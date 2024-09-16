@@ -9,13 +9,12 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
   const { setTheme } = useTheme();
 
   function setMyTheme(theme: string) {
-    //mui theme
-
     //next theme
     setTheme(theme);
   }
+
   return (
-    <div className={className}>
+    <div>
       <label
         className={`relative m-0 block h-7.5 w-14 rounded-full ${
           colorMode === "dark" ? "bg-secondary" : "bg-stroke/20"

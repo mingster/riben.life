@@ -98,7 +98,7 @@ function NavBar() {
               "py-4 border-b border-slate-900/10 lg:px-8 lg:border-0 dark:border-slate-300/10 mx-4 lg:mx-0",
             )}
           >
-            <div className="relative flex items-center">
+            <div className="relative flex items-center justify-between">
               <Link
                 href="/"
                 className="mr-3 flex-none w-[2.0625rem] overflow-hidden md:w-auto"
@@ -110,38 +110,19 @@ function NavBar() {
                 <span className="sr-only">home page</span>
                 <Logo className="w-auto h-5" />
               </Link>
-
               <div className="relative items-center hidden ml-auto lg:flex">
                 <nav className="text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">
                   <ul className="flex space-x-8">
                     <NavItems />
+                    <li className="pl-6 ml-6 border-l border-slate-200 dark:border-slate-800">
+                      <ThemeToggle />
+                    </li>
                   </ul>
                 </nav>
-                <div className="flex items-center pl-6 ml-6 border-l border-slate-200 dark:border-slate-800">
-                  <ThemeToggle className="mt-8" />
-                </div>
               </div>
+              {/* display popover on mobile */}
               <NavPopover className="ml-2 -my-1" display="lg:hidden" />
             </div>
-          </div>
-
-          <div className="flex items-center p-4 border-b border-slate-900/10 lg:hidden dark:border-slate-50/[0.06]">
-            <button
-              type="button"
-              //onClick={() => onNavToggle(!navIsOpen)}
-              className="text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
-            >
-              <span className="sr-only">Navigation</span>
-              <svg width="24" height="24" aria-hidden="true">
-                <path
-                  d="M5 6h14M5 12h14M5 18h14"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
           </div>
         </div>
       </div>
@@ -240,7 +221,7 @@ export default function Home() {
     <>
       <NavBar />
 
-      <div className="mb-20 overflow-hidden sm:mb-32 md:mb-40">
+      <div className="mb-20 overflow-hidden sm:mb-32 md:mb-40 p">
         <Header />
 
         <section className="px-8 mt-20 text-center sm:mt-32 md:mt-40">
