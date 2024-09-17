@@ -15,8 +15,8 @@ import { CollapseMenuButton } from "@/components/collapse-menu-button";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Store } from "@/types";
-import { GetMenuList } from "./store-menu-list";
 import { useState } from "react";
+import { GetMenuList } from "./store-menu-list";
 
 interface MenuProps {
   store: Store;

@@ -1,16 +1,16 @@
 "use client";
 
+import { DataTable } from "@/components/dataTable";
+import { DataTableColumnHeader } from "@/components/dataTable-column-header";
+import { PageQrCode } from "@/components/page-qrcode";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import VideoPlayer from "@/components/video-player";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
-import { DataTable } from "@/components/dataTable";
-import { DataTableColumnHeader } from "@/components/dataTable-column-header";
-import { PageQrCode } from "@/components/page-qrcode";
-import VideoPlayer from "@/components/video-player";
 import { Header, NavBar } from "./Header";
 
 import "../../../css/font.css";
@@ -22,8 +22,10 @@ import { AboutUs } from "./AboutUs";
 import { Cost } from "./Cost";
 import { FAQ } from "./FAQ";
 import { Features } from "./Features";
-import { UseCases } from "./UseCases";
 import { Footer } from "./Footer";
+import { UseCases } from "./UseCases";
+
+import Image from 'next/image';
 
 type User = {
   id: number;
@@ -167,32 +169,33 @@ export const UniversalHomeContent = () => {
 
         <section className="px-8 mt-20 text-center sm:mt-32 md:mt-40">
           <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl dark:text-white">
-          "Best practices" don't actually work.
+            &ldquo;Best practices&rdquo; don&#34;t actually work.
           </h2>
           <figure>
             <blockquote>
               <p className="max-w-3xl mx-auto mt-6 text-lg">
-                I've written{" "}
+                I&#34;ve written{" "}
                 <a
                   href="https://adamwathan.me/css-utility-classes-and-separation-of-concerns/"
                   className="font-semibold text-sky-500 dark:text-sky-400"
                 >
                   a few thousand words
                 </a>{" "}
-                on why traditional "semantic class names" are the reason CSS is
-                hard to maintain, but the truth is you're never going to believe
+                on why traditional &ldquo;semantic class names&rdquo; are the reason CSS is
+                hard to maintain, but the truth is you&#34;re never going to believe
                 me until you actually try it. If you can suppress the urge to
-                retch long enough to give it a chance, I really think you'll
+                retch long enough to give it a chance, I really think you&#34;ll
                 wonder how you ever worked with CSS any other way.
               </p>
             </blockquote>
             <figcaption className="flex items-center justify-center mt-6 space-x-4 text-left">
-              <img
+              <Image
                 src={require("@/img/adam.jpg").default.src}
                 alt=""
                 className="rounded-full w-14 h-14"
+                width={56}
+                height={56}
                 loading="lazy"
-                decoding="async"
               />
               <div>
                 <div className="font-semibold text-slate-900 dark:text-white">
