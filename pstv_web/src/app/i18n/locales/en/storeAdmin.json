@@ -1,0 +1,21 @@
+{
+  "StoreDashboard": "Store Dashboard",
+  "Sales": "Sales",
+  "Balance": "Balance",
+  "Transactions": "Transactions",
+  "Customers": "Customer Management",
+  "Support": "Customer Service",
+  "Tickets": "Tickets",
+  "Marketing": "Marketing",
+  "Products": "Product Management",
+  "AllProducts": "All Products",
+  "NewProduct": "Add New",
+  "FAQ": "Frequently Asked Questions",
+  "Tags": "Tag Management",
+  "StoreSettings": "Store Settings",
+  "Settings": "Settings",
+  "Categories": "Product Category",
+  "Announcements": "Announcement",
+  "Orders": "Order Management",
+  "Reports": "Reports"
+}

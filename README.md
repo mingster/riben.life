@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# pstv_web2
 
-## Getting Started
+pstv_web2 is based on Next.js, it provides web front-end and backend api.
 
-First, run the development server:
+## Ground work - [0-basic-boilerplate](https://github.com/mingster/pstv_web2/tree/0-basic-boilerplate)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Globalization ([i18n](https://next.i18next.com)
+- Themes ([NextTheme](https://github.com/pacocoursey/next-themes#readme))
+- Database backend ([PostgresSQL](https://www.postgresql.org) & [MongoDB](https://www.mongodb.com))
+- Authentication ([NextAuth](https://next-auth.js.org)
+- [Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs)
+- Video ([React player](https://github.com/cookpete/react-player))
+- Rich text editor / cms
+- [QR code](https://github.com/Bunlong/next-qrcode)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Store front / Store Admin / Backend Admin / User account/profiles
+- Cart
+- payment plug-in pattern 
+	- (stripe)
+- shipping plug-in pattern
+- ui
+	- data grid/ data table
+	- charting
+	- modal
+	- infinite scroll
+	- dynamic background
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Biz Logic
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### HomePage
 
-## Learn More
+home page is shown before sign-in. After signed, it shows connected page:
 
-To learn more about Next.js, take a look at the following resources:
+- Connected / PlayingNow page
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+show active channels with program currently shown. The info is reloaded every 10 min.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Player
 
-## Deploy on Vercel
+allow subscribers to receive live streaming.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### EPG
+
+### Support
+
+### Help
+
+### Shop
+
+### User Account
+
+### registration
+
+### Free trial
+
+disallow certain countries to get the free trial.
+When disallow, show shopping page instead.
+
+## Sign-in
+
+## Sign-out
+
+## My Account
+
+## Affiliates
+
+allow users in affiliate group and in pstv_affiliateCustomer table to enter.
+
+## Dashboard
+
+## Customer Management
+
+## TvCard management
+
+## TvCard purchasing
+
+## Order History
+
+## iPhone
+
+<code>xxxiPhone.Master</code> is used for iPhone visits.
+
+## iPad
+
+<code>xxxiPad.Master</code> is used for iPhone visits.
+
+## Android
+
+<code>/android/activation</code> provides device linking for Android phone.
+
+<code>/tvlink</code> provides device linking for AndroidTV.
+
+## ROKU
+
+<code>/roku</code> provides device linking for ROKU.
+
+## WebAPI / Admin
+
+## Automated utilities
+
+<code>/adm/affiliates/AutoOrder.ashx</code> 

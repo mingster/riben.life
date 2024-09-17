@@ -1,0 +1,58 @@
+[
+    {
+        "name": "宅配(台灣本島)",
+        "description": "0-60cm",
+        "basic_price": 70,
+        "currencyId": "TWD",
+        "shipRequried": true,
+        "isDefault": false
+    },
+    {
+        "name": "7-11超商取貨",
+        "description": "0-60cm",
+        "basic_price": 60,
+        "currencyId": "TWD",
+        "shipRequried": true,
+        "isDefault": false
+    },
+    {
+        "name": "全家超商取貨",
+        "description": "0-60cm",
+        "basic_price": 60,
+        "currencyId": "TWD",
+        "shipRequried": true,
+        "isDefault": false
+    },
+    {
+        "name": "黑貓宅急便",
+        "description": "0-60cm",
+        "basic_price": 90,
+        "currencyId": "TWD",
+        "shipRequried": true,
+        "isDefault": false
+    },
+    {
+        "name": "自取",
+        "description": "",
+        "basic_price": 0,
+        "currencyId": "TWD",
+        "shipRequried": false,
+        "isDefault": true
+    },
+    {
+        "name": "內用",
+        "description": "",
+        "basic_price": 0,
+        "currencyId": "TWD",
+        "shipRequried": false,
+        "isDefault": true
+    },
+    {
+        "name": "數位",
+        "description": "",
+        "basic_price": 0,
+        "currencyId": "TWD",
+        "shipRequried": false,
+        "isDefault": false
+    }
+]

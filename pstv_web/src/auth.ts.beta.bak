@@ -1,0 +1,95 @@
+import NextAuth from 'next-auth';
+import { encode, decode } from 'next-auth/jwt';
+import { Adapter } from 'next-auth/adapters';
+//import GitHub from 'next-auth/providers/github';
+import Google from 'next-auth/providers/google';
+
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import { PrismaClient } from "@prisma/client"
+
+import { mysqlClient } from '@/lib/prismadb';
+import refresh_google_token from './lib/auth/refresh_google_token';
+
+import { logger } from '@/lib/logger';
+const log = logger.child({ module: 'totoro' });
+const isDevelopmentMode = process.env.NODE_ENV === 'development';
+
+const prismaClient = new PrismaClient()
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: PrismaAdapter(prismaClient) as Adapter,
+  secret: process.env.AUTH_SECRET,
+  trustHost: true,
+  theme: {
+    logo: '/logo.png',
+  },
+  providers: [
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      // Google requires "offline" access_type to provide a `refresh_token`
+      authorization: { params: { access_type: 'offline', prompt: 'consent' } },
+    }),
+  ],
+  callbacks: {
+    // user only available when session strategy is set to database;
+    // token is only available when session strategy is set to jwt;
+    async session({ session, user, token }) {
+      if (token) {
+        session.id = token.id;
+      }
+
+      if (session.user && session.user.email) {
+        // determine user role
+        //
+        const dbuser = await prismadb.user.findUnique({
+          where: {
+            email: session.user.email,
+          },
+        });
+        //ANCHOR - define session.user type in @/types/next.auth.d.ts
+        //session.user.id = dbuser?.id + '';
+        session.user.id = user.id
+
+        session.user.role = dbuser?.role ?? '';
+
+        // refresh google token if needed
+        const [googleAccount] = await prismadb.account.findMany({
+          where: { userId: session.user.id, provider: 'google' },
+        });
+        if (googleAccount) {
+          refresh_google_token(googleAccount);
+        }
+        //console.log('googleAccount: ' + JSON.stringify(googleAccount));
+      }
+
+      if (isDevelopmentMode) {
+        console.log('session: ' + JSON.stringify(session));
+        console.log('user: ' + JSON.stringify(user));
+        console.log('token: ' + JSON.stringify(token));
+      }
+
+      return session;
+    },
+  },
+  events: {},
+  logger: {
+    error(code, ...message) {
+      log.error(code, 'An error occurred:', ...message);
+    },
+    warn(code, ...message) {
+      log.warn(code, message);
+    },
+    debug(code, ...message) {
+      log.debug(code, message);
+    },
+  },
+  debug: isDevelopmentMode,
+  session: {
+    // Set to jwt in order to CredentialsProvider works properly
+    //strategy: 'jwt',
+    strategy: 'database', // Store sessions in the database and store a sessionToken in the cookie for lookups
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
+  },
+});

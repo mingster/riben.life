@@ -1,0 +1,57 @@
+import { authOptions } from "@/auth";
+import { Toaster } from "@/components/ui/toaster";
+import { sqlClient } from "@/lib/prismadb";
+import { type Session, getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+
+export default async function DashboardLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: { storeId: string };
+}) {
+  const session = (await getServerSession(authOptions)) as Session;
+  //console.log('userid: ' + userId);
+
+  if (!session) {
+    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
+  }
+
+  let storeId = params.storeId;
+  if (!storeId) {
+    const store = await sqlClient.store.findFirst({
+      where: {
+        ownerId: session.user.id,
+      },
+    });
+
+    if (store) storeId = store?.id;
+  }
+
+  //console.log('storeId: ' + storeId);
+  //console.log('ownerId: ' + session.user.id);
+
+  // redirect user to `/storeAdmin/${store.id}` if the user is already a store owner
+  if (storeId) {
+    redirect(`/storeAdmin/${storeId}`);
+  }
+
+  //console.log('userId: ' + user?.id);
+  /*
+
+  if (session.user.role != 'OWNER') {
+    console.log('access denied');
+    redirect('/error/?code=500');
+
+  }
+
+  //console.log('store: ' + JSON.stringify(store));
+*/
+  return (
+    <>
+      {children}
+      <Toaster />
+    </>
+  );
+}
