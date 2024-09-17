@@ -1,0 +1,37 @@
+[
+    {
+        "name": "stripe",
+        "payUrl": "stripe",
+        "priceDescr": "2.9% + 30¢",
+        "fee": 0.029,
+        "isDefault": true
+    },
+    {
+        "name": "payal",
+        "payUrl": "paypal",
+        "priceDescr": "4% + 30¢",
+        "fee": 0.04,
+        "isDefault": false
+    },
+    {
+        "name": "linepay",
+        "payUrl": "linepay",
+        "priceDescr": "3.0%",
+        "fee": 0.00,
+        "isDefault": false
+    },
+    {
+        "name": "newebpay 藍新金流",
+        "payUrl": "newebpay",
+        "priceDescr": "2.8%",
+        "fee": 0.04,
+        "isDefault": false
+    },
+    {
+        "name": "cash",
+        "payUrl": "cash",
+        "priceDescr": "available for paid merchants",
+        "fee": 0,
+        "isDefault": false
+    }
+]

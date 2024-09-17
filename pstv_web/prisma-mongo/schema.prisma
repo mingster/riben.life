@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+    //previewFeatures = ["mongodb", "filterJson"]
+    output   = "../node_modules/@prisma-mongo/prisma/client"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("MONGODB_URI")
+}
+
+model StoreSettings {
+    id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+    databaseId          String  @unique //map to relational db
+    orderNoteToCustomer String?
+    privacyPolicy       String?
+    tos                 String?
+    aboutUs             String?
+    description         String?
+    aboutUsVideoUrl     String?
+    supportEmail        String?
+    supportPhoneNumber  String?
+    facebookUrl         String?
+    igUrl               String?
+    lineId              String?
+    telegramId          String?
+    twitterId           String?
+    whatsappId          String?
+    wechatId            String?
+
+    businessHours String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([id, databaseId])
+}
+
+model Address {
+    id              String  @id @default(auto()) @map("_id") @db.ObjectId
+    storeSettingsId String  @unique
+    firstName       String?
+    lastName        String?
+    company         String?
+    country         String?
+    streetLine1     String
+    streetLine2     String?
+    city            String
+    district        String?
+    province        String?
+    postalCode      String?
+    phoneNumber     String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([id, storeSettingsId, city, district, country, postalCode])
+}
