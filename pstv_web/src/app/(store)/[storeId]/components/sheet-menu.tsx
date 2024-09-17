@@ -6,6 +6,7 @@ import DropdownCart from "@/components/dropdown-cart";
 import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
 import DropdownUser from "@/components/dropdown-user";
+import ThemeToggler from "@/components/theme-toggler";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -19,7 +20,9 @@ import type { Store } from "@/types";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { StoreMenu } from "./store-menu";
-import ThemeToggler from "@/components/theme-toggler";
+
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
 
 interface props {
   store: Store;
@@ -31,6 +34,8 @@ export function SheetMenu({ store }: props) {
   //export function SheetMenu() {
   //className="lg:hidden"
   const [isOpen, setIsOpen] = useState(false); // true off by default
+  const { lng } = useI18n();
+  const { t } = useTranslation(lng);
 
   //const router = useRouter();
   const session = useSession();
@@ -72,6 +77,9 @@ export function SheetMenu({ store }: props) {
             <DropdownUser user={user} />
             <DropdownCart />
           </div>{" "}
+        </div>
+        <div className="pt-1 flex flex-1 items-center justify-center space-x-1 w-full">
+          <Link href='/unv'><Button variant="default">{t('system_provider')}</Button></Link>
         </div>
       </SheetContent>
     </Sheet>
