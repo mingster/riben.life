@@ -13,10 +13,10 @@ export function Hero() {
     <Layout
       left={
         <div className="lg:-mr-18">
-          <LayoutGroup>TBD</LayoutGroup>
+          <LayoutGroup> </LayoutGroup>
         </div>
       }
-      right={<>TBD</>}
+      right={<> </>}
     />
   );
 }
