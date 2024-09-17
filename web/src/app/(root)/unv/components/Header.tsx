@@ -8,13 +8,13 @@ import Router from "next/router";
 import { useEffect, useState } from "react";
 import styles from "../../../css/index.module.css";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import ThemeToggler from "@/components/theme-toggler";
 
 export function NavPopover({
@@ -27,6 +27,7 @@ export function NavPopover({
 } & React.HTMLAttributes<HTMLDivElement>) {
   const [isOpen, setIsOpen] = useState(false);
 
+  /*
   useEffect(() => {
     if (!isOpen) return;
     function handleRouteChange() {
@@ -37,66 +38,50 @@ export function NavPopover({
       Router.events.off("routeChangeComplete", handleRouteChange);
     };
   }, [isOpen]);
+  */
 
   return (
     <div className={clsx(className, display)} {...props}>
-      <Dialog
-        open={isOpen}
-        //onClose={setIsOpen}
-        //className={clsx("fixed z-50 inset-0", display)}
-      >
-      <DialogTrigger asChild>
-      {/* close button */}
-      <button
-        type="button"
-        className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
-        onClick={() => setIsOpen(true)}
-      >
-        <span className="sr-only">Navigation</span>
-        <svg width="24" height="24" fill="none" aria-hidden="true">
-          <path
-            d="M12 6v.01M12 12v.01M12 18v.01M12 7a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-
-      </DialogTrigger>
-
-
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm dark:bg-slate-900/80" />
-        <DialogContent className="fixed w-full max-w-xs p-6 text-base font-semibold bg-white rounded-lg shadow-lg top-4 right-4 text-slate-900 dark:bg-slate-800 dark:text-slate-400 dark:highlight-white/5">
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger asChild>
           <button
             type="button"
-            className="absolute flex items-center justify-center w-8 h-8 top-5 right-5 text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
-            onClick={() => setIsOpen(false)}
+            className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+            onClick={() => setIsOpen(true)}
           >
-            <span className="sr-only">Close navigation</span>
-            <svg
-              viewBox="0 0 10 10"
-              className="w-2.5 h-2.5 overflow-visible"
-              aria-hidden="true"
-            >
+            <span className="sr-only">Navigation</span>
+            <svg width="24" height="24" fill="none" aria-hidden="true">
               <path
-                d="M0 0L10 10M10 0L0 10"
-                fill="none"
+                d="M12 6v.01M12 12v.01M12 18v.01M12 7a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="1.5"
                 strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </button>
-          <ul className="space-y-6">
-            <NavItems />
-          </ul>
-          <div className="pt-6 mt-6 border-t border-slate-200 dark:border-slate-200/10">
-            <ThemeToggler />
+
+        </SheetTrigger>
+        <SheetContent
+          className="flex h-full flex-col px-3 w-64 backdrop-opacity-10 opacity-80 backdrop-invert rounded-lg shadow-lg text-slate-900
+          dark:text-slate-400 dark:highlight-white/5 bg-white  dark:bg-slate-800"
+          side="right"
+        >
+          <SheetHeader />
+          <SheetTitle />
+          <SheetDescription />
+
+          <div className="max-w-xs p-6 text-base font-semibold top-4 right-4">
+            <ul className="space-y-6">
+              <NavItems />
+            </ul>
+            <div className="pt-6 mt-6 border-t border-slate-200 dark:border-slate-200/10">
+              <ThemeToggler />
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
