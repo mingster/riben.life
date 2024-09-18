@@ -1,14 +1,12 @@
-import { authOptions } from "@/auth";
+import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { format } from "date-fns";
-import { Suspense } from "react";
-import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
+import type { Faq } from "@/types";
 import type { Store } from "@prisma/client";
+import { Suspense } from "react";
 import type { FaqColumn } from "./components/columns";
 import { FaqClient } from "./components/faq-client";
-import type { Faq } from "@/types";
 
 //import { Metadata } from 'next';
 interface pageProps {

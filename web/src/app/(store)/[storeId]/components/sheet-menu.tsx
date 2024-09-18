@@ -1,7 +1,6 @@
 import { HomeIcon, MenuIcon } from "lucide-react";
 import Link from "next/link";
 
-
 import DropdownCart from "@/components/dropdown-cart";
 import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
@@ -79,7 +78,9 @@ export function SheetMenu({ store }: props) {
           </div>{" "}
         </div>
         <div className="pt-1 flex flex-1 items-center justify-center space-x-1 w-full">
-          <Link href='/unv'><Button variant="default">{t('system_provider')}</Button></Link>
+          <Link href="/unv">
+            <Button variant="default">{t("system_provider")}</Button>
+          </Link>
         </div>
       </SheetContent>
     </Sheet>

@@ -1,7 +1,8 @@
-import { authOptions } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+
+import { auth } from "@/auth";
+import type { Session } from "next-auth";
 
 ///!SECTION update user in database.
 export async function PATCH(
@@ -9,7 +10,7 @@ export async function PATCH(
   { params }: { params: { userId: string } },
 ) {
   try {
-    const session = (await getServerSession(authOptions)) as Session;
+    const session = (await auth()) as Session;
     const userId = session?.user.id;
 
     if (!userId) {

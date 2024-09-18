@@ -3,7 +3,7 @@
 //Protect all routes
 //https://next-auth.js.org/configuration/nextjs#middleware
 import { type NextRequest, NextResponse } from "next/server";
-export { default } from "next-auth/middleware";
+//export { default } from "next-auth/middleware";
 
 export const config = {
   matcher: [
@@ -34,7 +34,6 @@ const allowedOrigins =
     ? (furls?.split(",") as string[])
     : [
         "http://localhost:3000",
-        "http://localhost:3001",
         "https://api.stripe.com",
       ];
 

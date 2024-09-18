@@ -1,6 +1,3 @@
-import { authOptions } from "@/auth";
-import { sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 

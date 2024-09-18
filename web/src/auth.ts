@@ -1,5 +1,7 @@
-//import NextAuth from 'next-auth';
-import type { NextAuthOptions } from "next-auth";
+// this is config for next-auth v5
+//
+import NextAuth from 'next-auth';
+//import type { NextAuthOptions } from "next-auth";
 //import { getSession } from 'next-auth/react';
 //import { NextApiRequest, NextApiResponse } from 'next';
 //import { nanoid } from 'nanoid';
@@ -21,6 +23,7 @@ import Auth0Provider from "next-auth/providers/auth0"
 */
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Stripe from "stripe";
+import type { Adapter } from "next-auth/adapters";
 
 // https://next-auth.js.org/configuration/options
 
@@ -40,8 +43,9 @@ export const getToken = (test: string) => {
 };
 */
 
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(sqlClient) as any,
+export const { handlers, signIn, signOut, auth } = NextAuth({
+//export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(sqlClient) as Adapter,
   secret: process.env.AUTH_SECRET,
   session: {
     //strategy: 'jwt',
@@ -120,7 +124,6 @@ export const authOptions: NextAuthOptions = {
   ],
   /*
   pages: {
-
       signIn: '/signin',
       signOut: '/signout',
       error: '/auth/error', // Error code passed in query string as ?error=
@@ -251,4 +254,4 @@ export const authOptions: NextAuthOptions = {
         });
     },
   },
-};
+});

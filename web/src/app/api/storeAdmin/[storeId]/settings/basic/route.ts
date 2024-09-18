@@ -1,9 +1,7 @@
-import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
-import { authOptions } from "@/auth";
 import { sqlClient, mongoClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../../api_helper";
+import { IsSignInResponse } from "@/utils/auth-utils";
 
 export async function PATCH(
   req: Request,
@@ -12,8 +10,10 @@ export async function PATCH(
   try {
     CheckStoreAdminAccess(params.storeId);
 
-    const session = (await getServerSession(authOptions)) as Session;
-    const userId = session?.user.id;
+    const userId = await IsSignInResponse();
+    if (typeof userId !== "string") {
+      return new NextResponse("Unauthenticated", { status: 400 });
+    }
 
     const body = await req.json();
 
@@ -99,8 +99,10 @@ export async function DELETE(
   try {
     CheckStoreAdminAccess(params.storeId);
 
-    const session = await getServerSession(authOptions);
-    const userId = session?.user.id;
+    const userId = await IsSignInResponse();
+    if (typeof userId !== "string") {
+      return new NextResponse("Unauthenticated", { status: 400 });
+    }
 
     // make sure store belongs to the user
     const storeToUpdate = await sqlClient.store.findUnique({

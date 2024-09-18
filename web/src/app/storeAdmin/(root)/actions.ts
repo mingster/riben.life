@@ -2,26 +2,26 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { authOptions } from "@/auth";
 import { mongoClient, sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 //import { connectToMongoDB } from '@/lib/mongodb';
 
 import StoreModel from "@/model/StoreModel";
 import type { formSchema } from "./store-modal";
 import type { z } from "zod";
 import fs from "node:fs";
+import type { Session } from "next-auth";
+import { GetSession, RequiresSignIn } from "@/utils/auth-utils";
 
 //NOTE - do not move this to other folder.
 //
 export const createStore = async (values: z.infer<typeof formSchema>) => {
-  const session = (await getServerSession(authOptions)) as Session;
-  if (!session) {
+  RequiresSignIn();
+  const session = (await GetSession()) as Session;
+  const ownerId = session.user?.id;
+
+  if (!session || !session.user || !ownerId) {
     redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
   }
-
-  const user = session?.user;
-  const ownerId = user?.id;
 
   //console.log(values);
   const { name, defaultLocale, defaultCountry, defaultCurrency } = values;
@@ -66,7 +66,7 @@ export const createStore = async (values: z.infer<typeof formSchema>) => {
   });
 
   try {
-    if (user.role === "USER") {
+    if (session.user.role === "USER") {
       // mark the user as OWNER
       await sqlClient.user.update({
         where: {

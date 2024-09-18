@@ -1,15 +1,17 @@
-import { authOptions } from "@/auth";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { mongoClient, sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
 import type { SupportTicket } from "@prisma/client";
 import { format } from "date-fns";
-import { type Session, getServerSession } from "next-auth";
+
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { TicketColumn } from "./components/columns";
 import { TicketClient } from "./components/ticket-client";
+
+import { auth } from "@/auth";
+import type { Session } from "next-auth";
 
 interface pageProps {
   params: {
@@ -17,7 +19,7 @@ interface pageProps {
   };
 }
 const StoreSupportPage: React.FC<pageProps> = async ({ params }) => {
-  const session = (await getServerSession(authOptions)) as Session;
+  const session = (await auth()) as Session;
   const userId = session?.user.id;
 
   if (!session) {

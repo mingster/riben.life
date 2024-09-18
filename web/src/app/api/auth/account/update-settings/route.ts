@@ -1,13 +1,14 @@
-import { authOptions } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+
+import { auth } from "@/auth";
+import type { Session } from "next-auth";
 
 ///!SECTION update user data on user's own behave.
 export async function PATCH(req: Request) {
   try {
-    const session = (await getServerSession(authOptions)) as Session;
+    const session = (await auth()) as Session;
     const userId = session?.user.id;
 
     if (!userId) {

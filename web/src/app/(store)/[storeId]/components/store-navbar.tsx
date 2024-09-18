@@ -76,8 +76,8 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
     <header
       className={`sticky ${scrollDirection === "down" ? "-top-24" : "top-0"} z-10 w-full shadow backdrop-blur dark:shadow-secondary`}
     >
-      <div className="mx-4 flex h-14 items-center xs:mx-1">
-        <div className="flex items-center space-x-4 lg:space-x-0">
+      <div className="mx-4 flex h-14 items-center sm:mx-1">
+        <div className="flex items-center space-x-4 lg:space-x-0 pl-2">
           <SheetMenu store={store} />
         </div>
 

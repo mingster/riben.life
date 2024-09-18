@@ -1,7 +1,7 @@
-import { authOptions } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import { type Session, getServerSession } from "next-auth";
+import { IsSignInResponse } from "@/utils/auth-utils";
+
 import { NextResponse } from "next/server";
 
 ///!SECTION get all tickets that belong to the thread
@@ -10,9 +10,8 @@ export async function POST(
   { params }: { params: { storeId: string; ticketId: string } },
 ) {
   try {
-    const session = (await getServerSession(authOptions)) as Session;
-    const userId = session?.user.id;
-    if (!userId) {
+    const userId = await IsSignInResponse();
+    if (typeof userId !== 'string') {
       return new NextResponse("Unauthenticated", { status: 403 });
     }
     if (!params.storeId) {

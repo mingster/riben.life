@@ -31,6 +31,7 @@ export function Menu({ isOpen }: MenuProps) {
       <nav className="mt-8 h-full w-full">
         <ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px)]">
           {menuList.map(({ groupLabel, menus }, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={index}>
               {(isOpen && groupLabel) || isOpen === undefined ? (
                 <p className="max-w-[248px] truncate px-4 pb-2 text-sm font-medium text-muted-foreground">
@@ -55,12 +56,13 @@ export function Menu({ isOpen }: MenuProps) {
               {menus.map(
                 ({ href, label, icon: Icon, active, submenus }, index) =>
                   submenus.length === 0 ? (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     <div className="w-full" key={index}>
                       <TooltipProvider disableHoverableContent>
                         <Tooltip delayDuration={100}>
                           <TooltipTrigger asChild>
                             <Button
-                              variant={active ? "secondary" : "ghost"}
+                              variant={active ? "outline" : "ghost"}
                               className="mb-1 h-10 w-full justify-start"
                               asChild
                             >
@@ -92,6 +94,7 @@ export function Menu({ isOpen }: MenuProps) {
                       </TooltipProvider>
                     </div>
                   ) : (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     <div className="w-full" key={index}>
                       <CollapseMenuButton
                         icon={Icon}

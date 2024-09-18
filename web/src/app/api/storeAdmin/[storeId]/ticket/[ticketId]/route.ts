@@ -1,10 +1,8 @@
-import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
-import { authOptions } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../../api_helper";
+import { IsSignInResponse } from "@/utils/auth-utils";
 
 ///!SECTION add reply to this ticket from store staff.
 export async function PATCH(
@@ -13,9 +11,10 @@ export async function PATCH(
 ) {
   try {
     CheckStoreAdminAccess(params.storeId);
-
-    const session = (await getServerSession(authOptions)) as Session;
-    const userId = session?.user.id;
+    const userId = IsSignInResponse();
+    if (typeof userId !== "string") {
+      return new NextResponse("Unauthenticated", { status: 400 });
+    }
 
     if (!params.ticketId) {
       return new NextResponse("ticketId is required", { status: 401 });
@@ -58,7 +57,7 @@ export async function PATCH(
       },
     });
 
-    console.log(`replied ticket: ${JSON.stringify(reply)}`);
+    //console.log(`replied ticket: ${JSON.stringify(reply)}`);
 
     // update status in this thread
     const cnt = await sqlClient.supportTicket.updateMany({

@@ -29,14 +29,24 @@ const StoreCheckoutPage: React.FC<pageProps> = async ({ params }) => {
         orderBy: { sortOrder: "asc" },
       },
       //StoreAnnouncement: true,
-      StoreShippingMethods: true,
-      StorePaymentMethods: true,
+      StoreShippingMethods: {
+        include: {
+          ShippingMethod: true,
+        },
+      },
+      StorePaymentMethods: {
+        include: {
+          PaymentMethod: true,
+        },
+      },
     },
   })) as Store;
 
   if (!store) {
     redirect("/unv");
   }
+
+  transformDecimalsToNumbers(store);
 
   // if no payment methods associated with this store, use default payment methods
   if (store.StorePaymentMethods.length === 0) {

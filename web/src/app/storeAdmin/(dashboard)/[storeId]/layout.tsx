@@ -1,13 +1,12 @@
 //import { Metadata } from 'next';
-import { type Session, getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import type { Store } from "@/types";
-
-import { authOptions } from "@/auth";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { Suspense } from "react";
 import type { Metadata, ResolvingMetadata } from "next";
+import { GetSession, RequiresSignIn } from "@/utils/auth-utils";
+import type { Session } from "next-auth";
 
 type Props = {
   params: { storeId: string };
@@ -51,7 +50,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
   params: { storeId: string };
 }) {
-  const session = (await getServerSession(authOptions)) as Session;
+  const session = (await GetSession()) as Session;
   //console.log('session: ' + JSON.stringify(session));
   //console.log('userid: ' + userId);
 

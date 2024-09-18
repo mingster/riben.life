@@ -24,14 +24,15 @@ const StoreAdminLayout: React.FC<props> = ({
 
   if (!sidebar) return null;
 
+  //<div className="bg-top bg-cover bg-no-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
   return (
-    <div className="bg-top bg-cover bg-no-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
+    <div className="">
       <StoreAdminNavbar store={sqlData} />
       <StoreAdminSidebar title={sqlData?.name} />
       <main
         className={cn(
           "min-h-[calc(100vh_-_56px)] transition-[margin-left] duration-300 ease-in-out ",
-          sidebar?.isOpen === false ? "lg:ml-[90px]" : "lg:ml-72",
+          sidebar?.isOpen === false ? "md:ml-[90px]" : "md:ml-72",
         )}
       >
         {children}
@@ -39,7 +40,7 @@ const StoreAdminLayout: React.FC<props> = ({
       <footer
         className={cn(
           "transition-[margin-left] duration-300 ease-in-out",
-          sidebar?.isOpen === false ? "lg:ml-[90px]" : "lg:ml-72",
+          sidebar?.isOpen === false ? "md:ml-[90px]" : "md:ml-72",
         )}
       >
         <StoreAdminFooter />

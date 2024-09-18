@@ -2,7 +2,7 @@
 
 import getUser from "@/actions/get-user";
 import type { StoreNotification } from "@/actions/send-store-notification";
-import { authOptions } from "@/auth";
+
 import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
 import { Loader } from "@/components/ui/loader";
@@ -11,13 +11,15 @@ import { formatDateTime } from "@/lib/utils";
 import type { User } from "@/types";
 import { MessageCircleMore } from "lucide-react";
 import type { Metadata } from "next";
-import { type Session, getServerSession } from "next-auth";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { useTranslation } from "@/app/i18n";
 import { useI18n } from "@/providers/i18n-provider";
+
+import { auth } from "@/auth";
+import type { Session } from "next-auth";
 
 export const metadata: Metadata = {
   title: "My Notification",
@@ -33,7 +35,7 @@ const UserNotificationPage: React.FC = async () => {
   } else {
     const u: User = user as User;
     //console.log(`user: ${JSON.stringify(u)}`);
-    const session = (await getServerSession(authOptions)) as Session;
+    const session = (await auth()) as Session;
 
     const notifications = session?.user.notifications;
     if (notifications === null) return;

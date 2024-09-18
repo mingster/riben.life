@@ -1,11 +1,7 @@
-import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
-import { authOptions } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import { CheckStoreAdminAccess } from "@/app/api/storeAdmin/api_helper";
-import { boolean } from "zod";
 
 //delete product option by its id
 export async function DELETE(
@@ -16,10 +12,6 @@ export async function DELETE(
 ) {
   //try {
   CheckStoreAdminAccess(params.storeId);
-
-  if (!params.storeId) {
-    return new NextResponse("store id is required", { status: 400 });
-  }
 
   if (!params.productId) {
     return new NextResponse("product id is required", { status: 400 });
@@ -75,10 +67,6 @@ export async function PATCH(
   }: { params: { storeId: string; productId: string; optionId: string } },
 ) {
   CheckStoreAdminAccess(params.storeId);
-
-  if (!params.storeId) {
-    return new NextResponse("store id is required", { status: 400 });
-  }
 
   if (!params.productId) {
     return new NextResponse("product id is required", { status: 400 });

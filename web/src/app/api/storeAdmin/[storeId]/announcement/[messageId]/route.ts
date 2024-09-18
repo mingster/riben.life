@@ -1,7 +1,6 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
-import { authOptions } from "@/auth";
+
 import { sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../../api_helper";
 
@@ -40,14 +39,9 @@ export async function DELETE(
   { params }: { params: { storeId: string; messageId: string } },
 ) {
   //try {
-  const session = (await getServerSession(authOptions)) as Session;
-  const userId = session?.user.id;
-  if (!userId) {
-    return new NextResponse("Unauthenticated", { status: 403 });
-  }
-  if (!params.storeId) {
-    return new NextResponse("Store id is required", { status: 400 });
-  }
+
+  CheckStoreAdminAccess(params.storeId);
+
 
   if (!params.messageId) {
     return new NextResponse("message id is required", { status: 401 });

@@ -96,6 +96,8 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
     allShipMethods[0].ShippingMethod,
   );
 
+  //console.log(`allShipMethods: ${JSON.stringify(allShipMethods)}`);
+
   const allpaymentMethods =
     store.StorePaymentMethods as StorePaymentMethodMapping[];
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
