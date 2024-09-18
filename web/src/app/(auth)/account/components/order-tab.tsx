@@ -52,7 +52,7 @@ export const DisplayOrders = ({ orders, status }: orderTabProps) => {
                       <div className="whitespace-nowrap">
                         {/* order items */}
                         {order.OrderItemView.map((item: orderitemview) => (
-                          <div key={item.id} className="flex xs:text-xs">
+                          <div key={item.id} className="flex sm:text-xs">
                             <label className="pr-2">{item.name}</label>
                             <div className="">
                               <label className="pr-2">x{item.quantity}</label>
@@ -63,7 +63,7 @@ export const DisplayOrders = ({ orders, status }: orderTabProps) => {
                           </div>
                         ))}
                       </div>
-                      <div className="justify-self-end whitespace-nowrap xs:text-xs">
+                      <div className="justify-self-end whitespace-nowrap sm:text-xs">
                         {format(order.createdAt, "yyyy/MM/dd")}
                       </div>
                     </div>
@@ -91,7 +91,7 @@ export const DisplayOrders = ({ orders, status }: orderTabProps) => {
                     </div>
  */}
                   </CardContent>
-                  <CardFooter className="xs:text-xs place-content-end items-end pt-0 pb-1 flex flex-col">
+                  <CardFooter className="sm:text-xs place-content-end items-end pt-0 pb-1 flex flex-col">
                     <div className="grid grid-flow-row-dense grid-cols-3 gap-1 place-items-end">
                       <div className="justify-self-end place-self-end whitespace-nowrap">
                         {t(
@@ -180,7 +180,7 @@ export const OrderTab = ({ orders }: props) => {
       onValueChange={handleTabChange}
       className="w-full"
     >
-      <TabsList className="xs:grid-cols-3 grid w-full grid-cols-6">
+      <TabsList className="sm:grid-cols-3 grid w-full grid-cols-6">
         {keys.map((key) => (
           <TabsTrigger key={key} value={key}>
             {/*<Badge badgeContent= color="primary"></Badge>*/}

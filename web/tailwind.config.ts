@@ -25,10 +25,16 @@ module.exports = {
   prefix: '',
   theme: {
     screens: {
-      'demo-sm': '720px',
+      //xs: "304px",
+      //sm: "768px",
+      //md: "1280px",
+      //lg: "1768px",
+      //xl: "1400px",
+      //"2xl": "2160px",
+      //'demo-sm': '720px',
       'xsm': '425px',
       '2xsm': '375px',
-      '3xsm': '2000px',
+      '3xsm': '200px',
       ...defaultTheme.screens,
     },
     aspectRatio: {

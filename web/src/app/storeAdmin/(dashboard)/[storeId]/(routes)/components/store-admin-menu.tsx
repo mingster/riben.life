@@ -32,10 +32,10 @@ export function StoreAdminMenu({ isOpen, title }: MenuProps) {
   //console.log(params);
   const menuList = GetMenuList(params.storeId, pathname);
 
+  //{isOpen && <div className="space-y-1 px-2">{title}</div>}
   return (
     <ScrollArea className="[&>div>div[style]]:!block">
       <nav className="mt-8 h-full w-full">
-        {isOpen && <div className="space-y-1 px-2">{title}</div>}
 
         <ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px)]">
           {menuList.map(({ groupLabel, menus }, index) => (

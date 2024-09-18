@@ -51,7 +51,7 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
   if (!visible) return <></>;
 
   //w-full shadow backdrop-blur dark:shadow-secondary mx-4 flex h-14 items-center justify-center
-  //hidden xs:block
+  //hidden sm:block
   return (
     <footer className="sticky bottom-0 w-full shadow backdrop-blur dark:shadow-secondary p-2 bg-body opacity-90">
       <div className="rounded xl:container xl:mx-auto">

@@ -12,14 +12,15 @@ export default async function DashboardLayout({
   children: React.ReactNode;
   params: { storeId: string };
 }) {
-  RequiresSignIn();
   const session = (await GetSession()) as Session;
-  const ownerId = session.user?.id;
-
-  if (!session || !session.user || !ownerId) {
+  if (!session) {
+    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
+  }
+  if (!session.user) {
     redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
   }
 
+  const ownerId = session.user?.id;
   //console.log('userid: ' + userId);
 
   let storeId = params.storeId;
