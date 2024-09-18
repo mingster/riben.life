@@ -69,8 +69,16 @@ const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
     Owner: true,
     Products: true,
     StoreOrders: true,
-    StoreShippingMethods: true,
-    StorePaymentMethods: true,
+    StoreShippingMethods: {
+      include: {
+        ShippingMethod: true,
+      },
+    },
+    StorePaymentMethods: {
+      include: {
+        PaymentMethod: true,
+      },
+    },
   },
 });
 export type Store = Prisma.StoreGetPayload<typeof storeObj>;

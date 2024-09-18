@@ -1,15 +1,16 @@
-import { authOptions } from "@/auth";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { format } from "date-fns";
-import { type Session, getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { UserColumn } from "./components/columns";
 import { UsersClient } from "./components/user-client";
 import type { User } from "@/types";
 import { transformDecimalsToNumbers } from "@/lib/utils";
+
+import { auth } from "@/auth";
+import type { Session } from "next-auth";
 
 //import { Metadata } from 'next';
 interface pageProps {
@@ -22,9 +23,8 @@ interface pageProps {
 //
 const UsersAdminPage: React.FC<pageProps> = async ({ params }) => {
   //console.log('storeid: ' + params.storeId);
-  const session = (await getServerSession(authOptions)) as Session;
+  const session = (await auth()) as Session;
   const userId = session?.user.id;
-
   if (!session) {
     redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
   }

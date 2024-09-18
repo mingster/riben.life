@@ -1,7 +1,7 @@
-import { authOptions } from "@/auth";
+
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import { type Session, getServerSession } from "next-auth";
+import { IsSignInResponse } from "@/utils/auth-utils";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
@@ -11,11 +11,11 @@ export async function POST(
   { params }: { params: { storeId: string } },
 ) {
   try {
-    const session = (await getServerSession(authOptions)) as Session;
-    const userId = session?.user.id;
-    if (!userId) {
+    const userId = await IsSignInResponse();
+    if (typeof userId !== 'string') {
       return new NextResponse("Unauthenticated", { status: 403 });
     }
+
     if (!params.storeId) {
       return new NextResponse("Store id is required", { status: 400 });
     }

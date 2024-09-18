@@ -1,10 +1,10 @@
-import { authOptions } from "@/auth";
 import { Toaster } from "@/components/ui/toaster";
 import { mongoClient, sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
+import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import StoreAdminLayout from "./components/store-admin-layout";
 import { transformDecimalsToNumbers } from "@/lib/utils";
+import { GetSession, RequiresSignIn } from "@/utils/auth-utils";
 //import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 
 export default async function StoreLayout({
@@ -14,10 +14,8 @@ export default async function StoreLayout({
   children: React.ReactNode;
   params: { storeId: string };
 }) {
-  const session = (await getServerSession(authOptions)) as Session;
-  if (!session) {
-    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
-  }
+  RequiresSignIn();
+  const session = (await GetSession()) as Session;
 
   //console.log('session: ' + JSON.stringify(session));
   //console.log('userId: ' + user?.id);

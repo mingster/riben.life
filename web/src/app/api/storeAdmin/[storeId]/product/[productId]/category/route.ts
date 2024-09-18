@@ -1,8 +1,5 @@
-import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import { CheckStoreAdminAccess } from "@/app/api/storeAdmin/api_helper";
-import { authOptions } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 export async function POST(

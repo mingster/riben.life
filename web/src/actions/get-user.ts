@@ -1,12 +1,11 @@
-import { authOptions } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
 //import { User } from 'prisma/prisma-client';
 import type { User } from "@/types";
-import { getServerSession } from "next-auth";
+import { auth } from "@/auth";
+
 
 const getUser = async (): Promise<User | null> => {
-  const session = await getServerSession(authOptions);
-
+  const session = await auth();
   if (!session) {
     return null;
   }

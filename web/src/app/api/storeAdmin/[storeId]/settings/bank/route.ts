@@ -1,9 +1,8 @@
-import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
-import { authOptions } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../../api_helper";
+import { GetSession, IsSignInResponse } from "@/utils/auth-utils";
+import type { Session } from "next-auth";
 
 export async function PATCH(
   req: Request,
@@ -12,10 +11,8 @@ export async function PATCH(
   try {
     CheckStoreAdminAccess(params.storeId);
 
-    const session = (await getServerSession(authOptions)) as Session;
-    const userId = session?.user.id;
-
-    if (!userId) {
+    const userId = await IsSignInResponse();
+    if (typeof userId !== "string") {
       return new NextResponse("Unauthenticated", { status: 400 });
     }
 

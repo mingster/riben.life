@@ -1,5 +1,7 @@
-//import NextAuth from 'next-auth';
-import type { NextAuthOptions } from "next-auth";
+// this is config for next-auth v5
+//
+import NextAuth from 'next-auth';
+//import type { NextAuthOptions } from "next-auth";
 //import { getSession } from 'next-auth/react';
 //import { NextApiRequest, NextApiResponse } from 'next';
 //import { nanoid } from 'nanoid';
@@ -41,7 +43,8 @@ export const getToken = (test: string) => {
 };
 */
 
-export const authOptions: NextAuthOptions = {
+export const { handlers, signIn, signOut, auth } = NextAuth({
+//export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(sqlClient) as Adapter,
   secret: process.env.AUTH_SECRET,
   session: {
@@ -121,7 +124,6 @@ export const authOptions: NextAuthOptions = {
   ],
   /*
   pages: {
-
       signIn: '/signin',
       signOut: '/signout',
       error: '/auth/error', // Error code passed in query string as ?error=
@@ -252,4 +254,4 @@ export const authOptions: NextAuthOptions = {
         });
     },
   },
-};
+});

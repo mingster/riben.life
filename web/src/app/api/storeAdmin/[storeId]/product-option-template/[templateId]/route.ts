@@ -1,7 +1,4 @@
-import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
-import { authOptions } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import { CheckStoreAdminAccess } from "@/app/api/storeAdmin/api_helper";
@@ -15,10 +12,6 @@ export async function DELETE(
 ) {
   //try {
   CheckStoreAdminAccess(params.storeId);
-
-  if (!params.storeId) {
-    return new NextResponse("store id is required", { status: 400 });
-  }
 
   if (!params.templateId) {
     return new NextResponse("template id is required", { status: 400 });
@@ -53,17 +46,13 @@ export async function PATCH(
 ) {
   CheckStoreAdminAccess(params.storeId);
 
-  if (!params.storeId) {
-    return new NextResponse("store id is required", { status: 400 });
-  }
-
   if (!params.templateId) {
     return new NextResponse("template id is required", { status: 400 });
   }
 
   const body = await req.json();
 
-  console.log(JSON.stringify(body));
+  //console.log(JSON.stringify(body));
 
   if (!body.optionName) {
     return new NextResponse("Name is required", { status: 400 });

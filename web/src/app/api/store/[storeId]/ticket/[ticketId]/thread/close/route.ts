@@ -1,7 +1,7 @@
-import { authOptions } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import { type Session, getServerSession } from "next-auth";
+import { IsSignInResponse } from "@/utils/auth-utils";
+
 import { NextResponse } from "next/server";
 
 ///!SECTION mark this ticket as close.
@@ -10,11 +10,11 @@ export async function DELETE(
   { params }: { params: { storeId: string; ticketId: string } },
 ) {
   try {
-    const session = (await getServerSession(authOptions)) as Session;
-    const userId = session?.user.id;
-    if (!userId) {
+    const userId = await IsSignInResponse();
+    if (typeof userId !== 'string') {
       return new NextResponse("Unauthenticated", { status: 403 });
     }
+
     if (!params.storeId) {
       return new NextResponse("Store id is required", { status: 400 });
     }

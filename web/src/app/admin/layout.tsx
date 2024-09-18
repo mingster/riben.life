@@ -1,7 +1,8 @@
-import { authOptions } from "@/auth";
 import { Toaster } from "@/components/ui/toaster";
-import { type Session, getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+
+import { auth } from "@/auth";
+import type { Session } from "next-auth";
 
 import AdminPanelLayout from "./components/admin-panel-layout";
 
@@ -12,7 +13,7 @@ export default async function AdminDashboardLayout({
   children: React.ReactNode;
   //params: { storeId: string };
 }) {
-  const session = (await getServerSession(authOptions)) as Session;
+  const session = (await auth()) as Session;
   //console.log('session: ' + JSON.stringify(session));
   //console.log('userid: ' + userId);
 
@@ -26,7 +27,7 @@ export default async function AdminDashboardLayout({
     console.log("access denied");
     redirect("/error/?code=500");
   }
-  
+
   */
   return (
     <AdminPanelLayout>

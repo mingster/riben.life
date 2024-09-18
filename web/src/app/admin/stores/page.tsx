@@ -1,14 +1,16 @@
-import { authOptions } from "@/auth";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { format } from "date-fns";
-import { type Session, getServerSession } from "next-auth";
+
+import type { Store } from "@/types";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { StoreColumn } from "./components/columns";
 import { StoresClient } from "./components/stores-client";
-import type { Store, User } from "@/types";
+
+import { auth } from "@/auth";
+import type { Session } from "next-auth";
 
 //import { Metadata } from 'next';
 interface pageProps {
@@ -21,7 +23,7 @@ interface pageProps {
 //
 const StoreAdminPage: React.FC<pageProps> = async ({ params }) => {
   //console.log('storeid: ' + params.storeId);
-  const session = (await getServerSession(authOptions)) as Session;
+  const session = (await auth()) as Session;
   const userId = session?.user.id;
 
   if (!session) {

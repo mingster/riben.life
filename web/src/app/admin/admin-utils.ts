@@ -1,13 +1,14 @@
-import { authOptions } from "@/auth";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { mongoClient, sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
+import { auth } from "@/auth";
+import type { Session } from "next-auth";
+
 import { redirect } from "next/navigation";
 
 export const checkAdminAccess = async () => {
   //console.log('storeid: ' + params.storeId);
-  const session = (await getServerSession(authOptions)) as Session;
+  const session = (await auth()) as Session;
   const userId = session?.user.id;
 
   if (!session) {

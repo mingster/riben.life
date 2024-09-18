@@ -1,7 +1,4 @@
-import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
-import { authOptions } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../../api_helper";
 
@@ -25,7 +22,7 @@ export async function PATCH(
       data: { ...body },
     });
 
-    console.log(`update FaqCategory: ${JSON.stringify(obj)}`);
+    //console.log(`update FaqCategory: ${JSON.stringify(obj)}`);
 
     return NextResponse.json(obj);
   } catch (error) {
@@ -53,7 +50,7 @@ export async function DELETE(
       },
     });
 
-    console.log(`delete FaqCategory: ${JSON.stringify(obj)}`);
+    //console.log(`delete FaqCategory: ${JSON.stringify(obj)}`);
 
     return NextResponse.json(obj);
   } catch (error) {

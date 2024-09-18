@@ -1,15 +1,16 @@
-import { authOptions } from "@/auth";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
 import type { SupportTicket } from "@prisma/client";
 import { format } from "date-fns";
-import { type Session, getServerSession } from "next-auth";
+
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { TicketColumn } from "./components/columns";
 import { TicketClient } from "./components/ticket-client";
+import type { Session } from "next-auth";
+import { GetSession, RequiresSignIn } from "@/utils/auth-utils";
 
 interface pageProps {
   params: {
@@ -17,12 +18,10 @@ interface pageProps {
   };
 }
 const StoreSupportPage: React.FC<pageProps> = async ({ params }) => {
-  const session = (await getServerSession(authOptions)) as Session;
-  const userId = session?.user.id;
+  RequiresSignIn();
 
-  if (!session) {
-    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
-  }
+  const session = await GetSession() as Session;
+  const userId = session?.user.id;
 
   const store = await sqlClient.store.findFirst({
     where: {

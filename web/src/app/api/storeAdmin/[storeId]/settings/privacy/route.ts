@@ -1,7 +1,4 @@
-import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
-import { authOptions } from "@/auth";
 import { mongoClient } from "@/lib/prismadb";
-import { type Session, getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../../api_helper";
 

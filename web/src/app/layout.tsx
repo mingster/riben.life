@@ -1,10 +1,9 @@
 import "./css/addon.css";
 import "./css/globals.css";
 
-import type { Session } from "next-auth";
-import { getServerSession } from "next-auth/next";
 import { env } from "node:process";
-import { authOptions } from "@/auth";
+
+import type { Session } from "next-auth";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import I18nProvider from "@/providers/i18n-provider";
@@ -13,13 +12,16 @@ import NextThemeProvider from "@/providers/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CartProvider } from "@/hooks/use-cart";
+import { GetSession } from "@/utils/auth-utils";
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = (await getServerSession(authOptions)) as Session;
+
+  //const session = (await getServerSession(authOptions)) as Session;
+  const session = await GetSession() as Session;
 
   return (
     <SessionWrapper session={session}>
