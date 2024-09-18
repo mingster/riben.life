@@ -21,6 +21,7 @@ import Auth0Provider from "next-auth/providers/auth0"
 */
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Stripe from "stripe";
+import type { Adapter } from "next-auth/adapters";
 
 // https://next-auth.js.org/configuration/options
 
@@ -41,7 +42,7 @@ export const getToken = (test: string) => {
 */
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(sqlClient) as any,
+  adapter: PrismaAdapter(sqlClient) as Adapter,
   secret: process.env.AUTH_SECRET,
   session: {
     //strategy: 'jwt',
