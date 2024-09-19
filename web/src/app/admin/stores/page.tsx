@@ -37,15 +37,22 @@ const StoreAdminPage: React.FC<pageProps> = async ({ params }) => {
       Owner: true,
       Products: true,
       StoreOrders: true,
-      StoreShippingMethods: true,
-      StorePaymentMethods: true,
+      StoreShippingMethods: {
+        include: {
+          ShippingMethod: true,
+        },
+      },
+      StorePaymentMethods: {
+        include: {
+          PaymentMethod: true,
+        },
+      },
     },
   });
 
   //console.log(`users: ${JSON.stringify(users)}`);
-
-  // map user to ui
-  const formattedStores: StoreColumn[] = stores.map((item: Store) => {
+  // map stores to UI format
+  const formattedStores: StoreColumn[] = stores.map((item) => {
     return {
       id: item.id,
       name: item.name || "",

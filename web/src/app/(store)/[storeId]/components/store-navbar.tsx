@@ -57,7 +57,7 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 
   if (
     pathName.includes("billing") ||
-    pathName.includes("checkout") ||
+    //pathName.includes("checkout") ||
     pathName.includes("faq") ||
     pathName.includes("privacy") ||
     pathName.includes("support") ||

@@ -6,7 +6,7 @@ import type { ItemOption } from "@/hooks/use-cart";
 
 import type { Product, ProductOption } from "@/types";
 import { useForm } from "react-hook-form";
-import { Button } from "./ui/button";
+import { Button } from "../../../../components/ui/button";
 import type { ProductOptionSelections } from "@prisma/client";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -34,7 +34,7 @@ import { Minus, Plus } from "lucide-react";
 
 import IconButton from "@/components/ui/icon-button";
 import { useState } from "react";
-import Currency from "./currency";
+import Currency from "../../../../components/currency";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -388,31 +388,36 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
 
   //console.log("form errors", form.formState.errors);
   return (
-    <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button
-            variant={"outline"}
-            className="w-full bg-slate-200 dark:bg-zinc-900"
-          >
-            {t("config_to_buy")}
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant={"outline"}
+          className="w-full bg-slate-200 dark:bg-zinc-900"
+        >
+          {t("config_to_buy")}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="fixed top-10 left-1/4 lg:left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[80vh] rounded-lg">
+        <div className="flex h-full flex-col">
+          <DialogHeader className="border-b p-4">
             <DialogTitle>
+              {" "}
               <div className="flex items-center justify-between">
-                <div className="grow">{product.name}</div>
+                <div className="grow text-xl m-2">{product.name}</div>
                 <div className="text-sm text-muted-foreground">
                   <Currency value={Number(product.price)} />
                 </div>
               </div>
             </DialogTitle>
-            <DialogDescription> </DialogDescription>
+            <DialogDescription>
+              {product.description && product.description}
+            </DialogDescription>
           </DialogHeader>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="flex-1 overflow-auto p-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                {/* render form errors}
               {form.formState.errors && (
                 <>
                   {Object.keys(form.formState.errors).map(
@@ -425,83 +430,129 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
                   )}
                 </>
               )}
+              */}
 
-              {/* loop through ProductOptions */}
-              {productOptions.map((option: ProductOption, index) => {
-                const fieldName = `option${index}`;
-                return (
-                  <div key={option.id} className="pb-2">
-                    {/* render product option and its requirement */}
-                    <div className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <FormLabel className="grow font-bold text-xl">
-                          {option.optionName}
-                        </FormLabel>
-                        {option.isRequired && (
-                          <div className="w-10 text-center text-green-800 text-sm bg-slate-300">
-                            必選
-                          </div>
-                        )}
-                        {option.minSelection !== 0 && (
-                          <div className="text-center text-green-800 text-sm bg-slate-300">
-                            最少選{option.minSelection}項
-                          </div>
-                        )}
-                        {option.maxSelection > 1 && (
-                          <div className="text-center text-green-800 text-sm bg-slate-300">
-                            最多選{option.maxSelection}項
-                          </div>
-                        )}
+                {/* loop through ProductOptions */}
+                {productOptions.map((option: ProductOption, index) => {
+                  const fieldName = `option${index}`;
+                  return (
+                    <div key={option.id} className="pb-5 border-b">
+                      {/* render product option and its requirement */}
+                      <div className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <FormLabel className="grow font-bold text-xl">
+                            {option.optionName}
+                          </FormLabel>
+                          {option.isRequired && (
+                            <div className="w-10 text-center text-green-800 text-sm bg-slate-300">
+                              必選
+                            </div>
+                          )}
+                          {option.minSelection !== 0 && (
+                            <div className="text-center text-green-800 text-sm bg-slate-300">
+                              最少選{option.minSelection}項
+                            </div>
+                          )}
+                          {option.maxSelection > 1 && (
+                            <div className="text-center text-green-800 text-sm bg-slate-300">
+                              最多選{option.maxSelection}項
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* render product option selections */}
-                    {option.isMultiple ? (
-                      // checkbox
-                      <FormField
-                        control={form.control}
-                        name={fieldName}
-                        render={() => (
-                          <FormItem>
-                            {option.ProductOptionSelections.map(
-                              (item: ProductOptionSelections) => (
-                                <FormField
-                                  key={item.id}
-                                  control={form.control}
-                                  name={fieldName}
-                                  render={({ field }) => {
-                                    return (
-                                      <div className="flex items-center justify-between">
-                                        <FormItem
-                                          key={item.id}
-                                          className="flex flex-row items-start space-x-3 space-y-0"
-                                        >
+                      {/* render product option selections */}
+                      {option.isMultiple ? (
+                        // checkbox
+                        <FormField
+                          control={form.control}
+                          name={fieldName}
+                          render={() => (
+                            <FormItem>
+                              {option.ProductOptionSelections.map(
+                                (item: ProductOptionSelections) => (
+                                  <FormField
+                                    key={item.id}
+                                    control={form.control}
+                                    name={fieldName}
+                                    render={({ field }) => {
+                                      return (
+                                        <div className="flex items-center justify-between">
+                                          <FormItem
+                                            key={item.id}
+                                            className="flex flex-row items-start space-x-3 space-y-0"
+                                          >
+                                            <FormControl>
+                                              <Checkbox
+                                                checked={field.value?.includes(
+                                                  item.id,
+                                                )}
+                                                onCheckedChange={(checked) => {
+                                                  return checked
+                                                    ? field.onChange(
+                                                        [
+                                                          ...field.value,
+                                                          item.id,
+                                                        ],
+                                                        handleCheckbox(
+                                                          Number(item.price),
+                                                        ),
+                                                      )
+                                                    : field.onChange(
+                                                        field.value?.filter(
+                                                          (value: string) =>
+                                                            value !== item.id,
+                                                        ),
+                                                        handleCheckbox(
+                                                          -item.price,
+                                                        ),
+                                                      );
+                                                }}
+                                              />
+                                            </FormControl>
+                                            <FormLabel className="text-sm font-normal">
+                                              {item.name}
+                                            </FormLabel>
+                                          </FormItem>
+                                          <div className="text-sm text-muted-foreground">
+                                            <Currency value={item.price} />
+                                          </div>
+                                        </div>
+                                      );
+                                    }}
+                                  />
+                                ),
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      ) : (
+                        // radio
+                        <FormField
+                          control={form.control}
+                          name={fieldName}
+                          render={({ field }) => (
+                            <FormItem className="space-y-3">
+                              <FormControl>
+                                <RadioGroup
+                                  onValueChange={(val) =>
+                                    handleRadio(field.name, val)
+                                  }
+                                  defaultValue={field.value}
+                                  className="flex flex-col space-y-1"
+                                >
+                                  {option.ProductOptionSelections.map(
+                                    (item: ProductOptionSelections) => (
+                                      <div
+                                        key={item.id}
+                                        className="flex items-center justify-between"
+                                      >
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
                                           <FormControl>
-                                            <Checkbox
-                                              checked={field.value?.includes(
-                                                item.id,
-                                              )}
-                                              onCheckedChange={(checked) => {
-                                                return checked
-                                                  ? field.onChange(
-                                                      [...field.value, item.id],
-                                                      handleCheckbox(
-                                                        Number(item.price),
-                                                      ),
-                                                    )
-                                                  : field.onChange(
-                                                      field.value?.filter(
-                                                        (value: string) =>
-                                                          value !== item.id,
-                                                      ),
-                                                      handleCheckbox(
-                                                        -item.price,
-                                                      ),
-                                                    );
-                                              }}
-                                            />
+                                            <RadioGroupItem value={item.id} />
                                           </FormControl>
-                                          <FormLabel className="text-sm font-normal">
+                                          <FormLabel className="font-normal">
                                             {item.name}
                                           </FormLabel>
                                         </FormItem>
@@ -509,125 +560,84 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
                                           <Currency value={item.price} />
                                         </div>
                                       </div>
-                                    );
-                                  }}
-                                />
-                              ),
-                            )}
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    ) : (
-                      // radio
-                      <FormField
-                        control={form.control}
-                        name={fieldName}
-                        render={({ field }) => (
-                          <FormItem className="space-y-3">
-                            <FormControl>
-                              <RadioGroup
-                                onValueChange={(val) =>
-                                  handleRadio(field.name, val)
-                                }
-                                defaultValue={field.value}
-                                className="flex flex-col space-y-1"
-                              >
-                                {option.ProductOptionSelections.map(
-                                  (item: ProductOptionSelections) => (
-                                    <div
-                                      key={item.id}
-                                      className="flex items-center justify-between"
-                                    >
-                                      <FormItem className="flex items-center space-x-3 space-y-0">
-                                        <FormControl>
-                                          <RadioGroupItem value={item.id} />
-                                        </FormControl>
-                                        <FormLabel className="font-normal">
-                                          {item.name}
-                                        </FormLabel>
-                                      </FormItem>
-                                      <div className="text-sm text-muted-foreground">
-                                        <Currency value={item.price} />
-                                      </div>
-                                    </div>
-                                  ),
-                                )}
-                              </RadioGroup>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                  </div>
-                );
-              })}
+                                    ),
+                                  )}
+                                </RadioGroup>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
 
-              {/* render quantity of product to buy */}
-              <div className="w-full pt-2 pb-2">
-                <div className="flex justify-center">
-                  <div className="flex flex-nowrap content-center w-[20px]">
-                    {quantity && quantity > 0 && (
+                {/* render quantity of product to buy */}
+                <div className="w-full pt-2 pb-2">
+                  <div className="flex justify-center">
+                    <div className="flex flex-nowrap content-center w-[20px]">
+                      {quantity && quantity > 0 && (
+                        <IconButton
+                          onClick={handleDecreaseQuality}
+                          icon={
+                            <Minus
+                              size={18}
+                              className="dark:text-primary text-secondary"
+                            />
+                          }
+                        />
+                      )}
+                    </div>
+                    <div className="flex flex-nowrap content-center item">
+                      <input
+                        type="number"
+                        className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        placeholder="0"
+                        value={quantity}
+                        onChange={handleQuantityInputChange}
+                      />
+                    </div>
+                    <div className="flex flex-nowrap content-center w-[20px]">
                       <IconButton
-                        onClick={handleDecreaseQuality}
+                        onClick={handleIncraseQuality}
                         icon={
-                          <Minus
+                          <Plus
                             size={18}
                             className="dark:text-primary text-secondary"
                           />
                         }
                       />
-                    )}
-                  </div>
-                  <div className="flex flex-nowrap content-center item">
-                    <input
-                      type="number"
-                      className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      placeholder="0"
-                      value={quantity}
-                      onChange={handleQuantityInputChange}
-                    />
-                  </div>
-                  <div className="flex flex-nowrap content-center w-[20px]">
-                    <IconButton
-                      onClick={handleIncraseQuality}
-                      icon={
-                        <Plus
-                          size={18}
-                          className="dark:text-primary text-secondary"
-                        />
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  title={
-                    product.ProductAttribute?.isRecurring
-                      ? t("subscribe")
-                      : t("buy")
-                  }
-                  variant={"secondary"}
-                  className="w-full"
-                  disabled={form.formState.isSubmitting}
-                  type="submit"
-                  //onClick={() => handleAddToCart(product)}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="grow font-bold text-xl">{t("buy")}</div>
-                    <div className="text-right text-green-800 text-sm">
-                      <Currency value={total} />
                     </div>
                   </div>
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    </>
+                </div>
+
+                <DialogFooter className="w-full pt-2 pb-2">
+                  <Button
+                    title={
+                      product.ProductAttribute?.isRecurring
+                        ? t("subscribe")
+                        : t("buy")
+                    }
+                    variant={"secondary"}
+                    className="w-full"
+                    disabled={form.formState.isSubmitting}
+                    type="submit"
+                    //onClick={() => handleAddToCart(product)}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="grow font-bold text-xl">{t("buy")}</div>
+                      <div className="text-right text-green-800 text-sm">
+                        <Currency value={total} />
+                      </div>
+                    </div>
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
