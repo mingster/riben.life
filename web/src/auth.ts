@@ -1,31 +1,27 @@
 // this is config for next-auth v5
 //
-import NextAuth from 'next-auth';
-//import type { NextAuthOptions } from "next-auth";
-//import { getSession } from 'next-auth/react';
-//import { NextApiRequest, NextApiResponse } from 'next';
+import NextAuth from "next-auth";
 //import { nanoid } from 'nanoid';
-
-//import CredentialsProvider from 'next-auth/providers/credentials';
 import EmailProvider from "next-auth/providers/email";
+import Nodemailer from "next-auth/providers/nodemailer"
+
 import GoogleProvider from "next-auth/providers/google";
 import LineProdiver from "next-auth/providers/line";
-//import FacebookProvider from 'next-auth/providers/facebook';
-
-import refresh_google_token from "@/lib/auth/refresh_google_token";
-//import { PrismaClient } from '@prisma/client';
-import { sqlClient } from "@/lib/prismadb";
 /*
+import Credentials from "next-auth/providers/credentials"
+import FacebookProvider from 'next-auth/providers/facebook';
 import GithubProvider from "next-auth/providers/github"
 import TwitterProvider from "next-auth/providers/twitter"
 import Auth0Provider from "next-auth/providers/auth0"
 // import AppleProvider from "next-auth/providers/apple"
 */
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import Stripe from "stripe";
-import type { Adapter } from "next-auth/adapters";
 
-// https://next-auth.js.org/configuration/options
+import refresh_google_token from "@/lib/auth/refresh_google_token";
+import { sqlClient } from "@/lib/prismadb";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import type { Adapter } from "next-auth/adapters";
+import type { Provider } from "next-auth/providers";
+import Stripe from "stripe";
 
 //const prisma = new PrismaClient();
 const isDevelopmentMode = process.env.NODE_ENV === "development";
@@ -42,9 +38,20 @@ export const getToken = (test: string) => {
   return process.env.NEXTAUTH_SECRET + test;
 };
 */
+const providers: Provider[] = [GoogleProvider, LineProdiver];
+
+export const providerMap = providers
+  .map((provider) => {
+    if (typeof provider === "function") {
+      const providerData = provider();
+      return { id: providerData.id, name: providerData.name };
+    }
+    return { id: provider.id, name: provider.name };
+  })
+  .filter((provider) => provider.id !== "credentials");
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-//export const authOptions: NextAuthOptions = {
+  //export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(sqlClient) as Adapter,
   secret: process.env.AUTH_SECRET,
   session: {
@@ -122,15 +129,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       maxAge: 24 * 60 * 60, // How long email links are valid for (default 24h)
     }),
   ],
-  /*
   pages: {
-      signIn: '/signin',
-      signOut: '/signout',
-      error: '/auth/error', // Error code passed in query string as ?error=
-      verifyRequest: '/verify-request', // (used for check email message)
-      newUser: '/signup' // New users will be directed here on first sign in (leave the property out if not of interest)
+    signIn: "/signin",
+    //signOut: '/signout',
+    //error: '/auth/error', // Error code passed in query string as ?error=
+    //verifyRequest: '/verify-request', // (used for check email message)
+    //newUser: '/signup' // New users will be directed here on first sign in (leave the property out if not of interest)
   },
-  */
   //Callbacks are asynchronous functions you can use to control what happens when an action is performed.
   callbacks: {
     async signIn({ user, account, email }) {
