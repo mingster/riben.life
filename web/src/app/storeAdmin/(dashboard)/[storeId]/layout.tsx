@@ -33,6 +33,7 @@ export async function generateMetadata(
         orderBy: { sortOrder: "asc" },
       },
       StoreAnnouncement: true,
+      
     },
   })) as Store;
 

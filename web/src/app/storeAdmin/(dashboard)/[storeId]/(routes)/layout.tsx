@@ -40,8 +40,16 @@ export default async function StoreLayout({
           updatedAt: "desc",
         },
       },
-      StoreShippingMethods: true,
-      StorePaymentMethods: true,
+      StoreShippingMethods: {
+        include: {
+          ShippingMethod: true,
+        },
+      },
+      StorePaymentMethods: {
+        include: {
+          PaymentMethod: true,
+        },
+      },
       Categories: true,
       StoreAnnouncement: {
         orderBy: {
