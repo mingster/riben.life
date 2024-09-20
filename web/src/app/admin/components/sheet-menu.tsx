@@ -19,13 +19,21 @@ export function SheetMenu() {
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger className="lg:hidden bg-green-100 dark:bg-green-800" asChild>
-      <Button className=" h-8" variant="outline" size="icon" title="open menu">
-            <MenuIcon size={20} />
-          </Button>
+      <SheetTrigger
+        className="lg:hidden bg-green-100 dark:bg-green-800"
+        asChild
+      >
+        <Button
+          className=" h-8"
+          variant="outline"
+          size="icon"
+          title="open menu"
+        >
+          <MenuIcon size={20} />
+        </Button>
       </SheetTrigger>
       <SheetContent className="flex h-full flex-col px-3 sm:w-72" side="left">
-      <SheetHeader />
+        <SheetHeader />
         <SheetTitle />
         <SheetDescription />
 

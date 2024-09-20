@@ -1,4 +1,3 @@
-
 import { CheckStoreAdminAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";

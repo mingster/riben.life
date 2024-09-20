@@ -46,7 +46,6 @@ const StoreCheckoutPage: React.FC<pageProps> = async ({ params }) => {
     redirect("/unv");
   }
 
-
   // if no payment methods associated with this store, use default payment methods
   if (store.StorePaymentMethods.length === 0) {
     const defaultPaymentMethods = (await sqlClient.paymentMethod.findMany({

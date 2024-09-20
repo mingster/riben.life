@@ -1,4 +1,3 @@
-
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
@@ -8,7 +7,9 @@ import { NextResponse } from "next/server";
 
 export async function GetSession() {
   const session = (await auth()) as Session;
-  if (!session) {return null;}
+  if (!session) {
+    return null;
+  }
   return session;
 }
 

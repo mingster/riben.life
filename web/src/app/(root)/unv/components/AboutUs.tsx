@@ -14,7 +14,7 @@ export function AboutUs({ className, ...props }: { className?: string }) {
           />
           <Caption className="text-sky-500">關於我們</Caption>
         </div>
-        
+
         <BigText>World-class IDE integration.</BigText>
         <Paragraph>
           <p>

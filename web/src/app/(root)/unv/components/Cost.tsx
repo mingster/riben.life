@@ -7,20 +7,16 @@ export function Cost({ className, ...props }: { className?: string }) {
   return (
     <section id="cost" className="relative pb-20 h-screen">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
-
-<div className="flex gap-2">
-
-<IconContainer
-          className="dark:bg-sky-500 dark:highlight-white/20"
-          light={require("@/img/icons/home/editor-tools.png").default.src}
-          dark={require("@/img/icons/home/dark/editor-tools.png").default.src}
-        />        <Caption className="text-sky-500">價格</Caption>
-
-</div>
-
+        <div className="flex gap-2">
+          <IconContainer
+            className="dark:bg-sky-500 dark:highlight-white/20"
+            light={require("@/img/icons/home/editor-tools.png").default.src}
+            dark={require("@/img/icons/home/dark/editor-tools.png").default.src}
+          />{" "}
+          <Caption className="text-sky-500">價格</Caption>
+        </div>
 
         <div className="flex items-start mx-auto max-w-7xl sm:px-6 md:px-8">
-
           <div className="items-start p-5 w-1/3 rounded h-[300px] dark:bg-slate-900">
             <BigText>基本版</BigText>
             <Paragraph>無需任何前置費用，有成交才會產生費用。</Paragraph>

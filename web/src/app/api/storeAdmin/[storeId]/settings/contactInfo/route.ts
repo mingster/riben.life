@@ -1,4 +1,3 @@
-
 import { mongoClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../../api_helper";

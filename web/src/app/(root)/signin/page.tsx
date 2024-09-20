@@ -35,8 +35,8 @@ export default async function SignInPage(props: {
         >
           <div className="flex h-screen p-8 w-full text-center items-center">
             <h2 className="text-3xl font-extrabold tracking-tight text-sky-200">
-            <Logo className="w-auto" />
-            登入來管理您的商店、訂單或帳號資訊。
+              <Logo className="w-auto" />
+              登入來管理您的商店、訂單或帳號資訊。
             </h2>
           </div>
         </div>

@@ -3,7 +3,6 @@ import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
 import { auth } from "@/auth";
 
-
 const getUser = async (): Promise<User | null> => {
   const session = await auth();
   if (!session) {

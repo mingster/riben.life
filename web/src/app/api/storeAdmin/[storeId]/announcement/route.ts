@@ -12,7 +12,7 @@ export async function POST(
 ) {
   try {
     const userId = await IsSignInResponse();
-    if (typeof userId !== 'string') {
+    if (typeof userId !== "string") {
       return new NextResponse("Unauthenticated", { status: 403 });
     }
 
