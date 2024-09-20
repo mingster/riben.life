@@ -60,7 +60,6 @@ export function NavPopover({
               />
             </svg>
           </button>
-
         </SheetTrigger>
         <SheetContent
           className="flex h-full flex-col px-3 w-64 backdrop-opacity-10 opacity-80 backdrop-invert rounded-lg shadow-lg text-slate-900
@@ -79,7 +78,6 @@ export function NavPopover({
               <ThemeToggler />
             </div>
           </div>
-
         </SheetContent>
       </Sheet>
     </div>
@@ -186,6 +184,7 @@ export function NavBar() {
 
   return (
     <>
+      {/* background image */}
       <div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">
         <div className="w-[108rem] flex-none flex justify-end">
           <picture>
@@ -214,6 +213,8 @@ export function NavBar() {
           </picture>
         </div>
       </div>
+
+      {/* navbar */}
       <div
         className={clsx(
           "sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-slate-900/10 dark:border-slate-50/[0.06]",
