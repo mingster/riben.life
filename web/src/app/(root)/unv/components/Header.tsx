@@ -60,7 +60,6 @@ export function NavPopover({
               />
             </svg>
           </button>
-
         </SheetTrigger>
         <SheetContent
           className="flex h-full flex-col px-3 w-64 backdrop-opacity-10 opacity-80 backdrop-invert rounded-lg shadow-lg text-slate-900
@@ -79,7 +78,6 @@ export function NavPopover({
               <ThemeToggler />
             </div>
           </div>
-
         </SheetContent>
       </Sheet>
     </div>
@@ -101,6 +99,17 @@ export function NavItems() {
     <>
       <li>
         <Link
+          data-to-scrollspy-id="features"
+          onClick={(e) => onNavlinkClick(e)}
+          href="#features"
+          className="hover:text-sky-500 dark:hover:text-sky-400"
+        >
+          功能表
+        </Link>
+      </li>
+
+      <li>
+        <Link
           data-to-scrollspy-id="useCases"
           onClick={(e) => onNavlinkClick(e)}
           href="#useCases"
@@ -110,16 +119,6 @@ export function NavItems() {
         </Link>
       </li>
 
-      <li>
-        <Link
-          data-to-scrollspy-id="features"
-          onClick={(e) => onNavlinkClick(e)}
-          href="#features"
-          className="hover:text-sky-500 dark:hover:text-sky-400"
-        >
-          功能表
-        </Link>
-      </li>
       <li>
         <Link
           data-to-scrollspy-id="cost"
@@ -186,6 +185,7 @@ export function NavBar() {
 
   return (
     <>
+      {/* background image */}
       <div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">
         <div className="w-[108rem] flex-none flex justify-end">
           <picture>
@@ -214,6 +214,8 @@ export function NavBar() {
           </picture>
         </div>
       </div>
+
+      {/* navbar */}
       <div
         className={clsx(
           "sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-slate-900/10 dark:border-slate-50/[0.06]",
@@ -222,7 +224,7 @@ export function NavBar() {
             : "bg-white/95 supports-backdrop-blur:bg-white/60 dark:bg-transparent",
         )}
       >
-        <div className="mx-auto max-w-8xl">
+        <div id="top" className="mx-auto max-w-8xl">
           <div
             className={clsx(
               "py-4 border-b border-slate-900/10 lg:px-8 lg:border-0 dark:border-slate-300/10 mx-4 lg:mx-0",
@@ -230,7 +232,7 @@ export function NavBar() {
           >
             <div className="relative flex items-center justify-between">
               <Link
-                href="/"
+                href="#top"
                 className="mr-3 flex-none w-[2.0625rem] overflow-hidden md:w-auto"
                 onContextMenu={(e) => {
                   e.preventDefault();
@@ -238,7 +240,7 @@ export function NavBar() {
                 }}
               >
                 <span className="sr-only">home page</span>
-                <Logo className="w-auto h-5" />
+                <Logo className="w-auto" />
               </Link>
               <div className="relative items-center hidden ml-auto lg:flex">
                 <nav className="text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">

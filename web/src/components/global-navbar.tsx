@@ -7,7 +7,7 @@ import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
 import DropdownUser from "@/components/dropdown-user";
 
-import { PanelsTopLeft } from "lucide-react";
+import { HomeIcon } from "lucide-react";
 //import { cn } from '@/lib/utils';
 import Image from "next/image";
 import Link from "next/link";
@@ -53,7 +53,7 @@ export function Navbar({ title }: NavbarProps) {
               </>
             ) : (
               <>
-                <PanelsTopLeft className="mr-1 h-6 w-6" />
+                <HomeIcon className="mr-1 h-6 w-6" />
                 <h1 className="font-bold">{title}</h1>
               </>
             )}

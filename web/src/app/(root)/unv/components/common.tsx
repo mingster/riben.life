@@ -37,20 +37,20 @@ export function Caption({ className = "", ...props }) {
 export function BigText({ className = "", ...props }) {
   return (
     <p
-      className={`mt-4 text-3xl sm:text-4xl text-slate-900 font-extrabold tracking-tight dark:text-slate-50 ${className}`}
+      className={`mt-4 text-4xl font-extrabold tracking-tight sm:text-3xl text-slate-900 dark:text-slate-50 ${className}`}
       {...props}
     />
   );
 }
 
 export function Paragraph({ as: Component = "p", className = "", ...props }) {
-  return <div className={`mt-4 max-w-3xl space-y-6 ${className}`} {...props} />;
+  return <div className={`mt-4 space-y-6 max-w-3xl ${className}`} {...props} />;
 }
 
 export function InlineCode({ className = "", ...props }) {
   return (
     <code
-      className={`font-mono text-slate-900 font-medium dark:text-slate-200 ${className}`}
+      className={`font-mono font-medium text-slate-900 dark:text-slate-200 ${className}`}
       {...props}
     />
   );
