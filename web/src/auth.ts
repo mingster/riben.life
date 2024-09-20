@@ -2,14 +2,16 @@
 //
 import NextAuth from "next-auth";
 //import { nanoid } from 'nanoid';
-import EmailProvider from "next-auth/providers/email";
-import Nodemailer from "next-auth/providers/nodemailer"
 
 import GoogleProvider from "next-auth/providers/google";
 import LineProdiver from "next-auth/providers/line";
+import FacebookProvider from "next-auth/providers/facebook";
+import Nodemailer from "next-auth/providers/nodemailer";
+
 /*
+import EmailProvider from "next-auth/providers/email";
+
 import Credentials from "next-auth/providers/credentials"
-import FacebookProvider from 'next-auth/providers/facebook';
 import GithubProvider from "next-auth/providers/github"
 import TwitterProvider from "next-auth/providers/twitter"
 import Auth0Provider from "next-auth/providers/auth0"
@@ -38,7 +40,7 @@ export const getToken = (test: string) => {
   return process.env.NEXTAUTH_SECRET + test;
 };
 */
-const providers: Provider[] = [GoogleProvider, LineProdiver];
+const providers: Provider[] = [GoogleProvider, LineProdiver, FacebookProvider];
 
 export const providerMap = providers
   .map((provider) => {
@@ -123,10 +125,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: `${process.env.AUTH_LINE_ID}`,
       clientSecret: `${process.env.AUTH_LINE_SECRET}`,
     }),
-    EmailProvider({
+    // https://developers.facebook.com/apps/557644063270057/settings/
+    FacebookProvider({
+      clientId: `${process.env.AUTH_FACEBOOK_ID}`,
+      clientSecret: `${process.env.AUTH_FACEBOOK_SECRET}`,
+    }),
+    Nodemailer({
       server: `smtp://${process.env.EMAIL_SERVER_USER}:${process.env.EMAIL_SERVER_PASSWORD}@${process.env.EMAIL_SERVER_HOST}:${process.env.EMAIL_SERVER_PORT}`,
       from: process.env.EMAIL_FROM,
       maxAge: 24 * 60 * 60, // How long email links are valid for (default 24h)
+      normalizeIdentifier(identifier: string): string {
+        // Get the first two elements only,
+        // separated by `@` from user input.
+        let [local, domain] = identifier.toLowerCase().trim().split("@")
+        // The part before "@" can contain a ","
+        // but we remove it on the domain part
+        domain = domain.split(",")[0]
+        return `${local}@${domain}`
+
+        // You can also throw an error, which will redirect the user
+        // to the sign-in page with error=EmailSignin in the URL
+        // if (identifier.split("@").length > 2) {
+        //   throw new Error("Only one email allowed")
+        // }
+      },
+      async generateVerificationToken() {
+        return crypto.randomUUID()
+      },
     }),
   ],
   pages: {
