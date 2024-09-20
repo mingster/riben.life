@@ -223,7 +223,7 @@ export function NavBar() {
             : "bg-white/95 supports-backdrop-blur:bg-white/60 dark:bg-transparent",
         )}
       >
-        <div className="mx-auto max-w-8xl">
+        <div id="top" className="mx-auto max-w-8xl">
           <div
             className={clsx(
               "py-4 border-b border-slate-900/10 lg:px-8 lg:border-0 dark:border-slate-300/10 mx-4 lg:mx-0",
@@ -231,7 +231,7 @@ export function NavBar() {
           >
             <div className="relative flex items-center justify-between">
               <Link
-                href="/"
+                href="#top"
                 className="mr-3 flex-none w-[2.0625rem] overflow-hidden md:w-auto"
                 onContextMenu={(e) => {
                   e.preventDefault();
@@ -239,7 +239,7 @@ export function NavBar() {
                 }}
               >
                 <span className="sr-only">home page</span>
-                <Logo className="w-auto h-5" />
+                <Logo className="w-auto" />
               </Link>
               <div className="relative items-center hidden ml-auto lg:flex">
                 <nav className="text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">

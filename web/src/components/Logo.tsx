@@ -1,7 +1,40 @@
-import clsx from 'clsx'
+import clsx from "clsx";
 
 export function Logo({ className, ...props }: { className?: string }) {
   return (
+    <div className="flex items-center gap-1">
+      <svg
+        aria-hidden="true"
+        className={clsx("flex text-slate-900 dark:text-white", className)}
+        width={32}
+        height={31}
+        {...props}
+      >
+        <image
+          xlinkHref="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAfCAMAAACxiD++AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAk1BMVEUAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgceJJknqzN1dN4qbSrw8bb3djj4ds1hZzV2dbf39qcu8HD0M/i4duLsru3ystNkqT///9fsR4KAAAAH3RSTlMAKmSXweL4SZrmL5LyU8Rh3ljgOMsBnVeqOnSmz+39eqYUWwAAAAFiS0dEMK7cLeQAAAAHdElNRQfoCRQVNjEmh2EiAAABFUlEQVQoz4VTV7KDMAxUGum9kO4CDiK8hPvf7uFg3EjG+8GAd5GllQSg0en2+oMoGvR73Q60MRyNicZ4NPToyXRGHMymE5ufL0gLi7nhlyvyBatlw6835Cs265rf7sgP7LaS3x/sMyofjKuvw74SxIphLEm5eGRSgI0+rgRH9c55mj+zTwwjOAKcIhMfmfxdWILoBGfiC9ASkDNc1FuBiH8CUbiCC1yt9PNEJusIrnAzN7we+cu/4gZ3Y4EQrHh7grsVgSfIqEj8CE0OpChkFZT4OegqBK3LpKVbhfIhS6nywbG68qHlpCOonNS90AKG+dvqRdNNiWdZ97XUJ3FrHlx85iE4UeGZDE91eC/CmxXezd/b/Q8tvV+YZX0lgAAAAABJRU5ErkJggg=="
+          width={32}
+          height={31}
+        />
+      </svg>
+      <svg
+        aria-hidden="true"
+        className={clsx("text-slate-900 dark:text-white hidden sm:block", className)}
+        width={98}
+        height={35}
+        {...props}
+      >
+        <image
+          xlinkHref="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGIAAAAjCAMAAABYfy/1AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAaVBMVEX///8AAABJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEitv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7tJSEitv7v///+JUtvMAAAAIHRSTlMAACAwEEDvn69wUN+Av2CPz1AwQCCPcBCAv89g36+f76DMRi4AAAABYktHRACIBR1IAAAAB3RJTUUH6AkUFSwePXumoAAAA0NJREFUSMe1lYm2qyoMQB0Qh2JtRQWcLu//f/IlQRxae9qeu27WKhhLsskABsEqUYwjS4IvxRkkzOvxSw8xtylMmc2/I6RkllpOOwyKi7XZi6XCWgtTacV3iNKWMIIx2RXwQMwfovglwkcBMVxfpzpKgt8jgiSifVpbfWDxO4STxNr37fIPECytgjgtIZGFYA7B8qxMr+uKIi3LnPm1UeW1A4KJAlItUqi1ID9BDAuraOHmljLoegIsOHaFvbgmZDfS+NWtrZwWPyIEtmNmnaCf1D1WzgwEo/AI8F6JbPGDhExUF0oArc0ELClPEfmCKIhwE+JGPtHMRbYiMlQTvpjyxJFKWktaRifoGbHVAnMTUCycobLU1yO4yzQYQRjcZgkKeYW1VKJiX9RTRGYvZCZQh5fsiFjOZoQbie0qLornvjlF8NXMRREcEWKnw7+3kiRl3yCgns4si4MTxBaFeOjzbxDi2exFLda18VdRrOcxis4QFnOCt+KF6ubOwBW1B0SFrX6OyJfGAC/RGWI5FxgE1puLpIA254+InN6dIxgcpDRJKo5enhE31w7c5eK6NAePD4iYEJdXiCC+LB0FwbDM374ZOY0rxnLohKu/h6IUVt8qUqvliyhwZim2S5CUBY6cPnUs8188hkf7ku5umhMJUe41TbKhqWnDc+m2x2b/PvhZlG5N3zZhPYShlmTR6s4YM/YwDJtPeDSb1rcKJzm0ffcWISV5lnpF9GjtlTWCdo+Av6dwNvM8S/U2Cu9sQwyQD+2iuG8ux+aICGkfaPUWcdfazFqrFaH+yFBOpKh+dTj8gbThzxiomxqUe/0RopFy7qTcopgmUGb3dkUoDGKLQulehwPg+hGG+W2i1Ih78oh2Rp5xsY1r5mm3u0Sp4fMowGnfjfcV0eEo52OilnAOtfgCcZ+0VP1WCweixE++3HUNcUBQOKzeoUB6NrpT7xB1rx46Csepe9yyBOlx8PoUDjPq3fQOMdbhE0LNrQHLJ9lTjfQnx3x6LrbTpmWjw+Y//SNCmvCvEOiha5eDN7YnCGpiTQvU5wit29HdHHe4GRq8DU0PndXVVP2d1EsTN3goTH//AOEuWOUr2Ryv0Q8E/fwPT8ZhfsZctJQAAAAASUVORK5CYII="
+          width={98}
+          height={35}
+        />
+      </svg>
+    </div>
+  );
+}
+
+/*
+// https://react-svgr.com/playground/?exportType=named&jsxRuntime=automatic&typescript=true
     <svg
       viewBox="0 0 248 31"
       className={clsx('text-slate-900 dark:text-white', className)}
@@ -14,6 +47,7 @@ export function Logo({ className, ...props }: { className?: string }) {
         d="M25.517 0C18.712 0 14.46 3.382 12.758 10.146c2.552-3.382 5.529-4.65 8.931-3.805 1.941.482 3.329 1.882 4.864 3.432 2.502 2.524 5.398 5.445 11.722 5.445 6.804 0 11.057-3.382 12.758-10.145-2.551 3.382-5.528 4.65-8.93 3.804-1.942-.482-3.33-1.882-4.865-3.431C34.736 2.92 31.841 0 25.517 0zM12.758 15.218C5.954 15.218 1.701 18.6 0 25.364c2.552-3.382 5.529-4.65 8.93-3.805 1.942.482 3.33 1.882 4.865 3.432 2.502 2.524 5.397 5.445 11.722 5.445 6.804 0 11.057-3.381 12.758-10.145-2.552 3.382-5.529 4.65-8.931 3.805-1.941-.483-3.329-1.883-4.864-3.432-2.502-2.524-5.398-5.446-11.722-5.446z"
         fill="#38bdf8"
       />
+
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -21,5 +55,5 @@ export function Logo({ className, ...props }: { className?: string }) {
         fill="currentColor"
       />
     </svg>
-  )
-}
+
+*/
