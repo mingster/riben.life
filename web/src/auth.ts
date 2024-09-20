@@ -141,6 +141,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // The part before "@" can contain a ","
         // but we remove it on the domain part
         domain = domain.split(",")[0];
+        local = local.trim(); //just to avoid typescript lint error
         return `${local}@${domain}`;
 
         // You can also throw an error, which will redirect the user
