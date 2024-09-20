@@ -18,13 +18,16 @@ export function Logo({ className, ...props }: { className?: string }) {
       </svg>
       <svg
         aria-hidden="true"
-        className={clsx("text-slate-900 dark:text-white hidden sm:block", className)}
+        className={clsx(
+          "text-slate-900 dark:text-white hidden sm:block",
+          className,
+        )}
         width={98}
         height={35}
         {...props}
       >
         <image
-          xlinkHref="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGIAAAAjCAMAAABYfy/1AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAaVBMVEX///8AAABJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEitv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7tJSEitv7v///+JUtvMAAAAIHRSTlMAACAwEEDvn69wUN+Av2CPz1AwQCCPcBCAv89g36+f76DMRi4AAAABYktHRACIBR1IAAAAB3RJTUUH6AkUFSwePXumoAAAA0NJREFUSMe1lYm2qyoMQB0Qh2JtRQWcLu//f/IlQRxae9qeu27WKhhLsskABsEqUYwjS4IvxRkkzOvxSw8xtylMmc2/I6RkllpOOwyKi7XZi6XCWgtTacV3iNKWMIIx2RXwQMwfovglwkcBMVxfpzpKgt8jgiSifVpbfWDxO4STxNr37fIPECytgjgtIZGFYA7B8qxMr+uKIi3LnPm1UeW1A4KJAlItUqi1ID9BDAuraOHmljLoegIsOHaFvbgmZDfS+NWtrZwWPyIEtmNmnaCf1D1WzgwEo/AI8F6JbPGDhExUF0oArc0ELClPEfmCKIhwE+JGPtHMRbYiMlQTvpjyxJFKWktaRifoGbHVAnMTUCycobLU1yO4yzQYQRjcZgkKeYW1VKJiX9RTRGYvZCZQh5fsiFjOZoQbie0qLornvjlF8NXMRREcEWKnw7+3kiRl3yCgns4si4MTxBaFeOjzbxDi2exFLda18VdRrOcxis4QFnOCt+KF6ubOwBW1B0SFrX6OyJfGAC/RGWI5FxgE1puLpIA254+InN6dIxgcpDRJKo5enhE31w7c5eK6NAePD4iYEJdXiCC+LB0FwbDM374ZOY0rxnLohKu/h6IUVt8qUqvliyhwZim2S5CUBY6cPnUs8188hkf7ku5umhMJUe41TbKhqWnDc+m2x2b/PvhZlG5N3zZhPYShlmTR6s4YM/YwDJtPeDSb1rcKJzm0ffcWISV5lnpF9GjtlTWCdo+Av6dwNvM8S/U2Cu9sQwyQD+2iuG8ux+aICGkfaPUWcdfazFqrFaH+yFBOpKh+dTj8gbThzxiomxqUe/0RopFy7qTcopgmUGb3dkUoDGKLQulehwPg+hGG+W2i1Ih78oh2Rp5xsY1r5mm3u0Sp4fMowGnfjfcV0eEo52OilnAOtfgCcZ+0VP1WCweixE++3HUNcUBQOKzeoUB6NrpT7xB1rx46Csepe9yyBOlx8PoUDjPq3fQOMdbhE0LNrQHLJ9lTjfQnx3x6LrbTpmWjw+Y//SNCmvCvEOiha5eDN7YnCGpiTQvU5wit29HdHHe4GRq8DU0PndXVVP2d1EsTN3goTH//AOEuWOUr2Ryv0Q8E/fwPT8ZhfsZctJQAAAAASUVORK5CYII="
+          xlinkHref="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGIAAAAjCAMAAABYfy/1AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAaVBMVEX///8AAABJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEhJSEitv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7utv7tJSEitv7v///+JUtvMAAAAIHRSTlMAACAwEEDvn69wUN+Av2CPzyAwEHCAwPBAoGDgUJDQsBD9rD0AAAABYktHRACIBR1IAAAAB3RJTUUH6AkUFgYvAYjU6wAAAwlJREFUSMftldGaoyAMRkURUbFWLRRqtfT9X3KTgM60tbtr59u7zYUaJTnmT9AkWS3N8MjzZKeFgJwvfvY2QyZ8ASfpy32EgsIKL+gNk6r2Xr5Zqrz3cGq82odofANHCKa4Ci6I+ZsqPkQsVUANh/dSp3nyOSLJU3pP79u/iPgMESz3/s/j8g8QvGiTrGhAyErxgOClbIrDuqIqmqbky9q0XbwHBFcVSK0K6LWiPEkGC9s0cktPCoaZgAiBU+HrMIT8SJ44hLVt8LJnhMJxlD4Y5inCZRvCwLCKBQHZWyVjHiRI1dYkAK2VCpY0m4gyIioiHJU6Uk4MC5WtCIluLmKoyAOpobXkSdpBr4ivXqA2CdUiODqxvwtCBKUhCMoQXuZolBXWUouq703dREhfU5hCH27yR0Tcmym+SOZXC1W8zs0mQqxhoYrkEaG++fD02JAVfA8C+hnCZJZsIL6qUE9zvgehXsPe9GJdm+2qYt2PabqF8KgJfhVr6lvYAwf0nhAtjvo2ooyDAVnSLUTcF1gE9luovIIxF8+Iku5tIzhspCLPW4FZXhHHMA4iaHGIwyGyB0RGiPodIsnqOFFQDJfL11dS0qzlvIRJOCzfobSA1ceW3Db+ERWeeYHjkuRNhUdBvzoulz8ex61dF9++NP/t58bQuvXQ9+zJhm65WG/tRZy0OWummTUY7fSdzMVsl0HrcNWNV2aveppvuxEXO0OCe0B0IxRycnZ54+G8Ilg3d1o7N+yvwtrZ2gVhNHPGmWmMeulZG6O1tlFHZvV+oToznafbEBCnu2b3yRl91lEcHRBXoBt7CSKa3e2291MUys6TZrMFocaAMPBkFQpq/awKNoyjnkMVAwo/TsZMMwnVu85a56ztl7nrAL8bMcxXw/qlF4BwzpzWdvdBqCs5c38B4W5uL+JyYpj7tiAmdx4f9sWXUCMzloZvdy8Iwdg1IPrB3DUW0U+PiGG0P0NczRl3G8gw6kGfYX8Bwt5Xu7DTDbCzMfPlAwS+2kDzwnob2vD6HVnHqnts9y9jglkJXzBzEAAAAABJRU5ErkJggg=="
           width={98}
           height={35}
         />
