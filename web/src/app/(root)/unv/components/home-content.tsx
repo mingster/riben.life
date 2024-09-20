@@ -25,7 +25,7 @@ import { Features } from "./Features";
 import { Footer } from "./Footer";
 import { UseCases } from "./UseCases";
 
-import Image from 'next/image';
+import Image from "next/image";
 
 type User = {
   id: number;
@@ -181,11 +181,12 @@ export const UniversalHomeContent = () => {
                 >
                   a few thousand words
                 </a>{" "}
-                on why traditional &ldquo;semantic class names&rdquo; are the reason CSS is
-                hard to maintain, but the truth is you&#34;re never going to believe
-                me until you actually try it. If you can suppress the urge to
-                retch long enough to give it a chance, I really think you&#34;ll
-                wonder how you ever worked with CSS any other way.
+                on why traditional &ldquo;semantic class names&rdquo; are the
+                reason CSS is hard to maintain, but the truth is you&#34;re
+                never going to believe me until you actually try it. If you can
+                suppress the urge to retch long enough to give it a chance, I
+                really think you&#34;ll wonder how you ever worked with CSS any
+                other way.
               </p>
             </blockquote>
             <figcaption className="flex items-center justify-center mt-6 space-x-4 text-left">

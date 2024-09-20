@@ -1,8 +1,13 @@
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
 
-export function IconContainer({ as: Component = "div", className = '', light = '', dark = '', ...props }
-) {
+export function IconContainer({
+  as: Component = "div",
+  className = "",
+  light = "",
+  dark = "",
+  ...props
+}) {
   return (
     <div
       className={`w-16 h-16 p-[0.1875rem] rounded-full ring-1 ring-slate-900/10 shadow overflow-hidden ${className}`}
@@ -25,7 +30,7 @@ export function IconContainer({ as: Component = "div", className = '', light = '
         />
       )}
     </div>
-  )
+  );
 }
 
 export { Widont } from "@/components/Widont";

@@ -37,7 +37,6 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
     <header
       className={`sticky ${scrollDirection === "down" ? "-top-24" : "top-0"} z-10 w-full shadow backdrop-blur dark:shadow-secondary`}
     >
-
       {/* background image */}
       <div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">
         <div className="w-[108rem] flex-none flex justify-end">
@@ -75,7 +74,10 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
 
         <div className="flex items-center space-x-4 lg:pl-80 pl-10">
           <h1 className="grow text-center text-xl font-bold leading-tight tracking-tighter lg:leading-[1.1] text-nowrap">
-            <Link className="flex" title="go to store" href={`/${store.id}`}><HomeIcon className="mr-1 h-6 w-6" />{store.name}</Link>
+            <Link className="flex" title="go to store" href={`/${store.id}`}>
+              <HomeIcon className="mr-1 h-6 w-6" />
+              {store.name}
+            </Link>
           </h1>
         </div>
 

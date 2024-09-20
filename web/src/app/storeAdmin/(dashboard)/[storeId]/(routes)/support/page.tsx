@@ -20,7 +20,7 @@ interface pageProps {
 const StoreSupportPage: React.FC<pageProps> = async ({ params }) => {
   RequiresSignIn();
 
-  const session = await GetSession() as Session;
+  const session = (await GetSession()) as Session;
   const userId = session?.user.id;
 
   const store = await sqlClient.store.findFirst({

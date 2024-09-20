@@ -42,7 +42,6 @@ export async function DELETE(
 
   CheckStoreAdminAccess(params.storeId);
 
-
   if (!params.messageId) {
     return new NextResponse("message id is required", { status: 401 });
   }

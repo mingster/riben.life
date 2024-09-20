@@ -1,4 +1,4 @@
- // v5 config
+// v5 config
 import { handlers } from "@/auth";
 export const { GET, POST } = handlers;
 

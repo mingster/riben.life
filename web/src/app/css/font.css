@@ -1,31 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
-
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins&display=swap");
 
 @font-face {
-  font-family: 'Inter var';
+  font-family: "Inter var";
   font-weight: 100 900;
   font-display: block;
   font-style: normal;
-  font-named-instance: 'Regular';
-  src: url('../../fonts/InterVariable.woff2') format('woff2');
+  font-named-instance: "Regular";
+  src: url("../../fonts/InterVariable.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: 'Inter var';
+  font-family: "Inter var";
   font-weight: 100 900;
   font-display: block;
   font-style: italic;
-  font-named-instance: 'Italic';
-  src: url('../../fonts/InterVariable-Italic.woff2') format('woff2');
+  font-named-instance: "Italic";
+  src: url("../../fonts/InterVariable-Italic.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: 'Fira Code VF';
+  font-family: "Fira Code VF";
   font-weight: 300 700;
   font-style: normal;
-  src: url('../../fonts/FiraCode-VF.woff2') format('woff2-variations'),
-    url('../../fonts/FiraCode-VF.woff') format('woff-variations');
+  src: url("../../fonts/FiraCode-VF.woff2") format("woff2-variations"),
+    url("../../fonts/FiraCode-VF.woff") format("woff-variations");
 }
 
 .font-mono {
@@ -33,42 +32,47 @@
 }
 
 @font-face {
-  font-family: 'Source Sans Pro';
+  font-family: "Source Sans Pro";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('../../fonts/SourceSansPro-Regular.otf') format('opentype');
+  src: url("../../fonts/SourceSansPro-Regular.otf") format("opentype");
 }
 
 @font-face {
-  font-family: 'Ubuntu Mono';
+  font-family: "Ubuntu Mono";
   font-weight: 700;
   font-style: normal;
-  src: url('../../fonts/Ubuntu-Mono-bold.woff2') format('woff2');
+  src: url("../../fonts/Ubuntu-Mono-bold.woff2") format("woff2");
 }
 
 /* Japanese Kana U+3040-U+30FF */
 @font-face {
   font-family: "custom_h";
-  src: local("Meiryo"), local("Klee"), local("Hiragino Kaku Gothic Pro"), local("Mojikyo");
+  src: local("Meiryo"), local("Klee"), local("Hiragino Kaku Gothic Pro"),
+    local("Mojikyo");
   unicode-range: U+41-5A, U+61-7A, U+C0-FF;
 }
 @font-face {
   font-family: "custom_t";
-  src: local("Meiryo"), local("Klee"), local("Hiragino Mincho Pro"), local("MS PMincho"), local("Gothic Pro"), local("Helvetica"), local("Tahoma");
+  src: local("Meiryo"), local("Klee"), local("Hiragino Mincho Pro"),
+    local("MS PMincho"), local("Gothic Pro"), local("Helvetica"),
+    local("Tahoma");
   unicode-range: U+41-5A, U+61-7A, U+C0-FF;
 }
 
 /* Latin, Latin1, Latin Ext-A, Latin Ext-B */
 @font-face {
   font-family: "custom_h";
-  src: 'Poppins', local("Helvetica Neue"), local("Century Schoolbook"), local("Lucida Grande"), local("Arial"), local("Times");
+  src: "Poppins", local("Helvetica Neue"), local("Century Schoolbook"),
+    local("Lucida Grande"), local("Arial"), local("Times");
   /*unicode-range: U+00-024F;*/
   /* no unicode-range; default to all characters */
 }
 @font-face {
   font-family: "custom_t";
-  src: 'Poppins', local("Lucida Grande"), local("Gothic Pro"), local("Helvetica"), local("Verdana"), local("Lucida Sans Unicode");
+  src: "Poppins", local("Lucida Grande"), local("Gothic Pro"),
+    local("Helvetica"), local("Verdana"), local("Lucida Sans Unicode");
   /*unicode-range: U+00-024F;*/
   /* no unicode-range; default to all characters */
 }
@@ -76,11 +80,15 @@
 /* CJK Unified Ideographs U+4E00-U+9FFF */
 @font-face {
   font-family: "custom_h";
-  src: -apple-system, 'Noto Sans TC', local("Source Han Sans"), local("Microsoft JhengHei"), local("PingFang TC"), local("PingFang SC"), local("SimHei"), local("sans-serif");
+  src: -apple-system, "Noto Sans TC", local("Source Han Sans"),
+    local("Microsoft JhengHei"), local("PingFang TC"), local("PingFang SC"),
+    local("SimHei"), local("sans-serif");
   unicode-range: U+4E00-9FFF;
 }
 @font-face {
   font-family: "custom_t";
-  src: -apple-system, 'Noto Sans TC', local("Microsoft YaHei"), local("Gothic Pro"), local("Microsoft JhengHei"), local("StSongti TC"), local("StSongti SC"), local("Meiryo"), local("Helvetica"), local("serif");
+  src: -apple-system, "Noto Sans TC", local("Microsoft YaHei"),
+    local("Gothic Pro"), local("Microsoft JhengHei"), local("StSongti TC"),
+    local("StSongti SC"), local("Meiryo"), local("Helvetica"), local("serif");
   unicode-range: U+4E00-9FFF;
 }

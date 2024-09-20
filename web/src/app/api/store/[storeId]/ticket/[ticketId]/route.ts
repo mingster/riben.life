@@ -11,7 +11,7 @@ export async function PATCH(
 ) {
   try {
     const userId = await IsSignInResponse();
-    if (typeof userId !== 'string') {
+    if (typeof userId !== "string") {
       return new NextResponse("Unauthenticated", { status: 400 });
     }
 
@@ -86,7 +86,7 @@ export async function DELETE(
 ) {
   try {
     const userId = await IsSignInResponse();
-    if (typeof userId !== 'string') {
+    if (typeof userId !== "string") {
       return new NextResponse("Unauthenticated", { status: 400 });
     }
 

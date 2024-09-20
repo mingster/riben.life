@@ -25,7 +25,7 @@
 }
 
 .mono-active > div:not(.not-mono) > span {
-  color: theme('colors.slate.600');
+  color: theme("colors.slate.600");
 }
 
 .mono > div > span {
@@ -38,36 +38,35 @@
   transition: none !important;
 }
 
-
 /* Hide scrollbar for Chrome, Safari and Opera */
 .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 @layer utilities {
-    /* Chrome, Safari and Opera */
-    .no-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
+  /* Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 
-    .no-scrollbar {
-        -ms-overflow-style: none;
-        /* IE and Edge */
-        scrollbar-width: none;
-        /* Firefox */
-    }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
 
-    .chat-height {
-        @apply h-[calc(100vh_-_8.125rem)] lg:h-[calc(100vh_-_5.625rem)];
-    }
+  .chat-height {
+    @apply h-[calc(100vh_-_8.125rem)] lg:h-[calc(100vh_-_5.625rem)];
+  }
 
-    .inbox-height {
-        @apply h-[calc(100vh_-_8.125rem)] lg:h-[calc(100vh_-_5.625rem)];
-    }
+  .inbox-height {
+    @apply h-[calc(100vh_-_8.125rem)] lg:h-[calc(100vh_-_5.625rem)];
+  }
 }

@@ -20,12 +20,17 @@ export function StoreAdminSheetMenu() {
     <>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger className="lg:hidden" asChild>
-          <Button className="h-8" variant="outline" size="icon" title="open menu">
+          <Button
+            className="h-8"
+            variant="outline"
+            size="icon"
+            title="open menu"
+          >
             <MenuIcon size={20} />
           </Button>
         </SheetTrigger>
         <SheetContent className="flex h-full flex-col px-3 sm:w-72" side="left">
-          <SheetHeader/>
+          <SheetHeader />
           <SheetTitle />
           <SheetDescription />
 

@@ -137,11 +137,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       normalizeIdentifier(identifier: string): string {
         // Get the first two elements only,
         // separated by `@` from user input.
-        let [local, domain] = identifier.toLowerCase().trim().split("@")
+        let [local, domain] = identifier.toLowerCase().trim().split("@");
         // The part before "@" can contain a ","
         // but we remove it on the domain part
-        domain = domain.split(",")[0]
-        return `${local}@${domain}`
+        domain = domain.split(",")[0];
+        local = local.trim(); //just to avoid typescript lint error
+        return `${local}@${domain}`;
 
         // You can also throw an error, which will redirect the user
         // to the sign-in page with error=EmailSignin in the URL
@@ -150,7 +151,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // }
       },
       async generateVerificationToken() {
-        return crypto.randomUUID()
+        return crypto.randomUUID();
       },
     }),
   ],
