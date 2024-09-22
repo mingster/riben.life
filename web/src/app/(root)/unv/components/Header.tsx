@@ -99,23 +99,23 @@ export function NavItems() {
     <>
       <li>
         <Link
-          data-to-scrollspy-id="features"
-          onClick={(e) => onNavlinkClick(e)}
-          href="#features"
-          className="hover:text-sky-500 dark:hover:text-sky-400"
-        >
-          功能表
-        </Link>
-      </li>
-
-      <li>
-        <Link
           data-to-scrollspy-id="useCases"
           onClick={(e) => onNavlinkClick(e)}
           href="#useCases"
           className="hover:text-sky-500 dark:hover:text-sky-400"
         >
           使用情境
+        </Link>
+      </li>
+
+      <li>
+        <Link
+          data-to-scrollspy-id="features"
+          onClick={(e) => onNavlinkClick(e)}
+          href="#features"
+          className="hover:text-sky-500 dark:hover:text-sky-400"
+        >
+          功能表
         </Link>
       </li>
 
