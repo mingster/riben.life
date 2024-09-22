@@ -269,7 +269,6 @@ export function Header() {
         <div
           className={clsx(
             "absolute inset-0 bottom-10 bg-bottom bg-no-repeat bg-slate-50 dark:bg-[#0B1120]",
-            styles.beams,
           )}
         >
           <div

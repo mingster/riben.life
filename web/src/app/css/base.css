@@ -31,6 +31,25 @@ abbr[title] {
   color-scheme: dark;
 }
 
+
+.beams {
+  background-image: url("../../img/beams/hero@75.jpg");
+  background-size: 150rem;
+}
+
+[data-theme="dark"] .beams {
+  background-image: url("../../img/beams/hero-dark@90.jpg");
+  background-size: 86.125rem;
+}
+
+
+.hash-span {
+  margin-top: -100px;
+  padding-bottom: 100px;
+  display: block;
+}
+
+
 @layer base {
   a {
     @apply cursor-pointer;
