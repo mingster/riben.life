@@ -17,13 +17,14 @@ import { redirect } from "next/navigation";
 type Props = {
   params: { storeId: string };
 };
+
 export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
   if (!params.storeId) {
     return {
-      title: "pstv",
+      title: "riben.life",
     };
   }
 
@@ -41,10 +42,10 @@ export async function generateMetadata(
     },
   })) as Store;
 
-  if (!store) return { title: "pstv" };
+  if (!store) return { title: "riben.life" };
 
   return {
-    title: store.name,
+    title: `${store.name} | 利便生活 點餐系統`
   };
 }
 
