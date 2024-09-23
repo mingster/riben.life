@@ -1,4 +1,3 @@
-import "./css/addon.css";
 import "./css/globals.css";
 
 import { env } from "node:process";
@@ -13,22 +12,91 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CartProvider } from "@/hooks/use-cart";
 import { GetSession } from "@/utils/auth-utils";
-import Head from "next/head";
-import type { Metadata, ResolvingMetadata } from "next";
+import type { Metadata } from "next";
 
+
+const title = "riben.life 利便生活";
+export const metadata: Metadata = {
+  title: {
+    template: `%s | ${title}`,
+    default: title, // a default is required when creating a template
+  },
+  keywords: ["掃碼點餐", "線上點餐", "QR code 點餐"],
+  authors: [{ name: "利便生活", url: "https://riben.life" }],
+  creator: "riben.life",
+  publisher: "riben.life",
+
+  openGraph: {
+    title: title,
+    description: '導入線上點餐系統，讓您的銷售流程更順暢。沒有前置費用、 增加營業額、 客戶無需等待、 只需手機或平版電腦，您就可以開始使用系統。',
+    url: 'https://riben.life',
+    siteName: title,
+    type: 'website',
+  },
+  robots: {
+    index: false,
+    follow: true,
+    nocache: true,
+    googleBot: {
+      index: true,
+      follow: false,
+      noimageindex: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  manifest: '/favicons/site.webmanifest',
+  applicationName: title,
+  /*
+  appleWebApp: {
+    title: title,
+    capable: true,
+    statusBarStyle: 'default',
+  },
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#38bdf8' },
+    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+  ],
+  */
+  icons: {
+    icon: '/favicons/favicon-16x16.png',
+    shortcut: '/favicons/favicon-32x32.png',
+    apple: [
+      { url: '/favicons/apple-touch-icon.png' },
+      { url: '/favicons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    other: {
+      rel: 'apple-touch-icon-precomposed',
+      url: '/favicons/apple-touch-icon.png',
+    },
+  },
+  verification: {
+    google: 'google',
+    yandex: 'yandex',
+    yahoo: 'yahoo',
+    other: {
+      'google-site-verification': 'google-site-verification',
+    },
+  },
+};
+/*
 const FAVICON_VERSION = 3;
-
 function v(href: string) {
   return `${href}?v=${FAVICON_VERSION}`;
 }
-
-export async function generateMetadata(
-  parent: ResolvingMetadata,
-): Promise<Metadata> {
-  return {
-    title: "riben.life 利便生活",
-  };
-}
+<Head>
+  <link
+    rel="mask-icon"
+    href={v("/favicons/safari-pinned-tab.svg")}
+    color="#38bdf8"
+  />
+  <meta
+    name="msapplication-config"
+    content={v("/favicons/browserconfig.xml")}
+  />
+</Head>
+*/
 
 export default async function RootLayout({
   children,
@@ -44,44 +112,6 @@ export default async function RootLayout({
         lang="en"
         className="dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]"
       >
-        <Head>
-          <link
-            rel="apple-touch-icon"
-            sizes="180x180"
-            href={v("/favicons/apple-touch-icon.png")}
-          />
-          <link
-            rel="icon"
-            type="image/png"
-            sizes="32x32"
-            href={v("/favicons/favicon-32x32.png")}
-          />
-          <link
-            rel="icon"
-            type="image/png"
-            sizes="16x16"
-            href={v("/favicons/favicon-16x16.png")}
-          />
-          <link rel="manifest" href={v("/favicons/site.webmanifest")} />
-          <link
-            rel="mask-icon"
-            href={v("/favicons/safari-pinned-tab.svg")}
-            color="#38bdf8"
-          />
-          <link rel="shortcut icon" href={v("/favicons/favicon.ico")} />
-          <meta
-            name="apple-mobile-web-app-title"
-            content="riben.life 利便生活"
-          />
-          <meta name="application-name" content="riben.life 利便生活" />
-          <meta name="msapplication-TileColor" content="#006988" />
-          <meta
-            name="msapplication-config"
-            content={v("/favicons/browserconfig.xml")}
-          />
-          <meta name="theme-color" content="#f8fafc" />
-        </Head>
-
         <body
           className={cn(
             "antialiased text-slate-500 dark:text-slate-400 min-h-screen",

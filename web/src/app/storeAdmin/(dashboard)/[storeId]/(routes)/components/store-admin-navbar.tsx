@@ -67,12 +67,12 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
         </div>
       </div>
 
-      <div className="mx-4 flex h-14 items-center sm:mx-8">
+      <div className="mx-4 flex h-14 items-center xs:mx-8">
         <div className="flex items-center space-x-4 lg:space-x-0">
           <StoreAdminSheetMenu />
         </div>
 
-        <div className="flex items-center space-x-4 lg:pl-80 pl-10">
+        <div className="flex items-center space-x-4 lg:pl-10">
           <h1 className="grow text-center text-xl font-bold leading-tight tracking-tighter lg:leading-[1.1] text-nowrap">
             <Link className="flex" title="go to store" href={`/${store.id}`}>
               <HomeIcon className="mr-1 h-6 w-6" />
