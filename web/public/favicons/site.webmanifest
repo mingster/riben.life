@@ -1,18 +1,14 @@
 {
-  "name": "Tailwind CSS",
-  "short_name": "Tailwind CSS",
-  "icons": [
-    {
-      "src": "/favicons/android-chrome-192x192.png?v=3",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/favicons/android-chrome-256x256.png?v=3",
-      "sizes": "256x256",
-      "type": "image/png"
-    }
-  ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff"
+    "name": "\u5229\u4fbf\u751f\u6d3b",
+    "short_name": "\u5229\u4fbf\u751f\u6d3b",
+    "icons": [
+        {
+            "src": "/android-chrome-48x48.png",
+            "sizes": "48x48",
+            "type": "image/png"
+        }
+    ],
+    "theme_color": "#006988",
+    "background_color": "#006988",
+    "display": "standalone"
 }

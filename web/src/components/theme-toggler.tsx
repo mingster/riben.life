@@ -29,7 +29,7 @@ const ThemeToggler = () => {
         className="dur absolute top-0 z-50 m-0 h-full w-full cursor-pointer opacity-0"
       />
       <span
-        className={`absolute left-[3px] top-1 flex h-6 w-6 -translate-y-1/2 translate-x-0 items-center justify-center rounded-full
+        className={`absolute left-[3px] top-4 flex h-6 w-6 -translate-y-1/2 translate-x-0 items-center justify-center rounded-full
           shadow-switcher duration-75 ease-linear ${
             colorMode === "dark" && "!right-[3px] !translate-x-full"
           }`}

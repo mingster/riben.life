@@ -16,14 +16,16 @@ import BusinessHours from "@/lib/businessHours";
 import { redirect } from "next/navigation";
 type Props = {
   params: { storeId: string };
+  searchParams: { [key: string]: string | string[] | undefined }
 };
+
 export async function generateMetadata(
-  { params }: Props,
+  { params, searchParams }: Props,
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
   if (!params.storeId) {
     return {
-      title: "pstv",
+      title: "riben.life",
     };
   }
 
@@ -41,10 +43,11 @@ export async function generateMetadata(
     },
   })) as Store;
 
-  if (!store) return { title: "pstv" };
+  //if (!store) return { title: "riben.life" };
 
   return {
     title: store.name,
+    //keywords: searchParams.keywords,
   };
 }
 

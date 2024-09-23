@@ -43,20 +43,17 @@ export async function generateMetadata(
   };
 }
 
-export default async function DashboardLayout({
+export default async function StoreAdminLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
   params: { storeId: string };
 }) {
-  const session = (await GetSession()) as Session;
+  RequiresSignIn();
+  const session = await GetSession() as Session;
   //console.log('session: ' + JSON.stringify(session));
   //console.log('userid: ' + userId);
-
-  if (!session) {
-    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
-  }
 
   if (!params.storeId) {
     // this will allow the user to set up a store

@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { MockupDashboardContent } from "../components/mockup-dashboard";
 
 import type { Store } from "@prisma/client";
+import "../../../../../css/addon.css";
 
 //import { Metadata } from 'next';
 interface pageProps {

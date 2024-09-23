@@ -60,7 +60,7 @@ export const VideoPlayer: React.FC<ReactPlayerProps> = () => {
       <ReactPlayer
         url={sources}
         controls={true}
-        playing={true}
+        playing={false}
         loop={true}
         //height='100%'
         width="100%"
