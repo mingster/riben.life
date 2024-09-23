@@ -6,7 +6,7 @@ import { auth, providerMap, signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
-import { FaFacebook, FaLine } from "react-icons/fa";
+import { FaDiscord, FaFacebook, FaLine } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 
 import { useTranslation } from "@/app/i18n";
@@ -72,15 +72,17 @@ export default async function SignInPage(props: {
                 type="submit"
                 className="w-full mt-4 px-4 py-2"
               >
-                <span className="mr-2 flex items-center justify-center">
+                <span className="mr-2 flex items-center justify-center gap-1">
                   {(() => {
                     switch (provider.name.toLowerCase()) {
                       case "google":
                         return <FcGoogle className="w-5 h-5" />;
                       case "facebook":
-                        return <FaFacebook className="w-5 h-5" />;
+                        return <FaFacebook className="w-5 h-5 text-[#4267B2]" />;
                       case "line":
-                        return <FaLine className="w-5 h-5" />;
+                        return <FaLine className="w-5 h-5 text-[#06C755]" />;
+                      case "discord":
+                        return <FaDiscord className="w-5 h-5 text-[#7289da]" />;
                       default:
                         return "";
                     }
