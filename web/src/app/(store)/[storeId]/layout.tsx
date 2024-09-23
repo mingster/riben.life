@@ -43,7 +43,7 @@ export async function generateMetadata(
     },
   })) as Store;
 
-  //if (!store) return { title: "riben.life" };
+  if (!store) return { title: "riben.life" };
 
   return {
     title: store.name,
@@ -73,6 +73,12 @@ export default async function StoreHomeLayout({
     },
   })) as Store;
 
+  if (store === null) {
+    redirect("/storeAdmin");
+    //return <Loader/>;
+    //throw new Error("store not found");
+  }
+
   transformDecimalsToNumbers(store);
 
   const storeSettings = (await mongoClient.storeSettings.findFirst({
@@ -81,12 +87,6 @@ export default async function StoreHomeLayout({
     },
   })) as StoreSettings;
   //console.log(JSON.stringify(store));
-
-  if (store === null) {
-    redirect("/storeAdmin");
-    //return <Loader/>;
-    //throw new Error("store not found");
-  }
 
   let isStoreOpen = store.isOpen;
   const bizHour = storeSettings.businessHours;

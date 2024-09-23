@@ -7,6 +7,7 @@ import GoogleProvider from "next-auth/providers/google";
 import LineProdiver from "next-auth/providers/line";
 import FacebookProvider from "next-auth/providers/facebook";
 import Nodemailer from "next-auth/providers/nodemailer";
+import Discord from "next-auth/providers/discord"
 
 /*
 import EmailProvider from "next-auth/providers/email";
@@ -40,7 +41,7 @@ export const getToken = (test: string) => {
   return process.env.NEXTAUTH_SECRET + test;
 };
 */
-const providers: Provider[] = [GoogleProvider, LineProdiver, FacebookProvider];
+const providers: Provider[] = [GoogleProvider, LineProdiver, FacebookProvider, Discord];
 
 export const providerMap = providers
   .map((provider) => {
@@ -102,6 +103,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     GoogleProvider({
       clientId: `${process.env.AUTH_GOOGLE_ID}`,
       clientSecret: `${process.env.AUTH_GOOGLE_SECRET}`,
+      //allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
           prompt: "consent",
@@ -110,25 +112,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
       },
     }),
-    /*
-    https://legod.vercel.app/api/auth/callback/facebook
-    http://localhost:3001/api/auth/callback/facebook
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_ID,
-      clientSecret: process.env.FACEBOOK_SECRET,
-    }),
-     */
 
     // https://blog.errorbaker.tw/posts/ruofan/next-auth/
     // https://developers.line.biz/console/channel/2000556006
     LineProdiver({
       clientId: `${process.env.AUTH_LINE_ID}`,
       clientSecret: `${process.env.AUTH_LINE_SECRET}`,
+      //allowDangerousEmailAccountLinking: true,
     }),
+    // https://discord.com/developers/applications/1287781517506121739/oauth2
+    Discord({
+      clientId: `${process.env.AUTH_DISCORD_ID}`,
+      clientSecret: `${process.env.AUTH_DISCORD_SECRET}`,
+      //allowDangerousEmailAccountLinking: true,
+    }),
+    //https://legod.vercel.app/api/auth/callback/facebook
+    // http://localhost:3001/api/auth/callback/facebook
     // https://developers.facebook.com/apps/557644063270057/settings/
     FacebookProvider({
       clientId: `${process.env.AUTH_FACEBOOK_ID}`,
       clientSecret: `${process.env.AUTH_FACEBOOK_SECRET}`,
+      //allowDangerousEmailAccountLinking: true,
     }),
     Nodemailer({
       server: `smtp://${process.env.EMAIL_SERVER_USER}:${process.env.EMAIL_SERVER_PASSWORD}@${process.env.EMAIL_SERVER_HOST}:${process.env.EMAIL_SERVER_PORT}`,
@@ -156,7 +160,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   pages: {
-    signIn: "/signin",
+    //signIn: "/signin",
     //signOut: '/signout',
     //error: '/auth/error', // Error code passed in query string as ?error=
     //verifyRequest: '/verify-request', // (used for check email message)
@@ -183,6 +187,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (userExists) {
           return true;
         }
+        return false;
         /* else {return "/register";}*/
       }
 
