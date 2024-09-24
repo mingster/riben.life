@@ -4,7 +4,7 @@ html {
   height: 100%;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   scroll-behavior: smooth;
-  scroll-padding-top: 300px; /* height of your navbar */
+  scroll-padding-top: 150px; /* height of your navbar */
 }
 
 body {
