@@ -324,6 +324,9 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
         variant: "success",
       });
 
+      // close the dialog
+      setOpen(false);
+
       // Your submission logic here
     } catch (error) {
       form.setError("root", {
@@ -387,6 +390,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
   }
 
   //console.log("form errors", form.formState.errors);
+  //className="fixed top-30 left-1/4 lg:left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[80vh] rounded-lg"
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -397,7 +401,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
           {t("config_to_buy")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="fixed top-10 left-1/4 lg:left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[80vh] rounded-lg">
+      <DialogContent>
         <div className="flex h-full flex-col">
           <DialogHeader className="border-b p-4">
             <DialogTitle>

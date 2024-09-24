@@ -16,6 +16,7 @@ interface cartItemProps {
   showVarity: boolean;
   showSubtotal: boolean;
   //onCartChange?: (newValue: number) => void;
+  className?: string;
 }
 
 const CartItemInfo: React.FC<cartItemProps> = ({
@@ -25,6 +26,7 @@ const CartItemInfo: React.FC<cartItemProps> = ({
   showVarity,
   showSubtotal,
   //onCartChange,
+  className,
 }) => {
   const cart = useCart();
   const { lng } = useI18n();
@@ -114,7 +116,7 @@ const CartItemInfo: React.FC<cartItemProps> = ({
   return (
     currentItem &&
     cart.items.length > 0 && (
-      <div className="flex">
+      <div className="{className} flex">
         {currentItem.images && showProductImg && (
           <div className="relative rounded-md overflow-hidden">
             <Image

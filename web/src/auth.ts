@@ -7,7 +7,7 @@ import GoogleProvider from "next-auth/providers/google";
 import LineProdiver from "next-auth/providers/line";
 import FacebookProvider from "next-auth/providers/facebook";
 import Nodemailer from "next-auth/providers/nodemailer";
-import Discord from "next-auth/providers/discord"
+import Discord from "next-auth/providers/discord";
 
 /*
 import EmailProvider from "next-auth/providers/email";
@@ -41,7 +41,12 @@ export const getToken = (test: string) => {
   return process.env.NEXTAUTH_SECRET + test;
 };
 */
-const providers: Provider[] = [GoogleProvider, LineProdiver, FacebookProvider, Discord];
+const providers: Provider[] = [
+  GoogleProvider,
+  LineProdiver,
+  FacebookProvider,
+  Discord,
+];
 
 export const providerMap = providers
   .map((provider) => {
@@ -206,14 +211,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (isDevelopmentMode) {
-        //console.log('session: ' + JSON.stringify(session));
-        //console.log('user: ' + JSON.stringify(user));
-        //console.log('token: ' + JSON.stringify(token));
+        /*
+        console.log(`session: ${JSON.stringify(session)}`);
+        console.log(`user: ${JSON.stringify(user)}`);
+        console.log(`token: ${JSON.stringify(token)}`);
+        */
       }
 
+      // determine user role
       if (session.user?.email) {
-        // determine user role
-        //
         const dbuser = await sqlClient.user.findUnique({
           where: {
             email: session.user.email,
@@ -231,19 +237,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           },
         });
 
-        //ANCHOR - define session.user type in @/types/next.auth.d.ts
+        //ANCHOR - role is defined in session.usertype in @/types/next.auth.d.ts
         session.user.id = `${user?.id}`;
         session.user.role = dbuser?.role ?? "";
         session.user.notifications = dbuser?.NotificationTo ?? [];
 
+        /*
         // refresh google token if needed
         const [googleAccount] = await sqlClient.account.findMany({
           where: { userId: session.user.id, provider: "google" },
         });
         if (googleAccount) {
-          refresh_google_token(googleAccount);
+          //refresh_google_token(googleAccount);
         }
-
+        */
         //session.user.id = token.sub + '';
         return Promise.resolve(session);
       }

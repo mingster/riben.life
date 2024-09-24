@@ -78,7 +78,9 @@ export default async function SignInPage(props: {
                       case "google":
                         return <FcGoogle className="w-5 h-5" />;
                       case "facebook":
-                        return <FaFacebook className="w-5 h-5 text-[#4267B2]" />;
+                        return (
+                          <FaFacebook className="w-5 h-5 text-[#4267B2]" />
+                        );
                       case "line":
                         return <FaLine className="w-5 h-5 text-[#06C755]" />;
                       case "discord":

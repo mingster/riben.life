@@ -4,7 +4,7 @@ html {
   height: 100%;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   scroll-behavior: smooth;
-  scroll-padding-top: 300px; /* height of your navbar */
+  scroll-padding-top: 150px; /* height of your navbar */
 }
 
 body {
@@ -31,7 +31,6 @@ abbr[title] {
   color-scheme: dark;
 }
 
-
 .beams {
   background-image: url("../../img/beams/hero@75.jpg");
   background-size: 150rem;
@@ -42,13 +41,11 @@ abbr[title] {
   background-size: 86.125rem;
 }
 
-
 .hash-span {
   margin-top: -100px;
   padding-bottom: 100px;
   display: block;
 }
-
 
 @layer base {
   a {

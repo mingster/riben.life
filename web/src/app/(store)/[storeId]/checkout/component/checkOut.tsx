@@ -3,7 +3,7 @@
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { type Item, useCart } from "@/hooks/use-cart";
 
@@ -23,7 +23,6 @@ import {
 import Container from "@/components/ui/container";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -32,8 +31,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
@@ -60,17 +57,15 @@ export const Checkout = ({ store, user }: props) => {
 
   return (
     <Container>
-      <>
-        {cart.items.length === 0 && !inCheckoutSteps ? (
-          <StoreNoItemPrompt />
-        ) : (
-          <CheckoutSteps
-            store={store}
-            user={user}
-            onChange={setInCheckoutSteps}
-          />
-        )}
-      </>
+      {cart.items.length === 0 && !inCheckoutSteps ? (
+        <StoreNoItemPrompt />
+      ) : (
+        <CheckoutSteps
+          store={store}
+          user={user}
+          onChange={setInCheckoutSteps}
+        />
+      )}
     </Container>
   );
 };
@@ -232,15 +227,19 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
         </CardHeader>
         <CardContent>
           {cart.items.length !== 0 &&
-            cart.items.map((item) => (
-              <div key={item.id}>
-                <CartItemInfo
-                  item={item as Item}
-                  showProductImg={true}
-                  showQuantity={false}
-                  showVarity={true}
-                  showSubtotal={true}
-                />
+            cart.items.map((item, index) => (
+              <div key={item.id} className="flex">
+                <div className="flex-none w-1">{index + 1}</div>
+                <div className="grow">
+                  <CartItemInfo
+                    item={item as Item}
+                    showProductImg={true}
+                    showQuantity={true}
+                    showVarity={true}
+                    showSubtotal={true}
+                    className=""
+                  />
+                </div>
               </div>
             ))}
         </CardContent>
@@ -318,14 +317,23 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
               <div className="flex-none w-1/2 pr-1">
                 <div className="sm:text-xs">{t("checkout_note")}</div>
               </div>
-              <div className="flex w-1/2 justify-end place-self-end">
+              <div className="flex w-1/2 justify-end place-self-end gap-2">
                 <Button
                   type="button"
                   disabled={isLoading}
-                  className="disabled:opacity-50"
+                  className="disabled:opacity-50 text-2xl w-1/2 p-5"
                   onClick={() => placeOrder()}
                 >
                   {t("checkout_orderButton")}
+                </Button>
+                <Button
+                  variant={"outline"}
+                  type="button"
+                  disabled={isLoading}
+                  className="disabled:opacity-50"
+                  onClick={() => router.back()}
+                >
+                  {t("checkout_keepShoppingButton")}
                 </Button>
               </div>
             </div>

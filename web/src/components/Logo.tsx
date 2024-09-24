@@ -20,7 +20,7 @@ export function Logo({ className, ...props }: { className?: string }) {
       <svg
         aria-hidden="true"
         className={clsx(
-          "text-slate-900 dark:text-white hidden sm:block",
+          "text-slate-900 dark:text-white hidden md:block",
           className,
         )}
         width={98}
