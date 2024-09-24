@@ -14,7 +14,6 @@ import { CartProvider } from "@/hooks/use-cart";
 import { GetSession } from "@/utils/auth-utils";
 import type { Metadata } from "next";
 
-
 const title = "riben.life 利便生活";
 export const metadata: Metadata = {
   title: {
@@ -28,10 +27,11 @@ export const metadata: Metadata = {
 
   openGraph: {
     title: title,
-    description: '導入線上點餐系統，讓您的銷售流程更順暢。沒有前置費用、 增加營業額、 客戶無需等待、 只需手機或平版電腦，您就可以開始使用系統。',
-    url: 'https://riben.life',
+    description:
+      "導入線上點餐系統，讓您的銷售流程更順暢。沒有前置費用、 增加營業額、 客戶無需等待、 只需手機或平版電腦，您就可以開始使用系統。",
+    url: "https://riben.life",
     siteName: title,
-    type: 'website',
+    type: "website",
   },
   robots: {
     index: false,
@@ -41,12 +41,12 @@ export const metadata: Metadata = {
       index: true,
       follow: false,
       noimageindex: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
-  manifest: '/favicons/site.webmanifest',
+  manifest: "/favicons/site.webmanifest",
   applicationName: title,
   /*
   appleWebApp: {
@@ -60,23 +60,27 @@ export const metadata: Metadata = {
   ],
   */
   icons: {
-    icon: '/favicons/favicon-16x16.png',
-    shortcut: '/favicons/favicon-32x32.png',
+    icon: "/favicons/favicon-16x16.png",
+    shortcut: "/favicons/favicon-32x32.png",
     apple: [
-      { url: '/favicons/apple-touch-icon.png' },
-      { url: '/favicons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: "/favicons/apple-touch-icon.png" },
+      {
+        url: "/favicons/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
     ],
     other: {
-      rel: 'apple-touch-icon-precomposed',
-      url: '/favicons/apple-touch-icon.png',
+      rel: "apple-touch-icon-precomposed",
+      url: "/favicons/apple-touch-icon.png",
     },
   },
   verification: {
-    google: 'google',
-    yandex: 'yandex',
-    yahoo: 'yahoo',
+    google: "google",
+    yandex: "yandex",
+    yahoo: "yahoo",
     other: {
-      'google-site-verification': 'google-site-verification',
+      "google-site-verification": "google-site-verification",
     },
   },
 };

@@ -53,6 +53,8 @@ export interface props {
 }
 
 // store home page.
+// if store is opened (according to business hours), display menu (categorized products), and seating status (take off/in store).
+//
 export const StoreHomeContent: React.FC<props> = ({
   storeData,
   mongoData,
@@ -125,12 +127,15 @@ export const StoreHomeContent: React.FC<props> = ({
     <section className="relative w-full justify-center content-center items-center">
       <div className="pl-1 pr-1">
         {!storeData.isOpen && <h2>{t("store_closed")}</h2>}
-        {tableData && (
-          <h3>
-            {t("storeTables")}: {tableData.tableName}
-          </h3>
-        )}
-
+        <h3 className="text-2xl">
+          {tableData ? (
+            <>
+              {t("storeTables")}: {tableData.tableName}
+            </>
+          ) : (
+            "外帶"
+          )}
+        </h3>
         {mongoData.orderNoteToCustomer && (
           <div>
             <pre>{mongoData.orderNoteToCustomer}</pre>

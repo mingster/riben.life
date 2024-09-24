@@ -16,8 +16,6 @@ export function UseCases({ className, ...props }: { className?: string }) {
           />
           <Caption className="text-sky-500">使用情境</Caption>
         </div>
-
-
       </div>
     </section>
   );

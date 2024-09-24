@@ -16,7 +16,7 @@ import BusinessHours from "@/lib/businessHours";
 import { redirect } from "next/navigation";
 type Props = {
   params: { storeId: string };
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export async function generateMetadata(

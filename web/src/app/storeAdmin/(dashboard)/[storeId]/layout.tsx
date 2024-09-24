@@ -51,7 +51,7 @@ export default async function StoreAdminLayout({
   params: { storeId: string };
 }) {
   RequiresSignIn();
-  const session = await GetSession() as Session;
+  const session = (await GetSession()) as Session;
   //console.log('session: ' + JSON.stringify(session));
   //console.log('userid: ' + userId);
 

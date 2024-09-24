@@ -39,6 +39,8 @@
     "checkout_note": "繼續進行結帳操作即視為您同意由店鋪賣家、直送廠商及/或物流服務提供商等第三方廠商依據隱私權政策蒐集此訂單中的購物資訊 (包含個資)，以作為訂單配送、完成交易及庫存管理之用。",
     "checkout_or": "或",
     "checkout_orderButton": "下訂單",
+    "checkout_keepShoppingButton": "繼續選購",
+
     "checkout_orderitems": "訂單商品",
     "checkout_orderTotal": "訂單金額：",
     "checkout_paymentMethod": "付款方式",
