@@ -1,12 +1,10 @@
 import Link from "next/link";
 
-import { Hero } from "./Hero";
 import { Logo } from "@/components/Logo";
+import TypewriterComponent from "typewriter-effect";
+import { Hero } from "./Hero";
 
-import clsx from "clsx";
-import Router from "next/router";
-import { useEffect, useState } from "react";
-import styles from "../../../css/index.module.css";
+import ThemeToggler from "@/components/theme-toggler";
 import {
   Sheet,
   SheetContent,
@@ -15,7 +13,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import ThemeToggler from "@/components/theme-toggler";
+import clsx from "clsx";
+import Router from "next/router";
+import { useEffect, useState } from "react";
 
 export function NavPopover({
   display = "md:hidden",
@@ -147,7 +147,7 @@ export function NavItems() {
           href="#aboutUs"
           className="hover:text-sky-500 dark:hover:text-sky-400"
         >
-          關於我們
+          聯繫我們
         </Link>
       </li>
       <li>
@@ -224,7 +224,7 @@ export function NavBar() {
             : "bg-white/95 supports-backdrop-blur:bg-white/60 dark:bg-transparent",
         )}
       >
-        <div id="top" className="mx-auto max-w-8xl">
+        <div className="mx-auto max-w-8xl">
           <div
             className={clsx(
               "py-4 border-b border-slate-900/10 lg:px-8 lg:border-0 dark:border-slate-300/10 mx-4 lg:mx-0",
@@ -265,6 +265,9 @@ export function NavBar() {
 export function Header() {
   return (
     <header className="relative">
+      <span className="hash-span" id="top">
+        &nbsp;
+      </span>
       <div className="px-4 sm:px-6 md:px-8">
         <div
           className={clsx(
@@ -282,7 +285,16 @@ export function Header() {
 
         <div className="relative max-w-5xl pt-20 mx-auto sm:pt-24 lg:pt-32">
           <h1 className="text-3xl font-extrabold tracking-tight text-center text-slate-900 sm:text-5xl lg:text-5xl dark:text-white">
-            導入線上點餐系統，讓您的銷售流程更順暢。
+            <TypewriterComponent
+              options={{
+                strings: [
+                  "導入線上點餐系統，",
+                  " 導入線上點餐系統，讓您的銷售流程更順暢。"
+                ],
+                autoStart: true,
+                loop: true,
+              }}
+            />
           </h1>
           <p className="max-w-3xl mx-auto mt-6 text-lg text-center text-slate-600 dark:text-slate-400">
             <code className="font-mono font-medium text-sky-500 dark:text-sky-400">
@@ -305,40 +317,6 @@ export function Header() {
             >
               不用洽詢，立即使用
             </Link>
-            {/*
-            <SearchButton className="items-center hidden h-12 px-4 space-x-3 text-left bg-white rounded-lg shadow-sm sm:flex w-72 ring-1 ring-slate-900/10 hover:ring-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-400 dark:bg-slate-800 dark:ring-0 dark:text-slate-300 dark:highlight-white/5 dark:hover:bg-slate-700">
-              {({ actionKey }) => (
-                <>
-                  <svg
-                    width="24"
-                    height="24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="flex-none text-slate-300 dark:text-slate-400"
-                    aria-hidden="true"
-                  >
-                    <path d="m19 19-3.5-3.5" />
-                    <circle cx="11" cy="11" r="6" />
-                  </svg>
-                  <span className="flex-auto">Quick search...</span>
-                  {actionKey && (
-                    <kbd className="font-sans font-semibold dark:text-slate-500">
-                      <abbr
-                        title={actionKey[1]}
-                        className="no-underline text-slate-300 dark:text-slate-500"
-                      >
-                        {actionKey[0]}
-                      </abbr>{' '}
-                      K
-                    </kbd>
-                  )}
-                </>
-              )}
-            </SearchButton>
-             */}
           </div>
         </div>
       </div>
