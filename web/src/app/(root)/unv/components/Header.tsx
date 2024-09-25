@@ -289,7 +289,7 @@ export function Header() {
               options={{
                 strings: [
                   "導入線上點餐系統，",
-                  " 導入線上點餐系統，讓您的銷售流程更順暢。"
+                  " 導入線上點餐系統，讓您的銷售流程更順暢。",
                 ],
                 autoStart: true,
                 loop: true,

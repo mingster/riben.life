@@ -95,8 +95,7 @@ const features_rsvp = [
     multi: true,
   },
   {
-    description:
-      "Google日曆及Gmail用餐提醒通知。",
+    description: "Google日曆及Gmail用餐提醒通知。",
     basic: true,
     advanced: true,
     multi: true,

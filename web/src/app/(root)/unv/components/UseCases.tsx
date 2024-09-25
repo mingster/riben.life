@@ -30,13 +30,17 @@ export function UseCases({ className, ...props }: { className?: string }) {
           <div>
             <BigText>客戶預約座位</BigText>
             <Caption>適用場景：高需求的特定時段（如周末、假日）</Caption>
-            <Paragraph>顧客在谷歌圖進入系統，選擇日期和時間進行預約。</Paragraph>
+            <Paragraph>
+              顧客在谷歌圖進入系統，選擇日期和時間進行預約。
+            </Paragraph>
             <Paragraph>店家根據預約情況安排座位、人力和食材。</Paragraph>
           </div>
           <div>
             <BigText>客戶預約#2</BigText>
             <Caption>適用場景：一般日</Caption>
-            <Paragraph>顧客出發前，進入系統檢視目前狀況，預先排隊取號。</Paragraph>
+            <Paragraph>
+              顧客出發前，進入系統檢視目前狀況，預先排隊取號。
+            </Paragraph>
           </div>
           <div>
             <BigText>調整營業時間</BigText>
@@ -46,23 +50,18 @@ export function UseCases({ className, ...props }: { className?: string }) {
           <div>
             <BigText>顧客線上點餐</BigText>
             <Caption>適用場景：各種餐飲業</Caption>
-            <Paragraph>
-              顧客透過掃碼，直接線上點餐/付款。
-            </Paragraph>
+            <Paragraph>顧客透過掃碼，直接線上點餐/付款。</Paragraph>
             <Paragraph>
               店家接單後，顧客依據回覆的資訊，依時間來取貨。
             </Paragraph>
           </div>
         </div>
 
-
         <div className="grid grid-cols-4 xs:grid-cols-2 gap-4">
           <div>
             <BigText>店內自助點餐</BigText>
             <Caption>適用場景：各種餐飲業</Caption>
-            <Paragraph>
-              顧客透過掃碼，自行選擇菜品，無需店員介入。
-            </Paragraph>
+            <Paragraph>顧客透過掃碼，自行選擇菜品，無需店員介入。</Paragraph>
             <Paragraph>
               菜單隨時更新，避免了傳統菜單的缺陷，如售罄菜品的標示不及時。
             </Paragraph>
@@ -98,7 +97,7 @@ export function UseCases({ className, ...props }: { className?: string }) {
             <Paragraph>
               顧客下單後，廚房的平板詳列訂單。人員直接開始準備。
             </Paragraph>
-            <Paragraph>出餐後，勾選"已出餐"，來完成訂單。</Paragraph>
+            <Paragraph>出餐後，勾選&quot;已出餐&quot;，來完成訂單。</Paragraph>
           </div>
           <div>
             <BigText>調整菜單</BigText>
@@ -109,7 +108,9 @@ export function UseCases({ className, ...props }: { className?: string }) {
           <div>
             <BigText>數據報表</BigText>
             <Caption>適用場景：每日進行食材採買前</Caption>
-            <Paragraph>依據分析報表，可看到每週五某菜品比其他日平常多5%。因此今天需多訂一點。</Paragraph>
+            <Paragraph>
+              依據分析報表，可看到每週五某菜品比其他日平常多5%。因此今天需多訂一點。
+            </Paragraph>
           </div>
           <div>
             <BigText>調整收款方式</BigText>
@@ -119,7 +120,6 @@ export function UseCases({ className, ...props }: { className?: string }) {
           </div>
         </div>
       </div>
-
     </section>
   );
 }

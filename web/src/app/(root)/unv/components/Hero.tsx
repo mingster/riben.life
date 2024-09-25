@@ -20,16 +20,17 @@ import colors from "tailwindcss/colors";
 
 */
 export function Hero() {
-  return (<>
-    <Layout
-      left={
-        <div className="lg:-mr-18">
-          <LayoutGroup> </LayoutGroup>
-        </div>
-      }
-      right={<LayoutGroup> </LayoutGroup>}
-    />
-  </>
+  return (
+    <>
+      <Layout
+        left={
+          <div className="lg:-mr-18">
+            <LayoutGroup> </LayoutGroup>
+          </div>
+        }
+        right={<LayoutGroup> </LayoutGroup>}
+      />
+    </>
   );
 }
 
