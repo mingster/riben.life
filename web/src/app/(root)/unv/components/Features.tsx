@@ -8,7 +8,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 
 const features_qrcode = [
@@ -43,12 +43,18 @@ const features_qrcode = [
     multi: true,
   },
   {
+    description: "用餐後結帳。",
+    basic: false,
+    advanced: true,
+    multi: true,
+  },
+  {
     description: "現金或原有店內系統結帳。",
     basic: false,
     advanced: true,
     multi: true,
-  }
-]
+  },
+];
 
 const features_rsvp = [
   {
@@ -64,7 +70,7 @@ const features_rsvp = [
     multi: true,
   },
   {
-    description: "入座後，直接掃桌上的條碼、綁定桌號，資訊明確，出餐無負擔。",
+    description: "預約訂餐：直接線上訂餐，減少雙方的時間壓力。",
     basic: true,
     advanced: true,
     multi: true,
@@ -74,9 +80,27 @@ const features_rsvp = [
     basic: false,
     advanced: true,
     multi: true,
-  }
-]
-
+  },
+  {
+    description: "自定營業時間，避免客戶空跑。",
+    basic: true,
+    advanced: true,
+    multi: true,
+  },
+  {
+    description:
+      "整合Google 預訂服務，消費者透過 Google 搜尋／地圖即可完成線上訂位。",
+    basic: true,
+    advanced: true,
+    multi: true,
+  },
+  {
+    description: "Google日曆及Gmail用餐提醒通知。",
+    basic: true,
+    advanced: true,
+    multi: true,
+  },
+];
 
 const features_pos = [
   {
@@ -85,12 +109,13 @@ const features_pos = [
     advanced: true,
     multi: true,
   },
+  /*
   {
     description: "桌位管理，一個螢幕掌握整間店",
     basic: true,
     advanced: true,
     multi: true,
-  },
+  },*/
   {
     description: "商品資訊、庫存管理，菜單即時更新。",
     basic: true,
@@ -123,15 +148,15 @@ const features_pos = [
   },
   {
     description: "自定義付款方式：LINE Pay、街口支付、一卡通 等，持續增加中",
-    basic: false,
+    basic: true,
     advanced: true,
     multi: true,
-  }
-]
+  },
+];
 
 export function Features({ className, ...props }: { className?: string }) {
   return (
-    <section id="features" className="relative h-screen mt-16 sm:mt-20">
+    <section id="features" className="relative min-h-screen mt-15 sm:mt-5">
       <div
         className={clsx(
           "absolute inset-0 bottom-10 bg-bottom bg-no-repeat bg-slate-50 dark:bg-[#0B1120]",
@@ -145,8 +170,7 @@ export function Features({ className, ...props }: { className?: string }) {
           }}
         />
       </div>
-      <div className="relative max-w-5xl pt-2 mx-auto sm:pt-24 lg:pt-5">
-
+      <div className="relative max-w-5xl pt-2 mx-auto">
         <div className="flex gap-2">
           <IconContainer
             className="dark:bg-sky-500 dark:highlight-white/20"
@@ -157,25 +181,36 @@ export function Features({ className, ...props }: { className?: string }) {
         </div>
 
         <BigText>掃碼點餐</BigText>
-        <Paragraph>
-          提升點餐效率、減少服務人力
-        </Paragraph>
+        <Paragraph>提升點餐效率、減少服務人力</Paragraph>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>&nbsp;</TableHead>
-              <TableHead>基礎版</TableHead>
-              <TableHead>進階版</TableHead>
-              <TableHead>多店版</TableHead>
+              <TableHead className="w-[60px]">基礎版</TableHead>
+              <TableHead className="w-[60px]">進階版</TableHead>
+              <TableHead className="w-[60px]">多店版</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {features_qrcode.map((feature, index) => (
-              <TableRow key={feature.description} className={index % 2 === 0 ? "bg-slate-50 dark:bg-slate-800" : "bg-white dark:bg-slate-900"}>
+              <TableRow
+                key={feature.description}
+                className={
+                  index % 2 === 0
+                    ? "bg-slate-50 dark:bg-slate-800"
+                    : "bg-white dark:bg-slate-900"
+                }
+              >
                 <TableCell className="">{feature.description}</TableCell>
-                <TableCell>{feature.basic ? <CheckIcon /> : <XIcon />}</TableCell>
-                <TableCell>{feature.advanced ? <CheckIcon /> : <XIcon />}</TableCell>
-                <TableCell>{feature.multi ? <CheckIcon /> : <XIcon />}</TableCell>
+                <TableCell>
+                  {feature.basic ? <CheckIcon /> : <XIcon />}
+                </TableCell>
+                <TableCell>
+                  {feature.advanced ? <CheckIcon /> : <XIcon />}
+                </TableCell>
+                <TableCell>
+                  {feature.multi ? <CheckIcon /> : <XIcon />}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -187,18 +222,31 @@ export function Features({ className, ...props }: { className?: string }) {
           <TableHeader>
             <TableRow>
               <TableHead>&nbsp;</TableHead>
-              <TableHead>基礎版</TableHead>
-              <TableHead>進階版</TableHead>
-              <TableHead>多店版</TableHead>
+              <TableHead className="w-[60px]">基礎版</TableHead>
+              <TableHead className="w-[60px]">進階版</TableHead>
+              <TableHead className="w-[60px]">多店版</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {features_rsvp.map((feature, index) => (
-              <TableRow key={feature.description} className={index % 2 === 0 ? "bg-slate-50 dark:bg-slate-800" : "bg-white dark:bg-slate-900"}>
+              <TableRow
+                key={feature.description}
+                className={
+                  index % 2 === 0
+                    ? "bg-slate-50 dark:bg-slate-800"
+                    : "bg-white dark:bg-slate-900"
+                }
+              >
                 <TableCell className="">{feature.description}</TableCell>
-                <TableCell>{feature.basic ? <CheckIcon /> : <XIcon />}</TableCell>
-                <TableCell>{feature.advanced ? <CheckIcon /> : <XIcon />}</TableCell>
-                <TableCell>{feature.multi ? <CheckIcon /> : <XIcon />}</TableCell>
+                <TableCell>
+                  {feature.basic ? <CheckIcon /> : <XIcon />}
+                </TableCell>
+                <TableCell>
+                  {feature.advanced ? <CheckIcon /> : <XIcon />}
+                </TableCell>
+                <TableCell>
+                  {feature.multi ? <CheckIcon /> : <XIcon />}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -209,18 +257,31 @@ export function Features({ className, ...props }: { className?: string }) {
           <TableHeader>
             <TableRow>
               <TableHead>&nbsp;</TableHead>
-              <TableHead>基礎版</TableHead>
-              <TableHead>進階版</TableHead>
-              <TableHead>多店版</TableHead>
+              <TableHead className="w-[60px]">基礎版</TableHead>
+              <TableHead className="w-[60px]">進階版</TableHead>
+              <TableHead className="w-[60px]">多店版</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {features_pos.map((feature, index) => (
-              <TableRow key={feature.description} className={index % 2 === 0 ? "bg-slate-50 dark:bg-slate-800" : "bg-white dark:bg-slate-900"}>
+              <TableRow
+                key={feature.description}
+                className={
+                  index % 2 === 0
+                    ? "bg-slate-50 dark:bg-slate-800"
+                    : "bg-white dark:bg-slate-900"
+                }
+              >
                 <TableCell className="">{feature.description}</TableCell>
-                <TableCell>{feature.basic ? <CheckIcon /> : <XIcon />}</TableCell>
-                <TableCell>{feature.advanced ? <CheckIcon /> : <XIcon />}</TableCell>
-                <TableCell>{feature.multi ? <CheckIcon /> : <XIcon />}</TableCell>
+                <TableCell>
+                  {feature.basic ? <CheckIcon /> : <XIcon />}
+                </TableCell>
+                <TableCell>
+                  {feature.advanced ? <CheckIcon /> : <XIcon />}
+                </TableCell>
+                <TableCell>
+                  {feature.multi ? <CheckIcon /> : <XIcon />}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

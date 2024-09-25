@@ -21,88 +21,8 @@ import { Footer } from "./Footer";
 import { UseCases } from "./UseCases";
 import Image from "next/image";
 
-type User = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  birthDate: Date;
-  height: number;
-  weight: number;
-};
-
-function GetUsers(): User[] {
-  const url = "./dummy_users.json";
-  const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
-  const { data, error, isLoading } = useSWR(url, fetcher);
-  let users: User[] = [];
-  if (!isLoading && !error) {
-    users = data;
-  }
-
-  //console.log(users.length);
-
-  return users;
-}
-const columns: ColumnDef<User>[] = [
-  {
-    accessorKey: "id",
-    header: () => <div className="text-right">id</div>,
-  },
-
-  {
-    accessorKey: "firstName",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="FirstName" />;
-    },
-  },
-  {
-    accessorKey: "lastName",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="LastName" />;
-    },
-  },
-  {
-    accessorKey: "email",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Email" />;
-    },
-  },
-  {
-    accessorKey: "birthDate",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Birthday" />;
-    },
-  },
-  {
-    accessorKey: "height",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Height (cm)" />;
-    },
-    cell: ({ row }) => {
-      const height = Number.parseFloat(row.getValue("height"));
-      const formatted = new Intl.NumberFormat().format(height);
-      return <div className="text-right font-medium">{formatted}</div>;
-    },
-  },
-  {
-    accessorKey: "weight",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Weight (kg)" />;
-    },
-    cell: ({ row }) => {
-      const weight = Number.parseFloat(row.getValue("weight"));
-      const formatted = new Intl.NumberFormat().format(weight);
-      return <div className="text-right font-medium">{formatted}</div>;
-    },
-  },
-];
-
 export const UniversalHomeContent = () => {
   const { toast } = useToast();
-
-  const users = GetUsers();
-  //console.log(JSON.stringify(users));
 
   return (
     <>
@@ -110,7 +30,7 @@ export const UniversalHomeContent = () => {
 
       <div className="mb-20 overflow-hidden sm:mb-32 md:mb-40 p">
         <Header />
-
+        {/*
         <section className="px-8 mt-20 text-center sm:mt-32 md:mt-40">
           <figure>
             <blockquote>
@@ -149,21 +69,8 @@ export const UniversalHomeContent = () => {
               </div>
             </figcaption>
           </figure>
-
-          <div className="pb-10 pl-10 pr-10">
-            <div className="relative h-screen grid-cols-12 overflow-hidden">
-              <div>
-                <DataTable
-                  columns={columns}
-                  data={users}
-                  searchKey="lastName"
-                />
-              </div>
-            </div>
-
-            <VideoPlayer />
-          </div>
         </section>
+         */}
       </div>
       <div className="flex flex-col pt-20 mb-20 overflow-hidden gap-y-20 sm:pt-32 sm:mb-32 sm:gap-y-32 md:pt-40 md:mb-40 md:gap-y-40">
         <ScrollSpy scrollThrottle={100} useBoxMethod={false}>

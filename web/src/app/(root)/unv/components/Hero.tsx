@@ -8,8 +8,7 @@ import { wait } from "@/utils/wait";
 
 import colors from "tailwindcss/colors";
 
-export function Hero() {
-  return (
+/*
     <Layout
       left={
         <div className="lg:-mr-18">
@@ -18,6 +17,20 @@ export function Hero() {
       }
       right={<> </>}
     />
+
+*/
+export function Hero() {
+  return (
+    <>
+      <Layout
+        left={
+          <div className="lg:-mr-18">
+            <LayoutGroup> </LayoutGroup>
+          </div>
+        }
+        right={<LayoutGroup> </LayoutGroup>}
+      />
+    </>
   );
 }
 
@@ -32,7 +45,7 @@ function Layout({
         <div className="-mx-4 sm:mx-0">{right}</div>
       </div>
       <div className="relative row-start-1 col-start-1 col-span-5 xl:col-span-6 -mt-10">
-        <div className="h-[24.25rem] max-w-xl mx-auto lg:max-w-none flex items-center justify-center">
+        <div className="h-[20.25rem] max-w-xl mx-auto lg:max-w-none flex items-center justify-center">
           <div className="w-full flex-none">{left}</div>
         </div>
       </div>
