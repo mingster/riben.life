@@ -15,12 +15,7 @@ export type StoreNotification = Prisma.StoreNotificationGetPayload<
   typeof notificationObj
 >;
 
-export async function sendStoreNotification(mailtoSend: StoreNotification) {
-  if (mailtoSend === null) return;
-  if (mailtoSend.id === null) return;
-  if (mailtoSend === null) return;
-  if (mailtoSend.Sender.email === null) return;
-  if (mailtoSend.Recipent.email === null) return;
+export async function sendMail(from: string, to: string, subject: string, message: string) {
   if (
     process.env.EMAIL_SERVER_HOST === null ||
     process.env.EMAIL_SERVER_HOST === undefined
@@ -31,18 +26,6 @@ export async function sendStoreNotification(mailtoSend: StoreNotification) {
     process.env.EMAIL_SERVER_PORT === undefined
   )
     return;
-
-  /*
-  const mailtoSend = await sqlClient.storeNotification.findUnique({
-    where: {
-      id: id,
-    },
-    include: {
-      Recipent: true,
-      Sender: true,
-    },
-  });
-  */
 
   const host = process.env.EMAIL_SERVER_HOST.toString() as string;
   const port = Number(process.env.EMAIL_SERVER_PORT);
@@ -63,14 +46,14 @@ export async function sendStoreNotification(mailtoSend: StoreNotification) {
 
   //const server = `smtp://${process.env.EMAIL_SERVER_USER}:${process.env.EMAIL_SERVER_PASSWORD}@${process.env.EMAIL_SERVER_HOST}:${process.env.EMAIL_SERVER_PORT}`;
 
+  const sendDeamon = "support@riben.life";
   const result = await transport.sendMail({
-    //from: mailtoSend.Sender.email,
-    from: "support@5ik.tv",
-    to: mailtoSend.Recipent.email,
-    replyTo: mailtoSend.Sender.email,
-    subject: mailtoSend.subject,
-    text: `${mailtoSend.message}`,
-    html: `${mailtoSend.message}`,
+    from: sendDeamon,
+    to: to,
+    replyTo: from,
+    subject: subject,
+    text: `${message}`,
+    html: `${message}`,
   });
 
   const failed = result.rejected.concat(result.pending).filter(Boolean);
@@ -79,18 +62,34 @@ export async function sendStoreNotification(mailtoSend: StoreNotification) {
     throw new Error(`Email (${failed.join(", ")}) could not be sent`);
   }
 
-  // update sent status
-  const obj = await sqlClient.storeNotification.update({
-    where: {
-      id: mailtoSend.id,
-    },
-    data: {
-      sentOn: toDateTime(Date.now() / 1000),
-      sendTries: mailtoSend.sendTries + 1,
-    },
-  });
+  return true;
 
-  return obj;
+}
+
+export async function sendStoreNotification(mailtoSend: StoreNotification) {
+  if (mailtoSend === null) return;
+  if (mailtoSend.id === null) return;
+  if (mailtoSend === null) return;
+  if (mailtoSend.Sender.email === null) return;
+  if (mailtoSend.Recipent.email === null) return;
+
+  const result = await sendMail("support@riben.life", mailtoSend.Recipent.email, mailtoSend.subject, mailtoSend.message);
+
+  if (result) {
+    // update sent status
+    const obj = await sqlClient.storeNotification.update({
+      where: {
+        id: mailtoSend.id,
+      },
+      data: {
+        sentOn: toDateTime(Date.now() / 1000),
+        sendTries: mailtoSend.sendTries + 1,
+      },
+    });
+    return obj;
+  }
+
+  return null;
 }
 
 export default sendStoreNotification;
