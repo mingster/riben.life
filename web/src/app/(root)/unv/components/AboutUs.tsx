@@ -2,19 +2,30 @@ import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { slideIn } from "@/lib/motion";
 import { useI18n } from "@/providers/i18n-provider";
-import emailjs from "@emailjs/browser";
 import { motion } from "framer-motion";
 import { FaDiscord, FaFacebook, FaInstagram, FaLine } from "react-icons/fa";
-import { FcGoogle } from "react-icons/fc";
 
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import Link from "next/link";
 import type React from "react";
-import { useRef, useState } from "react";
+import { type RefObject, useRef, useState } from "react";
 import { BigText, Caption, IconContainer, Paragraph } from "./common";
-import { sendMail } from "@/actions/send-store-notification";
+
+import { useToast } from "@/components/ui/use-toast";
+import ReCAPTCHA from "react-google-recaptcha";
+
+import axios, { type AxiosError } from "axios";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export function AboutUs({ className, ...props }: { className?: string }) {
   const { lng } = useI18n();
@@ -51,6 +62,7 @@ export function AboutUs({ className, ...props }: { className?: string }) {
               We are a team of engineers, designers, and developers who love to
               improve things in life.
             </Paragraph>
+
             <ContactForm />
           </motion.div>
         </div>
@@ -59,64 +71,117 @@ export function AboutUs({ className, ...props }: { className?: string }) {
   );
 }
 
-export const ContactForm = () => {
-  const formRef = useRef(null);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
+/*
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
+export default function GoogleCaptchaWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const recaptchaKey: string | undefined = process?.env?.NEXT_PUBLIC_RECAPTCHA;
+  return (
+    <GoogleReCaptchaProvider
+      reCaptchaKey={recaptchaKey ?? "NOT DEFINED"}
+      scriptProps={{
+        async: false,
+        defer: false,
+        appendTo: "head",
+        nonce: undefined,
+      }}
+    >
+      {children}
+    </GoogleReCaptchaProvider>
+  );
+}
+*/
 
+export const ContactForm = () => {
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "landing");
 
-  const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = event.target;
+  const [captcha, setCaptcha] = useState<string>("");
+  const recaptcha: RefObject<ReCAPTCHA> = useRef(null);
 
-    setForm((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+  const formSchema = z.object({
+    name: z.string().min(1, { message: "name is required" }),
+    email: z
+      .string()
+      .min(1, { message: "email is required" })
+      .email({ message: "email is invalid" }),
+    message: z.string().min(1, { message: "message is required" }),
+  });
+  type formValues = z.infer<typeof formSchema>;
+
+  const defaultValues = {
+    name: "",
+    email: "",
+    message: "",
   };
 
+  //console.log(`product basic: ${JSON.stringify(defaultValues)}`);
+  const form = useForm<formValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues,
+    mode: "onChange",
+  });
+
+  const onSubmit = async (data: formValues) => {
+    if (!captcha) {
+      alert("Please complete the captcha");
+      return;
+    }
+
+    const newdata = {
+      ...data,
+      captcha,
+    };
+
+    try {
+      setLoading(true);
+      const result = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/common/contactus-mail`,
+        newdata,
+      );
+
+      if (result.status === 200) {
+        toast({
+          title: t("landing_submitMessage"),
+          description: "",
+          variant: "success",
+        });
+      } else {
+        toast({
+          title: "Ahh, something went wrong. Please try again.",
+          description: `${result.status} ${result.statusText}`,
+          variant: "destructive",
+        });
+
+        console.log(JSON.stringify(result));
+      }
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      console.log(err);
+      toast({
+        title: "Ahh, something went wrong. Please try again.",
+        description: "",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  function captchaChange(value: string | null) {
+    if (value) {
+      setCaptcha(value);
+    }
+  }
   const lineId = "line";
   const facebookUrl = "fb";
   const igUrl = "ig";
   const discordUrl = "https://discord.gg/zquZfjWq";
-
-  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-
-    if (!form.name || !form.email || !form.message) {
-      alert('Please fill all fields');
-      setLoading(false);
-      return;
-    }
-
-    //console.log("form: ", JSON.stringify(form), form.name, form.email, form.message);
-
-    try {
-      setLoading(false);
-      alert(t("landing_submitMessage"));
-
-      setForm({
-        name: "",
-        email: "",
-        message: "",
-      });
-
-      const result = sendMail(form.name, form.email, t("landing_contactus"), form.message);
-    }
-    catch(error) {
-      setLoading(false);
-      alert("Ahh, something went wrong. Please try again.");
-    }
-  };
 
   return (
     <motion.section
@@ -125,10 +190,6 @@ export const ContactForm = () => {
       viewport={{ once: true, amount: 0.25 }}
       className="px-1 w-full mx-auto relative z-0"
     >
-      <span className="hash-span" id="nav_contact">
-        &nbsp;
-      </span>
-
       <div className="flex xl:flex-row flex-col-reverse gap-2 overflow-hidden">
         <motion.div
           variants={slideIn("left", "tween", 0.2, 1)}
@@ -136,78 +197,101 @@ export const ContactForm = () => {
         >
           <div className="flex gap-2 pb-10 hover:text-slate">
             {discordUrl && (
-              <>請直接在 Discord 討論或詢問：<DiscordLink url={discordUrl} /></>)}
+              <>
+                請直接在 Discord 討論或詢問：
+                <DiscordLink url={discordUrl} />
+              </>
+            )}
           </div>
 
-
           <div className="font-semibold mb-4 grid grid-cols-3">
-
             <div className="hover:text-slate">
               {lineId && <LineLink url={lineId} />}
             </div>
-
             <div className="hover:text-slate">
               {facebookUrl && <FacebookLink url={facebookUrl} />}
             </div>
-
             <div className="hover:text-slate">
               {igUrl && <InstagramLink url={igUrl} />}
             </div>
           </div>
 
-          <form
-            ref={formRef}
-            onSubmit={handleFormSubmit}
-            className="mt-2 flex flex-col gap-8"
-          >
-            <Label className="flex flex-col">
-              <span className="font-medium mb-4">
-                {t("landing_contactus_form_name_label")}
-              </span>
-              <Input
-                autoComplete="on"
-                type="text"
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="w-full space-y-1"
+            >
+              <FormField
+                control={form.control}
                 name="name"
-                value={form.name}
-                onChange={handleInputChange}
-                placeholder={t("landing_contactus_form_name")}
-                className="py-4 px-6 placeholder:text-gray-700 rounded-lg outline-none font-mono"
+                render={({ field }) => (
+                  <FormItem className="p-3">
+                    <FormControl>
+                      <Input
+                        disabled={loading}
+                        className="placeholder:text-gray-700 rounded-lg outline-none font-mono"
+                        placeholder={t("landing_contactus_form_name")}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </Label>
-            <Label className="flex flex-col">
-              <span className="font-medium mb-4">
-                {t("landing_contactus_form_email_label")}
-              </span>
-              <Input
-                autoComplete="on"
-                type="email"
+              <FormField
+                control={form.control}
                 name="email"
-                value={form.email}
-                onChange={handleInputChange}
-                placeholder={t("landing_contactus_form_email")}
-                className="py-4 px-6 placeholder:text-gray-700 rounded-lg outline-none font-mono"
+                render={({ field }) => (
+                  <FormItem className="p-3">
+                    <FormControl>
+                      <Input
+                        disabled={loading}
+                        className="placeholder:text-gray-700 rounded-lg outline-none font-mono"
+                        placeholder={t("landing_contactus_form_email")}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </Label>
-            <Label className="flex flex-col">
-              <span className="font-medium mb-4">
-                {t("landing_contactus_form_msg_Label")}
-              </span>
-              <Textarea
-                rows={7}
+              <FormField
+                control={form.control}
                 name="message"
-                value={form.message}
-                onChange={handleInputChange}
-                placeholder={t("landing_contactus_form_msg")}
-                className="py-4 px-6 placeholder:text-gray-700 rounded-lg outline-none font-mono"
+                render={({ field }) => (
+                  <FormItem className="p-3">
+                    <FormControl>
+                      <Textarea
+                        rows={7}
+                        disabled={loading}
+                        className="placeholder:text-gray-700 rounded-lg outline-none font-mono min-h-50"
+                        placeholder={t("landing_contactus_form_msg")}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </Label>
+              <ReCAPTCHA
+                size="normal"
+                sitekey={`${process.env.NEXT_PUBLIC_RECAPTCHA}`}
+                onChange={captchaChange}
+                ref={recaptcha}
+                className="mx-auto mt-10"
+              />
 
-            <Button type="submit" className="btn-primary">
-              {loading
-                ? t("landing_contactus_form_sending")
-                : t("landing_contactus_form_sendButton")}
-            </Button>
-          </form>
+              <Button
+                disabled={loading}
+                className="w-full disabled:opacity-25"
+                type="submit"
+              >
+                {loading
+                  ? t("landing_contactus_form_sending")
+                  : t("landing_contactus_form_sendButton")}
+              </Button>
+            </form>
+          </Form>
         </motion.div>
       </div>
     </motion.section>
