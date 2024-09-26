@@ -15,17 +15,24 @@ export type StoreNotification = Prisma.StoreNotificationGetPayload<
   typeof notificationObj
 >;
 
-export async function sendMail(from: string, to: string, subject: string, message: string) {
+export async function sendMail(
+  from: string,
+  to: string,
+  subject: string,
+  message: string,
+) {
   if (
     process.env.EMAIL_SERVER_HOST === null ||
     process.env.EMAIL_SERVER_HOST === undefined
-  )
-    return;
+  ) {
+    throw new Error("check mail configuration");
+  }
+
   if (
     process.env.EMAIL_SERVER_PORT === null ||
     process.env.EMAIL_SERVER_PORT === undefined
   )
-    return;
+    throw new Error("check mail configuration");
 
   const host = process.env.EMAIL_SERVER_HOST.toString() as string;
   const port = Number(process.env.EMAIL_SERVER_PORT);
@@ -44,8 +51,6 @@ export async function sendMail(from: string, to: string, subject: string, messag
     },
   });
 
-  //const server = `smtp://${process.env.EMAIL_SERVER_USER}:${process.env.EMAIL_SERVER_PASSWORD}@${process.env.EMAIL_SERVER_HOST}:${process.env.EMAIL_SERVER_PORT}`;
-
   const sendDeamon = "support@riben.life";
   const result = await transport.sendMail({
     from: sendDeamon,
@@ -63,7 +68,6 @@ export async function sendMail(from: string, to: string, subject: string, messag
   }
 
   return true;
-
 }
 
 export async function sendStoreNotification(mailtoSend: StoreNotification) {
@@ -73,7 +77,12 @@ export async function sendStoreNotification(mailtoSend: StoreNotification) {
   if (mailtoSend.Sender.email === null) return;
   if (mailtoSend.Recipent.email === null) return;
 
-  const result = await sendMail("support@riben.life", mailtoSend.Recipent.email, mailtoSend.subject, mailtoSend.message);
+  const result = await sendMail(
+    "support@riben.life",
+    mailtoSend.Recipent.email,
+    mailtoSend.subject,
+    mailtoSend.message,
+  );
 
   if (result) {
     // update sent status
