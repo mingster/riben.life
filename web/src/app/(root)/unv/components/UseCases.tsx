@@ -1,8 +1,8 @@
-import React from "react";
-import { BigText, Caption, IconContainer, Paragraph } from "./common";
-import Link from "next/link";
 import clsx from "clsx";
 import { motion } from "framer-motion";
+import Link from "next/link";
+import React from "react";
+import { BigText, Caption, IconContainer, Paragraph } from "./common";
 
 import {
   Table,
@@ -26,7 +26,7 @@ export function UseCases({ className, ...props }: { className?: string }) {
           <Caption className="text-sky-500">使用情境</Caption>
         </div>
 
-        <div className="grid grid-cols-4 xs:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-1">
           <div>
             <BigText>客戶預約座位</BigText>
             <Caption>適用場景：高需求的特定時段（如周末、假日）</Caption>
@@ -57,7 +57,7 @@ export function UseCases({ className, ...props }: { className?: string }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 xs:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-1">
           <div>
             <BigText>店內自助點餐</BigText>
             <Caption>適用場景：各種餐飲業</Caption>
@@ -90,7 +90,7 @@ export function UseCases({ className, ...props }: { className?: string }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 xs:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-1">
           <div>
             <BigText>接單製作</BigText>
             <Caption>適用場景：廚房</Caption>

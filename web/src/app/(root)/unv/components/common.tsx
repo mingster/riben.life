@@ -1,6 +1,3 @@
-import { Button } from "@/components/ui/button";
-import clsx from "clsx";
-
 export function IconContainer({
   as: Component = "div",
   className = "",
@@ -42,14 +39,19 @@ export function Caption({ className = "", ...props }) {
 export function BigText({ className = "", ...props }) {
   return (
     <p
-      className={`mt-4 text-4xl font-extrabold tracking-tight sm:text-3xl text-slate-900 dark:text-slate-50 ${className}`}
+      className={`mt-4 text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 ${className}`}
       {...props}
     />
   );
 }
 
 export function Paragraph({ as: Component = "p", className = "", ...props }) {
-  return <div className={`mt-4 space-y-6 max-w-3xl ${className}`} {...props} />;
+  return (
+    <div
+      className={`text-sm md:text-base mt-4 space-y-6 max-w-3xl ${className}`}
+      {...props}
+    />
+  );
 }
 
 export function InlineCode({ className = "", ...props }) {

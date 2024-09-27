@@ -129,7 +129,7 @@ export function NavItems() {
           價格
         </Link>
       </li>
-
+      {/*
       <li>
         <Link
           data-to-scrollspy-id="faq"
@@ -140,6 +140,7 @@ export function NavItems() {
           常見問題
         </Link>
       </li>
+       */}
       <li>
         <Link
           data-to-scrollspy-id="aboutUs"
