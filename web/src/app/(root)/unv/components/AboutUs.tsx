@@ -7,7 +7,6 @@ import { FaDiscord, FaFacebook, FaInstagram, FaLine } from "react-icons/fa";
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type React from "react";
 import { type RefObject, useRef, useState } from "react";
 import { BigText, Caption, IconContainer, Paragraph } from "./common";
 
@@ -15,6 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
 
 import axios, { type AxiosError } from "axios";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -26,13 +26,23 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTheme } from "next-themes";
 
 export function AboutUs({ className, ...props }: { className?: string }) {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "landing");
-
   return (
     <section id="aboutUs" className="relative min-h-screen">
+      {/*background */}
+      <div className="absolute top-0 inset-x-0 bg-top bg-no-repeat beams-7 dark:hidden" />
+      <Image
+        fill={true}
+        decoding="async"
+        src={require("@/img/beams/overlay.webp").default.src}
+        alt=""
+        className="absolute z-10 bottom-0 -left-80 w-[45.0625rem] pointer-events-none dark:hidden"
+      />
+
       <motion.section
         initial="hidden"
         whileInView="show"
@@ -104,6 +114,7 @@ export const ContactForm = () => {
 
   const [captcha, setCaptcha] = useState<string>("");
   const recaptcha: RefObject<ReCAPTCHA> = useRef(null);
+  const { theme } = useTheme();
 
   const formSchema = z.object({
     name: z.string().min(1, { message: "name is required" }),
@@ -195,7 +206,7 @@ export const ContactForm = () => {
           variants={slideIn("left", "tween", 0.2, 1)}
           className="flex-[0.75] bg-black-100 rounded-2xl"
         >
-          <div className="flex gap-2 pb-10 hover:text-slate">
+          <div className="flex gap-2 pt-10 pb-10 hover:text-slate">
             {discordUrl && (
               <>
                 請直接在 Discord 討論或詢問：
@@ -275,6 +286,7 @@ export const ContactForm = () => {
               />
               <ReCAPTCHA
                 size="normal"
+                theme={theme === "dark" ? "dark" : "light"}
                 sitekey={`${process.env.NEXT_PUBLIC_RECAPTCHA}`}
                 onChange={captchaChange}
                 ref={recaptcha}

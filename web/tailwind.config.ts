@@ -18,11 +18,11 @@ module.exports = {
     'list-image-[url(carrot.png)]',
   ],
   //presets: [defaultTheme, './src/spectrum-preset.ts'],
-  darkMode: ['class'],
+  //prefix: '',
+  darkMode: 'class',
   content: [
     './src/**/*.{ts,tsx,js,jsx,mdx}',
   ],
-  prefix: '',
   theme: {
     screens: {
       //xs: "304px",
@@ -71,9 +71,9 @@ module.exports = {
       backgroundImage: ({ theme }: PluginUtils) => ({
         //backgroundImage: (theme) => ({
         squiggle: `url("${svgToDataUri(
-            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6 3" enable-background="new 0 0 6 3" width="6" height="3" fill="${theme(
-                'colors.yellow.400'
-            )}"><polygon points="5.5,0 2.5,3 1.1,3 4.1,0"/><polygon points="4,0 6,2 6,0.6 5.4,0"/><polygon points="0,2 1,3 2.4,3 0,0.6"/></svg>`
+          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6 3" enable-background="new 0 0 6 3" width="6" height="3" fill="${theme(
+            'colors.yellow.400'
+          )}"><polygon points="5.5,0 2.5,3 1.1,3 4.1,0"/><polygon points="4,0 6,2 6,0.6 5.4,0"/><polygon points="0,2 1,3 2.4,3 0,0.6"/></svg>`
         )}")`,
       }),
       colors: {
@@ -104,8 +104,8 @@ module.exports = {
           foreground: 'hsl(var(--muted-foreground))',
         },
         descr: {
-            DEFAULT: 'hsl(var(--descr))',
-            foreground: 'hsl(var(--descr-foreground))',
+          DEFAULT: 'hsl(var(--descr))',
+          foreground: 'hsl(var(--descr-foreground))',
         },
         accent: {
           DEFAULT: 'hsl(var(--accent))',
@@ -170,7 +170,7 @@ module.exports = {
         ],
         source: ['Source Sans Pro', ...defaultTheme.fontFamily.sans],
         'ubuntu-mono': ['Ubuntu Mono', ...defaultTheme.fontFamily.mono],
-        display: ['"Noto Sans TC", sans-serif','Oswald', ...defaultTheme.fontFamily.mono],
+        display: ['"Noto Sans TC", sans-serif', 'Oswald', ...defaultTheme.fontFamily.mono],
       },
       fontSize: {
         'title-xxl': ['44px', '55px'],
@@ -381,8 +381,8 @@ module.exports = {
       },
       keyframes: {
         'flash-code': {
-            '0%': { backgroundColor: 'rgb(125 211 252 / 0.1)' },
-            '100%': { backgroundColor: 'transparent' },
+          '0%': { backgroundColor: 'rgb(125 211 252 / 0.1)' },
+          '100%': { backgroundColor: 'transparent' },
         },
         'accordion-down': {
           from: { height: '0' },
@@ -466,8 +466,8 @@ module.exports = {
     require('tailwindcss-animate'), require('tailwindcss-react-aria-components'),
     function ({ addVariant }: PluginAPI) {
       addVariant(
-          'supports-backdrop-blur',
-          '@supports (backdrop-filter: blur(0)) or (-webkit-backdrop-filter: blur(0))'
+        'supports-backdrop-blur',
+        '@supports (backdrop-filter: blur(0)) or (-webkit-backdrop-filter: blur(0))'
       )
       addVariant('supports-scrollbars', '@supports selector(::-webkit-scrollbar)')
       addVariant('children', '& > *')
@@ -477,72 +477,72 @@ module.exports = {
       addVariant('demo-dark', '.demo-dark &')
     },
     function ({ matchUtilities, theme }: PluginAPI) {
-        matchUtilities(
-            {
-                'bg-grid': (value) => ({
-                    backgroundImage: `url("${svgToDataUri(
-                        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="${value}"><path d="M0 .5H31.5V32"/></svg>`
-                    )}")`,
-                }),
-            },
-            { values: flattenColorPalette(theme('backgroundColor')), type: 'color' }
-        )
+      matchUtilities(
+        {
+          'bg-grid': (value) => ({
+            backgroundImage: `url("${svgToDataUri(
+              `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none" stroke="${value}"><path d="M0 .5H31.5V32"/></svg>`
+            )}")`,
+          }),
+        },
+        { values: flattenColorPalette(theme('backgroundColor')), type: 'color' }
+      )
 
-        matchUtilities(
-            {
-                highlight: (value) => ({ boxShadow: `inset 0 1px 0 0 ${value}` }),
-            },
-            { values: flattenColorPalette(theme('backgroundColor')), type: 'color' }
-        )
+      matchUtilities(
+        {
+          highlight: (value) => ({ boxShadow: `inset 0 1px 0 0 ${value}` }),
+        },
+        { values: flattenColorPalette(theme('backgroundColor')), type: 'color' }
+      )
     },
     function ({ addUtilities, theme }: PluginAPI) {
-        let backgroundSize = '7.07px 7.07px'
-        let backgroundImage = (color: any) =>
-            `linear-gradient(135deg, ${color} 10%, transparent 10%, transparent 50%, ${color} 50%, ${color} 60%, transparent 60%, transparent 100%)`
+      let backgroundSize = '7.07px 7.07px'
+      let backgroundImage = (color: any) =>
+        `linear-gradient(135deg, ${color} 10%, transparent 10%, transparent 50%, ${color} 50%, ${color} 60%, transparent 60%, transparent 100%)`
 
-        let backgroundColors = theme('backgroundColor');
-        if (backgroundColors) {
-            let colors = Object.entries(backgroundColors).filter(
-                ([, value]) => typeof value === 'object' && value[400] && value[500]
-            )
-            addUtilities(
-                Object.fromEntries(
-                    colors.map(([name, colors]) => {
-                        let backgroundColor = colors[400] + '1a' // 10% opacity
-                        let stripeColor = colors[500] + '80' // 50% opacity
-
-                        return [
-                            `.bg-stripes-${name}`,
-                            {
-                                backgroundColor,
-                                backgroundImage: backgroundImage(stripeColor),
-                                backgroundSize,
-                            },
-                        ]
-                    })
-                )
-            )
-        }
-
-        /*
-        let colors = Object.entries(theme('backgroundColor')).filter(
-            ([, value]) => typeof value === 'object' && value[400] && value[500]
+      let backgroundColors = theme('backgroundColor');
+      if (backgroundColors) {
+        let colors = Object.entries(backgroundColors).filter(
+          ([, value]) => typeof value === 'object' && value[400] && value[500]
         )
-        */
+        addUtilities(
+          Object.fromEntries(
+            colors.map(([name, colors]) => {
+              let backgroundColor = colors[400] + '1a' // 10% opacity
+              let stripeColor = colors[500] + '80' // 50% opacity
+
+              return [
+                `.bg-stripes-${name}`,
+                {
+                  backgroundColor,
+                  backgroundImage: backgroundImage(stripeColor),
+                  backgroundSize,
+                },
+              ]
+            })
+          )
+        )
+      }
+
+      /*
+      let colors = Object.entries(theme('backgroundColor')).filter(
+          ([, value]) => typeof value === 'object' && value[400] && value[500]
+      )
+      */
 
 
-        addUtilities({
-            '.bg-stripes-white': {
-                backgroundImage: backgroundImage('rgba(255 255 255 / 0.75)'),
-                backgroundSize,
-            },
-        })
+      addUtilities({
+        '.bg-stripes-white': {
+          backgroundImage: backgroundImage('rgba(255 255 255 / 0.75)'),
+          backgroundSize,
+        },
+      })
 
-        addUtilities({
-            '.ligatures-none': {
-                fontVariantLigatures: 'none',
-            },
-        })
+      addUtilities({
+        '.ligatures-none': {
+          fontVariantLigatures: 'none',
+        },
+      })
     },
   ],
 }; //satisfies Config

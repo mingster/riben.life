@@ -4,7 +4,7 @@ html {
   height: 100%;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   scroll-behavior: smooth;
-  scroll-padding-top: 150px; /* height of your navbar */
+  scroll-padding-top: 65px; /* height of your navbar */
 }
 
 body {
@@ -34,11 +34,29 @@ abbr[title] {
 .beams {
   background-image: url("../../img/beams/hero@75.jpg");
   background-size: 150rem;
+  background-blend-mode: multiply;
 }
 
 [data-theme="dark"] .beams {
   background-image: url("../../img/beams/hero-dark@90.jpg");
   background-size: 86.125rem;
+  background-blend-mode: overlay;
+}
+
+.beams-0 {
+  background-image: url("../../img/beams/0.jpg");
+  background-size: 122.375rem 100%;
+  height: 32.9375rem;
+  background-blend-mode: multiply;
+  opacity: 0.3;
+}
+
+.beams-7 {
+  background-image: url("../../img/beams/7.jpg");
+  background-size: 141.25rem 100%;
+  height: 33.5rem;
+  background-blend-mode: multiply;
+  opacity: 0.3;
 }
 
 .hash-span {

@@ -1,8 +1,11 @@
 import useColorMode from "@/hooks/useColorMode";
 import { Moon, SunMoon } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 const ThemeToggler = () => {
+  const [mounted, setMounted] = useState(false);
+
   const [colorMode, setColorMode] = useColorMode();
   const { setTheme } = useTheme();
 
@@ -12,6 +15,16 @@ const ThemeToggler = () => {
     //next theme
     setTheme(theme);
   }
+
+  // useEffect only runs on the client, so now we can safely show the UI
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <label
       className={`relative m-0 block h-7.5 w-14 rounded-full ${

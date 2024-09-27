@@ -170,7 +170,8 @@ export function Features({ className, ...props }: { className?: string }) {
           }}
         />
       </div>
-      <div className="relative max-w-5xl pt-2 mx-auto">
+
+      <div className="relative px-4 pt-5 mx-auto max-w-7xl sm:px-6 md:px-8">
         <div className="flex gap-2">
           <IconContainer
             className="dark:bg-sky-500 dark:highlight-white/20"

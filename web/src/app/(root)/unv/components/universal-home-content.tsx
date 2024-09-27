@@ -77,10 +77,10 @@ export const UniversalHomeContent = () => {
           <UseCases />
           <Features />
           <Cost />
-          <FAQ />
           <AboutUs />
 
           {/*
+          <FAQ />
           <Testimonials />
           <StateVariants />
           <ComponentDriven />

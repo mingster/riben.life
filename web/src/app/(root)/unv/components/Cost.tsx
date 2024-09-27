@@ -7,8 +7,39 @@ import { slideIn, staggerContainer, fadeIn, textVariant } from "@/lib/motion";
 
 export function Cost({ className, ...props }: { className?: string }) {
   return (
-    <section id="cost" className="relative pb-20 h-screen">
-      <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
+    <section id="cost" className="relative h-screen">
+      {/*background */}
+      <div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">
+        <div className="w-[108rem] flex-none flex justify-end">
+          <picture>
+            <source
+              srcSet={require("@/img/beams/docs@30.avif").default.src}
+              type="image/avif"
+            />
+            <img
+              src={require("@/img/beams/docs@tinypng.png").default.src}
+              alt=""
+              className="w-[71.75rem] flex-none max-w-none dark:hidden"
+              decoding="async"
+            />
+          </picture>
+          <picture>
+            <source
+              srcSet={require("@/img/beams/docs-dark@30.avif").default.src}
+              type="image/avif"
+            />
+            <img
+              src={require("@/img/beams/docs-dark@tinypng.png").default.src}
+              alt=""
+              className="w-[90rem] flex-none max-w-none hidden dark:block"
+              decoding="async"
+            />
+          </picture>
+        </div>
+      </div>
+
+      {/* content */}
+      <div className="pt-10 px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
         <div className="flex gap-2">
           <IconContainer
             className="dark:bg-sky-500 dark:highlight-white/20"
