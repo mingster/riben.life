@@ -1,9 +1,6 @@
-import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
-import { mongoClient, sqlClient } from "@/lib/prismadb";
+
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
-
 import { redirect } from "next/navigation";
 
 export const checkAdminAccess = async () => {
@@ -19,7 +16,8 @@ export const checkAdminAccess = async () => {
     redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
   }
 
-  if (session.user.role !== "ADMIN") {
+  // TODO: tmp code for vercel deployment
+  if (session.user.role !== "ADMIN" && session.user.email !== "mingster.tsai@gmail.com") {
     redirect("/error/?code=500&message=Unauthorized");
   }
 };

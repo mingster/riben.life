@@ -125,7 +125,7 @@ export const StoreHomeContent: React.FC<props> = ({
     return t("store_closed");
   }
 
-  // http://localhost:3000/d762607b-4d5a-4b70-bac4-67d378c0f24d/6861593b-e3f3-4063-8da8-7298146b10c8#9363d6a9-5803-41b2-bcac-3102365b7f95
+  // http://localhost:3000/4574496e-9759-4d9c-9258-818501418747/dfc853b4-47f5-400c-a2fb-f70f045d65a0
   return (
     <section className="relative w-full justify-center content-center items-center">
       <div className="pl-1 pr-1">

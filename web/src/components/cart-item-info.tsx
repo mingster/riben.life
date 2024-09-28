@@ -191,11 +191,9 @@ const CartItemInfo: React.FC<cartItemProps> = ({
               )}
 
               {showSubtotal && (
-                <>
-                  <Currency
-                    value={Number(currentItem.quantity * currentItem.price)}
-                  />
-                </>
+                <Currency
+                  value={Number(currentItem.quantity * currentItem.price)}
+                />
               )}
             </div>
           </div>

@@ -15,7 +15,7 @@ export async function GetSession() {
 
 // if not signed in, redirect to sign in page
 export async function RequiresSignIn() {
-  const session = await GetSession();
+  const session = (await auth()) as Session;
 
   if (!session) {
     if (!session) {
