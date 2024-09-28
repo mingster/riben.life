@@ -111,13 +111,14 @@ export function StoreAdminMenu({ isOpen, title }: MenuProps) {
                         label={label}
                         active={active}
                         submenus={submenus}
-                        isOpen={isOpen}
+                        isOpen={true} // force to open submenus
                       />
                     </div>
                   ),
               )}
             </li>
           ))}
+          {/* sign out button */}
           <li className="flex w-full grow items-end">
             <TooltipProvider disableHoverableContent>
               <Tooltip delayDuration={100}>

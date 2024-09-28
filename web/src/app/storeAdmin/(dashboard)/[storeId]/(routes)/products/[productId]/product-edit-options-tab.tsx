@@ -297,6 +297,7 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
       return <div className="pl-3">{val}</div>;
     },
   },
+  /*
   {
     accessorKey: "minQuantity",
     header: ({ column }) => {
@@ -319,7 +320,7 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
       );
     },
   },
-
+*/
   {
     accessorKey: "productOption",
     header: ({ column }) => {
@@ -334,7 +335,7 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
         return (
           <div>
             {val.ProductOptionSelections.map((item) => (
-              <div key={item.id} className="pl-0">
+              <div key={item.id} className="pl-0 text-nowrap">
                 {`${item.name}`}{" "}
                 {Number(item.price) !== 0 && `:(${item.price})`}
                 {item.isDefault === true && `:(${t("Default")})`}
@@ -347,7 +348,7 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
         return (
           <div>
             {val.StoreProductOptionSelectionsTemplate.map((item) => (
-              <div key={item.id} className="pl-0">
+              <div key={item.id} className="pl-0 text-nowrap">
                 {`${item.name}`}{" "}
                 {Number(item.price) !== 0 && `:(${item.price})`}
                 {item.isDefault === true && `:(${t("Default")})`}
@@ -481,7 +482,7 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
         return (
           <div>
             {val.ProductOptionSelections.map((item) => (
-              <div key={item.id} className="pl-0">
+              <div key={item.id} className="pl-0 text-nowrap">
                 {`${item.name}`}{" "}
                 {Number(item.price) !== 0 && `:(${item.price})`}
                 {item.isDefault === true && `:(${t("Default")})`}
@@ -494,7 +495,7 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
         return (
           <div>
             {val.StoreProductOptionSelectionsTemplate.map((item) => (
-              <div key={item.id} className="pl-0">
+              <div key={item.id} className="pl-0 text-nowrap">
                 {`${item.name}`}{" "}
                 {Number(item.price) !== 0 && `:(${item.price})`}
                 {item.isDefault === true && `:(${t("Default")})`}

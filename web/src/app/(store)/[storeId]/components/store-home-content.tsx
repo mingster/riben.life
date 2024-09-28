@@ -142,7 +142,7 @@ export const StoreHomeContent: React.FC<props> = ({
             "外帶"
           )}
         </div>
-        {mongoData.orderNoteToCustomer && (
+        {mongoData?.orderNoteToCustomer && (
           <div className="pl-5 pb-5">
             <pre>{mongoData.orderNoteToCustomer}</pre>
           </div>

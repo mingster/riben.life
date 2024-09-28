@@ -3,18 +3,12 @@
         "id": "en-US",
         "name": "English",
         "lng": "en",
-        "currency": "USD"
+        "defaultCurrencyId": "USD"
     },
     {
         "id": "zh-TW",
         "name": "正體中文",
         "lng": "tw",
-        "currency": "TWD"
-    },
-    {
-        "id": "zh-CN",
-        "name": "简体中文",
-        "lng": "cn",
-        "currency": "CNY"
+        "defaultCurrencyId": "TWD"
     }
 ]

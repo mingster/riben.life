@@ -194,7 +194,7 @@ const columns: ColumnDef<ProductOptionTemplateColumn>[] = [
         return (
           <div>
             {val.StoreProductOptionSelectionsTemplate.map((item) => (
-              <div key={item.id} className="pl-0">
+              <div key={item.id} className="pl-0 text-nowrap">
                 {`${item.name}`}{" "}
                 {Number(item.price) !== 0 && `:(${item.price})`}
                 {item.isDefault === true && `:(${t("Default")})`}
