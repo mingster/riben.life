@@ -42,6 +42,7 @@ import type {
 } from "@/types";
 import type { Address, PaymentMethod, ShippingMethod } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
+import { useSearchParams } from 'next/navigation'
 
 type props = {
   store: Store;
@@ -52,6 +53,11 @@ type props = {
 // TODO: implement payment method & shipping method
 export const Checkout = ({ store, user }: props) => {
   const cart = useCart();
+  const searchParams = useSearchParams()
+
+  // see if there is a tableId in querystring
+  const tableId = searchParams.get('tableId');
+  //console.log("tableId", tableId);
 
   const [inCheckoutSteps, setInCheckoutSteps] = useState(false);
 
@@ -246,18 +252,20 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 
         <CardFooter>
           <div className="relative w-full">
+            {user === null && <AskUserToSignIn />}
+            <div className="pr-5">
+              {/*備註 */}
+              <div className="sm:text-xs">{t("checkout_denote")}</div>
+              <Input
+                type="text"
+                name="orderNote"
+                value={states.orderNote}
+                onChange={handleOrderDataChange}
+              />
+            </div>
+
+            {/*
             <div className="flex justify-between">
-              <div className="flex-none w-1/3 pr-5">
-                {/*備註 */}
-                <div className="sm:text-xs">{t("checkout_denote")}</div>
-                <Input
-                  type="text"
-                  name="orderNote"
-                  value={states.orderNote}
-                  onChange={handleOrderDataChange}
-                />
-                {user === null && <AskUserToSignIn />}
-              </div>
               <div className="flex-auto w-1/3 pr-5">
                 <div className="sm:text-xs">{t("checkout_shipping_label")}</div>
                 <div className="flex">
@@ -275,13 +283,14 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
                   />
                 </div>
               </div>
-              <div className="justify-end place-self-end flex">
+                            <div className="justify-end place-self-end flex">
                 <div className="sm:text-xs">{t("checkout_shipping_cost")}</div>
                 {shipMethod && (
                   <Currency value={Number(shipMethod.basic_price)} />
                 )}
               </div>
-            </div>
+              </div>
+              */}
 
             <div className="flex justify-end place-self-end mt-2">
               <div className="sm:text-xs">{t("checkout_orderTotal")}</div>

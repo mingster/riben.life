@@ -16,9 +16,14 @@ export interface props {
   store: Store;
 }
 
+// store footer, show fixed sticky checkout button.
+//
 export const StoreFooter: React.FC<props> = ({ store, visible }) => {
   const router = useRouter();
-  const params = useParams<{ storeId: string }>();
+
+  const params = useParams<{ storeId: string, tableId: string }>();
+  //console.log("storeId", params.storeId, "tableId", params.tableId);
+
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
 
@@ -26,7 +31,10 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
   const [numInCart, setNumInCart] = useState(cart.totalItems);
 
   function onCheckout() {
-    router.push(`/${params.storeId}/checkout`);
+    params.tableId ?
+      router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`) :
+      router.push(`/${params.storeId}/checkout`)
+    //router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`);
   }
 
   useEffect(() => {
@@ -53,7 +61,7 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
   //w-full shadow backdrop-blur dark:shadow-secondary mx-4 flex h-14 items-center justify-center
   //hidden sm:block
   return (
-    <footer className="sticky bottom-0 w-full shadow backdrop-blur dark:shadow-secondary p-2 bg-body opacity-90">
+    <footer className="sticky bottom-0 w-full shadow backdrop-blur dark:shadow-secondary p-5 bg-body opacity-90">
       <div className="rounded xl:container xl:mx-auto">
         <div className="flex w-full justify-center">
           <strong className="relative w-1/2 inline-flex items-center rounded">
@@ -68,7 +76,7 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
               className="w-full hover:opacity-50"
             >
               <div className="flex w-full items-center justify-between">
-                <div className="grow">{t("cart_dropDown_placeOrder")}</div>
+                <div className="grow font-bold text-xl">{t("cart_dropDown_confirm")}</div>
 
                 <div className="self-end">
                   <Currency value={cart.cartTotal} />

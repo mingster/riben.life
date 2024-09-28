@@ -21,7 +21,10 @@ import Currency from "./currency";
 
 export const DropdownCart = () => {
   const router = useRouter();
-  const params = useParams<{ storeId: string }>();
+
+  const params = useParams<{ storeId: string, tableId: string }>();
+  //console.log("storeId", params.storeId, "tableId", params.tableId);
+
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
   const [isOpen, setIsOpen] = useState(false);
@@ -34,7 +37,10 @@ export const DropdownCart = () => {
     //close();
     setIsOpen(false);
 
-    router.push(`/${params.storeId}/checkout`);
+    params.tableId ?
+      router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`) :
+      router.push(`/${params.storeId}/checkout`)
+    //router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`);
   }
 
   function onCart() {
