@@ -39,6 +39,7 @@ import Currency from "../../../../components/currency";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { z } from "zod";
+import { useParams } from "next/navigation";
 
 type item_props = {
   id: string;
@@ -57,6 +58,11 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
   const { toast } = useToast();
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
+
+  //const params = useParams();
+  //const {storeId, tableId} = params;
+  const params = useParams<{ storeId: string, tableId: string }>();
+  //  console.log("storeId", params.storeId, "tableId", params.tableId);
 
   const productOptions = product.ProductOptions as ProductOption[];
 
@@ -313,6 +319,8 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
             price: unitPrice,
             quantity: quantity,
             itemOptions: itemOptions,
+            storeId: params.storeId,
+            tableId: params.tableId,
           },
           quantity,
         );

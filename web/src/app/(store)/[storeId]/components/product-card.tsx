@@ -20,6 +20,7 @@ import { CalendarPlus2 } from "lucide-react";
 import Currency from "../../../../components/currency";
 
 import { ProductOptionDialog } from "./product-option-dialog";
+import { useParams } from "next/navigation";
 
 interface ProductCardProps {
   //product: Partial<Product>;
@@ -39,6 +40,12 @@ export function ProductCard({
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
 
+  //const params = useParams();
+  //const {storeId, tableId} = params;
+  const params = useParams<{ storeId: string, tableId: string }>();
+  //  console.log("storeId", params.storeId, "tableId", params.tableId);
+
+
   const handleAddToCart = (product: Product) => {
     const item = cart.getItem(product.id);
     if (item) {
@@ -50,6 +57,8 @@ export function ProductCard({
           name: product.name,
           price: Number(product.price),
           quantity: 1,
+          storeId: params.storeId,
+          tableId: params.tableId,
           //...product,
           //cartStatus: CartProductStatus.InProgress,
           //userData: "",

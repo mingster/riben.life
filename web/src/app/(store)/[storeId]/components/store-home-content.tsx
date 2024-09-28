@@ -14,6 +14,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { ProductStatus } from "@/types/enum";
 import type { StoreSettings } from "@prisma-mongo/prisma/client";
 import ScrollSpy from "react-ui-scrollspy";
+import Link from "next/link";
 
 const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(
   {
@@ -107,6 +108,7 @@ export const StoreHomeContent: React.FC<props> = ({
     //console.log(`isOnHoliday: ${businessHours.isOnHoliday(new Date())}`);
   }
 
+  // scroll spy nav click
   const onNavlinkClick = (
     e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
   ) => {
@@ -123,25 +125,30 @@ export const StoreHomeContent: React.FC<props> = ({
     return t("store_closed");
   }
 
+  // http://localhost:3000/4574496e-9759-4d9c-9258-818501418747/dfc853b4-47f5-400c-a2fb-f70f045d65a0
   return (
     <section className="relative w-full justify-center content-center items-center">
       <div className="pl-1 pr-1">
-        {!storeData.isOpen && <h2>{t("store_closed")}</h2>}
-        <h3 className="text-2xl">
+        {!storeData.isOpen && <h2 className="text-2xl">{t("store_closed")}</h2>}
+        <div className="pl-5 pb-5">
           {tableData ? (
-            <>
-              {t("storeTables")}: {tableData.tableName}
-            </>
+            <div className="">
+              <div className="flex gap-2">消費金額 $919 <div className="text-sm"><Link href='#'>點餐紀錄</Link></div></div>
+              <div>{t("storeTables")}: {tableData.tableName}</div>
+              <div>入座時間：</div>
+              <div>2大人 0小孩</div>
+            </div>
           ) : (
             "外帶"
           )}
-        </h3>
+        </div>
         {mongoData.orderNoteToCustomer && (
-          <div>
+          <div className="pl-5 pb-5">
             <pre>{mongoData.orderNoteToCustomer}</pre>
           </div>
         )}
 
+        {/* menu */}
         <div className="grid grid-cols-[20%_80%] gap-2">
           <div className="self-start sticky top-24">
             {/* 20% sidebar */}
@@ -196,6 +203,7 @@ export const StoreHomeContent: React.FC<props> = ({
           </div>
         </div>
 
+        {/* scroll up to top */}
         <div className="relative flex w-full justify-center align-top">
           <button
             className="pt-0 pl-2"

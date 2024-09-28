@@ -77,7 +77,7 @@ export function SheetMenu({ store }: props) {
             <DropdownCart />
           </div>{" "}
         </div>
-        <div className="pt-1 flex flex-1 items-center justify-center space-x-1 w-full">
+        <div className="pt-1 flex flex-1 items-center justify-center space-x-1 w-full font-mono text-sm">
           <Link href="/unv">
             <Button variant="default">{t("system_provider")}</Button>
           </Link>
