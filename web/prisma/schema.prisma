@@ -35,6 +35,7 @@ model User {
   NotificationTo    StoreNotification[] @relation("NotificationTo")
   Store             Store[]
   Addresses         Address[]
+  Rsvp              Rsvp[]
 
   @@index([username])
   @@index([email])
@@ -283,11 +284,31 @@ model Subscription {
   updatedAt DateTime @updatedAt
 }
 
-
 model Rsvp {
-  id           String  @id @default(uuid())
+  id         String   @id @default(uuid())
+  storeId    String
+  userId     String?
+  orderId    String?
+  tableId    String?
+  numOfAdult Int      @default(2)
+  numOfChild Int      @default(0)
+  rsvpTime   DateTime
+  arriveTime DateTime
+  status     Int      @default(0)
+  message    String?
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  Store Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User  User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Order StoreOrder?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Table StoreTables? @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([userId])
+  @@index([orderId])
+  @@index([tableId])
 }
 
 model Store {
@@ -306,7 +327,7 @@ model Store {
   acceptAnonymousOrder Boolean @default(true)
   acceptReservation    Boolean @default(true)
 
-  requireSeating Boolean @default(false)  //需要帶位or not
+  requireSeating Boolean @default(false) //需要帶位or not
 
   useBusinessHours Boolean @default(true)
 
@@ -333,6 +354,7 @@ model Store {
   StorePaymentMethods        StorePaymentMethodMapping[]
   StoreTables                StoreTables[]
   StoreProductOptionTemplate StoreProductOptionTemplate[]
+  Rsvp                       Rsvp[]
 
   @@index([ownerId])
   @@index([name])
@@ -344,7 +366,8 @@ model StoreTables {
   tableName String
   capacity  Int    @default(2)
 
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Rsvp  Rsvp[]
 
   @@unique([tableName])
   @@index([storeId])
@@ -576,6 +599,7 @@ model StoreOrder {
   Shipment       Shipment[]
 
   PaymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  Rsvp          Rsvp[]
 
   @@index([userId])
   @@index([paymentMethodId])
