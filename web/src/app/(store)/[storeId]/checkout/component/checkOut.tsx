@@ -3,7 +3,7 @@
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { type Item, useCart } from "@/hooks/use-cart";
 
@@ -83,12 +83,16 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
   const params = useParams();
 
   const cart = useCart();
+  const [numInCart, setNumInCart] = useState(cart.totalItems);
+
+  useEffect(() => {
+    setNumInCart(cart.totalItems);
+  }, [cart.totalItems]);
+
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
 
   const [isLoading, setIsLoading] = useState(false);
-
-  const [totalPrice, setTotalPrice] = useState(cart.cartTotal);
   const [states, setStates] = useState({
     orderId: "",
     orderNote: "",
@@ -103,19 +107,22 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 
   const allpaymentMethods =
     store.StorePaymentMethods as StorePaymentMethodMapping[];
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
-    allpaymentMethods[0].PaymentMethod,
+
+  // default to cash if available
+  let defaultPaymentMethod = allpaymentMethods.find(
+    (o: StorePaymentMethodMapping) => o.PaymentMethod.name === "cash",
   );
+
+  if (!defaultPaymentMethod) {
+    defaultPaymentMethod = allpaymentMethods[0];
+  }
+
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
+    defaultPaymentMethod.PaymentMethod,
+  );
+  console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
+
   //const [selectedPaymentType, setSelectedPaymentType] = useState('creditCard');
-
-  /*
-  useEffect(() => {
-    if (shipMethod) {
-      setTotalPrice(Number(cart.cartTotal) + Number(shipMethod.basic_price));
-    }
-  }, [cart.cartTotal, shipMethod]);
-  */
-
   //console.log('selected shipMethod: ' + shipMethod);
   //console.log('CheckutSteps: ' + JSON.stringify(shipMethods));
 
@@ -175,7 +182,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 
     const body = JSON.stringify({
       userId: user?.id, //user is optional
-      total: totalPrice,
+      total: cart.cartTotal,
       currency: store.defaultCurrency,
       productIds: productIds,
       quantities: quantities,
@@ -245,7 +252,6 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
                     showQuantity={true}
                     showVarity={true}
                     showSubtotal={true}
-                    className=""
                   />
                 </div>
               </div>
@@ -296,7 +302,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 
             <div className="flex justify-end place-self-end mt-2">
               <div className="sm:text-xs">{t("checkout_orderTotal")}</div>
-              <Currency value={totalPrice} />
+              <Currency value={cart.cartTotal} />
             </div>
           </div>
         </CardFooter>

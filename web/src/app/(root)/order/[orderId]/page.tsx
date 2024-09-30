@@ -10,6 +10,7 @@ import type {
   StoreShipMethodMapping,
 } from "@/types";
 import type { PaymentMethod, ShippingMethod } from "@prisma/client";
+import { transformDecimalsToNumbers } from "@/lib/utils";
 
 interface pageProps {
   params: {
@@ -35,14 +36,16 @@ const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
     },
   })) as Store;
 
+  transformDecimalsToNumbers(store);
+  
   if (!store) {
     redirect("/unv");
   }
-  const user = await getUser();
+
 
   return (
     <Suspense fallback={<Loader />}>
-      <Container>order</Container>
+      <Container>購物明細</Container>
     </Suspense>
   );
 };

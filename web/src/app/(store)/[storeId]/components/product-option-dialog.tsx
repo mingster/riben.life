@@ -317,7 +317,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
 
         // console.log("form data", JSON.stringify(data));
         for (const [key, value] of Object.entries(data)) {
-          console.log(`${key}: ${value} ${typeof value}`);
+          //console.log(`${key}: ${value} ${typeof value}`);
 
           cartId += `${key}=${value}&`;
 
@@ -329,7 +329,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
             }
           } else if (Array.isArray(value)) {
             value.forEach((selection: string, index: number) => {
-              console.log(`selection: [${index}] ${selection}`);
+              //console.log(`selection: [${index}] ${selection}`);
               const itemOption = getCartItemOption(selection);
               if (itemOption) {
                 itemOptions.push(itemOption);

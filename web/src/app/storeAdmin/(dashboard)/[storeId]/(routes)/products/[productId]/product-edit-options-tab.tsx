@@ -28,13 +28,13 @@ import { AddProductOptionDialog } from "./product-option-dialog";
 
 interface editProps {
   initialData:
-    | (Product & {
-        //images: ProductImage[];
-        //productPrices: ProductPrice[];
-        //ProductImages: ProductImages[] | null;
-        //ProductAttribute: ProductAttribute | null;
-      })
-    | null;
+  | (Product & {
+    //images: ProductImage[];
+    //productPrices: ProductPrice[];
+    //ProductImages: ProductImages[] | null;
+    //ProductAttribute: ProductAttribute | null;
+  })
+  | null;
   storeOptionTemplates: StoreProductOptionTemplate[] | [];
 
   action: string;
@@ -122,6 +122,7 @@ export const DisplayStoreOptionTemplates = ({
       allowQuantity: item.allowQuantity,
       minQuantity: item.minQuantity,
       maxQuantity: item.maxQuantity,
+      sortOrder: item.sortOrder,
       productOption: item,
     }));
 
@@ -614,7 +615,7 @@ export const DisplayOptions = ({
       allowQuantity: item.allowQuantity,
       minQuantity: item.minQuantity,
       maxQuantity: item.maxQuantity,
-      sortOrder:item.sortOrder,
+      sortOrder: item.sortOrder,
       productOption: item,
     }),
   );
