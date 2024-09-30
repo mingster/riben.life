@@ -10,7 +10,7 @@ import { Suspense } from "react";
 import type { TicketColumn } from "./components/columns";
 import { TicketClient } from "./components/ticket-client";
 import type { Session } from "next-auth";
-import { GetSession, RequiresSignIn } from "@/utils/auth-utils";
+import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 
 interface pageProps {
   params: {

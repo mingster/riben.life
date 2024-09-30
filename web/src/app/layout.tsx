@@ -11,7 +11,7 @@ import NextThemeProvider from "@/providers/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CartProvider } from "@/hooks/use-cart";
-import { GetSession } from "@/utils/auth-utils";
+import { GetSession } from "@/lib/auth/utils";
 import type { Metadata } from "next";
 
 const title = "riben.life 利便生活";

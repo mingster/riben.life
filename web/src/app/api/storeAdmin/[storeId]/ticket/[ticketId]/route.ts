@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../../api_helper";
-import { IsSignInResponse } from "@/utils/auth-utils";
+import { IsSignInResponse } from "@/lib/auth/utils";
 
 ///!SECTION add reply to this ticket from store staff.
 export async function PATCH(

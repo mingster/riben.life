@@ -1,10 +1,10 @@
 import { LayoutGroup, motion, useAnimation } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
-import { fit } from "@/utils/fit";
+import { fit } from "@/lib/fit";
 //import debounce from "debounce";
 import { useMedia } from "@/hooks/useMedia";
-import { wait } from "@/utils/wait";
+import { wait } from "@/lib/wait";
 
 import colors from "tailwindcss/colors";
 
