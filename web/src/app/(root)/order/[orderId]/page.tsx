@@ -11,6 +11,8 @@ import type {
 } from "@/types";
 import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 import { transformDecimalsToNumbers } from "@/lib/utils";
+import { DisplayOrder } from "@/components/order-display";
+import type { StoreOrder } from "@/types";
 
 interface pageProps {
   params: {
@@ -37,15 +39,36 @@ const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
   })) as Store;
 
   transformDecimalsToNumbers(store);
-  
+
   if (!store) {
     redirect("/unv");
   }
 
+  const order = (await sqlClient.storeOrder.findUnique({
+    where: {
+      id: params.orderId,
+    },
+    include: {
+      OrderNotes: true,
+      OrderItemView: true,
+      User: true,
+      ShippingMethod: true,
+      PaymentMethod: true,
+    },
+  }));
+
+  if (!order) {
+    return "no order found";
+  }
+
+  transformDecimalsToNumbers(order);
 
   return (
     <Suspense fallback={<Loader />}>
-      <Container>購物明細</Container>
+      <Container>
+        <h1>購物明細</h1>
+        <DisplayOrder order={order} />
+      </Container>
     </Suspense>
   );
 };

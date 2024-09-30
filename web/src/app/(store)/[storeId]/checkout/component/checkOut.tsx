@@ -314,6 +314,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
           <CardTitle>{t("checkout_paymentMethod")}</CardTitle>
         </CardHeader>
         <CardContent>
+        {paymentMethod.name}
           {/*
           <Tabs defaultValue={paymentMethod.id} onValueChange={handleTabChange}>
             <TabsList>

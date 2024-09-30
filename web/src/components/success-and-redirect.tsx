@@ -1,16 +1,14 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useTimer } from "react-timer-hook";
-
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import { OrderStatus } from "@/types/enum";
-import { useSession } from "next-auth/react";
 
 type paymentProps = {
   orderId: string;
 };
 
+// show order success prompt and then redirect the customer to view order page (購物明細)
 export const SuccessAndRedirect: React.FC<paymentProps> = ({ orderId }) => {
   const seconds = 3;
   const timeStamp = new Date(Date.now() + seconds * 1000);
@@ -23,7 +21,12 @@ function MyTimer({
   orderId,
 }: { expiryTimestamp: Date; orderId: string }) {
   const router = useRouter();
-  const session = useSession();
+  //const session = useSession();
+
+
+  if (!orderId) {
+    return "no order";
+  }
 
   const {
     seconds,
@@ -40,13 +43,16 @@ function MyTimer({
     onExpire: () => {
       console.warn("onExpire called");
 
+      router.push(`/order/${orderId}`);
+
+      /*
       if (!session.data?.user) {
         router.push(`/order/${orderId}`);
       } else {
         router.push(
           `/account/?ordertab=${OrderStatus[OrderStatus.Processing]}`,
         );
-      }
+      }*/
     },
   });
 
