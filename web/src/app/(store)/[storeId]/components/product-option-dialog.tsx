@@ -72,9 +72,8 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
     productOptions.forEach((option: ProductOption, index) => {
       const fieldName = `option${index}`;
 
-      if (option.isMultiple) {
+      if (option.isMultiple) {  //checkboxes
         if (option.isRequired) {
-          //required checkboxes
           schemaFields[fieldName] = z
             .array(z.string())
             .min(
@@ -88,12 +87,42 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
             .refine((value) => value.some((item) => item), {
               message: "You have to select at least one item.",
             });
-        } else {
-          //optional checkboxes without additional validation
-          schemaFields[fieldName] = z.array(z.string()).optional();
+        } else {  // not required checkbox
+
+          if (option.minSelection === 0) {
+
+            if (option.maxSelection > 0) {  //最多選?項
+              schemaFields[fieldName] = z.array(z.string())
+                .max(
+                  option.maxSelection,
+                  `1You can select up to ${option.maxSelection} items only.`,
+                )
+                .optional();
+            }
+            else {
+              schemaFields[fieldName] = z
+              .array(z.string())
+              .optional();
+            }
+          }
+          else {  ////最少選?項
+            schemaFields[fieldName] = z.array(z.string())
+            .min(
+              option.minSelection,
+              `3You can select up to ${option.minSelection} items only.`,
+            )
+            .max(
+              option.maxSelection,
+              `4You can select up to ${option.maxSelection} items only.`,
+            )
+            .refine((value) => value.some((item) => item), {
+              message: "5You have to select at least one item.",
+            })
+            .optional();
+          }
         }
-      } else {
-        // radio buttons
+
+      } else { // radio buttons
         const iteriable_selections: string[] = productOptions.flatMap(
           (option) =>
             option.ProductOptionSelections.map((selection) => selection.id),
@@ -502,23 +531,23 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
                                                 onCheckedChange={(checked) => {
                                                   return checked
                                                     ? field.onChange(
-                                                        [
-                                                          ...field.value,
-                                                          item.id,
-                                                        ],
-                                                        handleCheckbox(
-                                                          Number(item.price),
-                                                        ),
-                                                      )
+                                                      [
+                                                        ...field.value,
+                                                        item.id,
+                                                      ],
+                                                      handleCheckbox(
+                                                        Number(item.price),
+                                                      ),
+                                                    )
                                                     : field.onChange(
-                                                        field.value?.filter(
-                                                          (value: string) =>
-                                                            value !== item.id,
-                                                        ),
-                                                        handleCheckbox(
-                                                          -item.price,
-                                                        ),
-                                                      );
+                                                      field.value?.filter(
+                                                        (value: string) =>
+                                                          value !== item.id,
+                                                      ),
+                                                      handleCheckbox(
+                                                        -item.price,
+                                                      ),
+                                                    );
                                                 }}
                                               />
                                             </FormControl>
@@ -635,7 +664,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
                     className="w-full"
                     disabled={form.formState.isSubmitting}
                     type="submit"
-                    //onClick={() => handleAddToCart(product)}
+                  //onClick={() => handleAddToCart(product)}
                   >
                     <div className="flex items-center justify-between w-full">
                       <div className="grow font-bold text-xl">{t("buy")}</div>

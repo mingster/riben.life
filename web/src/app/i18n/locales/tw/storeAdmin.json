@@ -54,7 +54,7 @@
   "no_results_found": "沒有資料",
   "Order": "訂單",
   "Order_accept": "接單",
-  "Order_accept_mgmt": "已付款訂單",
+  "Order_accept_mgmt": "待出貨訂單",
   "Order_accept_mgmt_descr": "請勾選來接單",
   "Order_accept_mgmt_descr2": "請勾選來完成訂單",
   "Order_cancel": "取消訂單",

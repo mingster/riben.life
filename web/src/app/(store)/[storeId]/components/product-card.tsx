@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -11,16 +12,15 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useCart } from "@/hooks/use-cart";
 import type { Product } from "@/types";
-import { Button } from "../../../../components/ui/button";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { CalendarPlus2 } from "lucide-react";
 
-import Currency from "../../../../components/currency";
+import Currency from "@/components/currency";
 
-import { ProductOptionDialog } from "./product-option-dialog";
 import { useParams } from "next/navigation";
+import { ProductOptionDialog } from "./product-option-dialog";
 
 interface ProductCardProps {
   //product: Partial<Product>;

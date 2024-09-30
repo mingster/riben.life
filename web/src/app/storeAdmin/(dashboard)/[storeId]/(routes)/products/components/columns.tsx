@@ -16,7 +16,7 @@ export type ProductColumn = {
   price: number;
   isFeatured: boolean;
   updatedAt: string;
-
+  hasOptions: boolean;
   stock: number | undefined;
   isRecurring: boolean | undefined;
 };
@@ -51,6 +51,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
       return <div>{t(`ProductStatus_${status.label}`)}</div>;
     },
   },
+  /*
   {
     accessorKey: "isFeatured",
     header: ({ column }) => {
@@ -61,6 +62,23 @@ export const columns: ColumnDef<ProductColumn>[] = [
     cell: ({ row }) => {
       const val =
         row.getValue("isFeatured") === true ? (
+          <CheckIcon className="text-green-400  h-4 w-4" />
+        ) : (
+          <XIcon className="text-red-400 h-4 w-4" />
+        );
+      return <div className="pl-3">{val}</div>;
+    },
+  },*/
+  {
+    accessorKey: "hasOptions",
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeader column={column} title={t("Product_hasOptions")} />
+      );
+    },
+    cell: ({ row }) => {
+      const val =
+        row.getValue("hasOptions") === true ? (
           <CheckIcon className="text-green-400  h-4 w-4" />
         ) : (
           <XIcon className="text-red-400 h-4 w-4" />
@@ -88,6 +106,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
       );
     },
   },
+  /*
   {
     accessorKey: "isRecurring",
     header: ({ column }) => {
@@ -108,7 +127,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
         );
       return <div className="pl-3">{isRecurring}</div>;
     },
-  },
+  },*/
   {
     accessorKey: "updatedAt",
     header: ({ column }) => {

@@ -42,7 +42,7 @@ import type {
 } from "@/types";
 import type { Address, PaymentMethod, ShippingMethod } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation';
 
 type props = {
   store: Store;
@@ -53,6 +53,7 @@ type props = {
 // TODO: implement payment method & shipping method
 export const Checkout = ({ store, user }: props) => {
   const cart = useCart();
+  const router = useRouter();
   const searchParams = useSearchParams()
 
   // see if there is a tableId in querystring
@@ -61,17 +62,18 @@ export const Checkout = ({ store, user }: props) => {
 
   const [inCheckoutSteps, setInCheckoutSteps] = useState(false);
 
+  if (cart.items.length === 0 && !inCheckoutSteps) {
+    router.replace("/");
+    return <StoreNoItemPrompt />;
+  }
+
   return (
     <Container>
-      {cart.items.length === 0 && !inCheckoutSteps ? (
-        <StoreNoItemPrompt />
-      ) : (
-        <CheckoutSteps
-          store={store}
-          user={user}
-          onChange={setInCheckoutSteps}
-        />
-      )}
+      <CheckoutSteps
+        store={store}
+        user={user}
+        onChange={setInCheckoutSteps}
+      />
     </Container>
   );
 };

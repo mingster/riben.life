@@ -64,13 +64,6 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
 
   //console.log(JSON.stringify(storeData));
   /*
-<section className="mx-auto flex flex-col max-w-[980px] items-center gap-2 py-8 md:py-12 md:pb-8 lg:py-24 lg:pb-6 content-center">
-</section>
-        
-  */
-  return (
-    <section className="relative w-full">
-      <div className="container">
         <CardDataStats
           title={t("Revenue_Today")}
           total="$47,2K"
@@ -79,6 +72,14 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
         >
           <DollarSign />
         </CardDataStats>
+
+  <section className="mx-auto flex flex-col max-w-[980px] items-center gap-2 py-8 md:py-12 md:pb-8 lg:py-24 lg:pb-6 content-center">
+</section>
+
+  */
+  return (
+    <section className="relative w-full">
+      <div className="container">
 
         <IntervaledContent />
         <InProgressOrder
@@ -89,7 +90,7 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
         />
         <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
         <div className="relative flex w-full justify-center">
-          <PageQrCode />
+
         </div>
       </div>
     </section>

@@ -371,6 +371,7 @@ export type ProductOptionColumn = {
   allowQuantity: boolean;
   minQuantity: number;
   maxQuantity: number;
+  sortOrder: number;
   productOption: ProductOption | StoreProductOptionTemplate;
 };
 
@@ -426,6 +427,7 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
       return <div className="pl-3">{val}</div>;
     },
   },
+  /*
   {
     accessorKey: "minSelection",
     header: ({ column }) => {
@@ -447,7 +449,7 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
         />
       );
     },
-  },
+  },*/
   {
     accessorKey: "allowQuantity",
     header: ({ column }) => {
@@ -466,6 +468,17 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
           <XIcon className="text-red-400 h-4 w-4" />
         );
       return <div className="pl-3">{val}</div>;
+    },
+  },
+  {
+    accessorKey: "sortOrder",
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={t("ProductOption_sortOrder")}
+        />
+      );
     },
   },
   {
@@ -506,6 +519,7 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
       }
     },
   },
+
   {
     id: "actions",
     cell: ({ row }) => (
@@ -600,6 +614,7 @@ export const DisplayOptions = ({
       allowQuantity: item.allowQuantity,
       minQuantity: item.minQuantity,
       maxQuantity: item.maxQuantity,
+      sortOrder:item.sortOrder,
       productOption: item,
     }),
   );

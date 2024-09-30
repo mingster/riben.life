@@ -60,7 +60,7 @@ const ProductsPage: React.FC<pageProps> = async ({ params }) => {
     updatedAt: format(item.updatedAt, "yyyy-MM-dd"),
     stock: item.ProductAttribute?.stock || 0,
     isRecurring: item.ProductAttribute?.isRecurring,
-
+    hasOptions: item.ProductOptions?.length > 0,
     //category: item.category.name,
     //size: item.size.name,
     //color: item.c.color.value,
