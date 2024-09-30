@@ -64,7 +64,7 @@ const features_rsvp = [
     multi: true,
   },
   {
-    description: "電話訂位：消費者來電訂位，店家端可爲客人紀錄訂位資訊。",
+    description: "電話訂位：消費者來電訂位，店家端爲客人紀錄訂位資訊。",
     basic: true,
     advanced: true,
     multi: true,
