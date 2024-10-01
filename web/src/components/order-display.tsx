@@ -33,7 +33,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
   }
 
   //console.log('order items: ' + JSON.stringify(orders));
-  const buyAgain = async (orderId: string) => { };
+  const buyAgain = async (orderId: string) => {};
   const pay = async (orderId: string) => {
     const url = `/checkout/${orderId}/stripe/`;
     console.log(url);
@@ -47,16 +47,17 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
   return (
     <Card key={order.id} className="pt-1 pb-1">
       <CardContent>
-
         <div className="grid grid-cols-3 gap-1 justify-items-stretch">
           <div className="whitespace-nowrap text-nowrap">
             {order.Store?.name}
           </div>
           <div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
-            {order.tableId && (`桌號：${order.tableId}`)} 交易序號：{order.orderNum}
+            {order.tableId && `桌號：${order.tableId}`} 交易序號：
+            {order.orderNum}
           </div>
           <div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
-            {format(order.createdAt, "yyyy/MM/dd HH:mm")}&nbsp;{order.OrderItemView.length}
+            {format(order.createdAt, "yyyy/MM/dd HH:mm")}&nbsp;
+            {order.OrderItemView.length}
           </div>
         </div>
 
@@ -66,7 +67,6 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
             <DisplayOrderItem key={item.id} currentItem={item} />
           ))}
         </div>
-
 
         {/*
                     <div className="grid grid-cols-3 gap-1 justify-items-stretch">
@@ -94,7 +94,6 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
       </CardContent>
       <CardFooter className="place-content-end items-end pt-0 pb-1 flex flex-col">
         <div className="grid grid-flow-row-dense grid-cols-3 gap-1">
-
           <div className="whitespace-nowrap">
             {t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
           </div>
@@ -116,14 +115,14 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
           )}
           {(order.orderStatus === OrderStatus.Completed ||
             order.orderStatus === OrderStatus.InShipping) && (
-              <Button
-                className="mr-2"
-                size="sm"
-                onClick={() => buyAgain(order.id)}
-              >
-                {t("order_tab_buyAgain")}
-              </Button>
-            )}
+            <Button
+              className="mr-2"
+              size="sm"
+              onClick={() => buyAgain(order.id)}
+            >
+              {t("order_tab_buyAgain")}
+            </Button>
+          )}
           <Button
             size="sm"
             onClick={() => contactSeller(order.storeId, order.id)}
@@ -136,14 +135,11 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
   );
 };
 
-
-
 type itemViewOrops = {
-  currentItem: orderitemview
-}
+  currentItem: orderitemview;
+};
 
 export const DisplayOrderItem: React.FC<itemViewOrops> = ({ currentItem }) => {
-
   return (
     <div className="relative ml-4 flex flex-1 flex-col justify-between sm:ml-6">
       <div className="relative pr-0 w-full">
@@ -151,14 +147,13 @@ export const DisplayOrderItem: React.FC<itemViewOrops> = ({ currentItem }) => {
           <div className="flex-none w-1/2 pr-2">
             {currentItem.name}
 
-            {currentItem.variants &&
-              currentItem.variants.length > 0 && (
-                <ul className="pl-2 text-sm">
-                  {currentItem.variants.split(",").map((itemOption) => (
-                    <li key={itemOption}>{itemOption}</li>
-                  ))}
-                </ul>
-              )}
+            {currentItem.variants && currentItem.variants.length > 0 && (
+              <ul className="pl-2 text-sm">
+                {currentItem.variants.split(",").map((itemOption) => (
+                  <li key={itemOption}>{itemOption}</li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="pr-2">{currentItem.quantity ?? 0}</div>
@@ -168,5 +163,5 @@ export const DisplayOrderItem: React.FC<itemViewOrops> = ({ currentItem }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

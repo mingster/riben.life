@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { type Item, useCart } from "@/hooks/use-cart";
-import queryString from 'query-string';
+import queryString from "query-string";
 
 import { useTranslation } from "@/app/i18n/client";
 import CartItemInfo from "@/components/cart-item-info";
@@ -181,8 +181,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
         productIds.push(item.id.split("?")[0]);
         variants.push(item.variants);
         variantCosts.push(item.variantCosts);
-      }
-      else {
+      } else {
         productIds.push(item.id);
       }
       prices.push(item.price);
@@ -228,8 +227,6 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
       // redirect to payment page
       const paymenturl = `/checkout/${order.id}/${paymentMethod.payUrl}`;
       router.push(paymenturl);
-
-
     } catch (error: unknown) {
       const err = error as AxiosError;
       console.error(error);

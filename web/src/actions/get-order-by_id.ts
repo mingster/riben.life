@@ -34,11 +34,11 @@ const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
 
   if (obj?.tableId) {
     // mock tableId to its display name
-    const table = await sqlClient.storeTables.findUnique({
+    const table = (await sqlClient.storeTables.findUnique({
       where: {
         id: obj?.tableId,
       },
-    }) as StoreTables;
+    })) as StoreTables;
 
     obj.tableId = table.tableName;
     //console.log(obj.tableId);

@@ -23,14 +23,14 @@ export async function POST(
   // orderNote is array of string.
   const {
     userId,
-    tableId,  //can be null
+    tableId, //can be null
     total,
     currency,
     productIds,
     quantities,
     unitPrices,
-    variants,  //can be null
-    variantCosts,  //can be null
+    variants, //can be null
+    variantCosts, //can be null
     orderNote, //can be null
     shippingMethodId,
     paymentMethodId,

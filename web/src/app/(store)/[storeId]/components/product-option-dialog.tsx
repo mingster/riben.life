@@ -312,8 +312,8 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
         // it's formatted as a query string of the form data
         let cartId = `${product.id}?`;
 
-        let variants = '';
-        let variantCosts = '';
+        let variants = "";
+        let variantCosts = "";
 
         // console.log("form data", JSON.stringify(data));
         for (const [key, value] of Object.entries(data)) {
@@ -321,7 +321,8 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
 
           cartId += `${key}=${value}&`;
 
-          if (typeof value === "string") {              // radio button
+          if (typeof value === "string") {
+            // radio button
             const itemOption = getCartItemOption(value);
             if (itemOption) {
               itemOptions.push(itemOption);
@@ -329,7 +330,8 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
               variants += `${itemOption.value},`;
               variantCosts += `${itemOption.price},`;
             }
-          } else if (Array.isArray(value)) {  // checkboxes
+          } else if (Array.isArray(value)) {
+            // checkboxes
             value.forEach((selection: string, index: number) => {
               //console.log(`selection: [${index}] ${selection}`);
               const itemOption = getCartItemOption(selection);
@@ -358,7 +360,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
             storeId: params.storeId,
             tableId: params.tableId,
             variants: variants,
-            variantCosts: variantCosts
+            variantCosts: variantCosts,
           },
           quantity,
         );
@@ -540,23 +542,23 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
                                                 onCheckedChange={(checked) => {
                                                   return checked
                                                     ? field.onChange(
-                                                      [
-                                                        ...field.value,
-                                                        item.id,
-                                                      ],
-                                                      handleCheckbox(
-                                                        Number(item.price),
-                                                      ),
-                                                    )
+                                                        [
+                                                          ...field.value,
+                                                          item.id,
+                                                        ],
+                                                        handleCheckbox(
+                                                          Number(item.price),
+                                                        ),
+                                                      )
                                                     : field.onChange(
-                                                      field.value?.filter(
-                                                        (value: string) =>
-                                                          value !== item.id,
-                                                      ),
-                                                      handleCheckbox(
-                                                        -item.price,
-                                                      ),
-                                                    );
+                                                        field.value?.filter(
+                                                          (value: string) =>
+                                                            value !== item.id,
+                                                        ),
+                                                        handleCheckbox(
+                                                          -item.price,
+                                                        ),
+                                                      );
                                                 }}
                                               />
                                             </FormControl>
@@ -673,7 +675,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
                     className="w-full"
                     disabled={form.formState.isSubmitting}
                     type="submit"
-                  //onClick={() => handleAddToCart(product)}
+                    //onClick={() => handleAddToCart(product)}
                   >
                     <div className="flex items-center justify-between w-full">
                       <div className="grow font-bold text-xl">{t("buy")}</div>

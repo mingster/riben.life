@@ -55,7 +55,7 @@ const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
 
   return (
     <Suspense fallback={<Loader />}>
-      <Navbar title=''/>
+      <Navbar title="" />
       <Container>
         <h1>購物明細</h1>
         <DisplayOrder order={order} />
