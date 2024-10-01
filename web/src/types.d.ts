@@ -85,6 +85,7 @@ export type Store = Prisma.StoreGetPayload<typeof storeObj>;
 
 const orderObj = Prisma.validator<Prisma.StoreOrderDefaultArgs>()({
   include: {
+    Store: true,
     OrderNotes: true,
     OrderItemView: true,
     User: true,

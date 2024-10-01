@@ -98,7 +98,7 @@
   "OrderStatus_Pending": "待付款",
   "OrderStatus_Processing": "(店家處理中)",
   "OrderStatus_Refund": "退貨/退款",
-  "orderTotal_label": "訂單金額：",
+  "orderTotal_label": "銷售總額：",
   "PaymentStatus_Authorized": "已授權",
   "PaymentStatus_Paid": "已付款",
   "PaymentStatus_PartiallyRefunded": "部分退款",

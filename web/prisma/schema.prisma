@@ -203,7 +203,7 @@ model ShippingMethod {
   name         String   @unique
   description  String?
   basic_price  Decimal  @default(0)
-  currencyId   String   @default("USD")
+  currencyId   String   @default("twd")
   isDeleted    Boolean  @default(false)
   isDefault    Boolean  @default(false)
   shipRequried Boolean  @default(true)
@@ -318,7 +318,7 @@ model Store {
   customDomain String? @unique
 
   defaultCountry  String  @default("USA")
-  defaultCurrency String  @default("USD")
+  defaultCurrency String  @default("twd")
   isDeleted       Boolean @default(false)
   defaultLocale   String  @default("en")
 
@@ -407,7 +407,7 @@ model Product {
   description String?
   isFeatured  Boolean  @default(false)
   status      Int      @default(0)
-  currency    String   @default("usd")
+  currency    String   @default("twd")
   price       Decimal  @default(0)
   useOption   Boolean  @default(true) // when true, price is calculated based on product option
   createdAt   DateTime @default(now())
@@ -570,7 +570,7 @@ model StoreOrder {
   orderNum           Int?     @default(autoincrement())
   isPaid             Boolean  @default(false)
   checkoutAttributes String   @default("")
-  currency           String   @default("usd")
+  currency           String   @default("twd")
   currencyRate       Decimal  @default(1)
   discount           Decimal  @default(0)
   orderTax           Decimal  @default(0)

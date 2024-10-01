@@ -49,6 +49,7 @@ const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
       id: params.orderId,
     },
     include: {
+      Store: true,
       OrderNotes: true,
       OrderItemView: true,
       User: true,
