@@ -88,10 +88,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
   const defaultValues = sqlData
     ? {
-      ...sqlData,
-      orderNoteToCustomer: mongoData?.orderNoteToCustomer || "",
-      businessHours: mongoData?.businessHours || "",
-    }
+        ...sqlData,
+        orderNoteToCustomer: mongoData?.orderNoteToCustomer || "",
+        businessHours: mongoData?.businessHours || "",
+      }
     : { orderNoteToCustomer: "", businessHours: "" };
 
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
@@ -344,7 +344,6 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                 />
               </div>
 
-
               <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
                 <FormField
                   control={form.control}
@@ -392,7 +391,6 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                     </FormItem>
                   )}
                 />
-
               </div>
               <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
                 <FormField
@@ -444,7 +442,6 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
               </div>
 
               <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-
                 <FormField
                   control={form.control}
                   name="acceptAnonymousOrder"

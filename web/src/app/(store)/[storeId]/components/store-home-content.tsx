@@ -106,7 +106,6 @@ export const StoreHomeContent: React.FC<props> = ({
     }
   };
 
-
   let closed_descr = "";
   let isStoreOpen = storeData.isOpen;
 
@@ -132,15 +131,16 @@ export const StoreHomeContent: React.FC<props> = ({
     //console.log(`isOnHoliday: ${businessHours.isOnHoliday(new Date())}`);
   }
 
-  if (!isStoreOpen) return (
-    <>
-      <h1>{t("store_closed")}</h1>
-      <div>
-        {t("store_next_opening_hours")}
-        {closed_descr}
-      </div>
-    </>);
-
+  if (!isStoreOpen)
+    return (
+      <>
+        <h1>{t("store_closed")}</h1>
+        <div>
+          {t("store_next_opening_hours")}
+          {closed_descr}
+        </div>
+      </>
+    );
 
   // http://localhost:3000/4574496e-9759-4d9c-9258-818501418747/dfc853b4-47f5-400c-a2fb-f70f045d65a0
   return (
@@ -151,19 +151,19 @@ export const StoreHomeContent: React.FC<props> = ({
           {tableData ? (
             <div className="">
               <div className="flex gap-2">
-                {t('store_orderTotal')}
+                {t("store_orderTotal")}
                 <div className="text-sm">
-                  <Link href="#">{t('store_linkToOrder')}</Link>
+                  <Link href="#">{t("store_linkToOrder")}</Link>
                 </div>
               </div>
               <div>
                 {t("storeTables")}: {tableData.tableName}
               </div>
-              <div>{t('store_seatingTime')}</div>
+              <div>{t("store_seatingTime")}</div>
               <div>2大人 0小孩</div>
             </div>
           ) : (
-            <div>{t('store_orderType_takeoff')}</div>
+            <div>{t("store_orderType_takeoff")}</div>
           )}
         </div>
         {mongoData?.orderNoteToCustomer && (

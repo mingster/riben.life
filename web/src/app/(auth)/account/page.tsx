@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AccountTabs } from "./components/tabs";
+import { Navbar } from "@/components/global-navbar";
 
 export const metadata: Metadata = {
   title: "My Account",
