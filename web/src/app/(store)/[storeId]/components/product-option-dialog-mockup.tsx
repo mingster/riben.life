@@ -288,7 +288,7 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
             variant={"outline"}
             className="w-full bg-slate-200 dark:bg-zinc-900"
           >
-            {t("config_to_buy")}
+            {t("keep_shopping")}
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">

@@ -18,18 +18,19 @@ interface pageProps {
 //NOTE - this page shows order status for anonymous users (the kind of users choose not to sign in).
 //
 const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
+
   const store = (await sqlClient.store.findFirst({
     where: {
       id: params.storeId,
     },
   })) as Store;
   transformDecimalsToNumbers(store);
+  const { t } = await useTranslation(store?.defaultLocale || "en");
 
   const order = await getOrderById(params.orderId);
   if (!order) {
     return "no order found";
   }
-  const { t } = await useTranslation(store?.defaultLocale || "en");
 
   return (
     <Suspense fallback={<Loader />}>
