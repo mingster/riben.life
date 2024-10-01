@@ -2,11 +2,13 @@ import getOrderById from "@/actions/get-order-by_id";
 import { useTranslation } from "@/app/i18n";
 import { Navbar } from "@/components/global-navbar";
 import { DisplayOrder } from "@/components/order-display";
+import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Store } from "@/types";
+import Link from "next/link";
 import { Suspense } from "react";
 
 interface pageProps {
@@ -38,7 +40,14 @@ const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
         <Navbar title="" />
         <Container>
           <h1 className="text-4xl sm:text-xl pb-2">{t("order_view_title")}</h1>
+
           <DisplayOrder order={order} />
+
+          <Link href="/" className="">
+            <Button className="w-full">
+              {t("cart_summary_keepShopping")}
+            </Button>{" "}
+          </Link>
         </Container>
       </div>
     </Suspense>
