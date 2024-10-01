@@ -24,8 +24,9 @@ import axios, { type AxiosError } from "axios";
 import { useEffect, useState } from "react";
 import { ProductEditOptionsTab } from "./product-edit-options-tab";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
+import { Eye, Trash } from "lucide-react";
 import { ProductPreviewDialog } from "./product-preview-dialog";
+import Link from "next/link";
 
 interface editProps {
   initialData:
@@ -109,6 +110,9 @@ export const ProductEditTabs = ({
     }*/
   };
 
+  /*
+  <ProductPreviewDialog initialData={initialData} />
+*/
   return (
     <>
       <AlertModal
@@ -124,7 +128,14 @@ export const ProductEditTabs = ({
         </div>
         {initialData && (
           <>
-            <ProductPreviewDialog initialData={initialData} />
+            <Link
+              target="_blank"
+              href={`/${params.storeId}/product/${initialData.id}`}
+              title={t("Preview")}
+              className="bg-blue-900"
+            >
+              <Eye className="h-4 w-4" />
+            </Link>
             <Button
               title={t("Delete")}
               disabled={loading}

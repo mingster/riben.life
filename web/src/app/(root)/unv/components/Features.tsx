@@ -58,13 +58,14 @@ const features_qrcode = [
 
 const features_rsvp = [
   {
-    description: "掃碼訂位：直接取得排隊號碼，時時掌握店家排隊狀態。",
+    description:
+      "線上訂位：確認客人訂位資訊後，直接取得排隊號碼，時時掌握店家排隊狀態。",
     basic: true,
     advanced: true,
     multi: true,
   },
   {
-    description: "電話訂位：消費者來電訂位，店家端可爲客人紀錄訂位資訊。",
+    description: "電話訂位：消費者來電訂位，店家端爲客人紀錄訂位資訊。",
     basic: true,
     advanced: true,
     multi: true,
@@ -181,8 +182,8 @@ export function Features({ className, ...props }: { className?: string }) {
           <Caption className="text-sky-500">功能表</Caption>
         </div>
 
-        <BigText>掃碼點餐</BigText>
-        <Paragraph>提升點餐效率、減少服務人力</Paragraph>
+        <BigText>預約/排隊系統</BigText>
+        <Paragraph>預約候位/預先點餐，客人不用現場等候．降減客服壓力</Paragraph>
         <Table>
           <TableHeader>
             <TableRow>
@@ -193,7 +194,7 @@ export function Features({ className, ...props }: { className?: string }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {features_qrcode.map((feature, index) => (
+            {features_rsvp.map((feature, index) => (
               <TableRow
                 key={feature.description}
                 className={
@@ -217,8 +218,8 @@ export function Features({ className, ...props }: { className?: string }) {
           </TableBody>
         </Table>
 
-        <BigText>預約/排隊系統</BigText>
-        <Paragraph>預約候位/預先點餐，客人不用現場等候．降減客服壓力</Paragraph>
+        <BigText>掃碼點餐</BigText>
+        <Paragraph>提升點餐效率、減少服務人力</Paragraph>
         <Table>
           <TableHeader>
             <TableRow>
@@ -229,7 +230,7 @@ export function Features({ className, ...props }: { className?: string }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {features_rsvp.map((feature, index) => (
+            {features_qrcode.map((feature, index) => (
               <TableRow
                 key={feature.description}
                 className={

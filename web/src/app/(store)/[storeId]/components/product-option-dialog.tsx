@@ -41,11 +41,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useParams } from "next/navigation";
 
-type item_props = {
-  id: string;
-  name: string;
-  price: number;
-};
 interface props {
   product: Product;
 }
@@ -61,7 +56,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
 
   //const params = useParams();
   //const {storeId, tableId} = params;
-  const params = useParams<{ storeId: string, tableId: string }>();
+  const params = useParams<{ storeId: string; tableId: string }>();
   //  console.log("storeId", params.storeId, "tableId", params.tableId);
 
   const productOptions = product.ProductOptions as ProductOption[];
@@ -73,8 +68,8 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
       const fieldName = `option${index}`;
 
       if (option.isMultiple) {
+        //checkboxes
         if (option.isRequired) {
-          //required checkboxes
           schemaFields[fieldName] = z
             .array(z.string())
             .min(
@@ -89,8 +84,38 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
               message: "You have to select at least one item.",
             });
         } else {
-          //optional checkboxes without additional validation
-          schemaFields[fieldName] = z.array(z.string()).optional();
+          // not required checkbox
+
+          if (option.minSelection === 0) {
+            if (option.maxSelection > 0) {
+              //最多選?項
+              schemaFields[fieldName] = z
+                .array(z.string())
+                .max(
+                  option.maxSelection,
+                  `1You can select up to ${option.maxSelection} items only.`,
+                )
+                .optional();
+            } else {
+              schemaFields[fieldName] = z.array(z.string()).optional();
+            }
+          } else {
+            ////最少選?項
+            schemaFields[fieldName] = z
+              .array(z.string())
+              .min(
+                option.minSelection,
+                `3You can select up to ${option.minSelection} items only.`,
+              )
+              .max(
+                option.maxSelection,
+                `4You can select up to ${option.maxSelection} items only.`,
+              )
+              .refine((value) => value.some((item) => item), {
+                message: "5You have to select at least one item.",
+              })
+              .optional();
+          }
         }
       } else {
         // radio buttons
@@ -271,6 +296,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
     return null;
   }
 
+  // add the product selection to the cart
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     //console.log("data", JSON.stringify(data));
 
@@ -283,34 +309,46 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
         const itemOptions: ItemOption[] = [];
 
         // NOTE: cartId is used to identify the item in the cart
-        // it is a query string of the form data
+        // it's formatted as a query string of the form data
         let cartId = `${product.id}?`;
+
+        let variants = "";
+        let variantCosts = "";
 
         // console.log("form data", JSON.stringify(data));
         for (const [key, value] of Object.entries(data)) {
-          console.log(`${key}: ${value} ${typeof value}`);
+          //console.log(`${key}: ${value} ${typeof value}`);
 
           cartId += `${key}=${value}&`;
 
           if (typeof value === "string") {
-            // Handle string value
+            // radio button
             const itemOption = getCartItemOption(value);
             if (itemOption) {
               itemOptions.push(itemOption);
+
+              variants += `${itemOption.value},`;
+              variantCosts += `${itemOption.price},`;
             }
           } else if (Array.isArray(value)) {
+            // checkboxes
             value.forEach((selection: string, index: number) => {
-              console.log(`selection: [${index}] ${selection}`);
+              //console.log(`selection: [${index}] ${selection}`);
               const itemOption = getCartItemOption(selection);
               if (itemOption) {
                 itemOptions.push(itemOption);
+                variants += `${itemOption.value},`;
+                variantCosts += `${itemOption.price},`;
               }
             });
           }
         }
 
-        //cartId = `${cartId}?${optionVal}`;
-        //console.log("cartId", cartId);
+        // trim off end comma
+        if (variants.length > 2) {
+          variants = variants.substring(0, variants.length - 1);
+          variantCosts = variantCosts.substring(0, variantCosts.length - 1);
+        }
 
         cart.addItem(
           {
@@ -321,6 +359,8 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
             itemOptions: itemOptions,
             storeId: params.storeId,
             tableId: params.tableId,
+            variants: variants,
+            variantCosts: variantCosts,
           },
           quantity,
         );
@@ -406,7 +446,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
           variant={"outline"}
           className="w-full bg-slate-200 dark:bg-zinc-900"
         >
-          {t("config_to_buy")}
+          {t("keep_shopping")}
         </Button>
       </DialogTrigger>
       <DialogContent>

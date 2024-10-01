@@ -1,5 +1,5 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
-import { GetSession } from "@/utils/auth-utils";
+import { GetSession } from "@/lib/auth/utils";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 

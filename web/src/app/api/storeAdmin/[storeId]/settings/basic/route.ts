@@ -1,7 +1,7 @@
 import { sqlClient, mongoClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../../api_helper";
-import { IsSignInResponse } from "@/utils/auth-utils";
+import { IsSignInResponse } from "@/lib/auth/utils";
 
 export async function PATCH(
   req: Request,
@@ -29,6 +29,8 @@ export async function PATCH(
       acceptReservation,
       useBusinessHours,
       businessHours,
+      requireSeating,
+      requirePrepay,
     } = body;
 
     if (!body.name) {
@@ -55,6 +57,8 @@ export async function PATCH(
         acceptReservation,
         useBusinessHours,
         isOpen,
+        requireSeating,
+        requirePrepay,
         updatedAt: new Date(Date.now()),
         /*
         storeLocales: {

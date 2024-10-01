@@ -6,7 +6,7 @@ import type { Session } from "next-auth";
 import { sqlClient } from "@/lib/prismadb";
 import { revalidatePath } from "next/cache";
 import type { StoreNotification } from "prisma/prisma-client";
-import { IsSignInResponse } from "@/utils/auth-utils";
+import { IsSignInResponse } from "@/lib/auth/utils";
 //import type { StoreNotification } from "@/types";
 
 export async function CreateNotification(values: StoreNotification) {

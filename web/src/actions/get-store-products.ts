@@ -1,4 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
+import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Product } from "@prisma/client";
 
 const getStoreProducts = async (storeId: string): Promise<Product[]> => {
@@ -25,6 +26,7 @@ const getStoreProducts = async (storeId: string): Promise<Product[]> => {
       ProductAttribute: true,
     },
   });
+  transformDecimalsToNumbers(obj);
 
   return obj;
 };

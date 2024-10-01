@@ -10,7 +10,7 @@ import type { formSchema } from "./store-modal";
 import type { z } from "zod";
 import fs from "node:fs";
 import type { Session } from "next-auth";
-import { GetSession, RequiresSignIn } from "@/utils/auth-utils";
+import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 
 //NOTE - do not move this to other folder.
 //

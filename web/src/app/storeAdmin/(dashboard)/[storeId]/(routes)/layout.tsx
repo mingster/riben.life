@@ -4,7 +4,7 @@ import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import StoreAdminLayout from "./components/store-admin-layout";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import { GetSession, RequiresSignIn } from "@/utils/auth-utils";
+import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 //import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 
 export default async function StoreLayout({

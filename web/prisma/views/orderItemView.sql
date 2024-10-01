@@ -15,5 +15,7 @@ SELECT item.id,
         FROM "ProductImages" pi
         WHERE pi."productId" = item."productId"
         LIMIT 1
-    ) AS url
+    ) AS url,
+    item."variants",
+    item."variantCosts"
 FROM "OrderItem" item;

@@ -1,7 +1,9 @@
+import { auth } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
+import { transformDecimalsToNumbers } from "@/lib/utils";
 //import { User } from 'prisma/prisma-client';
 import type { User } from "@/types";
-import { auth } from "@/auth";
+import type { StoreTables } from "@prisma/client";
 
 const getUser = async (): Promise<User | null> => {
   const session = await auth();
@@ -28,10 +30,6 @@ const getUser = async (): Promise<User | null> => {
       Orders: {
         include: {
           OrderItemView: true,
-          //orderItemsWithImage: true,
-          //orderNotes: true,
-          //shippingMethod: true,
-          //paymentMethod: true,
         },
         orderBy: {
           updatedAt: "desc",
@@ -42,10 +40,27 @@ const getUser = async (): Promise<User | null> => {
     },
   });
 
+  if (obj) {
+    transformDecimalsToNumbers(obj);
+
+    // mock tableId to its display name
+    for (const order of obj.Orders) {
+      if (order.tableId) {
+        const table = (await sqlClient.storeTables.findUnique({
+          where: {
+            id: order.tableId,
+          },
+        })) as StoreTables;
+
+        order.tableId = table.tableName;
+      }
+    }
+  }
+
   return obj;
 
   /*
-	//get user with needed assoicated objects
+  //get user with needed assoicated objects
   //
   const userid = session?.user.id;
   const URL = `${process.env.NEXT_PUBLIC_API_URL}/user/${userid}/userobj`;
@@ -56,15 +71,15 @@ const getUser = async (): Promise<User | null> => {
   const env = process.env.NODE_ENV;
 
   if (env === 'development') {
-	const res = await fetch(`${URL}`, {
-	  cache: 'no-store',
-	});
+  const res = await fetch(`${URL}`, {
+    cache: 'no-store',
+  });
 
-	return res.json();
+  return res.json();
   } else {
-	//cache lifetime in 1 hour
-	const res = await fetch(`${URL}`, { next: { revalidate: 3600 } });
-	return res.json();
+  //cache lifetime in 1 hour
+  const res = await fetch(`${URL}`, { next: { revalidate: 3600 } });
+  return res.json();
   }
   */
 };

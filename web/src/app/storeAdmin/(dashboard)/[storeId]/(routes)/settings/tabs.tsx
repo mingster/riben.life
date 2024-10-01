@@ -148,7 +148,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
             {t("StoreSettingsTab_payment_method")}
           </TabsTrigger>
           <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="paidOptions">
-            Paid Options
+            {t("StoreSettingsTab_PaidOptions")}
           </TabsTrigger>
         </TabsList>
 

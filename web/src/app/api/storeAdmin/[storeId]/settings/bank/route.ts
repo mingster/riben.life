@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../../api_helper";
-import { GetSession, IsSignInResponse } from "@/utils/auth-utils";
+import { GetSession, IsSignInResponse } from "@/lib/auth/utils";
 import type { Session } from "next-auth";
 
 export async function PATCH(

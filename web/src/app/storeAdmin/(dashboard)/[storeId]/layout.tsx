@@ -5,7 +5,7 @@ import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { Suspense } from "react";
 import type { Metadata, ResolvingMetadata } from "next";
-import { GetSession, RequiresSignIn } from "@/utils/auth-utils";
+import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 import type { Session } from "next-auth";
 
 type Props = {

@@ -3,7 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 
 import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../api_helper";
-import { IsSignInResponse } from "@/utils/auth-utils";
+import { IsSignInResponse } from "@/lib/auth/utils";
 
 ///!SECTION create Category record in database.
 export async function POST(

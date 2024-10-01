@@ -122,6 +122,7 @@ export const DisplayStoreOptionTemplates = ({
       allowQuantity: item.allowQuantity,
       minQuantity: item.minQuantity,
       maxQuantity: item.maxQuantity,
+      sortOrder: item.sortOrder,
       productOption: item,
     }));
 
@@ -297,6 +298,7 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
       return <div className="pl-3">{val}</div>;
     },
   },
+  /*
   {
     accessorKey: "minQuantity",
     header: ({ column }) => {
@@ -319,7 +321,7 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
       );
     },
   },
-
+*/
   {
     accessorKey: "productOption",
     header: ({ column }) => {
@@ -334,7 +336,7 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
         return (
           <div>
             {val.ProductOptionSelections.map((item) => (
-              <div key={item.id} className="pl-0">
+              <div key={item.id} className="pl-0 text-nowrap">
                 {`${item.name}`}{" "}
                 {Number(item.price) !== 0 && `:(${item.price})`}
                 {item.isDefault === true && `:(${t("Default")})`}
@@ -347,7 +349,7 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
         return (
           <div>
             {val.StoreProductOptionSelectionsTemplate.map((item) => (
-              <div key={item.id} className="pl-0">
+              <div key={item.id} className="pl-0 text-nowrap">
                 {`${item.name}`}{" "}
                 {Number(item.price) !== 0 && `:(${item.price})`}
                 {item.isDefault === true && `:(${t("Default")})`}
@@ -370,6 +372,7 @@ export type ProductOptionColumn = {
   allowQuantity: boolean;
   minQuantity: number;
   maxQuantity: number;
+  sortOrder: number;
   productOption: ProductOption | StoreProductOptionTemplate;
 };
 
@@ -425,6 +428,7 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
       return <div className="pl-3">{val}</div>;
     },
   },
+  /*
   {
     accessorKey: "minSelection",
     header: ({ column }) => {
@@ -446,7 +450,7 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
         />
       );
     },
-  },
+  },*/
   {
     accessorKey: "allowQuantity",
     header: ({ column }) => {
@@ -468,6 +472,17 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
     },
   },
   {
+    accessorKey: "sortOrder",
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={t("ProductOption_sortOrder")}
+        />
+      );
+    },
+  },
+  {
     accessorKey: "productOption",
     header: ({ column }) => {
       return <div className="pl-3">{t("ProductOption_selections")}</div>;
@@ -481,7 +496,7 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
         return (
           <div>
             {val.ProductOptionSelections.map((item) => (
-              <div key={item.id} className="pl-0">
+              <div key={item.id} className="pl-0 text-nowrap">
                 {`${item.name}`}{" "}
                 {Number(item.price) !== 0 && `:(${item.price})`}
                 {item.isDefault === true && `:(${t("Default")})`}
@@ -494,7 +509,7 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
         return (
           <div>
             {val.StoreProductOptionSelectionsTemplate.map((item) => (
-              <div key={item.id} className="pl-0">
+              <div key={item.id} className="pl-0 text-nowrap">
                 {`${item.name}`}{" "}
                 {Number(item.price) !== 0 && `:(${item.price})`}
                 {item.isDefault === true && `:(${t("Default")})`}
@@ -505,6 +520,7 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
       }
     },
   },
+
   {
     id: "actions",
     cell: ({ row }) => (
@@ -599,6 +615,7 @@ export const DisplayOptions = ({
       allowQuantity: item.allowQuantity,
       minQuantity: item.minQuantity,
       maxQuantity: item.maxQuantity,
+      sortOrder: item.sortOrder,
       productOption: item,
     }),
   );

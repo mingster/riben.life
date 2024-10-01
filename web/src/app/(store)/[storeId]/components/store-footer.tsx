@@ -21,7 +21,7 @@ export interface props {
 export const StoreFooter: React.FC<props> = ({ store, visible }) => {
   const router = useRouter();
 
-  const params = useParams<{ storeId: string, tableId: string }>();
+  const params = useParams<{ storeId: string; tableId: string }>();
   //console.log("storeId", params.storeId, "tableId", params.tableId);
 
   const { lng } = useI18n();
@@ -31,9 +31,9 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
   const [numInCart, setNumInCart] = useState(cart.totalItems);
 
   function onCheckout() {
-    params.tableId ?
-      router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`) :
-      router.push(`/${params.storeId}/checkout`)
+    params.tableId
+      ? router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`)
+      : router.push(`/${params.storeId}/checkout`);
     //router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`);
   }
 
@@ -76,7 +76,9 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
               className="w-full hover:opacity-50"
             >
               <div className="flex w-full items-center justify-between">
-                <div className="grow font-bold text-xl">{t("cart_dropDown_confirm")}</div>
+                <div className="grow font-bold text-xl">
+                  {t("cart_dropDown_confirm")}
+                </div>
 
                 <div className="self-end">
                   <Currency value={cart.cartTotal} />

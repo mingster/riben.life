@@ -15,6 +15,7 @@ import { ProductStatus } from "@/types/enum";
 import type { StoreSettings } from "@prisma-mongo/prisma/client";
 import ScrollSpy from "react-ui-scrollspy";
 import Link from "next/link";
+import { formatDate } from "date-fns";
 
 const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(
   {
@@ -90,23 +91,7 @@ export const StoreHomeContent: React.FC<props> = ({
       target.scrollIntoView({ behavior: "smooth" });
     }
   };
-
   */
-
-  let isStoreOpen = storeData.isOpen;
-  if (storeData.useBusinessHours && mongoData.businessHours !== null) {
-    const bizHour = mongoData.businessHours;
-    const businessHours = new BusinessHours(bizHour);
-    isStoreOpen = businessHours.isOpenNow();
-    //const nextOpeningDate = businessHours.nextOpeningDate();
-    //const nextOpeningHour = businessHours.nextOpeningHour();
-
-    //console.log(JSON.stringify(bizHour));
-    //console.log(`isOpenNow: ${businessHours.isOpenNow()}`);
-    //console.log(`nextOpeningDate: ${businessHours.nextOpeningDate(true)}`);
-    //console.log(`nextOpeningHour: ${businessHours.nextOpeningHour()}`);
-    //console.log(`isOnHoliday: ${businessHours.isOnHoliday(new Date())}`);
-  }
 
   // scroll spy nav click
   const onNavlinkClick = (
@@ -121,9 +106,41 @@ export const StoreHomeContent: React.FC<props> = ({
     }
   };
 
-  if (!isStoreOpen) {
-    return t("store_closed");
+  let closed_descr = "";
+  let isStoreOpen = storeData.isOpen;
+
+  //使用所設定的時間來判斷是否營業。若關閉，只會依照「店休/營業中」的設定。
+  if (storeData.useBusinessHours && mongoData.businessHours !== null) {
+    // determine store is open using business hour setting
+    const bizHour = mongoData.businessHours;
+    const businessHours = new BusinessHours(bizHour);
+    isStoreOpen = businessHours.isOpenNow();
+
+    const nextOpeningDate = businessHours.nextOpeningDate();
+    const nextOpeningHour = businessHours.nextOpeningHour();
+
+    closed_descr = `${formatDate(nextOpeningDate, "yyyy-MM-dd")} ${nextOpeningHour}`;
+
+    //const nextOpeningDate = businessHours.nextOpeningDate();
+    //const nextOpeningHour = businessHours.nextOpeningHour();
+
+    //console.log(JSON.stringify(bizHour));
+    //console.log(`isOpenNow: ${businessHours.isOpenNow()}`);
+    //console.log(`nextOpeningDate: ${businessHours.nextOpeningDate(true)}`);
+    //console.log(`nextOpeningHour: ${businessHours.nextOpeningHour()}`);
+    //console.log(`isOnHoliday: ${businessHours.isOnHoliday(new Date())}`);
   }
+
+  if (!isStoreOpen)
+    return (
+      <>
+        <h1>{t("store_closed")}</h1>
+        <div>
+          {t("store_next_opening_hours")}
+          {closed_descr}
+        </div>
+      </>
+    );
 
   // http://localhost:3000/4574496e-9759-4d9c-9258-818501418747/dfc853b4-47f5-400c-a2fb-f70f045d65a0
   return (
@@ -133,16 +150,23 @@ export const StoreHomeContent: React.FC<props> = ({
         <div className="pl-5 pb-5">
           {tableData ? (
             <div className="">
-              <div className="flex gap-2">消費金額 $919 <div className="text-sm"><Link href='#'>點餐紀錄</Link></div></div>
-              <div>{t("storeTables")}: {tableData.tableName}</div>
-              <div>入座時間：</div>
+              <div className="flex gap-2">
+                {t("store_orderTotal")}
+                <div className="text-sm">
+                  <Link href="#">{t("store_linkToOrder")}</Link>
+                </div>
+              </div>
+              <div>
+                {t("storeTables")}: {tableData.tableName}
+              </div>
+              <div>{t("store_seatingTime")}</div>
               <div>2大人 0小孩</div>
             </div>
           ) : (
-            "外帶"
+            <div>{t("store_orderType_takeoff")}</div>
           )}
         </div>
-        {mongoData.orderNoteToCustomer && (
+        {mongoData?.orderNoteToCustomer && (
           <div className="pl-5 pb-5">
             <pre>{mongoData.orderNoteToCustomer}</pre>
           </div>

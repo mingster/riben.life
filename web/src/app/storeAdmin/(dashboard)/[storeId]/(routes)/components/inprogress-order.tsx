@@ -8,6 +8,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
@@ -64,10 +65,6 @@ export const InProgressOrder = ({
     return <ClipLoader color="text-primary" />;
   }
 
-  if (orders.length === 0) {
-    return <div>{t("no_results_found")}</div>;
-  }
-
   const handleChecked = async (orderId: string) => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/orders/mark-as-completed/${orderId}`;
     await axios.post(url);
@@ -107,69 +104,79 @@ export const InProgressOrder = ({
       />
 
       <Card>
-        <CardHeader className="p-2">{t("Order_accept_mgmt")}</CardHeader>
+        <CardTitle className="p-2">{t("Order_accept_mgmt")}</CardTitle>
         <CardDescription className="pt-2 pl-6">
-          {autoAcceptOrder
-            ? t("Order_accept_mgmt_descr2")
-            : t("Order_accept_mgmt_descr")}
+          {orders.length === 0 ? (
+            <div>{t("no_results_found")}</div>
+          ) : autoAcceptOrder ? (
+            t("Order_accept_mgmt_descr2")
+          ) : (
+            t("Order_accept_mgmt_descr")
+          )}
         </CardDescription>
         <CardContent className="space-y-2">
           {/* display */}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[20px] text-nowrap">
-                  {t("Order_accept")}
-                </TableHead>
-                <TableHead className="w-[200px]">{t("Order_items")}</TableHead>
-                <TableHead>{t("Order_note")}</TableHead>
-                <TableHead className="w-[90px]">{t("Order_number")}</TableHead>
-                <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.map((order: StoreOrder) => (
-                <TableRow key={order.id}>
-                  <TableCell className="items-center justify-between">
-                    <Checkbox
-                      value={order.id}
-                      onClick={() => handleChecked(order.id)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {order.OrderItemView.map((item: orderitemview) => (
-                      <div
-                        key={item.id}
-                      >{`${item.name} x ${item.quantity}`}</div>
-                    ))}
-                  </TableCell>
-                  <TableCell>
-                    {order.OrderNotes.map((note: OrderNote) => (
-                      <div key={note.id}>{note.note}</div>
-                    ))}
-                    <div>{order.User?.name}</div>
-                    <div>{order.isPaid}</div>
-                    <div>{order.ShippingMethod?.name}</div>
-                    <div>{order.PaymentMethod?.name}</div>
-                  </TableCell>
-                  <TableCell>{order.orderNum}</TableCell>
-                  <TableCell>
-                    {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
-                    <Button className="gap-2 text-xs" variant={"outline"}>
-                      {t("Modify")}
-                    </Button>
-                    <Button
-                      className="gap-2 text-xs"
-                      variant={"destructive"}
-                      onClick={() => handleCancel(order.id)}
-                    >
-                      {t("Cancel")}
-                    </Button>
-                  </TableCell>
+          {orders.length !== 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[20px] text-nowrap">
+                    {t("Order_accept")}
+                  </TableHead>
+                  <TableHead className="w-[200px]">
+                    {t("Order_items")}
+                  </TableHead>
+                  <TableHead>{t("Order_note")}</TableHead>
+                  <TableHead className="w-[90px]">
+                    {t("Order_number")}
+                  </TableHead>
+                  <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {orders.map((order: StoreOrder) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="items-center justify-between">
+                      <Checkbox
+                        value={order.id}
+                        onClick={() => handleChecked(order.id)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {order.OrderItemView.map((item: orderitemview) => (
+                        <div
+                          key={item.id}
+                        >{`${item.name} x ${item.quantity}`}</div>
+                      ))}
+                    </TableCell>
+                    <TableCell>
+                      {order.OrderNotes.map((note: OrderNote) => (
+                        <div key={note.id}>{note.note}</div>
+                      ))}
+                      <div>{order.User?.name}</div>
+                      <div>{order.isPaid}</div>
+                      <div>{order.ShippingMethod?.name}</div>
+                      <div>{order.PaymentMethod?.name}</div>
+                    </TableCell>
+                    <TableCell>{order.orderNum}</TableCell>
+                    <TableCell>
+                      {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
+                      <Button className="gap-2 text-xs" variant={"outline"}>
+                        {t("Modify")}
+                      </Button>
+                      <Button
+                        className="gap-2 text-xs"
+                        variant={"destructive"}
+                        onClick={() => handleCancel(order.id)}
+                      >
+                        {t("Cancel")}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </>

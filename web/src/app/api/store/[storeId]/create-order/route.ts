@@ -23,12 +23,15 @@ export async function POST(
   // orderNote is array of string.
   const {
     userId,
+    tableId, //can be null
     total,
     currency,
     productIds,
     quantities,
     unitPrices,
-    orderNote,
+    variants, //can be null
+    variantCosts, //can be null
+    orderNote, //can be null
     shippingMethodId,
     paymentMethodId,
   } = data;
@@ -80,7 +83,7 @@ export async function POST(
       { status: 406 },
     );
   }
-    */
+  */
 
   if (productIds.length !== quantities.length) {
     return NextResponse.json(
@@ -131,6 +134,7 @@ export async function POST(
     data: {
       storeId: params.storeId,
       userId: userId || null, //user is optional
+      tableId: tableId || null,
       isPaid: false,
       orderTotal: new Prisma.Decimal(total),
       currency: currency,
@@ -143,6 +147,9 @@ export async function POST(
         createMany: {
           data: products.map((product, index: number) => ({
             productId: product.id,
+            productName: product.name,
+            variants: variants[index] || null,
+            variantCosts: variantCosts[index] || null,
             quantity: quantities[index],
             unitPrice: unitPrices[index],
           })),

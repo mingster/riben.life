@@ -1,4 +1,3 @@
-
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
@@ -16,8 +15,8 @@ export const checkAdminAccess = async () => {
     redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
   }
 
-  // TODO: tmp code for vercel deployment
-  if (session.user.role !== "ADMIN" && session.user.email !== "mingster.tsai@gmail.com") {
+  // block if not admin
+  if (session.user.role !== "ADMIN") {
     redirect("/error/?code=500&message=Unauthorized");
   }
 };

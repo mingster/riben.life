@@ -43,7 +43,7 @@ const StoreAdminDevMaintPage: React.FC<props> = async ({ params }) => {
     });
 
     console.log(`${count} orders deleted.`);
-    redirect("./admin/maint");
+    redirect("./");
   };
   const deleteAllSupportTickets = async () => {
     "use server";
@@ -55,7 +55,7 @@ const StoreAdminDevMaintPage: React.FC<props> = async ({ params }) => {
     });
 
     console.log(`${count} tickets deleted.`);
-    redirect("./admin/maint");
+    redirect("./");
   };
 
   const sendTestNoficiation = async () => {
