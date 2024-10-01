@@ -13,6 +13,8 @@ import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import { DisplayOrder } from "@/components/order-display";
 import type { StoreOrder } from "@/types";
+import { Navbar } from "@/components/global-navbar";
+import getOrderById from "@/actions/get-order-by_id";
 
 interface pageProps {
   params: {
@@ -23,6 +25,7 @@ interface pageProps {
 //NOTE - this page shows order status for anonymous users (the kind of users choose not to sign in).
 //
 const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
+  /*
   const store = (await sqlClient.store.findFirst({
     where: {
       id: params.storeId,
@@ -43,29 +46,16 @@ const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
   if (!store) {
     redirect("/unv");
   }
+  */
 
-  const order = await sqlClient.storeOrder.findUnique({
-    where: {
-      id: params.orderId,
-    },
-    include: {
-      Store: true,
-      OrderNotes: true,
-      OrderItemView: true,
-      User: true,
-      ShippingMethod: true,
-      PaymentMethod: true,
-    },
-  });
-
+  const order = await getOrderById(params.orderId);
   if (!order) {
     return "no order found";
   }
 
-  transformDecimalsToNumbers(order);
-
   return (
     <Suspense fallback={<Loader />}>
+      <Navbar title=''/>
       <Container>
         <h1>購物明細</h1>
         <DisplayOrder order={order} />

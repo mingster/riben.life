@@ -44,6 +44,7 @@ import type {
 import type { Address, PaymentMethod, ShippingMethod } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
 import { useSearchParams } from "next/navigation";
+import { table } from "console";
 
 type props = {
   store: Store;
@@ -177,7 +178,6 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
         console.log("productId", item.id.split("?")[0]);
         console.log("item.variants", item.variants);
         console.log("item.variantCosts", item.variantCosts);
-
         productIds.push(item.id.split("?")[0]);
         variants.push(item.variants);
         variantCosts.push(item.variantCosts);
@@ -193,6 +193,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/create-order`;
     const body = JSON.stringify({
       userId: user?.id, //user is optional
+      tableId: cart.items[0].tableId,
       total: cart.cartTotal,
       currency: store.defaultCurrency,
       productIds: productIds,

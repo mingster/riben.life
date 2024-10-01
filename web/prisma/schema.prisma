@@ -567,6 +567,7 @@ model StoreOrder {
   id                 String   @id @default(uuid())
   storeId            String
   userId             String?
+  tableId            String?
   orderNum           Int?     @default(autoincrement())
   isPaid             Boolean  @default(false)
   checkoutAttributes String   @default("")

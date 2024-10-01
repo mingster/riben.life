@@ -50,10 +50,10 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 
         <div className="grid grid-cols-3 gap-1 justify-items-stretch">
           <div className="whitespace-nowrap text-nowrap">
-            {order.Store.name}
+            {order.Store?.name}
           </div>
           <div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
-            交易序號：{order.orderNum}
+            {order.tableId && (`桌號：${order.tableId}`)} 交易序號：{order.orderNum}
           </div>
           <div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
             {format(order.createdAt, "yyyy/MM/dd HH:mm")}&nbsp;{order.OrderItemView.length}

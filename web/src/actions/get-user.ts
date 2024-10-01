@@ -2,6 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 //import { User } from 'prisma/prisma-client';
 import type { User } from "@/types";
 import { auth } from "@/auth";
+import { transformDecimalsToNumbers } from "@/lib/utils";
 
 const getUser = async (): Promise<User | null> => {
   const session = await auth();
@@ -27,6 +28,7 @@ const getUser = async (): Promise<User | null> => {
       Addresses: true,
       Orders: {
         include: {
+          //Store: true,
           OrderItemView: true,
           //orderItemsWithImage: true,
           //orderNotes: true,
@@ -41,6 +43,7 @@ const getUser = async (): Promise<User | null> => {
       Account: true,
     },
   });
+  transformDecimalsToNumbers(obj);
 
   return obj;
 
