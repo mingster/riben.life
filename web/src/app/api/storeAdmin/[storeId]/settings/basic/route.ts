@@ -29,6 +29,8 @@ export async function PATCH(
       acceptReservation,
       useBusinessHours,
       businessHours,
+      requireSeating,
+      requirePrepay,
     } = body;
 
     if (!body.name) {
@@ -55,6 +57,8 @@ export async function PATCH(
         acceptReservation,
         useBusinessHours,
         isOpen,
+        requireSeating,
+        requirePrepay,
         updatedAt: new Date(Date.now()),
         /*
         storeLocales: {

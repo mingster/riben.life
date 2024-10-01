@@ -50,6 +50,9 @@ const formSchema = z.object({
   acceptAnonymousOrder: z.boolean().optional().default(true),
   acceptReservation: z.boolean().optional().default(true),
 
+  requireSeating: z.boolean().optional().default(false), //需要帶位or not
+  requirePrepay: z.boolean().optional().default(true), //先付款再出貨
+
   useBusinessHours: z.boolean().optional().default(true),
   autoAcceptOrder: z.boolean().optional().default(false),
   isOpen: z.boolean().optional().default(false),
@@ -85,10 +88,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
   const defaultValues = sqlData
     ? {
-        ...sqlData,
-        orderNoteToCustomer: mongoData?.orderNoteToCustomer || "",
-        businessHours: mongoData?.businessHours || "",
-      }
+      ...sqlData,
+      orderNoteToCustomer: mongoData?.orderNoteToCustomer || "",
+      businessHours: mongoData?.businessHours || "",
+    }
     : { orderNoteToCustomer: "", businessHours: "" };
 
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
@@ -296,79 +299,6 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                 />
                 <FormField
                   control={form.control}
-                  name="autoAcceptOrder"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>
-                          {t("StoreSettings_autoAcceptOrder")}
-                        </FormLabel>
-                        <FormDescription>
-                          {t("StoreSettings_autoAcceptOrder_descr")}
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          disabled={loading}
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-                <FormField
-                  control={form.control}
-                  name="acceptAnonymousOrder"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>
-                          {t("StoreSettings_acceptAnonymousOrder")}
-                        </FormLabel>
-                        <FormDescription>
-                          {t("StoreSettings_acceptAnonymousOrder_descr")}
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="acceptReservation"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>
-                          {t("StoreSettings_acceptReservation")}
-                        </FormLabel>
-                        <FormDescription>
-                          {t("StoreSettings_acceptReservation_descr")}
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-                <FormField
-                  control={form.control}
                   name="useBusinessHours"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
@@ -409,6 +339,131 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+
+              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+                <FormField
+                  control={form.control}
+                  name="requireSeating"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>
+                          {t("StoreSettings_requireSeating")}
+                        </FormLabel>
+                        <FormDescription>
+                          {t("StoreSettings_requireSeating_descr")}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          disabled={loading}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="requirePrepay"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>
+                          {t("StoreSettings_requirePrepay")}
+                        </FormLabel>
+                        <FormDescription>
+                          {t("StoreSettings_requirePrepay_descr")}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          disabled={loading}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+              </div>
+              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+                <FormField
+                  control={form.control}
+                  name="autoAcceptOrder"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>
+                          {t("StoreSettings_autoAcceptOrder")}
+                        </FormLabel>
+                        <FormDescription>
+                          {t("StoreSettings_autoAcceptOrder_descr")}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          disabled={loading}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="acceptReservation"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>
+                          {t("StoreSettings_acceptReservation")}
+                        </FormLabel>
+                        <FormDescription>
+                          {t("StoreSettings_acceptReservation_descr")}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+
+                <FormField
+                  control={form.control}
+                  name="acceptAnonymousOrder"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>
+                          {t("StoreSettings_acceptAnonymousOrder")}
+                        </FormLabel>
+                        <FormDescription>
+                          {t("StoreSettings_acceptAnonymousOrder_descr")}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 />

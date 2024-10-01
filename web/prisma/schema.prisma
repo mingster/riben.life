@@ -328,6 +328,7 @@ model Store {
   acceptReservation    Boolean @default(true)
 
   requireSeating Boolean @default(false) //需要帶位or not
+  requirePrepay  Boolean @default(false) //先付款再出貨
 
   useBusinessHours Boolean @default(true)
 
