@@ -7,7 +7,6 @@ import { ProductCard } from "../../components/product-card";
 const StoreProductPage = async ({
   params,
 }: { params: { productId: string; storeId: string } }) => {
-
   const store = await sqlClient.store.findFirst({
     where: {
       id: params.storeId,
@@ -64,7 +63,7 @@ const StoreProductPage = async ({
         },
       },
       ProductCategories: true,
-    }
+    },
   })) as Product;
   transformDecimalsToNumbers(product);
 
@@ -80,7 +79,6 @@ const StoreProductPage = async ({
             product={product}
           />
         )}
-
       </div>
     </div>
   );

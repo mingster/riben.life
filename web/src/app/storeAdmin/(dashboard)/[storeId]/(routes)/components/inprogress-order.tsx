@@ -106,15 +106,13 @@ export const InProgressOrder = ({
       <Card>
         <CardTitle className="p-2">{t("Order_accept_mgmt")}</CardTitle>
         <CardDescription className="pt-2 pl-6">
-          {
-            orders.length === 0 ? (
-              <div>{t("no_results_found")}</div>
-            ) : (
-              autoAcceptOrder
-                ? t("Order_accept_mgmt_descr2")
-                : t("Order_accept_mgmt_descr")
-            )
-          }
+          {orders.length === 0 ? (
+            <div>{t("no_results_found")}</div>
+          ) : autoAcceptOrder ? (
+            t("Order_accept_mgmt_descr2")
+          ) : (
+            t("Order_accept_mgmt_descr")
+          )}
         </CardDescription>
         <CardContent className="space-y-2">
           {/* display */}
@@ -125,9 +123,13 @@ export const InProgressOrder = ({
                   <TableHead className="w-[20px] text-nowrap">
                     {t("Order_accept")}
                   </TableHead>
-                  <TableHead className="w-[200px]">{t("Order_items")}</TableHead>
+                  <TableHead className="w-[200px]">
+                    {t("Order_items")}
+                  </TableHead>
                   <TableHead>{t("Order_note")}</TableHead>
-                  <TableHead className="w-[90px]">{t("Order_number")}</TableHead>
+                  <TableHead className="w-[90px]">
+                    {t("Order_number")}
+                  </TableHead>
                   <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -175,7 +177,6 @@ export const InProgressOrder = ({
               </TableBody>
             </Table>
           )}
-
         </CardContent>
       </Card>
     </>

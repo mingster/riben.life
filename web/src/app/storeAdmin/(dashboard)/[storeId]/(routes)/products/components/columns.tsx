@@ -73,7 +73,10 @@ export const columns: ColumnDef<ProductColumn>[] = [
     accessorKey: "hasOptions",
     header: ({ column }) => {
       return (
-        <DataTableColumnHeader column={column} title={t("Product_hasOptions")} />
+        <DataTableColumnHeader
+          column={column}
+          title={t("Product_hasOptions")}
+        />
       );
     },
     cell: ({ row }) => {

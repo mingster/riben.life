@@ -23,11 +23,6 @@ function MyTimer({
   const router = useRouter();
   //const session = useSession();
 
-
-  if (!orderId) {
-    return "no order";
-  }
-
   const {
     seconds,
     minutes,
@@ -58,6 +53,10 @@ function MyTimer({
 
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
+
+  if (!orderId) {
+    return "no order";
+  }
 
   return (
     <div className="pt-10">

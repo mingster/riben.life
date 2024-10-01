@@ -58,7 +58,8 @@ const features_qrcode = [
 
 const features_rsvp = [
   {
-    description: "線上訂位：確認客人訂位資訊後，直接取得排隊號碼，時時掌握店家排隊狀態。",
+    description:
+      "線上訂位：確認客人訂位資訊後，直接取得排隊號碼，時時掌握店家排隊狀態。",
     basic: true,
     advanced: true,
     multi: true,
@@ -180,7 +181,6 @@ export function Features({ className, ...props }: { className?: string }) {
           />
           <Caption className="text-sky-500">功能表</Caption>
         </div>
-
 
         <BigText>預約/排隊系統</BigText>
         <Paragraph>預約候位/預先點餐，客人不用現場等候．降減客服壓力</Paragraph>

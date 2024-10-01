@@ -14,11 +14,45 @@ import { useEffect, useState } from "react";
 import type { StoreOrder } from "@/types";
 import type { orderitemview } from "@prisma/client";
 import { format } from "date-fns/format";
+import Currency from "./currency";
 
 type props = {
   orderId: string;
 };
 type orderProps = { order: StoreOrder };
+
+type itemViewOrops = {
+  currentItem: orderitemview
+}
+
+export const DisplayOrderItem: React.FC<itemViewOrops> = ({ currentItem }) => {
+
+  return (
+    <div className="relative ml-4 flex flex-1 flex-col justify-between sm:ml-6">
+      <div className="relative pr-0 w-full">
+        <div className="flex justify-between content-center">
+          <div className="flex-none w-1/2 pr-2">
+            {currentItem.name}
+
+            {currentItem.variants &&
+              currentItem.variants.length > 0 && (
+                <ul className="pl-2 text-sm">
+                  {currentItem.variants.split(",").map((itemOption) => (
+                    <li key={itemOption}>{itemOption}</li>
+                  ))}
+                </ul>
+              )}
+          </div>
+
+          <div className="pr-2">{currentItem.quantity ?? 0}</div>
+          <div className="pr-2">
+            <Currency value={Number(currentItem.unitPrice)} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
 export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
@@ -50,15 +84,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
           <div className="whitespace-nowrap text-nowrap">
             {/* order items */}
             {order.OrderItemView.map((item: orderitemview) => (
-              <div key={item.id} className="flex ">
-                <div className="pr-2">{item.name}</div>
-                <div className="">
-                  <div className="pr-2">x{item.quantity}</div>
-                </div>
-                <div className="justify-self-end place-self-end">
-                  <div>${Number(item.unitPrice)}</div>
-                </div>
-              </div>
+              <DisplayOrderItem key={item.id} currentItem={item} />
             ))}
           </div>
           <div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
@@ -92,9 +118,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
       <CardFooter className=" place-content-end items-end pt-0 pb-1 flex flex-col">
         <div className="grid grid-flow-row-dense grid-cols-3 gap-1 place-items-end">
           <div className="justify-self-end place-self-end whitespace-nowrap">
-            {t(
-              `PaymentStatus_${PaymentStatus[order.paymentStatus]}`,
-            )}
+            {t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
           </div>
           <div className="justify-self-end place-self-end whitespace-nowrap">
             {t("orderTotal_label")}
@@ -106,11 +130,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 
         <div className="">
           {order.orderStatus === OrderStatus.Pending && (
-            <Button
-              className="mr-2"
-              size="sm"
-              onClick={() => pay(order.id)}
-            >
+            <Button className="mr-2" size="sm" onClick={() => pay(order.id)}>
               {t("order_tab_pay")}
             </Button>
           )}
@@ -133,5 +153,5 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 };

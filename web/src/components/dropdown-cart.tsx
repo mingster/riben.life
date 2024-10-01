@@ -23,7 +23,7 @@ import Currency from "./currency";
 export const DropdownCart = () => {
   const router = useRouter();
 
-  const params = useParams<{ storeId: string, tableId: string }>();
+  const params = useParams<{ storeId: string; tableId: string }>();
   //console.log("storeId", params.storeId, "tableId", params.tableId);
 
   const { lng } = useI18n();
@@ -36,22 +36,20 @@ export const DropdownCart = () => {
   useEffect(() => {
     setNumInCart(cart.totalItems);
   }, [cart.totalItems]);
-  
+
   function onCheckout() {
     //bring to checkout page and close the cart dropdown
     //close();
     setIsOpen(false);
 
-    params.tableId ?
-      router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`) :
-      router.push(`/${params.storeId}/checkout`)
+    params.tableId
+      ? router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`)
+      : router.push(`/${params.storeId}/checkout`);
     //router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`);
   }
 
-
   function removeAll() {
     cart.emptyCart();
-
   }
   /*
   const [mounted, setMounted] = useState(false);
@@ -90,8 +88,7 @@ export const DropdownCart = () => {
 
         <SheetContent side="right">
           <div className="overflow-y-scroll w-full px-1 flex flex-col gap-y-8 no-scrollbar h-[calc(100vh-20px)]">
-            <div className='flex-1 pt-5'>
-
+            <div className="flex-1 pt-5">
               {cart.items.length === 0 ? (
                 <StoreNoItemPrompt />
               ) : (
@@ -131,18 +128,21 @@ export const DropdownCart = () => {
                       showSubtotal={true}
                     />
                   ))}
-
                 </>
               )}
             </div>
             <SheetFooter className="mt-auto">
-              <Button variant={"ghost"} className='content-end text-xs' onClick={removeAll}>remove all</Button>
+              <Button
+                variant={"ghost"}
+                className="content-end text-xs"
+                onClick={removeAll}
+              >
+                remove all
+              </Button>
             </SheetFooter>
-
           </div>
-
         </SheetContent>
-      </Sheet >
+      </Sheet>
     </>
   );
 };

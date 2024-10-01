@@ -41,11 +41,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useParams } from "next/navigation";
 
-type item_props = {
-  id: string;
-  name: string;
-  price: number;
-};
 interface props {
   product: Product;
 }
@@ -61,7 +56,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
 
   //const params = useParams();
   //const {storeId, tableId} = params;
-  const params = useParams<{ storeId: string, tableId: string }>();
+  const params = useParams<{ storeId: string; tableId: string }>();
   //  console.log("storeId", params.storeId, "tableId", params.tableId);
 
   const productOptions = product.ProductOptions as ProductOption[];
@@ -72,7 +67,8 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
     productOptions.forEach((option: ProductOption, index) => {
       const fieldName = `option${index}`;
 
-      if (option.isMultiple) {  //checkboxes
+      if (option.isMultiple) {
+        //checkboxes
         if (option.isRequired) {
           schemaFields[fieldName] = z
             .array(z.string())
@@ -87,42 +83,42 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
             .refine((value) => value.some((item) => item), {
               message: "You have to select at least one item.",
             });
-        } else {  // not required checkbox
+        } else {
+          // not required checkbox
 
           if (option.minSelection === 0) {
-
-            if (option.maxSelection > 0) {  //最多選?項
-              schemaFields[fieldName] = z.array(z.string())
+            if (option.maxSelection > 0) {
+              //最多選?項
+              schemaFields[fieldName] = z
+                .array(z.string())
                 .max(
                   option.maxSelection,
                   `1You can select up to ${option.maxSelection} items only.`,
                 )
                 .optional();
+            } else {
+              schemaFields[fieldName] = z.array(z.string()).optional();
             }
-            else {
-              schemaFields[fieldName] = z
+          } else {
+            ////最少選?項
+            schemaFields[fieldName] = z
               .array(z.string())
+              .min(
+                option.minSelection,
+                `3You can select up to ${option.minSelection} items only.`,
+              )
+              .max(
+                option.maxSelection,
+                `4You can select up to ${option.maxSelection} items only.`,
+              )
+              .refine((value) => value.some((item) => item), {
+                message: "5You have to select at least one item.",
+              })
               .optional();
-            }
-          }
-          else {  ////最少選?項
-            schemaFields[fieldName] = z.array(z.string())
-            .min(
-              option.minSelection,
-              `3You can select up to ${option.minSelection} items only.`,
-            )
-            .max(
-              option.maxSelection,
-              `4You can select up to ${option.maxSelection} items only.`,
-            )
-            .refine((value) => value.some((item) => item), {
-              message: "5You have to select at least one item.",
-            })
-            .optional();
           }
         }
-
-      } else { // radio buttons
+      } else {
+        // radio buttons
         const iteriable_selections: string[] = productOptions.flatMap(
           (option) =>
             option.ProductOptionSelections.map((selection) => selection.id),
@@ -300,6 +296,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
     return null;
   }
 
+  // add the product selection to the cart
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     //console.log("data", JSON.stringify(data));
 
@@ -312,8 +309,11 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
         const itemOptions: ItemOption[] = [];
 
         // NOTE: cartId is used to identify the item in the cart
-        // it is a query string of the form data
+        // it's formatted as a query string of the form data
         let cartId = `${product.id}?`;
+
+        let variants = '';
+        let variantCosts = '';
 
         // console.log("form data", JSON.stringify(data));
         for (const [key, value] of Object.entries(data)) {
@@ -321,25 +321,32 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
 
           cartId += `${key}=${value}&`;
 
-          if (typeof value === "string") {
-            // Handle string value
+          if (typeof value === "string") {              // radio button
             const itemOption = getCartItemOption(value);
             if (itemOption) {
               itemOptions.push(itemOption);
+
+              variants += `${itemOption.value},`;
+              variantCosts += `${itemOption.price},`;
             }
-          } else if (Array.isArray(value)) {
+          } else if (Array.isArray(value)) {  // checkboxes
             value.forEach((selection: string, index: number) => {
               //console.log(`selection: [${index}] ${selection}`);
               const itemOption = getCartItemOption(selection);
               if (itemOption) {
                 itemOptions.push(itemOption);
+                variants += `${itemOption.value},`;
+                variantCosts += `${itemOption.price},`;
               }
             });
           }
         }
 
-        //cartId = `${cartId}?${optionVal}`;
-        //console.log("cartId", cartId);
+        // trim off end comma
+        if (variants.length > 2) {
+          variants = variants.substring(0, variants.length - 1);
+          variantCosts = variantCosts.substring(0, variantCosts.length - 1);
+        }
 
         cart.addItem(
           {
@@ -350,6 +357,8 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
             itemOptions: itemOptions,
             storeId: params.storeId,
             tableId: params.tableId,
+            variants: variants,
+            variantCosts: variantCosts
           },
           quantity,
         );

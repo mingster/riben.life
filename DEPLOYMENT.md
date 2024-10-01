@@ -1,7 +1,7 @@
 # Depolyment Note
 
 
-Currently [legod.org](https://legod.org) is hosted at [vercel](https://vercel.com/mingsters-projects/legod).
+Currently [riben.life](https://riben.life) is hosted at [vercel](https://vercel.com).
 
 As you commit to main branch, new code will deploy to the production automatically.
 

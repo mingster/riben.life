@@ -34,9 +34,7 @@ export const DisplayOrders = ({ orders, status }: orderTabProps) => {
         <div className="flex-1 p-1 pt-1 space-y-1">
           {orders.map((order: StoreOrder) => (
             <div key={order.id}>
-              {order.orderStatus === status && (
-                <DisplayOrder order={order} />
-              )}
+              {order.orderStatus === status && <DisplayOrder order={order} />}
             </div>
           ))}
         </div>

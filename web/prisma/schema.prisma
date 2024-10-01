@@ -612,16 +612,17 @@ model StoreOrder {
 }
 
 model OrderItem {
-  id           String  @id @default(uuid())
-  orderId      String
-  productId    String
+  id        String @id @default(uuid())
+  orderId   String
+  productId String
+
   //copy over value
-  productName  String?
-  optionName   String?
-  selection    String?
-  quantity     Int     @default(1)
+  productName  String
+  variants     String? // hold values of product options selection delimited by comma
+  variantCosts String? // hold values of variant cost delimited by comma
+  quantity     Int
   unitDiscount Decimal @default(0)
-  unitPrice    Decimal @default(0)
+  unitPrice    Decimal
 
   Order   StoreOrder @relation("itemToStoreOrder", fields: [orderId], references: [id], onDelete: Cascade)
   Product Product    @relation("itemToProduct", fields: [productId], references: [id])
@@ -760,6 +761,8 @@ view orderitemview {
   unitPrice    Decimal?
   name         String?
   url          String?
+  variants     String? // hold values of product options selection delimited by comma
+  variantCosts String? // hold values of variant cost delimited by comma
 
   Order   StoreOrder @relation("itemViewToStoreOrder", fields: [orderId], references: [id], onDelete: Cascade)
   Product Product    @relation("itemViewToProduct", fields: [productId], references: [id])

@@ -58,7 +58,6 @@ const CartSummary = () => {
   return (
     <div className="py-5 sm:py-1 px-0 mx-auto xl:container rounded min-h-[95%]">
       {cart.items.length > 0 && (
-
         <div className="grid grid-rows-1">
           <div className="">
             <div className="grid grid-cols-3 gap-2">
@@ -91,7 +90,6 @@ const CartSummary = () => {
             </Button>
           </div>
         </div>
-
       )}
     </div>
   );

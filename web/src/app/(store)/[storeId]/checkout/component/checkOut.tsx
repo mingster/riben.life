@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { type Item, useCart } from "@/hooks/use-cart";
+import queryString from 'query-string';
 
 import { useTranslation } from "@/app/i18n/client";
 import CartItemInfo from "@/components/cart-item-info";
@@ -42,7 +43,7 @@ import type {
 } from "@/types";
 import type { Address, PaymentMethod, ShippingMethod } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams } from "next/navigation";
 
 type props = {
   store: Store;
@@ -54,10 +55,10 @@ type props = {
 export const Checkout = ({ store, user }: props) => {
   const cart = useCart();
   const router = useRouter();
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams();
 
   // see if there is a tableId in querystring
-  const tableId = searchParams.get('tableId');
+  const tableId = searchParams.get("tableId");
   //console.log("tableId", tableId);
 
   const [inCheckoutSteps, setInCheckoutSteps] = useState(false);
@@ -69,11 +70,7 @@ export const Checkout = ({ store, user }: props) => {
 
   return (
     <Container>
-      <CheckoutSteps
-        store={store}
-        user={user}
-        onChange={setInCheckoutSteps}
-      />
+      <CheckoutSteps store={store} user={user} onChange={setInCheckoutSteps} />
     </Container>
   );
 };
@@ -120,23 +117,11 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     defaultPaymentMethod.PaymentMethod,
   );
-  console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
+  //console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
 
   //const [selectedPaymentType, setSelectedPaymentType] = useState('creditCard');
   //console.log('selected shipMethod: ' + shipMethod);
   //console.log('CheckutSteps: ' + JSON.stringify(shipMethods));
-
-  const productIds: string[] = [];
-  const prices: number[] = [];
-  const quantities: number[] = [];
-  //const notes: string[] = [];
-
-  cart.items.map((item) => {
-    productIds.push(item.id);
-    prices.push(item.price);
-    quantities.push(Number(item.quantity));
-    //notes.push(item.userData);
-  });
 
   const handleTabChange = (paymentMethodId: string) => {
     //setSelectedPaymentType(paymentMethodId);
@@ -178,8 +163,34 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
       return;
     }
 
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/create-order`;
+    // convert cart items into string array to send to order creation
+    const productIds: string[] = [];
+    const prices: number[] = [];
+    const quantities: number[] = [];
+    //const notes: string[] = [];
+    const variants: string[] = [];
+    const variantCosts: string[] = [];
 
+    cart.items.map((item) => {
+      if (item.id.includes("?")) {
+        console.log("item.id", item.id);
+        console.log("productId", item.id.split("?")[0]);
+        console.log("item.variants", item.variants);
+        console.log("item.variantCosts", item.variantCosts);
+
+        productIds.push(item.id.split("?")[0]);
+        variants.push(item.variants);
+        variantCosts.push(item.variantCosts);
+      }
+      else {
+        productIds.push(item.id);
+      }
+      prices.push(item.price);
+      quantities.push(Number(item.quantity));
+      //notes.push(item.userData);
+    });
+
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/create-order`;
     const body = JSON.stringify({
       userId: user?.id, //user is optional
       total: cart.cartTotal,
@@ -187,6 +198,8 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
       productIds: productIds,
       quantities: quantities,
       unitPrices: prices,
+      variants: variants,
+      variantCosts: variantCosts,
       orderNote: states.orderNote,
       shippingMethodId: shipMethod.id,
       //shippingAddress: displayUserAddress(user),
@@ -197,7 +210,6 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 
     try {
       const result = await axios.post(url, body);
-
       const order = result.data.order as StoreOrder;
       //console.log(`featch result: ${JSON.stringify(order)}`);
       //console.log(`order.id: ${order.id}`);
@@ -205,19 +217,18 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
       // ANCHOR clear cart of the order placed
       //
       if (order) {
-        //clear cart
-        //cart.emptyCart();
-        productIds.map((productId) => {
-          cart.removeItem(productId);
-        });
+        // NOTE: if we allow customer to checkout parial of cart items, this need to be adjusted
+        cart.emptyCart(); //clear cart
       }
 
       //return value to parent component
       onChange?.(true);
 
+      // redirect to payment page
       const paymenturl = `/checkout/${order.id}/${paymentMethod.payUrl}`;
-      //console.log('payment url: ' + url);
       router.push(paymenturl);
+
+
     } catch (error: unknown) {
       const err = error as AxiosError;
       console.error(error);
@@ -314,7 +325,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
           <CardTitle>{t("checkout_paymentMethod")}</CardTitle>
         </CardHeader>
         <CardContent>
-        {paymentMethod.name}
+          {paymentMethod.name}
           {/*
           <Tabs defaultValue={paymentMethod.id} onValueChange={handleTabChange}>
             <TabsList>

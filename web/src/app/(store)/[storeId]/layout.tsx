@@ -89,7 +89,7 @@ export default async function StoreHomeLayout({
   //console.log(JSON.stringify(store));
 
   let isStoreOpen = store.isOpen;
-  if (storeSettings!=null){
+  if (storeSettings != null) {
     const bizHour = storeSettings.businessHours;
     if (store.useBusinessHours && bizHour !== null) {
       const businessHours = new BusinessHours(bizHour);

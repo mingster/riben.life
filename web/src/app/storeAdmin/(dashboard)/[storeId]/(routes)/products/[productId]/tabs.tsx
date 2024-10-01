@@ -30,13 +30,13 @@ import Link from "next/link";
 
 interface editProps {
   initialData:
-  | (Product & {
-    ProductImages: ProductImages[] | [];
-    ProductAttribute: ProductAttribute | null;
-    ProductCategories: ProductCategories[] | [];
-    ProductOptions: ProductOption[] | [];
-  })
-  | null;
+    | (Product & {
+        ProductImages: ProductImages[] | [];
+        ProductAttribute: ProductAttribute | null;
+        ProductCategories: ProductCategories[] | [];
+        ProductOptions: ProductOption[] | [];
+      })
+    | null;
   allCategories: Category[];
   storeOptionTemplates: StoreProductOptionTemplate[] | [];
   action: string;
@@ -128,8 +128,11 @@ export const ProductEditTabs = ({
         </div>
         {initialData && (
           <>
-            <Link target="_blank" href={`/${params.storeId}/product/${initialData.id}`}
-              title={t("Preview")} className="bg-blue-900"
+            <Link
+              target="_blank"
+              href={`/${params.storeId}/product/${initialData.id}`}
+              title={t("Preview")}
+              className="bg-blue-900"
             >
               <Eye className="h-4 w-4" />
             </Link>

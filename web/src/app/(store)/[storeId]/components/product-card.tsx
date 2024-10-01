@@ -42,9 +42,8 @@ export function ProductCard({
 
   //const params = useParams();
   //const {storeId, tableId} = params;
-  const params = useParams<{ storeId: string, tableId: string }>();
+  const params = useParams<{ storeId: string; tableId: string }>();
   //  console.log("storeId", params.storeId, "tableId", params.tableId);
-
 
   const handleAddToCart = (product: Product) => {
     const item = cart.getItem(product.id);

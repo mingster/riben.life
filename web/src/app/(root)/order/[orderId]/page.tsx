@@ -44,7 +44,7 @@ const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
     redirect("/unv");
   }
 
-  const order = (await sqlClient.storeOrder.findUnique({
+  const order = await sqlClient.storeOrder.findUnique({
     where: {
       id: params.orderId,
     },
@@ -55,7 +55,7 @@ const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
       ShippingMethod: true,
       PaymentMethod: true,
     },
-  }));
+  });
 
   if (!order) {
     return "no order found";

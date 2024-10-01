@@ -28,6 +28,8 @@ export async function POST(
     productIds,
     quantities,
     unitPrices,
+    variants,
+    variantCosts,
     orderNote,
     shippingMethodId,
     paymentMethodId,
@@ -143,6 +145,9 @@ export async function POST(
         createMany: {
           data: products.map((product, index: number) => ({
             productId: product.id,
+            productName: product.name,
+            variants: variants[index],
+            variantCosts: variantCosts[index],
             quantity: quantities[index],
             unitPrice: unitPrices[index],
           })),

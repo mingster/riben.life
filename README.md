@@ -1,6 +1,6 @@
-# pstv_web2
+# riben.life
 
-pstv_web2 is based on Next.js, it provides web front-end and backend api.
+riben.life provides both front-end and backend api.....
 
 ## Ground work - [0-basic-boilerplate](https://github.com/mingster/pstv_web2/tree/0-basic-boilerplate)
 

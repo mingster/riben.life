@@ -133,8 +133,15 @@ export const StoreHomeContent: React.FC<props> = ({
         <div className="pl-5 pb-5">
           {tableData ? (
             <div className="">
-              <div className="flex gap-2">消費金額 $919 <div className="text-sm"><Link href='#'>點餐紀錄</Link></div></div>
-              <div>{t("storeTables")}: {tableData.tableName}</div>
+              <div className="flex gap-2">
+                消費金額 $919{" "}
+                <div className="text-sm">
+                  <Link href="#">點餐紀錄</Link>
+                </div>
+              </div>
+              <div>
+                {t("storeTables")}: {tableData.tableName}
+              </div>
               <div>入座時間：</div>
               <div>2大人 0小孩</div>
             </div>
