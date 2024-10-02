@@ -17,11 +17,11 @@ const StoreNoItemPrompt = () => {
 
   return (
     <div>
-      <h1 className="sm:text-xl text-2xl tracking-wider">{t('cart_noitem')}</h1>
+      <h1 className="sm:text-xl text-2xl tracking-wider">{t("cart_noitem")}</h1>
 
       <Link href={"/"} className="hover:text-slate">
         <Button variant="outline" className="w-full">
-          {t('keep_shopping')}
+          {t("keep_shopping")}
         </Button>
       </Link>
     </div>
