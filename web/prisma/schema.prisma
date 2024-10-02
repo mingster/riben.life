@@ -337,6 +337,7 @@ model Store {
   bankAccount     String?
   bankAccountName String?
 
+  isProVersion  Boolean @default(false)
   logo         String?
   logoPublicId String?
   createdAt    DateTime @default(now())
