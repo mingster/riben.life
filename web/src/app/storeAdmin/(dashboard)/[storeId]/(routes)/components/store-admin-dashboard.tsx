@@ -88,7 +88,7 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
           parentLoading={loading}
         />
         <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
-        <div className="relative flex w-full justify-center"></div>
+        <div className="relative flex w-full justify-center"> </div>
       </div>
     </section>
   );
