@@ -11,11 +11,14 @@ import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
 import DropdownUser from "@/components/dropdown-user";
 
-import StoreSwitcher from "./store-switcher";
-import type { Store } from "@/types";
-import { useScrollDirection } from "@/lib/use-scroll-direction";
+import { useTranslation } from "@/app/i18n/client";
 import ThemeToggler from "@/components/theme-toggler";
+import { Button } from "@/components/ui/button";
+import { useScrollDirection } from "@/lib/use-scroll-direction";
+import { useI18n } from "@/providers/i18n-provider";
+import type { Store } from "@/types";
 import Link from "next/link";
+import StoreSwitcher from "./store-switcher";
 
 interface StoreAdminNavbarProps {
   store: Store;
@@ -23,6 +26,8 @@ interface StoreAdminNavbarProps {
 
 export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
   const router = useRouter();
+  const { lng } = useI18n();
+  const { t } = useTranslation(lng, "storeAdmin");
 
   const session = useSession();
   if (!session) {
@@ -82,6 +87,15 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
         </div>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
+          {/* level button */}
+          <Link href={`/storeAdmin${store.id}/subscribe`} className="text-xs">
+            <Button variant="outline">
+              {
+                (store.level === 0) ?
+                  t('Store_level_free') : (store.level === 1) ? t('Store_level_pro') : t('Store_level_multi')
+              }
+            </Button>
+          </Link>
           <StoreSwitcher />
           <StoreModal />
           <ThemeToggler />

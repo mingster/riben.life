@@ -28,7 +28,7 @@ const StoreAdminLayout: React.FC<props> = ({
   return (
     <div className="">
       <StoreAdminNavbar store={sqlData} />
-      <StoreAdminSidebar title={sqlData?.name} />
+      <StoreAdminSidebar store={sqlData} />
       <main
         className={cn(
           "min-h-[calc(100vh_-_56px)] transition-[margin-left] duration-300 ease-in-out ",

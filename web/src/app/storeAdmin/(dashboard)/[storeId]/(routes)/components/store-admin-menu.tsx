@@ -12,20 +12,22 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
 import { CollapseMenuButton } from "@/components/collapse-menu-button";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { GetMenuList } from "./menu-list";
+import { cn } from "@/lib/utils";
+import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
+import { GetMenuList } from "./menu-list";
 
 interface MenuProps {
   isOpen: boolean | undefined;
   store: Store;
 }
 
+// display storeadmin side menu.
+// the TooltipProvider  show full length when open; show just the label when not open
 export function StoreAdminMenu({ isOpen, store }: MenuProps) {
   const pathname = usePathname();
   const { lng } = useI18n();
@@ -38,7 +40,7 @@ export function StoreAdminMenu({ isOpen, store }: MenuProps) {
   return (
     <ScrollArea className="[&>div>div[style]]:!block">
       <nav className="mt-8 h-full w-full">
-        <ul className="flex min-h-[calc(100vh-48px-36px-16px-32px-110px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px-110px)]">
+        <ul className="flex min-h-[calc(100vh-48px-36px-16px-32px-50px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px-50px)]">
           {menuList.map(({ groupLabel, menus }, index) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={index}>
@@ -127,10 +129,6 @@ export function StoreAdminMenu({ isOpen, store }: MenuProps) {
             <Tooltip delayDuration={100}>
               <TooltipTrigger asChild>
                 <>
-                  <div className="flex w-full items-center justify-center">
-                    <Button variant="outline" className="mt-5 h-10 w-full justify-center">level</Button>
-                  </div>
-
                   {/* sign out button */}
                   <Button
                     onClick={() => signOut({ callbackUrl: "/" })}
@@ -151,18 +149,6 @@ export function StoreAdminMenu({ isOpen, store }: MenuProps) {
                   </Button>
                 </>
               </TooltipTrigger>
-
-              {isOpen === false && (
-                <TooltipContent side="right">
-                  <div>
-                    level
-                  </div>
-                  <div>
-                    {t('signout')}
-                  </div>
-
-                </TooltipContent>
-              )}
             </Tooltip>
           </TooltipProvider>
         </div>
