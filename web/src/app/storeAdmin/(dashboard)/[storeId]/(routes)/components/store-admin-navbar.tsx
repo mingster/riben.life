@@ -88,7 +88,7 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
 
         <div className="flex flex-1 items-center justify-end space-x-2">
           {/* level button */}
-          <Link href={`/storeAdmin${store.id}/subscribe`} className="text-xs">
+          <Link href={`/storeAdmin/${store.id}/subscribe`} className="text-xs">
             <Button variant="outline">
               {
                 (store.level === 0) ?
