@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
+
+import { useState } from "react";
+import { ConfirmModal } from "@/components/modals/cofirm-modal";
 interface props {
   store: Store;
 }
@@ -15,22 +18,39 @@ export function PkgSelection({ store }: props) {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   console.log('level', store.level);
 
   function handleDivClick(selected: number) {
+    if (selected === store.level) {
+      alert('您目前已選擇此方案');
+      return;
+    }
+
+    setOpen(true);
     store.level = selected;
-    alert(selected);
   }
 
+  const onSelect = async () => {
+  }
   return (
     <>
+      <ConfirmModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        onConfirm={onSelect}
+        loading={loading}
+        title={t('storeAdmin_switchLevel_title')}
+        description={t('storeAdmin_switchLevel_description')}
+      />
       <div className="max-w-6xl px-4 py-8 mx-auto sm:py-24 sm:px-6 lg:px-8">
         <div className="sm:flex sm:flex-col sm:align-center">
           <h1 className="text-4xl font-extrabold sm:text-center sm:text-6xl">
-            Pricing Plans
+            {t('storeAdmin_switchLevel_pageTitle')}
           </h1>
           <p className="max-w-2xl m-auto mt-5 text-xl sm:text-center sm:text-2xl">
-            請選擇適合的訂閱方案
+            {t('storeAdmin_switchLevel_pageDescr')}
           </p>
         </div>
 
@@ -51,7 +71,7 @@ export function PkgSelection({ store }: props) {
           >
             <div className="flex-1">
               <h2 className="text-2xl font-semibold leading-6">
-                {t('Store_level_free')}
+                {t('storeAdmin_switchLevel_free')}
               </h2>
               <div className="mt-8 text-2xl font-extrabold">
                 1%/營業額
@@ -75,7 +95,6 @@ export function PkgSelection({ store }: props) {
             </Button>
           </div>
 
-
           {/* 進階版*/}
           <div
             onClick={() => handleDivClick(1)}
@@ -91,7 +110,7 @@ export function PkgSelection({ store }: props) {
           >
             <div className="flex-1">
               <h2 className="text-2xl font-semibold leading-6">
-                {t('Store_level_pro')}
+                {t('storeAdmin_switchLevel_pro')}
               </h2>
               <div className="mt-8 text-2xl font-extrabold">
                 $300/每月
@@ -130,7 +149,7 @@ export function PkgSelection({ store }: props) {
           >
             <div className="flex-1">
               <h2 className="text-2xl font-semibold leading-6">
-                {t('Store_level_multi')}
+                {t('storeAdmin_switchLevel_multi')}
               </h2>
               <div className="mt-8">
                 <span className="text-2xl font-extrabold">
