@@ -2,11 +2,13 @@ import { sqlClient } from "@/lib/prismadb";
 import { type NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  // https://github.com/stripe/stripe-node#configuration
-  apiVersion: "2024-06-20",
-  typescript: true,
-});
+const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY_LIVE ?? process.env.STRIPE_SECRET_KEY ?? '',
+  {
+    // https://github.com/stripe/stripe-node#configuration
+    apiVersion: "2024-06-20",
+    typescript: true,
+  });
 
 const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;
 

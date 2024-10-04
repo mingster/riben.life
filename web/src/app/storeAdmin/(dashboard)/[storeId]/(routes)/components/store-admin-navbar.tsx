@@ -19,6 +19,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import Link from "next/link";
 import StoreSwitcher from "./store-switcher";
+import { StoreLevel } from "@/types/enum";
 
 interface StoreAdminNavbarProps {
   store: Store;
@@ -74,7 +75,7 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
 
       <div className="mx-4 flex h-14 items-center xs:mx-8">
         <div className="flex items-center space-x-4 lg:space-x-0">
-          <StoreAdminSheetMenu />
+          <StoreAdminSheetMenu store={store}/>
         </div>
 
         <div className="flex items-center space-x-4 lg:pl-10">
@@ -91,8 +92,9 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
           <Link href={`/storeAdmin/${store.id}/subscribe`} className="text-xs">
             <Button variant="outline">
               {
-                (store.level === 0) ?
-                  t('storeAdmin_switchLevel_free') : (store.level === 1) ? t('storeAdmin_switchLevel_pro') : t('storeAdmin_switchLevel_multi')
+                (store.level === StoreLevel.Free) ?
+                  t('storeAdmin_switchLevel_free') :
+                  (store.level === StoreLevel.Pro) ? t('storeAdmin_switchLevel_pro') : t('storeAdmin_switchLevel_multi')
               }
             </Button>
           </Link>

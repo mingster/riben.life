@@ -1,13 +1,11 @@
 "use server";
-import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { getAbsoluteUrl } from "@/lib/utils";
-import { OrderStatus, PaymentStatus, StoreLevel } from "@/types/enum";
-import { redirect } from "next/navigation";
+import { StoreLevel } from "@/types/enum";
 import { Suspense } from "react";
 import Stripe from "stripe";
+import { SuccessAndRedirect } from "./SuccessAndRedirect";
 
 // this page is hit when stripe element confirmed the payment.
 // here we mark the SubscriptionPayment as paid, show customer a message.
@@ -51,17 +49,19 @@ export default async function StripeConfirmedPage({
     );
 
     if (pi) {
-/*
-      stripe.subscriptions.create({
-        customer: pi.customer,
-        items: [
-          {
-            price: pi?.metadata?.priceId,
-          },
-        ],
-      })
+      // create subscription
+      //
+      /*
+            stripe.subscriptions.create({
+              customer: pi.customer,
+              items: [
+                {
+                  price: pi?.metadata?.priceId,
+                },
+              ],
+            })
 
-*/
+      */
 
       const checkoutAttributes = JSON.stringify({
         payment_intent: searchParams.payment_intent,
@@ -79,12 +79,24 @@ export default async function StripeConfirmedPage({
       });
 
       // update store's subscription level
+      const store = await sqlClient.store.findFirst({
+        where: {
+          id: order.storeId,
+        }
+      });
+
+      const count = await sqlClient.store.count({
+        where: {
+          ownerId: store?.ownerId
+        }
+      });
+
       await sqlClient.store.update({
         where: {
           id: order.storeId,
         },
         data: {
-          level: StoreLevel.Pro,
+          level: count === 1 ? StoreLevel.Pro : StoreLevel.Multi
         },
       })
 
@@ -97,10 +109,11 @@ export default async function StripeConfirmedPage({
       return (
         <Suspense fallback={<Loader />}>
           <Container>
-          SubscriptionPayment confirmed.
+            <SuccessAndRedirect orderId={order.id} />
           </Container>
         </Suspense>
       );
     }
   }
 }
+

@@ -275,10 +275,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     //Later, the stripeCustomerId will be added to that user's account in our database.
     createUser: async ({ user }) => {
       // biome-ignore lint/style/noNonNullAssertion: <explanation>
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-        apiVersion: "2024-06-20",
-        typescript: true,
-      });
+
+      const stripe = new Stripe(
+        process.env.STRIPE_SECRET_KEY_LIVE ?? process.env.STRIPE_SECRET_KEY ?? '',
+        {
+          apiVersion: "2024-06-20",
+          typescript: true,
+        });
 
       await stripe.customers
         .create({

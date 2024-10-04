@@ -29,6 +29,7 @@ import {
 } from "@stripe/stripe-js";
 import { useTheme } from "next-themes";
 import axios from "axios";
+import { StoreLevel } from "@/types/enum";
 
 
 export function PkgSelection({ store }: { store: Store }) {
@@ -66,8 +67,17 @@ const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
       return;
     }
 
-    setOpen(true);
-    store.level = selected;
+    if (selected === StoreLevel.Free && store.level !== StoreLevel.Free) {
+      if (confirm('您將調整到基礎版，確定嗎？')) {
+
+        store.level = selected;
+
+      }
+    }
+    else {
+      setOpen(true);
+    }
+
   }
 
   const onSelect = async () => {
@@ -109,15 +119,15 @@ const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
         <div className="mt-12 w-full space-y-0 flex justify-center gap-6 max-w-4xl mx-auto min-h-[calc(100vh-48px-36px-16px-32px-50px)]">
           {/* 基礎版*/}
           <div
-            onClick={() => handleDivClick(0)}
+            onClick={() => handleDivClick(StoreLevel.Free)}
             onKeyUp={(event) => {
               if (event.key === "Enter" || event.key === " ") {
-                handleDivClick(0);
+                handleDivClick(StoreLevel.Free);
               }
             }}
             className={cn(
               "flex flex-col basis-1/3 rounded-lg shadow-sm p-5 max-w-xs border border-gray-500 hover:cursor-pointer hover:bg-zinc-900 hover:border-pink-500",
-              store.level === 0
+              store.level === StoreLevel.Free
                 ? "border-pink-500 dark:hover:bg-blue-900"
                 : "border-gray-500",
             )}
@@ -141,15 +151,15 @@ const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
 
           {/* 進階版*/}
           <div
-            onClick={() => handleDivClick(1)}
+            onClick={() => handleDivClick(StoreLevel.Pro)}
             onKeyUp={(event) => {
               if (event.key === "Enter" || event.key === " ") {
-                handleDivClick(1);
+                handleDivClick(StoreLevel.Pro);
               }
             }}
             className={cn(
               "flex flex-col basis-1/3 rounded-lg shadow-sm p-5 max-w-xs border border-gray-500 hover:cursor-pointer hover:bg-zinc-900 hover:border-pink-500",
-              store.level === 1
+              store.level === StoreLevel.Pro
                 ? "border-pink-500 dark:hover:bg-blue-900"
                 : "border-gray-500",
             )}
@@ -176,15 +186,15 @@ const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
 
           {/* 多店版*/}
           <div
-            onClick={() => handleDivClick(2)}
+            onClick={() => handleDivClick(StoreLevel.Multi)}
             onKeyUp={(event) => {
               if (event.key === "Enter" || event.key === " ") {
-                handleDivClick(2);
+                handleDivClick(StoreLevel.Multi);
               }
             }}
             className={cn(
               "flex flex-col basis-1/3 rounded-lg shadow-sm p-5 max-w-xs border border-gray-500 hover:cursor-pointer hover:bg-zinc-900 hover:border-pink-500",
-              store.level === 2
+              store.level === StoreLevel.Multi
                 ? "border-pink-500  dark:hover:bg-blue-900"
                 : "border-gray-500",
             )}

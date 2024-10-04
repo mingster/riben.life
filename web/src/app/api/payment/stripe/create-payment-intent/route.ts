@@ -31,10 +31,12 @@ export async function POST(
       );
     }
 
-    const stripe = new Stripe(`${process.env.STRIPE_SECRET_KEY}`, {
-      apiVersion: "2024-06-20",
-      typescript: true,
-    });
+    const stripe = new Stripe(
+      process.env.STRIPE_SECRET_KEY_LIVE ?? process.env.STRIPE_SECRET_KEY ?? '',
+      {
+        apiVersion: "2024-06-20",
+        typescript: true,
+      });
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: total * 100,

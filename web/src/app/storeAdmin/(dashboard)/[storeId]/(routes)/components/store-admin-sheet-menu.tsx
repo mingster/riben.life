@@ -12,8 +12,13 @@ import {
 } from "@/components/ui/sheet";
 import { useState } from "react";
 import { StoreAdminMenu } from "./store-admin-menu";
+import type { Store } from "@/types";
 
-export function StoreAdminSheetMenu() {
+interface StoreAdminNavbarProps {
+  store: Store;
+}
+export function StoreAdminSheetMenu({ store }: StoreAdminNavbarProps) {
+
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -34,7 +39,7 @@ export function StoreAdminSheetMenu() {
           <SheetTitle />
           <SheetDescription />
 
-          <StoreAdminMenu isOpen title="" />
+          <StoreAdminMenu isOpen store={store}/>
         </SheetContent>
       </Sheet>
     </>
