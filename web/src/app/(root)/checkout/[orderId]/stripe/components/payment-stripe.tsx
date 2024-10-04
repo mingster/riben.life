@@ -53,8 +53,8 @@ const PaymentStripe: React.FC<paymentProps> = ({ order }) => {
 
   const [clientSecret, setClientSecret] = useState("");
 
-  console.log(JSON.stringify(order.isPaid));
-  console.log(`clientSecret:${JSON.stringify(clientSecret)}`);
+  //console.log(JSON.stringify(order.isPaid));
+  //console.log(`clientSecret:${JSON.stringify(clientSecret)}`);
 
   //call payment intent api to get client secret
   useEffect(() => {

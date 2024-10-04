@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { CheckStoreAdminAccess } from "../../api_helper";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
-///!SECTION create new product.
+///!SECTION create new store table.
 export async function POST(
   req: Request,
   { params }: { params: { storeId: string } },

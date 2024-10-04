@@ -138,6 +138,8 @@
   "Store_orders": "交易紀錄",
   "Store_Removed": "商店已刪除",
   "Store_Updated": "商店資料已更新",
+  "storeAdmin_switchLevel_duplicated": "您目前已選擇此方案",
+
   "storeAdmin_switchLevel_description": "請按下方「確認」鍵來繼續。",
   "storeAdmin_switchLevel_title": "您選擇的付費方案，未來將每月收取固定費用。",
   "storeAdmin_switchLevel_free": "基礎版",

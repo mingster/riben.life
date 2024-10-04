@@ -92,7 +92,7 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
             <Button variant="outline">
               {
                 (store.level === 0) ?
-                  t('Store_level_free') : (store.level === 1) ? t('Store_level_pro') : t('Store_level_multi')
+                  t('storeAdmin_switchLevel_free') : (store.level === 1) ? t('storeAdmin_switchLevel_pro') : t('storeAdmin_switchLevel_multi')
               }
             </Button>
           </Link>

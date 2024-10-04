@@ -284,6 +284,22 @@ model Subscription {
   updatedAt DateTime @updatedAt
 }
 
+model SubscriptionPayment {
+  id                 String  @id @default(cuid())
+  userId             String
+  storeId            String
+  isPaid             Boolean
+  amount             Decimal
+  currency           String  @default("twd")
+  checkoutAttributes String  @default("")
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([storeId])
+  @@index([checkoutAttributes])
+}
+
 model Rsvp {
   id         String   @id @default(uuid())
   storeId    String
@@ -337,7 +353,7 @@ model Store {
   bankAccount     String?
   bankAccountName String?
 
-  level  Int @default(0)
+  level        Int      @default(0)
   logo         String?
   logoPublicId String?
   createdAt    DateTime @default(now())

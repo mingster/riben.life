@@ -71,11 +71,18 @@ export enum OrderStatus {
 
 /*
 ReturnAuthorized = 30,
-	ItemRepaired = 40,
-	ItemRefunded = 50,
-	RequestRejected = 60,
-	Cancelled = 70,
-	*/
+  ItemRepaired = 40,
+  ItemRefunded = 50,
+  RequestRejected = 60,
+  Cancelled = 70,
+  */
+
+export enum StoreLevel {
+  Free = 1,
+  Pro = 2,
+  Multi = 3
+}
+
 export enum PaymentStatus {
   Pending = 10,
   SelfPickup = 11,
