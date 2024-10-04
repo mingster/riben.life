@@ -11,11 +11,15 @@ import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
 import DropdownUser from "@/components/dropdown-user";
 
-import StoreSwitcher from "./store-switcher";
-import type { Store } from "@/types";
-import { useScrollDirection } from "@/lib/use-scroll-direction";
+import { useTranslation } from "@/app/i18n/client";
 import ThemeToggler from "@/components/theme-toggler";
+import { Button } from "@/components/ui/button";
+import { useScrollDirection } from "@/lib/use-scroll-direction";
+import { useI18n } from "@/providers/i18n-provider";
+import type { Store } from "@/types";
 import Link from "next/link";
+import StoreSwitcher from "./store-switcher";
+import { StoreLevel } from "@/types/enum";
 
 interface StoreAdminNavbarProps {
   store: Store;
@@ -23,6 +27,8 @@ interface StoreAdminNavbarProps {
 
 export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
   const router = useRouter();
+  const { lng } = useI18n();
+  const { t } = useTranslation(lng, "storeAdmin");
 
   const session = useSession();
   if (!session) {
@@ -69,7 +75,7 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
 
       <div className="mx-4 flex h-14 items-center xs:mx-8">
         <div className="flex items-center space-x-4 lg:space-x-0">
-          <StoreAdminSheetMenu />
+          <StoreAdminSheetMenu store={store}/>
         </div>
 
         <div className="flex items-center space-x-4 lg:pl-10">
@@ -82,6 +88,16 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
         </div>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
+          {/* level button */}
+          <Link href={`/storeAdmin/${store.id}/subscribe`} className="text-xs">
+            <Button variant="outline">
+              {
+                (store.level === StoreLevel.Free) ?
+                  t('storeAdmin_switchLevel_free') :
+                  (store.level === StoreLevel.Pro) ? t('storeAdmin_switchLevel_pro') : t('storeAdmin_switchLevel_multi')
+              }
+            </Button>
+          </Link>
           <StoreSwitcher />
           <StoreModal />
           <ThemeToggler />

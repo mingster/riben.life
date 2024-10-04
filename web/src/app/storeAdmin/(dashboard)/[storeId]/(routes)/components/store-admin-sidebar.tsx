@@ -9,11 +9,12 @@ import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
 import { StoreAdminMenu } from "./store-admin-menu";
+import type { Store } from "@/types";
 
 interface SidebarProps {
-  title: string | undefined | null;
+  store: Store;
 }
-export function StoreAdminSidebar({ title }: SidebarProps) {
+export function StoreAdminSidebar({ store }: SidebarProps) {
   const sidebar = useStore(useSidebarToggle, (state) => state);
 
   if (!sidebar) return null;
@@ -54,7 +55,7 @@ export function StoreAdminSidebar({ title }: SidebarProps) {
       <SidebarToggle isOpen={sidebar?.isOpen} setIsOpen={sidebar?.setIsOpen} />
 
       <div className="relative h-full flex flex-col px-3 py-4 overflow-y-auto shadow-md dark:shadow-zinc-800">
-        <StoreAdminMenu isOpen={sidebar?.isOpen} title={title} />
+        <StoreAdminMenu isOpen={sidebar?.isOpen} store={store} />
       </div>
     </aside>
   );

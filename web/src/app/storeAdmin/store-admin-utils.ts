@@ -1,5 +1,6 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import { GetSession } from "@/lib/auth/utils";
+import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 
@@ -19,6 +20,7 @@ export const checkStoreAccess = async (storeId: string) => {
   if (!store) {
     redirect("/storeAdmin");
   }
+  transformDecimalsToNumbers(store);
 
   return store;
 };

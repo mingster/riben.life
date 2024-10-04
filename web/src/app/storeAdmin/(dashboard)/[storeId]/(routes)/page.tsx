@@ -61,7 +61,6 @@ const StoreAdminHomePage: React.FC<DashboardPageProps> = async ({ params }) => {
 
   */
 
-  transformDecimalsToNumbers(store);
 
   return (
     <Suspense fallback={<Loader />}>

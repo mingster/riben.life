@@ -349,6 +349,13 @@ module.exports = {
       content: {
         'icon-copy': 'url("../images/icon/icon-copy-alt.svg")',
       },
+      listStyleType: {
+        none: 'none',
+        disc: 'disc',
+        decimal: 'decimal',
+        square: 'square',
+        roman: 'upper-roman',
+      },
       transitionProperty: { width: 'width', stroke: 'stroke' },
       boxShadow: {
         default: '0px 8px 13px -3px rgba(0, 0, 0, 0.07)',
