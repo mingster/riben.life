@@ -8,7 +8,7 @@ export async function POST(
 ) {
   try {
     const data = await req.json();
-    const { total, currency } = data;
+    const { total, currency, stripeCustomerId } = data;
 
     if (!total) {
       return NextResponse.json(
@@ -32,6 +32,7 @@ export async function POST(
     }
 
     const paymentIntent = await stripe.paymentIntents.create({
+      customer: stripeCustomerId || '',
       amount: total * 100,
       currency: currency,
       automatic_payment_methods: { enabled: true },

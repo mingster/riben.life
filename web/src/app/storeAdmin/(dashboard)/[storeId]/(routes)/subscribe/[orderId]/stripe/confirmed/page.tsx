@@ -1,8 +1,11 @@
 "use server";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
+import { GetSession, IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
-import { StoreLevel } from "@/types/enum";
+import { stripe } from "@/lib/stripe/config";
+import { StoreLevel, SubscriptionStatus } from "@/types/enum";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import Stripe from "stripe";
 import { SuccessAndRedirect } from "./SuccessAndRedirect";
@@ -38,10 +41,10 @@ export default async function StripeConfirmedPage({
     searchParams.payment_intent &&
     searchParams.payment_intent_client_secret
   ) {
-    const stripe = new Stripe(
+    const stripePi = new Stripe(
       `${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`,
     );
-    const pi = await stripe.paymentIntents.retrieve(
+    const pi = await stripePi.paymentIntents.retrieve(
       searchParams.payment_intent,
       {
         client_secret: searchParams.payment_intent_client_secret,
@@ -49,20 +52,7 @@ export default async function StripeConfirmedPage({
     );
 
     if (pi) {
-      // create subscription
-      //
-      /*
-            stripe.subscriptions.create({
-              customer: pi.customer,
-              items: [
-                {
-                  price: pi?.metadata?.priceId,
-                },
-              ],
-            })
-
-      */
-
+      // save checkout references to related subscriptionPayment in db
       const checkoutAttributes = JSON.stringify({
         payment_intent: searchParams.payment_intent,
         client_secret: searchParams.payment_intent_client_secret,
@@ -78,33 +68,59 @@ export default async function StripeConfirmedPage({
         },
       });
 
-      // update store's subscription level
-      const store = await sqlClient.store.findFirst({
+      const store = await sqlClient.store.findUnique({
         where: {
           id: order.storeId,
-        }
+        },
       });
+      if (!store) throw Error("store not found");
 
+      // update subscription object in our database
+      //
+      const currentDate = new Date(); // Current date and time
+
+      await sqlClient.subscription.update({
+        where: {
+          storeId: store.id
+        },
+        data: {
+          status: SubscriptionStatus.Active,
+          expiration: new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth() + 1,
+            currentDate.getDay(),
+            23,
+            59,
+            59,
+          ),
+        },
+      })
+
+      // finally update store's subscription level
+      // if more than one store, save as StoreLevel.Multi
+      /*
       const count = await sqlClient.store.count({
         where: {
-          ownerId: store?.ownerId
-        }
+          ownerId: store?.ownerId,
+        },
       });
+      */
+
 
       await sqlClient.store.update({
         where: {
           id: order.storeId,
         },
         data: {
-          level: count === 1 ? StoreLevel.Pro : StoreLevel.Multi
+          level: StoreLevel.Pro
+          //level: count === 1 ? StoreLevel.Pro : StoreLevel.Multi,
         },
-      })
+      });
+
 
       console.log(
         `StripeConfirmedPage: order confirmed: ${JSON.stringify(order)}`,
       );
-
-      //redirect(`${getAbsoluteUrl()}/checkout/${order.id}/stripe/success`);
 
       return (
         <Suspense fallback={<Loader />}>
@@ -116,4 +132,3 @@ export default async function StripeConfirmedPage({
     }
   }
 }
-
