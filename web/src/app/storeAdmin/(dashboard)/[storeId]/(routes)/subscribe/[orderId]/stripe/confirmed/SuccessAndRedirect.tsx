@@ -25,7 +25,6 @@ function MyTimer({
     setMounted(true);
   }, []);
 
-
   const router = useRouter();
   //const session = useSession();
 
@@ -44,7 +43,7 @@ function MyTimer({
     onExpire: () => {
       console.warn("onExpire called");
       //router.reload();
-      router.push('/storeAdmin');
+      router.push("/storeAdmin");
     },
   });
 

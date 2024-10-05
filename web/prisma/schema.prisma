@@ -272,6 +272,7 @@ model Shipment {
 
 model Subscription {
   id                        String   @id @default(cuid())
+  storeId                   String // if muliple, make is comma separated
   userId                    String
   expiration                DateTime
   status                    Int
@@ -282,6 +283,8 @@ model Subscription {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model SubscriptionPayment {

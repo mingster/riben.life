@@ -109,13 +109,11 @@ export const InProgressOrder = ({
         <CardContent className="space-y-2">
           {/* display */}
           <div className="pt-2 pl-6">
-            {orders.length === 0 ? (
-              t("no_results_found")
-            ) : autoAcceptOrder ? (
-              t("Order_accept_mgmt_descr2")
-            ) : (
-              t("Order_accept_mgmt_descr")
-            )}
+            {orders.length === 0
+              ? t("no_results_found")
+              : autoAcceptOrder
+                ? t("Order_accept_mgmt_descr2")
+                : t("Order_accept_mgmt_descr")}
           </div>
 
           {orders.length !== 0 && (

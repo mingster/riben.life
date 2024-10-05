@@ -26,7 +26,6 @@ export async function POST(
       },
     });
 
-
     return NextResponse.json(result);
   } catch (error) {
     console.log("[SubscriptionPayment_POST]", error);

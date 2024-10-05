@@ -26,8 +26,6 @@ interface DashboardPageProps {
 const StoreSubscribePage: React.FC<DashboardPageProps> = async ({ params }) => {
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
-
-
   return (
     <Suspense fallback={<Loader />}>
       <section className="relative w-full">

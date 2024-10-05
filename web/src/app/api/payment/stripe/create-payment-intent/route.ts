@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe/config";
 
 //create stripe payment intent
 export async function POST(
@@ -30,13 +30,6 @@ export async function POST(
         { status: 404 },
       );
     }
-
-    const stripe = new Stripe(
-      process.env.STRIPE_SECRET_KEY_LIVE ?? process.env.STRIPE_SECRET_KEY ?? '',
-      {
-        apiVersion: "2024-06-20",
-        typescript: true,
-      });
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: total * 100,

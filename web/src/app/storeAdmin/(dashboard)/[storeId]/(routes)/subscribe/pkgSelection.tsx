@@ -1,36 +1,34 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { ConfirmModal } from "@/components/modals/cofirm-modal";
-import { useElements, useStripe } from "@stripe/react-stripe-js";
-import { type ChangeEvent, Suspense, useEffect, useState } from "react";
 import { getAbsoluteUrl } from "@/lib/utils";
+import { useElements, useStripe } from "@stripe/react-stripe-js";
 import {
   Elements,
   LinkAuthenticationElement,
   PaymentElement,
 } from "@stripe/react-stripe-js";
 import { useSession } from "next-auth/react";
+import { type ChangeEvent, Suspense, useEffect, useState } from "react";
 
 import getStripe from "@/lib/stripe/client";
 
-
+import { StoreLevel } from "@/types/enum";
 import type { SubscriptionPayment } from "@prisma/client";
 import {
   type Appearance,
   StripeElement,
   type StripeElementsOptions,
 } from "@stripe/stripe-js";
-import { useTheme } from "next-themes";
 import axios from "axios";
-import { StoreLevel } from "@/types/enum";
-
+import { useTheme } from "next-themes";
 
 export function PkgSelection({ store }: { store: Store }) {
   const [step, setStep] = useState(1);
@@ -40,7 +38,7 @@ export function PkgSelection({ store }: { store: Store }) {
       setStep(2);
     }
   }, [order]);
-  console.log('step', step);
+  console.log("step", step);
 
   if (step === 1) return <DisplayPkg store={store} onValueChange={setOrder} />;
   if (step === 2 && order) return <SubscriptionStripe order={order} />;
@@ -68,16 +66,12 @@ const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
     }
 
     if (selected === StoreLevel.Free && store.level !== StoreLevel.Free) {
-      if (confirm('您將調整到基礎版，確定嗎？')) {
-
+      if (confirm("您將調整到基礎版，確定嗎？")) {
         store.level = selected;
-
       }
-    }
-    else {
+    } else {
       setOpen(true);
     }
-
   }
 
   const onSelect = async () => {
@@ -409,7 +403,7 @@ const StripePayButton: React.FC<paymentProps> = ({ order }) => {
 
   // if payment is not confirmed, do this every 5 sec.
   const IntervaledContent = () => {
-    const [count, setCount] = useState(0);
+    const [count, setCount] = useState<number>(0);
 
     useEffect(() => {
       //Implementing the setInterval method

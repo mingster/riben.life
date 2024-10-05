@@ -61,7 +61,6 @@ const StoreAdminHomePage: React.FC<DashboardPageProps> = async ({ params }) => {
 
   */
 
-
   return (
     <Suspense fallback={<Loader />}>
       <StoreAdminDashboard store={store} />
