@@ -23,7 +23,7 @@ export const ConfirmModal: React.FC<props> = ({
   onConfirm,
   loading,
   title,
-  description
+  description,
 }) => {
   const [isMounted, setIsMounted] = useState(false);
 

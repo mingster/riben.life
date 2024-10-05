@@ -24,7 +24,8 @@ import { sqlClient } from "@/lib/prismadb";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { Adapter } from "next-auth/adapters";
 import type { Provider } from "next-auth/providers";
-import Stripe from "stripe";
+
+import { stripe } from "@/lib/stripe/config";
 
 //const prisma = new PrismaClient();
 const isDevelopmentMode = process.env.NODE_ENV === "development";
@@ -274,14 +275,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     //automatically create an account in the Stripe dashboard when a user logs in for the first time.
     //Later, the stripeCustomerId will be added to that user's account in our database.
     createUser: async ({ user }) => {
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
 
-      const stripe = new Stripe(
-        process.env.STRIPE_SECRET_KEY_LIVE ?? process.env.STRIPE_SECRET_KEY ?? '',
-        {
-          apiVersion: "2024-06-20",
-          typescript: true,
-        });
 
       await stripe.customers
         .create({

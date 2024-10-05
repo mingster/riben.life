@@ -50,6 +50,11 @@ export const PayoutSchedule: GeneralNVType[] = [
   },
 ];
 
+export enum SubscriptionStatus {
+  Inactive = 0,
+  Active = 1,
+}
+
 export enum TicketStatus {
   Open = 0,
   Active = 10,
@@ -80,7 +85,7 @@ ReturnAuthorized = 30,
 export enum StoreLevel {
   Free = 1,
   Pro = 2,
-  Multi = 3
+  Multi = 3,
 }
 
 export enum PaymentStatus {

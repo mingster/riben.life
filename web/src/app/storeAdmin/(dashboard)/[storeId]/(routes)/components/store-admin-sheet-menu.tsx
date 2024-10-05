@@ -18,7 +18,6 @@ interface StoreAdminNavbarProps {
   store: Store;
 }
 export function StoreAdminSheetMenu({ store }: StoreAdminNavbarProps) {
-
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -39,7 +38,7 @@ export function StoreAdminSheetMenu({ store }: StoreAdminNavbarProps) {
           <SheetTitle />
           <SheetDescription />
 
-          <StoreAdminMenu isOpen store={store}/>
+          <StoreAdminMenu isOpen store={store} />
         </SheetContent>
       </Sheet>
     </>

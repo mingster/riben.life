@@ -1,37 +1,41 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
+import { useParams, useRouter } from "next/navigation";
 
 import { ConfirmModal } from "@/components/modals/cofirm-modal";
-import { useElements, useStripe } from "@stripe/react-stripe-js";
-import { type ChangeEvent, Suspense, useEffect, useState } from "react";
 import { getAbsoluteUrl } from "@/lib/utils";
+
 import {
   Elements,
   LinkAuthenticationElement,
   PaymentElement,
+  useElements, useStripe,
 } from "@stripe/react-stripe-js";
+
+import type {
+  Appearance,
+  StripeElementsOptions
+} from "@stripe/stripe-js";
+
+
+
 import { useSession } from "next-auth/react";
+import { type ChangeEvent, useEffect, useState } from "react";
 
 import getStripe from "@/lib/stripe/client";
 
-
-import type { SubscriptionPayment } from "@prisma/client";
-import {
-  type Appearance,
-  StripeElement,
-  type StripeElementsOptions,
-} from "@stripe/stripe-js";
-import { useTheme } from "next-themes";
-import axios from "axios";
 import { StoreLevel } from "@/types/enum";
+import type { SubscriptionPayment } from "@prisma/client";
+import axios from "axios";
+import { useTheme } from "next-themes";
 
-
+// display package selectiion ui and call back end api to create related payment objects such as paymentintent
+//
 export function PkgSelection({ store }: { store: Store }) {
   const [step, setStep] = useState(1);
   const [order, setOrder] = useState<SubscriptionPayment | null>(null);
@@ -40,7 +44,6 @@ export function PkgSelection({ store }: { store: Store }) {
       setStep(2);
     }
   }, [order]);
-  console.log('step', step);
 
   if (step === 1) return <DisplayPkg store={store} onValueChange={setOrder} />;
   if (step === 2 && order) return <SubscriptionStripe order={order} />;
@@ -68,16 +71,12 @@ const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
     }
 
     if (selected === StoreLevel.Free && store.level !== StoreLevel.Free) {
-      if (confirm('您將調整到基礎版，確定嗎？')) {
-
+      if (confirm("您將調整到基礎版，確定嗎？")) {
         store.level = selected;
-
       }
-    }
-    else {
+    } else {
       setOpen(true);
     }
-
   }
 
   const onSelect = async () => {
@@ -246,6 +245,7 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
   //console.log(JSON.stringify(order.isPaid));
   //console.log(`clientSecret:${JSON.stringify(clientSecret)}`);
 
+
   //call payment intent api to get client secret
   useEffect(() => {
     if (order.isPaid) return;
@@ -253,6 +253,7 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 
     const url = `${process.env.NEXT_PUBLIC_API_URL}/payment/stripe/create-payment-intent`;
     const body = JSON.stringify({
+      stripeCustomerId: order.userId, // this should be stripe customer id
       total: Number(order.amount),
       currency: order.currency,
     });
@@ -267,7 +268,7 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
       .then((res) => res.json())
       .then((data) => {
         setClientSecret(data.client_secret);
-        //console.log('clientSecret: ' + JSON.stringify(data.client_secret));
+        console.log(`clientSecret: ${JSON.stringify(data.client_secret)}`);
       });
   }, [order]);
 
@@ -284,6 +285,7 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
     theme: resolvedTheme === "light" ? "flat" : "night",
   };
 
+
   const options: StripeElementsOptions = {
     // pass the client secret
     clientSecret: clientSecret,
@@ -292,33 +294,18 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
     //currency: currency,
     // Fully customizable with appearance API.
     appearance: appearance,
+
+    // Enable the skeleton loader UI for optimal loading.
+    loader: 'auto',
   };
-  //const [message, setMessage] = useState("");
-  //const [isLoading, setIsLoading] = useState(false);
+
   const stripePromise = getStripe();
 
-  /*
-
-  const router = useRouter();
-  if (order.isPaid) {
-    router.push(`/${order.storeId}/billing/${order.id}`);
-    return;
-  }
-  if (order.isPaid) {
-    return (
-      <Suspense fallback={<Loader />}>
-        <Container>
-          <SuccessAndRedirect />
-        </Container>
-      </Suspense>
-    );
-  }
-*/
-
   return (
+    clientSecret !== 'undefined' &&
     clientSecret !== "" &&
     stripePromise !== null && (
-      <Elements key={clientSecret} stripe={stripePromise} options={options}>
+      <Elements options={options} stripe={stripePromise}>
         <LinkAuthenticationElement
           id="link-authentication-element"
           // Access the email value like so:
@@ -329,22 +316,17 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
           // Prefill the email field like so:
           options={{ defaultValues: { email: email } }}
         />
-        <PaymentElement
-          id="payment-element"
-          options={{
-            defaultValues: {
-              billingDetails: {
-                email: email,
-                name: name,
-              },
-            },
-          }}
-        />
-        <div>
-          {t("payment_stripe_payAmount")}
-          {Number(order.amount)} {order.currency.toUpperCase()}
+        <div className='h-screen w-full mt-auto pt-10'>
+          <StripeCheckoutForm order={order} />
+
+          <div>
+            {t("payment_stripe_payAmount")}
+            {Number(order.amount)} {order.currency.toUpperCase()}
+          </div>
+
         </div>
-        <StripePayButton order={order} />
+
+
       </Elements>
     )
   );
@@ -359,7 +341,7 @@ const defaultFormFields = {
 // If payment is confirmed, redirect user to success page (return_url).
 // if payment is NOT confirmed, display error message.
 //
-const StripePayButton: React.FC<paymentProps> = ({ order }) => {
+const StripeCheckoutForm: React.FC<paymentProps> = ({ order }) => {
   const params = useParams();
 
   const router = useRouter();
@@ -409,7 +391,7 @@ const StripePayButton: React.FC<paymentProps> = ({ order }) => {
 
   // if payment is not confirmed, do this every 5 sec.
   const IntervaledContent = () => {
-    const [count, setCount] = useState(0);
+    const [count, setCount] = useState<number>(0);
 
     useEffect(() => {
       //Implementing the setInterval method
@@ -453,6 +435,16 @@ const StripePayButton: React.FC<paymentProps> = ({ order }) => {
           {errorMessage}
         </div>
       )}
+      <PaymentElement
+        id="payment-element"
+        options={{
+          layout: {
+            type: 'tabs',
+            defaultCollapsed: false,
+          }
+        }}
+      />
+
       {/* isLoading will disable the button on its first click.
           //bg-gradient-to-r from-purple-400 to-pink-600 font-semibold hover:from-green-400 hover:to-blue-500 */}
       <Button

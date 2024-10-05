@@ -1,89 +1,100 @@
 import { sqlClient } from "@/lib/prismadb";
+import { stripe } from "@/lib/stripe/config";
 import { type NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 
-const stripe = new Stripe(
-  process.env.STRIPE_SECRET_KEY_LIVE ?? process.env.STRIPE_SECRET_KEY ?? '',
-  {
-    // https://github.com/stripe/stripe-node#configuration
-    apiVersion: "2024-06-20",
-    typescript: true,
-  });
-
-const webhookSecret: string = process.env.STRIPE_WEBHOOK_SECRET!;
+const relevantEvents = new Set([
+  "product.created",
+  "product.updated",
+  "product.deleted",
+  "price.created",
+  "price.updated",
+  "price.deleted",
+  "checkout.session.completed",
+  "customer.subscription.created",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+]);
 
 const webhookHandler = async (req: NextRequest) => {
+  const body = await req.text();
+  const sig = req.headers.get("stripe-signature") as string;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  let event: Stripe.Event;
+
   try {
-    const buf = await req.text();
-    const sig = req.headers.get("stripe-signature")!;
+    if (!sig || !webhookSecret)
+      return new Response("Webhook secret not found.", { status: 400 });
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+    console.log(`🔔  Webhook received: ${event.type}`);
+  } catch (err: unknown) {
+    console.log(`Error message: ${err as Error}.message}`);
+    return new Response(`Webhook Error: ${(err as Error).message}`, {
+      status: 400,
+    });
+  }
 
-    let event: Stripe.Event;
+  // Successfully constructed event.
+  console.log("✅ Success:", event.id);
 
-    try {
-      event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      // On error, log and return the error message.
-      if (err! instanceof Error) console.log(err);
-      console.log(`❌ Error message: ${errorMessage}`);
+  // getting to the data we want from the event
+  const subscription = event.data.object as Stripe.Subscription;
 
-      return NextResponse.json(
-        {
-          error: {
-            message: `Webhook Error: ${errorMessage}`,
-          },
-        },
-        { status: 400 },
-      );
+  try {
+    if (relevantEvents.has(event.type)) {
+      switch (event.type) {
+        case "product.created":
+        case "product.updated":
+          break;
+        case "price.created":
+        case "price.updated":
+          break;
+        case "price.deleted":
+          break;
+        case "product.deleted":
+          break;
+        case "customer.subscription.created":
+          await sqlClient.user.update({
+            // Find the customer in our database with the Stripe customer ID linked to this purchase
+            where: {
+              stripeCustomerId: subscription.customer as string,
+            },
+            // Update that customer so their status is now active
+            data: {
+              isActive: true,
+            },
+          });
+          break;
+
+        case "customer.subscription.updated":
+        case "customer.subscription.deleted":
+          await sqlClient.user.update({
+            // Find the customer in our database with the Stripe customer ID linked to this purchase
+            where: {
+              stripeCustomerId: subscription.customer as string,
+            },
+            // Update that customer so their status is now active
+            data: {
+              isActive: false,
+            },
+          });
+          break;
+
+        case "checkout.session.completed":
+          break;
+        default:
+          throw new Error("Unhandled relevant event!");
+      }
+    } else {
+      return new NextResponse(`Unsupported event type: ${event.type}`, {
+        status: 400,
+      });
     }
-
-    // Successfully constructed event.
-    console.log("✅ Success:", event.id);
-
-    // getting to the data we want from the event
-    const subscription = event.data.object as Stripe.Subscription;
-
-    switch (event.type) {
-      case "customer.subscription.created":
-        await sqlClient.user.update({
-          // Find the customer in our database with the Stripe customer ID linked to this purchase
-          where: {
-            stripeCustomerId: subscription.customer as string,
-          },
-          // Update that customer so their status is now active
-          data: {
-            isActive: true,
-          },
-        });
-        break;
-      case "customer.subscription.deleted":
-        await sqlClient.user.update({
-          // Find the customer in our database with the Stripe customer ID linked to this purchase
-          where: {
-            stripeCustomerId: subscription.customer as string,
-          },
-          // Update that customer so their status is now active
-          data: {
-            isActive: false,
-          },
-        });
-        break;
-      default:
-        console.warn(`🤷‍♀️ Unhandled event type: ${event.type}`);
-        break;
-    }
-
-    // Return a response to acknowledge receipt of the event.
-    return NextResponse.json({ received: true });
-  } catch {
-    return NextResponse.json(
-      {
-        error: {
-          message: `Method Not Allowed`,
-        },
-      },
-      { status: 405 },
-    ).headers.set("Allow", "POST");
+  } catch (error: unknown) {
+    console.log(error);
+    return new NextResponse("Webhook handler failed. View your server logs.", {
+      status: 400,
+    });
   }
 };
 

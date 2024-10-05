@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe/config";
 
 //create stripe payment intent
 export async function POST(
@@ -8,7 +8,7 @@ export async function POST(
 ) {
   try {
     const data = await req.json();
-    const { total, currency } = data;
+    const { total, currency, stripeCustomerId } = data;
 
     if (!total) {
       return NextResponse.json(
@@ -31,14 +31,8 @@ export async function POST(
       );
     }
 
-    const stripe = new Stripe(
-      process.env.STRIPE_SECRET_KEY_LIVE ?? process.env.STRIPE_SECRET_KEY ?? '',
-      {
-        apiVersion: "2024-06-20",
-        typescript: true,
-      });
-
     const paymentIntent = await stripe.paymentIntents.create({
+      customer: stripeCustomerId || '',
       amount: total * 100,
       currency: currency,
       automatic_payment_methods: { enabled: true },

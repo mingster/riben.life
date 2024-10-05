@@ -144,7 +144,7 @@ export function StoreAdminMenu({ isOpen, store }: MenuProps) {
                         isOpen === false ? "hidden opacity-0" : "opacity-100",
                       )}
                     >
-                      {t('signout')}
+                      {t("signout")}
                     </span>
                   </Button>
                 </>
@@ -152,7 +152,6 @@ export function StoreAdminMenu({ isOpen, store }: MenuProps) {
             </Tooltip>
           </TooltipProvider>
         </div>
-
       </nav>
     </ScrollArea>
   );
