@@ -29,14 +29,14 @@ import { type ChangeEvent, useEffect, useState } from "react";
 
 import getStripe from "@/lib/stripe/client";
 
-import { StoreLevel } from "@/types/enum";
-import type { SubscriptionPayment } from "@prisma/client";
+import { StoreLevel, SubscriptionStatus } from "@/types/enum";
+import type { Subscription, SubscriptionPayment } from "@prisma/client";
 import axios from "axios";
 import { useTheme } from "next-themes";
 
 // display package selectiion ui and call back end api to create related payment objects such as paymentintent
 //
-export function PkgSelection({ store }: { store: Store }) {
+export function PkgSelection({ store, subscription }: { store: Store, subscription: Subscription }) {
   const [step, setStep] = useState(1);
   const [order, setOrder] = useState<SubscriptionPayment | null>(null);
   useEffect(() => {
@@ -45,16 +45,17 @@ export function PkgSelection({ store }: { store: Store }) {
     }
   }, [order]);
 
-  if (step === 1) return <DisplayPkg store={store} onValueChange={setOrder} />;
+  if (step === 1) return <DisplayPkg store={store} subscription={subscription} onValueChange={setOrder} />;
   if (step === 2 && order) return <SubscriptionStripe order={order} />;
 }
 
 type props = {
   store: Store;
+  subscription: Subscription;
   onValueChange?: (newValue: SubscriptionPayment) => void;
 };
-// display package ui and pass back selected package
-const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
+// display package ui. As user select a package, call back end api and pass back selected package.
+const DisplayPkg: React.FC<props> = ({ store, subscription, onValueChange }) => {
   const params = useParams();
   const router = useRouter();
   const { lng } = useI18n();
@@ -70,13 +71,33 @@ const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
       return;
     }
 
+    // user switch to free version
     if (selected === StoreLevel.Free && store.level !== StoreLevel.Free) {
-      if (confirm("您將調整到基礎版，確定嗎？")) {
+      if (confirm("您將調整到基礎版，調整會立即生效，確定嗎？")) {
         store.level = selected;
+        unsubscribe();
       }
     } else {
       setOpen(true);
     }
+  }
+
+  const unsubscribe = async () => {
+    setLoading(true);
+
+    const ret = await axios.post(
+      `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/unsubscribe/`,
+    );
+
+    if (ret.status === 200) {
+      store.level = StoreLevel.Free;
+      alert('您已回復到基礎版。');
+    }
+
+    //console.log("ret", ret);
+    setLoading(false);
+    router.replace('/storeAdmin/' + params.storeId + '/subscribe');
+    //router.refresh();
   }
 
   const onSelect = async () => {
@@ -110,9 +131,14 @@ const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
           <h1 className="text-4xl font-extrabold sm:text-center sm:text-6xl">
             {t("storeAdmin_switchLevel_pageTitle")}
           </h1>
-          <p className="max-w-2xl m-auto mt-5 text-xl sm:text-center sm:text-2xl">
-            {t("storeAdmin_switchLevel_pageDescr")}
-          </p>
+          <div className="max-w-2xl m-auto mt-5 text-xl sm:text-center sm:text-2xl">
+            {
+              // if no subscription...
+              (subscription === null || subscription.status === SubscriptionStatus.Inactive) ?
+                t("storeAdmin_switchLevel_pageDescr") :
+                "您目前已訂閱"
+            }
+          </div>
         </div>
 
         <div className="mt-12 w-full space-y-0 flex justify-center gap-6 max-w-4xl mx-auto min-h-[calc(100vh-48px-36px-16px-32px-50px)]">
