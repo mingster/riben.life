@@ -25,7 +25,7 @@ import { BasicSettingTab } from "./setting-basic-tab";
 
 import { Loader } from "@/components/ui/loader";
 import { ContactInfoTab } from "./setting-contact-info-tab";
-import { PaidOptionsTab } from "./setting-paidOptions";
+import { PaidOptionsTab } from "./setting-paid-options";
 import { PrivacyTab } from "./setting-privacy-tab";
 //import { TermsTab } from "./setting-terms-tab";
 import { ShippingPaymentMethodTab } from "./setting-shipping-payment-method";

@@ -13,36 +13,23 @@ import { useForm } from "react-hook-form";
 
 import * as z from "zod";
 
+import { useTranslation } from "@/app/i18n/client";
+import ImageUploadBox from "@/components/image-upload-box";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
-import { CountryCombobox } from "@/components/country-combobox";
-import { CurrencyCombobox } from "@/components/currency-combobox";
-import { LocaleSelectItems } from "@/components/locale-select-items";
-import { ApiListing } from "@/components/ui/api-listing";
-
-import {
-  Select,
-  SelectContent,
-  SelectTrigger,
-  SelectValue,
-} from "@radix-ui/react-select";
-
-import { useTranslation } from "@/app/i18n/client";
-import ImageUploadBox from "@/components/image-upload-box";
-import { deleteImage, uploadImage } from "@/lib/utils";
+import { cn, deleteImage, uploadImage } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
+import { StoreLevel } from "@/types/enum";
 import { XCircleIcon } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { RequiredProVersion } from "../components/require-pro-version";
 
 const formSchema = z.object({
   customDomain: z.string().optional().default(""),
@@ -76,10 +63,14 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
   //const origin = useOrigin();
   const [loading, setLoading] = useState(false);
 
+  // this store is pro version nor not?
+  const disablePaidOptions = initialData?.level === StoreLevel.Free;
+
+
   const defaultValues = initialData
     ? {
-        ...initialData,
-      }
+      ...initialData,
+    }
     : {};
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
   const form = useForm<formValues>({
@@ -174,7 +165,11 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
   return (
     <>
       <Card>
-        <CardContent className="space-y-2">
+        <CardContent className='space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900' data-disabled={disablePaidOptions}>
+        {
+          disablePaidOptions && <RequiredProVersion />
+        }
+
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
@@ -190,7 +185,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || disablePaidOptions}
                         className="font-mono"
                         placeholder="google.com"
                         {...field}
@@ -205,8 +200,9 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
               <div className="flex flex-row w-full">
                 <div className="flex flex-col space-y-4 w-1/2">
                   <ImageUploadBox
+                    disabled={loading || disablePaidOptions}
                     image={image ?? null}
-                    setImage={setImage ?? (() => {})}
+                    setImage={setImage ?? (() => { })}
                   />
                 </div>
                 <div className="flex flex-col pl-10 space-y-4 place-content-center">
@@ -262,7 +258,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
               </div>
 
               <Button
-                disabled={loading}
+                disabled={loading || disablePaidOptions}
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -270,6 +266,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
               </Button>
 
               <Button
+                disabled={loading || disablePaidOptions}
                 type="button"
                 variant="outline"
                 onClick={() => {
