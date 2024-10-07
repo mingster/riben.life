@@ -4,19 +4,33 @@ import { CheckStoreAdminAccess } from "../../api_helper";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { stripe } from "@/lib/stripe/config";
-import { SubscriptionStatus } from "@/types/enum";
+import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 
-// called when store operator select a package to subscribe.
-// create object for store level up subscription
+// called when store operator select the free package (StoreLevel.Free).
+// we will call stripe api to remove the subscription.
 export async function POST(
   req: Request,
   { params }: { params: { storeId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {
       return new NextResponse("Unauthenticated", { status: 400 });
+    }
+
+    const store = await sqlClient.store.findFirst({
+      where: {
+        id: params.storeId,
+      },
+    });
+
+    if (!store) {
+      return new NextResponse("store not found", { status: 402 });
+    }
+
+    /*
+    if (store.ownerId !== userId) {
+      return new NextResponse("Unauthenticated", { status: 401 });
     }
 
     const owner = await sqlClient.user.findFirst({
@@ -39,94 +53,69 @@ export async function POST(
     }
 
     if (stripeCustomer === null) {
-      const email = `${owner?.email}`;
 
-      stripeCustomer = await stripe.customers
-        .create({
-          email: email,
-          name: email,
-        });
-
-      await sqlClient.user.update({
-        where: { id: owner?.id },
-        data: {
-          stripeCustomerId: stripeCustomer.id,
-        },
-      })
     }
-    // create awaiting to be paid stripe subscription
-    /*
-    const stripeSubscription = await stripe.subscriptions.create({
-      customer: stripeCustomer.id,
-      items: [
-        {
-          plan: "price_1Q6ZsCRqaK2IhyxPXaDqZbjr",
-        },
-      ],
-      collection_method: "charge_automatically",
-      cancel_at_period_end: false,
-      //start_date: currentDate,
-      //current_period_start: currentDate,
-      currency: "twd",
-      payment_settings: { payment_method_types: ['card',], save_default_payment_method: "on_subscription" },
-      expand: ["latest_invoice.payment_intent"],
-      //payment_behavior: "default_incomplete",
-      payment_behavior: "allow_incomplete",
-      //payment_behavior: "pending_if_incomplete", //only used with updates and cannot be passed when creating a Subscription.
-    });
     */
-
-    const subscriptionSchedule = await stripe.subscriptionSchedules.create({
-      customer: stripeCustomer.id,
-      start_date: 'now',
-      end_behavior: 'release',
-      phases: [
-        {
-          items: [
-            {
-              price: 'price_1Q6ZsCRqaK2IhyxPXaDqZbjr',
-              quantity: 1,
-            },
-          ],
-        },
-      ],
-    });
-
-    //if (store.level === StoreLevel.Free) {
-    const currentDate = new Date(); // Current date and time
 
     const subscription = await sqlClient.subscription.findUnique({
       where: {
         storeId: params.storeId,
       },
-    })
-
-    if (!subscription) {
-      await sqlClient.subscription.create({
-        data: {
-          userId: owner.id,
-          storeId: params.storeId,
-          expiration: currentDate,
-          status: SubscriptionStatus.Inactive,
-          billingProvider: "stripe",
-          stripeSubscriptionId: subscriptionSchedule.id,
-          note: "",
-        },
-      });
-    }
-
-    const obj = await sqlClient.subscriptionPayment.create({
-      data: {
-        storeId: params.storeId,
-        userId: owner.stripeCustomerId || '',
-        isPaid: false,
-        amount: 300,
-        currency: "twd",
-      },
     });
 
-    return NextResponse.json(obj, { status: 200 });
+    if (subscription && subscription.stripeSubscriptionId) {
+      try {
+        const subscriptionSchedule = subscription?.stripeSubscriptionId
+          ? await stripe.subscriptionSchedules.retrieve(
+              subscription.stripeSubscriptionId,
+            )
+          : null;
 
+        if (subscriptionSchedule) {
+          await stripe.subscriptionSchedules.cancel(subscriptionSchedule.id);
+
+          if (
+            subscriptionSchedule &&
+            subscriptionSchedule.subscription &&
+            typeof subscriptionSchedule.subscription !== "string"
+          ) {
+            await stripe.subscriptions.cancel(
+              subscriptionSchedule.subscription.id,
+            );
+          }
+
+          // update in database
+          await sqlClient.subscription.update({
+            where: {
+              storeId: params.storeId,
+            },
+            data: {
+              stripeSubscriptionId: null,
+              status: SubscriptionStatus.Cancelled,
+              note: "Unsubscribed",
+              updatedAt: new Date(Date.now()),
+            },
+          });
+
+          await sqlClient.store.update({
+            where: {
+              id: params.storeId,
+            },
+            data: {
+              level: StoreLevel.Free,
+            },
+          });
+        }
+      } catch (error) {
+        console.log("[SubscriptionPayment_POST]", error);
+        return new NextResponse(`Internal error${error}`, { status: 500 });
+      }
+    } else {
+      // Handle the case where subscription or stripeSubscriptionId is null
+      return new NextResponse("Subscription not found", { status: 404 });
+    }
+
+    return NextResponse.json("ok", { status: 200 });
   } catch (error) {
     console.log("[SubscriptionPayment_POST]", error);
     return new NextResponse(`Internal error${error}`, { status: 500 });

@@ -275,8 +275,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     //automatically create an account in the Stripe dashboard when a user logs in for the first time.
     //Later, the stripeCustomerId will be added to that user's account in our database.
     createUser: async ({ user }) => {
-
-
       await stripe.customers
         .create({
           // biome-ignore lint/style/noNonNullAssertion: <explanation>

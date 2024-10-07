@@ -10,8 +10,8 @@ import { Suspense } from "react";
 import Stripe from "stripe";
 import { SuccessAndRedirect } from "./SuccessAndRedirect";
 
-// this page is hit when stripe element confirmed the payment.
-// here we mark the SubscriptionPayment as paid, show customer a message.
+// this page is triggered when stripe confirmed the payment.
+// here we mark the SubscriptionPayment as paid, activate the subscription, and show customer a message.
 export default async function StripeConfirmedPage({
   params,
   searchParams,
@@ -26,17 +26,6 @@ export default async function StripeConfirmedPage({
     throw new Error("order Id is missing");
   }
 
-  //http://localhost:3001/payment/52af45f3-12bc-4c6d-967a-b51c980c7b48/stripe/confirm?
-  //payment_intent=pi_2OMs29qw2UGRduYS1g2umg13&
-  //payment_intent_client_secret=pi_2OMs29qw2UGRduYS1g2umg13_secret_bxm9PFV4eQP7vhHVam5Gf5Y0K
-  //&redirect_status=succeeded
-
-  //console.log('orderId: ' + params.orderId);
-  //console.log('payment_intent: ' + searchParams.payment_intent);
-  //console.log('client_secret: ' + searchParams.payment_intent_client_secret);
-
-  //const payment_intent = searchParams.get('payment_intent');
-  //const client_secret = searchParams.get('payment_intent_client_secret');
   if (
     searchParams.payment_intent &&
     searchParams.payment_intent_client_secret
@@ -77,11 +66,21 @@ export default async function StripeConfirmedPage({
 
       // update subscription object in our database
       //
-      const currentDate = new Date(); // Current date and time
+
+      let currentDate = new Date(); // Current date and time
+
+      const subscription = await sqlClient.subscription.findUnique({
+        where: {
+          storeId: store.id,
+        },
+      });
+      if (subscription) {
+        currentDate = subscription.expiration;
+      }
 
       await sqlClient.subscription.update({
         where: {
-          storeId: store.id
+          storeId: store.id,
         },
         data: {
           status: SubscriptionStatus.Active,
@@ -94,7 +93,7 @@ export default async function StripeConfirmedPage({
             59,
           ),
         },
-      })
+      });
 
       // finally update store's subscription level
       // if more than one store, save as StoreLevel.Multi
@@ -106,17 +105,15 @@ export default async function StripeConfirmedPage({
       });
       */
 
-
       await sqlClient.store.update({
         where: {
           id: order.storeId,
         },
         data: {
-          level: StoreLevel.Pro
+          level: StoreLevel.Pro,
           //level: count === 1 ? StoreLevel.Pro : StoreLevel.Multi,
         },
       });
-
 
       console.log(
         `StripeConfirmedPage: order confirmed: ${JSON.stringify(order)}`,
