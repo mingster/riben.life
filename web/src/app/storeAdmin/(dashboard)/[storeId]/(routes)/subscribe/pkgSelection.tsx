@@ -14,29 +14,29 @@ import {
   Elements,
   LinkAuthenticationElement,
   PaymentElement,
-  useElements, useStripe,
+  useElements,
+  useStripe,
 } from "@stripe/react-stripe-js";
 
-import type {
-  Appearance,
-  StripeElementsOptions
-} from "@stripe/stripe-js";
-
-
+import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
 
 import { useSession } from "next-auth/react";
 import { type ChangeEvent, useEffect, useState } from "react";
 
 import getStripe from "@/lib/stripe/client";
 
-import { StoreLevel } from "@/types/enum";
-import type { SubscriptionPayment } from "@prisma/client";
+import { StoreLevel, SubscriptionStatus } from "@/types/enum";
+import type { Subscription, SubscriptionPayment } from "@prisma/client";
 import axios from "axios";
 import { useTheme } from "next-themes";
+import { formatDate } from "date-fns";
 
 // display package selectiion ui and call back end api to create related payment objects such as paymentintent
 //
-export function PkgSelection({ store }: { store: Store }) {
+export function PkgSelection({
+  store,
+  subscription,
+}: { store: Store; subscription: Subscription | null }) {
   const [step, setStep] = useState(1);
   const [order, setOrder] = useState<SubscriptionPayment | null>(null);
   useEffect(() => {
@@ -45,16 +45,28 @@ export function PkgSelection({ store }: { store: Store }) {
     }
   }, [order]);
 
-  if (step === 1) return <DisplayPkg store={store} onValueChange={setOrder} />;
+  if (step === 1)
+    return (
+      <DisplayPkg
+        store={store}
+        subscription={subscription}
+        onValueChange={setOrder}
+      />
+    );
   if (step === 2 && order) return <SubscriptionStripe order={order} />;
 }
 
 type props = {
   store: Store;
+  subscription: Subscription | null;
   onValueChange?: (newValue: SubscriptionPayment) => void;
 };
-// display package ui and pass back selected package
-const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
+// display package ui. As user select a package, call backend api to subscribe or unsubscribe
+const DisplayPkg: React.FC<props> = ({
+  store,
+  subscription,
+  onValueChange,
+}) => {
   const params = useParams();
   const router = useRouter();
   const { lng } = useI18n();
@@ -70,14 +82,41 @@ const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
       return;
     }
 
+    // user switch to free version
     if (selected === StoreLevel.Free && store.level !== StoreLevel.Free) {
-      if (confirm("您將調整到基礎版，確定嗎？")) {
+      if (confirm(t("storeAdmin_switchLevel_cancel_confirm"))) {
         store.level = selected;
+        unsubscribe();
       }
     } else {
       setOpen(true);
     }
   }
+
+  const unsubscribe = async () => {
+    setLoading(true);
+
+    const ret = await axios.post(
+      `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/unsubscribe/`,
+    );
+
+    if (ret.status === 200) {
+      store.level = StoreLevel.Free;
+
+      const message = t("storeAdmin_switchLevel_cancel_result").replace(
+        "{0}",
+        subscription?.expiration
+          ? formatDate(subscription.expiration, "yyyy-MM-dd")
+          : "",
+      );
+      alert(message);
+    }
+
+    //console.log("ret", ret);
+    setLoading(false);
+    router.replace("/storeAdmin/" + params.storeId + "/subscribe");
+    //router.refresh();
+  };
 
   const onSelect = async () => {
     // create SubscriptionPayment object and pass to SubscriptionStripe
@@ -110,9 +149,27 @@ const DisplayPkg: React.FC<props> = ({ store, onValueChange }) => {
           <h1 className="text-4xl font-extrabold sm:text-center sm:text-6xl">
             {t("storeAdmin_switchLevel_pageTitle")}
           </h1>
-          <p className="max-w-2xl m-auto mt-5 text-xl sm:text-center sm:text-2xl">
-            {t("storeAdmin_switchLevel_pageDescr")}
-          </p>
+          <div className="max-w-2xl m-auto mt-5 text-xl sm:text-center sm:text-2xl">
+            {
+              // if no subscription...
+              subscription === null ||
+              subscription.status === SubscriptionStatus.Inactive ||
+              subscription.status === SubscriptionStatus.Cancelled
+                ? t("storeAdmin_switchLevel_pageDescr")
+                : t("storeAdmin_switchLevel_pageDescr_subscribed")
+            }
+          </div>
+          <div>
+            {subscription !== null &&
+              subscription.status === SubscriptionStatus.Cancelled && (
+                <div className="max-w-2xl m-auto mt-5 text-xl text-center">
+                  {t("storeAdmin_switchLevel_subscription_expiry").replace(
+                    "{0}",
+                    formatDate(subscription.expiration, "yyyy-MM-dd"),
+                  )}
+                </div>
+              )}
+          </div>
         </div>
 
         <div className="mt-12 w-full space-y-0 flex justify-center gap-6 max-w-4xl mx-auto min-h-[calc(100vh-48px-36px-16px-32px-50px)]">
@@ -245,7 +302,6 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
   //console.log(JSON.stringify(order.isPaid));
   //console.log(`clientSecret:${JSON.stringify(clientSecret)}`);
 
-
   //call payment intent api to get client secret
   useEffect(() => {
     if (order.isPaid) return;
@@ -285,7 +341,6 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
     theme: resolvedTheme === "light" ? "flat" : "night",
   };
 
-
   const options: StripeElementsOptions = {
     // pass the client secret
     clientSecret: clientSecret,
@@ -296,13 +351,13 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
     appearance: appearance,
 
     // Enable the skeleton loader UI for optimal loading.
-    loader: 'auto',
+    loader: "auto",
   };
 
   const stripePromise = getStripe();
 
   return (
-    clientSecret !== 'undefined' &&
+    clientSecret !== "undefined" &&
     clientSecret !== "" &&
     stripePromise !== null && (
       <Elements options={options} stripe={stripePromise}>
@@ -316,17 +371,14 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
           // Prefill the email field like so:
           options={{ defaultValues: { email: email } }}
         />
-        <div className='h-screen w-full mt-auto pt-10'>
+        <div className="h-screen w-full mt-auto pt-10">
           <StripeCheckoutForm order={order} />
 
           <div>
             {t("payment_stripe_payAmount")}
             {Number(order.amount)} {order.currency.toUpperCase()}
           </div>
-
         </div>
-
-
       </Elements>
     )
   );
@@ -439,9 +491,9 @@ const StripeCheckoutForm: React.FC<paymentProps> = ({ order }) => {
         id="payment-element"
         options={{
           layout: {
-            type: 'tabs',
+            type: "tabs",
             defaultCollapsed: false,
-          }
+          },
         }}
       />
 

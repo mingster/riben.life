@@ -53,6 +53,7 @@ export const PayoutSchedule: GeneralNVType[] = [
 export enum SubscriptionStatus {
   Inactive = 0,
   Active = 1,
+  Cancelled = 20,
 }
 
 export enum TicketStatus {

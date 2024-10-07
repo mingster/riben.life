@@ -148,6 +148,14 @@
   "storeAdmin_switchLevel_pro": "進階版",
   "storeAdmin_switchLevel_pageTitle": "Pricing Plans",
   "storeAdmin_switchLevel_pageDescr": "請選擇適合的訂閱方案",
+  "storeAdmin_switchLevel_pageDescr_subscribed": "您目前已訂閱",
+  "storeAdmin_switchLevel_subscription_expiry": "進階版到期日：{0}",
+
+  "storeAdmin_switchLevel_cancel_confirm": "您將調整到基礎版，調整會立即生效，確定嗎？",
+  "storeAdmin_switchLevel_cancel_result": "您已回復到基礎版。進階功能可使用到：{0}。",
+
+
+
   "StoreDashboard": "後台首頁",
   "StoreSettings": "商店設定",
   "StoreSettings_about_us": "關於我們",
