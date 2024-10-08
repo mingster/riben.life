@@ -31,7 +31,7 @@ interface props<TData, TValue> {
   searchKey?: string;
   // pre-selected rows in RowSelectionState object. e.g. {0: true, 1: false, 2: true,}
   initiallySelected: RowSelectionState;
-
+  disabled: boolean;
   // return
   onRowSelectionChange?: (rows: RowSelectionState) => void;
 }
@@ -42,6 +42,7 @@ export function DataTableCheckbox<TData, TValue>({
   noSearch,
   searchKey,
   initiallySelected,
+  disabled,
   onRowSelectionChange,
 }: props<TData, TValue>) {
   //const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -79,7 +80,7 @@ export function DataTableCheckbox<TData, TValue>({
 
     onRowSelectionChange: handleRowSelectionChange,
     //onRowSelectionChange: setRowSelection,
-    enableRowSelection: true,
+    enableRowSelection: !disabled,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onPaginationChange: setPagination, //update the pagination state when internal APIs mutate the pagination state
@@ -112,6 +113,7 @@ export function DataTableCheckbox<TData, TValue>({
             onChange={(event) =>
               table.getColumn(searchKey)?.setFilterValue(event.target.value)
             }
+            disabled={disabled}
             className="max-w-sm"
           />
         </div>

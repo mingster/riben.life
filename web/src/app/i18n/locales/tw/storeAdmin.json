@@ -10,7 +10,7 @@
   "Announcement_Mgmt_descr": "管理店內公告",
   "Announcement_updated": "公告已更新",
   "Announcements": "公告管理",
-  "Balance": "銷售統計",
+  "Balance": "銷售分析",
   "business_hours": "營業時間",
   "Cancel": "取消",
   "Canceled": "已取消",
@@ -150,12 +150,9 @@
   "storeAdmin_switchLevel_pageDescr": "請選擇適合的訂閱方案",
   "storeAdmin_switchLevel_pageDescr_subscribed": "您目前已訂閱",
   "storeAdmin_switchLevel_subscription_expiry": "進階版到期日：{0}",
-
   "storeAdmin_switchLevel_cancel_confirm": "您將調整到基礎版，調整會立即生效，確定嗎？",
   "storeAdmin_switchLevel_cancel_result": "您已回復到基礎版。進階功能可使用到：{0}。",
-
-
-
+  "RequiredProVersion": "請升級到進階版",
   "StoreDashboard": "後台首頁",
   "StoreSettings": "商店設定",
   "StoreSettings_about_us": "關於我們",

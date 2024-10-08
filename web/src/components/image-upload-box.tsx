@@ -7,14 +7,17 @@ import { useState } from "react";
 interface ImageUploadBoxProp {
   image: File | null;
   setImage: (image: File | null) => void;
+  disabled: boolean;
 }
 
 const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
   image,
   setImage,
+  disabled,
 }: {
   image: File | null;
   setImage: (image: File | null) => void;
+  disabled: boolean;
 }) => {
   const [isDropZone, setIsDropZone] = useState(false);
 
@@ -57,7 +60,7 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
   };
 
   return (
-    <div
+    <div aria-disabled={disabled}
       onDrop={(e) => handleDrop(e)}
       onDragOver={(e) => handleDragOver(e)}
       onDragEnter={(e) => handleDragEnter(e)}
@@ -92,6 +95,7 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
           </label>
           <input
             type="file"
+            disabled={disabled}
             onChange={(e) => {
               //console.log(e.target.files);
               setImage(e.target.files && e.target.files[0]);
@@ -105,14 +109,15 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
           <BoxSelect className="h-10 w-10" />
           <p className="my-0 text-sm font-medium">Drag and Drop</p>
 
-          <div>
+          <div aria-disabled={disabled}>
             <label htmlFor="post_image">
-              <div className="mt-4 cursor-pointer rounded-lg px-7 py-2.5 text-sm font-medium leading-5 border">
+              <div className="mt-4 cursor-pointer rounded-lg px-7 py-2.5 text-sm font-medium leading-5 border disabled:bg-gray-300">
                 Choose Image
               </div>
             </label>
             <input
               type="file"
+              disabled={disabled}
               accept="image/*"
               onChange={(e) => {
                 console.log(e.target.files);

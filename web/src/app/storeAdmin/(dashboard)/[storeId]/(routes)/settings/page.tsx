@@ -11,6 +11,7 @@ import { Suspense } from "react";
 import { StoreSettingTabs } from "./tabs";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
+import isProLevel from "@/actions/storeAdmin/is-pro-level";
 
 const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
   include: {
@@ -45,6 +46,19 @@ const StoreSettingsPage: React.FC<pageProps> = async ({ params }) => {
   //console.log(`store: ${JSON.stringify(store)}`);
   //console.log('storeSettings: ' + JSON.stringify(storeSettings));
 
+  /*
+  await sqlClient.storePaymentMethodMapping.deleteMany({
+    where: {
+      storeId: params.storeId,
+    }
+  })
+  await sqlClient.storeShipMethodMapping.deleteMany({
+    where: {
+      storeId: params.storeId,
+    }
+  })
+  */
+
   const allPaymentMethods = (await sqlClient.paymentMethod.findMany({
     where: { isDeleted: false },
   })) as PaymentMethod[];
@@ -55,6 +69,9 @@ const StoreSettingsPage: React.FC<pageProps> = async ({ params }) => {
   transformDecimalsToNumbers(allPaymentMethods);
   transformDecimalsToNumbers(allShippingMethods);
 
+  // this store is pro version or not?
+  const disablePaidOptions = await isProLevel(store?.id);
+
   return (
     <Suspense fallback={<Loader />}>
       <Container>
@@ -63,6 +80,7 @@ const StoreSettingsPage: React.FC<pageProps> = async ({ params }) => {
           mongoData={storeSettings}
           paymentMethods={allPaymentMethods}
           shippingMethods={allShippingMethods}
+          disablePaidOptions={disablePaidOptions}
         />
       </Container>
     </Suspense>
