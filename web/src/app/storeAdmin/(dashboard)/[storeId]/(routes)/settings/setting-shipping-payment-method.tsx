@@ -12,24 +12,28 @@ import { DataTableCheckbox } from "@/components/dataTable-checkbox";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Checkbox } from "@/components/ui/checkbox";
 
+import Currency from "@/components/currency";
 import { useI18n } from "@/providers/i18n-provider";
 import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import axios from "axios";
 import { CheckIcon, XIcon } from "lucide-react";
+import { RequiredProVersion } from "../components/require-pro-version";
 import type { Store } from "./page";
-import Currency from "@/components/currency";
+import { t } from "i18next";
 
 export interface SettingsFormProps {
   sqlData: Store;
   allPaymentMethods: PaymentMethod[] | [];
   allShippingMethods: ShippingMethod[] | [];
+  disablePaidOptions: boolean;
 }
 
 export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
   sqlData,
   allPaymentMethods,
   allShippingMethods,
+  disablePaidOptions
 }) => {
   const params = useParams();
   const router = useRouter();
@@ -93,6 +97,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
       currencyId: item.currencyId.toString(),
       isDefault: item.isDefault,
       shipRequried: item.shipRequried,
+      disabled: disablePaidOptions
     }),
   );
 
@@ -170,20 +175,22 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
   };
   return (
     <>
+      {
+        disablePaidOptions && <RequiredProVersion />
+      }
       <Card>
         <CardHeader>請勾選本店所支援的配送方式:</CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className='space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900' data-disabled={disablePaidOptions}>
           <DataTableCheckbox
             searchKey=""
             columns={shipColumns}
             data={formattedShippings}
             initiallySelected={savedStoreShippingMethods}
             onRowSelectionChange={setSelectedShippingIds}
-          />
+            disabled={loading || disablePaidOptions} />
           <Button
             type="button"
-            disabled={loading}
-            className="disabled:opacity-25"
+            disabled={loading || disablePaidOptions} className="disabled:opacity-25"
             onClick={saveShippingData}
           >
             {t("Save")}
@@ -195,17 +202,18 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
 
       <Card>
         <CardHeader>請勾選本店所支援的付款方式:</CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className='space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900' data-disabled={disablePaidOptions}>
           <DataTableCheckbox
             searchKey=""
             columns={PayMethodColumns}
             data={formattedPaymethods}
             initiallySelected={savedStorePayMethods}
+            disabled={disablePaidOptions || disablePaidOptions}
             onRowSelectionChange={setSelectedPayMethodIds}
           />
           <Button
             type="button"
-            disabled={loading}
+            disabled={loading || disablePaidOptions}
             className="disabled:opacity-25"
             onClick={savePaymethodData}
           >
@@ -253,19 +261,19 @@ const PayMethodColumns: ColumnDef<PayMethodColumn>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="method" />;
+      return <DataTableColumnHeader column={column} title={t('paymentMethod_name')} />;
     },
   },
   {
     accessorKey: "priceDescr",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="cost" />;
+      return <DataTableColumnHeader column={column} title={t('paymentMethod_cost')} />;
     },
   },
   {
     accessorKey: "isDefault",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="isDefault" />;
+      return <DataTableColumnHeader column={column} title={t('paymentMethod_isDefault')} />;
     },
     cell: ({ row }) => {
       const isDefault =
@@ -290,6 +298,7 @@ type ShippingMethodColumn = {
   currencyId: string;
   isDefault: boolean;
   shipRequried: boolean;
+  disabled: boolean;
   //createdAt: Date;
   //updatedAt: Date;
 };
@@ -320,19 +329,19 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="method" />;
+      return <DataTableColumnHeader column={column} title={t('shippingMethod')} />;
     },
   },
   {
     accessorKey: "currencyId",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="currency" />;
+      return <DataTableColumnHeader column={column} title={t('shippingMethod_currency')} />;
     },
   },
   {
     accessorKey: "basic_price",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="price" />;
+      return <DataTableColumnHeader column={column} title={t('shippingMethod_price')} />;
     },
     cell: ({ row }) => {
       const price = Number(row.getValue("basic_price"));
@@ -342,7 +351,7 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
   {
     accessorKey: "shipRequried",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="ship requried" />;
+      return <DataTableColumnHeader column={column} title={t('shippingMethod_shipRequired')} />;
     },
     cell: ({ row }) => {
       const shipRequried =
@@ -357,7 +366,7 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
   {
     accessorKey: "isDefault",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="isDefault" />;
+      return <DataTableColumnHeader column={column} title={t('shippingMethod_isDefault')} />;
     },
     cell: ({ row }) => {
       const isDefault =

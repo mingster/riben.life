@@ -37,6 +37,7 @@ export interface SettingsFormProps {
   mongoData: StoreSettings | null;
   paymentMethods: PaymentMethod[] | [];
   shippingMethods: ShippingMethod[] | [];
+  disablePaidOptions: boolean;
   /*
   initialData:
     | (Store & {
@@ -52,6 +53,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
   mongoData,
   paymentMethods,
   shippingMethods,
+  disablePaidOptions
 }) => {
   const router = useRouter();
   const params = useParams();
@@ -171,10 +173,11 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
             sqlData={sqlData}
             allPaymentMethods={paymentMethods}
             allShippingMethods={shippingMethods}
+            disablePaidOptions={disablePaidOptions}
           />
         </TabsContent>
         <TabsContent value="paidOptions">
-          <PaidOptionsTab sqlData={sqlData} mongoData={mongoData} />
+          <PaidOptionsTab sqlData={sqlData} mongoData={mongoData} disablePaidOptions={disablePaidOptions} />
         </TabsContent>
       </Tabs>
     </>

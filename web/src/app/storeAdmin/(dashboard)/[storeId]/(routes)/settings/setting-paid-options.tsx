@@ -10,7 +10,6 @@ import axios, { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-
 import * as z from "zod";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -25,9 +24,8 @@ import {
   FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { cn, deleteImage, uploadImage } from "@/lib/utils";
+import { deleteImage, uploadImage } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
-import { StoreLevel } from "@/types/enum";
 import { XCircleIcon } from "lucide-react";
 import { RequiredProVersion } from "../components/require-pro-version";
 
@@ -42,6 +40,7 @@ type formValues = z.infer<typeof formSchema>;
 export interface SettingsFormProps {
   sqlData: Store;
   mongoData: StoreSettings | null;
+  disablePaidOptions: boolean;
   /*
   initialData:
     | (Store & {
@@ -55,17 +54,12 @@ export interface SettingsFormProps {
 
 export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
   sqlData: initialData,
+  disablePaidOptions
 }) => {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-
-  //const origin = useOrigin();
   const [loading, setLoading] = useState(false);
-
-  // this store is pro version nor not?
-  const disablePaidOptions = initialData?.level === StoreLevel.Free;
-
 
   const defaultValues = initialData
     ? {
@@ -166,9 +160,9 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
     <>
       <Card>
         <CardContent className='space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900' data-disabled={disablePaidOptions}>
-        {
-          disablePaidOptions && <RequiredProVersion />
-        }
+          {
+            disablePaidOptions && <RequiredProVersion />
+          }
 
           <Form {...form}>
             <form
