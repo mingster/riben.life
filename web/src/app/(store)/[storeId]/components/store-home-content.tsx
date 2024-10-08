@@ -146,8 +146,8 @@ export const StoreHomeContent: React.FC<props> = ({
   return (
     <section className="relative w-full justify-center content-center items-center">
       <div className="pl-1 pr-1">
-        {!storeData.isOpen && <h2 className="text-2xl">{t("store_closed")}</h2>}
-        <div className="pl-5 pb-5">
+        {!storeData.isOpen && <h2 className="text-2xl xs:text-xl font-extrabold">{t("store_closed")}</h2>}
+        <div className="pl-2 pb-5">
           {tableData ? (
             <div className="">
               <div className="flex gap-2">
@@ -156,14 +156,14 @@ export const StoreHomeContent: React.FC<props> = ({
                   <Link href="#">{t("store_linkToOrder")}</Link>
                 </div>
               </div>
-              <div>
+              <div className='text-xl font-extrabold'>
                 {t("storeTables")}: {tableData.tableName}
               </div>
               <div>{t("store_seatingTime")}</div>
               <div>2大人 0小孩</div>
             </div>
           ) : (
-            <div>{t("store_orderType_takeoff")}</div>
+            <div className='text-xl font-extrabold'>{t("store_orderType_takeoff")}</div>
           )}
         </div>
         {mongoData?.orderNoteToCustomer && (

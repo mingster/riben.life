@@ -154,6 +154,7 @@ export const ProductEditCategoryTab = ({
           {/* display */}
           <div className="w-full">
             <DataTableCheckbox
+              disabled={loading}
               noSearch={true}
               columns={columns}
               data={formattedCategories}
