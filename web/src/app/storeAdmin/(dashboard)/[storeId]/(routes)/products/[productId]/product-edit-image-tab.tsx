@@ -222,8 +222,9 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 
           <div className="flex justify-center">
             <ImageUploadBox
+              disabled={loading}
               image={image ?? null}
-              setImage={setImage ?? (() => {})}
+              setImage={setImage ?? (() => { })}
             />
           </div>
           <DialogFooter className="">

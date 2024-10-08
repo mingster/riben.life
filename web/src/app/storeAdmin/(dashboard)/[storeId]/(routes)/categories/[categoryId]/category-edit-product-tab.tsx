@@ -170,6 +170,7 @@ export const CategoryEditProductTab = ({ initialData, allProducts }: props) => {
       <Card className="w-full">
         <CardContent className="space-y-2">
           <DataTableCheckbox
+            disabled={loading}
             searchKey="name"
             columns={columns}
             data={formattedProducts}
