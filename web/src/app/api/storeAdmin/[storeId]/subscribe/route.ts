@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminAccess } from "../../api_helper";
+import { CheckStoreAdminApiAccess } from "../../api_helper";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { stripe } from "@/lib/stripe/config";
@@ -13,7 +13,7 @@ export async function POST(
   { params }: { params: { storeId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {
       return new NextResponse("Unauthenticated", { status: 400 });

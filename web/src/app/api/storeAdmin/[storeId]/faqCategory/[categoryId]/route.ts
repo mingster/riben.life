@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminAccess } from "../../../api_helper";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 ///!SECTION update faqCategory record in database.
 export async function PATCH(
@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: { storeId: string; categoryId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     if (!params.categoryId) {
       return new NextResponse("category id is required", { status: 401 });
@@ -37,7 +37,7 @@ export async function DELETE(
   { params }: { params: { storeId: string; categoryId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     if (!params.categoryId) {
       return new NextResponse("category id is required", { status: 401 });

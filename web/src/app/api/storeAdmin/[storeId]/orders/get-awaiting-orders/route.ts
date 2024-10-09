@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
 import type { StoreOrder } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminAccess } from "../../../api_helper";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
 // returns orders in a store
@@ -11,7 +11,7 @@ export async function GET(
   { params }: { params: { storeId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     const awaiting4ProcessOrders = (await sqlClient.storeOrder.findMany({
       where: {

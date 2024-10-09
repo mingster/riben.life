@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminAccess } from "../../api_helper";
+import { CheckStoreAdminApiAccess } from "../../api_helper";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { stripe } from "@/lib/stripe/config";

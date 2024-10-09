@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminAccess } from "../../../api_helper";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { IsSignInResponse } from "@/lib/auth/utils";
 
 ///!SECTION add reply to this ticket from store staff.
@@ -10,7 +10,7 @@ export async function PATCH(
   { params }: { params: { storeId: string; ticketId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
     const userId = IsSignInResponse();
     if (typeof userId !== "string") {
       return new NextResponse("Unauthenticated", { status: 400 });
@@ -83,7 +83,7 @@ export async function DELETE(
   { params }: { params: { storeId: string; ticketId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     if (!params.ticketId) {
       return new NextResponse("ticketId is required", { status: 401 });

@@ -18,12 +18,14 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { deleteImage, uploadImage } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import { XCircleIcon } from "lucide-react";
@@ -33,6 +35,7 @@ const formSchema = z.object({
   customDomain: z.string().optional().default(""),
   logo: z.string().optional().default(""),
   logoPublicId: z.string().default("").optional().default(""),
+  acceptAnonymousOrder: z.boolean().optional().default(true),
 });
 
 type formValues = z.infer<typeof formSchema>;
@@ -189,8 +192,8 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                   </FormItem>
                 )}
               />
-              <FormLabel>{t("StoreSettings_Store_Logo")}</FormLabel>
 
+              <FormLabel>{t("StoreSettings_Store_Logo")}</FormLabel>
               <div className="flex flex-row w-full">
                 <div className="flex flex-col space-y-4 w-1/2">
                   <ImageUploadBox
@@ -206,33 +209,31 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                     render={({ field }) => (
                       <FormItem>
                         {logo && (
-                          <>
-                            <div className="relative h-[40px] w-[120px] overflow-hidden">
-                              <div className="absolute right-1 top-2 z-10">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  type="button"
-                                  onClick={() =>
-                                    deleteImageFromClient(
-                                      logoPublicId as string,
-                                    )
-                                  }
-                                >
-                                  <XCircleIcon className="text-red-700" />
-                                </Button>
-                              </div>
-
-                              <Image
-                                src={logo}
-                                alt="logo"
-                                width={120}
-                                height={40}
-                                priority={false}
-                                className="object-cover"
-                              />
+                          <div className="relative h-[40px] w-[120px] overflow-hidden">
+                            <div className="absolute right-1 top-2 z-10">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                onClick={() =>
+                                  deleteImageFromClient(
+                                    logoPublicId as string,
+                                  )
+                                }
+                              >
+                                <XCircleIcon className="text-red-700" />
+                              </Button>
                             </div>
-                          </>
+
+                            <Image
+                              src={logo}
+                              alt="logo"
+                              width={120}
+                              height={40}
+                              priority={false}
+                              className="object-cover"
+                            />
+                          </div>
                         )}
                         <FormMessage />
                       </FormItem>
@@ -249,6 +250,32 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                     )}
                   />
                 </div>
+              </div>
+
+
+              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+                <FormField
+                  control={form.control}
+                  name="acceptAnonymousOrder"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>
+                          {t("StoreSettings_acceptAnonymousOrder")}
+                        </FormLabel>
+                        <FormDescription>
+                          {t("StoreSettings_acceptAnonymousOrder_descr")}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <Button

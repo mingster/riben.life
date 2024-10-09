@@ -1,4 +1,4 @@
-import { CheckStoreAdminAccess } from "@/app/api/storeAdmin/api_helper";
+import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
@@ -7,7 +7,7 @@ export async function POST(
   req: Request,
   { params }: { params: { storeId: string } },
 ) {
-  CheckStoreAdminAccess(params.storeId);
+  CheckStoreAdminApiAccess(params.storeId);
 
   const body = await req.json();
 
@@ -22,7 +22,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: { storeId: string } },
 ) {
-  CheckStoreAdminAccess(params.storeId);
+  CheckStoreAdminApiAccess(params.storeId);
 
   await sqlClient.storeShipMethodMapping.deleteMany({});
 

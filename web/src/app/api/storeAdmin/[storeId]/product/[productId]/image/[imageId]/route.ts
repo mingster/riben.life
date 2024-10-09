@@ -1,4 +1,4 @@
-import { CheckStoreAdminAccess } from "@/app/api/storeAdmin/api_helper";
+import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
@@ -9,7 +9,7 @@ export async function DELETE(
   }: { params: { storeId: string; productId: string; imageId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     if (!params.productId) {
       return new NextResponse("product id is required", { status: 400 });

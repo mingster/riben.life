@@ -1,4 +1,4 @@
-import { CheckStoreAdminAccess } from "@/app/api/storeAdmin/api_helper";
+import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
@@ -9,7 +9,7 @@ export async function POST(
   { params }: { params: { storeId: string; orderId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     if (!params.orderId) {
       return new NextResponse("orderId is required", { status: 403 });

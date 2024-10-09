@@ -1,12 +1,9 @@
-import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
-
 import { NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
 import { IsSignInResponse } from "@/lib/auth/utils";
-//import type { Store } from "@prisma/client";
 
-// returns all countries currently in db
-export async function CheckStoreAdminAccess(storeId: string) {
+// gate keeper for store admin api access
+export async function CheckStoreAdminApiAccess(storeId: string) {
   try {
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {

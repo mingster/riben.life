@@ -1,8 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { CheckAdminApiAccess } from "../../api_helper";
 
 ///!SECTION update user in database.
 export async function PATCH(
@@ -10,12 +9,7 @@ export async function PATCH(
   { params }: { params: { userId: string } },
 ) {
   try {
-    const session = (await auth()) as Session;
-    const userId = session?.user.id;
-
-    if (!userId) {
-      return new NextResponse("Unauthenticated", { status: 403 });
-    }
+    CheckAdminApiAccess();
 
     if (!params.userId) {
       return new NextResponse("user id is required", { status: 400 });
