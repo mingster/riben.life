@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminAccess } from "../../../api_helper";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
 //delete product by its id
@@ -9,7 +9,7 @@ export async function DELETE(
   { params }: { params: { productId: string; storeId: string } },
 ) {
   //try {
-  CheckStoreAdminAccess(params.storeId);
+  CheckStoreAdminApiAccess(params.storeId);
 
   if (!params.productId) {
     return new NextResponse("product id is required", { status: 400 });
@@ -51,7 +51,7 @@ export async function PATCH(
   { params }: { params: { storeId: string; productId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     if (!params.productId) {
       return new NextResponse("product id is required", { status: 400 });

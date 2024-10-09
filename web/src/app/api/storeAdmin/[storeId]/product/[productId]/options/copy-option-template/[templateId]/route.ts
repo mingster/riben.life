@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import { CheckStoreAdminAccess } from "@/app/api/storeAdmin/api_helper";
+import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import type {
   StoreProductOptionSelectionsTemplate,
   StoreProductOptionTemplate,
@@ -17,7 +17,7 @@ export async function POST(
   }: { params: { storeId: string; productId: string; templateId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     if (!params.storeId) {
       return new NextResponse("store id is required", { status: 410 });

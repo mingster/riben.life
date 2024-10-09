@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
 import type { SupportTicket } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminAccess } from "../../../api_helper";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 // returns all countries currently in db
 export async function GET(
@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: { storeId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     const pendingTickets = (await sqlClient.supportTicket.findMany({
       where: {

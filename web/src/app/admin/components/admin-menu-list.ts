@@ -7,6 +7,7 @@ import {
   Tag,
   Users,
   Wrench,
+  CircleDollarSign,
 } from "lucide-react";
 
 type Submenu = {
@@ -19,6 +20,7 @@ type Menu = {
   href: string;
   label: string;
   active: boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   icon: any;
   submenus: Submenu[];
 };
@@ -102,7 +104,14 @@ export function GetMenuList(pathname: string): Group[] {
           href: `${nav_prefix}/settings`,
           label: "Settings",
           active: pathname.includes(`${nav_prefix}/settings`),
-          icon: Users,
+          icon: Settings,
+          submenus: [],
+        },
+        {
+          href: `${nav_prefix}/paymentMethods`,
+          label: "Payment Methods",
+          active: pathname.includes(`${nav_prefix}/paymentMethods`),
+          icon: CircleDollarSign,
           submenus: [],
         },
       ],

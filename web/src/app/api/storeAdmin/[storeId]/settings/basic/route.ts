@@ -1,6 +1,6 @@
 import { sqlClient, mongoClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminAccess } from "../../../api_helper";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { IsSignInResponse } from "@/lib/auth/utils";
 
 export async function PATCH(
@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: { storeId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {
@@ -99,7 +99,7 @@ export async function DELETE(
   { params }: { params: { storeId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {

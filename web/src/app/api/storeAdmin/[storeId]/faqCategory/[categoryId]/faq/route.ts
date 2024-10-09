@@ -1,4 +1,4 @@
-import { CheckStoreAdminAccess } from "@/app/api/storeAdmin/api_helper";
+import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: { storeId: string; categoryId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     if (!params.categoryId) {
       return new NextResponse("faq category id is required", { status: 400 });

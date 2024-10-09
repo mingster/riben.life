@@ -1,4 +1,4 @@
-import { CheckStoreAdminAccess } from "@/app/api/storeAdmin/api_helper";
+import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
@@ -10,7 +10,7 @@ export async function PATCH(
   { params }: { params: { storeId: string; productId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     if (!params.productId) {
       return new NextResponse("product id is required", { status: 400 });

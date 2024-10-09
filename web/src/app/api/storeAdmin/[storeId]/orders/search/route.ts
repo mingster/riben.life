@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
 import type { StoreOrder } from "@prisma/client";
-import { CheckStoreAdminAccess } from "../../../api_helper";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { addDays, format } from "date-fns";
 
 import { type NextRequest, NextResponse } from "next/server";
@@ -14,7 +14,7 @@ export async function GET(
   context: { params: { Date: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     const { searchParams } = new URL(req.url);
     const dateVal = searchParams.get("date") || undefined;

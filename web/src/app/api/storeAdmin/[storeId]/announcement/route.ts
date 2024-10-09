@@ -2,7 +2,7 @@ import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import { sqlClient } from "@/lib/prismadb";
 
 import { NextResponse } from "next/server";
-import { CheckStoreAdminAccess } from "../../api_helper";
+import { CheckStoreAdminApiAccess } from "../../api_helper";
 import { IsSignInResponse } from "@/lib/auth/utils";
 
 ///!SECTION create Category record in database.
@@ -16,7 +16,7 @@ export async function POST(
       return new NextResponse("Unauthenticated", { status: 403 });
     }
 
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     const body = await req.json();
     const obj = await sqlClient.storeAnnouncement.create({

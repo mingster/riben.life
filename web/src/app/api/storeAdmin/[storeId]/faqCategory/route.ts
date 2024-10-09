@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminAccess } from "../../api_helper";
+import { CheckStoreAdminApiAccess } from "../../api_helper";
 
 ///!SECTION create faqCategory record in database.
 export async function POST(
@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: { storeId: string } },
 ) {
   try {
-    CheckStoreAdminAccess(params.storeId);
+    CheckStoreAdminApiAccess(params.storeId);
 
     const body = await req.json();
     const obj = await sqlClient.faqCategory.create({
