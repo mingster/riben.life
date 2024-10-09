@@ -345,7 +345,9 @@ model Store {
   autoAcceptOrder      Boolean @default(true)
   isOpen               Boolean @default(true)
   acceptAnonymousOrder Boolean @default(true)
-  acceptReservation    Boolean @default(true)
+
+  acceptReservation Boolean @default(true)
+  rsvpPrepaid       Boolean @default(false)  //訂位需付訂金
 
   requireSeating Boolean @default(false) //需要帶位or not
   requirePrepay  Boolean @default(false) //先付款再出貨

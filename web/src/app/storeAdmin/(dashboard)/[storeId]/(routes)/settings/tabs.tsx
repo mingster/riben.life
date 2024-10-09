@@ -3,8 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import type { StoreSettings } from "@prisma-mongo/prisma/client";
 import {
-  Prisma,
   type PaymentMethod,
+  Prisma,
   type ShippingMethod,
 } from "@prisma/client";
 
@@ -20,17 +20,16 @@ import { Button } from "@/components/ui/button";
 
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Heading } from "@/components/ui/heading";
-
 import { BasicSettingTab } from "./setting-basic-tab";
-
 import { Loader } from "@/components/ui/loader";
+import type { Store } from "./page";
+import { BankSettingTab } from "./setting-bank-tab";
 import { ContactInfoTab } from "./setting-contact-info-tab";
 import { PaidOptionsTab } from "./setting-paid-options";
 import { PrivacyTab } from "./setting-privacy-tab";
 //import { TermsTab } from "./setting-terms-tab";
 import { ShippingPaymentMethodTab } from "./setting-shipping-payment-method";
-import type { Store } from "./page";
-import { BankSettingTab } from "./setting-bank-tab";
+import { RsvpSettingTab } from "./setting-rsvp-tab";
 
 export interface SettingsFormProps {
   sqlData: Store;
@@ -132,6 +131,10 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
             {t("StoreSettingsTab_Basic")}
           </TabsTrigger>
 
+          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="rsvp">
+            {t("StoreSettingsTab_RSVP")}
+          </TabsTrigger>
+
           <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="bank">
             {t("StoreSettingsTab_Bank")}
           </TabsTrigger>
@@ -143,7 +146,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
             className="pl-5 pr-5 lg:min-w-40"
             value="privacyStatement"
           >
-            {t("StoreSettingsTab_Privacy")} / {t("StoreSettingsTab_Terms")}
+            {t("StoreSettingsTab_Policy")}
           </TabsTrigger>
           <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="ShippingMethod">
             {t("StoreSettingsTab_shipping_method")} /{" "}
@@ -165,9 +168,15 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
         <TabsContent value="contactInfo">
           <ContactInfoTab sqlData={sqlData} mongoData={mongoData} />
         </TabsContent>
+
+        <TabsContent value="rsvp">
+          <RsvpSettingTab sqlData={sqlData} mongoData={mongoData} />
+        </TabsContent>
+
         <TabsContent value="privacyStatement">
           <PrivacyTab sqlData={sqlData} mongoData={mongoData} />
         </TabsContent>
+
         <TabsContent value="ShippingMethod">
           <ShippingPaymentMethodTab
             sqlData={sqlData}
