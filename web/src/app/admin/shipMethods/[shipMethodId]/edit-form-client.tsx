@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import type { PaymentMethod } from "@prisma/client";
+import type { ShippingMethod } from "@prisma/client";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -27,18 +27,20 @@ import { Switch } from "@/components/ui/switch";
 
 const formSchema = z.object({
   name: z.string().default(""),
-  payUrl: z.string().default(""),
-  priceDescr: z.string().optional().default(""),
-  fee: z.coerce.number().default(0),
+  description: z.string().optional().default(""),
+  basic_price: z.coerce.number().default(0),
   isDeleted: z.boolean(),
   isDefault: z.boolean(),
+  shipRequried: z.boolean(),
+
+  //currencyId   String   @default("twd")
 });
 
 type formValues = z.infer<typeof formSchema>;
 
 interface editProps {
   initialData:
-  | (PaymentMethod & {
+  | (ShippingMethod & {
     //images: ProductImage[];
   })
   | null;
@@ -80,7 +82,7 @@ export const EditClient = ({ initialData }: editProps) => {
     setLoading(true);
     //console.log(`onSubmit: ${JSON.stringify(data)}`);
     await axios.patch(
-      `${process.env.NEXT_PUBLIC_API_URL}/admin/paymentMethods/${initialData.id}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/admin/shipMethods/${initialData.id}`,
       data,
     );
 
@@ -90,8 +92,8 @@ export const EditClient = ({ initialData }: editProps) => {
       variant: "success",
     });
 
-    //router.refresh();
-    router.push("/admin/paymentMethods");
+    router.refresh();
+    router.push("/admin/shipMethods");
     setLoading(false);
 
     /*
@@ -135,24 +137,7 @@ export const EditClient = ({ initialData }: editProps) => {
                 />
                 <FormField
                   control={form.control}
-                  name="payUrl"
-                  render={({ field }) => (
-                    <FormItem className="p-3">
-                      <FormLabel>pay url</FormLabel>
-                      <FormControl>
-                        <Input type='text'
-                          disabled={loading}
-                          className="font-mono"
-                          placeholder="payUrl"
-                          {...field}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="priceDescr"
+                  name="description"
                   render={({ field }) => (
                     <FormItem className="p-3">
                       <FormLabel>description</FormLabel>
@@ -160,7 +145,7 @@ export const EditClient = ({ initialData }: editProps) => {
                         <Input type='text'
                           disabled={loading}
                           className="font-mono"
-                          placeholder="priceDescr"
+                          placeholder="description"
                           {...field}
                         />
                       </FormControl>
@@ -169,15 +154,15 @@ export const EditClient = ({ initialData }: editProps) => {
                 />
                 <FormField
                   control={form.control}
-                  name="fee"
+                  name="basic_price"
                   render={({ field }) => (
                     <FormItem className="p-3">
-                      <FormLabel>fee</FormLabel>
+                      <FormLabel>basic price</FormLabel>
                       <FormControl>
                         <Input type='number'
                           disabled={loading}
                           className="font-mono"
-                          placeholder="fee"
+                          placeholder="basic_price"
                           {...field}
                         />
                       </FormControl>
@@ -223,6 +208,25 @@ export const EditClient = ({ initialData }: editProps) => {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="shipRequried"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between pl-3 pr-3 rounded-lg shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>shipment requried</FormLabel>
+                        <FormDescription>
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
 
 
@@ -240,7 +244,7 @@ export const EditClient = ({ initialData }: editProps) => {
                 variant="outline"
                 onClick={() => {
                   clearErrors();
-                  router.push("/admin/paymentMethods");
+                  router.push("/admin/shipMethods");
                 }}
                 className="ml-5"
               >

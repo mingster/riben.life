@@ -7,7 +7,7 @@ import {
   Tag,
   Users,
   Wrench,
-  CircleDollarSign,
+  CircleDollarSign, Truck
 } from "lucide-react";
 
 type Submenu = {
@@ -112,6 +112,13 @@ export function GetMenuList(pathname: string): Group[] {
           label: "Payment Methods",
           active: pathname.includes(`${nav_prefix}/paymentMethods`),
           icon: CircleDollarSign,
+          submenus: [],
+        },
+        {
+          href: `${nav_prefix}/shipMethods`,
+          label: "Shipping Methods",
+          active: pathname.includes(`${nav_prefix}/shipMethods`),
+          icon: Truck,
           submenus: [],
         },
       ],

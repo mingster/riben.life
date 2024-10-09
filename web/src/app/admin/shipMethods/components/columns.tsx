@@ -9,17 +9,19 @@ import { CheckIcon, XIcon } from "lucide-react";
 export type DataColumn = {
   id: string;
   name: string;
-  payUrl: string;
-  priceDescr: string;
-  fee: number;
+  //description: string;
+  basic_price: number;
+  currencyId: string;
 
   isDefault: boolean;
   isDeleted: boolean;
+  shipRequried: boolean;
 
   updatedAt?: string;
 
-  StorePaymentMethodMapping?: number;
+  stores?: number;
   StoreOrder?: number;
+  Shipment?: number;
 };
 
 export const columns: ColumnDef<DataColumn>[] = [
@@ -31,31 +33,25 @@ export const columns: ColumnDef<DataColumn>[] = [
     cell: ({ row }) => (
       <Link
         className="pl-5"
-        title="edit this payment method"
-        href={`./paymentMethods/${row.original.id}/`}
+        title="edit this shipping method"
+        href={`./shipMethods/${row.original.id}/`}
       >
         {row.getValue("name")}
       </Link>
     ),
   },
   {
-    accessorKey: "payUrl",
+    accessorKey: "basic_price",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="payUrl" />;
+      return <DataTableColumnHeader column={column} title="price" />;
     },
-  },
-  /*{
-      accessorKey: "priceDescr",
-      header: ({ column }) => {
-        return <DataTableColumnHeader column={column} title="price description" />;
-      },
-    },*/
+  },/*
   {
-    accessorKey: "fee",
+    accessorKey: "currencyId",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="fee" />;
+      return <DataTableColumnHeader column={column} title="currency" />;
     },
-  },
+  }, */
   {
     accessorKey: "isDefault",
     header: ({ column }) => {
@@ -91,7 +87,24 @@ export const columns: ColumnDef<DataColumn>[] = [
     },
   },
   {
-    accessorKey: "StorePaymentMethodMapping",
+    accessorKey: "shipRequried",
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeader column={column} title='shipRequried' />
+      );
+    },
+    cell: ({ row }) => {
+      const val =
+        row.getValue("shipRequried") === true ? (
+          <CheckIcon className="text-green-400  h-4 w-4" />
+        ) : (
+          <XIcon className="text-red-400 h-4 w-4" />
+        );
+      return <div className="pl-3">{val}</div>;
+    },
+  },
+  {
+    accessorKey: "stores",
     header: ({ column }) => {
       return (
         <DataTableColumnHeader column={column} title='# of store' />
@@ -106,13 +119,14 @@ export const columns: ColumnDef<DataColumn>[] = [
       );
     },
   },
-/*
   {
-    accessorKey: "updatedAt",
+    accessorKey: "Shipment",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="updated" />;
+      return (
+        <DataTableColumnHeader column={column} title='# of shipment' />
+      );
     },
-  },*/
+  },
   {
     id: "actions",
     cell: ({ row }) => <CellAction data={row.original} />,
