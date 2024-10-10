@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
@@ -111,7 +109,7 @@ export const InProgressOrder = ({
           <div className="pt-2 pl-6">
             {orders.length === 0
               ? t("no_results_found")
-              : autoAcceptOrder
+              : autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
                 ? t("Order_accept_mgmt_descr2")
                 : t("Order_accept_mgmt_descr")}
           </div>
@@ -120,28 +118,35 @@ export const InProgressOrder = ({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[20px] text-nowrap">
-                    {t("Order_accept")}
-                  </TableHead>
-                  <TableHead className="w-[200px]">
-                    {t("Order_items")}
-                  </TableHead>
-                  <TableHead>{t("Order_note")}</TableHead>
+                  {/*單號/桌號*/}
                   <TableHead className="w-[90px]">
                     {t("Order_number")}
                   </TableHead>
+
+                  <TableHead className="w-[20px] text-nowrap">
+                    {autoAcceptOrder ? t("Order_accept2") : t("Order_accept")}
+                  </TableHead>
+
+                  <TableHead className="w-[200px]">
+                    {t("Order_items")}
+                  </TableHead>
+
+                  <TableHead>{t("Order_note")}</TableHead>
                   <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {orders.map((order: StoreOrder) => (
                   <TableRow key={order.id}>
+                    <TableCell className="text-2xl font-extrabold">{order.orderNum}</TableCell>
+
                     <TableCell className="items-center justify-between">
                       <Checkbox
                         value={order.id}
                         onClick={() => handleChecked(order.id)}
                       />
                     </TableCell>
+
                     <TableCell>
                       {order.OrderItemView.map((item: orderitemview) => (
                         <div
@@ -149,6 +154,7 @@ export const InProgressOrder = ({
                         >{`${item.name} x ${item.quantity}`}</div>
                       ))}
                     </TableCell>
+
                     <TableCell>
                       {order.OrderNotes.map((note: OrderNote) => (
                         <div key={note.id}>{note.note}</div>
@@ -158,8 +164,8 @@ export const InProgressOrder = ({
                       <div>{order.ShippingMethod?.name}</div>
                       <div>{order.PaymentMethod?.name}</div>
                     </TableCell>
-                    <TableCell>{order.orderNum}</TableCell>
-                    <TableCell>
+
+                    <TableCell className="text-nowrap">
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                       <Button className="gap-2 text-xs" variant={"outline"}>
                         {t("Modify")}
