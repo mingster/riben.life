@@ -77,6 +77,11 @@ export const InProgressOrder = ({
     });
   };
 
+  const handleEdit = async (orderId: string) => {
+    setSelectedOrderId(orderId);
+    alert('not yet implemented');
+  };
+
   const handleCancel = async (orderId: string) => {
     setOpen(true);
     setSelectedOrderId(orderId);
@@ -123,29 +128,23 @@ export const InProgressOrder = ({
                     {t("Order_number")}
                   </TableHead>
 
-                  <TableHead className="w-[20px] text-nowrap">
-                    {autoAcceptOrder ? t("Order_accept2") : t("Order_accept")}
-                  </TableHead>
-
                   <TableHead className="w-[200px]">
                     {t("Order_items")}
                   </TableHead>
 
                   <TableHead>{t("Order_note")}</TableHead>
                   <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
+
+                  <TableHead className="w-[150px] text-nowrap">
+                    {autoAcceptOrder ? t("Order_accept2") : t("Order_accept")}
+                  </TableHead>
+
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {orders.map((order: StoreOrder) => (
                   <TableRow key={order.id}>
                     <TableCell className="text-2xl font-extrabold">{order.orderNum}</TableCell>
-
-                    <TableCell className="items-center justify-between">
-                      <Checkbox
-                        value={order.id}
-                        onClick={() => handleChecked(order.id)}
-                      />
-                    </TableCell>
 
                     <TableCell>
                       {order.OrderItemView.map((item: orderitemview) => (
@@ -167,7 +166,17 @@ export const InProgressOrder = ({
 
                     <TableCell className="text-nowrap">
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
-                      <Button className="gap-2 text-xs" variant={"outline"}>
+                    </TableCell>
+
+
+                    <TableCell className="items-center justify-between">
+                      <Checkbox
+                        value={order.id}
+                        onClick={() => handleChecked(order.id)}
+                      />
+                      <Button className="gap-2 text-xs" variant={"outline"}
+                        onClick={() => handleEdit(order.id)}
+                      >
                         {t("Modify")}
                       </Button>
                       <Button
@@ -177,6 +186,7 @@ export const InProgressOrder = ({
                       >
                         {t("Cancel")}
                       </Button>
+
                     </TableCell>
                   </TableRow>
                 ))}
