@@ -45,6 +45,7 @@ import type { Address, PaymentMethod, ShippingMethod } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
 import { useSearchParams } from "next/navigation";
 import { table } from "console";
+import { saveOrderToLocal } from "@/lib/order-history";
 
 type props = {
   store: Store;
@@ -219,6 +220,9 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
       if (order) {
         // NOTE: if we allow customer to checkout parial of cart items, this need to be adjusted
         cart.emptyCart(); //clear cart
+
+        if (!user)  // if no signed-in user, save order to local storage
+          saveOrderToLocal(order);
       }
 
       //return value to parent component

@@ -78,21 +78,23 @@ export const InProgressOrder = ({
   };
 
   const handleEdit = async (orderId: string) => {
+    setOpen(true);
+
     setSelectedOrderId(orderId);
     alert('not yet implemented');
   };
 
-  const handleCancel = async (orderId: string) => {
-    setOpen(true);
-    setSelectedOrderId(orderId);
-  };
 
   const onCancel = async () => {
+    alert('not yet implemented');
+
+
     toast({
       title: selectedOrderId + t("Order") + t("Canceled"),
       description: "",
       variant: "success",
     });
+    setOpen(false);
   };
 
   if (!mounted) return <></>;
@@ -135,7 +137,7 @@ export const InProgressOrder = ({
                   <TableHead>{t("Order_note")}</TableHead>
                   <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
 
-                  <TableHead className="w-[150px] text-nowrap">
+                  <TableHead className="w-[150px] text-center text-nowrap">
                     {autoAcceptOrder ? t("Order_accept2") : t("Order_accept")}
                   </TableHead>
 
@@ -169,23 +171,17 @@ export const InProgressOrder = ({
                     </TableCell>
 
 
-                    <TableCell className="items-center justify-between">
-                      <Checkbox
-                        value={order.id}
-                        onClick={() => handleChecked(order.id)}
-                      />
-                      <Button className="gap-2 text-xs" variant={"outline"}
-                        onClick={() => handleEdit(order.id)}
-                      >
-                        {t("Modify")}
-                      </Button>
-                      <Button
-                        className="gap-2 text-xs"
-                        variant={"destructive"}
-                        onClick={() => handleCancel(order.id)}
-                      >
-                        {t("Cancel")}
-                      </Button>
+                    <TableCell className="text-center">
+                      <div className='gap-10'>
+                        <Checkbox
+                          value={order.id}
+                          onClick={() => handleChecked(order.id)}
+                        />
+                        <Button className="text-xs" variant={"outline"}
+                          onClick={() => handleEdit(order.id)}
+                        >
+                          {t("Modify")}
+                        </Button></div>
 
                     </TableCell>
                   </TableRow>
