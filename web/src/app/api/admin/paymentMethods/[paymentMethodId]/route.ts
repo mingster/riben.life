@@ -2,7 +2,6 @@ import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../api_helper";
 
-
 export async function PATCH(
   req: Request,
   { params }: { params: { paymentMethodId: string } },

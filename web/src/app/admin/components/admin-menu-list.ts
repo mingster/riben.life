@@ -7,7 +7,8 @@ import {
   Tag,
   Users,
   Wrench,
-  CircleDollarSign, Truck
+  CircleDollarSign,
+  Truck,
 } from "lucide-react";
 
 type Submenu = {

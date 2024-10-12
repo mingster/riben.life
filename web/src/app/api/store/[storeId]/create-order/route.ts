@@ -130,7 +130,7 @@ export async function POST(
 
   //console.log('data: ' + JSON.stringify(data));
 
-  const order = await sqlClient.storeOrder.create({
+  const result = await sqlClient.storeOrder.create({
     data: {
       storeId: params.storeId,
       userId: userId || null, //user is optional
@@ -172,43 +172,19 @@ export async function POST(
     },
   });
 
-  /*
-  const order = await prismadb.storeOrder.create({
-  data: {
-    storeId: params.storeId,
-    userId: userId,
-    isPaid: false,
-    orderTotal: orderTotal,
-    currency: data.currency,
-    orderItems: {
-    createMany: {
-      data: products.map((product, index: number) => ({
-      productId: product.id,
-      quantity: quantities[index],
-      unitPrice: prices[index],
-      })),
+  const order = await sqlClient.storeOrder.findUnique({
+    where: {
+      id: result.id,
     },
+    include: {
+      Store: true,
+      OrderNotes: true,
+      OrderItemView: true,
+      User: true,
+      ShippingMethod: true,
+      PaymentMethod: true,
     },
-    orderNotes: {
-    createMany: {
-      data: data.notes.map((note: string) => ({
-      note: note,
-      displayToCustomer: true,
-      })),
-    },
-    },
-    shippingMethodId: shippingMethodId,
-    shippingAddress: data.shippingAddress,
-    shippingCost: data.shippingCost,
-    paymentStatus: Number(PaymentStatus.Pending),
-    returnStatus: Number(ReturnStatus.None),
-    shippingStatus: Number(ShippingStatus.NotYetShipped),
-    orderStatus: Number(OrderStatus.Pending),
-    paymentMethodId: data.paymentMethodId,
-    checkoutAttributes: data.checkoutAttributes,
-  },
   });
-*/
   transformDecimalsToNumbers(order);
 
   //console.log('order: ' + JSON.stringify(order));

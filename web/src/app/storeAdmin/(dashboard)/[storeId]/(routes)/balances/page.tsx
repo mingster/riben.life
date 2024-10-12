@@ -14,7 +14,6 @@ interface pageProps {
   params: {
     storeId: string;
   };
-  
 }
 
 const BalanceMgmtPage: React.FC<pageProps> = async ({ params }) => {

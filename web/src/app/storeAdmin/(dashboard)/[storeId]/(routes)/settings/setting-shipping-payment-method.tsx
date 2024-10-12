@@ -33,7 +33,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
   sqlData,
   allPaymentMethods,
   allShippingMethods,
-  disablePaidOptions
+  disablePaidOptions,
 }) => {
   const params = useParams();
   const router = useRouter();
@@ -97,7 +97,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
       currencyId: item.currencyId.toString(),
       isDefault: item.isDefault,
       shipRequried: item.shipRequried,
-      disabled: disablePaidOptions
+      disabled: disablePaidOptions,
     }),
   );
 
@@ -175,22 +175,25 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
   };
   return (
     <>
-      {
-        disablePaidOptions && <RequiredProVersion />
-      }
+      {disablePaidOptions && <RequiredProVersion />}
       <Card>
         <CardHeader>請勾選本店所支援的配送方式:</CardHeader>
-        <CardContent className='space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900' data-disabled={disablePaidOptions}>
+        <CardContent
+          className="space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900"
+          data-disabled={disablePaidOptions}
+        >
           <DataTableCheckbox
             searchKey=""
             columns={shipColumns}
             data={formattedShippings}
             initiallySelected={savedStoreShippingMethods}
             onRowSelectionChange={setSelectedShippingIds}
-            disabled={loading || disablePaidOptions} />
+            disabled={loading || disablePaidOptions}
+          />
           <Button
             type="button"
-            disabled={loading || disablePaidOptions} className="disabled:opacity-25"
+            disabled={loading || disablePaidOptions}
+            className="disabled:opacity-25"
             onClick={saveShippingData}
           >
             {t("Save")}
@@ -202,7 +205,10 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
 
       <Card>
         <CardHeader>請勾選本店所支援的付款方式:</CardHeader>
-        <CardContent className='space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900' data-disabled={disablePaidOptions}>
+        <CardContent
+          className="space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900"
+          data-disabled={disablePaidOptions}
+        >
           <DataTableCheckbox
             searchKey=""
             columns={PayMethodColumns}
@@ -261,19 +267,34 @@ const PayMethodColumns: ColumnDef<PayMethodColumn>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title={t('paymentMethod_name')} />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={t("paymentMethod_name")}
+        />
+      );
     },
   },
   {
     accessorKey: "priceDescr",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title={t('paymentMethod_cost')} />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={t("paymentMethod_cost")}
+        />
+      );
     },
   },
   {
     accessorKey: "isDefault",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title={t('paymentMethod_isDefault')} />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={t("paymentMethod_isDefault")}
+        />
+      );
     },
     cell: ({ row }) => {
       const isDefault =
@@ -329,19 +350,31 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title={t('shippingMethod')} />;
+      return (
+        <DataTableColumnHeader column={column} title={t("shippingMethod")} />
+      );
     },
   },
   {
     accessorKey: "currencyId",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title={t('shippingMethod_currency')} />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={t("shippingMethod_currency")}
+        />
+      );
     },
   },
   {
     accessorKey: "basic_price",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title={t('shippingMethod_price')} />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={t("shippingMethod_price")}
+        />
+      );
     },
     cell: ({ row }) => {
       const price = Number(row.getValue("basic_price"));
@@ -351,7 +384,12 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
   {
     accessorKey: "shipRequried",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title={t('shippingMethod_shipRequired')} />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={t("shippingMethod_shipRequired")}
+        />
+      );
     },
     cell: ({ row }) => {
       const shipRequried =
@@ -366,7 +404,12 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
   {
     accessorKey: "isDefault",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title={t('shippingMethod_isDefault')} />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title={t("shippingMethod_isDefault")}
+        />
+      );
     },
     cell: ({ row }) => {
       const isDefault =

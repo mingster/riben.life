@@ -3,7 +3,6 @@ import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { format } from "date-fns";
 
-
 import { Suspense } from "react";
 import type { DataColumn } from "./components/columns";
 import { DataClient } from "./components/data-client";
@@ -20,8 +19,8 @@ const PayMethodAdminPage: React.FC = async () => {
       Shipment: true,
     },
     orderBy: {
-      name: 'asc'
-    }
+      name: "asc",
+    },
   });
 
   transformDecimalsToNumbers(methods);
@@ -40,7 +39,7 @@ const PayMethodAdminPage: React.FC = async () => {
       updatedAt: format(item.updatedAt, "yyyy-MM-dd"),
       stores: item.stores.length,
       StoreOrder: item.StoreOrder.length,
-      Shipment: item.Shipment.length
+      Shipment: item.Shipment.length,
     };
   });
 

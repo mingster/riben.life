@@ -60,7 +60,8 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
   };
 
   return (
-    <div aria-disabled={disabled}
+    <div
+      aria-disabled={disabled}
       onDrop={(e) => handleDrop(e)}
       onDragOver={(e) => handleDragOver(e)}
       onDragEnter={(e) => handleDragEnter(e)}

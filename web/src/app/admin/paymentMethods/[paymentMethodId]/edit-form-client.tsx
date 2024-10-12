@@ -38,10 +38,10 @@ type formValues = z.infer<typeof formSchema>;
 
 interface editProps {
   initialData:
-  | (PaymentMethod & {
-    //images: ProductImage[];
-  })
-  | null;
+    | (PaymentMethod & {
+        //images: ProductImage[];
+      })
+    | null;
 }
 
 // edit payment method form
@@ -55,8 +55,8 @@ export const EditClient = ({ initialData }: editProps) => {
 
   const defaultValues = initialData
     ? {
-      ...initialData,
-    }
+        ...initialData,
+      }
     : {};
 
   //console.log(`product basic: ${JSON.stringify(defaultValues)}`);
@@ -112,10 +112,11 @@ export const EditClient = ({ initialData }: editProps) => {
       <Card>
         <CardContent className="space-y-2">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-1">
-
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="w-full space-y-1"
+            >
               <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-
                 <FormField
                   control={form.control}
                   name="name"
@@ -140,7 +141,8 @@ export const EditClient = ({ initialData }: editProps) => {
                     <FormItem className="p-3">
                       <FormLabel>pay url</FormLabel>
                       <FormControl>
-                        <Input type='text'
+                        <Input
+                          type="text"
                           disabled={loading}
                           className="font-mono"
                           placeholder="payUrl"
@@ -157,7 +159,8 @@ export const EditClient = ({ initialData }: editProps) => {
                     <FormItem className="p-3">
                       <FormLabel>description</FormLabel>
                       <FormControl>
-                        <Input type='text'
+                        <Input
+                          type="text"
                           disabled={loading}
                           className="font-mono"
                           placeholder="priceDescr"
@@ -174,7 +177,8 @@ export const EditClient = ({ initialData }: editProps) => {
                     <FormItem className="p-3">
                       <FormLabel>fee</FormLabel>
                       <FormControl>
-                        <Input type='number'
+                        <Input
+                          type="number"
                           disabled={loading}
                           className="font-mono"
                           placeholder="fee"
@@ -192,8 +196,7 @@ export const EditClient = ({ initialData }: editProps) => {
                     <FormItem className="flex flex-row items-center justify-between pl-3 pr-3 rounded-lg shadow-sm">
                       <div className="space-y-0.5">
                         <FormLabel>isDeleted </FormLabel>
-                        <FormDescription>
-                        </FormDescription>
+                        <FormDescription></FormDescription>
                       </div>
                       <FormControl>
                         <Switch
@@ -211,8 +214,7 @@ export const EditClient = ({ initialData }: editProps) => {
                     <FormItem className="flex flex-row items-center justify-between pl-3 pr-3 rounded-lg shadow-sm">
                       <div className="space-y-0.5">
                         <FormLabel>isDefault</FormLabel>
-                        <FormDescription>
-                        </FormDescription>
+                        <FormDescription></FormDescription>
                       </div>
                       <FormControl>
                         <Switch
@@ -224,8 +226,6 @@ export const EditClient = ({ initialData }: editProps) => {
                   )}
                 />
               </div>
-
-
 
               <Button
                 disabled={loading}

@@ -414,9 +414,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                     </FormItem>
                   )}
                 />
-
               </div>
-
 
               <Button
                 disabled={loading}

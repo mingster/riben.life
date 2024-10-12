@@ -45,19 +45,17 @@ export const columns: ColumnDef<DataColumn>[] = [
     header: ({ column }) => {
       return <DataTableColumnHeader column={column} title="price" />;
     },
-  },/*
+  } /*
   {
     accessorKey: "currencyId",
     header: ({ column }) => {
       return <DataTableColumnHeader column={column} title="currency" />;
     },
-  }, */
+  }, */,
   {
     accessorKey: "isDefault",
     header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title='isDefault' />
-      );
+      return <DataTableColumnHeader column={column} title="isDefault" />;
     },
     cell: ({ row }) => {
       const val =
@@ -72,9 +70,7 @@ export const columns: ColumnDef<DataColumn>[] = [
   {
     accessorKey: "isDeleted",
     header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title='isDeleted' />
-      );
+      return <DataTableColumnHeader column={column} title="isDeleted" />;
     },
     cell: ({ row }) => {
       const val =
@@ -89,9 +85,7 @@ export const columns: ColumnDef<DataColumn>[] = [
   {
     accessorKey: "shipRequried",
     header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title='shipRequried' />
-      );
+      return <DataTableColumnHeader column={column} title="shipRequried" />;
     },
     cell: ({ row }) => {
       const val =
@@ -106,25 +100,19 @@ export const columns: ColumnDef<DataColumn>[] = [
   {
     accessorKey: "stores",
     header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title='# of store' />
-      );
+      return <DataTableColumnHeader column={column} title="# of store" />;
     },
   },
   {
     accessorKey: "StoreOrder",
     header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title='# of order' />
-      );
+      return <DataTableColumnHeader column={column} title="# of order" />;
     },
   },
   {
     accessorKey: "Shipment",
     header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title='# of shipment' />
-      );
+      return <DataTableColumnHeader column={column} title="# of shipment" />;
     },
   },
   {
