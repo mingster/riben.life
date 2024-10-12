@@ -52,7 +52,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
   mongoData,
   paymentMethods,
   shippingMethods,
-  disablePaidOptions
+  disablePaidOptions,
 }) => {
   const router = useRouter();
   const params = useParams();
@@ -186,7 +186,11 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
           />
         </TabsContent>
         <TabsContent value="paidOptions">
-          <PaidOptionsTab sqlData={sqlData} mongoData={mongoData} disablePaidOptions={disablePaidOptions} />
+          <PaidOptionsTab
+            sqlData={sqlData}
+            mongoData={mongoData}
+            disablePaidOptions={disablePaidOptions}
+          />
         </TabsContent>
       </Tabs>
     </>

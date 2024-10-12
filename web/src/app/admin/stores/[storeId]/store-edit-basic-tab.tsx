@@ -82,8 +82,8 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 
   const defaultValues = initialData
     ? {
-      ...initialData,
-    }
+        ...initialData,
+      }
     : {};
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
   const form = useForm<formValues>({
@@ -294,7 +294,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
                   <ImageUploadBox
                     disabled={loading}
                     image={image ?? null}
-                    setImage={setImage ?? (() => { })}
+                    setImage={setImage ?? (() => {})}
                   />
                 </div>
                 <div className="flex flex-col pl-10 space-y-4 place-content-center">

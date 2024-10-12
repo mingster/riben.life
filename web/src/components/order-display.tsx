@@ -4,21 +4,15 @@ import { useI18n } from "@/providers/i18n-provider";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { OrderStatus, PaymentStatus } from "@/types/enum";
-import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import type { StoreOrder } from "@/types";
-import type { orderitemview } from "@prisma/client";
+import type { orderitemview, PaymentMethod } from "@prisma/client";
 import { format } from "date-fns/format";
 import Currency from "./currency";
 
-type props = {
-  orderId: string;
-};
 type orderProps = { order: StoreOrder };
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
@@ -32,11 +26,19 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
     return "no order";
   }
 
-  //console.log('order items: ' + JSON.stringify(orders));
+  if (!order.OrderItemView) {
+    return <></>;
+  }
+
+  //console.log('order', JSON.stringify(order));
+
   const buyAgain = async (orderId: string) => {};
-  const pay = async (orderId: string) => {
-    const url = `/checkout/${orderId}/stripe/`;
-    console.log(url);
+  const pay = async (orderId: string, payUrl?: string) => {
+    let purl = payUrl;
+    if (!purl) purl = "stripe";
+
+    const url = `/checkout/${orderId}/${purl}/`;
+    //console.log(url);
     router.push(url);
   };
 
@@ -109,7 +111,11 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 
         <div className="">
           {order.orderStatus === OrderStatus.Pending && (
-            <Button className="mr-2" size="sm" onClick={() => pay(order.id)}>
+            <Button
+              className="mr-2"
+              size="sm"
+              onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
+            >
               {t("order_tab_pay")}
             </Button>
           )}

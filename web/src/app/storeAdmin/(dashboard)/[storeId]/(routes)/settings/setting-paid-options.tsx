@@ -22,7 +22,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -57,7 +57,7 @@ export interface SettingsFormProps {
 
 export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
   sqlData: initialData,
-  disablePaidOptions
+  disablePaidOptions,
 }) => {
   const params = useParams();
   const router = useRouter();
@@ -66,8 +66,8 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 
   const defaultValues = initialData
     ? {
-      ...initialData,
-    }
+        ...initialData,
+      }
     : {};
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
   const form = useForm<formValues>({
@@ -162,10 +162,11 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
   return (
     <>
       <Card>
-        <CardContent className='space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900' data-disabled={disablePaidOptions}>
-          {
-            disablePaidOptions && <RequiredProVersion />
-          }
+        <CardContent
+          className="space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900"
+          data-disabled={disablePaidOptions}
+        >
+          {disablePaidOptions && <RequiredProVersion />}
 
           <Form {...form}>
             <form
@@ -199,7 +200,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                   <ImageUploadBox
                     disabled={loading || disablePaidOptions}
                     image={image ?? null}
-                    setImage={setImage ?? (() => { })}
+                    setImage={setImage ?? (() => {})}
                   />
                 </div>
                 <div className="flex flex-col pl-10 space-y-4 place-content-center">
@@ -216,9 +217,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                                 size="icon"
                                 type="button"
                                 onClick={() =>
-                                  deleteImageFromClient(
-                                    logoPublicId as string,
-                                  )
+                                  deleteImageFromClient(logoPublicId as string)
                                 }
                               >
                                 <XCircleIcon className="text-red-700" />
@@ -251,7 +250,6 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                   />
                 </div>
               </div>
-
 
               <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
                 <FormField

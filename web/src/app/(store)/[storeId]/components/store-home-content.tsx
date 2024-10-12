@@ -1,7 +1,7 @@
 "use client";
 
 import { ProductCard } from "@/app/(store)/[storeId]/components/product-card";
-import type { Category } from "@/types";
+import type { Category, StoreOrder } from "@/types";
 import { Prisma, type StoreTables } from "@prisma/client";
 import { ArrowUpToLine } from "lucide-react";
 import type { StoreWithProductNCategories } from "../page";
@@ -16,6 +16,7 @@ import type { StoreSettings } from "@prisma-mongo/prisma/client";
 import ScrollSpy from "react-ui-scrollspy";
 import Link from "next/link";
 import { formatDate } from "date-fns";
+import { getOrdersToday, removeOrders } from "@/lib/order-history";
 
 const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(
   {
@@ -142,30 +143,44 @@ export const StoreHomeContent: React.FC<props> = ({
       </>
     );
 
+  //removeOrders();
+  //const orders = getOrdersToday() as StoreOrder[];
+  //console.log('orders', JSON.stringify(orders));
+
   // http://localhost:3000/4574496e-9759-4d9c-9258-818501418747/dfc853b4-47f5-400c-a2fb-f70f045d65a0
   return (
     <section className="relative w-full justify-center content-center items-center">
       <div className="pl-1 pr-1">
-        {!storeData.isOpen && <h2 className="text-2xl xs:text-xl font-extrabold">{t("store_closed")}</h2>}
-        <div className="pl-2 pb-5">
-          {tableData ? (
-            <div className="">
-              <div className="flex gap-2">
-                {t("store_orderTotal")}
-                <div className="text-sm">
-                  <Link href="#">{t("store_linkToOrder")}</Link>
+        {!storeData.isOpen && (
+          <h2 className="text-2xl xs:text-xl font-extrabold">
+            {t("store_closed")}
+          </h2>
+        )}
+
+        <div className="pl-2 pr-2 flex items-center gap-5">
+          <div className="">
+            {tableData ? (
+              <div className="">
+                <div className="flex gap-2">{t("store_orderTotal")}</div>
+                <div className="text-xl font-extrabold">
+                  {t("storeTables")}: {tableData.tableName}
                 </div>
+                <div>{t("store_seatingTime")}</div>
+                <div>2大人 0小孩</div>
               </div>
-              <div className='text-xl font-extrabold'>
-                {t("storeTables")}: {tableData.tableName}
+            ) : (
+              <div className="text-xl font-extrabold">
+                {t("store_orderType_takeoff")}
               </div>
-              <div>{t("store_seatingTime")}</div>
-              <div>2大人 0小孩</div>
-            </div>
-          ) : (
-            <div className='text-xl font-extrabold'>{t("store_orderType_takeoff")}</div>
-          )}
+            )}
+          </div>
+          <div className="text-sm">
+            <Link href={`/order/?storeId=${storeData.id}`}>
+              {t("store_linkToOrder")}
+            </Link>
+          </div>
         </div>
+
         {mongoData?.orderNoteToCustomer && (
           <div className="pl-5 pb-5">
             <pre>{mongoData.orderNoteToCustomer}</pre>

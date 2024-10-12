@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -81,13 +77,11 @@ export const InProgressOrder = ({
     setOpen(true);
 
     setSelectedOrderId(orderId);
-    alert('not yet implemented');
+    alert("not yet implemented");
   };
 
-
   const onCancel = async () => {
-    alert('not yet implemented');
-
+    alert("not yet implemented");
 
     toast({
       title: selectedOrderId + t("Order") + t("Canceled"),
@@ -140,13 +134,14 @@ export const InProgressOrder = ({
                   <TableHead className="w-[150px] text-center text-nowrap">
                     {autoAcceptOrder ? t("Order_accept2") : t("Order_accept")}
                   </TableHead>
-
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {orders.map((order: StoreOrder) => (
                   <TableRow key={order.id}>
-                    <TableCell className="text-2xl font-extrabold">{order.orderNum}</TableCell>
+                    <TableCell className="text-2xl font-extrabold">
+                      {order.orderNum}
+                    </TableCell>
 
                     <TableCell>
                       {order.OrderItemView.map((item: orderitemview) => (
@@ -170,19 +165,20 @@ export const InProgressOrder = ({
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                     </TableCell>
 
-
                     <TableCell className="text-center">
-                      <div className='gap-10'>
+                      <div className="gap-10">
                         <Checkbox
                           value={order.id}
                           onClick={() => handleChecked(order.id)}
                         />
-                        <Button className="text-xs" variant={"outline"}
+                        <Button
+                          className="text-xs"
+                          variant={"outline"}
                           onClick={() => handleEdit(order.id)}
                         >
                           {t("Modify")}
-                        </Button></div>
-
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -3,7 +3,6 @@ import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { format } from "date-fns";
 
-
 import { Suspense } from "react";
 import type { DataColumn } from "./components/columns";
 import { DataClient } from "./components/data-client";
@@ -16,11 +15,11 @@ const PayMethodAdminPage: React.FC = async () => {
   const methods = await sqlClient.paymentMethod.findMany({
     include: {
       StorePaymentMethodMapping: true,
-      StoreOrder: true
+      StoreOrder: true,
     },
     orderBy: {
-      name: 'asc'
-    }
+      name: "asc",
+    },
   });
 
   transformDecimalsToNumbers(methods);
@@ -31,8 +30,8 @@ const PayMethodAdminPage: React.FC = async () => {
     return {
       id: item.id,
       name: item.name || "",
-      payUrl: item.payUrl || '',
-      priceDescr: item.priceDescr || '',
+      payUrl: item.payUrl || "",
+      priceDescr: item.priceDescr || "",
       fee: Number(item.fee) || 0,
       isDefault: item.isDefault,
       isDeleted: item.isDeleted,

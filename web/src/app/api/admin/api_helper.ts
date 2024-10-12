@@ -19,6 +19,3 @@ export const CheckAdminApiAccess = async () => {
     return new NextResponse("Unauthenticated", { status: 402 });
   }
 };
-
-
-

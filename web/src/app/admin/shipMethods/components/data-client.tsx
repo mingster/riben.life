@@ -14,9 +14,8 @@ export const DataClient: React.FC<props> = ({ data }) => {
   return (
     <>
       <div className="flex items-center justify-between">
-
-      <Heading
-          title='Shipping Methods'
+        <Heading
+          title="Shipping Methods"
           badge={data.length}
           description="Manage Shipping methods in this system."
         />

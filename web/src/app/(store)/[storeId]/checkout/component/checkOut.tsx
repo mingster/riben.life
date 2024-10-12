@@ -1,12 +1,9 @@
 "use client";
 
-import { signIn, useSession } from "next-auth/react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { type Item, useCart } from "@/hooks/use-cart";
-import queryString from "query-string";
 
 import { useTranslation } from "@/app/i18n/client";
 import CartItemInfo from "@/components/cart-item-info";
@@ -44,7 +41,7 @@ import type {
 import type { Address, PaymentMethod, ShippingMethod } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
 import { useSearchParams } from "next/navigation";
-import { table } from "console";
+
 import { saveOrderToLocal } from "@/lib/order-history";
 
 type props = {
@@ -175,10 +172,12 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 
     cart.items.map((item) => {
       if (item.id.includes("?")) {
+        /*
         console.log("item.id", item.id);
         console.log("productId", item.id.split("?")[0]);
         console.log("item.variants", item.variants);
         console.log("item.variantCosts", item.variantCosts);
+        */
         productIds.push(item.id.split("?")[0]);
         variants.push(item.variants);
         variantCosts.push(item.variantCosts);
@@ -211,18 +210,21 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 
     try {
       const result = await axios.post(url, body);
+
+      //console.log('featch result', JSON.stringify(result));
+
       const order = result.data.order as StoreOrder;
-      //console.log(`featch result: ${JSON.stringify(order)}`);
-      //console.log(`order.id: ${order.id}`);
+      //console.log('order.id', order.id);
 
       // ANCHOR clear cart of the order placed
       //
       if (order) {
+        if (!user)
+          // if no signed-in user, save order to local storage
+          saveOrderToLocal(order);
+
         // NOTE: if we allow customer to checkout parial of cart items, this need to be adjusted
         cart.emptyCart(); //clear cart
-
-        if (!user)  // if no signed-in user, save order to local storage
-          saveOrderToLocal(order);
       }
 
       //return value to parent component
@@ -273,7 +275,6 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 
         <CardFooter>
           <div className="relative w-full">
-            {user === null && <AskUserToSignIn />}
             <div className="pr-5">
               {/*備註 */}
               <div className="sm:text-xs">{t("checkout_denote")}</div>
@@ -390,44 +391,6 @@ function displayUserAddress(user?: User | null) {
     return `${the_address.postalCode} ${the_address.city}${the_address.district}${the_address.streetLine1}`;
   }
 }
-
-const AskUserToSignIn = () => {
-  const session = useSession();
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng);
-
-  let email = session.data?.user?.email as string;
-  if (!email) email = "";
-
-  return (
-    <>
-      {email === "" && (
-        <div className="my-5">
-          <Link
-            title={t("checkout_signIn")}
-            key="signin"
-            href="#"
-            onClick={() => signIn()}
-            className="hover:font-bold text-primary"
-          >
-            {t("checkout_signIn")}
-          </Link>
-          {t("checkout_or")}
-          <Link
-            title={t("checkout_signUp")}
-            key="signup"
-            href="#"
-            onClick={() => signIn()}
-            className="hover:font-bold text-primary"
-          >
-            {t("checkout_signUp")}
-          </Link>
-          {t("checkout_signInNote")}
-        </div>
-      )}
-    </>
-  );
-};
 
 type shippingDialogProps = {
   allMappings: StoreShipMethodMapping[];

@@ -142,35 +142,30 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
               onSubmit={form.handleSubmit(onSubmit)}
               className="w-full space-y-1"
             >
+              <div className="grid grid-flow-row-dense grid-cols-2 gap-1"></div>
 
-              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-                
-              </div>
-
-
-                <FormField
-                  control={form.control}
-                  name="acceptReservation"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>
-                          {t("StoreSettings_acceptReservation")}
-                        </FormLabel>
-                        <FormDescription>
-                          {t("StoreSettings_acceptReservation_descr")}
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
+              <FormField
+                control={form.control}
+                name="acceptReservation"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>
+                        {t("StoreSettings_acceptReservation")}
+                      </FormLabel>
+                      <FormDescription>
+                        {t("StoreSettings_acceptReservation_descr")}
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
               <Button
                 disabled={loading}
@@ -195,7 +190,6 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
           </Form>
         </CardContent>
       </Card>
-
     </>
   );
 };

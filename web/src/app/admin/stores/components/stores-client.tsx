@@ -15,7 +15,7 @@ export const StoresClient: React.FC<props> = ({ data }) => {
     <>
       <div className="flex items-center justify-between">
         <Heading
-          title='店家'
+          title="店家"
           badge={data.length}
           description="Manage stores in this system."
         />
