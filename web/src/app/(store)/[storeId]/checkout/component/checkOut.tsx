@@ -219,7 +219,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
       // ANCHOR clear cart of the order placed
       //
       if (order) {
-        if (!user)
+        //if (!user)
           // if no signed-in user, save order to local storage
           saveOrderToLocal(order);
 

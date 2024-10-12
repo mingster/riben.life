@@ -11,6 +11,7 @@ import type { z } from "zod";
 import fs from "node:fs";
 import type { Session } from "next-auth";
 import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
+import { StoreLevel } from "@/types/enum";
 
 //NOTE - do not move this to other folder.
 //
@@ -48,6 +49,7 @@ export const createStore = async (values: z.infer<typeof formSchema>) => {
       defaultCountry: defaultCountry,
       defaultCurrency: defaultCurrency,
       defaultLocale: defaultLocale,
+      level: StoreLevel.Free,
       StorePaymentMethods: {
         createMany: {
           data: defaultPaymentMethods.map((paymentMethod) => ({

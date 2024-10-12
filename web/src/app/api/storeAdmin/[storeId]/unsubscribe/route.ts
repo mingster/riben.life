@@ -63,7 +63,7 @@ export async function POST(
       },
     });
 
-    if (subscription && subscription.stripeSubscriptionId) {
+    if (subscription?.stripeSubscriptionId) {
       try {
         const subscriptionSchedule = subscription?.stripeSubscriptionId
           ? await stripe.subscriptionSchedules.retrieve(
@@ -75,8 +75,7 @@ export async function POST(
           await stripe.subscriptionSchedules.cancel(subscriptionSchedule.id);
 
           if (
-            subscriptionSchedule &&
-            subscriptionSchedule.subscription &&
+            subscriptionSchedule?.subscription &&
             typeof subscriptionSchedule.subscription !== "string"
           ) {
             await stripe.subscriptions.cancel(
