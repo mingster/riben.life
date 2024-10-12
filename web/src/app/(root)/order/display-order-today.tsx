@@ -7,9 +7,12 @@ import { useSearchParams } from "next/navigation";
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
 export const DisplayStoreOrdersToday: React.FC = () => {
+
   const param = useSearchParams();
   const storeId = param.get("storeId");
   const orders = getOrdersToday() as StoreOrder[];
+
+  //console.log('orders', JSON.stringify(orders));
 
   // filter orders by store id
   orders.map((order: StoreOrder) => {
