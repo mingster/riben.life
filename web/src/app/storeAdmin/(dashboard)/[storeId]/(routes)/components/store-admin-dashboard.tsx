@@ -6,8 +6,11 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { format } from "date-fns";
-import { InProgressOrder } from "./order-inprogress";
+
 import { Heading } from "@/components/ui/heading";
+import { OrderInProgress } from "./order-inprogress";
+import { OrderPending } from "./order-pending";
+import { OrderStatus } from "@/types/enum";
 
 export interface props {
   store: Store;
@@ -22,25 +25,28 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
   const [loading, setLoading] = useState(false);
 
   const date = new Date();
-  const [awaiting4ProcessingOrders, setAwaiting4ProcessingOrders] = useState(
-    [],
-  );
-
+  const [awaiting4ProcessingOrders, setAwaiting4ProcessingOrders] = useState([]);
+  const [pendingOrders, setPendingOrders] = useState([]);
 
   const fetchData = () => {
     setLoading(true);
+
+    // get pending and processing orders in the store.
     const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-orders`;
     fetch(url)
       .then((data) => {
         return data.json();
       })
       .then((data) => {
+        console.log("data", JSON.stringify(data));
+
         if (store.requirePrepay) {
           const prepayOrders = data.filter((order: StoreOrder) => order.isPaid);
-          console.log("prepayOrders", JSON.stringify(prepayOrders));
-          setAwaiting4ProcessingOrders(prepayOrders);
+          setPendingOrders(prepayOrders.filter((order: StoreOrder) => order.orderStatus === OrderStatus.Pending));
+          setAwaiting4ProcessingOrders(prepayOrders.filter((order: StoreOrder) => order.orderStatus === OrderStatus.Processing));
         } else {
-          setAwaiting4ProcessingOrders(data);
+          setPendingOrders(data.filter((order: StoreOrder) => order.orderStatus === OrderStatus.Pending));
+          setAwaiting4ProcessingOrders(data.filter((order: StoreOrder) => order.orderStatus === OrderStatus.Processing));
         }
       })
       .catch((err) => {
@@ -84,23 +90,26 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
     <section className="relative w-full">
       <div className="container">
         <IntervaledContent />
+        {store.requirePrepay && '只會顯示已付款訂單。'}
 
-        {store.requirePrepay && <Heading title="待確認訂單" description="請勾選來接單。" badge={10} className="pt-1 pb-10" />}
+        <div className='flex flex-col gap-5'>
 
+          <OrderPending
+            storeId={store.id}
+            orders={pendingOrders}
+            parentLoading={loading}
+          />
+          <OrderInProgress
+            storeId={store.id}
+            autoAcceptOrder={store.autoAcceptOrder}
+            orders={awaiting4ProcessingOrders}
+            parentLoading={loading}
+          />
+          <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
 
-        <InProgressOrder
-          storeId={store.id}
-          autoAcceptOrder={store.autoAcceptOrder}
-          orders={awaiting4ProcessingOrders}
-          parentLoading={loading}
-        />
-        <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
+          <Heading title="現金結帳" description="請勾選來確認收款。" className="pt-20" />
 
-
-
-
-        <Heading title="現金結帳管理" description="..." className="pt-20" />
-
+        </div>
 
         <div className="relative flex w-full justify-center">
 

@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
-// returns orders in a store
+// get pending and processing orders in the store.
 export async function GET(
   req: Request,
   { params }: { params: { storeId: string } },

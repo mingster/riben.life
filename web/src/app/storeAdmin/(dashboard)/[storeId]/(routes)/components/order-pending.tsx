@@ -29,14 +29,12 @@ import { OrderStatus } from "@/types/enum";
 
 interface props {
   storeId: string;
-  autoAcceptOrder: boolean;
   orders: StoreOrder[];
   parentLoading: boolean;
 }
 
-export const OrderInProgress = ({
+export const OrderPending = ({
   storeId,
-  autoAcceptOrder,
   orders,
   parentLoading,
 }: props) => {
@@ -62,7 +60,7 @@ export const OrderInProgress = ({
   }
 
   const handleChecked = async (orderId: string) => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/orders/mark-as-completed/${orderId}`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/orders/mark-as-processing/${orderId}`;
     await axios.post(url);
 
     // remove the order from the list
@@ -105,16 +103,14 @@ export const OrderInProgress = ({
       />
 
       <Card>
-        <Heading title={t("Order_accept_mgmt")} description="" badge={orders.length} className="pt-2" />
+        <Heading title='待確認訂單' description="請勾選來接單。" badge={orders.length} className="pt-2" />
 
         <CardContent className="space-y-2">
           {/* display */}
           <div className="pt-2 pl-1">
             {orders.length === 0
               ? t("no_results_found")
-              : autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
-                ? t("Order_accept_mgmt_descr2")
-                : t("Order_accept_mgmt_descr")}
+              : t("Order_accept_mgmt_descr")}
           </div>
 
           {orders.length !== 0 && (
@@ -134,7 +130,7 @@ export const OrderInProgress = ({
                   <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
 
                   <TableHead className="w-[150px] text-center text-nowrap">
-                    {autoAcceptOrder ? t("Order_accept2") : t("Order_accept")}
+                    {t("Order_accept")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
