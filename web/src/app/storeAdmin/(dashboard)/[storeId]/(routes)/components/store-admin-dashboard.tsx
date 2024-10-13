@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { format } from "date-fns";
-import { InProgressOrder } from "./inprogress-order";
+import { InProgressOrder } from "./order-inprogress";
 import { Heading } from "@/components/ui/heading";
 
 export interface props {
