@@ -36,7 +36,7 @@ export async function GET(
 
     transformDecimalsToNumbers(awaiting4ProcessOrders);
 
-    console.log("awaiting4ProcessOrders", JSON.stringify(awaiting4ProcessOrders));
+    //console.log("awaiting4ProcessOrders", JSON.stringify(awaiting4ProcessOrders));
     return NextResponse.json(awaiting4ProcessOrders);
   } catch (error) {
     console.error("[GET_PENDING_ORDERS]", error);

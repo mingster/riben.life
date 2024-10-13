@@ -130,6 +130,14 @@ export async function POST(
 
   //console.log('data: ' + JSON.stringify(data));
 
+  const store = await sqlClient.store.findUnique({
+    where: {
+      id: params.storeId,
+    }
+  });
+
+  const orderStatus = store?.autoAcceptOrder ? OrderStatus.Processing : OrderStatus.Pending;
+
   const result = await sqlClient.storeOrder.create({
     data: {
       storeId: params.storeId,
@@ -142,7 +150,7 @@ export async function POST(
       shippingMethodId: shippingMethodId,
       updatedAt: new Date(Date.now()),
       paymentStatus: PaymentStatus.Pending,
-      orderStatus: OrderStatus.Pending,
+      orderStatus: orderStatus,
       OrderItems: {
         createMany: {
           data: products.map((product, index: number) => ({

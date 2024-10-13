@@ -24,6 +24,7 @@ import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
+import { Heading } from "@/components/ui/heading";
 
 interface props {
   storeId: string;
@@ -103,11 +104,11 @@ export const InProgressOrder = ({
       />
 
       <Card>
-        <CardTitle className="p-2">{t("Order_accept_mgmt")}</CardTitle>
+        <Heading title={t("Order_accept_mgmt")} description="已付款、待出貨的訂單。請勾選來完成訂單。" badge={orders.length} className="pt-2" />
 
         <CardContent className="space-y-2">
           {/* display */}
-          <div className="pt-2 pl-6">
+          <div className="pt-2 pl-1">
             {orders.length === 0
               ? t("no_results_found")
               : autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單

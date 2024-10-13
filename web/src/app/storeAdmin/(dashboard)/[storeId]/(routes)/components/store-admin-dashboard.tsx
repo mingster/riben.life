@@ -1,15 +1,13 @@
 "use client";
 
-import { PageQrCode } from "@/components/page-qrcode";
-import CardDataStats from "@/components/ui/CardDataStats";
-import type { Store } from "@/types";
-import { DollarSign, Eye, PersonStanding, Sofa } from "lucide-react";
+import type { Store, StoreOrder } from "@/types";
 import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { format } from "date-fns";
 import { InProgressOrder } from "./inprogress-order";
+import { Heading } from "@/components/ui/heading";
 
 export interface props {
   store: Store;
@@ -28,17 +26,22 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
     [],
   );
 
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-orders`;
 
   const fetchData = () => {
     setLoading(true);
-
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-orders`;
     fetch(url)
       .then((data) => {
         return data.json();
       })
       .then((data) => {
-        setAwaiting4ProcessingOrders(data);
+        if (store.requirePrepay) {
+          const prepayOrders = data.filter((order: StoreOrder) => order.isPaid);
+          console.log("prepayOrders", JSON.stringify(prepayOrders));
+          setAwaiting4ProcessingOrders(prepayOrders);
+        } else {
+          setAwaiting4ProcessingOrders(data);
+        }
       })
       .catch((err) => {
         console.log(err);
@@ -81,6 +84,10 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
     <section className="relative w-full">
       <div className="container">
         <IntervaledContent />
+
+        {store.requirePrepay && <Heading title="待確認訂單" description="請勾選來接單。" badge={10} className="pt-1 pb-10" />}
+
+
         <InProgressOrder
           storeId={store.id}
           autoAcceptOrder={store.autoAcceptOrder}
@@ -88,7 +95,17 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
           parentLoading={loading}
         />
         <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
-        <div className="relative flex w-full justify-center"> </div>
+
+
+
+
+        <Heading title="現金結帳管理" description="..." className="pt-20" />
+
+
+        <div className="relative flex w-full justify-center">
+
+
+        </div>
       </div>
     </section>
   );
