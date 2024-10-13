@@ -16,7 +16,7 @@ export async function GET(
     const awaiting4ProcessOrders = (await sqlClient.storeOrder.findMany({
       where: {
         storeId: params.storeId,
-        orderStatus: OrderStatus.Processing,
+        orderStatus: { in: [OrderStatus.Pending, OrderStatus.Processing] }
       },
       include: {
         OrderNotes: true,
@@ -36,6 +36,7 @@ export async function GET(
 
     transformDecimalsToNumbers(awaiting4ProcessOrders);
 
+    console.log("awaiting4ProcessOrders", JSON.stringify(awaiting4ProcessOrders));
     return NextResponse.json(awaiting4ProcessOrders);
   } catch (error) {
     console.error("[GET_PENDING_ORDERS]", error);

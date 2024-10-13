@@ -62,6 +62,7 @@
   "Order_cancel": "取消訂單",
   "Order_items": "訂單項目",
   "Order_note": "備註",
+  "Order_status": "狀態",
   "Order_number": "單號/桌號",
   "ordered_at": "訂購時間",
   "Orders": "訂單管理",
