@@ -1,15 +1,12 @@
-import getOrderById from "@/actions/get-order-by_id";
 import { useTranslation } from "@/app/i18n";
 import { AskUserToSignIn } from "@/components/ask-user-to-signIn";
 import { Navbar } from "@/components/global-navbar";
-import { DisplayOrder } from "@/components/order-display";
 import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import { getOrdersToday } from "@/lib/order-history";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import type { Store, StoreOrder } from "@/types";
+import type { Store } from "@/types";
 import Link from "next/link";
 import { Suspense } from "react";
 import { DisplayStoreOrdersToday } from "./display-order-today";

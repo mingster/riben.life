@@ -25,6 +25,23 @@ export const getOrdersToday = (): StoreOrder[] => {
   });
 };
 
+export const getOrdersTodayByStore = (storeId: string|null|undefined): StoreOrder[] => {
+  if (!storeId) return [];
+
+  // filter orders by date
+  const today = new Date();
+  const orders = getOrdersFromLocal() as StoreOrder[];
+
+  return orders.filter((order: StoreOrder) => {
+    const orderDate = new Date(order.createdAt);
+    return (
+      orderDate.getFullYear() === today.getFullYear() &&
+      orderDate.getMonth() === today.getMonth() &&
+      orderDate.getDate() === today.getDate() &&
+      order.storeId === storeId
+    );
+  });
+};
 export const removePreviousOrders = () => {
   const orders = getOrdersFromLocal() as StoreOrder[];
   const today = new Date();
