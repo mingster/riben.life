@@ -74,6 +74,13 @@ export const OrderUnpaid = ({
   };
 
 
+  const handleEdit = async (orderId: string) => {
+    setOpen(true);
+
+    setSelectedOrderId(orderId);
+    alert("not yet implemented");
+  };
+
   const onCancel = async () => {
     alert("not yet implemented");
 
@@ -160,13 +167,19 @@ export const OrderUnpaid = ({
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                     </TableCell>
 
-                    <TableCell className="text-center">
-                      <div className="gap-10">
-                        <Checkbox
-                          value={order.id}
-                          onClick={() => handleChecked(order.id)}
-                        />
-                      </div>
+                    <TableCell className="items-center text-center text-nowrap">
+                      <Checkbox
+                        value={order.id}
+                        onClick={() => handleChecked(order.id)}
+                      />
+                      <Button
+                        className="text-xs"
+                        variant={"outline"}
+                        onClick={() => handleEdit(order.id)}
+                      >
+                        {t("Modify")}
+                      </Button>
+
                     </TableCell>
                   </TableRow>
                 ))}
