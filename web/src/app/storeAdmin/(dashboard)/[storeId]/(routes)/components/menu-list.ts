@@ -1,5 +1,11 @@
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
+import type { Store } from "@/types";
+import { StoreLevel } from "@/types/enum";
 import {
   Box,
+  CircleHelp,
+  Dock,
   DollarSign,
   LayoutGrid,
   MenuIcon,
@@ -8,12 +14,8 @@ import {
   Settings,
   Tag,
   Ticket,
-  CircleHelp,
-  Users,
-  Dock,
+  Users, UtensilsCrossed,
 } from "lucide-react";
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
 type Submenu = {
   href: string;
   label: string;
@@ -34,12 +36,20 @@ type Group = {
   menus: Menu[];
 };
 
-export function GetMenuList(storeId: string, pathname: string): Group[] {
+export function GetMenuList(store: Store, pathname: string): Group[] {
   const STORE_ADMIN_PATH = "/storeAdmin/";
-  const nav_prefix = STORE_ADMIN_PATH + storeId;
+  const nav_prefix = STORE_ADMIN_PATH + store.id;
 
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
+
+  const cash = {
+    href: `${nav_prefix}/cash-cashier`,
+    label: '現金結帳',
+    active: pathname.includes(`${nav_prefix}/cash-cashier`),
+    icon: Scale,
+    submenus: [],
+  };
 
   return [
     {
@@ -57,13 +67,8 @@ export function GetMenuList(storeId: string, pathname: string): Group[] {
     {
       groupLabel: t("Sales"),
       menus: [
-        {
-          href: `${nav_prefix}/balances`,
-          label: t("Balance"),
-          active: pathname.includes(`${nav_prefix}/balances`),
-          icon: Scale,
-          submenus: [],
-        },
+        // add cash menu if store level is not free
+        ...(store.level !== StoreLevel.Free ? [cash] : []),
         {
           href: `${nav_prefix}/transactions`,
           label: t("Transactions"),
@@ -172,7 +177,7 @@ export function GetMenuList(storeId: string, pathname: string): Group[] {
           href: `${nav_prefix}/tables`,
           label: t("storeTables"),
           active: pathname.includes(`${nav_prefix}/tables`),
-          icon: Dock,
+          icon: UtensilsCrossed,
           submenus: [],
         },
         {

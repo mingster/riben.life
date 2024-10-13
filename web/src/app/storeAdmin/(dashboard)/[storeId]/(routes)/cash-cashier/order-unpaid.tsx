@@ -33,7 +33,7 @@ interface props {
   parentLoading: boolean;
 }
 
-export const OrderPending = ({
+export const OrderUnpaid = ({
   storeId,
   orders,
   parentLoading,
@@ -60,7 +60,7 @@ export const OrderPending = ({
   }
 
   const handleChecked = async (orderId: string) => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/orders/mark-as-processing/${orderId}`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/orders/mark-as-paid/${orderId}`;
     await axios.post(url);
 
     // remove the order from the list
@@ -73,12 +73,6 @@ export const OrderPending = ({
     });
   };
 
-  const handleEdit = async (orderId: string) => {
-    setOpen(true);
-
-    setSelectedOrderId(orderId);
-    alert("not yet implemented");
-  };
 
   const onCancel = async () => {
     alert("not yet implemented");
@@ -103,7 +97,7 @@ export const OrderPending = ({
       />
 
       <Card>
-        <Heading title='待確認訂單' description="請勾選來接單。" badge={orders.length} className="pt-2" />
+        <Heading title="現金結帳" description="請勾選來確認收款。" badge={orders.length} className="pt-2" />
 
         <CardContent className="space-y-2">
           {/* display */}
@@ -130,8 +124,9 @@ export const OrderPending = ({
                   <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
 
                   <TableHead className="w-[150px] text-center text-nowrap">
-                    {t("Order_accept")}
+                    確認收款
                   </TableHead>
+
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -157,7 +152,6 @@ export const OrderPending = ({
                         <div>{order.isPaid === true ? "已付" : "未付"}</div>
                         <div>{order.ShippingMethod?.name}</div>
                         <div>{order.PaymentMethod?.name}</div>
-                        <div>{OrderStatus[order.orderStatus]}</div>
                         <div>{order.User?.name}</div>
                       </div>
                     </TableCell>
@@ -172,13 +166,6 @@ export const OrderPending = ({
                           value={order.id}
                           onClick={() => handleChecked(order.id)}
                         />
-                        <Button
-                          className="text-xs"
-                          variant={"outline"}
-                          onClick={() => handleEdit(order.id)}
-                        >
-                          {t("Modify")}
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

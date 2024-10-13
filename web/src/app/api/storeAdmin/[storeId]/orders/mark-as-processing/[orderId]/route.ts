@@ -24,32 +24,14 @@ export async function POST(
       return new NextResponse("order not found", { status: 500 });
     }
 
-    const ship = await sqlClient.shippingMethod.findUnique({
+    await sqlClient.storeOrder.update({
       where: {
-        id: orderToUpdate.shippingMethodId,
+        id: params.orderId,
+      },
+      data: {
+        orderStatus: OrderStatus.Processing,
       },
     });
-
-    // if physical shipping NOT required, mark order status as completed
-    if (ship?.shipRequried) {
-      await sqlClient.storeOrder.update({
-        where: {
-          id: params.orderId,
-        },
-        data: {
-          orderStatus: OrderStatus.Processing,
-        },
-      });
-    } else {
-      await sqlClient.storeOrder.update({
-        where: {
-          id: params.orderId,
-        },
-        data: {
-          orderStatus: OrderStatus.InShipping,
-        },
-      });
-    }
 
     return NextResponse.json("success", { status: 200 });
   } catch (error) {

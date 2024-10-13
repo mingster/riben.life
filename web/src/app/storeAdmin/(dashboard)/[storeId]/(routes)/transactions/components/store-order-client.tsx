@@ -158,16 +158,18 @@ export const DisplayOrders = ({ orders }: orderTabProps) => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[90px]">{t("Order_number")}</TableHead>
                 <TableHead className="w-[200px]">{t("Order_items")}</TableHead>
                 <TableHead>{t("Order_note")}</TableHead>
                 <TableHead className="w-[90px]">{t("Order_status")}</TableHead>
-                <TableHead className="w-[90px]">{t("Order_number")}</TableHead>
                 <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {orders.map((order: StoreOrder) => (
                 <TableRow key={order.id}>
+                  <TableCell className="text-2xl font-extrabold">{order.orderNum}</TableCell>
+
                   <TableCell>
                     {order.OrderItemView.map((item: orderitemview) => (
                       <div
@@ -180,15 +182,18 @@ export const DisplayOrders = ({ orders }: orderTabProps) => {
                     {order.OrderNotes.map((note: OrderNote) => (
                       <div key={note.id}>{note.note}</div>
                     ))}
-                    <div>{order.User?.name}</div>
-                    <div>{order.isPaid}</div>
-                    <div>{order.ShippingMethod?.name}</div>
-                    <div>{order.PaymentMethod?.name}</div>
+
+                    <div className='flex gap-2'>
+                      <div>{order.isPaid === true ? "已付" : "未付"}</div>
+                      <div>{order.ShippingMethod?.name}</div>
+                      <div>{order.PaymentMethod?.name}</div>
+                      <div>{order.User?.name}</div>
+                    </div>
+
                   </TableCell>
 
                   <TableCell>{OrderStatus[order.orderStatus]}</TableCell>
 
-                  <TableCell>{order.orderNum}</TableCell>
 
                   <TableCell>
                     {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}

@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
-// get pending and processing orders in the store.
+// get unpaid orders in the store.
 export async function GET(
   req: Request,
   { params }: { params: { storeId: string } },
@@ -13,10 +13,10 @@ export async function GET(
   try {
     CheckStoreAdminApiAccess(params.storeId);
 
-    const awaiting4ProcessOrders = (await sqlClient.storeOrder.findMany({
+    const unpaidOrders = (await sqlClient.storeOrder.findMany({
       where: {
         storeId: params.storeId,
-        orderStatus: { in: [OrderStatus.Pending, OrderStatus.Processing, OrderStatus.InShipping] }
+        isPaid: false,
       },
       include: {
         OrderNotes: true,
@@ -34,12 +34,12 @@ export async function GET(
       },
     })) as StoreOrder[];
 
-    transformDecimalsToNumbers(awaiting4ProcessOrders);
+    transformDecimalsToNumbers(unpaidOrders);
 
     //console.log("awaiting4ProcessOrders", JSON.stringify(awaiting4ProcessOrders));
-    return NextResponse.json(awaiting4ProcessOrders);
+    return NextResponse.json(unpaidOrders);
   } catch (error) {
-    console.error("[GET_PENDING_ORDERS]", error);
+    console.error("[GET_UNPAID_ORDERS]", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
