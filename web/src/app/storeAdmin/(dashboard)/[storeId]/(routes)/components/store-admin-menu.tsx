@@ -35,7 +35,7 @@ export function StoreAdminMenu({ isOpen, store }: MenuProps) {
 
   const params = useParams<{ storeId: string }>();
   //console.log(params);
-  const menuList = GetMenuList(params.storeId, pathname);
+  const menuList = GetMenuList(store, pathname);
 
   return (
     <ScrollArea className="[&>div>div[style]]:!block">

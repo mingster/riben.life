@@ -347,7 +347,7 @@ model Store {
   acceptAnonymousOrder Boolean @default(true)
 
   acceptReservation Boolean @default(true)
-  rsvpPrepaid       Boolean @default(false)  //訂位需付訂金
+  rsvpPrepaid       Boolean @default(false) //訂位需付訂金
 
   requireSeating Boolean @default(false) //需要帶位or not
   requirePrepay  Boolean @default(false) //先付款再出貨
@@ -588,32 +588,33 @@ model ProductAttribute {
 }
 
 model StoreOrder {
-  id                 String   @id @default(uuid())
+  id                 String    @id @default(uuid())
   storeId            String
   userId             String?
   tableId            String?
-  orderNum           Int?     @default(autoincrement())
-  isPaid             Boolean  @default(false)
-  checkoutAttributes String   @default("")
-  currency           String   @default("twd")
-  currencyRate       Decimal  @default(1)
-  discount           Decimal  @default(0)
-  orderTax           Decimal  @default(0)
+  orderNum           Int?      @default(autoincrement())
+  isPaid             Boolean   @default(false)
+  paidDate           DateTime?
+  checkoutAttributes String    @default("")
+  currency           String    @default("twd")
+  currencyRate       Decimal   @default(1)
+  discount           Decimal   @default(0)
+  orderTax           Decimal   @default(0)
   paymentMethodId    String?
-  paymentStatus      Int      @default(10)
-  refundAmount       Decimal  @default(0)
-  returnStatus       Int      @default(0)
+  paymentStatus      Int       @default(10)
+  refundAmount       Decimal   @default(0)
+  returnStatus       Int       @default(0)
   shippingMethodId   String
-  shippingAddress    String   @default("")
-  shippingCost       Decimal  @default(0)
-  shippingStatus     Int      @default(10)
-  taxRate            Decimal  @default(0)
-  checkoutRef        String   @default("")
-  orderStatus        Int      @default(10)
-  paymentCost        Decimal  @default(0)
-  orderTotal         Decimal  @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  shippingAddress    String    @default("")
+  shippingCost       Decimal   @default(0)
+  shippingStatus     Int       @default(10)
+  taxRate            Decimal   @default(0)
+  checkoutRef        String    @default("")
+  orderStatus        Int       @default(10)
+  paymentCost        Decimal   @default(0)
+  orderTotal         Decimal   @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   Store          Store           @relation("StoreToOrder", fields: [storeId], references: [id], onDelete: Cascade)
   User           User?           @relation("UserOrders", fields: [userId], references: [id])
@@ -634,6 +635,9 @@ model StoreOrder {
   @@index([shippingStatus])
   @@index([storeId])
   @@index([checkoutAttributes])
+  @@index([isPaid])
+  @@index([paidDate])
+  @@index([currency])
 }
 
 model OrderItem {

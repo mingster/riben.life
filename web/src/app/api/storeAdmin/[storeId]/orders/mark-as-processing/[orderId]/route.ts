@@ -3,7 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
 
-///!SECTION mark order as completed
+///!SECTION mark order as Processing
 export async function POST(
   req: Request,
   { params }: { params: { storeId: string; orderId: string } },
@@ -24,41 +24,12 @@ export async function POST(
       return new NextResponse("order not found", { status: 500 });
     }
 
-    /*
-    const ship = await sqlClient.shippingMethod.findUnique({
-      where: {
-        id: orderToUpdate.shippingMethodId,
-      },
-    });
-
-    // if physical shipping NOT required, mark order status as completed
-    if (ship?.shipRequried) {
-      await sqlClient.storeOrder.update({
-        where: {
-          id: params.orderId,
-        },
-        data: {
-          orderStatus: OrderStatus.Completed,
-        },
-      });
-    } else {
-      await sqlClient.storeOrder.update({
-        where: {
-          id: params.orderId,
-        },
-        data: {
-          orderStatus: OrderStatus.InShipping,
-        },
-      });
-    }
-*/
-
     await sqlClient.storeOrder.update({
       where: {
         id: params.orderId,
       },
       data: {
-        orderStatus: OrderStatus.Completed,
+        orderStatus: OrderStatus.Processing,
       },
     });
 
