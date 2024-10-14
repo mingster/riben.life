@@ -1,13 +1,13 @@
 "use client";
 
 import { useToast } from "@/components/ui/use-toast";
-import { useCart } from "@/hooks/use-cart";
 import type { ItemOption } from "@/hooks/use-cart";
+import { useCart } from "@/hooks/use-cart";
 
+import { Button } from "@/components/ui/button";
 import type { Product, ProductOption } from "@/types";
-import { useForm } from "react-hook-form";
-import { Button } from "../../../../components/ui/button";
 import type { ProductOptionSelections } from "@prisma/client";
+import { useForm } from "react-hook-form";
 
 import { useTranslation } from "@/app/i18n/client";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,14 +32,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useI18n } from "@/providers/i18n-provider";
 import { Minus, Plus } from "lucide-react";
 
+import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
 import { useState } from "react";
-import Currency from "../../../../components/currency";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { z } from "zod";
 import { useParams } from "next/navigation";
+import { z } from "zod";
 
 interface props {
   product: Product;
@@ -542,23 +542,23 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
                                                 onCheckedChange={(checked) => {
                                                   return checked
                                                     ? field.onChange(
-                                                        [
-                                                          ...field.value,
-                                                          item.id,
-                                                        ],
-                                                        handleCheckbox(
-                                                          Number(item.price),
-                                                        ),
-                                                      )
+                                                      [
+                                                        ...field.value,
+                                                        item.id,
+                                                      ],
+                                                      handleCheckbox(
+                                                        Number(item.price),
+                                                      ),
+                                                    )
                                                     : field.onChange(
-                                                        field.value?.filter(
-                                                          (value: string) =>
-                                                            value !== item.id,
-                                                        ),
-                                                        handleCheckbox(
-                                                          -item.price,
-                                                        ),
-                                                      );
+                                                      field.value?.filter(
+                                                        (value: string) =>
+                                                          value !== item.id,
+                                                      ),
+                                                      handleCheckbox(
+                                                        -item.price,
+                                                      ),
+                                                    );
                                                 }}
                                               />
                                             </FormControl>
@@ -675,7 +675,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
                     className="w-full"
                     disabled={form.formState.isSubmitting}
                     type="submit"
-                    //onClick={() => handleAddToCart(product)}
+                  //onClick={() => handleAddToCart(product)}
                   >
                     <div className="flex items-center justify-between w-full">
                       <div className="grow font-bold text-xl">{t("buy")}</div>

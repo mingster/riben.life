@@ -94,11 +94,13 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
         {store.requirePrepay && '只會顯示已付款訂單。'}
 
         <div className='flex flex-col gap-5'>
-          <OrderPending
-            storeId={store.id}
-            orders={pendingOrders}
-            parentLoading={loading}
-          />
+          {!store.autoAcceptOrder && (
+            <OrderPending
+              storeId={store.id}
+              orders={pendingOrders}
+              parentLoading={loading}
+            />
+          )}
           <OrderInProgress
             storeId={store.id}
             autoAcceptOrder={store.autoAcceptOrder}

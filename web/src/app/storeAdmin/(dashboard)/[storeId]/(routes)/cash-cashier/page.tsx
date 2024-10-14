@@ -1,6 +1,7 @@
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import { Loader } from "@/components/ui/loader";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+
+import getStore from "@/actions/get-store";
 import type { Store } from "@/types";
 import type { Metadata } from "next";
 import { Suspense } from "react";
@@ -20,8 +21,8 @@ export const metadata: Metadata = {
 // DashboardPage is home of the selected store. It diesplays store operatiing stat such as
 //total revenue, sales count, products, etc..
 const CashCashierAdminPage: React.FC<props> = async ({ params }) => {
-  const store = (await checkStoreAccess(params.storeId)) as Store;
-  transformDecimalsToNumbers(store);
+  await checkStoreAccess(params.storeId);
+  const store = await getStore(params.storeId) as Store;
 
   return (
     <Suspense fallback={<Loader />}>

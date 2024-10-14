@@ -9,7 +9,7 @@ import { format } from "date-fns";
 
 import { Heading } from "@/components/ui/heading";
 import { OrderStatus, StoreLevel } from "@/types/enum";
-import { OrderUnpaid } from "./order-unpaid";
+import { OrderUnpaid } from "../components/order-unpaid";
 
 export interface props {
   store: Store;
@@ -38,13 +38,6 @@ export const CashCashier: React.FC<props> = ({ store }) => {
       .then((data) => {
         //console.log("data", JSON.stringify(data));
         setUnpaidOrders(data);
-        /*
-        if (store.requirePrepay) {
-          const prepayOrders = data.filter((order: StoreOrder) => order.isPaid);
-        } else {
-          setUnpaidOrders(data.filter((order: StoreOrder) => order.orderStatus === OrderStatus.Pending || order.orderStatus === OrderStatus.InShipping));
-        }
-        */
       })
       .catch((err) => {
         console.log(err);
@@ -74,7 +67,7 @@ export const CashCashier: React.FC<props> = ({ store }) => {
         <div className='flex flex-col gap-5'>
           {store.level !== StoreLevel.Free && (<>
             <OrderUnpaid
-              storeId={store.id}
+              store={store}
               orders={unpaidOrders}
               parentLoading={loading}
             />

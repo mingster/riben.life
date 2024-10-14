@@ -1,0 +1,28 @@
+import { NextResponse } from "next/server";
+
+import getStore from "@/actions/get-store";
+import type { Store } from "@/types";
+import { CheckStoreAdminApiAccess } from "../api_helper";
+
+// get unpaid orders in the store.
+export async function GET(
+  req: Request,
+  { params }: { params: { storeId: string } },
+) {
+  try {
+    CheckStoreAdminApiAccess(params.storeId);
+
+    const store = await getStore(params.storeId) as Store;
+
+    if (!store) {
+      return new NextResponse("store not found", { status: 404 });
+    }
+
+    //console.log("getStore", JSON.stringify(store));
+    return NextResponse.json(store);
+
+  } catch (error) {
+    console.error("[GET_STORE]", error);
+    return new NextResponse("Internal error", { status: 500 });
+  }
+}
