@@ -33,11 +33,7 @@ interface props {
   parentLoading: boolean;
 }
 
-export const OrderPending = ({
-  storeId,
-  orders,
-  parentLoading,
-}: props) => {
+export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -103,14 +99,17 @@ export const OrderPending = ({
       />
 
       <Card>
-        <Heading title='待確認訂單' description="請勾選來接單。" badge={orders.length} className="pt-2" />
+        <Heading
+          title="待確認訂單"
+          description="請勾選來接單。"
+          badge={orders.length}
+          className="pt-2"
+        />
 
         <CardContent className="space-y-2">
           {/* display */}
           <div className="pt-2 pl-1">
-            {orders.length === 0
-              ? t("no_results_found")
-              : ''}
+            {orders.length === 0 ? t("no_results_found") : ""}
           </div>
 
           {orders.length !== 0 && (
@@ -153,7 +152,7 @@ export const OrderPending = ({
                       {order.OrderNotes.map((note: OrderNote) => (
                         <div key={note.id}>{note.note}</div>
                       ))}
-                      <div className='flex gap-2'>
+                      <div className="flex gap-2">
                         <div>{order.isPaid === true ? "已付" : "未付"}</div>
                         <div>{order.ShippingMethod?.name}</div>
                         <div>{order.PaymentMethod?.name}</div>

@@ -220,8 +220,8 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
       //
       if (order) {
         //if (!user)
-          // if no signed-in user, save order to local storage
-          saveOrderToLocal(order);
+        // if no signed-in user, save order to local storage
+        saveOrderToLocal(order);
 
         // NOTE: if we allow customer to checkout parial of cart items, this need to be adjusted
         cart.emptyCart(); //clear cart

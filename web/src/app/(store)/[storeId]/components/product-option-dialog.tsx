@@ -542,23 +542,23 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
                                                 onCheckedChange={(checked) => {
                                                   return checked
                                                     ? field.onChange(
-                                                      [
-                                                        ...field.value,
-                                                        item.id,
-                                                      ],
-                                                      handleCheckbox(
-                                                        Number(item.price),
-                                                      ),
-                                                    )
+                                                        [
+                                                          ...field.value,
+                                                          item.id,
+                                                        ],
+                                                        handleCheckbox(
+                                                          Number(item.price),
+                                                        ),
+                                                      )
                                                     : field.onChange(
-                                                      field.value?.filter(
-                                                        (value: string) =>
-                                                          value !== item.id,
-                                                      ),
-                                                      handleCheckbox(
-                                                        -item.price,
-                                                      ),
-                                                    );
+                                                        field.value?.filter(
+                                                          (value: string) =>
+                                                            value !== item.id,
+                                                        ),
+                                                        handleCheckbox(
+                                                          -item.price,
+                                                        ),
+                                                      );
                                                 }}
                                               />
                                             </FormControl>
@@ -675,7 +675,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product }) => {
                     className="w-full"
                     disabled={form.formState.isSubmitting}
                     type="submit"
-                  //onClick={() => handleAddToCart(product)}
+                    //onClick={() => handleAddToCart(product)}
                   >
                     <div className="flex items-center justify-between w-full">
                       <div className="grow font-bold text-xl">{t("buy")}</div>

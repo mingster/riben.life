@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 //total revenue, sales count, products, etc..
 const CashCashierAdminPage: React.FC<props> = async ({ params }) => {
   await checkStoreAccess(params.storeId);
-  const store = await getStore(params.storeId) as Store;
+  const store = (await getStore(params.storeId)) as Store;
 
   return (
     <Suspense fallback={<Loader />}>

@@ -83,7 +83,6 @@ const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
 });
 export type Store = Prisma.StoreGetPayload<typeof storeObj>;
 
-
 const storeWithProductObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
   include: {
     Categories: {
@@ -101,15 +100,16 @@ const storeWithProductObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
                   },
                 },
               },
-            }
-          }
-        }
+            },
+          },
+        },
       },
-    }
+    },
   },
 });
-export type StoreWithProducts = Prisma.StoreGetPayload<typeof storeWithProductObj>;
-
+export type StoreWithProducts = Prisma.StoreGetPayload<
+  typeof storeWithProductObj
+>;
 
 const orderObj = Prisma.validator<Prisma.StoreOrderDefaultArgs>()({
   include: {

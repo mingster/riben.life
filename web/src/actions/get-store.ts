@@ -49,8 +49,11 @@ const getStore = async (storeId: string): Promise<Store> => {
   // add default payment methods to the store
   // skip if store already has the method(s)
   defaultPaymentMethods.map((paymentMethod) => {
-    if (!store.StorePaymentMethods.find((existingMethod) => existingMethod.id === paymentMethod.id)) {
-
+    if (
+      !store.StorePaymentMethods.find(
+        (existingMethod) => existingMethod.id === paymentMethod.id,
+      )
+    ) {
       const mapping = {
         storeId: store.id,
         methodId: paymentMethod.id,
@@ -70,7 +73,11 @@ const getStore = async (storeId: string): Promise<Store> => {
   })) as ShippingMethod[];
 
   defaultShippingMethods.map((method) => {
-    if (!store.StoreShippingMethods.find((existingMethod) => existingMethod.id === method.id)) {
+    if (
+      !store.StoreShippingMethods.find(
+        (existingMethod) => existingMethod.id === method.id,
+      )
+    ) {
       const mapping = {
         storeId: store.id,
         methodId: method.id,
@@ -84,5 +91,5 @@ const getStore = async (storeId: string): Promise<Store> => {
   transformDecimalsToNumbers(store);
 
   return store;
-}
+};
 export default getStore;

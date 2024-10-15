@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 
 import { useTranslation } from "@/app/i18n/client";
-import { AlertModal } from "@/components/modals/alert-modal";
 import { Heading } from "@/components/ui/heading";
 import {
   Table,
@@ -20,7 +18,6 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
-//import type { StoreOrder } from "@/types";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { format } from "date-fns";
@@ -33,11 +30,7 @@ interface props {
   parentLoading: boolean;
 }
 
-export const OrderUnpaid = ({
-  store,
-  orders,
-  parentLoading,
-}: props) => {
+export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -77,14 +70,17 @@ export const OrderUnpaid = ({
 
   return (
     <Card>
-      <Heading title="現金結帳" description="請勾選來確認收款。" badge={orders.length} className="pt-2" />
+      <Heading
+        title="現金結帳"
+        description="請勾選來確認收款。"
+        badge={orders.length}
+        className="pt-2"
+      />
 
       <CardContent className="space-y-2">
         {/* display */}
         <div className="pt-2 pl-1">
-          {orders.length === 0
-            ? t("no_results_found")
-            : ''}
+          {orders.length === 0 ? t("no_results_found") : ""}
         </div>
 
         {orders.length !== 0 && (
@@ -92,13 +88,9 @@ export const OrderUnpaid = ({
             <TableHeader>
               <TableRow>
                 {/*單號/桌號*/}
-                <TableHead className="w-[90px]">
-                  {t("Order_number")}
-                </TableHead>
+                <TableHead className="w-[90px]">{t("Order_number")}</TableHead>
 
-                <TableHead className="w-[200px]">
-                  {t("Order_items")}
-                </TableHead>
+                <TableHead className="w-[200px]">{t("Order_items")}</TableHead>
 
                 <TableHead>{t("Order_note")}</TableHead>
                 <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
@@ -106,7 +98,6 @@ export const OrderUnpaid = ({
                 <TableHead className="w-[150px] text-center text-nowrap">
                   確認收款
                 </TableHead>
-
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -128,7 +119,7 @@ export const OrderUnpaid = ({
                     {order.OrderNotes.map((note: OrderNote) => (
                       <div key={note.id}>{note.note}</div>
                     ))}
-                    <div className='flex gap-2'>
+                    <div className="flex gap-2">
                       <div>{order.isPaid === true ? "已付" : "未付"}</div>
                       <div>{order.ShippingMethod?.name}</div>
                       <div>{order.PaymentMethod?.name}</div>
@@ -146,7 +137,6 @@ export const OrderUnpaid = ({
                       onClick={() => handleChecked(order.id)}
                     />
                     <ModifiyOrderDialog store={store} order={order} />
-
                   </TableCell>
                 </TableRow>
               ))}

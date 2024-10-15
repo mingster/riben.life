@@ -1,14 +1,13 @@
 "use client";
 
-import type { Store, StoreOrder } from "@/types";
+import type { Store } from "@/types";
 import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { format } from "date-fns";
 
-import { Heading } from "@/components/ui/heading";
-import { OrderStatus, StoreLevel } from "@/types/enum";
+import { StoreLevel } from "@/types/enum";
 import { OrderUnpaid } from "../components/order-unpaid";
 
 export interface props {
@@ -64,16 +63,19 @@ export const CashCashier: React.FC<props> = ({ store }) => {
     <section className="relative w-full">
       <div className="container">
         <IntervaledContent />
-        <div className='flex flex-col gap-5'>
-          {store.level !== StoreLevel.Free && (<>
-            <OrderUnpaid
-              store={store}
-              orders={unpaidOrders}
-              parentLoading={loading}
-            />
-            <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
-          </>)
-          }
+        <div className="flex flex-col gap-5">
+          {store.level !== StoreLevel.Free && (
+            <>
+              <OrderUnpaid
+                store={store}
+                orders={unpaidOrders}
+                parentLoading={loading}
+              />
+              <div className="text-xs">
+                {format(date, "yyyy-MM-dd HH:mm:ss")}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </section>

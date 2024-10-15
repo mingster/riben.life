@@ -133,10 +133,12 @@ export async function POST(
   const store = await sqlClient.store.findUnique({
     where: {
       id: params.storeId,
-    }
+    },
   });
 
-  const orderStatus = store?.autoAcceptOrder ? OrderStatus.Processing : OrderStatus.Pending;
+  const orderStatus = store?.autoAcceptOrder
+    ? OrderStatus.Processing
+    : OrderStatus.Pending;
 
   const result = await sqlClient.storeOrder.create({
     data: {

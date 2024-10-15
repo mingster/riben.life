@@ -20,7 +20,7 @@ interface pageProps {
   };
 }
 const StoreCheckoutPage: React.FC<pageProps> = async ({ params }) => {
-  const store = await getStore(params.storeId) as Store;
+  const store = (await getStore(params.storeId)) as Store;
 
   if (!store) {
     redirect("/unv");

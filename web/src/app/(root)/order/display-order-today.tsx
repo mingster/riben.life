@@ -3,7 +3,12 @@
 import { auth } from "@/auth";
 import { DisplayOrder } from "@/components/order-display";
 import { GetSession } from "@/lib/auth/utils";
-import { getOrdersToday, getOrdersFromLocal, removePreviousOrders, getOrdersTodayByStore } from "@/lib/order-history";
+import {
+  getOrdersToday,
+  getOrdersFromLocal,
+  removePreviousOrders,
+  getOrdersTodayByStore,
+} from "@/lib/order-history";
 import type { StoreOrder } from "@/types";
 import axios from "axios";
 
@@ -25,8 +30,7 @@ export const DisplayStoreOrdersToday: React.FC = () => {
     // construct orderIds to update in backend database
     const orderIds: string[] = [];
     orders.map((order: StoreOrder) => {
-      if (!order.userId)
-        orderIds.push(order.id);
+      if (!order.userId) orderIds.push(order.id);
     });
 
     updateOrders(orderIds);
@@ -34,12 +38,10 @@ export const DisplayStoreOrdersToday: React.FC = () => {
     // update the local storage orders
     const userId = session?.user?.id;
     orders.map((order: StoreOrder) => {
-      if (!order.userId)
-        order.userId = userId;
+      if (!order.userId) order.userId = userId;
     });
     localStorage.setItem("orders", JSON.stringify(orders));
   }
-
 
   const orders2 = getOrdersTodayByStore(storeId) as StoreOrder[];
 
@@ -64,15 +66,12 @@ export const DisplayStoreOrdersToday: React.FC = () => {
 };
 
 const updateOrders = async (orderIds: string[]) => {
-  console.log('orderIds', orderIds);
+  console.log("orderIds", orderIds);
 
   const url = `${process.env.NEXT_PUBLIC_API_URL}/auth/account/link-orders`;
-  await axios.patch(
-    url,
-    {
-      orderIds: orderIds
-    }
-  );
+  await axios.patch(url, {
+    orderIds: orderIds,
+  });
 
   return;
-}
+};

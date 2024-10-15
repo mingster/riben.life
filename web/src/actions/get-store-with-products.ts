@@ -2,8 +2,9 @@ import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { StoreWithProducts } from "@/types";
 
-const getStoreWithProducts = async (storeId: string): Promise<StoreWithProducts> => {
-
+const getStoreWithProducts = async (
+  storeId: string,
+): Promise<StoreWithProducts> => {
   if (!storeId) {
     throw Error("storeId is required");
   }
@@ -43,7 +44,6 @@ const getStoreWithProducts = async (storeId: string): Promise<StoreWithProducts>
       },
     },
   });
-
 
   if (!store) {
     throw Error("no store found");

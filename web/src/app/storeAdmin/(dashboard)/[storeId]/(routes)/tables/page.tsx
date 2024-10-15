@@ -7,6 +7,7 @@ import type { StoreTables } from "@prisma/client";
 import { Suspense } from "react";
 import type { TableColumn } from "./components/columns";
 import { TableClient } from "./components/table-client";
+import getStoreTables from "@/actions/get-store-tables";
 
 //import { Metadata } from 'next';
 interface pageProps {
@@ -19,14 +20,7 @@ interface pageProps {
 const StoreTablePage: React.FC<pageProps> = async ({ params }) => {
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
-  const tables = await sqlClient.storeTables.findMany({
-    where: {
-      storeId: store.id,
-    },
-    orderBy: {
-      tableName: "asc",
-    },
-  });
+  const tables = (await getStoreTables(store.id)) as StoreTables[];
 
   // map FAQ Category to ui
   const formattedTables: TableColumn[] = tables.map((item: StoreTables) => ({

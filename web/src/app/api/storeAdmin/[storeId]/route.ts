@@ -12,7 +12,7 @@ export async function GET(
   try {
     CheckStoreAdminApiAccess(params.storeId);
 
-    const store = await getStore(params.storeId) as Store;
+    const store = (await getStore(params.storeId)) as Store;
 
     if (!store) {
       return new NextResponse("store not found", { status: 404 });
@@ -20,7 +20,6 @@ export async function GET(
 
     //console.log("getStore", JSON.stringify(store));
     return NextResponse.json(store);
-
   } catch (error) {
     console.error("[GET_STORE]", error);
     return new NextResponse("Internal error", { status: 500 });

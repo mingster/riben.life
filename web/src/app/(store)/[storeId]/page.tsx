@@ -31,7 +31,7 @@ interface pageProps {
 }
 const StoreHomePage: React.FC<pageProps> = async ({ params }) => {
   const store = await getStoreWithProducts(params.storeId);
-  
+
   //console.log(JSON.stringify(store));
 
   if (!store) {
