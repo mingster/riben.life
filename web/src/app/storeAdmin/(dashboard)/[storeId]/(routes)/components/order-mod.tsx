@@ -148,12 +148,13 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
         </DialogTrigger>
         <DialogContent>
           <div className="flex h-full flex-col">
-            <DialogHeader className="border-b p-4">
+
+            <DialogHeader className="p-1">
               <DialogTitle>修改訂單</DialogTitle>
               <DialogDescription>&nbsp;</DialogDescription>
             </DialogHeader>
 
-            <div className="flex-1 overflow-auto p-4">
+            <div className="flex-1 overflow-auto p-1">
 
               <Form {...form}>
                 <form
@@ -211,8 +212,39 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
 
                   </div>
 
-                  <div className="pb-5">改付款方式</div>
-
+                  <FormField
+                    control={form.control}
+                    name="paymentMethodId"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-1 space-y-0">
+                        <FormLabel className="font-normal">修改付款方式</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            //onValueChange={(val) => handleTableChange(field.name, val)}
+                            defaultValue={field.value}
+                            className="flex items-center space-x-1 space-y-0"
+                          >
+                            {store.StorePaymentMethods.map((item) => (
+                              <div
+                                key={item.methodId}
+                                className="flex items-center"
+                              >
+                                <FormItem className="flex items-center space-x-1 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value={item.methodId} />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {item.PaymentMethod.name}
+                                  </FormLabel>
+                                </FormItem>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
 
                   <DialogFooter className="w-full pt-2 pb-2">
@@ -246,7 +278,7 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                   </DialogFooter>
 
 
-                  <div className="pb-5">改menu</div>
+                  <div className="pb-5">修改menu</div>
 
 
                 </form>
