@@ -58,7 +58,6 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
-
   const formSchema = z.object({
     tableId: z.string().min(1),
     orderNum: z.number().optional(),
@@ -105,7 +104,7 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
   //console.log('StorePaymentMethods', JSON.stringify(store.StorePaymentMethods));
 
   //const params = useParams();
-  //console.log(JSON.stringify(order));
+  //console.log('order', JSON.stringify(order));
 
   //console.log("form errors", form.formState.errors);
 
@@ -116,27 +115,15 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
     setOpen(false);
   };
 
-  const handleTableChange = (fieldName: string, selectedVal: string) => {
-    //console.log("fieldName", fieldName, selectedVal);
-    //console.log("selected", selected);
+  const handleShipChange = (fieldName: string, selectedVal: string) => {
+    console.log("fieldName", fieldName, selectedVal);
+    form.setValue('shippingMethodId', selectedVal);
 
-    /*
-    const base_price = Number(product.price);
-    let selected = null;
-    if (fieldName === "option1") {
-      selected = option1_items.find((item) => item.name === selectedVal);
-    } else if (fieldName === "option4") {
-      selected = option4_items.find((item) => item.name === selectedVal);
-      console.log("selected", selected);
-    }
-
-    if (selected) {
-      const p = base_price + (selected?.price ?? 0) + checkedTotal;
-      setUnitPrice(p);
-      setTotal(quantity * p);
-    }
-    */
+    const test = form.watch("shippingMethodId") === '3203cf4c-e1c7-4b79-b611-62c920b50860';
+    console.log(`test: ${test}`);
   };
+
+
 
   return (
     <>
@@ -169,18 +156,19 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                         <FormItem className="flex items-center">
                           <FormControl>
                             <RadioGroup
-                              //onValueChange={(val) => handleTableChange(field.name, val)}
-                              defaultValue={field.value}
+                              onValueChange={(val) =>
+                                handleShipChange(field.name, val)
+                              } defaultValue={field.value}
                               className="flex items-center space-x-1 space-y-0"
                             >
                               {store.StoreShippingMethods.map((item) => (
                                 <div
-                                  key={item.methodId}
+                                  key={item.ShippingMethod.id}
                                   className="flex items-center"
                                 >
                                   <FormItem className="flex items-center space-x-1 space-y-0">
                                     <FormControl>
-                                      <RadioGroupItem value={item.methodId} />
+                                      <RadioGroupItem value={item.ShippingMethod.id} />
                                     </FormControl>
                                     <FormLabel className="font-normal">
                                       {item.ShippingMethod.name}
@@ -201,7 +189,7 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                         <FormItem className="flex items-center space-x-1 space-y-0">
                           <FormLabel className="text-nowrap">桌號</FormLabel>
                           <StoreTableCombobox
-                            disabled={loading}
+                            disabled={loading || form.watch("shippingMethodId") !== '3203cf4c-e1c7-4b79-b611-62c920b50860'}
                             storeId={store.id}
                             onValueChange={field.onChange}
                             defaultValue={field.value}
@@ -226,12 +214,12 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                           >
                             {store.StorePaymentMethods.map((item) => (
                               <div
-                                key={item.methodId}
+                                key={item.PaymentMethod.id}
                                 className="flex items-center"
                               >
                                 <FormItem className="flex items-center space-x-1 space-y-0">
                                   <FormControl>
-                                    <RadioGroupItem value={item.methodId} />
+                                    <RadioGroupItem value={item.PaymentMethod.id} />
                                   </FormControl>
                                   <FormLabel className="font-normal">
                                     {item.PaymentMethod.name}

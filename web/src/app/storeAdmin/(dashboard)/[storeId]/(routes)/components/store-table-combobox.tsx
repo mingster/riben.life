@@ -88,17 +88,17 @@ export const StoreTableCombobox = ({
             <Command>
               <CommandInput placeholder="" />
               <CommandList>
-                <CommandEmpty> </CommandEmpty>
+                <CommandEmpty> --- </CommandEmpty>
                 <CommandGroup>
                   {tables.map((table) => (
                     <CommandItem
                       key={table.id}
                       value={table.id}
-                      onSelect={(value) => {
+                      onSelect={(newValue) => {
                         //console.log('onSelect: ' + value);
-                        setSelected(value);
+                        setSelected(newValue);
                         setDisplayName(table.tableName);
-                        onValueChange?.(value); //return value to parent component
+                        onValueChange?.(newValue); //return value to parent component
                         setOpen(false);
                       }}
                     >
