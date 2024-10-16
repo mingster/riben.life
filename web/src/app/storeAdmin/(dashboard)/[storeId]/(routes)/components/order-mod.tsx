@@ -6,7 +6,7 @@ import type { ItemOption } from "@/hooks/use-cart";
 
 import { Button } from "@/components/ui/button";
 import type { Product, ProductOption, Store, StoreOrder } from "@/types";
-import type { ProductOptionSelections, StoreTables, StoreShipMethodMapping } from "@prisma/client";
+import type { orderitemview, StoreTables, StoreShipMethodMapping } from "@prisma/client";
 import { useForm } from "react-hook-form";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -58,11 +58,22 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
+
+  const itemView = z.object({
+    id: z.string().min(1),
+    orderId: z.string().min(1),
+    productId: z.string().min(1),
+    quantity: z.coerce.number().min(1),
+    unitDiscount: z.coerce.number().min(1),
+    unitPrice: z.coerce.number().min(1),
+  })
+
   const formSchema = z.object({
     tableId: z.string().min(1),
     orderNum: z.number().optional(),
     paymentMethodId: z.string().optional(),
     shippingMethodId: z.string().optional(),
+    OrderItemView: itemView.array().optional(),
   });
 
   type formValues = z.infer<typeof formSchema>;
@@ -115,15 +126,14 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
     setOpen(false);
   };
 
-  const handleShipChange = (fieldName: string, selectedVal: string) => {
+  const handleShipMethodChange = (fieldName: string, selectedVal: string) => {
     console.log("fieldName", fieldName, selectedVal);
     form.setValue('shippingMethodId', selectedVal);
-
-    const test = form.watch("shippingMethodId") === '3203cf4c-e1c7-4b79-b611-62c920b50860';
-    console.log(`test: ${test}`);
   };
-
-
+  const handlePayMethodChange = (fieldName: string, selectedVal: string) => {
+    console.log("fieldName", fieldName, selectedVal);
+    form.setValue('paymentMethodId', selectedVal);
+  };
 
   return (
     <>
@@ -156,9 +166,8 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                         <FormItem className="flex items-center">
                           <FormControl>
                             <RadioGroup
-                              onValueChange={(val) =>
-                                handleShipChange(field.name, val)
-                              } defaultValue={field.value}
+                              onValueChange={(val) => handleShipMethodChange(field.name, val)}
+                              defaultValue={field.value}
                               className="flex items-center space-x-1 space-y-0"
                             >
                               {store.StoreShippingMethods.map((item) => (
@@ -208,7 +217,7 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                         <FormLabel className="font-normal">修改付款方式</FormLabel>
                         <FormControl>
                           <RadioGroup
-                            //onValueChange={(val) => handleTableChange(field.name, val)}
+                            onValueChange={(val) => handlePayMethodChange(field.name, val)}
                             defaultValue={field.value}
                             className="flex items-center space-x-1 space-y-0"
                           >
