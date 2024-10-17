@@ -23,6 +23,7 @@ import axios from "axios";
 import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
 import { ModifiyOrderDialog } from "./order-mod";
+import Currency from "@/components/currency";
 
 interface props {
   store: Store;
@@ -51,6 +52,7 @@ export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
   if (parentLoading) {
     return <ClipLoader color="text-primary" />;
   }
+
 
   const handleChecked = async (orderId: string) => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/mark-as-paid/${orderId}`;
@@ -88,15 +90,16 @@ export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
             <TableHeader>
               <TableRow>
                 {/*單號/桌號*/}
-                <TableHead className="w-[90px]">{t("Order_number")}</TableHead>
+                <TableHead className="">{t("Order_number")}</TableHead>
 
                 <TableHead className="w-[200px]">{t("Order_items")}</TableHead>
 
                 <TableHead>{t("Order_note")}</TableHead>
                 <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
+                <TableHead className="w-[90px] text-right">{t("Order_total")}</TableHead>
 
-                <TableHead className="w-[150px] text-center text-nowrap">
-                  確認收款
+                <TableHead className="w-[150px] text-center">
+                  {t('Order_cashier_confirm')}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -131,12 +134,17 @@ export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
                     {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                   </TableCell>
 
-                  <TableCell className="items-center text-center text-nowrap">
-                    <Checkbox
-                      value={order.id}
-                      onClick={() => handleChecked(order.id)}
-                    />
-                    <ModifiyOrderDialog store={store} order={order} />
+                  <TableCell className="text-right text-2xl font-extrabold">
+                    <Currency value={Number(order.orderTotal)} />
+                  </TableCell>
+
+                  <TableCell className="bg-red-100">
+                    <div className="flex gap-5 items-center justify-end pr-1">
+                      <Checkbox
+                        value={order.id}
+                        onClick={() => handleChecked(order.id)}
+                      />
+                      <ModifiyOrderDialog store={store} order={order} /></div>
                   </TableCell>
                 </TableRow>
               ))}
