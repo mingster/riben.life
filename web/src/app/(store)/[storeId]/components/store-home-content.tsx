@@ -13,10 +13,9 @@ import { getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import { ProductStatus } from "@/types/enum";
 import type { StoreSettings } from "@prisma-mongo/prisma/client";
-import ScrollSpy from "react-ui-scrollspy";
-import Link from "next/link";
 import { formatDate } from "date-fns";
-import { getOrdersToday, removeOrders } from "@/lib/order-history";
+import Link from "next/link";
+import ScrollSpy from "react-ui-scrollspy";
 
 const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(
   {

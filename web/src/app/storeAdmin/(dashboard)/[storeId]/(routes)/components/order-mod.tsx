@@ -30,18 +30,17 @@ import {
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useI18n } from "@/providers/i18n-provider";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, XIcon } from "lucide-react";
 
 import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
 import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-
-import { AlertModal } from "@/components/modals/alert-modal";
 import { useParams } from "next/navigation";
 import { z } from "zod";
 import { StoreTableCombobox } from "./store-table-combobox";
+import { Modal } from "@/components/ui/modal";
 
 interface props {
   store: Store;
@@ -134,7 +133,26 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
     console.log("fieldName", fieldName, selectedVal);
     form.setValue('paymentMethodId', selectedVal);
   };
+  const [openModal, setOpenModal] = useState(false);
 
+  const handleIncraseQuality = () => {
+    //console.log('handleIncraseQuality: ' + currentItem.quantity);
+  };
+
+  const handleDecreaseQuality = () => {
+    //currentItem.quantity = currentItem.quantity - 1;
+    //onCartChange?.(newQuantity);
+    //console.log('handleDecreaseQuality: ' + currentItem.quantity);
+  };
+
+  const handleQuantityInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const result = event.target.value.replace(/\D/g, "");
+    if (result) {
+      //onCartChange?.(Number(result));
+    }
+  };
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -147,7 +165,7 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
           <div className="flex h-full flex-col">
 
             <DialogHeader className="p-1">
-              <DialogTitle>修改訂單</DialogTitle>
+              <DialogTitle>新增/修改訂單</DialogTitle>
               <DialogDescription>&nbsp;</DialogDescription>
             </DialogHeader>
 
@@ -206,42 +224,100 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                         </FormItem>
                       )}
                     />
-
+                  </div>
+                  <div className="pb-5 flex items-center gap-5">
+                    <FormField
+                      control={form.control}
+                      name="paymentMethodId"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-1 space-y-0">
+                          <FormLabel className="font-normal">付款方式</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={(val) => handlePayMethodChange(field.name, val)}
+                              defaultValue={field.value}
+                              className="flex items-center space-x-1 space-y-0"
+                            >
+                              {store.StorePaymentMethods.map((item) => (
+                                <div
+                                  key={item.PaymentMethod.id}
+                                  className="flex items-center"
+                                >
+                                  <FormItem className="flex items-center space-x-1 space-y-0">
+                                    <FormControl>
+                                      <RadioGroupItem value={item.PaymentMethod.id} />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {item.PaymentMethod.name}
+                                    </FormLabel>
+                                  </FormItem>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="paymentMethodId"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center space-x-1 space-y-0">
-                        <FormLabel className="font-normal">修改付款方式</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={(val) => handlePayMethodChange(field.name, val)}
-                            defaultValue={field.value}
-                            className="flex items-center space-x-1 space-y-0"
-                          >
-                            {store.StorePaymentMethods.map((item) => (
-                              <div
-                                key={item.PaymentMethod.id}
-                                className="flex items-center"
-                              >
-                                <FormItem className="flex items-center space-x-1 space-y-0">
-                                  <FormControl>
-                                    <RadioGroupItem value={item.PaymentMethod.id} />
-                                  </FormControl>
-                                  <FormLabel className="font-normal">
-                                    {item.PaymentMethod.name}
-                                  </FormLabel>
-                                </FormItem>
-                              </div>
-                            ))}
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
+                  {order.OrderItemView.map((item) => (
+                    <div key={item.id} className="flex flex-row justify-between">
+                      <div><XIcon className="text-red-400 h-4 w-4" /></div>
+                      <div>{item.name}</div>
+                      <div>
+
+                        <div className="pl-2">
+                          <div className="flex">
+                            <div className="flex flex-nowrap content-center w-[20px]">
+                              {item.quantity && item.quantity > 0 && (
+                                //{currentItem.quantity > 0 && (
+                                <IconButton
+                                  onClick={handleDecreaseQuality}
+                                  icon={
+                                    <Minus
+                                      size={18}
+                                      className="dark:text-primary text-secondary"
+                                    />
+                                  }
+                                />
+                              )}
+                            </div>
+                            <div className="flex flex-nowrap content-center item">
+                              <input
+                                type="number"
+                                className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                placeholder="0"
+                                value={Number(item.quantity) || 0}
+                                onChange={handleQuantityInputChange}
+                              />
+                            </div>
+                            <div className="flex flex-nowrap content-center w-[20px]">
+                              <IconButton
+                                onClick={handleIncraseQuality}
+                                icon={
+                                  <Plus
+                                    size={18}
+                                    className="dark:text-primary text-secondary"
+                                  />
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+
+                      </div>
+
+                    </div>
+                  ))}
+
+                  <Button onClick={() => setOpenModal(true)} variant={'outline'}>加點</Button>
+
+                  <Modal isOpen={openModal} onClose={() => setOpenModal(false)} title='' description=''>
+                    menu
+                  </Modal>
 
 
                   <DialogFooter className="w-full pt-2 pb-2">
@@ -275,7 +351,6 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                   </DialogFooter>
 
 
-                  <div className="pb-5">修改menu</div>
 
 
                 </form>
