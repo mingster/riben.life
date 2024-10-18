@@ -4,7 +4,6 @@ import { ProductCard } from "@/app/(store)/[storeId]/components/product-card";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
-
 import { useToast } from "@/components/ui/use-toast";
 import { useCart } from "@/hooks/use-cart";
 import { useParams } from "next/navigation";
@@ -20,10 +19,7 @@ export interface props {
 // store home page.
 // if store is opened (according to business hours), display menu (categorized products), and seating status (take off/in store).
 //
-export const Client: React.FC<props> = ({
-  store,
-  category,
-}) => {
+export const Client: React.FC<props> = ({ store, category }) => {
   /*
   const session = useSession();
   //const { toast } = useToast();

@@ -41,18 +41,16 @@ interface pageProps {
 }
 // display products in the given category
 const CategoryPage: React.FC<pageProps> = async ({ params }) => {
-  if (params.storeId === null) return;
-  if (params.categoryId === null) return;
-
-  const storeData = await sqlClient.store.findUnique({
+  const storeData = (await sqlClient.store.findUnique({
     where: {
       id: params.storeId,
     },
-  }) as Store;
-
+  })) as Store;
   const { t } = await useTranslation(storeData?.defaultLocale || "en");
 
   if (!storeData) return;
+
+  if (params.categoryId === null) return;
 
   const category = await sqlClient.category.findUnique({
     where: {

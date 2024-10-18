@@ -4,7 +4,7 @@ import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Checkout } from "./component/checkOut";
+import { Checkout } from "./client";
 import type {
   Store,
   StorePaymentMethodMapping,

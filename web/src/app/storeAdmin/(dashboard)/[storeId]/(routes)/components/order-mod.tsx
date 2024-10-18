@@ -6,7 +6,11 @@ import type { ItemOption } from "@/hooks/use-cart";
 
 import { Button } from "@/components/ui/button";
 import type { Product, ProductOption, Store, StoreOrder } from "@/types";
-import type { StoreShipMethodMapping, StoreTables, orderitemview } from "@prisma/client";
+import type {
+  StoreShipMethodMapping,
+  StoreTables,
+  orderitemview,
+} from "@prisma/client";
 import { useForm } from "react-hook-form";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -57,7 +61,6 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
-
   const itemView = z.object({
     id: z.string().min(1),
     orderId: z.string().min(1),
@@ -65,7 +68,7 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
     quantity: z.coerce.number().min(1),
     unitDiscount: z.coerce.number().min(1),
     unitPrice: z.coerce.number().min(1),
-  })
+  });
 
   const formSchema = z.object({
     tableId: z.string().min(1),
@@ -79,8 +82,8 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
 
   const defaultValues = order
     ? {
-      ...order,
-    }
+        ...order,
+      }
     : {};
 
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
@@ -97,19 +100,17 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
     clearErrors,
   } = useForm<formValues>();
 
-
   const onSubmit = async (data: formValues) => {
     setLoading(true);
 
-
-    console.log('formValues', JSON.stringify(data));
+    console.log("formValues", JSON.stringify(data));
     toast({
-      title: '訂單更新了',
+      title: "訂單更新了",
       description: "",
       variant: "success",
     });
     setLoading(false);
-  }
+  };
 
   //console.log('StorePaymentMethods', JSON.stringify(store.StorePaymentMethods));
 
@@ -127,11 +128,11 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
 
   const handleShipMethodChange = (fieldName: string, selectedVal: string) => {
     console.log("fieldName", fieldName, selectedVal);
-    form.setValue('shippingMethodId', selectedVal);
+    form.setValue("shippingMethodId", selectedVal);
   };
   const handlePayMethodChange = (fieldName: string, selectedVal: string) => {
     console.log("fieldName", fieldName, selectedVal);
-    form.setValue('paymentMethodId', selectedVal);
+    form.setValue("paymentMethodId", selectedVal);
   };
   const [openModal, setOpenModal] = useState(false);
 
@@ -163,14 +164,12 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
         </DialogTrigger>
         <DialogContent>
           <div className="flex h-full flex-col">
-
             <DialogHeader className="p-1">
               <DialogTitle>新增/修改訂單</DialogTitle>
               <DialogDescription>&nbsp;</DialogDescription>
             </DialogHeader>
 
             <div className="flex-1 overflow-auto p-1">
-
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
@@ -184,7 +183,9 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                         <FormItem className="flex items-center">
                           <FormControl>
                             <RadioGroup
-                              onValueChange={(val) => handleShipMethodChange(field.name, val)}
+                              onValueChange={(val) =>
+                                handleShipMethodChange(field.name, val)
+                              }
                               defaultValue={field.value}
                               className="flex items-center space-x-1 space-y-0"
                             >
@@ -195,7 +196,9 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                                 >
                                   <FormItem className="flex items-center space-x-1 space-y-0">
                                     <FormControl>
-                                      <RadioGroupItem value={item.ShippingMethod.id} />
+                                      <RadioGroupItem
+                                        value={item.ShippingMethod.id}
+                                      />
                                     </FormControl>
                                     <FormLabel className="font-normal">
                                       {item.ShippingMethod.name}
@@ -216,7 +219,11 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                         <FormItem className="flex items-center space-x-1 space-y-0">
                           <FormLabel className="text-nowrap">桌號</FormLabel>
                           <StoreTableCombobox
-                            disabled={loading || form.watch("shippingMethodId") !== '3203cf4c-e1c7-4b79-b611-62c920b50860'}
+                            disabled={
+                              loading ||
+                              form.watch("shippingMethodId") !==
+                                "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                            }
                             storeId={store.id}
                             onValueChange={field.onChange}
                             defaultValue={field.value}
@@ -231,10 +238,14 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                       name="paymentMethodId"
                       render={({ field }) => (
                         <FormItem className="flex items-center space-x-1 space-y-0">
-                          <FormLabel className="font-normal">付款方式</FormLabel>
+                          <FormLabel className="font-normal">
+                            付款方式
+                          </FormLabel>
                           <FormControl>
                             <RadioGroup
-                              onValueChange={(val) => handlePayMethodChange(field.name, val)}
+                              onValueChange={(val) =>
+                                handlePayMethodChange(field.name, val)
+                              }
                               defaultValue={field.value}
                               className="flex items-center space-x-1 space-y-0"
                             >
@@ -245,7 +256,9 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                                 >
                                   <FormItem className="flex items-center space-x-1 space-y-0">
                                     <FormControl>
-                                      <RadioGroupItem value={item.PaymentMethod.id} />
+                                      <RadioGroupItem
+                                        value={item.PaymentMethod.id}
+                                      />
                                     </FormControl>
                                     <FormLabel className="font-normal">
                                       {item.PaymentMethod.name}
@@ -261,13 +274,16 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                     />
                   </div>
 
-
                   {order.OrderItemView.map((item) => (
-                    <div key={item.id} className="flex flex-row justify-between">
-                      <div><XIcon className="text-red-400 h-4 w-4" /></div>
+                    <div
+                      key={item.id}
+                      className="flex flex-row justify-between"
+                    >
+                      <div>
+                        <XIcon className="text-red-400 h-4 w-4" />
+                      </div>
                       <div>{item.name}</div>
                       <div>
-
                         <div className="pl-2">
                           <div className="flex">
                             <div className="flex flex-nowrap content-center w-[20px]">
@@ -306,22 +322,27 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                             </div>
                           </div>
                         </div>
-
-
                       </div>
-
                     </div>
                   ))}
 
-                  <Button onClick={() => setOpenModal(true)} variant={'outline'}>加點</Button>
+                  <Button
+                    onClick={() => setOpenModal(true)}
+                    variant={"outline"}
+                  >
+                    加點
+                  </Button>
 
-                  <Modal isOpen={openModal} onClose={() => setOpenModal(false)} title='' description=''>
+                  <Modal
+                    isOpen={openModal}
+                    onClose={() => setOpenModal(false)}
+                    title=""
+                    description=""
+                  >
                     menu
                   </Modal>
 
-
                   <DialogFooter className="w-full pt-2 pb-2">
-
                     <Button
                       disabled={loading}
                       className="disabled:opacity-25"
@@ -334,7 +355,8 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                       type="button"
                       variant="outline"
                       onClick={() => {
-                        clearErrors(); setOpen(false);
+                        clearErrors();
+                        setOpen(false);
                       }}
                       className="ml-2 disabled:opacity-25"
                     >
@@ -349,14 +371,9 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                       刪單
                     </Button>
                   </DialogFooter>
-
-
-
-
                 </form>
               </Form>
             </div>
-
           </div>
         </DialogContent>
       </Dialog>

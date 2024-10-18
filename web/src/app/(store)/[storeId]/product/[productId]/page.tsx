@@ -9,7 +9,9 @@ import { Client } from "./client";
 const StoreProductPage = async ({
   params,
 }: { params: { productId: string; storeId: string } }) => {
-  const store = await getStoreWithProducts(params.storeId) as StoreWithProducts;
+  const store = (await getStoreWithProducts(
+    params.storeId,
+  )) as StoreWithProducts;
 
   if (!store) {
     redirect("/unv");
@@ -39,8 +41,7 @@ const StoreProductPage = async ({
   return (
     <div className="flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">
-      <Client product={product} store={store} />
-
+        <Client product={product} store={store} />
       </div>
     </div>
   );

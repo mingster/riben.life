@@ -50,7 +50,9 @@ export const ProductPreviewDialog: React.FC<props> = ({ initialData }) => {
 
           <ProductCard
             className="lg:min-w-[220px]"
-            onPurchase={() => { alert('To be implemented') }}
+            onPurchase={() => {
+              alert("To be implemented");
+            }}
             disableBuyButton={true}
             product={{
               ...initialData,

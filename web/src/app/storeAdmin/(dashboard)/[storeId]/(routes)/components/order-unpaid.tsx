@@ -53,7 +53,6 @@ export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
     return <ClipLoader color="text-primary" />;
   }
 
-
   const handleChecked = async (orderId: string) => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/mark-as-paid/${orderId}`;
     await axios.post(url);
@@ -96,10 +95,12 @@ export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
 
                 <TableHead>{t("Order_note")}</TableHead>
                 <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
-                <TableHead className="w-[90px] text-right">{t("Order_total")}</TableHead>
+                <TableHead className="w-[90px] text-right">
+                  {t("Order_total")}
+                </TableHead>
 
                 <TableHead className="w-[150px] text-center">
-                  {t('Order_cashier_confirm')}
+                  {t("Order_cashier_confirm")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -144,7 +145,8 @@ export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
                         value={order.id}
                         onClick={() => handleChecked(order.id)}
                       />
-                      <ModifiyOrderDialog store={store} order={order} /></div>
+                      <ModifiyOrderDialog store={store} order={order} />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

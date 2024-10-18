@@ -36,7 +36,6 @@ export function ProductCard({
   className,
   ...props
 }: ProductCardProps) {
-
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
 
