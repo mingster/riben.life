@@ -7,6 +7,9 @@ import { Suspense } from "react";
 //import { Metadata } from 'next';
 
 import { useTranslation } from "@/app/i18n";
+import { transformDecimalsToNumbers } from "@/lib/utils";
+import type { Store } from "@/types";
+import { Client } from "./client";
 
 const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(
   {
@@ -36,12 +39,16 @@ interface pageProps {
     categoryId: string;
   };
 }
+// display products in the given category
 const CategoryPage: React.FC<pageProps> = async ({ params }) => {
+  if (params.storeId === null) return;
+  if (params.categoryId === null) return;
+
   const storeData = await sqlClient.store.findUnique({
     where: {
       id: params.storeId,
     },
-  });
+  }) as Store;
 
   const { t } = await useTranslation(storeData?.defaultLocale || "en");
 
@@ -76,6 +83,7 @@ const CategoryPage: React.FC<pageProps> = async ({ params }) => {
 
   if (category === null) return;
 
+  transformDecimalsToNumbers(category);
   //console.log(JSON.stringify(category));
 
   return (
@@ -84,20 +92,7 @@ const CategoryPage: React.FC<pageProps> = async ({ params }) => {
         {!storeData.isOpen && <h2 className="pb-5">{t("store_closed")}</h2>}
 
         <div className="grid grid-flow-row-dense lg:grid-flow-col gap-3">
-          {(category.ProductCategories as ProductCategories[])?.map((pc) => (
-            <ProductCard
-              key={pc.Product.id}
-              className="lg:min-w-[220px]"
-              disableBuyButton={!storeData.isOpen}
-              product={{
-                ...pc.Product,
-                //ProductImages: pc.Product.ProductImages,
-                //ProductAttribute: pc.Product.ProductAttribute,
-                //ProductOptions: pc.Product.ProductOptions,
-                //ProductCategories: pc.ProductCategories,
-              }}
-            />
-          ))}
+          <Client category={category} store={storeData} />
         </div>
       </Container>
     </Suspense>

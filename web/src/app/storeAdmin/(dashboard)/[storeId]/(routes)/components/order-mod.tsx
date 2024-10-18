@@ -6,7 +6,7 @@ import type { ItemOption } from "@/hooks/use-cart";
 
 import { Button } from "@/components/ui/button";
 import type { Product, ProductOption, Store, StoreOrder } from "@/types";
-import type { orderitemview, StoreTables, StoreShipMethodMapping } from "@prisma/client";
+import type { StoreShipMethodMapping, StoreTables, orderitemview } from "@prisma/client";
 import { useForm } from "react-hook-form";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -36,11 +36,11 @@ import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
 import { useState } from "react";
 
+import { Modal } from "@/components/ui/modal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
 import { z } from "zod";
 import { StoreTableCombobox } from "./store-table-combobox";
-import { Modal } from "@/components/ui/modal";
 
 interface props {
   store: Store;

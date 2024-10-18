@@ -1,48 +1,15 @@
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import type { Product } from "@/types";
+import type { Product, StoreWithProducts } from "@/types";
 import { redirect } from "next/navigation";
 import { ProductCard } from "../../components/product-card";
+import getStoreWithProducts from "@/actions/get-store-with-products";
+import { Client } from "./client";
 
 const StoreProductPage = async ({
   params,
 }: { params: { productId: string; storeId: string } }) => {
-  const store = await sqlClient.store.findFirst({
-    where: {
-      id: params.storeId,
-    },
-    include: {
-      Categories: {
-        where: { isFeatured: true },
-        orderBy: { sortOrder: "asc" },
-        include: {
-          ProductCategories: {
-            //where: { Product: { status: ProductStatus.Published } },
-            include: {
-              Product: {
-                //where: { status: ProductStatus.Published },
-                include: {
-                  ProductImages: true,
-                  ProductAttribute: true,
-                  //ProductCategories: true,
-                  ProductOptions: {
-                    include: {
-                      ProductOptionSelections: true,
-                    },
-                    orderBy: {
-                      sortOrder: "asc",
-                    },
-                  },
-                },
-              },
-            },
-            orderBy: { sortOrder: "asc" },
-          },
-        },
-        //StoreAnnouncement: true,
-      },
-    },
-  });
+  const store = await getStoreWithProducts(params.storeId) as StoreWithProducts;
 
   if (!store) {
     redirect("/unv");
@@ -72,13 +39,8 @@ const StoreProductPage = async ({
   return (
     <div className="flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">
-        {product && (
-          <ProductCard
-            className=""
-            disableBuyButton={!store.isOpen}
-            product={product}
-          />
-        )}
+      <Client product={product} store={store} />
+
       </div>
     </div>
   );
