@@ -11,7 +11,6 @@ import type {
   StoreTables,
   orderitemview,
 } from "@prisma/client";
-import { useForm } from "react-hook-form";
 
 import { useTranslation } from "@/app/i18n/client";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -41,19 +40,55 @@ import IconButton from "@/components/ui/icon-button";
 import { useState } from "react";
 
 import { Modal } from "@/components/ui/modal";
-import { zodResolver } from "@hookform/resolvers/zod";
+
 import { useParams } from "next/navigation";
 import { z } from "zod";
 import { StoreTableCombobox } from "./store-table-combobox";
+
+import { useForm, type UseFormProps, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 interface props {
   store: Store;
   order: StoreOrder;
 }
 
+const formSchema = z.object({
+  tableId: z.string().min(1),
+  orderNum: z.number().optional(),
+  paymentMethodId: z.string().optional(),
+  shippingMethodId: z.string().optional(),
+  OrderItemView: z.object({
+    id: z.string().min(1),
+    orderId: z.string().min(1),
+    productId: z.string().min(1),
+    quantity: z.coerce.number().min(1),
+    unitDiscount: z.coerce.number().min(1),
+    unitPrice: z.coerce.number().min(1),
+  }).array(),
+});
+
+function useZodForm<TSchema extends z.ZodType>(
+  props: Omit<UseFormProps<TSchema['_input']>, 'resolver'> & {
+    schema: TSchema;
+  },
+) {
+  const form = useForm<TSchema['_input']>({
+    ...props,
+    resolver: zodResolver(props.schema, undefined, {
+      // This makes it so we can use `.transform()`s on the schema without same transform getting applied again when it reaches the server
+      //rawValues: true
+    }),
+  });
+
+  return form;
+}
+
 // Modifiy Order Dialog
 //
 export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
+  //console.log('order', JSON.stringify(order));
+
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -61,30 +96,36 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
-  const itemView = z.object({
-    id: z.string().min(1),
-    orderId: z.string().min(1),
-    productId: z.string().min(1),
-    quantity: z.coerce.number().min(1),
-    unitDiscount: z.coerce.number().min(1),
-    unitPrice: z.coerce.number().min(1),
-  });
-
-  const formSchema = z.object({
-    tableId: z.string().min(1),
-    orderNum: z.number().optional(),
-    paymentMethodId: z.string().optional(),
-    shippingMethodId: z.string().optional(),
-    OrderItemView: itemView.array().optional(),
-  });
-
   type formValues = z.infer<typeof formSchema>;
+  type OrderItemView = z.infer<typeof formSchema>['OrderItemView'][number];
 
   const defaultValues = order
     ? {
-        ...order,
-      }
+      ...order,
+    }
     : {};
+
+  const {
+    handleSubmit,
+    register,
+    control,
+    formState: { isValid, errors, isValidating, isDirty },
+    reset,
+    watch,
+    clearErrors,
+  } = useZodForm({
+    schema: formSchema,
+    defaultValues,
+    mode: 'onChange',
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    name: 'OrderItemView',
+    control,
+  });
+
+  //console.log("fields", fields, fields.length);
+  const isSubmittable = !!isDirty && !!isValid;
 
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
   const form = useForm<formValues>({
@@ -92,13 +133,6 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
     defaultValues,
   });
 
-  const {
-    register,
-    formState: { errors },
-    handleSubmit,
-    watch,
-    clearErrors,
-  } = useForm<formValues>();
 
   const onSubmit = async (data: formValues) => {
     setLoading(true);
@@ -154,6 +188,23 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
       //onCartChange?.(Number(result));
     }
   };
+
+
+  const handleDeleteOrderItem = async (index: number) => {
+    const rowToRemove = fields[index];
+    console.log('rowToRemove', JSON.stringify(rowToRemove));
+    //console.log('rowToRemove: ' + rowToRemove.publicId);
+
+    //1. remove from cloud storage
+
+    //2. remove from database
+
+    //console.log('urlToDelete: ' + urlToDelete);
+
+    //remove from client data
+    remove(index);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -222,7 +273,7 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                             disabled={
                               loading ||
                               form.watch("shippingMethodId") !==
-                                "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                              "3203cf4c-e1c7-4b79-b611-62c920b50860"
                             }
                             storeId={store.id}
                             onValueChange={field.onChange}
@@ -274,15 +325,27 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                     />
                   </div>
 
-                  {order.OrderItemView.map((item) => (
+                  {order.OrderItemView.map((item, index) => (
                     <div
                       key={item.id}
                       className="flex flex-row justify-between"
                     >
                       <div>
-                        <XIcon className="text-red-400 h-4 w-4" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          onClick={() => handleDeleteOrderItem(index)}
+                        >
+                          <XIcon className="text-red-400 h-4 w-4" />
+                        </Button>
+
+
                       </div>
-                      <div>{item.name}</div>
+                      <div className='bg-red-100'>{item.name}
+                        {item.variants && (<div className=''>{item.variants}</div>)}
+
+                      </div>
                       <div>
                         <div className="pl-2">
                           <div className="flex">
