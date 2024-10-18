@@ -16,7 +16,9 @@ interface pageProps {
     storeId: string;
   };
 }
-//NOTE - this page shows order status for anonymous users (the kind of users choose not to sign in).
+
+// 點餐記錄 - show order history from local storage.
+//NOTE - why local storage?  because we allow anonymous user to place order.
 //
 const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
   const store = (await sqlClient.store.findFirst({

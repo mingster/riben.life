@@ -66,7 +66,7 @@ export const DisplayStoreOrdersToday: React.FC = () => {
 };
 
 const updateOrders = async (orderIds: string[]) => {
-  console.log("orderIds", orderIds);
+  //console.log("orderIds", orderIds);
 
   const url = `${process.env.NEXT_PUBLIC_API_URL}/auth/account/link-orders`;
   await axios.patch(url, {

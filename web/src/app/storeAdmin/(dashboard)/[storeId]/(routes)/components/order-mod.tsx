@@ -45,8 +45,8 @@ import { useParams } from "next/navigation";
 import { z } from "zod";
 import { StoreTableCombobox } from "./store-table-combobox";
 
-import { useForm, type UseFormProps, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, type UseFormProps, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface props {
   store: Store;
@@ -58,22 +58,24 @@ const formSchema = z.object({
   orderNum: z.number().optional(),
   paymentMethodId: z.string().optional(),
   shippingMethodId: z.string().optional(),
-  OrderItemView: z.object({
-    id: z.string().min(1),
-    orderId: z.string().min(1),
-    productId: z.string().min(1),
-    quantity: z.coerce.number().min(1),
-    unitDiscount: z.coerce.number().min(1),
-    unitPrice: z.coerce.number().min(1),
-  }).array(),
+  OrderItemView: z
+    .object({
+      id: z.string().min(1),
+      orderId: z.string().min(1),
+      productId: z.string().min(1),
+      quantity: z.coerce.number().min(1),
+      unitDiscount: z.coerce.number().min(1),
+      unitPrice: z.coerce.number().min(1),
+    })
+    .array(),
 });
 
 function useZodForm<TSchema extends z.ZodType>(
-  props: Omit<UseFormProps<TSchema['_input']>, 'resolver'> & {
+  props: Omit<UseFormProps<TSchema["_input"]>, "resolver"> & {
     schema: TSchema;
   },
 ) {
-  const form = useForm<TSchema['_input']>({
+  const form = useForm<TSchema["_input"]>({
     ...props,
     resolver: zodResolver(props.schema, undefined, {
       // This makes it so we can use `.transform()`s on the schema without same transform getting applied again when it reaches the server
@@ -97,7 +99,7 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
   const { t } = useTranslation(lng, "storeAdmin");
 
   type formValues = z.infer<typeof formSchema>;
-  type OrderItemView = z.infer<typeof formSchema>['OrderItemView'][number];
+  //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
 
   const defaultValues = order
     ? {
@@ -116,11 +118,11 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
   } = useZodForm({
     schema: formSchema,
     defaultValues,
-    mode: 'onChange',
+    mode: "onChange",
   });
 
   const { fields, append, remove } = useFieldArray({
-    name: 'OrderItemView',
+    name: "OrderItemView",
     control,
   });
 
@@ -132,7 +134,6 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
     resolver: zodResolver(formSchema),
     defaultValues,
   });
-
 
   const onSubmit = async (data: formValues) => {
     setLoading(true);
@@ -189,11 +190,11 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
     }
   };
 
-
   const handleDeleteOrderItem = async (index: number) => {
     const rowToRemove = fields[index];
-    console.log('rowToRemove', JSON.stringify(rowToRemove));
+    //console.log("rowToRemove", JSON.stringify(rowToRemove));
     //console.log('rowToRemove: ' + rowToRemove.publicId);
+    order.OrderItemView.splice(index, 1);
 
     //1. remove from cloud storage
 
@@ -202,7 +203,10 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
     //console.log('urlToDelete: ' + urlToDelete);
 
     //remove from client data
+    fields.splice(index, 1);
     remove(index);
+
+    //console.log('order', JSON.stringify(order));
   };
 
   return (
@@ -270,11 +274,13 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                         <FormItem className="flex items-center space-x-1 space-y-0">
                           <FormLabel className="text-nowrap">桌號</FormLabel>
                           <StoreTableCombobox
-                            disabled={
-                              loading ||
-                              form.watch("shippingMethodId") !==
-                              "3203cf4c-e1c7-4b79-b611-62c920b50860"
-                            }
+                            /*
+                              disabled={
+                                loading ||
+                                form.watch("shippingMethodId") !==
+                                "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                              }*/
+                            disabled={loading}
                             storeId={store.id}
                             onValueChange={field.onChange}
                             defaultValue={field.value}
@@ -328,9 +334,9 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                   {order.OrderItemView.map((item, index) => (
                     <div
                       key={item.id}
-                      className="flex flex-row justify-between"
+                      className="grid grid-cols-[5%_70%_25%] gap-1 w-full"
                     >
-                      <div>
+                      <div className="flex flex-nowrap content-center items-center">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -339,50 +345,48 @@ export const ModifiyOrderDialog: React.FC<props> = ({ store, order }) => {
                         >
                           <XIcon className="text-red-400 h-4 w-4" />
                         </Button>
-
-
                       </div>
-                      <div className='bg-red-100'>{item.name}
-                        {item.variants && (<div className=''>{item.variants}</div>)}
-
+                      <div className="">
+                        {item.name}
+                        {item.variants && (
+                          <div className="">{item.variants}</div>
+                        )}
                       </div>
-                      <div>
-                        <div className="pl-2">
-                          <div className="flex">
-                            <div className="flex flex-nowrap content-center w-[20px]">
-                              {item.quantity && item.quantity > 0 && (
-                                //{currentItem.quantity > 0 && (
-                                <IconButton
-                                  onClick={handleDecreaseQuality}
-                                  icon={
-                                    <Minus
-                                      size={18}
-                                      className="dark:text-primary text-secondary"
-                                    />
-                                  }
-                                />
-                              )}
-                            </div>
-                            <div className="flex flex-nowrap content-center item">
-                              <input
-                                type="number"
-                                className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                placeholder="0"
-                                value={Number(item.quantity) || 0}
-                                onChange={handleQuantityInputChange}
-                              />
-                            </div>
-                            <div className="flex flex-nowrap content-center w-[20px]">
+                      <div className="place-self-center">
+                        <div className="flex">
+                          <div className="flex flex-nowrap content-center w-[20px]">
+                            {item.quantity && item.quantity > 0 && (
+                              //{currentItem.quantity > 0 && (
                               <IconButton
-                                onClick={handleIncraseQuality}
+                                onClick={handleDecreaseQuality}
                                 icon={
-                                  <Plus
+                                  <Minus
                                     size={18}
                                     className="dark:text-primary text-secondary"
                                   />
                                 }
                               />
-                            </div>
+                            )}
+                          </div>
+                          <div className="flex flex-nowrap content-center items-center ">
+                            <input
+                              type="number"
+                              className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              placeholder="0"
+                              value={Number(item.quantity) || 0}
+                              onChange={handleQuantityInputChange}
+                            />
+                          </div>
+                          <div className="flex flex-nowrap content-center w-[20px]">
+                            <IconButton
+                              onClick={handleIncraseQuality}
+                              icon={
+                                <Plus
+                                  size={18}
+                                  className="dark:text-primary text-secondary"
+                                />
+                              }
+                            />
                           </div>
                         </div>
                       </div>
