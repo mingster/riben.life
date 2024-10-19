@@ -46,7 +46,7 @@ interface props {
 }
 
 const formSchema = z.object({
-  tableId: z.string().min(1),
+  tableId: z.coerce.string(),
   orderNum: z.number().optional(),
   paymentMethodId: z.string().optional(),
   shippingMethodId: z.string().optional(),
@@ -94,13 +94,13 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   type formValues = z.infer<typeof formSchema>;
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
-
   const defaultValues = order
     ? {
       ...order,
     }
-    : {};
+    : { };
 
+  // access OrderItemView using fields
   const {
     handleSubmit,
     register,
@@ -133,15 +133,16 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     setLoading(true);
 
     console.log("formValues", JSON.stringify(data));
+
     toast({
       title: "訂單更新了",
       description: "",
       variant: "success",
     });
+
     setLoading(false);
 
     router.back();
-
   };
 
   //console.log('StorePaymentMethods', JSON.stringify(store.StorePaymentMethods));
@@ -149,13 +150,13 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //const params = useParams();
   //console.log('order', JSON.stringify(order));
 
-  //console.log("form errors", form.formState.errors);
+  console.log("form errors", form.formState.errors);
 
   const onCancel = async () => {
     if (confirm("are you sure?")) {
       alert("not yet implemented");
     }
-    setOpen(false);
+    router.back();
   };
 
   const handleShipMethodChange = (fieldName: string, selectedVal: string) => {
@@ -209,7 +210,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   };
 
   return (
-
     <Card>
       <CardHeader>新增/修改訂單</CardHeader>
       <CardContent>
@@ -218,6 +218,12 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
             onSubmit={form.handleSubmit(onSubmit)}
             className="w-full space-y-1"
           >
+
+            {Object.entries(form.formState.errors).map(([key, error]) => (
+              <div key={key} className="text-red-500">
+                {error.message?.toString()}
+              </div>
+            ))}
 
             <div className="pb-5 flex items-center gap-5">
               <FormField
@@ -263,16 +269,14 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                   <FormItem className="flex items-center space-x-1 space-y-0">
                     <FormLabel className="text-nowrap">桌號</FormLabel>
                     <StoreTableCombobox
-                      /*
-                            disabled={
-                              loading ||
-                              form.watch("shippingMethodId") !==
-                              "3203cf4c-e1c7-4b79-b611-62c920b50860"
-                            }*/
-                      disabled={loading}
+                      disabled={
+                        loading ||
+                        form.watch("shippingMethodId") !== "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                      }
+                      //disabled={loading}
                       storeId={store.id}
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={field.value || ""}
                     />
                   </FormItem>
                 )}
