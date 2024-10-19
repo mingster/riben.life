@@ -8,7 +8,7 @@ import type {
 import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
-const getStore = async (storeId: string): Promise<Store> => {
+const getStoreWithCategories = async (storeId: string): Promise<Store> => {
   if (!storeId) {
     throw Error("storeId is required");
   }
@@ -92,4 +92,4 @@ const getStore = async (storeId: string): Promise<Store> => {
 
   return store;
 };
-export default getStore;
+export default getStoreWithCategories;

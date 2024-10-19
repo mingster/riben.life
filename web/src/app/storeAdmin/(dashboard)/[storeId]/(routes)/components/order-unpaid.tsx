@@ -22,8 +22,10 @@ import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
-import { ModifiyOrderDialog } from "./order-mod";
+import { ModifiyOrderDialog } from "../order/[orderId]/client";
 import Currency from "@/components/currency";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface props {
   store: Store;
@@ -145,7 +147,13 @@ export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
                         value={order.id}
                         onClick={() => handleChecked(order.id)}
                       />
-                      <ModifiyOrderDialog store={store} order={order} />
+                      <Button className="text-xs" variant={"outline"}>
+                        <Link
+                          href={`/storeAdmin/${store.id}/order/${order.id}`}
+                        >
+                          {t("Modify")}
+                        </Link>
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

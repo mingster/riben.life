@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import getStore from "@/actions/get-store";
+import getStoreWithCategories from "@/actions/get-store";
 import type { Store } from "@/types";
 import { CheckStoreAdminApiAccess } from "../api_helper";
 
@@ -12,7 +12,7 @@ export async function GET(
   try {
     CheckStoreAdminApiAccess(params.storeId);
 
-    const store = (await getStore(params.storeId)) as Store;
+    const store = (await getStoreWithCategories(params.storeId)) as Store;
 
     if (!store) {
       return new NextResponse("store not found", { status: 404 });

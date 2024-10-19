@@ -3,7 +3,7 @@ import clsx from "clsx";
 interface HeadingProps {
   title: string;
   badge?: number;
-  description: string;
+  description?: string;
   className?: string;
 }
 
