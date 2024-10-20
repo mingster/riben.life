@@ -1,4 +1,4 @@
-import { ProductCard } from "@/app/(store)/[storeId]/components/product-card";
+
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";

@@ -4,7 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useCart } from "@/hooks/use-cart";
 import type { Product } from "@/types";
 import { useForm } from "react-hook-form";
-import { Button } from "../../../../components/ui/button";
+import { Button } from "./ui/button";
 
 import { useTranslation } from "@/app/i18n/client";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,7 +31,7 @@ import { Minus, Plus } from "lucide-react";
 
 import IconButton from "@/components/ui/icon-button";
 import { useState } from "react";
-import Currency from "../../../../components/currency";
+import Currency from "./currency";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 

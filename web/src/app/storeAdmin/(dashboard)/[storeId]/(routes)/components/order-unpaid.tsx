@@ -22,7 +22,7 @@ import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
-import { ModifiyOrderDialog } from "../order/[orderId]/client";
+
 import Currency from "@/components/currency";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

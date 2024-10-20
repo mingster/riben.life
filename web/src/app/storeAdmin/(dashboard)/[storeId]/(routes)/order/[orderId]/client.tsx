@@ -384,19 +384,21 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               const errorForFieldName = errors?.OrderItemView?.[index]?.message;
 
               return (
-                <div key={item.id} className="grid grid-cols-[5%_70%_25%] gap-1 w-full">
+                <div key={item.id} className="grid grid-cols-[5%_70%_25%] gap-1 w-full border">
                   {errorForFieldName && <p>{errorForFieldName}</p>}
 
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    type="button"
-                    onClick={() => handleDeleteOrderItem(index)}
-                  >
-                    <XIcon className="text-red-400 h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      onClick={() => handleDeleteOrderItem(index)}
+                    >
+                      <XIcon className="text-red-400 h-4 w-4" />
+                    </Button>
+                  </div>
 
-                  <div className="">
+                  <div className="flex items-center">
                     {item.name}
                     {item.variants && <div className="pl-3 text-sm">- {item.variants}</div>}
                   </div>
@@ -442,7 +444,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               );
             })}
 
-            <Button onClick={() => setOpenModal(true)} variant={"outline"}>
+            <Button type='button' onClick={() => setOpenModal(true)} variant={"outline"}>
               加點
             </Button>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ProductCard } from "@/app/(store)/[storeId]/components/product-card";
+import { ProductCard } from "@/components/product-card";
 import type { Category, Product, StoreOrder } from "@/types";
 import { Prisma, type StoreTables } from "@prisma/client";
 import { ArrowUpToLine } from "lucide-react";

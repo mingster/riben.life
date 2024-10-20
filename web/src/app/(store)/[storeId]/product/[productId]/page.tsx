@@ -1,9 +1,8 @@
+import getStoreWithProducts from "@/actions/get-store-with-products";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Product, StoreWithProducts } from "@/types";
 import { redirect } from "next/navigation";
-import { ProductCard } from "../../components/product-card";
-import getStoreWithProducts from "@/actions/get-store-with-products";
 import { Client } from "./client";
 
 const StoreProductPage = async ({
