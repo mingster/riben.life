@@ -105,7 +105,12 @@ export const OrderInProgress = ({
       />
 
       <Card>
-        <Heading title={t("Order_accept_mgmt")} description="" badge={orders.length} className="pt-2" />
+        <Heading
+          title={t("Order_accept_mgmt")}
+          description=""
+          badge={orders.length}
+          className="pt-2"
+        />
 
         <CardContent className="space-y-2">
           {/* display */}
@@ -157,7 +162,7 @@ export const OrderInProgress = ({
                       {order.OrderNotes.map((note: OrderNote) => (
                         <div key={note.id}>{note.note}</div>
                       ))}
-                      <div className='flex gap-2'>
+                      <div className="flex gap-2">
                         <div>{order.isPaid === true ? "已付" : "未付"}</div>
                         <div>{order.ShippingMethod?.name}</div>
                         <div>{order.PaymentMethod?.name}</div>

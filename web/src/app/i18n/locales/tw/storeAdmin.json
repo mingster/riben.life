@@ -65,6 +65,9 @@
   "Order_status": "狀態",
   "Order_number": "單號/桌號",
   "ordered_at": "訂購時間",
+  "Order_total": "金額",
+  "Order_cashier_confirm": "確認收款",
+
   "Orders": "訂單管理",
   "PayoutSchedule_Auto_Daily": "自動 - 每日",
   "PayoutSchedule_Auto_Monthly": "自動 - 每月",

@@ -12,6 +12,7 @@ import { StoreHomeContent } from "./components/store-home-content";
 import { useTranslation } from "@/app/i18n";
 import { useI18n } from "@/providers/i18n-provider";
 import { formatDate } from "date-fns";
+import getStoreWithProducts from "@/actions/get-store-with-products";
 
 const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
   include: {
@@ -29,42 +30,7 @@ interface pageProps {
   };
 }
 const StoreHomePage: React.FC<pageProps> = async ({ params }) => {
-  const store = await sqlClient.store.findFirst({
-    where: {
-      id: params.storeId,
-    },
-    include: {
-      Categories: {
-        where: { isFeatured: true },
-        orderBy: { sortOrder: "asc" },
-        include: {
-          ProductCategories: {
-            //where: { Product: { status: ProductStatus.Published } },
-            include: {
-              Product: {
-                //where: { status: ProductStatus.Published },
-                include: {
-                  ProductImages: true,
-                  ProductAttribute: true,
-                  //ProductCategories: true,
-                  ProductOptions: {
-                    include: {
-                      ProductOptionSelections: true,
-                    },
-                    orderBy: {
-                      sortOrder: "asc",
-                    },
-                  },
-                },
-              },
-            },
-            orderBy: { sortOrder: "asc" },
-          },
-        },
-        //StoreAnnouncement: true,
-      },
-    },
-  });
+  const store = await getStoreWithProducts(params.storeId);
 
   //console.log(JSON.stringify(store));
 

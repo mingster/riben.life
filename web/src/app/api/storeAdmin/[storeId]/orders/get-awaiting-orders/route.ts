@@ -16,7 +16,13 @@ export async function GET(
     const awaiting4ProcessOrders = (await sqlClient.storeOrder.findMany({
       where: {
         storeId: params.storeId,
-        orderStatus: { in: [OrderStatus.Pending, OrderStatus.Processing, OrderStatus.InShipping] }
+        orderStatus: {
+          in: [
+            OrderStatus.Pending,
+            OrderStatus.Processing,
+            OrderStatus.InShipping,
+          ],
+        },
       },
       include: {
         OrderNotes: true,

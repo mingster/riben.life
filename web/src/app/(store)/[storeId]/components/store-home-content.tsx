@@ -1,7 +1,7 @@
 "use client";
 
-import { ProductCard } from "@/app/(store)/[storeId]/components/product-card";
-import type { Category, StoreOrder } from "@/types";
+import { ProductCard } from "@/components/product-card";
+import type { Category, Product, StoreOrder } from "@/types";
 import { Prisma, type StoreTables } from "@prisma/client";
 import { ArrowUpToLine } from "lucide-react";
 import type { StoreWithProductNCategories } from "../page";
@@ -13,10 +13,12 @@ import { getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import { ProductStatus } from "@/types/enum";
 import type { StoreSettings } from "@prisma-mongo/prisma/client";
-import ScrollSpy from "react-ui-scrollspy";
-import Link from "next/link";
 import { formatDate } from "date-fns";
-import { getOrdersToday, removeOrders } from "@/lib/order-history";
+import Link from "next/link";
+import ScrollSpy from "react-ui-scrollspy";
+import { useToast } from "@/components/ui/use-toast";
+import { useCart } from "@/hooks/use-cart";
+import { useParams } from "next/navigation";
 
 const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(
   {
@@ -74,6 +76,10 @@ export const StoreHomeContent: React.FC<props> = ({
   //const [order, setOrder] = useState<StoreOrder>();
   const params = useParams<{ storeId: string }>();
   */
+
+  const cart = useCart();
+  const { toast } = useToast();
+  const params = useParams<{ storeId: string; tableId: string }>();
 
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
@@ -146,6 +152,36 @@ export const StoreHomeContent: React.FC<props> = ({
   //removeOrders();
   //const orders = getOrdersToday() as StoreOrder[];
   //console.log('orders', JSON.stringify(orders));
+
+  const handleAddToCart = (product: Product) => {
+    const item = cart.getItem(product.id);
+    if (item) {
+      cart.updateItemQuantity(product.id, item.quantity + 1);
+    } else {
+      cart.addItem(
+        {
+          id: product.id,
+          name: product.name,
+          price: Number(product.price),
+          quantity: 1,
+          storeId: params.storeId,
+          tableId: params.tableId,
+          //...product,
+          //cartStatus: CartProductStatus.InProgress,
+          //userData: "",
+        },
+        1,
+      );
+    }
+
+    //router.push('/cart');
+
+    toast({
+      title: t("product_added_to_cart"),
+      description: "",
+      variant: "success",
+    });
+  };
 
   // http://localhost:3000/4574496e-9759-4d9c-9258-818501418747/dfc853b4-47f5-400c-a2fb-f70f045d65a0
   return (
@@ -227,6 +263,7 @@ export const StoreHomeContent: React.FC<props> = ({
                             key={pc.Product.id}
                             className=""
                             disableBuyButton={!storeData.isOpen}
+                            onPurchase={() => handleAddToCart(pc.Product)}
                             product={{
                               ...pc.Product,
                               //ProductImages: pc.Product.ProductImages,

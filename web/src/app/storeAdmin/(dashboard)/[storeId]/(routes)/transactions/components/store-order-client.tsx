@@ -168,7 +168,9 @@ export const DisplayOrders = ({ orders }: orderTabProps) => {
             <TableBody>
               {orders.map((order: StoreOrder) => (
                 <TableRow key={order.id}>
-                  <TableCell className="text-2xl font-extrabold">{order.orderNum}</TableCell>
+                  <TableCell className="text-2xl font-extrabold">
+                    {order.orderNum}
+                  </TableCell>
 
                   <TableCell>
                     {order.OrderItemView.map((item: orderitemview) => (
@@ -183,17 +185,15 @@ export const DisplayOrders = ({ orders }: orderTabProps) => {
                       <div key={note.id}>{note.note}</div>
                     ))}
 
-                    <div className='flex gap-2'>
+                    <div className="flex gap-2">
                       <div>{order.isPaid === true ? "已付" : "未付"}</div>
                       <div>{order.ShippingMethod?.name}</div>
                       <div>{order.PaymentMethod?.name}</div>
                       <div>{order.User?.name}</div>
                     </div>
-
                   </TableCell>
 
                   <TableCell>{OrderStatus[order.orderStatus]}</TableCell>
-
 
                   <TableCell>
                     {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}

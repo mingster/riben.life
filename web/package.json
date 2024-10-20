@@ -21,7 +21,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.0",
     "@hookform/resolvers": "^3.9.0",
-    "@prisma/client": "^5.20.0",
+    "@prisma/client": "^5.21.1",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -66,7 +66,7 @@
     "flatpickr": "^4.6.13",
     "focus-visible": "^5.2.1",
     "framer-motion": "^11.11.8",
-    "i18next": "^23.15.2",
+    "i18next": "^23.16.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-resources-to-backend": "^1.2.1",
     "input-otp": "^1.2.4",
@@ -89,7 +89,7 @@
     "react-dom": "18.3.1",
     "react-google-recaptcha": "^3.1.0",
     "react-hook-form": "^7.53.0",
-    "react-i18next": "^15.0.2",
+    "react-i18next": "^15.0.3",
     "react-icons": "^5.3.0",
     "react-image-file-resizer": "^0.4.8",
     "react-markdown": "^9.0.1",
@@ -115,8 +115,8 @@
     "zustand": "^4.5.5"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.3",
-    "@prisma/nextjs-monorepo-workaround-plugin": "^5.20.0",
+    "@biomejs/biome": "^1.9.4",
+    "@prisma/nextjs-monorepo-workaround-plugin": "^5.21.1",
     "@types/node": "^20.16.11",
     "@types/nodemailer": "^6.4.16",
     "@types/react": "^18.3.7",
@@ -130,8 +130,8 @@
     "eslint": "^8",
     "eslint-config-next": "^14.2.15",
     "postcss": "^8",
-    "prisma": "^5.20.0",
-    "tailwindcss": "^3.4.13",
+    "prisma": "^5.21.1",
+    "tailwindcss": "^3.4.14",
     "tailwindcss-react-aria-components": "^1.1.6",
     "typescript": "^5"
   },

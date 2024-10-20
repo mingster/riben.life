@@ -25,7 +25,9 @@ export const getOrdersToday = (): StoreOrder[] => {
   });
 };
 
-export const getOrdersTodayByStore = (storeId: string|null|undefined): StoreOrder[] => {
+export const getOrdersTodayByStore = (
+  storeId: string | null | undefined,
+): StoreOrder[] => {
   if (!storeId) return [];
 
   // filter orders by date

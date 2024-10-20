@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
-import { ProductCard } from "@/app/(store)/[storeId]/components/product-card";
+import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -50,6 +50,9 @@ export const ProductPreviewDialog: React.FC<props> = ({ initialData }) => {
 
           <ProductCard
             className="lg:min-w-[220px]"
+            onPurchase={() => {
+              alert("To be implemented");
+            }}
             disableBuyButton={true}
             product={{
               ...initialData,

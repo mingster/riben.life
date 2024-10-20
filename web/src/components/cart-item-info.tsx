@@ -107,7 +107,8 @@ const CartItemInfo: React.FC<cartItemProps> = ({
 
         return (
           <Link
-            href={`${params.storeId}/product/${id}`}
+            //href={`${params.storeId}/product/${id}`}
+            href="#"
             className="hover:text-slate"
           >
             {name}

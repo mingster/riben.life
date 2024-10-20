@@ -23,28 +23,29 @@ import { useParams } from "next/navigation";
 import { ProductOptionDialog } from "./product-option-dialog";
 
 interface ProductCardProps {
-  //product: Partial<Product>;
   product: Product;
+  onPurchase: () => void;
   disableBuyButton: boolean;
   className?: string;
 }
 
 export function ProductCard({
   product,
+  onPurchase,
   disableBuyButton,
   className,
   ...props
 }: ProductCardProps) {
-  const cart = useCart();
-  const { toast } = useToast();
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
 
+  /*
+  const cart = useCart();
+  const { toast } = useToast();
   //const params = useParams();
   //const {storeId, tableId} = params;
   const params = useParams<{ storeId: string; tableId: string }>();
   //  console.log("storeId", params.storeId, "tableId", params.tableId);
-
   const handleAddToCart = (product: Product) => {
     const item = cart.getItem(product.id);
     if (item) {
@@ -74,6 +75,7 @@ export function ProductCard({
       variant: "success",
     });
   };
+  */
 
   const enableBuy =
     !product.ProductAttribute?.disableBuyButton && !disableBuyButton;
@@ -111,7 +113,8 @@ export function ProductCard({
             }
             variant={"default"}
             className="w-full"
-            onClick={() => handleAddToCart(product)}
+            onClick={onPurchase}
+            //onClick={() => handleAddToCart(product)}
           >
             {product.ProductAttribute?.isRecurring ? t("subscribe") : t("buy")}
           </Button>

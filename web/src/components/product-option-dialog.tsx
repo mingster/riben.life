@@ -1,13 +1,13 @@
 "use client";
 
 import { useToast } from "@/components/ui/use-toast";
-import { useCart } from "@/hooks/use-cart";
 import type { ItemOption } from "@/hooks/use-cart";
+import { useCart } from "@/hooks/use-cart";
 
+import { Button } from "@/components/ui/button";
 import type { Product, ProductOption } from "@/types";
-import { useForm } from "react-hook-form";
-import { Button } from "../../../../components/ui/button";
 import type { ProductOptionSelections } from "@prisma/client";
+import { useForm } from "react-hook-form";
 
 import { useTranslation } from "@/app/i18n/client";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,14 +32,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useI18n } from "@/providers/i18n-provider";
 import { Minus, Plus } from "lucide-react";
 
+import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
 import { useState } from "react";
-import Currency from "../../../../components/currency";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { z } from "zod";
 import { useParams } from "next/navigation";
+import { z } from "zod";
 
 interface props {
   product: Product;

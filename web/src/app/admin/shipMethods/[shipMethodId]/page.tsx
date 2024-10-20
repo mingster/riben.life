@@ -15,6 +15,8 @@ const StoreEditPage = async ({
   transformDecimalsToNumbers(obj);
   //console.log('paymentMethod', JSON.stringify(obj));
 
+  //await sqlClient.storeShipMethodMapping.deleteMany({ where: {methodId: obj.id } });
+
   return (
     <div className="flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">

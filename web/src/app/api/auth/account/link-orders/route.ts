@@ -19,7 +19,7 @@ export async function PATCH(req: Request) {
     const { orderIds } = body;
 
     if (orderIds) {
-      console.log('link order', orderIds);
+      console.log("link order", orderIds);
 
       orderIds.map(async (orderId: string) => {
         await sqlClient.storeOrder.update({
@@ -28,17 +28,16 @@ export async function PATCH(req: Request) {
           },
           data: {
             userId: userId,
-            updatedAt: new Date(Date.now())
+            updatedAt: new Date(Date.now()),
           },
         });
-      })
-
+      });
     }
 
     revalidatePath("/order");
     //console.log(`updated user: ${JSON.stringify(obj)}`);
 
-    return NextResponse.json('success');
+    return NextResponse.json("success");
   } catch (error) {
     console.log("[PATCH]", error);
     return new NextResponse(`Internal error${error}`, { status: 500 });

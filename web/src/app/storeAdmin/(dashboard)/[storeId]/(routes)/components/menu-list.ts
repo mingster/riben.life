@@ -14,7 +14,8 @@ import {
   Settings,
   Tag,
   Ticket,
-  Users, UtensilsCrossed,
+  Users,
+  UtensilsCrossed,
 } from "lucide-react";
 type Submenu = {
   href: string;
@@ -45,7 +46,7 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 
   const cash = {
     href: `${nav_prefix}/cash-cashier`,
-    label: '現金結帳',
+    label: "現金結帳",
     active: pathname.includes(`${nav_prefix}/cash-cashier`),
     icon: Scale,
     submenus: [],
