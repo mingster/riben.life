@@ -29,7 +29,7 @@ import { Minus, Plus, XIcon } from "lucide-react";
 
 import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Modal } from "@/components/ui/modal";
 
@@ -38,6 +38,8 @@ import { StoreTableCombobox } from "../../components/store-table-combobox";
 
 import { useForm, type UseFormProps, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Decimal from "decimal.js";
+import { Input } from "@/components/ui/input";
 
 interface props {
   store: Store;
@@ -52,12 +54,13 @@ const formSchema = z.object({
   shippingMethodId: z.string().optional(),
   OrderItemView: z
     .object({
-      id: z.string().min(1),
-      orderId: z.string().min(1),
+      //id: z.string().min(1),
+      //orderId: z.string().min(1),
       productId: z.string().min(1),
       quantity: z.coerce.number().min(1),
-      unitDiscount: z.coerce.number().min(1),
-      unitPrice: z.coerce.number().min(1),
+      //variants: z.string().optional(),
+      //unitDiscount: z.coerce.number().min(1),
+      //unitPrice: z.coerce.number().min(1),
     })
     .array(),
 });
@@ -85,6 +88,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [orderTotal, setOrderTotal] = useState(order?.orderTotal || 0);
+  const [openModal, setOpenModal] = useState(false);
 
   const { toast } = useToast();
   const { lng } = useI18n();
@@ -98,7 +103,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     ? {
       ...order,
     }
-    : { };
+    : {};
 
   // access OrderItemView using fields
   const {
@@ -109,15 +114,16 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     reset,
     watch,
     clearErrors,
+    setValue
   } = useZodForm({
     schema: formSchema,
     defaultValues,
     mode: "onChange",
   });
 
-  const { fields, append, remove } = useFieldArray({
-    name: "OrderItemView",
-    control,
+  const { fields, update, append, prepend, remove, swap, move, insert, replace } = useFieldArray({
+    control, // control props comes from useForm (optional: if you are using FormProvider)
+    name: "OrderItemView", // unique name for your Field Array
   });
 
   //console.log("fields", fields, fields.length);
@@ -131,8 +137,16 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   const onSubmit = async (data: formValues) => {
     setLoading(true);
+    if (order?.OrderItemView.length === 0) {
+      alert('請添加商品');
+      setLoading(false);
+      return;
+    }
 
     console.log("formValues", JSON.stringify(data));
+    console.log("order", JSON.stringify(order));
+
+    // NOTE: take OrderItemView data in order object instead of fieldArray
 
     toast({
       title: "訂單更新了",
@@ -142,7 +156,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
     setLoading(false);
 
-    router.back();
+    //router.back();
   };
 
   //console.log('StorePaymentMethods', JSON.stringify(store.StorePaymentMethods));
@@ -167,16 +181,38 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     console.log("fieldName", fieldName, selectedVal);
     form.setValue("paymentMethodId", selectedVal);
   };
-  const [openModal, setOpenModal] = useState(false);
 
-  const handleIncraseQuality = () => {
+  const handleIncraseQuality = (index: number) => {
+    if (!order) return;
+
+    const row = fields[index];
+    row.quantity = row.quantity + 1;
+    update(index, row);
+
+    setValue(`OrderItemView.${index}.quantity`, row.quantity);
+    order.OrderItemView[index].quantity = row.quantity;
+
+    recalc();
+
     //console.log('handleIncraseQuality: ' + currentItem.quantity);
   };
 
-  const handleDecreaseQuality = () => {
-    //currentItem.quantity = currentItem.quantity - 1;
-    //onCartChange?.(newQuantity);
-    //console.log('handleDecreaseQuality: ' + currentItem.quantity);
+  const handleDecreaseQuality = (index: number) => {
+    if (!order) return;
+
+    const row = fields[index];
+    row.quantity = row.quantity - 1;
+    update(index, row);
+    setValue(`OrderItemView.${index}.quantity`, row.quantity);
+
+    order.OrderItemView[index].quantity = row.quantity;
+
+    if (row.quantity <= 0) {
+      handleDeleteOrderItem(index);
+      return;
+    }
+
+    recalc();
   };
 
   const handleQuantityInputChange = (
@@ -188,7 +224,19 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     }
   };
 
-  const handleDeleteOrderItem = async (index: number) => {
+  const recalc = () => {
+    if (!order) return;
+
+    let total = 0;
+    order.OrderItemView.map((item) => {
+      if (item.unitPrice && item.quantity)
+        total += Number(item.unitPrice) * item.quantity;
+    });
+    setOrderTotal(total);
+    order.orderTotal = new Decimal(total);
+  }
+
+  const handleDeleteOrderItem = (index: number) => {
     if (!order) return;
 
     const rowToRemove = fields[index];
@@ -196,18 +244,25 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     //console.log('rowToRemove: ' + rowToRemove.publicId);
     order.OrderItemView.splice(index, 1);
 
+    //remove from client data
+    fields.splice(index, 1);
+    remove(index);
+
+    recalc();
+
     //1. remove from cloud storage
 
     //2. remove from database
 
     //console.log('urlToDelete: ' + urlToDelete);
 
-    //remove from client data
-    fields.splice(index, 1);
-    remove(index);
 
     //console.log('order', JSON.stringify(order));
   };
+
+  useEffect(() => {
+    setOrderTotal(order?.orderTotal || 0);
+  }, [order?.orderTotal]);
 
   return (
     <Card>
@@ -321,68 +376,71 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                   </FormItem>
                 )}
               />
+              <div className='text-bold'><Currency value={orderTotal} /></div>
             </div>
 
+            {order?.OrderItemView.map((item, index) => {
 
-            {order?.OrderItemView.map((item, index) => (
-              <div
-                key={item.id}
-                className="grid grid-cols-[5%_70%_25%] gap-1 w-full border"
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  type="button"
-                  onClick={() => handleDeleteOrderItem(index)}
-                >
-                  <XIcon className="text-red-400 h-4 w-4" />
-                </Button>
+              const errorForFieldName = errors?.OrderItemView?.[index]?.message;
 
-                <div className="flex items-center">
-                  {item.name}
-                  {item.variants && <div className="">{item.variants}</div>}
-                </div>
+              return (
+                <div key={item.id} className="grid grid-cols-[5%_70%_25%] gap-1 w-full">
+                  {errorForFieldName && <p>{errorForFieldName}</p>}
 
-                <div className="place-self-center">
-                  <div className="flex">
-                    <div className="flex flex-nowrap content-center w-[20px]">
-                      {item.quantity && item.quantity > 0 && (
-                        //{currentItem.quantity > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    type="button"
+                    onClick={() => handleDeleteOrderItem(index)}
+                  >
+                    <XIcon className="text-red-400 h-4 w-4" />
+                  </Button>
+
+                  <div className="">
+                    {item.name}
+                    {item.variants && <div className="pl-3 text-sm">- {item.variants}</div>}
+                  </div>
+
+                  <div className="place-self-center">
+                    <div className="flex">
+                      <div className="flex flex-nowrap content-center w-[20px]">
+                        {item.quantity && item.quantity > 0 && (
+                          //{currentItem.quantity > 0 && (
+                          <IconButton
+                            onClick={() => handleDecreaseQuality(index)} icon={
+                              <Minus
+                                size={18}
+                                className="dark:text-primary text-secondary"
+                              />
+                            }
+                          />
+                        )}
+                      </div>
+                      <div className="flex flex-nowrap content-center items-center ">
+                        <Input
+                          {...register(`OrderItemView.${index}.quantity` as const)}
+                          type="number"
+                          className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          value={Number(item.quantity) || 0}
+                          onChange={handleQuantityInputChange}
+                        />
+                      </div>
+                      <div className="flex flex-nowrap content-center w-[20px]">
                         <IconButton
-                          onClick={handleDecreaseQuality}
+                          onClick={() => handleIncraseQuality(index)}
                           icon={
-                            <Minus
+                            <Plus
                               size={18}
                               className="dark:text-primary text-secondary"
                             />
                           }
                         />
-                      )}
-                    </div>
-                    <div className="flex flex-nowrap content-center items-center ">
-                      <input
-                        type="number"
-                        className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        placeholder="0"
-                        value={Number(item.quantity) || 0}
-                        onChange={handleQuantityInputChange}
-                      />
-                    </div>
-                    <div className="flex flex-nowrap content-center w-[20px]">
-                      <IconButton
-                        onClick={handleIncraseQuality}
-                        icon={
-                          <Plus
-                            size={18}
-                            className="dark:text-primary text-secondary"
-                          />
-                        }
-                      />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             <Button onClick={() => setOpenModal(true)} variant={"outline"}>
               加點

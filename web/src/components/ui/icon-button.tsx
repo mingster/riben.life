@@ -1,4 +1,4 @@
-import { MouseEventHandler } from "react";
+import type { MouseEventHandler } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -29,7 +29,7 @@ const IconButton: React.FC<IconButtonProps> = ({
   className,
 }) => {
   return (
-    <button
+    <button type='button'
       onClick={onClick}
       className={className === "" ? defaultStyles : className}
     >
