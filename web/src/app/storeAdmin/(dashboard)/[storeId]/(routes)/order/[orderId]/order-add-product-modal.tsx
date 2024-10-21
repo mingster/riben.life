@@ -66,8 +66,6 @@ export const OrderAddProductModal: React.FC<props> = ({
     }
   };
 
-
-
   const handleAddToOrder = (product: Product) => {
     if (!order) return;
 
@@ -82,7 +80,7 @@ export const OrderAddProductModal: React.FC<props> = ({
       url: null,
       orderId: order.id,
       variants: null,
-      variantCosts: null
+      variantCosts: null,
     });
 
     onValueChange?.(newItems);
@@ -111,7 +109,7 @@ export const OrderAddProductModal: React.FC<props> = ({
     //router.push('/cart');
 
     toast({
-      title: '已加入訂單',
+      title: "已加入訂單",
       description: "",
       variant: "success",
     });

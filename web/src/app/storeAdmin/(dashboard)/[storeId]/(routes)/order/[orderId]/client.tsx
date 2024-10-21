@@ -4,16 +4,16 @@ import { useToast } from "@/components/ui/use-toast";
 import { useParams, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type {
   Product,
   ProductOption,
-  StoreWithProducts,
   StoreOrder,
   StorePaymentMethodMapping,
   StoreShipMethodMapping,
+  StoreWithProducts,
 } from "@/types";
 import type { StoreTables, orderitemview } from "@prisma/client";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { useTranslation } from "@/app/i18n/client";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,10 +39,10 @@ import { Modal } from "@/components/ui/modal";
 import { z } from "zod";
 import { StoreTableCombobox } from "../../components/store-table-combobox";
 
-import { useForm, type UseFormProps, useFieldArray } from "react-hook-form";
+import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
-import { Input } from "@/components/ui/input";
+import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 import { OrderAddProductModal } from "./order-add-product-modal";
 
 interface props {
@@ -279,16 +279,19 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   const handleAddToOrder = (newItems: orderitemview[]) => {
     if (!order) return;
-    console.log('newItems', JSON.stringify(newItems));
+    console.log("newItems", JSON.stringify(newItems));
 
     order.OrderItemView = order.OrderItemView.concat(newItems);
 
     append(
-      newItems.map(item => ({ productId: item.productId, quantity: item.quantity || 1 }))
+      newItems.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity || 1,
+      })),
     );
 
     recalc();
-  }
+  };
 
   return (
     <Card>
@@ -500,7 +503,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               order={order}
               onValueChange={(newItems: orderitemview[] | []) => {
                 handleAddToOrder(newItems);
-              }} openModal={openModal}
+              }}
+              openModal={openModal}
               onModalClose={() => setOpenModal(false)}
             />
 
