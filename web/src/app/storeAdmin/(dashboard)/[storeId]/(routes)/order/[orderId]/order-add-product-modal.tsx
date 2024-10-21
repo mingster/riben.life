@@ -14,6 +14,7 @@ import type {
   Category,
   Product,
   ProductCategories,
+  StoreOrder,
   StoreWithProductNCategories,
 } from "@/types";
 import { ProductStatus } from "@/types/enum";
@@ -25,11 +26,15 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import ScrollSpy from "react-ui-scrollspy";
 import { Button } from "@/components/ui/button";
+import Decimal from "decimal.js";
+import type { orderitemview } from "@prisma/client";
 
 export interface props {
   store: StoreWithProductNCategories;
+  order: StoreOrder | null; // when null, create new order
   openModal: boolean;
   onModalClose: () => void;
+  onValueChange?: (newValue: orderitemview[]) => void;
 }
 
 // store home page.
@@ -37,8 +42,10 @@ export interface props {
 //
 export const OrderAddProductModal: React.FC<props> = ({
   store,
+  order,
   openModal,
   onModalClose,
+  onValueChange,
 }) => {
   const cart = useCart();
   const { toast } = useToast();
@@ -59,7 +66,26 @@ export const OrderAddProductModal: React.FC<props> = ({
     }
   };
 
+
+
   const handleAddToOrder = (product: Product) => {
+    if (!order) return;
+
+    const newItems: orderitemview[] = [];
+    newItems.push({
+      productId: product.id,
+      quantity: 1,
+      unitPrice: product.price,
+      unitDiscount: new Decimal(0),
+      name: product.name,
+      id: "",
+      url: null,
+      orderId: order.id,
+      variants: null,
+      variantCosts: null
+    });
+
+    onValueChange?.(newItems);
 
     /*
     const item = cart.getItem(product.id);

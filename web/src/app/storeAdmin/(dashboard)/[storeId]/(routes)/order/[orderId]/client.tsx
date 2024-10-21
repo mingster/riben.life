@@ -105,8 +105,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-        ...order,
-      }
+      ...order,
+    }
     : {};
 
   // access OrderItemView using fields
@@ -253,7 +253,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   const handleDeleteOrderItem = (index: number) => {
     if (!order) return;
 
-    const rowToRemove = fields[index];
+    //const rowToRemove = fields[index];
     //console.log("rowToRemove", JSON.stringify(rowToRemove));
     //console.log('rowToRemove: ' + rowToRemove.publicId);
     order.OrderItemView.splice(index, 1);
@@ -276,6 +276,19 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   useEffect(() => {
     setOrderTotal(order?.orderTotal || 0);
   }, [order?.orderTotal]);
+
+  const handleAddToOrder = (newItems: orderitemview[]) => {
+    if (!order) return;
+    console.log('newItems', JSON.stringify(newItems));
+
+    order.OrderItemView = order.OrderItemView.concat(newItems);
+
+    append(
+      newItems.map(item => ({ productId: item.productId, quantity: item.quantity || 1 }))
+    );
+
+    recalc();
+  }
 
   return (
     <Card>
@@ -341,7 +354,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       disabled={
                         loading ||
                         form.watch("shippingMethodId") !==
-                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                        "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}
@@ -403,8 +416,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
               return (
                 <div
-                  key={item.id}
-                  className="grid grid-cols-[5%_70%_25%] gap-1 w-full border"
+                  key={`${item.id}${index}`}
+                  className="grid grid-cols-[5%_70%_10%_15%] gap-1 w-full border"
                 >
                   {errorForFieldName && <p>{errorForFieldName}</p>}
 
@@ -424,6 +437,10 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                     {item.variants && (
                       <div className="pl-3 text-sm">- {item.variants}</div>
                     )}
+                  </div>
+
+                  <div className="place-self-center">
+                    <Currency value={Number(item.unitPrice)} />
                   </div>
 
                   <div className="place-self-center">
@@ -480,7 +497,10 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
             <OrderAddProductModal
               store={store}
-              openModal={openModal}
+              order={order}
+              onValueChange={(newItems: orderitemview[] | []) => {
+                handleAddToOrder(newItems);
+              }} openModal={openModal}
               onModalClose={() => setOpenModal(false)}
             />
 
