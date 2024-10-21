@@ -43,7 +43,7 @@ import { useForm, type UseFormProps, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
 import { Input } from "@/components/ui/input";
-import { OrderAddProductModal } from "../../components/order-add-product-modal";
+import { OrderAddProductModal } from "./order-add-product-modal";
 
 interface props {
   store: StoreWithProducts;
@@ -477,6 +477,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
             >
               加點
             </Button>
+
             <OrderAddProductModal
               store={store}
               openModal={openModal}
