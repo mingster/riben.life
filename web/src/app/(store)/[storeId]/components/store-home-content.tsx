@@ -1,46 +1,27 @@
 "use client";
 
-import { ProductCard } from "@/components/product-card";
-import type { Category, Product, StoreOrder } from "@/types";
-import { Prisma, type StoreTables } from "@prisma/client";
-import { ArrowUpToLine } from "lucide-react";
-import type { StoreWithProductNCategories } from "../page";
-
 import { useTranslation } from "@/app/i18n/client";
+import { ProductCard } from "@/components/product-card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useToast } from "@/components/ui/use-toast";
+import { useCart } from "@/hooks/use-cart";
 import BusinessHours from "@/lib/businessHours";
 import { getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
+import type {
+  Category,
+  Product,
+  ProductCategories,
+  StoreWithProductNCategories,
+} from "@/types";
 import { ProductStatus } from "@/types/enum";
 import type { StoreSettings } from "@prisma-mongo/prisma/client";
+import type { StoreTables } from "@prisma/client";
 import { formatDate } from "date-fns";
+import { ArrowUpToLine } from "lucide-react";
 import Link from "next/link";
-import ScrollSpy from "react-ui-scrollspy";
-import { useToast } from "@/components/ui/use-toast";
-import { useCart } from "@/hooks/use-cart";
 import { useParams } from "next/navigation";
-
-const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(
-  {
-    include: {
-      Product: {
-        include: {
-          ProductImages: true,
-          ProductAttribute: true,
-          ProductOptions: {
-            include: {
-              ProductOptionSelections: true,
-            },
-          },
-          ProductCategories: true,
-        },
-      },
-    },
-  },
-);
-export type ProductCategories = Prisma.ProductCategoriesGetPayload<
-  typeof prodCategoryObj
->;
+import ScrollSpy from "react-ui-scrollspy";
 
 /*
   <Image

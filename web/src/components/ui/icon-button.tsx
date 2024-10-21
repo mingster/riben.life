@@ -29,7 +29,8 @@ const IconButton: React.FC<IconButtonProps> = ({
   className,
 }) => {
   return (
-    <button type='button'
+    <button
+      type="button"
       onClick={onClick}
       className={className === "" ? defaultStyles : className}
     >

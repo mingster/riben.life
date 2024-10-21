@@ -4,12 +4,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { useParams, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import type { Product, ProductOption, Store, StoreOrder } from "@/types";
 import type {
+  Product,
+  ProductOption,
+  StoreWithProducts,
+  StoreOrder,
+  StorePaymentMethodMapping,
   StoreShipMethodMapping,
-  StoreTables,
-  orderitemview,
-} from "@prisma/client";
+} from "@/types";
+import type { StoreTables, orderitemview } from "@prisma/client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -40,9 +43,10 @@ import { useForm, type UseFormProps, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
 import { Input } from "@/components/ui/input";
+import { OrderAddProductModal } from "../../components/order-add-product-modal";
 
 interface props {
-  store: Store;
+  store: StoreWithProducts;
   order: StoreOrder | null; // when null, create new order
   action: string;
 }
@@ -101,8 +105,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-      ...order,
-    }
+        ...order,
+      }
     : {};
 
   // access OrderItemView using fields
@@ -114,14 +118,24 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     reset,
     watch,
     clearErrors,
-    setValue
+    setValue,
   } = useZodForm({
     schema: formSchema,
     defaultValues,
     mode: "onChange",
   });
 
-  const { fields, update, append, prepend, remove, swap, move, insert, replace } = useFieldArray({
+  const {
+    fields,
+    update,
+    append,
+    prepend,
+    remove,
+    swap,
+    move,
+    insert,
+    replace,
+  } = useFieldArray({
     control, // control props comes from useForm (optional: if you are using FormProvider)
     name: "OrderItemView", // unique name for your Field Array
   });
@@ -138,7 +152,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   const onSubmit = async (data: formValues) => {
     setLoading(true);
     if (order?.OrderItemView.length === 0) {
-      alert('請添加商品');
+      alert("請添加商品");
       setLoading(false);
       return;
     }
@@ -234,7 +248,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     });
     setOrderTotal(total);
     order.orderTotal = new Decimal(total);
-  }
+  };
 
   const handleDeleteOrderItem = (index: number) => {
     if (!order) return;
@@ -256,7 +270,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
     //console.log('urlToDelete: ' + urlToDelete);
 
-
     //console.log('order', JSON.stringify(order));
   };
 
@@ -273,7 +286,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
             onSubmit={form.handleSubmit(onSubmit)}
             className="w-full space-y-1"
           >
-
             {Object.entries(form.formState.errors).map(([key, error]) => (
               <div key={key} className="text-red-500">
                 {error.message?.toString()}
@@ -294,23 +306,25 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                         defaultValue={field.value}
                         className="flex items-center space-x-1 space-y-0"
                       >
-                        {store.StoreShippingMethods.map((item) => (
-                          <div
-                            key={item.ShippingMethod.id}
-                            className="flex items-center"
-                          >
-                            <FormItem className="flex items-center space-x-1 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem
-                                  value={item.ShippingMethod.id}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {item.ShippingMethod.name}
-                              </FormLabel>
-                            </FormItem>
-                          </div>
-                        ))}
+                        {store.StoreShippingMethods.map(
+                          (item: StoreShipMethodMapping) => (
+                            <div
+                              key={item.ShippingMethod.id}
+                              className="flex items-center"
+                            >
+                              <FormItem className="flex items-center space-x-1 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem
+                                    value={item.ShippingMethod.id}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {item.ShippingMethod.name}
+                                </FormLabel>
+                              </FormItem>
+                            </div>
+                          ),
+                        )}
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
@@ -326,7 +340,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                     <StoreTableCombobox
                       disabled={
                         loading ||
-                        form.watch("shippingMethodId") !== "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                        form.watch("shippingMethodId") !==
+                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}
@@ -353,38 +368,44 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                         defaultValue={field.value}
                         className="flex items-center space-x-1 space-y-0"
                       >
-                        {store.StorePaymentMethods.map((item) => (
-                          <div
-                            key={item.PaymentMethod.id}
-                            className="flex items-center"
-                          >
-                            <FormItem className="flex items-center space-x-1 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem
-                                  value={item.PaymentMethod.id}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {item.PaymentMethod.name}
-                              </FormLabel>
-                            </FormItem>
-                          </div>
-                        ))}
+                        {store.StorePaymentMethods.map(
+                          (item: StorePaymentMethodMapping) => (
+                            <div
+                              key={item.PaymentMethod.id}
+                              className="flex items-center"
+                            >
+                              <FormItem className="flex items-center space-x-1 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem
+                                    value={item.PaymentMethod.id}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {item.PaymentMethod.name}
+                                </FormLabel>
+                              </FormItem>
+                            </div>
+                          ),
+                        )}
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <div className='text-bold'><Currency value={orderTotal} /></div>
+              <div className="text-bold">
+                <Currency value={orderTotal} />
+              </div>
             </div>
 
             {order?.OrderItemView.map((item, index) => {
-
               const errorForFieldName = errors?.OrderItemView?.[index]?.message;
 
               return (
-                <div key={item.id} className="grid grid-cols-[5%_70%_25%] gap-1 w-full border">
+                <div
+                  key={item.id}
+                  className="grid grid-cols-[5%_70%_25%] gap-1 w-full border"
+                >
                   {errorForFieldName && <p>{errorForFieldName}</p>}
 
                   <div className="flex items-center">
@@ -400,7 +421,9 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
                   <div className="flex items-center">
                     {item.name}
-                    {item.variants && <div className="pl-3 text-sm">- {item.variants}</div>}
+                    {item.variants && (
+                      <div className="pl-3 text-sm">- {item.variants}</div>
+                    )}
                   </div>
 
                   <div className="place-self-center">
@@ -409,7 +432,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                         {item.quantity && item.quantity > 0 && (
                           //{currentItem.quantity > 0 && (
                           <IconButton
-                            onClick={() => handleDecreaseQuality(index)} icon={
+                            onClick={() => handleDecreaseQuality(index)}
+                            icon={
                               <Minus
                                 size={18}
                                 className="dark:text-primary text-secondary"
@@ -420,7 +444,9 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       </div>
                       <div className="flex flex-nowrap content-center items-center ">
                         <Input
-                          {...register(`OrderItemView.${index}.quantity` as const)}
+                          {...register(
+                            `OrderItemView.${index}.quantity` as const,
+                          )}
                           type="number"
                           className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           value={Number(item.quantity) || 0}
@@ -444,18 +470,18 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               );
             })}
 
-            <Button type='button' onClick={() => setOpenModal(true)} variant={"outline"}>
+            <Button
+              type="button"
+              onClick={() => setOpenModal(true)}
+              variant={"outline"}
+            >
               加點
             </Button>
-
-            <Modal
-              isOpen={openModal}
-              onClose={() => setOpenModal(false)}
-              title=""
-              description=""
-            >
-              menu
-            </Modal>
+            <OrderAddProductModal
+              store={store}
+              openModal={openModal}
+              onModalClose={() => setOpenModal(false)}
+            />
 
             <div className="w-full pt-2 pb-2">
               <Button
@@ -486,7 +512,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 刪單
               </Button>
             </div>
-
           </form>
         </Form>
       </CardContent>

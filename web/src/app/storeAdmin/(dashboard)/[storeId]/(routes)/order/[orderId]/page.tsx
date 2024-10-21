@@ -5,15 +5,18 @@ import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import getStoreWithCategories from "@/actions/get-store";
 
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import type { Store, StoreOrder } from "@/types";
+import type { StoreWithProducts, StoreOrder } from "@/types";
 import { OrderEditClient } from "./client";
+import getStoreWithProducts from "@/actions/get-store-with-products";
 
 const OrderEditPage = async ({
   params,
 }: { params: { orderId: string; storeId: string } }) => {
-
   await checkStoreAccess(params.storeId);
-  const store = (await getStoreWithCategories(params.storeId)) as Store;
+  //const store = (await getStoreWithCategories(params.storeId)) as Store;
+  const store = (await getStoreWithProducts(
+    params.storeId,
+  )) as StoreWithProducts;
 
   const order = (await sqlClient.storeOrder.findUnique({
     where: {

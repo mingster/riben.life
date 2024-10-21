@@ -28,13 +28,13 @@ import { Eye, Trash } from "lucide-react";
 
 interface editProps {
   initialData:
-  | (Product & {
-    ProductImages: ProductImages[] | [];
-    ProductAttribute: ProductAttribute | null;
-    ProductCategories: ProductCategories[] | [];
-    ProductOptions: ProductOption[] | [];
-  })
-  | null;
+    | (Product & {
+        ProductImages: ProductImages[] | [];
+        ProductAttribute: ProductAttribute | null;
+        ProductCategories: ProductCategories[] | [];
+        ProductOptions: ProductOption[] | [];
+      })
+    | null;
   allCategories: Category[];
   storeOptionTemplates: StoreProductOptionTemplate[] | [];
   action: string;

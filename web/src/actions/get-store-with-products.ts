@@ -14,6 +14,16 @@ const getStoreWithProducts = async (
       id: storeId,
     },
     include: {
+      StoreShippingMethods: {
+        include: {
+          ShippingMethod: true,
+        },
+      },
+      StorePaymentMethods: {
+        include: {
+          PaymentMethod: true,
+        },
+      },
       Categories: {
         where: { isFeatured: true },
         orderBy: { sortOrder: "asc" },

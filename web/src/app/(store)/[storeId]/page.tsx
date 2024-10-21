@@ -14,15 +14,6 @@ import { useI18n } from "@/providers/i18n-provider";
 import { formatDate } from "date-fns";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 
-const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
-  include: {
-    Categories: { include: { ProductCategories: true } },
-  },
-});
-export type StoreWithProductNCategories = Prisma.StoreGetPayload<
-  typeof storeObj
->;
-
 //import { Metadata } from 'next';
 interface pageProps {
   params: {
