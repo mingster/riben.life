@@ -562,17 +562,23 @@ export const ProductOptionDialog: React.FC<props> = ({
                           </FormLabel>
                           {option.isRequired && (
                             <div className="w-10 text-center text-green-800 text-sm bg-slate-300">
-                              {t('ProductOptionDialog_required')}
+                              {t("ProductOptionDialog_required")}
                             </div>
                           )}
                           {option.minSelection !== 0 && (
                             <div className="text-center text-green-800 text-sm bg-slate-300">
-                              {t('ProductOptionDialog_minSelection').replace('{0}', `${option.minSelection}`)}
+                              {t("ProductOptionDialog_minSelection").replace(
+                                "{0}",
+                                `${option.minSelection}`,
+                              )}
                             </div>
                           )}
                           {option.maxSelection > 1 && (
                             <div className="text-center text-green-800 text-sm bg-slate-300">
-                              {t('ProductOptionDialog_maxSelection').replace('{0}', `${option.maxSelection}`)}
+                              {t("ProductOptionDialog_maxSelection").replace(
+                                "{0}",
+                                `${option.maxSelection}`,
+                              )}
                             </div>
                           )}
                         </div>
@@ -607,23 +613,23 @@ export const ProductOptionDialog: React.FC<props> = ({
                                                 onCheckedChange={(checked) => {
                                                   return checked
                                                     ? field.onChange(
-                                                      [
-                                                        ...field.value,
-                                                        item.id,
-                                                      ],
-                                                      handleCheckbox(
-                                                        Number(item.price),
-                                                      ),
-                                                    )
+                                                        [
+                                                          ...field.value,
+                                                          item.id,
+                                                        ],
+                                                        handleCheckbox(
+                                                          Number(item.price),
+                                                        ),
+                                                      )
                                                     : field.onChange(
-                                                      field.value?.filter(
-                                                        (value: string) =>
-                                                          value !== item.id,
-                                                      ),
-                                                      handleCheckbox(
-                                                        -item.price,
-                                                      ),
-                                                    );
+                                                        field.value?.filter(
+                                                          (value: string) =>
+                                                            value !== item.id,
+                                                        ),
+                                                        handleCheckbox(
+                                                          -item.price,
+                                                        ),
+                                                      );
                                                 }}
                                               />
                                             </FormControl>

@@ -102,8 +102,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-      ...order,
-    }
+        ...order,
+      }
     : {};
 
   // access OrderItemView using fields
@@ -191,12 +191,10 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   };
 
   const handleShipMethodChange = (fieldName: string, selectedVal: string) => {
-
     console.log("fieldName", fieldName, selectedVal);
     form.setValue("shippingMethodId", selectedVal);
 
-    if (updatedOrder)
-      updatedOrder.shippingMethodId = selectedVal;
+    if (updatedOrder) updatedOrder.shippingMethodId = selectedVal;
   };
   const handlePayMethodChange = (fieldName: string, selectedVal: string) => {
     console.log("fieldName", fieldName, selectedVal);
@@ -302,7 +300,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   return (
     <Card>
-      <CardHeader>{t('Order_edit_title')}</CardHeader>
+      <CardHeader>{t("Order_edit_title")}</CardHeader>
       <CardContent>
         <Form {...form}>
           <form
@@ -364,7 +362,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       disabled={
                         loading ||
                         form.watch("shippingMethodId") !==
-                        "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}
@@ -427,7 +425,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 onClick={() => setOpenModal(true)}
                 variant={"outline"}
               >
-                {t('Order_edit_addButton')}
+                {t("Order_edit_addButton")}
               </Button>
             </div>
 
@@ -542,7 +540,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 variant={"destructive"}
                 onClick={onCancel}
               >
-                {t('Order_edit_deleteButton')}
+                {t("Order_edit_deleteButton")}
               </Button>
             </div>
           </form>

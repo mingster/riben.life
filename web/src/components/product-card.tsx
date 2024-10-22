@@ -120,7 +120,7 @@ export function ProductCard({
             variant={"default"}
             className="w-full"
             onClick={onPurchase}
-          //onClick={() => handleAddToCart(product)}
+            //onClick={() => handleAddToCart(product)}
           >
             {product.ProductAttribute?.isRecurring ? t("subscribe") : t("buy")}
           </Button>

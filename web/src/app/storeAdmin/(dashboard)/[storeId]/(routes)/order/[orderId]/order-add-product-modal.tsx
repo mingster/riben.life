@@ -47,7 +47,7 @@ export const OrderAddProductModal: React.FC<props> = ({
   const params = useParams<{ storeId: string }>();
 
   const { lng } = useI18n();
-  const { t } = useTranslation(lng, 'storeAdmin');
+  const { t } = useTranslation(lng, "storeAdmin");
   // scroll spy nav click
   const onNavlinkClick = (
     e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
@@ -66,7 +66,8 @@ export const OrderAddProductModal: React.FC<props> = ({
     if (!order) return;
     const result: orderitemview[] = [];
 
-    if (newItem) {  // add the product with variants
+    if (newItem) {
+      // add the product with variants
       result.push({
         productId: product.id,
         quantity: newItem.quantity,
@@ -79,7 +80,8 @@ export const OrderAddProductModal: React.FC<props> = ({
         variants: newItem.variants,
         variantCosts: newItem.variantCosts,
       });
-    } else {    // add the product with no variant
+    } else {
+      // add the product with no variant
       result.push({
         productId: product.id,
         quantity: 1,
