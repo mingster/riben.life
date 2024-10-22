@@ -1,19 +1,19 @@
 "use client";
 
 import { useToast } from "@/components/ui/use-toast";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import type { Product, ProductOption, Store, StoreOrder } from "@/types";
-import type {
-  StoreShipMethodMapping,
-  StoreTables,
-  orderitemview,
-} from "@prisma/client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import type {
+  StoreOrder,
+  StorePaymentMethodMapping,
+  StoreShipMethodMapping,
+  StoreWithProducts,
+} from "@/types";
+import type { orderitemview } from "@prisma/client";
 
 import { useTranslation } from "@/app/i18n/client";
-import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   Form,
@@ -31,18 +31,17 @@ import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
 import { useEffect, useState } from "react";
 
-import { Modal } from "@/components/ui/modal";
-
 import { z } from "zod";
 import { StoreTableCombobox } from "../../components/store-table-combobox";
 
-import { useForm, type UseFormProps, useFieldArray } from "react-hook-form";
+import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
-import { Input } from "@/components/ui/input";
+import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
+import { OrderAddProductModal } from "./order-add-product-modal";
 
 interface props {
-  store: Store;
+  store: StoreWithProducts;
   order: StoreOrder | null; // when null, create new order
   action: string;
 }
@@ -88,6 +87,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [updatedOrder, setUpdatedOrder] = useState<StoreOrder | null>(order);
   const [orderTotal, setOrderTotal] = useState(order?.orderTotal || 0);
   const [openModal, setOpenModal] = useState(false);
 
@@ -101,8 +102,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-      ...order,
-    }
+        ...order,
+      }
     : {};
 
   // access OrderItemView using fields
@@ -114,20 +115,30 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     reset,
     watch,
     clearErrors,
-    setValue
+    setValue,
   } = useZodForm({
     schema: formSchema,
     defaultValues,
     mode: "onChange",
   });
 
-  const { fields, update, append, prepend, remove, swap, move, insert, replace } = useFieldArray({
+  const {
+    fields,
+    update,
+    append,
+    prepend,
+    remove,
+    swap,
+    move,
+    insert,
+    replace,
+  } = useFieldArray({
     control, // control props comes from useForm (optional: if you are using FormProvider)
     name: "OrderItemView", // unique name for your Field Array
   });
 
   //console.log("fields", fields, fields.length);
-  const isSubmittable = !!isDirty && !!isValid;
+  //const isSubmittable = !!isDirty && !!isValid;
 
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
   const form = useForm<formValues>({
@@ -137,19 +148,19 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   const onSubmit = async (data: formValues) => {
     setLoading(true);
-    if (order?.OrderItemView.length === 0) {
-      alert('請添加商品');
+    if (updatedOrder?.OrderItemView.length === 0) {
+      alert(t("Order_edit_noItem"));
       setLoading(false);
       return;
     }
 
     console.log("formValues", JSON.stringify(data));
-    console.log("order", JSON.stringify(order));
+    console.log("updatedOrder", JSON.stringify(updatedOrder));
 
     // NOTE: take OrderItemView data in order object instead of fieldArray
 
     toast({
-      title: "訂單更新了",
+      title: t("Order_edit_updated"),
       description: "",
       variant: "success",
     });
@@ -170,12 +181,20 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     if (confirm("are you sure?")) {
       alert("not yet implemented");
     }
+
+    toast({
+      title: t("Order_edit_removed"),
+      description: "",
+      variant: "success",
+    });
     router.back();
   };
 
   const handleShipMethodChange = (fieldName: string, selectedVal: string) => {
     console.log("fieldName", fieldName, selectedVal);
     form.setValue("shippingMethodId", selectedVal);
+
+    if (updatedOrder) updatedOrder.shippingMethodId = selectedVal;
   };
   const handlePayMethodChange = (fieldName: string, selectedVal: string) => {
     console.log("fieldName", fieldName, selectedVal);
@@ -183,14 +202,14 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   };
 
   const handleIncraseQuality = (index: number) => {
-    if (!order) return;
+    if (!updatedOrder) return;
 
     const row = fields[index];
     row.quantity = row.quantity + 1;
     update(index, row);
 
     setValue(`OrderItemView.${index}.quantity`, row.quantity);
-    order.OrderItemView[index].quantity = row.quantity;
+    updatedOrder.OrderItemView[index].quantity = row.quantity;
 
     recalc();
 
@@ -198,14 +217,14 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   };
 
   const handleDecreaseQuality = (index: number) => {
-    if (!order) return;
+    if (!updatedOrder) return;
 
     const row = fields[index];
     row.quantity = row.quantity - 1;
     update(index, row);
     setValue(`OrderItemView.${index}.quantity`, row.quantity);
 
-    order.OrderItemView[index].quantity = row.quantity;
+    updatedOrder.OrderItemView[index].quantity = row.quantity;
 
     if (row.quantity <= 0) {
       handleDeleteOrderItem(index);
@@ -225,28 +244,28 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   };
 
   const recalc = () => {
-    if (!order) return;
+    if (!updatedOrder) return;
 
     let total = 0;
-    order.OrderItemView.map((item) => {
+    updatedOrder.OrderItemView.map((item) => {
       if (item.unitPrice && item.quantity)
         total += Number(item.unitPrice) * item.quantity;
     });
     setOrderTotal(total);
-    order.orderTotal = new Decimal(total);
-  }
+    updatedOrder.orderTotal = new Decimal(total);
+  };
 
   const handleDeleteOrderItem = (index: number) => {
-    if (!order) return;
+    if (!updatedOrder) return;
 
-    const rowToRemove = fields[index];
+    //const rowToRemove = fields[index];
     //console.log("rowToRemove", JSON.stringify(rowToRemove));
     //console.log('rowToRemove: ' + rowToRemove.publicId);
-    order.OrderItemView.splice(index, 1);
+    updatedOrder.OrderItemView.splice(index, 1);
 
     //remove from client data
     fields.splice(index, 1);
-    remove(index);
+    //remove(index);
 
     recalc();
 
@@ -256,24 +275,38 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
     //console.log('urlToDelete: ' + urlToDelete);
 
-
     //console.log('order', JSON.stringify(order));
   };
 
   useEffect(() => {
-    setOrderTotal(order?.orderTotal || 0);
-  }, [order?.orderTotal]);
+    setOrderTotal(updatedOrder?.orderTotal || 0);
+  }, [updatedOrder?.orderTotal]);
+
+  const handleAddToOrder = (newItems: orderitemview[]) => {
+    if (!updatedOrder) return;
+    //console.log("newItems", JSON.stringify(newItems));
+
+    updatedOrder.OrderItemView = updatedOrder.OrderItemView.concat(newItems);
+
+    append(
+      newItems.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity || 1,
+      })),
+    );
+
+    recalc();
+  };
 
   return (
     <Card>
-      <CardHeader>新增/修改訂單</CardHeader>
+      <CardHeader>{t("Order_edit_title")}</CardHeader>
       <CardContent>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="w-full space-y-1"
           >
-
             {Object.entries(form.formState.errors).map(([key, error]) => (
               <div key={key} className="text-red-500">
                 {error.message?.toString()}
@@ -294,23 +327,25 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                         defaultValue={field.value}
                         className="flex items-center space-x-1 space-y-0"
                       >
-                        {store.StoreShippingMethods.map((item) => (
-                          <div
-                            key={item.ShippingMethod.id}
-                            className="flex items-center"
-                          >
-                            <FormItem className="flex items-center space-x-1 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem
-                                  value={item.ShippingMethod.id}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {item.ShippingMethod.name}
-                              </FormLabel>
-                            </FormItem>
-                          </div>
-                        ))}
+                        {store.StoreShippingMethods.map(
+                          (item: StoreShipMethodMapping) => (
+                            <div
+                              key={item.ShippingMethod.id}
+                              className="flex items-center"
+                            >
+                              <FormItem className="flex items-center space-x-1 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem
+                                    value={item.ShippingMethod.id}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {item.ShippingMethod.name}
+                                </FormLabel>
+                              </FormItem>
+                            </div>
+                          ),
+                        )}
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
@@ -326,7 +361,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                     <StoreTableCombobox
                       disabled={
                         loading ||
-                        form.watch("shippingMethodId") !== "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                        form.watch("shippingMethodId") !==
+                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}
@@ -353,38 +389,63 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                         defaultValue={field.value}
                         className="flex items-center space-x-1 space-y-0"
                       >
-                        {store.StorePaymentMethods.map((item) => (
-                          <div
-                            key={item.PaymentMethod.id}
-                            className="flex items-center"
-                          >
-                            <FormItem className="flex items-center space-x-1 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem
-                                  value={item.PaymentMethod.id}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {item.PaymentMethod.name}
-                              </FormLabel>
-                            </FormItem>
-                          </div>
-                        ))}
+                        {store.StorePaymentMethods.map(
+                          (item: StorePaymentMethodMapping) => (
+                            <div
+                              key={item.PaymentMethod.id}
+                              className="flex items-center"
+                            >
+                              <FormItem className="flex items-center space-x-1 space-y-0">
+                                <FormControl>
+                                  <RadioGroupItem
+                                    value={item.PaymentMethod.id}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {item.PaymentMethod.name}
+                                </FormLabel>
+                              </FormItem>
+                            </div>
+                          ),
+                        )}
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <div className='text-bold'><Currency value={orderTotal} /></div>
+              <div className="text-bold">
+                <Currency value={orderTotal} />
+              </div>
             </div>
 
-            {order?.OrderItemView.map((item, index) => {
+            <div className="w-full text-right">
+              <Button
+                type="button"
+                onClick={() => setOpenModal(true)}
+                variant={"outline"}
+              >
+                {t("Order_edit_addButton")}
+              </Button>
+            </div>
 
+            <OrderAddProductModal
+              store={store}
+              order={order}
+              onValueChange={(newItems: orderitemview[] | []) => {
+                handleAddToOrder(newItems);
+              }}
+              openModal={openModal}
+              onModalClose={() => setOpenModal(false)}
+            />
+            {updatedOrder?.OrderItemView.map((item, index) => {
               const errorForFieldName = errors?.OrderItemView?.[index]?.message;
 
               return (
-                <div key={item.id} className="grid grid-cols-[5%_70%_25%] gap-1 w-full border">
+                <div
+                  key={`${item.id}${index}`}
+                  className="grid grid-cols-[5%_70%_10%_15%] gap-1 w-full border"
+                >
                   {errorForFieldName && <p>{errorForFieldName}</p>}
 
                   <div className="flex items-center">
@@ -400,7 +461,13 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
                   <div className="flex items-center">
                     {item.name}
-                    {item.variants && <div className="pl-3 text-sm">- {item.variants}</div>}
+                    {item.variants && (
+                      <div className="pl-3 text-sm">- {item.variants}</div>
+                    )}
+                  </div>
+
+                  <div className="place-self-center">
+                    <Currency value={Number(item.unitPrice)} />
                   </div>
 
                   <div className="place-self-center">
@@ -409,7 +476,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                         {item.quantity && item.quantity > 0 && (
                           //{currentItem.quantity > 0 && (
                           <IconButton
-                            onClick={() => handleDecreaseQuality(index)} icon={
+                            onClick={() => handleDecreaseQuality(index)}
+                            icon={
                               <Minus
                                 size={18}
                                 className="dark:text-primary text-secondary"
@@ -420,7 +488,9 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       </div>
                       <div className="flex flex-nowrap content-center items-center ">
                         <Input
-                          {...register(`OrderItemView.${index}.quantity` as const)}
+                          {...register(
+                            `OrderItemView.${index}.quantity` as const,
+                          )}
                           type="number"
                           className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           value={Number(item.quantity) || 0}
@@ -443,19 +513,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 </div>
               );
             })}
-
-            <Button type='button' onClick={() => setOpenModal(true)} variant={"outline"}>
-              加點
-            </Button>
-
-            <Modal
-              isOpen={openModal}
-              onClose={() => setOpenModal(false)}
-              title=""
-              description=""
-            >
-              menu
-            </Modal>
 
             <div className="w-full pt-2 pb-2">
               <Button
@@ -483,10 +540,9 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 variant={"destructive"}
                 onClick={onCancel}
               >
-                刪單
+                {t("Order_edit_deleteButton")}
               </Button>
             </div>
-
           </form>
         </Form>
       </CardContent>

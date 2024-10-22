@@ -62,6 +62,17 @@ export type StoreShipMethodMapping = Prisma.StoreShipMethodMappingGetPayload<
   typeof shipmethodMappingObj
 >;
 
+const storeCategoryObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
+  include: {
+    StoreShippingMethods,
+    StorePaymentMethods,
+    Categories: { include: { ProductCategories: true } },
+  },
+});
+export type StoreWithProductNCategories = Prisma.StoreGetPayload<
+  typeof storeCategoryObj
+>;
+
 const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
   include: {
     Categories: true,
@@ -85,6 +96,8 @@ export type Store = Prisma.StoreGetPayload<typeof storeObj>;
 
 const storeWithProductObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
   include: {
+    StoreShippingMethods,
+    StorePaymentMethods,
     Categories: {
       include: {
         ProductCategories: {
@@ -122,6 +135,28 @@ const orderObj = Prisma.validator<Prisma.StoreOrderDefaultArgs>()({
   },
 });
 export type StoreOrder = Prisma.StoreOrderGetPayload<typeof orderObj>;
+
+const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(
+  {
+    include: {
+      Product: {
+        include: {
+          ProductImages: true,
+          ProductAttribute: true,
+          ProductOptions: {
+            include: {
+              ProductOptionSelections: true,
+            },
+          },
+          ProductCategories: true,
+        },
+      },
+    },
+  },
+);
+export type ProductCategories = Prisma.ProductCategoriesGetPayload<
+  typeof prodCategoryObj
+>;
 
 const productObj = Prisma.validator<Prisma.ProductDefaultArgs>()({
   include: {

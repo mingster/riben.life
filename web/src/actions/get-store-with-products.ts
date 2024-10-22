@@ -1,6 +1,11 @@
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import type { StoreWithProducts } from "@/types";
+import type {
+  StorePaymentMethodMapping,
+  StoreShipMethodMapping,
+  StoreWithProducts,
+} from "@/types";
+import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 
 const getStoreWithProducts = async (
   storeId: string,
@@ -14,6 +19,16 @@ const getStoreWithProducts = async (
       id: storeId,
     },
     include: {
+      StoreShippingMethods: {
+        include: {
+          ShippingMethod: true,
+        },
+      },
+      StorePaymentMethods: {
+        include: {
+          PaymentMethod: true,
+        },
+      },
       Categories: {
         where: { isFeatured: true },
         orderBy: { sortOrder: "asc" },
@@ -48,6 +63,54 @@ const getStoreWithProducts = async (
   if (!store) {
     throw Error("no store found");
   }
+
+  const defaultPaymentMethods = (await sqlClient.paymentMethod.findMany({
+    where: {
+      isDefault: true,
+    },
+  })) as PaymentMethod[];
+
+  // add default payment methods to the store
+  // skip if store already has the method(s)
+  defaultPaymentMethods.map((paymentMethod) => {
+    if (
+      !store.StorePaymentMethods.find(
+        (existingMethod) => existingMethod.id === paymentMethod.id,
+      )
+    ) {
+      const mapping = {
+        storeId: store.id,
+        methodId: paymentMethod.id,
+        PaymentMethod: paymentMethod,
+      } as StorePaymentMethodMapping;
+
+      store.StorePaymentMethods.push(mapping);
+    }
+  });
+
+  // add default shipping methods to the store
+  // skip if store already has the method(s)
+  const defaultShippingMethods = (await sqlClient.shippingMethod.findMany({
+    where: {
+      isDefault: true,
+    },
+  })) as ShippingMethod[];
+
+  defaultShippingMethods.map((method) => {
+    if (
+      !store.StoreShippingMethods.find(
+        (existingMethod) => existingMethod.id === method.id,
+      )
+    ) {
+      const mapping = {
+        storeId: store.id,
+        methodId: method.id,
+        ShippingMethod: method,
+      } as StoreShipMethodMapping;
+
+      store.StoreShippingMethods.push(mapping);
+    }
+  });
 
   transformDecimalsToNumbers(store);
 
