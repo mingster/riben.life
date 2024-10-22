@@ -50,7 +50,12 @@ interface props {
 
 // display product options for user to select and buy
 //
-export const ProductOptionDialog: React.FC<props> = ({ product, disableBuyButton, onPurchase, onValueChange }) => {
+export const ProductOptionDialog: React.FC<props> = ({
+  product,
+  disableBuyButton,
+  onPurchase,
+  onValueChange,
+}) => {
   const [open, setOpen] = useState(false);
   const cart = useCart();
   const { toast } = useToast();
@@ -367,10 +372,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product, disableBuyButton
 
         onValueChange?.(newItem);
 
-        cart.addItem(
-          newItem,
-          quantity,
-        );
+        cart.addItem(newItem, quantity);
       }
 
       toast({
@@ -390,9 +392,11 @@ export const ProductOptionDialog: React.FC<props> = ({ product, disableBuyButton
       });
     }
   };
+
+  // construct form data into CartItem, and return to parent component
   const onClick = () => {
     const data = form.getValues();
-    console.log("data", JSON.stringify(data));
+    //console.log("data", JSON.stringify(data));
 
     // Map form data to item
     const itemOptions: ItemOption[] = [];
@@ -452,11 +456,11 @@ export const ProductOptionDialog: React.FC<props> = ({ product, disableBuyButton
     } as Item;
 
     onValueChange?.(newItem);
-    onPurchase();
+    //onPurchase();
 
     // close the dialog
     setOpen(false);
-  }
+  };
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     //console.log("data", JSON.stringify(data));
@@ -519,7 +523,7 @@ export const ProductOptionDialog: React.FC<props> = ({ product, disableBuyButton
       } as Item;
 
       onValueChange?.(newItem);
-      onPurchase();
+      //onPurchase();
 
       // close the dialog
       setOpen(false);
@@ -690,23 +694,23 @@ export const ProductOptionDialog: React.FC<props> = ({ product, disableBuyButton
                                                 onCheckedChange={(checked) => {
                                                   return checked
                                                     ? field.onChange(
-                                                      [
-                                                        ...field.value,
-                                                        item.id,
-                                                      ],
-                                                      handleCheckbox(
-                                                        Number(item.price),
-                                                      ),
-                                                    )
+                                                        [
+                                                          ...field.value,
+                                                          item.id,
+                                                        ],
+                                                        handleCheckbox(
+                                                          Number(item.price),
+                                                        ),
+                                                      )
                                                     : field.onChange(
-                                                      field.value?.filter(
-                                                        (value: string) =>
-                                                          value !== item.id,
-                                                      ),
-                                                      handleCheckbox(
-                                                        -item.price,
-                                                      ),
-                                                    );
+                                                        field.value?.filter(
+                                                          (value: string) =>
+                                                            value !== item.id,
+                                                        ),
+                                                        handleCheckbox(
+                                                          -item.price,
+                                                        ),
+                                                      );
                                                 }}
                                               />
                                             </FormControl>
@@ -847,8 +851,6 @@ export const ProductOptionDialog: React.FC<props> = ({ product, disableBuyButton
                       </div>
                     </div>
                   </Button>
-
-
                 </DialogFooter>
               </form>
             </Form>

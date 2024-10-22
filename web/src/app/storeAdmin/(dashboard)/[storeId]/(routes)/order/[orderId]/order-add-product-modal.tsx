@@ -68,7 +68,6 @@ export const OrderAddProductModal: React.FC<props> = ({
 
   // called when user click Add button in ProductCard
   const handleAddToOrder = (product: Product, newItem: Item | null) => {
-
     if (!order) return;
     const result: orderitemview[] = [];
 
@@ -85,8 +84,7 @@ export const OrderAddProductModal: React.FC<props> = ({
         variants: newItem.variants,
         variantCosts: newItem.variantCosts,
       });
-    }
-    else {
+    } else {
       result.push({
         productId: product.id,
         quantity: 1,
@@ -172,7 +170,9 @@ export const OrderAddProductModal: React.FC<props> = ({
                               onValueChange={(newItem: Item) => {
                                 handleAddToOrder(pc.Product, newItem);
                               }}
-                              onPurchase={() => handleAddToOrder(pc.Product, null)}
+                              onPurchase={() =>
+                                handleAddToOrder(pc.Product, null)
+                              }
                               product={{
                                 ...pc.Product,
                                 //ProductImages: pc.Product.ProductImages,

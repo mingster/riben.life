@@ -4,7 +4,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { ProductCard } from "@/components/product-card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
-import { useCart } from "@/hooks/use-cart";
+import { Item, useCart } from "@/hooks/use-cart";
 import BusinessHours from "@/lib/businessHours";
 import { getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
@@ -134,29 +134,39 @@ export const StoreHomeContent: React.FC<props> = ({
   //const orders = getOrdersToday() as StoreOrder[];
   //console.log('orders', JSON.stringify(orders));
 
-  const handleAddToCart = (product: Product) => {
-    const item = cart.getItem(product.id);
-    if (item) {
-      cart.updateItemQuantity(product.id, item.quantity + 1);
+  const handleAddToCart = (product: Product, newItem: Item | null) => {
+    if (newItem != null) {
+      // add product to cart with variants
+      const test = cart.getItem(newItem.id);
+      if (test) {
+        cart.updateItemQuantity(newItem.id, test.quantity + 1);
+      } else {
+        cart.addItem(newItem, newItem?.quantity ?? 1);
+      }
     } else {
-      cart.addItem(
-        {
-          id: product.id,
-          name: product.name,
-          price: Number(product.price),
-          quantity: 1,
-          storeId: params.storeId,
-          tableId: params.tableId,
-          //...product,
-          //cartStatus: CartProductStatus.InProgress,
-          //userData: "",
-        },
-        1,
-      );
+      // add product to cart with no variant
+      const item = cart.getItem(product.id);
+      if (item) {
+        cart.updateItemQuantity(product.id, item.quantity + 1);
+      } else {
+        cart.addItem(
+          {
+            id: product.id,
+            name: product.name,
+            price: Number(product.price),
+            quantity: 1,
+            storeId: params.storeId,
+            tableId: params.tableId,
+            //...product,
+            //cartStatus: CartProductStatus.InProgress,
+            //userData: "",
+          },
+          1,
+        );
+      }
     }
 
     //router.push('/cart');
-
     toast({
       title: t("product_added_to_cart"),
       description: "",
@@ -244,7 +254,10 @@ export const StoreHomeContent: React.FC<props> = ({
                             key={pc.Product.id}
                             className=""
                             disableBuyButton={!storeData.isOpen}
-                            onPurchase={() => handleAddToCart(pc.Product)}  //occurs when button is clicked
+                            onValueChange={(newItem: Item) => {
+                              handleAddToCart(pc.Product, newItem);
+                            }}
+                            onPurchase={() => handleAddToCart(pc.Product, null)}
                             product={{
                               ...pc.Product,
                               //ProductImages: pc.Product.ProductImages,

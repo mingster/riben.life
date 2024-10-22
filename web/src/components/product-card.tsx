@@ -107,20 +107,22 @@ export function ProductCard({
       </CardContent>
       <CardFooter className="place-self-end">
         {enableBuy && product.ProductOptions.length > 0 ? (
-          <ProductOptionDialog product={product}
+          <ProductOptionDialog
+            product={product}
             disableBuyButton={!enableBuy}
             onPurchase={onPurchase}
-            onValueChange={onValueChange}/>
+            onValueChange={onValueChange}
+          />
         ) : (
           <Button
-            type='button'
+            type="button"
             title={
               product.ProductAttribute?.isRecurring ? t("subscribe") : t("buy")
             }
             variant={"default"}
             className="w-full"
             onClick={onPurchase}
-          //onClick={() => handleAddToCart(product)}
+            //onClick={() => handleAddToCart(product)}
           >
             {product.ProductAttribute?.isRecurring ? t("subscribe") : t("buy")}
           </Button>

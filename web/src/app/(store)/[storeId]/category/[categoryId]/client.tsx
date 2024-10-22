@@ -5,7 +5,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
 import { useToast } from "@/components/ui/use-toast";
-import { useCart } from "@/hooks/use-cart";
+import { type Item, useCart } from "@/hooks/use-cart";
 import { useParams } from "next/navigation";
 
 import type { Category, Product, Store } from "@/types";
@@ -39,29 +39,39 @@ export const Client: React.FC<props> = ({ store, category }) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
 
-  const handleAddToCart = (product: Product) => {
-    const item = cart.getItem(product.id);
-    if (item) {
-      cart.updateItemQuantity(product.id, item.quantity + 1);
+  const handleAddToCart = (product: Product, newItem: Item | null) => {
+    if (newItem != null) {
+      // add product to cart with variants
+      const test = cart.getItem(newItem.id);
+      if (test) {
+        cart.updateItemQuantity(newItem.id, test.quantity + 1);
+      } else {
+        cart.addItem(newItem, newItem?.quantity ?? 1);
+      }
     } else {
-      cart.addItem(
-        {
-          id: product.id,
-          name: product.name,
-          price: Number(product.price),
-          quantity: 1,
-          storeId: params.storeId,
-          tableId: params.tableId,
-          //...product,
-          //cartStatus: CartProductStatus.InProgress,
-          //userData: "",
-        },
-        1,
-      );
+      // add product to cart with no variant
+      const item = cart.getItem(product.id);
+      if (item) {
+        cart.updateItemQuantity(product.id, item.quantity + 1);
+      } else {
+        cart.addItem(
+          {
+            id: product.id,
+            name: product.name,
+            price: Number(product.price),
+            quantity: 1,
+            storeId: params.storeId,
+            tableId: params.tableId,
+            //...product,
+            //cartStatus: CartProductStatus.InProgress,
+            //userData: "",
+          },
+          1,
+        );
+      }
     }
 
     //router.push('/cart');
-
     toast({
       title: t("product_added_to_cart"),
       description: "",
@@ -76,7 +86,10 @@ export const Client: React.FC<props> = ({ store, category }) => {
         <ProductCard
           key={pc.Product.id}
           className="lg:min-w-[220px]"
-          onPurchase={() => handleAddToCart(pc.Product)}
+          onValueChange={(newItem: Item) => {
+            handleAddToCart(pc.Product, newItem);
+          }}
+          onPurchase={() => handleAddToCart(pc.Product, null)}
           disableBuyButton={!store.isOpen}
           product={{
             ...pc.Product,

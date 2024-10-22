@@ -9,7 +9,7 @@ import type {
   StoreOrder,
   StorePaymentMethodMapping,
   StoreShipMethodMapping,
-  StoreWithProducts
+  StoreWithProducts,
 } from "@/types";
 import type { orderitemview } from "@prisma/client";
 
@@ -102,8 +102,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-      ...order,
-    }
+        ...order,
+      }
     : {};
 
   // access OrderItemView using fields
@@ -354,7 +354,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       disabled={
                         loading ||
                         form.watch("shippingMethodId") !==
-                        "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}
@@ -411,7 +411,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               </div>
             </div>
 
-            <div className='w-full text-right'>
+            <div className="w-full text-right">
               <Button
                 type="button"
                 onClick={() => setOpenModal(true)}
