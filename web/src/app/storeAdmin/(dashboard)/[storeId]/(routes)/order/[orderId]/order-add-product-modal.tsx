@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/product-card";
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
-import { Item, useCart } from "@/hooks/use-cart";
+import { type Item, useCart } from "@/hooks/use-cart";
 import { cn, getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
@@ -18,16 +18,11 @@ import type {
   StoreWithProductNCategories,
 } from "@/types";
 import { ProductStatus } from "@/types/enum";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { formatDate } from "date-fns";
-import { ArrowUpToLine, XIcon } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import ScrollSpy from "react-ui-scrollspy";
-import { Button } from "@/components/ui/button";
-import Decimal from "decimal.js";
 import type { orderitemview } from "@prisma/client";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import Decimal from "decimal.js";
+import { useParams } from "next/navigation";
+import ScrollSpy from "react-ui-scrollspy";
 
 export interface props {
   store: StoreWithProductNCategories;
@@ -52,7 +47,7 @@ export const OrderAddProductModal: React.FC<props> = ({
   const params = useParams<{ storeId: string }>();
 
   const { lng } = useI18n();
-  const { t } = useTranslation(lng);
+  const { t } = useTranslation(lng, 'storeAdmin');
   // scroll spy nav click
   const onNavlinkClick = (
     e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
@@ -71,7 +66,7 @@ export const OrderAddProductModal: React.FC<props> = ({
     if (!order) return;
     const result: orderitemview[] = [];
 
-    if (newItem) {
+    if (newItem) {  // add the product with variants
       result.push({
         productId: product.id,
         quantity: newItem.quantity,
@@ -84,7 +79,7 @@ export const OrderAddProductModal: React.FC<props> = ({
         variants: newItem.variants,
         variantCosts: newItem.variantCosts,
       });
-    } else {
+    } else {    // add the product with no variant
       result.push({
         productId: product.id,
         quantity: 1,
@@ -102,7 +97,7 @@ export const OrderAddProductModal: React.FC<props> = ({
     onValueChange?.(result);
 
     toast({
-      title: "已加入訂單",
+      title: t("Order_add_product_modal_updated"),
       description: "",
       variant: "success",
     });

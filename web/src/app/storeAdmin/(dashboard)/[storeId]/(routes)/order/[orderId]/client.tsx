@@ -102,8 +102,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-        ...order,
-      }
+      ...order,
+    }
     : {};
 
   // access OrderItemView using fields
@@ -138,7 +138,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   });
 
   //console.log("fields", fields, fields.length);
-  const isSubmittable = !!isDirty && !!isValid;
+  //const isSubmittable = !!isDirty && !!isValid;
 
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
   const form = useForm<formValues>({
@@ -149,7 +149,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   const onSubmit = async (data: formValues) => {
     setLoading(true);
     if (updatedOrder?.OrderItemView.length === 0) {
-      alert("請添加商品");
+      alert(t("Order_edit_noItem"));
       setLoading(false);
       return;
     }
@@ -160,7 +160,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     // NOTE: take OrderItemView data in order object instead of fieldArray
 
     toast({
-      title: "訂單更新了",
+      title: t("Order_edit_updated"),
       description: "",
       variant: "success",
     });
@@ -181,12 +181,22 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     if (confirm("are you sure?")) {
       alert("not yet implemented");
     }
+
+    toast({
+      title: t("Order_edit_removed"),
+      description: "",
+      variant: "success",
+    });
     router.back();
   };
 
   const handleShipMethodChange = (fieldName: string, selectedVal: string) => {
+
     console.log("fieldName", fieldName, selectedVal);
     form.setValue("shippingMethodId", selectedVal);
+
+    if (updatedOrder)
+      updatedOrder.shippingMethodId = selectedVal;
   };
   const handlePayMethodChange = (fieldName: string, selectedVal: string) => {
     console.log("fieldName", fieldName, selectedVal);
@@ -292,7 +302,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   return (
     <Card>
-      <CardHeader>新增/修改訂單</CardHeader>
+      <CardHeader>{t('Order_edit_title')}</CardHeader>
       <CardContent>
         <Form {...form}>
           <form
@@ -354,7 +364,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       disabled={
                         loading ||
                         form.watch("shippingMethodId") !==
-                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                        "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}
@@ -417,7 +427,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 onClick={() => setOpenModal(true)}
                 variant={"outline"}
               >
-                加點
+                {t('Order_edit_addButton')}
               </Button>
             </div>
 
@@ -532,7 +542,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 variant={"destructive"}
                 onClick={onCancel}
               >
-                刪單
+                {t('Order_edit_deleteButton')}
               </Button>
             </div>
           </form>

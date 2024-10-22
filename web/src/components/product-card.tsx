@@ -9,8 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { type Item, useCart } from "@/hooks/use-cart";
+import type { Item } from "@/hooks/use-cart";
 import type { Product } from "@/types";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -19,7 +18,6 @@ import { CalendarPlus2 } from "lucide-react";
 
 import Currency from "@/components/currency";
 
-import { useParams } from "next/navigation";
 import { ProductOptionDialog } from "./product-option-dialog";
 
 interface ProductCardProps {
@@ -110,7 +108,7 @@ export function ProductCard({
           <ProductOptionDialog
             product={product}
             disableBuyButton={!enableBuy}
-            onPurchase={onPurchase}
+            //onPurchase={onPurchase}
             onValueChange={onValueChange}
           />
         ) : (
@@ -122,7 +120,7 @@ export function ProductCard({
             variant={"default"}
             className="w-full"
             onClick={onPurchase}
-            //onClick={() => handleAddToCart(product)}
+          //onClick={() => handleAddToCart(product)}
           >
             {product.ProductAttribute?.isRecurring ? t("subscribe") : t("buy")}
           </Button>

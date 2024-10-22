@@ -6,7 +6,7 @@ import { useCart } from "@/hooks/use-cart";
 
 import { Button } from "@/components/ui/button";
 import type { Product, ProductOption } from "@/types";
-import type { orderitemview, ProductOptionSelections } from "@prisma/client";
+import type { ProductOptionSelections } from "@prisma/client";
 import { useForm } from "react-hook-form";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -44,16 +44,16 @@ import { z } from "zod";
 interface props {
   product: Product;
   disableBuyButton: boolean;
-  onPurchase: () => void;
+  //onPurchase: () => void;
   onValueChange?: (newValue: Item) => void; // return configured CartItem back to parent component
 }
 
-// display product options for user to select and buy
+// display product options for user to configure product variants.
 //
 export const ProductOptionDialog: React.FC<props> = ({
   product,
   disableBuyButton,
-  onPurchase,
+  //onPurchase,
   onValueChange,
 }) => {
   const [open, setOpen] = useState(false);
@@ -304,95 +304,6 @@ export const ProductOptionDialog: React.FC<props> = ({
     return null;
   }
 
-  // add the product selection to the cart
-  const onSubmitOld = async (data: z.infer<typeof formSchema>) => {
-    //console.log("data", JSON.stringify(data));
-
-    try {
-      const item = cart.getItem(product.id);
-      if (item) {
-        cart.updateItemQuantity(product.id, item.quantity + 1);
-      } else {
-        // Map form data to itemOptions
-        const itemOptions: ItemOption[] = [];
-
-        // NOTE: cartId is used to identify the item in the cart
-        // it's formatted as a query string of the form data
-        let cartId = `${product.id}?`;
-
-        let variants = "";
-        let variantCosts = "";
-
-        // console.log("form data", JSON.stringify(data));
-        for (const [key, value] of Object.entries(data)) {
-          //console.log(`${key}: ${value} ${typeof value}`);
-
-          cartId += `${key}=${value}&`;
-
-          if (typeof value === "string") {
-            // radio button
-            const itemOption = getCartItemOption(value);
-            if (itemOption) {
-              itemOptions.push(itemOption);
-
-              variants += `${itemOption.value},`;
-              variantCosts += `${itemOption.price},`;
-            }
-          } else if (Array.isArray(value)) {
-            // checkboxes
-            value.forEach((selection: string, index: number) => {
-              //console.log(`selection: [${index}] ${selection}`);
-              const itemOption = getCartItemOption(selection);
-              if (itemOption) {
-                itemOptions.push(itemOption);
-                variants += `${itemOption.value},`;
-                variantCosts += `${itemOption.price},`;
-              }
-            });
-          }
-        }
-
-        // trim off end comma
-        if (variants.length > 2) {
-          variants = variants.substring(0, variants.length - 1);
-          variantCosts = variantCosts.substring(0, variantCosts.length - 1);
-        }
-
-        const newItem = {
-          id: cartId,
-          name: product.name,
-          price: unitPrice,
-          quantity: quantity,
-          itemOptions: itemOptions,
-          storeId: params.storeId,
-          tableId: params.tableId,
-          variants: variants,
-          variantCosts: variantCosts,
-        } as Item;
-
-        onValueChange?.(newItem);
-
-        cart.addItem(newItem, quantity);
-      }
-
-      toast({
-        title: t("product_added_to_cart"),
-        description: "",
-        variant: "success",
-      });
-
-      // close the dialog
-      setOpen(false);
-
-      // Your submission logic here
-    } catch (error) {
-      form.setError("root", {
-        type: "submit",
-        message: "An error occurred while submitting the form.",
-      });
-    }
-  };
-
   // construct form data into CartItem, and return to parent component
   const onClick = () => {
     const data = form.getValues();
@@ -462,6 +373,8 @@ export const ProductOptionDialog: React.FC<props> = ({
     setOpen(false);
   };
 
+  // NOTE: obsoleted
+  // add the product selection to the cart
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     //console.log("data", JSON.stringify(data));
     try {
@@ -643,23 +556,23 @@ export const ProductOptionDialog: React.FC<props> = ({
                     <div key={option.id} className="pb-5 border-b">
                       {/* render product option and its requirement */}
                       <div className="pb-2">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-1">
                           <FormLabel className="grow font-bold text-xl">
                             {option.optionName}
                           </FormLabel>
                           {option.isRequired && (
                             <div className="w-10 text-center text-green-800 text-sm bg-slate-300">
-                              必選
+                              {t('ProductOptionDialog_required')}
                             </div>
                           )}
                           {option.minSelection !== 0 && (
                             <div className="text-center text-green-800 text-sm bg-slate-300">
-                              最少選{option.minSelection}項
+                              {t('ProductOptionDialog_minSelection').replace('{0}', `${option.minSelection}`)}
                             </div>
                           )}
                           {option.maxSelection > 1 && (
                             <div className="text-center text-green-800 text-sm bg-slate-300">
-                              最多選{option.maxSelection}項
+                              {t('ProductOptionDialog_maxSelection').replace('{0}', `${option.maxSelection}`)}
                             </div>
                           )}
                         </div>
@@ -694,23 +607,23 @@ export const ProductOptionDialog: React.FC<props> = ({
                                                 onCheckedChange={(checked) => {
                                                   return checked
                                                     ? field.onChange(
-                                                        [
-                                                          ...field.value,
-                                                          item.id,
-                                                        ],
-                                                        handleCheckbox(
-                                                          Number(item.price),
-                                                        ),
-                                                      )
+                                                      [
+                                                        ...field.value,
+                                                        item.id,
+                                                      ],
+                                                      handleCheckbox(
+                                                        Number(item.price),
+                                                      ),
+                                                    )
                                                     : field.onChange(
-                                                        field.value?.filter(
-                                                          (value: string) =>
-                                                            value !== item.id,
-                                                        ),
-                                                        handleCheckbox(
-                                                          -item.price,
-                                                        ),
-                                                      );
+                                                      field.value?.filter(
+                                                        (value: string) =>
+                                                          value !== item.id,
+                                                      ),
+                                                      handleCheckbox(
+                                                        -item.price,
+                                                      ),
+                                                    );
                                                 }}
                                               />
                                             </FormControl>
@@ -818,7 +731,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 
                 <DialogFooter className="w-full pt-2 pb-2">
                   {/*
-<Button
+                  obsolete form submit and change to onclick event. this is because we use the dialog inside another form.
+                  <Button
                     title={
                       product.ProductAttribute?.isRecurring
                         ? t("subscribe")
@@ -828,7 +742,6 @@ export const ProductOptionDialog: React.FC<props> = ({
                     className="w-full"
                     disabled={form.formState.isSubmitting}
                     type="submit"
-                  //onClick={() => handleAddToCart(product)}
                   >
                   </Button>
                   */}
