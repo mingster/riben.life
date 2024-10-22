@@ -1,22 +1,19 @@
 "use client";
 
 import { useToast } from "@/components/ui/use-toast";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type {
-  Product,
-  ProductOption,
   StoreOrder,
   StorePaymentMethodMapping,
   StoreShipMethodMapping,
-  StoreWithProducts,
+  StoreWithProducts
 } from "@/types";
-import type { StoreTables, orderitemview } from "@prisma/client";
+import type { orderitemview } from "@prisma/client";
 
 import { useTranslation } from "@/app/i18n/client";
-import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   Form,
@@ -33,8 +30,6 @@ import { Minus, Plus, XIcon } from "lucide-react";
 import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
 import { useEffect, useState } from "react";
-
-import { Modal } from "@/components/ui/modal";
 
 import { z } from "zod";
 import { StoreTableCombobox } from "../../components/store-table-combobox";
@@ -279,7 +274,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   const handleAddToOrder = (newItems: orderitemview[]) => {
     if (!order) return;
-    console.log("newItems", JSON.stringify(newItems));
+    //console.log("newItems", JSON.stringify(newItems));
 
     order.OrderItemView = order.OrderItemView.concat(newItems);
 
@@ -414,6 +409,25 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               </div>
             </div>
 
+            <div className='w-full text-right'>
+              <Button
+                type="button"
+                onClick={() => setOpenModal(true)}
+                variant={"outline"}
+              >
+                加點
+              </Button>
+            </div>
+
+            <OrderAddProductModal
+              store={store}
+              order={order}
+              onValueChange={(newItems: orderitemview[] | []) => {
+                handleAddToOrder(newItems);
+              }}
+              openModal={openModal}
+              onModalClose={() => setOpenModal(false)}
+            />
             {order?.OrderItemView.map((item, index) => {
               const errorForFieldName = errors?.OrderItemView?.[index]?.message;
 
@@ -489,24 +503,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 </div>
               );
             })}
-
-            <Button
-              type="button"
-              onClick={() => setOpenModal(true)}
-              variant={"outline"}
-            >
-              加點
-            </Button>
-
-            <OrderAddProductModal
-              store={store}
-              order={order}
-              onValueChange={(newItems: orderitemview[] | []) => {
-                handleAddToOrder(newItems);
-              }}
-              openModal={openModal}
-              onModalClose={() => setOpenModal(false)}
-            />
 
             <div className="w-full pt-2 pb-2">
               <Button

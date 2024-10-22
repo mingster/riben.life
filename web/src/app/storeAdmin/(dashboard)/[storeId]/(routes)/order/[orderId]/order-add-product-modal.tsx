@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/product-card";
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
-import { useCart } from "@/hooks/use-cart";
+import { Item, useCart } from "@/hooks/use-cart";
 import { cn, getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
@@ -66,47 +66,42 @@ export const OrderAddProductModal: React.FC<props> = ({
     }
   };
 
-  const handleAddToOrder = (product: Product) => {
+  // called when user click Add button in ProductCard
+  const handleAddToOrder = (product: Product, newItem: Item | null) => {
+
     if (!order) return;
+    const result: orderitemview[] = [];
 
-    const newItems: orderitemview[] = [];
-    newItems.push({
-      productId: product.id,
-      quantity: 1,
-      unitPrice: product.price,
-      unitDiscount: new Decimal(0),
-      name: product.name,
-      id: "",
-      url: null,
-      orderId: order.id,
-      variants: null,
-      variantCosts: null,
-    });
-
-    onValueChange?.(newItems);
-
-    /*
-    const item = cart.getItem(product.id);
-    if (item) {
-      cart.updateItemQuantity(product.id, item.quantity + 1);
-    } else {
-      cart.addItem(
-        {
-          id: product.id,
-          name: product.name,
-          price: Number(product.price),
-          quantity: 1,
-          storeId: params.storeId,
-          //...product,
-          //cartStatus: CartProductStatus.InProgress,
-          //userData: "",
-        },
-        1,
-      );
+    if (newItem) {
+      result.push({
+        productId: product.id,
+        quantity: newItem.quantity,
+        unitPrice: new Decimal(newItem.price),
+        unitDiscount: new Decimal(0),
+        name: newItem.name,
+        id: newItem.id,
+        url: null,
+        orderId: order.id,
+        variants: newItem.variants,
+        variantCosts: newItem.variantCosts,
+      });
     }
-    */
+    else {
+      result.push({
+        productId: product.id,
+        quantity: 1,
+        unitPrice: product.price,
+        unitDiscount: new Decimal(0),
+        name: product.name,
+        id: "",
+        url: null,
+        orderId: order.id,
+        variants: null,
+        variantCosts: null,
+      });
+    }
 
-    //router.push('/cart');
+    onValueChange?.(result);
 
     toast({
       title: "已加入訂單",
@@ -129,7 +124,7 @@ export const OrderAddProductModal: React.FC<props> = ({
   return (
     <>
       <CustomDialog open={openModal} onOpenChange={onChange}>
-        <DialogTitle>點餐</DialogTitle>
+        <DialogTitle> </DialogTitle>
         <DialogDescription> </DialogDescription>
 
         <DialogContent
@@ -174,7 +169,10 @@ export const OrderAddProductModal: React.FC<props> = ({
                               key={pc.Product.id}
                               className=""
                               disableBuyButton={!store.isOpen}
-                              onPurchase={() => handleAddToOrder(pc.Product)}
+                              onValueChange={(newItem: Item) => {
+                                handleAddToOrder(pc.Product, newItem);
+                              }}
+                              onPurchase={() => handleAddToOrder(pc.Product, null)}
                               product={{
                                 ...pc.Product,
                                 //ProductImages: pc.Product.ProductImages,

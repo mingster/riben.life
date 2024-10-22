@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { useCart } from "@/hooks/use-cart";
+import { type Item, useCart } from "@/hooks/use-cart";
 import type { Product } from "@/types";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -25,6 +25,7 @@ import { ProductOptionDialog } from "./product-option-dialog";
 interface ProductCardProps {
   product: Product;
   onPurchase: () => void;
+  onValueChange?: (newValue: Item) => void; // return configured CartItem back to parent component
   disableBuyButton: boolean;
   className?: string;
 }
@@ -32,6 +33,7 @@ interface ProductCardProps {
 export function ProductCard({
   product,
   onPurchase,
+  onValueChange,
   disableBuyButton,
   className,
   ...props
@@ -105,16 +107,20 @@ export function ProductCard({
       </CardContent>
       <CardFooter className="place-self-end">
         {enableBuy && product.ProductOptions.length > 0 ? (
-          <ProductOptionDialog product={product} />
+          <ProductOptionDialog product={product}
+            disableBuyButton={!enableBuy}
+            onPurchase={onPurchase}
+            onValueChange={onValueChange}/>
         ) : (
           <Button
+            type='button'
             title={
               product.ProductAttribute?.isRecurring ? t("subscribe") : t("buy")
             }
             variant={"default"}
             className="w-full"
             onClick={onPurchase}
-            //onClick={() => handleAddToCart(product)}
+          //onClick={() => handleAddToCart(product)}
           >
             {product.ProductAttribute?.isRecurring ? t("subscribe") : t("buy")}
           </Button>

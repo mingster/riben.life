@@ -244,7 +244,7 @@ export const StoreHomeContent: React.FC<props> = ({
                             key={pc.Product.id}
                             className=""
                             disableBuyButton={!storeData.isOpen}
-                            onPurchase={() => handleAddToCart(pc.Product)}
+                            onPurchase={() => handleAddToCart(pc.Product)}  //occurs when button is clicked
                             product={{
                               ...pc.Product,
                               //ProductImages: pc.Product.ProductImages,
