@@ -87,6 +87,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [updatedOrder, setUpdatedOrder] = useState<StoreOrder | null>(order);
   const [orderTotal, setOrderTotal] = useState(order?.orderTotal || 0);
   const [openModal, setOpenModal] = useState(false);
 
@@ -146,14 +148,14 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   const onSubmit = async (data: formValues) => {
     setLoading(true);
-    if (order?.OrderItemView.length === 0) {
+    if (updatedOrder?.OrderItemView.length === 0) {
       alert("請添加商品");
       setLoading(false);
       return;
     }
 
     console.log("formValues", JSON.stringify(data));
-    console.log("order", JSON.stringify(order));
+    console.log("updatedOrder", JSON.stringify(updatedOrder));
 
     // NOTE: take OrderItemView data in order object instead of fieldArray
 
@@ -192,14 +194,14 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   };
 
   const handleIncraseQuality = (index: number) => {
-    if (!order) return;
+    if (!updatedOrder) return;
 
     const row = fields[index];
     row.quantity = row.quantity + 1;
     update(index, row);
 
     setValue(`OrderItemView.${index}.quantity`, row.quantity);
-    order.OrderItemView[index].quantity = row.quantity;
+    updatedOrder.OrderItemView[index].quantity = row.quantity;
 
     recalc();
 
@@ -207,14 +209,14 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   };
 
   const handleDecreaseQuality = (index: number) => {
-    if (!order) return;
+    if (!updatedOrder) return;
 
     const row = fields[index];
     row.quantity = row.quantity - 1;
     update(index, row);
     setValue(`OrderItemView.${index}.quantity`, row.quantity);
 
-    order.OrderItemView[index].quantity = row.quantity;
+    updatedOrder.OrderItemView[index].quantity = row.quantity;
 
     if (row.quantity <= 0) {
       handleDeleteOrderItem(index);
@@ -234,28 +236,28 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   };
 
   const recalc = () => {
-    if (!order) return;
+    if (!updatedOrder) return;
 
     let total = 0;
-    order.OrderItemView.map((item) => {
+    updatedOrder.OrderItemView.map((item) => {
       if (item.unitPrice && item.quantity)
         total += Number(item.unitPrice) * item.quantity;
     });
     setOrderTotal(total);
-    order.orderTotal = new Decimal(total);
+    updatedOrder.orderTotal = new Decimal(total);
   };
 
   const handleDeleteOrderItem = (index: number) => {
-    if (!order) return;
+    if (!updatedOrder) return;
 
     //const rowToRemove = fields[index];
     //console.log("rowToRemove", JSON.stringify(rowToRemove));
     //console.log('rowToRemove: ' + rowToRemove.publicId);
-    order.OrderItemView.splice(index, 1);
+    updatedOrder.OrderItemView.splice(index, 1);
 
     //remove from client data
     fields.splice(index, 1);
-    remove(index);
+    //remove(index);
 
     recalc();
 
@@ -269,14 +271,14 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   };
 
   useEffect(() => {
-    setOrderTotal(order?.orderTotal || 0);
-  }, [order?.orderTotal]);
+    setOrderTotal(updatedOrder?.orderTotal || 0);
+  }, [updatedOrder?.orderTotal]);
 
   const handleAddToOrder = (newItems: orderitemview[]) => {
-    if (!order) return;
+    if (!updatedOrder) return;
     //console.log("newItems", JSON.stringify(newItems));
 
-    order.OrderItemView = order.OrderItemView.concat(newItems);
+    updatedOrder.OrderItemView = updatedOrder.OrderItemView.concat(newItems);
 
     append(
       newItems.map((item) => ({
@@ -428,7 +430,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               openModal={openModal}
               onModalClose={() => setOpenModal(false)}
             />
-            {order?.OrderItemView.map((item, index) => {
+            {updatedOrder?.OrderItemView.map((item, index) => {
               const errorForFieldName = errors?.OrderItemView?.[index]?.message;
 
               return (
