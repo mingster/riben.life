@@ -4,7 +4,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
 import type {
   StoreOrder,
   StorePaymentMethodMapping,
@@ -39,6 +44,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 import { OrderAddProductModal } from "./order-add-product-modal";
+import axios from "axios";
 
 interface props {
   store: StoreWithProducts;
@@ -147,6 +153,10 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   });
 
   const onSubmit = async (data: formValues) => {
+    if (updatedOrder === null) {
+      return;
+    }
+
     setLoading(true);
     if (updatedOrder?.OrderItemView.length === 0) {
       alert(t("Order_edit_noItem"));
@@ -154,10 +164,22 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
       return;
     }
 
-    console.log("formValues", JSON.stringify(data));
-    console.log("updatedOrder", JSON.stringify(updatedOrder));
-
+    //const order: StoreOrder = { /* initialize properties here */ };
+    updatedOrder.paymentMethodId = data.paymentMethodId ?? "";
+    updatedOrder.shippingMethodId = data.shippingMethodId ?? "";
+    updatedOrder.tableId = data.tableId ?? null;
+    updatedOrder.orderTotal = new Decimal(orderTotal);
     // NOTE: take OrderItemView data in order object instead of fieldArray
+
+    //console.log("formValues", JSON.stringify(data));
+    //console.log("updatedOrder", JSON.stringify(updatedOrder));
+
+    const result = await axios.patch(
+      `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/${updatedOrder.id}`,
+      updatedOrder,
+    );
+
+    console.log("result", JSON.stringify(result));
 
     toast({
       title: t("Order_edit_updated"),
@@ -167,7 +189,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
     setLoading(false);
 
-    //router.back();
+    router.refresh();
+    router.back();
   };
 
   //console.log('StorePaymentMethods', JSON.stringify(store.StorePaymentMethods));
@@ -178,16 +201,29 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   console.log("form errors", form.formState.errors);
 
   const onCancel = async () => {
-    if (confirm("are you sure?")) {
-      alert("not yet implemented");
+    if (updatedOrder === null) {
+      return;
     }
 
-    toast({
-      title: t("Order_edit_removed"),
-      description: "",
-      variant: "success",
-    });
-    router.back();
+    if (confirm(t("Delete_Confirm"))) {
+      setLoading(true);
+
+      const result = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/${updatedOrder?.id}`,
+      );
+
+      console.log("result", JSON.stringify(result));
+
+      setLoading(false);
+
+      toast({
+        title: t("Order_edit_removed"),
+        description: "",
+        variant: "success",
+      });
+      router.refresh();
+      router.back();
+    }
   };
 
   const handleShipMethodChange = (fieldName: string, selectedVal: string) => {
@@ -262,20 +298,10 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     //console.log("rowToRemove", JSON.stringify(rowToRemove));
     //console.log('rowToRemove: ' + rowToRemove.publicId);
     updatedOrder.OrderItemView.splice(index, 1);
-
     //remove from client data
     fields.splice(index, 1);
     //remove(index);
-
     recalc();
-
-    //1. remove from cloud storage
-
-    //2. remove from database
-
-    //console.log('urlToDelete: ' + urlToDelete);
-
-    //console.log('order', JSON.stringify(order));
   };
 
   useEffect(() => {
@@ -307,13 +333,17 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
             onSubmit={form.handleSubmit(onSubmit)}
             className="w-full space-y-1"
           >
-            {Object.entries(form.formState.errors).map(([key, error]) => (
-              <div key={key} className="text-red-500">
-                {error.message?.toString()}
-              </div>
-            ))}
+            <div className="pb-1 flex items-center gap-1">
+              <span>單號：</span>
+              <div className="font-extrabold">{order?.orderNum}</div>
+              {Object.entries(form.formState.errors).map(([key, error]) => (
+                <div key={key} className="text-red-500">
+                  {error.message?.toString()}
+                </div>
+              ))}
+            </div>
 
-            <div className="pb-5 flex items-center gap-5">
+            <div className="pb-1 flex items-center gap-1">
               <FormField
                 control={form.control}
                 name="shippingMethodId"
@@ -374,7 +404,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               />
             </div>
 
-            <div className="pb-5 flex items-center gap-5">
+            <div className="pb-1 flex items-center gap-1">
               <FormField
                 control={form.control}
                 name="paymentMethodId"

@@ -71,7 +71,8 @@ export enum OrderStatus {
   Processing = 20,
   InShipping = 30,
   Completed = 40,
-  Refund = 50,
+  Refunded = 50,
+  Void = 90,
   Cancelled = 100,
 }
 
