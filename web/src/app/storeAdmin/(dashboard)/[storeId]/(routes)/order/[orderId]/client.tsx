@@ -44,7 +44,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 import { OrderAddProductModal } from "./order-add-product-modal";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 interface props {
   store: StoreWithProducts;
@@ -108,8 +108,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-        ...order,
-      }
+      ...order,
+    }
     : {};
 
   // access OrderItemView using fields
@@ -235,6 +235,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   const handlePayMethodChange = (fieldName: string, selectedVal: string) => {
     console.log("fieldName", fieldName, selectedVal);
     form.setValue("paymentMethodId", selectedVal);
+    if (updatedOrder) updatedOrder.paymentMethodId = selectedVal;
+
   };
 
   const handleIncraseQuality = (index: number) => {
@@ -308,8 +310,123 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     setOrderTotal(updatedOrder?.orderTotal || 0);
   }, [updatedOrder?.orderTotal]);
 
-  const handleAddToOrder = (newItems: orderitemview[]) => {
-    if (!updatedOrder) return;
+
+  //create an order, and then process to the selected payment method
+  //
+  const placeOrder = async () => {
+    setLoading(true);
+
+    if (!store.StorePaymentMethods[0]) {
+      const errmsg = t("checkout_no_paymentMethod");
+      console.error(errmsg);
+      setLoading(false);
+
+      return;
+    }
+    if (!store.StoreShippingMethods[0]) {
+      const errmsg = t("checkout_no_shippingMethod");
+      console.error(errmsg);
+      setLoading(false);
+      return;
+    }
+
+    // convert cart items into string array to send to order creation
+    const productIds: string[] = [];
+    const prices: number[] = [];
+    const quantities: number[] = [];
+    //const notes: string[] = [];
+    const variants: string[] = [];
+    const variantCosts: string[] = [];
+
+    /*
+    cart.items.map((item) => {
+      if (item.id.includes("?")) {
+        productIds.push(item.id.split("?")[0]);
+        variants.push(item.variants);
+        variantCosts.push(item.variantCosts);
+      } else {
+        productIds.push(item.id);
+      }
+      prices.push(item.price);
+      quantities.push(Number(item.quantity));
+      //notes.push(item.userData);
+    });
+    */
+
+
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${store.id}/create-order`;
+    const body = JSON.stringify({
+      userId: null, //user is optional
+      tableId: "",
+      total: 0,
+      currency: store.defaultCurrency,
+      productIds: productIds,
+      quantities: quantities,
+      unitPrices: prices,
+      variants: variants,
+      variantCosts: variantCosts,
+      orderNote: 'created by store admin',
+      shippingMethodId: store.StoreShippingMethods[0].id,
+      //shippingAddress: displayUserAddress(user),
+      //shippingCost: shipMethod.basic_price,
+      paymentMethodId: store.StorePaymentMethods[0].id,
+    });
+    //console.log(JSON.stringify(body));
+
+    try {
+      const result = await axios.post(url, body);
+
+      console.log('featch result', JSON.stringify(result));
+
+      const order = result.data.order as StoreOrder;
+
+      setUpdatedOrder(order);
+
+      //console.log('order.id', order.id);
+
+      // ANCHOR clear cart of the order placed
+      //
+      if (order) {
+        //if (!user)
+        // if no signed-in user, save order to local storage
+        //saveOrderToLocal(order);
+
+        // NOTE: if we allow customer to checkout parial of cart items, this need to be adjusted
+        //cart.emptyCart(); //clear cart
+      }
+
+      //return value to parent component
+      //onChange?.(true);
+
+      // redirect to payment page
+      //const paymenturl = `/checkout/${order.id}/${paymentMethod.payUrl}`;
+      //router.push(paymenturl);
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      console.error(error);
+      toast({
+        title: "Something went wrong.",
+        description: t("checkout_placeOrder_exception") + err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // receive new items from OrderAddProductModal
+  const handleAddToOrder = async (newItems: orderitemview[]) => {
+    if (!updatedOrder) {
+      console.log("create new?", action);
+
+      // create new empty order
+      await placeOrder();
+      if (!updatedOrder) {
+        console.log("failed to place order", action);
+        return;
+      }
+    }
+
     //console.log("newItems", JSON.stringify(newItems));
 
     updatedOrder.OrderItemView = updatedOrder.OrderItemView.concat(newItems);
@@ -324,9 +441,11 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     recalc();
   };
 
+  const pageTitle = t(action) + t('Order_edit_title');
+
   return (
     <Card>
-      <CardHeader>{t("Order_edit_title")}</CardHeader>
+      <CardHeader className='p-5 font-extrabold text-2xl'>{pageTitle}</CardHeader>
       <CardContent>
         <Form {...form}>
           <form
@@ -334,13 +453,13 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
             className="w-full space-y-1"
           >
             <div className="pb-1 flex items-center gap-1">
-              <span>單號：</span>
-              <div className="font-extrabold">{order?.orderNum}</div>
               {Object.entries(form.formState.errors).map(([key, error]) => (
                 <div key={key} className="text-red-500">
                   {error.message?.toString()}
                 </div>
               ))}
+
+              {order?.orderNum && (<><span>{t("Order_edit_orderNum")}</span><div className="font-extrabold">{order?.orderNum}</div></>)}
             </div>
 
             <div className="pb-1 flex items-center gap-1">
@@ -392,7 +511,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       disabled={
                         loading ||
                         form.watch("shippingMethodId") !==
-                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                        "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}
@@ -449,7 +568,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               </div>
             </div>
 
-            <div className="w-full text-right">
+            <div className="w-full text-right">{/*加點按鈕 */}
               <Button
                 type="button"
                 onClick={() => setOpenModal(true)}
