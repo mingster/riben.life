@@ -32,18 +32,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { StoreOrder } from "@/types";
+import type { Store, StoreOrder } from "@/types";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { useState } from "react";
 import { OrderStatus } from "@/types/enum";
 
 interface StoreOrderClientProps {
-  storeId: string;
+  store: Store;
 }
 
 export const StoreOrderClient: React.FC<StoreOrderClientProps> = ({
-  storeId,
+  store,
 }) => {
   const params = useParams();
   const router = useRouter();
@@ -62,7 +62,7 @@ export const StoreOrderClient: React.FC<StoreOrderClientProps> = ({
   const { t } = useTranslation(lng, "storeAdmin");
 
   const doSearch = async () => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/orders/search`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/search`;
     axios
       .get(url, {
         params: {

@@ -31,7 +31,9 @@ export async function GET(
     const dateStr = `${tmp.getFullYear()}/${tmp.getMonth() + 1}/${tmp.getDate()} 00:00:00`;
     const date = Date.parse(dateStr);
 
-    //console.log(`${format(date, "yyyy-MM-dd HH:mm:ss")}至${format(today, "yyyy-MM-dd HH:mm:ss")}`)
+    console.log(
+      `${format(date, "yyyy-MM-dd HH:mm:ss")}至${format(today, "yyyy-MM-dd HH:mm:ss")}`,
+    );
 
     const result = (await sqlClient.storeOrder.findMany({
       where: {
