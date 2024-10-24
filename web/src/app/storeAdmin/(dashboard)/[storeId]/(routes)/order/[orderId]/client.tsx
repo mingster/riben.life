@@ -34,7 +34,7 @@ import { Minus, Plus, XIcon } from "lucide-react";
 
 import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { z } from "zod";
 import { StoreTableCombobox } from "../../components/store-table-combobox";
@@ -44,7 +44,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 import { OrderAddProductModal } from "./order-add-product-modal";
-import axios, { AxiosError } from "axios";
+import axios, { type AxiosError } from "axios";
 
 interface props {
   store: StoreWithProducts;
@@ -55,19 +55,21 @@ interface props {
 const formSchema = z.object({
   tableId: z.coerce.string(),
   orderNum: z.number().optional(),
-  paymentMethodId: z.string().optional(),
-  shippingMethodId: z.string().optional(),
+  paymentMethodId: z.string().min(1, { message: "payment method is required" }),
+  shippingMethodId: z.string().min(1, { message: "shipping method is required" }),
   OrderItemView: z
     .object({
       //id: z.string().min(1),
       //orderId: z.string().min(1),
-      productId: z.string().min(1),
-      quantity: z.coerce.number().min(1),
+      //productId: z.string().min(1, { message: "product is required" }),
+      //quantity: z.coerce.number().min(1, { message: "quantity is required" }),
+      productId: z.string().optional(),
+      quantity: z.coerce.number().optional(),
       //variants: z.string().optional(),
       //unitDiscount: z.coerce.number().min(1),
       //unitPrice: z.coerce.number().min(1),
     })
-    .array(),
+    .array().optional(),
 });
 
 function useZodForm<TSchema extends z.ZodType>(
@@ -227,13 +229,13 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   };
 
   const handleShipMethodChange = (fieldName: string, selectedVal: string) => {
-    console.log("fieldName", fieldName, selectedVal);
+    //console.log("fieldName", fieldName, selectedVal);
     form.setValue("shippingMethodId", selectedVal);
 
     if (updatedOrder) updatedOrder.shippingMethodId = selectedVal;
   };
   const handlePayMethodChange = (fieldName: string, selectedVal: string) => {
-    console.log("fieldName", fieldName, selectedVal);
+    //console.log("fieldName", fieldName, selectedVal);
     form.setValue("paymentMethodId", selectedVal);
     if (updatedOrder) updatedOrder.paymentMethodId = selectedVal;
 
@@ -306,11 +308,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     recalc();
   };
 
-  useEffect(() => {
-    setOrderTotal(updatedOrder?.orderTotal || 0);
-  }, [updatedOrder?.orderTotal]);
-
-
   //create an order, and then process to the selected payment method
   //
   const placeOrder = async () => {
@@ -338,62 +335,34 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     const variants: string[] = [];
     const variantCosts: string[] = [];
 
-    /*
-    cart.items.map((item) => {
-      if (item.id.includes("?")) {
-        productIds.push(item.id.split("?")[0]);
-        variants.push(item.variants);
-        variantCosts.push(item.variantCosts);
-      } else {
-        productIds.push(item.id);
-      }
-      prices.push(item.price);
-      quantities.push(Number(item.quantity));
-      //notes.push(item.userData);
-    });
-    */
-
-
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${store.id}/create-order`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${store.id}/create-empty-order`;
     const body = JSON.stringify({
       userId: null, //user is optional
       tableId: "",
       total: 0,
       currency: store.defaultCurrency,
+      shippingMethodId: store.StoreShippingMethods[0].methodId,
       productIds: productIds,
       quantities: quantities,
       unitPrices: prices,
       variants: variants,
       variantCosts: variantCosts,
       orderNote: 'created by store admin',
-      shippingMethodId: store.StoreShippingMethods[0].id,
-      //shippingAddress: displayUserAddress(user),
-      //shippingCost: shipMethod.basic_price,
-      paymentMethodId: store.StorePaymentMethods[0].id,
+      paymentMethodId: store.StorePaymentMethods[0].methodId,
     });
+
     //console.log(JSON.stringify(body));
 
     try {
+
       const result = await axios.post(url, body);
-
       console.log('featch result', JSON.stringify(result));
+      const newOrder = result.data.order as StoreOrder;
+      setUpdatedOrder(newOrder);
 
-      const order = result.data.order as StoreOrder;
-
-      setUpdatedOrder(order);
+      console.log(JSON.stringify(result));
 
       //console.log('order.id', order.id);
-
-      // ANCHOR clear cart of the order placed
-      //
-      if (order) {
-        //if (!user)
-        // if no signed-in user, save order to local storage
-        //saveOrderToLocal(order);
-
-        // NOTE: if we allow customer to checkout parial of cart items, this need to be adjusted
-        //cart.emptyCart(); //clear cart
-      }
 
       //return value to parent component
       //onChange?.(true);
@@ -441,6 +410,24 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     recalc();
   };
 
+  useEffect(() => {
+    setOrderTotal(updatedOrder?.orderTotal || 0);
+  }, [updatedOrder?.orderTotal]);
+
+  const placeOrderCallback = useCallback(placeOrder, []);
+
+  // create empty order if not exist
+  useEffect(() => {
+
+    const createOrder = async () => {
+      if (updatedOrder === null) {
+        await placeOrderCallback();
+      }
+    };
+
+    createOrder();
+  }, [updatedOrder, placeOrderCallback]);
+
   const pageTitle = t(action) + t('Order_edit_title');
 
   return (
@@ -459,7 +446,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 </div>
               ))}
 
-              {order?.orderNum && (<><span>{t("Order_edit_orderNum")}</span><div className="font-extrabold">{order?.orderNum}</div></>)}
+              {updatedOrder?.orderNum && (<><span>{t("Order_edit_orderNum")}</span><div className="font-extrabold">{updatedOrder?.orderNum}</div></>)}
             </div>
 
             <div className="pb-1 flex items-center gap-1">
@@ -580,7 +567,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
             <OrderAddProductModal
               store={store}
-              order={order}
+              order={updatedOrder}
               onValueChange={(newItems: orderitemview[] | []) => {
                 handleAddToOrder(newItems);
               }}
@@ -665,7 +652,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
             <div className="w-full pt-2 pb-2">
               <Button
-                disabled={loading}
+                disabled={loading||!form.formState.isValid}
                 className="disabled:opacity-25"
                 type="submit"
               >
