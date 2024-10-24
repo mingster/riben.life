@@ -27,6 +27,14 @@ export async function DELETE(
     },
   });
 
+  if (Number(order.orderTotal) === 0) {
+    const order = await sqlClient.storeOrder.delete({
+      where: {
+        id: params.orderId,
+      },
+    });
+  }
+
   console.log("[ORDER_DELETED]", order);
 
   return NextResponse.json(order);

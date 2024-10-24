@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
-import type { OrderNote, orderitemview } from "@prisma/client";
+import type { OrderNote, StoreTables, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
@@ -30,11 +30,16 @@ import { useParams } from "next/navigation";
 
 interface props {
   store: Store;
+  tables: StoreTables[];
   orders: StoreOrder[];
   parentLoading: boolean;
 }
 
-export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
+function getTableName(tables: StoreTables[], tableId: string) {
+  return tables.find((table) => table.id === tableId)?.tableName || "";
+}
+
+export const OrderUnpaid = ({ store, tables, orders, parentLoading }: props) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -117,6 +122,7 @@ export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
                 <TableRow key={order.id}>
                   <TableCell className="text-2xl font-extrabold">
                     {order.orderNum}
+                    {order.tableId && (` / ${getTableName(tables, order.tableId)}`)}
                   </TableCell>
 
                   <TableCell>

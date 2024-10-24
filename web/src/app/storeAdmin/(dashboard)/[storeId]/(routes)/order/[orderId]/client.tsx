@@ -53,7 +53,7 @@ interface props {
 }
 
 const formSchema = z.object({
-  tableId: z.coerce.string(),
+  tableId: z.string().optional().nullable(),
   orderNum: z.number().optional(),
   paymentMethodId: z.string().min(1, { message: "payment method is required" }),
   shippingMethodId: z.string().min(1, { message: "shipping method is required" }),
@@ -61,15 +61,13 @@ const formSchema = z.object({
     .object({
       //id: z.string().min(1),
       //orderId: z.string().min(1),
-      //productId: z.string().min(1, { message: "product is required" }),
-      //quantity: z.coerce.number().min(1, { message: "quantity is required" }),
-      productId: z.string().optional(),
-      quantity: z.coerce.number().optional(),
+      productId: z.string().min(1, { message: "product is required" }),
+      quantity: z.coerce.number().min(1, { message: "quantity is required" }),
       //variants: z.string().optional(),
       //unitDiscount: z.coerce.number().min(1),
       //unitPrice: z.coerce.number().min(1),
     })
-    .array().optional(),
+    .array().min(1, { message: "at least one item is required" }).optional(),
 });
 
 function useZodForm<TSchema extends z.ZodType>(
@@ -210,11 +208,13 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     if (confirm(t("Delete_Confirm"))) {
       setLoading(true);
 
+      clearErrors();
+
       const result = await axios.delete(
         `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/${updatedOrder?.id}`,
       );
 
-      console.log("result", JSON.stringify(result));
+      //console.log("result", JSON.stringify(result));
 
       setLoading(false);
 
@@ -386,26 +386,26 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   // receive new items from OrderAddProductModal
   const handleAddToOrder = async (newItems: orderitemview[]) => {
     if (!updatedOrder) {
-      console.log("create new?", action);
-
-      // create new empty order
-      await placeOrder();
-      if (!updatedOrder) {
-        console.log("failed to place order", action);
-        return;
-      }
+      return;
     }
-
-    //console.log("newItems", JSON.stringify(newItems));
 
     updatedOrder.OrderItemView = updatedOrder.OrderItemView.concat(newItems);
 
     append(
       newItems.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity || 1,
+        ...item,
+        quantity: item.quantity ?? 1, // provide a default value of 0 if quantity is null
       })),
     );
+
+    newItems.map((item) => (
+      fields.push({
+        ...item,
+        quantity: item.quantity ?? 1, // provide a default value of 0 if quantity is null
+      })
+    ));
+
+    console.log("fields", JSON.stringify(fields));
 
     recalc();
   };
@@ -446,9 +446,11 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 </div>
               ))}
 
-              {updatedOrder?.orderNum && (<><span>{t("Order_edit_orderNum")}</span><div className="font-extrabold">{updatedOrder?.orderNum}</div></>)}
             </div>
 
+            <div className="pb-1 flex items-center gap-1">
+              {updatedOrder?.orderNum && (<><span>{t("Order_edit_orderNum")}</span><div className="font-extrabold">{updatedOrder?.orderNum}</div></>)}
+            </div>
             <div className="pb-1 flex items-center gap-1">
               <FormField
                 control={form.control}
@@ -652,7 +654,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
             <div className="w-full pt-2 pb-2">
               <Button
-                disabled={loading||!form.formState.isValid}
+                disabled={loading || !form.formState.isValid}
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -661,6 +663,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
               <Button
                 type="button"
+                disabled={loading}
                 variant="outline"
                 onClick={() => {
                   clearErrors();
@@ -672,6 +675,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               </Button>
 
               <Button
+                disabled={loading}
                 className="text-xs"
                 variant={"destructive"}
                 onClick={onCancel}

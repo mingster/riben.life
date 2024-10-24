@@ -6,6 +6,7 @@ import Resizer from "react-image-file-resizer";
 import { twMerge } from "tailwind-merge";
 
 import Decimal from "decimal.js"; // gets added if installed
+import { z } from "zod";
 // recursive function looping deeply throug an object to find Decimals
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export const transformDecimalsToNumbers = (obj: any) => {
@@ -21,6 +22,19 @@ export const transformDecimalsToNumbers = (obj: any) => {
     }
   }
 };
+
+function nullable<TSchema extends z.AnyZodObject>(schema: TSchema) {
+  const entries = Object.entries(schema.shape) as [keyof TSchema['shape'], z.ZodTypeAny][];
+
+  const newProps = entries.reduce((acc, [key, value]) => {
+      acc[key] = value.nullable();
+      return acc;
+  }, {} as {
+      [key in keyof TSchema['shape']]: z.ZodNullable<TSchema['shape'][key]>
+  });
+
+  return z.object(newProps)
+}
 
 export const formatter = new Intl.NumberFormat("en-US", {
   style: "currency",
