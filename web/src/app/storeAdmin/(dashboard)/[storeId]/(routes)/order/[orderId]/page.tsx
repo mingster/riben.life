@@ -10,6 +10,7 @@ import { OrderEditClient } from "./client";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import {
   OrderStatus,
+  PageAction,
   PaymentStatus,
   ReturnStatus,
   ShippingStatus,
@@ -48,9 +49,9 @@ const OrderEditPage = async ({
 
   //console.log('order', JSON.stringify(order));
 
-  let action = "Modify";
+  let action = PageAction.Modify;
   if (order === null) {
-    action = "Create";
+    action = PageAction.Create;
   }
 
   return (

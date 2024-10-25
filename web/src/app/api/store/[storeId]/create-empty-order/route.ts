@@ -90,7 +90,7 @@ export async function POST(
     data: {
       storeId: params.storeId,
       userId: userId || null, //user is optional
-      tableId: tableId || '', // empty string so zod won't throw error
+      tableId: tableId || "", // empty string so zod won't throw error
       isPaid: false,
       orderTotal: new Prisma.Decimal(total),
       currency: currency,

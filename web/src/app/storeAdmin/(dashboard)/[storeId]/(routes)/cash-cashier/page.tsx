@@ -26,18 +26,18 @@ const CashCashierAdminPage: React.FC<props> = async ({ params }) => {
   await checkStoreAccess(params.storeId);
   const store = (await getStoreWithCategories(params.storeId)) as Store;
 
-  const tables = await sqlClient.storeTables.findMany({
+  const tables = (await sqlClient.storeTables.findMany({
     where: {
       storeId: store.id,
     },
     orderBy: {
       tableName: "asc",
     },
-  }) as StoreTables[];
+  })) as StoreTables[];
 
   return (
     <Suspense fallback={<Loader />}>
-      <CashCashier store={store} tables={tables}/>
+      <CashCashier store={store} tables={tables} />
     </Suspense>
   );
 };

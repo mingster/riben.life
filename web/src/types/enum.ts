@@ -126,7 +126,8 @@ export enum ReturnStatus {
   Cancelled = 70,
 }
 
-export enum PaymentMethod {
-  Stripe = 10,
-  PayPal = 20,
+export enum PageAction {
+  Create = "Create",
+  Modify = "Modify",
+  Delete = "Delete",
 }

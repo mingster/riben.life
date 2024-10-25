@@ -45,6 +45,7 @@ import Decimal from "decimal.js";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 import { OrderAddProductModal } from "./order-add-product-modal";
 import axios, { type AxiosError } from "axios";
+import { PageAction } from "@/types/enum";
 
 interface props {
   store: StoreWithProducts;
@@ -56,7 +57,9 @@ const formSchema = z.object({
   tableId: z.string().optional().nullable(),
   orderNum: z.number().optional(),
   paymentMethodId: z.string().min(1, { message: "payment method is required" }),
-  shippingMethodId: z.string().min(1, { message: "shipping method is required" }),
+  shippingMethodId: z
+    .string()
+    .min(1, { message: "shipping method is required" }),
   OrderItemView: z
     .object({
       //id: z.string().min(1),
@@ -67,7 +70,9 @@ const formSchema = z.object({
       //unitDiscount: z.coerce.number().min(1),
       //unitPrice: z.coerce.number().min(1),
     })
-    .array().min(1, { message: "at least one item is required" }).optional(),
+    .array()
+    .min(1, { message: "at least one item is required" })
+    .optional(),
 });
 
 function useZodForm<TSchema extends z.ZodType>(
@@ -108,8 +113,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-      ...order,
-    }
+        ...order,
+      }
     : {};
 
   // access OrderItemView using fields
@@ -238,7 +243,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     //console.log("fieldName", fieldName, selectedVal);
     form.setValue("paymentMethodId", selectedVal);
     if (updatedOrder) updatedOrder.paymentMethodId = selectedVal;
-
   };
 
   const handleIncraseQuality = (index: number) => {
@@ -347,16 +351,15 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
       unitPrices: prices,
       variants: variants,
       variantCosts: variantCosts,
-      orderNote: 'created by store admin',
+      orderNote: "created by store admin",
       paymentMethodId: store.StorePaymentMethods[0].methodId,
     });
 
     //console.log(JSON.stringify(body));
 
     try {
-
       const result = await axios.post(url, body);
-      console.log('featch result', JSON.stringify(result));
+      console.log("featch result", JSON.stringify(result));
       const newOrder = result.data.order as StoreOrder;
       setUpdatedOrder(newOrder);
 
@@ -398,12 +401,12 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
       })),
     );
 
-    newItems.map((item) => (
+    newItems.map((item) =>
       fields.push({
         ...item,
         quantity: item.quantity ?? 1, // provide a default value of 0 if quantity is null
-      })
-    ));
+      }),
+    );
 
     console.log("fields", JSON.stringify(fields));
 
@@ -418,7 +421,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   // create empty order if not exist
   useEffect(() => {
-
     const createOrder = async () => {
       if (updatedOrder === null) {
         await placeOrderCallback();
@@ -428,11 +430,13 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     createOrder();
   }, [updatedOrder, placeOrderCallback]);
 
-  const pageTitle = t(action) + t('Order_edit_title');
+  const pageTitle = t(action) + t("Order_edit_title");
 
   return (
     <Card>
-      <CardHeader className='p-5 font-extrabold text-2xl'>{pageTitle}</CardHeader>
+      <CardHeader className="p-5 font-extrabold text-2xl">
+        {pageTitle}
+      </CardHeader>
       <CardContent>
         <Form {...form}>
           <form
@@ -445,11 +449,15 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                   {error.message?.toString()}
                 </div>
               ))}
-
             </div>
 
             <div className="pb-1 flex items-center gap-1">
-              {updatedOrder?.orderNum && (<><span>{t("Order_edit_orderNum")}</span><div className="font-extrabold">{updatedOrder?.orderNum}</div></>)}
+              {updatedOrder?.orderNum && (
+                <>
+                  <span>{t("Order_edit_orderNum")}</span>
+                  <div className="font-extrabold">{updatedOrder?.orderNum}</div>
+                </>
+              )}
             </div>
             <div className="pb-1 flex items-center gap-1">
               <FormField
@@ -501,7 +509,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       disabled={
                         loading ||
                         form.watch("shippingMethodId") !==
-                        "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}
@@ -558,7 +566,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               </div>
             </div>
 
-            <div className="w-full text-right">{/*加點按鈕 */}
+            <div className="w-full text-right">
+              {/*加點按鈕 */}
               <Button
                 type="button"
                 onClick={() => setOpenModal(true)}
@@ -653,7 +662,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               );
             })}
 
-            <div className="w-full pt-2 pb-2">
+            <div className="w-full pt-2 pb-2 flex gap-2">
               <Button
                 disabled={loading || !form.formState.isValid}
                 className="disabled:opacity-25"
@@ -662,18 +671,20 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 {t("Save")}
               </Button>
 
-              <Button
-                type="button"
-                disabled={loading}
-                variant="outline"
-                onClick={() => {
-                  clearErrors();
-                  router.back();
-                }}
-                className="ml-2 disabled:opacity-25"
-              >
-                {t("Cancel")}
-              </Button>
+              {action === PageAction.Modify && (
+                <Button
+                  type="button"
+                  disabled={loading}
+                  variant="outline"
+                  onClick={() => {
+                    clearErrors();
+                    router.back();
+                  }}
+                  className="ml-2 disabled:opacity-25"
+                >
+                  {t("Cancel")}
+                </Button>
+              )}
 
               <Button
                 disabled={loading}

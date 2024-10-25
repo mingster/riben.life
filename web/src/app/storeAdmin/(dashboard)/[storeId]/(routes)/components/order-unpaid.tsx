@@ -39,7 +39,12 @@ function getTableName(tables: StoreTables[], tableId: string) {
   return tables.find((table) => table.id === tableId)?.tableName || "";
 }
 
-export const OrderUnpaid = ({ store, tables, orders, parentLoading }: props) => {
+export const OrderUnpaid = ({
+  store,
+  tables,
+  orders,
+  parentLoading,
+}: props) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -122,7 +127,8 @@ export const OrderUnpaid = ({ store, tables, orders, parentLoading }: props) => 
                 <TableRow key={order.id}>
                   <TableCell className="text-2xl font-extrabold">
                     {order.orderNum}
-                    {order.tableId && (` / ${getTableName(tables, order.tableId)}`)}
+                    {order.tableId &&
+                      ` / ${getTableName(tables, order.tableId)}`}
                   </TableCell>
 
                   <TableCell>

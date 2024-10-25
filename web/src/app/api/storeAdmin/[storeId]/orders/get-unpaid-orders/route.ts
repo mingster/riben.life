@@ -19,7 +19,7 @@ export async function GET(
         isPaid: false,
         orderStatus: {
           in: [OrderStatus.Pending, OrderStatus.Processing],
-        }
+        },
       },
       include: {
         OrderNotes: true,
