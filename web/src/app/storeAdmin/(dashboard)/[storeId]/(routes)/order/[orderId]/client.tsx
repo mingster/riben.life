@@ -4,7 +4,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
 import type {
   StoreOrder,
   StorePaymentMethodMapping,
@@ -29,7 +34,7 @@ import { Minus, Plus, XIcon } from "lucide-react";
 
 import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { z } from "zod";
 import { StoreTableCombobox } from "../../components/store-table-combobox";
@@ -39,6 +44,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 import { OrderAddProductModal } from "./order-add-product-modal";
+import axios, { type AxiosError } from "axios";
+import { PageAction } from "@/types/enum";
 
 interface props {
   store: StoreWithProducts;
@@ -47,21 +54,25 @@ interface props {
 }
 
 const formSchema = z.object({
-  tableId: z.coerce.string(),
+  tableId: z.string().optional().nullable(),
   orderNum: z.number().optional(),
-  paymentMethodId: z.string().optional(),
-  shippingMethodId: z.string().optional(),
+  paymentMethodId: z.string().min(1, { message: "payment method is required" }),
+  shippingMethodId: z
+    .string()
+    .min(1, { message: "shipping method is required" }),
   OrderItemView: z
     .object({
       //id: z.string().min(1),
       //orderId: z.string().min(1),
-      productId: z.string().min(1),
-      quantity: z.coerce.number().min(1),
+      productId: z.string().min(1, { message: "product is required" }),
+      quantity: z.coerce.number().min(1, { message: "quantity is required" }),
       //variants: z.string().optional(),
       //unitDiscount: z.coerce.number().min(1),
       //unitPrice: z.coerce.number().min(1),
     })
-    .array(),
+    .array()
+    .min(1, { message: "at least one item is required" })
+    .optional(),
 });
 
 function useZodForm<TSchema extends z.ZodType>(
@@ -147,6 +158,10 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   });
 
   const onSubmit = async (data: formValues) => {
+    if (updatedOrder === null) {
+      return;
+    }
+
     setLoading(true);
     if (updatedOrder?.OrderItemView.length === 0) {
       alert(t("Order_edit_noItem"));
@@ -154,10 +169,22 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
       return;
     }
 
-    console.log("formValues", JSON.stringify(data));
-    console.log("updatedOrder", JSON.stringify(updatedOrder));
-
+    //const order: StoreOrder = { /* initialize properties here */ };
+    updatedOrder.paymentMethodId = data.paymentMethodId ?? "";
+    updatedOrder.shippingMethodId = data.shippingMethodId ?? "";
+    updatedOrder.tableId = data.tableId ?? null;
+    updatedOrder.orderTotal = new Decimal(orderTotal);
     // NOTE: take OrderItemView data in order object instead of fieldArray
+
+    //console.log("formValues", JSON.stringify(data));
+    //console.log("updatedOrder", JSON.stringify(updatedOrder));
+
+    const result = await axios.patch(
+      `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/${updatedOrder.id}`,
+      updatedOrder,
+    );
+
+    console.log("result", JSON.stringify(result));
 
     toast({
       title: t("Order_edit_updated"),
@@ -167,7 +194,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
     setLoading(false);
 
-    //router.back();
+    router.refresh();
+    router.back();
   };
 
   //console.log('StorePaymentMethods', JSON.stringify(store.StorePaymentMethods));
@@ -178,27 +206,43 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   console.log("form errors", form.formState.errors);
 
   const onCancel = async () => {
-    if (confirm("are you sure?")) {
-      alert("not yet implemented");
+    if (updatedOrder === null) {
+      return;
     }
 
-    toast({
-      title: t("Order_edit_removed"),
-      description: "",
-      variant: "success",
-    });
-    router.back();
+    if (confirm(t("Delete_Confirm"))) {
+      setLoading(true);
+
+      clearErrors();
+
+      const result = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/${updatedOrder?.id}`,
+      );
+
+      //console.log("result", JSON.stringify(result));
+
+      setLoading(false);
+
+      toast({
+        title: t("Order_edit_removed"),
+        description: "",
+        variant: "success",
+      });
+      router.refresh();
+      router.back();
+    }
   };
 
   const handleShipMethodChange = (fieldName: string, selectedVal: string) => {
-    console.log("fieldName", fieldName, selectedVal);
+    //console.log("fieldName", fieldName, selectedVal);
     form.setValue("shippingMethodId", selectedVal);
 
     if (updatedOrder) updatedOrder.shippingMethodId = selectedVal;
   };
   const handlePayMethodChange = (fieldName: string, selectedVal: string) => {
-    console.log("fieldName", fieldName, selectedVal);
+    //console.log("fieldName", fieldName, selectedVal);
     form.setValue("paymentMethodId", selectedVal);
+    if (updatedOrder) updatedOrder.paymentMethodId = selectedVal;
   };
 
   const handleIncraseQuality = (index: number) => {
@@ -262,58 +306,160 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     //console.log("rowToRemove", JSON.stringify(rowToRemove));
     //console.log('rowToRemove: ' + rowToRemove.publicId);
     updatedOrder.OrderItemView.splice(index, 1);
-
     //remove from client data
     fields.splice(index, 1);
     //remove(index);
+    recalc();
+  };
+
+  //create an order, and then process to the selected payment method
+  //
+  const placeOrder = async () => {
+    setLoading(true);
+
+    if (!store.StorePaymentMethods[0]) {
+      const errmsg = t("checkout_no_paymentMethod");
+      console.error(errmsg);
+      setLoading(false);
+
+      return;
+    }
+    if (!store.StoreShippingMethods[0]) {
+      const errmsg = t("checkout_no_shippingMethod");
+      console.error(errmsg);
+      setLoading(false);
+      return;
+    }
+
+    // convert cart items into string array to send to order creation
+    const productIds: string[] = [];
+    const prices: number[] = [];
+    const quantities: number[] = [];
+    //const notes: string[] = [];
+    const variants: string[] = [];
+    const variantCosts: string[] = [];
+
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${store.id}/create-empty-order`;
+    const body = JSON.stringify({
+      userId: null, //user is optional
+      tableId: "",
+      total: 0,
+      currency: store.defaultCurrency,
+      shippingMethodId: store.StoreShippingMethods[0].methodId,
+      productIds: productIds,
+      quantities: quantities,
+      unitPrices: prices,
+      variants: variants,
+      variantCosts: variantCosts,
+      orderNote: "created by store admin",
+      paymentMethodId: store.StorePaymentMethods[0].methodId,
+    });
+
+    //console.log(JSON.stringify(body));
+
+    try {
+      const result = await axios.post(url, body);
+      console.log("featch result", JSON.stringify(result));
+      const newOrder = result.data.order as StoreOrder;
+      setUpdatedOrder(newOrder);
+
+      console.log(JSON.stringify(result));
+
+      //console.log('order.id', order.id);
+
+      //return value to parent component
+      //onChange?.(true);
+
+      // redirect to payment page
+      //const paymenturl = `/checkout/${order.id}/${paymentMethod.payUrl}`;
+      //router.push(paymenturl);
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      console.error(error);
+      toast({
+        title: "Something went wrong.",
+        description: t("checkout_placeOrder_exception") + err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // receive new items from OrderAddProductModal
+  const handleAddToOrder = async (newItems: orderitemview[]) => {
+    if (!updatedOrder) {
+      return;
+    }
+
+    updatedOrder.OrderItemView = updatedOrder.OrderItemView.concat(newItems);
+
+    append(
+      newItems.map((item) => ({
+        ...item,
+        quantity: item.quantity ?? 1, // provide a default value of 0 if quantity is null
+      })),
+    );
+
+    newItems.map((item) =>
+      fields.push({
+        ...item,
+        quantity: item.quantity ?? 1, // provide a default value of 0 if quantity is null
+      }),
+    );
+
+    console.log("fields", JSON.stringify(fields));
 
     recalc();
-
-    //1. remove from cloud storage
-
-    //2. remove from database
-
-    //console.log('urlToDelete: ' + urlToDelete);
-
-    //console.log('order', JSON.stringify(order));
   };
 
   useEffect(() => {
     setOrderTotal(updatedOrder?.orderTotal || 0);
   }, [updatedOrder?.orderTotal]);
 
-  const handleAddToOrder = (newItems: orderitemview[]) => {
-    if (!updatedOrder) return;
-    //console.log("newItems", JSON.stringify(newItems));
+  const placeOrderCallback = useCallback(placeOrder, []);
 
-    updatedOrder.OrderItemView = updatedOrder.OrderItemView.concat(newItems);
+  // create empty order if not exist
+  useEffect(() => {
+    const createOrder = async () => {
+      if (updatedOrder === null) {
+        await placeOrderCallback();
+      }
+    };
 
-    append(
-      newItems.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity || 1,
-      })),
-    );
+    createOrder();
+  }, [updatedOrder, placeOrderCallback]);
 
-    recalc();
-  };
+  const pageTitle = t(action) + t("Order_edit_title");
 
   return (
     <Card>
-      <CardHeader>{t("Order_edit_title")}</CardHeader>
+      <CardHeader className="p-5 font-extrabold text-2xl">
+        {pageTitle}
+      </CardHeader>
       <CardContent>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
             className="w-full space-y-1"
           >
-            {Object.entries(form.formState.errors).map(([key, error]) => (
-              <div key={key} className="text-red-500">
-                {error.message?.toString()}
-              </div>
-            ))}
+            <div className="pb-1 flex items-center gap-1">
+              {Object.entries(form.formState.errors).map(([key, error]) => (
+                <div key={key} className="text-red-500">
+                  {error.message?.toString()}
+                </div>
+              ))}
+            </div>
 
-            <div className="pb-5 flex items-center gap-5">
+            <div className="pb-1 flex items-center gap-1">
+              {updatedOrder?.orderNum && (
+                <>
+                  <span>{t("Order_edit_orderNum")}</span>
+                  <div className="font-extrabold">{updatedOrder?.orderNum}</div>
+                </>
+              )}
+            </div>
+            <div className="pb-1 flex items-center gap-1">
               <FormField
                 control={form.control}
                 name="shippingMethodId"
@@ -358,6 +504,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 render={({ field }) => (
                   <FormItem className="flex items-center space-x-1 space-y-0">
                     <FormLabel className="text-nowrap">桌號</FormLabel>
+
                     <StoreTableCombobox
                       disabled={
                         loading ||
@@ -374,7 +521,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               />
             </div>
 
-            <div className="pb-5 flex items-center gap-5">
+            <div className="pb-1 flex items-center gap-1">
               <FormField
                 control={form.control}
                 name="paymentMethodId"
@@ -420,6 +567,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
             </div>
 
             <div className="w-full text-right">
+              {/*加點按鈕 */}
               <Button
                 type="button"
                 onClick={() => setOpenModal(true)}
@@ -431,7 +579,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
             <OrderAddProductModal
               store={store}
-              order={order}
+              order={updatedOrder}
               onValueChange={(newItems: orderitemview[] | []) => {
                 handleAddToOrder(newItems);
               }}
@@ -514,28 +662,32 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               );
             })}
 
-            <div className="w-full pt-2 pb-2">
+            <div className="w-full pt-2 pb-2 flex gap-2">
               <Button
-                disabled={loading}
+                disabled={loading || !form.formState.isValid}
                 className="disabled:opacity-25"
                 type="submit"
               >
                 {t("Save")}
               </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  clearErrors();
-                  router.back();
-                }}
-                className="ml-2 disabled:opacity-25"
-              >
-                {t("Cancel")}
-              </Button>
+              {action === PageAction.Modify && (
+                <Button
+                  type="button"
+                  disabled={loading}
+                  variant="outline"
+                  onClick={() => {
+                    clearErrors();
+                    router.back();
+                  }}
+                  className="ml-2 disabled:opacity-25"
+                >
+                  {t("Cancel")}
+                </Button>
+              )}
 
               <Button
+                disabled={loading}
                 className="text-xs"
                 variant={"destructive"}
                 onClick={onCancel}

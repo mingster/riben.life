@@ -96,6 +96,7 @@ export type Store = Prisma.StoreGetPayload<typeof storeObj>;
 
 const storeWithProductObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
   include: {
+    StoreTables: true,
     StoreShippingMethods,
     StorePaymentMethods,
     Categories: {

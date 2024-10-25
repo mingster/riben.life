@@ -9,14 +9,16 @@ import { format } from "date-fns";
 
 import { StoreLevel } from "@/types/enum";
 import { OrderUnpaid } from "../components/order-unpaid";
+import type { StoreTables } from "@prisma/client";
 
 export interface props {
   store: Store;
+  tables: StoreTables[];
 }
 
 // store admin home page.
 // it checks for new orders every 10 seconds.
-export const CashCashier: React.FC<props> = ({ store }) => {
+export const CashCashier: React.FC<props> = ({ store, tables }) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
@@ -68,6 +70,7 @@ export const CashCashier: React.FC<props> = ({ store }) => {
             <>
               <OrderUnpaid
                 store={store}
+                tables={tables}
                 orders={unpaidOrders}
                 parentLoading={loading}
               />

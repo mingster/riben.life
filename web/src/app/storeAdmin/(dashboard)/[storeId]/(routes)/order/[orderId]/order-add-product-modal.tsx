@@ -17,7 +17,7 @@ import type {
   StoreOrder,
   StoreWithProductNCategories,
 } from "@/types";
-import { ProductStatus } from "@/types/enum";
+import { OrderStatus, ProductStatus } from "@/types/enum";
 import type { orderitemview } from "@prisma/client";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import Decimal from "decimal.js";
@@ -63,7 +63,12 @@ export const OrderAddProductModal: React.FC<props> = ({
 
   // called when user click Add button in ProductCard
   const handleAddToOrder = (product: Product, newItem: Item | null) => {
-    if (!order) return;
+    if (!order) {
+      console.log("create new order");
+
+      return;
+    }
+
     const result: orderitemview[] = [];
 
     if (newItem) {

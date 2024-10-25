@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
-import type { OrderNote, orderitemview } from "@prisma/client";
+import type { OrderNote, StoreTables, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
@@ -26,21 +26,32 @@ import { ClipLoader } from "react-spinners";
 import Currency from "@/components/currency";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
 interface props {
   store: Store;
+  tables: StoreTables[];
   orders: StoreOrder[];
   parentLoading: boolean;
 }
 
-export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
+function getTableName(tables: StoreTables[], tableId: string) {
+  return tables.find((table) => table.id === tableId)?.tableName || "";
+}
+
+export const OrderUnpaid = ({
+  store,
+  tables,
+  orders,
+  parentLoading,
+}: props) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  //const params = useParams();
+  const params = useParams();
   //const router = useRouter();
   const { toast } = useToast();
 
@@ -73,12 +84,17 @@ export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
 
   return (
     <Card>
-      <Heading
-        title="現金結帳"
-        description="請勾選來確認收款。"
-        badge={orders.length}
-        className="pt-2"
-      />
+      <div className="flex justify-between items-center pl-2 pr-2">
+        <Heading
+          title={t("Order_unpiad_title")}
+          description={t("Order_unpiad_descr")}
+          badge={orders.length}
+          className="pt-2"
+        />
+        <div>
+          <Link href={`/storeAdmin/${params.storeId}/order/add`}>新增訂單</Link>
+        </div>
+      </div>
 
       <CardContent className="space-y-2">
         {/* display */}
@@ -111,6 +127,8 @@ export const OrderUnpaid = ({ store, orders, parentLoading }: props) => {
                 <TableRow key={order.id}>
                   <TableCell className="text-2xl font-extrabold">
                     {order.orderNum}
+                    {order.tableId &&
+                      ` / ${getTableName(tables, order.tableId)}`}
                   </TableCell>
 
                   <TableCell>

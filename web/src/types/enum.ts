@@ -71,7 +71,8 @@ export enum OrderStatus {
   Processing = 20,
   InShipping = 30,
   Completed = 40,
-  Refund = 50,
+  Refunded = 50,
+  Void = 90,
   Cancelled = 100,
 }
 
@@ -125,7 +126,8 @@ export enum ReturnStatus {
   Cancelled = 70,
 }
 
-export enum PaymentMethod {
-  Stripe = 10,
-  PayPal = 20,
+export enum PageAction {
+  Create = "Create",
+  Modify = "Modify",
+  Delete = "Delete",
 }

@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreTables } from "@prisma/client";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 import { CheckIcon } from "lucide-react";
 import * as React from "react";
 import useSWR from "swr";
@@ -57,31 +58,31 @@ export const StoreTableCombobox = ({
   */
 
   const [open, setOpen] = React.useState(false);
+  const [selected, setSelected] = React.useState<string | "">(defaultValue);
+  const [displayName, setDisplayName] = React.useState<string | "">();
 
-  // combox is buggy if default value is empty....
-  //if (defaultValue === "" || defaultValue === null) defaultValue = "TWD";
-  //console.log('default: ' + defaultValue);
+  //console.log('defaultValue', defaultValue);
+  //console.log('selected', selected);
+  //console.log('data', JSON.stringify(data));
 
-  const [selected, setSelected] = React.useState<string | null>(defaultValue);
-  const [displayName, setDisplayName] = React.useState<string | null>();
-
-  //console.log('defaultValue: ' + defaultValue);
-  //console.log('selected: ' + JSON.stringify(selected));
   if (error) return <div>failed to load</div>;
   if (isLoading) return <div>loading...</div>;
+
   if (data && !isLoading && !error) {
-    //console.log('data: ' + JSON.stringify(data));
     return (
       <>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
-              className=""
               disabled={disabled}
-              {...props}
+              variant="outline"
+              aria-expanded={open}
+              className="w-[200px] justify-between"
             >
-              {selected ? <>{displayName}</> : <>+ tables </>}
+              {selected
+                ? tables.find((table) => table.id === selected)?.tableName
+                : "Select a table"}
+              <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="p-0" side="bottom" align="start">

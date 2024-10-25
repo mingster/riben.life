@@ -99,8 +99,8 @@ export const OrderTab = ({ orders }: props) => {
       <TabsContent value={OrderStatus[OrderStatus.Completed]}>
         <DisplayOrders orders={orders} status={OrderStatus.Completed} />
       </TabsContent>
-      <TabsContent value={OrderStatus[OrderStatus.Refund]}>
-        <DisplayOrders orders={orders} status={OrderStatus.Refund} />
+      <TabsContent value={OrderStatus[OrderStatus.Refunded]}>
+        <DisplayOrders orders={orders} status={OrderStatus.Refunded} />
       </TabsContent>
       <TabsContent value={OrderStatus[OrderStatus.Cancelled]}>
         <DisplayOrders orders={orders} status={OrderStatus.Cancelled} />

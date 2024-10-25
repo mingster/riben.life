@@ -8,6 +8,15 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { StoreWithProducts, StoreOrder } from "@/types";
 import { OrderEditClient } from "./client";
 import getStoreWithProducts from "@/actions/get-store-with-products";
+import {
+  OrderStatus,
+  PageAction,
+  PaymentStatus,
+  ReturnStatus,
+  ShippingStatus,
+} from "@/types/enum";
+import Decimal from "decimal.js";
+import getOrderById from "@/actions/get-order-by_id";
 
 const OrderEditPage = async ({
   params,
@@ -18,7 +27,9 @@ const OrderEditPage = async ({
     params.storeId,
   )) as StoreWithProducts;
 
-  const order = (await sqlClient.storeOrder.findUnique({
+  const order = (await getOrderById(params.orderId)) as StoreOrder | null;
+  /*
+  let order = (await sqlClient.storeOrder.findUnique({
     where: {
       id: params.orderId,
     },
@@ -34,12 +45,14 @@ const OrderEditPage = async ({
       PaymentMethod: true,
     },
   })) as StoreOrder | null;
+  */
 
-  transformDecimalsToNumbers(order);
   //console.log('order', JSON.stringify(order));
 
-  let action = "Edit";
-  if (order === null) action = "Create";
+  let action = PageAction.Modify;
+  if (order === null) {
+    action = PageAction.Create;
+  }
 
   return (
     <div className="flex-col">

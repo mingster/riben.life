@@ -17,6 +17,9 @@ export async function GET(
       where: {
         storeId: params.storeId,
         isPaid: false,
+        orderStatus: {
+          in: [OrderStatus.Pending, OrderStatus.Processing],
+        },
       },
       include: {
         OrderNotes: true,

@@ -32,7 +32,13 @@ const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
 
   transformDecimalsToNumbers(obj);
 
-  if (obj?.tableId) {
+  /*
+  if (
+    obj?.tableId &&
+    obj?.tableId !== null &&
+    obj?.tableId !== undefined &&
+    obj?.tableId !== ""
+  ) {
     // mock tableId to its display name
     const table = (await sqlClient.storeTables.findUnique({
       where: {
@@ -40,9 +46,10 @@ const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
       },
     })) as StoreTables;
 
-    obj.tableId = table.tableName;
+    if (table) obj.tableId = table.tableName;
     //console.log(obj.tableId);
   }
+  */
 
   return obj;
 };

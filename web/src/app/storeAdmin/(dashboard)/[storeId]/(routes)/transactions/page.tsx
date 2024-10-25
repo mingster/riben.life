@@ -1,10 +1,9 @@
 import Container from "@/components/ui/container";
-import { sqlClient } from "@/lib/prismadb";
 
-import type { Store } from "@prisma/client";
+import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
+
 import { StoreOrderClient } from "./components/store-order-client";
-import type { StoreOrder } from "@/types";
-import { format } from "date-fns";
+import type { Store } from "@/types";
 
 //import { Metadata } from 'next';
 interface pageProps {
@@ -14,25 +13,11 @@ interface pageProps {
 }
 
 const TransactionMgmtPage: React.FC<pageProps> = async ({ params }) => {
-  /*
-  const orders = (await sqlClient.storeOrder.findMany({
-    where: {
-      storeId: params.storeId,
-    },
-    include: {
-      OrderNotes: true,
-      OrderItemView: true,
-      User: true,
-      ShippingMethod: true,
-      PaymentMethod: true,
-    },
-  })) as StoreOrder[];
-*/
-  //console.log(JSON.stringify(orders));
+  const store = (await checkStoreAccess(params.storeId)) as Store;
 
   return (
     <Container>
-      <StoreOrderClient storeId={params.storeId} />
+      <StoreOrderClient store={store} />
     </Container>
   );
 };
