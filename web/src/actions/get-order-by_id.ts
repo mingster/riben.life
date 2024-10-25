@@ -32,6 +32,7 @@ const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
 
   transformDecimalsToNumbers(obj);
 
+  /*
   if (
     obj?.tableId &&
     obj?.tableId !== null &&
@@ -48,6 +49,7 @@ const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
     if (table) obj.tableId = table.tableName;
     //console.log(obj.tableId);
   }
+  */
 
   return obj;
 };

@@ -46,44 +46,11 @@ const OrderEditPage = async ({
   })) as StoreOrder | null;
   */
 
-  transformDecimalsToNumbers(order);
   //console.log('order', JSON.stringify(order));
 
   let action = "Modify";
   if (order === null) {
     action = "Create";
-
-
-
-    const orderStatus = store?.autoAcceptOrder
-      ? OrderStatus.Processing
-      : OrderStatus.Pending;
-    /*
-    const result = await sqlClient.storeOrder.create({
-      data: {
-        storeId: params.storeId,
-        userId: null, //user is optional
-        tableId: null,
-        isPaid: false,
-        orderTotal: new Decimal(0),
-        currency: store.defaultCurrency,
-        paymentMethodId: '',
-        shippingMethodId: '',
-        updatedAt: new Date(Date.now()),
-        paymentStatus: PaymentStatus.Pending,
-        orderStatus: orderStatus,
-        OrderNotes: {
-          create: {
-            note: "created by admin",
-            displayToCustomer: true,
-          },
-        },
-      },
-    });
-
-    order = await getOrderById(result.id) as StoreOrder | null;
-    //console.log('action', action);
-*/
   }
 
   return (

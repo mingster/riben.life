@@ -496,6 +496,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                 render={({ field }) => (
                   <FormItem className="flex items-center space-x-1 space-y-0">
                     <FormLabel className="text-nowrap">桌號</FormLabel>
+
                     <StoreTableCombobox
                       disabled={
                         loading ||
