@@ -9,108 +9,69 @@ import { CheckIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { CellAction } from "./cell-action";
 
-
 // #region data table realted
 export type StoreOrderColumn = {
   id: string;
-  userId: string | null;
+  user: string | null | undefined;
   orderStatus: number;
   amount: number;
   currency: string;
   isPaid: boolean;
   updatedAt: string;
-  paymentMethod: string|null|undefined;
-  shippingMethod: string|null|undefined;
-  tableId: string|null|undefined;
+  paymentMethod: string | null | undefined;
+  shippingMethod: string | null | undefined;
+  tableId: string | null | undefined;
   orderNum: number;
   paymentCost: number;
+  note: string | null | undefined;
 };
 
 export const columns: ColumnDef<StoreOrderColumn>[] = [
   {
     accessorKey: "amount",
     header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title={t("Product_price")} />
-      );
+      return <DataTableColumnHeader column={column} title={t("Order_total")} />;
     },
     cell: ({ row }) => {
       const amount = Number(row.getValue("amount"));
       return <Currency value={amount} />;
     },
   },
-
-  /*
   {
     accessorKey: "orderStatus",
     header: ({ column }) => {
       return (
-        <DataTableColumnHeader column={column} title={t("Product_status")} />
+        <DataTableColumnHeader column={column} title={t("Order_status")} />
       );
     },
     cell: ({ row }) => {
       const status = OrderStatus[Number(row.getValue("orderStatus"))];
-      return {status}
-      //return <div>{t(`ProductStatus_${status.label}`)}</div>;
+      const key = `OrderStatus_${status}`;
+      return t(key);
     },
   },
-
   {
-    accessorKey: "name",
+    accessorKey: "paymentMethod",
     header: ({ column }) => {
       return (
-        <DataTableColumnHeader column={column} title={t("Product_name")} />
-      );
-    },
-    cell: ({ row }) => (
-      <Link
-        className="pl-0"
-        title="click to edit"
-        href={`./products/${row.original.id}`}
-      >
-        {row.getValue("name")}
-      </Link>
-    ),
-  },
-
-  {
-    accessorKey: "isFeatured",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title={t("Product_featured")} />
+        <DataTableColumnHeader column={column} title={t("PaymentMethod")} />
       );
     },
     cell: ({ row }) => {
-      const val =
-        row.getValue("isFeatured") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
-        ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
-        );
-      return <div className="pl-3">{val}</div>;
+      return row.getValue("paymentMethod");
     },
   },
   {
-    accessorKey: "hasOptions",
+    accessorKey: "shippingMethod",
     header: ({ column }) => {
       return (
-        <DataTableColumnHeader
-          column={column}
-          title={t("Product_hasOptions")}
-        />
+        <DataTableColumnHeader column={column} title={t("ShippingMethod")} />
       );
     },
     cell: ({ row }) => {
-      const val =
-        row.getValue("hasOptions") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
-        ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
-        );
-      return <div className="pl-3">{val}</div>;
+      return row.getValue("shippingMethod");
     },
   },
-*/
   {
     accessorKey: "updatedAt",
     header: ({ column }) => {
@@ -118,7 +79,36 @@ export const columns: ColumnDef<StoreOrderColumn>[] = [
     },
   },
   {
+    id: "info",
+    header: ({ column }) => {
+      return "";
+    },
+    cell: ({ row }) => <InfoCol data={row.original} />,
+  },
+  {
     id: "actions",
     cell: ({ row }) => <CellAction data={row.original} />,
   },
 ];
+
+interface CellActionProps {
+  data: StoreOrderColumn;
+}
+
+export const InfoCol: React.FC<CellActionProps> = ({ data }) => {
+  let note = `${t('Order_edit_orderNum')}${data.orderNum.toString()}`;
+  if (data.tableId) note = `${note}/ ${data.tableId}`;
+
+  /*
+    const orderNum =row.getValue("orderNum")??'';
+    const note =row.getValue("note");
+  */
+
+  return (
+    <div className="flex flex-col gap-1 text-nowrap">
+      <div>{data.isPaid === true ? "已付" : "未付"}</div>
+      <div>{note}</div>
+      <div>{data.user}</div>
+    </div>
+  );
+};

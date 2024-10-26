@@ -102,7 +102,6 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
             <Trash className="mr-2 h-4 w-4" /> {t("Delete")}
           </DropdownMenuItem>
           */}
-
         </DropdownMenuContent>
       </DropdownMenu>
     </>

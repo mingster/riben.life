@@ -45,29 +45,25 @@ interface StoreOrderClientProps {
   data: StoreOrderColumn[];
 }
 
-
 export const TransactionClient: React.FC<StoreOrderClientProps> = ({
-  store, data
+  store,
+  data,
 }) => {
-
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
   return (
     <>
-    <Heading
-      title={t("Store_orders")}
-      badge={data.length}
-      description=""
-    />
+      <Heading title={t("Store_orders")} badge={data.length} description="" />
 
-    <DataTable searchKey="" columns={columns} data={data} />
+      <DataTable searchKey="" columns={columns} data={data} />
     </>
   );
-}
+};
 
 export const TransactionClientOld: React.FC<StoreOrderClientProps> = ({
-  store, data
+  store,
+  data,
 }) => {
   const params = useParams();
   const router = useRouter();
@@ -160,8 +156,7 @@ export const TransactionClientOld: React.FC<StoreOrderClientProps> = ({
       {data.length === 0 ? (
         <p className="text-descr text-xs font-mono">{t("no_results_found")}</p>
       ) : (
-        <>
-        </>
+        <></>
       )}
     </>
   );

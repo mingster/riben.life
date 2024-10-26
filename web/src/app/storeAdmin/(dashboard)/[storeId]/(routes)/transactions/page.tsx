@@ -19,8 +19,7 @@ interface pageProps {
 const TransactionMgmtPage: React.FC<pageProps> = async ({ params }) => {
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
-
-  const orders = await sqlClient.storeOrder.findMany({
+  const orders = (await sqlClient.storeOrder.findMany({
     where: {
       storeId: store.id,
     },
@@ -35,15 +34,15 @@ const TransactionMgmtPage: React.FC<pageProps> = async ({ params }) => {
     orderBy: {
       updatedAt: "desc",
     },
-  }) as StoreOrder[];
+  })) as StoreOrder[];
 
   transformDecimalsToNumbers(orders);
 
   // map order to ui
   const formattedData: StoreOrderColumn[] = orders.map((item: StoreOrder) => ({
     id: item.id,
-    userId: item.userId ?? '',
-    orderStatus: item.orderStatus,
+    user: item.User?.username || "",
+    orderStatus: item.orderStatus || 0,
     amount: Number(item.orderTotal),
     currency: item.currency,
     isPaid: item.isPaid,
@@ -53,6 +52,7 @@ const TransactionMgmtPage: React.FC<pageProps> = async ({ params }) => {
     tableId: item.tableId,
     orderNum: Number(item.orderNum),
     paymentCost: Number(item.paymentCost) || 0,
+    note: item.OrderNotes[0]?.note || "",
   }));
 
   return (
