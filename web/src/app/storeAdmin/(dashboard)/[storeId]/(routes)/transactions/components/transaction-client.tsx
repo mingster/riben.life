@@ -52,60 +52,49 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
-  const [filter, setFilter] = useState(0);
-  const [filteredData, setFilteredData] = useState<StoreOrderColumn[]>(data);
-
-  if (filter) {
-    setFilteredData(data.filter((d) => d.orderStatus === filter));
-  }
-
-  return (
-    <>
-      <Heading title={t("Store_orders")} badge={data.length} description="" />
-      <Filters />
-      <DataTable searchKey="" columns={columns} data={filteredData} />
-    </>
-  );
-};
-
-export const Filters: React.FC = () => {
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng, "storeAdmin");
-
+  // orderStatus numeric key
   const keys = Object
     .keys(OrderStatus)
-    .filter((v) => Number.isNaN(Number(v)));
+    .filter((v) => !Number.isNaN(Number(v)));
 
-  /*
-keys.forEach((key, index) => {
-  const v = `OrderStatus_${key}`;
-  console.log(`${key} has index ${index} - ${t(v)}`)
-})
-  */
+  const [filterStatus, setFilterStatus] = useState(0);  //0 = all
+  let result = data;
 
+  if (filterStatus !== 0) {
+    //console.log('filter', filterStatus);
+    result = data.filter((d) => d.orderStatus === filterStatus);
+
+    //console.log('result', result.length);
+  }
+
+  const highlight_css = 'border-dashed border-green-500';
   return (
-    <div className='flex gap-1 pb-2'>
-      <Button
-        className='h-12'
-        variant="outline"
-        onClick={() => { }}
-      >
-        ALL
-      </Button>
-      {
-        keys.map((key, index) => (
-          <Button
-            key={key}
-            className='h-12'
-            variant="outline"
-            onClick={() => { }}
-          >
-            {t(`OrderStatus_${key}`)}
-          </Button>
-        ))
-      }
+    <>
+      <Heading title={t("Store_orders")} badge={result.length} description="" />
+      <div className='flex gap-1 pb-2'>
+        <Button
+          className={cn('h-12', filterStatus === 0 && highlight_css)}
+          variant="outline"
+          onClick={() => { setFilterStatus(0) }}
+        >
+          ALL
+        </Button>
+        {
+          keys.map((key) => (
+            <Button
+              key={key}
+              className={cn('h-12', filterStatus === Number(key) && highlight_css)}
+              variant="outline"
+              onClick={() => { setFilterStatus(Number(key)) }}
+            >
+              {t(`OrderStatus_${OrderStatus[Number(key)]}`)}
+            </Button>
+          ))
+        }
 
-    </div>
+      </div>
+      <DataTable searchKey="" columns={columns} data={result} />
+    </>
   );
 };
 
