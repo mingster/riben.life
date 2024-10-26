@@ -37,13 +37,37 @@ import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { useState } from "react";
 import { OrderStatus } from "@/types/enum";
+import { DataTable } from "@/components/dataTable";
+import { columns, type StoreOrderColumn } from "./columns";
 
 interface StoreOrderClientProps {
   store: Store;
+  data: StoreOrderColumn[];
 }
 
-export const StoreOrderClient: React.FC<StoreOrderClientProps> = ({
-  store,
+
+export const TransactionClient: React.FC<StoreOrderClientProps> = ({
+  store, data
+}) => {
+
+  const { lng } = useI18n();
+  const { t } = useTranslation(lng, "storeAdmin");
+
+  return (
+    <>
+    <Heading
+      title={t("Store_orders")}
+      badge={data.length}
+      description=""
+    />
+
+    <DataTable searchKey="" columns={columns} data={data} />
+    </>
+  );
+}
+
+export const TransactionClientOld: React.FC<StoreOrderClientProps> = ({
+  store, data
 }) => {
   const params = useParams();
   const router = useRouter();
@@ -130,20 +154,20 @@ export const StoreOrderClient: React.FC<StoreOrderClientProps> = ({
       <Button variant={"outline"} onClick={() => doSearch()}>
         search
       </Button>
-
       <div className="text-descr text-xs font-mono">
         {format(date, "yyyy-MM-dd")}至{format(new Date(), "yyyy-MM-dd")}
       </div>
-      {orders.length === 0 ? (
+      {data.length === 0 ? (
         <p className="text-descr text-xs font-mono">{t("no_results_found")}</p>
       ) : (
         <>
-          <DisplayOrders orders={orders} />
         </>
       )}
     </>
   );
 };
+
+//          <DisplayOrders orders={orders} />
 
 type orderTabProps = { orders: StoreOrder[] };
 export const DisplayOrders = ({ orders }: orderTabProps) => {
