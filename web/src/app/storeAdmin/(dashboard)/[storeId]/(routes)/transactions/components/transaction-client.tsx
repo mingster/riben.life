@@ -52,12 +52,60 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
+  const [filter, setFilter] = useState(0);
+  const [filteredData, setFilteredData] = useState<StoreOrderColumn[]>(data);
+
+  if (filter) {
+    setFilteredData(data.filter((d) => d.orderStatus === filter));
+  }
+
   return (
     <>
       <Heading title={t("Store_orders")} badge={data.length} description="" />
-
-      <DataTable searchKey="" columns={columns} data={data} />
+      <Filters />
+      <DataTable searchKey="" columns={columns} data={filteredData} />
     </>
+  );
+};
+
+export const Filters: React.FC = () => {
+  const { lng } = useI18n();
+  const { t } = useTranslation(lng, "storeAdmin");
+
+  const keys = Object
+    .keys(OrderStatus)
+    .filter((v) => Number.isNaN(Number(v)));
+
+  /*
+keys.forEach((key, index) => {
+  const v = `OrderStatus_${key}`;
+  console.log(`${key} has index ${index} - ${t(v)}`)
+})
+  */
+
+  return (
+    <div className='flex gap-1 pb-2'>
+      <Button
+        className='h-12'
+        variant="outline"
+        onClick={() => { }}
+      >
+        ALL
+      </Button>
+      {
+        keys.map((key, index) => (
+          <Button
+            key={key}
+            className='h-12'
+            variant="outline"
+            onClick={() => { }}
+          >
+            {t(`OrderStatus_${key}`)}
+          </Button>
+        ))
+      }
+
+    </div>
   );
 };
 
