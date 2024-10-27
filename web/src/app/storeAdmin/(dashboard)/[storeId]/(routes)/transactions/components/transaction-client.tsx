@@ -53,11 +53,9 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   const { t } = useTranslation(lng, "storeAdmin");
 
   // orderStatus numeric key
-  const keys = Object
-    .keys(OrderStatus)
-    .filter((v) => !Number.isNaN(Number(v)));
+  const keys = Object.keys(OrderStatus).filter((v) => !Number.isNaN(Number(v)));
 
-  const [filterStatus, setFilterStatus] = useState(0);  //0 = all
+  const [filterStatus, setFilterStatus] = useState(0); //0 = all
   let result = data;
 
   if (filterStatus !== 0) {
@@ -67,31 +65,35 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
     //console.log('result', result.length);
   }
 
-  const highlight_css = 'border-dashed border-green-500';
+  const highlight_css = "border-dashed border-green-500";
   return (
     <>
       <Heading title={t("Store_orders")} badge={result.length} description="" />
-      <div className='flex gap-1 pb-2'>
+      <div className="flex gap-1 pb-2">
         <Button
-          className={cn('h-12', filterStatus === 0 && highlight_css)}
+          className={cn("h-12", filterStatus === 0 && highlight_css)}
           variant="outline"
-          onClick={() => { setFilterStatus(0) }}
+          onClick={() => {
+            setFilterStatus(0);
+          }}
         >
           ALL
         </Button>
-        {
-          keys.map((key) => (
-            <Button
-              key={key}
-              className={cn('h-12', filterStatus === Number(key) && highlight_css)}
-              variant="outline"
-              onClick={() => { setFilterStatus(Number(key)) }}
-            >
-              {t(`OrderStatus_${OrderStatus[Number(key)]}`)}
-            </Button>
-          ))
-        }
-
+        {keys.map((key) => (
+          <Button
+            key={key}
+            className={cn(
+              "h-12",
+              filterStatus === Number(key) && highlight_css,
+            )}
+            variant="outline"
+            onClick={() => {
+              setFilterStatus(Number(key));
+            }}
+          >
+            {t(`OrderStatus_${OrderStatus[Number(key)]}`)}
+          </Button>
+        ))}
       </div>
       <DataTable searchKey="" columns={columns} data={result} />
     </>

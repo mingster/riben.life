@@ -1,4 +1,4 @@
-import type { Package } from "@/types/package";
+import type { Package } from "@/types/mockup/package";
 
 const packageData: Package[] = [
   {

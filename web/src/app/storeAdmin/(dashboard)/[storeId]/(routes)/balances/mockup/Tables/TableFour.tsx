@@ -1,5 +1,5 @@
-import DropdownDefault from "@/components/ui/Dropdowns/DropdownDefault";
-import type { BRAND } from "@/types/brand";
+import DropdownDefault from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Dropdowns/DropdownDefault";
+import type { BRAND } from "@/types/mockup/brand";
 import Image from "next/image";
 
 const brandData: BRAND[] = [

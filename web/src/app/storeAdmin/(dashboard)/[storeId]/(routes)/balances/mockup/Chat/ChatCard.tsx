@@ -1,4 +1,4 @@
-import type { Chat } from "@/types/chat";
+import type { Chat } from "@/types/mockup/chat";
 import Image from "next/image";
 import Link from "next/link";
 

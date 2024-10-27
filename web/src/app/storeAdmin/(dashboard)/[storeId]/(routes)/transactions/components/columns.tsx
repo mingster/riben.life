@@ -96,7 +96,7 @@ interface CellActionProps {
 }
 
 export const InfoCol: React.FC<CellActionProps> = ({ data }) => {
-  let note = `${t('Order_edit_orderNum')}${data.orderNum.toString()}`;
+  let note = `${t("Order_edit_orderNum")}${data.orderNum.toString()}`;
   if (data.tableId) note = `${note}/ ${data.tableId}`;
 
   /*
