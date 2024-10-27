@@ -1,18 +1,18 @@
 "use client";
-import Breadcrumb from "@/components/ui/Breadcrumbs/Breadcrumb";
-import CheckboxFive from "@/components/ui/Checkboxes/CheckboxFive";
-import CheckboxFour from "@/components/ui/Checkboxes/CheckboxFour";
-import CheckboxOne from "@/components/ui/Checkboxes/CheckboxOne";
-import CheckboxThree from "@/components/ui/Checkboxes/CheckboxThree";
-import CheckboxTwo from "@/components/ui/Checkboxes/CheckboxTwo";
-import DatePickerOne from "@/components/ui/FormElements/DatePicker/DatePickerOne";
-import DatePickerTwo from "@/components/ui/FormElements/DatePicker/DatePickerTwo";
-import MultiSelect from "@/components/ui/FormElements/MultiSelect";
-import SelectGroupTwo from "@/components/ui/SelectGroup/SelectGroupTwo";
-import SwitcherFour from "@/components/ui/Switchers/SwitcherFour";
-import SwitcherOne from "@/components/ui/Switchers/SwitcherOne";
-import SwitcherThree from "@/components/ui/Switchers/SwitcherThree";
-import SwitcherTwo from "@/components/ui/Switchers/SwitcherTwo";
+import Breadcrumb from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Breadcrumbs/Breadcrumb";
+import CheckboxFive from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Checkboxes/CheckboxFive";
+import CheckboxFour from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Checkboxes/CheckboxFour";
+import CheckboxOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Checkboxes/CheckboxOne";
+import CheckboxThree from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Checkboxes/CheckboxThree";
+import CheckboxTwo from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Checkboxes/CheckboxTwo";
+import DatePickerOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/FormElements/DatePicker/DatePickerOne";
+import DatePickerTwo from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/FormElements/DatePicker/DatePickerTwo";
+import MultiSelect from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/FormElements/MultiSelect";
+import SelectGroupTwo from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/SelectGroup/SelectGroupTwo";
+import SwitcherFour from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Switchers/SwitcherFour";
+import SwitcherOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Switchers/SwitcherOne";
+import SwitcherThree from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Switchers/SwitcherThree";
+import SwitcherTwo from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Switchers/SwitcherTwo";
 
 const FormElements = () => {
   return (

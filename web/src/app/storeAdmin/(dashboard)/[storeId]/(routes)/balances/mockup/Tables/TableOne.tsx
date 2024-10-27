@@ -1,4 +1,4 @@
-import type { BRAND } from "@/types/brand";
+import type { BRAND } from "@/types/mockup/brand";
 import Image from "next/image";
 
 const brandData: BRAND[] = [

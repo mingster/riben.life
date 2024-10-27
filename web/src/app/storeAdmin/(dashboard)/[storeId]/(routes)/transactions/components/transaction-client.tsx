@@ -52,11 +52,50 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
+  // orderStatus numeric key
+  const keys = Object.keys(OrderStatus).filter((v) => !Number.isNaN(Number(v)));
+
+  const [filterStatus, setFilterStatus] = useState(0); //0 = all
+  let result = data;
+
+  if (filterStatus !== 0) {
+    //console.log('filter', filterStatus);
+    result = data.filter((d) => d.orderStatus === filterStatus);
+
+    //console.log('result', result.length);
+  }
+
+  const highlight_css = "border-dashed border-green-500";
   return (
     <>
-      <Heading title={t("Store_orders")} badge={data.length} description="" />
-
-      <DataTable searchKey="" columns={columns} data={data} />
+      <Heading title={t("Store_orders")} badge={result.length} description="" />
+      <div className="flex gap-1 pb-2">
+        <Button
+          className={cn("h-12", filterStatus === 0 && highlight_css)}
+          variant="outline"
+          onClick={() => {
+            setFilterStatus(0);
+          }}
+        >
+          ALL
+        </Button>
+        {keys.map((key) => (
+          <Button
+            key={key}
+            className={cn(
+              "h-12",
+              filterStatus === Number(key) && highlight_css,
+            )}
+            variant="outline"
+            onClick={() => {
+              setFilterStatus(Number(key));
+            }}
+          >
+            {t(`OrderStatus_${OrderStatus[Number(key)]}`)}
+          </Button>
+        ))}
+      </div>
+      <DataTable searchKey="" columns={columns} data={result} />
     </>
   );
 };
