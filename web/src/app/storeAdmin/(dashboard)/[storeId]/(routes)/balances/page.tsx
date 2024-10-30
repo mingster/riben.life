@@ -19,7 +19,7 @@ interface pageProps {
 const BalanceMgmtPage: React.FC<pageProps> = async ({ params }) => {
   const store = (await checkStoreAccess(params.storeId)) as Store;
   // this store is pro version or not?
-  const disablePaidOptions = await isProLevel(store?.id);
+  const disablePaidOptions = await (!isProLevel(store?.id));
 
   return (
     <Suspense fallback={<Loader />}>

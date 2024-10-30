@@ -124,6 +124,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
       fee: Number(item.fee),
       priceDescr: item.priceDescr.toString(),
       isDefault: item.isDefault,
+      disabled: disablePaidOptions,
     }),
   );
   // biome-ignore lint/style/noVar: <explanation>
@@ -214,7 +215,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
             columns={PayMethodColumns}
             data={formattedPaymethods}
             initiallySelected={savedStorePayMethods}
-            disabled={disablePaidOptions || disablePaidOptions}
+            disabled={loading || disablePaidOptions}
             onRowSelectionChange={setSelectedPayMethodIds}
           />
           <Button
@@ -237,8 +238,7 @@ type PayMethodColumn = {
   fee: number;
   priceDescr: string;
   isDefault: boolean;
-  //createdAt: Date;
-  //updatedAt: Date;
+  disabled: boolean;
 };
 
 const PayMethodColumns: ColumnDef<PayMethodColumn>[] = [
@@ -256,6 +256,7 @@ const PayMethodColumns: ColumnDef<PayMethodColumn>[] = [
     ),
     cell: ({ row }) => (
       <Checkbox
+        disabled={row.original.disabled}
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Select row"
@@ -339,6 +340,7 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
     ),
     cell: ({ row }) => (
       <Checkbox
+        disabled={row.original.disabled}
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Select row"
