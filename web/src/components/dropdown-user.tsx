@@ -40,7 +40,7 @@ export default function DropdownUser({ user }: UserButtonProps) {
       <DropdownMenuTrigger asChild>
         <Button
           size="icon"
-          className="flex-none rounded-full border-gray/20 bg-stroke/20 hover:text-meta-1 
+          className="flex-none rounded-full border-gray/20 bg-stroke/20 hover:text-meta-1
           dark:border-strokedark dark:bg-meta-4 dark:text-primary dark:hover:text-meta-1"
         >
           <Image
@@ -58,7 +58,7 @@ export default function DropdownUser({ user }: UserButtonProps) {
             <DropdownMenuGroup>
               <DropdownMenuItem className="cursor-pointer" asChild>
                 <Link href={`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`}>
-                  <LogIn className="mr-2 h-4 w-4" />
+                  <LogIn className="mr-1 h-4 w-4" />
                   <span>
                     {t("user_profile_signIn")}/{t("user_profile_signUp")}
                   </span>
@@ -75,13 +75,13 @@ export default function DropdownUser({ user }: UserButtonProps) {
             <DropdownMenuGroup>
               <DropdownMenuItem className="cursor-pointer" asChild>
                 <Link href="/account">
-                  <Settings className="mr-2 h-4 w-4" />
+                  <Settings className="mr-1 h-4 w-4" />
                   <span>{t("user_profile_myAccount")}</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer" asChild>
                 <Link href="/storeAdmin/">
-                  <Lock className="mr-2 h-4 w-4" />
+                  <Lock className="mr-1 h-4 w-4" />
                   <span>{t("user_profile_linkTo_storeDashboard")}</span>
                 </Link>
               </DropdownMenuItem>
@@ -89,7 +89,7 @@ export default function DropdownUser({ user }: UserButtonProps) {
               {user?.role === "ADMIN" && (
                 <DropdownMenuItem className="cursor-pointer" asChild>
                   <Link href="/admin">
-                    <Lock className="mr-2 h-4 w-4" />
+                    <Lock className="mr-1 h-4 w-4" />
                     <span>{t("user_profile_linkTo_admin")}</span>
                   </Link>
                 </DropdownMenuItem>
@@ -102,7 +102,7 @@ export default function DropdownUser({ user }: UserButtonProps) {
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="flex w-full items-center"
               >
-                <LogOut className="mr-2 h-4 w-4" /> {t("user_profile_signOut")}
+                <LogOut className="mr-1 h-4 w-4" /> {t("user_profile_signOut")}
               </button>
             </DropdownMenuItem>
           </>

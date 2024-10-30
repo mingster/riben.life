@@ -16,12 +16,11 @@ const isProLevel = async (storeId: string): Promise<boolean> => {
     return false;
   }
 
-  console.log('store level', store.level);
+  console.log("store level", store.level);
 
   if (store.level === StoreLevel.Free) return false;
 
   if (store.level === StoreLevel.Pro || store.level === StoreLevel.Multi) {
-
     /*
     await sqlClient.subscription.update({
       where: {
@@ -38,7 +37,6 @@ const isProLevel = async (storeId: string): Promise<boolean> => {
         storeId,
       },
     });
-
 
     console.log("store is pro. exp is: ", subscriptions?.expiration);
 
