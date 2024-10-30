@@ -65,53 +65,57 @@ const getStoreWithProducts = async (
     throw Error("no store found");
   }
 
-  const defaultPaymentMethods = (await sqlClient.paymentMethod.findMany({
-    where: {
-      isDefault: true,
-    },
-  })) as PaymentMethod[];
-
   // add default payment methods to the store
   // skip if store already has the method(s)
-  defaultPaymentMethods.map((paymentMethod) => {
-    if (
-      !store.StorePaymentMethods.find(
-        (existingMethod) => existingMethod.id === paymentMethod.id,
-      )
-    ) {
-      const mapping = {
-        storeId: store.id,
-        methodId: paymentMethod.id,
-        PaymentMethod: paymentMethod,
-      } as StorePaymentMethodMapping;
+  if (store.StorePaymentMethods.length === 0) {
+    const defaultPaymentMethods = (await sqlClient.paymentMethod.findMany({
+      where: {
+        isDefault: true,
+      },
+    })) as PaymentMethod[];
 
-      store.StorePaymentMethods.push(mapping);
-    }
-  });
+    defaultPaymentMethods.map((paymentMethod) => {
+      if (
+        !store.StorePaymentMethods.find(
+          (existingMethod) => existingMethod.id === paymentMethod.id,
+        )
+      ) {
+        const mapping = {
+          storeId: store.id,
+          methodId: paymentMethod.id,
+          PaymentMethod: paymentMethod,
+        } as StorePaymentMethodMapping;
+
+        store.StorePaymentMethods.push(mapping);
+      }
+    });
+  }
 
   // add default shipping methods to the store
   // skip if store already has the method(s)
-  const defaultShippingMethods = (await sqlClient.shippingMethod.findMany({
-    where: {
-      isDefault: true,
-    },
-  })) as ShippingMethod[];
+  if (store.StoreShippingMethods.length === 0) {
+    const defaultShippingMethods = (await sqlClient.shippingMethod.findMany({
+      where: {
+        isDefault: true,
+      },
+    })) as ShippingMethod[];
 
-  defaultShippingMethods.map((method) => {
-    if (
-      !store.StoreShippingMethods.find(
-        (existingMethod) => existingMethod.id === method.id,
-      )
-    ) {
-      const mapping = {
-        storeId: store.id,
-        methodId: method.id,
-        ShippingMethod: method,
-      } as StoreShipMethodMapping;
+    defaultShippingMethods.map((method) => {
+      if (
+        !store.StoreShippingMethods.find(
+          (existingMethod) => existingMethod.id === method.id,
+        )
+      ) {
+        const mapping = {
+          storeId: store.id,
+          methodId: method.id,
+          ShippingMethod: method,
+        } as StoreShipMethodMapping;
 
-      store.StoreShippingMethods.push(mapping);
-    }
-  });
+        store.StoreShippingMethods.push(mapping);
+      }
+    });
+  }
 
   transformDecimalsToNumbers(store);
 

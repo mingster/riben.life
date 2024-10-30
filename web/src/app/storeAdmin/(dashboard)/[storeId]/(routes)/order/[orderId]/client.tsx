@@ -157,6 +157,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     defaultValues,
   });
 
+  // update order in persisted storage
   const onSubmit = async (data: formValues) => {
     if (updatedOrder === null) {
       return;
@@ -205,6 +206,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   console.log("form errors", form.formState.errors);
 
+  // mark order as voided if total is zero.  Delete the order if total is zero.
   const onCancel = async () => {
     if (updatedOrder === null) {
       return;
@@ -312,7 +314,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     recalc();
   };
 
-  //create an order, and then process to the selected payment method
+  //create an order object. and then process to the selected payment method
   //
   const placeOrder = async () => {
     setLoading(true);
@@ -417,9 +419,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     setOrderTotal(updatedOrder?.orderTotal || 0);
   }, [updatedOrder?.orderTotal]);
 
+  // create order object if not exist. This should occur only in 新增訂單 workflow.
   const placeOrderCallback = useCallback(placeOrder, []);
-
-  // create empty order if not exist
   useEffect(() => {
     const createOrder = async () => {
       if (updatedOrder === null) {
