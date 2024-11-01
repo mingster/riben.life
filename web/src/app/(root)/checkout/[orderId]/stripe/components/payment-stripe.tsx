@@ -1,12 +1,9 @@
 "use client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { useElements, useStripe } from "@stripe/react-stripe-js";
-import { type ChangeEvent, Suspense, useEffect, useState } from "react";
-
+import { type ChangeEvent, useEffect, useState } from "react";
 import { getAbsoluteUrl } from "@/lib/utils";
-//import type { StoreOrder } from "prisma/prisma-client";
-
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
@@ -17,20 +14,9 @@ import {
   PaymentElement,
 } from "@stripe/react-stripe-js";
 import { useSession } from "next-auth/react";
-
 import getStripe from "@/lib/stripe/client";
-//import type { StoreOrder } from "prisma/prisma-client";
-//import StripePayButton from "./pay-button";
-
-import { SuccessAndRedirect } from "@/components/success-and-redirect";
-import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
 import type { StoreOrder } from "@prisma/client";
-import {
-  type Appearance,
-  StripeElement,
-  type StripeElementsOptions,
-} from "@stripe/stripe-js";
+import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
 import { useTheme } from "next-themes";
 
 type paymentProps = {
@@ -112,17 +98,6 @@ const PaymentStripe: React.FC<paymentProps> = ({ order }) => {
     router.push(`/${order.storeId}/billing/${order.id}`);
     return;
   }
-  /*
-  if (order.isPaid) {
-    return (
-      <Suspense fallback={<Loader />}>
-        <Container>
-          <SuccessAndRedirect />
-        </Container>
-      </Suspense>
-    );
-  }
-*/
 
   return (
     clientSecret !== "" &&

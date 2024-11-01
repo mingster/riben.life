@@ -70,8 +70,9 @@ const StoreSettingsPage: React.FC<pageProps> = async ({ params }) => {
   transformDecimalsToNumbers(allShippingMethods);
 
   // this store is pro version or not?
-  const disablePaidOptions = await isProLevel(store?.id);
+  const disablePaidOptions = await !isProLevel(store?.id);
 
+  console.log("disablePaidOptions", disablePaidOptions);
   return (
     <Suspense fallback={<Loader />}>
       <Container>

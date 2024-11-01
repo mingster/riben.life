@@ -42,10 +42,16 @@ const getUser = async (): Promise<User | null> => {
 
   if (obj) {
     transformDecimalsToNumbers(obj);
+  }
 
-    // mock tableId to its display name
+  return obj;
+
+  /*
+      // mock tableId to its display name
     for (const order of obj.Orders) {
-      if (order.tableId) {
+      console.log('tableId', order.tableId);
+
+      if (order.tableId && order.tableId !== "" && order.tableId !== null) {
         const table = (await sqlClient.storeTables.findUnique({
           where: {
             id: order.tableId,
@@ -55,11 +61,8 @@ const getUser = async (): Promise<User | null> => {
         order.tableId = table.tableName;
       }
     }
-  }
 
-  return obj;
-
-  /*
+    
   //get user with needed assoicated objects
   //
   const userid = session?.user.id;

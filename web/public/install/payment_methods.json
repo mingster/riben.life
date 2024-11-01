@@ -14,17 +14,17 @@
         "isDefault": false
     },
     {
-        "name": "linepay",
-        "payUrl": "linepay",
+        "name": "linePay",
+        "payUrl": "linePay",
         "priceDescr": "3.0%",
         "fee": 0.00,
         "isDefault": false
     },
     {
-        "name": "newebpay 藍新金流",
-        "payUrl": "newebpay",
+        "name": "ApplePay",
+        "payUrl": "ApplePay",
         "priceDescr": "2.8%",
-        "fee": 0.04,
+        "fee": 0.015,
         "isDefault": false
     },
     {

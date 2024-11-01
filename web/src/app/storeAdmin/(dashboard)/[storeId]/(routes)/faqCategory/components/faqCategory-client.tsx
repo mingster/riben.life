@@ -39,7 +39,7 @@ export const FaqCategoryClient: React.FC<FaqCategoryClientProps> = ({
             router.push(`/storeAdmin/${params.storeId}/faqCategory/new`)
           }
         >
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-1 h-4 w-4" />
           {t("Create")}
         </Button>
       </div>

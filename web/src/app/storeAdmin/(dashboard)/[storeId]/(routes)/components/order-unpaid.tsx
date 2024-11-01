@@ -25,9 +25,9 @@ import { ClipLoader } from "react-spinners";
 
 import Currency from "@/components/currency";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-
+import { useParams, useRouter } from "next/navigation";
 interface props {
   store: Store;
   tables: StoreTables[];
@@ -52,7 +52,7 @@ export const OrderUnpaid = ({
   }, []);
 
   const params = useParams();
-  //const router = useRouter();
+  const router = useRouter();
   const { toast } = useToast();
 
   const { lng } = useI18n();
@@ -92,7 +92,15 @@ export const OrderUnpaid = ({
           className="pt-2"
         />
         <div>
-          <Link href={`/storeAdmin/${params.storeId}/order/add`}>新增訂單</Link>
+          <Button
+            variant={"outline"}
+            onClick={() =>
+              router.push(`/storeAdmin/${params.storeId}/order/add`)
+            }
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            {t("Create")}
+          </Button>
         </div>
       </div>
 

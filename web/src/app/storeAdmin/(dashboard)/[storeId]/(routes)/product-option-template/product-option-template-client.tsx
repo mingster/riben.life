@@ -273,7 +273,7 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
         className="text-white bg-red-600 dark:bg-red-900"
         onClick={() => setOpen(true)}
       >
-        <Trash className="mr-2 h-4 w-4" /> {t("Delete")}
+        <Trash className="mr-1 h-4 w-4" /> {t("Delete")}
       </Button>
     </>
   );

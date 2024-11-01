@@ -65,7 +65,7 @@ export const TableClient: React.FC<props> = ({ data }) => {
               router.push(`/storeAdmin/${params.storeId}/tables/new`)
             }
           >
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-1 h-4 w-4" />
             {t("Create")}
           </Button>
           <AddTablesDialog />
@@ -120,7 +120,7 @@ export function AddTablesDialog() {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant={"outline"}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-1 h-4 w-4" />
           {t("StoreTable_Mgmt_AddButton")}
         </Button>
       </DialogTrigger>
