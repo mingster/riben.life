@@ -785,10 +785,10 @@ view orderitemview {
   id           String   @unique
   orderId      String
   productId    String
-  quantity     Int?
+  quantity     Int
   unitDiscount Decimal?
-  unitPrice    Decimal?
-  name         String?
+  unitPrice    Decimal
+  name         String
   url          String?
   variants     String? // hold values of product options selection delimited by comma
   variantCosts String? // hold values of variant cost delimited by comma
