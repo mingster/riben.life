@@ -16,10 +16,7 @@ import {
 import { useSession } from "next-auth/react";
 import getStripe from "@/lib/stripe/client";
 import type { StoreOrder } from "@prisma/client";
-import type {
-  Appearance,
-  StripeElementsOptions
-} from "@stripe/stripe-js";
+import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
 import { useTheme } from "next-themes";
 
 type paymentProps = {

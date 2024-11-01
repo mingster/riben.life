@@ -119,7 +119,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     defaultPaymentMethod.PaymentMethod,
   );
-  console.log('StorePaymentMethods', JSON.stringify(allpaymentMethods));
+  console.log("StorePaymentMethods", JSON.stringify(allpaymentMethods));
   console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
 
   //const [selectedPaymentType, setSelectedPaymentType] = useState('creditCard');
@@ -127,11 +127,11 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
   //console.log('CheckutSteps: ' + JSON.stringify(shipMethods));
 
   const hanlePaymentChange = (selectedPaymentMethodId: string) => {
-
-    console.log('hanlePaymentChange', selectedPaymentMethodId);
+    console.log("hanlePaymentChange", selectedPaymentMethodId);
 
     const selected = allpaymentMethods.find(
-      (o: StorePaymentMethodMapping) => o.PaymentMethod.id === selectedPaymentMethodId,
+      (o: StorePaymentMethodMapping) =>
+        o.PaymentMethod.id === selectedPaymentMethodId,
     );
     if (selected) setPaymentMethod(selected.PaymentMethod);
     //console.log('selected payment type: ' + selected?.paymentMethod.name);
@@ -334,17 +334,21 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
           <CardTitle>{t("checkout_paymentMethod")}</CardTitle>
         </CardHeader>
         <CardContent>
-
-          <RadioGroup className="flex"
+          <RadioGroup
+            className="flex"
             defaultValue={defaultPaymentMethod.id}
-            onValueChange={(val) =>
-              hanlePaymentChange(val)
-            }>
+            onValueChange={(val) => hanlePaymentChange(val)}
+          >
             {allpaymentMethods.map((mapping) => (
               <div key={mapping.id} className="flex items-center space-x-2">
-                <RadioGroupItem value={mapping.PaymentMethod.id} id={mapping.PaymentMethod.id} />
+                <RadioGroupItem
+                  value={mapping.PaymentMethod.id}
+                  id={mapping.PaymentMethod.id}
+                />
                 <Label htmlFor={mapping.PaymentMethod.id}>
-                  {mapping.paymentDisplayName !== null ? mapping.paymentDisplayName : mapping.PaymentMethod.name}
+                  {mapping.paymentDisplayName !== null
+                    ? mapping.paymentDisplayName
+                    : mapping.PaymentMethod.name}
                 </Label>
               </div>
             ))}

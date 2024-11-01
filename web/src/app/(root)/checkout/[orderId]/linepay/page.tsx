@@ -25,19 +25,19 @@ const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
   //console.log('linepay order', JSON.stringify(order));
 
   if (!process.env.LNE_PAY_ID) {
-    throw new Error('LNE_PAY_ID is not set');
+    throw new Error("LNE_PAY_ID is not set");
   }
   if (!process.env.LINE_PAY_SECRET) {
-    throw new Error('LINE_PAY_SECRET is not set');
+    throw new Error("LINE_PAY_SECRET is not set");
   }
-  const env = process.env.NODE_ENV === 'development' ? 'development' : 'production';
+  const env =
+    process.env.NODE_ENV === "development" ? "development" : "production";
 
   const linePayClient = createLinePayClient({
     channelId: process.env.LNE_PAY_ID,
     channelSecretKey: process.env.LINE_PAY_SECRET,
-    env: env // env can be 'development' or 'production'
+    env: env, // env can be 'development' or 'production'
   }) as LinePayClient;
-
 
   const confirmUrl = `/checkout/${order.id}/linepay/confirmed`;
   const cancelUrl = `/checkout/${order.id}/linepay/canceled`;
@@ -55,18 +55,18 @@ const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
             {
               name: item.name,
               quantity: item.quantity,
-              price: item.unitPrice
-            }
-          ]
+              price: item.unitPrice,
+            },
+          ],
         };
-      })],
+      }),
+    ],
     redirectUrls: {
       confirmUrl: confirmUrl,
-      cancelUrl: cancelUrl
-    }
+      cancelUrl: cancelUrl,
+    },
   };
-  console.log('linepay request', JSON.stringify(requestBody));
-
+  console.log("linepay request", JSON.stringify(requestBody));
 
   if (order.isPaid) {
     return (
@@ -78,7 +78,7 @@ const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
     );
   }
 
-  return (<>line pay</>);
+  return <>line pay</>;
 };
 
 export default PaymentPage;

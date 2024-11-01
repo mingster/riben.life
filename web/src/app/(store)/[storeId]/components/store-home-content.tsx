@@ -4,7 +4,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { ProductCard } from "@/components/product-card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
-import { Item, useCart } from "@/hooks/use-cart";
+import { type Item, useCart } from "@/hooks/use-cart";
 import BusinessHours from "@/lib/businessHours";
 import { getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";

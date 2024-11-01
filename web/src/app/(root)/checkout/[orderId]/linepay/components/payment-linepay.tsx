@@ -6,19 +6,16 @@ import type { StoreOrder } from "@/types";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-
 type paymentProps = {
   order: StoreOrder;
   client: LinePayClient;
 };
 const PaymentLinePay: React.FC<paymentProps> = ({ order, client }) => {
-
   if (!order) throw Error("order is required.");
 
   //call payment intent api to get client secret
   useEffect(() => {
     if (order.isPaid) return;
-
 
     const confirmUrl = `${getAbsoluteUrl()}/checkout/${order.id}/linepay/confirmed`;
     const cancelUrl = `${getAbsoluteUrl()}/checkout/${order.id}/linepay/canceled`;
@@ -36,18 +33,18 @@ const PaymentLinePay: React.FC<paymentProps> = ({ order, client }) => {
               {
                 name: item.name,
                 quantity: item.quantity,
-                price: item.unitPrice
-              }
-            ]
+                price: item.unitPrice,
+              },
+            ],
           };
-        })],
+        }),
+      ],
       redirectUrls: {
         confirmUrl: confirmUrl,
-        cancelUrl: cancelUrl
-      }
+        cancelUrl: cancelUrl,
+      },
     };
-    console.log('linepay request', JSON.stringify(requestBody));
-
+    console.log("linepay request", JSON.stringify(requestBody));
   }, [order]);
 
   return (
@@ -55,6 +52,6 @@ const PaymentLinePay: React.FC<paymentProps> = ({ order, client }) => {
       <p>PaymentLinePay</p>
     </div>
   );
-}
+};
 
 export default PaymentLinePay;
