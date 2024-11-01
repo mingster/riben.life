@@ -43,6 +43,9 @@ import axios, { type AxiosError } from "axios";
 import { useSearchParams } from "next/navigation";
 
 import { saveOrderToLocal } from "@/lib/order-history";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 type props = {
   store: Store;
@@ -116,16 +119,19 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     defaultPaymentMethod.PaymentMethod,
   );
-  //console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
+  console.log('StorePaymentMethods', JSON.stringify(allpaymentMethods));
+  console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
 
   //const [selectedPaymentType, setSelectedPaymentType] = useState('creditCard');
   //console.log('selected shipMethod: ' + shipMethod);
   //console.log('CheckutSteps: ' + JSON.stringify(shipMethods));
 
-  const handleTabChange = (paymentMethodId: string) => {
-    //setSelectedPaymentType(paymentMethodId);
+  const hanlePaymentChange = (selectedPaymentMethodId: string) => {
+
+    console.log('hanlePaymentChange', selectedPaymentMethodId);
+
     const selected = allpaymentMethods.find(
-      (o: StorePaymentMethodMapping) => o.PaymentMethod.id === paymentMethodId,
+      (o: StorePaymentMethodMapping) => o.PaymentMethod.id === selectedPaymentMethodId,
     );
     if (selected) setPaymentMethod(selected.PaymentMethod);
     //console.log('selected payment type: ' + selected?.paymentMethod.name);
@@ -328,20 +334,21 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
           <CardTitle>{t("checkout_paymentMethod")}</CardTitle>
         </CardHeader>
         <CardContent>
-          {paymentMethod.name}
-          {/*
-          <Tabs defaultValue={paymentMethod.id} onValueChange={handleTabChange}>
-            <TabsList>
-              {allpaymentMethods.map((mapping) => (
-                <TabsTrigger key={mapping.id} value={mapping.PaymentMethod.id}>
-                  {mapping.paymentDisplayName}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            <TabsContent value="paypal"> </TabsContent>
-            <TabsContent value="creditCard"> </TabsContent>
-          </Tabs>
-           */}
+
+          <RadioGroup className="flex"
+            defaultValue={defaultPaymentMethod.id}
+            onValueChange={(val) =>
+              hanlePaymentChange(val)
+            }>
+            {allpaymentMethods.map((mapping) => (
+              <div key={mapping.id} className="flex items-center space-x-2">
+                <RadioGroupItem value={mapping.PaymentMethod.id} id={mapping.PaymentMethod.id} />
+                <Label htmlFor={mapping.PaymentMethod.id}>
+                  {mapping.paymentDisplayName !== null ? mapping.paymentDisplayName : mapping.PaymentMethod.name}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
         </CardContent>
         <CardFooter>
           <div className="relative w-full">
