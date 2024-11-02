@@ -119,15 +119,15 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     defaultPaymentMethod.PaymentMethod,
   );
-  console.log("StorePaymentMethods", JSON.stringify(allpaymentMethods));
-  console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
+  //console.log("StorePaymentMethods", JSON.stringify(allpaymentMethods));
+  //console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
 
   //const [selectedPaymentType, setSelectedPaymentType] = useState('creditCard');
   //console.log('selected shipMethod: ' + shipMethod);
   //console.log('CheckutSteps: ' + JSON.stringify(shipMethods));
 
   const hanlePaymentChange = (selectedPaymentMethodId: string) => {
-    console.log("hanlePaymentChange", selectedPaymentMethodId);
+    //console.log("hanlePaymentChange", selectedPaymentMethodId);
 
     const selected = allpaymentMethods.find(
       (o: StorePaymentMethodMapping) =>
