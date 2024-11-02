@@ -1,20 +1,32 @@
 import getOrderById from "@/actions/get-order-by_id";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
+import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
+import { type Currency, type RequestRequestBody, type RequestRequestConfig, createLinePayClient } from "@/lib/linepay";
+import type { LinePayClient } from "@/lib/linepay/type";
 import type { StoreOrder } from "@/types";
+import { useQRCode } from "next-qrcode";
+import { headers } from "next/headers";
 import { Suspense } from "react";
 import PaymentLinePay from "./components/payment-linepay";
-import { createLinePayClient } from "@/lib/linepay";
-import type { LinePayClient } from "@/lib/linepay/type";
+import { redirect } from 'next/navigation'
+import { sqlClient } from "@/lib/prismadb";
+import { isMobileUserAgent } from "@/lib/utils";
 
 // customer select linepay as payment method. here we will make a payment request
 // https://developers-pay.line.me/online
 // https://developers-pay.line.me/online-api
+// https://developers-pay.line.me/online/implement-basic-payment#confirm
 const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
   if (!params.orderId) {
     throw new Error("order Id is missing");
   }
+  const headerList = headers();
+  const host = headerList.get("host"); // stackoverflow.com
+  //const pathname = headerList.get("x-current-path");
+  //console.log("pathname", host, pathname);
+  const isMobile = isMobileUserAgent(headerList.get('user-agent'))
 
   const order = (await getOrderById(params.orderId)) as StoreOrder;
   //console.log('orderId: ' + params.orderId);
@@ -23,50 +35,6 @@ const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
     throw new Error("order not found");
   }
   //console.log('linepay order', JSON.stringify(order));
-
-  if (!process.env.LNE_PAY_ID) {
-    throw new Error("LNE_PAY_ID is not set");
-  }
-  if (!process.env.LINE_PAY_SECRET) {
-    throw new Error("LINE_PAY_SECRET is not set");
-  }
-  const env =
-    process.env.NODE_ENV === "development" ? "development" : "production";
-
-  const linePayClient = createLinePayClient({
-    channelId: process.env.LNE_PAY_ID,
-    channelSecretKey: process.env.LINE_PAY_SECRET,
-    env: env, // env can be 'development' or 'production'
-  }) as LinePayClient;
-
-  const confirmUrl = `/checkout/${order.id}/linepay/confirmed`;
-  const cancelUrl = `/checkout/${order.id}/linepay/canceled`;
-
-  const requestBody = {
-    amount: order.orderTotal,
-    currency: order.currency,
-    orderId: order.id,
-    packages: [
-      order.OrderItemView.map((item) => {
-        return {
-          id: item.id,
-          amount: Number(item.unitPrice) * item.quantity,
-          products: [
-            {
-              name: item.name,
-              quantity: item.quantity,
-              price: item.unitPrice,
-            },
-          ],
-        };
-      }),
-    ],
-    redirectUrls: {
-      confirmUrl: confirmUrl,
-      cancelUrl: cancelUrl,
-    },
-  };
-  console.log("linepay request", JSON.stringify(requestBody));
 
   if (order.isPaid) {
     return (
@@ -78,7 +46,90 @@ const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
     );
   }
 
-  return <>line pay</>;
+  if (!process.env.LNE_PAY_ID) {
+    throw new Error("LNE_PAY_ID is not set");
+  }
+  if (!process.env.LINE_PAY_SECRET) {
+    throw new Error("LINE_PAY_SECRET is not set");
+  }
+  const env =
+    process.env.NODE_ENV === "development" ? "development" : "production";
+
+  let protocol = 'http:';
+  if (env === 'production') {
+    protocol = 'https:';
+  }
+
+  const linePayClient = createLinePayClient({
+    channelId: process.env.LNE_PAY_ID,
+    channelSecretKey: process.env.LINE_PAY_SECRET,
+    env: env, // env can be 'development' or 'production'
+  }) as LinePayClient;
+
+  const confirmUrl = `${protocol}//${host}/checkout/${order.id}/linepay/confirmed`;
+  const cancelUrl = `${protocol}//${host}/checkout/${order.id}/linepay/canceled`;
+
+  const requestBody: RequestRequestBody = {
+    amount: Number(order.orderTotal),
+    currency: order.currency as Currency,
+    orderId: order.id,
+    packages: order.OrderItemView.map((item) => ({
+      id: item.id,
+      amount: Number(item.unitPrice) * item.quantity,
+      products: [
+        {
+          name: item.name,
+          quantity: item.quantity,
+          price: Number(item.unitPrice),
+        },
+      ],
+    })),
+    redirectUrls: {
+      confirmUrl: confirmUrl,
+      cancelUrl: cancelUrl,
+    },
+  };
+
+  //console.log("linepay request", JSON.stringify(requestBody));
+
+  const requestConfig: RequestRequestConfig = {
+    body: requestBody,
+  };
+
+  const res = await linePayClient.request.send(requestConfig);
+  //console.log("linepay res", JSON.stringify(res));
+
+  if (res.body.returnCode === "0000") {
+    const weburl = res.body.info.paymentUrl.web;
+    const appurl = res.body.info.paymentUrl.app;
+    const transactionId = res.body.info.transactionId;
+    const paymentAccessToken = res.body.info.paymentAccessToken;
+
+    await sqlClient.storeOrder.update({
+      where: {
+        id: order.id
+      },
+      data: {
+        checkoutAttributes: transactionId,
+        checkoutRef: paymentAccessToken
+      }
+    });
+
+
+    // for pc user, redirect to web
+    // for mobile user, redirect to app
+    if (isMobile) {
+      redirect(appurl);
+    }
+    else {
+      redirect(weburl);
+    }
+  }
+
+  // something wrong
+  console.error(res.body.returnMessage);
+  throw new Error(res.body.returnMessage);
+
 };
 
 export default PaymentPage;

@@ -44,6 +44,9 @@ export function middleware(req: NextRequest) {
   // retrieve the current response
   const res = NextResponse.next();
 
+  // Add a new header x-current-path which passes the path to downstream components
+  res.headers.set("x-current-path", req.nextUrl.pathname);
+
   // CORS apply only to api routes
   //
   const regex = /\/api\/*/;

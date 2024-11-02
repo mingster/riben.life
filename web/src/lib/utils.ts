@@ -1,12 +1,21 @@
-import crypto from "crypto";
 import axios from "axios";
 import { type ClassValue, clsx } from "clsx";
+import crypto from "crypto";
 import { format } from "date-fns";
 import Resizer from "react-image-file-resizer";
 import { twMerge } from "tailwind-merge";
 
 import Decimal from "decimal.js"; // gets added if installed
 import { z } from "zod";
+import type { StoreTables } from "@prisma/client";
+
+
+export function getTableName(tables: StoreTables[], tableId: string) {
+  return tables.find((table) => table.id === tableId)?.tableName || "";
+}
+
+
+
 // recursive function looping deeply throug an object to find Decimals
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export const transformDecimalsToNumbers = (obj: any) => {
@@ -50,6 +59,13 @@ export const formatter = new Intl.NumberFormat("en-US", {
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+
+export const isMobileUserAgent = (userAgent: string | null) => {
+  if (!userAgent) return false;
+  return /iPhone|iPad|iPod|Android/i.test(userAgent);
+};
+
 
 export function getAbsoluteUrl() {
   const origin =

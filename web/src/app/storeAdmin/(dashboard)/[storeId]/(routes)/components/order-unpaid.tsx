@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { getTableName } from "@/lib/utils";
 interface props {
   store: Store;
   tables: StoreTables[];
@@ -35,9 +36,6 @@ interface props {
   parentLoading: boolean;
 }
 
-function getTableName(tables: StoreTables[], tableId: string) {
-  return tables.find((table) => table.id === tableId)?.tableName || "";
-}
 
 export const OrderUnpaid = ({
   store,
