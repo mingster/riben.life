@@ -55,7 +55,7 @@ const options: ApexOptions = {
     fontSize: "14px",
 
     markers: {
-      size: 10,
+      //size: 10,
     },
   },
   fill: {

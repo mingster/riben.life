@@ -483,7 +483,7 @@ export const ProductEditAttributeTab = ({
                             disabled={(date: Date) =>
                               date < new Date() && date < new Date("3000-01-01")
                             }
-                            initialFocus
+                            //initialFocus
                           />
                         </PopoverContent>
                       </Popover>
@@ -527,7 +527,7 @@ export const ProductEditAttributeTab = ({
                             disabled={(date: Date) =>
                               date < new Date() && date < new Date("3000-01-01")
                             }
-                            initialFocus
+                            //initialFocus
                           />
                         </PopoverContent>
                       </Popover>

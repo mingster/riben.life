@@ -181,7 +181,7 @@ export const TransactionClientOld: React.FC<StoreOrderClientProps> = ({
               mode="single"
               selected={date}
               onSelect={(date) => date && setDate(date)}
-              initialFocus
+              //initialFocus
             />
           </div>
         </PopoverContent>
