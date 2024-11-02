@@ -1,42 +1,25 @@
 "use client";
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
-import { OrderStatus, PaymentStatus } from "@/types/enum";
+import { OrderStatus } from "@/types/enum";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import type { StoreOrder } from "@/types";
-import type { orderitemview } from "@prisma/client";
-import { format } from "date-fns/format";
 import { DisplayOrder } from "@/components/order-display";
+import { cn } from "@/lib/utils";
+import type { StoreOrder } from "@/types";
 
-/*
-const getOrderItems = async (orderId: string) => {
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/${process.env.NEXT_PUBLIC_STORE_ID}/storeOrder/orderItem/${orderId}`;
-  console.log(url);
-  return (await axios.get(url).then((response) => response.data)) as OrderItem[];
-};
-*/
-type orderTabProps = { orders: StoreOrder[]; status: OrderStatus };
-export const DisplayOrders = ({ orders, status }: orderTabProps) => {
-  const router = useRouter();
-
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng, "account");
-
-  //sort orders by updateAt
-
+type orderTabProps = { orders: StoreOrder[] };
+export const DisplayOrders = ({ orders }: orderTabProps) => {
   return (
     <>
       <div className="flex-col">
         <div className="flex-1 p-1 pt-1 space-y-1">
           {orders.map((order: StoreOrder) => (
             <div key={order.id}>
-              {order.orderStatus === status && <DisplayOrder order={order} />}
+              <DisplayOrder order={order} />
             </div>
           ))}
         </div>
@@ -66,47 +49,57 @@ export const OrderTab = ({ orders }: props) => {
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
 
-  //console.log('selectedTab: ' + activeTab);
-  const keys = Object.keys(OrderStatus).filter((v) => Number.isNaN(Number(v)));
-  //const vals = Object.keys(OrderStatus).filter((v) => !Number.isNaN(Number(v)));
-  //console.log(keys);
 
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "account");
 
+  // orderStatus numeric key
+  const keys = Object.keys(OrderStatus).filter((v) => !Number.isNaN(Number(v)));
+
+  const [filterStatus, setFilterStatus] = useState(0); //0 = all
+  let result = orders;
+
+  if (filterStatus !== 0) {
+    //console.log('filter', filterStatus);
+    result = orders.filter((d) => d.orderStatus === filterStatus);
+    //console.log('result', result.length);
+  }
+
+  //sort orders by updateAt
+  result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+
+
+  const highlight_css = "border-dashed border-green-500";
+
   return (
-    <Tabs
-      value={activeTab}
-      defaultValue="orders"
-      onValueChange={handleTabChange}
-      className="w-full"
-    >
-      <TabsList className="grid w-full grid-cols-6">
+    <>
+      <div className="flex gap-1 pb-2">
+        <Button
+          className={cn("h-12", filterStatus === 0 && highlight_css)}
+          variant="outline"
+          onClick={() => {
+            setFilterStatus(0);
+          }}
+        >
+          ALL
+        </Button>
         {keys.map((key) => (
-          <TabsTrigger key={key} value={key}>
-            {/*<Badge badgeContent= color="primary"></Badge>*/}
-            {t(`OrderStatus_${key}`)}
-          </TabsTrigger>
+          <Button
+            key={key}
+            className={cn(
+              "h-12",
+              filterStatus === Number(key) && highlight_css,
+            )}
+            variant="outline"
+            onClick={() => {
+              setFilterStatus(Number(key));
+            }}
+          >
+            {t(`OrderStatus_${OrderStatus[Number(key)]}`)}
+          </Button>
         ))}
-      </TabsList>
-      <TabsContent value={OrderStatus[OrderStatus.Pending]}>
-        <DisplayOrders orders={orders} status={OrderStatus.Pending} />
-      </TabsContent>
-      <TabsContent value={OrderStatus[OrderStatus.Processing]}>
-        <DisplayOrders orders={orders} status={OrderStatus.Processing} />
-      </TabsContent>
-      <TabsContent value={OrderStatus[OrderStatus.InShipping]}>
-        <DisplayOrders orders={orders} status={OrderStatus.InShipping} />
-      </TabsContent>
-      <TabsContent value={OrderStatus[OrderStatus.Completed]}>
-        <DisplayOrders orders={orders} status={OrderStatus.Completed} />
-      </TabsContent>
-      <TabsContent value={OrderStatus[OrderStatus.Refunded]}>
-        <DisplayOrders orders={orders} status={OrderStatus.Refunded} />
-      </TabsContent>
-      <TabsContent value={OrderStatus[OrderStatus.Cancelled]}>
-        <DisplayOrders orders={orders} status={OrderStatus.Cancelled} />
-      </TabsContent>
-    </Tabs>
+      </div>
+      <DisplayOrders orders={result} />
+    </>
   );
 };

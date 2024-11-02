@@ -86,9 +86,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
         </div>
 
         <div className="flex gap-1 items-center">
-
-          {order.orderStatus === OrderStatus.Pending && order.PaymentMethod?.name === 'cash' && (
-
+          {order.isPaid!==true && order.PaymentMethod?.name === 'cash' && (
             <div className="whitespace-nowrap">
               <Button
                 variant={"outline"}
@@ -98,10 +96,9 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
                 {`現金${t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}`}
               </Button>
             </div>
-
           )}
 
-          {order.orderStatus === OrderStatus.Pending && order.PaymentMethod?.name !== 'cash' && (
+          {order.isPaid!==true && order.PaymentMethod?.name !== 'cash' && (
             <Button
               className="mr-2"
               size="sm"
@@ -110,6 +107,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
               {order.PaymentMethod?.name + t("order_tab_pay")}
             </Button>
           )}
+
           {(order.orderStatus === OrderStatus.Completed ||
             order.orderStatus === OrderStatus.InShipping) && (
               <Button
