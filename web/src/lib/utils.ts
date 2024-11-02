@@ -51,6 +51,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+
+export const isMobileUserAgent = (userAgent: string | null) => {
+  if (!userAgent) return false;
+  return /iPhone|iPad|iPod|Android/i.test(userAgent);
+};
+
+
 export function getAbsoluteUrl() {
   const origin =
     typeof window !== "undefined" && window.location.origin

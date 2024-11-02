@@ -3,43 +3,105 @@ import getOrderById from "@/actions/get-order-by_id";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
+import { ConfirmRequestBody, type ConfirmRequestConfig, createLinePayClient, type Currency } from "@/lib/linepay";
+import type { LinePayClient } from "@/lib/linepay/type";
 import { sqlClient } from "@/lib/prismadb";
 import { getAbsoluteUrl } from "@/lib/utils";
 import type { StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import Stripe from "stripe";
 
-// this page is hit when stripe element confirmed the payment.
+// https://developers-pay.line.me/merchant/redirection-pages/
 // here we mark the order as paid, show customer a message and redirect to account page.
+//
 export default async function LinePayConfirmedPage({
-  params,
   searchParams,
 }: {
-  params: { orderId: string };
-  searchParams: {
-    payment_intent: string;
-    payment_intent_client_secret: string;
-  };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  if (!params.orderId) {
+  const { orderId, transactionId } = await searchParams;
+  //console.log('orderId', orderId, 'transactionId', transactionId);
+
+  if (!orderId) {
     throw new Error("order Id is missing");
   }
 
+  const order = (await getOrderById(orderId as string)) as StoreOrder;
+  if (!order) {
+    throw new Error("order not found");
+  }
+
+  if (order.checkoutAttributes !== transactionId) {
+    throw new Error("transactionId not match");
+  }
+
+  // call linepay confirm api
+  if (order.isPaid) {
+    return (
+      <Suspense fallback={<Loader />}>
+        <Container>
+          <SuccessAndRedirect orderId={order.id} />
+        </Container>
+      </Suspense>
+    );
+  }
+
+  if (!process.env.LNE_PAY_ID) {
+    throw new Error("LNE_PAY_ID is not set");
+  }
+  if (!process.env.LINE_PAY_SECRET) {
+    throw new Error("LINE_PAY_SECRET is not set");
+  }
+  const env =
+    process.env.NODE_ENV === "development" ? "development" : "production";
+
+  let protocol = 'http:';
+  if (env === 'production') {
+    protocol = 'https:';
+  }
+
+  const linePayClient = createLinePayClient({
+    channelId: process.env.LNE_PAY_ID,
+    channelSecretKey: process.env.LINE_PAY_SECRET,
+    env: env, // env can be 'development' or 'production'
+  }) as LinePayClient;
 
 
-  // call confirm api
-  const order = (await getOrderById(params.orderId)) as StoreOrder;
+  const confirmRequest = {
+    transactionId: transactionId as string,
+    body: {
+      currency: order.currency as Currency,
+      amount: Number(order.orderTotal),
+    }
+  } as ConfirmRequestConfig
+  //console.log("confirmRequest", JSON.stringify(confirmRequest));
 
 
-  //redirect(`${getAbsoluteUrl()}/checkout/${order.id}/linepay/success`);
+  const res = await linePayClient.confirm.send(confirmRequest);
+
+  if (res.body.returnCode === "0000") {
+    // mark order as paid
+
+    const order = await sqlClient.storeOrder.update({
+      where: {
+        id: orderId as string,
+      },
+      data: {
+        isPaid: true,
+        orderStatus: Number(OrderStatus.Processing),
+        paymentStatus: Number(PaymentStatus.Paid),
+      },
+    });
+
+    console.log(
+      `LinePayConfirmedPage: order confirmed: ${JSON.stringify(order)}`,
+    );
+
+    redirect(`${getAbsoluteUrl()}/checkout/${order.id}/linepay/success`);
+  }
 
   return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        <SuccessAndRedirect orderId={order.id} />
-      </Container>
-    </Suspense>
-  );
+    <></>
+  )
 }

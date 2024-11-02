@@ -12,10 +12,12 @@ import { Suspense } from "react";
 import PaymentLinePay from "./components/payment-linepay";
 import { redirect } from 'next/navigation'
 import { sqlClient } from "@/lib/prismadb";
+import { isMobileUserAgent } from "@/lib/utils";
 
 // customer select linepay as payment method. here we will make a payment request
 // https://developers-pay.line.me/online
 // https://developers-pay.line.me/online-api
+// https://developers-pay.line.me/online/implement-basic-payment#confirm
 const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
   if (!params.orderId) {
     throw new Error("order Id is missing");
@@ -24,6 +26,7 @@ const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
   const host = headerList.get("host"); // stackoverflow.com
   //const pathname = headerList.get("x-current-path");
   //console.log("pathname", host, pathname);
+  const isMobile = isMobileUserAgent(headerList.get('user-agent'))
 
   const order = (await getOrderById(params.orderId)) as StoreOrder;
   //console.log('orderId: ' + params.orderId);
@@ -94,26 +97,33 @@ const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
   };
 
   const res = await linePayClient.request.send(requestConfig);
-  console.log("linepay res", JSON.stringify(res));
+  //console.log("linepay res", JSON.stringify(res));
 
   if (res.body.returnCode === "0000") {
     const weburl = res.body.info.paymentUrl.web;
     const appurl = res.body.info.paymentUrl.app;
+    const transactionId = res.body.info.transactionId;
+    const paymentAccessToken = res.body.info.paymentAccessToken;
 
     await sqlClient.storeOrder.update({
       where: {
         id: order.id
       },
       data: {
-        checkoutAttributes: weburl
+        checkoutAttributes: transactionId,
+        checkoutRef: paymentAccessToken
       }
     });
 
-    redirect(weburl);
 
-    return (
-      <PaymentLinePay order={order} webUrl={weburl} appUrl={appurl} />
-    );
+    // for pc user, redirect to web
+    // for mobile user, redirect to app
+    if (isMobile) {
+      redirect(appurl);
+    }
+    else {
+      redirect(weburl);
+    }
   }
 
   // something wrong
