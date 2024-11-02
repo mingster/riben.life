@@ -12,11 +12,14 @@ import type { StoreOrder } from "@/types";
 import type { orderitemview, PaymentMethod } from "@prisma/client";
 import { format } from "date-fns/format";
 import Currency from "./currency";
+import { getTableName } from "@/lib/utils";
 
 type orderProps = { order: StoreOrder };
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
 export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
+  console.log("DisplayOrder", JSON.stringify(order));
+
   const router = useRouter();
 
   const { lng } = useI18n();
@@ -32,9 +35,11 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 
   //console.log('order', JSON.stringify(order));
 
-  const buyAgain = async (orderId: string) => {};
+  const buyAgain = async (orderId: string) => { };
   const pay = async (orderId: string, payUrl?: string) => {
     let purl = payUrl;
+
+    // if no pay url, use stripe as default
     if (!purl) purl = "stripe";
 
     const url = `/checkout/${orderId}/${purl}/`;
@@ -45,7 +50,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
   const contactSeller = (storeId: string, orderId: string) => {
     router.push(`${storeId}/support/new?orderid=${orderId}`);
   };
-
+  //{order.tableId && order.tableId !== null && order.tableId !== 'null' && `桌號：${getTableName(tables, order.tableId)}`}
   return (
     <Card key={order.id} className="pt-1 pb-1">
       <CardContent>
@@ -54,8 +59,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
             {order.Store?.name}
           </div>
           <div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
-            {order.tableId && `桌號：${order.tableId}`} 交易序號：
-            {order.orderNum}
+            交易序號：{order.orderNum}
           </div>
           <div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
             {format(order.createdAt, "yyyy/MM/dd HH:mm")}&nbsp;
@@ -69,37 +73,9 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
             <DisplayOrderItem key={item.id} currentItem={item} />
           ))}
         </div>
-
-        {/*
-                    <div className="grid grid-cols-3 gap-1 justify-items-stretch">
-                        <div className="flex whitespace-nowrap">
-                            <div className="hidden sm:block">
-                                <div className="pr-2">{order.shippingAddress}</div>
-                            </div>
-                            {t('ShippingStatus_' + ShippingStatus[order.shippingStatus])}
-                        </div>
-                        <div className="hidden sm:block justify-self-end">
-                            {t('shippingCost_label')}
-                        </div>
-                        <div className="hidden sm:block justify-self-end">
-                            ${Number(order.shippingCost)}
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-1 justify-items-stretch">
-                        <div className="whitespace-nowrap">{order.shippingMethod.name}</div>
-                        <div className="hidden sm:block justify-self-end">{t('tax_label')}</div>
-                        <div className="hidden sm:block justify-self-end">
-                            ${Number(order.orderTax)}
-                        </div>
-                    </div>
- */}
       </CardContent>
       <CardFooter className="place-content-end items-end pt-0 pb-1 flex flex-col">
-        <div className="grid grid-flow-row-dense grid-cols-3 gap-1">
-          <div className="whitespace-nowrap">
-            {t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
-          </div>
-
+        <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
           <div className="justify-self-end place-self-end whitespace-nowrap">
             {t("orderTotal_label")}
           </div>
@@ -109,26 +85,41 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
           </div>
         </div>
 
-        <div className="">
-          {order.orderStatus === OrderStatus.Pending && (
+        <div className="flex gap-1 items-center">
+
+          {order.orderStatus === OrderStatus.Pending && order.PaymentMethod?.name === 'cash' && (
+
+            <div className="whitespace-nowrap">
+              <Button
+                variant={"outline"}
+                className="mr-2 cursor-default"
+                size="sm"
+              >
+                {`現金${t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}`}
+              </Button>
+            </div>
+
+          )}
+
+          {order.orderStatus === OrderStatus.Pending && order.PaymentMethod?.name !== 'cash' && (
             <Button
               className="mr-2"
               size="sm"
               onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
             >
-              {t("order_tab_pay")}
+              {order.PaymentMethod?.name + t("order_tab_pay")}
             </Button>
           )}
           {(order.orderStatus === OrderStatus.Completed ||
             order.orderStatus === OrderStatus.InShipping) && (
-            <Button
-              className="mr-2"
-              size="sm"
-              onClick={() => buyAgain(order.id)}
-            >
-              {t("order_tab_buyAgain")}
-            </Button>
-          )}
+              <Button
+                className="mr-2"
+                size="sm"
+                onClick={() => buyAgain(order.id)}
+              >
+                {t("order_tab_buyAgain")}
+              </Button>
+            )}
           <Button
             size="sm"
             onClick={() => contactSeller(order.storeId, order.id)}

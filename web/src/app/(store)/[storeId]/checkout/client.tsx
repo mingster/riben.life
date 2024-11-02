@@ -53,6 +53,7 @@ type props = {
   onChange?: (newValue: boolean) => void;
 };
 
+// parse cart into order, and process to the selected payment method
 // TODO: implement payment method & shipping method
 export const Checkout = ({ store, user }: props) => {
   const cart = useCart();

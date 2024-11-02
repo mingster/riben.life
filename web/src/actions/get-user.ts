@@ -29,6 +29,8 @@ const getUser = async (): Promise<User | null> => {
       Addresses: true,
       Orders: {
         include: {
+          ShippingMethod: true,
+          PaymentMethod: true,
           OrderItemView: true,
         },
         orderBy: {
@@ -62,7 +64,7 @@ const getUser = async (): Promise<User | null> => {
       }
     }
 
-    
+
   //get user with needed assoicated objects
   //
   const userid = session?.user.id;
