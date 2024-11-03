@@ -142,7 +142,10 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
               onSubmit={form.handleSubmit(onSubmit)}
               className="w-full space-y-1"
             >
-              <div className="grid grid-flow-row-dense grid-cols-2 gap-1"></div>
+              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+                {" "}
+                &nbsp;{" "}
+              </div>
 
               <FormField
                 control={form.control}
@@ -168,7 +171,7 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
               />
 
               <Button
-                disabled={loading}
+                disabled={loading || !form.formState.isValid}
                 className="disabled:opacity-25"
                 type="submit"
               >

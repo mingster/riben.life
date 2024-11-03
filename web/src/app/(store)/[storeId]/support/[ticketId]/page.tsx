@@ -7,6 +7,8 @@ import { TicketReply } from "./ticket-reply";
 import { Suspense } from "react";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
+import getOrderById from "@/actions/get-order-by_id";
+import type { StoreOrder } from "@/types";
 
 //import { Metadata } from 'next';
 interface pageProps {
@@ -14,8 +16,18 @@ interface pageProps {
     storeId: string;
     ticketId: string;
   };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
-const TicketEditPage: React.FC<pageProps> = async ({ params }) => {
+const TicketEditPage: React.FC<pageProps> = async ({ params, searchParams }) => {
+
+  const { orderid } = await searchParams;
+  //console.log(`orderid: ${orderid}`);
+
+  let order = null;
+  if (orderid) {
+    order = await getOrderById(orderid as string) as StoreOrder;
+  }
+
   const ticket = await sqlClient.supportTicket.findUnique({
     where: {
       id: params.ticketId,
@@ -55,7 +67,7 @@ const TicketEditPage: React.FC<pageProps> = async ({ params }) => {
               ) : (
                 <>
                   {/* otherwise display create form */}
-                  <TicketCreate initialData={null} />
+                  <TicketCreate initialData={null} order={order} />
                 </>
               )
             }

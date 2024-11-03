@@ -36,7 +36,6 @@ interface props {
   parentLoading: boolean;
 }
 
-
 export const OrderUnpaid = ({
   store,
   tables,

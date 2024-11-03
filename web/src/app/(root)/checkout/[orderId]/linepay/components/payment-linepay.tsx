@@ -17,10 +17,12 @@ const PaymentLinePay: React.FC<paymentProps> = ({ order, webUrl, appUrl }) => {
   if (!order) throw Error("order is required.");
   const { SVG } = useQRCode();
 
-  console.log('appUrl', appUrl)
+  console.log("appUrl", appUrl);
   return (
     <div>
-      <div className="text-xl font-extrabold">請在LINE程序掃描二維碼完成付款</div>
+      <div className="text-xl font-extrabold">
+        請在LINE程序掃描二維碼完成付款
+      </div>
       <div>
         <SVG
           text={appUrl}
@@ -33,7 +35,9 @@ const PaymentLinePay: React.FC<paymentProps> = ({ order, webUrl, appUrl }) => {
 
       <div className="pt-10 text-xl font-extrabold">或點擊下方按鈕完成付款</div>
       <div>
-        <Button variant={"secondary"} onClick={() => window.open(webUrl)}>付款</Button>
+        <Button variant={"secondary"} onClick={() => window.open(webUrl)}>
+          付款
+        </Button>
       </div>
     </div>
   );

@@ -1,13 +1,20 @@
 "use server";
 import getOrderById from "@/actions/get-order-by_id";
+import getStoreById from "@/actions/get-store-by_id";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import { ConfirmRequestBody, type ConfirmRequestConfig, createLinePayClient, type Currency } from "@/lib/linepay";
+import {
+  ConfirmRequestBody,
+  type ConfirmRequestConfig,
+  createLinePayClient,
+  type Currency,
+  getLinePayClient,
+} from "@/lib/linepay";
 import type { LinePayClient } from "@/lib/linepay/type";
 import { sqlClient } from "@/lib/prismadb";
 import { getAbsoluteUrl } from "@/lib/utils";
-import type { StoreOrder } from "@/types";
+import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -18,7 +25,7 @@ import { Suspense } from "react";
 export default async function LinePayConfirmedPage({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { orderId, transactionId } = await searchParams;
   //console.log('orderId', orderId, 'transactionId', transactionId);
@@ -47,36 +54,17 @@ export default async function LinePayConfirmedPage({
     );
   }
 
-  if (!process.env.LNE_PAY_ID) {
-    throw new Error("LNE_PAY_ID is not set");
-  }
-  if (!process.env.LINE_PAY_SECRET) {
-    throw new Error("LINE_PAY_SECRET is not set");
-  }
-  const env =
-    process.env.NODE_ENV === "development" ? "development" : "production";
-
-  let protocol = 'http:';
-  if (env === 'production') {
-    protocol = 'https:';
-  }
-
-  const linePayClient = createLinePayClient({
-    channelId: process.env.LNE_PAY_ID,
-    channelSecretKey: process.env.LINE_PAY_SECRET,
-    env: env, // env can be 'development' or 'production'
-  }) as LinePayClient;
-
+  const store = (await getStoreById(order.storeId)) as Store;
+  const linePayClient = getLinePayClient(store.LINE_PAY_ID, store.LINE_PAY_SECRET) as LinePayClient;
 
   const confirmRequest = {
     transactionId: transactionId as string,
     body: {
       currency: order.currency as Currency,
       amount: Number(order.orderTotal),
-    }
-  } as ConfirmRequestConfig
+    },
+  } as ConfirmRequestConfig;
   //console.log("confirmRequest", JSON.stringify(confirmRequest));
-
 
   const res = await linePayClient.confirm.send(confirmRequest);
 
@@ -101,7 +89,5 @@ export default async function LinePayConfirmedPage({
     redirect(`${getAbsoluteUrl()}/checkout/${order.id}/linepay/success`);
   }
 
-  return (
-    <></>
-  )
+  return <></>;
 }

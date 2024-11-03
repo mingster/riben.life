@@ -33,6 +33,9 @@ import { RequiredProVersion } from "../components/require-pro-version";
 
 const formSchema = z.object({
   customDomain: z.string().optional().default(""),
+  LINE_PAY_ID: z.string().optional().default(""),
+  LINE_PAY_SECRET: z.string().optional().default(""),
+  STRIPE_SECRET_KEY: z.string().optional().default(""),
   logo: z.string().optional().default(""),
   logoPublicId: z.string().default("").optional().default(""),
   acceptAnonymousOrder: z.boolean().optional().default(true),
@@ -51,7 +54,6 @@ export interface SettingsFormProps {
       })
     | null;
   logo: string;
-
   */
 }
 
@@ -66,19 +68,30 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 
   const defaultValues = initialData
     ? {
-        ...initialData,
-      }
-    : {};
+      ...initialData,
+    }
+    : {
+      LINE_PAY_ID: "",
+      LINE_PAY_SECRET: "",
+      STRIPE_SECRET_KEY: "",
+    };
+
+  // Replace null values with undefined
+  const sanitizedDefaultValues = Object.fromEntries(
+    Object.entries(defaultValues).map(([key, value]) => [key, value ?? undefined])
+  );
+
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
   const form = useForm<formValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: sanitizedDefaultValues,
   });
 
   const {
     register,
     formState: { errors },
     handleSubmit,
+    watch,
     clearErrors,
   } = useForm<formValues>();
 
@@ -88,9 +101,8 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
   const { t } = useTranslation(lng, "storeAdmin");
 
   const onSubmit = async (data: formValues) => {
-    //console.log('onSubmit: ' + JSON.stringify(data));
+    console.log("onSubmit", JSON.stringify(data));
     //console.log('logo: ' + image?.name);
-
     try {
       setLoading(true);
 
@@ -159,6 +171,10 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
     }
   }, [logo]);
 
+  //console.log("data", JSON.stringify(initialData));
+  //console.log('disablePaidOptions', disablePaidOptions);
+  console.log("form errors", form.formState.errors);
+
   return (
     <>
       <Card>
@@ -173,26 +189,111 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
               onSubmit={form.handleSubmit(onSubmit)}
               className="w-full space-y-1"
             >
-              <FormField
-                control={form.control}
-                name="customDomain"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="">
-                      {t("StoreSettings_Store_Customer_Domain")}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        disabled={loading || disablePaidOptions}
-                        className="font-mono"
-                        placeholder="google.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+                <FormField
+                  control={form.control}
+                  name="LINE_PAY_ID"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="">LINE_PAY_ID</FormLabel>
+                      <FormControl>
+                        <Input
+                          disabled={loading || disablePaidOptions}
+                          className="font-mono"
+                          placeholder=""
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="LINE_PAY_SECRET"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="">LINE_PAY_SECRET</FormLabel>
+                      <FormControl>
+                        <Input
+                          disabled={loading || disablePaidOptions}
+                          className="font-mono"
+                          placeholder=""
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+                <FormField
+                  control={form.control}
+                  name="STRIPE_SECRET_KEY"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="">STRIPE_SECRET_KEY</FormLabel>
+                      <FormControl>
+                        <Input
+                          disabled={loading || disablePaidOptions}
+                          className="font-mono"
+                          placeholder=""
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div>&nbsp;</div>
+              </div>
+
+              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+                <FormField
+                  control={form.control}
+                  name="acceptAnonymousOrder"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>
+                          {t("StoreSettings_acceptAnonymousOrder")}
+                        </FormLabel>
+                        <FormDescription>
+                          {t("StoreSettings_acceptAnonymousOrder_descr")}
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="customDomain"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="">
+                        {t("StoreSettings_Store_Customer_Domain")}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          disabled={loading || disablePaidOptions}
+                          className="font-mono"
+                          placeholder="google.com"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormLabel>{t("StoreSettings_Store_Logo")}</FormLabel>
               <div className="flex flex-row w-full">
@@ -200,7 +301,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                   <ImageUploadBox
                     disabled={loading || disablePaidOptions}
                     image={image ?? null}
-                    setImage={setImage ?? (() => {})}
+                    setImage={setImage ?? (() => { })}
                   />
                 </div>
                 <div className="flex flex-col pl-10 space-y-4 place-content-center">
@@ -251,33 +352,10 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-                <FormField
-                  control={form.control}
-                  name="acceptAnonymousOrder"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel>
-                          {t("StoreSettings_acceptAnonymousOrder")}
-                        </FormLabel>
-                        <FormDescription>
-                          {t("StoreSettings_acceptAnonymousOrder_descr")}
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               <Button
-                disabled={loading || disablePaidOptions}
+                disabled={
+                  loading || disablePaidOptions || !form.formState.isValid
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >

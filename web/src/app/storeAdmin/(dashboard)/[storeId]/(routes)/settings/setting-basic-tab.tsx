@@ -417,7 +417,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
               </div>
 
               <Button
-                disabled={loading}
+                disabled={loading || !form.formState.isValid}
                 className="disabled:opacity-25"
                 type="submit"
               >
