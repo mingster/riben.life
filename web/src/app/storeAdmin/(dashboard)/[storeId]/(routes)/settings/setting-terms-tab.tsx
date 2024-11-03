@@ -71,6 +71,7 @@ export const TermsTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
     register,
     formState: { errors },
     handleSubmit,
+    watch,
     clearErrors,
   } = useForm<formValues>();
 
@@ -137,7 +138,7 @@ export const TermsTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
               )}
             />
             <Button
-              disabled={loading}
+              disabled={loading || !form.formState.isValid}
               className="disabled:opacity-25"
               type="submit"
             >

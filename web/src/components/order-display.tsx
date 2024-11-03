@@ -50,6 +50,9 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
   const contactSeller = (storeId: string, orderId: string) => {
     router.push(`${storeId}/support/new?orderid=${orderId}`);
   };
+
+  const canPay = !order.isPaid && order.PaymentMethod?.name !== 'cash' && (order.orderStatus === OrderStatus.Pending || order.orderStatus === OrderStatus.Processing);
+
   //{order.tableId && order.tableId !== null && order.tableId !== 'null' && `桌號：${getTableName(tables, order.tableId)}`}
   return (
     <Card key={order.id} className="pt-1 pb-1">
@@ -86,32 +89,47 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
         </div>
 
         <div className="flex gap-1 items-center">
-          {order.isPaid!==true && order.PaymentMethod?.name === 'cash' && (
-            <div className="whitespace-nowrap">
-              <Button
-                variant={"outline"}
-                className="mr-2 cursor-default"
-                size="sm"
-              >
-                {`現金${t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}`}
-              </Button>
-            </div>
-          )}
-
-          {order.isPaid!==true && order.PaymentMethod?.name !== 'cash' && (
+          {canPay ? (
             <Button
-              className="mr-2"
+              className="mr-2 bg-green-900 hover:bg-green-700"
               size="sm"
               onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
             >
               {order.PaymentMethod?.name + t("order_tab_pay")}
             </Button>
-          )}
+          )
+            :
+
+            order.isPaid !== true && order.PaymentMethod?.name === "cash" ? (
+              <div className="whitespace-nowrap">
+                <Button
+                  variant={"outline"}
+                  className="mr-2 cursor-default"
+                  size="sm"
+                >
+                  {`現金${t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}`}
+                </Button>
+              </div>
+            )
+              :
+              (
+                <div className="whitespace-nowrap">
+                  <Button
+                    variant={"outline"}
+                    className="mr-2 cursor-default"
+                    size="sm"
+                  >{
+                      t(`OrderStatus_${OrderStatus[Number(order.orderStatus)]}`)}
+                  </Button>
+                </div>
+              )
+          }
 
           {(order.orderStatus === OrderStatus.Completed ||
             order.orderStatus === OrderStatus.InShipping) && (
               <Button
-                className="mr-2"
+                className="mr-2 bg-green-200 hover:bg-green-300"
+                variant={"outline"}
                 size="sm"
                 onClick={() => buyAgain(order.id)}
               >

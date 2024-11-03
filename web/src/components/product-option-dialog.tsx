@@ -57,7 +57,7 @@ export const ProductOptionDialog: React.FC<props> = ({
   onValueChange,
 }) => {
   const [open, setOpen] = useState(false);
-  const cart = useCart();
+  //const cart = useCart();
   const { toast } = useToast();
   const { lng } = useI18n();
   const { t } = useTranslation(lng);

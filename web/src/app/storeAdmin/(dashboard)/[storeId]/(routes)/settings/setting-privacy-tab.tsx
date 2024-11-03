@@ -65,7 +65,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
       {...field}
     />
 */
-  const privacyForm = useForm<formValues>({
+  const form = useForm<formValues>({
     resolver: zodResolver(privacyFormSchema),
     defaultValues,
   });
@@ -74,6 +74,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
     register,
     formState: { errors },
     handleSubmit,
+    watch,
     clearErrors,
   } = useForm<formValues>();
 
@@ -113,14 +114,14 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
   return (
     <Card className="h-svh">
       <CardContent className="space-y-2">
-        <Form {...privacyForm}>
+        <Form {...form}>
           <form
-            onSubmit={privacyForm.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(onSubmit)}
             className="w-full space-y-1"
           >
             <div>
               <FormField
-                control={privacyForm.control}
+                control={form.control}
                 name="privacyPolicy"
                 render={({ field }) => (
                   <FormItem>
@@ -136,7 +137,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
                 )}
               />
               <FormField
-                control={privacyForm.control}
+                control={form.control}
                 name="tos"
                 render={({ field }) => (
                   <FormItem>
@@ -153,7 +154,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
               />
             </div>
             <Button
-              disabled={loading}
+              disabled={loading || !form.formState.isValid}
               className="disabled:opacity-25"
               type="submit"
             >

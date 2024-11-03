@@ -71,6 +71,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
     register,
     formState: { errors },
     handleSubmit,
+    watch,
     clearErrors,
   } = useForm<formValues>();
 
@@ -208,7 +209,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
               </div>
 
               <Button
-                disabled={loading}
+                disabled={loading || !form.formState.isValid}
                 className="disabled:opacity-25"
                 type="submit"
               >

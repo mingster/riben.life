@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
+import type { StoreOrder } from "@/types";
 import { TicketStatus } from "@/types/enum";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { SupportTicket } from "@prisma/client";
@@ -50,19 +51,20 @@ type formValues = z.infer<typeof formSchema>;
 
 interface editProps {
   initialData:
-    | (SupportTicket & {
-        //images: ProductImage[];
-        //productPrices: ProductPrice[];
-        //ProductImages: ProductImages[] | null;
-        //ProductAttribute: ProductAttribute | null;
-      })
-    | null;
+  | (SupportTicket & {
+    //images: ProductImage[];
+    //productPrices: ProductPrice[];
+    //ProductImages: ProductImages[] | null;
+    //ProductAttribute: ProductAttribute | null;
+  })
+  | null;
+  order: StoreOrder | null;
 }
 
 // in edit mode,display all replies in this ticket (thread id)
 // or create a new ticket
 //
-export const TicketCreate = ({ initialData }: editProps) => {
+export const TicketCreate = ({ initialData, order }: editProps) => {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -71,17 +73,21 @@ export const TicketCreate = ({ initialData }: editProps) => {
   const [loading, setLoading] = useState(false);
 
   const editMode = false;
-
   const defaultValues = initialData
     ? {
-        ...initialData,
-      }
+      ...initialData,
+    }
     : {
-        subject: "",
-        message: "",
-        department: "",
-        status: TicketStatus.Active,
-      };
+      subject: "",
+      message: "",
+      department: "",
+      status: TicketStatus.Active,
+    };
+
+  if (order) {
+    defaultValues.subject = `關於訂單 ＃${order.orderNum}`;
+    defaultValues.department = "Sales";
+  }
 
   //console.log(`product basic: ${JSON.stringify(defaultValues)}`);
   const form = useForm<formValues>({
@@ -216,9 +222,10 @@ export const TicketCreate = ({ initialData }: editProps) => {
                 variant="outline"
                 onClick={() => {
                   clearErrors();
-                  router.push(`/${params.storeId}/support`);
+                  router.back();
+                  //router.push(`/${params.storeId}/support`);
                 }}
-                className="ml-5"
+                className="ml-2"
               >
                 {t("Cancel")}
               </Button>

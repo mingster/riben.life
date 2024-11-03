@@ -18,7 +18,7 @@ export interface props {
 }
 
 // store admin home page.
-// it checks for new orders every 10 seconds.
+// it checks for new orders every 5 seconds.
 export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
@@ -87,7 +87,7 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
       //Implementing the setInterval method
       const interval = setInterval(() => {
         fetchData();
-      }, 10000); // do every 10 sec.
+      }, 5000); // do every 5 sec.
 
       //Clearing the interval
       return () => clearInterval(interval);
@@ -97,20 +97,6 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
   };
 
   //console.log(JSON.stringify(storeData));
-  /*
-        <CardDataStats
-          title={t("Revenue_Today")}
-          total="$47,2K"
-          rate="4.35%"
-          levelUp
-        >
-          <DollarSign />
-        </CardDataStats>
-
-  <section className="mx-auto flex flex-col max-w-[980px] items-center gap-2 py-8 md:py-12 md:pb-8 lg:py-24 lg:pb-6 content-center">
-</section>
-
-  */
   return (
     <section className="relative w-full">
       <div className="container">

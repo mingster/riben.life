@@ -179,3 +179,29 @@ export function createLinePayClient(config: LineMerchantConfig): LinePayClient {
     ),
   };
 }
+
+
+export function getLinePayClient(id: string | null, secret: string | null) {
+  let linePayId = id;
+  let linePaySecret = secret;
+
+  if (!id || !secret) {
+    linePayId = process.env.LINE_PAY_ID as string;
+    linePaySecret = process.env.LINE_PAY_SECRET as string;
+  }
+
+  if (!linePayId || !linePaySecret) {
+    throw new Error("LINE_PAY is not set");
+  }
+
+  const env =
+    process.env.NODE_ENV === "development" ? "development" : "production";
+
+  const linePayClient = createLinePayClient({
+    channelId: linePayId,
+    channelSecretKey: linePaySecret,
+    env: env, // env can be 'development' or 'production'
+  }) as LinePayClient;
+
+  return linePayClient;
+};

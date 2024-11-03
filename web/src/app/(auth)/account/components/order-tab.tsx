@@ -49,7 +49,6 @@ export const OrderTab = ({ orders }: props) => {
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
 
-
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "account");
 
@@ -67,7 +66,6 @@ export const OrderTab = ({ orders }: props) => {
 
   //sort orders by updateAt
   result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-
 
   const highlight_css = "border-dashed border-green-500";
 

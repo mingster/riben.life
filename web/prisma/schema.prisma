@@ -332,10 +332,9 @@ model Rsvp {
 }
 
 model Store {
-  id           String  @id @default(uuid())
-  name         String
-  ownerId      String
-  customDomain String? @unique
+  id      String @id @default(uuid())
+  name    String
+  ownerId String
 
   defaultCountry  String  @default("USA")
   defaultCurrency String  @default("twd")
@@ -359,7 +358,13 @@ model Store {
   bankAccount     String?
   bankAccountName String?
 
-  level        Int      @default(0)
+  level        Int     @default(0)
+  //paid options
+  customDomain String? @unique
+  LINE_PAY_ID        String?
+  LINE_PAY_SECRET   String?
+  STRIPE_SECRET_KEY String?
+
   logo         String?
   logoPublicId String?
   createdAt    DateTime @default(now())

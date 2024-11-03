@@ -83,7 +83,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
 
-  const contactInfoForm = useForm<formValues>({
+  const form = useForm<formValues>({
     resolver: zodResolver(contactInfoFormSchema),
     defaultValues,
   });
@@ -92,6 +92,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
     register,
     formState: { errors },
     handleSubmit,
+    watch,
     clearErrors,
   } = useForm<formValues>();
 
@@ -129,13 +130,13 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
     <>
       <Card>
         <CardContent className="space-y-2">
-          <Form {...contactInfoForm}>
+          <Form {...form}>
             <form
-              onSubmit={contactInfoForm.handleSubmit(oncontactInfoSubmit)}
+              onSubmit={form.handleSubmit(oncontactInfoSubmit)}
               className="w-full space-y-1"
             >
               <FormField
-                control={contactInfoForm.control}
+                control={form.control}
                 name="aboutUs"
                 render={({ field }) => (
                   <FormItem>
@@ -155,7 +156,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 
               <div className="grid grid-flow-row-dense grid-cols-2 gap-8">
                 <FormField
-                  control={contactInfoForm.control}
+                  control={form.control}
                   name="supportEmail"
                   render={({ field }) => (
                     <FormItem>
@@ -174,7 +175,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                 />
 
                 <FormField
-                  control={contactInfoForm.control}
+                  control={form.control}
                   name="supportPhoneNumber"
                   render={({ field }) => (
                     <FormItem>
@@ -195,7 +196,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 
               <div className="grid grid-flow-row-dense grid-cols-2 gap-8">
                 <FormField
-                  control={contactInfoForm.control}
+                  control={form.control}
                   name="facebookUrl"
                   render={({ field }) => (
                     <FormItem>
@@ -214,7 +215,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                 />
 
                 <FormField
-                  control={contactInfoForm.control}
+                  control={form.control}
                   name="igUrl"
                   render={({ field }) => (
                     <FormItem>
@@ -235,7 +236,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 
               <div className="grid grid-flow-row-dense grid-cols-2 gap-8">
                 <FormField
-                  control={contactInfoForm.control}
+                  control={form.control}
                   name="lineId"
                   render={({ field }) => (
                     <FormItem>
@@ -253,7 +254,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                   )}
                 />
                 <FormField
-                  control={contactInfoForm.control}
+                  control={form.control}
                   name="telegramId"
                   render={({ field }) => (
                     <FormItem>
@@ -275,7 +276,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
               </div>
               <div className="grid grid-flow-row-dense grid-cols-2 gap-8">
                 <FormField
-                  control={contactInfoForm.control}
+                  control={form.control}
                   name="twitterId"
                   render={({ field }) => (
                     <FormItem>
@@ -295,7 +296,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                   )}
                 />
                 <FormField
-                  control={contactInfoForm.control}
+                  control={form.control}
                   name="whatsappId"
                   render={({ field }) => (
                     <FormItem>
@@ -317,7 +318,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
               </div>
 
               <FormField
-                control={contactInfoForm.control}
+                control={form.control}
                 name="wechatId"
                 render={({ field }) => (
                   <FormItem>
@@ -335,7 +336,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                 )}
               />
               <Button
-                disabled={loading}
+                disabled={loading || !form.formState.isValid}
                 className="disabled:opacity-25"
                 type="submit"
               >

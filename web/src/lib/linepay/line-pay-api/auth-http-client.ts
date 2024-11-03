@@ -124,13 +124,13 @@ export function createAuthHttpClient(
     typeof data !== "string"
       ? data
       : JSON.parse(
-        data
-          .replace(/"transactionId":\s*(\d+)/g, '"transactionId":"$1"')
-          .replace(
-            /"refundTransactionId":\s*(\d+)/g,
-            '"refundTransactionId":"$1"',
-          ),
-      );
+          data
+            .replace(/"transactionId":\s*(\d+)/g, '"transactionId":"$1"')
+            .replace(
+              /"refundTransactionId":\s*(\d+)/g,
+              '"refundTransactionId":"$1"',
+            ),
+        );
 
   const axiosInstance = axios.create({
     baseURL: BASE_URL,
@@ -143,16 +143,15 @@ export function createAuthHttpClient(
 
   axiosInstance.interceptors.request.use((config) =>
     config.method === "get"
-      ?
-      (handleGetRequest(
-        merchantConfig,
-        config,
-      ) as InternalAxiosRequestConfig<GeneralResponseBody>)
-      : config.method === "post"
-        ? (handlePostRequest(
+      ? (handleGetRequest(
           merchantConfig,
           config,
         ) as InternalAxiosRequestConfig<GeneralResponseBody>)
+      : config.method === "post"
+        ? (handlePostRequest(
+            merchantConfig,
+            config,
+          ) as InternalAxiosRequestConfig<GeneralResponseBody>)
         : config,
   );
 
