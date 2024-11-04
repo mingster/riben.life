@@ -173,7 +173,7 @@
   "StoreSettings_acceptReservation": "接受預約",
   "StoreSettings_acceptReservation_descr": "打開 / 關閉預約訂位系統。",
   "StoreSettings_autoAcceptOrder": "自動接單",
-  "StoreSettings_autoAcceptOrder_descr": "打開後，不用先確認，會直接通知出貨人員。",
+  "StoreSettings_autoAcceptOrder_descr": "打開後，不用先確認訂單，會直接通知出貨人員。",
   "StoreSettings_BankAccount": "帳號",
   "StoreSettings_BankAccountName": "戶名",
   "StoreSettings_BankCode": "銀行代碼",
