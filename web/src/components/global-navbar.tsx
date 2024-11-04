@@ -7,11 +7,12 @@ import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
 import DropdownUser from "@/components/dropdown-user";
 
+import DropdownCart from "@/components/dropdown-cart";
+import ThemeToggler from "@/components/theme-toggler";
 import { HomeIcon } from "lucide-react";
 //import { cn } from '@/lib/utils';
 import Image from "next/image";
 import Link from "next/link";
-import ThemeToggler from "./theme-toggler";
 
 //import { useI18n } from '@/providers/i18n-provider';
 //import { useTranslation } from '@/app/i18n/client';
@@ -64,6 +65,7 @@ export function Navbar({ title }: NavbarProps) {
           <DropdownMessage messages={[]} />
           <DropdownNotification />
           <DropdownUser user={user} />
+          <DropdownCart />
         </div>
       </div>
     </header>
