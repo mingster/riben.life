@@ -15,10 +15,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn, highlight_css } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 
+import { DataTable } from "@/components/dataTable";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -33,12 +34,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Store, StoreOrder } from "@/types";
+import { OrderStatus } from "@/types/enum";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { useState } from "react";
-import { OrderStatus } from "@/types/enum";
-import { DataTable } from "@/components/dataTable";
-import { columns, type StoreOrderColumn } from "./columns";
+import { type StoreOrderColumn, columns } from "./columns";
 
 interface StoreOrderClientProps {
   store: Store;
@@ -65,7 +65,6 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
     //console.log('result', result.length);
   }
 
-  const highlight_css = "border-dashed border-green-500";
   return (
     <>
       <Heading title={t("Store_orders")} badge={result.length} description="" />
@@ -181,7 +180,7 @@ export const TransactionClientOld: React.FC<StoreOrderClientProps> = ({
               mode="single"
               selected={date}
               onSelect={(date) => date && setDate(date)}
-              //initialFocus
+            //initialFocus
             />
           </div>
         </PopoverContent>
