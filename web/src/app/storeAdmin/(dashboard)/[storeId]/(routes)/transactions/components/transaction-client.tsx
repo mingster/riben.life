@@ -21,6 +21,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 
 import { DataTable } from "@/components/dataTable";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -33,15 +34,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus } from "@/types/enum";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { useState } from "react";
+import { ControllerRenderProps, Field, useForm } from "react-hook-form";
+import { z } from "zod";
 import { type StoreOrderColumn, columns } from "./columns";
-import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
 
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 interface StoreOrderClientProps {
   store: Store;
   data: StoreOrderColumn[];
@@ -117,6 +129,12 @@ type filterProps = {
   onValueChange?: (newValue: string) => void;
 };
 
+const formSchema = z.object({
+  filter: z.string().optional().default(""),
+  f1f: z.coerce.number().optional().default(1),
+});
+type formValues = z.infer<typeof formSchema>;
+
 export const FilterDateTime = ({
   disabled,
   defaultValue,
@@ -125,8 +143,8 @@ export const FilterDateTime = ({
 }: filterProps) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
+  const [loading, setLoading] = useState(false);
 
-  const [date, setDate] = useState<Date>(new Date()); //default to today
   const [val, setVal] = useState('');
 
   const setFilerValue = (v: string) => {
@@ -134,6 +152,37 @@ export const FilterDateTime = ({
     onValueChange?.(v);
     //setDate(addDays(new Date(), val));
   };
+
+  const defaultValues = {
+    f1f: 1,
+  };
+
+  // Replace null values with undefined
+  const sanitizedDefaultValues = Object.fromEntries(
+    Object.entries(defaultValues).map(([key, value]) => [key, value ?? undefined])
+  );
+
+  //console.log('defaultValues: ' + JSON.stringify(defaultValues));
+  const form = useForm<formValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: sanitizedDefaultValues,
+  });
+
+  const {
+    register,
+    formState: { errors },
+    handleSubmit,
+    watch,
+    clearErrors,
+  } = useForm<formValues>();
+
+
+  const onSubmit = async (data: formValues) => {
+    console.log("onSubmit", JSON.stringify(data));
+
+    setVal(JSON.stringify(data));
+    onValueChange?.(JSON.stringify(data));
+  }
 
   return (
     <Popover>
@@ -155,27 +204,72 @@ export const FilterDateTime = ({
         <div>
           Filter by Date and time
         </div>
-        <Select onValueChange={(value) => setFilerValue(value)}>
-          <SelectTrigger>
-            <SelectValue placeholder={t("select")} />
-          </SelectTrigger>
-          <SelectContent position="popper">
-            <SelectItem value='f1'>is in the last</SelectItem>
-            <SelectItem value='f2'>is equal to</SelectItem>
-            <SelectItem value='f3'>is between</SelectItem>
-            <SelectItem value='f4'>is on or after</SelectItem>
-            <SelectItem value='f5'>is before or on</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className='flex gap-1 items-center'>{
-          val === 'f1' && (
-            <><Input type="number" /> days</>
-          )
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="w-full space-y-1"
+          >
+            <FormField
+              control={form.control}
+              name="filter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Select
+                      onValueChange={(v) => {
+                        field.onChange(v); setFilerValue(v);
+                      }}
+                      defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        <SelectItem value='f1'>is in the last</SelectItem>
+                        <SelectItem value='f2'>is equal to</SelectItem>
+                        <SelectItem value='f3'>is between</SelectItem>
+                        <SelectItem value='f4'>is on or after</SelectItem>
+                        <SelectItem value='f5'>is before or on</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        }</div>
+            <div className='flex gap-1 items-center'>{
 
+              val === 'f1' && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="f1f"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            type='number'
+                            disabled={loading}
+                            className="font-mono"
+                            placeholder=""
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  /> days</>
+              )
+            }</div>
 
-        <Button className="w-full">Apply</Button>
+            <Button
+              disabled={!form.formState.isValid}
+              className="disabled:opacity-25 w-full"
+              type="submit"
+            >Apply
+            </Button>
+
+          </form></Form>
       </PopoverContent>
     </Popover>
 
