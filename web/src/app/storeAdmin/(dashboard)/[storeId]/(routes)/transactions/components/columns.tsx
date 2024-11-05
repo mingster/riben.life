@@ -104,7 +104,7 @@ export const InfoCol: React.FC<CellActionProps> = ({ data }) => {
 
   return (
     <div className="flex flex-col gap-1 text-nowrap">
-      <div>{data.isPaid === true ? t('isPaid') : t('isNotPaid')}</div>
+      <div>{data.isPaid === true ? t("isPaid") : t("isNotPaid")}</div>
       <div>{note}</div>
       <div>{data.user}</div>
     </div>

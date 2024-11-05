@@ -55,10 +55,13 @@ const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
   }
 
   const store = (await getStoreById(order.storeId)) as Store;
-  const linePayClient = getLinePayClient(store.LINE_PAY_ID, store.LINE_PAY_SECRET) as LinePayClient;
+  const linePayClient = getLinePayClient(
+    store.LINE_PAY_ID,
+    store.LINE_PAY_SECRET,
+  ) as LinePayClient;
 
   const env =
-  process.env.NODE_ENV === "development" ? "development" : "production";
+    process.env.NODE_ENV === "development" ? "development" : "production";
 
   let protocol = "http:";
   if (env === "production") {

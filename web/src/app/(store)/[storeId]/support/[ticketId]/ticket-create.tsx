@@ -51,13 +51,13 @@ type formValues = z.infer<typeof formSchema>;
 
 interface editProps {
   initialData:
-  | (SupportTicket & {
-    //images: ProductImage[];
-    //productPrices: ProductPrice[];
-    //ProductImages: ProductImages[] | null;
-    //ProductAttribute: ProductAttribute | null;
-  })
-  | null;
+    | (SupportTicket & {
+        //images: ProductImage[];
+        //productPrices: ProductPrice[];
+        //ProductImages: ProductImages[] | null;
+        //ProductAttribute: ProductAttribute | null;
+      })
+    | null;
   order: StoreOrder | null;
 }
 
@@ -75,14 +75,14 @@ export const TicketCreate = ({ initialData, order }: editProps) => {
   const editMode = false;
   const defaultValues = initialData
     ? {
-      ...initialData,
-    }
+        ...initialData,
+      }
     : {
-      subject: "",
-      message: "",
-      department: "",
-      status: TicketStatus.Active,
-    };
+        subject: "",
+        message: "",
+        department: "",
+        status: TicketStatus.Active,
+      };
 
   if (order) {
     defaultValues.subject = `關於訂單 ＃${order.orderNum}`;

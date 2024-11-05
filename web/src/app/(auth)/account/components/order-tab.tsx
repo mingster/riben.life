@@ -67,7 +67,6 @@ export const OrderTab = ({ orders }: props) => {
   //sort orders by updateAt
   //result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
   result.sort((a, b) => (b.orderNum ?? 0) - (a.orderNum ?? 0));
-  
 
   return (
     <>

@@ -55,7 +55,10 @@ export default async function LinePayConfirmedPage({
   }
 
   const store = (await getStoreById(order.storeId)) as Store;
-  const linePayClient = getLinePayClient(store.LINE_PAY_ID, store.LINE_PAY_SECRET) as LinePayClient;
+  const linePayClient = getLinePayClient(
+    store.LINE_PAY_ID,
+    store.LINE_PAY_SECRET,
+  ) as LinePayClient;
 
   const confirmRequest = {
     transactionId: transactionId as string,

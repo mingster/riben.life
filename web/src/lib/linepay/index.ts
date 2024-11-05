@@ -180,7 +180,6 @@ export function createLinePayClient(config: LineMerchantConfig): LinePayClient {
   };
 }
 
-
 export function getLinePayClient(id: string | null, secret: string | null) {
   let linePayId = id;
   let linePaySecret = secret;
@@ -204,4 +203,4 @@ export function getLinePayClient(id: string | null, secret: string | null) {
   }) as LinePayClient;
 
   return linePayClient;
-};
+}

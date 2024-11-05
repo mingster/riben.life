@@ -23,7 +23,8 @@ export default async function LinePayCancelledPage({
   return (
     <Suspense fallback={<Loader />}>
       <Container>
-        <CancelAndRedirect orderId={searchParams.orderId} /></Container>
+        <CancelAndRedirect orderId={searchParams.orderId} />
+      </Container>
     </Suspense>
   );
 }
