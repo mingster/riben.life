@@ -81,6 +81,7 @@
   "PayoutSchedule_Auto_Monthly": "自動 - 每月",
   "PayoutSchedule_Auto_Weekly": "自動 - 每週",
   "PayoutSchedule_Manual": "手動",
+
   "PickDate_Past_7_days": "上星期",
   "PickDate_Past_30_days": "上個月",
   "PickDate_Pick_a_date": "請選擇日期",
@@ -89,6 +90,7 @@
   "PickDate_Today": "今天",
   "PickDate_Tomorrow": "明天",
   "PickDate_Yesterday": "昨天",
+
   "Preview": "預覽",
   "product": "產品",
   "Product_created": "產品已新增",

@@ -39,6 +39,8 @@ import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { useState } from "react";
 import { type StoreOrderColumn, columns } from "./columns";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 
 interface StoreOrderClientProps {
   store: Store;
@@ -55,25 +57,28 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   // orderStatus numeric key
   const keys = Object.keys(OrderStatus).filter((v) => !Number.isNaN(Number(v)));
 
-  const [filterStatus, setFilterStatus] = useState(0); //0 = all
+  const [filterByStatus, setFilterByStatus] = useState(0); //0 = all
   let result = data;
 
-  if (filterStatus !== 0) {
+  if (filterByStatus !== 0) {
     //console.log('filter', filterStatus);
-    result = data.filter((d) => d.orderStatus === filterStatus);
+    result = data.filter((d) => d.orderStatus === filterByStatus);
 
     //console.log('result', result.length);
   }
+
+  const [filterByTime, setFilterByTime] = useState('');
+  console.log('filterByTime', filterByTime);
 
   return (
     <>
       <Heading title={t("Store_orders")} badge={result.length} description="" />
       <div className="flex gap-1 pb-2">
         <Button
-          className={cn("h-12", filterStatus === 0 && highlight_css)}
+          className={cn("h-12", filterByStatus === 0 && highlight_css)}
           variant="outline"
           onClick={() => {
-            setFilterStatus(0);
+            setFilterByStatus(0);
           }}
         >
           ALL
@@ -83,21 +88,99 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
             key={key}
             className={cn(
               "h-12",
-              filterStatus === Number(key) && highlight_css,
+              filterByStatus === Number(key) && highlight_css,
             )}
             variant="outline"
             onClick={() => {
-              setFilterStatus(Number(key));
+              setFilterByStatus(Number(key));
             }}
           >
             {t(`OrderStatus_${OrderStatus[Number(key)]}`)}
           </Button>
         ))}
       </div>
+
+      <div>
+
+        <FilterDateTime disabled={false} defaultValue={""} onValueChange={setFilterByTime} />
+      </div>
+      <Separator />
       <DataTable searchKey="" columns={columns} data={result} />
     </>
   );
 };
+
+
+type filterProps = {
+  disabled: boolean;
+  defaultValue: string | undefined;
+  onValueChange?: (newValue: string) => void;
+};
+
+export const FilterDateTime = ({
+  disabled,
+  defaultValue,
+  onValueChange,
+  ...props
+}: filterProps) => {
+  const { lng } = useI18n();
+  const { t } = useTranslation(lng, "storeAdmin");
+
+  const [date, setDate] = useState<Date>(new Date()); //default to today
+  const [val, setVal] = useState('');
+
+  const setFilerValue = (v: string) => {
+    setVal(v);
+    onValueChange?.(v);
+    //setDate(addDays(new Date(), val));
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant={"outline"}
+          className={cn(
+            "justify-start text-left font-normal",
+          )}
+        >
+          <CalendarIcon className="mr-1 h-4 w-4" />
+          <span>Date and time</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="flex w-auto flex-col space-y-2 p-2"
+      >
+        <div>
+          Filter by Date and time
+        </div>
+        <Select onValueChange={(value) => setFilerValue(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder={t("select")} />
+          </SelectTrigger>
+          <SelectContent position="popper">
+            <SelectItem value='f1'>is in the last</SelectItem>
+            <SelectItem value='f2'>is equal to</SelectItem>
+            <SelectItem value='f3'>is between</SelectItem>
+            <SelectItem value='f4'>is on or after</SelectItem>
+            <SelectItem value='f5'>is before or on</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className='flex gap-1 items-center'>{
+          val === 'f1' && (
+            <><Input type="number" /> days</>
+          )
+
+        }</div>
+
+
+        <Button className="w-full">Apply</Button>
+      </PopoverContent>
+    </Popover>
+
+  )
+}
 
 export const TransactionClientOld: React.FC<StoreOrderClientProps> = ({
   store,
