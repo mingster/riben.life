@@ -75,13 +75,34 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   if (filterByStatus !== 0) {
     //console.log('filter', filterStatus);
     result = data.filter((d) => d.orderStatus === filterByStatus);
-
     //console.log('result', result.length);
   }
 
-  const [filterByTime, setFilterByTime] = useState('');
-  console.log('filterByTime', filterByTime);
 
+  const defaultTimeFilter = {
+    filter: "f1",
+    filter1_is_in_the_last_of_days: 1
+  } as TimeFilter;
+
+  const [filterByTime, setFilterByTime] = useState<TimeFilter>(defaultTimeFilter);
+
+  if (filterByTime) {
+    console.log('filterByTime', filterByTime);
+
+    if (filterByTime.filter === 'f1') {
+
+      const date = new Date(Date.now());
+
+      date.setDate(date.getDate() - filterByTime.filter1_is_in_the_last_of_days);
+      console.log(format(date, 'yyyy-MM-dd HH:mm:ss'));
+
+      // filter result by updateAt
+      result = result.filter((d) => {
+        const dateStr = format(d.updatedAt, 'yyyy-MM-dd HH:mm:ss');
+        return dateStr >= format(date, 'yyyy-MM-dd HH:mm:ss');
+      });
+    }
+  }
   return (
     <>
       <Heading title={t("Store_orders")} badge={result.length} description="" />
@@ -112,26 +133,28 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
         ))}
       </div>
 
-      <div>
-
-        <FilterDateTime disabled={false} defaultValue={""} onValueChange={setFilterByTime} />
+      <div className="flex gap-1 pb-2 items-center">
+        <FilterDateTime disabled={false} defaultValue={filterByTime} onValueChange={setFilterByTime} />
       </div>
       <Separator />
       <DataTable searchKey="" columns={columns} data={result} />
     </>
   );
 };
-
+export type TimeFilter = {
+  filter: string;
+  filter1_is_in_the_last_of_days: number;
+};
 
 type filterProps = {
   disabled: boolean;
-  defaultValue: string | undefined;
-  onValueChange?: (newValue: string) => void;
+  defaultValue: TimeFilter | null;
+  onValueChange?: (newValue: TimeFilter) => void;
 };
 
 const formSchema = z.object({
   filter: z.string().optional().default(""),
-  f1f: z.coerce.number().optional().default(1),
+  filter1_is_in_the_last_of_days: z.coerce.number().optional().default(1),
 });
 type formValues = z.infer<typeof formSchema>;
 
@@ -144,17 +167,27 @@ export const FilterDateTime = ({
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  const [val, setVal] = useState('');
+  const defaultValues = defaultValue
+    ? {
+      ...defaultValue,
+    }
+    : {
+      filter: "f1",
+      filter1_is_in_the_last_of_days: 1
+    };
 
-  const setFilerValue = (v: string) => {
-    setVal(v);
-    onValueChange?.(v);
-    //setDate(addDays(new Date(), val));
-  };
+  const [val, setVal] = useState(defaultValues);
+  //console.log('defaultValue', JSON.stringify(defaultValue));
 
-  const defaultValues = {
-    f1f: 1,
+  const setFilerValue = (filter: string) => {
+    if (val === null) return;
+
+    val.filter = filter;
+    setVal(val);
+    onValueChange?.(val);
+
   };
 
   // Replace null values with undefined
@@ -162,7 +195,6 @@ export const FilterDateTime = ({
     Object.entries(defaultValues).map(([key, value]) => [key, value ?? undefined])
   );
 
-  //console.log('defaultValues: ' + JSON.stringify(defaultValues));
   const form = useForm<formValues>({
     resolver: zodResolver(formSchema),
     defaultValues: sanitizedDefaultValues,
@@ -178,14 +210,18 @@ export const FilterDateTime = ({
 
 
   const onSubmit = async (data: formValues) => {
+    //if (val === null) return;
+
+    setVal(data);
+
     console.log("onSubmit", JSON.stringify(data));
 
-    setVal(JSON.stringify(data));
-    onValueChange?.(JSON.stringify(data));
+    onValueChange?.(data);
+    setOpen(false);
   }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant={"outline"}
@@ -224,6 +260,7 @@ export const FilterDateTime = ({
                         <SelectValue placeholder="" />
                       </SelectTrigger>
                       <SelectContent position="popper">
+                        <SelectItem value='--'>---</SelectItem>
                         <SelectItem value='f1'>is in the last</SelectItem>
                         <SelectItem value='f2'>is equal to</SelectItem>
                         <SelectItem value='f3'>is between</SelectItem>
@@ -239,11 +276,11 @@ export const FilterDateTime = ({
 
             <div className='flex gap-1 items-center'>{
 
-              val === 'f1' && (
+              val?.filter === 'f1' && (
                 <>
                   <FormField
                     control={form.control}
-                    name="f1f"
+                    name="filter1_is_in_the_last_of_days"
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
