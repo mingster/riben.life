@@ -15,11 +15,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn, highlight_css } from "@/lib/utils";
 import { addDays, format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 
+import { DataTable } from "@/components/dataTable";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -32,14 +34,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import type { Store, StoreOrder } from "@/types";
+import { OrderStatus } from "@/types/enum";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { useState } from "react";
-import { OrderStatus } from "@/types/enum";
-import { DataTable } from "@/components/dataTable";
-import { columns, type StoreOrderColumn } from "./columns";
+import { ControllerRenderProps, Field, useForm } from "react-hook-form";
+import { z } from "zod";
+import { type StoreOrderColumn, columns } from "./columns";
 
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 interface StoreOrderClientProps {
   store: Store;
   data: StoreOrderColumn[];
@@ -55,26 +69,50 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   // orderStatus numeric key
   const keys = Object.keys(OrderStatus).filter((v) => !Number.isNaN(Number(v)));
 
-  const [filterStatus, setFilterStatus] = useState(0); //0 = all
+  const [filterByStatus, setFilterByStatus] = useState(0); //0 = all
   let result = data;
 
-  if (filterStatus !== 0) {
+  if (filterByStatus !== 0) {
     //console.log('filter', filterStatus);
-    result = data.filter((d) => d.orderStatus === filterStatus);
-
+    result = data.filter((d) => d.orderStatus === filterByStatus);
     //console.log('result', result.length);
   }
 
-  const highlight_css = "border-dashed border-green-500";
+  const defaultTimeFilter = {
+    filter: "f1",
+    filter1_is_in_the_last_of_days: 1,
+  } as TimeFilter;
+
+  const [filterByTime, setFilterByTime] =
+    useState<TimeFilter>(defaultTimeFilter);
+
+  if (filterByTime) {
+    console.log("filterByTime", filterByTime);
+
+    if (filterByTime.filter === "f1") {
+      const date = new Date(Date.now());
+
+      date.setDate(
+        date.getDate() - filterByTime.filter1_is_in_the_last_of_days,
+      );
+      console.log(format(date, "yyyy-MM-dd HH:mm:ss"));
+
+      // filter result by updateAt
+      result = result.filter((d) => {
+        const dateStr = format(d.updatedAt, "yyyy-MM-dd HH:mm:ss");
+        return dateStr >= format(date, "yyyy-MM-dd HH:mm:ss");
+      });
+    }
+  }
   return (
     <>
       <Heading title={t("Store_orders")} badge={result.length} description="" />
       <div className="flex gap-1 pb-2">
         <Button
-          className={cn("h-12", filterStatus === 0 && highlight_css)}
+          className={cn("h-12", filterByStatus === 0 && highlight_css)}
           variant="outline"
           onClick={() => {
-            setFilterStatus(0);
+            setFilterByStatus(0);
           }}
         >
           ALL
@@ -84,19 +122,199 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
             key={key}
             className={cn(
               "h-12",
-              filterStatus === Number(key) && highlight_css,
+              filterByStatus === Number(key) && highlight_css,
             )}
             variant="outline"
             onClick={() => {
-              setFilterStatus(Number(key));
+              setFilterByStatus(Number(key));
             }}
           >
             {t(`OrderStatus_${OrderStatus[Number(key)]}`)}
           </Button>
         ))}
       </div>
+
+      <div className="flex gap-1 pb-2 items-center">
+        <FilterDateTime
+          disabled={false}
+          defaultValue={filterByTime}
+          onValueChange={setFilterByTime}
+        />
+      </div>
+      <Separator />
       <DataTable searchKey="" columns={columns} data={result} />
     </>
+  );
+};
+export type TimeFilter = {
+  filter: string;
+  filter1_is_in_the_last_of_days: number;
+};
+
+type filterProps = {
+  disabled: boolean;
+  defaultValue: TimeFilter | null;
+  onValueChange?: (newValue: TimeFilter) => void;
+};
+
+const formSchema = z.object({
+  filter: z.string().optional().default(""),
+  filter1_is_in_the_last_of_days: z.coerce.number().optional().default(1),
+});
+type formValues = z.infer<typeof formSchema>;
+
+export const FilterDateTime = ({
+  disabled,
+  defaultValue,
+  onValueChange,
+  ...props
+}: filterProps) => {
+  const { lng } = useI18n();
+  const { t } = useTranslation(lng, "storeAdmin");
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const defaultValues = defaultValue
+    ? {
+        ...defaultValue,
+      }
+    : {
+        filter: "f1",
+        filter1_is_in_the_last_of_days: 1,
+      };
+
+  const [val, setVal] = useState(defaultValues);
+  //console.log('defaultValue', JSON.stringify(defaultValue));
+
+  const setFilerValue = (filter: string) => {
+    if (val === null) return;
+
+    val.filter = filter;
+    setVal(val);
+    onValueChange?.(val);
+  };
+
+  // Replace null values with undefined
+  const sanitizedDefaultValues = Object.fromEntries(
+    Object.entries(defaultValues).map(([key, value]) => [
+      key,
+      value ?? undefined,
+    ]),
+  );
+
+  const form = useForm<formValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: sanitizedDefaultValues,
+  });
+
+  const {
+    register,
+    formState: { errors },
+    handleSubmit,
+    watch,
+    clearErrors,
+  } = useForm<formValues>();
+
+  const onSubmit = async (data: formValues) => {
+    //if (val === null) return;
+
+    setVal(data);
+
+    console.log("onSubmit", JSON.stringify(data));
+
+    onValueChange?.(data);
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant={"outline"}
+          className={cn("justify-start text-left font-normal")}
+        >
+          <CalendarIcon className="mr-1 h-4 w-4" />
+          <span>Date and time</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="flex w-auto flex-col space-y-2 p-2"
+      >
+        <div>Filter by Date and time</div>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="w-full space-y-1"
+          >
+            <FormField
+              control={form.control}
+              name="filter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Select
+                      onValueChange={(v) => {
+                        field.onChange(v);
+                        setFilerValue(v);
+                      }}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        <SelectItem value="--">---</SelectItem>
+                        <SelectItem value="f1">is in the last</SelectItem>
+                        <SelectItem value="f2">is equal to</SelectItem>
+                        <SelectItem value="f3">is between</SelectItem>
+                        <SelectItem value="f4">is on or after</SelectItem>
+                        <SelectItem value="f5">is before or on</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex gap-1 items-center">
+              {val?.filter === "f1" && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="filter1_is_in_the_last_of_days"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            disabled={loading}
+                            className="font-mono"
+                            placeholder=""
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />{" "}
+                  days
+                </>
+              )}
+            </div>
+
+            <Button
+              disabled={!form.formState.isValid}
+              className="disabled:opacity-25 w-full"
+              type="submit"
+            >
+              Apply
+            </Button>
+          </form>
+        </Form>
+      </PopoverContent>
+    </Popover>
   );
 };
 

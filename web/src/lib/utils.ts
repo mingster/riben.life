@@ -9,6 +9,8 @@ import Decimal from "decimal.js"; // gets added if installed
 import { z } from "zod";
 import type { StoreTables } from "@prisma/client";
 
+export const highlight_css = "border-dashed border-green-500 border-2";
+
 export function getTableName(tables: StoreTables[], tableId: string) {
   return tables.find((table) => table.id === tableId)?.tableName || "";
 }

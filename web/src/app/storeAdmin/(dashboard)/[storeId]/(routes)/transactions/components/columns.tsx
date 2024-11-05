@@ -2,11 +2,9 @@
 
 import Currency from "@/components/currency";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
-import { OrderStatus, ProductStatuses } from "@/types/enum";
+import { OrderStatus } from "@/types/enum";
 import type { ColumnDef } from "@tanstack/react-table";
 import { t } from "i18next";
-import { CheckIcon, XIcon } from "lucide-react";
-import Link from "next/link";
 import { CellAction } from "./cell-action";
 
 // #region data table realted
@@ -20,7 +18,7 @@ export type StoreOrderColumn = {
   updatedAt: string;
   paymentMethod: string | null | undefined;
   shippingMethod: string | null | undefined;
-  tableId: string | null | undefined;
+  //tableId: string | null | undefined;
   orderNum: number;
   paymentCost: number;
   note: string | null | undefined;
@@ -96,8 +94,8 @@ interface CellActionProps {
 }
 
 export const InfoCol: React.FC<CellActionProps> = ({ data }) => {
-  let note = `${t("Order_edit_orderNum")}${data.orderNum.toString()}`;
-  if (data.tableId) note = `${note}/ ${data.tableId}`;
+  const note = `${t("Order_edit_orderNum")}${data.orderNum.toString()}`;
+  //if (data.tableId) note = `${note}/ ${data.tableId}`;
 
   /*
     const orderNum =row.getValue("orderNum")??'';
@@ -106,7 +104,7 @@ export const InfoCol: React.FC<CellActionProps> = ({ data }) => {
 
   return (
     <div className="flex flex-col gap-1 text-nowrap">
-      <div>{data.isPaid === true ? "已付" : "未付"}</div>
+      <div>{data.isPaid === true ? t("isPaid") : t("isNotPaid")}</div>
       <div>{note}</div>
       <div>{data.user}</div>
     </div>

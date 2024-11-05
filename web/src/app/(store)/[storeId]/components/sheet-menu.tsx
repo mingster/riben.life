@@ -68,7 +68,7 @@ export function SheetMenu({ store }: props) {
         <StoreMenu store={store} isOpen title="" setIsOpen={setIsOpen} />
 
         {/*<!--  Hidden by default, but visible if screen is small: hidden md:block--> */}
-        <div className="">
+        <div className="hidden lg:block">
           <div className="flex flex-1 items-center justify-center space-x-1">
             <ThemeToggler />
             <DropdownMessage messages={store.StoreAnnouncement} />

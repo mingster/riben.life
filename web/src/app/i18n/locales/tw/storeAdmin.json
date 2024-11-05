@@ -12,6 +12,7 @@
   "Announcements": "公告管理",
   "Balance": "銷售分析",
   "business_hours": "營業時間",
+  "cash-cashier": "現金結帳",
   "Cancel": "取消",
   "Canceled": "已取消",
   "Categories": "產品分類管理",
@@ -81,6 +82,7 @@
   "PayoutSchedule_Auto_Monthly": "自動 - 每月",
   "PayoutSchedule_Auto_Weekly": "自動 - 每週",
   "PayoutSchedule_Manual": "手動",
+
   "PickDate_Past_7_days": "上星期",
   "PickDate_Past_30_days": "上個月",
   "PickDate_Pick_a_date": "請選擇日期",
@@ -89,6 +91,7 @@
   "PickDate_Today": "今天",
   "PickDate_Tomorrow": "明天",
   "PickDate_Yesterday": "昨天",
+
   "Preview": "預覽",
   "product": "產品",
   "Product_created": "產品已新增",
@@ -173,7 +176,7 @@
   "StoreSettings_acceptReservation": "接受預約",
   "StoreSettings_acceptReservation_descr": "打開 / 關閉預約訂位系統。",
   "StoreSettings_autoAcceptOrder": "自動接單",
-  "StoreSettings_autoAcceptOrder_descr": "打開後，不用先確認，會直接通知出貨人員。",
+  "StoreSettings_autoAcceptOrder_descr": "打開後，不用先確認訂單，會直接通知出貨人員。",
   "StoreSettings_BankAccount": "帳號",
   "StoreSettings_BankAccountName": "戶名",
   "StoreSettings_BankCode": "銀行代碼",

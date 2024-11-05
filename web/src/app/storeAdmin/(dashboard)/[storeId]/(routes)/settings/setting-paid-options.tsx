@@ -68,17 +68,20 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 
   const defaultValues = initialData
     ? {
-      ...initialData,
-    }
+        ...initialData,
+      }
     : {
-      LINE_PAY_ID: "",
-      LINE_PAY_SECRET: "",
-      STRIPE_SECRET_KEY: "",
-    };
+        LINE_PAY_ID: "",
+        LINE_PAY_SECRET: "",
+        STRIPE_SECRET_KEY: "",
+      };
 
   // Replace null values with undefined
   const sanitizedDefaultValues = Object.fromEntries(
-    Object.entries(defaultValues).map(([key, value]) => [key, value ?? undefined])
+    Object.entries(defaultValues).map(([key, value]) => [
+      key,
+      value ?? undefined,
+    ]),
   );
 
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
@@ -301,7 +304,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                   <ImageUploadBox
                     disabled={loading || disablePaidOptions}
                     image={image ?? null}
-                    setImage={setImage ?? (() => { })}
+                    setImage={setImage ?? (() => {})}
                   />
                 </div>
                 <div className="flex flex-col pl-10 space-y-4 place-content-center">

@@ -61,7 +61,10 @@ function MyTimer({
 
   return (
     <div className="pt-10">
-      <Heading title="訂單已取消" description="目前訂單狀態為未付款，請重新訂購。" />
+      <Heading
+        title="訂單已取消"
+        description="目前訂單狀態為未付款，請重新訂購。"
+      />
     </div>
   );
 }

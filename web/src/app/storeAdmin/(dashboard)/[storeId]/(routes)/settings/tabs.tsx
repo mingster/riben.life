@@ -127,32 +127,32 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 
       <Tabs defaultValue="basic" className="w-full">
         <TabsList>
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="basic">
+          <TabsTrigger className="pl-1 pr-1 lg:min-w-25" value="basic">
             {t("StoreSettingsTab_Basic")}
           </TabsTrigger>
 
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="rsvp">
+          <TabsTrigger className="pl-1 pr-1 lg:min-w-25" value="rsvp">
             {t("StoreSettingsTab_RSVP")}
           </TabsTrigger>
 
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="bank">
+          <TabsTrigger className="pl-1 pr-1 lg:min-w-25" value="bank">
             {t("StoreSettingsTab_Bank")}
           </TabsTrigger>
 
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="contactInfo">
+          <TabsTrigger className="pl-1 pr-1 lg:min-w-25" value="contactInfo">
             {t("StoreSettingsTab_ContactInfo")}
           </TabsTrigger>
           <TabsTrigger
-            className="pl-5 pr-5 lg:min-w-40"
+            className="pl-1 pr-1 lg:min-w-25"
             value="privacyStatement"
           >
             {t("StoreSettingsTab_Policy")}
           </TabsTrigger>
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="ShippingMethod">
+          <TabsTrigger className="pl-1 pr-1 lg:min-w-25" value="ShippingMethod">
             {t("StoreSettingsTab_shipping_method")} /{" "}
             {t("StoreSettingsTab_payment_method")}
           </TabsTrigger>
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="paidOptions">
+          <TabsTrigger className="pl-1 pr-1 lg:min-w-25" value="paidOptions">
             {t("StoreSettingsTab_PaidOptions")}
           </TabsTrigger>
         </TabsList>

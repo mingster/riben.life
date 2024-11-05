@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { DisplayOrder } from "@/components/order-display";
-import { cn } from "@/lib/utils";
+import { cn, highlight_css } from "@/lib/utils";
 import type { StoreOrder } from "@/types";
 
 type orderTabProps = { orders: StoreOrder[] };
@@ -65,9 +65,8 @@ export const OrderTab = ({ orders }: props) => {
   }
 
   //sort orders by updateAt
-  result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-
-  const highlight_css = "border-dashed border-green-500";
+  //result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  result.sort((a, b) => (b.orderNum ?? 0) - (a.orderNum ?? 0));
 
   return (
     <>

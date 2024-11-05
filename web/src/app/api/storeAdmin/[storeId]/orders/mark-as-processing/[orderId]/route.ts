@@ -30,6 +30,7 @@ export async function POST(
       },
       data: {
         orderStatus: OrderStatus.Processing,
+        updatedAt: new Date(Date.now()),
       },
     });
 

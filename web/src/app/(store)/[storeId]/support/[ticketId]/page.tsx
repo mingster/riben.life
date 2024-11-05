@@ -18,14 +18,16 @@ interface pageProps {
   };
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
-const TicketEditPage: React.FC<pageProps> = async ({ params, searchParams }) => {
-
+const TicketEditPage: React.FC<pageProps> = async ({
+  params,
+  searchParams,
+}) => {
   const { orderid } = await searchParams;
   //console.log(`orderid: ${orderid}`);
 
   let order = null;
   if (orderid) {
-    order = await getOrderById(orderid as string) as StoreOrder;
+    order = (await getOrderById(orderid as string)) as StoreOrder;
   }
 
   const ticket = await sqlClient.supportTicket.findUnique({

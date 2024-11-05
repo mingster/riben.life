@@ -27,9 +27,10 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
     setVisible(false);
   }
   //const router = useRouter();
+  */
+
   const session = useSession();
   const user = session.data?.user;
-  */
 
   // auto hide navbar on scroll
   const scrollDirection = useScrollDirection();
@@ -89,6 +90,7 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
             <ThemeToggler />
             <DropdownMessage messages={store.StoreAnnouncement} />
             <DropdownNotification />
+            <DropdownUser user={user} />
             <DropdownCart />
           </div>
         </div>

@@ -59,6 +59,7 @@ export async function POST(
       },
       data: {
         orderStatus: OrderStatus.Completed,
+        updatedAt: new Date(Date.now()),
       },
     });
 
