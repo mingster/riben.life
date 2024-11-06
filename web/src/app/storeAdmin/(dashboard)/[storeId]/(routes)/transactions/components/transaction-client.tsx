@@ -1,22 +1,13 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
 
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 
 import { Heading } from "@/components/ui/heading";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { cn, highlight_css } from "@/lib/utils";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 
 import { DataTable } from "@/components/dataTable";
@@ -35,12 +26,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import type { Store, StoreOrder } from "@/types";
+import type { Store } from "@/types";
 import { OrderStatus } from "@/types/enum";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { OrderNote, orderitemview } from "@prisma/client";
-import axios from "axios";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { type StoreOrderColumn, columns } from "./columns";
@@ -48,12 +37,12 @@ import { type StoreOrderColumn, columns } from "./columns";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 import { PopoverClose } from "@radix-ui/react-popover";
+import Currency from "@/components/currency";
 interface StoreOrderClientProps {
   store: Store;
   data: StoreOrderColumn[];
@@ -69,6 +58,7 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   // orderStatus numeric key
   const keys = Object.keys(OrderStatus).filter((v) => !Number.isNaN(Number(v)));
 
+  const [total, setTotal] = useState(0); //0 = all
   const [filterByStatus, setFilterByStatus] = useState(0); //0 = all
   let result = data;
 
@@ -79,37 +69,70 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   }
 
   const defaultTimeFilter = {
-    filter: "f1",
+    filter: "---",
     filter1_is_in_the_last_of_days: 1,
     filter_date1: new Date(Date.now()),
     filter_date2: new Date(Date.now()),
   } as TimeFilter;
 
-  const [filterByTime, setFilterByTime] =
-    useState<TimeFilter>(defaultTimeFilter);
+  const [filterByTime, setFilterByTime] = useState<TimeFilter>(defaultTimeFilter);
 
+  // implement time filter
   if (filterByTime) {
     console.log("filterByTime", filterByTime);
 
-    if (filterByTime.filter === "f1") {
-      const date = new Date(Date.now());
+    if (filterByTime.filter === "f1") { // filter result that are greater than in_last_of_days
+      const in_last_of_days = new Date(Date.now());
 
-      date.setDate(
-        date.getDate() - filterByTime.filter1_is_in_the_last_of_days,
+      in_last_of_days.setDate(
+        in_last_of_days.getDate() - filterByTime.filter1_is_in_the_last_of_days,
       );
-      //console.log(format(date, "yyyy-MM-dd HH:mm:ss"));
+      //console.log('in_last_of_days', format(in_last_of_days, "yyyy-MM-dd"));
 
-      // filter result by updateAt
       result = result.filter((d) => {
-        const dateStr = format(d.updatedAt, "yyyy-MM-dd HH:mm:ss");
-        return dateStr >= format(date, "yyyy-MM-dd HH:mm:ss");
+        const date = new Date(d.updatedAt);
+        return date >= in_last_of_days;
       });
     }
+    else if (filterByTime.filter === "f2") {  // filter result that are on the same day as filter_date1
+      result = result.filter((d) => {
+        return format(d.updatedAt, "yyyy-MM-dd") === format(filterByTime.filter_date1, "yyyy-MM-dd");
+      });
+    }
+    else if (filterByTime.filter === "f3") {  // filter result that are between filter_date1 and filter_date1
+      result = result.filter((d) => {
+        const date = new Date(d.updatedAt);
+        return date >= filterByTime.filter_date1 && date <= filterByTime.filter_date2;
+      })
+    }
+    else if (filterByTime.filter === "f4") {  // filter result that are on or after filter_date1
+      result = result.filter((d) => {
+        const date = new Date(d.updatedAt);
+        return date >= filterByTime.filter_date1;
+      })
+    }
+    else if (filterByTime.filter === "f5") {  // filter result that are before or on filter_date1
+      result = result.filter((d) => {
+        const date = new Date(d.updatedAt);
+        return date <= filterByTime.filter_date1;
+      })
+    }
   }
+
+  function clearFilter() {
+    setFilterByTime(defaultTimeFilter);
+  }
+
+  useEffect(() => {
+    // sum of order amount
+    setTotal(result.reduce((a, b) => a + b.amount, 0));
+  }, [result]);
+
   return (
     <>
       <Heading title={t("Store_orders")} badge={result.length} description="" />
       <div className="flex gap-1 pb-2">
+        {/* status filter*/}
         <Button
           className={cn("h-12", filterByStatus === 0 && highlight_css)}
           variant="outline"
@@ -142,6 +165,8 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
           defaultValue={filterByTime}
           onValueChange={setFilterByTime}
         />
+        <Currency value={total} />
+        <Button variant={"link"} size={'sm'} className='text-xs font-mono' onClick={clearFilter}>Clear filter</Button>
       </div>
       <Separator />
       <DataTable searchKey="" columns={columns} data={result} />
@@ -182,8 +207,8 @@ export const FilterDateTime = ({
 
   const defaultValues = defaultValue
     ? {
-        ...defaultValue,
-      }
+      ...defaultValue,
+    }
     : {};
 
   const [val, setVal] = useState<TimeFilter>(defaultValue);
