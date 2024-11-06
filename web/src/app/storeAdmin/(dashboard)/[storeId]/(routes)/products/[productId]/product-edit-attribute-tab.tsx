@@ -118,11 +118,19 @@ export const ProductEditAttributeTab = ({
       }
     : {};
 
+  // Replace null values with undefined
+  const sanitizedDefaultValues = Object.fromEntries(
+    Object.entries(defaultValues).map(([key, value]) => [
+      key,
+      value ?? undefined,
+    ]),
+  );
+
   //console.log(`product attribute: ${JSON.stringify(initialData)}`);
   //console.log(`attribute defaultValues: ${JSON.stringify(defaultValues)}`);
   const form = useForm<formValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: sanitizedDefaultValues,
     mode: "onChange",
   });
 
