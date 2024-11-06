@@ -1,7 +1,7 @@
 "use client";
 
 import axios, { type AxiosError } from "axios";
-import { Copy, Edit, MoreHorizontal, Trash } from "lucide-react";
+import { Copy, Edit, MoreHorizontal, Trash, Undo2Icon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
@@ -35,18 +35,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const onConfirm = async () => {
     //try {
     setLoading(true);
-    await axios.delete(
-      `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${data.id}`,
-    );
-
-    toast({
-      title: t("Product_deleted"),
-      description: "",
-      variant: "success",
-    });
-    router.refresh();
-    setLoading(false);
-    setOpen(false);
+    router.push(`/storeAdmin/${params.storeId}/order/${data.id}/refund`)
     /*} catch (error: unknown) {
       const err = error as AxiosError;
       toast({
@@ -55,9 +44,11 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
-      setOpen(false);
     }*/
+
+    setLoading(false);
+    setOpen(false);
+
   };
 
   const onCopy = (id: string) => {
@@ -89,6 +80,14 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           <DropdownMenuItem onClick={() => onCopy(data.id)}>
             <Copy className="mr-1 h-4 w-4" /> Copy Id
           </DropdownMenuItem>
+          {
+            data.isPaid === true && (
+              <DropdownMenuItem
+                onClick={() => setOpen(true)}>
+                <Undo2Icon className="mr-1 h-4 w-4" /> Refund
+              </DropdownMenuItem>
+            )
+          }
 
           {/*
           <DropdownMenuItem

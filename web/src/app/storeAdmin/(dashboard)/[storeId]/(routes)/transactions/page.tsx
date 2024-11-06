@@ -49,6 +49,7 @@ const TransactionMgmtPage: React.FC<pageProps> = async ({ params }) => {
     updatedAt: format(item.updatedAt, "yyyy-MM-dd HH:mm:ss"),
     paymentMethod: item.PaymentMethod?.name,
     shippingMethod: item.ShippingMethod.name,
+    orderItems: item.OrderItemView,
     //tableId: item.tableId,
     orderNum: Number(item.orderNum),
     paymentCost: Number(item.paymentCost) || 0,
