@@ -51,7 +51,7 @@ import {
   FormDescription,
   FormField,
   FormItem,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { PopoverClose } from "@radix-ui/react-popover";
 interface StoreOrderClientProps {
@@ -85,7 +85,8 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
     filter_date2: new Date(Date.now()),
   } as TimeFilter;
 
-  const [filterByTime, setFilterByTime] = useState<TimeFilter>(defaultTimeFilter);
+  const [filterByTime, setFilterByTime] =
+    useState<TimeFilter>(defaultTimeFilter);
 
   if (filterByTime) {
     console.log("filterByTime", filterByTime);
@@ -181,13 +182,12 @@ export const FilterDateTime = ({
 
   const defaultValues = defaultValue
     ? {
-      ...defaultValue,
-    }
-    : {
-    };
+        ...defaultValue,
+      }
+    : {};
 
   const [val, setVal] = useState<TimeFilter>(defaultValue);
-  console.log('val', JSON.stringify(val));
+  console.log("val", JSON.stringify(val));
 
   const setFilerValue = (filter: string) => {
     if (val === null) return;
@@ -295,7 +295,12 @@ export const FilterDateTime = ({
             />
 
             <div className="flex gap-1 items-center">
-              {val?.filter === "f1" && (
+              <div
+                className={cn(
+                  "flex gap-1 text-sm items-center",
+                  val?.filter !== "f1" && "hidden",
+                )}
+              >
                 <>
                   <FormField
                     control={form.control}
@@ -317,9 +322,13 @@ export const FilterDateTime = ({
                   />
                   days
                 </>
-              )}
-
-              {(val?.filter === "f2" || val?.filter === "f3" || val?.filter === "f4" || val?.filter === "f5") && (
+              </div>
+              <div
+                className={cn(
+                  "flex gap-1 text-sm items-center",
+                  val?.filter === "f1" && "hidden",
+                )}
+              >
                 <FormField
                   control={form.control}
                   name="filter_date1"
@@ -352,8 +361,10 @@ export const FilterDateTime = ({
                             onSelect={(e) => {
                               field.onChange(e);
                               popOverDate1Ref.current?.click(); // closes popover
-                            }} disabled={(date: Date) =>
-                              date < new Date('1970-01-01') && date < new Date("3000-01-01")
+                            }}
+                            disabled={(date: Date) =>
+                              date < new Date("1970-01-01") &&
+                              date < new Date("3000-01-01")
                             }
                           />
                         </PopoverContent>
@@ -361,16 +372,19 @@ export const FilterDateTime = ({
                     </FormItem>
                   )}
                 />
-              )}
-
-              <div className={cn("flex gap-1 text-sm items-center", val?.filter !== "f3" && 'hidden')}>
+              </div>
+              <div
+                className={cn(
+                  "flex gap-1 text-sm items-center",
+                  val?.filter !== "f3" && "hidden",
+                )}
+              >
                 and
                 <FormField
                   control={form.control}
                   name="filter_date2"
                   render={({ field }) => (
                     <FormItem className="flex flex-col p-3">
-
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -398,8 +412,10 @@ export const FilterDateTime = ({
                             onSelect={(e) => {
                               field.onChange(e);
                               popOverDate2Ref.current?.click(); // closes popover
-                            }} disabled={(date: Date) =>
-                              date < new Date('1970-01-01') && date < new Date("3000-01-01")
+                            }}
+                            disabled={(date: Date) =>
+                              date < new Date("1970-01-01") &&
+                              date < new Date("3000-01-01")
                             }
                           />
                         </PopoverContent>
@@ -408,9 +424,6 @@ export const FilterDateTime = ({
                   )}
                 />
               </div>
-
-
-
             </div>
 
             <Button
