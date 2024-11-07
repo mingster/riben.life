@@ -100,12 +100,14 @@ export enum PaymentStatus {
   Voided = 60,
 }
 
+/*
 export enum ShippingMethod {
   Digital = 10,
   SelfPickup = 20,
   FlatRate = 30,
   LocalDelivery = 40,
 }
+*/
 
 export enum ShippingStatus {
   ShippigNotRequired = 0,

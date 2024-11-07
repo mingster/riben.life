@@ -3,7 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
 
-///!SECTION mark order as completed
+///!SECTION mark pending or processing order as completed
 export async function POST(
   req: Request,
   { params }: { params: { storeId: string; orderId: string } },
