@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["views", "relationJoins"]
+  previewFeatures = ["views", "relationJoins", "tracing"]
 }
 
 datasource db {
@@ -349,7 +349,7 @@ model Store {
   rsvpPrepaid       Boolean @default(false) //訂位需付訂金
 
   requireSeating Boolean @default(false) //需要帶位or not
-  requirePrepay  Boolean @default(false) //先付款再出貨
+  requirePrepaid Boolean @default(false) //先付款再出貨 @map("requirePrepaid")
 
   useBusinessHours Boolean @default(true)
 
@@ -358,10 +358,10 @@ model Store {
   bankAccount     String?
   bankAccountName String?
 
-  level        Int     @default(0)
+  level             Int     @default(0)
   //paid options
-  customDomain String? @unique
-  LINE_PAY_ID        String?
+  customDomain      String? @unique
+  LINE_PAY_ID       String?
   LINE_PAY_SECRET   String?
   STRIPE_SECRET_KEY String?
 
@@ -387,6 +387,10 @@ model Store {
 
   @@index([ownerId])
   @@index([name])
+  @@index([defaultCountry])
+  @@index([defaultCurrency])
+  @@index([level])
+  @@index([customDomain])
 }
 
 model StoreTables {
@@ -559,6 +563,7 @@ model Category {
   ProductCategories ProductCategories[]
 
   @@index([storeId])
+  @@index([name])
 }
 
 model ProductAttribute {
@@ -643,6 +648,7 @@ model StoreOrder {
   @@index([isPaid])
   @@index([paidDate])
   @@index([currency])
+  @@index([updatedAt])
 }
 
 model OrderItem {
@@ -675,6 +681,7 @@ model OrderNote {
   Order             StoreOrder @relation("orderNoteToStoreOrder", fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
+  @@index([updatedAt])
 }
 
 model FaqCategory {

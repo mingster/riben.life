@@ -3,6 +3,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import { StoreLevel } from "@/types/enum";
 import {
+  ArrowRight,
   Box,
   CircleHelp,
   Dock,
@@ -10,6 +11,7 @@ import {
   LayoutGrid,
   MenuIcon,
   MessageCircleMore,
+  PackageCheck,
   Scale,
   Settings,
   Tag,
@@ -52,6 +54,14 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
     submenus: [],
   };
 
+  const orderConfirmation = {
+    href: `${nav_prefix}/order/awaiting4Confirmation`,
+    label: "確認訂單",
+    active: pathname.includes(`${nav_prefix}/order/awaiting4Confirmation`),
+    icon: PackageCheck,
+    submenus: [],
+  };
+
   return [
     {
       groupLabel: "",
@@ -63,12 +73,20 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
           icon: LayoutGrid,
           submenus: [],
         },
+        ...(store.autoAcceptOrder ? [] : [orderConfirmation]),
+        {
+          href: `${nav_prefix}/order/awaiting4Processing`,
+          label: "出貨管理",
+          active: pathname.includes(`${nav_prefix}/order/awaiting4Processing`),
+          icon: ArrowRight,
+          submenus: [],
+        },
       ],
     },
     {
       groupLabel: t("Sales"),
       menus: [
-        // add cash menu if store level is not free
+        // add cash menu if store level is not free 現金結帳
         ...(store.level !== StoreLevel.Free ? [cash] : []),
         {
           href: `${nav_prefix}/transactions`,
@@ -77,14 +95,6 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
           icon: DollarSign,
           submenus: [],
         },
-        /*
-        {
-          href: `${nav_prefix}/customers`,
-          label: t("Customers"),
-          active: pathname.includes(`${nav_prefix}/customers`),
-          icon: Users,
-          submenus: [],
-        },*/
       ],
     },
     {

@@ -1,6 +1,6 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
-import { OrderStatus } from "@/types/enum";
+import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
 
 ///!SECTION mark order as paid
@@ -31,6 +31,7 @@ export async function POST(
       data: {
         isPaid: true,
         paidDate: new Date(Date.now()),
+        paymentStatus: PaymentStatus.Paid,
       },
     });
 

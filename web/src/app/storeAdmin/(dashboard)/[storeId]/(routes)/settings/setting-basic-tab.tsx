@@ -49,7 +49,7 @@ const formSchema = z.object({
   orderNoteToCustomer: z.string().optional(),
 
   requireSeating: z.boolean().optional().default(false), //需要帶位or not
-  requirePrepay: z.boolean().optional().default(true), //先付款再出貨
+  requirePrepaid: z.boolean().optional().default(true), //先付款再出貨
 
   useBusinessHours: z.boolean().optional().default(true),
   autoAcceptOrder: z.boolean().optional().default(false),
@@ -368,7 +368,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                 />
                 <FormField
                   control={form.control}
-                  name="requirePrepay"
+                  name="requirePrepaid"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
                       <div className="space-y-0.5">

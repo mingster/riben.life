@@ -6,6 +6,8 @@ import { OrderStatus } from "@/types/enum";
 import type { ColumnDef } from "@tanstack/react-table";
 import { t } from "i18next";
 import { CellAction } from "./cell-action";
+import type { orderitemview } from "@prisma/client";
+import { Button } from "@/components/ui/button";
 
 // #region data table realted
 export type StoreOrderColumn = {
@@ -18,6 +20,7 @@ export type StoreOrderColumn = {
   updatedAt: string;
   paymentMethod: string | null | undefined;
   shippingMethod: string | null | undefined;
+  orderItems: orderitemview[];
   //tableId: string | null | undefined;
   orderNum: number;
   paymentCost: number;
@@ -49,6 +52,29 @@ export const columns: ColumnDef<StoreOrderColumn>[] = [
     },
   },
   {
+    accessorKey: "isPaid",
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeader column={column} title={t("Order_isPaid")} />
+      );
+    },
+    cell: ({ row }) => {
+      return row.getValue("isPaid") === true ? (
+        <Button variant={"outline"} className="mr-2 cursor-default" size="sm">
+          {t("isPaid")}
+        </Button>
+      ) : (
+        <Button
+          variant={"outline"}
+          className="mr-2 bg-red-900 text-gray cursor-default"
+          size="sm"
+        >
+          {t("isNotPaid")}
+        </Button>
+      );
+    },
+  },
+  {
     accessorKey: "paymentMethod",
     header: ({ column }) => {
       return (
@@ -68,6 +94,18 @@ export const columns: ColumnDef<StoreOrderColumn>[] = [
     },
     cell: ({ row }) => {
       return row.getValue("shippingMethod");
+    },
+  },
+  {
+    accessorKey: "orderNum",
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeader column={column} title={t("Order_orderNum")} />
+      );
+    },
+
+    cell: ({ row }) => {
+      return row.getValue("orderNum");
     },
   },
   {
@@ -94,18 +132,39 @@ interface CellActionProps {
 }
 
 export const InfoCol: React.FC<CellActionProps> = ({ data }) => {
-  const note = `${t("Order_edit_orderNum")}${data.orderNum.toString()}`;
+  //const note = `${t("Order_edit_orderNum")}${data.orderNum.toString()}`;
   //if (data.tableId) note = `${note}/ ${data.tableId}`;
-
   /*
     const orderNum =row.getValue("orderNum")??'';
     const note =row.getValue("note");
-  */
+      <div>{data.isPaid === true ?
+        <Button
+          variant={"outline"}
+          className="mr-2 cursor-default"
+          size="sm"
+        >
+          {t("isPaid")}
+        </Button>
+        :
+        <Button
+          variant={"outline"}
+          className="mr-2 bg-red-900 text-gray cursor-default"
+          size="sm"
+        >
+          {t("isNotPaid")}
+        </Button>
+      }</div>
+    */
 
   return (
     <div className="flex flex-col gap-1 text-nowrap">
-      <div>{data.isPaid === true ? t("isPaid") : t("isNotPaid")}</div>
-      <div>{note}</div>
+      <div>
+        {data.orderItems.map((item) => (
+          <div key={item.id} className="text-xs">
+            {item.name} x {item.quantity}
+          </div>
+        ))}
+      </div>
       <div>{data.user}</div>
     </div>
   );
