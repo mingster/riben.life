@@ -55,28 +55,23 @@ export const columns: ColumnDef<StoreOrderColumn>[] = [
     accessorKey: "isPaid",
     header: ({ column }) => {
       return (
-        <DataTableColumnHeader column={column} title={t('Order_isPaid')} />
+        <DataTableColumnHeader column={column} title={t("Order_isPaid")} />
       );
     },
     cell: ({ row }) => {
-      return (
-        row.getValue("isPaid") === true ?
-          <Button
-            variant={"outline"}
-            className="mr-2 cursor-default"
-            size="sm"
-          >
-            {t("isPaid")}
-          </Button>
-          :
-          <Button
-            variant={"outline"}
-            className="mr-2 bg-red-900 text-gray cursor-default"
-            size="sm"
-          >
-            {t("isNotPaid")}
-          </Button>
-      )
+      return row.getValue("isPaid") === true ? (
+        <Button variant={"outline"} className="mr-2 cursor-default" size="sm">
+          {t("isPaid")}
+        </Button>
+      ) : (
+        <Button
+          variant={"outline"}
+          className="mr-2 bg-red-900 text-gray cursor-default"
+          size="sm"
+        >
+          {t("isNotPaid")}
+        </Button>
+      );
     },
   },
   {
@@ -164,11 +159,12 @@ export const InfoCol: React.FC<CellActionProps> = ({ data }) => {
   return (
     <div className="flex flex-col gap-1 text-nowrap">
       <div>
-        {
-          data.orderItems.map((item) => (
-            <div key={item.id} className="text-xs">{item.name} x {item.quantity}</div>
-          ))
-        }</div>
+        {data.orderItems.map((item) => (
+          <div key={item.id} className="text-xs">
+            {item.name} x {item.quantity}
+          </div>
+        ))}
+      </div>
       <div>{data.user}</div>
     </div>
   );

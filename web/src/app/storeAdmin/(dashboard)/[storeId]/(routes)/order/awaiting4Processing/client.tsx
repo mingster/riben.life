@@ -6,20 +6,17 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { format } from "date-fns";
-
-import { Heading } from "@/components/ui/heading";
-import { OrderInProgress } from "./order-inprogress";
-import { OrderPending } from "./order-pending";
 import { OrderStatus, StoreLevel } from "@/types/enum";
-import { useIsMounted } from "usehooks-ts";
+import { OrderInProgress } from "../../components/order-inprogress";
+import { OrderPending } from "../../components/order-pending";
 
 export interface props {
   store: Store;
 }
 
-// store admin home page.
+// Awaiting4ProcessingClient
 // it checks for new orders every 5 seconds.
-export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
+export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
@@ -35,7 +32,7 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
     setLoading(true);
 
     // get pending and processing orders in the store.
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-orders`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-processing-orders`;
     fetch(url)
       .then((data) => {
         return data.json();

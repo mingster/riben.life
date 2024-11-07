@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
@@ -39,7 +38,7 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { PopoverClose } from "@radix-ui/react-popover";
 import Currency from "@/components/currency";
@@ -75,13 +74,15 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
     filter_date2: new Date(Date.now()),
   } as TimeFilter;
 
-  const [filterByTime, setFilterByTime] = useState<TimeFilter>(defaultTimeFilter);
+  const [filterByTime, setFilterByTime] =
+    useState<TimeFilter>(defaultTimeFilter);
 
   // implement time filter
   if (filterByTime) {
     console.log("filterByTime", filterByTime);
 
-    if (filterByTime.filter === "f1") { // filter result that are greater than in_last_of_days
+    if (filterByTime.filter === "f1") {
+      // filter result that are greater than in_last_of_days
       const in_last_of_days = new Date(Date.now());
 
       in_last_of_days.setDate(
@@ -93,29 +94,34 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
         const date = new Date(d.updatedAt);
         return date >= in_last_of_days;
       });
-    }
-    else if (filterByTime.filter === "f2") {  // filter result that are on the same day as filter_date1
+    } else if (filterByTime.filter === "f2") {
+      // filter result that are on the same day as filter_date1
       result = result.filter((d) => {
-        return format(d.updatedAt, "yyyy-MM-dd") === format(filterByTime.filter_date1, "yyyy-MM-dd");
+        return (
+          format(d.updatedAt, "yyyy-MM-dd") ===
+          format(filterByTime.filter_date1, "yyyy-MM-dd")
+        );
       });
-    }
-    else if (filterByTime.filter === "f3") {  // filter result that are between filter_date1 and filter_date1
+    } else if (filterByTime.filter === "f3") {
+      // filter result that are between filter_date1 and filter_date1
       result = result.filter((d) => {
         const date = new Date(d.updatedAt);
-        return date >= filterByTime.filter_date1 && date <= filterByTime.filter_date2;
-      })
-    }
-    else if (filterByTime.filter === "f4") {  // filter result that are on or after filter_date1
+        return (
+          date >= filterByTime.filter_date1 && date <= filterByTime.filter_date2
+        );
+      });
+    } else if (filterByTime.filter === "f4") {
+      // filter result that are on or after filter_date1
       result = result.filter((d) => {
         const date = new Date(d.updatedAt);
         return date >= filterByTime.filter_date1;
-      })
-    }
-    else if (filterByTime.filter === "f5") {  // filter result that are before or on filter_date1
+      });
+    } else if (filterByTime.filter === "f5") {
+      // filter result that are before or on filter_date1
       result = result.filter((d) => {
         const date = new Date(d.updatedAt);
         return date <= filterByTime.filter_date1;
-      })
+      });
     }
   }
 
@@ -166,7 +172,14 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
           onValueChange={setFilterByTime}
         />
         <Currency value={total} />
-        <Button variant={"link"} size={'sm'} className='text-xs font-mono' onClick={clearFilter}>Clear filter</Button>
+        <Button
+          variant={"link"}
+          size={"sm"}
+          className="text-xs font-mono"
+          onClick={clearFilter}
+        >
+          Clear filter
+        </Button>
       </div>
       <Separator />
       <DataTable searchKey="" columns={columns} data={result} />
@@ -207,8 +220,8 @@ export const FilterDateTime = ({
 
   const defaultValues = defaultValue
     ? {
-      ...defaultValue,
-    }
+        ...defaultValue,
+      }
     : {};
 
   const [val, setVal] = useState<TimeFilter>(defaultValue);

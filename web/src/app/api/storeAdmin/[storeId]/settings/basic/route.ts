@@ -29,7 +29,7 @@ export async function PATCH(
       useBusinessHours,
       businessHours,
       requireSeating,
-      requirePrepay,
+      requirePrepaid,
     } = body;
 
     if (!body.name) {
@@ -56,7 +56,7 @@ export async function PATCH(
         useBusinessHours,
         isOpen,
         requireSeating,
-        requirePrepay,
+        requirePrepaid,
         updatedAt: new Date(Date.now()),
         /*
         storeLocales: {

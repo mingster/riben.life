@@ -35,7 +35,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const onConfirm = async () => {
     //try {
     setLoading(true);
-    router.push(`/storeAdmin/${params.storeId}/order/${data.id}/refund`)
+    router.push(`/storeAdmin/${params.storeId}/order/${data.id}/refund`);
     /*} catch (error: unknown) {
       const err = error as AxiosError;
       toast({
@@ -48,7 +48,6 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
     setLoading(false);
     setOpen(false);
-
   };
 
   const onCopy = (id: string) => {
@@ -80,14 +79,11 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           <DropdownMenuItem onClick={() => onCopy(data.id)}>
             <Copy className="mr-1 h-4 w-4" /> Copy Id
           </DropdownMenuItem>
-          {
-            data.isPaid === true && (
-              <DropdownMenuItem
-                onClick={() => setOpen(true)}>
-                <Undo2Icon className="mr-1 h-4 w-4" /> Refund
-              </DropdownMenuItem>
-            )
-          }
+          {data.isPaid === true && (
+            <DropdownMenuItem onClick={() => setOpen(true)}>
+              <Undo2Icon className="mr-1 h-4 w-4" /> Refund
+            </DropdownMenuItem>
+          )}
 
           {/*
           <DropdownMenuItem
