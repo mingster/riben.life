@@ -32,7 +32,7 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
     setLoading(true);
 
     // get pending and processing orders in the store.
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-processing-orders`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-for-process`;
     fetch(url)
       .then((data) => {
         return data.json();

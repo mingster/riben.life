@@ -29,7 +29,7 @@ export const Awaiting4ConfirmationClient: React.FC<props> = ({ store }) => {
     setLoading(true);
 
     // get pending and processing orders in the store.
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-confirmation-orders`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-for-confirmation`;
     fetch(url)
       .then((data) => {
         return data.json();
