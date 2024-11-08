@@ -135,8 +135,6 @@ module.exports = {
         bodydark1: '#DEE4EE',
         bodydark2: '#8A99AF',
         stroke: '#E2E8F0',
-        gray: '#EFF4FB',
-        graydark: '#333A48',
         whiten: '#F1F5F9',
         whiter: '#F5F7FD',
         boxdark: '#24303F',
