@@ -83,10 +83,12 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           {data.isPaid === true && (
             <DropdownMenuItem onClick={() => setOpen(true)}>
               <Button className="text-xs" variant={"outline"}>
-                <Link className='flex gap-1'
+                <Link
+                  className="flex gap-1"
                   href={`/storeAdmin/${data.storeId}/order/${data.id}/refund`}
                 >
-                  <Undo2Icon className="mr-1 h-4 w-4" />{t("Refund")}
+                  <Undo2Icon className="mr-1 h-4 w-4" />
+                  {t("Refund")}
                 </Link>
               </Button>
             </DropdownMenuItem>
@@ -95,15 +97,16 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           {data.orderStatus === OrderStatus.Pending && (
             <DropdownMenuItem onClick={() => setOpen(true)}>
               <Button className="text-xs" variant={"outline"}>
-                <Link className='flex gap-1'
+                <Link
+                  className="flex gap-1"
                   href={`/storeAdmin/${data.storeId}/order/${data.id}`}
                 >
-                  <PenBoxIcon className="mr-1 h-4 w-4" />{t("Modify")}
+                  <PenBoxIcon className="mr-1 h-4 w-4" />
+                  {t("Modify")}
                 </Link>
               </Button>
             </DropdownMenuItem>
           )}
-
 
           {/*
           <DropdownMenuItem

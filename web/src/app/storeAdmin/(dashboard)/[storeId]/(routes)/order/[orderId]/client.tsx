@@ -2,7 +2,15 @@
 
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
-import { Copy, Edit, MoreHorizontal, PenBoxIcon, PenIcon, Trash, Undo2Icon } from "lucide-react";
+import {
+  Copy,
+  Edit,
+  MoreHorizontal,
+  PenBoxIcon,
+  PenIcon,
+  Trash,
+  Undo2Icon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -115,8 +123,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-      ...order,
-    }
+        ...order,
+      }
     : {};
 
   // access OrderItemView using fields
@@ -227,7 +235,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
       const result = await axios.delete(
         `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/${updatedOrder?.id}`,
       );
-
 
       //console.log("result", JSON.stringify(result));
 
@@ -448,8 +455,17 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
           這是已完成的訂單。是否要退款？
         </CardHeader>
         <CardContent>
-          <Button type='button' variant={"default"} onClick={() => { router.push(`/storeAdmin/${updatedOrder.storeId}/order/${updatedOrder.id}/refund`) }}>
-            <Undo2Icon className="mr-1 h-4 w-4" />{t("Refund")}
+          <Button
+            type="button"
+            variant={"default"}
+            onClick={() => {
+              router.push(
+                `/storeAdmin/${updatedOrder.storeId}/order/${updatedOrder.id}/refund`,
+              );
+            }}
+          >
+            <Undo2Icon className="mr-1 h-4 w-4" />
+            {t("Refund")}
           </Button>
 
           <Button
@@ -476,7 +492,9 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
       </CardHeader>
       <CardContent>
         <div className="text-muted-foreground pt-0">
-          可以在此修改未付款、未完成的訂單。<br />若訂單已付款，修改可能會產生退款。
+          可以在此修改未付款、未完成的訂單。
+          <br />
+          若訂單已付款，修改可能會產生退款。
         </div>
 
         <Form {...form}>
@@ -550,7 +568,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       disabled={
                         loading ||
                         form.watch("shippingMethodId") !==
-                        "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}

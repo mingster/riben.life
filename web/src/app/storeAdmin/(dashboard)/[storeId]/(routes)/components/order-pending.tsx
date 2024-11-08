@@ -76,8 +76,8 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
     <>
       <Card>
         <Heading
-          title={t('Order_pending')}
-          description={t('Order_pending_descr')}
+          title={t("Order_pending")}
+          description={t("Order_pending_descr")}
           badge={orders.length}
           className="pt-2"
         />
@@ -124,7 +124,9 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                         <div key={note.id}>{note.note}</div>
                       ))}
                       <div className="flex gap-2">
-                        <div>{order.isPaid === true ? t('isPaid') : t('isNotPaid')}</div>
+                        <div>
+                          {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
+                        </div>
                         <div>{order.ShippingMethod?.name}</div>
                         <div>{order.PaymentMethod?.name}</div>
                         <div>{OrderStatus[order.orderStatus]}</div>
