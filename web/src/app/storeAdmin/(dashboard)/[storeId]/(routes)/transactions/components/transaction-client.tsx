@@ -79,7 +79,7 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
 
   // implement time filter
   if (filterByTime) {
-    console.log("filterByTime", filterByTime);
+    //console.log("filterByTime", filterByTime);
 
     if (filterByTime.filter === "f1") {
       // filter result that are greater than in_last_of_days
@@ -225,7 +225,7 @@ export const FilterDateTime = ({
     : {};
 
   const [val, setVal] = useState<TimeFilter>(defaultValue);
-  console.log("val", JSON.stringify(val));
+  //console.log("val", JSON.stringify(val));
 
   const setFilerValue = (filter: string) => {
     if (val === null) return;
@@ -269,7 +269,7 @@ export const FilterDateTime = ({
     setVal(filter);
     onValueChange?.(filter);
     setOpen(false);
-    console.log("onSubmit", JSON.stringify(filter));
+    //console.log("onSubmit", JSON.stringify(filter));
   };
 
   /*

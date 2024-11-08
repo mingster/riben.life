@@ -113,15 +113,12 @@ export const OrderUnpaid = ({
               <TableRow>
                 {/*單號/桌號*/}
                 <TableHead className="">{t("Order_number")}</TableHead>
-
                 <TableHead className="w-[200px]">{t("Order_items")}</TableHead>
-
                 <TableHead>{t("Order_note")}</TableHead>
                 <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
                 <TableHead className="w-[90px] text-right">
                   {t("Order_total")}
                 </TableHead>
-
                 <TableHead className="w-[150px] text-center">
                   {t("Order_cashier_confirm")}
                 </TableHead>
@@ -172,7 +169,7 @@ export const OrderUnpaid = ({
                       />
                       <Button className="text-xs" variant={"outline"}>
                         <Link
-                          href={`/storeAdmin/${store.id}/order/${order.id}`}
+                          href={`/storeAdmin/${order.storeId}/order/${order.id}`}
                         >
                           {t("Modify")}
                         </Link>

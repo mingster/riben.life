@@ -2,6 +2,7 @@
 
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
+import { Copy, Edit, MoreHorizontal, PenBoxIcon, PenIcon, Trash, Undo2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -45,7 +46,8 @@ import Decimal from "decimal.js";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 import { OrderAddProductModal } from "./order-add-product-modal";
 import axios, { type AxiosError } from "axios";
-import { PageAction } from "@/types/enum";
+import { OrderStatus, PageAction } from "@/types/enum";
+import Link from "next/link";
 
 interface props {
   store: StoreWithProducts;
@@ -113,8 +115,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-        ...order,
-      }
+      ...order,
+    }
     : {};
 
   // access OrderItemView using fields
@@ -212,14 +214,20 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
       return;
     }
 
-    if (confirm(t("Delete_Confirm"))) {
+    let message = t("Delete_Confirm");
+
+    if (updatedOrder.isPaid) {
+      //construct message for refund
+      message = `取消本訂單將退款 ＄${updatedOrder.orderTotal}，確定嗎？`;
+    }
+
+    if (confirm(message)) {
       setLoading(true);
-
       clearErrors();
-
       const result = await axios.delete(
         `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/${updatedOrder?.id}`,
       );
+
 
       //console.log("result", JSON.stringify(result));
 
@@ -314,7 +322,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     recalc();
   };
 
-  //create an order object. and then process to the selected payment method
+  // when action is to create new order, we create an persisted order first.
   //
   const placeOrder = async () => {
     setLoading(true);
@@ -433,12 +441,44 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   const pageTitle = t(action) + t("Order_edit_title");
 
+  if (updatedOrder?.orderStatus === OrderStatus.Completed) {
+    return (
+      <Card>
+        <CardHeader className="pt-5 pl-5 pb-0 font-extrabold text-2xl">
+          這是已完成的訂單。是否要退款？
+        </CardHeader>
+        <CardContent>
+          <Button type='button' variant={"default"} onClick={() => { router.push(`/storeAdmin/${updatedOrder.storeId}/order/${updatedOrder.id}/refund`) }}>
+            <Undo2Icon className="mr-1 h-4 w-4" />{t("Refund")}
+          </Button>
+
+          <Button
+            type="button"
+            disabled={loading}
+            variant="outline"
+            onClick={() => {
+              clearErrors();
+              router.back();
+            }}
+            className="ml-2 disabled:opacity-25"
+          >
+            {t("Cancel")}
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
-      <CardHeader className="p-5 font-extrabold text-2xl">
+      <CardHeader className="pt-5 pl-5 pb-0 font-extrabold text-2xl">
         {pageTitle}
       </CardHeader>
       <CardContent>
+        <div className="text-muted-foreground pt-0">
+          可以在此修改未付款、未完成的訂單。<br />若訂單已付款，修改可能會產生退款。
+        </div>
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -510,7 +550,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       disabled={
                         loading ||
                         form.watch("shippingMethodId") !==
-                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                        "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}

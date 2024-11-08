@@ -26,6 +26,7 @@ import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
 import { Heading } from "@/components/ui/heading";
 import { OrderStatus } from "@/types/enum";
+import Link from "next/link";
 
 interface props {
   storeId: string;
@@ -69,39 +70,14 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
     });
   };
 
-  const handleEdit = async (orderId: string) => {
-    setOpen(true);
-
-    setSelectedOrderId(orderId);
-    alert("not yet implemented");
-  };
-
-  const onCancel = async () => {
-    alert("not yet implemented");
-
-    toast({
-      title: selectedOrderId + t("Order") + t("Canceled"),
-      description: "",
-      variant: "success",
-    });
-    setOpen(false);
-  };
-
   if (!mounted) return <></>;
 
   return (
     <>
-      <AlertModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        onConfirm={onCancel}
-        loading={loading}
-      />
-
       <Card>
         <Heading
-          title="待確認訂單"
-          description="請勾選來接單。"
+          title={t('Order_pending')}
+          description={t('Order_pending_descr')}
           badge={orders.length}
           className="pt-2"
         />
@@ -120,14 +96,11 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                   <TableHead className="w-[90px]">
                     {t("Order_number")}
                   </TableHead>
-
                   <TableHead className="w-[200px]">
                     {t("Order_items")}
                   </TableHead>
-
                   <TableHead>{t("Order_note")}</TableHead>
                   <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
-
                   <TableHead className="w-[150px] text-center text-nowrap">
                     {t("Order_accept")}
                   </TableHead>
@@ -139,7 +112,6 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                     <TableCell className="text-2xl font-extrabold">
                       {order.orderNum}
                     </TableCell>
-
                     <TableCell>
                       {order.OrderItemView.map((item: orderitemview) => (
                         <div
@@ -147,36 +119,33 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                         >{`${item.name} x ${item.quantity}`}</div>
                       ))}
                     </TableCell>
-
                     <TableCell>
                       {order.OrderNotes.map((note: OrderNote) => (
                         <div key={note.id}>{note.note}</div>
                       ))}
                       <div className="flex gap-2">
-                        <div>{order.isPaid === true ? "已付" : "未付"}</div>
+                        <div>{order.isPaid === true ? t('isPaid') : t('isNotPaid')}</div>
                         <div>{order.ShippingMethod?.name}</div>
                         <div>{order.PaymentMethod?.name}</div>
                         <div>{OrderStatus[order.orderStatus]}</div>
                         <div>{order.User?.name}</div>
                       </div>
                     </TableCell>
-
                     <TableCell className="text-nowrap">
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                     </TableCell>
-
-                    <TableCell className="text-center">
-                      <div className="gap-10">
+                    <TableCell className="bg-red-100">
+                      <div className="flex gap-5 items-center justify-end pr-1">
                         <Checkbox
                           value={order.id}
                           onClick={() => handleChecked(order.id)}
                         />
-                        <Button
-                          className="text-xs"
-                          variant={"outline"}
-                          onClick={() => handleEdit(order.id)}
-                        >
-                          {t("Modify")}
+                        <Button className="text-xs" variant={"outline"}>
+                          <Link
+                            href={`/storeAdmin/${order.storeId}/order/${order.id}`}
+                          >
+                            {t("Modify")}
+                          </Link>
                         </Button>
                       </div>
                     </TableCell>

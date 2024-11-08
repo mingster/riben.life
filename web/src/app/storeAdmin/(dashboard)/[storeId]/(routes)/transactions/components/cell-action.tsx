@@ -1,11 +1,10 @@
 "use client";
 
-import axios, { type AxiosError } from "axios";
-import { Copy, Edit, MoreHorizontal, Trash, Undo2Icon } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { Copy, MoreHorizontal, PenBoxIcon, Undo2Icon } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { toast } from "@/components/ui/use-toast";
+import { OrderStatus } from "@/types/enum";
+import Link from "next/link";
 import type { StoreOrderColumn } from "./columns";
 
 interface CellActionProps {
@@ -81,9 +82,28 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           </DropdownMenuItem>
           {data.isPaid === true && (
             <DropdownMenuItem onClick={() => setOpen(true)}>
-              <Undo2Icon className="mr-1 h-4 w-4" /> Refund
+              <Button className="text-xs" variant={"outline"}>
+                <Link className='flex gap-1'
+                  href={`/storeAdmin/${data.storeId}/order/${data.id}/refund`}
+                >
+                  <Undo2Icon className="mr-1 h-4 w-4" />{t("Refund")}
+                </Link>
+              </Button>
             </DropdownMenuItem>
           )}
+
+          {data.orderStatus === OrderStatus.Pending && (
+            <DropdownMenuItem onClick={() => setOpen(true)}>
+              <Button className="text-xs" variant={"outline"}>
+                <Link className='flex gap-1'
+                  href={`/storeAdmin/${data.storeId}/order/${data.id}`}
+                >
+                  <PenBoxIcon className="mr-1 h-4 w-4" />{t("Modify")}
+                </Link>
+              </Button>
+            </DropdownMenuItem>
+          )}
+
 
           {/*
           <DropdownMenuItem

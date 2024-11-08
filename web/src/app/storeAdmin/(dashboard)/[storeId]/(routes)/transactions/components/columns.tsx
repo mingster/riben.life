@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 // #region data table realted
 export type StoreOrderColumn = {
   id: string;
+  storeId: string;
   user: string | null | undefined;
   orderStatus: number;
   amount: number;
