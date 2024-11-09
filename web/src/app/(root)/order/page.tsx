@@ -6,10 +6,12 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import type { Store } from "@/types";
+import type { Store, User } from "@/types";
 import Link from "next/link";
 import { Suspense } from "react";
 import { DisplayStoreOrdersToday } from "./display-order-today";
+import getUser from "@/actions/get-user";
+import { redirect } from "next/navigation";
 
 interface pageProps {
   params: {
@@ -21,6 +23,14 @@ interface pageProps {
 //NOTE - why local storage?  because we allow anonymous user to place order.
 //
 const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
+
+  // show my account -> order page if user is signed in
+  const user = (await getUser()) as User;
+  if (user) {
+    redirect('/account');
+  }
+
+  // otherwise use local storage to show orders
   const store = (await sqlClient.store.findFirst({
     where: {
       id: params.storeId,
@@ -36,6 +46,7 @@ const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
         <Navbar title="" />
         <Container>
           <h1 className="text-4xl sm:text-xl pb-2">{t("order_view_title")}</h1>
+
 
           <DisplayStoreOrdersToday />
 

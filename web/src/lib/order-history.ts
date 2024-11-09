@@ -1,17 +1,20 @@
 import type { StoreOrder } from "@/types";
-import axios from "axios";
+import useLocalStorage from "../hooks/useLocalStorage";
 
 export const saveOrderToLocal = (order: StoreOrder) => {
-  const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-  existingOrders.push(order);
+
+
+  const existingOrders = JSON.parse(window.localStorage.getItem("orders") || "[]");
+  existingOrders.push(order.id);
   localStorage.setItem("orders", JSON.stringify(existingOrders));
 };
 
 
-export const getOrdersFromLocal = (): StoreOrder[] => {
-  return JSON.parse(localStorage.getItem("orders") || "[]");
+export const getOrdersFromLocal = () => {
+  return JSON.parse(window.localStorage.getItem("orders") || "[]");
 };
 
+/*
 export const getOrdersToday = (): StoreOrder[] => {
   // filter orders by date
   const today = new Date();
@@ -65,12 +68,8 @@ export const removePreviousOrders = () => {
 
   localStorage.setItem("orders", JSON.stringify(orders));
 };
+*/
 
 export const removeOrders = () => {
-  localStorage.removeItem("orders");
+  window.localStorage.removeItem("orders");
 };
-
-/*
-  const orders = getOrdersFromLocal() as StoreOrder[];
-  console.log('orders', JSON.stringify(orders));
-*/

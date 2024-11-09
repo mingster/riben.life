@@ -4,7 +4,7 @@ import type { StoreOrder } from "@/types";
 import { NextResponse } from "next/server";
 
 // get all orders in the given orderId array
-export async function PATCH(
+export async function GET(
   req: Request,
   { params }: { params: { storeId: string } },
 ) {
@@ -15,9 +15,10 @@ export async function PATCH(
 
     const orders: StoreOrder[] = [];
 
-    if (orderIds) {
-      //console.log("get-orders", orderIds);
+    console.log("get-orders", orderIds);
 
+    /*
+    if (orderIds) {
       orderIds.map(async (orderId: string) => {
         if (orderId) {
           console.log("get-orders", orderId);
@@ -33,6 +34,7 @@ export async function PATCH(
 
       });
     }
+      */
 
     //revalidatePath("/order");
     //console.log(`updated user: ${JSON.stringify(obj)}`);
