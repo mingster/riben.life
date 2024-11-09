@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 
 import { useTranslation } from "@/app/i18n/client";
-import { AlertModal } from "@/components/modals/alert-modal";
+import { Heading } from "@/components/ui/heading";
 import {
   Table,
   TableBody,
@@ -19,13 +19,14 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreOrder } from "@/types";
+import { OrderStatus } from "@/types/enum";
 //import type { StoreOrder } from "@/types";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { format } from "date-fns";
+import Link from "next/link";
 import { ClipLoader } from "react-spinners";
-import { Heading } from "@/components/ui/heading";
-import { OrderStatus } from "@/types/enum";
+import { DisplayOrderStatus } from "@/components/order-status-display";
 
 interface props {
   storeId: string;
@@ -49,13 +50,8 @@ export const OrderInProgress = ({
   //const params = useParams();
   //const router = useRouter();
   const { toast } = useToast();
-
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
-  const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-
-  const [selectedOrderId, setSelectedOrderId] = useState("");
 
   if (parentLoading) {
     return <ClipLoader color="text-primary" />;
@@ -75,35 +71,10 @@ export const OrderInProgress = ({
     });
   };
 
-  const handleEdit = async (orderId: string) => {
-    setOpen(true);
-
-    setSelectedOrderId(orderId);
-    alert("not yet implemented");
-  };
-
-  const onCancel = async () => {
-    alert("not yet implemented");
-
-    toast({
-      title: selectedOrderId + t("Order") + t("Canceled"),
-      description: "",
-      variant: "success",
-    });
-    setOpen(false);
-  };
-
   if (!mounted) return <></>;
 
   return (
     <>
-      <AlertModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        onConfirm={onCancel}
-        loading={loading}
-      />
-
       <Card>
         <Heading
           title={t("Order_accept_mgmt")}
@@ -111,15 +82,14 @@ export const OrderInProgress = ({
           badge={orders.length}
           className="pt-2"
         />
-
         <CardContent className="space-y-2">
           {/* display */}
           <div className="pt-2 pl-1">
             {orders.length === 0
               ? t("no_results_found")
               : autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
-                ? t("Order_accept_mgmt_descr2")
-                : t("Order_accept_mgmt_descr")}
+                ? t("Order_accept_mgmt_descr")
+                : t("Order_accept_mgmt_descr2")}
           </div>
 
           {orders.length !== 0 && (
@@ -130,16 +100,13 @@ export const OrderInProgress = ({
                   <TableHead className="w-[90px]">
                     {t("Order_number")}
                   </TableHead>
-
                   <TableHead className="w-[200px]">
                     {t("Order_items")}
                   </TableHead>
-
                   <TableHead>{t("Order_note")}</TableHead>
                   <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
-
                   <TableHead className="w-[150px] text-center text-nowrap">
-                    {autoAcceptOrder ? t("Order_accept2") : t("Order_accept")}
+                    {autoAcceptOrder ? t("Order_accept") : t("Order_accept2")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -162,11 +129,15 @@ export const OrderInProgress = ({
                       {order.OrderNotes.map((note: OrderNote) => (
                         <div key={note.id}>{note.note}</div>
                       ))}
-                      <div className="flex gap-2">
-                        <div>{order.isPaid === true ? "已付" : "未付"}</div>
+                      <div className="flex gap-1 items-center">
+                        <div>
+                          {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
+                        </div>
                         <div>{order.ShippingMethod?.name}</div>
                         <div>{order.PaymentMethod?.name}</div>
-                        <div>{OrderStatus[order.orderStatus]}</div>
+                        <div>
+                          <DisplayOrderStatus status={order.orderStatus} />
+                        </div>
                         <div>{order.User?.name}</div>
                       </div>
                     </TableCell>
@@ -175,18 +146,19 @@ export const OrderInProgress = ({
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                     </TableCell>
 
-                    <TableCell className="text-center">
-                      <div className="gap-10">
+                    <TableCell className="bg-red-100">
+                      <div className="flex gap-5 items-center justify-end pr-1">
                         <Checkbox
                           value={order.id}
                           onClick={() => handleChecked(order.id)}
                         />
-                        <Button
-                          className="text-xs"
-                          variant={"outline"}
-                          onClick={() => handleEdit(order.id)}
-                        >
-                          {t("Modify")}
+
+                        <Button className="text-xs" variant={"outline"}>
+                          <Link
+                            href={`/storeAdmin/${order.storeId}/order/${order.id}`}
+                          >
+                            {t("Modify")}
+                          </Link>
                         </Button>
                       </div>
                     </TableCell>

@@ -1,4 +1,6 @@
 {
+
+
   "account_page_title": "我的帳號",
   "account_tab_currentAcct": "登入帳號：",
   "account_tab_signout": "登出",
@@ -105,8 +107,9 @@
   "OrderStatus_InShipping": "待收貨",
   "OrderStatus_Pending": "待確認",
   "OrderStatus_Processing": "(準備中)",
+  "Refund": "退款",
   "OrderStatus_Refunded": "退貨/退款",
-  "OrderStatus_Void": "已做廢",
+  "OrderStatus_Voided": "已做廢",
   "orderTotal_label": "銷售總額：",
   "PaymentMethod": "付款方式",
   "paymentMethod_cost": "費用",

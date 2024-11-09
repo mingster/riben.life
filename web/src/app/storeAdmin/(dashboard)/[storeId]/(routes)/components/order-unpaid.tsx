@@ -29,6 +29,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { getTableName } from "@/lib/utils";
+import { DisplayOrderStatus } from "@/components/order-status-display";
 interface props {
   store: Store;
   tables: StoreTables[];
@@ -113,15 +114,12 @@ export const OrderUnpaid = ({
               <TableRow>
                 {/*單號/桌號*/}
                 <TableHead className="">{t("Order_number")}</TableHead>
-
                 <TableHead className="w-[200px]">{t("Order_items")}</TableHead>
-
                 <TableHead>{t("Order_note")}</TableHead>
                 <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
                 <TableHead className="w-[90px] text-right">
                   {t("Order_total")}
                 </TableHead>
-
                 <TableHead className="w-[150px] text-center">
                   {t("Order_cashier_confirm")}
                 </TableHead>
@@ -148,10 +146,15 @@ export const OrderUnpaid = ({
                     {order.OrderNotes.map((note: OrderNote) => (
                       <div key={note.id}>{note.note}</div>
                     ))}
-                    <div className="flex gap-2">
-                      <div>{order.isPaid === true ? "已付" : "未付"}</div>
+                    <div className="flex gap-1 items-center">
+                      <div>
+                        {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
+                      </div>
                       <div>{order.ShippingMethod?.name}</div>
                       <div>{order.PaymentMethod?.name}</div>
+                      <div>
+                        <DisplayOrderStatus status={order.orderStatus} />
+                      </div>
                       <div>{order.User?.name}</div>
                     </div>
                   </TableCell>
@@ -172,7 +175,7 @@ export const OrderUnpaid = ({
                       />
                       <Button className="text-xs" variant={"outline"}>
                         <Link
-                          href={`/storeAdmin/${store.id}/order/${order.id}`}
+                          href={`/storeAdmin/${order.storeId}/order/${order.id}`}
                         >
                           {t("Modify")}
                         </Link>

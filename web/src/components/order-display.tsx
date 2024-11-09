@@ -13,6 +13,7 @@ import type { orderitemview, PaymentMethod } from "@prisma/client";
 import { format } from "date-fns/format";
 import Currency from "./currency";
 import { getTableName } from "@/lib/utils";
+import { DisplayOrderStatus } from "./order-status-display";
 
 type orderProps = { order: StoreOrder };
 
@@ -35,7 +36,10 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 
   //console.log('order', JSON.stringify(order));
 
-  const buyAgain = async (orderId: string) => {};
+  const buyAgain = async (orderId: string) => {
+    alert(`buy again${orderId}`);
+  };
+
   const pay = async (orderId: string, payUrl?: string) => {
     let purl = payUrl;
 
@@ -105,7 +109,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
             <div className="whitespace-nowrap">
               <Button
                 variant={"outline"}
-                className="mr-2 cursor-default"
+                className="mr-2 cursor-pointer bg-green-200 hover:bg-green-300"
                 size="sm"
               >
                 {`現金${t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}`}
@@ -113,27 +117,14 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
             </div>
           ) : (
             <div className="whitespace-nowrap">
-              <Button
-                variant={"outline"}
-                className="mr-2 cursor-default"
-                size="sm"
-              >
-                {t(`OrderStatus_${OrderStatus[Number(order.orderStatus)]}`)}
-              </Button>
+              <DisplayOrderStatus
+                status={order.orderStatus}
+                displayBuyAgain={true}
+                onCompletedStatus={() => buyAgain(order.id)}
+              />
             </div>
           )}
 
-          {(order.orderStatus === OrderStatus.Completed ||
-            order.orderStatus === OrderStatus.InShipping) && (
-            <Button
-              className="mr-2 bg-green-200 hover:bg-green-300"
-              variant={"outline"}
-              size="sm"
-              onClick={() => buyAgain(order.id)}
-            >
-              {t("order_tab_buyAgain")}
-            </Button>
-          )}
           <Button
             size="sm"
             onClick={() => contactSeller(order.storeId, order.id)}

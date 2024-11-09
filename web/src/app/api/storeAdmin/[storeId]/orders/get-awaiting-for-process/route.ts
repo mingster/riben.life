@@ -36,7 +36,7 @@ export async function GET(
         }
       : {
           orderStatus: {
-            in: [OrderStatus.Pending],
+            in: [OrderStatus.Processing],
           },
         };
 

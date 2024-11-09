@@ -41,9 +41,11 @@ const TransactionMgmtPage: React.FC<pageProps> = async ({ params }) => {
   // map order to ui
   const formattedData: StoreOrderColumn[] = orders.map((item: StoreOrder) => ({
     id: item.id,
+    storeId: item.storeId,
     user: item.User?.username || "",
     orderStatus: item.orderStatus || 0,
     amount: Number(item.orderTotal),
+    refundAmount: Number(item.refundAmount) || 0,
     currency: item.currency,
     isPaid: item.isPaid,
     updatedAt: format(item.updatedAt, "yyyy-MM-dd HH:mm:ss"),

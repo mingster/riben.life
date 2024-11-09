@@ -28,11 +28,12 @@ import { Separator } from "@/components/ui/separator";
 import type { Store } from "@/types";
 import { OrderStatus } from "@/types/enum";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { type StoreOrderColumn, columns } from "./columns";
 
+import Currency from "@/components/currency";
 import {
   Form,
   FormControl,
@@ -41,7 +42,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { PopoverClose } from "@radix-ui/react-popover";
-import Currency from "@/components/currency";
 interface StoreOrderClientProps {
   store: Store;
   data: StoreOrderColumn[];
@@ -68,7 +68,7 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   }
 
   const defaultTimeFilter = {
-    filter: "---",
+    filter: "",
     filter1_is_in_the_last_of_days: 1,
     filter_date1: new Date(Date.now()),
     filter_date2: new Date(Date.now()),
@@ -130,8 +130,12 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   }
 
   useEffect(() => {
-    // sum of order amount
-    setTotal(result.reduce((a, b) => a + b.amount, 0));
+    // sum of order amount, minus refund amount
+    let total = result.reduce((a, b) => a + b.amount, 0);
+    const refunds = result.reduce((a, b) => a + b.refundAmount, 0);
+    total = total - refunds;
+
+    setTotal(total);
   }, [result]);
 
   return (
@@ -165,27 +169,75 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
         ))}
       </div>
 
-      <div className="flex gap-1 pb-2 items-center">
-        <FilterDateTime
-          disabled={false}
-          defaultValue={filterByTime}
-          onValueChange={setFilterByTime}
-        />
-        <Currency value={total} />
-        <Button
-          variant={"link"}
-          size={"sm"}
-          className="text-xs font-mono"
-          onClick={clearFilter}
-        >
-          Clear filter
-        </Button>
+      <div className="grid grid-cols-2 justify-between pb-2">
+        <div className="flex gap-1 items-center">
+          <FilterDateTime
+            disabled={false}
+            defaultValue={filterByTime}
+            onValueChange={setFilterByTime}
+          />
+          <Currency value={total} />
+        </div>
+        <div className="flex gap-1 items-center">
+          <Button variant={"outline"} size={"sm"} onClick={clearFilter}>
+            {t("Clear_Filter")}
+          </Button>
+
+          {/* render date filter descr */}
+          <div className="flex gap-1 text-xs font-mono">
+            {
+              TimerFilterSelections.find((v) => v.value === filterByTime.filter)
+                ?.label
+            }
+            &nbsp;
+            {filterByTime.filter === "f1" &&
+              `${filterByTime.filter1_is_in_the_last_of_days} $t(days)`}
+            {(filterByTime.filter === "f2" ||
+              filterByTime.filter === "f4" ||
+              filterByTime.filter === "f5") &&
+              format(filterByTime.filter_date1, "yyyy-MM-dd")}
+            {filterByTime.filter === "f3" &&
+              `${format(filterByTime.filter_date1, "yyyy-MM-dd")} ~ ${format(filterByTime.filter_date2, "yyyy-MM-dd")}`}
+          </div>
+        </div>
       </div>
       <Separator />
       <DataTable searchKey="" columns={columns} data={result} />
     </>
   );
 };
+
+export type NVType = {
+  value: string;
+  label: string;
+};
+const TimerFilterSelections: NVType[] = [
+  {
+    value: "f0",
+    label: "",
+  },
+  {
+    value: "f1",
+    label: "is in the last",
+  },
+  {
+    value: "f2",
+    label: "is equal to",
+  },
+  {
+    value: "f3",
+    label: "is between",
+  },
+  {
+    value: "f4",
+    label: "is on or after",
+  },
+  {
+    value: "f5",
+    label: "is before or on",
+  },
+];
+
 export type TimeFilter = {
   filter: string;
   filter1_is_in_the_last_of_days: number;
@@ -220,20 +272,23 @@ export const FilterDateTime = ({
 
   const defaultValues = defaultValue
     ? {
-        ...defaultValue,
-      }
+      ...defaultValue,
+    }
     : {};
 
   const [val, setVal] = useState<TimeFilter>(defaultValue);
-  console.log("val", JSON.stringify(val));
+  //console.log("val", JSON.stringify(val));
 
-  const setFilerValue = (filter: string) => {
-    if (val === null) return;
+  const setFilerValue = useCallback(
+    (filter: string) => {
+      if (val === null) return;
 
-    val.filter = filter;
-    setVal(val);
-    onValueChange?.(val);
-  };
+      val.filter = filter;
+      setVal(val);
+      onValueChange?.(val);
+    },
+    [val, onValueChange],
+  );
 
   // Replace null values with undefined
   const sanitizedDefaultValues = Object.fromEntries(
@@ -269,14 +324,13 @@ export const FilterDateTime = ({
     setVal(filter);
     onValueChange?.(filter);
     setOpen(false);
-    console.log("onSubmit", JSON.stringify(filter));
+    //console.log("onSubmit", JSON.stringify(filter));
   };
 
-  /*
   useEffect(() => {
     setFilerValue(val.filter);
-  }, [val.filter]);
-  */
+  }, [val.filter, setFilerValue]);
+
   const popOverDate1Ref = useRef<HTMLButtonElement | null>(null);
   const popOverDate2Ref = useRef<HTMLButtonElement | null>(null);
 
@@ -288,14 +342,16 @@ export const FilterDateTime = ({
           className={cn("justify-start text-left font-normal")}
         >
           <CalendarIcon className="mr-1 h-4 w-4" />
-          <span>Date and time</span>
+          <span>{t("Date_and_Time")}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent
         align="start"
         className="flex w-auto flex-col space-y-2 p-2"
       >
-        <div>Filter by Date and time</div>
+        <div className="text-sm text-muted-foreground">
+          {t("DateTime_Filter_descr")}
+        </div>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -318,12 +374,11 @@ export const FilterDateTime = ({
                         <SelectValue placeholder="" />
                       </SelectTrigger>
                       <SelectContent position="popper">
-                        <SelectItem value="--">---</SelectItem>
-                        <SelectItem value="f1">is in the last</SelectItem>
-                        <SelectItem value="f2">is equal to</SelectItem>
-                        <SelectItem value="f3">is between</SelectItem>
-                        <SelectItem value="f4">is on or after</SelectItem>
-                        <SelectItem value="f5">is before or on</SelectItem>
+                        {TimerFilterSelections.map((item) => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {t(`TimerFilterSelections_${item.value}`)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -332,7 +387,7 @@ export const FilterDateTime = ({
               )}
             />
 
-            <div className="flex gap-1 items-center">
+            <div className="flex items-center">
               <div
                 className={cn(
                   "flex gap-1 text-sm items-center",
@@ -358,12 +413,12 @@ export const FilterDateTime = ({
                       </FormItem>
                     )}
                   />
-                  days
+                  {t("days")}
                 </>
               </div>
               <div
                 className={cn(
-                  "flex gap-1 text-sm items-center",
+                  "flex text-sm items-center",
                   val?.filter === "f1" && "hidden",
                 )}
               >
@@ -385,7 +440,7 @@ export const FilterDateTime = ({
                               {field.value ? (
                                 format(field.value, "PPP")
                               ) : (
-                                <span>Pick a date</span>
+                                <span>{t("Pick_a_date")}</span>
                               )}
                               <CalendarIcon className="w-4 h-4 ml-auto opacity-50" />
                             </Button>
@@ -413,7 +468,7 @@ export const FilterDateTime = ({
               </div>
               <div
                 className={cn(
-                  "flex gap-1 text-sm items-center",
+                  "flex text-sm items-center",
                   val?.filter !== "f3" && "hidden",
                 )}
               >
@@ -436,7 +491,7 @@ export const FilterDateTime = ({
                               {field.value ? (
                                 format(field.value, "PPP")
                               ) : (
-                                <span>Pick a date</span>
+                                <span>{t("Pick_a_date")}</span>
                               )}
                               <CalendarIcon className="w-4 h-4 ml-auto opacity-50" />
                             </Button>
@@ -469,7 +524,7 @@ export const FilterDateTime = ({
               className="disabled:opacity-25 w-full"
               type="submit"
             >
-              Apply
+              {t("Apply")}
             </Button>
           </form>
         </Form>

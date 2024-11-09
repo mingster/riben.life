@@ -75,9 +75,9 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
         },
         ...(store.autoAcceptOrder ? [] : [orderConfirmation]),
         {
-          href: `${nav_prefix}/order/awaiting4Processing`,
+          href: `${nav_prefix}/order/awaiting4Process`,
           label: "出貨管理",
-          active: pathname.includes(`${nav_prefix}/order/awaiting4Processing`),
+          active: pathname.includes(`${nav_prefix}/order/awaiting4Process`),
           icon: ArrowRight,
           submenus: [],
         },

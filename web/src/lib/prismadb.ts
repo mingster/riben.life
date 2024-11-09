@@ -2,10 +2,12 @@ import { PrismaClient as mongoPrismaClient } from "@prisma-mongo/prisma/client";
 // LINK - https://www.prisma.io/docs/orm/more/help-and-troubleshooting/help-articles/nextjs-prisma-client-dev-practices
 import { PrismaClient as sqlPrismaClient } from "@prisma/client";
 import { withOptimize } from "@prisma/extension-optimize";
+import { withAccelerate } from "@prisma/extension-accelerate";
 
 const prismaClientSingleton = () => {
   //return new sqlPrismaClient().$extends(withOptimize({ apiKey: process.env.OPTIMIZE_API_KEY as string}));
-  return new sqlPrismaClient();
+  //return new sqlPrismaClient();
+  return new sqlPrismaClient().$extends(withAccelerate());
 };
 
 declare global {
