@@ -28,6 +28,7 @@ export const DisplayStoreOrdersToday: React.FC = () => {
   const [orders, setOrders] = useState([]);
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
+  const { data: session } = useSession();
 
   const [mounted, setMounted] = useState(false);
 
@@ -38,6 +39,35 @@ export const DisplayStoreOrdersToday: React.FC = () => {
 
   if (!mounted) {
     return null;
+  }
+
+  const linkOrders = async () => {
+    // if user is signed in, update the orders
+    if (session?.user?.id) {
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/auth/account/link-orders`;
+      await axios.patch(url, {
+        orderIds: orders_local,
+      });
+    }
+  }
+
+  const removeOutedLocalOrders = () => {
+
+    // filter orders by date
+    const today = new Date();
+    const orders = getOrdersFromLocal() as StoreOrder[];
+    //console.log("orders_local", JSON.stringify(orders));
+
+    return orders.filter((order: StoreOrder) => {
+      const orderDate = new Date(order.updatedAt);
+      return (
+        orderDate.getFullYear() === today.getFullYear() &&
+        orderDate.getMonth() === today.getMonth() &&
+        orderDate.getDate() === today.getDate() &&
+        order.storeId === storeId
+      );
+    });
+
   }
 
   const fetchData = () => {
@@ -66,6 +96,7 @@ export const DisplayStoreOrdersToday: React.FC = () => {
       //Implementing the setInterval method
       const interval = setInterval(() => {
         fetchData();
+        linkOrders();
       }, 5000); // do every 5 sec.
 
       //Clearing the interval
@@ -143,10 +174,3 @@ export const DisplayStoreOrdersToday: React.FC = () => {
   );
 };
 
-
-const linkOrders = async (orderIds: string[]) => {
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/auth/account/link-orders`;
-  await axios.patch(url, {
-    orderIds: orderIds,
-  });
-}
