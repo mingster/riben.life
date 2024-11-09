@@ -13,7 +13,6 @@ import { useTranslation } from "@/app/i18n";
 import { Navbar } from "@/components/global-navbar";
 import { useI18n } from "@/providers/i18n-provider";
 import { Logo } from "@/components/logo";
-
 const SIGNIN_ERROR_URL = "/signin-error";
 
 export default async function SignInPage(props: {

@@ -22,13 +22,15 @@ export async function PATCH(req: Request) {
       console.log("link order", orderIds);
 
       orderIds.map(async (orderId: string) => {
+        if (!orderId) return;
+        
         await sqlClient.storeOrder.update({
           where: {
             id: orderId,
           },
           data: {
             userId: userId,
-            updatedAt: new Date(Date.now()),
+            //updatedAt: new Date(Date.now()),
           },
         });
       });

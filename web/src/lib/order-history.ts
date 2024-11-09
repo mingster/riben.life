@@ -1,10 +1,12 @@
 import type { StoreOrder } from "@/types";
+import axios from "axios";
 
 export const saveOrderToLocal = (order: StoreOrder) => {
   const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
   existingOrders.push(order);
   localStorage.setItem("orders", JSON.stringify(existingOrders));
 };
+
 
 export const getOrdersFromLocal = (): StoreOrder[] => {
   return JSON.parse(localStorage.getItem("orders") || "[]");
@@ -16,7 +18,7 @@ export const getOrdersToday = (): StoreOrder[] => {
   const orders = getOrdersFromLocal() as StoreOrder[];
 
   return orders.filter((order: StoreOrder) => {
-    const orderDate = new Date(order.createdAt);
+    const orderDate = new Date(order.updatedAt);
     return (
       orderDate.getFullYear() === today.getFullYear() &&
       orderDate.getMonth() === today.getMonth() &&
@@ -33,9 +35,10 @@ export const getOrdersTodayByStore = (
   // filter orders by date
   const today = new Date();
   const orders = getOrdersFromLocal() as StoreOrder[];
+  //console.log("orders_local", JSON.stringify(orders));
 
   return orders.filter((order: StoreOrder) => {
-    const orderDate = new Date(order.createdAt);
+    const orderDate = new Date(order.updatedAt);
     return (
       orderDate.getFullYear() === today.getFullYear() &&
       orderDate.getMonth() === today.getMonth() &&
@@ -49,7 +52,7 @@ export const removePreviousOrders = () => {
   const today = new Date();
 
   orders.map((order: StoreOrder) => {
-    const orderDate = new Date(order.createdAt);
+    const orderDate = new Date(order.updatedAt);
     if (
       orderDate.getFullYear() < today.getFullYear() ||
       orderDate.getMonth() < today.getMonth() ||

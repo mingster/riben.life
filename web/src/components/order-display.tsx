@@ -19,7 +19,7 @@ type orderProps = { order: StoreOrder };
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
 export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
-  console.log("DisplayOrder", JSON.stringify(order));
+  //console.log("DisplayOrder", JSON.stringify(order));
 
   const router = useRouter();
 
@@ -109,7 +109,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
             <div className="whitespace-nowrap">
               <Button
                 variant={"outline"}
-                className="mr-2 cursor-pointer bg-green-200 hover:bg-green-300"
+                className="mr-2 cursor-default bg-green-200 hover:bg-green-300"
                 size="sm"
               >
                 {`現金${t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}`}
