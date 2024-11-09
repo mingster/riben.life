@@ -1,14 +1,19 @@
 "use client";
 
+import { AskUserToSignIn } from "@/components/ask-user-to-signIn";
 import { DisplayOrder } from "@/components/order-display";
+import { Button } from "@/components/ui/button";
 import {
   getOrdersFromLocal,
 } from "@/lib/order-history";
+import { useI18n } from "@/providers/i18n-provider";
 import type { StoreOrder } from "@/types";
 import axios from "axios";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // view order page (購物明細)
 // show orders in local storage placed today
@@ -21,8 +26,21 @@ export const DisplayStoreOrdersToday: React.FC = () => {
   const orders_local = getOrdersFromLocal();
   //console.log('orders_local', orders_local);
   const [orders, setOrders] = useState([]);
+  const { lng } = useI18n();
+  const { t } = useTranslation(lng);
 
+  const [mounted, setMounted] = useState(false);
+
+  // useEffect only runs on the client, so now we can safely show the UI
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
+  const fetchData = () => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${storeId}/get-orders`;
     const body = JSON.stringify({
       orderIds: orders_local
@@ -41,7 +59,21 @@ export const DisplayStoreOrdersToday: React.FC = () => {
 
         setOrders(data);
       });
-  }, [storeId, orders_local]);
+  };
+
+  const IntervaledContent = () => {
+    useEffect(() => {
+      //Implementing the setInterval method
+      const interval = setInterval(() => {
+        fetchData();
+      }, 5000); // do every 5 sec.
+
+      //Clearing the interval
+      return () => clearInterval(interval);
+    }, []);
+
+    return <></>;
+  };
 
   //console.log('orders_today', JSON.stringify(orders));
 
@@ -80,21 +112,35 @@ export const DisplayStoreOrdersToday: React.FC = () => {
 
   //removePreviousOrders();
 
-  if (orders.length > 0) {
-    return (
-      <div className="flex flex-col">
-        <div className="flex-1 p-1 pt-1 space-y-1">
-          {orders.map((order: StoreOrder) => (
-            <div key={order.id}>
-              <DisplayOrder order={order} />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  return (
+    <section className="relative w-full">
+      <div className="container">
+        <h1 className="text-4xl sm:text-xl pb-2">{t("order_view_title")}</h1>
 
-  return <></>;
+        <IntervaledContent />
+
+        <div className="flex flex-col">
+          <div className="flex-1 p-1 pt-1 space-y-1">
+            {orders.map((order: StoreOrder) => (
+              <div key={order.id}>
+                <DisplayOrder order={order} />
+              </div>
+            ))}
+          </div>
+
+        </div>
+
+
+        <Link href="/" className="">
+          <Button className="w-full">
+            {t("cart_summary_keepShopping")}
+          </Button>{" "}
+        </Link>
+
+        <AskUserToSignIn />
+      </div>
+    </section>
+  );
 };
 
 
