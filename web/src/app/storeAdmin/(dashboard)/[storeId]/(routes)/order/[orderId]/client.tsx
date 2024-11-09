@@ -123,8 +123,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-      ...order,
-    }
+        ...order,
+      }
     : {};
 
   // access OrderItemView using fields
@@ -520,7 +520,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
           >
             {t("Cancel")}
           </Button>
-
         </CardContent>
       </Card>
     );
@@ -609,7 +608,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       disabled={
                         loading ||
                         form.watch("shippingMethodId") !==
-                        "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}

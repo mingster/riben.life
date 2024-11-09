@@ -73,7 +73,7 @@ export enum OrderStatus {
   Completed = 40,
   Refunded = 50,
   Voided = 90,
-  Cancelled = 100,
+  //Cancelled = 100,
 }
 
 /*

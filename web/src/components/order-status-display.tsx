@@ -53,7 +53,8 @@ export const DisplayOrderStatus: React.FC<props> = ({
       )}
 
       {(status === OrderStatus.Completed ||
-        status === OrderStatus.InShipping) && displayBuyAgain && (
+        status === OrderStatus.InShipping) &&
+        displayBuyAgain && (
           <Button
             className="mr-2 bg-green-200 hover:bg-green-300"
             variant={"outline"}

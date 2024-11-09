@@ -603,26 +603,33 @@ model StoreOrder {
   userId             String?
   tableId            String?
   orderNum           Int?      @default(autoincrement())
+
   isPaid             Boolean   @default(false)
   paidDate           DateTime?
   checkoutAttributes String    @default("")
+  checkoutRef        String    @default("")
   currency           String    @default("twd")
   currencyRate       Decimal   @default(1)
+
   discount           Decimal   @default(0)
-  orderTax           Decimal   @default(0)
+
   paymentMethodId    String?
   paymentStatus      Int       @default(10)
   refundAmount       Decimal   @default(0)
   returnStatus       Int       @default(0)
+
   shippingMethodId   String
   shippingAddress    String    @default("")
   shippingCost       Decimal   @default(0)
   shippingStatus     Int       @default(10)
-  taxRate            Decimal   @default(0)
-  checkoutRef        String    @default("")
+
   orderStatus        Int       @default(10)
+
   paymentCost        Decimal   @default(0)
+  taxRate            Decimal   @default(0)
+  orderTax           Decimal   @default(0)
   orderTotal         Decimal   @default(0)
+
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 

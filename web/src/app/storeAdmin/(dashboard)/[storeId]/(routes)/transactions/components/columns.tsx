@@ -17,6 +17,7 @@ export type StoreOrderColumn = {
   user: string | null | undefined;
   orderStatus: number;
   amount: number;
+  refundAmount: number;
   currency: string;
   isPaid: boolean;
   updatedAt: string;
@@ -49,7 +50,7 @@ export const columns: ColumnDef<StoreOrderColumn>[] = [
     },
     cell: ({ row }) => {
       const status = OrderStatus[Number(row.getValue("orderStatus"))];
-      return <DisplayOrderStatus status={ row.getValue("orderStatus") } />;
+      return <DisplayOrderStatus status={row.getValue("orderStatus")} />;
     },
   },
   {

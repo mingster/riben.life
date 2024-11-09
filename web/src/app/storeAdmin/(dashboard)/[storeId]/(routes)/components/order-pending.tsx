@@ -130,7 +130,9 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                         </div>
                         <div>{order.ShippingMethod?.name}</div>
                         <div>{order.PaymentMethod?.name}</div>
-                        <div><DisplayOrderStatus status={order.orderStatus} /></div>
+                        <div>
+                          <DisplayOrderStatus status={order.orderStatus} />
+                        </div>
                         <div>{order.User?.name}</div>
                       </div>
                     </TableCell>

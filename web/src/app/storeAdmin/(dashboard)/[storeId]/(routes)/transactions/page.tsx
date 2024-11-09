@@ -45,6 +45,7 @@ const TransactionMgmtPage: React.FC<pageProps> = async ({ params }) => {
     user: item.User?.username || "",
     orderStatus: item.orderStatus || 0,
     amount: Number(item.orderTotal),
+    refundAmount: Number(item.refundAmount) || 0,
     currency: item.currency,
     isPaid: item.isPaid,
     updatedAt: format(item.updatedAt, "yyyy-MM-dd HH:mm:ss"),
