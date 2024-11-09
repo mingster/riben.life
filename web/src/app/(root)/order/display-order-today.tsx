@@ -33,6 +33,7 @@ export const DisplayStoreOrdersToday: React.FC = () => {
 
   const fetchData = () => {
     setLoading(true);
+
     const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${storeId}/get-orders`;
 
     const options = {
