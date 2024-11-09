@@ -123,8 +123,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   //type OrderItemView = z.infer<typeof formSchema>["OrderItemView"][number];
   const defaultValues = order
     ? {
-        ...order,
-      }
+      ...order,
+    }
     : {};
 
   // access OrderItemView using fields
@@ -449,10 +449,12 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   const pageTitle = t(action) + t("Order_edit_title");
 
   if (updatedOrder?.orderStatus === OrderStatus.Completed) {
+    // do not allow editing if order is completed
+    // display refund button instead
     return (
       <Card>
         <CardHeader className="pt-5 pl-5 pb-0 font-extrabold text-2xl">
-          這是已完成的訂單。是否要退款？
+          這是已完成的訂單。是否要退款/刪單？
         </CardHeader>
         <CardContent>
           <Button
@@ -480,6 +482,45 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
           >
             {t("Cancel")}
           </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (updatedOrder?.isPaid === true) {
+    // do not allow editing if order is paid
+    return (
+      <Card>
+        <CardHeader className="pt-5 pl-5 pb-0 font-extrabold text-2xl">
+          這是已付款的訂單。是否要退款？
+        </CardHeader>
+        <CardContent>
+          <Button
+            type="button"
+            variant={"default"}
+            onClick={() => {
+              router.push(
+                `/storeAdmin/${updatedOrder.storeId}/order/${updatedOrder.id}/refund`,
+              );
+            }}
+          >
+            <Undo2Icon className="mr-1 h-4 w-4" />
+            {t("Refund")}
+          </Button>
+
+          <Button
+            type="button"
+            disabled={loading}
+            variant="outline"
+            onClick={() => {
+              clearErrors();
+              router.back();
+            }}
+            className="ml-2 disabled:opacity-25"
+          >
+            {t("Cancel")}
+          </Button>
+
         </CardContent>
       </Card>
     );
@@ -568,7 +609,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       disabled={
                         loading ||
                         form.watch("shippingMethodId") !==
-                          "3203cf4c-e1c7-4b79-b611-62c920b50860"
+                        "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
                       //disabled={loading}
                       storeId={store.id}
