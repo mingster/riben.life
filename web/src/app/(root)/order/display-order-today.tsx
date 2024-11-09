@@ -19,23 +19,9 @@ export const DisplayStoreOrdersToday: React.FC = () => {
   if (!storeId) return <></>;
 
   const orders_local = getOrdersFromLocal();
-  console.log('orders_local', orders_local);
+  //console.log('orders_local', orders_local);
+  const [orders, setOrders] = useState([]);
 
-  /*
-  // construct orderIds to update in backend database
-  const orderIds: string[] = [];
-  orders_local.map((order: StoreOrder) => {
-    if (order?.id)
-      orderIds.push(order.id);
-  });
-  */
-
-  const [loading, setLoading] = useState(false);
-  //  const [orders, setOrders] = useState([]);
-
-  let orders_today = [] as StoreOrder[];
-
-  //call payment intent api to get client secret
   useEffect(() => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${storeId}/get-orders`;
     const body = JSON.stringify({
@@ -51,24 +37,26 @@ export const DisplayStoreOrdersToday: React.FC = () => {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log('data', JSON.stringify(data));
-        orders_today = data;
+        //console.log('data', JSON.stringify(data));
+
+        setOrders(data);
       });
-  }, [storeId, orders_local, orders_today]);
+  }, [storeId, orders_local]);
+
+  //console.log('orders_today', JSON.stringify(orders));
 
 
-  //updateOrders(storeId, orderIds);
-
-  //console.log("orderIds", orderIds);
-
-  //const orders_today = getOrdersTodayByStore(storeId) as StoreOrder[];
-  //console.log("orders_today", JSON.stringify(orders_today));
+  // remove non-today's orders from local storage
 
   //
   /*
-    // if user is signed in, update local storage orders
-    const { data: session } = useSession();
-    if (session?.user?.id) {
+  // if user is signed in, update the orders
+  const { data: session } = useSession();
+  if (session?.user?.id) {
+    linkOrders(orders_local);
+  }
+
+  if (session?.user?.id) {
 
       // construct orderIds to update in backend database
       const orderIds: string[] = [];
@@ -90,14 +78,13 @@ export const DisplayStoreOrdersToday: React.FC = () => {
   //const orders_today = getOrdersFromLocal() as StoreOrder[];
   //console.log("orders_today", JSON.stringify(orders_today));
 
-  // remove previous orders in local storage
   //removePreviousOrders();
 
-  if (orders_today.length > 0) {
+  if (orders.length > 0) {
     return (
       <div className="flex flex-col">
         <div className="flex-1 p-1 pt-1 space-y-1">
-          {orders_today.map((order: StoreOrder) => (
+          {orders.map((order: StoreOrder) => (
             <div key={order.id}>
               <DisplayOrder order={order} />
             </div>
@@ -110,45 +97,10 @@ export const DisplayStoreOrdersToday: React.FC = () => {
   return <></>;
 };
 
-const updateOrders = async (storeId: string, orderIds: string[]) => {
-  console.log("orderIds", orderIds);
 
-  // 1. get order from backend
-
-  // 2. link order if user is signed in
-  linkOrders(storeId, orderIds);
-
-};
-
-const linkOrders = async (storeId: string, orderIds: string[]) => {
+const linkOrders = async (orderIds: string[]) => {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/auth/account/link-orders`;
   await axios.patch(url, {
     orderIds: orderIds,
   });
-}
-
-// sync given orderIds from backend to local
-export const syncOrders = async (storeId: string, orderIds: string[]) => {
-  console.log("orderIds", orderIds);
-
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${storeId}/get-orders`;
-
-  //1.get order from backend
-  const orders = await axios.patch(url, {
-    orderIds: orderIds,
-  });
-
-  console.log("syncOrders", JSON.stringify(orders));
-
-  //2.save order to local
-  //saveOrderToLocal(order);
-
-  /*
-  const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-
-  existingOrders.push(orders);
-  localStorage.setItem("orders", JSON.stringify(existingOrders));
-  removePreviousOrders();
-
-  */
 }

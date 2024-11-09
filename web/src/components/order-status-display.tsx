@@ -20,20 +20,8 @@ export const DisplayOrderStatus: React.FC<props> = ({
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
 
-  /*
-{(status === OrderStatus.Completed || status === OrderStatus.InShipping) && (
-  <Button
-    className="mr-2 bg-green-200 hover:bg-green-300"
-    variant={"outline"}
-    size="sm"
-    onClick={() => buyAgain(order.id)}
-  >
-    {t("order_tab_buyAgain")}
-  </Button>
-)}
-  */
+  //console.log("status", status);
 
-  //{order.tableId && order.tableId !== null && order.tableId !== 'null' && `桌號：${getTableName(tables, order.tableId)}`}
   return (
     <>
       {status !== OrderStatus.Voided && (

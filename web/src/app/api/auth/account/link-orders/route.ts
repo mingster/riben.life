@@ -21,23 +21,20 @@ export async function PATCH(req: Request) {
     if (orderIds) {
       console.log("link order", orderIds);
 
-      orderIds.map(async (orderId: string) => {
-        if (!orderId) return;
-        
-        await sqlClient.storeOrder.update({
-          where: {
-            id: orderId,
+      await sqlClient.storeOrder.updateMany({
+        where: {
+          id: {
+            in: orderIds,
           },
-          data: {
-            userId: userId,
-            //updatedAt: new Date(Date.now()),
-          },
-        });
+        },
+        data: {
+          userId: userId,
+          //updatedAt: new Date(Date.now()),
+        },
       });
     }
 
-    revalidatePath("/order");
-    //console.log(`updated user: ${JSON.stringify(obj)}`);
+    //revalidatePath("/order");
 
     return NextResponse.json("success");
   } catch (error) {

@@ -40,7 +40,7 @@ export async function POST(
       })) as StoreOrder[];
       transformDecimalsToNumbers(orders);
 
-      revalidatePath("/order");
+      //revalidatePath("/order");
       return NextResponse.json(orders);
     }
 
