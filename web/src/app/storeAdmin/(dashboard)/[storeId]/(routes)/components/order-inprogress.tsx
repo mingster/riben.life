@@ -26,6 +26,7 @@ import axios from "axios";
 import { format } from "date-fns";
 import Link from "next/link";
 import { ClipLoader } from "react-spinners";
+import { DisplayOrderStatus } from "@/components/order-status-display";
 
 interface props {
   storeId: string;
@@ -87,8 +88,8 @@ export const OrderInProgress = ({
             {orders.length === 0
               ? t("no_results_found")
               : autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
-                ? t("Order_accept_mgmt_descr2")
-                : t("Order_accept_mgmt_descr")}
+                ? t("Order_accept_mgmt_descr")
+                : t("Order_accept_mgmt_descr2")}
           </div>
 
           {orders.length !== 0 && (
@@ -105,7 +106,7 @@ export const OrderInProgress = ({
                   <TableHead>{t("Order_note")}</TableHead>
                   <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
                   <TableHead className="w-[150px] text-center text-nowrap">
-                    {autoAcceptOrder ? t("Order_accept2") : t("Order_accept")}
+                    {autoAcceptOrder ? t("Order_accept") : t("Order_accept2")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -128,13 +129,13 @@ export const OrderInProgress = ({
                       {order.OrderNotes.map((note: OrderNote) => (
                         <div key={note.id}>{note.note}</div>
                       ))}
-                      <div className="flex gap-2">
+                      <div className="flex gap-1 items-center">
                         <div>
                           {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
                         </div>
                         <div>{order.ShippingMethod?.name}</div>
                         <div>{order.PaymentMethod?.name}</div>
-                        <div>{OrderStatus[order.orderStatus]}</div>
+                        <div><DisplayOrderStatus status={order.orderStatus} /></div>
                         <div>{order.User?.name}</div>
                       </div>
                     </TableCell>

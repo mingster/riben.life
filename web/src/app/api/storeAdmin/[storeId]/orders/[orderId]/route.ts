@@ -23,7 +23,7 @@ export async function DELETE(
       id: params.orderId,
     },
     data: {
-      orderStatus: OrderStatus.Void,
+      orderStatus: OrderStatus.Voided,
     },
   });
 

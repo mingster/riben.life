@@ -29,6 +29,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { getTableName } from "@/lib/utils";
+import { DisplayOrderStatus } from "@/components/order-status-display";
 interface props {
   store: Store;
   tables: StoreTables[];
@@ -145,10 +146,13 @@ export const OrderUnpaid = ({
                     {order.OrderNotes.map((note: OrderNote) => (
                       <div key={note.id}>{note.note}</div>
                     ))}
-                    <div className="flex gap-2">
-                      <div>{order.isPaid === true ? "已付" : "未付"}</div>
+                    <div className="flex gap-1 items-center">
+                      <div>
+                        {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
+                      </div>
                       <div>{order.ShippingMethod?.name}</div>
                       <div>{order.PaymentMethod?.name}</div>
+                      <div><DisplayOrderStatus status={order.orderStatus}/></div>
                       <div>{order.User?.name}</div>
                     </div>
                   </TableCell>

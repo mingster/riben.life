@@ -40,6 +40,9 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
       .then((data) => {
         //console.log("data", JSON.stringify(data));
 
+        setAwaiting4ProcessingOrders(data);
+
+        /*
         if (store.requirePrepaid) {
           const prepayOrders = data.filter((order: StoreOrder) => order.isPaid);
           setPendingOrders(
@@ -70,6 +73,7 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
             ),
           );
         }
+        */
       })
       .catch((err) => {
         console.log(err);
@@ -94,13 +98,7 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
   };
 
   //console.log(JSON.stringify(storeData));
-  return (
-    <section className="relative w-full">
-      <div className="container">
-        <IntervaledContent />
-        {store.requirePrepaid && "只會顯示已付款訂單。"}
-
-        <div className="flex flex-col gap-5">
+  /*
           {!store.autoAcceptOrder && (
             <OrderPending
               storeId={store.id}
@@ -108,6 +106,16 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
               parentLoading={loading}
             />
           )}
+
+  */
+
+  return (
+    <section className="relative w-full">
+      <div className="container">
+        <IntervaledContent />
+        {store.requirePrepaid && "只會顯示已付款訂單。"}
+
+        <div className="flex flex-col gap-5">
           <OrderInProgress
             storeId={store.id}
             autoAcceptOrder={store.autoAcceptOrder}

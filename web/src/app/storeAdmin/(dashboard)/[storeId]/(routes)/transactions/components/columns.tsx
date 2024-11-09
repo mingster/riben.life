@@ -8,6 +8,7 @@ import { t } from "i18next";
 import { CellAction } from "./cell-action";
 import type { orderitemview } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import { DisplayOrderStatus } from "@/components/order-status-display";
 
 // #region data table realted
 export type StoreOrderColumn = {
@@ -48,8 +49,7 @@ export const columns: ColumnDef<StoreOrderColumn>[] = [
     },
     cell: ({ row }) => {
       const status = OrderStatus[Number(row.getValue("orderStatus"))];
-      const key = `OrderStatus_${status}`;
-      return t(key);
+      return <DisplayOrderStatus status={ row.getValue("orderStatus") } />;
     },
   },
   {

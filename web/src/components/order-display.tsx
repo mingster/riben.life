@@ -119,6 +119,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
             <div className="whitespace-nowrap">
               <DisplayOrderStatus
                 status={order.orderStatus}
+                displayBuyAgain={true}
                 onCompletedStatus={() => buyAgain(order.id)}
               />
             </div>

@@ -27,6 +27,7 @@ import { ClipLoader } from "react-spinners";
 import { Heading } from "@/components/ui/heading";
 import { OrderStatus } from "@/types/enum";
 import Link from "next/link";
+import { DisplayOrderStatus } from "@/components/order-status-display";
 
 interface props {
   storeId: string;
@@ -123,13 +124,13 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                       {order.OrderNotes.map((note: OrderNote) => (
                         <div key={note.id}>{note.note}</div>
                       ))}
-                      <div className="flex gap-2">
+                      <div className="flex gap-1 items-center">
                         <div>
                           {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
                         </div>
                         <div>{order.ShippingMethod?.name}</div>
                         <div>{order.PaymentMethod?.name}</div>
-                        <div>{OrderStatus[order.orderStatus]}</div>
+                        <div><DisplayOrderStatus status={order.orderStatus} /></div>
                         <div>{order.User?.name}</div>
                       </div>
                     </TableCell>
