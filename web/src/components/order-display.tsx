@@ -40,7 +40,6 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
     alert(`buy again${orderId}`);
   };
 
-
   const pay = async (orderId: string, payUrl?: string) => {
     let purl = payUrl;
 
@@ -118,7 +117,10 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
             </div>
           ) : (
             <div className="whitespace-nowrap">
-              <DisplayOrderStatus status={order.orderStatus} onCompletedStatus={() => buyAgain(order.id)}/>
+              <DisplayOrderStatus
+                status={order.orderStatus}
+                onCompletedStatus={() => buyAgain(order.id)}
+              />
             </div>
           )}
 
