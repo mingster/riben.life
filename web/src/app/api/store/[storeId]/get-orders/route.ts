@@ -1,10 +1,11 @@
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import type { StoreOrder } from "@/types";
+import type { StoreOrder } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 // get all orders in the given orderId array
-export async function GET(
+export async function POST(
   req: Request,
   { params }: { params: { storeId: string } },
 ) {
@@ -13,35 +14,42 @@ export async function GET(
     const body = await req.json();
     const { orderIds } = body;
 
-    const orders: StoreOrder[] = [];
+    //console.log("get-orders", orderIds);
 
-    console.log("get-orders", orderIds);
-
-    /*
     if (orderIds) {
-      orderIds.map(async (orderId: string) => {
-        if (orderId) {
-          console.log("get-orders", orderId);
-          const order = await sqlClient.storeOrder.findUnique({
-            where: {
-              id: orderId,
+      const orders = (await sqlClient.storeOrder.findMany({
+        where: {
+          id: {
+            in: orderIds,
+          },
+        },
+        include: {
+          OrderNotes: true,
+          OrderItemView: {
+            include: {
+              Product: true,
             },
-          }) as StoreOrder;
+          },
+          User: true,
+          ShippingMethod: true,
+          PaymentMethod: true,
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+      })) as StoreOrder[];
+      transformDecimalsToNumbers(orders);
 
-          transformDecimalsToNumbers(order);
-          orders.push(order);
-        }
-
-      });
+      revalidatePath("/order");
+      return NextResponse.json(orders);
     }
-      */
 
-    //revalidatePath("/order");
     //console.log(`updated user: ${JSON.stringify(obj)}`);
 
-    return NextResponse.json(orders);
+    return NextResponse.json([]);
+
   } catch (error) {
-    console.log("[PATCH]", error);
+    console.log("[POST]", error);
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

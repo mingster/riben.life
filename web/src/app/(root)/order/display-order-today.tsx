@@ -19,60 +19,42 @@ export const DisplayStoreOrdersToday: React.FC = () => {
   if (!storeId) return <></>;
 
   const orders_local = getOrdersFromLocal();
-  console.log('orders_local', JSON.stringify(orders_local));
+  console.log('orders_local', orders_local);
 
+  /*
   // construct orderIds to update in backend database
   const orderIds: string[] = [];
   orders_local.map((order: StoreOrder) => {
     if (order?.id)
       orderIds.push(order.id);
   });
+  */
 
   const [loading, setLoading] = useState(false);
-  const [awaiting4ProcessingOrders, setAwaiting4ProcessingOrders] = useState([]);
+  //  const [orders, setOrders] = useState([]);
 
-  const fetchData = () => {
-    setLoading(true);
+  let orders_today = [] as StoreOrder[];
 
+  //call payment intent api to get client secret
+  useEffect(() => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${storeId}/get-orders`;
+    const body = JSON.stringify({
+      orderIds: orders_local
+    });
 
-    const options = {
-      method: "GET",
-      body: JSON.stringify(orderIds),
-    }
-
-    fetch(url, options)
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: body,
+    })
+      .then((res) => res.json())
       .then((data) => {
-        return data.json();
-      })
-      .then((data) => {
-        console.log("data", JSON.stringify(data));
-
-        setAwaiting4ProcessingOrders(data);
-        //console.log("awaiting4ProcessingOrders", JSON.stringify(awaiting4ProcessingOrders));
-
-      })
-      .catch((err) => {
-        console.log(err);
+        console.log('data', JSON.stringify(data));
+        orders_today = data;
       });
-    //setCount(count + 5);
-
-    setLoading(false);
-  };
-
-  const IntervaledContent = () => {
-    useEffect(() => {
-      //Implementing the setInterval method
-      const interval = setInterval(() => {
-        fetchData();
-      }, 5000); // do every 15 sec.
-
-      //Clearing the interval
-      return () => clearInterval(interval);
-    }, []);
-
-    return <></>;
-  };
+  }, [storeId, orders_local, orders_today]);
 
 
   //updateOrders(storeId, orderIds);
@@ -111,7 +93,6 @@ export const DisplayStoreOrdersToday: React.FC = () => {
   // remove previous orders in local storage
   //removePreviousOrders();
 
-  /*
   if (orders_today.length > 0) {
     return (
       <div className="flex flex-col">
@@ -125,9 +106,8 @@ export const DisplayStoreOrdersToday: React.FC = () => {
       </div>
     );
   }
-    */
 
-  return <><IntervaledContent /></>;
+  return <></>;
 };
 
 const updateOrders = async (storeId: string, orderIds: string[]) => {

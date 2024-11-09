@@ -1,17 +1,18 @@
+'use client';
+
 import type { StoreOrder } from "@/types";
-import useLocalStorage from "../hooks/useLocalStorage";
+
+const KEY = 'orders';
 
 export const saveOrderToLocal = (order: StoreOrder) => {
-
-
-  const existingOrders = JSON.parse(window.localStorage.getItem("orders") || "[]");
+  const existingOrders = JSON.parse(window.localStorage.getItem(KEY) || "[]");
   existingOrders.push(order.id);
-  localStorage.setItem("orders", JSON.stringify(existingOrders));
+  localStorage.setItem(KEY, JSON.stringify(existingOrders));
 };
 
 
 export const getOrdersFromLocal = () => {
-  return JSON.parse(window.localStorage.getItem("orders") || "[]");
+  return JSON.parse(window.localStorage.getItem(KEY) || "[]");
 };
 
 /*
@@ -66,10 +67,10 @@ export const removePreviousOrders = () => {
     }
   });
 
-  localStorage.setItem("orders", JSON.stringify(orders));
+  localStorage.setItem(KEY, JSON.stringify(orders));
 };
 */
 
 export const removeOrders = () => {
-  window.localStorage.removeItem("orders");
+  window.localStorage.removeItem(KEY);
 };
