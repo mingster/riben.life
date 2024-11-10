@@ -1,17 +1,11 @@
-import { useTranslation } from "@/app/i18n";
-import { AskUserToSignIn } from "@/components/ask-user-to-signIn";
 import { Navbar } from "@/components/global-navbar";
-import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import type { Store, User } from "@/types";
-import Link from "next/link";
+import type { Store } from "@/types";
 import { Suspense } from "react";
 import { DisplayStoreOrdersToday } from "./display-order-today";
-import getUser from "@/actions/get-user";
-import { redirect } from "next/navigation";
 
 interface pageProps {
   params: {
@@ -23,7 +17,6 @@ interface pageProps {
 //NOTE - why local storage?  because we allow anonymous user to place order.
 //
 const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
-
   // show my account -> order page if user is signed in
   /*
   const user = (await getUser()) as User;

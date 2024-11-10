@@ -1,18 +1,30 @@
-'use client';
+"use client";
 
 import type { StoreOrder } from "@/types";
+import { useEffect } from "react";
 
-const KEY = 'orders';
+export const KEY_LOCALORDERS = "orders";
 
 export const saveOrderToLocal = (order: StoreOrder) => {
-  const existingOrders = JSON.parse(window.localStorage.getItem(KEY) || "[]");
-  existingOrders.push(order.id);
-  localStorage.setItem(KEY, JSON.stringify(existingOrders));
+  if (typeof window !== "undefined") {
+    const existingOrders = JSON.parse(
+      window.localStorage.getItem(KEY_LOCALORDERS) || "[]",
+    );
+    existingOrders.push(order.id);
+    localStorage.setItem(KEY_LOCALORDERS, JSON.stringify(existingOrders));
+  }
 };
 
-
 export const getOrdersFromLocal = () => {
-  return JSON.parse(window.localStorage.getItem(KEY) || "[]");
+  if (typeof window !== "undefined") {
+    return JSON.parse(window.localStorage.getItem(KEY_LOCALORDERS) || "[]");
+  }
+};
+
+export const removeOrdersFromLocal = () => {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(KEY_LOCALORDERS);
+  }
 };
 
 /*
@@ -70,7 +82,3 @@ export const removePreviousOrders = () => {
   localStorage.setItem(KEY, JSON.stringify(orders));
 };
 */
-
-export const removeOrders = () => {
-  window.localStorage.removeItem(KEY);
-};

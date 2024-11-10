@@ -272,8 +272,8 @@ export const FilterDateTime = ({
 
   const defaultValues = defaultValue
     ? {
-      ...defaultValue,
-    }
+        ...defaultValue,
+      }
     : {};
 
   const [val, setVal] = useState<TimeFilter>(defaultValue);

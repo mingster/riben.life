@@ -10,7 +10,6 @@ export async function POST(
   { params }: { params: { storeId: string } },
 ) {
   try {
-
     const body = await req.json();
     const { orderIds } = body;
 
@@ -47,7 +46,6 @@ export async function POST(
     //console.log(`updated user: ${JSON.stringify(obj)}`);
 
     return NextResponse.json([]);
-
   } catch (error) {
     console.log("[POST]", error);
     return new NextResponse(`Internal error${error}`, { status: 500 });

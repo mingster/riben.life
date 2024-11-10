@@ -105,16 +105,19 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
             >
               {order.PaymentMethod?.name + t("order_tab_pay")}
             </Button>
-          ) : order.isPaid !== true && order.PaymentMethod?.name === "cash" && (
-            <div className="whitespace-nowrap">
-              <Button
-                variant={"outline"}
-                className="mr-2 cursor-default bg-green-200 hover:bg-green-300"
-                size="sm"
-              >
-                {`現金${t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}`}
-              </Button>
-            </div>
+          ) : (
+            order.isPaid !== true &&
+            order.PaymentMethod?.name === "cash" && (
+              <div className="whitespace-nowrap">
+                <Button
+                  variant={"outline"}
+                  className="mr-2 cursor-default bg-green-200 hover:bg-green-300"
+                  size="sm"
+                >
+                  {`現金${t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}`}
+                </Button>
+              </div>
+            )
           )}
 
           <div className="whitespace-nowrap">
