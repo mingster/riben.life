@@ -1,15 +1,4 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
@@ -18,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
+import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
 import type { StoreOrder, User } from "@/types";
 import { OrderTab } from "./order-tab";
@@ -50,7 +40,7 @@ export const AccountTabs = ({ user }: props) => {
   const title = t("account_page_title");
 
   return (
-    <main>
+    <Container>
       <Heading title={title} description={""} />
 
       <Tabs
@@ -101,6 +91,6 @@ export const AccountTabs = ({ user }: props) => {
           </Card>
         </TabsContent> */}
       </Tabs>
-    </main>
+    </Container>
   );
 };

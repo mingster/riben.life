@@ -100,9 +100,13 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
           </Link>
           <StoreSwitcher />
           <StoreModal />
-          <ThemeToggler />
-          <DropdownNotification />
-          {user != null && <DropdownUser user={user} />}
+
+          {/* visible by default, hidden on small screens */}
+          <div className="sm:hidden">
+            <DropdownNotification />
+            <ThemeToggler />
+            <DropdownUser user={user} />
+          </div>
         </div>
       </div>
     </header>

@@ -214,8 +214,8 @@ export const StoreHomeContent: React.FC<props> = ({
           </div>
         )}
 
-        {/* menu */}
-        <div className="grid grid-cols-[20%_80%] gap-2">
+        {/* side menu */}
+        <div className="grid grid-cols-[20%_80%] gap-2 pl-1 pr-1">
           <div className="self-start sticky top-24">
             {/* 20% sidebar */}
             <ScrollArea className="w-full max-h-fit whitespace-nowrap">
@@ -228,49 +228,46 @@ export const StoreHomeContent: React.FC<props> = ({
                   >
                     <div
                       data-to-scrollspy-id={category.id}
-                      className={"ss-item"}
+                      className="ss-item sm:text-sm"
                     >
                       {category.name}
                     </div>
                   </a>
                 ))}
-              </div>{" "}
+              </div>
               <ScrollBar orientation="vertical" />
             </ScrollArea>
           </div>
 
-          <div className="">
-            <ScrollSpy scrollThrottle={100} useBoxMethod={false}>
-              {storeData.Categories?.map((category: Category) => (
-                <div key={category.id} id={category.id} className="">
-                  <div className="text-center w-full">
-                    <div className="font-bold">{category.name}</div>
-                  </div>
-                  <div className="pb-10">
-                    {(category.ProductCategories as ProductCategories[])?.map(
-                      (pc) =>
-                        pc.Product.status === ProductStatus.Published && (
-                          <ProductCard
-                            key={pc.Product.id}
-                            className=""
-                            disableBuyButton={!storeData.isOpen}
-                            onValueChange={(newItem: Item) => {
-                              handleAddToCart(pc.Product, newItem);
-                            }}
-                            onPurchase={() => handleAddToCart(pc.Product, null)}
-                            product={{
-                              ...pc.Product,
-                              //ProductImages: pc.Product.ProductImages,
-                              //ProductAttribute: pc.Product.ProductAttribute,
-                            }}
-                          />
-                        ),
-                    )}
-                  </div>
+          <ScrollSpy scrollThrottle={100} useBoxMethod={false}>
+            {storeData.Categories?.map((category: Category) => (
+              <div key={category.id} id={category.id} className="">
+                <div className="text-center w-full">
+                  <div className="sm:text-sm">{category.name}</div>
                 </div>
-              ))}
-            </ScrollSpy>
-          </div>
+                <div className="pb-10">
+                  {(category.ProductCategories as ProductCategories[])?.map(
+                    (pc) =>
+                      pc.Product.status === ProductStatus.Published && (
+                        <ProductCard
+                          key={pc.Product.id}
+                          disableBuyButton={!storeData.isOpen}
+                          onValueChange={(newItem: Item) => {
+                            handleAddToCart(pc.Product, newItem);
+                          }}
+                          onPurchase={() => handleAddToCart(pc.Product, null)}
+                          product={{
+                            ...pc.Product,
+                            //ProductImages: pc.Product.ProductImages,
+                            //ProductAttribute: pc.Product.ProductAttribute,
+                          }}
+                        />
+                      ),
+                  )}
+                </div>
+              </div>
+            ))}
+          </ScrollSpy>
         </div>
 
         {/* scroll up to top */}
