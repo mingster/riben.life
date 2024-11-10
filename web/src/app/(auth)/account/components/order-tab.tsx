@@ -72,7 +72,7 @@ export const OrderTab = ({ orders }: props) => {
     <>
       <div className="flex gap-1 pb-2">
         <Button
-          className={cn("h-12", filterStatus === 0 && highlight_css)}
+          className={cn("sm:text-xs h-12", filterStatus === 0 && highlight_css)}
           variant="outline"
           onClick={() => {
             setFilterStatus(0);
@@ -84,7 +84,7 @@ export const OrderTab = ({ orders }: props) => {
           <Button
             key={key}
             className={cn(
-              "h-12",
+              "sm:text-xs h-12",
               filterStatus === Number(key) && highlight_css,
             )}
             variant="outline"

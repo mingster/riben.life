@@ -39,44 +39,6 @@ export function ProductCard({
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
 
-  /*
-  const cart = useCart();
-  const { toast } = useToast();
-  //const params = useParams();
-  //const {storeId, tableId} = params;
-  const params = useParams<{ storeId: string; tableId: string }>();
-  //  console.log("storeId", params.storeId, "tableId", params.tableId);
-  const handleAddToCart = (product: Product) => {
-    const item = cart.getItem(product.id);
-    if (item) {
-      cart.updateItemQuantity(product.id, item.quantity + 1);
-    } else {
-      cart.addItem(
-        {
-          id: product.id,
-          name: product.name,
-          price: Number(product.price),
-          quantity: 1,
-          storeId: params.storeId,
-          tableId: params.tableId,
-          //...product,
-          //cartStatus: CartProductStatus.InProgress,
-          //userData: "",
-        },
-        1,
-      );
-    }
-
-    //router.push('/cart');
-
-    toast({
-      title: t("product_added_to_cart"),
-      description: "",
-      variant: "success",
-    });
-  };
-  */
-
   const enableBuy =
     !product.ProductAttribute?.disableBuyButton && !disableBuyButton;
 
@@ -86,7 +48,7 @@ export function ProductCard({
     <Card className={`${className} object-cover hover:opacity-50`} {...props}>
       <CardHeader>
         <CardTitle>
-          <div className="flex gap-1 items-center">
+          <div className="flex gap-1 items-center sm:text-sm">
             {product.name}
             {
               // display recurring icon if recurring
@@ -96,12 +58,12 @@ export function ProductCard({
             }
           </div>
         </CardTitle>
-        <CardDescription>{product.description}</CardDescription>
+        <CardDescription className="sm:text-sm text-muted-foreground">
+          {product.description}
+        </CardDescription>
       </CardHeader>
       <CardContent className="min-h-18 max-h-36">
-        <div>
-          <Currency value={product.price} />
-        </div>
+        <Currency value={product.price} />
       </CardContent>
       <CardFooter className="place-self-end">
         {enableBuy && product.ProductOptions.length > 0 ? (
