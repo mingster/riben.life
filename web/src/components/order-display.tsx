@@ -19,7 +19,7 @@ type orderProps = { order: StoreOrder };
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
 export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
-  console.log("DisplayOrder", JSON.stringify(order));
+  //console.log("DisplayOrder", JSON.stringify(order));
 
   const router = useRouter();
 
@@ -105,25 +105,28 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
             >
               {order.PaymentMethod?.name + t("order_tab_pay")}
             </Button>
-          ) : order.isPaid !== true && order.PaymentMethod?.name === "cash" ? (
-            <div className="whitespace-nowrap">
-              <Button
-                variant={"outline"}
-                className="mr-2 cursor-pointer bg-green-200 hover:bg-green-300"
-                size="sm"
-              >
-                {`現金${t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}`}
-              </Button>
-            </div>
           ) : (
-            <div className="whitespace-nowrap">
-              <DisplayOrderStatus
-                status={order.orderStatus}
-                displayBuyAgain={true}
-                onCompletedStatus={() => buyAgain(order.id)}
-              />
-            </div>
+            order.isPaid !== true &&
+            order.PaymentMethod?.name === "cash" && (
+              <div className="whitespace-nowrap">
+                <Button
+                  variant={"outline"}
+                  className="mr-2 cursor-default bg-green-200 hover:bg-green-300"
+                  size="sm"
+                >
+                  {`現金${t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}`}
+                </Button>
+              </div>
+            )
           )}
+
+          <div className="whitespace-nowrap">
+            <DisplayOrderStatus
+              status={order.orderStatus}
+              displayBuyAgain={true}
+              onCompletedStatus={() => buyAgain(order.id)}
+            />
+          </div>
 
           <Button
             size="sm"

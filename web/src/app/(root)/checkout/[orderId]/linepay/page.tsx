@@ -53,8 +53,12 @@ const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
       </Suspense>
     );
   }
-
   const store = (await getStoreById(order.storeId)) as Store;
+
+  if (!store.LINE_PAY_ID || !store.LINE_PAY_SECRET) {
+    return "尚未設定LinePay";
+  }
+
   const linePayClient = getLinePayClient(
     store.LINE_PAY_ID,
     store.LINE_PAY_SECRET,

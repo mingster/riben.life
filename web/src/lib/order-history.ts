@@ -1,22 +1,40 @@
+"use client";
+
 import type { StoreOrder } from "@/types";
+import { useEffect } from "react";
+
+export const KEY_LOCALORDERS = "orders";
 
 export const saveOrderToLocal = (order: StoreOrder) => {
-  const existingOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-  existingOrders.push(order);
-  localStorage.setItem("orders", JSON.stringify(existingOrders));
+  if (typeof window !== "undefined") {
+    const existingOrders = JSON.parse(
+      window.localStorage.getItem(KEY_LOCALORDERS) || "[]",
+    );
+    existingOrders.push(order.id);
+    localStorage.setItem(KEY_LOCALORDERS, JSON.stringify(existingOrders));
+  }
 };
 
-export const getOrdersFromLocal = (): StoreOrder[] => {
-  return JSON.parse(localStorage.getItem("orders") || "[]");
+export const getOrdersFromLocal = () => {
+  if (typeof window !== "undefined") {
+    return JSON.parse(window.localStorage.getItem(KEY_LOCALORDERS) || "[]");
+  }
 };
 
+export const removeOrdersFromLocal = () => {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(KEY_LOCALORDERS);
+  }
+};
+
+/*
 export const getOrdersToday = (): StoreOrder[] => {
   // filter orders by date
   const today = new Date();
   const orders = getOrdersFromLocal() as StoreOrder[];
 
   return orders.filter((order: StoreOrder) => {
-    const orderDate = new Date(order.createdAt);
+    const orderDate = new Date(order.updatedAt);
     return (
       orderDate.getFullYear() === today.getFullYear() &&
       orderDate.getMonth() === today.getMonth() &&
@@ -33,9 +51,10 @@ export const getOrdersTodayByStore = (
   // filter orders by date
   const today = new Date();
   const orders = getOrdersFromLocal() as StoreOrder[];
+  //console.log("orders_local", JSON.stringify(orders));
 
   return orders.filter((order: StoreOrder) => {
-    const orderDate = new Date(order.createdAt);
+    const orderDate = new Date(order.updatedAt);
     return (
       orderDate.getFullYear() === today.getFullYear() &&
       orderDate.getMonth() === today.getMonth() &&
@@ -49,7 +68,7 @@ export const removePreviousOrders = () => {
   const today = new Date();
 
   orders.map((order: StoreOrder) => {
-    const orderDate = new Date(order.createdAt);
+    const orderDate = new Date(order.updatedAt);
     if (
       orderDate.getFullYear() < today.getFullYear() ||
       orderDate.getMonth() < today.getMonth() ||
@@ -60,14 +79,6 @@ export const removePreviousOrders = () => {
     }
   });
 
-  localStorage.setItem("orders", JSON.stringify(orders));
+  localStorage.setItem(KEY, JSON.stringify(orders));
 };
-
-export const removeOrders = () => {
-  localStorage.removeItem("orders");
-};
-
-/*
-  const orders = getOrdersFromLocal() as StoreOrder[];
-  console.log('orders', JSON.stringify(orders));
 */

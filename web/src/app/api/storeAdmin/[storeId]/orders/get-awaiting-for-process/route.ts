@@ -26,24 +26,41 @@ export async function GET(
     // if auto accept order, filter by both pending and processing; else filter by pending
     const filter = store.autoAcceptOrder
       ? {
-          orderStatus: {
-            in: [
-              OrderStatus.Pending,
-              OrderStatus.Processing,
-              //OrderStatus.InShipping,
-            ],
-          },
-        }
+        orderStatus: {
+          in: [
+            OrderStatus.Pending,
+            OrderStatus.Processing,
+            //OrderStatus.InShipping,
+          ],
+        },
+      }
       : {
-          orderStatus: {
-            in: [OrderStatus.Processing],
+        orderStatus: {
+          in: [OrderStatus.Processing],
+        },
+      };
+
+    // if requirePrepaid, filter order by requirePrepaid
+    const filter2 = store.requirePrepaid
+      ? {
+        isPaid: true,
+      }
+      : {
+        OR: [
+          {
+            isPaid: true,
           },
-        };
+          {
+            isPaid: false,
+          },
+        ],
+      };
 
     const awaiting4ProcessOrders = (await sqlClient.storeOrder.findMany({
       where: {
         storeId: params.storeId,
         ...filter,
+        ...filter2,
       },
       include: {
         OrderNotes: true,
