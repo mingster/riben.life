@@ -64,19 +64,16 @@ export function SheetMenu({ store }: props) {
         </SheetHeader>
         <SheetTitle />
         <SheetDescription />
-
         <StoreMenu store={store} isOpen title="" setIsOpen={setIsOpen} />
-
+        <div className="flex flex-1 items-center justify-center space-x-1">
+          <ThemeToggler />
+          <DropdownMessage messages={store.StoreAnnouncement} />
+          <DropdownNotification />
+          <DropdownUser user={user} />
+          <DropdownCart />
+        </div>{" "}
         {/*<!-- Hidden by default, but visible if screen is small --> */}
-        <div className="hidden sm:block">
-          <div className="flex flex-1 items-center justify-center space-x-1">
-            <ThemeToggler />
-            <DropdownMessage messages={store.StoreAnnouncement} />
-            <DropdownNotification />
-            <DropdownUser user={user} />
-            <DropdownCart />
-          </div>{" "}
-        </div>
+        <div className="hidden md:block"></div>
         <div className="pt-1 flex flex-1 items-center justify-center space-x-1 w-full font-mono text-sm">
           <Link href="/unv">
             <Button variant="default">{t("system_provider")}</Button>

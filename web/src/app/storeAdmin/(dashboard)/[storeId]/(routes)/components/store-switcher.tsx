@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
 import useSWR from "swr";
 
+import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -23,6 +24,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/providers/i18n-provider";
 
 import { useStoreModal } from "@/hooks/storeAdmin/use-store-modal";
 
@@ -38,6 +40,8 @@ interface StoreSwitcherProps extends PopoverTriggerProps {
 export default function StoreSwitcher({ className }: StoreSwitcherProps) {
   const params = useParams();
   const router = useRouter();
+  const { lng } = useI18n();
+  const { t } = useTranslation(lng, "storeAdmin");
 
   // load user's store data
   const { data: session } = useSession();
@@ -79,10 +83,11 @@ export default function StoreSwitcher({ className }: StoreSwitcherProps) {
           <Button
             variant="outline"
             size="sm"
+            // biome-ignore lint/a11y/useSemanticElements: <explanation>
             role="combobox"
             aria-expanded={open}
-            aria-label="Select a store"
-            className={cn("w-[200px] justify-between", className)}
+            aria-label={t("storeAdmin_switcher_select_a_store")}
+            className={cn("lg:w-[200px] justify-between", className)}
           >
             <StoreIcon className="mr-1 h-4 w-4" />
             {currentStore?.label}
@@ -92,9 +97,11 @@ export default function StoreSwitcher({ className }: StoreSwitcherProps) {
         <PopoverContent className="w-[200px] p-0">
           <Command>
             <CommandList>
-              <CommandInput placeholder="Search store..." />
+              <CommandInput
+                placeholder={t("storeAdmin_switcher_search_prompt")}
+              />
               <CommandEmpty>No store found.</CommandEmpty>
-              <CommandGroup heading="Stores">
+              <CommandGroup heading={t("storeAdmin_switcher_heading")}>
                 {formattedItems.map((store) => (
                   <CommandItem
                     key={store.value}
@@ -125,7 +132,7 @@ export default function StoreSwitcher({ className }: StoreSwitcherProps) {
                   }}
                 >
                   <PlusCircle className="mr-2 h-5 w-5" />
-                  Create Store
+                  {t("storeAdmin_switcher_create_store")}
                 </CommandItem>
               </CommandGroup>
             </CommandList>

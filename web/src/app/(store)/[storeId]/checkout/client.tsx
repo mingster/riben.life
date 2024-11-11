@@ -103,8 +103,6 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
     allShipMethods[0].ShippingMethod,
   );
 
-  //console.log(`allShipMethods: ${JSON.stringify(allShipMethods)}`);
-
   const allpaymentMethods =
     store.StorePaymentMethods as StorePaymentMethodMapping[];
 
@@ -120,12 +118,15 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     defaultPaymentMethod.PaymentMethod,
   );
-  //console.log("StorePaymentMethods", JSON.stringify(allpaymentMethods));
-  //console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
+
+  /*
+  console.log("StorePaymentMethods", JSON.stringify(allpaymentMethods));
+  console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
 
   //const [selectedPaymentType, setSelectedPaymentType] = useState('creditCard');
   //console.log('selected shipMethod: ' + shipMethod);
   //console.log('CheckutSteps: ' + JSON.stringify(shipMethods));
+  */
 
   const hanlePaymentChange = (selectedPaymentMethodId: string) => {
     //console.log("hanlePaymentChange", selectedPaymentMethodId);
@@ -282,7 +283,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 
         <CardFooter>
           <div className="relative w-full">
-            <div className="pr-5">
+            <div className="">
               {/*備註 */}
               <div className="sm:text-xs">{t("checkout_denote")}</div>
               <Input
@@ -321,7 +322,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
               </div>
               */}
 
-            <div className="flex justify-end place-self-end mt-2">
+            <div className="flex items-center justify-end place-self-end mt-2">
               <div className="sm:text-xs">{t("checkout_orderTotal")}</div>
               <Currency value={cart.cartTotal} />
             </div>
@@ -337,16 +338,19 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
         <CardContent>
           <RadioGroup
             className="flex"
-            defaultValue={defaultPaymentMethod.id}
+            defaultValue={paymentMethod.id}
             onValueChange={(val) => hanlePaymentChange(val)}
           >
             {allpaymentMethods.map((mapping) => (
-              <div key={mapping.id} className="flex items-center space-x-2">
+              <div
+                key={mapping.methodId}
+                className="flex items-center space-x-2"
+              >
                 <RadioGroupItem
-                  value={mapping.PaymentMethod.id}
-                  id={mapping.PaymentMethod.id}
+                  value={mapping.methodId}
+                  id={mapping.methodId}
                 />
-                <Label htmlFor={mapping.PaymentMethod.id}>
+                <Label htmlFor={mapping.methodId}>
                   {mapping.paymentDisplayName !== null
                     ? mapping.paymentDisplayName
                     : mapping.PaymentMethod.name}
@@ -357,29 +361,26 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
         </CardContent>
         <CardFooter>
           <div className="relative w-full">
-            <div className="flex justify-between">
-              <div className="flex-none w-1/2 pr-1">
-                <div className="sm:text-xs">{t("checkout_note")}</div>
-              </div>
-              <div className="flex w-1/2 justify-end place-self-end gap-2">
-                <Button
-                  type="button"
-                  disabled={isLoading}
-                  className="disabled:opacity-50 text-2xl w-1/2 p-5"
-                  onClick={() => placeOrder()}
-                >
-                  {t("checkout_orderButton")}
-                </Button>
-                <Button
-                  variant={"outline"}
-                  type="button"
-                  disabled={isLoading}
-                  className="disabled:opacity-50"
-                  onClick={() => router.back()}
-                >
-                  {t("checkout_keepShoppingButton")}
-                </Button>
-              </div>
+            <div className="text-xs pb-2">{t("checkout_note")}</div>
+
+            <div className="flex justify-between items-center">
+              <Button
+                type="button"
+                disabled={isLoading}
+                className="disabled:opacity-50 lg:text-2xl w-1/2 p-5"
+                onClick={() => placeOrder()}
+              >
+                {t("checkout_orderButton")}
+              </Button>
+              <Button
+                variant={"outline"}
+                type="button"
+                disabled={isLoading}
+                className="disabled:opacity-50"
+                onClick={() => router.back()}
+              >
+                {t("checkout_keepShoppingButton")}
+              </Button>
             </div>
           </div>
         </CardFooter>
