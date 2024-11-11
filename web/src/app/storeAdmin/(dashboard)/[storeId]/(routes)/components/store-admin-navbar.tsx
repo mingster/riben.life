@@ -80,26 +80,34 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
 
         <div className="flex items-center space-x-4 lg:pl-10">
           <h1 className="grow text-center text-xl font-bold leading-tight tracking-tighter lg:leading-[1.1] text-nowrap">
-            <Link className="flex" title="go to store" href={`/${store.id}`}>
-              <HomeIcon className="mr-1 h-6 w-6" />
+            <Link
+              className="flex items-center gap-1"
+              title={t("back_to_store")}
+              href={`/${store.id}`}
+            >
+              <HomeIcon className="mr-1 h-4 w-4" />
               {store.name}
             </Link>
           </h1>
         </div>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
+          <StoreSwitcher />
+          <StoreModal />
+          {/* stpreModal is to create new store when switcher's create store is clicked */}
           {/* level button */}
-          <Link href={`/storeAdmin/${store.id}/subscribe`} className="text-xs">
-            <Button variant="outline">
+          <Button variant="outline" size="sm">
+            <Link
+              href={`/storeAdmin/${store.id}/subscribe`}
+              className="text-xs"
+            >
               {store.level === StoreLevel.Free
                 ? t("storeAdmin_switchLevel_free")
                 : store.level === StoreLevel.Pro
                   ? t("storeAdmin_switchLevel_pro")
                   : t("storeAdmin_switchLevel_multi")}
-            </Button>
-          </Link>
-          <StoreSwitcher />
-          <StoreModal />
+            </Link>
+          </Button>
 
           {/* visible by default, hidden on small screens */}
           <div className="sm:hidden">

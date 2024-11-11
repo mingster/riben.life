@@ -1,4 +1,5 @@
 {
+  "back_to_store": "返回商店首頁",
   "Actions": "管理",
   "Add": "加入",
   "Added": "已加入",
@@ -164,6 +165,11 @@
   "Store_orders": "交易紀錄",
   "Store_Removed": "商店已刪除",
   "Store_Updated": "商店資料已更新",
+"storeAdmin_switcher_search_prompt": "請輸入商店名稱",
+"storeAdmin_switcher_select_a_store":"請選擇商店",
+"storeAdmin_switcher_heading":"商店列表",
+"storeAdmin_switcher_create_store":"新增商店",
+
   "storeAdmin_switchLevel_cancel_confirm": "您將調整到基礎版，調整會立即生效，確定嗎？",
   "storeAdmin_switchLevel_cancel_result": "您已回復到基礎版。進階功能可使用到：{0}。",
   "storeAdmin_switchLevel_description": "請按下方「確認」鍵來繼續。",
