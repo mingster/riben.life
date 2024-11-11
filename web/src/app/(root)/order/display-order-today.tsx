@@ -72,6 +72,7 @@ export const DisplayStoreOrdersToday: React.FC = () => {
       }
     });
 
+    //console.log('orderArray', orderArray);
     // update local storage
     removeOrdersFromLocal();
     localStorage.setItem(KEY_LOCALORDERS, JSON.stringify(orderArray));
