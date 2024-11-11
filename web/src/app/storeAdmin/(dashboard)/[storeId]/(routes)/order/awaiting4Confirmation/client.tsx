@@ -61,17 +61,14 @@ export const Awaiting4ConfirmationClient: React.FC<props> = ({ store }) => {
   //console.log(JSON.stringify(storeData));
   return (
     <section className="relative w-full">
-      <div className="container">
-        <IntervaledContent />
-
-        <div className="flex flex-col gap-1">
-          <OrderPending
-            storeId={store.id}
-            orders={pendingOrders}
-            parentLoading={loading}
-          />
-          <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
-        </div>
+      <IntervaledContent />
+      <div className="flex flex-col gap-1">
+        <OrderPending
+          storeId={store.id}
+          orders={pendingOrders}
+          parentLoading={loading}
+        />
+        <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
       </div>
     </section>
   );

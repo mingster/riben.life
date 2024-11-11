@@ -531,7 +531,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
         {pageTitle}
       </CardHeader>
       <CardContent>
-        <div className="text-muted-foreground pt-0">
+        <div className="text-muted-foreground text-xs pt-0">
           可以在此修改未付款、未完成的訂單。
           <br />
           若訂單已付款，修改可能會產生退款。

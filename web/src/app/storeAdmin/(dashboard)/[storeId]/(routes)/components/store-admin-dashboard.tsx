@@ -7,6 +7,7 @@ import { useI18n } from "@/providers/i18n-provider";
 
 import { Awaiting4ConfirmationClient } from "../order/awaiting4Confirmation/client";
 import { Awaiting4ProcessingClient } from "../order/awaiting4Process/client";
+import Container from "@/components/ui/container";
 
 export interface props {
   store: Store;
@@ -21,15 +22,13 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
   //console.log(JSON.stringify(storeData));
   return (
     <section className="relative w-full">
-      <div className="">
-        {store.requirePrepaid && "只會顯示已付款訂單。"}
-
+      <Container>
         {!store.autoAcceptOrder && (
           <Awaiting4ConfirmationClient store={store} />
         )}
 
         <Awaiting4ProcessingClient store={store} />
-      </div>
+      </Container>
     </section>
   );
 };

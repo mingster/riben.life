@@ -85,7 +85,7 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
 
         <CardContent className="pl-0 pr-0 m-0">
           {/* display */}
-          <div className="text-muted-foreground text-sm">
+          <div className="text-muted-foreground text-xs">
             {orders.length === 0
               ? t("no_results_found")
               : t("Order_pending_descr")}
@@ -96,17 +96,17 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
               <TableHeader>
                 <TableRow>
                   {/*單號/桌號*/}
-                  <TableHead className="lg:w-[90px]">
+                  <TableHead className="text-nowrap w-[50px]">
                     {t("Order_number")}
                   </TableHead>
                   <TableHead className="text-nowrap">
                     {t("Order_items")}
                   </TableHead>
-                  <TableHead className="lg:w-[200px]">{t("Order_note")}</TableHead>
-                  <TableHead className="invisible md:visible lg:w-[90px]">
+                  <TableHead className="w-[250px]">{t("Order_note")}</TableHead>
+                  <TableHead className="hidden lg:table-cell lg:w-[90px]">
                     {t("ordered_at")}
                   </TableHead>
-                  <TableHead className="lg:w-[100px] text-center text-nowrap">
+                  <TableHead className="w-[100px] text-center text-nowrap">
                     {t("Order_accept")}
                   </TableHead>
                 </TableRow>
@@ -117,6 +117,7 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                     <TableCell className="lg:text-2xl font-extrabold">
                       {order.orderNum}
                     </TableCell>
+
                     <TableCell className="text-nowrap">
                       {order.OrderItemView.map((item: orderitemview) => (
                         <div
@@ -124,14 +125,15 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                         >{`${item.name} x ${item.quantity}`}</div>
                       ))}
                     </TableCell>
-                    <TableCell>
-                      <div className="invisible md:visible">
+
+                    <TableCell className="border">
+                      <div className="hidden lg:inline-block">
                         {order.OrderNotes.map((note: OrderNote) => (
                           <div key={note.id}>{note.note}</div>
                         ))}
                       </div>
 
-                      <div className="flex gap-1 items-center">
+                      <div className="flex gap-1 text-xs items-center">
                         <div>
                           {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
                         </div>
@@ -144,7 +146,7 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                       </div>
                     </TableCell>
 
-                    <TableCell className="invisible md:visible">
+                    <TableCell className="hidden lg:table-cell text-xs">
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                     </TableCell>
 
