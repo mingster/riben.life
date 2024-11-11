@@ -82,9 +82,10 @@ export const OrderInProgress = ({
           badge={orders.length}
           className="pt-2"
         />
-        <CardContent className="space-y-2">
+
+        <CardContent className="pl-0 pr-0 m-0">
           {/* display */}
-          <div className="pt-2 pl-1">
+          <div className="text-muted-foreground text-xs">
             {orders.length === 0
               ? t("no_results_found")
               : autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
@@ -97,15 +98,17 @@ export const OrderInProgress = ({
               <TableHeader>
                 <TableRow>
                   {/*單號/桌號*/}
-                  <TableHead className="w-[90px]">
+                  <TableHead className="text-nowrap w-[50px]">
                     {t("Order_number")}
                   </TableHead>
-                  <TableHead className="w-[200px]">
+                  <TableHead className="text-nowrap">
                     {t("Order_items")}
                   </TableHead>
-                  <TableHead>{t("Order_note")}</TableHead>
-                  <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
-                  <TableHead className="w-[150px] text-center text-nowrap">
+                  <TableHead className="w-[250px]">{t("Order_note")}</TableHead>
+                  <TableHead className="hidden lg:table-cell text-right align-middle lg:w-[90px]">
+                    {t("ordered_at")}
+                  </TableHead>
+                  <TableHead className="w-[100px] text-center">
                     {autoAcceptOrder ? t("Order_accept") : t("Order_accept2")}
                   </TableHead>
                 </TableRow>
@@ -113,11 +116,11 @@ export const OrderInProgress = ({
               <TableBody>
                 {orders.map((order: StoreOrder) => (
                   <TableRow key={order.id}>
-                    <TableCell className="text-2xl font-extrabold">
+                    <TableCell className="lg:text-2xl font-extrabold">
                       {order.orderNum}
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell className="text-nowrap">
                       {order.OrderItemView.map((item: orderitemview) => (
                         <div
                           key={item.id}
@@ -125,11 +128,14 @@ export const OrderInProgress = ({
                       ))}
                     </TableCell>
 
-                    <TableCell>
-                      {order.OrderNotes.map((note: OrderNote) => (
-                        <div key={note.id}>{note.note}</div>
-                      ))}
-                      <div className="flex gap-1 items-center">
+                    <TableCell className="border">
+                      <div className="hidden lg:table-cell">
+                        {order.OrderNotes.map((note: OrderNote) => (
+                          <div key={note.id}>{note.note}</div>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-1 text-xs items-center">
                         <div>
                           {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
                         </div>
@@ -142,12 +148,12 @@ export const OrderInProgress = ({
                       </div>
                     </TableCell>
 
-                    <TableCell className="text-nowrap">
+                    <TableCell className="hidden lg:table-cell text-xs text-right align-bottom">
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                     </TableCell>
 
                     <TableCell className="bg-red-100">
-                      <div className="flex gap-5 items-center justify-end pr-1">
+                      <div className="flex gap-3 items-center justify-end pr-1">
                         <Checkbox
                           value={order.id}
                           onClick={() => handleChecked(order.id)}

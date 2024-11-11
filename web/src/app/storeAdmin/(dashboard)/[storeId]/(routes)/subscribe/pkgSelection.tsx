@@ -145,7 +145,7 @@ const DisplayPkg: React.FC<props> = ({
       <div
         className={cn("max-w-6xl px-4 py-8 mx-auto sm:py-24 sm:px-6 lg:px-8")}
       >
-        <div className="sm:flex sm:flex-col sm:align-center">
+        <div className="sm:flex sm:flex-col sm:align-middle">
           <h1 className="text-4xl font-extrabold sm:text-center sm:text-6xl">
             {t("storeAdmin_switchLevel_pageTitle")}
           </h1>

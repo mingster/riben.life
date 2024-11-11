@@ -1,13 +1,11 @@
 "use client";
 
-import type { Store, StoreOrder } from "@/types";
-import { useCallback, useEffect, useState } from "react";
+import type { Store } from "@/types";
+import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { format } from "date-fns";
-import { OrderStatus, StoreLevel } from "@/types/enum";
-import { OrderInProgress } from "../../components/order-inprogress";
 import { OrderPending } from "../../components/order-pending";
 
 export interface props {
@@ -63,17 +61,14 @@ export const Awaiting4ConfirmationClient: React.FC<props> = ({ store }) => {
   //console.log(JSON.stringify(storeData));
   return (
     <section className="relative w-full">
-      <div className="container">
-        <IntervaledContent />
-
-        <div className="flex flex-col gap-5">
-          <OrderPending
-            storeId={store.id}
-            orders={pendingOrders}
-            parentLoading={loading}
-          />
-          <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
-        </div>
+      <IntervaledContent />
+      <div className="flex flex-col gap-1">
+        <OrderPending
+          storeId={store.id}
+          orders={pendingOrders}
+          parentLoading={loading}
+        />
+        <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
       </div>
     </section>
   );

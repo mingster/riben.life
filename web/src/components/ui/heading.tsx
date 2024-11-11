@@ -23,11 +23,11 @@ export const Heading: React.FC<HeadingProps> = ({
             <span>{badge}</span>
           </span>
         )}
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-xl lg:text-3xl dark:text-white">
+        <h1 className="text-xl lg:text-2xl dark:text-white lg:font-extrabold tracking-tight text-slate-900">
           {title}
         </h1>
       </strong>
-      <div className="text-muted-foreground">{description}</div>
+      <div className="text-muted-foreground text-sm p-0">{description}</div>
     </div>
   );
 };

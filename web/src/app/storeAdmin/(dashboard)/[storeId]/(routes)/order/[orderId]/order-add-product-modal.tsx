@@ -128,7 +128,7 @@ export const OrderAddProductModal: React.FC<props> = ({
         <DialogDescription> </DialogDescription>
 
         <DialogContent
-          className={"lg:max-w-screen-lg overflow-y-scroll max-h-screen"}
+          className={"max-w-[calc(80vh)] overflow-y-scroll max-h-screen"}
         >
           <div className="grid grid-cols-[20%_80%] gap-2">
             <div className="self-start sticky top-24">

@@ -9,6 +9,8 @@ import { useToast } from "@/components/ui/use-toast";
 
 import { useTranslation } from "@/app/i18n/client";
 import { AlertModal } from "@/components/modals/alert-modal";
+import { DisplayOrderStatus } from "@/components/order-status-display";
+import { Heading } from "@/components/ui/heading";
 import {
   Table,
   TableBody,
@@ -19,15 +21,13 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreOrder } from "@/types";
+import { OrderStatus } from "@/types/enum";
 //import type { StoreOrder } from "@/types";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { format } from "date-fns";
-import { ClipLoader } from "react-spinners";
-import { Heading } from "@/components/ui/heading";
-import { OrderStatus } from "@/types/enum";
 import Link from "next/link";
-import { DisplayOrderStatus } from "@/components/order-status-display";
+import { ClipLoader } from "react-spinners";
 
 interface props {
   storeId: string;
@@ -78,15 +78,17 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
       <Card>
         <Heading
           title={t("Order_pending")}
-          description={t("Order_pending_descr")}
+          description=""
           badge={orders.length}
           className="pt-2"
         />
 
-        <CardContent className="space-y-2">
+        <CardContent className="pl-0 pr-0 m-0">
           {/* display */}
-          <div className="pt-2 pl-1">
-            {orders.length === 0 ? t("no_results_found") : ""}
+          <div className="text-muted-foreground text-xs">
+            {orders.length === 0
+              ? t("no_results_found")
+              : t("Order_pending_descr")}
           </div>
 
           {orders.length !== 0 && (
@@ -94,15 +96,17 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
               <TableHeader>
                 <TableRow>
                   {/*單號/桌號*/}
-                  <TableHead className="w-[90px]">
+                  <TableHead className="text-nowrap w-[50px]">
                     {t("Order_number")}
                   </TableHead>
-                  <TableHead className="w-[200px]">
+                  <TableHead className="text-nowrap">
                     {t("Order_items")}
                   </TableHead>
-                  <TableHead>{t("Order_note")}</TableHead>
-                  <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
-                  <TableHead className="w-[150px] text-center text-nowrap">
+                  <TableHead className="w-[250px]">{t("Order_note")}</TableHead>
+                  <TableHead className="hidden lg:table-cell lg:w-[90px]">
+                    {t("ordered_at")}
+                  </TableHead>
+                  <TableHead className="w-[100px] text-center text-nowrap">
                     {t("Order_accept")}
                   </TableHead>
                 </TableRow>
@@ -110,21 +114,26 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
               <TableBody>
                 {orders.map((order: StoreOrder) => (
                   <TableRow key={order.id}>
-                    <TableCell className="text-2xl font-extrabold">
+                    <TableCell className="lg:text-2xl font-extrabold">
                       {order.orderNum}
                     </TableCell>
-                    <TableCell>
+
+                    <TableCell className="text-nowrap">
                       {order.OrderItemView.map((item: orderitemview) => (
                         <div
                           key={item.id}
                         >{`${item.name} x ${item.quantity}`}</div>
                       ))}
                     </TableCell>
-                    <TableCell>
-                      {order.OrderNotes.map((note: OrderNote) => (
-                        <div key={note.id}>{note.note}</div>
-                      ))}
-                      <div className="flex gap-1 items-center">
+
+                    <TableCell className="border">
+                      <div className="hidden lg:inline-block">
+                        {order.OrderNotes.map((note: OrderNote) => (
+                          <div key={note.id}>{note.note}</div>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-1 text-xs items-center">
                         <div>
                           {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
                         </div>
@@ -136,11 +145,13 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                         <div>{order.User?.name}</div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-nowrap">
+
+                    <TableCell className="hidden lg:table-cell text-xs">
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                     </TableCell>
+
                     <TableCell className="bg-red-100">
-                      <div className="flex gap-5 items-center justify-end pr-1">
+                      <div className="flex gap-3 items-center justify-end pr-1">
                         <Checkbox
                           value={order.id}
                           onClick={() => handleChecked(order.id)}

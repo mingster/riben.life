@@ -1,6 +1,8 @@
+import { auth } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { StoreOrder } from "@prisma/client";
+import { Session } from "next-auth";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
@@ -37,17 +39,53 @@ export async function POST(
           updatedAt: "desc",
         },
       })) as StoreOrder[];
-      transformDecimalsToNumbers(orders);
 
-      //revalidatePath("/order");
+      if (orders.length > 0) {
+        transformDecimalsToNumbers(orders);
+        //revalidatePath("/order");
+        return NextResponse.json(orders);
+      }
+    }
+
+    // if no orderIds, try to get user's order if user is signed in
+    const session = (await auth()) as Session;
+    const userId = session?.user.id;
+
+    if (userId) {
+      const orders = (await sqlClient.storeOrder.findMany({
+        where: {
+          userId: session.user.id,
+          //updateAt = today
+          updatedAt: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          },
+        },
+        include: {
+          OrderNotes: true,
+          OrderItemView: {
+            include: {
+              Product: true,
+            },
+          },
+          User: true,
+          ShippingMethod: true,
+          PaymentMethod: true,
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+      })) as StoreOrder[];
+      transformDecimalsToNumbers(orders);
       return NextResponse.json(orders);
     }
 
-    //console.log(`updated user: ${JSON.stringify(obj)}`);
-
+    // otherwise, return empty
     return NextResponse.json([]);
   } catch (error) {
     console.log("[POST]", error);
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
+}
+function getServerSession() {
+  throw new Error("Function not implemented.");
 }

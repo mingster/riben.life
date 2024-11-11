@@ -72,6 +72,7 @@ export const DisplayStoreOrdersToday: React.FC = () => {
       }
     });
 
+    //console.log('orderArray', orderArray);
     // update local storage
     removeOrdersFromLocal();
     localStorage.setItem(KEY_LOCALORDERS, JSON.stringify(orderArray));
@@ -108,7 +109,7 @@ export const DisplayStoreOrdersToday: React.FC = () => {
         fetchData();
         linkOrders();
         removeOutedLocalOrders();
-      }, 5000); // do every 5 sec.
+      }, 15000); // do every 15 sec.
 
       //Clearing the interval
       return () => clearInterval(interval);

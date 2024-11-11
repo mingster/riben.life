@@ -19,13 +19,14 @@ export async function PATCH(req: Request) {
     const { orderIds } = body;
 
     if (orderIds) {
-      console.log("link order", orderIds);
+      //console.log("link order", orderIds);
 
-      await sqlClient.storeOrder.updateMany({
+      const cnt = await sqlClient.storeOrder.updateMany({
         where: {
           id: {
             in: orderIds,
           },
+          userId: null,
         },
         data: {
           userId: userId,
