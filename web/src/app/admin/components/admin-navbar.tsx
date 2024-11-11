@@ -67,10 +67,10 @@ export function AdminNavbar({ title }: NavbarProps) {
           <h1 className="font-bold">{title}</h1>
         </div>
         {/* visible by default, hidden on small screens */}
-        <div className="sm:hidden">
-          <div className="flex flex-1 items-center justify-end space-x-2">
-            <DropdownNotification />
+        <div className='hidden lg:block'>
+          <div className="flex flex-1 items-center justify-end space-x-1">
             <ThemeToggler />
+            <DropdownNotification />
             <DropdownUser user={user} />
           </div>
         </div>

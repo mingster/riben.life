@@ -109,11 +109,14 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
             </Link>
           </Button>
 
-          {/* visible by default, hidden on small screens */}
-          <div className="sm:hidden">
-            <DropdownNotification />
-            <ThemeToggler />
-            <DropdownUser user={user} />
+          {/* visible by default, hidden on small screens
+          <div className="visible xs:invisible">*/}
+          <div className='hidden lg:block'>
+            <div className="flex flex-1 items-center justify-end space-x-1">
+              <ThemeToggler />
+              <DropdownNotification />
+              <DropdownUser user={user} />
+            </div>
           </div>
         </div>
       </div>
