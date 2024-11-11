@@ -38,7 +38,8 @@ export async function GET(
 
     transformDecimalsToNumbers(awaitingOrders);
 
-    //console.log("awaiting4ProcessOrders", JSON.stringify(awaiting4ProcessOrders));
+    //console.log("awaitingOrders", JSON.stringify(awaitingOrders));
+
     return NextResponse.json(awaitingOrders);
   } catch (error) {
     console.error("[GET_PENDING_ORDERS]", error);

@@ -51,8 +51,6 @@ export async function POST(
     const session = (await auth()) as Session;
     const userId = session?.user.id;
 
-    console.log("userId", userId);
-
     if (userId) {
       const orders = (await sqlClient.storeOrder.findMany({
         where: {

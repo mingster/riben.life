@@ -101,11 +101,11 @@ export const OrderInProgress = ({
                   <TableHead className="lg:w-[80px]">
                     {t("Order_number")}
                   </TableHead>
-                  <TableHead className="lg:w-[200px]">
+                  <TableHead className="text-nowrap">
                     {t("Order_items")}
                   </TableHead>
-                  <TableHead>{t("Order_note")}</TableHead>
-                  <TableHead className="hidden md:block lg:w-[90px]">
+                  <TableHead className="lg:w-[200px]">{t("Order_note")}</TableHead>
+                  <TableHead className="invisible md:visible lg:w-[90px]">
                     {t("ordered_at")}
                   </TableHead>
                   <TableHead className="lg:w-[100px] text-center">
@@ -120,7 +120,7 @@ export const OrderInProgress = ({
                       {order.orderNum}
                     </TableCell>
 
-                    <TableCell>
+                    <TableCell className="text-nowrap">
                       {order.OrderItemView.map((item: orderitemview) => (
                         <div
                           key={item.id}
@@ -129,7 +129,7 @@ export const OrderInProgress = ({
                     </TableCell>
 
                     <TableCell>
-                      <div className="hidden md:block">
+                      <div className="invisible md:visible">
                         {order.OrderNotes.map((note: OrderNote) => (
                           <div key={note.id}>{note.note}</div>
                         ))}
@@ -148,7 +148,7 @@ export const OrderInProgress = ({
                       </div>
                     </TableCell>
 
-                    <TableCell className="hidden md:block">
+                    <TableCell className="invisible md:visible">
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                     </TableCell>
 

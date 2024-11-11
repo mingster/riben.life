@@ -9,6 +9,8 @@ import { useToast } from "@/components/ui/use-toast";
 
 import { useTranslation } from "@/app/i18n/client";
 import { AlertModal } from "@/components/modals/alert-modal";
+import { DisplayOrderStatus } from "@/components/order-status-display";
+import { Heading } from "@/components/ui/heading";
 import {
   Table,
   TableBody,
@@ -19,15 +21,13 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreOrder } from "@/types";
+import { OrderStatus } from "@/types/enum";
 //import type { StoreOrder } from "@/types";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { format } from "date-fns";
-import { ClipLoader } from "react-spinners";
-import { Heading } from "@/components/ui/heading";
-import { OrderStatus } from "@/types/enum";
 import Link from "next/link";
-import { DisplayOrderStatus } from "@/components/order-status-display";
+import { ClipLoader } from "react-spinners";
 
 interface props {
   storeId: string;
@@ -99,14 +99,14 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                   <TableHead className="lg:w-[90px]">
                     {t("Order_number")}
                   </TableHead>
-                  <TableHead className="lg:w-[200px]">
+                  <TableHead className="text-nowrap">
                     {t("Order_items")}
                   </TableHead>
-                  <TableHead>{t("Order_note")}</TableHead>
-                  <TableHead className="hidden md:block lg:w-[90px]">
+                  <TableHead className="lg:w-[200px]">{t("Order_note")}</TableHead>
+                  <TableHead className="invisible md:visible lg:w-[90px]">
                     {t("ordered_at")}
                   </TableHead>
-                  <TableHead className="lg:w-[120px] text-center text-nowrap">
+                  <TableHead className="lg:w-[100px] text-center text-nowrap">
                     {t("Order_accept")}
                   </TableHead>
                 </TableRow>
@@ -114,10 +114,10 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
               <TableBody>
                 {orders.map((order: StoreOrder) => (
                   <TableRow key={order.id}>
-                    <TableCell className="lg:text-2xl lg:font-extrabold">
+                    <TableCell className="lg:text-2xl font-extrabold">
                       {order.orderNum}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-nowrap">
                       {order.OrderItemView.map((item: orderitemview) => (
                         <div
                           key={item.id}
@@ -125,9 +125,12 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                       ))}
                     </TableCell>
                     <TableCell>
-                      {order.OrderNotes.map((note: OrderNote) => (
-                        <div key={note.id}>{note.note}</div>
-                      ))}
+                      <div className="invisible md:visible">
+                        {order.OrderNotes.map((note: OrderNote) => (
+                          <div key={note.id}>{note.note}</div>
+                        ))}
+                      </div>
+
                       <div className="flex gap-1 items-center">
                         <div>
                           {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
@@ -141,7 +144,7 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                       </div>
                     </TableCell>
 
-                    <TableCell className="hidden md:block">
+                    <TableCell className="invisible md:visible">
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                     </TableCell>
 

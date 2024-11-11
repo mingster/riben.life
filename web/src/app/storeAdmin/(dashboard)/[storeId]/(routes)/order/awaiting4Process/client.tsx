@@ -115,7 +115,7 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
         <IntervaledContent />
         {store.requirePrepaid && "只會顯示已付款訂單。"}
 
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-1">
           <OrderInProgress
             storeId={store.id}
             autoAcceptOrder={store.autoAcceptOrder}
