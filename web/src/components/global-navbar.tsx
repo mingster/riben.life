@@ -54,15 +54,14 @@ export function Navbar({ title }: NavbarProps) {
               </>
             ) : (
               <>
-                <HomeIcon className="mr-1 h-6 w-6" />
+                <HomeIcon className="mr-1 h-4 w-4" />
                 <h1 className="font-bold">{title}</h1>
               </>
             )}
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex flex-1 items-center justify-end space-x-1">
           <ThemeToggler />
-          <DropdownMessage messages={[]} />
           <DropdownNotification />
           <DropdownUser user={user} />
           <DropdownCart />

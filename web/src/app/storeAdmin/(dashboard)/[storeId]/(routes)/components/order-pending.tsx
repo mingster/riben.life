@@ -78,15 +78,17 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
       <Card>
         <Heading
           title={t("Order_pending")}
-          description={t("Order_pending_descr")}
+          description=""
           badge={orders.length}
           className="pt-2"
         />
 
-        <CardContent className="space-y-2">
+        <CardContent className="pl-0 pr-0 m-0">
           {/* display */}
-          <div className="pt-2 pl-1">
-            {orders.length === 0 ? t("no_results_found") : ""}
+          <div className="text-muted-foreground text-sm">
+            {orders.length === 0
+              ? t("no_results_found")
+              : t("Order_pending_descr")}
           </div>
 
           {orders.length !== 0 && (
@@ -94,15 +96,17 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
               <TableHeader>
                 <TableRow>
                   {/*單號/桌號*/}
-                  <TableHead className="w-[90px]">
+                  <TableHead className="lg:w-[90px]">
                     {t("Order_number")}
                   </TableHead>
-                  <TableHead className="w-[200px]">
+                  <TableHead className="lg:w-[200px]">
                     {t("Order_items")}
                   </TableHead>
                   <TableHead>{t("Order_note")}</TableHead>
-                  <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
-                  <TableHead className="w-[150px] text-center text-nowrap">
+                  <TableHead className="hidden md:block lg:w-[90px]">
+                    {t("ordered_at")}
+                  </TableHead>
+                  <TableHead className="lg:w-[120px] text-center text-nowrap">
                     {t("Order_accept")}
                   </TableHead>
                 </TableRow>
@@ -110,7 +114,7 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
               <TableBody>
                 {orders.map((order: StoreOrder) => (
                   <TableRow key={order.id}>
-                    <TableCell className="text-2xl font-extrabold">
+                    <TableCell className="lg:text-2xl lg:font-extrabold">
                       {order.orderNum}
                     </TableCell>
                     <TableCell>
@@ -136,11 +140,13 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                         <div>{order.User?.name}</div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-nowrap">
+
+                    <TableCell className="hidden md:block">
                       {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
                     </TableCell>
+
                     <TableCell className="bg-red-100">
-                      <div className="flex gap-5 items-center justify-end pr-1">
+                      <div className="flex gap-3 items-center justify-end pr-1">
                         <Checkbox
                           value={order.id}
                           onClick={() => handleChecked(order.id)}
