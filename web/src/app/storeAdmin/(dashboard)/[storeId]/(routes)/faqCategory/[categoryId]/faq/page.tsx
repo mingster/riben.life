@@ -18,7 +18,8 @@ interface pageProps {
 
 //!SECTION here we list FAQs under the given faq category.
 //
-const FaqPage: React.FC<pageProps> = async ({ params }) => {
+const FaqPage: React.FC<pageProps> = async (props) => {
+  const params = await props.params;
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   //SECTION disallow access if category is not found

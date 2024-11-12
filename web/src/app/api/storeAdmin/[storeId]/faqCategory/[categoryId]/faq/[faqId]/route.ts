@@ -5,10 +5,11 @@ import { NextResponse } from "next/server";
 ///!SECTION update faq record in database.
 export async function PATCH(
   req: Request,
-  {
-    params,
-  }: { params: { storeId: string; categoryId: string; faqId: string } },
+  props: {
+    params: Promise<{ storeId: string; categoryId: string; faqId: string }>;
+  },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 
@@ -40,10 +41,11 @@ export async function PATCH(
 ///!SECTION delete faq record in database.
 export async function DELETE(
   req: Request,
-  {
-    params,
-  }: { params: { storeId: string; categoryId: string; faqId: string } },
+  props: {
+    params: Promise<{ storeId: string; categoryId: string; faqId: string }>;
+  },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

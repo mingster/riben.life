@@ -8,12 +8,16 @@ import ReactMarkdown from "react-markdown";
 
 import remarkGfm from "remark-gfm";
 import remarkHtml from "remark-html";
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
-const StorePrivacyPage: React.FC<pageProps> = async ({ params }) => {
+
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function StorePrivacyPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const store = await sqlClient.store.findFirst({
     where: {
       id: params.storeId,
@@ -47,5 +51,4 @@ const StorePrivacyPage: React.FC<pageProps> = async ({ params }) => {
       </Container>
     </Suspense>
   );
-};
-export default StorePrivacyPage;
+}

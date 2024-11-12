@@ -11,16 +11,15 @@ import Stripe from "stripe";
 
 // this page is hit when stripe element confirmed the payment.
 // here we mark the order as paid, show customer a message and redirect to account page.
-export default async function StripeConfirmedPage({
-  params,
-  searchParams,
-}: {
-  params: { orderId: string };
-  searchParams: {
+export default async function StripeConfirmedPage(props: {
+  params: Promise<{ orderId: string }>;
+  searchParams: Promise<{
     payment_intent: string;
     payment_intent_client_secret: string;
-  };
+  }>;
 }) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   if (!params.orderId) {
     throw new Error("order Id is missing");
   }

@@ -6,8 +6,9 @@ import { CheckStoreAdminApiAccess } from "../../api_helper";
 ///!SECTION create Category record in database.
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 
@@ -36,8 +37,9 @@ export async function POST(
 ///!SECTION 批量新增 create multiple Categories record in database.
 export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

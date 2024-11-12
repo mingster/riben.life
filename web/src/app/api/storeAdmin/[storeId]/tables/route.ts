@@ -8,8 +8,9 @@ import type { StoreTables } from "@prisma/client";
 ///!SECTION create new store table.
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 
@@ -35,8 +36,9 @@ export async function POST(
 
 export async function GET(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   CheckStoreAdminApiAccess(params.storeId);
 
   const tables = await sqlClient.storeTables.findMany({

@@ -5,8 +5,9 @@ import { CheckStoreAdminApiAccess } from "../../api_helper";
 ///!SECTION create faqCategory record in database.
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

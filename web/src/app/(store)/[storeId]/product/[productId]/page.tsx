@@ -5,9 +5,15 @@ import type { Product, StoreWithProducts } from "@/types";
 import { redirect } from "next/navigation";
 import { Client } from "./client";
 
-const StoreProductPage = async ({
-  params,
-}: { params: { productId: string; storeId: string } }) => {
+type Params = Promise<{ storeId: string; productId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function StoreProductPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const store = (await getStoreWithProducts(
     params.storeId,
   )) as StoreWithProducts;
@@ -44,6 +50,4 @@ const StoreProductPage = async ({
       </div>
     </div>
   );
-};
-
-export default StoreProductPage;
+}

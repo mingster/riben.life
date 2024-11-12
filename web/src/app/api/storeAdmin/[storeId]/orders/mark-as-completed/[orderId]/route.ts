@@ -6,8 +6,9 @@ import { NextResponse } from "next/server";
 ///!SECTION mark pending or processing order as completed
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string; orderId: string } },
+  props: { params: Promise<{ storeId: string; orderId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

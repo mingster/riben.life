@@ -6,7 +6,8 @@ import { Loader } from "@/components/ui/loader";
 import Container from "@/components/ui/container";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 
-const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
+const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
+  const params = await props.params;
   //console.log('orderId: ' + params.orderId);
 
   if (!params.orderId) {

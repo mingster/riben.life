@@ -2,7 +2,10 @@ import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import { StoreEditTabs } from "./tabs";
 
-const StoreEditPage = async ({ params }: { params: { storeId: string } }) => {
+const StoreEditPage = async (props: {
+  params: Promise<{ storeId: string }>;
+}) => {
+  const params = await props.params;
   const store = await sqlClient.store.findUnique({
     where: {
       id: params.storeId,

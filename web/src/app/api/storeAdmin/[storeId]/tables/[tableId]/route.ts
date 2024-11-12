@@ -6,8 +6,9 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 //delete storetable by its id
 export async function DELETE(
   req: Request,
-  { params }: { params: { storeId: string; tableId: string } },
+  props: { params: Promise<{ storeId: string; tableId: string }> },
 ) {
+  const params = await props.params;
   //try {
   CheckStoreAdminApiAccess(params.storeId);
 
@@ -35,8 +36,9 @@ export async function DELETE(
 ///!SECTION update tableId in database.
 export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string; tableId: string } },
+  props: { params: Promise<{ storeId: string; tableId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

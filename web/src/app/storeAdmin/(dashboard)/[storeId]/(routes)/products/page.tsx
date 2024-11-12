@@ -10,16 +10,14 @@ import type { ProductColumn } from "./components/columns";
 import { ProductsClient } from "./components/products-client";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-// here we save store settings to mangodb
-//
-const ProductsPage: React.FC<pageProps> = async ({ params }) => {
+export default async function ProductsPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   const products = (await sqlClient.product.findMany({
@@ -74,5 +72,3 @@ const ProductsPage: React.FC<pageProps> = async ({ params }) => {
     </Suspense>
   );
 };
-
-export default ProductsPage;

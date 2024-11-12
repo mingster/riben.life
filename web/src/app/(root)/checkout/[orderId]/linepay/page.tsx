@@ -25,11 +25,12 @@ import getStoreById from "@/actions/get-store-by_id";
 // https://developers-pay.line.me/online
 // https://developers-pay.line.me/online-api
 // https://developers-pay.line.me/online/implement-basic-payment#confirm
-const PaymentPage = async ({ params }: { params: { orderId: string } }) => {
+const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
+  const params = await props.params;
   if (!params.orderId) {
     throw new Error("order Id is missing");
   }
-  const headerList = headers();
+  const headerList = await headers();
   const host = headerList.get("host"); // stackoverflow.com
   //const pathname = headerList.get("x-current-path");
   //console.log("pathname", host, pathname);

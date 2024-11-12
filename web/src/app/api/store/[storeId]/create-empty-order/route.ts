@@ -8,8 +8,9 @@ import { NextResponse } from "next/server";
 //
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   if (!params.storeId) {
     return new NextResponse("storeId is required", { status: 400 });
   }

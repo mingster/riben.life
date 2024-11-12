@@ -7,8 +7,9 @@ import { CheckStoreAdminApiAccess } from "../../../api_helper";
 ///!SECTION update Category record in database.
 export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string; messageId: string } },
+  props: { params: Promise<{ storeId: string; messageId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 
@@ -36,8 +37,9 @@ export async function PATCH(
 ///!SECTION delete Category record in database.
 export async function DELETE(
   req: Request,
-  { params }: { params: { storeId: string; messageId: string } },
+  props: { params: Promise<{ storeId: string; messageId: string }> },
 ) {
+  const params = await props.params;
   //try {
 
   CheckStoreAdminApiAccess(params.storeId);

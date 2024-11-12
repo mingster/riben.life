@@ -8,12 +8,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Awaiting4ConfirmationClient } from "./client";
 
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
-
 export const metadata: Metadata = {
   title: "Store Dashboard",
   description: "",
@@ -21,9 +15,16 @@ export const metadata: Metadata = {
 
 // DashboardPage is home of the selected store. It diesplays store operatiing stat such as
 //total revenue, sales count, products, etc..
-const OrderAwaiting4ConfirmationPage: React.FC<pageProps> = async ({
-  params,
-}) => {
+
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function OrderAwaiting4ConfirmationPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   /*
@@ -63,5 +64,3 @@ const OrderAwaiting4ConfirmationPage: React.FC<pageProps> = async ({
     </Suspense>
   );
 };
-
-export default OrderAwaiting4ConfirmationPage;

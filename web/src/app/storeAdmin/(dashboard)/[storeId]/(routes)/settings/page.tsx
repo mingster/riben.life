@@ -21,16 +21,14 @@ const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
 });
 export type Store = Prisma.StoreGetPayload<typeof storeObj>;
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-// here we save store settings to mangodb
-//
-const StoreSettingsPage: React.FC<pageProps> = async ({ params }) => {
+export default async function StoreSettingsPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   //NOTE - we call checkStoreAccess here to get the store object
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
@@ -87,5 +85,3 @@ const StoreSettingsPage: React.FC<pageProps> = async ({ params }) => {
     </Suspense>
   );
 };
-
-export default StoreSettingsPage;

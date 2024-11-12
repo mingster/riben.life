@@ -32,20 +32,26 @@ export type ProductCategories = Prisma.ProductCategoriesGetPayload<
   typeof prodCategoryObj
 >;
 
-interface pageProps {
-  params: {
-    storeId: string;
-    categoryId: string;
-  };
-}
-// display products in the given category
-const CategoryPage: React.FC<pageProps> = async ({ params }) => {
+type Params = Promise<{ storeId: string; categoryId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function CategoryPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const storeData = (await sqlClient.store.findUnique({
     where: {
       id: params.storeId,
     },
   })) as Store;
+
+  /*
   const { t } = await useTranslation(storeData?.defaultLocale || "en");
+        {!storeData.isOpen && <h2 className="pb-5">{t("store_closed")}</h2>}
+
+  */
 
   if (!storeData) return;
 
@@ -86,7 +92,7 @@ const CategoryPage: React.FC<pageProps> = async ({ params }) => {
   return (
     <Suspense fallback={<Loader />}>
       <Container>
-        {!storeData.isOpen && <h2 className="pb-5">{t("store_closed")}</h2>}
+        {!storeData.isOpen && <h2 className="pb-5">目前店休，無法接受訂單</h2>}
 
         <div className="grid grid-flow-row-dense lg:grid-flow-col gap-3">
           <Client category={category} store={storeData} />
@@ -94,5 +100,4 @@ const CategoryPage: React.FC<pageProps> = async ({ params }) => {
       </Container>
     </Suspense>
   );
-};
-export default CategoryPage;
+}

@@ -7,8 +7,9 @@ import { NextResponse } from "next/server";
 // called by: AddProductOptionTemplateDialog.
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string; productId: string } },
+  props: { params: Promise<{ storeId: string; productId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

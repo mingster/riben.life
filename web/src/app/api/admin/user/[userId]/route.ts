@@ -6,8 +6,9 @@ import { CheckAdminApiAccess } from "../../api_helper";
 ///!SECTION update user in database.
 export async function PATCH(
   req: Request,
-  { params }: { params: { userId: string } },
+  props: { params: Promise<{ userId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckAdminApiAccess();
 

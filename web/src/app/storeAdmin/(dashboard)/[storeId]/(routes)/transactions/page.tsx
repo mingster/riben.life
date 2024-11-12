@@ -16,7 +16,8 @@ interface pageProps {
   };
 }
 
-const TransactionMgmtPage: React.FC<pageProps> = async ({ params }) => {
+const TransactionMgmtPage: React.FC<pageProps> = async (props) => {
+  const params = await props.params;
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   const orders = (await sqlClient.storeOrder.findMany({

@@ -2,18 +2,25 @@ import { auth } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { StoreOrder } from "@prisma/client";
-import { Session } from "next-auth";
+import type { Session } from "next-auth";
 import { revalidatePath } from "next/cache";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+
+type Params = Promise<{ storeId: string }>;
 
 // get all orders in the given orderId array
+//
 export async function POST(
-  req: Request,
-  { params }: { params: { storeId: string } },
+  request: Request,
+  props: {
+    params: Params;
+  },
 ) {
   try {
-    const body = await req.json();
+    const body = await request.json();
     const { orderIds } = body;
+
+    const params = await props.params;
 
     //console.log("get-orders", orderIds);
 

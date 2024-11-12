@@ -1,9 +1,10 @@
 import { sqlClient } from "@/lib/prismadb";
 import { FaqEdit } from "./faq-edit";
 
-const FaqEditPage = async ({
-  params,
-}: { params: { storeId: string; categoryId: string; faqId: string } }) => {
+const FaqEditPage = async (props: {
+  params: Promise<{ storeId: string; categoryId: string; faqId: string }>;
+}) => {
+  const params = await props.params;
   // make sure category exists
   const category = await sqlClient.faqCategory.findUnique({
     where: {

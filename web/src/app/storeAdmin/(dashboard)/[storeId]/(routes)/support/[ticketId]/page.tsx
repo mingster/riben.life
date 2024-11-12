@@ -1,20 +1,21 @@
 "use server";
 
-import { sqlClient } from "@/lib/prismadb";
-import { DisplayThread } from "./display-thread";
-import { TicketReply } from "./ticket-reply";
-import { Suspense } from "react";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
+import { sqlClient } from "@/lib/prismadb";
+import { Suspense } from "react";
+import { DisplayThread } from "./display-thread";
+import { TicketReply } from "./ticket-reply";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-    ticketId: string;
-  };
-}
-const TicketEditPage: React.FC<pageProps> = async ({ params }) => {
+type Params = Promise<{ orderId: string, ticketId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function TicketEditPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const ticket = await sqlClient.supportTicket.findUnique({
     where: {
       id: params.ticketId,
@@ -63,5 +64,3 @@ const TicketEditPage: React.FC<pageProps> = async ({ params }) => {
     </Suspense>
   );
 };
-
-export default TicketEditPage;

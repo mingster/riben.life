@@ -18,9 +18,10 @@ import {
 import Decimal from "decimal.js";
 import getOrderById from "@/actions/get-order-by_id";
 
-const OrderRefundPage = async ({
-  params,
-}: { params: { orderId: string; storeId: string } }) => {
+const OrderRefundPage = async (props: {
+  params: Promise<{ orderId: string; storeId: string }>;
+}) => {
+  const params = await props.params;
   await checkStoreAccess(params.storeId);
   //const store = (await getStoreWithCategories(params.storeId)) as Store;
   const store = (await getStoreWithProducts(

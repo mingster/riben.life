@@ -1,14 +1,13 @@
 import Container from "@/components/ui/container";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-const SettingsAdminPage: React.FC<pageProps> = async ({ params }) => {
+export default async function SettingsAdminPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   return <Container>admin Settings</Container>;
-};
-
-export default SettingsAdminPage;
+}

@@ -9,8 +9,9 @@ import getOrderById from "@/actions/get-order-by_id";
 // mark order as deleted
 export async function DELETE(
   req: Request,
-  { params }: { params: { orderId: string; storeId: string } },
+  props: { params: Promise<{ orderId: string; storeId: string }> },
 ) {
+  const params = await props.params;
   //try {
   CheckStoreAdminApiAccess(params.storeId);
 
@@ -47,8 +48,9 @@ export async function DELETE(
 /// persist updated order in database
 export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string; orderId: string } },
+  props: { params: Promise<{ storeId: string; orderId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

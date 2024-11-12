@@ -3,9 +3,10 @@ import { ProductEditTabs } from "./tabs";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Product, StoreProductOptionTemplate } from "@/types";
 
-const ProductEditPage = async ({
-  params,
-}: { params: { productId: string; storeId: string } }) => {
+const ProductEditPage = async (props: {
+  params: Promise<{ productId: string; storeId: string }>;
+}) => {
+  const params = await props.params;
   const product = (await sqlClient.product.findUnique({
     where: {
       id: params.productId,

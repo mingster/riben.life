@@ -1,22 +1,20 @@
+import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { Suspense } from "react";
-import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import type { Category, Store } from "@/types";
-import type { CategoryColumn } from "./components/columns";
+import { Suspense } from "react";
 import { CategoryClient } from "./components/category-client";
+import type { CategoryColumn } from "./components/columns";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string, messageId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-// here we save store settings to mangodb
-//
-const CategoryPage: React.FC<pageProps> = async ({ params }) => {
+export default async function CategoryPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   const lastSort = await sqlClient.category.findFirst({
@@ -57,5 +55,3 @@ const CategoryPage: React.FC<pageProps> = async ({ params }) => {
     </Suspense>
   );
 };
-
-export default CategoryPage;

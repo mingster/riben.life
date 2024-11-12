@@ -5,13 +5,14 @@ import type { Session } from "next-auth";
 
 import { redirect } from "next/navigation";
 
-export default async function DashboardLayout({
-  children,
-  params,
-}: {
+export default async function DashboardLayout(props: {
   children: React.ReactNode;
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }) {
+  const params = await props.params;
+
+  const { children } = props;
+
   const session = (await GetSession()) as Session;
   if (!session) {
     redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);

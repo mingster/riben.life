@@ -7,8 +7,9 @@ import { NextResponse } from "next/server";
 ///!SECTION add reply to this ticket.
 export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string; ticketId: string } },
+  props: { params: Promise<{ storeId: string; ticketId: string }> },
 ) {
+  const params = await props.params;
   try {
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {
@@ -82,8 +83,9 @@ export async function PATCH(
 ///!SECTION mark this ticket as archived.
 export async function DELETE(
   req: Request,
-  { params }: { params: { storeId: string; ticketId: string } },
+  props: { params: Promise<{ storeId: string; ticketId: string }> },
 ) {
+  const params = await props.params;
   try {
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev --turbopack -p 3000",
     "debugdev": "yarn postinstall; NODE_OPTIONS='--inspect' next dev -p 3000",
     "build": "yarn postinstall; next build",
     "start": "next start -p 3000",
@@ -16,7 +16,8 @@
     "sql:generate": "npx prisma generate",
     "sql:dbpush": "npx prisma db push --schema prisma/schema.prisma",
     "mongo:generate": "prisma generate --schema prisma-mongo/schema.prisma",
-    "mongo:dbpush": "npx prisma db push --schema prisma-mongo/schema.prisma"
+    "mongo:dbpush": "npx prisma db push --schema prisma-mongo/schema.prisma",
+    "depcheck": "npx depcheck ."
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.3",
@@ -76,19 +77,19 @@
     "lucide-react": "^0.456.0",
     "mongodb": "^6.10.0",
     "mongoose": "^8.8.1",
-    "next": "^14",
+    "next": "15.0.3",
     "next-auth": "^5.0.0-beta.25",
     "next-qrcode": "^2.5.1",
     "next-themes": "^0.3.0",
     "nextjs-current-url": "^1.0.3",
     "nodemailer": "^6.9.15",
     "postcss-focus-visible": "^10.0.1",
-    "react": "18.3.1",
+    "react": "^19",
     "react-apexcharts": "^1.5.0",
     "react-aria-components": "^1.4.1",
     "react-cookie": "^7.2.2",
     "react-day-picker": "^9.2.1",
-    "react-dom": "18.3.1",
+    "react-dom": "^19",
     "react-google-recaptcha": "^3.1.0",
     "react-hook-form": "^7.53.1",
     "react-i18next": "^15.1.0",
@@ -123,8 +124,8 @@
     "@types/crypto-js": "^4.2.2",
     "@types/node": "20.17.0",
     "@types/nodemailer": "^6.4.16",
-    "@types/react": "^18.3.7",
-    "@types/react-dom": "18.3.1",
+    "@types/react": "npm:types-react@19.0.0-rc.1",
+    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
     "@types/react-google-recaptcha": "^2.1.9",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^7.13.1",
@@ -132,12 +133,16 @@
     "autoprefixer": "^10.4.20",
     "dotenv": "^16.4.5",
     "eslint": "^8",
-    "eslint-config-next": "^14.2.15",
+    "eslint-config-next": "^15.0.3",
     "postcss": "^8",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.14",
     "tailwindcss-react-aria-components": "^1.1.6",
     "typescript": "^5"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
+  "resolutions": {
+    "@types/react": "npm:types-react@19.0.0-rc.1",
+    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1"
+  }
 }

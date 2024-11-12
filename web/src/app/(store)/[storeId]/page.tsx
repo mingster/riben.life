@@ -1,26 +1,24 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import BusinessHours from "@/lib/businessHours";
-import { mongoClient, sqlClient } from "@/lib/prismadb";
+import { mongoClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { StoreSettings } from "@prisma-mongo/prisma/client";
-import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { StoreHomeContent } from "./components/store-home-content";
 
-import { useTranslation } from "@/app/i18n";
-import { useI18n } from "@/providers/i18n-provider";
-import { formatDate } from "date-fns";
 import getStoreWithProducts from "@/actions/get-store-with-products";
+import { formatDate } from "date-fns";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
-const StoreHomePage: React.FC<pageProps> = async ({ params }) => {
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function StoreHomePage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   const store = await getStoreWithProducts(params.storeId);
 
   //console.log(JSON.stringify(store));
@@ -38,7 +36,14 @@ const StoreHomePage: React.FC<pageProps> = async ({ params }) => {
   })) as StoreSettings;
   //console.log(JSON.stringify(storeSettings));
 
-  const { t } = await useTranslation(store?.defaultLocale || "en");
+  /*
+const { t } = await useTranslation(store?.defaultLocale || "en");
+<h1>{t("store_closed")}</h1>
+<div>
+{t("store_next_opening_hours")}
+{closed_descr}
+</div>
+  */
 
   let closed_descr = "";
   let isStoreOpen = store.isOpen;
@@ -62,9 +67,9 @@ const StoreHomePage: React.FC<pageProps> = async ({ params }) => {
       <Container>
         {!isStoreOpen ? (
           <>
-            <h1>{t("store_closed")}</h1>
+            <h1>目前店休，無法接受訂單</h1>
             <div>
-              {t("store_next_opening_hours")}
+              下次開店時間:
               {closed_descr}
             </div>
           </>
@@ -76,5 +81,4 @@ const StoreHomePage: React.FC<pageProps> = async ({ params }) => {
       </Container>
     </Suspense>
   );
-};
-export default StoreHomePage;
+}

@@ -16,10 +16,12 @@ import { Logo } from "@/components/logo";
 const SIGNIN_ERROR_URL = "/signin-error";
 
 export default async function SignInPage(props: {
-  searchParams: { callbackUrl: string | undefined };
+  searchParams: Promise<{ callbackUrl: string | undefined }>;
 }) {
+  /*
   const { t } = await useTranslation("tw");
-
+  useI18n().t("signin_with").replace("{0}", provider.name)}
+  */
   return (
     <>
       <Navbar title="" />
@@ -29,8 +31,8 @@ export default async function SignInPage(props: {
       >
         <div
           className="w-1/2 h-screen hidden lg:block
-      bg-top bg-cover bg-no-repeat bg-[url('/images/beams/blog-post-form@80.jpg')]
-      dark:bg-[url('/images/beams/blog-post-form-dark@90.jpg')]"
+    bg-top bg-cover bg-no-repeat bg-[url('/images/beams/blog-post-form@80.jpg')]
+    dark:bg-[url('/images/beams/blog-post-form-dark@90.jpg')]"
         >
           <div className="flex h-screen p-8 w-full text-center items-center">
             <h2 className="text-3xl font-extrabold tracking-tight text-sky-200">
@@ -48,7 +50,7 @@ export default async function SignInPage(props: {
                 "use server";
                 try {
                   await signIn(provider.id, {
-                    redirectTo: props.searchParams?.callbackUrl ?? "",
+                    redirectTo: (await props.searchParams)?.callbackUrl ?? "",
                   });
                 } catch (error) {
                   // Signin can fail for a number of reasons, such as the user
@@ -87,8 +89,7 @@ export default async function SignInPage(props: {
                       default:
                         return "";
                     }
-                  })()}
-                  {t("signin_with").replace("{0}", provider.name)}
+                  })()}用{provider.name}登入
                 </span>
               </Button>
             </form>

@@ -1,8 +1,8 @@
 import { sendMail } from "@/actions/send-store-notification";
 import axios from "axios";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: Request, response: Response) {
+export async function POST(request: Request) {
   try {
     const body = await request.json();
     console.log(JSON.stringify(body));

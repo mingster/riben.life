@@ -8,16 +8,16 @@ import type { Store, StoreAnnouncement } from "@prisma/client";
 import type { MessageColumn } from "./components/columns";
 import { MessageClient } from "./components/message-client";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 // here we save store settings to mangodb
 //
-const AnnouncementsAdminPage: React.FC<pageProps> = async ({ params }) => {
+export default async function AnnouncementsAdminPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   const messages = await sqlClient.storeAnnouncement.findMany({
@@ -47,5 +47,3 @@ const AnnouncementsAdminPage: React.FC<pageProps> = async ({ params }) => {
     </Suspense>
   );
 };
-
-export default AnnouncementsAdminPage;

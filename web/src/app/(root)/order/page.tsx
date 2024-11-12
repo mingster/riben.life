@@ -7,27 +7,18 @@ import type { Store } from "@/types";
 import { Suspense } from "react";
 import { DisplayStoreOrdersToday } from "./display-order-today";
 
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
-
 // 點餐記錄 - show order history from local storage.
 //NOTE - why local storage?  because we allow anonymous user to place order.
 //
-const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
-  // show my account -> order page if user is signed in
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function StoreOrderStatusPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   /*
-  const user = (await getUser()) as User;
-  if (user) {
-    redirect('/account');
-  }
-  */
-
-  // we will use DisplayStoreOrdersToday to link orders to user
-  // should user decide to sign in.
-
+  const params = await props.params;
   // otherwise use local storage to show orders
   const store = (await sqlClient.store.findFirst({
     where: {
@@ -35,8 +26,7 @@ const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
     },
   })) as Store;
   transformDecimalsToNumbers(store);
-
-  //const { t } = await useTranslation(store?.defaultLocale || "en");
+  */
 
   return (
     <Suspense fallback={<Loader />}>
@@ -48,5 +38,4 @@ const StoreOrderStatusPage: React.FC<pageProps> = async ({ params }) => {
       </div>
     </Suspense>
   );
-};
-export default StoreOrderStatusPage;
+}

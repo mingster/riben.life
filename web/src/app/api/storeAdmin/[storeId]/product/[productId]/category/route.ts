@@ -4,8 +4,9 @@ import { NextResponse } from "next/server";
 
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string; productId: string } },
+  props: { params: Promise<{ storeId: string; productId: string }> },
 ) {
+  const params = await props.params;
   CheckStoreAdminApiAccess(params.storeId);
 
   const body = await req.json();
@@ -19,8 +20,9 @@ export async function POST(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { storeId: string; productId: string } },
+  props: { params: Promise<{ storeId: string; productId: string }> },
 ) {
+  const params = await props.params;
   CheckStoreAdminApiAccess(params.storeId);
 
   const body = await req.json();

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 const UserNotificationPage: React.FC = async () => {
   const user = await getUser();
 
-  const { t } = await useTranslation(user?.locale || "en");
+  //const { t } = await useTranslation(user?.locale || "en");
 
   if (!user) {
     redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
@@ -57,7 +57,8 @@ const UserNotificationPage: React.FC = async () => {
       },
     });
 
-    const title = t("notification");
+    const title = "Notification";
+    //const title = t("notification");
     //console.log(`title: ${title}`);
 
     return (

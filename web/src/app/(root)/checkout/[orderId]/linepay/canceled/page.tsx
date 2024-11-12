@@ -6,14 +6,13 @@ import { CancelAndRedirect } from "./cancelAndRedirect";
 
 // https://developers-pay.line.me/merchant/redirection-pages/
 // cancel page is called when user
-export default async function LinePayCancelledPage({
-  searchParams,
-}: {
-  searchParams: {
+export default async function LinePayCancelledPage(props: {
+  searchParams: Promise<{
     orderId: string;
     transactionId: string;
-  };
+  }>;
 }) {
+  const searchParams = await props.searchParams;
   console.log(searchParams.orderId, searchParams.transactionId);
 
   if (!searchParams.orderId) {

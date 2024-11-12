@@ -1,9 +1,17 @@
 import { sqlClient } from "@/lib/prismadb";
 import { MessageEdit } from "./message-edit";
 
-const MessageEditPage = async ({
-  params,
-}: { params: { storeId: string; messageId: string } }) => {
+type Params = Promise<{ storeId: string, messageId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+// here we save store settings to mangodb
+//
+export default async function MessageEditPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const obj = await sqlClient.storeAnnouncement.findUnique({
     where: {
       id: params.messageId,
@@ -22,5 +30,3 @@ const MessageEditPage = async ({
     </div>
   );
 };
-
-export default MessageEditPage;

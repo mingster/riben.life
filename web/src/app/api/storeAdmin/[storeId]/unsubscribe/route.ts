@@ -10,8 +10,9 @@ import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 // we will call stripe api to remove the subscription.
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {

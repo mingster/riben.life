@@ -1,9 +1,15 @@
 import { sqlClient } from "@/lib/prismadb";
 import { FaqCategoryEdit } from "./faqCategory-edit";
 
-const FaqCategoryEditPage = async ({
-  params,
-}: { params: { storeId: string; categoryId: string } }) => {
+type Params = Promise<{ storeId: string, categoryId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function FaqCategoryEditPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const obj = await sqlClient.faqCategory.findUnique({
     where: {
       id: params.categoryId,
@@ -25,5 +31,3 @@ const FaqCategoryEditPage = async ({
     </div>
   );
 };
-
-export default FaqCategoryEditPage;

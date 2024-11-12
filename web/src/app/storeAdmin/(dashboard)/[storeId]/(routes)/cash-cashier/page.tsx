@@ -9,12 +9,6 @@ import { CashCashier } from "./data-client";
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreTables } from "@prisma/client";
 
-interface props {
-  params: {
-    storeId: string;
-  };
-}
-
 export const metadata: Metadata = {
   title: "Store Dashboard - Cash Cashier",
   description: "",
@@ -22,7 +16,16 @@ export const metadata: Metadata = {
 
 // DashboardPage is home of the selected store. It diesplays store operatiing stat such as
 //total revenue, sales count, products, etc..
-const CashCashierAdminPage: React.FC<props> = async ({ params }) => {
+
+type Params = Promise<{ storeId: string, messageId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function CashCashierAdminPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   await checkStoreAccess(params.storeId);
   const store = (await getStoreWithCategories(params.storeId)) as Store;
 
@@ -41,5 +44,3 @@ const CashCashierAdminPage: React.FC<props> = async ({ params }) => {
     </Suspense>
   );
 };
-
-export default CashCashierAdminPage;

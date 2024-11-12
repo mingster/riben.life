@@ -15,13 +15,16 @@ import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
-const StoreFaqHomePage: React.FC<pageProps> = async ({ params }) => {
+
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function StoreFaqHomePage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const store = await sqlClient.store.findFirst({
     where: {
       id: params.storeId,
@@ -48,16 +51,22 @@ const StoreFaqHomePage: React.FC<pageProps> = async ({ params }) => {
 
   const i18Options = getOptions();
   const user = (await getUser()) as User;
+
+  /*
   const lng = user?.locale?.toString() || i18Options.fallbackLng;
   //console.log(`user language: ${lng}`);
   const { t } = await useTranslation(lng);
+
+          <Heading title={t("FAQ")} description={""} />
+
+  */
 
   if (faqCategories === null) return;
 
   return (
     <Suspense fallback={<Loader />}>
       <Container>
-        <Heading title={t("FAQ")} description={""} />
+        <Heading title="常見問題" description={""} />
 
         <Tabs defaultValue="account" className="">
           <TabsList className="">
@@ -89,5 +98,4 @@ const StoreFaqHomePage: React.FC<pageProps> = async ({ params }) => {
       </Container>
     </Suspense>
   );
-};
-export default StoreFaqHomePage;
+}

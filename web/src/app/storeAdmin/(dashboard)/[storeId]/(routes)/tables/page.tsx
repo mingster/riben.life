@@ -9,15 +9,15 @@ import type { TableColumn } from "./components/columns";
 import { TableClient } from "./components/table-client";
 import getStoreTables from "@/actions/get-store-tables";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-//
-const StoreTablePage: React.FC<pageProps> = async ({ params }) => {
+export default async function StoreTablePage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   const tables = (await getStoreTables(store.id)) as StoreTables[];
@@ -38,5 +38,3 @@ const StoreTablePage: React.FC<pageProps> = async ({ params }) => {
     </Suspense>
   );
 };
-
-export default StoreTablePage;

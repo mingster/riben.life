@@ -9,7 +9,14 @@ import { DataClient } from "./components/data-client";
 import { checkAdminAccess } from "../admin-utils";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
-const PayMethodAdminPage: React.FC = async () => {
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function PayMethodAdminPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   checkAdminAccess();
 
   const methods = await sqlClient.shippingMethod.findMany({
@@ -50,6 +57,4 @@ const PayMethodAdminPage: React.FC = async () => {
       </Container>
     </Suspense>
   );
-};
-
-export default PayMethodAdminPage;
+}
