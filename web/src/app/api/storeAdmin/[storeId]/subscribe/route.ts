@@ -10,8 +10,9 @@ import { SubscriptionStatus } from "@/types/enum";
 // create db objects needed in this call.
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
     const userId = await IsSignInResponse();

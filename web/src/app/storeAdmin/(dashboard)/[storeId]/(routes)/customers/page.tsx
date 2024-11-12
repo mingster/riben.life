@@ -1,18 +1,16 @@
-import Container from "@/components/ui/container";
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
+import Container from "@/components/ui/container";
 import type { Store } from "@prisma/client";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-const CustomerMgmtPage: React.FC<pageProps> = async ({ params }) => {
+export default async function CustomerMgmtPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   return <Container>Customer Management</Container>;
-};
-
-export default CustomerMgmtPage;
+}

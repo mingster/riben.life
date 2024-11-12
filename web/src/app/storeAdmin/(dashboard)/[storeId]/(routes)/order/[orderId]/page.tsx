@@ -1,26 +1,22 @@
 //create or edit store order
 
-import { sqlClient } from "@/lib/prismadb";
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
-import getStoreWithCategories from "@/actions/get-store";
 
-import { transformDecimalsToNumbers } from "@/lib/utils";
-import type { StoreWithProducts, StoreOrder } from "@/types";
-import { OrderEditClient } from "./client";
-import getStoreWithProducts from "@/actions/get-store-with-products";
-import {
-  OrderStatus,
-  PageAction,
-  PaymentStatus,
-  ReturnStatus,
-  ShippingStatus,
-} from "@/types/enum";
-import Decimal from "decimal.js";
 import getOrderById from "@/actions/get-order-by_id";
+import getStoreWithProducts from "@/actions/get-store-with-products";
+import type { StoreOrder, StoreWithProducts } from "@/types";
+import { PageAction } from "@/types/enum";
+import { OrderEditClient } from "./client";
 
-const OrderEditPage = async ({
-  params,
-}: { params: { orderId: string; storeId: string } }) => {
+type Params = Promise<{ storeId: string; orderId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function OrderEditPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   await checkStoreAccess(params.storeId);
   //const store = (await getStoreWithCategories(params.storeId)) as Store;
   const store = (await getStoreWithProducts(
@@ -61,6 +57,4 @@ const OrderEditPage = async ({
       </div>
     </div>
   );
-};
-
-export default OrderEditPage;
+}

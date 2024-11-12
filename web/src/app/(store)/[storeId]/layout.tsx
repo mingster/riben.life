@@ -15,14 +15,15 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 import BusinessHours from "@/lib/businessHours";
 import { redirect } from "next/navigation";
 type Props = {
-  params: { storeId: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ storeId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export async function generateMetadata(
-  { params, searchParams }: Props,
+  props: Props,
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
+  const params = await props.params;
   if (!params.storeId) {
     return {
       title: "riben.life",
@@ -51,15 +52,19 @@ export async function generateMetadata(
   };
 }
 
-export default async function StoreHomeLayout({
-  params,
-  children, // will be a page or nested layout
-}: {
-  params: {
+export default async function StoreHomeLayout(props: {
+  params: Promise<{
     storeId: string;
-  };
+  }>;
   children: React.ReactNode;
 }) {
+  const params = await props.params;
+
+  const {
+    // will be a page or nested layout
+    children,
+  } = props;
+
   const store = (await sqlClient.store.findFirst({
     where: {
       id: params.storeId,

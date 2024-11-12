@@ -4,8 +4,9 @@ import { CheckAdminApiAccess } from "../../api_helper";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { paymentMethodId: string } },
+  props: { params: Promise<{ paymentMethodId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckAdminApiAccess();
 

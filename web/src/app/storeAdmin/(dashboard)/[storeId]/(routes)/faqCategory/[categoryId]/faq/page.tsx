@@ -8,17 +8,17 @@ import { Suspense } from "react";
 import type { FaqColumn } from "./components/columns";
 import { FaqClient } from "./components/faq-client";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-    categoryId: string;
-  };
-}
-
 //!SECTION here we list FAQs under the given faq category.
 //
-const FaqPage: React.FC<pageProps> = async ({ params }) => {
+
+type Params = Promise<{ storeId: string; categoryId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function FaqPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   //SECTION disallow access if category is not found
@@ -61,6 +61,4 @@ const FaqPage: React.FC<pageProps> = async ({ params }) => {
       </Container>
     </Suspense>
   );
-};
-
-export default FaqPage;
+}

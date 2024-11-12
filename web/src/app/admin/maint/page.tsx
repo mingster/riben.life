@@ -17,20 +17,21 @@ import { sqlClient } from "@/lib/prismadb";
 import { DiamondPlus, Send, Trash } from "lucide-react";
 import { checkAdminAccess } from "../admin-utils";
 
+import { redirect } from "next/navigation";
 import fs from "node:fs";
 import { EditDefaultPrivacy } from "./edit-default-privacy";
 import { EditDefaultTerms } from "./edit-default-terms";
-import { redirect } from "next/navigation";
 
-interface props {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 // DashboardPage is home of the selected store. It diesplays store operatiing stat such as
 //total revenue, sales count, products, etc..
-const StoreAdminDevMaintPage: React.FC<props> = async ({ params }) => {
+export default async function StoreAdminDevMaintPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   checkAdminAccess();
 
   const deleteAllOrders = async () => {
@@ -300,6 +301,4 @@ const StoreAdminDevMaintPage: React.FC<props> = async ({ params }) => {
       <EditDefaultTerms data={tos} />
     </Container>
   );
-};
-
-export default StoreAdminDevMaintPage;
+}

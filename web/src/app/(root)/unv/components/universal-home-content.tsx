@@ -13,13 +13,13 @@ import "../../../css/base.css";
 import "../../../css/font.css";
 import "../../../css/utilities.css";
 
+import Image from "next/image";
 import { AboutUs } from "./AboutUs";
 import { Cost } from "./Cost";
 import { FAQ } from "./FAQ";
 import { Features } from "./Features";
 import { Footer } from "./Footer";
 import { UseCases } from "./UseCases";
-import Image from "next/image";
 
 export const UniversalHomeContent = () => {
   const { toast } = useToast();

@@ -3,11 +3,10 @@ import { StoreOrder } from "prisma/prisma-client";
 
 // route to payment provider based on region and currency
 //
-const CheckoutHomePage = async ({
-  params,
-}: {
-  params: { orderId: string };
+const CheckoutHomePage = async (props: {
+  params: Promise<{ orderId: string }>;
 }) => {
+  const params = await props.params;
   //console.log('orderId: ' + params.orderId);
 
   if (!params.orderId) {

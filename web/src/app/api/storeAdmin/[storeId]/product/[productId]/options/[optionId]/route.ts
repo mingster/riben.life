@@ -6,10 +6,11 @@ import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 //delete product option by its id
 export async function DELETE(
   req: Request,
-  {
-    params,
-  }: { params: { productId: string; storeId: string; optionId: string } },
+  props: {
+    params: Promise<{ productId: string; storeId: string; optionId: string }>;
+  },
 ) {
+  const params = await props.params;
   //try {
   CheckStoreAdminApiAccess(params.storeId);
 
@@ -62,10 +63,11 @@ export async function DELETE(
 // called by: AddProductOptionDialog.
 export async function PATCH(
   req: Request,
-  {
-    params,
-  }: { params: { storeId: string; productId: string; optionId: string } },
+  props: {
+    params: Promise<{ storeId: string; productId: string; optionId: string }>;
+  },
 ) {
+  const params = await props.params;
   CheckStoreAdminApiAccess(params.storeId);
 
   if (!params.productId) {

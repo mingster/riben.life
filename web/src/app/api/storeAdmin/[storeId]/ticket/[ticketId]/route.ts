@@ -7,8 +7,9 @@ import { IsSignInResponse } from "@/lib/auth/utils";
 ///!SECTION add reply to this ticket from store staff.
 export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string; ticketId: string } },
+  props: { params: Promise<{ storeId: string; ticketId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
     const userId = IsSignInResponse();
@@ -80,8 +81,9 @@ export async function PATCH(
 ///!SECTION mark this ticket as archived.
 export async function DELETE(
   req: Request,
-  { params }: { params: { storeId: string; ticketId: string } },
+  props: { params: Promise<{ storeId: string; ticketId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

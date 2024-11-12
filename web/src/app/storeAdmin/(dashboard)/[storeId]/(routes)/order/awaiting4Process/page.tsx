@@ -7,15 +7,15 @@ import type { Store } from "@/types";
 import { Suspense } from "react";
 import { Awaiting4ProcessingClient } from "./client";
 
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-// DashboardPage is home of the selected store. It diesplays store operatiing stat such as
-//total revenue, sales count, products, etc..
-const OrderAwaiting4Processing: React.FC<pageProps> = async ({ params }) => {
+export default async function OrderAwaiting4Processing(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   /*
@@ -54,6 +54,4 @@ const OrderAwaiting4Processing: React.FC<pageProps> = async ({ params }) => {
       <Awaiting4ProcessingClient store={store} />
     </Suspense>
   );
-};
-
-export default OrderAwaiting4Processing;
+}

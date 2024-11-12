@@ -12,16 +12,15 @@ import { SuccessAndRedirect } from "./SuccessAndRedirect";
 
 // this page is triggered when stripe confirmed the payment.
 // here we mark the SubscriptionPayment as paid, activate the subscription, and show customer a message.
-export default async function StripeConfirmedPage({
-  params,
-  searchParams,
-}: {
-  params: { orderId: string };
-  searchParams: {
+export default async function StripeConfirmedPage(props: {
+  params: Promise<{ orderId: string }>;
+  searchParams: Promise<{
     payment_intent: string;
     payment_intent_client_secret: string;
-  };
+  }>;
 }) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   if (!params.orderId) {
     throw new Error("order Id is missing");
   }

@@ -2,9 +2,14 @@ import { sqlClient } from "@/lib/prismadb";
 import { CategoryEditTabs } from "./tabs";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
-const CategoryEditPage = async ({
-  params,
-}: { params: { storeId: string; categoryId: string } }) => {
+type Params = Promise<{ storeId: string; categoryId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function CategoryEditPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   const obj = await sqlClient.category.findUnique({
     where: {
       id: params.categoryId,
@@ -40,6 +45,4 @@ const CategoryEditPage = async ({
       </div>
     </div>
   );
-};
-
-export default CategoryEditPage;
+}

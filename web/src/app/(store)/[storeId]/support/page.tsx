@@ -13,12 +13,14 @@ import { TicketClient } from "./components/ticket-client";
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
 
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
-const StoreSupportPage: React.FC<pageProps> = async ({ params }) => {
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function StoreSupportPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   const session = (await auth()) as Session;
   const userId = session?.user.id;
 
@@ -85,5 +87,4 @@ const StoreSupportPage: React.FC<pageProps> = async ({ params }) => {
       </Container>
     </Suspense>
   );
-};
-export default StoreSupportPage;
+}

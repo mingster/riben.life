@@ -12,16 +12,17 @@ import { StoresClient } from "./components/stores-client";
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 // here we save store settings to mangodb
 //
-const StoreAdminPage: React.FC<pageProps> = async ({ params }) => {
+export default async function StoreAdminPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   //console.log('storeid: ' + params.storeId);
   const session = (await auth()) as Session;
   const userId = session?.user.id;
@@ -71,6 +72,4 @@ const StoreAdminPage: React.FC<pageProps> = async ({ params }) => {
       </Container>
     </Suspense>
   );
-};
-
-export default StoreAdminPage;
+}

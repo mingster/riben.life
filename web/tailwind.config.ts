@@ -468,7 +468,7 @@ module.exports = {
     require('@tailwindcss/typography'),
     require('@tailwindcss/aspect-ratio'),
     require('@tailwindcss/forms')({ strategy: 'class' }),
-    require('tailwindcss-animate'), require('tailwindcss-react-aria-components'),
+    //require('tailwindcss-animate'), require('tailwindcss-react-aria-components'),
     function ({ addVariant }: PluginAPI) {
       addVariant(
         'supports-backdrop-blur',
@@ -501,20 +501,20 @@ module.exports = {
       )
     },
     function ({ addUtilities, theme }: PluginAPI) {
-      let backgroundSize = '7.07px 7.07px'
-      let backgroundImage = (color: any) =>
+      const backgroundSize = '7.07px 7.07px'
+      const backgroundImage = (color: any) =>
         `linear-gradient(135deg, ${color} 10%, transparent 10%, transparent 50%, ${color} 50%, ${color} 60%, transparent 60%, transparent 100%)`
 
-      let backgroundColors = theme('backgroundColor');
+      const backgroundColors = theme('backgroundColor');
       if (backgroundColors) {
-        let colors = Object.entries(backgroundColors).filter(
+        const colors = Object.entries(backgroundColors).filter(
           ([, value]) => typeof value === 'object' && value[400] && value[500]
         )
         addUtilities(
           Object.fromEntries(
             colors.map(([name, colors]) => {
-              let backgroundColor = colors[400] + '1a' // 10% opacity
-              let stripeColor = colors[500] + '80' // 50% opacity
+              const backgroundColor = colors[400] + '1a' // 10% opacity
+              const stripeColor = colors[500] + '80' // 50% opacity
 
               return [
                 `.bg-stripes-${name}`,

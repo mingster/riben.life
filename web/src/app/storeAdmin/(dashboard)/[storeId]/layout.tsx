@@ -9,13 +9,14 @@ import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 import type { Session } from "next-auth";
 
 type Props = {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 };
 
 export async function generateMetadata(
-  { params }: Props,
+  props: Props,
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
+  const params = await props.params;
   if (!params.storeId) {
     return {
       title: "pstv",
@@ -43,13 +44,14 @@ export async function generateMetadata(
   };
 }
 
-export default async function StoreAdminLayout({
-  children,
-  params,
-}: {
+export default async function StoreAdminLayout(props: {
   children: React.ReactNode;
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }) {
+  const params = await props.params;
+
+  const { children } = props;
+
   RequiresSignIn();
   const session = (await GetSession()) as Session;
   //console.log('session: ' + JSON.stringify(session));

@@ -1,20 +1,19 @@
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import { Loader } from "@/components/ui/loader";
+import { sqlClient } from "@/lib/prismadb";
+import { stripe } from "@/lib/stripe/config";
 import type { Store } from "@/types";
 import { Suspense } from "react";
 import { PkgSelection } from "./pkgSelection";
-import { sqlClient } from "@/lib/prismadb";
-import type { Subscription, SubscriptionPayment } from "@prisma/client";
-import { StoreLevel } from "@/types/enum";
-import { stripe } from "@/lib/stripe/config";
 
-interface props {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-const StoreSubscribePage: React.FC<props> = async ({ params }) => {
+export default async function StoreSubscribePage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   /*
   await sqlClient.subscription.deleteMany({
   });
@@ -56,6 +55,4 @@ const StoreSubscribePage: React.FC<props> = async ({ params }) => {
       </section>
     </Suspense>
   );
-};
-
-export default StoreSubscribePage;
+}

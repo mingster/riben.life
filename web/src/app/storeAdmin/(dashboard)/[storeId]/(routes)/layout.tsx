@@ -7,13 +7,14 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 //import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 
-export default async function StoreLayout({
-  children,
-  params,
-}: {
+export default async function StoreLayout(props: {
   children: React.ReactNode;
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }) {
+  const params = await props.params;
+
+  const { children } = props;
+
   RequiresSignIn();
   const session = (await GetSession()) as Session;
 

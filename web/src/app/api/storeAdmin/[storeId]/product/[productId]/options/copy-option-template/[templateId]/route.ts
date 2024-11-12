@@ -12,10 +12,11 @@ import type {
 // called by: DisplayStoreOptionTemplates.
 export async function POST(
   req: Request,
-  {
-    params,
-  }: { params: { storeId: string; productId: string; templateId: string } },
+  props: {
+    params: Promise<{ storeId: string; productId: string; templateId: string }>;
+  },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

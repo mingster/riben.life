@@ -43,7 +43,12 @@ export default function DropdownMessage({ messages }: props) {
       */
 
     // finally, show the message if available.
-    messages ? setNotifying(true) : setNotifying(false);
+    if (messages !== null) {
+      setNotifying(true);
+    } else {
+      setNotifying(false);
+    }
+    //messages ? setNotifying(true) : setNotifying(false);
   }, [messages]);
 
   //console.log(`hasMessage: ${hasMessage}`);

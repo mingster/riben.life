@@ -8,8 +8,9 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 // get unpaid orders in the store.
 export async function GET(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 
@@ -17,9 +18,10 @@ export async function GET(
       where: {
         storeId: params.storeId,
         isPaid: false,
+        /*
         orderStatus: {
           in: [OrderStatus.Pending, OrderStatus.Processing],
-        },
+        },*/
       },
       include: {
         OrderNotes: true,

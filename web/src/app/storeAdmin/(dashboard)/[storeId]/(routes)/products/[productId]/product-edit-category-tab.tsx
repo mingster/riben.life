@@ -55,7 +55,7 @@ export const ProductEditCategoryTab = ({
   const formattedCategories: CategoryColumn[] = allCategories.map(
     (item: Category) => ({
       id: item.id.toString(),
-      storeId: params.storeId.toString(),
+      storeId: params.storeId as string, // Assert that it's a string
       name: item.name.toString(),
       isFeatured: item.isFeatured,
       sortOrder: Number(item.sortOrder) || 0,
@@ -115,7 +115,7 @@ export const ProductEditCategoryTab = ({
       if (selected) {
         // save to db
         const obj = {
-          productId: params.productId.toString(),
+          productId: params.productId as string,
           categoryId: item.id.toString(),
           sortOrder: index + 1,
         };

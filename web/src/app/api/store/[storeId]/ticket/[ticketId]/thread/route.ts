@@ -7,8 +7,9 @@ import { NextResponse } from "next/server";
 ///!SECTION get all tickets that belong to the thread
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string; ticketId: string } },
+  props: { params: Promise<{ storeId: string; ticketId: string }> },
 ) {
+  const params = await props.params;
   try {
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {

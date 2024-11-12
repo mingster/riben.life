@@ -2,9 +2,10 @@ import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import { EditClient } from "./edit-form-client";
 
-const StoreEditPage = async ({
-  params,
-}: { params: { shipMethodId: string } }) => {
+const StoreEditPage = async (props: {
+  params: Promise<{ shipMethodId: string }>;
+}) => {
+  const params = await props.params;
   if (params.shipMethodId === null) return;
 
   const obj = await sqlClient.shippingMethod.findUnique({

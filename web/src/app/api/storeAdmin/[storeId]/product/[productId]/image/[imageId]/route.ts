@@ -4,10 +4,11 @@ import { NextResponse } from "next/server";
 
 export async function DELETE(
   req: Request,
-  {
-    params,
-  }: { params: { storeId: string; productId: string; imageId: string } },
+  props: {
+    params: Promise<{ storeId: string; productId: string; imageId: string }>;
+  },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

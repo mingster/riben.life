@@ -24,13 +24,18 @@ import { ProductStatuses } from "@/types/enum";
 import Link from "next/link";
 
 interface props {
+  storeId: string;
   initialData?: ProductCategories[] | []; // persisted data from database
   allProducts: Product[]; //all available products in the store
 }
 
 // Select products for this store category.
 //
-export const CategoryEditProductTab = ({ initialData, allProducts }: props) => {
+export const CategoryEditProductTab = ({
+  storeId,
+  initialData,
+  allProducts,
+}: props) => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -53,7 +58,7 @@ export const CategoryEditProductTab = ({ initialData, allProducts }: props) => {
   const formattedProducts: ProductColumn[] = allProducts.map(
     (item: Product) => ({
       id: item.id.toString(),
-      storeId: params.storeId.toString(),
+      storeId: storeId,
       name: item.name.toString(),
       price: Number(item.price),
       status: item.status,
@@ -120,7 +125,7 @@ export const CategoryEditProductTab = ({ initialData, allProducts }: props) => {
 
     // remove all products associated with this category
     await axios.delete(
-      `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/categories/${params.categoryId}/product`,
+      `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId?.toString()}/categories/${params.categoryId?.toString()}/product`,
       { data: {} },
     );
 
@@ -133,11 +138,11 @@ export const CategoryEditProductTab = ({ initialData, allProducts }: props) => {
         // save to db
         const obj = {
           productId: item.id.toString(),
-          categoryId: params.categoryId.toString(),
+          categoryId: params.categoryId?.toString(),
           sortOrder: index + 1,
         };
         await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/categories/${params.categoryId}/product`,
+          `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId?.toString()}/categories/${params.categoryId?.toString()}/product`,
           obj,
         );
 
@@ -161,7 +166,7 @@ export const CategoryEditProductTab = ({ initialData, allProducts }: props) => {
     });
 
     router.refresh();
-    router.push(`/storeAdmin/${params.storeId}/categories`);
+    router.push(`/storeAdmin/${params.storeId?.toString()}/categories`);
   };
 
   return (
@@ -190,7 +195,9 @@ export const CategoryEditProductTab = ({ initialData, allProducts }: props) => {
             type="button"
             variant="outline"
             onClick={() => {
-              router.push(`/storeAdmin/${params.storeId}/categories`);
+              router.push(
+                `/storeAdmin/${params.storeId?.toString()}/categories`,
+              );
             }}
             className="ml-5"
           >

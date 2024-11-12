@@ -8,8 +8,9 @@ import { IsSignInResponse } from "@/lib/auth/utils";
 ///!SECTION create Category record in database.
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {

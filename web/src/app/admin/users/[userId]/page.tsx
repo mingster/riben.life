@@ -3,7 +3,8 @@ import type { Account, Role, Session, StoreOrder } from "@prisma/client";
 import { UserEditTabs } from "./tabs";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
-const UserEditPage = async ({ params }: { params: { userId: string } }) => {
+const UserEditPage = async (props: { params: Promise<{ userId: string }> }) => {
+  const params = await props.params;
   const user = await sqlClient.user.findUnique({
     where: {
       id: params.userId,

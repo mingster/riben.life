@@ -1,9 +1,15 @@
 import { sqlClient } from "@/lib/prismadb";
 import { EditStoreTable } from "./edit-store-table";
 
-const StoreTableEditPage = async ({
-  params,
-}: { params: { storeId: string; tableId: string } }) => {
+type Params = Promise<{ storeId: string; tableId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function StoreTableEditPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const obj = await sqlClient.storeTables.findUnique({
     where: {
       id: params.tableId,
@@ -20,6 +26,4 @@ const StoreTableEditPage = async ({
       </div>
     </div>
   );
-};
-
-export default StoreTableEditPage;
+}

@@ -5,8 +5,9 @@ import { IsSignInResponse } from "@/lib/auth/utils";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
     const userId = await IsSignInResponse();

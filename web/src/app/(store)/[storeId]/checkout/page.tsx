@@ -1,25 +1,22 @@
+import getStoreWithCategories from "@/actions/get-store";
 import getUser from "@/actions/get-user";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import { sqlClient } from "@/lib/prismadb";
+import { transformDecimalsToNumbers } from "@/lib/utils";
+import type { Store } from "@/types";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Checkout } from "./client";
-import type {
-  Store,
-  StorePaymentMethodMapping,
-  StoreShipMethodMapping,
-} from "@/types";
-import type { PaymentMethod, ShippingMethod } from "@prisma/client";
-import { transformDecimalsToNumbers } from "@/lib/utils";
-import getStoreWithCategories from "@/actions/get-store";
 
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
-const StoreCheckoutPage: React.FC<pageProps> = async ({ params }) => {
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function StoreCheckoutPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+
   const store = (await getStoreWithCategories(params.storeId)) as Store;
 
   if (!store) {
@@ -38,5 +35,4 @@ const StoreCheckoutPage: React.FC<pageProps> = async ({ params }) => {
       </Container>
     </Suspense>
   );
-};
-export default StoreCheckoutPage;
+}

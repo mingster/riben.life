@@ -1,28 +1,25 @@
 "use server";
 
-import { sqlClient } from "@/lib/prismadb";
-import { TicketCreate } from "./ticket-create";
-import { DisplayThread } from "./display-thread";
-import { TicketReply } from "./ticket-reply";
-import { Suspense } from "react";
+import getOrderById from "@/actions/get-order-by_id";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import getOrderById from "@/actions/get-order-by_id";
+import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder } from "@/types";
+import { Suspense } from "react";
+import { DisplayThread } from "./display-thread";
+import { TicketCreate } from "./ticket-create";
+import { TicketReply } from "./ticket-reply";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-    ticketId: string;
-  };
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-const TicketEditPage: React.FC<pageProps> = async ({
-  params,
-  searchParams,
-}) => {
-  const { orderid } = await searchParams;
+type Params = Promise<{ storeId: string; ticketId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function TicketEditPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+  const orderid = searchParams.query;
   //console.log(`orderid: ${orderid}`);
 
   let order = null;
@@ -78,6 +75,4 @@ const TicketEditPage: React.FC<pageProps> = async ({
       </Container>
     </Suspense>
   );
-};
-
-export default TicketEditPage;
+}

@@ -6,8 +6,9 @@ import { NextResponse } from "next/server";
 //
 export async function GET(
   req: Request,
-  { params }: { params: { ownerId: string } },
+  props: { params: Promise<{ ownerId: string }> },
 ) {
+  const params = await props.params;
   if (!params.ownerId) {
     return new NextResponse("User is required", { status: 401 });
   }

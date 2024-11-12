@@ -4,80 +4,24 @@ import BusinessHours from "@/lib/businessHours";
 import { mongoClient, sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { StoreSettings } from "@prisma-mongo/prisma/client";
-import { Prisma, type StoreTables } from "@prisma/client";
+import type { StoreTables } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { useTranslation } from "@/app/i18n";
-import { useI18n } from "@/providers/i18n-provider";
+import getStoreWithProducts from "@/actions/get-store-with-products";
 import { formatDate } from "date-fns";
 import { StoreHomeContent } from "../components/store-home-content";
 
-const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
-  include: {
-    Categories: { include: { ProductCategories: true } },
-  },
-});
-export type StoreWithProductNCategories = Prisma.StoreGetPayload<
-  typeof storeObj
->;
+type Params = Promise<{ storeId: string; tableId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-    tableId: string;
-  };
-}
+export default async function TableOrderPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
 
-// customer scan table QR code to get to this page.
-// show to store menu and/or current order
-/*
-客美多-台中公益店
-點餐紀錄: 消費金額 $352
-內用座位 104+103 桌 (No. 187)
-入座時間 2024-08-31 14:26:23
-2大人 0小孩
-*/
-const TableOrderPage: React.FC<pageProps> = async ({ params }) => {
-  const store = await sqlClient.store.findFirst({
-    where: {
-      id: params.storeId,
-    },
-    include: {
-      Categories: {
-        where: { isFeatured: true },
-        orderBy: { sortOrder: "asc" },
-        include: {
-          ProductCategories: {
-            //where: { Product: { status: ProductStatus.Published } },
-            include: {
-              Product: {
-                //where: { status: ProductStatus.Published },
-                include: {
-                  ProductImages: true,
-                  ProductAttribute: true,
-                  //ProductCategories: true,
-                  ProductOptions: {
-                    include: {
-                      ProductOptionSelections: true,
-                    },
-                    orderBy: {
-                      sortOrder: "asc",
-                    },
-                  },
-                },
-              },
-            },
-            orderBy: { sortOrder: "asc" },
-          },
-        },
-        //StoreAnnouncement: true,
-      },
-    },
-  });
-
-  //console.log(JSON.stringify(store));
+  const store = await getStoreWithProducts(params.storeId);
 
   if (!store) {
     redirect("/unv");
@@ -97,8 +41,6 @@ const TableOrderPage: React.FC<pageProps> = async ({ params }) => {
     },
   })) as StoreSettings;
   //console.log(JSON.stringify(storeSettings));
-
-  const { t } = await useTranslation(store?.defaultLocale || "en");
 
   let closed_descr = "";
   let isStoreOpen = store.isOpen;
@@ -122,9 +64,9 @@ const TableOrderPage: React.FC<pageProps> = async ({ params }) => {
       <Container>
         {!isStoreOpen ? (
           <>
-            <h1>{t("store_closed")}</h1>
+            <h1>目前店休，無法接受訂單</h1>
             <div>
-              {t("store_next_opening_hours")}
+              下次開店時間:
               {closed_descr}
             </div>
           </>
@@ -140,5 +82,4 @@ const TableOrderPage: React.FC<pageProps> = async ({ params }) => {
       </Container>
     </Suspense>
   );
-};
-export default TableOrderPage;
+}

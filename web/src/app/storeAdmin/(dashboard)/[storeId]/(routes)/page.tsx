@@ -8,12 +8,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { StoreAdminDashboard } from "./components/store-admin-dashboard";
 
-interface DashboardPageProps {
-  params: {
-    storeId: string;
-  };
-}
-
 export const metadata: Metadata = {
   title: "Store Dashboard",
   description: "",
@@ -21,7 +15,15 @@ export const metadata: Metadata = {
 
 // DashboardPage is home of the selected store. It diesplays store operatiing stat such as
 //total revenue, sales count, products, etc..
-const StoreAdminHomePage: React.FC<DashboardPageProps> = async ({ params }) => {
+
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function StoreAdminHomePage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   /*
@@ -60,6 +62,4 @@ const StoreAdminHomePage: React.FC<DashboardPageProps> = async ({ params }) => {
       <StoreAdminDashboard store={store} />
     </Suspense>
   );
-};
-
-export default StoreAdminHomePage;
+}

@@ -1,14 +1,9 @@
-"use client";
-
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { Suspense } from "react";
 
-import { useI18n } from "@/providers/i18n-provider";
-import { useTranslation } from "@/app/i18n/client";
-import { useParams } from "next/navigation";
-
+/*
 interface pageProps {
   params: {
     storeId: string;
@@ -16,22 +11,11 @@ interface pageProps {
   };
 }
 
-const CheckoutSuccessPage: React.FC<pageProps> = ({ params }) => {
+const CheckoutSuccessPage: React.FC<pageProps> = props => {
+  const params = use(props.params);
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
 
-  //when we get here, the checkout cart item should be removed
-  //
-  /* this code causes client side error
-'use client';
-  import useCart from '@/hooks/use-cart';
-  try {
-    const cart = useCart();
-    cart.removeAll();
-  } catch (e) {
-    console.error(e);
-  }
-  */
   return (
     <Suspense fallback={<Loader />}>
       <Container>
@@ -41,3 +25,35 @@ const CheckoutSuccessPage: React.FC<pageProps> = ({ params }) => {
   );
 };
 export default CheckoutSuccessPage;
+
+export async function generateMetadata(props: {
+  params: Params
+  searchParams: SearchParams
+}) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+  const orderId = params.orderId;
+  const query = searchParams.query;
+}
+*/
+
+type Params = Promise<{ orderId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function CheckoutSuccessPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+  const orderId = params.orderId;
+  const query = searchParams.query;
+
+  return (
+    <Suspense fallback={<Loader />}>
+      <Container>
+        <SuccessAndRedirect orderId={orderId} />
+      </Container>
+    </Suspense>
+  );
+}

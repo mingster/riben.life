@@ -6,8 +6,9 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 //delete product by its id
 export async function DELETE(
   req: Request,
-  { params }: { params: { productId: string; storeId: string } },
+  props: { params: Promise<{ productId: string; storeId: string }> },
 ) {
+  const params = await props.params;
   //try {
   CheckStoreAdminApiAccess(params.storeId);
 
@@ -48,8 +49,9 @@ export async function DELETE(
 ///!SECTION update product in database.
 export async function PATCH(
   req: Request,
-  { params }: { params: { storeId: string; productId: string } },
+  props: { params: Promise<{ storeId: string; productId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

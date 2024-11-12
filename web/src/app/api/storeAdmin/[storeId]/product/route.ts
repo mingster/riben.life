@@ -6,8 +6,9 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 ///!SECTION create new product.
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 
@@ -56,8 +57,9 @@ export async function POST(
 // get products in the store
 export async function GET(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     CheckStoreAdminApiAccess(params.storeId);
 

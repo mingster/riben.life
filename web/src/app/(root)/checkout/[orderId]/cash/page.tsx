@@ -6,7 +6,9 @@ import { Loader } from "@/components/ui/loader";
 import Container from "@/components/ui/container";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 
-const CashPaymentPage = async ({ params }: { params: { orderId: string } }) => {
+/*
+const CashPaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
+  const params = await props.params;
   //console.log('orderId: ' + params.orderId);
 
   if (!params.orderId) {
@@ -24,5 +26,26 @@ const CashPaymentPage = async ({ params }: { params: { orderId: string } }) => {
     </Suspense>
   );
 };
-
 export default CashPaymentPage;
+*/
+
+type Params = Promise<{ orderId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function CashPaymentPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+  const orderId = params.orderId;
+  const query = searchParams.query;
+
+  return (
+    <Suspense fallback={<Loader />}>
+      <Container>
+        <SuccessAndRedirect orderId={orderId} />
+      </Container>
+    </Suspense>
+  );
+}

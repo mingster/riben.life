@@ -7,8 +7,9 @@ import { v4 as uuidv4 } from "uuid";
 ///!SECTION create new ticket from store's support page.
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string } },
+  props: { params: Promise<{ storeId: string }> },
 ) {
+  const params = await props.params;
   try {
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {

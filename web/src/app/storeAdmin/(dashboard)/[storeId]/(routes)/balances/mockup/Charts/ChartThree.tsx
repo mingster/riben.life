@@ -61,7 +61,7 @@ const ChartThree: React.FC = () => {
       series: [65, 34, 12, 56],
     }));
   };
-  handleReset;
+  handleReset();
 
   return (
     <div className="col-span-12 rounded-sm border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:col-span-5">
@@ -93,6 +93,8 @@ const ChartThree: React.FC = () => {
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
+                {" "}
+                <title>Arrow Down Icon</title>
                 <path
                   d="M0.47072 1.08816C0.47072 1.02932 0.500141 0.955772 0.54427 0.911642C0.647241 0.808672 0.809051 0.808672 0.912022 0.896932L4.85431 4.60386C4.92785 4.67741 5.06025 4.67741 5.14851 4.60386L9.09079 0.896932C9.19376 0.793962 9.35557 0.808672 9.45854 0.911642C9.56151 1.01461 9.5468 1.17642 9.44383 1.27939L5.50155 4.98632C5.22206 5.23639 4.78076 5.23639 4.51598 4.98632L0.558981 1.27939C0.50014 1.22055 0.47072 1.16171 0.47072 1.08816Z"
                   fill="#637381"
@@ -122,7 +124,9 @@ const ChartThree: React.FC = () => {
       <div className="-mx-8 flex flex-wrap items-center justify-center gap-y-3">
         <div className="w-full px-8 sm:w-1/2">
           <div className="flex w-full items-center">
-            <span className="mr-2 block h-3 w-full max-w-3 rounded-full bg-primary"></span>
+            <span className="mr-2 block h-3 w-full max-w-3 rounded-full bg-primary">
+              {" "}
+            </span>
             <p className="flex w-full justify-between text-sm font-medium text-black dark:text-primary">
               <span> Desktop </span>
               <span> 65% </span>
@@ -131,7 +135,9 @@ const ChartThree: React.FC = () => {
         </div>
         <div className="w-full px-8 sm:w-1/2">
           <div className="flex w-full items-center">
-            <span className="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#6577F3]"></span>
+            <span className="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#6577F3]">
+              {" "}
+            </span>
             <p className="flex w-full justify-between text-sm font-medium text-black dark:text-primary">
               <span> Tablet </span>
               <span> 34% </span>
@@ -140,7 +146,9 @@ const ChartThree: React.FC = () => {
         </div>
         <div className="w-full px-8 sm:w-1/2">
           <div className="flex w-full items-center">
-            <span className="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#8FD0EF]"></span>
+            <span className="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#8FD0EF]">
+              {" "}
+            </span>
             <p className="flex w-full justify-between text-sm font-medium text-black dark:text-primary">
               <span> Mobile </span>
               <span> 45% </span>
@@ -149,7 +157,9 @@ const ChartThree: React.FC = () => {
         </div>
         <div className="w-full px-8 sm:w-1/2">
           <div className="flex w-full items-center">
-            <span className="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#0FADCF]"></span>
+            <span className="mr-2 block h-3 w-full max-w-3 rounded-full bg-[#0FADCF]">
+              {" "}
+            </span>
             <p className="flex w-full justify-between text-sm font-medium text-black dark:text-primary">
               <span> Unknown </span>
               <span> 12% </span>
