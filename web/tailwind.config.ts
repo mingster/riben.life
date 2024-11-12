@@ -468,7 +468,7 @@ module.exports = {
     require('@tailwindcss/typography'),
     require('@tailwindcss/aspect-ratio'),
     require('@tailwindcss/forms')({ strategy: 'class' }),
-    require('tailwindcss-animate'), require('tailwindcss-react-aria-components'),
+    //require('tailwindcss-animate'), require('tailwindcss-react-aria-components'),
     function ({ addVariant }: PluginAPI) {
       addVariant(
         'supports-backdrop-blur',

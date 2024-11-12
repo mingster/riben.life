@@ -44,8 +44,7 @@ export const DropdownCart = () => {
 
     if (params.tableId !== null) {
       router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`);
-    }
-    else {
+    } else {
       router.push(`/${params.storeId}/checkout`);
     }
   }

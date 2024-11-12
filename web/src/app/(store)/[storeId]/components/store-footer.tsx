@@ -32,9 +32,8 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
 
   function onCheckout() {
     if (params.tableId !== null) {
-      router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`)
-    }
-    else {
+      router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`);
+    } else {
       router.push(`/${params.storeId}/checkout`);
     }
     //router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`);

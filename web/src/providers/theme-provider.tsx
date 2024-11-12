@@ -23,13 +23,15 @@ export default function ThemeProvider({
   return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
 }
 
-
-
 interface ValueObject {
   [themeName: string]: string;
 }
 type DataAttribute = `data-${string}`;
-interface ScriptProps extends React.DetailedHTMLProps<React.ScriptHTMLAttributes<HTMLScriptElement>, HTMLScriptElement> {
+interface ScriptProps
+  extends React.DetailedHTMLProps<
+    React.ScriptHTMLAttributes<HTMLScriptElement>,
+    HTMLScriptElement
+  > {
   [dataAttribute: DataAttribute]: any;
 }
 interface UseThemeProps {
@@ -44,9 +46,9 @@ interface UseThemeProps {
   /** If `enableSystem` is true and the active theme is "system", this returns whether the system preference resolved to "dark" or "light". Otherwise, identical to `theme` */
   resolvedTheme?: string | undefined;
   /** If enableSystem is true, returns the System theme preference ("dark" or "light"), regardless what the active theme is */
-  systemTheme?: 'dark' | 'light' | undefined;
+  systemTheme?: "dark" | "light" | undefined;
 }
-type Attribute = DataAttribute | 'class';
+type Attribute = DataAttribute | "class";
 interface ThemeProviderProps extends React.PropsWithChildren {
   /** List of all available theme names */
   themes?: string[] | undefined;
