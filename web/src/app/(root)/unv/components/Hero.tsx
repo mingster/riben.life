@@ -1,24 +1,6 @@
-import { LayoutGroup, motion, useAnimation } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
-import clsx from "clsx";
-import { fit } from "@/lib/fit";
 //import debounce from "debounce";
-import { useMedia } from "@/hooks/useMedia";
-import { wait } from "@/lib/wait";
+import { LayoutGroup } from "framer-motion";
 
-import colors from "tailwindcss/colors";
-
-/*
-    <Layout
-      left={
-        <div className="lg:-mr-18">
-          <LayoutGroup> </LayoutGroup>
-        </div>
-      }
-      right={<> </>}
-    />
-
-*/
 export function Hero() {
   return (
     <>

@@ -7,7 +7,7 @@ import { Suspense } from "react";
 import { CategoryClient } from "./components/category-client";
 import type { CategoryColumn } from "./components/columns";
 
-type Params = Promise<{ storeId: string, messageId: string }>;
+type Params = Promise<{ storeId: string; messageId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function CategoryPage(props: {
@@ -54,4 +54,4 @@ export default async function CategoryPage(props: {
       </Container>
     </Suspense>
   );
-};
+}

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 // DashboardPage is home of the selected store. It diesplays store operatiing stat such as
 //total revenue, sales count, products, etc..
 
-type Params = Promise<{ storeId: string, messageId: string }>;
+type Params = Promise<{ storeId: string; messageId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function CashCashierAdminPage(props: {
@@ -43,4 +43,4 @@ export default async function CashCashierAdminPage(props: {
       <CashCashier store={store} tables={tables} />
     </Suspense>
   );
-};
+}

@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { MessageEdit } from "./message-edit";
 
-type Params = Promise<{ storeId: string, messageId: string }>;
+type Params = Promise<{ storeId: string; messageId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 // here we save store settings to mangodb
@@ -29,4 +29,4 @@ export default async function MessageEditPage(props: {
       </div>
     </div>
   );
-};
+}

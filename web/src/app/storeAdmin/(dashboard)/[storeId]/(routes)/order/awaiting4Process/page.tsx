@@ -7,7 +7,6 @@ import type { Store } from "@/types";
 import { Suspense } from "react";
 import { Awaiting4ProcessingClient } from "./client";
 
-
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
@@ -55,4 +54,4 @@ export default async function OrderAwaiting4Processing(props: {
       <Awaiting4ProcessingClient store={store} />
     </Suspense>
   );
-};
+}

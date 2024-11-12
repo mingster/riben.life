@@ -1,9 +1,5 @@
-import React from "react";
-import { BigText, Caption, IconContainer, Paragraph } from "./common";
 import Link from "next/link";
-import clsx from "clsx";
-import { motion } from "framer-motion";
-import { slideIn, staggerContainer, fadeIn, textVariant } from "@/lib/motion";
+import { BigText, Caption, IconContainer, Paragraph } from "./common";
 
 export function Cost({ className, ...props }: { className?: string }) {
   return (

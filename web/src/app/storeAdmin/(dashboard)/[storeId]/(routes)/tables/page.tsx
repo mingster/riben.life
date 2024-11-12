@@ -37,4 +37,4 @@ export default async function StoreTablePage(props: {
       </Container>
     </Suspense>
   );
-};
+}

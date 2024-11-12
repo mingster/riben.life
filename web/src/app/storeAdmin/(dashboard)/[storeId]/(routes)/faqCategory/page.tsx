@@ -49,4 +49,4 @@ export default async function FaqCategoryPage(props: {
       </Container>
     </Suspense>
   );
-};
+}

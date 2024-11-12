@@ -8,7 +8,7 @@ import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import type { Store } from "@prisma/client";
 import "../../../../../css/addon.css";
 
-type Params = Promise<{ storeId: string, messageId: string }>;
+type Params = Promise<{ storeId: string; messageId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function BalanceMgmtPage(props: {
@@ -27,4 +27,4 @@ export default async function BalanceMgmtPage(props: {
       </Container>
     </Suspense>
   );
-};
+}

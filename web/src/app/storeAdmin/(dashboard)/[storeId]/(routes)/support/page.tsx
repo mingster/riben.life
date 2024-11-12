@@ -29,7 +29,6 @@ export default async function StoreSupportPage(props: {
   const session = (await GetSession()) as Session;
   const userId = session?.user.id;
 
-
   if (!store) {
     redirect("/unv");
   }
@@ -65,4 +64,4 @@ export default async function StoreSupportPage(props: {
       </Container>
     </Suspense>
   );
-};
+}

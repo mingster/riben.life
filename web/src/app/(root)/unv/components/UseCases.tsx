@@ -1,17 +1,4 @@
-import clsx from "clsx";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import React from "react";
 import { BigText, Caption, IconContainer, Paragraph } from "./common";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 export function UseCases({ className, ...props }: { className?: string }) {
   return (

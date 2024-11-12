@@ -84,4 +84,4 @@ export default async function StoreSettingsPage(props: {
       </Container>
     </Suspense>
   );
-};
+}

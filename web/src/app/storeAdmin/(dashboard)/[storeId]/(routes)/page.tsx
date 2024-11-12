@@ -62,4 +62,4 @@ export default async function StoreAdminHomePage(props: {
       <StoreAdminDashboard store={store} />
     </Suspense>
   );
-};
+}

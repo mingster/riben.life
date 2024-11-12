@@ -63,4 +63,4 @@ export default async function OrderAwaiting4ConfirmationPage(props: {
       <Awaiting4ConfirmationClient store={store} />
     </Suspense>
   );
-};
+}

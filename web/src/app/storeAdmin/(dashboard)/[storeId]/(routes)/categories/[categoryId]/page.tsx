@@ -2,8 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { CategoryEditTabs } from "./tabs";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 
-
-type Params = Promise<{ storeId: string, categoryId: string }>;
+type Params = Promise<{ storeId: string; categoryId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function CategoryEditPage(props: {
@@ -46,4 +45,4 @@ export default async function CategoryEditPage(props: {
       </div>
     </div>
   );
-};
+}

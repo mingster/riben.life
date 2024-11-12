@@ -40,8 +40,8 @@ export default async function StoreSubscribePage(props: {
 
   const subscriptionSchedule = subscription?.stripeSubscriptionId
     ? await stripe.subscriptionSchedules.retrieve(
-      subscription.stripeSubscriptionId,
-    )
+        subscription.stripeSubscriptionId,
+      )
     : null;
 
   console.log("subscriptionSchedule", JSON.stringify(subscriptionSchedule));
@@ -55,4 +55,4 @@ export default async function StoreSubscribePage(props: {
       </section>
     </Suspense>
   );
-};
+}

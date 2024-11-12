@@ -13,4 +13,4 @@ export default async function CustomerMgmtPage(props: {
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   return <Container>Customer Management</Container>;
-};
+}

@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { EditStoreTable } from "./edit-store-table";
 
-type Params = Promise<{ storeId: string, tableId: string }>;
+type Params = Promise<{ storeId: string; tableId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function StoreTableEditPage(props: {
@@ -26,4 +26,4 @@ export default async function StoreTableEditPage(props: {
       </div>
     </div>
   );
-};
+}

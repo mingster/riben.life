@@ -5,12 +5,10 @@ import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import type { StoreOrder, StoreWithProducts } from "@/types";
-import {
-  PageAction
-} from "@/types/enum";
+import { PageAction } from "@/types/enum";
 import { OrderEditClient } from "./client";
 
-type Params = Promise<{ storeId: string, orderId: string }>;
+type Params = Promise<{ storeId: string; orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function OrderEditPage(props: {
@@ -59,4 +57,4 @@ export default async function OrderEditPage(props: {
       </div>
     </div>
   );
-};
+}

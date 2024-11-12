@@ -9,15 +9,15 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { StoreOrderColumn } from "./components/columns";
 import { format } from "date-fns";
 
-//import { Metadata } from 'next';
-interface pageProps {
-  params: {
-    storeId: string;
-  };
-}
+type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-const TransactionMgmtPage: React.FC<pageProps> = async (props) => {
+export default async function TransactionMgmtPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   const params = await props.params;
+
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
   const orders = (await sqlClient.storeOrder.findMany({
@@ -64,6 +64,4 @@ const TransactionMgmtPage: React.FC<pageProps> = async (props) => {
       <TransactionClient store={store} data={formattedData} />
     </Container>
   );
-};
-
-export default TransactionMgmtPage;
+}

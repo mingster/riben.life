@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { FaqCategoryEdit } from "./faqCategory-edit";
 
-type Params = Promise<{ storeId: string, categoryId: string }>;
+type Params = Promise<{ storeId: string; categoryId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function FaqCategoryEditPage(props: {
@@ -30,4 +30,4 @@ export default async function FaqCategoryEditPage(props: {
       </div>
     </div>
   );
-};
+}

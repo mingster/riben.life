@@ -70,7 +70,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
       if (selected) {
         // save to db
         const obj = {
-          storeId: params.storeId.toString(),
+          storeId: params.storeId as string,
           methodId: item.id.toString(),
         };
         await axios.post(url, obj);
@@ -156,7 +156,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
       if (selected) {
         // save to db
         const obj = {
-          storeId: params.storeId.toString(),
+          storeId: params.storeId as string,
           methodId: item.id.toString(),
         };
         await axios.post(url, obj);

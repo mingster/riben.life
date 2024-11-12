@@ -71,4 +71,4 @@ export default async function ProductsPage(props: {
       </Container>
     </Suspense>
   );
-};
+}

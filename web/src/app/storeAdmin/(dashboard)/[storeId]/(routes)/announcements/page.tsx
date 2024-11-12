@@ -46,4 +46,4 @@ export default async function AnnouncementsAdminPage(props: {
       </Container>
     </Suspense>
   );
-};
+}

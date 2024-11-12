@@ -309,7 +309,7 @@ export function Header() {
             <code className="font-mono font-medium text-sky-500 dark:text-sky-400">
               客戶無需等待
             </code>
-            、 只需手機或平版電腦，您就可以開始使用系統。{" "}
+            、 只需手機或平版電腦，您就可以開始使用系統。
           </p>
           <div className="flex justify-center mt-6 space-x-6 text-sm sm:mt-10">
             <Link

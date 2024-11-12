@@ -7,7 +7,7 @@ import { Suspense } from "react";
 import { DisplayThread } from "./display-thread";
 import { TicketReply } from "./ticket-reply";
 
-type Params = Promise<{ orderId: string, ticketId: string }>;
+type Params = Promise<{ orderId: string; ticketId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function TicketEditPage(props: {
@@ -63,4 +63,4 @@ export default async function TicketEditPage(props: {
       </Container>
     </Suspense>
   );
-};
+}

@@ -47,12 +47,12 @@ export function AboutUs({ className, ...props }: { className?: string }) {
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, amount: 0.25 }}
-        className="px-1 lg:px-10 w-full py-10"
+        //className="px-1 lg:px-10 w-full py-10"
       >
         <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8 overflow-hidden">
           <motion.div
-            //variants={slideIn("left", "tween", 0.2, 1)}
-            className="flex-[0.75] bg-black-100 p-2 rounded-2xl"
+          //variants={slideIn("left", "tween", 0.2, 1)}
+          //className="flex-[0.75] bg-black-100 p-2 rounded-2xl"
           >
             <div className="flex gap-2">
               <IconContainer
@@ -113,7 +113,9 @@ export const ContactForm = () => {
   const { t } = useTranslation(lng, "landing");
 
   const [captcha, setCaptcha] = useState<string>("");
-  const recaptcha: RefObject<ReCAPTCHA> = useRef(null);
+
+  //const recaptcha: RefObject<ReCAPTCHA> = useRef(null);
+
   const { theme } = useTheme();
 
   const formSchema = z.object({
@@ -199,12 +201,12 @@ export const ContactForm = () => {
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, amount: 0.25 }}
-      className="px-1 w-full mx-auto relative z-0"
+      //className="px-1 w-full mx-auto relative z-0"
     >
       <div className="flex xl:flex-row flex-col-reverse gap-2 overflow-hidden">
         <motion.div
           variants={slideIn("left", "tween", 0.2, 1)}
-          className="flex-[0.75] bg-black-100 rounded-2xl"
+          //className="flex-[0.75] bg-black-100 rounded-2xl"
         >
           <div className="flex gap-2 pt-10 pb-10 hover:text-slate">
             {discordUrl && (
@@ -289,7 +291,7 @@ export const ContactForm = () => {
                 theme={theme === "dark" ? "dark" : "light"}
                 sitekey={`${process.env.NEXT_PUBLIC_RECAPTCHA}`}
                 onChange={captchaChange}
-                ref={recaptcha}
+                //ref={recaptcha}
                 className="mx-auto mt-10"
               />
 
