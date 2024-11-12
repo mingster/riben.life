@@ -1,5 +1,3 @@
-"use client";
-
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";

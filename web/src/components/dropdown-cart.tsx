@@ -42,10 +42,12 @@ export const DropdownCart = () => {
     //close();
     setIsOpen(false);
 
-    params.tableId
-      ? router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`)
-      : router.push(`/${params.storeId}/checkout`);
-    //router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`);
+    if (params.tableId !== null) {
+      router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`);
+    }
+    else {
+      router.push(`/${params.storeId}/checkout`);
+    }
   }
 
   function removeAll() {

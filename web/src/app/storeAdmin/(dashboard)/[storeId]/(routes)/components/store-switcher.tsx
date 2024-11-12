@@ -32,12 +32,9 @@ type PopoverTriggerProps = React.ComponentPropsWithoutRef<
   typeof PopoverTrigger
 >;
 
-interface StoreSwitcherProps extends PopoverTriggerProps {
-  //items: Record<string, any>[];
-}
 
 //export default function StoreSwitcher({ className, items = [] }: StoreSwitcherProps) {
-export default function StoreSwitcher({ className }: StoreSwitcherProps) {
+export default function StoreSwitcher({ className }: PopoverTriggerProps) {
   const params = useParams();
   const router = useRouter();
   const { lng } = useI18n();

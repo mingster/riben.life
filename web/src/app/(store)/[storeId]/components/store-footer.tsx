@@ -31,9 +31,12 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
   const [numInCart, setNumInCart] = useState(cart.totalItems);
 
   function onCheckout() {
-    params.tableId
-      ? router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`)
-      : router.push(`/${params.storeId}/checkout`);
+    if (params.tableId !== null) {
+      router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`)
+    }
+    else {
+      router.push(`/${params.storeId}/checkout`);
+    }
     //router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`);
   }
 

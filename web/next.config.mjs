@@ -6,6 +6,17 @@ const nextConfig = {
   experimental: {
     //ppr: true,  //https://nextjs.org/learn/dashboard-app/partial-prerendering
     //serverComponentsExternalPackages: ['pino', 'pino-pretty'],
+    turbo: {
+      resolveExtensions: [
+        '.mdx',
+        '.tsx',
+        '.ts',
+        '.jsx',
+        '.js',
+        '.mjs',
+        '.json',
+      ],
+    }
   },
   images: {
     remotePatterns: [
@@ -44,7 +55,7 @@ const nextConfig = {
   },
   reactStrictMode: true,
   //swcMinify: true,
-  webpack: (config,{ isServer }) => {
+  webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
         fs: false,
