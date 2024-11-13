@@ -6,6 +6,7 @@ import type { Store } from "@/types";
 
 import { Suspense } from "react";
 import { Awaiting4ProcessingClient } from "./client";
+import Container from "@/components/ui/container";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -51,7 +52,9 @@ export default async function OrderAwaiting4Processing(props: {
 
   return (
     <Suspense fallback={<Loader />}>
-      <Awaiting4ProcessingClient store={store} />
+      <Container>
+        <Awaiting4ProcessingClient store={store} />
+      </Container>
     </Suspense>
   );
 }

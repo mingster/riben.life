@@ -1,7 +1,7 @@
 "use client";
 
 import type { Store } from "@/types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { StoreLevel } from "@/types/enum";
 import { OrderUnpaid } from "../components/order-unpaid";
 import type { StoreTables } from "@prisma/client";
+import { Loader } from "@/components/ui/loader";
 
 export interface props {
   store: Store;
@@ -21,13 +22,13 @@ export interface props {
 export const CashCashier: React.FC<props> = ({ store, tables }) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
-
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const date = new Date();
   const [unpaidOrders, setUnpaidOrders] = useState([]);
 
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
     setLoading(true);
 
     // get pending and processing orders in the store.
@@ -45,7 +46,7 @@ export const CashCashier: React.FC<props> = ({ store, tables }) => {
       });
 
     setLoading(false);
-  };
+  }, [store.id]);
 
   const IntervaledContent = () => {
     useEffect(() => {
@@ -61,6 +62,18 @@ export const CashCashier: React.FC<props> = ({ store, tables }) => {
     return <></>;
   };
 
+  // useEffect only runs on the client, so now we can safely show the UI
+  useEffect(() => {
+    // fetch data as soon as page is mounted
+    if (!mounted) fetchData();
+    setMounted(true);
+  }, [mounted, fetchData]);
+
+  if (!mounted) {
+    return null;
+  }
+
+  if (loading) return <Loader />;
   return (
     <section className="relative w-full">
       <div className="container">

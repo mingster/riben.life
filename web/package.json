@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 3000",
-    "debugdev": "yarn postinstall; NODE_OPTIONS='--inspect' next dev -p 3000",
+    "debugdev": "yarn postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3000",
     "build": "yarn postinstall; next build",
     "start": "next start -p 3000",
     "lint": "next lint; eslint --fix \"**/*.{js,jsx,ts,tsx}\"",
@@ -64,6 +64,7 @@
     "cmdk": "1.0.4",
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "decimal.js": "^10.4.3",
     "embla-carousel-react": "^8.3.1",
     "flatpickr": "^4.6.13",

@@ -3,18 +3,20 @@
 import { AskUserToSignIn } from "@/components/ask-user-to-signIn";
 import { DisplayOrder } from "@/components/order-display";
 import { Button } from "@/components/ui/button";
+import { Loader } from "@/components/ui/loader";
 import {
   KEY_LOCALORDERS,
   getOrdersFromLocal,
   removeOrdersFromLocal,
 } from "@/lib/order-history";
+import { getUtcDate } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreOrder } from "@/types";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 
 // view order page (購物明細)
@@ -25,22 +27,14 @@ export const DisplayStoreOrdersToday: React.FC = () => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
   const { data: session } = useSession();
-  const [mounted, setMounted] = useState(false);
 
-  // useEffect only runs on the client, so now we can safely show the UI
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const param = useSearchParams();
   const storeId = param.get("storeId");
-  if (!storeId) return <></>;
 
   //console.log('orders_local', orders_local);
-
-  if (!mounted) {
-    return null;
-  }
 
   const linkOrders = async () => {
     // if user is signed in, update the orders
@@ -56,7 +50,7 @@ export const DisplayStoreOrdersToday: React.FC = () => {
 
   const removeOutedLocalOrders = () => {
     // filter orders by date
-    const today = new Date(Date.now());
+    const today = getUtcDate();
     const orderArray = JSON.parse("[]");
 
     orders.map((order: StoreOrder) => {
@@ -78,9 +72,11 @@ export const DisplayStoreOrdersToday: React.FC = () => {
     localStorage.setItem(KEY_LOCALORDERS, JSON.stringify(orderArray));
   };
 
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
+    setLoading(true);
+
     const orders_local = getOrdersFromLocal();
-    //console.log("orders_local", orders_local);
+    console.log("orders_local", orders_local);
 
     const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${storeId}/get-orders`;
     const body = JSON.stringify({
@@ -97,10 +93,11 @@ export const DisplayStoreOrdersToday: React.FC = () => {
       .then((res) => res.json())
       .then((data) => {
         //console.log('data', JSON.stringify(data));
-
         setOrders(data);
       });
-  };
+
+    setLoading(false);
+  }, [storeId]);
 
   const IntervaledContent = () => {
     useEffect(() => {
@@ -118,6 +115,20 @@ export const DisplayStoreOrdersToday: React.FC = () => {
     return <></>;
   };
 
+  // useEffect only runs on the client, so now we can safely show the UI
+  useEffect(() => {
+    // fetch data as soon as page is mounted
+    if (!mounted) fetchData();
+    setMounted(true);
+  }, [mounted, fetchData]);
+
+  if (!mounted) {
+    return null;
+  }
+
+  if (!storeId) return <></>;
+
+  if (loading) return <Loader />;
   return (
     <section className="relative w-full">
       <div className="container">

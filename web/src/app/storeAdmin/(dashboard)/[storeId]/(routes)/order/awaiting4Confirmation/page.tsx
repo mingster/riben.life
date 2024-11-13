@@ -7,6 +7,7 @@ import type { Store } from "@/types";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Awaiting4ConfirmationClient } from "./client";
+import Container from "@/components/ui/container";
 
 export const metadata: Metadata = {
   title: "Store Dashboard",
@@ -60,7 +61,9 @@ export default async function OrderAwaiting4ConfirmationPage(props: {
 
   return (
     <Suspense fallback={<Loader />}>
-      <Awaiting4ConfirmationClient store={store} />
+      <Container>
+        <Awaiting4ConfirmationClient store={store} />
+      </Container>
     </Suspense>
   );
 }

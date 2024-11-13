@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { OrderStatus, StoreLevel } from "@/types/enum";
 import { OrderInProgress } from "../../components/order-inprogress";
 import { OrderPending } from "../../components/order-pending";
+import { Loader } from "@/components/ui/loader";
 
 export interface props {
   store: Store;
@@ -20,18 +21,18 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "storeAdmin");
 
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const date = new Date();
   const [awaiting4ProcessingOrders, setAwaiting4ProcessingOrders] = useState(
     [],
   );
-  const [pendingOrders, setPendingOrders] = useState([]);
 
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
     setLoading(true);
 
-    // get pending and processing orders in the store.
+    // get processing orders in the store.
     const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-for-process`;
     fetch(url)
       .then((data) => {
@@ -39,7 +40,6 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
       })
       .then((data) => {
         //console.log("data", JSON.stringify(data));
-
         setAwaiting4ProcessingOrders(data);
 
         /*
@@ -78,10 +78,9 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
       .catch((err) => {
         console.log(err);
       });
-    //setCount(count + 5);
 
     setLoading(false);
-  };
+  }, [store.id]);
 
   const IntervaledContent = () => {
     useEffect(() => {
@@ -97,18 +96,18 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
     return <></>;
   };
 
-  //console.log(JSON.stringify(storeData));
-  /*
-          {!store.autoAcceptOrder && (
-            <OrderPending
-              storeId={store.id}
-              orders={pendingOrders}
-              parentLoading={loading}
-            />
-          )}
+  // useEffect only runs on the client, so now we can safely show the UI
+  useEffect(() => {
+    // fetch data as soon as page is mounted
+    if (!mounted) fetchData();
+    setMounted(true);
+  }, [mounted, fetchData]);
 
-  */
+  if (!mounted) {
+    return null;
+  }
 
+  if (loading) return <Loader />;
   return (
     <section className="relative w-full">
       <IntervaledContent />
