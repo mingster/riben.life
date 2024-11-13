@@ -71,7 +71,7 @@
   "Order_cancel": "取消訂單",
   "Order_cashier_confirm": "確認收款",
   "Order_edit_addButton": "加點",
-  "Order_edit_deleteButton": "刪單",
+  "Order_edit_deleteButton": "刪單/作廢",
   "Order_edit_noItem": "請添加商品",
   "Order_edit_orderNum": "單號：",
   "Order_edit_removed": "訂單已刪除",

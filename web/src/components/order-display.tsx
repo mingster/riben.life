@@ -12,7 +12,7 @@ import type { StoreOrder } from "@/types";
 import type { orderitemview, PaymentMethod } from "@prisma/client";
 import { format } from "date-fns/format";
 import Currency from "./currency";
-import { getTableName } from "@/lib/utils";
+import { formatDateTime, getTableName } from "@/lib/utils";
 import { DisplayOrderStatus } from "./order-status-display";
 
 type orderProps = { order: StoreOrder };
@@ -24,7 +24,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
   const router = useRouter();
 
   const { lng } = useI18n();
-  const { t } = useTranslation(lng, "account");
+  const { t } = useTranslation(lng);
 
   if (!order) {
     return "no order";
@@ -73,7 +73,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
             交易序號：{order.orderNum}
           </div>
           <div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
-            {format(order.createdAt, "yyyy/MM/dd HH:mm")}&nbsp;
+            {formatDateTime(order.createdAt)}&nbsp;
             {order.OrderItemView.length}
           </div>
         </div>

@@ -39,6 +39,7 @@ const formSchema = z.object({
   logo: z.string().optional().default(""),
   logoPublicId: z.string().default("").optional().default(""),
   acceptAnonymousOrder: z.boolean().optional().default(true),
+  defaultTimezone: z.coerce.number().optional().default(8),
 });
 
 type formValues = z.infer<typeof formSchema>;
@@ -250,7 +251,26 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                     </FormItem>
                   )}
                 />
-                <div>&nbsp;</div>
+
+                <FormField
+                  control={form.control}
+                  name="defaultTimezone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="">Timezone</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          disabled={loading || disablePaidOptions}
+                          className="font-mono"
+                          placeholder=""
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="grid grid-flow-row-dense grid-cols-2 gap-1">

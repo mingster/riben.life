@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { getNowDateInTz, transformDecimalsToNumbers } from "@/lib/utils";
 import { getUtcDate } from "@/lib/utils";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { Prisma } from "@prisma/client";
@@ -138,6 +138,16 @@ export async function POST(
     },
   });
 
+  if (!store) {
+    return NextResponse.json(
+      { success: false, message: "store not found." },
+      { status: 409 },
+    );
+  }
+
+  // store time in store's local timezone
+  const storeTimeNow = getNowDateInTz(store.defaultTimezone);
+
   const orderStatus = store?.autoAcceptOrder
     ? OrderStatus.Processing
     : OrderStatus.Pending;
@@ -152,7 +162,8 @@ export async function POST(
       currency: currency,
       paymentMethodId: paymentMethodId,
       shippingMethodId: shippingMethodId,
-      updatedAt: getUtcDate(),
+      createdAt: storeTimeNow,
+      updatedAt: storeTimeNow,
       paymentStatus: PaymentStatus.Pending,
       orderStatus: orderStatus,
       OrderItems: {

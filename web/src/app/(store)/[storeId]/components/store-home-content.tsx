@@ -6,7 +6,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import { type Item, useCart } from "@/hooks/use-cart";
 import BusinessHours from "@/lib/businessHours";
-import { getAbsoluteUrl } from "@/lib/utils";
+import { getAbsoluteUrl, getNowDateInTz, getUtcDate } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
   Category,
@@ -57,6 +57,12 @@ export const StoreHomeContent: React.FC<props> = ({
   //const [order, setOrder] = useState<StoreOrder>();
   const params = useParams<{ storeId: string }>();
   */
+
+  console.log("storeData", storeData.defaultTimezone);
+
+  console.log("utc", getUtcDate());
+
+  console.log("now", getNowDateInTz(storeData.defaultTimezone));
 
   const cart = useCart();
   const { toast } = useToast();
