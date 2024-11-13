@@ -2,6 +2,7 @@ import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
+import { getUtcDate } from "@/lib/utils";
 
 ///!SECTION mark pending or processing order as completed
 export async function POST(
@@ -60,7 +61,7 @@ export async function POST(
       },
       data: {
         orderStatus: OrderStatus.Completed,
-        updatedAt: new Date(Date.now()),
+        updatedAt: getUtcDate(),
       },
     });
 

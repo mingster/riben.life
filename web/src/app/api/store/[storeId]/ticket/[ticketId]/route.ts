@@ -1,6 +1,7 @@
-import { sqlClient } from "@/lib/prismadb";
-import { TicketStatus } from "@/types/enum";
 import { IsSignInResponse } from "@/lib/auth/utils";
+import { sqlClient } from "@/lib/prismadb";
+import { getUtcDate } from "@/lib/utils";
+import { TicketStatus } from "@/types/enum";
 
 import { NextResponse } from "next/server";
 
@@ -57,7 +58,7 @@ export async function PATCH(
         department: orig_ticket.department,
         subject: orig_ticket.subject,
         message,
-        updatedAt: new Date(Date.now()),
+        updatedAt: getUtcDate(),
       },
     });
     console.log(`reply ticket created: ${JSON.stringify(reply)}`);
@@ -69,7 +70,7 @@ export async function PATCH(
       },
       data: {
         status: TicketStatus.Active,
-        updatedAt: new Date(Date.now()),
+        updatedAt: getUtcDate(),
       },
     });
 
@@ -133,7 +134,7 @@ export async function DELETE(
       },
       data: {
         status: TicketStatus.Archived,
-        updatedAt: new Date(Date.now()),
+        updatedAt: getUtcDate(),
       },
     });
 

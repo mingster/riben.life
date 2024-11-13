@@ -3,6 +3,7 @@ import { TicketStatus } from "@/types/enum";
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
+import { getUtcDate } from "@/lib/utils";
 
 ///!SECTION create new ticket from store's support page.
 export async function POST(
@@ -42,7 +43,7 @@ export async function POST(
         department,
         subject,
         message,
-        updatedAt: new Date(Date.now()),
+        updatedAt: getUtcDate(),
       },
     });
 

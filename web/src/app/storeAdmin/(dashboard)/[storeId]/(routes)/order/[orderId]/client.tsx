@@ -331,7 +331,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
   // when action is to create new order, we create an persisted order first.
   //
-  const placeOrder = async () => {
+  const placeOrder = useCallback(async () => {
     setLoading(true);
 
     if (!store.StorePaymentMethods[0]) {
@@ -401,7 +401,14 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    store.StorePaymentMethods,
+    store.StoreShippingMethods,
+    store.defaultCurrency,
+    store.id,
+    t,
+    toast,
+  ]);
 
   // receive new items from OrderAddProductModal
   const handleAddToOrder = async (newItems: orderitemview[]) => {
@@ -435,16 +442,16 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
   }, [updatedOrder?.orderTotal]);
 
   // create order object if not exist. This should occur only in 新增訂單 workflow.
-  const placeOrderCallback = useCallback(placeOrder, []);
+  //const placeOrderCallback = useCallback(placeOrder, []);
   useEffect(() => {
     const createOrder = async () => {
       if (updatedOrder === null) {
-        await placeOrderCallback();
+        await placeOrder();
       }
     };
 
     createOrder();
-  }, [updatedOrder, placeOrderCallback]);
+  }, [updatedOrder, placeOrder]);
 
   const pageTitle = t(action) + t("Order_edit_title");
 

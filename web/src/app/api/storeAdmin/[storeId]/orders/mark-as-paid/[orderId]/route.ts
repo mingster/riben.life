@@ -2,6 +2,7 @@ import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
+import { getUtcDate } from "@/lib/utils";
 
 ///!SECTION mark order as paid
 export async function POST(
@@ -31,7 +32,7 @@ export async function POST(
       },
       data: {
         isPaid: true,
-        paidDate: new Date(Date.now()),
+        paidDate: getUtcDate(),
         paymentStatus: PaymentStatus.Paid,
       },
     });

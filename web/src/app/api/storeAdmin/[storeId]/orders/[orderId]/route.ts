@@ -5,6 +5,7 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 import { OrderStatus } from "@/types/enum";
 import type { StoreOrder } from "@/types";
 import getOrderById from "@/actions/get-order-by_id";
+import { getUtcDate } from "@/lib/utils";
 
 // mark order as deleted
 export async function DELETE(
@@ -25,6 +26,7 @@ export async function DELETE(
     },
     data: {
       orderStatus: OrderStatus.Voided,
+      updatedAt: getUtcDate(),
     },
   });
 
@@ -69,6 +71,7 @@ export async function PATCH(
         shippingMethodId: updatedOrder.shippingMethodId,
         tableId: updatedOrder.tableId,
         orderTotal: updatedOrder.orderTotal,
+        updatedAt: getUtcDate(),
       },
     });
 

@@ -1,8 +1,9 @@
+import { IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
+import { getUtcDate } from "@/lib/utils";
 import { TicketStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { IsSignInResponse } from "@/lib/auth/utils";
 
 ///!SECTION add reply to this ticket from store staff.
 export async function PATCH(
@@ -54,7 +55,7 @@ export async function PATCH(
         department: orig_ticket.department,
         subject: orig_ticket.subject,
         message,
-        updatedAt: new Date(Date.now()),
+        updatedAt: getUtcDate(),
       },
     });
 
@@ -67,7 +68,7 @@ export async function PATCH(
       },
       data: {
         status: TicketStatus.Replied,
-        updatedAt: new Date(Date.now()),
+        updatedAt: getUtcDate(),
       },
     });
 
@@ -124,7 +125,7 @@ export async function DELETE(
       },
       data: {
         status: TicketStatus.Archived,
-        updatedAt: new Date(Date.now()),
+        updatedAt: getUtcDate(),
       },
     });
 

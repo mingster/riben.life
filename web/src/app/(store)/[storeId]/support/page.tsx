@@ -3,7 +3,6 @@ import { Loader } from "@/components/ui/loader";
 import { mongoClient, sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
 import type { SupportTicket } from "@prisma/client";
-import { format } from "date-fns";
 
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -11,6 +10,7 @@ import type { TicketColumn } from "./components/columns";
 import { TicketClient } from "./components/ticket-client";
 
 import { auth } from "@/auth";
+import { formatDateTime } from "@/lib/utils";
 import type { Session } from "next-auth";
 
 type Params = Promise<{ storeId: string }>;
@@ -60,7 +60,7 @@ export default async function StoreSupportPage(props: {
       department: item.department,
       subject: item.subject,
       status: item.status,
-      updatedAt: format(item.updatedAt, "yyyy-MM-dd"),
+      updatedAt: formatDateTime(item.updatedAt),
     }),
   );
 

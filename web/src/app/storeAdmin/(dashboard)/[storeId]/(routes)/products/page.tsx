@@ -4,7 +4,7 @@ import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { Product } from "@/types";
 import type { Store } from "@prisma/client";
-import { format } from "date-fns";
+import { formatDateTime } from "@/lib/utils";
 import { Suspense } from "react";
 import type { ProductColumn } from "./components/columns";
 import { ProductsClient } from "./components/products-client";
@@ -55,7 +55,7 @@ export default async function ProductsPage(props: {
     status: item.status,
     price: Number(item.price),
     isFeatured: item.isFeatured,
-    updatedAt: format(item.updatedAt, "yyyy-MM-dd"),
+    updatedAt: formatDateTime(item.updatedAt),
     stock: item.ProductAttribute?.stock || 0,
     isRecurring: item.ProductAttribute?.isRecurring,
     hasOptions: item.ProductOptions?.length > 0,

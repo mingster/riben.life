@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+//import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
@@ -30,7 +30,7 @@ export async function PATCH(req: Request) {
         },
         data: {
           userId: userId,
-          //updatedAt: new Date(Date.now()),
+          //updatedAt: getUtcDate(),
         },
       });
     }

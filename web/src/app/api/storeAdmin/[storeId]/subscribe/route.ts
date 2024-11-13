@@ -5,6 +5,7 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { stripe } from "@/lib/stripe/config";
 import { SubscriptionStatus } from "@/types/enum";
+import { getUtcDate } from "@/lib/utils";
 
 // called when store operator select a package to subscribe.
 // create db objects needed in this call.
@@ -78,7 +79,7 @@ export async function POST(
     // make sure we have the subscription record only.
     // activate the subscription only when payment is confirmed.
     //
-    const currentDate = new Date(); // Current date and time
+    const currentDate = getUtcDate(); // Current date and time
     await sqlClient.subscription.upsert({
       where: {
         storeId: params.storeId,

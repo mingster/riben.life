@@ -1,7 +1,8 @@
-import { sqlClient, mongoClient } from "@/lib/prismadb";
+import { IsSignInResponse } from "@/lib/auth/utils";
+import { mongoClient, sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { IsSignInResponse } from "@/lib/auth/utils";
+import { getUtcDate } from "@/lib/utils";
 
 export async function PATCH(
   req: Request,
@@ -58,7 +59,7 @@ export async function PATCH(
         isOpen,
         requireSeating,
         requirePrepaid,
-        updatedAt: new Date(Date.now()),
+        updatedAt: getUtcDate(),
         /*
         storeLocales: {
           upsert: {
@@ -79,7 +80,7 @@ export async function PATCH(
       update: {
         orderNoteToCustomer,
         businessHours,
-        updatedAt: new Date(Date.now()),
+        updatedAt: getUtcDate(),
       },
       create: {
         orderNoteToCustomer,

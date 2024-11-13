@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { format } from "date-fns";
+import { formatDateTime } from "@/lib/utils";
 import { Suspense } from "react";
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import type { Store, StoreAnnouncement } from "@prisma/client";
@@ -35,7 +35,7 @@ export default async function AnnouncementsAdminPage(props: {
       id: item.id.toString(),
       storeId: store.id.toString(),
       message: item.message.toString(),
-      updatedAt: format(item.updatedAt, "yyyy-MM-dd"),
+      updatedAt: formatDateTime(item.updatedAt),
     }),
   );
 

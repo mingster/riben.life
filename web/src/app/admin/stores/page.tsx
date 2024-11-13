@@ -1,9 +1,8 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { format } from "date-fns";
+import { formatDateTime } from "@/lib/utils";
 
-import type { Store } from "@/types";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { StoreColumn } from "./components/columns";
@@ -59,7 +58,7 @@ export default async function StoreAdminPage(props: {
       name: item.name || "",
       customDomain: item.customDomain || "",
       owner: item.Owner.email || item.Owner.name || "",
-      createdAt: format(item.updatedAt, "yyyy-MM-dd"),
+      createdAt: formatDateTime(item.updatedAt),
       products: item.Products.length,
       storeOrders: item.StoreOrders.length,
     };

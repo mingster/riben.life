@@ -3,6 +3,7 @@ import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import { getUtcDate } from "@/lib/utils";
 
 ///!SECTION update Category record in database.
 export async function PATCH(
@@ -22,7 +23,7 @@ export async function PATCH(
       where: {
         id: params.messageId,
       },
-      data: { ...body, updatedAt: new Date(Date.now()) },
+      data: { ...body, updatedAt: getUtcDate() },
     });
 
     //console.log(`update announcement: ${JSON.stringify(obj)}`);

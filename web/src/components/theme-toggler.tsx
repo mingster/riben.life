@@ -1,3 +1,5 @@
+"use client";
+
 import useColorMode from "@/hooks/useColorMode";
 import { Moon, SunMoon } from "lucide-react";
 import { useTheme } from "next-themes";

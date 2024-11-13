@@ -1,13 +1,13 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { format } from "date-fns";
 
 import { Suspense } from "react";
 import type { DataColumn } from "./components/columns";
 import { DataClient } from "./components/data-client";
 import { checkAdminAccess } from "../admin-utils";
 import { transformDecimalsToNumbers } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -43,7 +43,7 @@ export default async function PayMethodAdminPage(props: {
       isDefault: item.isDefault,
       isDeleted: item.isDeleted,
       shipRequried: item.shipRequried,
-      updatedAt: format(item.updatedAt, "yyyy-MM-dd"),
+      updatedAt: formatDateTime(item.updatedAt),
       stores: item.stores.length,
       StoreOrder: item.StoreOrder.length,
       Shipment: item.Shipment.length,

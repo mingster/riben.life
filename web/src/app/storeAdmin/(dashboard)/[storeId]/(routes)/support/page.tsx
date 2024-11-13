@@ -3,7 +3,7 @@ import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
 import type { Store, SupportTicket } from "@prisma/client";
-import { format } from "date-fns";
+import { formatDateTime } from "@/lib/utils";
 
 import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 import type { Session } from "next-auth";
@@ -53,7 +53,7 @@ export default async function StoreSupportPage(props: {
       department: item.department,
       subject: item.subject,
       status: item.status,
-      updatedAt: format(item.updatedAt, "yyyy-MM-dd"),
+      updatedAt: formatDateTime(item.updatedAt),
     }),
   );
 

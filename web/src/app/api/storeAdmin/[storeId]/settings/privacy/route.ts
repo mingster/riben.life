@@ -1,4 +1,5 @@
 import { mongoClient } from "@/lib/prismadb";
+import { getUtcDate } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
@@ -19,7 +20,7 @@ export async function PATCH(
       where: {
         databaseId: params.storeId,
       },
-      update: { ...body, updatedAt: new Date(Date.now()) },
+      update: { ...body, updatedAt: getUtcDate() },
       create: {
         ...body,
         databaseId: params.storeId,

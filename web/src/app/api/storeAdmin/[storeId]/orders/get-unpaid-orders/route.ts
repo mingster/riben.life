@@ -18,6 +18,11 @@ export async function GET(
       where: {
         storeId: params.storeId,
         isPaid: false,
+        orderStatus: {
+          not: {
+            in: [OrderStatus.Voided, OrderStatus.Refunded],
+          },
+        },
         /*
         orderStatus: {
           in: [OrderStatus.Pending, OrderStatus.Processing],

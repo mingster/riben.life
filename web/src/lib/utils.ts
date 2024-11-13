@@ -221,6 +221,32 @@ export const formatDateTime = (d: Date) => {
   return format(d, "yyyy-MM-dd H:mm");
 };
 
+export function getNowDateInTz(offsetHours: number) {
+  return getDateInTz(getUtcDate(), offsetHours);
+}
+
+export function getDateInTz(dt: Date, offsetHours: number) {
+  const timezoneOffsetInMS = offsetHours * 60 * 60000;
+  const d = dt.getTimezoneOffset() * 60000 + timezoneOffsetInMS;
+  const date = new Date(new Date().getTime() - d);
+  return date;
+}
+
+export function getUtcDate() {
+  const d = new Date();
+  const utcDate = new Date(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate(),
+    d.getUTCHours(),
+    d.getUTCMinutes(),
+    d.getUTCSeconds(),
+    d.getUTCMilliseconds(),
+  );
+  //console.log('utcDate', utcDate);
+  return utcDate;
+}
+
 export const calculateTrialEndUnixTimestamp = (
   trialPeriodDays: number | null | undefined,
 ) => {

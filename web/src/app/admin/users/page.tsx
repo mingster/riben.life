@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { format } from "date-fns";
+import { formatDateTime } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { UserColumn } from "./components/columns";
@@ -54,7 +54,7 @@ export default async function UsersAdminPage(props: {
       username: item.username || "",
       email: item.email || "",
       role: item.role || "",
-      createdAt: format(item.updatedAt, "yyyy-MM-dd"),
+      createdAt: formatDateTime(item.updatedAt),
       orders: item.Orders,
       currentlySignedIn: item.Session.length > 0,
     };

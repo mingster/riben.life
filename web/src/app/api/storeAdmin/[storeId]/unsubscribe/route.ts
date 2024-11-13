@@ -1,10 +1,9 @@
-import { sqlClient } from "@/lib/prismadb";
-import { NextResponse } from "next/server";
-import { CheckStoreAdminApiAccess } from "../../api_helper";
-import { transformDecimalsToNumbers } from "@/lib/utils";
 import { IsSignInResponse } from "@/lib/auth/utils";
+import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
+import { getUtcDate } from "@/lib/utils";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
+import { NextResponse } from "next/server";
 
 // called when store operator select the free package (StoreLevel.Free).
 // we will call stripe api to remove the subscription.
@@ -93,7 +92,7 @@ export async function POST(
               stripeSubscriptionId: null,
               status: SubscriptionStatus.Cancelled,
               note: "Unsubscribed",
-              updatedAt: new Date(Date.now()),
+              updatedAt: getUtcDate(),
             },
           });
 

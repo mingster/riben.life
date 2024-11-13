@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { getUtcDate, transformDecimalsToNumbers } from "@/lib/utils";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { Prisma, StoreShipMethodMapping } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -97,7 +97,7 @@ export async function POST(
       currency: currency,
       paymentMethodId: paymentMethodId,
       shippingMethodId: shippingMethodId,
-      updatedAt: new Date(Date.now()),
+      updatedAt: getUtcDate(),
       paymentStatus: PaymentStatus.Pending,
       orderStatus: orderStatus,
       OrderItems: {

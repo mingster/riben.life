@@ -1,7 +1,8 @@
+import { IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
+import { getUtcDate } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { IsSignInResponse } from "@/lib/auth/utils";
 
 export async function PATCH(
   req: Request,
@@ -26,7 +27,7 @@ export async function PATCH(
       },
       data: {
         ...body,
-        updatedAt: new Date(Date.now()),
+        updatedAt: getUtcDate(),
       },
     });
 

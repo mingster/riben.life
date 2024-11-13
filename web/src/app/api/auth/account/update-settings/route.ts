@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
+import { getUtcDate } from "@/lib/utils";
 
 ///!SECTION update user data on user's own behave.
 export async function PATCH(req: Request) {
@@ -20,7 +21,7 @@ export async function PATCH(req: Request) {
       where: {
         id: userId,
       },
-      data: { ...body, updatedAt: new Date(Date.now()) },
+      data: { ...body, updatedAt: getUtcDate() },
     });
     revalidatePath("/");
     //console.log(`updated user: ${JSON.stringify(obj)}`);

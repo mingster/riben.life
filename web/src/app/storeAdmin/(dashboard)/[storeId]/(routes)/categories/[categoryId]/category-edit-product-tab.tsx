@@ -11,7 +11,6 @@ import { DataTableCheckbox } from "@/components/dataTable-checkbox";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import axios from "axios";
-import { format } from "date-fns";
 import { CheckIcon, XIcon } from "lucide-react";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -20,6 +19,7 @@ import { t } from "i18next";
 
 import Currency from "@/components/currency";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatDateTime } from "@/lib/utils";
 import { ProductStatuses } from "@/types/enum";
 import Link from "next/link";
 
@@ -64,7 +64,7 @@ export const CategoryEditProductTab = ({
       status: item.status,
       isFeatured: item.isFeatured,
       //createdAt: item.createdAt,
-      updatedAt: format(item.updatedAt, "yyyy-MM-dd"),
+      updatedAt: formatDateTime(item.updatedAt),
     }),
   );
 
