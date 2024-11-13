@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { getNowDateInTz, transformDecimalsToNumbers } from "@/lib/utils";
 import { OrderStatus } from "@/types/enum";
 import type { StoreOrder } from "@/types";
 import getOrderById from "@/actions/get-order-by_id";
@@ -20,13 +20,27 @@ export async function DELETE(
     return new NextResponse("orderId is required", { status: 400 });
   }
 
+  const store = await sqlClient.store.findUnique({
+    where: {
+      id: params.storeId,
+    },
+  });
+
+  if (!store) {
+    return NextResponse.json(
+      { success: false, message: "store not found." },
+      { status: 409 },
+    );
+  }
+
   const order = await sqlClient.storeOrder.update({
     where: {
       id: params.orderId,
     },
     data: {
       orderStatus: OrderStatus.Voided,
-      updatedAt: getUtcDate(),
+      // store time in store's local timezone
+      updatedAt: getNowDateInTz(store.defaultTimezone),
     },
   });
 
@@ -60,6 +74,19 @@ export async function PATCH(
       return new NextResponse("orderId is required", { status: 400 });
     }
 
+    const store = await sqlClient.store.findUnique({
+      where: {
+        id: params.storeId,
+      },
+    });
+
+    if (!store) {
+      return NextResponse.json(
+        { success: false, message: "store not found." },
+        { status: 409 },
+      );
+    }
+
     const updatedOrder = (await req.json()) as StoreOrder;
 
     await sqlClient.storeOrder.update({
@@ -71,7 +98,9 @@ export async function PATCH(
         shippingMethodId: updatedOrder.shippingMethodId,
         tableId: updatedOrder.tableId,
         orderTotal: updatedOrder.orderTotal,
-        updatedAt: getUtcDate(),
+
+        // store time in store's local timezone
+        updatedAt: getNowDateInTz(store.defaultTimezone),
       },
     });
 

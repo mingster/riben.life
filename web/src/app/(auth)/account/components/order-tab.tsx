@@ -50,7 +50,7 @@ export const OrderTab = ({ orders }: props) => {
   }, [initialTab]);
 
   const { lng } = useI18n();
-  const { t } = useTranslation(lng, "account");
+  const { t } = useTranslation(lng);
 
   // orderStatus numeric key
   const keys = Object.keys(OrderStatus).filter((v) => !Number.isNaN(Number(v)));

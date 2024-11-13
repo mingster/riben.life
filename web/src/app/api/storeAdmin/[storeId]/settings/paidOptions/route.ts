@@ -27,7 +27,7 @@ export async function PATCH(
       },
       data: {
         ...body,
-        updatedAt: getUtcDate(),
+        //updatedAt: getUtcDate(),
       },
     });
 

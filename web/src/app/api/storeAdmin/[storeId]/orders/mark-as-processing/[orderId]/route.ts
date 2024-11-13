@@ -2,7 +2,7 @@ import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
-import { getUtcDate } from "@/lib/utils";
+import { getNowDateInTz, getUtcDate } from "@/lib/utils";
 
 ///!SECTION mark the pending order as Processing
 export async function POST(
@@ -29,6 +29,16 @@ export async function POST(
       return new NextResponse("order is not pending", { status: 501 });
     }
 
+    const store = await sqlClient.store.findUnique({
+      where: {
+        id: params.storeId,
+      },
+    });
+
+    if (store === null) {
+      return new NextResponse("store not found", { status: 500 });
+    }
+
     // update order
     await sqlClient.storeOrder.update({
       where: {
@@ -36,7 +46,7 @@ export async function POST(
       },
       data: {
         orderStatus: OrderStatus.Processing,
-        updatedAt: getUtcDate(),
+        updatedAt: getNowDateInTz(store.defaultTimezone),
       },
     });
 

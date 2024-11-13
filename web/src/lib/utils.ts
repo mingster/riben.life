@@ -226,10 +226,17 @@ export function getNowDateInTz(offsetHours: number) {
 }
 
 export function getDateInTz(dt: Date, offsetHours: number) {
-  const timezoneOffsetInMS = offsetHours * 60 * 60000;
-  const d = dt.getTimezoneOffset() * 60000 + timezoneOffsetInMS;
-  const date = new Date(new Date().getTime() - d);
-  return date;
+  return new Date(
+    Date.UTC(
+      dt.getFullYear(),
+      dt.getMonth(),
+      dt.getDate(),
+      dt.getHours(),
+      dt.getMinutes(),
+      dt.getSeconds(),
+      offsetHours * 60,
+    ),
+  );
 }
 
 export function getUtcDate() {
