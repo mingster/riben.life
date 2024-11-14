@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 
 import { Heading } from "@/components/ui/heading";
-import { cn, getUtcDate, highlight_css } from "@/lib/utils";
+import { cn, getUtcNow, highlight_css } from "@/lib/utils";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 
@@ -70,8 +70,8 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   const defaultTimeFilter = {
     filter: "",
     filter1_is_in_the_last_of_days: 1,
-    filter_date1: getUtcDate(),
-    filter_date2: getUtcDate(),
+    filter_date1: getUtcNow(),
+    filter_date2: getUtcNow(),
   } as TimeFilter;
 
   const [filterByTime, setFilterByTime] =
@@ -83,7 +83,7 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
 
     if (filterByTime.filter === "f1") {
       // filter result that are greater than in_last_of_days
-      const in_last_of_days = getUtcDate();
+      const in_last_of_days = getUtcNow();
 
       in_last_of_days.setDate(
         in_last_of_days.getDate() - filterByTime.filter1_is_in_the_last_of_days,

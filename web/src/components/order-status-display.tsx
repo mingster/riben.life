@@ -25,14 +25,14 @@ export const DisplayOrderStatus: React.FC<props> = ({
   return (
     <>
       {status !== OrderStatus.Voided && (
-        <Button variant={"outline"} className="mr-2 cursor-default" size="sm">
+        <Button variant={"ghost"} className="mr-2 cursor-default" size="sm">
           {t(`OrderStatus_${OrderStatus[Number(status)]}`)}
         </Button>
       )}
 
       {status === OrderStatus.Voided && (
         <Button
-          variant={"outline"}
+          variant={"ghost"}
           className="mr-2 bg-muted text-gray-500 cursor-default"
           size="sm"
         >

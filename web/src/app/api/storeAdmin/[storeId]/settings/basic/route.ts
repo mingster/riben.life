@@ -2,7 +2,7 @@ import { IsSignInResponse } from "@/lib/auth/utils";
 import { mongoClient, sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { getUtcDate } from "@/lib/utils";
+import { getUtcNow } from "@/lib/utils";
 
 export async function PATCH(
   req: Request,
@@ -59,7 +59,7 @@ export async function PATCH(
         isOpen,
         requireSeating,
         requirePrepaid,
-        updatedAt: getUtcDate(),
+        updatedAt: getUtcNow(),
         /*
         storeLocales: {
           upsert: {
@@ -80,7 +80,7 @@ export async function PATCH(
       update: {
         orderNoteToCustomer,
         businessHours,
-        updatedAt: getUtcDate(),
+        updatedAt: getUtcNow(),
       },
       create: {
         orderNoteToCustomer,
@@ -102,8 +102,10 @@ export async function DELETE(
 ) {
   const params = await props.params;
   try {
+    // once we pass this point, the user is the store owner and is authenticated
     CheckStoreAdminApiAccess(params.storeId);
 
+    // get the userId
     const userId = await IsSignInResponse();
     if (typeof userId !== "string") {
       return new NextResponse("Unauthenticated", { status: 400 });
@@ -177,7 +179,7 @@ export async function DELETE(
       return NextResponse.json(store);
     }
 
-    // mark store as deleted only
+    // otherwise mark the store as deleted only
     const store = await sqlClient.store.update({
       where: {
         id: params.storeId,

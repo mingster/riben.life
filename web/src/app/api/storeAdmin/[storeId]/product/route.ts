@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import { getUtcDate } from "@/lib/utils";
+import { getUtcNow } from "@/lib/utils";
 
 ///!SECTION create new product.
 export async function POST(
@@ -37,7 +37,7 @@ export async function POST(
         currency,
         isFeatured,
         status,
-        updatedAt: getUtcDate(),
+        updatedAt: getUtcNow(),
         ProductAttribute: {
           create: { ...ProductAttribute },
         },

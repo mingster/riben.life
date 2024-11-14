@@ -7,10 +7,11 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { format } from "date-fns";
 
-import { StoreLevel } from "@/types/enum";
-import { OrderUnpaid } from "../components/order-unpaid";
-import type { StoreTables } from "@prisma/client";
 import { Loader } from "@/components/ui/loader";
+import { formatDateTime } from "@/lib/utils";
+import { StoreLevel } from "@/types/enum";
+import type { StoreTables } from "@prisma/client";
+import { OrderUnpaid } from "./order-unpaid";
 
 export interface props {
   store: Store;
@@ -76,23 +77,19 @@ export const CashCashier: React.FC<props> = ({ store, tables }) => {
   if (loading) return <Loader />;
   return (
     <section className="relative w-full">
-      <div className="container">
-        <IntervaledContent />
-        <div className="flex flex-col gap-5">
-          {store.level !== StoreLevel.Free && (
-            <>
-              <OrderUnpaid
-                store={store}
-                tables={tables}
-                orders={unpaidOrders}
-                parentLoading={loading}
-              />
-              <div className="text-xs">
-                {format(date, "yyyy-MM-dd HH:mm:ss")}
-              </div>
-            </>
-          )}
-        </div>
+      <IntervaledContent />
+      <div className="flex flex-col gap-1">
+        {store.level !== StoreLevel.Free && (
+          <>
+            <OrderUnpaid
+              store={store}
+              tables={tables}
+              orders={unpaidOrders}
+              parentLoading={loading}
+            />
+            <div className="text-xs">{formatDateTime(date)}</div>
+          </>
+        )}
       </div>
     </section>
   );

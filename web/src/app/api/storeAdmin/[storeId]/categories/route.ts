@@ -2,7 +2,7 @@ import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
-import { getUtcDate } from "@/lib/utils";
+import { getUtcNow } from "@/lib/utils";
 
 ///!SECTION create Category record in database.
 export async function POST(
@@ -22,7 +22,7 @@ export async function POST(
       data: {
         storeId: params.storeId,
         ...body,
-        updatedAt: getUtcDate(),
+        updatedAt: getUtcNow(),
       },
     });
 
@@ -66,7 +66,7 @@ export async function PATCH(
           name: name_array[i],
           isFeatured,
           sortOrder: i + sort + 1,
-          updatedAt: getUtcDate(),
+          updatedAt: getUtcNow(),
         },
       });
     }

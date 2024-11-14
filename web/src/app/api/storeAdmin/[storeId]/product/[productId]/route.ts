@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import { getUtcDate } from "@/lib/utils";
+import { getUtcNow } from "@/lib/utils";
 
 //delete product by its id
 export async function DELETE(
@@ -83,7 +83,7 @@ export async function PATCH(
       },
       data: {
         ...body,
-        updatedAt: getUtcDate(),
+        updatedAt: getUtcNow(),
         /*
         ProductAttribute: {
           update: { ...ProductAttribute },

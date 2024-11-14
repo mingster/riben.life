@@ -10,6 +10,7 @@ import { OrderStatus, StoreLevel } from "@/types/enum";
 import { OrderInProgress } from "../../components/order-inprogress";
 import { OrderPending } from "../../components/order-pending";
 import { Loader } from "@/components/ui/loader";
+import { formatDateTime } from "@/lib/utils";
 
 export interface props {
   store: Store;
@@ -119,12 +120,12 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
 
       <div className="flex flex-col gap-1">
         <OrderInProgress
-          storeId={store.id}
+          store={store}
           autoAcceptOrder={store.autoAcceptOrder}
           orders={awaiting4ProcessingOrders}
           parentLoading={loading}
         />
-        <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
+        <div className="text-xs">{formatDateTime(date)}</div>
       </div>
     </section>
   );

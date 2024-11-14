@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { getNowDateInTz, transformDecimalsToNumbers } from "@/lib/utils";
-import { getUtcDate } from "@/lib/utils";
+import { getNowTimeInTz, transformDecimalsToNumbers } from "@/lib/utils";
+import { getUtcNow } from "@/lib/utils";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -146,7 +146,7 @@ export async function POST(
   }
 
   // store time in store's local timezone
-  const storeTimeNow = getNowDateInTz(store.defaultTimezone);
+  const storeTimeNow = getNowTimeInTz(store.defaultTimezone);
 
   const orderStatus = store?.autoAcceptOrder
     ? OrderStatus.Processing

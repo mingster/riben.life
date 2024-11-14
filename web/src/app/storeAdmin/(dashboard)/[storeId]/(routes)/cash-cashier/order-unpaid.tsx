@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { getTableName } from "@/lib/utils";
+import { formatDateTime, getDateInTz, getTableName } from "@/lib/utils";
 import { DisplayOrderStatus } from "@/components/order-status-display";
 interface props {
   store: Store;
@@ -65,7 +65,7 @@ export const OrderUnpaid = ({
   }
 
   const handleChecked = async (orderId: string) => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/mark-as-paid/${orderId}`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/cash-mark-as-paid/${orderId}`;
     await axios.post(url);
 
     // remove the order from the list
@@ -102,9 +102,9 @@ export const OrderUnpaid = ({
         </div>
       </div>
 
-      <CardContent className="space-y-2">
+      <CardContent className="pl-0 pr-0 m-0">
         {/* display */}
-        <div className="pt-2 pl-1">
+        <div className="text-muted-foreground text-xs">
           {orders.length === 0 ? t("no_results_found") : ""}
         </div>
 
@@ -116,11 +116,13 @@ export const OrderUnpaid = ({
                 <TableHead className="">{t("Order_number")}</TableHead>
                 <TableHead className="w-[200px]">{t("Order_items")}</TableHead>
                 <TableHead>{t("Order_note")}</TableHead>
-                <TableHead className="w-[90px]">{t("ordered_at")}</TableHead>
+                <TableHead className="w-[90px] hidden lg:table-cell">
+                  {t("ordered_at")}
+                </TableHead>
                 <TableHead className="w-[90px] text-right">
                   {t("Order_total")}
                 </TableHead>
-                <TableHead className="w-[150px] text-center">
+                <TableHead className="w-[80px] text-center">
                   {t("Order_cashier_confirm")}
                 </TableHead>
               </TableRow>
@@ -143,44 +145,49 @@ export const OrderUnpaid = ({
                   </TableCell>
 
                   <TableCell>
-                    {order.OrderNotes.map((note: OrderNote) => (
-                      <div key={note.id}>{note.note}</div>
-                    ))}
-                    <div className="flex gap-1 items-center">
+                    <div className="flex gap-1 text-xs items-center">
+                      <Button className="text-xs" variant={"outline"} size="sm">
+                        <Link
+                          href={`/storeAdmin/${order.storeId}/order/${order.id}`}
+                        >
+                          {t("Order_Modify")}
+                        </Link>
+                      </Button>
+
                       <div>
                         {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
                       </div>
                       <div>{order.ShippingMethod?.name}</div>
-                      <div>{order.PaymentMethod?.name}</div>
+                      <div className="hidden lg:table-cell">
+                        {order.PaymentMethod?.name}
+                      </div>
                       <div>
                         <DisplayOrderStatus status={order.orderStatus} />
                       </div>
+                    </div>
+
+                    <div className="hidden lg:table-cell text-xs">
+                      {order.OrderNotes.map((note: OrderNote) => (
+                        <div key={note.id}>{note.note}</div>
+                      ))}
                       <div>{order.User?.name}</div>
                     </div>
                   </TableCell>
 
-                  <TableCell className="text-nowrap">
-                    {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
+                  <TableCell className="hidden lg:table-cell text-xs">
+                    {/*format(getDateInTz(new Date(order.updatedAt), store.defaultTimezone), "yyyy-MM-dd HH:mm:ss")*/}
+                    {formatDateTime(order.updatedAt)}
                   </TableCell>
 
                   <TableCell className="text-right text-2xl font-extrabold">
                     <Currency value={Number(order.orderTotal)} />
                   </TableCell>
 
-                  <TableCell className="bg-red-100">
-                    <div className="flex gap-5 items-center justify-end pr-1">
-                      <Checkbox
-                        value={order.id}
-                        onClick={() => handleChecked(order.id)}
-                      />
-                      <Button className="text-xs" variant={"outline"}>
-                        <Link
-                          href={`/storeAdmin/${order.storeId}/order/${order.id}`}
-                        >
-                          {t("Modify")}
-                        </Link>
-                      </Button>
-                    </div>
+                  <TableCell className="bg-red-100 text-center">
+                    <Checkbox
+                      value={order.id}
+                      onClick={() => handleChecked(order.id)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

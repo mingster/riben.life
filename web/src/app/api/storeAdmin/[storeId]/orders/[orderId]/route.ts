@@ -1,11 +1,11 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { getNowDateInTz, transformDecimalsToNumbers } from "@/lib/utils";
+import { getNowTimeInTz, transformDecimalsToNumbers } from "@/lib/utils";
 import { OrderStatus } from "@/types/enum";
 import type { StoreOrder } from "@/types";
 import getOrderById from "@/actions/get-order-by_id";
-import { getUtcDate } from "@/lib/utils";
+import { getUtcNow } from "@/lib/utils";
 
 // mark order as deleted
 export async function DELETE(
@@ -40,7 +40,7 @@ export async function DELETE(
     data: {
       orderStatus: OrderStatus.Voided,
       // store time in store's local timezone
-      updatedAt: getNowDateInTz(store.defaultTimezone),
+      updatedAt: getNowTimeInTz(store.defaultTimezone),
     },
   });
 
@@ -100,7 +100,7 @@ export async function PATCH(
         orderTotal: updatedOrder.orderTotal,
 
         // store time in store's local timezone
-        updatedAt: getNowDateInTz(store.defaultTimezone),
+        updatedAt: getNowTimeInTz(store.defaultTimezone),
       },
     });
 

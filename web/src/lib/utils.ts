@@ -221,12 +221,15 @@ export const formatDateTime = (d: Date) => {
   return format(d, "yyyy-MM-dd H:mm");
 };
 
-export function getNowDateInTz(offsetHours: number) {
-  return getDateInTz(getUtcDate(), offsetHours);
+export function getNowTimeInTz(offsetHours: number) {
+  return getDateInTz(getUtcNow(), offsetHours);
 }
 
 export function getDateInTz(dt: Date, offsetHours: number) {
-  return new Date(
+  // if dt is not Date object, return empty string
+  if (typeof dt !== "object") return dt;
+
+  const result = new Date(
     Date.UTC(
       dt.getFullYear(),
       dt.getMonth(),
@@ -237,9 +240,13 @@ export function getDateInTz(dt: Date, offsetHours: number) {
       offsetHours * 60,
     ),
   );
+
+  //console.log('dt', dt, result);
+
+  return result;
 }
 
-export function getUtcDate() {
+export function getUtcNow() {
   const d = new Date();
   const utcDate = new Date(
     d.getUTCFullYear(),

@@ -8,7 +8,7 @@ import { Loader } from "@/components/ui/loader";
 import { useI18n } from "@/providers/i18n-provider";
 import { format } from "date-fns-tz";
 
-import { getNowDateInTz } from "@/lib/utils";
+import { formatDateTime, getNowTimeInTz } from "@/lib/utils";
 import { OrderPending } from "../../components/order-pending";
 
 export interface props {
@@ -24,7 +24,7 @@ export const Awaiting4ConfirmationClient: React.FC<props> = ({ store }) => {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const date = getNowDateInTz(8);
+  const date = getNowTimeInTz(8);
   //console.log('date', date);
 
   const [pendingOrders, setPendingOrders] = useState([]);
@@ -82,11 +82,11 @@ export const Awaiting4ConfirmationClient: React.FC<props> = ({ store }) => {
       <IntervaledContent />
       <div className="flex flex-col gap-1">
         <OrderPending
-          storeId={store.id}
+          store={store}
           orders={pendingOrders}
           parentLoading={loading}
         />
-        <div className="text-xs">{format(date, "yyyy-MM-dd HH:mm:ss")}</div>
+        <div className="text-xs">{formatDateTime(date)}</div>
       </div>
     </section>
   );
