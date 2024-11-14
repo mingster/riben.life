@@ -48,7 +48,7 @@ export function ProductCard({
     <Card className={`${className} object-cover hover:opacity-50`} {...props}>
       <CardHeader>
         <CardTitle>
-          <div className="flex gap-1 items-center sm:text-sm">
+          <div className="flex gap-1 items-center lg:text-xl">
             {product.name}
             {
               // display recurring icon if recurring
@@ -58,7 +58,7 @@ export function ProductCard({
             }
           </div>
         </CardTitle>
-        <CardDescription className="sm:text-sm text-muted-foreground">
+        <CardDescription className="lg:text-xl text-muted-foreground">
           {product.description}
         </CardDescription>
       </CardHeader>

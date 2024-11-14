@@ -56,13 +56,11 @@ export const StoreHomeContent: React.FC<props> = ({
   //const stripePromise = getStripe();
   //const [order, setOrder] = useState<StoreOrder>();
   const params = useParams<{ storeId: string }>();
-  */
 
   console.log("storeData", storeData.defaultTimezone);
-
   console.log("utc", getUtcDate());
-
   console.log("now", getNowDateInTz(storeData.defaultTimezone));
+  */
 
   const cart = useCart();
   const { toast } = useToast();
@@ -234,7 +232,7 @@ export const StoreHomeContent: React.FC<props> = ({
                   >
                     <div
                       data-to-scrollspy-id={category.id}
-                      className="ss-item sm:text-sm"
+                      className="ss-item lg:text-xl"
                     >
                       {category.name}
                     </div>
@@ -249,7 +247,7 @@ export const StoreHomeContent: React.FC<props> = ({
             {storeData.Categories?.map((category: Category) => (
               <div key={category.id} id={category.id} className="">
                 <div className="text-center w-full">
-                  <div className="sm:text-sm">{category.name}</div>
+                  <div className="lg:text-xl">{category.name}</div>
                 </div>
                 <div className="pb-10">
                   {(category.ProductCategories as ProductCategories[])?.map(
