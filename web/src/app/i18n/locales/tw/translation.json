@@ -1,6 +1,4 @@
 {
-
-
   "account_page_title": "我的帳號",
   "account_tab_currentAcct": "登入帳號：",
   "account_tab_signout": "登出",
@@ -107,7 +105,6 @@
   "OrderStatus_InShipping": "待收貨",
   "OrderStatus_Pending": "待確認",
   "OrderStatus_Processing": "(準備中)",
-  "Refund": "退款",
   "OrderStatus_Refunded": "退貨/退款",
   "OrderStatus_Voided": "已做廢",
   "orderTotal_label": "銷售總額：",
@@ -151,6 +148,7 @@
   "ProductStatus_Deleted": "已刪除",
   "ProductStatus_Draft": "編輯中",
   "ProductStatus_Published": "已上架",
+  "Refund": "退款",
   "reply": "回覆",
   "reservation": "訂位",
   "reset": "重設",
@@ -159,7 +157,6 @@
   "search": "搜尋",
   "selected": "已選擇",
   "shippingCost_label": "運費：",
-
   "shippingMethod": "配送方式",
   "ShippingMethod": "配送方式",
   "shippingMethod_currency": "幣別",
@@ -186,6 +183,7 @@
   "store_orderType_inStore": "內用",
   "store_orderType_takeoff": "外帶點餐",
   "store_seatingTime": "入座時間：",
+  "store-require-prepaid-prompt": "請先至櫃檯結帳",
   "StoreAnnouncement_title": "商店訊息",
   "StoreTable_Name": "桌號名稱",
   "StoreTable_Seats": "座位數",

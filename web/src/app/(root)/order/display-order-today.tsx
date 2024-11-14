@@ -2,6 +2,8 @@
 
 import { AskUserToSignIn } from "@/components/ask-user-to-signIn";
 import { DisplayOrder } from "@/components/order-display";
+import StoreRequirePrepaidPrompt from "@/components/store-require-prepaid.-prompt";
+
 import { Button } from "@/components/ui/button";
 import { Loader } from "@/components/ui/loader";
 import {
@@ -11,18 +13,22 @@ import {
 } from "@/lib/order-history";
 import { getUtcDate } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StoreOrder } from "@/types";
+import type { Store, StoreOrder } from "@/types";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+//import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+export interface props {
+  store: Store;
+}
 
 // view order page (購物明細)
 // show orders in local storage placed today
 // NOTE: we need local storage because we allow anonymous user to place order
-export const DisplayStoreOrdersToday: React.FC = () => {
+export const DisplayStoreOrdersToday: React.FC<props> = ({ store }) => {
   const [orders, setOrders] = useState([]);
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
@@ -31,8 +37,9 @@ export const DisplayStoreOrdersToday: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const param = useSearchParams();
-  const storeId = param.get("storeId");
+  //const param = useSearchParams();
+  //const storeId = param.get("storeId");
+  const storeId = store.id;
 
   //console.log('orders_local', orders_local);
 
@@ -76,7 +83,7 @@ export const DisplayStoreOrdersToday: React.FC = () => {
     setLoading(true);
 
     const orders_local = getOrdersFromLocal();
-    console.log("orders_local", orders_local);
+    //console.log("orders_local", orders_local);
 
     const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${storeId}/get-orders`;
     const body = JSON.stringify({
@@ -140,6 +147,10 @@ export const DisplayStoreOrdersToday: React.FC = () => {
           <div className="flex-1 p-1 pt-1 space-y-1">
             {orders.map((order: StoreOrder) => (
               <div key={order.id}>
+                {store.requirePrepaid && order.isPaid === false && (
+                  <StoreRequirePrepaidPrompt />
+                )}
+
                 <DisplayOrder order={order} />
               </div>
             ))}
