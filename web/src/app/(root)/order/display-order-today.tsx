@@ -11,7 +11,7 @@ import {
   getOrdersFromLocal,
   removeOrdersFromLocal,
 } from "@/lib/order-history";
-import { getUtcDate } from "@/lib/utils";
+import { getUtcNow } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
 import axios from "axios";
@@ -57,7 +57,7 @@ export const DisplayStoreOrdersToday: React.FC<props> = ({ store }) => {
 
   const removeOutedLocalOrders = () => {
     // filter orders by date
-    const today = getUtcDate();
+    const today = getUtcNow();
     const orderArray = JSON.parse("[]");
 
     orders.map((order: StoreOrder) => {

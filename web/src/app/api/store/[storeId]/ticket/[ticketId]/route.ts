@@ -1,6 +1,6 @@
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcDate } from "@/lib/utils";
+import { getUtcNow } from "@/lib/utils";
 import { TicketStatus } from "@/types/enum";
 
 import { NextResponse } from "next/server";
@@ -58,7 +58,7 @@ export async function PATCH(
         department: orig_ticket.department,
         subject: orig_ticket.subject,
         message,
-        updatedAt: getUtcDate(),
+        updatedAt: getUtcNow(),
       },
     });
     console.log(`reply ticket created: ${JSON.stringify(reply)}`);
@@ -70,7 +70,7 @@ export async function PATCH(
       },
       data: {
         status: TicketStatus.Active,
-        updatedAt: getUtcDate(),
+        updatedAt: getUtcNow(),
       },
     });
 
@@ -134,7 +134,7 @@ export async function DELETE(
       },
       data: {
         status: TicketStatus.Archived,
-        updatedAt: getUtcDate(),
+        updatedAt: getUtcNow(),
       },
     });
 

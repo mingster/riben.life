@@ -14,9 +14,7 @@ import {
   PackageCheck,
   Scale,
   Settings,
-  Tag,
   Ticket,
-  Users,
   UtensilsCrossed,
 } from "lucide-react";
 type Submenu = {
@@ -52,15 +50,20 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
     active: pathname.includes(`${nav_prefix}/cash-cashier`),
     icon: Scale,
     submenus: [],
-  };
+  } as Menu;
 
-  const orderConfirmation = {
+  let orderConfirmation = {
     href: `${nav_prefix}/order/awaiting4Confirmation`,
     label: "確認訂單",
     active: pathname.includes(`${nav_prefix}/order/awaiting4Confirmation`),
     icon: PackageCheck,
     submenus: [],
-  };
+  } as Menu;
+
+  // if autoAcceptOrder is true, hide orderConfirmation
+  if (store.autoAcceptOrder) {
+    orderConfirmation = {} as Menu;
+  }
 
   return [
     {
@@ -73,21 +76,24 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
           icon: LayoutGrid,
           submenus: [],
         },
-        ...(store.autoAcceptOrder ? [] : [orderConfirmation]),
-        {
-          href: `${nav_prefix}/order/awaiting4Process`,
-          label: "出貨管理",
-          active: pathname.includes(`${nav_prefix}/order/awaiting4Process`),
-          icon: ArrowRight,
-          submenus: [],
-        },
       ],
     },
     {
       groupLabel: t("Sales"),
       menus: [
-        // add cash menu if store level is not free 現金結帳
-        ...(store.level !== StoreLevel.Free ? [cash] : []),
+        //...(store.autoAcceptOrder ? [] : [orderConfirmation]),
+
+        // add cash (現金結帳) menu if store level is not free
+        // otherwise display orderCofirmation
+        ...(store.level !== StoreLevel.Free ? [cash] : [orderConfirmation]),
+        {
+          href: `${nav_prefix}/order/awaiting4Process`,
+          label: t("Order_readyness"),
+          active: pathname.includes(`${nav_prefix}/order/awaiting4Process`),
+          icon: ArrowRight,
+          submenus: [],
+        },
+
         {
           href: `${nav_prefix}/transactions`,
           label: t("Transactions"),

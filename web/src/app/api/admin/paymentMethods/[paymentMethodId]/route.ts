@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../api_helper";
-import { getNowDateInTz, getUtcDate } from "@/lib/utils";
+import { getNowTimeInTz, getUtcNow } from "@/lib/utils";
 
 export async function PATCH(
   req: Request,
@@ -19,7 +19,7 @@ export async function PATCH(
       },
       data: {
         ...body,
-        updatedAt: getUtcDate(),
+        updatedAt: getUtcNow(),
       },
     });
     return NextResponse.json(obj);

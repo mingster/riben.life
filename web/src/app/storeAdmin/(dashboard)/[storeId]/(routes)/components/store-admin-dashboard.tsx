@@ -8,6 +8,8 @@ import { useI18n } from "@/providers/i18n-provider";
 import { Awaiting4ConfirmationClient } from "../order/awaiting4Confirmation/client";
 import { Awaiting4ProcessingClient } from "../order/awaiting4Process/client";
 import Container from "@/components/ui/container";
+import { StoreLevel } from "@/types/enum";
+import { CashCashier } from "../cash-cashier/data-client";
 
 export interface props {
   store: Store;
@@ -23,7 +25,14 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
   return (
     <section className="relative w-full">
       <Container>
-        {!store.autoAcceptOrder && (
+        {
+          //show cash cashier if store subscribes pro level (not free)
+          store.level !== StoreLevel.Free && (
+            <CashCashier store={store} tables={[]} />
+          )
+        }
+
+        {store.level === StoreLevel.Free && !store.autoAcceptOrder && (
           <Awaiting4ConfirmationClient store={store} />
         )}
 

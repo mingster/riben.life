@@ -33,6 +33,7 @@ export default function DropdownUser({ user }: UserButtonProps) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
   if (!mounted) return <></>;
 
   return (
@@ -99,6 +100,7 @@ export default function DropdownUser({ user }: UserButtonProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem className="cursor-pointer" asChild>
               <button
+                type="button"
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="flex w-full items-center"
               >

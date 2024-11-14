@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
-import { getUtcDate } from "@/lib/utils";
+import { getUtcNow } from "@/lib/utils";
 
 ///!SECTION create faqCategory record in database.
 export async function POST(
@@ -17,7 +17,7 @@ export async function POST(
       data: {
         storeId: params.storeId,
         ...body,
-        updatedAt: getUtcDate(),
+        updatedAt: getUtcNow(),
       },
     });
 

@@ -2,7 +2,7 @@ import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
-import { getNowDateInTz, getUtcDate } from "@/lib/utils";
+import { getNowTimeInTz, getUtcNow } from "@/lib/utils";
 
 ///!SECTION mark the pending order as Processing
 export async function POST(
@@ -46,7 +46,7 @@ export async function POST(
       },
       data: {
         orderStatus: OrderStatus.Processing,
-        updatedAt: getNowDateInTz(store.defaultTimezone),
+        updatedAt: getNowTimeInTz(store.defaultTimezone),
       },
     });
 

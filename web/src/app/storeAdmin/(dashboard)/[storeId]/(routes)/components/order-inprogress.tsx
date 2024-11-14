@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 
 import { useTranslation } from "@/app/i18n/client";
+import { DisplayOrderStatus } from "@/components/order-status-display";
 import { Heading } from "@/components/ui/heading";
 import {
   Table,
@@ -18,25 +19,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StoreOrder } from "@/types";
-import { OrderStatus } from "@/types/enum";
-//import type { StoreOrder } from "@/types";
+import type { Store, StoreOrder } from "@/types";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { format } from "date-fns";
 import Link from "next/link";
 import { ClipLoader } from "react-spinners";
-import { DisplayOrderStatus } from "@/components/order-status-display";
+import { formatDateTime, getDateInTz } from "@/lib/utils";
+import Currency from "@/components/currency";
 
 interface props {
-  storeId: string;
+  store: Store;
   autoAcceptOrder: boolean;
   orders: StoreOrder[];
   parentLoading: boolean;
 }
 
 export const OrderInProgress = ({
-  storeId,
+  store,
   autoAcceptOrder,
   orders,
   parentLoading,
@@ -58,7 +58,7 @@ export const OrderInProgress = ({
   }
 
   const handleChecked = async (orderId: string) => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/orders/mark-as-completed/${orderId}`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/mark-as-completed/${orderId}`;
     await axios.post(url);
 
     // remove the order from the list
@@ -98,21 +98,23 @@ export const OrderInProgress = ({
               <TableHeader>
                 <TableRow>
                   {/*單號/桌號*/}
-                  <TableHead className="text-nowrap w-[50px]">
-                    {t("Order_number")}
-                  </TableHead>
-                  <TableHead className="text-nowrap">
+                  <TableHead className="">{t("Order_number")}</TableHead>
+                  <TableHead className="w-[200px]">
                     {t("Order_items")}
                   </TableHead>
-                  <TableHead className="w-[250px]">{t("Order_note")}</TableHead>
-                  <TableHead className="hidden lg:table-cell text-right align-middle lg:w-[90px]">
+                  <TableHead>{t("Order_note")}</TableHead>
+                  <TableHead className="w-[90px] hidden lg:table-cell">
                     {t("ordered_at")}
                   </TableHead>
-                  <TableHead className="w-[100px] text-center">
+                  <TableHead className="w-[90px] text-right">
+                    {t("Order_total")}
+                  </TableHead>
+                  <TableHead className="w-[80px] text-center">
                     {autoAcceptOrder ? t("Order_accept") : t("Order_accept2")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
                 {orders.map((order: StoreOrder) => (
                   <TableRow key={order.id}>
@@ -128,45 +130,54 @@ export const OrderInProgress = ({
                       ))}
                     </TableCell>
 
-                    <TableCell className="border">
-                      <div className="hidden lg:table-cell">
-                        {order.OrderNotes.map((note: OrderNote) => (
-                          <div key={note.id}>{note.note}</div>
-                        ))}
-                      </div>
-
+                    <TableCell>
                       <div className="flex gap-1 text-xs items-center">
+                        <Button
+                          className="text-xs"
+                          variant={"outline"}
+                          size="sm"
+                        >
+                          <Link
+                            href={`/storeAdmin/${order.storeId}/order/${order.id}`}
+                          >
+                            {t("Order_Modify")}
+                          </Link>
+                        </Button>
+
                         <div>
                           {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
                         </div>
                         <div>{order.ShippingMethod?.name}</div>
-                        <div>{order.PaymentMethod?.name}</div>
+                        <div className="hidden lg:table-cell">
+                          {order.PaymentMethod?.name}
+                        </div>
                         <div>
                           <DisplayOrderStatus status={order.orderStatus} />
                         </div>
+                      </div>
+
+                      <div className="hidden lg:table-cell text-xs">
+                        {order.OrderNotes.map((note: OrderNote) => (
+                          <div key={note.id}>{note.note}</div>
+                        ))}
                         <div>{order.User?.name}</div>
                       </div>
                     </TableCell>
 
-                    <TableCell className="hidden lg:table-cell text-xs text-right align-bottom">
-                      {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
+                    <TableCell className="hidden lg:table-cell text-xs">
+                      {/*format(getDateInTz(new Date(order.updatedAt), store.defaultTimezone), "yyyy-MM-dd HH:mm:ss")*/}
+                      {formatDateTime(order.updatedAt)}
                     </TableCell>
 
-                    <TableCell className="bg-red-100">
-                      <div className="flex gap-3 items-center justify-end pr-1">
-                        <Checkbox
-                          value={order.id}
-                          onClick={() => handleChecked(order.id)}
-                        />
+                    <TableCell className="text-right text-2xl font-extrabold">
+                      <Currency value={Number(order.orderTotal)} />
+                    </TableCell>
 
-                        <Button className="text-xs" variant={"outline"}>
-                          <Link
-                            href={`/storeAdmin/${order.storeId}/order/${order.id}`}
-                          >
-                            {t("Modify")}
-                          </Link>
-                        </Button>
-                      </div>
+                    <TableCell className="bg-red-100 text-center">
+                      <Checkbox
+                        value={order.id}
+                        onClick={() => handleChecked(order.id)}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

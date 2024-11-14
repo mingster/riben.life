@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 
 import { useTranslation } from "@/app/i18n/client";
-import { AlertModal } from "@/components/modals/alert-modal";
+import Currency from "@/components/currency";
 import { DisplayOrderStatus } from "@/components/order-status-display";
 import { Heading } from "@/components/ui/heading";
 import {
@@ -19,9 +19,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDateTime, getDateInTz } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StoreOrder } from "@/types";
-import { OrderStatus } from "@/types/enum";
+import type { Store, StoreOrder } from "@/types";
 //import type { StoreOrder } from "@/types";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
@@ -30,12 +30,12 @@ import Link from "next/link";
 import { ClipLoader } from "react-spinners";
 
 interface props {
-  storeId: string;
+  store: Store;
   orders: StoreOrder[];
   parentLoading: boolean;
 }
 
-export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
+export const OrderPending = ({ store, orders, parentLoading }: props) => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
   }
 
   const handleChecked = async (orderId: string) => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/orders/mark-as-processing/${orderId}`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/mark-as-processing/${orderId}`;
     await axios.post(url);
 
     // remove the order from the list
@@ -96,17 +96,18 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
               <TableHeader>
                 <TableRow>
                   {/*單號/桌號*/}
-                  <TableHead className="text-nowrap w-[50px]">
-                    {t("Order_number")}
-                  </TableHead>
-                  <TableHead className="text-nowrap">
+                  <TableHead className="">{t("Order_number")}</TableHead>
+                  <TableHead className="w-[200px]">
                     {t("Order_items")}
                   </TableHead>
-                  <TableHead className="w-[250px]">{t("Order_note")}</TableHead>
-                  <TableHead className="hidden lg:table-cell lg:w-[90px]">
+                  <TableHead>{t("Order_note")}</TableHead>
+                  <TableHead className="w-[90px] hidden lg:table-cell">
                     {t("ordered_at")}
                   </TableHead>
-                  <TableHead className="w-[100px] text-center text-nowrap">
+                  <TableHead className="w-[90px] text-right">
+                    {t("Order_total")}
+                  </TableHead>
+                  <TableHead className="w-[80px] text-center">
                     {t("Order_accept")}
                   </TableHead>
                 </TableRow>
@@ -126,44 +127,54 @@ export const OrderPending = ({ storeId, orders, parentLoading }: props) => {
                       ))}
                     </TableCell>
 
-                    <TableCell className="border">
-                      <div className="hidden lg:inline-block">
-                        {order.OrderNotes.map((note: OrderNote) => (
-                          <div key={note.id}>{note.note}</div>
-                        ))}
-                      </div>
-
+                    <TableCell>
                       <div className="flex gap-1 text-xs items-center">
+                        <Button
+                          className="text-xs"
+                          variant={"outline"}
+                          size="sm"
+                        >
+                          <Link
+                            href={`/storeAdmin/${order.storeId}/order/${order.id}`}
+                          >
+                            {t("Order_Modify")}
+                          </Link>
+                        </Button>
+
                         <div>
                           {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
                         </div>
                         <div>{order.ShippingMethod?.name}</div>
-                        <div>{order.PaymentMethod?.name}</div>
+                        <div className="hidden lg:table-cell">
+                          {order.PaymentMethod?.name}
+                        </div>
                         <div>
                           <DisplayOrderStatus status={order.orderStatus} />
                         </div>
+                      </div>
+
+                      <div className="hidden lg:table-cell text-xs">
+                        {order.OrderNotes.map((note: OrderNote) => (
+                          <div key={note.id}>{note.note}</div>
+                        ))}
                         <div>{order.User?.name}</div>
                       </div>
                     </TableCell>
 
                     <TableCell className="hidden lg:table-cell text-xs">
-                      {format(order.updatedAt, "yyyy-MM-dd HH:mm:ss")}
+                      {/*format(getDateInTz(new Date(order.updatedAt), store.defaultTimezone), "yyyy-MM-dd HH:mm:ss")*/}
+                      {formatDateTime(order.updatedAt)}
                     </TableCell>
 
-                    <TableCell className="bg-red-100">
-                      <div className="flex gap-3 items-center justify-end pr-1">
-                        <Checkbox
-                          value={order.id}
-                          onClick={() => handleChecked(order.id)}
-                        />
-                        <Button className="text-xs" variant={"outline"}>
-                          <Link
-                            href={`/storeAdmin/${order.storeId}/order/${order.id}`}
-                          >
-                            {t("Modify")}
-                          </Link>
-                        </Button>
-                      </div>
+                    <TableCell className="text-right text-2xl font-extrabold">
+                      <Currency value={Number(order.orderTotal)} />
+                    </TableCell>
+
+                    <TableCell className="bg-red-100 text-center">
+                      <Checkbox
+                        value={order.id}
+                        onClick={() => handleChecked(order.id)}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

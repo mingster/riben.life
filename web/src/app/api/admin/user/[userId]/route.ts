@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 import { CheckAdminApiAccess } from "../../api_helper";
-import { getUtcDate } from "@/lib/utils";
+import { getUtcNow } from "@/lib/utils";
 
 ///!SECTION update user in database.
 export async function PATCH(
@@ -22,7 +22,7 @@ export async function PATCH(
       where: {
         id: params.userId,
       },
-      data: { ...body, updatedAt: getUtcDate() },
+      data: { ...body, updatedAt: getUtcNow() },
     });
 
     console.log(`updated user: ${JSON.stringify(obj)}`);

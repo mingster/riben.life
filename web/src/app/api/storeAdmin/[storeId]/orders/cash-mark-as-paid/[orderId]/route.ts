@@ -2,7 +2,7 @@ import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
-import { getNowDateInTz, getUtcDate } from "@/lib/utils";
+import { getNowTimeInTz, getUtcNow } from "@/lib/utils";
 
 ///!SECTION mark order as paid
 export async function POST(
@@ -36,14 +36,25 @@ export async function POST(
       return new NextResponse("store not found", { status: 500 });
     }
 
+    const cash_paymentMethod = await sqlClient.paymentMethod.findUnique({
+      where: {
+        name: "cash",
+      },
+    });
+
+    // mark the order as paid, update payment status, and order status to in-progress
+    // all order related date/time is saved in store's local timezone.
     await sqlClient.storeOrder.update({
       where: {
         id: params.orderId,
       },
       data: {
         isPaid: true,
-        paidDate: getNowDateInTz(store.defaultTimezone),
+        paidDate: getNowTimeInTz(store.defaultTimezone),
+        paymentMethodId: cash_paymentMethod?.id,
         paymentStatus: PaymentStatus.Paid,
+        orderStatus: OrderStatus.Processing,
+        updatedAt: getNowTimeInTz(store.defaultTimezone),
       },
     });
 
