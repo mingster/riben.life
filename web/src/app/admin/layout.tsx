@@ -18,7 +18,8 @@ export default async function AdminDashboardLayout({
   children: React.ReactNode;
   //params: { storeId: string };
 }) {
-  checkAdminAccess();
+  const isAdmin = await checkAdminAccess() as boolean;
+  if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
 
   return (
     <AdminPanelLayout>

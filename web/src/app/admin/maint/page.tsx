@@ -46,6 +46,7 @@ export default async function StoreAdminDevMaintPage(props: {
     console.log(`${count} orders deleted.`);
     redirect("./");
   };
+  
   const deleteAllSupportTickets = async () => {
     "use server";
 

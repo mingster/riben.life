@@ -14,7 +14,7 @@ export default async function DashboardLayout(props: {
   const { children } = props;
 
   const session = (await GetSession()) as Session;
-  if (!session.user) {
+  if (!session) {
     redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
   }
 

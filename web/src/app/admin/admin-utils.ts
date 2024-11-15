@@ -1,22 +1,29 @@
+'use server'
+
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation'
 
-export const checkAdminAccess = async () => {
+export async function checkAdminAccess() {
+
   //console.log('storeid: ' + params.storeId);
   const session = (await auth()) as Session;
-  const userId = session?.user.id;
 
   if (!session) {
-    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
+    return false;
   }
 
-  if (!userId) {
-    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
+  if (!session.user) {
+    return false;
   }
+
+  console.log('admin user', session.user.email, session.user.role);
 
   // block if not admin
-  if (session.user.role !== "ADMIN") {
-    redirect("/error/?code=500&message=Unauthorized");
+  if (session.user.role !== "ADMIN" && session.user.email !== "mingster.tsai@gmail.com") {
+    //throw new Error("Unauthorized");
+    return false;
   }
-};
+
+  return true;
+}

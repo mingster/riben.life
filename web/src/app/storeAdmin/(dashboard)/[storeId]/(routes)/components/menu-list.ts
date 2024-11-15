@@ -52,7 +52,7 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
     submenus: [],
   } as Menu;
 
-  let orderConfirmation = {
+  const orderConfirmation = {
     href: `${nav_prefix}/order/awaiting4Confirmation`,
     label: "確認訂單",
     active: pathname.includes(`${nav_prefix}/order/awaiting4Confirmation`),
@@ -60,10 +60,6 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
     submenus: [],
   } as Menu;
 
-  // if autoAcceptOrder is true, hide orderConfirmation
-  if (store.autoAcceptOrder) {
-    orderConfirmation = {} as Menu;
-  }
 
   return [
     {
@@ -85,7 +81,11 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 
         // add cash (現金結帳) menu if store level is not free
         // otherwise display orderCofirmation
-        ...(store.level !== StoreLevel.Free ? [cash] : [orderConfirmation]),
+        ...(store.level !== StoreLevel.Free ? [cash] : []),
+
+        // for not pro stores, if autoAcceptOrder is true, show orderConfirmation menu
+        ...(store.level === StoreLevel.Free && !store.autoAcceptOrder ? [orderConfirmation] : []),
+
         {
           href: `${nav_prefix}/order/awaiting4Process`,
           label: t("Order_readyness"),

@@ -22,11 +22,11 @@ export default function Home() {
   const message = searchParams.get("message");
 
   return (
-    <div className="bg-red-800 h-screen w-full flex place-items-center">
+    <div className="bg-red-900 h-screen w-full flex items-center align-middle">
       <Container>
-        <Card className="bg-red-950 basis-1/2 lg:min-h-[500px]">
+        <Card className="basis-1/2 lg:min-h-[500px]">
           <CardHeader>
-            <CardTitle className="flex gap-2 text-3xl text-primary place-items-center">
+            <CardTitle className="flex gap-2 text-3xl text-primary items-center">
               <MonitorX className="h-10 w-10" />
               Error
             </CardTitle>
