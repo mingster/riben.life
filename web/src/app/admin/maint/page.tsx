@@ -1,13 +1,6 @@
 "use server";
 
-import { populateCountryData } from "@/actions/admin/populate-country-data";
-import { populateCurrencyData } from "@/actions/admin/populate-currency-data";
-import {
-  create_locales,
-  create_paymentMethods,
-  create_shippingMethods,
-  wipeoutDefaultData,
-} from "@/actions/admin/populate-payship_defaults";
+import {wipeoutDefaultData} from "@/actions/admin/populate-payship_defaults";
 import sendStoreNotification, {
   type StoreNotification,
 } from "@/actions/send-store-notification";
@@ -32,7 +25,9 @@ export default async function StoreAdminDevMaintPage(props: {
   searchParams: SearchParams;
 }) {
   const params = await props.params;
-  checkAdminAccess();
+
+  const isAdmin = await checkAdminAccess() as boolean;
+  if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
 
   const deleteAllOrders = async () => {
     "use server";
@@ -46,7 +41,7 @@ export default async function StoreAdminDevMaintPage(props: {
     console.log(`${count} orders deleted.`);
     redirect("./");
   };
-  
+
   const deleteAllSupportTickets = async () => {
     "use server";
 
@@ -131,26 +126,6 @@ export default async function StoreAdminDevMaintPage(props: {
   const ticketCount = await sqlClient.supportTicket.count();
   console.log(`ticketCount:${ticketCount}`);
 
-  const countryCount = await sqlClient.country.count();
-  console.log(`countryCount:${countryCount}`);
-
-  const currencyCount = await sqlClient.currency.count();
-  console.log(`currencyCount:${currencyCount}`);
-
-  const paymentMethods = await sqlClient.paymentMethod.findMany();
-  console.log(`paymentMethods:${JSON.stringify(paymentMethods)}`);
-
-  const shippingMethods = await sqlClient.shippingMethod.findMany();
-  console.log(`shippingMethods:${JSON.stringify(shippingMethods)}`);
-
-  const localeCount = await sqlClient.locale.count();
-  console.log(`localeCount:${localeCount}`);
-
-  const shippingMethodCount = await sqlClient.shippingMethod.count();
-  console.log(`shippingMethodCount:${shippingMethodCount}`);
-
-  const paymentMethodCount = await sqlClient.paymentMethod.count();
-  console.log(`paymentMethodCount:${paymentMethodCount}`);
 
   // populate defaults: privacy policy and terms of service
   //
