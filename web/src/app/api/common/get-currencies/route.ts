@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
+import { NextResponse } from "next/server";
 
 // returns all currencies currently in db
 export async function GET(req: Request) {

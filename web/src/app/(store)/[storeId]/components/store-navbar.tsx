@@ -4,13 +4,13 @@ import DropdownCart from "@/components/dropdown-cart";
 import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
 import DropdownUser from "@/components/dropdown-user";
+import ThemeToggler from "@/components/theme-toggler";
 import { useScrollDirection } from "@/lib/use-scroll-direction";
 import type { Store } from "@/types";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { SheetMenu } from "./sheet-menu";
-import ThemeToggler from "@/components/theme-toggler";
 
 export interface props {
   visible: boolean;

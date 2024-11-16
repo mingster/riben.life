@@ -1,6 +1,6 @@
 "use server";
 
-import {wipeoutDefaultData} from "@/actions/admin/populate-payship_defaults";
+import { wipeoutDefaultData } from "@/actions/admin/populate-payship_defaults";
 import sendStoreNotification, {
   type StoreNotification,
 } from "@/actions/send-store-notification";
@@ -10,8 +10,8 @@ import { sqlClient } from "@/lib/prismadb";
 import { DiamondPlus, Send, Trash } from "lucide-react";
 import { checkAdminAccess } from "../admin-utils";
 
-import { redirect } from "next/navigation";
 import fs from "node:fs";
+import { redirect } from "next/navigation";
 import { EditDefaultPrivacy } from "./edit-default-privacy";
 import { EditDefaultTerms } from "./edit-default-terms";
 
@@ -26,7 +26,7 @@ export default async function StoreAdminDevMaintPage(props: {
 }) {
   const params = await props.params;
 
-  const isAdmin = await checkAdminAccess() as boolean;
+  const isAdmin = (await checkAdminAccess()) as boolean;
   if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
 
   const deleteAllOrders = async () => {
@@ -125,7 +125,6 @@ export default async function StoreAdminDevMaintPage(props: {
 
   const ticketCount = await sqlClient.supportTicket.count();
   console.log(`ticketCount:${ticketCount}`);
-
 
   // populate defaults: privacy policy and terms of service
   //

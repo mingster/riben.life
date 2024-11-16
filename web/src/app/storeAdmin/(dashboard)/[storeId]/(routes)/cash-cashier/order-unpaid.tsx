@@ -24,12 +24,12 @@ import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
 
 import Currency from "@/components/currency";
+import { DisplayOrderStatus } from "@/components/order-status-display";
 import { Button } from "@/components/ui/button";
+import { formatDateTime, getDateInTz, getTableName } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { formatDateTime, getDateInTz, getTableName } from "@/lib/utils";
-import { DisplayOrderStatus } from "@/components/order-status-display";
 interface props {
   store: Store;
   tables: StoreTables[];

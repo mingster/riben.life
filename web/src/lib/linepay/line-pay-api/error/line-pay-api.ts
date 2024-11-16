@@ -1,4 +1,4 @@
-import { GeneralResponseBody } from "../type";
+import type { GeneralResponseBody } from "../type";
 
 export class LinePayApiError extends Error {
   constructor(

@@ -7,10 +7,10 @@ import { DataTable } from "@/components/dataTable";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-import { Heading } from "@/components/ui/heading";
-import { type MessageColumn, columns } from "./columns";
 import { useTranslation } from "@/app/i18n/client";
+import { Heading } from "@/components/ui/heading";
 import { useI18n } from "@/providers/i18n-provider";
+import { type MessageColumn, columns } from "./columns";
 
 interface messageClientProps {
   data: MessageColumn[];

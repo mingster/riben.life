@@ -1,12 +1,12 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { Suspense } from "react";
-import type { DataColumn } from "./components/columns";
-import { DataClient } from "./components/data-client";
-import { checkAdminAccess } from "../admin-utils";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import { formatDateTime } from "@/lib/utils";
+import { Suspense } from "react";
+import { checkAdminAccess } from "../admin-utils";
+import type { DataColumn } from "./components/columns";
+import { DataClient } from "./components/data-client";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

@@ -2,12 +2,12 @@ import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import { Loader } from "@/components/ui/loader";
 
 import getStoreWithCategories from "@/actions/get-store";
+import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
+import type { StoreTables } from "@prisma/client";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CashCashier } from "./data-client";
-import { sqlClient } from "@/lib/prismadb";
-import type { StoreTables } from "@prisma/client";
 
 export const metadata: Metadata = {
   title: "Store Dashboard - Cash Cashier",

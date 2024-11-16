@@ -1,14 +1,14 @@
 import {
   Bookmark,
+  CircleDollarSign,
   LayoutGrid,
   Settings,
   SquarePen,
   Store,
   Tag,
+  Truck,
   Users,
   Wrench,
-  CircleDollarSign,
-  Truck,
 } from "lucide-react";
 
 type Submenu = {

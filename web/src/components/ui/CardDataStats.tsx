@@ -1,6 +1,6 @@
+import { TrendingDown, TrendingUp } from "lucide-react";
 import type React from "react";
 import type { ReactNode } from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface CardDataStatsProps {
   title: string;

@@ -1,6 +1,6 @@
+import { IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import { IsSignInResponse } from "@/lib/auth/utils";
 
 import { NextResponse } from "next/server";
 

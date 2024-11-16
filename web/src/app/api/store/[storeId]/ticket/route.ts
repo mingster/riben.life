@@ -1,9 +1,9 @@
-import { sqlClient } from "@/lib/prismadb";
-import { TicketStatus } from "@/types/enum";
 import { IsSignInResponse } from "@/lib/auth/utils";
+import { sqlClient } from "@/lib/prismadb";
+import { getUtcNow } from "@/lib/utils";
+import { TicketStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { getUtcNow } from "@/lib/utils";
 
 ///!SECTION create new ticket from store's support page.
 export async function POST(

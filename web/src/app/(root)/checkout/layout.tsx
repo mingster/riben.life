@@ -1,8 +1,8 @@
 import { Navbar } from "@/components/global-navbar";
-import { Toaster } from "@/components/ui/toaster";
 //import { Metadata } from 'next';
 //import { mongoClient, sqlClient } from '@/lib/prismadb';
 import Container from "@/components/ui/container";
+import { Toaster } from "@/components/ui/toaster";
 
 import { Loader } from "@/components/ui/loader";
 import { Suspense } from "react";

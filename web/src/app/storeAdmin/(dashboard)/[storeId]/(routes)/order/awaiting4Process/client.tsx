@@ -4,13 +4,13 @@ import type { Store, StoreOrder } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import { format } from "date-fns";
-import { OrderStatus, StoreLevel } from "@/types/enum";
-import { OrderInProgress } from "../../components/order-inprogress";
-import { OrderPending } from "../../components/order-pending";
 import { Loader } from "@/components/ui/loader";
 import { formatDateTime } from "@/lib/utils";
+import { useI18n } from "@/providers/i18n-provider";
+import { OrderStatus, StoreLevel } from "@/types/enum";
+import { format } from "date-fns";
+import { OrderInProgress } from "../../components/order-inprogress";
+import { OrderPending } from "../../components/order-pending";
 
 export interface props {
   store: Store;

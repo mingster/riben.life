@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
-import { ProductEditTabs } from "./tabs";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Product, StoreProductOptionTemplate } from "@/types";
+import { ProductEditTabs } from "./tabs";
 
 const ProductEditPage = async (props: {
   params: Promise<{ productId: string; storeId: string }>;

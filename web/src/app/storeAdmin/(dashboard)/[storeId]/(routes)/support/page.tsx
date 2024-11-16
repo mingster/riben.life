@@ -1,17 +1,17 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
+import { formatDateTime } from "@/lib/utils";
 import { TicketStatus } from "@/types/enum";
 import type { Store, SupportTicket } from "@prisma/client";
-import { formatDateTime } from "@/lib/utils";
 
+import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { TicketColumn } from "./components/columns";
 import { TicketClient } from "./components/ticket-client";
-import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

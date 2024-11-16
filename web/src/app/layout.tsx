@@ -2,17 +2,17 @@ import "./css/globals.css";
 
 import { env } from "node:process";
 
-import type { Session } from "next-auth";
 import { Toaster } from "@/components/ui/toaster";
+import { CartProvider } from "@/hooks/use-cart";
+import { GetSession } from "@/lib/auth/utils";
 import { cn } from "@/lib/utils";
 import I18nProvider from "@/providers/i18n-provider";
 import SessionWrapper from "@/providers/session-provider";
 import NextThemeProvider from "@/providers/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { CartProvider } from "@/hooks/use-cart";
-import { GetSession } from "@/lib/auth/utils";
 import type { Metadata } from "next";
+import type { Session } from "next-auth";
 
 const title = "riben.life 利便生活";
 export const metadata: Metadata = {

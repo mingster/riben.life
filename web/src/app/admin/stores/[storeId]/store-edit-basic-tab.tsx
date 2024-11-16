@@ -40,11 +40,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-import ImageUploadBox from "@/components/image-upload-box";
-import { deleteImage, uploadImage } from "@/lib/utils";
 import { CountryCombobox } from "@/components/country-combobox";
 import { CurrencyCombobox } from "@/components/currency-combobox";
+import ImageUploadBox from "@/components/image-upload-box";
 import { LocaleSelectItems } from "@/components/locale-select-items";
+import { deleteImage, uploadImage } from "@/lib/utils";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "store name is required" }),

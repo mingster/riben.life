@@ -1,8 +1,8 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-import { CheckAdminApiAccess } from "../../api_helper";
 import { getUtcNow } from "@/lib/utils";
+import { CheckAdminApiAccess } from "../../api_helper";
 
 ///!SECTION update user in database.
 export async function PATCH(

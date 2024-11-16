@@ -1,12 +1,12 @@
 "use client";
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
-import type { ColumnDef } from "@tanstack/react-table";
-import { CellAction } from "./cell-action";
 import { Button } from "@/components/ui/button";
 import { CaretSortIcon } from "@radix-ui/react-icons";
-import Link from "next/link";
+import type { ColumnDef } from "@tanstack/react-table";
 import { t } from "i18next";
+import Link from "next/link";
+import { CellAction } from "./cell-action";
 
 export type FaqColumn = {
   id: string;

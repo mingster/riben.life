@@ -1,6 +1,6 @@
+import fs from "node:fs";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-import fs from "node:fs";
 import { CheckAdminApiAccess } from "../../api_helper";
 
 ///!SECTION update default privacy md file in /public/defaults/privacy.md

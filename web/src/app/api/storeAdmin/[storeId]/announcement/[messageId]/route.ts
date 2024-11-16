@@ -1,9 +1,9 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 
 import { sqlClient } from "@/lib/prismadb";
+import { getUtcNow } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { getUtcNow } from "@/lib/utils";
 
 ///!SECTION update Category record in database.
 export async function PATCH(

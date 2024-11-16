@@ -23,8 +23,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { SettingsFormProps } from "./setting-basic-tab";
 import { Textarea } from "@/components/ui/textarea";
+import type { SettingsFormProps } from "./setting-basic-tab";
 
 const contactInfoFormSchema = z.object({
   aboutUs: z.string().optional().default(""),

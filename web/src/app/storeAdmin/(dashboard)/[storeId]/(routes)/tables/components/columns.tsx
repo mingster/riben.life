@@ -3,9 +3,9 @@
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
 import { t } from "i18next";
+import { useQRCode } from "next-qrcode";
 import Link from "next/link";
 import { CellAction } from "./cell-action";
-import { useQRCode } from "next-qrcode";
 
 export type TableColumn = {
   id: string;

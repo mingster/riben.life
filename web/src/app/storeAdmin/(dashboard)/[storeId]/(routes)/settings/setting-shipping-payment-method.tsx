@@ -17,10 +17,10 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import axios from "axios";
+import { t } from "i18next";
 import { CheckIcon, XIcon } from "lucide-react";
 import { RequiredProVersion } from "../components/require-pro-version";
 import type { Store } from "./page";
-import { t } from "i18next";
 
 export interface SettingsFormProps {
   sqlData: Store;

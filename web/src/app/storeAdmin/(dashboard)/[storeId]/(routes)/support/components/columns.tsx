@@ -3,9 +3,9 @@
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { TicketStatus } from "@/types/enum";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CellAction } from "./cell-action";
-import Link from "next/link";
 import { t } from "i18next";
+import Link from "next/link";
+import { CellAction } from "./cell-action";
 
 export type TicketColumn = {
   id: string;

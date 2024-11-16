@@ -1,12 +1,12 @@
 "use client";
 
-import { ProductCard } from "@/components/product-card";
 import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
+import { ProductCard } from "@/components/product-card";
 import { useToast } from "@/components/ui/use-toast";
 import { type Item, useCart } from "@/hooks/use-cart";
-import { useParams } from "next/navigation";
+import { useI18n } from "@/providers/i18n-provider";
 import type { Product, StoreWithProducts } from "@/types";
+import { useParams } from "next/navigation";
 
 export interface props {
   product: Product;

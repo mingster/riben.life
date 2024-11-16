@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { CategoryEditTabs } from "./tabs";
 import { transformDecimalsToNumbers } from "@/lib/utils";
+import { CategoryEditTabs } from "./tabs";
 
 type Params = Promise<{ storeId: string; categoryId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

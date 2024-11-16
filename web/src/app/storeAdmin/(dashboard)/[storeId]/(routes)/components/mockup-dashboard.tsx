@@ -1,12 +1,12 @@
 "use client";
 
-import CardDataStats from "@/components/ui/CardDataStats";
 import ChartOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Charts/ChartOne";
 import ChartThree from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Charts/ChartThree";
 import ChartTwo from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Charts/ChartTwo";
 import ChatCard from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Chat/ChatCard";
 import MapOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Maps/MapOne";
 import TableOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Tables/TableOne";
+import CardDataStats from "@/components/ui/CardDataStats";
 import { DollarSign, Eye, PersonStanding, Sofa } from "lucide-react";
 import { RequiredProVersion } from "./require-pro-version";
 

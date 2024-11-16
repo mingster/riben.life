@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe/config";
+import { NextResponse } from "next/server";
 
 //create stripe payment intent
 export async function POST(

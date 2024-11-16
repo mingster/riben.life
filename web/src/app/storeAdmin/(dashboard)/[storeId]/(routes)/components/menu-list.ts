@@ -60,7 +60,6 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
     submenus: [],
   } as Menu;
 
-
   return [
     {
       groupLabel: "",
@@ -84,7 +83,9 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
         ...(store.level !== StoreLevel.Free ? [cash] : []),
 
         // for not pro stores, if autoAcceptOrder is true, show orderConfirmation menu
-        ...(store.level === StoreLevel.Free && !store.autoAcceptOrder ? [orderConfirmation] : []),
+        ...(store.level === StoreLevel.Free && !store.autoAcceptOrder
+          ? [orderConfirmation]
+          : []),
 
         {
           href: `${nav_prefix}/order/awaiting4Process`,

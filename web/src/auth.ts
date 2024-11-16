@@ -3,11 +3,11 @@
 import NextAuth from "next-auth";
 //import { nanoid } from 'nanoid';
 
+import Discord from "next-auth/providers/discord";
+import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
 import LineProdiver from "next-auth/providers/line";
-import FacebookProvider from "next-auth/providers/facebook";
 import Nodemailer from "next-auth/providers/nodemailer";
-import Discord from "next-auth/providers/discord";
 
 /*
 import EmailProvider from "next-auth/providers/email";
