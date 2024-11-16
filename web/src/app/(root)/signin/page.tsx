@@ -1,4 +1,4 @@
-import "../../css/font.css";
+
 import "../../css/base.css";
 import "../../css/utilities.css";
 

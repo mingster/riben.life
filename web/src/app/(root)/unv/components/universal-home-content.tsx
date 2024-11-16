@@ -10,7 +10,6 @@ import { Header, NavBar } from "./Header";
 
 import ScrollSpy from "react-ui-scrollspy";
 import "../../../css/base.css";
-import "../../../css/font.css";
 import "../../../css/utilities.css";
 
 import Image from "next/image";

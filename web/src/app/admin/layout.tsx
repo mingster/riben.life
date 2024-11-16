@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
 
-import "../css/font.css";
 import "../css/base.css";
 import "../css/utilities.css";
 
