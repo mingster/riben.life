@@ -13,7 +13,7 @@
     "biolint": "npx @biomejs/biome check --write ./src",
     "postinstall": "yarn sql:generate; yarn mongo:generate",
     "dbpush": "yarn sql:dbpush; yarn mongo:dbpush",
-    "sql:generate": "npx prisma generate",    
+    "sql:generate": "npx prisma generate",
     "sql:dbpush": "npx prisma db push --schema prisma/schema.prisma",
     "mongo:generate": "prisma generate --schema prisma-mongo/schema.prisma",
     "mongo:dbpush": "npx prisma db push --schema prisma-mongo/schema.prisma",
