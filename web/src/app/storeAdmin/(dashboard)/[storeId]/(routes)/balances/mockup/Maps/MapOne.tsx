@@ -3,7 +3,6 @@ import jsVectorMap from "jsvectormap";
 import "jsvectormap/dist/jsvectormap.min.css";
 import type React from "react";
 import { useEffect } from "react";
-import "@/js/us-aea-en";
 
 const MapOne: React.FC = () => {
   useEffect(() => {
@@ -51,9 +50,7 @@ const MapOne: React.FC = () => {
       <h4 className="mb-2 text-xl font-semibold text-black dark:text-primary">
         Region labels
       </h4>
-      <div className="h-90">
-        <div id="mapOne" className="mapOne map-btn"></div>
-      </div>
+      <div className="h-90"></div>
     </div>
   );
 };

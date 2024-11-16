@@ -8,4 +8,6 @@ try {
   } else {
     document.documentElement.classList.remove('dark')
   }
-} catch (_) {}
+} catch (e) {
+  console.log(e);
+}

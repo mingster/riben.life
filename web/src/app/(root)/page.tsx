@@ -69,6 +69,7 @@ export default function GlobalHomePage() {
           description: error.message,
           variant: "destructive",
         });
+        throw new Error("Something went wrong.");
       });
   };
 

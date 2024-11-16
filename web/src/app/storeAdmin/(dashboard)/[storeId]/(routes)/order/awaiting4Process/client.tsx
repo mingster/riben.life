@@ -76,8 +76,9 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
         }
         */
       })
-      .catch((err) => {
-        console.log(err);
+      .catch((error) => {
+        console.error("Error:", error);
+        throw error;
       });
 
     setLoading(false);

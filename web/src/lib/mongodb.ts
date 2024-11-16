@@ -36,11 +36,15 @@ export async function connectToMongoDB() {
   }
   try {
     // If no cached connection exists, establish a new connection to MongoDB
-    const cnx = await mongoose.connect(process.env.MONGODB_URI!);
+
+    const uri = `${process.env.MONGODB_URI}`;
+    const cnx = await mongoose.connect(uri);
+
     // Cache the connection for future use
     cachedConnection = cnx.connection;
     // Log message indicating a new MongoDB connection is established
     console.log("New mongodb connection established");
+
     // Return the newly established connection
     return cachedConnection;
   } catch (error) {

@@ -68,6 +68,7 @@ export async function POST(request: Request) {
 
       console.log(`send result: ${JSON.stringify(result)}`);
       //console.log(`create announcement: ${JSON.stringify(obj)}`);
+
       return NextResponse.json(result, { status: 200 });
     }
 
