@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     return NextResponse.json(store);
   } catch (error) {
     console.log("[GET_BY_HOSTNAME]", error);
+
     return new NextResponse("Internal error", { status: 500 });
   }
 }

@@ -44,6 +44,7 @@ export async function PATCH(
     return NextResponse.json(storeSettings);
   } catch (error) {
     console.log("[STORE_PATCH]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

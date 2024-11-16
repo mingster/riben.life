@@ -1,4 +1,3 @@
-
 import "../../css/base.css";
 import "../../css/utilities.css";
 
@@ -77,15 +76,13 @@ export default async function SignInPage(props: {
                   {(() => {
                     switch (provider.name.toLowerCase()) {
                       case "google":
-                        return <FcGoogle className="w-5 h-5" />;
+                        return <FcGoogle className="size-5" />;
                       case "facebook":
-                        return (
-                          <FaFacebook className="w-5 h-5 text-[#4267B2]" />
-                        );
+                        return <FaFacebook className="size-5 text-[#4267B2]" />;
                       case "line":
-                        return <FaLine className="w-5 h-5 text-[#06C755]" />;
+                        return <FaLine className="size-5 text-[#06C755]" />;
                       case "discord":
-                        return <FaDiscord className="w-5 h-5 text-[#7289da]" />;
+                        return <FaDiscord className="size-5 text-[#7289da]" />;
                       default:
                         return "";
                     }

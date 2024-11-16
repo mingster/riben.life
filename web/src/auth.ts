@@ -53,8 +53,10 @@ export const providerMap = providers
   .map((provider) => {
     if (typeof provider === "function") {
       const providerData = provider();
+
       return { id: providerData.id, name: providerData.name };
     }
+
     return { id: provider.id, name: provider.name };
   })
   .filter((provider) => provider.id !== "credentials");
@@ -152,6 +154,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // but we remove it on the domain part
         domain = domain.split(",")[0];
         local = local.trim(); //just to avoid typescript lint error
+
         return `${local}@${domain}`;
 
         // You can also throw an error, which will redirect the user
@@ -193,6 +196,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (userExists) {
           return true;
         }
+
         return false;
         /* else {return "/register";}*/
       }

@@ -70,7 +70,7 @@ export const StoreContactCard: React.FC<props> = ({ store, storeSettings }) => {
             <div className="">
               {storeSettings.facebookUrl && (
                 <div className="text-sm pb-2 flex">
-                  <FacebookIcon className="h-4 w-4" />
+                  <FacebookIcon className="size-4" />
                   <Link className="pl-1" href={storeSettings.facebookUrl}>
                     Facebook
                   </Link>
@@ -78,7 +78,7 @@ export const StoreContactCard: React.FC<props> = ({ store, storeSettings }) => {
               )}
               {storeSettings.igUrl && (
                 <div className="text-sm pb-2 flex">
-                  <InstagramIcon className="h-4 w-4" />
+                  <InstagramIcon className="size-4" />
                   <Link className="pl-1" href={storeSettings.igUrl}>
                     IG
                   </Link>

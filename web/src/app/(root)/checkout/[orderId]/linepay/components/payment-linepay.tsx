@@ -18,6 +18,7 @@ const PaymentLinePay: React.FC<paymentProps> = ({ order, webUrl, appUrl }) => {
   const { SVG } = useQRCode();
 
   console.log("appUrl", appUrl);
+
   return (
     <div>
       <div className="text-xl font-extrabold">

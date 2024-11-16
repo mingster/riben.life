@@ -31,6 +31,7 @@ export async function POST(
     return NextResponse.json(obj);
   } catch (error) {
     console.log("[CATEGORY_POST]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }
@@ -74,6 +75,7 @@ export async function PATCH(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.log("[CATEGORY_PATCH]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

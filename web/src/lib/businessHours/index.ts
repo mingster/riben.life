@@ -111,6 +111,7 @@ export default class BusinessHours {
         now.toLocaleString("en-US", { timeZone: this.hours.timeZone }),
       ),
     );
+
     return date;
   }
 
@@ -277,8 +278,10 @@ export default class BusinessHours {
 
     if (Array.isArray(bizhours)) {
       const nextOpeningTime = bizhours[0].from;
+
       return nextOpeningTime;
     }
+
     return "";
   }
 
@@ -329,6 +332,7 @@ export default class BusinessHours {
     const modifiedTime = time.replace(":", "");
 
     if (Number.isNaN(modifiedTime)) return false;
+
     return true;
   }
 

@@ -85,7 +85,7 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
               title={t("back_to_store")}
               href={`/${store.id}`}
             >
-              <HomeIcon className="mr-1 h-4 w-4" />
+              <HomeIcon className="mr-1 size-4" />
               {store.name}
             </Link>
           </h1>

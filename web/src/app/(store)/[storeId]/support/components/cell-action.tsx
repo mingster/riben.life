@@ -73,9 +73,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
       />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
+          <Button variant="ghost" className="size-8 p-0 cursor-pointer">
             <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -84,19 +84,19 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
             className=" cursor-pointer"
             onClick={() => onCopy(data.id)}
           >
-            <Copy className="mr-1 h-4 w-4" /> Copy Id
+            <Copy className="mr-1 size-4" /> Copy Id
           </DropdownMenuItem>
           <DropdownMenuItem
             className=" cursor-pointer"
             onClick={() => router.push(`/${params.storeId}/support/${data.id}`)}
           >
-            <Edit className="mr-1 h-4 w-4" /> Reply
+            <Edit className="mr-1 size-4" /> Reply
           </DropdownMenuItem>
           <DropdownMenuItem
             className=" cursor-pointer"
             onClick={() => setOpen(true)}
           >
-            <Trash className="mr-1 h-4 w-4" /> Archive
+            <Trash className="mr-1 size-4" /> Archive
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

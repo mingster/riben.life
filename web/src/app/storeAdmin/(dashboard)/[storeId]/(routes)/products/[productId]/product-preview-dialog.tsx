@@ -39,7 +39,7 @@ export const ProductPreviewDialog: React.FC<props> = ({ initialData }) => {
             size="sm"
             variant={"outline"}
           >
-            <Eye className="h-4 w-4" />
+            <Eye className="size-4" />
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">

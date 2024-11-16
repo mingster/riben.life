@@ -63,7 +63,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 
   //{order.tableId && order.tableId !== null && order.tableId !== 'null' && `桌號：${getTableName(tables, order.tableId)}`}
   return (
-    <Card key={order.id} className="pt-1 pb-1">
+    <Card key={order.id} className="py-1">
       <CardContent>
         <div className="grid grid-cols-3 gap-1 justify-items-stretch">
           <div className="whitespace-nowrap text-nowrap">

@@ -40,6 +40,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json("success");
   } catch (error) {
     console.log("[PATCH]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

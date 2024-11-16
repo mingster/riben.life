@@ -38,6 +38,7 @@ export const columns: ColumnDef<StoreOrderColumn>[] = [
     },
     cell: ({ row }) => {
       const amount = Number(row.getValue("amount"));
+
       return <Currency value={amount} />;
     },
   },
@@ -50,6 +51,7 @@ export const columns: ColumnDef<StoreOrderColumn>[] = [
     },
     cell: ({ row }) => {
       const status = OrderStatus[Number(row.getValue("orderStatus"))];
+
       return <DisplayOrderStatus status={row.getValue("orderStatus")} />;
     },
   },

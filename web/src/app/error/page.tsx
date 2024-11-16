@@ -27,7 +27,7 @@ export default function Home() {
         <Card className="basis-1/2 lg:min-h-[500px]">
           <CardHeader>
             <CardTitle className="flex gap-2 text-3xl text-primary items-center">
-              <MonitorX className="h-10 w-10" />
+              <MonitorX className="size-10" />
               Error
             </CardTitle>
             <CardDescription>{errCode}</CardDescription>

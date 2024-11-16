@@ -34,6 +34,7 @@ const DropdownNotification = () => {
       setDropdownOpen(false);
     };
     document.addEventListener("click", clickHandler);
+
     return () => document.removeEventListener("click", clickHandler);
   });
 
@@ -44,6 +45,7 @@ const DropdownNotification = () => {
       setDropdownOpen(false);
     };
     document.addEventListener("keydown", keyHandler);
+
     return () => document.removeEventListener("keydown", keyHandler);
   });
 
@@ -68,23 +70,23 @@ const DropdownNotification = () => {
           setNotifying(false);
           setDropdownOpen(!dropdownOpen);
         }}
-        className="relative flex h-8.5 w-8.5 items-center justify-center rounded-full border-[0.5px]
-         border-gray/20 bg-stroke/20 hover:text-meta-1 dark:border-strokedark dark:bg-meta-4 dark:text-primary dark:hover:text-meta-1"
+        className="relative flex size-8.5 items-center justify-center rounded-full border-[0.5px] border-gray/20
+         bg-stroke/20 hover:text-meta-1 dark:border-strokedark dark:bg-meta-4 dark:text-primary dark:hover:text-meta-1"
         href="#"
       >
         {/* show if there's unread notification */}
         {!isRead && (
           <>
             <span
-              className={`absolute -right-0.5 -top-0.5 z-1 h-2 w-2 rounded-full bg-meta-1 ${
+              className={`absolute -right-0.5 -top-0.5 z-1 size-2 rounded-full bg-meta-1 ${
                 notifying === false ? "hidden" : "inline"
               }`}
             >
-              <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-meta-1 opacity-75"></span>
+              <span className="absolute -z-1 inline-flex size-full animate-ping rounded-full bg-meta-1 opacity-75"></span>
             </span>
           </>
         )}
-        <MessageCircleMore className="text-slate-400 hover:opacity-50 duration-300 ease-in-out w-5 h-5" />
+        <MessageCircleMore className="text-slate-400 hover:opacity-50 duration-300 ease-in-out size-5" />
       </Link>
 
       {/* <!-- Dropdown Start --> */}
@@ -109,7 +111,7 @@ const DropdownNotification = () => {
                 className="flex gap-4.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
                 href="/account/notification"
               >
-                <div className="h-12.5 w-12.5 rounded-full">
+                <div className="size-12.5 rounded-full">
                   <Image
                     width={112}
                     height={112}

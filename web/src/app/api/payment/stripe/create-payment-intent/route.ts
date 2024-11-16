@@ -43,6 +43,7 @@ export async function POST(
     return NextResponse.json(paymentIntent);
   } catch (error) {
     console.log("[STRIPE_payment_intent]", error);
+
     return new NextResponse("Internal error", { status: 500 });
   }
 }

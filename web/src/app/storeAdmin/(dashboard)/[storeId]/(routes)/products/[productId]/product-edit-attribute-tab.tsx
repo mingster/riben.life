@@ -479,7 +479,7 @@ export const ProductEditAttributeTab = ({
                               ) : (
                                 <span>Pick a date</span>
                               )}
-                              <CalendarIcon className="w-4 h-4 ml-auto opacity-50" />
+                              <CalendarIcon className="size-4 ml-auto opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
@@ -523,7 +523,7 @@ export const ProductEditAttributeTab = ({
                               ) : (
                                 <span>Pick a date</span>
                               )}
-                              <CalendarIcon className="w-4 h-4 ml-auto opacity-50" />
+                              <CalendarIcon className="size-4 ml-auto opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>

@@ -46,6 +46,7 @@ export function paramsSerializer(params: QueryParams): string {
 
 function encrypt(data: string, secretKey: string): string {
   const hmac = hmacSHA256(data, secretKey);
+
   return Base64.stringify(hmac);
 }
 
@@ -79,6 +80,7 @@ function handleGetRequest(
   const signature = encrypt(text, merchantConfig.channelSecretKey);
 
   const headers = generateHeader(merchantConfig.channelId, nonce, signature);
+
   return {
     ...config,
     headers,
@@ -100,6 +102,7 @@ function handlePostRequest(
   const signature = encrypt(text, merchantConfig.channelSecretKey);
 
   const headers = generateHeader(merchantConfig.channelId, nonce, signature);
+
   return {
     ...config,
     headers,

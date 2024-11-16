@@ -40,6 +40,7 @@ function nullable<TSchema extends z.AnyZodObject>(schema: TSchema) {
   const newProps = entries.reduce(
     (acc, [key, value]) => {
       acc[key] = value.nullable();
+
       return acc;
     },
     {} as {
@@ -61,6 +62,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export const isMobileUserAgent = (userAgent: string | null) => {
   if (!userAgent) return false;
+
   return /iPhone|iPad|iPod|Android/i.test(userAgent);
 };
 
@@ -100,11 +102,13 @@ export function isIOS() {
 export const generateSHA1 = (data: crypto.BinaryLike) => {
   const hash = crypto.createHash("sha1");
   hash.update(data);
+
   return hash.digest("hex");
 };
 
 export const generateSignature = (publicId: string, apiSecret: string) => {
   const timestamp = new Date().getTime();
+
   return `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
 };
 
@@ -180,6 +184,7 @@ export const uploadImage = async (
     return res.data;
   } catch (error) {
     console.error(error);
+
     return error;
   }
 };
@@ -212,6 +217,7 @@ export const deleteImage = async (publicId: string) => {
 export const toDateTime = (secs: number) => {
   const t = new Date(+0); // Unix epoch start.
   t.setSeconds(secs);
+
   return t;
 };
 
@@ -277,6 +283,7 @@ export const calculateTrialEndUnixTimestamp = (
   const trialEnd = new Date(
     currentDate.getTime() + (trialPeriodDays + 1) * 24 * 60 * 60 * 1000,
   ); // Add trial days
+
   return Math.floor(trialEnd.getTime() / 1000); // Convert to Unix timestamp in seconds
 };
 

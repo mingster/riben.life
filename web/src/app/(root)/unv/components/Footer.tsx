@@ -7,7 +7,7 @@ export function Footer({ className, ...props }: { className?: string }) {
       {/* scroll up to top */}
       <div className="flex justify-center w-full">
         <a href="#top" title="scroll up to top">
-          <ArrowBigUpDash className="w-[35px] h-[35px]" />
+          <ArrowBigUpDash className="size-[35px]" />
         </a>
       </div>
 

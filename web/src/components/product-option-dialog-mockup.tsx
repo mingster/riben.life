@@ -363,7 +363,7 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
                 )}
               />
 
-              <div key="optionid2" className="pt-2 pb-2">
+              <div key="optionid2" className="py-2">
                 {/* render product option and its requirement */}
                 <div className="flex items-center justify-between">
                   <FormLabel className="grow font-bold text-xl">主菜</FormLabel>
@@ -427,7 +427,7 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
                 )}
               />
 
-              <div key="optionid3" className="pt-2 pb-2">
+              <div key="optionid3" className="py-2">
                 {/* render product option and its requirement */}
                 <div className="flex items-center justify-between">
                   <FormLabel className="grow font-bold text-xl">加購</FormLabel>
@@ -534,7 +534,7 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
               />
 
               {/* render quantity of product to buy */}
-              <div className="w-full pt-2 pb-2">
+              <div className="w-full py-2">
                 <div className="flex justify-center">
                   <div className="flex flex-nowrap content-center w-[20px]">
                     {quantity && quantity > 0 && (

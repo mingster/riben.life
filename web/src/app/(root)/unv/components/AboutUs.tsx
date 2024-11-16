@@ -31,6 +31,7 @@ import { useTheme } from "next-themes";
 export function AboutUs({ className, ...props }: { className?: string }) {
   const { lng } = useI18n();
   const { t } = useTranslation(lng, "landing");
+
   return (
     <section id="aboutUs" className="relative min-h-screen">
       {/*background */}
@@ -144,6 +145,7 @@ export const ContactForm = () => {
   const onSubmit = async (data: formValues) => {
     if (!captcha) {
       alert("Please complete the captcha");
+
       return;
     }
 
@@ -208,7 +210,7 @@ export const ContactForm = () => {
           variants={slideIn("left", "tween", 0.2, 1)}
           //className="flex-[0.75] bg-black-100 rounded-2xl"
         >
-          <div className="flex gap-2 pt-10 pb-10 hover:text-slate">
+          <div className="flex gap-2 py-10 hover:text-slate">
             {discordUrl && (
               <>
                 請直接在 Discord 討論或詢問：
@@ -319,7 +321,7 @@ type Props = {
 const DiscordLink = ({ url }: Props) => (
   <a href={url} target="_blank" rel="noreferrer">
     <div className="flex items-center justify-center gap-1">
-      <FaDiscord className="w-5 h-5 text-[#7289da]" />
+      <FaDiscord className="size-5 text-[#7289da]" />
       Discord
     </div>
   </a>
@@ -332,7 +334,7 @@ const FacebookLink = ({ url }: Props) => (
     rel="noreferrer"
   >
     <div className="flex items-center justify-center gap-1">
-      <FaFacebook className="w-5 h-5 text-[#4267B2]" />
+      <FaFacebook className="size-5 text-[#4267B2]" />
       Facebook
     </div>
   </a>
@@ -341,7 +343,7 @@ const FacebookLink = ({ url }: Props) => (
 const InstagramLink = ({ url }: Props) => (
   <a href={url} target="_blank" rel="noreferrer">
     <div className="flex items-center justify-center gap-1">
-      <FaInstagram className="w-5 h-5" />
+      <FaInstagram className="size-5" />
       Instagram
     </div>
   </a>
@@ -354,7 +356,7 @@ const LineLink = ({ url }: Props) => (
     rel="noreferrer"
   >
     <div className="flex items-center justify-center gap-1">
-      <FaLine className="w-5 h-5 text-[#06C755]" />
+      <FaLine className="size-5 text-[#06C755]" />
       LINE
     </div>
   </a>

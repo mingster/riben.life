@@ -56,7 +56,7 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 
   return (
     <ScrollArea className="[&>div>div[style]]:!block">
-      <nav className="mt-8 h-full w-full ">
+      <nav className="mt-8 size-full ">
         {isOpen && <div className="space-y-1 px-2">{title}</div>}
         <ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px)]">
           {menuList.map(({ groupLabel, menus }, index) => (
@@ -71,7 +71,7 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
                   <Tooltip delayDuration={100}>
                     <TooltipTrigger className="w-full">
                       <div className="flex w-full items-center justify-center">
-                        <Ellipsis className="h-5 w-5" />
+                        <Ellipsis className="size-5" />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="right">

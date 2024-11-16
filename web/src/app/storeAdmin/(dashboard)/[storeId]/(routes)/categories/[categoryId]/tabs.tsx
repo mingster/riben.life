@@ -39,11 +39,11 @@ export const CategoryEditTabs = ({
       <Heading title={pageTitle} description="" />
       <Tabs defaultValue="basic" className="w-full">
         <TabsList>
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="basic">
+          <TabsTrigger className="px-5 lg:min-w-40" value="basic">
             {t("Category_Mgmt_tab_basic")}
           </TabsTrigger>
           {params.productId !== "new" && (
-            <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="products">
+            <TabsTrigger className="px-5 lg:min-w-40" value="products">
               {t("Category_Mgmt_tab_products")}
             </TabsTrigger>
           )}

@@ -27,7 +27,7 @@ export const columns: ColumnDef<FaqColumn>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           {t("FaqCategory")}
-          <CaretSortIcon className="ml-2 h-4 w-4" />
+          <CaretSortIcon className="ml-2 size-4" />
         </Button>
       );
     },

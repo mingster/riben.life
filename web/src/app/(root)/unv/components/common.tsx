@@ -7,7 +7,7 @@ export function IconContainer({
 }) {
   return (
     <div
-      className={`w-16 h-16 p-[0.1875rem] rounded-full ring-1 ring-slate-900/10 shadow overflow-hidden ${className}`}
+      className={`size-16 p-[0.1875rem] rounded-full ring-1 ring-slate-900/10 shadow overflow-hidden ${className}`}
       {...props}
     >
       {light && (

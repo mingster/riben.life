@@ -50,6 +50,7 @@ export async function GET(
     return NextResponse.json(unpaidOrders);
   } catch (error) {
     console.error("[GET_UNPAID_ORDERS]", error);
+
     return new NextResponse("Internal error", { status: 500 });
   }
 }

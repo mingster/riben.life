@@ -68,7 +68,7 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
         <div className="flex w-full justify-center">
           <strong className="relative w-1/2 inline-flex items-center rounded">
             {numInCart > 0 && (
-              <span className="absolute -top-1 -right-2 h-5 w-5 rounded-full bg-red-800 text-slate-100 flex justify-center items-center text-xs pb-1">
+              <span className="absolute -top-1 -right-2 size-5 rounded-full bg-red-800 text-slate-100 flex justify-center items-center text-xs pb-1">
                 <span>{numInCart}</span>
               </span>
             )}

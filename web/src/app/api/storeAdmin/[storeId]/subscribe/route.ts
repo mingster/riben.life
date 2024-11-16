@@ -1,8 +1,7 @@
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
-import { transformDecimalsToNumbers } from "@/lib/utils";
-import { getUtcNow } from "@/lib/utils";
+import { getUtcNow, transformDecimalsToNumbers } from "@/lib/utils";
 import { SubscriptionStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
@@ -117,6 +116,7 @@ export async function POST(
     return NextResponse.json(obj, { status: 200 });
   } catch (error) {
     console.log("[SubscriptionPayment_POST]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

@@ -2,13 +2,12 @@
 
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import { useParams, useRouter } from "next/navigation";
 
 import { ConfirmModal } from "@/components/modals/cofirm-modal";
-import { getAbsoluteUrl } from "@/lib/utils";
 
 import {
   Elements,
@@ -79,6 +78,7 @@ const DisplayPkg: React.FC<props> = ({
   function handleDivClick(selected: number) {
     if (selected === store.level) {
       alert(t("storeAdmin_switchLevel_duplicated"));
+
       return;
     }
 

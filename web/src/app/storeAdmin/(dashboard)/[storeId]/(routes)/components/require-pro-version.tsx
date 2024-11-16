@@ -12,10 +12,10 @@ export const RequiredProVersion = () => {
   return (
     <div>
       <Link
-        className="flex gap-2 pt-2 pb-2 font-bold"
+        className="flex gap-2 py-2 font-bold"
         href={`/storeAdmin/${params.storeId}/subscribe/`}
       >
-        <FileWarning className="w-6 h-6 text-red-500" />
+        <FileWarning className="size-6 text-red-500" />
         {t("RequiredProVersion")}
       </Link>
     </div>

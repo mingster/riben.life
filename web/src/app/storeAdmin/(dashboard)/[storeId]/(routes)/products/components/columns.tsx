@@ -48,6 +48,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
     },
     cell: ({ row }) => {
       const status = ProductStatuses[Number(row.getValue("status"))];
+
       return <div>{t(`ProductStatus_${status.label}`)}</div>;
     },
   },
@@ -82,10 +83,11 @@ export const columns: ColumnDef<ProductColumn>[] = [
     cell: ({ row }) => {
       const val =
         row.getValue("hasOptions") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
+          <CheckIcon className="text-green-400  size-4" />
         ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
+          <XIcon className="text-red-400 size-4" />
         );
+
       return <div className="pl-3">{val}</div>;
     },
   },
@@ -98,6 +100,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
     },
     cell: ({ row }) => {
       const price = Number(row.getValue("price"));
+
       return <Currency value={price} />;
     },
   },

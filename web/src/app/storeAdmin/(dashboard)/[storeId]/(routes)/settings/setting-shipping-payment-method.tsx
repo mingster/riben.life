@@ -104,7 +104,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
   // check the saved shipping methods
   //
   // biome-ignore lint/style/noVar: <explanation>
-  var savedStoreShippingMethods: RowSelectionState = {};
+  const savedStoreShippingMethods: RowSelectionState = {};
 
   if (sqlData) {
     // use index number as row key
@@ -128,7 +128,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
     }),
   );
   // biome-ignore lint/style/noVar: <explanation>
-  var savedStorePayMethods: RowSelectionState = {};
+  const savedStorePayMethods: RowSelectionState = {};
   if (sqlData) {
     // use index number as row key
     sqlData.StorePaymentMethods.map((mapping) => {
@@ -174,6 +174,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
 
     setLoading(false);
   };
+
   return (
     <>
       {disablePaidOptions && <RequiredProVersion />}
@@ -300,10 +301,11 @@ const PayMethodColumns: ColumnDef<PayMethodColumn>[] = [
     cell: ({ row }) => {
       const isDefault =
         row.getValue("isDefault") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
+          <CheckIcon className="text-green-400  size-4" />
         ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
+          <XIcon className="text-red-400 size-4" />
         );
+
       return <div className="pl-3">{isDefault}</div>;
     },
   },
@@ -380,6 +382,7 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
     },
     cell: ({ row }) => {
       const price = Number(row.getValue("basic_price"));
+
       return <Currency value={price} />;
     },
   },
@@ -396,10 +399,11 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
     cell: ({ row }) => {
       const shipRequried =
         row.getValue("shipRequried") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
+          <CheckIcon className="text-green-400  size-4" />
         ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
+          <XIcon className="text-red-400 size-4" />
         );
+
       return <div className="pl-3">{shipRequried}</div>;
     },
   },
@@ -416,10 +420,11 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
     cell: ({ row }) => {
       const isDefault =
         row.getValue("isDefault") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
+          <CheckIcon className="text-green-400  size-4" />
         ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
+          <XIcon className="text-red-400 size-4" />
         );
+
       return <div className="pl-3">{isDefault}</div>;
     },
   },

@@ -133,7 +133,7 @@ export const ProductEditTabs = ({
             size="sm"
             onClick={() => setOpen(true)}
           >
-            <Trash className="h-4 w-4" />
+            <Trash className="size-4" />
           </Button>
         )}
       </div>
@@ -145,24 +145,24 @@ export const ProductEditTabs = ({
         className="w-full"
       >
         <TabsList>
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="basic">
+          <TabsTrigger className="px-5 lg:min-w-40" value="basic">
             {t("Product_tab_basic")}
           </TabsTrigger>
           {params.productId !== "new" && (
             <>
-              <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="categories">
+              <TabsTrigger className="px-5 lg:min-w-40" value="categories">
                 {t("Product_tab_category")}
               </TabsTrigger>
 
-              <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="options">
+              <TabsTrigger className="px-5 lg:min-w-40" value="options">
                 {t("Product_tab_options")}
               </TabsTrigger>
 
-              <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="attribute">
+              <TabsTrigger className="px-5 lg:min-w-40" value="attribute">
                 {t("Product_tab_attribute")}
               </TabsTrigger>
 
-              <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="images">
+              <TabsTrigger className="px-5 lg:min-w-40" value="images">
                 {t("Product_tab_images")}
               </TabsTrigger>
             </>

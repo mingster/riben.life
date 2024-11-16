@@ -1,10 +1,10 @@
 "use client";
 import { useTranslation } from "@/app/i18n/client";
+//import { toast } from "react-hot-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-//import { toast } from "react-hot-toast";
-import { useToast } from "@/components/ui/use-toast";
 
 import { Loader } from "@/components/ui/loader";
 import { getHostname } from "@/lib/utils";

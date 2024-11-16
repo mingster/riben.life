@@ -59,10 +59,11 @@ export const columns: ColumnDef<CategoryColumn>[] = [
       //console.log( typeof(row.getValue("isFeatured")) );
       const isFeatured =
         row.getValue("isFeatured") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
+          <CheckIcon className="text-green-400  size-4" />
         ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
+          <XIcon className="text-red-400 size-4" />
         );
+
       return <div className="pl-3">{isFeatured}</div>;
     },
   },

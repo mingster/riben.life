@@ -66,7 +66,7 @@ export const DropdownCart = () => {
         <SheetTrigger asChild>
           <strong className="relative inline-flex items-center rounded">
             {numInCart > 0 && (
-              <span className="absolute -top-1 -right-2 h-5 w-5 rounded-full bg-red-800 text-slate-100 flex justify-center items-center text-xs pb-1">
+              <span className="absolute -top-1 -right-2 size-5 rounded-full bg-red-800 text-slate-100 flex justify-center items-center text-xs pb-1">
                 <span>{numInCart}</span>
               </span>
             )}
@@ -78,7 +78,7 @@ export const DropdownCart = () => {
             >
               <ShoppingBag
                 size={20}
-                className="text-slate-400 hover:opacity-50 duration-300 ease-in-out w-5 h-5"
+                className="text-slate-400 hover:opacity-50 duration-300 ease-in-out size-5"
               />
             </Button>
           </strong>
@@ -96,7 +96,7 @@ export const DropdownCart = () => {
                 <>
                   <strong className="w-full relative inline-flex items-center rounded">
                     {numInCart > 0 && (
-                      <span className="absolute -top-1 -right-2 h-5 w-5 rounded-full bg-red-800 text-slate-100 flex justify-center items-center text-xs pb-1">
+                      <span className="absolute -top-1 -right-2 size-5 rounded-full bg-red-800 text-slate-100 flex justify-center items-center text-xs pb-1">
                         <span>{numInCart}</span>
                       </span>
                     )}

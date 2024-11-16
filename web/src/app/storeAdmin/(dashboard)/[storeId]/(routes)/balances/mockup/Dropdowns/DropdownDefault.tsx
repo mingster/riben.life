@@ -19,6 +19,7 @@ const DropdownDefault = () => {
       setDropdownOpen(false);
     };
     document.addEventListener("click", clickHandler);
+
     return () => document.removeEventListener("click", clickHandler);
   });
 
@@ -29,6 +30,7 @@ const DropdownDefault = () => {
       setDropdownOpen(false);
     };
     document.addEventListener("keydown", keyHandler);
+
     return () => document.removeEventListener("keydown", keyHandler);
   });
 

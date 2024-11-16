@@ -64,6 +64,7 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.log("[TICKET_DELETE]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

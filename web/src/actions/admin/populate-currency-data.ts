@@ -38,5 +38,6 @@ export async function populateCurrencyData() {
       console.error(err);
     }
   }
+
   return true;
 }

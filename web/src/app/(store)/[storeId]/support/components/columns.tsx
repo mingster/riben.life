@@ -29,6 +29,7 @@ export const columns: ColumnDef<TicketColumn>[] = [
     },
     cell: ({ row }) => {
       const status = TicketStatus[Number(row.getValue("status"))];
+
       return <div className="">{status}</div>;
     },
   },

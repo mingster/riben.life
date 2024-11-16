@@ -23,6 +23,7 @@ export async function GET(
     return NextResponse.json(store);
   } catch (error) {
     console.error("[GET_STORE]", error);
+
     return new NextResponse("Internal error", { status: 500 });
   }
 }

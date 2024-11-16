@@ -80,7 +80,7 @@ export const CategoryEditProductTab = ({
   // construct pre-select rows from ProductCategories
   //
   // biome-ignore lint/style/noVar: <explanation>
-  var initiallySelected: RowSelectionState = {};
+  const initiallySelected: RowSelectionState = {};
   if (initialData) {
     // use index number as row key
     initialData.map((pc: ProductCategories, index2) => {
@@ -270,6 +270,7 @@ const columns: ColumnDef<ProductColumn>[] = [
     },
     cell: ({ row }) => {
       const price = Number(row.getValue("price"));
+
       return (
         <>
           <div className="">
@@ -289,10 +290,11 @@ const columns: ColumnDef<ProductColumn>[] = [
     cell: ({ row }) => {
       const val =
         row.getValue("isFeatured") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
+          <CheckIcon className="text-green-400  size-4" />
         ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
+          <XIcon className="text-red-400 size-4" />
         );
+
       return <div className="pl-3">{val}</div>;
     },
   },
@@ -305,6 +307,7 @@ const columns: ColumnDef<ProductColumn>[] = [
     },
     cell: ({ row }) => {
       const status = ProductStatuses[Number(row.getValue("status"))];
+
       return <div>{t(`ProductStatus_${status.label}`)}</div>;
     },
   },

@@ -247,7 +247,7 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
             {fields.map((item, index) => (
               <div
                 key={item.id}
-                className="relative h-[200px] w-[200px] overflow-hidden"
+                className="relative size-[200px] overflow-hidden"
               >
                 <div className="absolute right-1 top-2 z-10">
                   <Button

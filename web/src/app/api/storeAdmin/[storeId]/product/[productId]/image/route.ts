@@ -25,6 +25,7 @@ export async function PATCH(
     return NextResponse.json(obj);
   } catch (error) {
     console.log("[PRODUCT_IMAGE_PATCH]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }
@@ -56,6 +57,7 @@ export async function DELETE(
     return NextResponse.json(obj);
   } catch (error) {
     console.log("[PRODUCT_IMAGE_DELETE]", error);
+
     return new NextResponse("Internal error", { status: 500 });
   }
 }

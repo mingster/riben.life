@@ -168,9 +168,9 @@ export const AddProductOptionDialog: React.FC<props> = ({
       <DialogTrigger asChild>
         <Button variant={"outline"}>
           {action === "Create" ? (
-            <Plus className="mr-1 h-4 w-4" />
+            <Plus className="mr-1 size-4" />
           ) : (
-            <Pencil className="mr-1 h-4 w-4" />
+            <Pencil className="mr-1 size-4" />
           )}
           {t(action)}
         </Button>

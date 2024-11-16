@@ -62,6 +62,7 @@ export async function GET(
     return NextResponse.json(result);
   } catch (error) {
     console.error("[SEARCH_ORDERS]", error);
+
     return new NextResponse("Internal error", { status: 500 });
   }
 }

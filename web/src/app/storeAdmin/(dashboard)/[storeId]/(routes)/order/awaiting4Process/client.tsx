@@ -109,6 +109,7 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
   }
 
   if (loading) return <Loader />;
+
   return (
     <section className="relative w-full">
       <IntervaledContent />

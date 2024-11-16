@@ -181,14 +181,14 @@ export const StoreHomeContent: React.FC<props> = ({
   // http://localhost:3000/4574496e-9759-4d9c-9258-818501418747/dfc853b4-47f5-400c-a2fb-f70f045d65a0
   return (
     <section className="relative w-full justify-center content-center items-center">
-      <div className="pl-1 pr-1">
+      <div className="px-1">
         {!storeData.isOpen && (
           <h2 className="text-2xl xs:text-xl font-extrabold">
             {t("store_closed")}
           </h2>
         )}
 
-        <div className="pl-2 pr-2 flex items-center gap-5">
+        <div className="px-2 flex items-center gap-5">
           <div className="">
             {tableData ? (
               <div className="">
@@ -219,7 +219,7 @@ export const StoreHomeContent: React.FC<props> = ({
         )}
 
         {/* side menu */}
-        <div className="grid grid-cols-[20%_80%] gap-2 pl-1 pr-1">
+        <div className="grid grid-cols-[20%_80%] gap-2 px-1">
           <div className="self-start sticky top-24">
             {/* 20% sidebar */}
             <ScrollArea className="w-full max-h-fit whitespace-nowrap">
@@ -288,7 +288,7 @@ export const StoreHomeContent: React.FC<props> = ({
               }
             }}
           >
-            <ArrowUpToLine className="w-[20px] h-[20px]" />
+            <ArrowUpToLine className="size-[20px]" />
           </button>
         </div>
       </div>
