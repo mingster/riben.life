@@ -1,8 +1,8 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
+import { getNowTimeInTz, getUtcNow } from "@/lib/utils";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
-import { getNowTimeInTz, getUtcNow } from "@/lib/utils";
 
 ///!SECTION mark order as paid
 export async function POST(

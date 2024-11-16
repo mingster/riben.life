@@ -1,10 +1,10 @@
 "use client";
-import dynamic from "next/dynamic";
-import type React from "react";
 import type { ContextStore } from "@uiw/react-md-editor";
-import { type FC, useCallback, useState } from "react";
 import { commands } from "@uiw/react-md-editor";
 import { useTheme } from "next-themes";
+import dynamic from "next/dynamic";
+import type React from "react";
+import { type FC, useCallback, useState } from "react";
 
 // ANCHOR https://github.com/uiwjs/react-md-editor/tree/master
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });

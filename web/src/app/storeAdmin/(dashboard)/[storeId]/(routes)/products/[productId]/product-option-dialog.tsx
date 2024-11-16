@@ -1,10 +1,7 @@
 "use client";
 
-import { Plus, Pencil } from "lucide-react";
-import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -28,9 +25,12 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { useI18n } from "@/providers/i18n-provider";
 import type { ProductOption, StoreProductOptionTemplate } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import { Pencil, Plus } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";

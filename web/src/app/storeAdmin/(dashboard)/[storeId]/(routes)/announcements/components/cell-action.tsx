@@ -1,7 +1,7 @@
 "use client";
 
 import axios, { type AxiosError } from "axios";
-import { Copy, Edit, UserRoundPen, MoreHorizontal, Trash } from "lucide-react";
+import { Copy, Edit, MoreHorizontal, Trash, UserRoundPen } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -15,10 +15,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { toast } from "@/components/ui/use-toast";
-import type { MessageColumn } from "./columns";
 import { useTranslation } from "@/app/i18n/client";
+import { toast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
+import type { MessageColumn } from "./columns";
 
 interface CellActionProps {
   data: MessageColumn;

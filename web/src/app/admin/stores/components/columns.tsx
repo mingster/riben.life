@@ -2,8 +2,8 @@
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CellAction } from "./cell-action";
 import Link from "next/link";
+import { CellAction } from "./cell-action";
 
 export type StoreColumn = {
   id: string;

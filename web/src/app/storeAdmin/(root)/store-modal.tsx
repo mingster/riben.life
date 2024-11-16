@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { useTranslation } from "@/app/i18n/client";
 import {
   Form,
   FormControl,
@@ -24,16 +25,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useI18n } from "@/providers/i18n-provider";
-import { useTranslation } from "@/app/i18n/client";
 
 import { CountryCombobox } from "@/components/country-combobox";
 import { CurrencyCombobox } from "@/components/currency-combobox";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { Button } from "@/components/ui/button";
 import { useStoreModal } from "@/hooks/storeAdmin/use-store-modal";
+import { useParams } from "next/navigation";
 import { z } from "zod";
 import { createStore } from "./actions";
-import { useParams } from "next/navigation";
 
 //NOTE - do not move this to other folder.
 //TODO - import from template

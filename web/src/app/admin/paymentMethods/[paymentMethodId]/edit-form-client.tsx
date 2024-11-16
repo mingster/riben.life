@@ -16,6 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { Switch } from "@/components/ui/switch";
 import type { PaymentMethod } from "@prisma/client";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
@@ -23,7 +24,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import * as z from "zod";
-import { Switch } from "@/components/ui/switch";
 
 const formSchema = z.object({
   name: z.string().default(""),

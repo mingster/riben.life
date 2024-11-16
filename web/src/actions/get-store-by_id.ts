@@ -1,12 +1,12 @@
 import { sqlClient } from "@/lib/prismadb";
 
+import { transformDecimalsToNumbers } from "@/lib/utils";
 import type {
   Store,
   StorePaymentMethodMapping,
   StoreShipMethodMapping,
 } from "@/types";
 import type { PaymentMethod, ShippingMethod } from "@prisma/client";
-import { transformDecimalsToNumbers } from "@/lib/utils";
 
 const getStoreById = async (storeId: string): Promise<Store> => {
   if (!storeId) {

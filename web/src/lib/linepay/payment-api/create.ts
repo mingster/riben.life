@@ -1,9 +1,9 @@
 import type { HttpClient } from "../line-pay-api/type";
 import type {
-  ApiResponse,
   ApiHandler,
-  PaymentApi,
+  ApiResponse,
   LinePayApiClients,
+  PaymentApi,
   RequestConfig,
   ResponseBody,
 } from "./type";

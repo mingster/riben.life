@@ -8,8 +8,8 @@ import "../css/font.css";
 import "../css/base.css";
 import "../css/utilities.css";
 
-import AdminPanelLayout from "./components/admin-panel-layout";
 import { checkAdminAccess } from "./admin-utils";
+import AdminPanelLayout from "./components/admin-panel-layout";
 
 export default async function AdminDashboardLayout({
   children,
@@ -18,7 +18,7 @@ export default async function AdminDashboardLayout({
   children: React.ReactNode;
   //params: { storeId: string };
 }) {
-  const isAdmin = await checkAdminAccess() as boolean;
+  const isAdmin = (await checkAdminAccess()) as boolean;
   if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
 
   return (

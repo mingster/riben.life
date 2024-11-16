@@ -1,8 +1,8 @@
 import { sqlClient } from "@/lib/prismadb";
-import { NextResponse } from "next/server";
-import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import { getUtcNow } from "@/lib/utils";
+import { NextResponse } from "next/server";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 //delete product by its id
 export async function DELETE(

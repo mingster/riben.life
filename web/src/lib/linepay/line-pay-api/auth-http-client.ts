@@ -1,21 +1,21 @@
 import axios, {
-  InternalAxiosRequestConfig,
+  type InternalAxiosRequestConfig,
   type AxiosInstance,
   type AxiosRequestConfig,
   type AxiosResponse,
   type AxiosResponseTransformer,
 } from "axios";
+import Base64 from "crypto-js/enc-base64";
+import hmacSHA256 from "crypto-js/hmac-sha256";
+import { v4 as uuidv4 } from "uuid";
+import { HttpError } from "./error/http";
+import { LinePayApiError } from "./error/line-pay-api";
+import { TimeoutError } from "./error/timeout";
 import type {
   GeneralResponseBody,
   LineMerchantConfig,
   QueryParams,
 } from "./type";
-import hmacSHA256 from "crypto-js/hmac-sha256";
-import Base64 from "crypto-js/enc-base64";
-import { v4 as uuidv4 } from "uuid";
-import { TimeoutError } from "./error/timeout";
-import { HttpError } from "./error/http";
-import { LinePayApiError } from "./error/line-pay-api";
 
 export type AuthHttpClient = AxiosInstance;
 

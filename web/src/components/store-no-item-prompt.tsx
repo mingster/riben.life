@@ -1,8 +1,8 @@
-import Link from "next/link";
-import { Button } from "./ui/button";
-import { useEffect, useState } from "react";
-import { useI18n } from "@/providers/i18n-provider";
 import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
 
 const StoreNoItemPrompt = () => {
   const { lng } = useI18n();

@@ -5,11 +5,11 @@ import type { Store } from "@/types";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { Awaiting4ConfirmationClient } from "../order/awaiting4Confirmation/client";
-import { Awaiting4ProcessingClient } from "../order/awaiting4Process/client";
 import Container from "@/components/ui/container";
 import { StoreLevel } from "@/types/enum";
 import { CashCashier } from "../cash-cashier/data-client";
+import { Awaiting4ConfirmationClient } from "../order/awaiting4Confirmation/client";
+import { Awaiting4ProcessingClient } from "../order/awaiting4Process/client";
 
 export interface props {
   store: Store;

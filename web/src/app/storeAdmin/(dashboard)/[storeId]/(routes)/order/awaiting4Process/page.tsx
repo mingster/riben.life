@@ -4,9 +4,9 @@ import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import { Loader } from "@/components/ui/loader";
 import type { Store } from "@/types";
 
+import Container from "@/components/ui/container";
 import { Suspense } from "react";
 import { Awaiting4ProcessingClient } from "./client";
-import Container from "@/components/ui/container";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

@@ -1,15 +1,15 @@
 "use client";
 
+import { useTranslation } from "@/app/i18n/client";
 import { AskUserToSignIn } from "@/components/ask-user-to-signIn";
 import { Navbar } from "@/components/global-navbar";
 import { DisplayOrder } from "@/components/order-display";
 import StoreRequirePrepaidPrompt from "@/components/store-require-prepaid.-prompt";
 import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
+import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
 import Link from "next/link";
-import { useI18n } from "@/providers/i18n-provider";
-import { useTranslation } from "@/app/i18n/client";
 
 // view order page (購物明細)
 

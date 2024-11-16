@@ -2,9 +2,9 @@ import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/lib/utils";
 
+import { IsSignInResponse } from "@/lib/auth/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
-import { IsSignInResponse } from "@/lib/auth/utils";
 
 ///!SECTION create Category record in database.
 export async function POST(

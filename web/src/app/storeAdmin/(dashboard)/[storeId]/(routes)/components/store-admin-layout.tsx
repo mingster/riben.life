@@ -3,11 +3,11 @@
 import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
+import type { Store } from "@/types";
 import type { StoreSettings } from "@prisma-mongo/prisma/client";
 import { StoreAdminFooter } from "./store-admin-footer";
 import { StoreAdminNavbar } from "./store-admin-navbar";
 import { StoreAdminSidebar } from "./store-admin-sidebar";
-import type { Store } from "@/types";
 
 export interface props {
   sqlData: Store;

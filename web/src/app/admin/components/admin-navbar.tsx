@@ -4,11 +4,11 @@
 import DropdownNotification from "@/components/dropdown-notification";
 import DropdownUser from "@/components/dropdown-user";
 
+import ThemeToggler from "@/components/theme-toggler";
 import { useScrollDirection } from "@/lib/use-scroll-direction";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { SheetMenu } from "./sheet-menu";
-import ThemeToggler from "@/components/theme-toggler";
 
 interface NavbarProps {
   title: string;
@@ -60,7 +60,6 @@ export function AdminNavbar({ title }: NavbarProps) {
       </div>
 
       <div className="mx-4 flex h-14 items-center sm:mx-8 items-center justify-end space-x-2">
-
         <div className="flex items-center space-x-4 lg:space-x-0">
           <SheetMenu />
         </div>

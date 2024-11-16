@@ -1,9 +1,9 @@
-import { Bell } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreAnnouncement } from "@prisma/client";
+import { Bell } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { CookiesProvider, useCookies } from "react-cookie";
 
 interface props {

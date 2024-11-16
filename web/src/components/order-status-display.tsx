@@ -1,7 +1,7 @@
 "use client";
 import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/providers/i18n-provider";
 
 import { OrderStatus } from "@/types/enum";
 

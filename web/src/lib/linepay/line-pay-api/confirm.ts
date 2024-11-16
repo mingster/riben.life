@@ -1,7 +1,7 @@
 import type { LinePayApiClients } from "../payment-api/type";
 import { FormatError } from "./error/format";
 import type { GeneralRequestConfig, GeneralResponseBody } from "./type";
-import type { Currency, Address } from "./type";
+import type { Address, Currency } from "./type";
 
 /** Request */
 export type ConfirmRequestBody = {

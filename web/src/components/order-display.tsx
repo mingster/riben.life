@@ -8,11 +8,11 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { useRouter } from "next/navigation";
 
+import { formatDateTime, getTableName } from "@/lib/utils";
 import type { StoreOrder } from "@/types";
-import type { orderitemview, PaymentMethod } from "@prisma/client";
+import type { PaymentMethod, orderitemview } from "@prisma/client";
 import { format } from "date-fns/format";
 import Currency from "./currency";
-import { formatDateTime, getTableName } from "@/lib/utils";
 import { DisplayOrderStatus } from "./order-status-display";
 
 type orderProps = { order: StoreOrder };

@@ -5,14 +5,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Loader } from "@/components/ui/loader";
 import { mongoClient, sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
+import type { StoreSettings } from "@prisma-mongo/prisma/client";
 import { Suspense } from "react";
 import { StoreFooter } from "./components/store-footer";
 import { StoreNavbar } from "./components/store-navbar";
-import type { StoreSettings } from "@prisma-mongo/prisma/client";
 
-import type { Metadata, ResolvingMetadata } from "next";
-import { transformDecimalsToNumbers } from "@/lib/utils";
 import BusinessHours from "@/lib/businessHours";
+import { transformDecimalsToNumbers } from "@/lib/utils";
+import type { Metadata, ResolvingMetadata } from "next";
 import { redirect } from "next/navigation";
 type Props = {
   params: Promise<{ storeId: string }>;

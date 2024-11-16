@@ -2,12 +2,12 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { formatDateTime } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/lib/utils";
+import type { User } from "@/types";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { UserColumn } from "./components/columns";
 import { UsersClient } from "./components/user-client";
-import type { User } from "@/types";
-import { transformDecimalsToNumbers } from "@/lib/utils";
 
 import { auth } from "@/auth";
 import type { Session } from "next-auth";

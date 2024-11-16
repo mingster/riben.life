@@ -1,11 +1,10 @@
-'use server'
+"use server";
 
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation";
 
 export async function checkAdminAccess() {
-
   //console.log('storeid: ' + params.storeId);
   const session = (await auth()) as Session;
 
@@ -17,7 +16,7 @@ export async function checkAdminAccess() {
     return false;
   }
 
-  console.log('admin user', session.user.email, session.user.role);
+  console.log("admin user", session.user.email, session.user.role);
 
   // block if not admin
   //if (session.user.role !== "ADMIN" && session.user.email !== "mingster.tsai@gmail.com") {

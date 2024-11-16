@@ -2,13 +2,13 @@ import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
+import { formatDateTime } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Product } from "@/types";
 import type { Store } from "@prisma/client";
-import { formatDateTime } from "@/lib/utils";
 import { Suspense } from "react";
 import type { ProductColumn } from "./components/columns";
 import { ProductsClient } from "./components/products-client";
-import { transformDecimalsToNumbers } from "@/lib/utils";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
