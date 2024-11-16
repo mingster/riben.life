@@ -1,4 +1,5 @@
 import getOrderById from "@/actions/get-order-by_id";
+import getStoreById from "@/actions/get-store-by_id";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
@@ -11,15 +12,14 @@ import {
   getLinePayClient,
 } from "@/lib/linepay";
 import type { LinePayClient } from "@/lib/linepay/type";
+import { sqlClient } from "@/lib/prismadb";
+import { isMobileUserAgent } from "@/lib/utils";
 import type { Store, StoreOrder } from "@/types";
 import { useQRCode } from "next-qrcode";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import PaymentLinePay from "./components/payment-linepay";
-import { redirect } from "next/navigation";
-import { sqlClient } from "@/lib/prismadb";
-import { isMobileUserAgent } from "@/lib/utils";
-import getStoreById from "@/actions/get-store-by_id";
 
 // customer select linepay as payment method. here we will make a payment request
 // https://developers-pay.line.me/online

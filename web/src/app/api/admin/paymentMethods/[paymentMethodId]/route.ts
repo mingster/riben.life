@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
+import { getNowTimeInTz, getUtcNow } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../api_helper";
-import { getNowTimeInTz, getUtcNow } from "@/lib/utils";
 
 export async function PATCH(
   req: Request,

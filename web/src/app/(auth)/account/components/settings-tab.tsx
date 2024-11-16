@@ -2,10 +2,6 @@
 
 import { cookieName } from "@/app/i18n/settings";
 
-import type { User } from "@/types";
-import { signOut, useSession } from "next-auth/react";
-import { useCookies } from "react-cookie";
-import { useForm } from "react-hook-form";
 import {
   Card,
   CardContent,
@@ -14,6 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { User } from "@/types";
+import { signOut, useSession } from "next-auth/react";
+import { useCookies } from "react-cookie";
+import { useForm } from "react-hook-form";
 
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
@@ -39,8 +39,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { z } from "zod";
 import axios from "axios";
+import { z } from "zod";
 
 export const userFormSchema = z.object({
   name: z.string().min(1, { message: "name is required" }),

@@ -42,10 +42,10 @@ import type { Address, PaymentMethod, ShippingMethod } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
 import { useSearchParams } from "next/navigation";
 
-import { saveOrderToLocal } from "@/lib/order-history";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { saveOrderToLocal } from "@/lib/order-history";
 
 type props = {
   store: Store;

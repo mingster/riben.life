@@ -1,13 +1,13 @@
 "use client";
 
+import { useToast } from "@/components/ui/use-toast";
 import axios, { type AxiosError } from "axios";
 import { MessageSquareText, Trash } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
 
-import { useI18n } from "@/providers/i18n-provider";
-import { useTranslation } from "react-i18next";
+import { AlertModal } from "@/components/modals/alert-modal";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,12 +17,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
-import { TicketStatus } from "@/types/enum";
-import { Button } from "@/components/ui/button";
-import { AlertModal } from "@/components/modals/alert-modal";
 import { formatDateTime } from "@/lib/utils";
+import { useI18n } from "@/providers/i18n-provider";
 import type { SupportTicket } from "@/types";
+import { TicketStatus } from "@/types/enum";
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 
 interface props {
   thread:

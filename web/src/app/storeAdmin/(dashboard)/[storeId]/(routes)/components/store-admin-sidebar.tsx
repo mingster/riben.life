@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
-import { StoreAdminMenu } from "./store-admin-menu";
 import type { Store } from "@/types";
+import { StoreAdminMenu } from "./store-admin-menu";
 
 interface SidebarProps {
   store: Store;

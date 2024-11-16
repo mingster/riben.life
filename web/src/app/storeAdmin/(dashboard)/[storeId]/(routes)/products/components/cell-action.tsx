@@ -1,11 +1,11 @@
 "use client";
 
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
 import axios, { type AxiosError } from "axios";
 import { Copy, Edit, MoreHorizontal, Trash } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
 
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Button } from "@/components/ui/button";

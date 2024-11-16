@@ -1,4 +1,3 @@
-
 import Container from "@/components/ui/container";
 
 import { populateCountryData } from "@/actions/admin/populate-country-data";
@@ -10,9 +9,9 @@ import {
   wipeoutDefaultData,
 } from "@/actions/admin/populate-payship_defaults";
 
-import { checkAdminAccess } from "../admin-utils";
-import { redirect } from "next/navigation";
 import { sqlClient } from "@/lib/prismadb";
+import { redirect } from "next/navigation";
+import { checkAdminAccess } from "../admin-utils";
 
 //type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -23,7 +22,7 @@ export default async function InstallDefaultDataPage(props: {
 }) {
   //const params = await props.params;
 
-  const isAdmin = await checkAdminAccess() as boolean;
+  const isAdmin = (await checkAdminAccess()) as boolean;
   if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
 
   const countryCount = await sqlClient.country.count();
@@ -55,9 +54,6 @@ export default async function InstallDefaultDataPage(props: {
     await create_locales();
   }
   console.log(`localeCount:${localeCount}`);
-
-
-
 
   return <Container>DONE</Container>;
 }

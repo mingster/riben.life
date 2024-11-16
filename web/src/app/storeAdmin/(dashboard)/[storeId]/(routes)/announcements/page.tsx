@@ -1,10 +1,10 @@
+import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { formatDateTime } from "@/lib/utils";
-import { Suspense } from "react";
-import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import type { Store, StoreAnnouncement } from "@prisma/client";
+import { Suspense } from "react";
 import type { MessageColumn } from "./components/columns";
 import { MessageClient } from "./components/message-client";
 

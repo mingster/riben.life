@@ -17,9 +17,9 @@ import { Button } from "@/components/ui/button";
 import { useScrollDirection } from "@/lib/use-scroll-direction";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
+import { StoreLevel } from "@/types/enum";
 import Link from "next/link";
 import StoreSwitcher from "./store-switcher";
-import { StoreLevel } from "@/types/enum";
 
 interface StoreAdminNavbarProps {
   store: Store;

@@ -4,10 +4,10 @@ import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import { Loader } from "@/components/ui/loader";
 import type { Store } from "@/types";
 
+import Container from "@/components/ui/container";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Awaiting4ConfirmationClient } from "./client";
-import Container from "@/components/ui/container";
 
 export const metadata: Metadata = {
   title: "Store Dashboard",

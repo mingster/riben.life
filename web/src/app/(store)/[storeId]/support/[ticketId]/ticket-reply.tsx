@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { useI18n } from "@/providers/i18n-provider";
 import { TicketStatus } from "@/types/enum";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { SupportTicket } from "@prisma/client";
@@ -25,9 +26,8 @@ import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { useI18n } from "@/providers/i18n-provider";
 import { useTranslation } from "react-i18next";
+import * as z from "zod";
 
 const formSchema = z.object({
   //department: z.string().min(1, { message: "department is required" }),

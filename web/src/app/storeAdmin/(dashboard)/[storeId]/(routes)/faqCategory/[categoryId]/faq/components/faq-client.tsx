@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 import { Heading } from "@/components/ui/heading";
-import { type FaqColumn, columns } from "./columns";
 import type { FaqCategory } from "@prisma/client";
+import { type FaqColumn, columns } from "./columns";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";

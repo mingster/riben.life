@@ -2,9 +2,9 @@
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CellAction } from "./cell-action";
-import Link from "next/link";
 import { CheckIcon, XIcon } from "lucide-react";
+import Link from "next/link";
+import { CellAction } from "./cell-action";
 
 export type DataColumn = {
   id: string;

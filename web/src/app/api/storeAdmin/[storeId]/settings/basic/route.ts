@@ -1,8 +1,8 @@
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { mongoClient, sqlClient } from "@/lib/prismadb";
+import { getUtcNow } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { getUtcNow } from "@/lib/utils";
 
 export async function PATCH(
   req: Request,

@@ -1,9 +1,9 @@
+import getStoreTables from "@/actions/get-store-tables";
 import { sqlClient } from "@/lib/prismadb";
+import { transformDecimalsToNumbers } from "@/lib/utils";
+import type { StoreTables } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
-import { transformDecimalsToNumbers } from "@/lib/utils";
-import getStoreTables from "@/actions/get-store-tables";
-import type { StoreTables } from "@prisma/client";
 
 ///!SECTION create new store table.
 export async function POST(

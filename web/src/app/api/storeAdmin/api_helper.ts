@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { sqlClient } from "@/lib/prismadb";
 import { IsSignInResponse } from "@/lib/auth/utils";
+import { sqlClient } from "@/lib/prismadb";
+import { NextResponse } from "next/server";
 
 // gate keeper for store admin api access
 export async function CheckStoreAdminApiAccess(storeId: string) {

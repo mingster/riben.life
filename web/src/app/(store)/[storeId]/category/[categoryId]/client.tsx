@@ -1,7 +1,7 @@
 "use client";
 
-import { ProductCard } from "@/components/product-card";
 import { useTranslation } from "@/app/i18n/client";
+import { ProductCard } from "@/components/product-card";
 import { useI18n } from "@/providers/i18n-provider";
 
 import { useToast } from "@/components/ui/use-toast";

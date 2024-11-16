@@ -1,12 +1,12 @@
+import { Loader } from "@/components/ui/loader";
+import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
+import { sqlClient } from "@/lib/prismadb";
+import type { Store } from "@/types";
+import type { Metadata, ResolvingMetadata } from "next";
+import type { Session } from "next-auth";
 //import { Metadata } from 'next';
 import { redirect } from "next/navigation";
-import type { Store } from "@/types";
-import { Loader } from "@/components/ui/loader";
-import { sqlClient } from "@/lib/prismadb";
 import { Suspense } from "react";
-import type { Metadata, ResolvingMetadata } from "next";
-import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
-import type { Session } from "next-auth";
 
 type Props = {
   params: Promise<{ storeId: string }>;

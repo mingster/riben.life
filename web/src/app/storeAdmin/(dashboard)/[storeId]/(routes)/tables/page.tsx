@@ -1,3 +1,4 @@
+import getStoreTables from "@/actions/get-store-tables";
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
@@ -7,7 +8,6 @@ import type { StoreTables } from "@prisma/client";
 import { Suspense } from "react";
 import type { TableColumn } from "./components/columns";
 import { TableClient } from "./components/table-client";
-import getStoreTables from "@/actions/get-store-tables";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

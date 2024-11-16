@@ -20,16 +20,16 @@ import { Button } from "@/components/ui/button";
 
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Heading } from "@/components/ui/heading";
-import { BasicSettingTab } from "./setting-basic-tab";
 import { Loader } from "@/components/ui/loader";
 import type { Store } from "./page";
 import { BankSettingTab } from "./setting-bank-tab";
+import { BasicSettingTab } from "./setting-basic-tab";
 import { ContactInfoTab } from "./setting-contact-info-tab";
 import { PaidOptionsTab } from "./setting-paid-options";
 import { PrivacyTab } from "./setting-privacy-tab";
+import { RsvpSettingTab } from "./setting-rsvp-tab";
 //import { TermsTab } from "./setting-terms-tab";
 import { ShippingPaymentMethodTab } from "./setting-shipping-payment-method";
-import { RsvpSettingTab } from "./setting-rsvp-tab";
 
 export interface SettingsFormProps {
   sqlData: Store;

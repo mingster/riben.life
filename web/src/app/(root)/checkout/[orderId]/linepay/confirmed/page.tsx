@@ -7,8 +7,8 @@ import { Loader } from "@/components/ui/loader";
 import {
   ConfirmRequestBody,
   type ConfirmRequestConfig,
-  createLinePayClient,
   type Currency,
+  createLinePayClient,
   getLinePayClient,
 } from "@/lib/linepay";
 import type { LinePayClient } from "@/lib/linepay/type";
