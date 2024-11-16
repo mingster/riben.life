@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack -p 3000",
+    "dev": "bun next dev --turbopack -p 3000",
     "debugdev": "bun postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3000",
-    "build": "bun postinstall; next build",
+    "build": "bun postinstall; bun next build",
     "start": "next start -p 3000",
     "lint": "next lint; eslint --fix \"**/*.{js,jsx,ts,tsx}\"",
     "pretty": "prettier --write \"./**/*.{ts,tsx,js,jsx,json}\" --config ./.prettierrc",
