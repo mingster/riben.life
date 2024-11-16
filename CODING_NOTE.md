@@ -1,28 +1,39 @@
 # Dev Setup & Coding Note
 
+this project typescript + bun + next.js + postgres with a bit of monogodb.  Follow the quick note below to set up dev enviornment.
+
 ## Dev Environment
 
-- [node.js / yarn / ...](https://github.com/mingster/dotfiles/blob/433ddf40a11b3ef2fb2b45721206376e24574d0b/install/web.sh)
+- bun: js runtime:
 
-- vs code and its [JS profile](https://vscode.dev/profile/github/7ddbc3501bada54a92352aca7dde0b5e)
+	```
+	curl -fsSL https://bun.sh/install | bash
+	```
 
-``` fish
-brew install --cask --appdir="/Applications/_dev" visual-studio-code
-```
+- pkg mgr: yarn
+
+	```
+	brew install node@20 yarn
+	```
+
+- IDE: [vscode](https://github.com/mingster/dotfiles/blob/master/vscode/vscode_README.md)
+
+
+out-dated: [node.js / yarn / ...](https://github.com/mingster/dotfiles/blob/433ddf40a11b3ef2fb2b45721206376e24574d0b/install/web.sh)
+
 
 ## Sign up for the services below
 
-- [tiDB](https://tidbcloud.com/)
 - [Cloudary](https://cloudinary.com)
-- <s>[Planet scale](https://app.planetscale.com/)</s>
 
 1. clone and install
 
-``` fish
-git clone https://github.com/mingster/popnmom.shop.git
-cd popnmom.shop
-yarn install
-```
+	``` fish
+	git clone https://github.com/mingster/riben.life.git
+	
+	cd riben.life/web
+	yarn
+	```
 
 1. Setup Prisma / Database
 
