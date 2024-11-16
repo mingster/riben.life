@@ -137,9 +137,6 @@ export const AddProductOptionDialog: React.FC<props> = ({
           variant: "success",
         });
       }
-
-      if ("StoreProductOptionSelectionsTemplate" in initialData) {
-      }
     } else {
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${params.productId}/options`,

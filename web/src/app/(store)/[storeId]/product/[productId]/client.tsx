@@ -60,6 +60,7 @@ export const Client: React.FC<props> = ({ store, product }) => {
       variant: "success",
     });
   };
+
   // http://localhost:3000/4574496e-9759-4d9c-9258-818501418747/dfc853b4-47f5-400c-a2fb-f70f045d65a0
   return (
     <>

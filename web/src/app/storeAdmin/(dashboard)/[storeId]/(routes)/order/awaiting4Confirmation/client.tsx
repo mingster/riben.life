@@ -42,8 +42,9 @@ export const Awaiting4ConfirmationClient: React.FC<props> = ({ store }) => {
         //console.log("data", JSON.stringify(data));
         setPendingOrders(data);
       })
-      .catch((err) => {
-        console.log(err);
+      .catch((error) => {
+        console.error("Error:", error);
+        throw error;
       });
 
     setLoading(false);

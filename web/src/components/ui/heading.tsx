@@ -15,6 +15,7 @@ export const Heading: React.FC<HeadingProps> = ({
 }) => {
   if (!badge) badge = 0;
   //console.log(`badge:${badge}`);
+  
   return (
     <div className={clsx("", className)}>
       <strong className="relative inline-flex items-center rounded">

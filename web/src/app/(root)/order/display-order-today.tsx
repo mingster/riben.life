@@ -101,6 +101,10 @@ export const DisplayStoreOrdersToday: React.FC<props> = ({ store }) => {
       .then((data) => {
         //console.log('data', JSON.stringify(data));
         setOrders(data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        throw error;
       });
 
     setLoading(false);

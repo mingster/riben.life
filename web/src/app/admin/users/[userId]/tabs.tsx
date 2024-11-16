@@ -25,6 +25,7 @@ export const UserEditTabs = ({ initialData, action }: editProps) => {
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
   //product.storeId = `${params.storeId}`;
+
   return (
     <>
       <Heading

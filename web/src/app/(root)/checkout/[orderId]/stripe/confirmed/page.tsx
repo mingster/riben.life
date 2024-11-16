@@ -49,9 +49,6 @@ export default async function StripeConfirmedPage(props: {
       },
     );
 
-    if (!pi) {
-    }
-
     if (pi) {
       const checkoutAttributes = JSON.stringify({
         payment_intent: searchParams.payment_intent,

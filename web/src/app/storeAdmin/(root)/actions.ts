@@ -149,9 +149,11 @@ export const deleteStore = async (id: FormData) => {
     await StoreModel.deleteOne({ _id: StoreId });
     // Triggering revalidation of the specified path ("/")
     revalidatePath("/");
+
     // Returning a success message after deleting the Store
     return "Store deleted";
   } catch (error) {
+
     // Returning an error message if Store deletion fails
     return { message: "error deleting Store" };
   }

@@ -48,24 +48,32 @@ const PaymentStripe: React.FC<paymentProps> = ({ order }) => {
     if (order.isPaid) return;
     //if (clientSecret !== null) return;
 
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/payment/stripe/create-payment-intent`;
-    const body = JSON.stringify({
-      total: Number(order.orderTotal),
-      currency: order.currency,
-    });
-
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: body,
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setClientSecret(data.client_secret);
-        //console.log('clientSecret: ' + JSON.stringify(data.client_secret));
+    try {
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/payment/stripe/create-payment-intent`;
+      const body = JSON.stringify({
+        total: Number(order.orderTotal),
+        currency: order.currency,
       });
+
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: body,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setClientSecret(data.client_secret);
+          //console.log('clientSecret: ' + JSON.stringify(data.client_secret));
+        })
+        .catch((e) => {
+          console.error(e);
+          throw e;
+        });
+    } catch (e) {
+      console.error(e);
+    }
   }, [order]);
 
   const session = useSession();

@@ -50,6 +50,7 @@ export async function POST(
       if (orders.length > 0) {
         transformDecimalsToNumbers(orders);
         //revalidatePath("/order");
+
         return NextResponse.json(orders);
       }
     }
@@ -89,6 +90,7 @@ export async function POST(
 
     // otherwise, return empty
     return NextResponse.json([]);
+
   } catch (error) {
     console.log("[POST]", error);
 

@@ -263,6 +263,7 @@ export function getUtcNow() {
     d.getUTCSeconds(),
     d.getUTCMilliseconds(),
   );
+
   //console.log('utcDate', utcDate);
   return utcDate;
 }

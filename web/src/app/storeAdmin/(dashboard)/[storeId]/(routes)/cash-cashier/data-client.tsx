@@ -42,8 +42,9 @@ export const CashCashier: React.FC<props> = ({ store, tables }) => {
         //console.log("data", JSON.stringify(data));
         setUnpaidOrders(data);
       })
-      .catch((err) => {
-        console.log(err);
+      .catch((error) => {
+        console.error("Error:", error);
+        throw error;
       });
 
     setLoading(false);
