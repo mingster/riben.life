@@ -13,7 +13,7 @@ export function SidebarToggle({ isOpen, setIsOpen }: SidebarToggleProps) {
     <div className="invisible md:visible absolute -right-[16px] top-[12px] z-20 dark:bg-primary-foreground">
       <Button
         onClick={() => setIsOpen?.()}
-        className="h-8 w-8 rounded-md bg-transparent"
+        className="size-8 rounded-md bg-transparent"
         variant="outline"
         size="icon"
       >

@@ -36,14 +36,14 @@ export const TicketClient: React.FC<TicketClientProps> = ({
 
   return (
     <>
-      <div className="flex items-center justify-between pl-2 pr-2">
+      <div className="flex items-center justify-between px-2">
         <Heading title={t("ticket")} badge={data.length} description="" />
 
         <Button
           variant={"outline"}
           onClick={() => router.push(`/${params.storeId}/support/new`)}
         >
-          <Plus className="mr-1 h-4 w-4" /> {t("create")}
+          <Plus className="mr-1 size-4" /> {t("create")}
         </Button>
       </div>
 

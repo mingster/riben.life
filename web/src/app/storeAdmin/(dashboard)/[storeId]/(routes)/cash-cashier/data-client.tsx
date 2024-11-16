@@ -75,6 +75,7 @@ export const CashCashier: React.FC<props> = ({ store, tables }) => {
   }
 
   if (loading) return <Loader />;
+
   return (
     <section className="relative w-full">
       <IntervaledContent />

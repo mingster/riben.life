@@ -3,24 +3,24 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bun next dev --turbopack -p 3000",
-    "debugdev": "bun postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3000",
-    "build": "bun postinstall; bun next build",
+    "dev": "next dev --turbopack -p 3000",
+    "debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3000",
+    "build": "bun run postinstall; next build",
     "start": "next start -p 3000",
     "lint": "next lint; eslint --fix \"**/*.{js,jsx,ts,tsx}\"",
     "pretty": "prettier --write \"./**/*.{ts,tsx,js,jsx,json}\" --config ./.prettierrc",
     "biome": "npx @biomejs/biome format --write ./src",
     "biolint": "npx @biomejs/biome check --write ./src",
-    "postinstall": "yarn sql:generate; yarn mongo:generate",
-    "dbpush": "yarn sql:dbpush; yarn mongo:dbpush",
+    "postinstall": "bun run sql:generate; bun run mongo:generate",
+    "dbpush": "bun run sql:dbpush; bun run mongo:dbpush",
     "sql:generate": "npx prisma generate",
     "sql:dbpush": "npx prisma db push --schema prisma/schema.prisma",
-    "mongo:generate": "prisma generate --schema prisma-mongo/schema.prisma",
+    "mongo:generate": "npx prisma generate --schema prisma-mongo/schema.prisma",
     "mongo:dbpush": "npx prisma db push --schema prisma-mongo/schema.prisma",
     "depcheck": "npx depcheck ."
   },
   "dependencies": {
-    "@auth/prisma-adapter": "^2.7.3",
+    "@auth/prisma-adapter": "^2.7.4",
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^5.22.0",
     "@prisma/extension-accelerate": "^1.2.1",
@@ -117,6 +117,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@eslint/js": "^9.15.0",
     "@prisma/extension-optimize": "^1.0.1",
     "@prisma/nextjs-monorepo-workaround-plugin": "^5.22.0",
     "@types/crypto-js": "^4.2.2",
@@ -132,14 +133,20 @@
     "dotenv": "^16.4.5",
     "eslint": "^9.15.0",
     "eslint-config-next": "^15.0.3",
+    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-promise": "^7.1.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-tailwindcss": "^3.17.5",
     "postcss": "^8.4.49",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.15",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.14.0"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
   "resolutions": {
     "@types/react": "npm:types-react@19.0.0-rc.1",
     "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1"
-  }
+  },
+  "packageManager": "yarn@4.5.1+sha512.341db9396b6e289fecc30cd7ab3af65060e05ebff4b3b47547b278b9e67b08f485ecd8c79006b405446262142c7a38154445ef7f17c1d5d1de7d90bf9ce7054d"
 }

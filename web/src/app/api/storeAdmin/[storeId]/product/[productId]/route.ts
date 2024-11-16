@@ -1,6 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
-import { getUtcNow } from "@/lib/utils";
+import { getUtcNow, transformDecimalsToNumbers } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
@@ -98,6 +97,7 @@ export async function PATCH(
     return NextResponse.json(product);
   } catch (error) {
     console.log("[PRODUCT_PATCH]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

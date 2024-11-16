@@ -58,7 +58,7 @@ export function SheetMenu({ store }: props) {
         <SheetHeader>
           <Button className="flex pb-2 pt-1" variant="link" asChild>
             <Link href="/" className="flex gap-2">
-              <HomeIcon className="mr-1 h-6 w-6" />
+              <HomeIcon className="mr-1 size-6" />
             </Link>
           </Button>
         </SheetHeader>

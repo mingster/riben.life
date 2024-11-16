@@ -79,7 +79,7 @@ export function DataTableColumnHeader<TData, TValue>({
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
     >
       {title}
-      <CaretSortIcon className="ml-2 h-4 w-4" />
+      <CaretSortIcon className="ml-2 size-4" />
     </Button>
   );
 }

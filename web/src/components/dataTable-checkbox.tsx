@@ -101,6 +101,7 @@ export function DataTableCheckbox<TData, TValue>({
   searchKey = searchKey || "";
 
   const s = `${t("search")} ${searchKey}`;
+
   return (
     <div>
       {!noSearch && searchKey && (

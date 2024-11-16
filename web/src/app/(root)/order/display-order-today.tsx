@@ -136,6 +136,7 @@ export const DisplayStoreOrdersToday: React.FC<props> = ({ store }) => {
   if (!storeId) return <></>;
 
   if (loading) return <Loader />;
+
   return (
     <section className="relative w-full">
       <div className="container">
@@ -144,7 +145,7 @@ export const DisplayStoreOrdersToday: React.FC<props> = ({ store }) => {
         <IntervaledContent />
 
         <div className="flex flex-col">
-          <div className="flex-1 p-1 pt-1 space-y-1">
+          <div className="flex-1 p-1 space-y-1">
             {orders.map((order: StoreOrder) => (
               <div key={order.id}>
                 {store.requirePrepaid && order.isPaid === false && (

@@ -107,6 +107,7 @@ export async function POST(
         }
       } catch (error) {
         console.log("[SubscriptionPayment_POST]", error);
+
         return new NextResponse(`Internal error${error}`, { status: 500 });
       }
     } else {
@@ -117,6 +118,7 @@ export async function POST(
     return NextResponse.json("ok", { status: 200 });
   } catch (error) {
     console.log("[SubscriptionPayment_POST]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

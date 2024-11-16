@@ -82,6 +82,7 @@ export async function POST(
     return NextResponse.json("success", { status: 200 });
   } catch (error) {
     console.log("[ORDER_MARK_AS_COMPLETED]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

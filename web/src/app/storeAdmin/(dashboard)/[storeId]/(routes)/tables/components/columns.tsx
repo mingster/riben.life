@@ -20,6 +20,7 @@ interface QrCodeProps {
 
 export const QRCode: React.FC<QrCodeProps> = ({ data }) => {
   const { SVG } = useQRCode();
+
   return (
     <Link
       href={`/${data.storeId}/${data.id}`}

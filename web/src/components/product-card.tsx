@@ -53,7 +53,7 @@ export function ProductCard({
             {
               // display recurring icon if recurring
               product.ProductAttribute?.isRecurring && (
-                <CalendarPlus2 className="w-4 h-4" />
+                <CalendarPlus2 className="size-4" />
               )
             }
           </div>

@@ -39,6 +39,7 @@ export function Navbar({ title }: NavbarProps) {
   }
   */
   const logo = null;
+
   return (
     <header className="sticky top-0 z-10 w-full">
       <div className="mx-4 flex h-14 items-center sm:mx-8">
@@ -54,7 +55,7 @@ export function Navbar({ title }: NavbarProps) {
               </>
             ) : (
               <>
-                <HomeIcon className="mr-1 h-4 w-4" />
+                <HomeIcon className="mr-1 size-4" />
                 <h1 className="font-bold">{title}</h1>
               </>
             )}

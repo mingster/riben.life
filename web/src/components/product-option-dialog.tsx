@@ -289,6 +289,7 @@ export const ProductOptionDialog: React.FC<props> = ({
         }
       }
     }
+
     return null; // Return null if no matching selection is found
   }
 
@@ -301,6 +302,7 @@ export const ProductOptionDialog: React.FC<props> = ({
         price: Number(productOptionSelection.price),
       } as ItemOption;
     }
+
     return null;
   }
 
@@ -552,6 +554,7 @@ export const ProductOptionDialog: React.FC<props> = ({
                 {/* loop through ProductOptions */}
                 {productOptions.map((option: ProductOption, index) => {
                   const fieldName = `option${index}`;
+
                   return (
                     <div key={option.id} className="pb-5 border-b">
                       {/* render product option and its requirement */}
@@ -697,7 +700,7 @@ export const ProductOptionDialog: React.FC<props> = ({
                 })}
 
                 {/* render quantity of product to buy */}
-                <div className="w-full pt-2 pb-2">
+                <div className="w-full py-2">
                   <div className="flex justify-center">
                     <div className="flex flex-nowrap content-center w-[20px]">
                       {quantity && quantity > 0 && (
@@ -735,7 +738,7 @@ export const ProductOptionDialog: React.FC<props> = ({
                   </div>
                 </div>
 
-                <DialogFooter className="w-full pt-2 pb-2">
+                <DialogFooter className="w-full py-2">
                   {/*
                   obsolete form submit and change to onclick event. this is because we use the dialog inside another form.
                   <Button

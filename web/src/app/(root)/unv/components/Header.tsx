@@ -46,7 +46,7 @@ export function NavPopover({
         <SheetTrigger asChild>
           <button
             type="button"
-            className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+            className="flex items-center justify-center size-8 text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
             onClick={() => setIsOpen(true)}
           >
             <span className="sr-only">Navigation</span>
@@ -178,6 +178,7 @@ export function NavBar() {
     }
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
+
     return () => {
       window.removeEventListener("scroll", onScroll);
       //window.addEventListener("scroll", onScroll, { passive: true } as any);

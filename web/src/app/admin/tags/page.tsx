@@ -8,5 +8,6 @@ export default async function TagsAdminPage(props: {
   searchParams: SearchParams;
 }) {
   const params = await props.params;
+
   return <Container>admin Tags</Container>;
 }

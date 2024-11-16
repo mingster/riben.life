@@ -30,6 +30,7 @@ export async function POST(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.log("[TABLES_POST]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

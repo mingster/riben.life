@@ -20,6 +20,7 @@ export async function GET(req: Request) {
     return NextResponse.json(currencies);
   } catch (error) {
     console.log("[GET_CURRENCIES]", error);
+
     return new NextResponse("Internal error", { status: 500 });
   }
 }

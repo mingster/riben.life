@@ -45,6 +45,7 @@ export async function POST(
     return NextResponse.json(thread);
   } catch (error) {
     console.log("[TICKET_POST]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

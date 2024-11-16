@@ -43,7 +43,7 @@ export const StoreEditTabs = ({ initialData, action }: editProps) => {
       />
       <Tabs defaultValue="basic" className="w-full">
         <TabsList>
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="basic">
+          <TabsTrigger className="px-5 lg:min-w-40" value="basic">
             {t("StoreSettingsTab_Basic")}
           </TabsTrigger>
         </TabsList>

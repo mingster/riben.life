@@ -70,15 +70,15 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
       />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button variant="ghost" className="size-8 p-0">
             <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
           <DropdownMenuItem onClick={() => onCopy(data.id)}>
-            <Copy className="mr-1 h-4 w-4" /> Copy Id
+            <Copy className="mr-1 size-4" /> Copy Id
           </DropdownMenuItem>
           {data.isPaid === true && (
             <DropdownMenuItem onClick={() => setOpen(true)}>
@@ -87,7 +87,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
                   className="flex gap-1"
                   href={`/storeAdmin/${data.storeId}/order/${data.id}/refund`}
                 >
-                  <Undo2Icon className="mr-1 h-4 w-4" />
+                  <Undo2Icon className="mr-1 size-4" />
                   {t("Refund")}
                 </Link>
               </Button>
@@ -101,7 +101,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
                   className="flex gap-1"
                   href={`/storeAdmin/${data.storeId}/order/${data.id}`}
                 >
-                  <PenBoxIcon className="mr-1 h-4 w-4" />
+                  <PenBoxIcon className="mr-1 size-4" />
                   {t("Modify")}
                 </Link>
               </Button>

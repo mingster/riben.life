@@ -126,7 +126,7 @@ export const DisplayThread = ({ thread }: props) => {
 
           <div>
             <div className="flex">
-              <MessageSquareText className="w-6 h-6 pr-2" />
+              <MessageSquareText className="size-6 pr-2" />
               {ticket.message}
             </div>
             <div className="text-xs">{formatDateTime(ticket.updatedAt)}</div>

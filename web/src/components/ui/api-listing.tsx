@@ -34,7 +34,7 @@ export const ApiListing: React.FC<ApiListingProps> = ({
   return (
     <div className="pt-10">
       <Alert className="font-mono text-sm">
-        <Server className="h-4 w-4" />
+        <Server className="size-4" />
         <AlertTitle className="flex items-center">
           {title}
           <Badge variant={variantMap[variant]}>{textMap[variant]}</Badge>
@@ -48,7 +48,7 @@ export const ApiListing: React.FC<ApiListingProps> = ({
             size="sm"
             onClick={() => onCopy(description)}
           >
-            <Copy className="h-4 w-4" />
+            <Copy className="size-4" />
           </Button>
         </AlertDescription>
       </Alert>

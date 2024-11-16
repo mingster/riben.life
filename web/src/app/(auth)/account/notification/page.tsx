@@ -88,7 +88,7 @@ const UserNotificationPage: React.FC = async () => {
 
                 <div>
                   <div className="flex">
-                    <MessageCircleMore className="w-6 h-6 pr-2" />
+                    <MessageCircleMore className="size-6 pr-2" />
                     {obj.subject}
                   </div>
                   <div>{obj.message}</div>

@@ -193,7 +193,7 @@ export const EditClient = ({ initialData }: editProps) => {
                   control={form.control}
                   name="isDeleted"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between pl-3 pr-3 rounded-lg shadow-sm">
+                    <FormItem className="flex flex-row items-center justify-between px-3 rounded-lg shadow-sm">
                       <div className="space-y-0.5">
                         <FormLabel>isDeleted </FormLabel>
                         <FormDescription></FormDescription>
@@ -211,7 +211,7 @@ export const EditClient = ({ initialData }: editProps) => {
                   control={form.control}
                   name="isDefault"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between pl-3 pr-3 rounded-lg shadow-sm">
+                    <FormItem className="flex flex-row items-center justify-between px-3 rounded-lg shadow-sm">
                       <div className="space-y-0.5">
                         <FormLabel>isDefault</FormLabel>
                         <FormDescription></FormDescription>

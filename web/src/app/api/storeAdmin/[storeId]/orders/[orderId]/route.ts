@@ -1,7 +1,10 @@
 import getOrderById from "@/actions/get-order-by_id";
 import { sqlClient } from "@/lib/prismadb";
-import { getNowTimeInTz, transformDecimalsToNumbers } from "@/lib/utils";
-import { getUtcNow } from "@/lib/utils";
+import {
+  getNowTimeInTz,
+  getUtcNow,
+  transformDecimalsToNumbers,
+} from "@/lib/utils";
 import type { StoreOrder } from "@/types";
 import { OrderStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
@@ -130,6 +133,7 @@ export async function PATCH(
     return NextResponse.json(result);
   } catch (error) {
     console.log("[ORDER_PATCH]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

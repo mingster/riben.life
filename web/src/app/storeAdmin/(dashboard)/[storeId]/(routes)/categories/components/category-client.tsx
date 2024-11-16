@@ -66,7 +66,7 @@ export const CategoryClient: React.FC<categoryClientProps> = ({ data }) => {
               router.push(`/storeAdmin/${params.storeId}/categories/new`)
             }
           >
-            <Plus className="mr-1 h-4 w-4" />
+            <Plus className="mr-1 size-4" />
             {t("Create")}
           </Button>
           <AddCategoriesDialog />
@@ -118,7 +118,7 @@ export function AddCategoriesDialog() {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant={"outline"}>
-          <Plus className="mr-1 h-4 w-4" />
+          <Plus className="mr-1 size-4" />
           {t("Category_Mgmt_AddButton")}
         </Button>
       </DialogTrigger>

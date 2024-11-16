@@ -82,7 +82,7 @@ export const OrderUnpaid = ({
 
   return (
     <Card>
-      <div className="flex justify-between items-center pl-2 pr-2">
+      <div className="flex justify-between items-center px-2">
         <Heading
           title={t("Order_unpiad_title")}
           description={t("Order_unpiad_descr")}
@@ -96,13 +96,13 @@ export const OrderUnpaid = ({
               router.push(`/storeAdmin/${params.storeId}/order/add`)
             }
           >
-            <Plus className="mr-1 h-4 w-4" />
+            <Plus className="mr-1 size-4" />
             {t("Create")}
           </Button>
         </div>
       </div>
 
-      <CardContent className="pl-0 pr-0 m-0">
+      <CardContent className="px-0 m-0">
         {/* display */}
         <div className="text-muted-foreground text-xs">
           {orders.length === 0 ? t("no_results_found") : ""}

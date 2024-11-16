@@ -1,6 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
-import { getUtcNow } from "@/lib/utils";
+import { getUtcNow, transformDecimalsToNumbers } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
 
@@ -51,6 +50,7 @@ export async function POST(
     return NextResponse.json(product);
   } catch (error) {
     console.log("[PRODUCT_POST]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }
@@ -93,6 +93,7 @@ export async function GET(
     return NextResponse.json(products);
   } catch (error) {
     console.log("[PRODUCT_GET]", error);
+
     return new NextResponse("Internal error", { status: 500 });
   }
 }

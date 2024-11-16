@@ -64,10 +64,11 @@ export const columns: ColumnDef<DataColumn>[] = [
     cell: ({ row }) => {
       const val =
         row.getValue("isDefault") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
+          <CheckIcon className="text-green-400  size-4" />
         ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
+          <XIcon className="text-red-400 size-4" />
         );
+
       return <div className="pl-3">{val}</div>;
     },
   },
@@ -79,10 +80,11 @@ export const columns: ColumnDef<DataColumn>[] = [
     cell: ({ row }) => {
       const val =
         row.getValue("isDeleted") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
+          <CheckIcon className="text-green-400  size-4" />
         ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
+          <XIcon className="text-red-400 size-4" />
         );
+
       return <div className="pl-3">{val}</div>;
     },
   },

@@ -21,6 +21,7 @@ export function useScrollDirection() {
       lastScrollY = scrollY > 0 ? scrollY : 0;
     };
     window.addEventListener("scroll", updateScrollDirection); // add event listener
+
     return () => {
       window.removeEventListener("scroll", updateScrollDirection); // clean up
     };

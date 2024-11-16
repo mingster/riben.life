@@ -5,16 +5,17 @@ import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
-import { useElements, useStripe } from "@stripe/react-stripe-js";
-import { type ChangeEvent, useEffect, useState } from "react";
-
-import getStripe from "@/lib/stripe/client";
-import type { StoreOrder } from "@prisma/client";
 import {
   Elements,
   LinkAuthenticationElement,
   PaymentElement,
+  useElements,
+  useStripe,
 } from "@stripe/react-stripe-js";
+import { type ChangeEvent, useEffect, useState } from "react";
+
+import getStripe from "@/lib/stripe/client";
+import type { StoreOrder } from "@prisma/client";
 import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
@@ -96,6 +97,7 @@ const PaymentStripe: React.FC<paymentProps> = ({ order }) => {
   const router = useRouter();
   if (order.isPaid) {
     router.push(`/${order.storeId}/billing/${order.id}`);
+
     return;
   }
 

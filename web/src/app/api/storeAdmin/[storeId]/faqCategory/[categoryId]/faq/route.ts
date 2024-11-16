@@ -25,6 +25,7 @@ export async function POST(
     return NextResponse.json(obj);
   } catch (error) {
     console.log("[FAQ_POST]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

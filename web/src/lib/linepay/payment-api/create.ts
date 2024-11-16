@@ -28,6 +28,7 @@ export function createPaymentApi<T extends keyof LinePayApiClients>(
 ): PaymentApi<T> {
   const addHandlers = (...fs: ApiHandler<T>[]) => {
     handlers.push(...fs);
+
     return createPaymentApi(type, createSender, httpClient, handlers);
   };
 

@@ -75,6 +75,7 @@ export async function PATCH(
     return NextResponse.json(reply);
   } catch (error) {
     console.log("[TICKET_PATCH]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }
@@ -132,6 +133,7 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.log("[TICKET_DELETE]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { type Item, useCart } from "@/hooks/use-cart";
@@ -40,7 +40,6 @@ import type {
 } from "@/types";
 import type { Address, PaymentMethod, ShippingMethod } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
-import { useSearchParams } from "next/navigation";
 
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -68,6 +67,7 @@ export const Checkout = ({ store, user }: props) => {
 
   if (cart.items.length === 0 && !inCheckoutSteps) {
     router.replace("/");
+
     return <StoreNoItemPrompt />;
   }
 
@@ -167,6 +167,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
       const errmsg = t("checkout_no_shippingMethod");
       console.error(errmsg);
       setIsLoading(false);
+
       return;
     }
 
@@ -255,7 +256,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
   };
 
   return (
-    <div className="pl-2 pr-2">
+    <div className="px-2">
       {/* #region 訂單商品 */}
       <div className="text-lg font-medium">{t("checkout")}</div>
       <Card>
@@ -450,7 +451,7 @@ const DialogShipping = ({
               // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
               <div
                 key={method.id}
-                className="cursor-pointer border px-5 py-5"
+                className="cursor-pointer border p-5"
                 onClick={() => selectShipMethod(method)}
               >
                 {method.ShippingMethod.name}

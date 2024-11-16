@@ -1,7 +1,11 @@
 import type { LinePayApiClients } from "../payment-api/type";
 import { FormatError } from "./error/format";
-import type { GeneralRequestConfig, GeneralResponseBody } from "./type";
-import type { Address, Product } from "./type";
+import type {
+  Address,
+  GeneralRequestConfig,
+  GeneralResponseBody,
+  Product,
+} from "./type";
 
 /** Request */
 export type Fields = "ALL" | "TRANSACTION" | "ORDER";

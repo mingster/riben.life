@@ -31,6 +31,7 @@ export async function connectToMongoDB() {
   // If a cached connection exists, return it
   if (cachedConnection) {
     console.log("Using cached db connection");
+
     return cachedConnection;
   }
   try {

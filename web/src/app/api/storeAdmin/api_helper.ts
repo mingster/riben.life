@@ -30,6 +30,7 @@ export async function CheckStoreAdminApiAccess(storeId: string) {
     return true;
   } catch (error) {
     console.error("[CheckAccess]", error);
+
     return false;
   }
 }

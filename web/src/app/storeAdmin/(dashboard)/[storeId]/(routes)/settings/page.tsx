@@ -2,8 +2,7 @@ import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import { mongoClient } from "@/lib/prismadb";
-import { sqlClient } from "@/lib/prismadb";
+import { mongoClient, sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import {
   type PaymentMethod,
@@ -71,6 +70,7 @@ export default async function StoreSettingsPage(props: {
   const disablePaidOptions = await !isProLevel(store?.id);
 
   console.log("disablePaidOptions", disablePaidOptions);
+
   return (
     <Suspense fallback={<Loader />}>
       <Container>

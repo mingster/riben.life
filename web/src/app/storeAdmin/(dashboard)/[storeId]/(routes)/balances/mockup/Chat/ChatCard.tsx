@@ -67,7 +67,7 @@ const ChatCard = () => {
             className="flex items-center gap-5 px-7.5 py-3 hover:bg-gray-3 dark:hover:bg-meta-4"
             key={key}
           >
-            <div className="relative h-14 w-14 rounded-full">
+            <div className="relative size-14 rounded-full">
               <Image
                 width={56}
                 height={56}
@@ -79,7 +79,7 @@ const ChatCard = () => {
                 }}
               />
               <span
-                className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${
+                className={`absolute bottom-0 right-0 size-3.5 rounded-full border-2 border-white ${
                   chat.dot === 6 ? "bg-meta-6" : `bg-meta-${chat.dot}`
                 } `}
               ></span>
@@ -98,7 +98,7 @@ const ChatCard = () => {
                 </p>
               </div>
               {chat.textCount !== 0 && (
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary">
+                <div className="flex size-6 items-center justify-center rounded-full bg-primary">
                   <span className="text-sm font-medium text-primary">
                     {chat.textCount}
                   </span>

@@ -42,6 +42,7 @@ export async function POST(request: Request) {
         okToSendMail = true;
       } else {
         console.log("fail: res.data?.score:", res.data?.score);
+
         return NextResponse.json({
           success: false,
           name,
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
       }
     } catch (e) {
       console.log("recaptcha error:", e);
+
       return new NextResponse("Captcha failed", { status: 404 });
     }
 
@@ -72,6 +74,7 @@ export async function POST(request: Request) {
     return new NextResponse("Captcha failed", { status: 404 });
   } catch (error) {
     console.log("[contactus_mail]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

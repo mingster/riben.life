@@ -34,16 +34,16 @@ const TableThree = () => {
         <table className="w-full table-auto">
           <thead>
             <tr className="bg-gray-2 text-left dark:bg-meta-4">
-              <th className="min-w-[220px] px-4 py-4 font-medium text-black dark:text-primary xl:pl-11">
+              <th className="min-w-[220px] p-4 font-medium text-black dark:text-primary xl:pl-11">
                 Package
               </th>
-              <th className="min-w-[150px] px-4 py-4 font-medium text-black dark:text-primary">
+              <th className="min-w-[150px] p-4 font-medium text-black dark:text-primary">
                 Invoice date
               </th>
-              <th className="min-w-[120px] px-4 py-4 font-medium text-black dark:text-primary">
+              <th className="min-w-[120px] p-4 font-medium text-black dark:text-primary">
                 Status
               </th>
-              <th className="px-4 py-4 font-medium text-black dark:text-primary">
+              <th className="p-4 font-medium text-black dark:text-primary">
                 Actions
               </th>
             </tr>

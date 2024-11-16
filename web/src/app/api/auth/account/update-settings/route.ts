@@ -29,6 +29,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json(obj);
   } catch (error) {
     console.log("[USER_PATCH]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

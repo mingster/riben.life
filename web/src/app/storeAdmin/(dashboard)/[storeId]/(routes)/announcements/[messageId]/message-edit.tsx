@@ -113,6 +113,7 @@ export const MessageEdit = ({ initialData, action }: editProps) => {
   };
 
   const pageTitle = t(action) + t("Announcement");
+
   return (
     <>
       <Card>

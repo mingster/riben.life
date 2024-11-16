@@ -29,6 +29,7 @@ const webhookHandler = async (req: NextRequest) => {
     console.log(`🔔  Webhook received: ${event.type}`);
   } catch (err: unknown) {
     console.log(`Error message: ${err as Error}.message}`);
+
     return new Response(`Webhook Error: ${(err as Error).message}`, {
       status: 400,
     });
@@ -92,6 +93,7 @@ const webhookHandler = async (req: NextRequest) => {
     }
   } catch (error: unknown) {
     console.log(error);
+
     return new NextResponse("Webhook handler failed. View your server logs.", {
       status: 400,
     });

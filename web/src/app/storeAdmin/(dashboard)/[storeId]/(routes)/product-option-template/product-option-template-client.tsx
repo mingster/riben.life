@@ -111,10 +111,11 @@ const columns: ColumnDef<ProductOptionTemplateColumn>[] = [
     cell: ({ row }) => {
       const val =
         row.getValue("isRequired") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
+          <CheckIcon className="text-green-400  size-4" />
         ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
+          <XIcon className="text-red-400 size-4" />
         );
+
       return <div className="pl-3">{val}</div>;
     },
   },
@@ -131,10 +132,11 @@ const columns: ColumnDef<ProductOptionTemplateColumn>[] = [
     cell: ({ row }) => {
       const val =
         row.getValue("isMultiple") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
+          <CheckIcon className="text-green-400  size-4" />
         ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
+          <XIcon className="text-red-400 size-4" />
         );
+
       return <div className="pl-3">{val}</div>;
     },
   },
@@ -173,10 +175,11 @@ const columns: ColumnDef<ProductOptionTemplateColumn>[] = [
     cell: ({ row }) => {
       const val =
         row.getValue("allowQuantity") === true ? (
-          <CheckIcon className="text-green-400  h-4 w-4" />
+          <CheckIcon className="text-green-400  size-4" />
         ) : (
-          <XIcon className="text-red-400 h-4 w-4" />
+          <XIcon className="text-red-400 size-4" />
         );
+
       return <div className="pl-3">{val}</div>;
     },
   },
@@ -273,7 +276,7 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
         className="text-white bg-red-600 dark:bg-red-900"
         onClick={() => setOpen(true)}
       >
-        <Trash className="mr-1 h-4 w-4" /> {t("Delete")}
+        <Trash className="mr-1 size-4" /> {t("Delete")}
       </Button>
     </>
   );

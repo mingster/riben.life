@@ -16,7 +16,7 @@ export const DisplayOrders = ({ orders }: orderTabProps) => {
   return (
     <>
       <div className="flex-col">
-        <div className="flex-1 p-1 pt-1 space-y-1">
+        <div className="flex-1 p-1 space-y-1">
           {orders.map((order: StoreOrder) => (
             <div key={order.id}>
               <DisplayOrder order={order} />

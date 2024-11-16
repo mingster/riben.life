@@ -33,13 +33,13 @@ export const UserEditTabs = ({ initialData, action }: editProps) => {
       />
       <Tabs defaultValue="basic" className="w-full">
         <TabsList>
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="basic">
+          <TabsTrigger className="px-5 lg:min-w-40" value="basic">
             User
           </TabsTrigger>
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="attribute">
+          <TabsTrigger className="px-5 lg:min-w-40" value="attribute">
             Session
           </TabsTrigger>
-          <TabsTrigger className="pl-5 pr-5 lg:min-w-40" value="images">
+          <TabsTrigger className="px-5 lg:min-w-40" value="images">
             Account
           </TabsTrigger>
         </TabsList>

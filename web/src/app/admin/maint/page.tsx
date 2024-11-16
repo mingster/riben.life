@@ -147,7 +147,7 @@ export default async function StoreAdminDevMaintPage(props: {
             size="sm"
             {...(storeOrderCount === 0 && { disabled: true })}
           >
-            <Trash className="h-4 w-4 mr-1" /> Delete all order data
+            <Trash className="size-4 mr-1" /> Delete all order data
           </Button>
         </form>
         <form action={deleteAllSupportTickets}>
@@ -157,12 +157,12 @@ export default async function StoreAdminDevMaintPage(props: {
             size="sm"
             {...(ticketCount === 0 && { disabled: true })}
           >
-            <Trash className="h-4 w-4 mr-1" /> Delete all Support Ticket data
+            <Trash className="size-4 mr-1" /> Delete all Support Ticket data
           </Button>
         </form>
         <form action={sendTestNoficiation}>
           <Button type="submit" variant="default" size="sm">
-            <Send className="h-4 w-4 mr-1" /> Send test nofication
+            <Send className="size-4 mr-1" /> Send test nofication
           </Button>
         </form>
       </div>

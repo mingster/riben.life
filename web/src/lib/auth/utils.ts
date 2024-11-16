@@ -10,6 +10,7 @@ export async function GetSession() {
   if (!session) {
     return null;
   }
+
   return session;
 }
 

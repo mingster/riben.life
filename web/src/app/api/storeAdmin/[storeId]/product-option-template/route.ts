@@ -112,6 +112,7 @@ export async function POST(
     return NextResponse.json(result);
   } catch (error) {
     console.log("[PRODUCTOPTION_POST]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

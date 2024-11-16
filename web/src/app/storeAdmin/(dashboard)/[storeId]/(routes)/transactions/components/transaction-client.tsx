@@ -92,6 +92,7 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
 
       result = result.filter((d) => {
         const date = new Date(d.updatedAt);
+
         return date >= in_last_of_days;
       });
     } else if (filterByTime.filter === "f2") {
@@ -106,6 +107,7 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
       // filter result that are between filter_date1 and filter_date1
       result = result.filter((d) => {
         const date = new Date(d.updatedAt);
+
         return (
           date >= filterByTime.filter_date1 && date <= filterByTime.filter_date2
         );
@@ -114,12 +116,14 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
       // filter result that are on or after filter_date1
       result = result.filter((d) => {
         const date = new Date(d.updatedAt);
+
         return date >= filterByTime.filter_date1;
       });
     } else if (filterByTime.filter === "f5") {
       // filter result that are before or on filter_date1
       result = result.filter((d) => {
         const date = new Date(d.updatedAt);
+
         return date <= filterByTime.filter_date1;
       });
     }
@@ -341,7 +345,7 @@ export const FilterDateTime = ({
           variant={"outline"}
           className={cn("justify-start text-left font-normal")}
         >
-          <CalendarIcon className="mr-1 h-4 w-4" />
+          <CalendarIcon className="mr-1 size-4" />
           <span>{t("Date_and_Time")}</span>
         </Button>
       </PopoverTrigger>
@@ -442,7 +446,7 @@ export const FilterDateTime = ({
                               ) : (
                                 <span>{t("Pick_a_date")}</span>
                               )}
-                              <CalendarIcon className="w-4 h-4 ml-auto opacity-50" />
+                              <CalendarIcon className="size-4 ml-auto opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
@@ -493,7 +497,7 @@ export const FilterDateTime = ({
                               ) : (
                                 <span>{t("Pick_a_date")}</span>
                               )}
-                              <CalendarIcon className="w-4 h-4 ml-auto opacity-50" />
+                              <CalendarIcon className="size-4 ml-auto opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>

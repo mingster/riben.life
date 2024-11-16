@@ -29,6 +29,7 @@ export async function POST(req: Request) {
     console.log(`🔔  Webhook received: ${event.type}`);
   } catch (err: unknown) {
     console.log(`Error message: ${err as Error}.message}`);
+
     return new Response(`Webhook Error: ${(err as Error).message}`, {
       status: 400,
     });
@@ -63,6 +64,7 @@ export async function POST(req: Request) {
     }
   } catch (error: unknown) {
     console.log(error);
+
     return new NextResponse("Webhook handler failed. View your server logs.", {
       status: 400,
     });

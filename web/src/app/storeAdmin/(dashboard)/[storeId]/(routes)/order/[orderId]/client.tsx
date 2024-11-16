@@ -4,11 +4,14 @@ import { useToast } from "@/components/ui/use-toast";
 import {
   Copy,
   Edit,
+  Minus,
   MoreHorizontal,
   PenBoxIcon,
   PenIcon,
+  Plus,
   Trash,
   Undo2Icon,
+  XIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -39,7 +42,6 @@ import {
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useI18n } from "@/providers/i18n-provider";
-import { Minus, Plus, XIcon } from "lucide-react";
 
 import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
@@ -177,6 +179,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
     if (updatedOrder?.OrderItemView.length === 0) {
       alert(t("Order_edit_noItem"));
       setLoading(false);
+
       return;
     }
 
@@ -289,6 +292,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
     if (row.quantity <= 0) {
       handleDeleteOrderItem(index);
+
       return;
     }
 
@@ -345,6 +349,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
       const errmsg = t("checkout_no_shippingMethod");
       console.error(errmsg);
       setLoading(false);
+
       return;
     }
 
@@ -473,7 +478,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               );
             }}
           >
-            <Undo2Icon className="mr-1 h-4 w-4" />
+            <Undo2Icon className="mr-1 size-4" />
             {t("Refund")}
           </Button>
 
@@ -511,7 +516,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               );
             }}
           >
-            <Undo2Icon className="mr-1 h-4 w-4" />
+            <Undo2Icon className="mr-1 size-4" />
             {t("Refund")}
           </Button>
 
@@ -709,7 +714,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                       type="button"
                       onClick={() => handleDeleteOrderItem(index)}
                     >
-                      <XIcon className="text-red-400 h-4 w-4" />
+                      <XIcon className="text-red-400 size-4" />
                     </Button>
                   </div>
 
@@ -768,7 +773,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               );
             })}
 
-            <div className="w-full pt-2 pb-2 flex gap-2">
+            <div className="w-full py-2 flex gap-2">
               <Button
                 disabled={loading || !form.formState.isValid}
                 className="disabled:opacity-25"

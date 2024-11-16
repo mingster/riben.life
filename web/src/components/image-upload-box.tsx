@@ -69,12 +69,12 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
       className="h-[240px] max-w-xs flex-1 overflow-hidden rounded-lg border"
     >
       {isDropZone && (
-        <div className="absolute bottom-0 left-0 right-0 top-0 z-10 scale-[1.01] rounded-md border-4 border-dashed bg-white/40" />
+        <div className="absolute inset-0 z-10 scale-[1.01] rounded-md border-4 border-dashed bg-white/40" />
       )}
       {image ? (
-        <div className="relative h-full w-full rounded-md">
+        <div className="relative size-full rounded-md">
           <Image
-            className="my-0 h-full w-full rounded-md object-cover"
+            className="my-0 size-full rounded-md object-cover"
             src={URL.createObjectURL(image)}
             width={120}
             height={40}
@@ -107,7 +107,7 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
         </div>
       ) : (
         <div className="flex h-full flex-col items-center justify-center gap-2 py-4">
-          <BoxSelect className="h-10 w-10" />
+          <BoxSelect className="size-10" />
           <p className="my-0 text-sm font-medium">Drag and Drop</p>
 
           <div aria-disabled={disabled}>

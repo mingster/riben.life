@@ -4,22 +4,72 @@ this project typescript + bun + next.js + postgres with a bit of monogodb.  Foll
 
 ## Dev Environment
 
-- bun: js runtime:
+- package manager - bun:
 
-	```
+	``` fish
 	curl -fsSL https://bun.sh/install | bash
 	```
 
-- pkg mgr: yarn
+- Javascript run-time: node
 
-	```
-	brew install node@20 yarn
+	``` fish
+	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
+	
+	asdf nodejs update-nodebuild
+	
+	asdf list all nodejs
+	
+	asdf nodejs resolve lts --latest-available
+	
+	asdf install nodejs 20.18.0
+	asdf global nodejs 20.18.0
+	asdf shell nodejs 20.18.0
+	
+	npm install -g npm@latest
+	
+	corepack disable
+		
+	asdf reshim nodejs
 	```
 
 - IDE: [vscode](https://github.com/mingster/dotfiles/blob/master/vscode/vscode_README.md)
 
 
 out-dated: [node.js / yarn / ...](https://github.com/mingster/dotfiles/blob/433ddf40a11b3ef2fb2b45721206376e24574d0b/install/web.sh)
+
+## basic operation
+
+- install packages
+
+	``` fish
+	bun install
+	```
+
+- run dev server (with node.js)
+
+	``` fish
+	bun dev
+	```
+
+- build
+
+	``` fish
+	bun run build
+	```
+
+- Linter
+
+	``` fish
+	bun run biolint
+	
+	#bunx biome lint --write ./src
+	```
+
+- Prettier
+
+	``` fish
+	bun run biome	
+	```
 
 
 ## Sign up for the services below

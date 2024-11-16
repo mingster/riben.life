@@ -83,6 +83,7 @@ export async function POST(
         },
       })) as StoreOrder[];
       transformDecimalsToNumbers(orders);
+
       return NextResponse.json(orders);
     }
 
@@ -90,6 +91,7 @@ export async function POST(
     return NextResponse.json([]);
   } catch (error) {
     console.log("[POST]", error);
+
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
 }

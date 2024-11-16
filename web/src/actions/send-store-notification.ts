@@ -95,6 +95,7 @@ export async function sendStoreNotification(mailtoSend: StoreNotification) {
         sendTries: mailtoSend.sendTries + 1,
       },
     });
+
     return obj;
   }
 

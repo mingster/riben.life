@@ -83,7 +83,7 @@ export const OrderPending = ({ store, orders, parentLoading }: props) => {
           className="pt-2"
         />
 
-        <CardContent className="pl-0 pr-0 m-0">
+        <CardContent className="px-0 m-0">
           {/* display */}
           <div className="text-muted-foreground text-xs">
             {orders.length === 0

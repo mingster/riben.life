@@ -85,6 +85,7 @@ export async function GET(
     return NextResponse.json(awaiting4ProcessOrders);
   } catch (error) {
     console.error("[GET_PENDING_ORDERS]", error);
+
     return new NextResponse("Internal error", { status: 500 });
   }
 }
