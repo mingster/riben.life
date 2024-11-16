@@ -4,6 +4,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 //import { toast } from "react-hot-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 import { Loader } from "@/components/ui/loader";
 import { getHostname } from "@/lib/utils";
@@ -20,6 +21,8 @@ export default function GlobalHomePage() {
   }, []);
 
   const router = useRouter();
+  const { toast } = useToast();
+
   const { lng } = useI18n();
   const { t } = useTranslation(lng);
 
@@ -61,7 +64,11 @@ export default function GlobalHomePage() {
       })
       .catch((error) => {
         console.error(error);
-        //toast.error(t("err_toaster"));
+        toast({
+          title: "Something went wrong.",
+          description: error.message,
+          variant: "destructive",
+        });
       });
   };
 
