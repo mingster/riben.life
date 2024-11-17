@@ -11,7 +11,7 @@ export async function GET(
   props: { params: Promise<{ storeId: string }> },
 ) {
   const params = await props.params;
-  try {
+  //try {
     CheckStoreAdminApiAccess(params.storeId);
 
     const store = await sqlClient.store.findUnique({
@@ -83,9 +83,9 @@ export async function GET(
 
     //console.log("awaiting4ProcessOrders", JSON.stringify(awaiting4ProcessOrders));
     return NextResponse.json(awaiting4ProcessOrders);
-  } catch (error) {
-    console.error("[GET_PENDING_ORDERS]", error);
 
+  /*} catch (error) {
+    console.error("[GET_PENDING_ORDERS]", error);
     return new NextResponse("Internal error", { status: 500 });
-  }
+  }*/
 }

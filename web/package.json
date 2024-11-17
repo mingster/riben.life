@@ -7,20 +7,16 @@
     "debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3000",
     "build": "bun run postinstall; next build",
     "start": "next start -p 3000",
-
     "lint": "next lint; eslint --fix \"**/*.{js,jsx,ts,tsx}\"",
     "biolint": "npx @biomejs/biome check --fix ./src/**/*.{ts,tsx,js,jsx,json}",
-
     "pretty_old": "prettier --write \"./**/*.{ts,tsx,js,jsx,json}\" --config ./.prettierrc",
     "pretty": "npx @biomejs/biome format --write ./src",
-
     "postinstall": "bun run sql:generate; bun run mongo:generate",
     "dbpush": "bun run sql:dbpush; bun run mongo:dbpush",
     "sql:generate": "npx prisma generate",
     "sql:dbpush": "npx prisma db push --schema prisma/schema.prisma",
     "mongo:generate": "npx prisma generate --schema prisma-mongo/schema.prisma",
     "mongo:dbpush": "npx prisma db push --schema prisma-mongo/schema.prisma",
-
     "depcheck": "npx depcheck ."
   },
   "dependencies": {
@@ -73,7 +69,7 @@
     "embla-carousel-react": "^8.3.1",
     "flatpickr": "^4.6.13",
     "focus-visible": "^5.2.1",
-    "framer-motion": "^11.11.17",
+    "framer-motion": "^5.6.0",
     "i18next": "^23.16.5",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-resources-to-backend": "^1.2.1",
@@ -92,7 +88,7 @@
     "react": "npm:react@19.0.0-rc.1",
     "react-apexcharts": "^1.5.0",
     "react-cookie": "^7.2.2",
-    "react-day-picker": "^9.3.0",
+    "react-day-picker": "^9.3.1",
     "react-dom": "npm:react-dom@19.0.0-rc.1",
     "react-google-recaptcha": "^3.1.0",
     "react-hook-form": "^7.53.2",
