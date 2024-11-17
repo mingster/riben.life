@@ -106,15 +106,13 @@ export default function DropdownMessage({ messages }: props) {
         bg-stroke/20 hover:text-meta-1 dark:border-strokedark dark:bg-meta-4 dark:text-primary dark:hover:text-meta-1"
       >
         {hasMessage && (
-          <>
-            <span
-              className={`absolute -top-0.5 right-0 z-1 size-2 rounded-full bg-meta-1 ${
-                notifying === false ? "hidden" : "inline"
-              }`}
-            >
-              <span className="absolute -z-1 inline-flex size-full animate-ping rounded-full bg-meta-1 opacity-75"></span>
-            </span>
-          </>
+          <span
+            className={`absolute -top-0.5 right-0 z-1 size-2 rounded-full bg-meta-1 ${
+              notifying === false ? "hidden" : "inline"
+            }`}
+          >
+            <span className="absolute -z-1 inline-flex size-full animate-ping rounded-full bg-meta-1 opacity-75" />
+          </span>
         )}
         <Bell className="text-slate-400 hover:opacity-50 duration-300 ease-in-out size-5" />
       </Link>

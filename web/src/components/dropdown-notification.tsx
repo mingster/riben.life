@@ -76,15 +76,13 @@ const DropdownNotification = () => {
       >
         {/* show if there's unread notification */}
         {!isRead && (
-          <>
-            <span
-              className={`absolute -right-0.5 -top-0.5 z-1 size-2 rounded-full bg-meta-1 ${
-                notifying === false ? "hidden" : "inline"
-              }`}
-            >
-              <span className="absolute -z-1 inline-flex size-full animate-ping rounded-full bg-meta-1 opacity-75"></span>
-            </span>
-          </>
+          <span
+            className={`absolute -right-0.5 -top-0.5 z-1 size-2 rounded-full bg-meta-1 ${
+              notifying === false ? "hidden" : "inline"
+            }`}
+          >
+            <span className="absolute -z-1 inline-flex size-full animate-ping rounded-full bg-meta-1 opacity-75" />
+          </span>
         )}
         <MessageCircleMore className="text-slate-400 hover:opacity-50 duration-300 ease-in-out size-5" />
       </Link>
