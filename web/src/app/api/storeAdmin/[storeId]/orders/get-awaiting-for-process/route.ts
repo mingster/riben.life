@@ -12,77 +12,77 @@ export async function GET(
 ) {
   const params = await props.params;
   //try {
-    CheckStoreAdminApiAccess(params.storeId);
+  CheckStoreAdminApiAccess(params.storeId);
 
-    const store = await sqlClient.store.findUnique({
-      where: {
-        id: params.storeId,
-      },
-    });
+  const store = await sqlClient.store.findUnique({
+    where: {
+      id: params.storeId,
+    },
+  });
 
-    if (!store) {
-      return new NextResponse("store not found", { status: 404 });
-    }
+  if (!store) {
+    return new NextResponse("store not found", { status: 404 });
+  }
 
-    // if auto accept order, filter by both pending and processing; else filter by pending
-    const filter = store.autoAcceptOrder
-      ? {
-          orderStatus: {
-            in: [
-              OrderStatus.Pending,
-              OrderStatus.Processing,
-              //OrderStatus.InShipping,
-            ],
-          },
-        }
-      : {
-          orderStatus: {
-            in: [OrderStatus.Processing],
-          },
-        };
-
-    // if requirePrepaid, filter order by requirePrepaid
-    const filter2 = store.requirePrepaid
-      ? {
-          isPaid: true,
-        }
-      : {
-          OR: [
-            {
-              isPaid: true,
-            },
-            {
-              isPaid: false,
-            },
+  // if auto accept order, filter by both pending and processing; else filter by pending
+  const filter = store.autoAcceptOrder
+    ? {
+        orderStatus: {
+          in: [
+            OrderStatus.Pending,
+            OrderStatus.Processing,
+            //OrderStatus.InShipping,
           ],
-        };
-
-    const awaiting4ProcessOrders = (await sqlClient.storeOrder.findMany({
-      where: {
-        storeId: params.storeId,
-        ...filter,
-        ...filter2,
-      },
-      include: {
-        OrderNotes: true,
-        OrderItemView: {
-          include: {
-            Product: true,
-          },
         },
-        User: true,
-        ShippingMethod: true,
-        PaymentMethod: true,
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
-    })) as StoreOrder[];
+      }
+    : {
+        orderStatus: {
+          in: [OrderStatus.Processing],
+        },
+      };
 
-    transformDecimalsToNumbers(awaiting4ProcessOrders);
+  // if requirePrepaid, filter order by requirePrepaid
+  const filter2 = store.requirePrepaid
+    ? {
+        isPaid: true,
+      }
+    : {
+        OR: [
+          {
+            isPaid: true,
+          },
+          {
+            isPaid: false,
+          },
+        ],
+      };
 
-    //console.log("awaiting4ProcessOrders", JSON.stringify(awaiting4ProcessOrders));
-    return NextResponse.json(awaiting4ProcessOrders);
+  const awaiting4ProcessOrders = (await sqlClient.storeOrder.findMany({
+    where: {
+      storeId: params.storeId,
+      ...filter,
+      ...filter2,
+    },
+    include: {
+      OrderNotes: true,
+      OrderItemView: {
+        include: {
+          Product: true,
+        },
+      },
+      User: true,
+      ShippingMethod: true,
+      PaymentMethod: true,
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  })) as StoreOrder[];
+
+  transformDecimalsToNumbers(awaiting4ProcessOrders);
+
+  //console.log("awaiting4ProcessOrders", JSON.stringify(awaiting4ProcessOrders));
+  return NextResponse.json(awaiting4ProcessOrders);
 
   /*} catch (error) {
     console.error("[GET_PENDING_ORDERS]", error);

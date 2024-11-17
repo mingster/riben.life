@@ -141,9 +141,7 @@ export default async function RootLayout({
           />
         </head>
 
-        <body
-          className='antialiased text-slate-500 dark:text-slate-400 min-h-screen'>
-
+        <body className="antialiased text-slate-500 dark:text-slate-400 min-h-screen">
           <NextThemeProvider attribute="class" defaultTheme="dark" enableSystem>
             <CartProvider>
               <I18nProvider>{children}</I18nProvider>

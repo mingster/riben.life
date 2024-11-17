@@ -210,12 +210,32 @@ export const ContactForm = () => {
           variants={slideIn("left", "tween", 0.2, 1)}
           className="flex-1 rounded-2xl"
         >
-          {discordUrl && <div className="flex gap-1 py-10 hover:text-slate">請直接在 Discord 討論或詢問：</div>}
+          {discordUrl && (
+            <div className="flex gap-1 py-10 hover:text-slate">
+              請直接在 Discord 討論或詢問：
+            </div>
+          )}
           <div className="font-semibold mb-4 flex gap-5 justify-between">
-            {discordUrl && <div className="hover:text-slate"><DiscordLink url={discordUrl} /></div>}
-            {lineId && <div className="hover:text-slate"><LineLink url={lineId} /></div>}
-            {facebookUrl && <div className="hover:text-slate"><FacebookLink url={facebookUrl} /></div>}
-            {igUrl && <div className="hover:text-slate"><InstagramLink url={igUrl} /></div>}
+            {discordUrl && (
+              <div className="hover:text-slate">
+                <DiscordLink url={discordUrl} />
+              </div>
+            )}
+            {lineId && (
+              <div className="hover:text-slate">
+                <LineLink url={lineId} />
+              </div>
+            )}
+            {facebookUrl && (
+              <div className="hover:text-slate">
+                <FacebookLink url={facebookUrl} />
+              </div>
+            )}
+            {igUrl && (
+              <div className="hover:text-slate">
+                <InstagramLink url={igUrl} />
+              </div>
+            )}
           </div>
 
           <Form {...form}>
@@ -295,11 +315,9 @@ export const ContactForm = () => {
               </Button>
             </form>
           </Form>
-
         </motion.div>
       </div>
     </motion.section>
-
   );
 };
 
