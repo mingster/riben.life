@@ -33,7 +33,7 @@ export function AboutUs({ className, ...props }: { className?: string }) {
   const { t } = useTranslation(lng, "landing");
 
   return (
-    <section id="aboutUs" className="relative min-h-screen">
+    <section id="aboutUs" className="relative min-h-screen w-full">
       {/*background */}
       <div className="absolute top-0 inset-x-0 bg-top bg-no-repeat beams-7 dark:hidden" />
       <Image
@@ -48,12 +48,12 @@ export function AboutUs({ className, ...props }: { className?: string }) {
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, amount: 0.25 }}
-        //className="px-1 lg:px-10 w-full py-10"
+        className="px-1 lg:px-10 w-full py-10"
       >
         <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8 overflow-hidden">
           <motion.div
-          //variants={slideIn("left", "tween", 0.2, 1)}
-          //className="flex-[0.75] bg-black-100 p-2 rounded-2xl"
+            variants={slideIn("left", "tween", 0.2, 1)}
+            className="flex-[0.75] bg-black-100 p-2 rounded-2xl"
           >
             <div className="flex gap-2">
               <IconContainer
@@ -203,32 +203,39 @@ export const ContactForm = () => {
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, amount: 0.25 }}
-      //className="px-1 w-full mx-auto relative z-0"
+      className="px-1 w-full mx-auto relative z-0"
     >
-      <div className="flex xl:flex-row flex-col-reverse gap-2 overflow-hidden">
+      <div className="flex xl:flex-row flex-col-reverse gap-1 overflow-hidden">
         <motion.div
           variants={slideIn("left", "tween", 0.2, 1)}
-          //className="flex-[0.75] bg-black-100 rounded-2xl"
+          className="flex-1 rounded-2xl"
         >
-          <div className="flex gap-2 py-10 hover:text-slate">
+          {discordUrl && (
+            <div className="flex gap-1 py-10 hover:text-slate">
+              請直接在 Discord 討論或詢問：
+            </div>
+          )}
+          <div className="font-semibold mb-4 flex gap-5 justify-between">
             {discordUrl && (
-              <>
-                請直接在 Discord 討論或詢問：
+              <div className="hover:text-slate">
                 <DiscordLink url={discordUrl} />
-              </>
+              </div>
             )}
-          </div>
-
-          <div className="font-semibold mb-4 grid grid-cols-3">
-            <div className="hover:text-slate">
-              {lineId && <LineLink url={lineId} />}
-            </div>
-            <div className="hover:text-slate">
-              {facebookUrl && <FacebookLink url={facebookUrl} />}
-            </div>
-            <div className="hover:text-slate">
-              {igUrl && <InstagramLink url={igUrl} />}
-            </div>
+            {lineId && (
+              <div className="hover:text-slate">
+                <LineLink url={lineId} />
+              </div>
+            )}
+            {facebookUrl && (
+              <div className="hover:text-slate">
+                <FacebookLink url={facebookUrl} />
+              </div>
+            )}
+            {igUrl && (
+              <div className="hover:text-slate">
+                <InstagramLink url={igUrl} />
+              </div>
+            )}
           </div>
 
           <Form {...form}>
@@ -261,7 +268,7 @@ export const ContactForm = () => {
                     <FormControl>
                       <Input
                         disabled={loading}
-                        className="placeholder:text-gray-700 rounded-lg outline-none font-mono"
+                        className="placeholder:text-gray-700 rounded-lg disabled:opacity-25 outline-none font-mono"
                         placeholder={t("landing_contactus_form_email")}
                         {...field}
                       />

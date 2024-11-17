@@ -16,7 +16,7 @@ export async function checkAdminAccess() {
     return false;
   }
 
-  console.log("admin user", session.user.email, session.user.role);
+  //console.log("admin user", session.user.email, session.user.role);
 
   // block if not admin
   if (

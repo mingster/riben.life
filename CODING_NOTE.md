@@ -4,132 +4,152 @@ this project typescript + bun + next.js + postgres with a bit of monogodb.  Foll
 
 ## Dev Environment
 
-- bun, package manager:
+### bun, package manager:
 
-	``` fish
-	curl -fsSL https://bun.sh/install | bash
-	```
+``` fish
+curl -fsSL https://bun.sh/install | bash
+```
 
-- node, the run-time:
+### node, the run-time:
 
-	``` fish
-	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
+``` fish
+asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
 	
-	asdf nodejs update-nodebuild
+asdf nodejs update-nodebuild
+	
+asdf install nodejs 20.18.0
+asdf global nodejs 20.18.0
+asdf shell nodejs 20.18.0
+	
+npm install -g npm@latest
+corepack disable		
+asdf reshim nodejs
+```
+
+### [vscode](https://github.com/mingster/dotfiles/blob/master/vscode/vscode_README.md), the IDE:
+
+``` fish
+brew install --cask visual-studio-code
+	
+curl -s https://raw.githubusercontent.com/mingster/dotfiles/master/vscode/install-vscode-extensions.sh | /bin/bash
+```
+
+### [postgres](https://github.com/mingster/dotfiles/blob/master/mac/install_PostgreSQL.sh), the main database
+
+``` fish
+brew install postgresql@15
+	
+createuser -s postgres
+```
+	
+In the psql session, type \password postgres to set the password.	
+	
+``` fish
+psql -h localhost -U postgres
+```
+	
+CREATE NEW user
+	
+in the psql sessesion, create new user as follow:
+	
+``` fish
+CREATE ROLE PSTV_USER WITH LOGIN PASSWORD 'Sup3rS3cret';
+```
+	
+you can \du to list out users.
+	
+allow PSTV_USER user to create db:
+
+
+``` fish
+ALTER ROLE PSTV_USER CREATEDB;
+```
+	
+\q to quit psql
+	
+reconnect using the new user
+	
+``` fish
+psql postgres -U pstv_user;
+```
+	
+Create new database and its permission:
+
+``` fish
+CREATE DATABASE pstvweb;
+GRANT ALL PRIVILEGES ON DATABASE pstvweb TO pstv_user;
+\list
+\connect pstvweb
+\dt
+\q
+```
+	
+You can now create, read, update and delete data on our database with the user pstv_user!
 		
-	asdf install nodejs 20.18.0
-	asdf global nodejs 20.18.0
-	asdf shell nodejs 20.18.0
-	
-	npm install -g npm@latest
-	corepack disable		
-	asdf reshim nodejs
-	```
 
-- [vscode](https://github.com/mingster/dotfiles/blob/master/vscode/vscode_README.md), the IDE:
+<b>Generate prisma object and db schema</b>
+	
+```shell
+npx prisma generate
+npx prisma db push
+```
+	
+Generate view(s)
+	
+```
+psql pstv_web -U pstv_user
+```
+	
+The view sql files are under $pstv_web/prisma/views. Execute each of the files.
+	
+you can also do manual sql execution something like this: 
+```
+update "Product" set "useOption"=true;
+```
 
-	``` fish
-	brew install --cask visual-studio-code
+optioanl gui tool
 	
-	curl -s https://raw.githubusercontent.com/mingster/dotfiles/master/vscode/install-vscode-extensions.sh | /bin/bash
-	```
-
-- [postgres](https://github.com/mingster/dotfiles/blob/master/mac/install_PostgreSQL.sh)
-
-	``` fish
-	brew install postgresql@15
+``` fish
+brew install --cask --appdir="/Applications/_dev" pgadmin4
+```
 	
-	createuser -s postgres
-	```
-	
-	In the psql session, type \password postgres to set the password.	
-	
-	``` fish
-	psql -h localhost -U postgres
-	```
-	
-	CREATE NEW user
-	
-	in the psql sessesion, create new user as follow:
-	
-	``` fish
-	CREATE ROLE PSTV_USER WITH LOGIN PASSWORD 'Sup3rS3cret';
-	```
-	
-	you can \du to list out users.
-	
-	allow PSTV_USER user to create db:
+### [monogo db](https://github.com/mingster/dotfiles/blob/master/mac/install_mongodb.sh), the metabase
 
 
-	``` fish
-	ALTER ROLE PSTV_USER CREATEDB;
-	```
+``` fish
+brew install --cask --appdir="/Applications/_dev" mongodb-compass
 	
-	\q to quit psql
+brew tap mongodb/brew
+brew update
 	
-	reconnect using the new user
+brew install mongodb-community@7.0
+```
 	
-	``` fish
-	psql postgres -U pstv_user;
-	```
+add relication to /usr/local/etc/mongod.conf
 	
-	Create new database and its permission:
+``` fish
+architecture=$(uname -m)
+if [ "$architecture" == "arm64" ]; then
 
-	``` fish
-	CREATE DATABASE pstvweb;
-	GRANT ALL PRIVILEGES ON DATABASE pstvweb TO pstv_user;
-	\list
-	\connect pstvweb
-	\dt
-	\q
-	```
-	
-	You can now create, read, update and delete data on our
-	pstv_web database with the user pstv_user!
+  echo "replication:" >> /opt/homebrew/etc/mongod.conf
+  echo "    replSetName: rs0" >> /opt/homebrew/etc/mongod.conf
 
-	
-	optioanl gui tool
-	
-	``` fish
-	brew install --cask --appdir="/Applications/_dev" pgadmin4
-	```
-	
-- [monogo db](https://github.com/mingster/dotfiles/blob/master/mac/install_mongodb.sh)
+elif [ "$architecture" == "x86_64" ]; then
 
-	``` fish
-	brew install --cask --appdir="/Applications/_dev" mongodb-compass
-	
-	brew tap mongodb/brew
-	brew update
-	
-	brew install mongodb-community@7.0
-	```
-	
-	add relication to /usr/local/etc/mongod.conf
-	
-	``` fish
-	architecture=$(uname -m)
-	if [ "$architecture" == "arm64" ]; then
+  echo "replication:" >> /usr/local/etc/mongod.conf
+  echo "    replSetName: rs0" >> /usr/local/etc/mongod.conf
 
-	  echo "replication:" >> /opt/homebrew/etc/mongod.conf
-	  echo "    replSetName: rs0" >> /opt/homebrew/etc/mongod.conf
+else
+    echo "Unknown architecture: $architecture"
+fi
 
-	elif [ "$architecture" == "x86_64" ]; then
-
-	  echo "replication:" >> /usr/local/etc/mongod.conf
-	  echo "    replSetName: rs0" >> /usr/local/etc/mongod.conf
-
-	else
-	    echo "Unknown architecture: $architecture"
-	fi
-
-	```
+```
 	
-	start the database service:
+start the database service:
 	
-	``` fish
-	brew services start mongodb-community
-	```
+``` fish
+brew services start mongodb-community
+```
 
 ## .env
 
@@ -269,30 +289,6 @@ NEXT_PUBLIC_CLOUDINARY_APISECRET=JaRrBfUN5X_Vl5tIT0iKAKtQ6QA
 	
 	cd riben.life/web
 	yarn
-	```
-
-1. Setup Prisma / Database
-
-	Postgres
-	
-	- Generate prisma object and db schema
-	
-	```shell
-	npx prisma generate
-	npx prisma db push
-	```
-	
-	- Generate view(s)
-	
-	```
-	psql pstv_web -U pstv_user
-	```
-	
-	The view sql files are under $pstv_web/prisma/views. Execute each of the files.
-	
-	you can also do manual sql execution something like this: 
-	```
-	update "Product" set "useOption"=true;
 	```
 
 1. Cloudinary

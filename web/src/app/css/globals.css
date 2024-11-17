@@ -4,11 +4,8 @@
 /*! purgecss start ignore */
 @import "bar-of-progress.css";
 /*! purgecss end ignore */
-@import "tailwindcss/components";
 @import "utilities.css";
 
+/*@import "tailwindcss/components";
 @tailwind components;
-@import "tailwindcss/components";
-
-@layer components {
-}
+*/

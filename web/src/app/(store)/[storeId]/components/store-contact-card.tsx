@@ -53,6 +53,7 @@ export const StoreContactCard: React.FC<props> = ({ store, storeSettings }) => {
                 {storeSettings.aboutUs && (
                   <div className="text-sm font-medium leading-none">
                     <div
+                      // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
                       dangerouslySetInnerHTML={{
                         __html: storeSettings.aboutUs,
                       }}
