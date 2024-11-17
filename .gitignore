@@ -159,6 +159,10 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# bun lock file
+*.lockb
+
+
 ### Windows ###
 # Windows thumbnail cache files
 Thumbs.db
