@@ -153,9 +153,12 @@ module.exports = {
         'meta-9': '#E5E7EB',
         'meta-10': '#0FADCF',
       },
+      // https://medium.com/@tez1969/tailwind-筆記-29cd1e01c061
       fontFamily: {
+        host_grotesk: ['var(--font-host-grotesk)', 'sans-serif'],
+        noto_tc: ['var(--font-noto_tc)', 'sans-serif'],
         sans: [
-          '"Noto Sans TC", sans-serif',
+          '"Noto Sans TC", "Host Grotesk", sans-serif',
           {
             fontFeatureSettings: '"cv11", "ss01"',
             fontVariationSettings: '"opsz" 32',
@@ -166,9 +169,7 @@ module.exports = {
           'ui-monospace, Menlo, Monaco, "Ubuntu Monospace", "Segoe UI Mono", "Source Code Pro", "Courier New", monospace',
           ...defaultTheme.fontFamily.mono,
         ],
-        source: ['Source Sans Pro', ...defaultTheme.fontFamily.sans],
-        'ubuntu-mono': ['Ubuntu Mono', ...defaultTheme.fontFamily.mono],
-        display: ['"Noto Sans TC", sans-serif', 'Oswald', ...defaultTheme.fontFamily.mono],
+        //display: ['"Noto Sans TC", sans-serif', 'Oswald', ...defaultTheme.fontFamily.sans],
       },
       fontSize: {
         'title-xxl': ['44px', '55px'],

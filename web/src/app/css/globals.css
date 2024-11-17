@@ -8,7 +8,5 @@
 @import "utilities.css";
 
 @tailwind components;
-@import "tailwindcss/components";
 
-@layer components {
-}
+@import "tailwindcss/components";

@@ -14,6 +14,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import type { Session } from "next-auth";
 
+import { Host_Grotesk, Noto_Sans_TC } from "next/font/google";
+
 const title = "riben.life 利便生活";
 export const metadata: Metadata = {
   title: {
@@ -100,7 +102,32 @@ function v(href: string) {
     content={v("/favicons/browserconfig.xml")}
   />
 </Head>
+
+        <head>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossOrigin=""
+          />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Host_Grotesk:wght@400;700&family=Noto+Sans+TC:wght@500;700&family=Rubik:wght@500;700&display=swap"
+            rel="stylesheet"
+          />
+        </head>
+
 */
+
+const grotesk = Host_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-host-grotesk',
+  display: 'swap'
+});
+const noto_tc = Noto_Sans_TC({
+  subsets: ['latin'],
+  variable: '--font-noto_tc',
+  display: 'swap'
+});
 
 export default async function RootLayout({
   children,
@@ -117,10 +144,8 @@ export default async function RootLayout({
         className="dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]"
       >
         <body
-          className={cn(
-            "antialiased text-slate-500 dark:text-slate-400 min-h-screen",
-          )}
-        >
+          className={`${grotesk.variable} ${noto_tc.variable} antialiased text-slate-500 dark:text-slate-400 min-h-screen`}>
+
           <NextThemeProvider attribute="class" defaultTheme="dark" enableSystem>
             <CartProvider>
               <I18nProvider>{children}</I18nProvider>
