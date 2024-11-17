@@ -1,8 +1,11 @@
 import pluginJs from '@eslint/js';
+// @ts-ignore
 import nextPlugin from '@next/eslint-plugin-next';
 
 //import eslintConfigPrettier from 'eslint-config-prettier';
+// @ts-ignore
 import importPlugin from 'eslint-plugin-import';
+// @ts-ignore
 import pluginPromise from 'eslint-plugin-promise';
 import pluginReact from 'eslint-plugin-react';
 import tailwind from 'eslint-plugin-tailwindcss';
@@ -21,9 +24,24 @@ export default [
   },
   pluginJs.configs.recommended, // ? https://github.com/eslint/eslint
   importPlugin.flatConfigs.recommended, // ? https://github.com/import-js/eslint-plugin-import
-  ...tseslint.configs.recommended, // ? https://github.com/typescript-eslint/typescript-eslint
-  pluginPromise.configs['flat/recommended'], // ? https://github.com/eslint-community/eslint-plugin-promise
-  pluginReact.configs.flat.recommended, // ? https://github.com/jsx-eslint/eslint-plugin-react
+
+  // ? https://github.com/typescript-eslint/typescript-eslint
+  ...tseslint.configs.recommended,
+
+  // ? https://github.com/eslint-community/eslint-plugin-promise
+  pluginPromise.configs['flat/recommended'],
+
+  // ? https://github.com/jsx-eslint/eslint-plugin-react
+  {
+    // @ts-ignore
+    ...pluginReact.configs.flat.recommended,
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
+  },
+  // @ts-ignore
   pluginReact.configs.flat['jsx-runtime'], // ? https://github.com/jsx-eslint/eslint-plugin-react
   //eslintConfigPrettier, // ? https://github.com/prettier/eslint-config-prettier
   ...tailwind.configs['flat/recommended'], // ? https://github.com/francoismassart/eslint-plugin-tailwindcss

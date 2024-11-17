@@ -90,7 +90,6 @@ export async function POST(
 
     // otherwise, return empty
     return NextResponse.json([]);
-
   } catch (error) {
     console.log("[POST]", error);
 
