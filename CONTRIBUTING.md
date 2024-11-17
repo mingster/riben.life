@@ -54,11 +54,11 @@ We highly encourage that you do a self-review prior to requesting a review. To d
 
   | command       | example                                         |
   | :------------ | :---------------------------------------------- |
-  | [BugFix]      | [fix]/restore the missing pizza-12345        |
-  | [Feature]     | [feat]/add a new pizza-12346                 |
-  | [Enhancement] | [enhancement]/add new topping to pizza #1-12347 |
-  | [Refactor]    | [refactor]/move cheese to the top-12348         |
-  | [Doc]         | [docs]/writeup recipe for #1-12349               |
+  | [Fix]      | [fix]-restore the missing pizza-12345        |
+  | [Feature]     | [feat]-add a new pizza-12346                 |
+  | [Enhancement] | [enhancement]-add new topping to pizza #1-12347 |
+  | [Refactor]    | [refactor]-move cheese to the top-12348         |
+  | [Doc]         | [docs]-writeup recipe for #1-12349               |
 
 - Short Description: Provide a brief, informative description of the PR that explains the changes made.
 - Issue(s) Linked: Mention any related issue(s) by using the keyword Fixes or Closes followed by the respective issue number(s) (e.g., Fixes #123, Closes #456).

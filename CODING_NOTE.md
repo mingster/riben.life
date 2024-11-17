@@ -4,13 +4,13 @@ this project typescript + bun + next.js + postgres with a bit of monogodb.  Foll
 
 ## Dev Environment
 
-- package manager - bun:
+- bun, package manager:
 
 	``` fish
 	curl -fsSL https://bun.sh/install | bash
 	```
 
-- Javascript run-time: node
+- node, the run-time:
 
 	``` fish
 	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
@@ -32,26 +32,24 @@ this project typescript + bun + next.js + postgres with a bit of monogodb.  Foll
 	asdf reshim nodejs
 	```
 
-- IDE: [vscode](https://github.com/mingster/dotfiles/blob/master/vscode/vscode_README.md)
+- [vscode](https://github.com/mingster/dotfiles/blob/master/vscode/vscode_README.md), the IDE:
 
 
-out-dated: [node.js / yarn / ...](https://github.com/mingster/dotfiles/blob/433ddf40a11b3ef2fb2b45721206376e24574d0b/install/web.sh)
+## Basic Operation
 
-## basic operation
-
-- install packages
+- Install packages
 
 	``` fish
 	bun install
 	```
 
-- run dev server (with node.js)
+- Run dev server (with node.js)
 
 	``` fish
 	bun dev
 	```
 
-- build
+- Build
 
 	``` fish
 	bun run build
@@ -175,6 +173,77 @@ success: "success group border-green-500 bg-green-500 text-neutral-50",
 - [auth.js](https://authjs.dev/reference/overview)
 
 
+### lazygit cheatsheet
+
+#### Creating a New Branch
+
+First, make sure that the upstream-master branch is in sync with the remote. Use <code>h</code> and <code>l</code> to switch to the Local branches section, then use <code>k</code> and <code>j</code> to navigate to the upstream-master branch. 
+
+Next, press <code>f</code> to fetch the latest changes. Finally, press <code>n</code> to create a new branch.
+
+#### Syncing with Upstream
+
+Again, navigate to the upstream-master branch in the Local branches section, then press <code>f</code> to fetch the latest changes and <code>r</code> to rebase onto it.
+
+#### Development and Pull Request
+
+Navigate to the Files section and press <code>Space</code> to add files to the staging area one by one, or use <code>a</code> to add all files at once. Then, press <code>C</code> to commit. 
+
+Next, navigate to the branch you want to push in the Local branches section and press <code>P</code> to push. Finally, press <code>o</code> to open the GitHub pull request page.
+
+#### Global
+
+- h and l: Switch between the sections on the left side.
+- k and j: Move the cursor up and down.
+- /: Search for a string.
+- [ and ]: Switch between the tabs on the left side.
+- Ctrl + o: Copy the file name (in the Files section), branch name (in the Local branches section), or commit hash (in the commits section) to the clipboard.
+- q: Exit Lazygit.
+
+#### Left Side - Files Section
+
+- Space: Add or remove the selected file from the staging area.
+- a: Add or remove all files from the staging area.
+- Enter: Collapse or expand folders when used on a folder, or enter the file preview area on the right side when used on a file.
+- C: Open an external text editor to edit the commit message, then commit.
+- A: Amend the last commit.
+- d: Discard all changes to the selected file that have not been committed. Note that if the file is newly created, it will be deleted.
+- D: Discard all changes to all files that have not been committed. Use this when you’ve messed up and want to start over.
+- S: Open the stash options.
+
+#### Left Side - Local Branches Section
+
+- Space: Switch to the selected branch.
+- n: Checkout a new branch from the selected branch.
+- f: Fetch new commits for the selected branch from the remote.
+- r: Rebase onto the selected branch.
+- R: Rename the selected branch.
+- p: Pull the selected branch.
+- P: Push the selected branch.
+- o: Open the GitHub pull request page for the selected branch.
+- Enter: View the commits of the selected branch. Use Esc to go back.
+
+#### Left Side - Commits Section
+
+- Enter: View the files changed in the selected commit. Use Esc to go back.
+- R: Open an external editor to modify the commit message.
+- d: Delete the selected commit.
+- g: Open the reset options.
+- F: Create a fixup! commit for the selected commit.
+- S: Squash all fixup! commits on top of the selected commit.
+
+#### Left Side - Stash Section
+
+- g: Apply and delete the selected stash.
+- Space: Apply the selected stash without deleting it.
+- d: Delete the selected stash.
+
+
+#### Right Side - Preview Area
+
+- v: Enter multi-line selection mode.
+- Space: Add or remove the selected line or lines (when in multi-line selection mode) from the staging area.
+- Esc: Return to the left side sections.
 
 
 
