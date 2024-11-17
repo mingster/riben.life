@@ -5,7 +5,6 @@ import { env } from "node:process";
 import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from "@/hooks/use-cart";
 import { GetSession } from "@/lib/auth/utils";
-import { cn } from "@/lib/utils";
 import I18nProvider from "@/providers/i18n-provider";
 import SessionWrapper from "@/providers/session-provider";
 import NextThemeProvider from "@/providers/theme-provider";
@@ -13,8 +12,6 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import type { Session } from "next-auth";
-
-import { Host_Grotesk, Noto_Sans_TC } from "next/font/google";
 
 const title = "riben.life 利便生活";
 export const metadata: Metadata = {
@@ -103,21 +100,7 @@ function v(href: string) {
   />
 </Head>
 
-        <head>
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link
-            rel="preconnect"
-            href="https://fonts.gstatic.com"
-            crossOrigin=""
-          />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Host_Grotesk:wght@400;700&family=Noto+Sans+TC:wght@500;700&family=Rubik:wght@500;700&display=swap"
-            rel="stylesheet"
-          />
-        </head>
-
-*/
-
+import { Host_Grotesk, Noto_Sans_TC } from "next/font/google";
 const grotesk = Host_Grotesk({
   subsets: ['latin'],
   variable: '--font-host-grotesk',
@@ -128,6 +111,8 @@ const noto_tc = Noto_Sans_TC({
   variable: '--font-noto_tc',
   display: 'swap'
 });
+
+*/
 
 export default async function RootLayout({
   children,
@@ -143,8 +128,21 @@ export default async function RootLayout({
         lang="en"
         className="dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]"
       >
+        <head>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossOrigin=""
+          />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Host_Grotesk:wght@400;700&family=Noto+Sans+TC:wght@500;700&family=Rubik:wght@500;700&display=swap"
+            rel="stylesheet"
+          />
+        </head>
+
         <body
-          className={`${grotesk.variable} ${noto_tc.variable} antialiased text-slate-500 dark:text-slate-400 min-h-screen`}>
+          className='antialiased text-slate-500 dark:text-slate-400 min-h-screen'>
 
           <NextThemeProvider attribute="class" defaultTheme="dark" enableSystem>
             <CartProvider>

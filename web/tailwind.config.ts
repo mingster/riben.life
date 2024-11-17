@@ -24,6 +24,7 @@ module.exports = {
     './src/**/*.{ts,tsx,js,jsx,mdx}',
   ],
   theme: {
+
     screens: {
       //xs: "304px",
       //sm: "768px",
@@ -68,6 +69,7 @@ module.exports = {
       },
     },
     extend: {
+
       backgroundImage: ({ theme }: PluginUtils) => ({
         //backgroundImage: (theme) => ({
         squiggle: `url("${svgToDataUri(
@@ -155,10 +157,8 @@ module.exports = {
       },
       // https://medium.com/@tez1969/tailwind-筆記-29cd1e01c061
       fontFamily: {
-        host_grotesk: ['var(--font-host-grotesk)', 'sans-serif'],
-        noto_tc: ['var(--font-noto_tc)', 'sans-serif'],
         sans: [
-          '"Noto Sans TC", "Host Grotesk", sans-serif',
+          '"Host Grotesk", "Noto Sans TC", sans-serif',
           {
             fontFeatureSettings: '"cv11", "ss01"',
             fontVariationSettings: '"opsz" 32',
@@ -169,7 +169,7 @@ module.exports = {
           'ui-monospace, Menlo, Monaco, "Ubuntu Monospace", "Segoe UI Mono", "Source Code Pro", "Courier New", monospace',
           ...defaultTheme.fontFamily.mono,
         ],
-        //display: ['"Noto Sans TC", sans-serif', 'Oswald', ...defaultTheme.fontFamily.sans],
+        display: ['"Host Grotesk", "Noto Sans TC", sans-serif', ...defaultTheme.fontFamily.sans],
       },
       fontSize: {
         'title-xxl': ['44px', '55px'],
