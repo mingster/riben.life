@@ -60,6 +60,7 @@ export const CategoryClient: React.FC<categoryClientProps> = ({ data }) => {
           description={t("Category_Mgmt_descr")}
         />
         <div>
+          {/*新增 */}
           <Button
             variant={"outline"}
             onClick={() =>
@@ -69,6 +70,8 @@ export const CategoryClient: React.FC<categoryClientProps> = ({ data }) => {
             <Plus className="mr-0 size-4" />
             {t("Create")}
           </Button>
+
+          {/*批量新增 */}
           <AddCategoriesDialog />
         </div>
       </div>
@@ -124,6 +127,7 @@ export function AddCategoriesDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
+          {/*批量新增*/}
           <DialogTitle>{t("Category_Mgmt_Add")}</DialogTitle>
           <DialogDescription>{t("Category_Mgmt_Add_Descr")}</DialogDescription>
         </DialogHeader>
@@ -137,7 +141,8 @@ export function AddCategoriesDialog() {
                 <FormItem>
                   <FormLabel>{t("Category_names")}</FormLabel>
                   <FormControl>
-                    <Textarea {...field} />
+                    <Textarea disabled={loading}
+                      {...field} />
                   </FormControl>
                   <FormDescription>{t("Category_names_Descr")}</FormDescription>
                   <FormMessage />
@@ -158,6 +163,7 @@ export function AddCategoriesDialog() {
                   </div>
                   <FormControl>
                     <Switch
+                      disabled={loading}
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
@@ -166,14 +172,17 @@ export function AddCategoriesDialog() {
               )}
             />
             <div className="flex w-full items-center justify-end space-x-2 pt-6">
-              <Button disabled={form.formState.isSubmitting} type="submit">
+              <Button
+                disabled={loading || !form.formState.isValid || form.formState.isSubmitting}
+
+                type="submit">
                 {t("Create")}
               </Button>
 
               <DialogFooter className="sm:justify-start">
                 <DialogClose asChild>
                   <Button
-                    disabled={form.formState.isSubmitting}
+                    disabled={loading || form.formState.isSubmitting}
                     variant="outline"
                   >
                     {t("Cancel")}

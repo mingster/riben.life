@@ -170,7 +170,7 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
               />
 
               <Button
-                disabled={loading}
+                disabled={loading || form.formState.isSubmitting}
                 className="disabled:opacity-25"
                 type="submit"
               >
