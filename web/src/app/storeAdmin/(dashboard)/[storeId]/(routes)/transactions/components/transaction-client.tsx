@@ -345,7 +345,7 @@ export const FilterDateTime = ({
           variant={"outline"}
           className={cn("justify-start text-left font-normal")}
         >
-          <CalendarIcon className="mr-1 size-4" />
+          <CalendarIcon className="mr-0 size-4" />
           <span>{t("Date_and_Time")}</span>
         </Button>
       </PopoverTrigger>

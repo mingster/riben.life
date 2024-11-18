@@ -91,7 +91,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
             className="cursor-pointer"
             onClick={() => onCopy(data.faqCategoryId)}
           >
-            <Copy className="mr-1 size-4" /> Copy Id
+            <Copy className="mr-0 size-4" /> Copy Id
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -102,7 +102,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
               )
             }
           >
-            <UserRoundPen className="mr-1 size-4" /> {t("FaqCategory_AddFaq")}
+            <UserRoundPen className="mr-0 size-4" /> {t("FaqCategory_AddFaq")}
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -113,13 +113,13 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
               )
             }
           >
-            <Edit className="mr-1 size-4" /> {t("Edit")}
+            <Edit className="mr-0 size-4" /> {t("Edit")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="cursor-pointer"
             onClick={() => setOpen(true)}
           >
-            <Trash className="mr-1 size-4" /> {t("Delete")}
+            <Trash className="mr-0 size-4" /> {t("Delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

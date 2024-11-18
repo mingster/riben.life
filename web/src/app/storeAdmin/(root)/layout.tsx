@@ -5,7 +5,10 @@ import type { Session } from "next-auth";
 
 import { redirect } from "next/navigation";
 
-export default async function DashboardLayout(props: {
+// this is the main layout for store admin.
+// if the user has a store, redirect to the store dashboard (dashboard/[storeId])
+// if the user doesn't have store, show the create store modal (via page.tsx)
+export default async function StoreAdminLayout(props: {
   children: React.ReactNode;
   params: Promise<{ storeId: string }>;
 }) {

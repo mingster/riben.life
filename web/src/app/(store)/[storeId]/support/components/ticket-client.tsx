@@ -43,7 +43,7 @@ export const TicketClient: React.FC<TicketClientProps> = ({
           variant={"outline"}
           onClick={() => router.push(`/${params.storeId}/support/new`)}
         >
-          <Plus className="mr-1 size-4" /> {t("create")}
+          <Plus className="mr-0 size-4" /> {t("create")}
         </Button>
       </div>
 

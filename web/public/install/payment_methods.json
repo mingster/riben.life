@@ -1,6 +1,6 @@
 [
     {
-        "name": "stripe",
+        "name": "信用卡",
         "payUrl": "stripe",
         "priceDescr": "2.9% + 30¢",
         "fee": 0.029,
@@ -14,7 +14,7 @@
         "isDefault": false
     },
     {
-        "name": "linePay",
+        "name": "LinePay",
         "payUrl": "linePay",
         "priceDescr": "3.0%",
         "fee": 0.00,
@@ -28,7 +28,7 @@
         "isDefault": false
     },
     {
-        "name": "cash",
+        "name": "現金",
         "payUrl": "cash",
         "priceDescr": "available for paid merchants",
         "fee": 0,

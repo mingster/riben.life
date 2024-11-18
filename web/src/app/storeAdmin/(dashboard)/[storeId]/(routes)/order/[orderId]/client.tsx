@@ -478,7 +478,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               );
             }}
           >
-            <Undo2Icon className="mr-1 size-4" />
+            <Undo2Icon className="mr-0 size-4" />
             {t("Refund")}
           </Button>
 
@@ -516,7 +516,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               );
             }}
           >
-            <Undo2Icon className="mr-1 size-4" />
+            <Undo2Icon className="mr-0 size-4" />
             {t("Refund")}
           </Button>
 

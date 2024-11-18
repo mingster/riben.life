@@ -92,7 +92,7 @@ export default function SettingsTab({ user }: SettingsPageProps) {
     //setLoading(true);
     //console.log(`onSubmit: ${JSON.stringify(data)}`);
     await axios.patch(
-      `${process.env.NEXT_PUBLIC_API_URL}/account/update-settings`,
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/account/update-settings`,
       data,
     );
 

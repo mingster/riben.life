@@ -96,7 +96,7 @@ export const OrderUnpaid = ({
               router.push(`/storeAdmin/${params.storeId}/order/add`)
             }
           >
-            <Plus className="mr-1 size-4" />
+            <Plus className="mr-0 size-4" />
             {t("Create")}
           </Button>
         </div>

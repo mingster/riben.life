@@ -55,7 +55,7 @@ export function Navbar({ title }: NavbarProps) {
               </>
             ) : (
               <>
-                <HomeIcon className="mr-1 size-4" />
+                <HomeIcon className="mr-0 size-4" />
                 <h1 className="font-bold">{title}</h1>
               </>
             )}

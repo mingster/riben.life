@@ -37,7 +37,7 @@ export const MessageClient: React.FC<messageClientProps> = ({ data }) => {
             router.push(`/storeAdmin/${params.storeId}/announcements/new`)
           }
         >
-          <Plus className="mr-1 size-4" />
+          <Plus className="mr-0 size-4" />
           {t("Create")}
         </Button>
       </div>

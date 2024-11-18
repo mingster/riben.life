@@ -90,7 +90,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
             className="cursor-pointer"
             onClick={() => onCopy(data.id)}
           >
-            <Copy className="mr-1 size-4" /> Copy Id
+            <Copy className="mr-0 size-4" /> Copy Id
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -101,14 +101,14 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
               )
             }
           >
-            <Edit className="mr-1 size-4" />
+            <Edit className="mr-0 size-4" />
             {t("Update")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="cursor-pointer"
             onClick={() => setOpen(true)}
           >
-            <Trash className="mr-1 size-4" /> {t("Delete")}
+            <Trash className="mr-0 size-4" /> {t("Delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
