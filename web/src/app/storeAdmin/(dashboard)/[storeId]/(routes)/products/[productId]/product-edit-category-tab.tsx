@@ -76,7 +76,6 @@ export const ProductEditCategoryTab = ({
 
   // construct pre-select rows from ProductCategories
   //
-  // biome-ignore lint/style/noVar: <explanation>
   const initiallySelected: RowSelectionState = {};
   if (initialData) {
     // use index number as row key
@@ -147,43 +146,41 @@ export const ProductEditCategoryTab = ({
   };
 
   return (
-    <>
-      <Card>
-        <CardHeader> </CardHeader>
-        <CardContent className="space-y-2">
-          {/* display */}
-          <div className="w-full">
-            <DataTableCheckbox
-              disabled={loading}
-              noSearch={true}
-              columns={columns}
-              data={formattedCategories}
-              initiallySelected={initiallySelected}
-              onRowSelectionChange={setSelectedCategoryIds}
-            />
-          </div>
-          <Button
-            type="button"
+    <Card>
+      <CardHeader> </CardHeader>
+      <CardContent className="space-y-2">
+        {/* display */}
+        <div className="w-full">
+          <DataTableCheckbox
             disabled={loading}
-            className="disabled:opacity-25"
-            onClick={saveData}
-          >
-            {t("Add")}
-          </Button>
+            noSearch={true}
+            columns={columns}
+            data={formattedCategories}
+            initiallySelected={initiallySelected}
+            onRowSelectionChange={setSelectedCategoryIds}
+          />
+        </div>
+        <Button
+          type="button"
+          disabled={loading}
+          className="disabled:opacity-25"
+          onClick={saveData}
+        >
+          {t("Add")}
+        </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              router.push(`/storeAdmin/${params.storeId}/products`);
-            }}
-            className="ml-5"
-          >
-            {t("Cancel")}
-          </Button>
-        </CardContent>
-      </Card>
-    </>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            router.push(`/storeAdmin/${params.storeId}/products`);
+          }}
+          className="ml-5"
+        >
+          {t("Cancel")}
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 

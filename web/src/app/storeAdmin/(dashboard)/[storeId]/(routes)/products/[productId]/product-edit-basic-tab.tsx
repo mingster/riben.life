@@ -169,7 +169,7 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
                       <FormControl>
                         <Input
                           type="text"
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder={
                             t("input_placeholder1") + t("Product_name")
@@ -191,7 +191,7 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
                         <Input
                           type="number"
                           //disabled={loading || form.watch("useOption")}
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed"
                           placeholder={
                             t("input_placeholder1") + t("Product_price")
@@ -214,7 +214,7 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
                     <FormControl>
                       <Input
                         type="text"
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={
                           t("input_placeholder1") + t("Product_description")
@@ -242,7 +242,7 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
                       <FormControl>
                         <div>
                           <ProductStatusCombobox
-                            disabled={loading}
+                            disabled={loading || form.formState.isSubmitting}
                             defaultValue={field.value}
                             onChange={field.onChange}
                           />
@@ -302,7 +302,11 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
               <Separator />
 
               <Button
-                disabled={loading}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -316,7 +320,8 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
                   clearErrors();
                   router.push(`/storeAdmin/${params.storeId}/products`);
                 }}
-                className="ml-5"
+                disabled={loading || form.formState.isSubmitting}
+                className="ml-5 disabled:opacity-25"
               >
                 {t("Cancel")}
               </Button>

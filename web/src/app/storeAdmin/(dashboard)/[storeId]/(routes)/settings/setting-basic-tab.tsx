@@ -178,7 +178,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                     <FormLabel>{t("StoreSettings_Store_Name")}</FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={t("StoreSettings_Store_Name_Descr")}
                         {...field}
@@ -200,7 +200,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                       </FormLabel>
                       <FormControl>
                         <Textarea
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono min-h-20"
                           placeholder=""
                           {...field}
@@ -223,7 +223,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                     <FormItem>
                       <FormLabel>{t("StoreSettings_Store_Locale")}</FormLabel>
                       <Select
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
@@ -248,7 +248,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                     <FormItem>
                       <FormLabel>{t("StoreSettings_Store_Currency")}</FormLabel>
                       <CurrencyCombobox
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       />
@@ -263,7 +263,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                     <FormItem>
                       <FormLabel>{t("StoreSettings_Store_Country")}</FormLabel>
                       <CountryCombobox
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       />
@@ -310,7 +310,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                       </div>
                       <FormControl>
                         <Switch
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           ref={field.ref}
                           checked={field.value}
                           onCheckedChange={field.onChange}
@@ -330,7 +330,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                       <FormLabel>{t("business_hours")}</FormLabel>
                       <FormControl>
                         <Textarea
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono min-h-100"
                           placeholder=""
                           {...field}
@@ -358,7 +358,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                       </div>
                       <FormControl>
                         <Switch
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
@@ -381,7 +381,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                       </div>
                       <FormControl>
                         <Switch
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
@@ -406,7 +406,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                       </div>
                       <FormControl>
                         <Switch
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
@@ -417,7 +417,11 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
               </div>
 
               <Button
-                disabled={loading || !form.formState.isValid}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -431,6 +435,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
                   clearErrors();
                   router.push("../");
                 }}
+                disabled={loading || form.formState.isSubmitting}
                 className="ml-2 disabled:opacity-25"
               >
                 {t("Cancel")}

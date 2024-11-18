@@ -407,7 +407,7 @@ export const FilterDateTime = ({
                         <FormControl>
                           <Input
                             type="number"
-                            disabled={loading}
+                            disabled={loading || form.formState.isSubmitting}
                             className="font-mono"
                             placeholder=""
                             {...field}

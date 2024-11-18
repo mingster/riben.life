@@ -149,7 +149,7 @@ export const TicketCreate = ({ initialData, order }: editProps) => {
                     <FormControl>
                       <Input
                         type="text"
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder="Subject"
                         {...field}
@@ -168,7 +168,7 @@ export const TicketCreate = ({ initialData, order }: editProps) => {
                       <FormLabel>{t("department")}</FormLabel>
                       <FormControl>
                         <Select
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
@@ -197,7 +197,7 @@ export const TicketCreate = ({ initialData, order }: editProps) => {
                     <FormLabel>{t("message")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono min-h-50"
                         placeholder="message"
                         {...field}
@@ -210,7 +210,7 @@ export const TicketCreate = ({ initialData, order }: editProps) => {
             </CardContent>
             <CardFooter>
               <Button
-                disabled={loading}
+                disabled={loading || form.formState.isSubmitting}
                 className="disabled:opacity-25"
                 type="submit"
               >

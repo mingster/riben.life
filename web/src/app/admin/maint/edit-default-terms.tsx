@@ -112,11 +112,15 @@ export const EditDefaultTerms: React.FC<props> = ({ data }) => {
               />
             </div>
             <Button
-              disabled={loading}
+              disabled={
+                loading ||
+                !form.formState.isValid ||
+                form.formState.isSubmitting
+              }
               className="disabled:opacity-25"
               type="submit"
             >
-              Save changes
+              {t("Save")}
             </Button>
 
             <Button

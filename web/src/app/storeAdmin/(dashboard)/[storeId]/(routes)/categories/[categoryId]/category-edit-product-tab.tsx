@@ -79,7 +79,6 @@ export const CategoryEditProductTab = ({
 
   // construct pre-select rows from ProductCategories
   //
-  // biome-ignore lint/style/noVar: <explanation>
   const initiallySelected: RowSelectionState = {};
   if (initialData) {
     // use index number as row key

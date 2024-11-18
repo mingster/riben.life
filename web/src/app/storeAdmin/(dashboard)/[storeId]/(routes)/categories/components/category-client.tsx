@@ -141,8 +141,10 @@ export function AddCategoriesDialog() {
                 <FormItem>
                   <FormLabel>{t("Category_names")}</FormLabel>
                   <FormControl>
-                    <Textarea disabled={loading}
-                      {...field} />
+                    <Textarea
+                      disabled={loading || form.formState.isSubmitting}
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>{t("Category_names_Descr")}</FormDescription>
                   <FormMessage />
@@ -163,7 +165,7 @@ export function AddCategoriesDialog() {
                   </div>
                   <FormControl>
                     <Switch
-                      disabled={loading}
+                      disabled={loading || form.formState.isSubmitting}
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
@@ -173,9 +175,13 @@ export function AddCategoriesDialog() {
             />
             <div className="flex w-full items-center justify-end space-x-2 pt-6">
               <Button
-                disabled={loading || !form.formState.isValid || form.formState.isSubmitting}
-
-                type="submit">
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
+                type="submit"
+              >
                 {t("Create")}
               </Button>
 

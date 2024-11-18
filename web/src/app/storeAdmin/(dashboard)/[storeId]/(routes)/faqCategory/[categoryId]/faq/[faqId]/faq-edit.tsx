@@ -154,7 +154,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
                     <FormLabel>{t("FAQ")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={t("input_placeholder1") + t("FAQ")}
                         {...field}
@@ -172,7 +172,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
                     <FormLabel>{t("FAQ_Answer")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={t("input_placeholder1") + t("FAQ_Answer")}
                         {...field}
@@ -191,7 +191,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
                     <FormLabel>{t("sortOrder")}</FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={t("input_placeholder1") + t("sortOrder")}
                         type="number"

@@ -131,7 +131,7 @@ export const MessageEdit = ({ initialData, action }: editProps) => {
                   <FormItem className="p-3">
                     <FormControl>
                       <Textarea
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono min-h-50"
                         placeholder="message"
                         {...field}
@@ -143,7 +143,11 @@ export const MessageEdit = ({ initialData, action }: editProps) => {
               />
 
               <Button
-                disabled={loading}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -153,6 +157,7 @@ export const MessageEdit = ({ initialData, action }: editProps) => {
               <Button
                 type="button"
                 variant="outline"
+                disabled={loading || form.formState.isSubmitting}
                 onClick={() => {
                   clearErrors();
                   router.push(`/storeAdmin/${params.storeId}/announcements`);

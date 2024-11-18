@@ -484,7 +484,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
           <Button
             type="button"
-            disabled={loading}
+            disabled={loading || form.formState.isSubmitting}
             variant="outline"
             onClick={() => {
               clearErrors();
@@ -522,7 +522,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
           <Button
             type="button"
-            disabled={loading}
+            disabled={loading || form.formState.isSubmitting}
             variant="outline"
             onClick={() => {
               clearErrors();
@@ -622,7 +622,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
                         form.watch("shippingMethodId") !==
                           "3203cf4c-e1c7-4b79-b611-62c920b50860"
                       }
-                      //disabled={loading}
+                      //disabled={loading || form.formState.isSubmitting}
                       storeId={store.id}
                       onValueChange={field.onChange}
                       defaultValue={field.value || ""}
@@ -785,7 +785,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               {action === PageAction.Modify && (
                 <Button
                   type="button"
-                  disabled={loading}
+                  disabled={loading || form.formState.isSubmitting}
                   variant="outline"
                   onClick={() => {
                     clearErrors();
@@ -798,7 +798,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
               )}
 
               <Button
-                disabled={loading}
+                disabled={loading || form.formState.isSubmitting}
                 className="text-xs"
                 variant={"destructive"}
                 onClick={onCancel}

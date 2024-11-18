@@ -135,7 +135,7 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
                     <FormControl>
                       <Input
                         type="text"
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={
                           t("input_placeholder1") + t("FaqCategory_name")
@@ -155,7 +155,7 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
                     <FormLabel>{t("FaqCategory_sortOrder")}</FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={
                           t("input_placeholder1") + t("FaqCategory_sortOrder")
@@ -170,7 +170,11 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
               />
 
               <Button
-                disabled={loading || form.formState.isSubmitting}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -178,6 +182,7 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
               </Button>
 
               <Button
+                disabled={loading || form.formState.isSubmitting}
                 type="button"
                 variant="outline"
                 onClick={() => {

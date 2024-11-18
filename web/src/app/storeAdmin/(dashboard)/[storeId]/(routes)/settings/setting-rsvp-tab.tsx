@@ -171,7 +171,11 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
               />
 
               <Button
-                disabled={loading || !form.formState.isValid}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -185,6 +189,7 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
                   clearErrors();
                   router.push("../");
                 }}
+                disabled={loading || form.formState.isSubmitting}
                 className="ml-2 disabled:opacity-25"
               >
                 {t("Cancel")}

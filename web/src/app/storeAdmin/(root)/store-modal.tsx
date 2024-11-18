@@ -180,7 +180,11 @@ export const StoreModal: React.FC = () => {
 
                 <div className="flex w-full items-center justify-end space-x-2 pt-6">
                   <Button
-                    disabled={loading || form.formState.isSubmitting}
+                    disabled={
+                      loading ||
+                      !form.formState.isValid ||
+                      form.formState.isSubmitting
+                    }
                     variant="outline"
                     onClick={storeModal.onClose}
                   >
@@ -188,7 +192,8 @@ export const StoreModal: React.FC = () => {
                   </Button>
                   <Button
                     disabled={loading || form.formState.isSubmitting}
-                    type="submit">
+                    type="submit"
+                  >
                     {t("Continue")}
                   </Button>
                 </div>

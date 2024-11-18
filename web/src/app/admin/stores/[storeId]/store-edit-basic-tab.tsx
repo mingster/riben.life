@@ -197,7 +197,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
                     <FormLabel>{t("Store_Name")}</FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={t("Store_Name_Descr")}
                         {...field}
@@ -216,7 +216,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
                     <FormLabel>{t("Store_Locale")}</FormLabel>
 
                     <Select
-                      disabled={loading}
+                      disabled={loading || form.formState.isSubmitting}
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
@@ -243,7 +243,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
                   <FormItem>
                     <FormLabel>{t("Store_Currency")}</FormLabel>
                     <CurrencyCombobox
-                      disabled={loading}
+                      disabled={loading || form.formState.isSubmitting}
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     />
@@ -258,7 +258,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
                   <FormItem>
                     <FormLabel>{t("Store_Country")}</FormLabel>
                     <CountryCombobox
-                      disabled={loading}
+                      disabled={loading || form.formState.isSubmitting}
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     />
@@ -276,7 +276,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder="google.com"
                         {...field}
@@ -292,7 +292,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
               <div className="flex flex-row w-full">
                 <div className="flex flex-col space-y-4 w-1/2">
                   <ImageUploadBox
-                    disabled={loading}
+                    disabled={loading || form.formState.isSubmitting}
                     image={image ?? null}
                     setImage={setImage ?? (() => {})}
                   />
@@ -304,32 +304,31 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
                     render={({ field }) => (
                       <FormItem>
                         {logo && (
-                          <>
-                            <div className="relative h-[40px] w-[120px] overflow-hidden">
-                              <div className="absolute right-1 top-2 z-10">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  type="button"
-                                  onClick={() =>
-                                    deleteImageFromClient(
-                                      logoPublicId as string,
-                                    )
-                                  }
-                                >
-                                  <XCircleIcon className="text-red-700" />
-                                </Button>
-                              </div>
-                              <Image
-                                src={logo}
-                                alt="logo"
-                                width={120}
-                                height={40}
-                                priority={false}
-                                className="object-cover"
-                              />
+                          <div className="relative h-[40px] w-[120px] overflow-hidden">
+                            <div className="absolute right-1 top-2 z-10">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                disabled={
+                                  loading || form.formState.isSubmitting
+                                }
+                                onClick={() =>
+                                  deleteImageFromClient(logoPublicId as string)
+                                }
+                              >
+                                <XCircleIcon className="text-red-700" />
+                              </Button>
                             </div>
-                          </>
+                            <Image
+                              src={logo}
+                              alt="logo"
+                              width={120}
+                              height={40}
+                              priority={false}
+                              className="object-cover"
+                            />
+                          </div>
                         )}
                         <FormMessage />
                       </FormItem>
@@ -349,7 +348,11 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
               </div>
 
               <Button
-                disabled={loading}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -363,6 +366,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
                   clearErrors();
                   router.push("../");
                 }}
+                disabled={loading || form.formState.isSubmitting}
                 className="ml-2 disabled:opacity-25"
               >
                 {t("Cancel")}
