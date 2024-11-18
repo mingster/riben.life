@@ -21,7 +21,7 @@ export default async function CategoryPage(props: {
     where: { storeId: params.storeId },
     orderBy: { sortOrder: "desc" },
   });
-  console.log(JSON.stringify(lastSort?.sortOrder));
+  //console.log(JSON.stringify(lastSort?.sortOrder));
 
   const categories = await sqlClient.category.findMany({
     where: {

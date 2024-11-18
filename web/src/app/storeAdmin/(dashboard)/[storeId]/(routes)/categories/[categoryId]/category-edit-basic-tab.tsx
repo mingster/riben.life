@@ -138,7 +138,7 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
                     <FormLabel>{t("Category_name")}</FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={
                           t("input_placeholder1") + t("Category_name")
@@ -178,7 +178,7 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
                     <FormLabel>{t("Category_sortOrder")}</FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={
                           t("input_placeholder1") + t("Category_sortOrder")
@@ -193,7 +193,11 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
               />
 
               <Button
-                disabled={loading}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >

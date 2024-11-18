@@ -37,7 +37,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({ data }) => {
             router.push(`/storeAdmin/${params.storeId}/products/new`)
           }
         >
-          <Plus className="mr-1 size-4" />
+          <Plus className="mr-0 size-4" />
           {t("Create")}
         </Button>
       </div>

@@ -85,7 +85,7 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
             aria-label={t("storeAdmin_switcher_select_a_store")}
             className={cn("lg:w-[200px] justify-between", className)}
           >
-            <StoreIcon className="mr-1 size-4" />
+            <StoreIcon className="mr-0 size-4" />
             {currentStore?.label}
             <ChevronsUpDown className="ml-auto size-4 shrink-0 opacity-50" />
           </Button>
@@ -104,7 +104,7 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
                     onSelect={() => onStoreSelect(store)}
                     className="text-sm"
                   >
-                    <StoreIcon className="mr-1 size-4" />
+                    <StoreIcon className="mr-0 size-4" />
                     {store.label}
                     <Check
                       className={cn(

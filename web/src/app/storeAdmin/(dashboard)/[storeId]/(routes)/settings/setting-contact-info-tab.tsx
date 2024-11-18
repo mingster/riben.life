@@ -143,7 +143,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                     <FormLabel>{t("StoreSettings_about_us")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={`${t("input_placeholder1")}${t("StoreSettings_about_us")}`}
                         {...field}
@@ -163,7 +163,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                       <FormLabel>{t("StoreSettings_support_email")}</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_email")}`}
                           {...field}
@@ -182,7 +182,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                       <FormLabel>{t("StoreSettings_support_phone")}</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_phone")}`}
                           {...field}
@@ -203,7 +203,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                       <FormLabel>{t("StoreSettings_facebook_url")}</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder={`${t("input_placeholder1")}${t("StoreSettings_facebook_url")}`}
                           {...field}
@@ -222,7 +222,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                       <FormLabel>{t("StoreSettings_ig_url")}</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder={`${t("input_placeholder1")}${t("StoreSettings_ig_url")}`}
                           {...field}
@@ -243,7 +243,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                       <FormLabel>{t("StoreSettings_support_lineId")}</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_lineId")}`}
                           {...field}
@@ -263,7 +263,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_telegramId")}`}
                           {...field}
@@ -285,7 +285,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_twitterId")}`}
                           {...field}
@@ -305,7 +305,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_whatsappId")}`}
                           {...field}
@@ -325,7 +325,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                     <FormLabel>{t("StoreSettings_support_wechatId")}</FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_wechatId")}`}
                         {...field}
@@ -336,7 +336,11 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                 )}
               />
               <Button
-                disabled={loading || !form.formState.isValid}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -350,7 +354,8 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
                   clearErrors();
                   router.push("../");
                 }}
-                className="ml-5"
+                disabled={loading || form.formState.isSubmitting}
+                className="ml-5 disabled:opacity-25"
               >
                 {t("Cancel")}
               </Button>

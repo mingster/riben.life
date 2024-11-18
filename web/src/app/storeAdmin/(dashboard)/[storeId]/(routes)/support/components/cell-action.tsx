@@ -84,19 +84,19 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
             className=" cursor-pointer"
             onClick={() => onCopy(data.id)}
           >
-            <Copy className="mr-1 size-4" /> Copy Id
+            <Copy className="mr-0 size-4" /> Copy Id
           </DropdownMenuItem>
           <DropdownMenuItem
             className=" cursor-pointer"
             onClick={() => router.push(`/${params.storeId}/support/${data.id}`)}
           >
-            <Edit className="mr-1 size-4" /> Reply
+            <Edit className="mr-0 size-4" /> Reply
           </DropdownMenuItem>
           <DropdownMenuItem
             className=" cursor-pointer"
             onClick={() => setOpen(true)}
           >
-            <Trash className="mr-1 size-4" /> Archive
+            <Trash className="mr-0 size-4" /> Archive
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -114,11 +114,15 @@ export const EditDefaultPrivacy: React.FC<props> = ({ data }) => {
               />
             </div>
             <Button
-              disabled={loading}
+              disabled={
+                loading ||
+                !privacyForm.formState.isValid ||
+                privacyForm.formState.isSubmitting
+              }
               className="disabled:opacity-25"
               type="submit"
             >
-              Save changes
+              {t("Save")}
             </Button>
 
             <Button

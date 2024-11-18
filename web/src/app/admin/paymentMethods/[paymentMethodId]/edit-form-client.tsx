@@ -125,7 +125,7 @@ export const EditClient = ({ initialData }: editProps) => {
                       <FormLabel>name</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="name"
                           {...field}
@@ -143,7 +143,7 @@ export const EditClient = ({ initialData }: editProps) => {
                       <FormControl>
                         <Input
                           type="text"
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="payUrl"
                           {...field}
@@ -161,7 +161,7 @@ export const EditClient = ({ initialData }: editProps) => {
                       <FormControl>
                         <Input
                           type="text"
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="priceDescr"
                           {...field}
@@ -179,7 +179,7 @@ export const EditClient = ({ initialData }: editProps) => {
                       <FormControl>
                         <Input
                           type="number"
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="fee"
                           {...field}
@@ -196,10 +196,11 @@ export const EditClient = ({ initialData }: editProps) => {
                     <FormItem className="flex flex-row items-center justify-between px-3 rounded-lg shadow-sm">
                       <div className="space-y-0.5">
                         <FormLabel>isDeleted </FormLabel>
-                        <FormDescription></FormDescription>
+                        <FormDescription />
                       </div>
                       <FormControl>
                         <Switch
+                          disabled={loading || form.formState.isSubmitting}
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
@@ -214,10 +215,11 @@ export const EditClient = ({ initialData }: editProps) => {
                     <FormItem className="flex flex-row items-center justify-between px-3 rounded-lg shadow-sm">
                       <div className="space-y-0.5">
                         <FormLabel>isDefault</FormLabel>
-                        <FormDescription></FormDescription>
+                        <FormDescription> </FormDescription>
                       </div>
                       <FormControl>
                         <Switch
+                          disabled={loading || form.formState.isSubmitting}
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
@@ -228,7 +230,11 @@ export const EditClient = ({ initialData }: editProps) => {
               </div>
 
               <Button
-                disabled={loading}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -242,7 +248,8 @@ export const EditClient = ({ initialData }: editProps) => {
                   clearErrors();
                   router.push("/admin/paymentMethods");
                 }}
-                className="ml-5"
+                disabled={loading || form.formState.isSubmitting}
+                className="ml-5 disabled:opacity-25"
               >
                 {t("Cancel")}
               </Button>

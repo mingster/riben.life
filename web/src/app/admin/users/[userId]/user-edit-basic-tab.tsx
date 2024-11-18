@@ -129,7 +129,7 @@ export const UserEditBasicTab = ({ initialData, action }: editProps) => {
                       <FormLabel>{t("account_page_title")}</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="name"
                           {...field}
@@ -147,7 +147,7 @@ export const UserEditBasicTab = ({ initialData, action }: editProps) => {
                       <FormLabel>{t("account_tabs_language")}</FormLabel>
                       <FormControl>
                         <Select
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           //disabled={form.formState.isSubmitting}
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -193,7 +193,7 @@ export const UserEditBasicTab = ({ initialData, action }: editProps) => {
               <Separator />
 
               <Button
-                disabled={loading}
+                disabled={loading || form.formState.isSubmitting}
                 className="disabled:opacity-25"
                 type="submit"
               >

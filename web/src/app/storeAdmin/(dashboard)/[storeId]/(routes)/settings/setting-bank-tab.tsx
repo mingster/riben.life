@@ -136,7 +136,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 
                     <FormControl>
                       <PayoutScheduleCombobox
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         defaultValue={field.value}
                         onChange={field.onChange}
                       />
@@ -158,7 +158,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
                   <FormItem>
                     <FormLabel>{t("StoreSettings_BankCode")}</FormLabel>
                     <TwBankCodeCombobox
-                      disabled={loading}
+                      disabled={loading || form.formState.isSubmitting}
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     />
@@ -175,7 +175,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
                     <FormControl>
                       <Input
                         type="text"
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder={t("StoreSettings_BankAccountName")}
                         {...field}
@@ -196,7 +196,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
                       <FormControl>
                         <Input
                           type="text"
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder={t("StoreSettings_BankAccount")}
                           {...field}
@@ -209,7 +209,11 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
               </div>
 
               <Button
-                disabled={loading || !form.formState.isValid}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -223,6 +227,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
                   clearErrors();
                   router.push("../");
                 }}
+                disabled={loading || form.formState.isSubmitting}
                 className="ml-2 disabled:opacity-25"
               >
                 {t("Cancel")}

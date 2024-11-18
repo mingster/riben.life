@@ -250,7 +250,7 @@ export const ContactForm = () => {
                   <FormItem className="p-3">
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="placeholder:text-gray-700 rounded-lg outline-none font-mono"
                         placeholder={t("landing_contactus_form_name")}
                         {...field}
@@ -267,7 +267,7 @@ export const ContactForm = () => {
                   <FormItem className="p-3">
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="placeholder:text-gray-700 rounded-lg disabled:opacity-25 outline-none font-mono"
                         placeholder={t("landing_contactus_form_email")}
                         {...field}
@@ -285,7 +285,7 @@ export const ContactForm = () => {
                     <FormControl>
                       <Textarea
                         rows={7}
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="placeholder:text-gray-700 rounded-lg outline-none font-mono min-h-50"
                         placeholder={t("landing_contactus_form_msg")}
                         {...field}
@@ -305,7 +305,11 @@ export const ContactForm = () => {
               />
 
               <Button
-                disabled={loading}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="w-full disabled:opacity-25"
                 type="submit"
               >

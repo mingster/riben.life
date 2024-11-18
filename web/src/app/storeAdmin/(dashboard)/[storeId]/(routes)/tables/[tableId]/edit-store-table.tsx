@@ -163,7 +163,11 @@ export const EditStoreTable = ({ initialData, action }: editProps) => {
 
               <div className="flex w-full items-center justify-end space-x-2 pt-6">
                 <Button
-                  disabled={loading}
+                  disabled={
+                    loading ||
+                    !form.formState.isValid ||
+                    form.formState.isSubmitting
+                  }
                   className="disabled:opacity-25"
                   type="submit"
                 >

@@ -228,7 +228,7 @@ export const ProductEditAttributeTab = ({
                       <FormLabel>interval</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="Interval in days."
                           {...field}
@@ -247,7 +247,7 @@ export const ProductEditAttributeTab = ({
                       <FormLabel>interval count</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="# of interval set fore."
                           {...field}
@@ -267,7 +267,7 @@ export const ProductEditAttributeTab = ({
                     <FormLabel>free trial days?</FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder="enter number of days for free trial."
                         {...field}
@@ -346,7 +346,7 @@ export const ProductEditAttributeTab = ({
                       <FormLabel>additional ship cost</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="shipping cost"
                           {...field}
@@ -367,7 +367,7 @@ export const ProductEditAttributeTab = ({
                     <FormLabel>stock</FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder="# of stock"
                         {...field}
@@ -553,7 +553,7 @@ export const ProductEditAttributeTab = ({
                       <FormLabel>order max quantity</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="order max quantity"
                           {...field}
@@ -572,7 +572,7 @@ export const ProductEditAttributeTab = ({
                       <FormLabel>order min quantity</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="order min quantity"
                           {...field}
@@ -593,7 +593,7 @@ export const ProductEditAttributeTab = ({
                     <FormLabel>stripe price Id</FormLabel>
                     <FormControl>
                       <Input
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono"
                         placeholder="stripe price id"
                         {...field}
@@ -613,7 +613,7 @@ export const ProductEditAttributeTab = ({
                       <FormLabel>Manufacturer Part Number</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="Manufacturer info.."
                           {...field}
@@ -631,7 +631,7 @@ export const ProductEditAttributeTab = ({
                       <FormLabel>weight</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="weight in kg"
                           {...field}
@@ -649,7 +649,7 @@ export const ProductEditAttributeTab = ({
                       <FormLabel>height</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="height in cm"
                           {...field}
@@ -667,7 +667,7 @@ export const ProductEditAttributeTab = ({
                       <FormLabel>width</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading}
+                          disabled={loading || form.formState.isSubmitting}
                           className="font-mono"
                           placeholder="width in cm"
                           {...field}
@@ -680,7 +680,11 @@ export const ProductEditAttributeTab = ({
               </div>
 
               <Button
-                disabled={loading}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -694,7 +698,8 @@ export const ProductEditAttributeTab = ({
                   clearErrors();
                   router.push(`/storeAdmin/${params.storeId}/products`);
                 }}
-                className="ml-5"
+                disabled={loading || form.formState.isSubmitting}
+                className="ml-5 disabled:opacity-25"
               >
                 {t("Cancel")}
               </Button>

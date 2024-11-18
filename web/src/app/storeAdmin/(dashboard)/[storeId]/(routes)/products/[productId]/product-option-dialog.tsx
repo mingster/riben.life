@@ -165,9 +165,9 @@ export const AddProductOptionDialog: React.FC<props> = ({
       <DialogTrigger asChild>
         <Button variant={"outline"}>
           {action === "Create" ? (
-            <Plus className="mr-1 size-4" />
+            <Plus className="mr-0 size-4" />
           ) : (
-            <Pencil className="mr-1 size-4" />
+            <Pencil className="mr-0 size-4" />
           )}
           {t(action)}
         </Button>
@@ -189,7 +189,11 @@ export const AddProductOptionDialog: React.FC<props> = ({
                 <FormItem>
                   <FormLabel>{t("ProductOption_optionName")}</FormLabel>
                   <FormControl>
-                    <Input disabled={loading} type="text" {...field} />
+                    <Input
+                      disabled={loading || form.formState.isSubmitting}
+                      type="text"
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>
                     {t("ProductOption_optionName_Descr")}
@@ -212,7 +216,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
                   </div>
                   <FormControl>
                     <Switch
-                      disabled={loading}
+                      disabled={loading || form.formState.isSubmitting}
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
@@ -235,7 +239,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
                   <FormControl>
                     <Switch
                       ref={field.ref}
-                      disabled={loading}
+                      disabled={loading || form.formState.isSubmitting}
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
@@ -301,7 +305,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
                   </div>
                   <FormControl>
                     <Switch
-                      disabled={loading}
+                      disabled={loading || form.formState.isSubmitting}
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
@@ -379,7 +383,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
                   <FormLabel>{t("Category_sortOrder")}</FormLabel>
                   <FormControl>
                     <Input
-                      disabled={loading}
+                      disabled={loading || form.formState.isSubmitting}
                       className="font-mono"
                       placeholder={
                         t("input_placeholder1") + t("Category_sortOrder")

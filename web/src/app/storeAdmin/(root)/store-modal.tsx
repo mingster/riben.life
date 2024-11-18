@@ -113,7 +113,7 @@ export const StoreModal: React.FC = () => {
                       <FormLabel>{t("StoreSettings_Store_Name")}</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={form.formState.isSubmitting}
+                          disabled={loading || form.formState.isSubmitting}
                           placeholder={t("StoreSettings_Store_Name_Descr")}
                           {...field}
                         />
@@ -130,7 +130,7 @@ export const StoreModal: React.FC = () => {
                     <FormItem>
                       <FormLabel>{t("StoreSettings_Store_Locale")}</FormLabel>
                       <Select
-                        disabled={form.formState.isSubmitting}
+                        disabled={loading || form.formState.isSubmitting}
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
@@ -155,7 +155,7 @@ export const StoreModal: React.FC = () => {
                     <FormItem>
                       <FormLabel>{t("StoreSettings_Store_Currency")}</FormLabel>
                       <CurrencyCombobox
-                        disabled={form.formState.isSubmitting}
+                        disabled={loading || form.formState.isSubmitting}
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       />
@@ -170,7 +170,7 @@ export const StoreModal: React.FC = () => {
                     <FormItem>
                       <FormLabel>{t("StoreSettings_Store_Country")}</FormLabel>
                       <CountryCombobox
-                        disabled={form.formState.isSubmitting}
+                        disabled={loading || form.formState.isSubmitting}
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       />
@@ -180,13 +180,20 @@ export const StoreModal: React.FC = () => {
 
                 <div className="flex w-full items-center justify-end space-x-2 pt-6">
                   <Button
-                    disabled={form.formState.isSubmitting}
+                    disabled={
+                      loading ||
+                      !form.formState.isValid ||
+                      form.formState.isSubmitting
+                    }
                     variant="outline"
                     onClick={storeModal.onClose}
                   >
                     {t("Cancel")}
                   </Button>
-                  <Button disabled={form.formState.isSubmitting} type="submit">
+                  <Button
+                    disabled={loading || form.formState.isSubmitting}
+                    type="submit"
+                  >
                     {t("Continue")}
                   </Button>
                 </div>

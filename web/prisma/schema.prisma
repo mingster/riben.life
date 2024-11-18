@@ -440,7 +440,7 @@ model Product {
   name        String
   description String?
   isFeatured  Boolean  @default(false)
-  status      Int      @default(0)
+  status      Int      @default(1)  //ProductStatus, 1 = Published, 0 = Draft
   currency    String   @default("twd")
   price       Decimal  @default(0)
   useOption   Boolean  @default(true) // when true, price is calculated based on product option

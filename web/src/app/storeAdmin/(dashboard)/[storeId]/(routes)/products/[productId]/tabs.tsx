@@ -21,8 +21,8 @@ import { AlertModal } from "@/components/modals/alert-modal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
-import axios, { type AxiosError } from "axios";
-import { Eye, Trash } from "lucide-react";
+import axios from "axios";
+import { Trash } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ProductEditOptionsTab } from "./product-edit-options-tab";
 

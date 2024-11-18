@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/select";
 import axios from "axios";
 import { z } from "zod";
+import { useState } from "react";
 
 export const userFormSchema = z.object({
   name: z.string().min(1, { message: "name is required" }),
@@ -55,6 +56,8 @@ interface SettingsPageProps {
 
 export default function SettingsTab({ user }: SettingsPageProps) {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
   const session = useSession();
   const [cookies, setCookie] = useCookies([cookieName]); //https://github.com/bendotcodes/cookies/tree/main/packages/react-cookie
 
@@ -89,10 +92,10 @@ export default function SettingsTab({ user }: SettingsPageProps) {
   async function onSubmit(data: userFormValues) {
     //try {
 
-    //setLoading(true);
+    setLoading(true);
     //console.log(`onSubmit: ${JSON.stringify(data)}`);
     await axios.patch(
-      `${process.env.NEXT_PUBLIC_API_URL}/account/update-settings`,
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/account/update-settings`,
       data,
     );
 
@@ -109,6 +112,8 @@ export default function SettingsTab({ user }: SettingsPageProps) {
         description: "An error occurred. Please try again.",
       });
     }*/
+
+    setLoading(false);
   }
 
   const handleChangeLanguage = (value: string) => {
@@ -146,7 +151,7 @@ export default function SettingsTab({ user }: SettingsPageProps) {
                     <FormLabel>Name</FormLabel>
                     <FormControl>
                       <Input
-                        disabled={form.formState.isSubmitting}
+                        disabled={loading || form.formState.isSubmitting}
                         placeholder="Enter your name"
                         {...field}
                       />
@@ -164,7 +169,7 @@ export default function SettingsTab({ user }: SettingsPageProps) {
                       <FormLabel>{t("account_tabs_language")}</FormLabel>
                       <FormControl>
                         <Select
-                          disabled={form.formState.isSubmitting}
+                          disabled={loading || form.formState.isSubmitting}
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
@@ -182,7 +187,10 @@ export default function SettingsTab({ user }: SettingsPageProps) {
                   )}
                 />
               </div>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
+              <Button
+                type="submit"
+                disabled={loading || form.formState.isSubmitting}
+              >
                 {t("Submit")}
               </Button>
             </form>

@@ -83,36 +83,6 @@ export const metadata: Metadata = {
     },
   },
 };
-/*
-const FAVICON_VERSION = 3;
-function v(href: string) {
-  return `${href}?v=${FAVICON_VERSION}`;
-}
-<Head>
-  <link
-    rel="mask-icon"
-    href={v("/favicons/safari-pinned-tab.svg")}
-    color="#38bdf8"
-  />
-  <meta
-    name="msapplication-config"
-    content={v("/favicons/browserconfig.xml")}
-  />
-</Head>
-
-import { Host_Grotesk, Noto_Sans_TC } from "next/font/google";
-const grotesk = Host_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-host-grotesk',
-  display: 'swap'
-});
-const noto_tc = Noto_Sans_TC({
-  subsets: ['latin'],
-  variable: '--font-noto_tc',
-  display: 'swap'
-});
-
-*/
 
 export default async function RootLayout({
   children,

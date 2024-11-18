@@ -59,7 +59,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
   //console.log('defaultValues: ' + JSON.stringify(defaultValues));
   /*
     <Textarea
-      disabled={loading}
+      disabled={loading || form.formState.isSubmitting}
       className="font-mono min-h-100"
       placeholder="enter your privacy statement here..."
       {...field}
@@ -154,7 +154,11 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
               />
             </div>
             <Button
-              disabled={loading || !form.formState.isValid}
+              disabled={
+                loading ||
+                !form.formState.isValid ||
+                form.formState.isSubmitting
+              }
               className="disabled:opacity-25"
               type="submit"
             >
@@ -168,7 +172,8 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
                 clearErrors();
                 router.push("../");
               }}
-              className="ml-5"
+              disabled={loading || form.formState.isSubmitting}
+              className="ml-5 disabled:opacity-25"
             >
               {t("Cancel")}
             </Button>

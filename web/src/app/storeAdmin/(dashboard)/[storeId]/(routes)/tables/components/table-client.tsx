@@ -65,7 +65,7 @@ export const TableClient: React.FC<props> = ({ data }) => {
               router.push(`/storeAdmin/${params.storeId}/tables/new`)
             }
           >
-            <Plus className="mr-1 size-4" />
+            <Plus className="mr-0 size-4" />
             {t("Create")}
           </Button>
           <AddTablesDialog />
@@ -120,7 +120,7 @@ export function AddTablesDialog() {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant={"outline"}>
-          <Plus className="mr-1 size-4" />
+          <Plus className="mr-0 size-4" />
           {t("StoreTable_Mgmt_AddButton")}
         </Button>
       </DialogTrigger>
@@ -141,7 +141,11 @@ export function AddTablesDialog() {
                 <FormItem>
                   <FormLabel>{t("StoreTable_Mgmt_Prefix")}</FormLabel>
                   <FormControl>
-                    <Input type="text" {...field} />
+                    <Input
+                      type="text"
+                      disabled={loading || form.formState.isSubmitting}
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>
                     {t("StoreTable_Mgmt_Prefix_Descr")}
@@ -157,7 +161,11 @@ export function AddTablesDialog() {
                 <FormItem>
                   <FormLabel>{t("StoreTable_NumToAdd")}</FormLabel>
                   <FormControl>
-                    <Input type="number" {...field} />
+                    <Input
+                      type="number"
+                      disabled={loading || form.formState.isSubmitting}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -170,7 +178,11 @@ export function AddTablesDialog() {
                 <FormItem>
                   <FormLabel>{t("StoreTable_Seats")}</FormLabel>
                   <FormControl>
-                    <Input type="number" {...field} />
+                    <Input
+                      type="number"
+                      disabled={loading || form.formState.isSubmitting}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -184,7 +196,11 @@ export function AddTablesDialog() {
               <DialogFooter className="sm:justify-start">
                 <DialogClose asChild>
                   <Button
-                    disabled={form.formState.isSubmitting}
+                    disabled={
+                      loading ||
+                      !form.formState.isValid ||
+                      form.formState.isSubmitting
+                    }
                     variant="outline"
                   >
                     {t("Cancel")}

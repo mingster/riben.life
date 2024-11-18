@@ -135,7 +135,7 @@ export const TicketReply = ({ initialData }: editProps) => {
                     <FormLabel>{t("message")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        disabled={loading}
+                        disabled={loading || form.formState.isSubmitting}
                         className="font-mono min-h-50"
                         placeholder="message"
                         {...field}
@@ -148,7 +148,11 @@ export const TicketReply = ({ initialData }: editProps) => {
             </CardContent>
             <CardFooter>
               <Button
-                disabled={loading}
+                disabled={
+                  loading ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
+                }
                 className="disabled:opacity-25"
                 type="submit"
               >
@@ -162,7 +166,8 @@ export const TicketReply = ({ initialData }: editProps) => {
                   clearErrors();
                   router.push(`/${params.storeId}/support`);
                 }}
-                className="ml-5"
+                disabled={loading || form.formState.isSubmitting}
+                className="ml-5 disabled:opacity-25"
               >
                 {t("Cancel")}
               </Button>
