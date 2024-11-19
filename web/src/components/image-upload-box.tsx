@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { BoxSelect } from "lucide-react";
 import Image from "next/image";
 import type React from "react";
@@ -66,7 +67,7 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
       onDragOver={(e) => handleDragOver(e)}
       onDragEnter={(e) => handleDragEnter(e)}
       onDragLeave={(e) => handleDragLeave(e)}
-      className="h-[240px] max-w-xs flex-1 overflow-hidden rounded-lg border"
+      className="h-[240px] max-w-xs flex-1 overflow-hidden rounded-lg border disabled:opacity-25 disabled:cursor-not-allowed disabled:text-gary-100"
     >
       {isDropZone && (
         <div className="absolute inset-0 z-10 scale-[1.01] rounded-md border-4 border-dashed bg-white/40" />
@@ -106,7 +107,10 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
           />
         </div>
       ) : (
-        <div className="flex h-full flex-col items-center justify-center gap-2 py-4">
+        <div className={
+          cn('flex h-full flex-col items-center justify-center gap-2 py-4 disabled:opacity-25 disabled:cursor-not-allowed disabled:text-gary-100',
+            disabled && 'opacity-25 cursor-not-allowed text-gary-100'
+          )}>
           <BoxSelect className="size-10" />
           <p className="my-0 text-sm font-medium">Drag and Drop</p>
 

@@ -67,9 +67,9 @@ export default async function StoreSettingsPage(props: {
   transformDecimalsToNumbers(allShippingMethods);
 
   // this store is pro version or not?
-  const disablePaidOptions = await !isProLevel(store?.id);
+  const disablePaidOptions = !await isProLevel(store?.id);
 
-  console.log("disablePaidOptions", disablePaidOptions);
+  //console.log("isProLevel", disablePaidOptions);
 
   return (
     <Suspense fallback={<Loader />}>
