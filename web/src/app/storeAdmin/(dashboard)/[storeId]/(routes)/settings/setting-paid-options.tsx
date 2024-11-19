@@ -176,7 +176,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
   }, [logo]);
 
   //console.log("data", JSON.stringify(initialData));
-  //console.log('disablePaidOptions', disablePaidOptions);
+  console.log("disablePaidOptions", disablePaidOptions);
   console.log("form errors", form.formState.errors);
 
   return (
@@ -202,7 +202,11 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                       <FormLabel className="">LINE_PAY_ID</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading || disablePaidOptions}
+                          disabled={
+                            loading ||
+                            form.formState.isSubmitting ||
+                            disablePaidOptions
+                          }
                           className="font-mono"
                           placeholder=""
                           {...field}
@@ -220,7 +224,11 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                       <FormLabel className="">LINE_PAY_SECRET</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading || disablePaidOptions}
+                          disabled={
+                            loading ||
+                            form.formState.isSubmitting ||
+                            disablePaidOptions
+                          }
                           className="font-mono"
                           placeholder=""
                           {...field}
@@ -241,7 +249,11 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                       <FormLabel className="">STRIPE_SECRET_KEY</FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading || disablePaidOptions}
+                          disabled={
+                            loading ||
+                            form.formState.isSubmitting ||
+                            disablePaidOptions
+                          }
                           className="font-mono"
                           placeholder=""
                           {...field}
@@ -261,7 +273,11 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                       <FormControl>
                         <Input
                           type="number"
-                          disabled={loading || disablePaidOptions}
+                          disabled={
+                            loading ||
+                            form.formState.isSubmitting ||
+                            disablePaidOptions
+                          }
                           className="font-mono"
                           placeholder=""
                           {...field}
@@ -289,6 +305,11 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                       </div>
                       <FormControl>
                         <Switch
+                          disabled={
+                            loading ||
+                            form.formState.isSubmitting ||
+                            disablePaidOptions
+                          }
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
@@ -306,7 +327,11 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          disabled={loading || disablePaidOptions}
+                          disabled={
+                            loading ||
+                            form.formState.isSubmitting ||
+                            disablePaidOptions
+                          }
                           className="font-mono"
                           placeholder="google.com"
                           {...field}
@@ -322,7 +347,11 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
               <div className="flex flex-row w-full">
                 <div className="flex flex-col space-y-4 w-1/2">
                   <ImageUploadBox
-                    disabled={loading || disablePaidOptions}
+                    disabled={
+                      loading ||
+                      form.formState.isSubmitting ||
+                      disablePaidOptions
+                    }
                     image={image ?? null}
                     setImage={setImage ?? (() => {})}
                   />
@@ -340,6 +369,12 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
                                 variant="ghost"
                                 size="icon"
                                 type="button"
+                                className="disabled:opacity-25 disabled:cursor-not-allowed disabled:text-gary-100"
+                                disabled={
+                                  loading ||
+                                  form.formState.isSubmitting ||
+                                  disablePaidOptions
+                                }
                                 onClick={() =>
                                   deleteImageFromClient(logoPublicId as string)
                                 }
@@ -377,7 +412,10 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 
               <Button
                 disabled={
-                  loading || disablePaidOptions || !form.formState.isValid
+                  loading ||
+                  disablePaidOptions ||
+                  !form.formState.isValid ||
+                  form.formState.isSubmitting
                 }
                 className="disabled:opacity-25"
                 type="submit"
@@ -386,7 +424,9 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
               </Button>
 
               <Button
-                disabled={loading || disablePaidOptions}
+                disabled={
+                  loading || form.formState.isSubmitting || disablePaidOptions
+                }
                 type="button"
                 variant="outline"
                 onClick={() => {

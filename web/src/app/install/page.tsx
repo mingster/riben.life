@@ -6,12 +6,9 @@ import {
   create_locales,
   create_paymentMethods,
   create_shippingMethods,
-  wipeoutDefaultData,
 } from "@/actions/admin/populate-payship_defaults";
 
 import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
-import { checkAdminAccess } from "../admin-utils";
 
 //type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -21,9 +18,6 @@ export default async function InstallDefaultDataPage(props: {
   searchParams: SearchParams;
 }) {
   //const params = await props.params;
-
-  const isAdmin = (await checkAdminAccess()) as boolean;
-  if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
 
   const countryCount = await sqlClient.country.count();
   if (countryCount === 0) {

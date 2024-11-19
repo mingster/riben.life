@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "web"
+		},
+		{
+			"path": "doc"
 		}
 	],
 	"settings": {

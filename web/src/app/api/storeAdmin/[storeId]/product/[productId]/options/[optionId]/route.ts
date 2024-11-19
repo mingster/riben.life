@@ -126,7 +126,7 @@ export async function PATCH(
   });
 
   const selection_lines = selections.split("\n");
-  console.log("selection_lines", selection_lines);
+  //console.log("selection_lines", selection_lines);
 
   for (let i = 0; i < selection_lines.length; i++) {
     const tmp = selection_lines[i].trim();
