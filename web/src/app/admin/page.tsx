@@ -22,7 +22,7 @@ export default async function AdminPage() {
     where: {
       status: Number(SubscriptionStatus.Active),
     },
-  })
+  });
 
   return (
     <Suspense fallback={<Loader />}>
@@ -30,11 +30,28 @@ export default async function AdminPage() {
       <div className="container relative pb-10">
         <section className="mx-auto flex max-w-[980px] flex-col items-center gap-2 py-8 md:py-12 md:pb-8 lg:py-24 lg:pb-6">
           <div className="grid grid-cols-3 gap-4">
-            <div># of store: <span className='text-2xl font-extrabold'>{storeCount}</span></div>
-            <div># of subscription: <span className='text-2xl font-extrabold'>{subscriptionCount}</span></div>
-            <div># of customer: <span className='text-2xl font-extrabold'>{customerCount}</span></div>
-            <div># of order: <span className='text-2xl font-extrabold'>{orderCount}</span></div>
-            <div># of product: <span className='text-2xl font-extrabold'>{productCount}</span></div>
+            <div>
+              # of store:{" "}
+              <span className="text-2xl font-extrabold">{storeCount}</span>
+            </div>
+            <div>
+              # of subscription:{" "}
+              <span className="text-2xl font-extrabold">
+                {subscriptionCount}
+              </span>
+            </div>
+            <div>
+              # of customer:{" "}
+              <span className="text-2xl font-extrabold">{customerCount}</span>
+            </div>
+            <div>
+              # of order:{" "}
+              <span className="text-2xl font-extrabold">{orderCount}</span>
+            </div>
+            <div>
+              # of product:{" "}
+              <span className="text-2xl font-extrabold">{productCount}</span>
+            </div>
           </div>
         </section>
       </div>

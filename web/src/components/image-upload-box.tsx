@@ -107,10 +107,12 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
           />
         </div>
       ) : (
-        <div className={
-          cn('flex h-full flex-col items-center justify-center gap-2 py-4 disabled:opacity-25 disabled:cursor-not-allowed disabled:text-gary-100',
-            disabled && 'opacity-25 cursor-not-allowed text-gary-100'
-          )}>
+        <div
+          className={cn(
+            "flex h-full flex-col items-center justify-center gap-2 py-4 disabled:opacity-25 disabled:cursor-not-allowed disabled:text-gary-100",
+            disabled && "opacity-25 cursor-not-allowed text-gary-100",
+          )}
+        >
           <BoxSelect className="size-10" />
           <p className="my-0 text-sm font-medium">Drag and Drop</p>
 

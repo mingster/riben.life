@@ -125,6 +125,9 @@ export async function PATCH(
       const description = obj[2];
       const category_name = obj[3];
 
+      //產品選項
+      const product_option = obj[4];
+
       // min. requirement: has name and price
       if (name && !Number.isNaN(price)) {
         const product = await sqlClient.product.create({
@@ -152,6 +155,69 @@ export async function PATCH(
                 sortOrder: 1,
               },
             });
+          }
+        }
+
+        // if product and valid product option, add the product/option selections.
+        //
+        if (product && product_option) {
+          const option_template =
+            await sqlClient.storeProductOptionTemplate.findFirst({
+              where: { optionName: product_option },
+            });
+
+          const option_template_selection =
+            await sqlClient.storeProductOptionSelectionsTemplate.findMany({
+              where: { optionId: option_template?.id },
+            });
+
+          if (option_template) {
+            const new_product_option = await sqlClient.productOption.upsert({
+              create: {
+                productId: product.id,
+                optionName: option_template.optionName,
+                isRequired: option_template.isRequired,
+                isMultiple: option_template.isMultiple,
+                minSelection: option_template.minSelection,
+                maxSelection: option_template.maxSelection,
+                allowQuantity: option_template.allowQuantity,
+                minQuantity: option_template.minQuantity,
+                maxQuantity: option_template.maxQuantity,
+                sortOrder: option_template.sortOrder,
+              },
+              update: {
+                optionName: option_template.optionName,
+                isRequired: option_template.isRequired,
+                isMultiple: option_template.isMultiple,
+                minSelection: option_template.minSelection,
+                maxSelection: option_template.maxSelection,
+                allowQuantity: option_template.allowQuantity,
+                minQuantity: option_template.minQuantity,
+                maxQuantity: option_template.maxQuantity,
+                sortOrder: option_template.sortOrder,
+              },
+              where: {
+                productId_optionName: {
+                  productId: params.storeId,
+                  optionName: option_template.optionName,
+                },
+              },
+            });
+
+            // copy option_selection into new_product_option
+            if (option_template_selection) {
+              for (let i = 0; i < option_template_selection.length; i++) {
+                const obj = option_template_selection[i];
+                await sqlClient.productOptionSelections.create({
+                  data: {
+                    optionId: new_product_option.id,
+                    name: obj.name,
+                    price: obj.price,
+                    isDefault: obj.isDefault,
+                  },
+                });
+              }
+            }
           }
         }
       } else {
