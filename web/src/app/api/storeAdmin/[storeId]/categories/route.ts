@@ -48,7 +48,7 @@ export async function PATCH(
     const body = await req.json();
     const { names, isFeatured } = body;
     if (!names) {
-      return new NextResponse("name is required", { status: 400 });
+      return new NextResponse("category data is required", { status: 400 });
     }
 
     const name_array = names.split("\n");
