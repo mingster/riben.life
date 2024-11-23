@@ -3,7 +3,7 @@ import Stripe from "stripe";
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
   // https://github.com/stripe/stripe-node#configuration
   // https://stripe.com/docs/api/versioning
-  apiVersion: "2024-10-28.acacia",
+  apiVersion: "2024-11-20.acacia",
   typescript: true,
 
   // Register this as an official Stripe plugin.

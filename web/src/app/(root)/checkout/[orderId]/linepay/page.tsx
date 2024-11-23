@@ -20,6 +20,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import PaymentLinePay from "./components/payment-linepay";
+import isProLevel from "@/actions/storeAdmin/is-pro-level";
 
 // customer select linepay as payment method. here we will make a payment request
 // https://developers-pay.line.me/online
@@ -56,13 +57,28 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
   }
   const store = (await getStoreById(order.storeId)) as Store;
 
-  if (!store.LINE_PAY_ID || !store.LINE_PAY_SECRET) {
+  // determine line pay id and secret
+  let linePayId = store.LINE_PAY_ID;
+  let linePaySecret = store.LINE_PAY_SECRET;
+
+  // this store is pro version or not?
+  const isPro = (await isProLevel(store?.id));
+  console.log("isPro", isPro);
+
+  if (isPro === false) {
+    linePayId = process.env.LINE_PAY_ID || null;
+    linePaySecret = process.env.LINE_PAY_SECRET || null;
+
+    console.log('linePayId', linePayId, 'linePaySecret', linePaySecret);
+  }
+
+  if (!linePayId || !linePaySecret) {
+    //
     return "尚未設定LinePay";
   }
 
   const linePayClient = getLinePayClient(
-    store.LINE_PAY_ID,
-    store.LINE_PAY_SECRET,
+    linePayId, linePaySecret,
   ) as LinePayClient;
 
   const env =

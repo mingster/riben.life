@@ -34,7 +34,7 @@ export const DisplayClient: React.FC<props> = ({ store, order }) => {
 
         <DisplayOrder order={order} />
 
-        <Link href="/" className="">
+        <Link href={`/${store.id}`} className="">
           <Button className="w-full">{t("cart_summary_keepShopping")}</Button>
         </Link>
 

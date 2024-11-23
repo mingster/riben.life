@@ -1,6 +1,7 @@
 "use server";
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
+import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
@@ -55,9 +56,27 @@ export default async function LinePayConfirmedPage({
   }
 
   const store = (await getStoreById(order.storeId)) as Store;
+
+
+  // determine line pay id and secret
+  let linePayId = store.LINE_PAY_ID;
+  let linePaySecret = store.LINE_PAY_SECRET;
+
+  // this store is pro version or not?
+  const isPro = (await isProLevel(store?.id));
+  if (isPro === false) {
+    linePayId = process.env.LINE_PAY_ID || null;
+    linePaySecret = process.env.LINE_PAY_SECRET || null;
+
+  }
+
+  if (!linePayId || !linePaySecret || linePayId === null || linePaySecret === null) {
+    //
+    return "尚未設定LinePay";
+  }
+
   const linePayClient = getLinePayClient(
-    store.LINE_PAY_ID,
-    store.LINE_PAY_SECRET,
+    linePayId, linePaySecret,
   ) as LinePayClient;
 
   const confirmRequest = {
