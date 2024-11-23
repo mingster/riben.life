@@ -62,14 +62,17 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
   let linePaySecret = store.LINE_PAY_SECRET;
 
   // this store is pro version or not?
-  const isPro = !(await isProLevel(store?.id));
+  const isPro = (await isProLevel(store?.id));
+  console.log("isPro", isPro);
+
   if (isPro === false) {
     linePayId = process.env.LINE_PAY_ID || null;
     linePaySecret = process.env.LINE_PAY_SECRET || null;
 
+    console.log('linePayId', linePayId, 'linePaySecret', linePaySecret);
   }
 
-  if (!linePayId || !linePaySecret || linePayId === null || linePaySecret === null) {
+  if (!linePayId || !linePaySecret) {
     //
     return "尚未設定LinePay";
   }

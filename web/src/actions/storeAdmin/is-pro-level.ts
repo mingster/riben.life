@@ -16,7 +16,7 @@ const isProLevel = async (storeId: string): Promise<boolean> => {
     return false;
   }
 
-  console.log("store level", store.level);
+  //console.log("store level", store.level);
 
   if (store.level === StoreLevel.Free) return false;
 
@@ -38,7 +38,7 @@ const isProLevel = async (storeId: string): Promise<boolean> => {
       },
     });
 
-    console.log("store is pro. exp is: ", subscriptions?.expiration);
+    //console.log("store is pro. exp is: ", subscriptions?.expiration);
 
     if (subscriptions && subscriptions.expiration > new Date()) {
       return true;

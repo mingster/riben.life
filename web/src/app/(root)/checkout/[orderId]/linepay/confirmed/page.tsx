@@ -63,7 +63,7 @@ export default async function LinePayConfirmedPage({
   let linePaySecret = store.LINE_PAY_SECRET;
 
   // this store is pro version or not?
-  const isPro = !(await isProLevel(store?.id));
+  const isPro = (await isProLevel(store?.id));
   if (isPro === false) {
     linePayId = process.env.LINE_PAY_ID || null;
     linePaySecret = process.env.LINE_PAY_SECRET || null;
