@@ -142,7 +142,10 @@ export const OrderPending = ({ store, orders, parentLoading }: props) => {
                         </Button>
 
                         <div>
-                          {order.isPaid === true ? t("isPaid") : t("isNotPaid")}
+                          {order.isPaid === true ?
+                            <div className='text-green-700 dark:text-green-700'>{t("isPaid")}</div> :
+                            <div className='text-red-400 dark:text-red-700'>{t("isNotPaid")}</div>
+                          }
                         </div>
                         <div>{order.ShippingMethod?.name}</div>
                         <div className="hidden lg:table-cell">
@@ -170,7 +173,7 @@ export const OrderPending = ({ store, orders, parentLoading }: props) => {
                       <Currency value={Number(order.orderTotal)} />
                     </TableCell>
 
-                    <TableCell className="bg-red-100 text-center">
+                    <TableCell className="bg-slate-200 dark:bg-slate-900 text-center">
                       <Checkbox
                         value={order.id}
                         onClick={() => handleChecked(order.id)}
