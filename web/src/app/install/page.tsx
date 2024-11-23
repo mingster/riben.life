@@ -23,8 +23,8 @@ export default async function InstallDefaultDataPage(props: {
   const stores = await sqlClient.store.findMany({});
   const defaultPaymentMethods = await sqlClient.paymentMethod.findMany({
     where: {
-      isDefault: true
-    }
+      isDefault: true,
+    },
   });
 
   for (const store of stores) {
@@ -33,21 +33,20 @@ export default async function InstallDefaultDataPage(props: {
       await sqlClient.storePaymentMethodMapping.deleteMany({
         where: {
           storeId: store.id,
-          methodId: defaultPaymentMethod.id
-        }
+          methodId: defaultPaymentMethod.id,
+        },
       });
 
       // add default payment methods for each store
       await sqlClient.storePaymentMethodMapping.create({
         data: {
           storeId: store.id,
-          methodId: defaultPaymentMethod.id
-        }
+          methodId: defaultPaymentMethod.id,
+        },
       });
     }
   }
-  console.log('default payment method updated.');
-
+  console.log("default payment method updated.");
 
   const countryCount = await sqlClient.country.count();
   if (countryCount === 0) {
