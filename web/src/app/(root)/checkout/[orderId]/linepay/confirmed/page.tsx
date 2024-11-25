@@ -14,14 +14,15 @@ import {
 } from "@/lib/linepay";
 import type { LinePayClient } from "@/lib/linepay/type";
 import { sqlClient } from "@/lib/prismadb";
-import { getAbsoluteUrl } from "@/lib/utils";
+import { getAbsoluteUrl, getUtcNow } from "@/lib/utils";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+// linepay confirmed page: once user completed the linepay payment, linepay will redirect to this page
+// here we check the payment status. Upon success, we mark the order as paid, and then redirect to success page.
 // https://developers-pay.line.me/merchant/redirection-pages/
-// here we mark the order as paid, show customer a message and redirect to account page.
 //
 export default async function LinePayConfirmedPage({
   searchParams,
@@ -67,7 +68,6 @@ export default async function LinePayConfirmedPage({
   if (isPro === false) {
     linePayId = process.env.LINE_PAY_ID || null;
     linePaySecret = process.env.LINE_PAY_SECRET || null;
-
   }
 
   if (!linePayId || !linePaySecret || linePayId === null || linePaySecret === null) {
@@ -91,14 +91,15 @@ export default async function LinePayConfirmedPage({
   const res = await linePayClient.confirm.send(confirmRequest);
 
   if (res.body.returnCode === "0000") {
-    // mark order as paid
 
+    // mark order as paid
     const order = await sqlClient.storeOrder.update({
       where: {
         id: orderId as string,
       },
       data: {
         isPaid: true,
+        paidDate: getUtcNow(),
         orderStatus: Number(OrderStatus.Processing),
         paymentStatus: Number(PaymentStatus.Paid),
       },
