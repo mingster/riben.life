@@ -65,7 +65,7 @@ const MarkAsPaid = async (
 
   // avilablity date = order date + payment methods' clear days
   const avaiablityDate = new Date(
-    getUtcNow(store.defaultTimezone).getTime() +
+    order.updatedAt.getTime() +
       order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
   );
 

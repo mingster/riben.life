@@ -252,7 +252,7 @@ export function getDateInTz(dt: Date, offsetHours: number) {
   return result;
 }
 
-export function getUtcNow(defaultTimezone: number) {
+export function getUtcNow() {
   const d = new Date();
   const utcDate = new Date(
     d.getUTCFullYear(),
