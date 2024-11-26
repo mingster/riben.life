@@ -12,6 +12,8 @@ export type DataColumn = {
   payUrl: string;
   priceDescr: string;
   fee: number;
+  feeAdditional: number;
+  clearDays: number;
 
   isDefault: boolean;
   isDeleted: boolean;
@@ -60,6 +62,12 @@ export const columns: ColumnDef<DataColumn>[] = [
     accessorKey: "feeAdditional",
     header: ({ column }) => {
       return <DataTableColumnHeader column={column} title="fee additional" />;
+    },
+  },
+  {
+    accessorKey: "clearDays",
+    header: ({ column }) => {
+      return <DataTableColumnHeader column={column} title="clear days" />;
     },
   },
   {

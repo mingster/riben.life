@@ -1,5 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
-import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
+import { GetSession } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import type { Session } from "next-auth";
 
@@ -18,7 +18,9 @@ export default async function StoreAdminLayout(props: {
 
   const session = (await GetSession()) as Session;
   if (!session) {
-    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
+    redirect(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=/storeAdmin/${params.storeId}`,
+    );
   }
 
   //const ownerId = session.user?.id;

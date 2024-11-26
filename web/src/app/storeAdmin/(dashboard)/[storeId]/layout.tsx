@@ -19,7 +19,7 @@ export async function generateMetadata(
   const params = await props.params;
   if (!params.storeId) {
     return {
-      title: "pstv",
+      title: "店家後台",
     };
   }
 
@@ -40,7 +40,7 @@ export async function generateMetadata(
   if (!store) return { title: "pstv" };
 
   return {
-    title: `${store.name} - administration`,
+    title: `${store.name} - 店家後台`,
   };
 }
 
@@ -52,7 +52,7 @@ export default async function StoreAdminLayout(props: {
 
   const { children } = props;
 
-  RequiresSignIn();
+  RequiresSignIn("/storeAdmin");
   const session = (await GetSession()) as Session;
   //console.log('session: ' + JSON.stringify(session));
   //console.log('userid: ' + userId);

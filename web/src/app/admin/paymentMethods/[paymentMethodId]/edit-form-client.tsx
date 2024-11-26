@@ -31,6 +31,7 @@ const formSchema = z.object({
   priceDescr: z.string().optional().default(""),
   fee: z.coerce.number().default(0),
   feeAdditional: z.coerce.number().default(0),
+  clearDays: z.coerce.number().default(0),
   isDeleted: z.boolean(),
   isDefault: z.boolean(),
 });
@@ -171,6 +172,26 @@ export const EditClient = ({ initialData }: editProps) => {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="clearDays"
+                  render={({ field }) => (
+                    <FormItem className="p-3">
+                      <FormLabel>clear days</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          disabled={loading || form.formState.isSubmitting}
+                          className="font-mono"
+                          placeholder="clear days"
+                          {...field}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="fee"
@@ -207,6 +228,7 @@ export const EditClient = ({ initialData }: editProps) => {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="isDeleted"

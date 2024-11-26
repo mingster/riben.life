@@ -6,7 +6,7 @@ import { mongoClient, sqlClient } from "@/lib/prismadb";
 //import { connectToMongoDB } from '@/lib/mongodb';
 
 import fs from "node:fs";
-import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
+import { GetSession } from "@/lib/auth/utils";
 import StoreModel from "@/model/StoreModel";
 import { StoreLevel } from "@/types/enum";
 import type { Session } from "next-auth";
@@ -16,12 +16,13 @@ import type { formSchema } from "./store-modal";
 //NOTE - do not move this to other folder.
 //
 export const createStore = async (values: z.infer<typeof formSchema>) => {
-  RequiresSignIn();
   const session = (await GetSession()) as Session;
   const ownerId = session.user?.id;
 
   if (!session || !session.user || !ownerId) {
-    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
+    redirect(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/signin/?callbackUrl=/storeAdmin`,
+    );
   }
 
   //console.log(values);

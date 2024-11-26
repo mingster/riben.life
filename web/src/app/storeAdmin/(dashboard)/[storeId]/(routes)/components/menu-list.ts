@@ -4,6 +4,7 @@ import type { Store } from "@/types";
 import { StoreLevel } from "@/types/enum";
 import {
   ArrowRight,
+  BadgeDollarSign,
   Box,
   CircleHelp,
   Dock,
@@ -12,6 +13,7 @@ import {
   MenuIcon,
   MessageCircleMore,
   PackageCheck,
+  Proportions,
   Scale,
   Settings,
   Ticket,
@@ -99,7 +101,21 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
           href: `${nav_prefix}/transactions`,
           label: t("Transactions"),
           active: pathname.includes(`${nav_prefix}/transactions`),
+          icon: BadgeDollarSign,
+          submenus: [],
+        },
+        {
+          href: `${nav_prefix}/balances`,
+          label: t("Balances"),
+          active: pathname.includes(`${nav_prefix}/balances`),
           icon: DollarSign,
+          submenus: [],
+        },
+        {
+          href: `${nav_prefix}/reports`,
+          label: t("Sales_Reports"),
+          active: pathname.includes(`${nav_prefix}/reports`),
+          icon: Proportions,
           submenus: [],
         },
       ],
