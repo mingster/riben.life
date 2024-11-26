@@ -30,6 +30,7 @@ const formSchema = z.object({
   payUrl: z.string().default(""),
   priceDescr: z.string().optional().default(""),
   fee: z.coerce.number().default(0),
+  feeAdditional: z.coerce.number().default(0),
   isDeleted: z.boolean(),
   isDefault: z.boolean(),
 });
@@ -175,7 +176,7 @@ export const EditClient = ({ initialData }: editProps) => {
                   name="fee"
                   render={({ field }) => (
                     <FormItem className="p-3">
-                      <FormLabel>fee</FormLabel>
+                      <FormLabel>fee (%)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -188,7 +189,24 @@ export const EditClient = ({ initialData }: editProps) => {
                     </FormItem>
                   )}
                 />
-
+                <FormField
+                  control={form.control}
+                  name="feeAdditional"
+                  render={({ field }) => (
+                    <FormItem className="p-3">
+                      <FormLabel>fee additional</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          disabled={loading || form.formState.isSubmitting}
+                          className="font-mono"
+                          placeholder="fee additional"
+                          {...field}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="isDeleted"

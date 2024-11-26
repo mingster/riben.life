@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import type { Store } from "@/types";
-import { OrderStatus } from "@/types/enum";
+import { OrderStatus, type StringNVType } from "@/types/enum";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -211,11 +211,7 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
   );
 };
 
-export type NVType = {
-  value: string;
-  label: string;
-};
-const TimerFilterSelections: NVType[] = [
+const TimerFilterSelections: StringNVType[] = [
   {
     value: "f0",
     label: "",
@@ -266,7 +262,7 @@ type formValues = z.infer<typeof formSchema>;
 export const FilterDateTime = ({
   disabled,
   defaultValue,
-  onValueChange,
+  onValueChange, // pass back the new value to parent component
   ...props
 }: filterProps) => {
   const { lng } = useI18n();

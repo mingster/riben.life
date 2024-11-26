@@ -23,6 +23,8 @@ import PaymentLinePay from "./components/payment-linepay";
 import isProLevel from "@/actions/storeAdmin/is-pro-level";
 
 // customer select linepay as payment method. here we will make a payment request
+// and redirect user to linepay payment page
+//
 // https://developers-pay.line.me/online
 // https://developers-pay.line.me/online-api
 // https://developers-pay.line.me/online/implement-basic-payment#confirm
@@ -46,7 +48,7 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
   }
   //console.log('linepay order', JSON.stringify(order));
 
-  if (order.isPaid) {
+  if (order.isPaid === true) {
     return (
       <Suspense fallback={<Loader />}>
         <Container>
@@ -62,14 +64,14 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
   let linePaySecret = store.LINE_PAY_SECRET;
 
   // this store is pro version or not?
-  const isPro = (await isProLevel(store?.id));
-  console.log("isPro", isPro);
+  const isPro = await isProLevel(store?.id);
+  //console.log("isPro", isPro);
 
   if (isPro === false) {
     linePayId = process.env.LINE_PAY_ID || null;
     linePaySecret = process.env.LINE_PAY_SECRET || null;
 
-    console.log('linePayId', linePayId, 'linePaySecret', linePaySecret);
+    //console.log('linePayId', linePayId, 'linePaySecret', linePaySecret);
   }
 
   if (!linePayId || !linePaySecret) {
@@ -78,7 +80,8 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
   }
 
   const linePayClient = getLinePayClient(
-    linePayId, linePaySecret,
+    linePayId,
+    linePaySecret,
   ) as LinePayClient;
 
   const env =

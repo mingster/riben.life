@@ -1,3 +1,8 @@
+export type StringNVType = {
+  value: string;
+  label: string;
+};
+
 export type GeneralNVType = {
   value: number;
   label: string;

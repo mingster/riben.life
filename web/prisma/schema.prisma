@@ -175,6 +175,7 @@ model PaymentMethod {
   payUrl     String   @default("")
   priceDescr String   @default("")
   fee        Decimal  @default("0.029")
+  feeAdditional Decimal @default("0")
   isDeleted  Boolean  @default(false)
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
@@ -440,7 +441,7 @@ model Product {
   name        String
   description String?
   isFeatured  Boolean  @default(false)
-  status      Int      @default(1)  //ProductStatus, 1 = Published, 0 = Draft
+  status      Int      @default(1) //ProductStatus, 1 = Published, 0 = Draft
   currency    String   @default("twd")
   price       Decimal  @default(0)
   useOption   Boolean  @default(true) // when true, price is calculated based on product option
@@ -598,6 +599,27 @@ model ProductAttribute {
   @@index([productId])
 }
 
+model StoreLedger {
+  id          String  @id @default(uuid())
+  storeId     String
+  orderId     String
+  amount      Decimal
+  fee         Decimal // fee from payment type. e.g. linepay = 3%
+  platformFee Decimal // riben.life's fee
+  currency    String  @default("twd")
+  balance     Decimal
+  description String
+  note        String?
+
+  createdAt DateTime @default(now())
+
+  StoreOrder StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([orderId])
+  @@index([createdAt])
+}
+
 model StoreOrder {
   id       String  @id @default(uuid())
   storeId  String
@@ -644,6 +666,7 @@ model StoreOrder {
 
   PaymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
   Rsvp          Rsvp[]
+  StoreLedger   StoreLedger[]
 
   @@index([userId])
   @@index([paymentMethodId])

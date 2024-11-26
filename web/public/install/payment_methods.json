@@ -1,37 +1,42 @@
 [
-    {
-        "name": "信用卡",
-        "payUrl": "stripe",
-        "priceDescr": "2.9% + 30¢",
-        "fee": 0.029,
-        "isDefault": true
-    },
-    {
-        "name": "payal",
-        "payUrl": "paypal",
-        "priceDescr": "4% + 30¢",
-        "fee": 0.04,
-        "isDefault": false
-    },
-    {
-        "name": "LinePay",
-        "payUrl": "linepay",
-        "priceDescr": "3.0%",
-        "fee": 0.00,
-        "isDefault": false
-    },
-    {
-        "name": "ApplePay",
-        "payUrl": "Applepay",
-        "priceDescr": "2.8%",
-        "fee": 0.015,
-        "isDefault": false
-    },
-    {
-        "name": "現金",
-        "payUrl": "cash",
-        "priceDescr": "available for paid merchants",
-        "fee": 0,
-        "isDefault": false
-    }
+  {
+    "name": "信用卡",
+    "payUrl": "stripe",
+    "priceDescr": "2.9% + 30¢",
+    "fee": 0.029,
+    "fee_additional": 0.3,
+    "isDefault": true
+  },
+  {
+    "name": "payal",
+    "payUrl": "paypal",
+    "priceDescr": "4% + 30¢",
+    "fee": 0.04,
+    "fee_additional": 0.3,
+    "isDefault": false
+  },
+  {
+    "name": "LinePay",
+    "payUrl": "linepay",
+    "priceDescr": "3.0%",
+    "fee": 0.03,
+    "fee_additional": 0,
+    "isDefault": false
+  },
+  {
+    "name": "ApplePay",
+    "payUrl": "Applepay",
+    "priceDescr": "2.8%",
+    "fee": 0.028,
+    "fee_additional": 0,
+    "isDefault": false
+  },
+  {
+    "name": "現金",
+    "payUrl": "cash",
+    "priceDescr": "available for paid merchants",
+    "fee": 0,
+    "fee_additional": 0,
+    "isDefault": false
+  }
 ]
