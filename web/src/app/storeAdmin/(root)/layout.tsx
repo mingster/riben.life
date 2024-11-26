@@ -18,7 +18,7 @@ export default async function StoreAdminLayout(props: {
 
   const session = (await GetSession()) as Session;
   if (!session) {
-    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
+    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=/storeAdmin/${params.storeId}`);
   }
 
   //const ownerId = session.user?.id;

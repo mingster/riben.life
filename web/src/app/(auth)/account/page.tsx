@@ -18,7 +18,7 @@ export default async function AccountPage() {
   const user = (await getUser()) as User;
 
   if (!user) {
-    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
+    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=/account`);
   } else {
     //console.log(`user: ${JSON.stringify(u)}`);
 
