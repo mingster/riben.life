@@ -20,7 +20,9 @@ export async function RequiresSignIn(callbackUrl: string) {
 
   if (!session) {
     if (!session) {
-      redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=${callbackUrl}`);
+      redirect(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=${callbackUrl}`,
+      );
     }
   }
 }

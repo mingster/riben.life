@@ -39,6 +39,7 @@ export default async function PayMethodAdminPage(props: {
       priceDescr: item.priceDescr || "",
       fee: Number(item.fee) || 0,
       feeAdditional: Number(item.feeAdditional) || 0,
+      clearDays: Number(item.clearDays),
       isDefault: item.isDefault,
       isDeleted: item.isDeleted,
       updatedAt: formatDateTime(item.updatedAt),

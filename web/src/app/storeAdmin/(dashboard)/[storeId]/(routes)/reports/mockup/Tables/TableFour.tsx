@@ -1,4 +1,4 @@
-import DropdownDefault from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Dropdowns/DropdownDefault";
+import DropdownDefault from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/reports/mockup/Dropdowns/DropdownDefault";
 import type { BRAND } from "@/types/mockup/brand";
 import Image from "next/image";
 

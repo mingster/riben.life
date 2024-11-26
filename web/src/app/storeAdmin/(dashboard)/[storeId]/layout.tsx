@@ -52,7 +52,7 @@ export default async function StoreAdminLayout(props: {
 
   const { children } = props;
 
-  RequiresSignIn('/storeAdmin');
+  RequiresSignIn("/storeAdmin");
   const session = (await GetSession()) as Session;
   //console.log('session: ' + JSON.stringify(session));
   //console.log('userid: ' + userId);

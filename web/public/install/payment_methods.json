@@ -5,6 +5,7 @@
     "priceDescr": "2.9% + 30¢",
     "fee": 0.029,
     "fee_additional": 0.3,
+    "clear_days": 3,
     "isDefault": true
   },
   {
@@ -13,6 +14,7 @@
     "priceDescr": "4% + 30¢",
     "fee": 0.04,
     "fee_additional": 0.3,
+    "clear_days": 5,
     "isDefault": false
   },
   {
@@ -21,14 +23,16 @@
     "priceDescr": "3.0%",
     "fee": 0.03,
     "fee_additional": 0,
+    "clear_days": 2,
     "isDefault": false
   },
   {
     "name": "ApplePay",
     "payUrl": "Applepay",
     "priceDescr": "2.8%",
-    "fee": 0.028,
+    "fee": 0.0275,
     "fee_additional": 0,
+    "clear_days": 2,
     "isDefault": false
   },
   {
@@ -37,6 +41,7 @@
     "priceDescr": "available for paid merchants",
     "fee": 0,
     "fee_additional": 0,
+    "clear_days": 0,
     "isDefault": false
   }
 ]

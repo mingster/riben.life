@@ -1,13 +1,13 @@
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
-import { Suspense } from "react";
-import { MockupDashboardContent } from "../components/mockup-dashboard";
 
-import isProLevel from "@/actions/storeAdmin/is-pro-level";
-import type { Store } from "@prisma/client";
-import "../../../../../css/addon.css";
 import { sqlClient } from "@/lib/prismadb";
+import { transformDecimalsToNumbers } from "@/lib/utils";
+import type { Store } from "@/types";
+import type { StoreLedger } from "@prisma/client";
+import { format } from "date-fns";
+import { BalancesClient } from "./components/balances-client";
+import type { StoreLedgerColumn } from "./components/columns";
 
 type Params = Promise<{ storeId: string; messageId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -21,22 +21,39 @@ export default async function BalanceMgmtPage(props: {
   // this store is pro version or not?
   //const disablePaidOptions = await !isProLevel(store?.id);
 
-  const legers = await sqlClient.storeLedger.findMany({
+  const legers = (await sqlClient.storeLedger.findMany({
     where: {
       storeId: store.id,
     },
     orderBy: {
       createdAt: "desc",
     },
-  });
-
-  //        <MockupDashboardContent disablePaidOptions={disablePaidOptions} />
+  })) as StoreLedger[];
+  transformDecimalsToNumbers(legers);
 
   console.log(JSON.stringify(legers));
 
+  // map order to ui
+  const formattedData: StoreLedgerColumn[] = legers.map(
+    (item: StoreLedger) => ({
+      id: item.id,
+      storeId: item.storeId,
+      orderId: item.orderId,
+      amount: Number(item.amount),
+      fee: Number(item.fee),
+      platformFee: Number(item.platformFee),
+      currency: item.currency,
+      balance: Math.round(Number(item.balance)),
+      description: item.description,
+      note: item.note,
+      createdAt: format(item.createdAt, "yyyy-MM-dd HH:mm:ss"),
+      availablity: format(item.availablity, "yyyy-MM-dd HH:mm:ss"),
+    }),
+  );
+
   return (
-    <Suspense fallback={<Loader />}>
-      <Container>balances</Container>
-    </Suspense>
+    <Container>
+      <BalancesClient store={store} data={formattedData} />
+    </Container>
   );
 }

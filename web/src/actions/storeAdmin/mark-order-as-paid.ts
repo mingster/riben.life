@@ -19,6 +19,10 @@ const MarkAsPaid = async (
   const store = (await getStoreById(order.storeId)) as Store;
   const ispro = await isProLevel(order.storeId);
 
+  if (store === null) throw Error("store is null");
+  if (order === null) throw Error("order is null");
+  if (order.PaymentMethod === null) throw Error("PaymentMethod is null");
+
   // mark order as paid
   await sqlClient.storeOrder.update({
     where: {
@@ -49,12 +53,21 @@ const MarkAsPaid = async (
   const balance = Number(lastLedger ? lastLedger.balance : 0);
 
   // fee rate is determined by payment method
-  const fee =
+  const fee = -Number(
     Number(order.orderTotal) * Number(order.PaymentMethod?.fee) +
-    Number(order.PaymentMethod?.feeAdditional);
+      Number(order.PaymentMethod?.feeAdditional),
+  );
+
+  const feeTax = Number(fee * 0.05);
 
   // fee charge by riben.life
-  const platform_fee = ispro ? 0 : Number(order.orderTotal) * 0.01;
+  const platform_fee = ispro ? 0 : -Number(Number(order.orderTotal) * 0.01);
+
+  // avilablity date = order date + payment methods' clear days
+  const avaiablityDate = new Date(
+    getUtcNow(store.defaultTimezone).getTime() +
+      order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
+  );
 
   // create store ledger entry
   await sqlClient.storeLedger.create({
@@ -62,10 +75,15 @@ const MarkAsPaid = async (
       orderId: order.id as string,
       storeId: order.storeId as string,
       amount: order.orderTotal,
-      fee: fee,
+      fee: fee + feeTax,
       platformFee: platform_fee,
-      description: `order #${order.id}`,
-      balance: balance + Number(order.orderTotal) - fee - platform_fee,
+      currency: order.currency,
+      description: `order # ${order.orderNum}`,
+      note: `order id: ${order.id}`,
+      availablity: avaiablityDate,
+      balance:
+        balance +
+        Math.round(Number(order.orderTotal) - (fee + feeTax) - platform_fee),
     },
   });
 

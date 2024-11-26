@@ -13,6 +13,7 @@ import {
   MenuIcon,
   MessageCircleMore,
   PackageCheck,
+  Proportions,
   Scale,
   Settings,
   Ticket,
@@ -110,8 +111,13 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
           icon: DollarSign,
           submenus: [],
         },
-
-
+        {
+          href: `${nav_prefix}/reports`,
+          label: t("Sales_Reports"),
+          active: pathname.includes(`${nav_prefix}/reports`),
+          icon: Proportions,
+          submenus: [],
+        },
       ],
     },
     {

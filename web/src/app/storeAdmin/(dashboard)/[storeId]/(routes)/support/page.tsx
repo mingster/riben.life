@@ -24,7 +24,6 @@ export default async function StoreSupportPage(props: {
 
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
-
   const session = (await GetSession()) as Session;
   const userId = session?.user.id;
 

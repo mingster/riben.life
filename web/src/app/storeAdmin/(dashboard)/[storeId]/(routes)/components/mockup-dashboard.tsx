@@ -1,11 +1,7 @@
 "use client";
 
-import ChartOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Charts/ChartOne";
-import ChartThree from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Charts/ChartThree";
-import ChartTwo from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Charts/ChartTwo";
-import ChatCard from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Chat/ChatCard";
-import MapOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Maps/MapOne";
-import TableOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/balances/mockup/Tables/TableOne";
+import ChatCard from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/reports/mockup/Chat/ChatCard";
+import TableOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/reports/mockup/Tables/TableOne";
 import CardDataStats from "@/components/ui/CardDataStats";
 import { DollarSign, Eye, PersonStanding, Sofa } from "lucide-react";
 import { RequiredProVersion } from "./require-pro-version";
@@ -18,9 +14,21 @@ export const MockupDashboardContent: React.FC<props> = ({
 }) => {
   //disablePaidOptions = true;
 
+  /*
+import ChartOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/reports/mockup/Charts/ChartOne";
+import ChartThree from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/reports/mockup/Charts/ChartThree";
+import ChartTwo from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/reports/mockup/Charts/ChartTwo";
+import MapOne from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/reports/mockup/Maps/MapOne";
+
+<ChartOne />
+<ChartTwo />
+<ChartThree />
+<MapOne />
+  */
   return (
     <>
       {disablePaidOptions && <RequiredProVersion />}
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
         <CardDataStats title="Total views" total="$3.456K" rate="0.43%" levelUp>
           <Eye />
@@ -37,10 +45,6 @@ export const MockupDashboardContent: React.FC<props> = ({
       </div>
 
       <div className="mt-4 grid grid-cols-12 gap-4 md:mt-6 md:gap-6 2xl:mt-7.5 2xl:gap-7.5">
-        <ChartOne />
-        <ChartTwo />
-        <ChartThree />
-        <MapOne />
         <div className="col-span-12 xl:col-span-8">
           <TableOne />
         </div>

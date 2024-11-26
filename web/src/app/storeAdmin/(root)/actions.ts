@@ -20,7 +20,9 @@ export const createStore = async (values: z.infer<typeof formSchema>) => {
   const ownerId = session.user?.id;
 
   if (!session || !session.user || !ownerId) {
-    redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin/?callbackUrl=/storeAdmin`);
+    redirect(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/signin/?callbackUrl=/storeAdmin`,
+    );
   }
 
   //console.log(values);
