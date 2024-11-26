@@ -15,12 +15,12 @@ export async function GetSession() {
 }
 
 // if not signed in, redirect to sign in page
-export async function RequiresSignIn() {
+export async function RequiresSignIn(callbackUrl: string) {
   const session = (await auth()) as Session;
 
   if (!session) {
     if (!session) {
-      redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
+      redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=${callbackUrl}`);
     }
   }
 }

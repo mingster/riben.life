@@ -15,7 +15,7 @@ export default async function StoreLayout(props: {
 
   const { children } = props;
 
-  RequiresSignIn();
+  RequiresSignIn('/storeAdmin');
   const session = (await GetSession()) as Session;
 
   //console.log('session: ' + JSON.stringify(session));

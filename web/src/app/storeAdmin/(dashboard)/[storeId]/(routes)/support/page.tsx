@@ -6,7 +6,7 @@ import { TicketStatus } from "@/types/enum";
 import type { Store, SupportTicket } from "@prisma/client";
 
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
-import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
+import { GetSession } from "@/lib/auth/utils";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -24,7 +24,6 @@ export default async function StoreSupportPage(props: {
 
   const store = (await checkStoreAccess(params.storeId)) as Store;
 
-  //RequiresSignIn();
 
   const session = (await GetSession()) as Session;
   const userId = session?.user.id;

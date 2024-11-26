@@ -1,7 +1,6 @@
 //import { auth } from "@/auth";
 
 import getUser from "@/actions/get-user";
-import { Navbar } from "@/components/global-navbar";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import type { User } from "@/types";

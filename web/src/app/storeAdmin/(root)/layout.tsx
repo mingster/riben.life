@@ -1,5 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
-import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
+import { GetSession } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import type { Session } from "next-auth";
 
