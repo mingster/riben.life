@@ -175,6 +175,7 @@ model PaymentMethod {
   payUrl     String   @default("")
   priceDescr String   @default("")
   fee        Decimal  @default("0.029")
+  feeAdditional Decimal @default("0")
   isDeleted  Boolean  @default(false)
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())

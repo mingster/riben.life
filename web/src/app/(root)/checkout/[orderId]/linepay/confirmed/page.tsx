@@ -2,6 +2,7 @@
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
 import isProLevel from "@/actions/storeAdmin/is-pro-level";
+import MarkAsPaid from "@/actions/storeAdmin/mark-order-as-paid";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
@@ -58,25 +59,30 @@ export default async function LinePayConfirmedPage({
 
   const store = (await getStoreById(order.storeId)) as Store;
 
-
   // determine line pay id and secret
   let linePayId = store.LINE_PAY_ID;
   let linePaySecret = store.LINE_PAY_SECRET;
 
   // this store is pro version or not?
-  const isPro = (await isProLevel(store?.id));
+  const isPro = await isProLevel(store?.id);
   if (isPro === false) {
     linePayId = process.env.LINE_PAY_ID || null;
     linePaySecret = process.env.LINE_PAY_SECRET || null;
   }
 
-  if (!linePayId || !linePaySecret || linePayId === null || linePaySecret === null) {
+  if (
+    !linePayId ||
+    !linePaySecret ||
+    linePayId === null ||
+    linePaySecret === null
+  ) {
     //
     return "尚未設定LinePay";
   }
 
   const linePayClient = getLinePayClient(
-    linePayId, linePaySecret,
+    linePayId,
+    linePaySecret,
   ) as LinePayClient;
 
   const confirmRequest = {
@@ -91,25 +97,18 @@ export default async function LinePayConfirmedPage({
   const res = await linePayClient.confirm.send(confirmRequest);
 
   if (res.body.returnCode === "0000") {
+    // mark order as paid
 
     // mark order as paid
-    const order = await sqlClient.storeOrder.update({
-      where: {
-        id: orderId as string,
-      },
-      data: {
-        isPaid: true,
-        paidDate: getUtcNow(),
-        orderStatus: Number(OrderStatus.Processing),
-        paymentStatus: Number(PaymentStatus.Paid),
-      },
-    });
+    const checkoutAttributes = order.checkoutAttributes;
+    const updated_order = await MarkAsPaid(order.id, checkoutAttributes);
 
-    console.log(
-      `LinePayConfirmedPage: order confirmed: ${JSON.stringify(order)}`,
+    if (process.env.NODE_ENV === "development")
+      console.log("LinePayConfirmedPage", JSON.stringify(updated_order));
+
+    redirect(
+      `${getAbsoluteUrl()}/checkout/${updated_order.id}/linepay/success`,
     );
-
-    redirect(`${getAbsoluteUrl()}/checkout/${order.id}/linepay/success`);
   }
 
   return <></>;

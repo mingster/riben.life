@@ -64,7 +64,7 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
   let linePaySecret = store.LINE_PAY_SECRET;
 
   // this store is pro version or not?
-  const isPro = (await isProLevel(store?.id));
+  const isPro = await isProLevel(store?.id);
   //console.log("isPro", isPro);
 
   if (isPro === false) {
@@ -80,7 +80,8 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
   }
 
   const linePayClient = getLinePayClient(
-    linePayId, linePaySecret,
+    linePayId,
+    linePaySecret,
   ) as LinePayClient;
 
   const env =

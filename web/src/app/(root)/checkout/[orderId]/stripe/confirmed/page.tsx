@@ -1,4 +1,5 @@
 "use server";
+import MarkAsPaid from "@/actions/storeAdmin/mark-order-as-paid";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
@@ -55,28 +56,23 @@ export default async function StripeConfirmedPage(props: {
         client_secret: searchParams.payment_intent_client_secret,
       });
 
-      const order = await sqlClient.storeOrder.update({
-        where: {
-          id: params.orderId,
-        },
-        data: {
-          isPaid: true,
-          orderStatus: Number(OrderStatus.Processing),
-          paymentStatus: Number(PaymentStatus.Paid),
-          checkoutAttributes: checkoutAttributes,
-        },
-      });
-
-      console.log(
-        `StripeConfirmedPage: order confirmed: ${JSON.stringify(order)}`,
+      // mark order as paid
+      const updated_order = await MarkAsPaid(
+        params.orderId,
+        checkoutAttributes,
       );
 
-      redirect(`${getAbsoluteUrl()}/checkout/${order.id}/stripe/success`);
+      if (process.env.NODE_ENV === "development")
+        console.log("StripeConfirmedPage", JSON.stringify(updated_order));
+
+      redirect(
+        `${getAbsoluteUrl()}/checkout/${updated_order.id}/stripe/success`,
+      );
 
       return (
         <Suspense fallback={<Loader />}>
           <Container>
-            <SuccessAndRedirect orderId={order.id} />
+            <SuccessAndRedirect orderId={updated_order.id} />
           </Container>
         </Suspense>
       );

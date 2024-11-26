@@ -57,6 +57,12 @@ export const columns: ColumnDef<DataColumn>[] = [
     },
   },
   {
+    accessorKey: "feeAdditional",
+    header: ({ column }) => {
+      return <DataTableColumnHeader column={column} title="fee additional" />;
+    },
+  },
+  {
     accessorKey: "isDefault",
     header: ({ column }) => {
       return <DataTableColumnHeader column={column} title="isDefault" />;

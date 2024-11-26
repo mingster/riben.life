@@ -59,6 +59,7 @@ export async function create_paymentMethods() {
       const paymentMethod = await sqlClient.paymentMethod.create({
         data: {
           ...c,
+
           /*
           name: c.name,
           payUrl: c.payurl,
