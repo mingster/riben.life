@@ -42,8 +42,8 @@ export function StoreAdminMenu({ isOpen, store }: MenuProps) {
       <nav className="mt-8 size-full">
         <ul className="flex min-h-[calc(100vh-48px-36px-16px-32px-50px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px-50px)]">
           {menuList.map(({ groupLabel, menus }, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={index}>
+
+            <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={groupLabel}>
               {(isOpen && groupLabel) || isOpen === undefined ? (
                 <p className="max-w-[248px] truncate px-4 pb-2 text-sm font-medium text-muted-foreground">
                   {groupLabel}
@@ -123,36 +123,28 @@ export function StoreAdminMenu({ isOpen, store }: MenuProps) {
             </li>
           ))}
         </ul>
-
-        <div className="flex flex-col w-full grow items-end">
-          <TooltipProvider disableHoverableContent>
-            <Tooltip delayDuration={100}>
-              <TooltipTrigger asChild>
-                <>
-                  {/* sign out button */}
-                  <Button
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                    variant="outline"
-                    className="mt-5 h-10 w-full justify-center"
-                  >
-                    <span className={cn(isOpen === false ? "" : "mr-4")}>
-                      <LogOut size={18} />
-                    </span>
-                    <span
-                      className={cn(
-                        "whitespace-nowrap",
-                        isOpen === false ? "hidden opacity-0" : "opacity-100",
-                      )}
-                    >
-                      {t("signout")}
-                    </span>
-                  </Button>
-                </>
-              </TooltipTrigger>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
       </nav>
+
+      <div className="flex flex-col w-full grow items-end">
+        {/* sign out button */}
+        <Button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          variant="outline"
+          className="mt-5 h-10 w-full justify-center"
+        >
+          <span className={cn(isOpen === false ? "" : "mr-4")}>
+            <LogOut size={18} />
+          </span>
+          <span
+            className={cn(
+              "whitespace-nowrap",
+              isOpen === false ? "hidden opacity-0" : "opacity-100",
+            )}
+          >
+            {t("signout")}
+          </span>
+        </Button>
+      </div>
     </ScrollArea>
   );
 }
