@@ -9,6 +9,7 @@ import {
   CircleHelp,
   Dock,
   DollarSign,
+  FileQuestion,
   LayoutGrid,
   MenuIcon,
   MessageCircleMore,
@@ -223,5 +224,19 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
         },
       ],
     },
+
+    {
+      groupLabel: t("Help"),
+      menus: [
+        {
+          href: `${nav_prefix}/help`,
+          label: t("QandA"),
+          active: pathname.includes(`${nav_prefix}/help`),
+          icon: FileQuestion,
+          submenus: [],
+        },
+      ],
+    },
+
   ];
 }
