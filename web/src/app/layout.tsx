@@ -106,12 +106,12 @@ export default async function RootLayout({
             crossOrigin=""
           />
           <link
-            href="https://fonts.googleapis.com/css2?family=Host_Grotesk:wght@400;700&family=Noto+Sans+TC:wght@500;700&family=Rubik:wght@500;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Host_Grotesk:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Rubik:wght@500;700&display=swap"
             rel="stylesheet"
           />
         </head>
 
-        <body className="antialiased text-slate-500 dark:text-slate-400 min-h-screen">
+        <body className="antialiased text-primary-400 dark:text-primary-400 min-h-screen">
           <NextThemeProvider attribute="class" defaultTheme="dark" enableSystem>
             <CartProvider>
               <I18nProvider>{children}</I18nProvider>
