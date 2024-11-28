@@ -12,6 +12,7 @@ import {
   type Currency,
   createLinePayClient,
   getLinePayClient,
+  getLinePayClientByStore,
 } from "@/lib/linepay";
 import type { LinePayClient } from "@/lib/linepay/type";
 import { sqlClient } from "@/lib/prismadb";
@@ -58,32 +59,7 @@ export default async function LinePayConfirmedPage({
   }
 
   const store = (await getStoreById(order.storeId)) as Store;
-
-  // determine line pay id and secret
-  let linePayId = store.LINE_PAY_ID;
-  let linePaySecret = store.LINE_PAY_SECRET;
-
-  // this store is pro version or not?
-  const isPro = await isProLevel(store?.id);
-  if (isPro === false) {
-    linePayId = process.env.LINE_PAY_ID || null;
-    linePaySecret = process.env.LINE_PAY_SECRET || null;
-  }
-
-  if (
-    !linePayId ||
-    !linePaySecret ||
-    linePayId === null ||
-    linePaySecret === null
-  ) {
-    //
-    return "尚未設定LinePay";
-  }
-
-  const linePayClient = getLinePayClient(
-    linePayId,
-    linePaySecret,
-  ) as LinePayClient;
+  const linePayClient = await getLinePayClientByStore(store);
 
   const confirmRequest = {
     transactionId: transactionId as string,
@@ -97,8 +73,6 @@ export default async function LinePayConfirmedPage({
   const res = await linePayClient.confirm.send(confirmRequest);
 
   if (res.body.returnCode === "0000") {
-    // mark order as paid
-
     // mark order as paid
     const checkoutAttributes = order.checkoutAttributes;
     const updated_order = await MarkAsPaid(order.id, checkoutAttributes);
