@@ -1,19 +1,17 @@
 "use client";
 import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import { useRouter } from "next/navigation";
-import { useTimer } from "react-timer-hook";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useI18n } from "@/providers/i18n-provider";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export const FaqClient: React.FC = () => {
   const { lng } = useI18n();
@@ -37,11 +35,9 @@ export const FaqClient: React.FC = () => {
   }, [initialTab]);
   //console.log('selectedTab: ' + activeTab);
 
-  const title = t('QandA');
   return (
-
     <Container className="lg:pl-2 pr-2">
-      <Heading title={title} description={""} />
+      <Heading title={t('QandA')} description={""} />
 
       <Tabs
         value={activeTab}
