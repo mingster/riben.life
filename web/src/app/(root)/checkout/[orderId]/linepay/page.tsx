@@ -1,26 +1,23 @@
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
+import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
-import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import {
   type Currency,
   type RequestRequestBody,
   type RequestRequestConfig,
-  createLinePayClient,
   getLinePayClient,
+  getLinePayClientByStore
 } from "@/lib/linepay";
 import type { LinePayClient } from "@/lib/linepay/type";
 import { sqlClient } from "@/lib/prismadb";
 import { isMobileUserAgent } from "@/lib/utils";
 import type { Store, StoreOrder } from "@/types";
-import { useQRCode } from "next-qrcode";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import PaymentLinePay from "./components/payment-linepay";
-import isProLevel from "@/actions/storeAdmin/is-pro-level";
 
 // customer select linepay as payment method. here we will make a payment request
 // and redirect user to linepay payment page
@@ -57,32 +54,9 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
       </Suspense>
     );
   }
+  
   const store = (await getStoreById(order.storeId)) as Store;
-
-  // determine line pay id and secret
-  let linePayId = store.LINE_PAY_ID;
-  let linePaySecret = store.LINE_PAY_SECRET;
-
-  // this store is pro version or not?
-  const isPro = await isProLevel(store?.id);
-  //console.log("isPro", isPro);
-
-  if (isPro === false) {
-    linePayId = process.env.LINE_PAY_ID || null;
-    linePaySecret = process.env.LINE_PAY_SECRET || null;
-
-    //console.log('linePayId', linePayId, 'linePaySecret', linePaySecret);
-  }
-
-  if (!linePayId || !linePaySecret) {
-    //
-    return "尚未設定LinePay";
-  }
-
-  const linePayClient = getLinePayClient(
-    linePayId,
-    linePaySecret,
-  ) as LinePayClient;
+  const linePayClient = await getLinePayClientByStore(store);
 
   const env =
     process.env.NODE_ENV === "development" ? "development" : "production";

@@ -82,7 +82,7 @@ abbr[title] {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
 
-    --primary: 0 0% 9%;
+    --primary: 0 0% 1%;
     --primary-foreground: 0 0% 98%;
 
     --secondary: 0 0% 96.1%;
@@ -93,6 +93,9 @@ abbr[title] {
 
     --muted: 0 0% 96.1%;
     --muted-foreground: 0 0% 45.1%;
+
+    --gold: 13 96% 21%;
+    --gold-foreground: 0 0% 98%;
 
     --descr: 140 100% 16%;
     --descr-foreground: 0 0% 45.1%;
@@ -138,6 +141,9 @@ abbr[title] {
 
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
+
+    --gold: 50 86% 45%;
+    --gold-foreground: 0 0% 98%;
 
     --descr: 140, 100%, 43%, 0.7;
     --descr-foreground: 0 0% 63.9%;

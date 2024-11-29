@@ -24,6 +24,8 @@ import { checkRegKeyWithClient } from "./line-pay-api/check-regkey";
 import { expireRegKeyWithClient } from "./line-pay-api/expire-regkey";
 import { payPreapprovedWithClient } from "./line-pay-api/pay-preapproved";
 import { voidWithClient } from "./line-pay-api/void";
+import { Store } from "@prisma/client";
+import isProLevel from "@/actions/storeAdmin/is-pro-level";
 
 export type {
   Package as RequestPackage,
@@ -180,13 +182,15 @@ export function createLinePayClient(config: LineMerchantConfig): LinePayClient {
   };
 }
 
+
+
 export function getLinePayClient(id: string | null, secret: string | null) {
   let linePayId = id;
   let linePaySecret = secret;
 
   if (!id || !secret) {
-    linePayId = process.env.LINE_PAY_ID as string;
-    linePaySecret = process.env.LINE_PAY_SECRET as string;
+    linePayId = process.env.LINE_PAY_ID || null;
+    linePaySecret = process.env.LINE_PAY_SECRET || null;
   }
 
   if (!linePayId || !linePaySecret) {
@@ -201,6 +205,35 @@ export function getLinePayClient(id: string | null, secret: string | null) {
     channelSecretKey: linePaySecret,
     env: env, // env can be 'development' or 'production'
   }) as LinePayClient;
+
+  return linePayClient;
+}
+
+
+export async function getLinePayClientByStore(store: Store) {
+  // determine line pay id and secret
+  let linePayId = store.LINE_PAY_ID;
+  let linePaySecret = store.LINE_PAY_SECRET;
+
+  // this store is pro version or not?
+  const isPro = await isProLevel(store?.id);
+  //console.log("isPro", isPro);
+
+  if (isPro === false) {
+    linePayId = process.env.LINE_PAY_ID || null;
+    linePaySecret = process.env.LINE_PAY_SECRET || null;
+
+    //console.log('linePayId', linePayId, 'linePaySecret', linePaySecret);
+  }
+
+  if (!linePayId || !linePaySecret) {
+    throw new Error("LINE_PAY is not set");
+  }
+
+  const linePayClient = getLinePayClient(
+    linePayId,
+    linePaySecret,
+  ) as LinePayClient;
 
   return linePayClient;
 }

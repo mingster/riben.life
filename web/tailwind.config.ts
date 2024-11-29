@@ -105,6 +105,10 @@ module.exports = {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
         },
+        gold: {
+          DEFAULT: 'hsl(var(--gold))',
+          foreground: 'hsl(var(--gold-foreground))',
+        },
         descr: {
           DEFAULT: 'hsl(var(--descr))',
           foreground: 'hsl(var(--descr-foreground))',
@@ -169,7 +173,14 @@ module.exports = {
           'ui-monospace, Menlo, Monaco, "Ubuntu Monospace", "Segoe UI Mono", "Source Code Pro", "Courier New", monospace',
           ...defaultTheme.fontFamily.mono,
         ],
-        display: ['"Host Grotesk", "Noto Sans TC", sans-serif', ...defaultTheme.fontFamily.sans],
+        display: [
+          '"Noto Sans TC", "Host Grotesk", sans-serif',
+          {
+            fontFeatureSettings: '"cv11", "ss01"',
+            fontVariationSettings: '"opsz" 32',
+          },
+          ...defaultTheme.fontFamily.sans,
+        ],
       },
       fontSize: {
         'title-xxl': ['44px', '55px'],
