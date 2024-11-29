@@ -1,5 +1,3 @@
-
-
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { Suspense } from "react";
@@ -7,7 +5,6 @@ import { FaqClient } from "./faq-client";
 
 type Params = Promise<{ orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
-
 
 export default async function HelpPage(props: {
   params: Params;
@@ -21,8 +18,7 @@ export default async function HelpPage(props: {
   return (
     <Suspense fallback={<Loader />}>
       <Container>
-        <FaqClient/>
-
+        <FaqClient />
       </Container>
     </Suspense>
   );

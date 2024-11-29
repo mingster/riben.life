@@ -9,7 +9,11 @@ import type { Store, StoreOrder, StoreWithProducts } from "@/types";
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
 import getStoreWithProducts from "@/actions/get-store-with-products";
-import { type RefundRequestBody, type RefundRequestConfig, getLinePayClientByStore } from "@/lib/linepay";
+import {
+  type RefundRequestBody,
+  type RefundRequestConfig,
+  getLinePayClientByStore,
+} from "@/lib/linepay";
 import {
   OrderStatus,
   PageAction,
@@ -39,7 +43,7 @@ const OrderRefundPage = async (props: {
   // call to payment method's refund api
   if (order.PaymentMethod?.payUrl === "linepay") {
     const requestBody: RefundRequestBody = {
-      refundAmount: Number(order.orderTotal)
+      refundAmount: Number(order.orderTotal),
     };
 
     const requestConfig: RefundRequestConfig = {
@@ -52,7 +56,6 @@ const OrderRefundPage = async (props: {
     const res = await linePayClient.refund.send(requestConfig);
 
     if (res.body.returnCode === "0000") {
-
       // refund success, update order status
       await sqlClient.storeOrder.update({
         where: {
@@ -74,4 +77,3 @@ const OrderRefundPage = async (props: {
 };
 
 export default OrderRefundPage;
-

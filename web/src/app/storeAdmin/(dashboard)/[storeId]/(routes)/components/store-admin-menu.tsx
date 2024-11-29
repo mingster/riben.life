@@ -42,8 +42,10 @@ export function StoreAdminMenu({ isOpen, store }: MenuProps) {
       <nav className="mt-8 size-full">
         <ul className="flex min-h-[calc(100vh-48px-36px-16px-32px-50px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px-50px)]">
           {menuList.map(({ groupLabel, menus }, index) => (
-
-            <li className={cn("w-full", groupLabel ? "pt-5" : "")} key={groupLabel}>
+            <li
+              className={cn("w-full", groupLabel ? "pt-5" : "")}
+              key={groupLabel}
+            >
               {(isOpen && groupLabel) || isOpen === undefined ? (
                 <p className="max-w-[248px] truncate px-4 pb-2 text-sm font-medium text-muted-foreground">
                   {groupLabel}
