@@ -23,21 +23,6 @@ const MarkAsPaid = async (
   if (order === null) throw Error("order is null");
   if (order.PaymentMethod === null) throw Error("PaymentMethod is null");
 
-  // mark order as paid
-  await sqlClient.storeOrder.update({
-    where: {
-      id: orderId as string,
-    },
-    data: {
-      isPaid: true,
-      paidDate: getNowTimeInTz(store.defaultTimezone),
-      orderStatus: Number(OrderStatus.Processing),
-      paymentStatus: Number(PaymentStatus.Paid),
-      checkoutAttributes: checkoutAttributes || "",
-      updatedAt: getNowTimeInTz(store.defaultTimezone),
-    },
-  });
-
   // create new entry in store ledger
   //
   const lastLedger = await sqlClient.storeLedger.findFirst({
@@ -55,7 +40,7 @@ const MarkAsPaid = async (
   // fee rate is determined by payment method
   const fee = -Number(
     Number(order.orderTotal) * Number(order.PaymentMethod?.fee) +
-      Number(order.PaymentMethod?.feeAdditional),
+    Number(order.PaymentMethod?.feeAdditional),
   );
 
   const feeTax = Number(fee * 0.05);
@@ -63,10 +48,27 @@ const MarkAsPaid = async (
   // fee charge by riben.life
   const platform_fee = ispro ? 0 : -Number(Number(order.orderTotal) * 0.01);
 
+  // mark order as paid
+  await sqlClient.storeOrder.update({
+    where: {
+      id: orderId as string,
+    },
+    data: {
+      isPaid: true,
+      paidDate: getNowTimeInTz(store.defaultTimezone),
+      orderStatus: Number(OrderStatus.Processing),
+      paymentStatus: Number(PaymentStatus.Paid),
+      paymentCost: fee + feeTax + platform_fee,
+      checkoutAttributes: checkoutAttributes || "",
+      updatedAt: getNowTimeInTz(store.defaultTimezone),
+    },
+  });
+
+
   // avilablity date = order date + payment methods' clear days
   const avaiablityDate = new Date(
     order.updatedAt.getTime() +
-      order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
+    order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
   );
 
   // create store ledger entry
