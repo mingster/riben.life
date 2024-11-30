@@ -1,25 +1,55 @@
 //create or edit store order
 
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
-import { sqlClient } from "@/lib/prismadb";
 
-import type { Store, StoreOrder } from "@/types";
+import getOrderById from "@/actions/get-order-by_id";
+import getStoreWithProducts from "@/actions/get-store-with-products";
+import type { StoreOrder, StoreWithProducts } from "@/types";
+import { OrderRefundClient } from "./refund-client";
 
-// display order and its items for user to select items to refund
-const OrderRefundPage = async (props: {
-  params: Promise<{ orderId: string; storeId: string }>;
-}) => {
+type Params = Promise<{ storeId: string; orderId: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+// store admin can refund full or partial order
+export default async function OrderRefundPage(props: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   const params = await props.params;
-  const store = await checkStoreAccess(params.storeId);
+
+  await checkStoreAccess(params.storeId);
+  //const store = (await getStoreWithCategories(params.storeId)) as Store;
+  const store = (await getStoreWithProducts(
+    params.storeId,
+  )) as StoreWithProducts;
+
+  const order = (await getOrderById(params.orderId)) as StoreOrder | null;
+  /*
+  let order = (await sqlClient.storeOrder.findUnique({
+    where: {
+      id: params.orderId,
+    },
+    include: {
+      OrderNotes: true,
+      OrderItemView: {
+        include: {
+          Product: true,
+        },
+      },
+      User: true,
+      ShippingMethod: true,
+      PaymentMethod: true,
+    },
+  })) as StoreOrder | null;
+  */
 
   //console.log('order', JSON.stringify(order));
-  //console.log('payment method', JSON.stringify(order.PaymentMethod));
 
   return (
     <div className="flex-col">
-      <div className="flex-1 space-y-4 p-8 pt-6">REFUND</div>
+      <div className="flex-1 space-y-4 p-8 pt-6">
+        <OrderRefundClient store={store} order={order} />
+      </div>
     </div>
   );
-};
-
-export default OrderRefundPage;
+}

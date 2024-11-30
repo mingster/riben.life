@@ -543,7 +543,7 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
                         icon={
                           <Minus
                             size={18}
-                            className="dark:text-primary text-secondary"
+                            className="dark:text-primary text-slate-500"
                           />
                         }
                       />
@@ -564,7 +564,7 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
                       icon={
                         <Plus
                           size={18}
-                          className="dark:text-primary text-secondary"
+                          className="dark:text-primary text-slate-500"
                         />
                       }
                     />

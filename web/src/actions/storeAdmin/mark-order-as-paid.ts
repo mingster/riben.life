@@ -84,7 +84,7 @@ const MarkAsPaid = async (
       availablity: avaiablityDate,
       balance:
         balance +
-        Math.round(Number(order.orderTotal) - (fee + feeTax) - platform_fee),
+        Math.round(Number(order.orderTotal) + (fee + feeTax) + platform_fee),
     },
   });
 

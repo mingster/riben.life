@@ -157,6 +157,7 @@
   "ProductStatus_Draft": "編輯中",
   "ProductStatus_Published": "已發佈",
   "Refund": "退款",
+  "RefundAll": "退整張訂單",
   "reply": "回覆",
   "reservation": "訂位",
   "reset": "重設",

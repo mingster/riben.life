@@ -24,7 +24,7 @@
     "fee": 0.03,
     "feeAdditional": 0,
     "clearDays": 2,
-    "isDefault": false
+    "isDefault": true
   },
   {
     "name": "ApplePay",

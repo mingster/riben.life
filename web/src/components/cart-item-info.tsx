@@ -161,7 +161,7 @@ const CartItemInfo: React.FC<cartItemProps> = ({
                           icon={
                             <Minus
                               size={18}
-                              className="dark:text-primary text-secondary"
+                              className="dark:text-primary text-slate-500"
                             />
                           }
                         />
@@ -182,7 +182,7 @@ const CartItemInfo: React.FC<cartItemProps> = ({
                         icon={
                           <Plus
                             size={18}
-                            className="dark:text-primary text-secondary"
+                            className="dark:text-primary text-slate-500"
                           />
                         }
                       />
