@@ -24,6 +24,7 @@ export default async function BalanceMgmtPage(props: {
   const legers = (await sqlClient.storeLedger.findMany({
     where: {
       storeId: store.id,
+      type: 0,
     },
     orderBy: {
       createdAt: "desc",
@@ -31,7 +32,7 @@ export default async function BalanceMgmtPage(props: {
   })) as StoreLedger[];
   transformDecimalsToNumbers(legers);
 
-  console.log(JSON.stringify(legers));
+  //console.log(JSON.stringify(legers));
 
   // map order to ui
   const formattedData: StoreLedgerColumn[] = legers.map(
