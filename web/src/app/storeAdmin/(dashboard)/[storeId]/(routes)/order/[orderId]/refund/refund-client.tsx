@@ -9,12 +9,9 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import type {
-  StoreOrder,
-  StorePaymentMethodMapping,
-  StoreShipMethodMapping,
-  StoreWithProducts,
-} from "@/types";
+
+import type { StoreOrder, Store } from "@/types";
+
 import type { orderitemview } from "@prisma/client";
 import { useTranslation } from "@/app/i18n/client";
 import {
@@ -34,7 +31,7 @@ import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
 
 import { Input } from "@/components/ui/input";
-import { OrderStatus, PageAction } from "@/types/enum";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { type AxiosError } from "axios";
 import Decimal from "decimal.js";
@@ -43,7 +40,7 @@ import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 import { Minus, Undo2Icon, XIcon } from "lucide-react";
 
 interface props {
-  store: StoreWithProducts;
+  store: Store;
   order: StoreOrder;
 }
 

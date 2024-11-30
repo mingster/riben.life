@@ -1,9 +1,6 @@
 "use server";
 
 import { wipeoutDefaultData } from "@/actions/admin/populate-payship_defaults";
-import sendStoreNotification, {
-  type StoreNotification,
-} from "@/actions/send-store-notification";
 import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
@@ -14,6 +11,11 @@ import fs from "node:fs";
 import { redirect } from "next/navigation";
 import { EditDefaultPrivacy } from "./edit-default-privacy";
 import { EditDefaultTerms } from "./edit-default-terms";
+import { deleteAllOrders } from "@/actions/admin/maint/delete-all-orders";
+import { deleteAllSupportTickets } from "@/actions/admin/maint/delete-all-support-tickets";
+import { sendTestNoficiation } from "@/actions/admin/maint/send-test-noficiation";
+import { deleteAllLedgers } from "@/actions/admin/maint/delete-all-ledgers";
+import { Heading } from "@/components/ui/heading";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -28,68 +30,6 @@ export default async function StoreAdminDevMaintPage(props: {
 
   const isAdmin = (await checkAdminAccess()) as boolean;
   if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
-
-  const deleteAllOrders = async () => {
-    "use server";
-
-    const { count } = await sqlClient.storeOrder.deleteMany({
-      where: {
-        //storeId: params.storeId,
-      },
-    });
-
-    console.log(`${count} orders deleted.`);
-    redirect("./");
-  };
-
-  const deleteAllSupportTickets = async () => {
-    "use server";
-
-    const { count } = await sqlClient.supportTicket.deleteMany({
-      where: {
-        //storeId: params.storeId,
-      },
-    });
-
-    console.log(`${count} tickets deleted.`);
-    redirect("./");
-  };
-
-  const sendTestNoficiation = async () => {
-    "use server";
-
-    const obj = await sqlClient.storeNotification.create({
-      data: {
-        subject: "test",
-        message: "test",
-        Sender: {
-          connect: {
-            email: "mingster.tsai@gmail.com",
-          },
-        },
-        Recipent: {
-          connect: {
-            email: "mingster.tsai@gmail.com",
-          },
-        },
-      },
-    });
-
-    const notifyTest: StoreNotification | null =
-      await sqlClient.storeNotification.findUnique({
-        where: {
-          id: obj.id,
-        },
-        include: {
-          Recipent: true,
-          Sender: true,
-        },
-      });
-
-    if (notifyTest) {
-      sendStoreNotification(notifyTest);
-    }
-  };
 
   const deleteAllShippingMethods = async () => {
     "use server";
@@ -123,6 +63,9 @@ export default async function StoreAdminDevMaintPage(props: {
   const storeOrderCount = await sqlClient.storeOrder.count();
   console.log(`storeOrderCount:${storeOrderCount}`);
 
+  const storeLedgerCount = await sqlClient.storeLedger.count();
+  console.log(`storeLedgerCount:${storeLedgerCount}`);
+
   const ticketCount = await sqlClient.supportTicket.count();
   console.log(`ticketCount:${ticketCount}`);
 
@@ -139,32 +82,70 @@ export default async function StoreAdminDevMaintPage(props: {
   //<MaintClient storeId={store.id} />
   return (
     <Container>
-      <div className="flex flex-row gap-3">
-        <form action={deleteAllOrders}>
+      <Heading
+        title="Data Maintenance"
+        description="Manage store data -- ONLY DO this in development."
+      />
+
+      <div className="flex flex-row gap-3 pb-2">
+        <div className="relative inline-flex items-center rounded">
+          <span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1">
+            <span className="z-10">{storeLedgerCount}</span>
+          </span>
           <Button
-            type="submit"
+            onClick={deleteAllLedgers}
+            type="button"
             variant="destructive"
+            className="disabled:opacity-50 z-0"
+            size="sm"
+            {...(storeLedgerCount === 0 && { disabled: true })}
+          >
+            <Trash className="size-4 mr-1" /> Delete all Ledger data
+          </Button>
+        </div>
+
+        <div className="relative inline-flex items-center rounded">
+          <span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1">
+            <span className="z-10">{storeOrderCount}</span>
+          </span>
+          <Button
+            onClick={deleteAllOrders}
+            type="button"
+            variant="destructive"
+            className="disabled:opacity-50"
             size="sm"
             {...(storeOrderCount === 0 && { disabled: true })}
           >
             <Trash className="size-4 mr-1" /> Delete all order data
           </Button>
-        </form>
-        <form action={deleteAllSupportTickets}>
+        </div>
+
+        <div className="relative inline-flex items-center rounded">
+          <span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1">
+            <span className="z-10">{ticketCount}</span>
+          </span>
+
           <Button
-            type="submit"
+            onClick={deleteAllSupportTickets}
+            type="button"
             variant="destructive"
+            className="disabled:opacity-50"
             size="sm"
             {...(ticketCount === 0 && { disabled: true })}
           >
             <Trash className="size-4 mr-1" /> Delete all Support Ticket data
           </Button>
-        </form>
-        <form action={sendTestNoficiation}>
-          <Button type="submit" variant="default" size="sm">
-            <Send className="size-4 mr-1" /> Send test nofication
-          </Button>
-        </form>
+        </div>
+
+        <Button
+          onClick={sendTestNoficiation}
+          type="button"
+          variant="default"
+          className="disabled:opacity-50"
+          size="sm"
+        >
+          <Send className="size-4 mr-1" /> Send test nofication
+        </Button>
       </div>
 
       <EditDefaultPrivacy data={privacyPolicy} />

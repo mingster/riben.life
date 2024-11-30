@@ -3,8 +3,7 @@
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 
 import getOrderById from "@/actions/get-order-by_id";
-import getStoreWithProducts from "@/actions/get-store-with-products";
-import type { StoreOrder, StoreWithProducts } from "@/types";
+import type { Store, StoreOrder } from "@/types";
 import { OrderRefundClient } from "./refund-client";
 
 type Params = Promise<{ storeId: string; orderId: string }>;
@@ -17,31 +16,12 @@ export default async function OrderRefundPage(props: {
 }) {
   const params = await props.params;
 
-  await checkStoreAccess(params.storeId);
-  //const store = (await getStoreWithCategories(params.storeId)) as Store;
-  const store = (await getStoreWithProducts(
-    params.storeId,
-  )) as StoreWithProducts;
+  const store = (await checkStoreAccess(params.storeId)) as Store;
 
-  const order = (await getOrderById(params.orderId)) as StoreOrder | null;
-  /*
-  let order = (await sqlClient.storeOrder.findUnique({
-    where: {
-      id: params.orderId,
-    },
-    include: {
-      OrderNotes: true,
-      OrderItemView: {
-        include: {
-          Product: true,
-        },
-      },
-      User: true,
-      ShippingMethod: true,
-      PaymentMethod: true,
-    },
-  })) as StoreOrder | null;
-  */
+  const order = (await getOrderById(params.orderId)) as StoreOrder;
+  if (order === null) {
+    return <div>Order not found</div>;
+  }
 
   //console.log('order', JSON.stringify(order));
 
