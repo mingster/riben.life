@@ -5,23 +5,15 @@ import { sqlClient } from "@/lib/prismadb";
 
 import type { Store, StoreOrder } from "@/types";
 
-
+// display order and its items for user to select items to refund
 const OrderRefundPage = async (props: {
   params: Promise<{ orderId: string; storeId: string }>;
 }) => {
   const params = await props.params;
-  await checkStoreAccess(params.storeId);
-  //const store = (await getStoreWithCategories(params.storeId)) as Store;
-
+  const store = await checkStoreAccess(params.storeId);
 
   //console.log('order', JSON.stringify(order));
   //console.log('payment method', JSON.stringify(order.PaymentMethod));
-
-  const store = (await getStoreById(order.storeId)) as Store;
-
-  // call to payment method's refund api
-  if (order.PaymentMethod?.payUrl === "linepay") {
-  }
 
   return (
     <div className="flex-col">

@@ -1,27 +1,41 @@
+import getOrderById from "@/actions/get-order-by_id";
+import getStoreById from "@/actions/get-store-by_id";
 import { sqlClient } from "@/lib/prismadb";
-import { getNowTimeInTz, getUtcNow } from "@/lib/utils";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
-import isProLevel from "./is-pro-level";
-import getOrderById from "../get-order-by_id";
+import isProLevel from "../is-pro-level";
 
-import getStoreById from "../get-store-by_id";
-
-const MarkAsPaid = async (
+const CashRefund = async (
   orderId: string,
-  checkoutAttributes: string,
-): Promise<StoreOrder> => {
+  refundAmount: number,
+): Promise<boolean> => {
   if (!orderId) {
     throw Error("orderId is required");
   }
 
-  const order = (await getOrderById(orderId)) as StoreOrder;
+  const order = (await getOrderById(orderId)) as StoreOrder | null;
+  if (!order) {
+    throw new Error("order not found");
+  }
   const store = (await getStoreById(order.storeId)) as Store;
+  const ispro = await isProLevel(order.storeId);
 
   if (store === null) throw Error("store is null");
-  if (order === null) throw Error("order is null");
   if (order.PaymentMethod === null) throw Error("PaymentMethod is null");
-  const ispro = await isProLevel(order.storeId);
+
+  // cash refund
+
+  // refund success, update order status
+  await sqlClient.storeOrder.update({
+    where: {
+      id: order.id,
+    },
+    data: {
+      refundAmount: refundAmount,
+      orderStatus: OrderStatus.Refunded,
+      paymentStatus: PaymentStatus.Refunded,
+    },
+  });
 
   // create new entry in store ledger
   //
@@ -38,31 +52,11 @@ const MarkAsPaid = async (
   const balance = Number(lastLedger ? lastLedger.balance : 0);
 
   // fee rate is determined by payment method
-  const fee = -Number(
-    Number(order.orderTotal) * Number(order.PaymentMethod?.fee) +
-      Number(order.PaymentMethod?.feeAdditional),
-  );
-
+  const fee = Number(refundAmount) * Number(order.PaymentMethod?.fee);
   const feeTax = Number(fee * 0.05);
 
   // fee charge by riben.life
-  const platform_fee = ispro ? 0 : -Number(Number(order.orderTotal) * 0.01);
-
-  // mark order as paid
-  await sqlClient.storeOrder.update({
-    where: {
-      id: orderId as string,
-    },
-    data: {
-      isPaid: true,
-      paidDate: getNowTimeInTz(store.defaultTimezone),
-      orderStatus: Number(OrderStatus.Processing),
-      paymentStatus: Number(PaymentStatus.Paid),
-      paymentCost: fee + feeTax + platform_fee,
-      checkoutAttributes: checkoutAttributes || "",
-      updatedAt: getNowTimeInTz(store.defaultTimezone),
-    },
-  });
+  const platform_fee = ispro ? 0 : Number(Number(order.orderTotal) * 0.01);
 
   // avilablity date = order date + payment methods' clear days
   const avaiablityDate = new Date(
@@ -70,12 +64,11 @@ const MarkAsPaid = async (
       order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
   );
 
-  // create store ledger entry
   await sqlClient.storeLedger.create({
     data: {
       orderId: order.id as string,
       storeId: order.storeId as string,
-      amount: order.orderTotal,
+      amount: refundAmount,
       fee: fee + feeTax,
       platformFee: platform_fee,
       currency: order.currency,
@@ -83,12 +76,12 @@ const MarkAsPaid = async (
       note: `order id: ${order.id}`,
       availablity: avaiablityDate,
       balance:
-        balance +
-        Math.round(Number(order.orderTotal) - (fee + feeTax) - platform_fee),
+        balance -
+        Math.round(Number(refundAmount) + (fee + feeTax) + platform_fee),
     },
   });
 
-  return (await getOrderById(orderId)) as StoreOrder;
+  return true;
 };
 
-export default MarkAsPaid;
+export default CashRefund;
