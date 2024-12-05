@@ -2,7 +2,6 @@
 
 ## Installation
 
-
 1. Add the PostgreSQL Repository
 
     To install the latest version of PostgreSQL, add the official PostgreSQL Apt Repository:
@@ -165,6 +164,9 @@
 
     # stm36
     hostssl    all     all     192.154.111.78/32       md5
+
+    # mx1
+    hostssl    all     all     45.77.133.15/32       md5
     ```
 
     This setting allows PostgreSQL to accept connections from the specifed IP address.
@@ -176,6 +178,13 @@
     ``` bash
     sudo systemctl restart postgresql
     sudo systemctl status postgresql
+    ```
+
+    For RHEL systems:
+
+    ``` bash
+    sudo systemctl restart postgresql-17
+    sudo systemctl status postgresql-17
     ```
 
 1. firewall
