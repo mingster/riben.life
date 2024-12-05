@@ -27,8 +27,7 @@ const MarkAsPaid = async (
 
   if (!ispro) {
     usePlatform = true; //for free level, always use platform
-  }
-  else {
+  } else {
     if (store.LINE_PAY_ID !== null || store.STRIPE_SECRET_KEY !== null) {
       //store has its own linepay or stripe
       usePlatform = true;
@@ -49,13 +48,15 @@ const MarkAsPaid = async (
 
   const balance = Number(lastLedger ? lastLedger.balance : 0);
 
-  let fee = 0; let feeTax = 0;
+  let fee = 0;
+  let feeTax = 0;
 
   // if store does not have its own linepay or stripe, calc balance and fee
-  if (usePlatform) { // fee rate is determined by payment method
+  if (usePlatform) {
+    // fee rate is determined by payment method
     fee = -Number(
       Number(order.orderTotal) * Number(order.PaymentMethod?.fee) +
-      Number(order.PaymentMethod?.feeAdditional),
+        Number(order.PaymentMethod?.feeAdditional),
     );
 
     feeTax = Number(fee * 0.05);
@@ -63,7 +64,8 @@ const MarkAsPaid = async (
 
   // fee charge by riben.life
   let platform_fee = 0;
-  if (!ispro) { //always charge platform fee for free store
+  if (!ispro) {
+    //always charge platform fee for free store
     platform_fee = ispro ? 0 : -Number(Number(order.orderTotal) * 0.01);
   }
 
@@ -86,7 +88,7 @@ const MarkAsPaid = async (
   // avilablity date = order date + payment methods' clear days
   const avaiablityDate = new Date(
     order.updatedAt.getTime() +
-    order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
+      order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
   );
 
   // create store ledger entry
@@ -98,7 +100,7 @@ const MarkAsPaid = async (
       fee: fee + feeTax,
       platformFee: platform_fee,
       currency: order.currency,
-      type: usePlatform ? 0 : 1,  // 0: 代收 | 1: store's own payment provider
+      type: usePlatform ? 0 : 1, // 0: 代收 | 1: store's own payment provider
       description: `order # ${order.orderNum}`,
       note: `${order.PaymentMethod.name}, order id: ${order.id}`,
       availablity: avaiablityDate,
