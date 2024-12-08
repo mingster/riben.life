@@ -213,11 +213,11 @@
 ## Setup database
 
 ``` bash
+su -l postgres
 psql
 ```
 
 ``` sql
-
 # in the psql sessesion, create new user as follow:
 CREATE ROLE PSTV_USER WITH LOGIN PASSWORD 'Sup3rS3cret';
 #
@@ -245,8 +245,170 @@ GRANT ALL PRIVILEGES ON DATABASE pstv_web TO pstv_user;
 \q
 ```
 
+## Setup for Incremental Backups
+
+1. Prerequisites
+
+    Ensure you are using PostgreSQL 17 or later. Set up WAL summarization by executing:
+
+    ``` sql
+    ALTER SYSTEM SET summarize_wal = on;
+    SELECT pg_reload_conf();
+    ```
+
+    where is data directory?
+
+    ``` sql
+    SHOW data_directory;
+    ```
+
+1. Create a Full Backup
+    First, perform a full backup using pg_basebackup:
+
+    ``` bash
+    pg_basebackup -D /path/to/full_backup/
+    ```
+
+1. Create an Incremental Backup
+
+    After making changes to your database (e.g., adding tables or data), create an incremental backup:
+
+    ``` bash
+    pg_basebackup --incremental=/path/to/full_backup/backup_manifest -D /path/to/incremental_backup/
+    ```
+
+    The --incremental option requires the path to the manifest file from the previous full or incremental backup.
+
+1. Subsequent Incremental Backups
+
+    You can continue to create additional incremental backups based on previous ones:
+
+    ``` bash
+    pg_basebackup --incremental=/path/to/incremental_backup/backup_manifest -D /path/to/next_incremental_backup/
+    ```
+
+## Restoring from Incremental Backups
+
+To restore from a combination of full and incremental backups, use the pg_combinebackup tool:
+
+``` bash
+pg_combinebackup -o /path/to/restore_directory /path/to/full_backup/ /path/to/incremental_backup/
+```
+
+## Automated Backup
+
+To run the backup scrip manually:
+
+``` bash
+su -l postgres
+bash ~/bin/pg_backup_rotated2.sh
+```
+
+## Continuous Archiving and Point-in-Time Recovery
+
+``` bash
+chown -R postgres:postgres /var/lib/postgresql/
+chmod 700 -R /var/lib/postgresql/
+```
+
+## Postgres Streaming Replication
+
+### Configure the Primary Server
+
+1. Edit postgresql.conf:
+
+    ``` text
+    wal_level = replica
+    max_wal_senders = 3
+    ```
+
+    Update pg_hba.conf to allow replication connections:
+
+    ``` text
+    host replication all <standby_ip>/32 md5
+    ```
+
+1. Create a Replication Role:
+
+    On the primary server, create a user for replication:
+
+    ``` bash
+    psql postgres -U postgres
+    ```
+
+    ``` sql
+    # in the psql sessesion, create new user as follow:
+    CREATE ROLE replica_user WITH REPLICATION LOGIN PASSWORD 'Sup3rS3cret';
+    #
+    # you can \du to list out users.
+
+    #\q to quit psql
+    \q
+    ```
+
+1. Restart
+
+    ``` bash
+    sudo systemctl restart postgresql-17
+    ```
+
+### Set Up the Standby Server
+
+1. Stop PostgreSQL on the standby server:
+
+    ``` bash
+    sudo systemctl stop postgresql-17
+    ```
+
+1. Use pg_basebackup to copy data from the primary:
+
+    ``` bash
+    pg_basebackup -h <primary_ip> -D /var/lib/postgresql/17/main -U replica_user -P --wal-method=stream
+    ```
+
+    e.g.
+
+    ``` bash
+    pg_basebackup -h mx1.mingster.com -D /var/lib/pgsql/17/data -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
+    ```
+
+1. change ownership
+
+``` bash
+sudo chown -R postgres:postgres /var/lib/pgsql/17/main
+chmod -R 775 /var/lib/pgsql/17/main
+```
+
+1. Create a recovery.conf file in the data directory of the standby:
+
+    ``` text
+    standby_mode = 'on'
+    primary_conninfo = 'host=<primary_ip> port=5432 user=replica_user password=your_password'
+    ```
+
+    e.g.
+
+    ``` bash
+    nano /var/lib/pgsql/17/main/recovery.conf
+    ```
+
+    ``` text
+    standby_mode = 'on'
+    primary_conninfo = 'host=mx1.mingster.com port=5432 user=replica_user password=Sup3rS3cret'
+    ```
+
+1. Start the Standby Server:
+
+    ``` bash
+    sudo systemctl start postgresql
+    ```
+
+##  Uninstall
+
+if you fuc'ed up the installation, you might [try this](https://neon.tech/postgresql/postgresql-administration/uninstall-postgresql-ubuntu).
 ## Ref
 
 - [Comprehensive Guide: Setting Up PostgreSQL 17 on Ubuntu](https://www.sqlpassion.at/archive/2024/10/14/comprehensive-guide-setting-up-postgresql-17-on-ubuntu-24-04/)
 - [How to Install PostgreSQL on Ubuntu](https://docs.vultr.com/how-to-install-postgresql-on-ubuntu-24-04)
 - [Use SSL Encryption with PostgreSQL on Ubuntu](https://docs.vultr.com/use-ssl-encryption-with-postgresql-on-ubuntu-20-04)
+- [How To Set Up Continuous Archiving and Perform Point-In-Time-Recovery with PostgreSQL](https://www.digitalocean.com/community/tutorials/how-to-set-up-continuous-archiving-and-perform-point-in-time-recovery-with-postgresql-12-on-ubuntu-20-04)
