@@ -300,9 +300,29 @@ pg_combinebackup -o /path/to/restore_directory /path/to/full_backup/ /path/to/in
 To run the backup scrip manually:
 
 ``` bash
-su -l postgres
-bash ~/bin/pg_backup_rotated2.sh
+su -l postgres /var/lib/postgresql/bin/pg_backup_rotated2.sh
 ```
+
+### Schedule with Cron
+
+To automate this script, you can add it to your crontab:
+
+```bash
+crontab -e
+```
+
+Add a line to schedule it (e.g., every 3 hours):
+
+```bash
+0 */3 * * * su postgres -c "/var/lib/postgresql/bin/pg_backup_rotated2.sh >> /var/log/postgresql/backup.log 2>&1"
+```
+
+Ship backup to other serever
+
+```bash
+0 */3 * * * su postgres -c "/var/lib/postgresql/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1"
+```
+
 
 ## Continuous Archiving and Point-in-Time Recovery
 
