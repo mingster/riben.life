@@ -12,5 +12,6 @@ export const deleteAllOrders = async () => {
   console.log(`${count} order deleted.`);
 
   redirect("/admin/maint");
+
   return count;
 };
