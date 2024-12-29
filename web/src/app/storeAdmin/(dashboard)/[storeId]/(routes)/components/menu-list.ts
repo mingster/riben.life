@@ -237,6 +237,5 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
         },
       ],
     },
-
   ];
 }

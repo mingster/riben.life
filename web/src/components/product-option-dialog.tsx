@@ -709,7 +709,7 @@ export const ProductOptionDialog: React.FC<props> = ({
                           icon={
                             <Minus
                               size={18}
-                              className="dark:text-primary text-secondary"
+                              className="dark:text-primary text-slate-500"
                             />
                           }
                         />
@@ -730,7 +730,7 @@ export const ProductOptionDialog: React.FC<props> = ({
                         icon={
                           <Plus
                             size={18}
-                            className="dark:text-primary text-secondary"
+                            className="dark:text-primary text-slate-500"
                           />
                         }
                       />

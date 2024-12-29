@@ -94,12 +94,10 @@ export default [
     rules: {
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
-      '@next/next/no-img-element': 'off',
+      //'@next/next/no-img-element': 'off',
       // ! TO COMPILE SHADCN EXAMPLES, PLEASE REMOVE AS NEEDED
-      '@next/next/no-html-link-for-pages': 'off',
-
-      //"@typescript-eslint/no-unused-vars": "error",
-      //"@typescript-eslint/no-explicit-any": "error"
+      //'@next/next/no-html-link-for-pages': 'off',
+      '@next/next/no-page-custom-font': 'off',
       "@typescript-eslint/no-var-requires": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "off",

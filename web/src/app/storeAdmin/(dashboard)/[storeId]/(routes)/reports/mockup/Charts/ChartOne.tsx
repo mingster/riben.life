@@ -168,7 +168,7 @@ const ChartOne: React.FC = () => {
               </span>
             </span>
             <div className="w-full">
-              <p className="font-semibold text-secondary">Total Sales</p>
+              <p className="font-semibold text-slate-500">Total Sales</p>
               <p className="text-sm font-medium">12.04.2022 - 12.05.2022</p>
             </div>
           </div>

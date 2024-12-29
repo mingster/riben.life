@@ -9,7 +9,7 @@ import {
   type RequestRequestBody,
   type RequestRequestConfig,
   getLinePayClient,
-  getLinePayClientByStore
+  getLinePayClientByStore,
 } from "@/lib/linepay";
 import type { LinePayClient } from "@/lib/linepay/type";
 import { sqlClient } from "@/lib/prismadb";
@@ -54,7 +54,7 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
       </Suspense>
     );
   }
-  
+
   const store = (await getStoreById(order.storeId)) as Store;
   const linePayClient = await getLinePayClientByStore(store);
 
