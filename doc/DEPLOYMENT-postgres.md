@@ -156,7 +156,7 @@
     sudo nano /etc/postgresql/17/main/pg_hba.conf
     ```
 
-    Add the following line at the end of the file to allow connections from any IP address using MD5 password authentication:
+    Add the following line at the end of the file to allow connections from any IP address using sha-256 password authentication:
 
     ``` text
     # tc2
@@ -297,7 +297,7 @@ pg_combinebackup -o /path/to/restore_directory /path/to/full_backup/ /path/to/in
 
 ## Automated Backup
 
-To run the backup scrip manually:
+To run the backup script manually:
 
 ``` bash
 su -l postgres /var/lib/postgresql/bin/pg_backup_rotated2.sh
@@ -320,7 +320,7 @@ Add a line to schedule it (e.g., every 3 hours):
 Ship backup to other serever
 
 ```bash
-0 */3 * * * su postgres -c "/var/lib/postgresql/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1"
+0 */3 * * * su root -c "/var/lib/postgresql/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1"
 ```
 
 ## Continuous Archiving and Point-in-Time Recovery
@@ -368,7 +368,7 @@ chmod 700 -R /var/lib/postgresql/
 1. Restart
 
     ``` bash
-    sudo systemctl restart postgresql-17
+    sudo systemctl restart postgresql
     ```
 
 ### Set Up the Standby Server
@@ -376,7 +376,7 @@ chmod 700 -R /var/lib/postgresql/
 1. Stop PostgreSQL on the standby server:
 
     ``` bash
-    sudo systemctl stop postgresql-17
+    sudo systemctl stop postgresql
     ```
 
 1. Use pg_basebackup to copy data from the primary:
@@ -388,32 +388,14 @@ chmod 700 -R /var/lib/postgresql/
     e.g.
 
     ``` bash
-    pg_basebackup -h mx1.mingster.com -D /var/lib/pgsql/17/data -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
+    pg_basebackup -h mx1.mingster.com -D /var/lib/postgresql/17/main -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
     ```
 
 1. change ownership
 
-``` bash
-sudo chown -R postgres:postgres /var/lib/pgsql/17/main
-chmod -R 775 /var/lib/pgsql/17/main
-```
-
-1. Create a recovery.conf file in the data directory of the standby:
-
-    ``` text
-    standby_mode = 'on'
-    primary_conninfo = 'host=<primary_ip> port=5432 user=replica_user password=your_password'
-    ```
-
-    e.g.
-
     ``` bash
-    nano /var/lib/pgsql/17/main/recovery.conf
-    ```
-
-    ``` text
-    standby_mode = 'on'
-    primary_conninfo = 'host=mx1.mingster.com port=5432 user=replica_user password=Sup3rS3cret'
+    sudo chown -R postgres:postgres /var/lib/postgresql/17/main/
+    chmod -R 0750 /var/lib/postgresql/17/main/
     ```
 
 1. Start the Standby Server:
@@ -422,9 +404,19 @@ chmod -R 775 /var/lib/pgsql/17/main
     sudo systemctl start postgresql
     ```
 
-##  Uninstall
+    this will start a read-only server.
+
+## Debug
+
+``` bash
+export ${PATH}:/usr/lib/postgresql/17/bin/
+postgres -D /etc/postgresql/17/main/
+```
+
+## Uninstall
 
 if you fuc'ed up the installation, you might [try this](https://neon.tech/postgresql/postgresql-administration/uninstall-postgresql-ubuntu).
+
 ## Ref
 
 - [Comprehensive Guide: Setting Up PostgreSQL 17 on Ubuntu](https://www.sqlpassion.at/archive/2024/10/14/comprehensive-guide-setting-up-postgresql-17-on-ubuntu-24-04/)
