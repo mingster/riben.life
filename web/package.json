@@ -77,7 +77,7 @@
     "jsvectormap": "^1.6.0",
     "lucide-react": "^0.460.0",
     "mongodb": "^6.12.0",
-    "mongoose": "^8.9.2",
+    "mongoose": "^8.9.3",
     "next": "15.0.3",
     "next-auth": "^5.0.0-beta.25",
     "next-qrcode": "^2.5.1",
@@ -85,14 +85,14 @@
     "nextjs-current-url": "^1.0.3",
     "nodemailer": "^6.9.16",
     "postcss-focus-visible": "^10.0.1",
-    "react": "npm:react@19.0.0-rc.1",
+    "react": "^19.0.0",
     "react-apexcharts": "^1.7.0",
     "react-cookie": "^7.2.2",
-    "react-day-picker": "^9.4.4",
-    "react-dom": "npm:react-dom@19.0.0-rc.1",
+    "react-day-picker": "^9.5.0",
+    "react-dom": "^19.0.0",
     "react-google-recaptcha": "^3.1.0",
     "react-hook-form": "^7.54.2",
-    "react-i18next": "^15.2.0",
+    "react-i18next": "^15.4.0",
     "react-icons": "^5.4.0",
     "react-image-file-resizer": "^0.4.8",
     "react-markdown": "^9.0.1",
@@ -123,12 +123,12 @@
     "@types/crypto-js": "^4.2.2",
     "@types/node": "22.9.0",
     "@types/nodemailer": "^6.4.17",
-    "@types/react": "npm:types-react@19.0.0-rc.1",
-    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
+    "@types/react": "19.0.1",
+    "@types/react-dom": "19.0.1",
     "@types/react-google-recaptcha": "^2.1.9",
     "@types/uuid": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.18.2",
-    "@typescript-eslint/parser": "^8.18.2",
+    "@typescript-eslint/eslint-plugin": "^8.19.0",
+    "@typescript-eslint/parser": "^8.19.0",
     "autoprefixer": "^10.4.20",
     "dotenv": "^16.4.7",
     "eslint": "^9.17.0",
@@ -142,11 +142,6 @@
     "prisma": "^6.1.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.2"
-  },
-  "resolutions": {
-    "@types/react": "npm:types-react@19.0.0-rc.1",
-    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1"
-  },
-  "packageManager": "yarn@4.5.1+sha512.341db9396b6e289fecc30cd7ab3af65060e05ebff4b3b47547b278b9e67b08f485ecd8c79006b405446262142c7a38154445ef7f17c1d5d1de7d90bf9ce7054d"
+    "typescript-eslint": "^8.19.0"
+  }
 }

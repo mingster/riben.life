@@ -160,13 +160,13 @@
 
     ``` text
     # tc2
-    hostssl    all     all     220.135.171.33/32       md5
+    hostssl    all     all     220.135.171.33/32       scram-sha-256
 
     # stm36
-    hostssl    all     all     192.154.111.78/32       md5
+    hostssl    all     all     192.154.111.78/32       scram-sha-256
 
     # mx1
-    hostssl    all     all     45.77.133.15/32       md5
+    hostssl    all     all     45.77.133.15/32       scram-sha-256
     ```
 
     This setting allows PostgreSQL to accept connections from the specifed IP address.
@@ -322,7 +322,6 @@ Ship backup to other serever
 ```bash
 0 */3 * * * su postgres -c "/var/lib/postgresql/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1"
 ```
-
 
 ## Continuous Archiving and Point-in-Time Recovery
 
