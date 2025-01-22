@@ -147,6 +147,14 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
         {
           href: `${nav_prefix}/products`,
           label: t("Products"),
+          active: pathname.includes(`${nav_prefix}/products`),
+          icon: Box,
+          submenus: [],
+        },
+        /*
+        {
+          href: `${nav_prefix}/products`,
+          label: t("Products"),
           active: pathname.includes("/products"),
           icon: Box,
           submenus: [
@@ -162,6 +170,7 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
             },
           ],
         },
+        */
         {
           href: `${nav_prefix}/faqCategory`,
           label: t("FAQ"),
