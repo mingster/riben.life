@@ -79,7 +79,7 @@ curl -s https://raw.githubusercontent.com/mingster/dotfiles/master/vscode/instal
 ### [postgres](https://github.com/mingster/dotfiles/blob/master/mac/install_PostgreSQL.sh), the main database
 
 ``` fish
-brew install postgresql@15
+brew install postgresql@17
 
 createuser -s postgres
 ```

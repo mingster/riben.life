@@ -180,7 +180,7 @@ export const StoreHomeContent: React.FC<props> = ({
 
   // http://localhost:3000/4574496e-9759-4d9c-9258-818501418747/dfc853b4-47f5-400c-a2fb-f70f045d65a0
   return (
-    <section className="relative w-full justify-center content-center items-center">
+    <section className="relative w-full place-content-center items-center">
       <div className="px-1">
         {!storeData.isOpen && (
           <h2 className="text-2xl xs:text-xl font-extrabold">

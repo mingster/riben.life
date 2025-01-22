@@ -87,11 +87,11 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
       </CardContent>
       <CardFooter className="place-content-end items-end pt-0 pb-1 flex flex-col">
         <div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-          <div className="justify-self-end place-self-end whitespace-nowrap">
+          <div className="place-self-end whitespace-nowrap">
             {t("orderTotal_label")}
           </div>
 
-          <div className="justify-self-end place-self-end whitespace-nowrap">
+          <div className="place-self-end whitespace-nowrap">
             ${Number(order.orderTotal)} {order.currency}
           </div>
         </div>

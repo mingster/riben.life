@@ -34,8 +34,10 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
-, "src/app/(store)/[storeId]/[tableId]/page.tsx-old", "src/components/store-require-prepaid.-prompt.tsx"  ],
+    ".next/types/**/*.ts",
+    "src/app/(store)/[storeId]/[tableId]/page.tsx-old",
+    "src/components/store-require-prepaid.-prompt.tsx"
+  ],
   "exclude": [
     "node_modules"
   ]
