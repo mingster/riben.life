@@ -59,7 +59,7 @@ export function AdminNavbar({ title }: NavbarProps) {
         </div>
       </div>
 
-      <div className="mx-4 flex h-14 items-center sm:mx-8 items-center justify-end space-x-2">
+      <div className="mx-4 flex h-14 place-items-center sm:mx-8 justify-end space-x-2">
         <div className="flex items-center space-x-4 lg:space-x-0">
           <SheetMenu />
         </div>
