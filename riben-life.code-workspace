@@ -5,6 +5,12 @@
 		},
 		{
 			"path": "doc"
+		},
+		{
+			"path": "bin"
+		},
+		{
+			"path": "fileServer"
 		}
 	],
 	"settings": {

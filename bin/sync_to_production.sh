@@ -12,5 +12,5 @@ cd $HOME
 
 rsync -avz --exclude='*.log' --include='*.conf' \
     --delete --no-perms --no-owner --no-group \
-    $HOME/mx1.mingster.com/etc/postgresql/ \
-    root@mx1.mingster.com:/etc/postgresql/
+    $HOME/mx2.mingster.com/etc/postgresql/ \
+    root@mx2.mingster.com:/etc/postgresql/

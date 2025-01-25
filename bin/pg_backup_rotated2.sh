@@ -57,7 +57,7 @@ fi
 
 function perform_backups() {
     SUFFIX=$1
-    FINAL_BACKUP_DIR=$BACKUP_DIR"$(date +\%Y-\%m-\%d)/$SUFFIX/"
+    FINAL_BACKUP_DIR=$BACKUP_DIR"/$(date +\%Y-\%m-\%d)/$SUFFIX/"
 
     echo "Making backup directory in $FINAL_BACKUP_DIR"
 
@@ -93,7 +93,7 @@ function perform_incremental_backups() {
     echo -e "\n\nPerforming Incremental Backup"
     echo -e "--------------------------------------------\n"
 
-    echo "$BACKUP_DIR$SUFFIX"
+    echo "$BACKUP_DIR/$SUFFIX"
 
     # if incremental backup dir doesn't exist, create it
     if [ ! -d "$BACKUP_DIR$SUFFIX" ]; then
@@ -117,12 +117,12 @@ function perform_incremental_backups() {
 find $BACKUP_DIR -maxdepth 1 -mtime +$DAYS_TO_KEEP -name "*-daily" -exec rm -rf '{}' ';'
 
 SUFFIX="daily"
-BASE_BACKUP_DIR=$BACKUP_DIR"$(date +\%Y-\%m-\%d)/"
+BASE_BACKUP_DIR=$BACKUP_DIR"/$(date +\%Y-\%m-\%d)/"
 
 echo 'backup dir:'
-echo "$BASE_BACKUP_DIR$SUFFIX/"
+echo "$BASE_BACKUP_DIR/$SUFFIX/"
 
-if [ -d "$BACKUP_DIR"$(date +\%Y-\%m-\%d)/$SUFFIX/"" ]; then
+if [ -d "$BACKUP_DIR"/$(date +\%Y-\%m-\%d)/$SUFFIX/"" ]; then
     #full backup exists
     echo 'do incremental backup'
     perform_incremental_backups $BASE_BACKUP_DIR $SUFFIX
