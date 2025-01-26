@@ -20,7 +20,7 @@
     Open a terminal and update your package index to ensure you have the latest information about available packages:
 
     ```bash
-    sudo apt upgrade && sudo apt update
+    sudo apt update -y && sudo apt upgrade
     sudo apt install wget ca-certificates
     ```
 
@@ -37,8 +37,8 @@
     Start the service and enable it to run at boot time:
 
     ``` bash
-    sudo systemctl start postgresql
     sudo systemctl enable postgresql
+    sudo systemctl start postgresql
     ```
 
 1. Check Service Status:
@@ -386,7 +386,7 @@ Add a line to schedule it (e.g., every 3 hours):
 Ship backup to other serever
 
 ```bash
-0 */3 * * * su root -c "/var/lib/postgresql/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1"
+0 */3 * * * su root -c "/var/lib/postgresql/17/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1"
 ```
 
 ## Continuous Archiving and Point-in-Time Recovery
@@ -449,6 +449,15 @@ chmod -R 0750 /var/lib/postgresql/
     sudo systemctl restart postgresql
     ```
 
+1. firewall
+
+    allow standby server(s):
+
+    ``` bash
+    sudo ufw allow proto tcp from 107.150.35.210 to any port 5432
+    sudo ufw allow proto tcp from 107.150.51.226 to any port 5432
+    ```
+
 ### Set Up the Standby Server
 
 1. Stop PostgreSQL on the standby server:
@@ -460,12 +469,16 @@ chmod -R 0750 /var/lib/postgresql/
 1. Use pg_basebackup to copy data from the primary:
 
     ``` bash
-    pg_basebackup -h <primary_ip> -D /var/lib/postgresql/17/main -U replica_user -P --wal-method=stream
+    pg_basebackup -h <primary_ip> -D $dest_dir -U replica_user -P --wal-method=stream
     ```
 
     e.g.
 
     ``` bash
+    pg_basebackup -h mx2.mingster.com -D $desst_dir -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
+
+    mv /var/lib/postgresql/17/main /var/lib/postgresql/17/main-old
+
     pg_basebackup -h mx2.mingster.com -D /var/lib/postgresql/17/main -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
     ```
 
@@ -489,6 +502,10 @@ chmod -R 0750 /var/lib/postgresql/
 ``` bash
 export ${PATH}:/usr/lib/postgresql/17/bin/
 postgres -D /etc/postgresql/17/main/
+```
+
+``` bash
+tail -f /var/log/postgresql/postgresql-17-main.log
 ```
 
 ## Uninstall
