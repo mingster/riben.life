@@ -8,18 +8,21 @@ makedir() {
 }
 
 HOME=~/projects/riben.life/fileServer/deployment/
+
+command="makedir $HOME/mx2.mingster.com/etc/postgresql/; makedir $HOME/mx2.mingster.com/var/lib/postgresql/;"
+#echo $command
+eval $command
+
 cd $HOME
 
 rsync -avz --exclude='*.log' \
     --delete --no-perms --no-owner --no-group \
     --stats --progress --force \
-    root@mx1.mingster.com:/etc/postgresql/ \
-    $HOME/mx1.mingster.com/etc/postgresql/
+    root@mx2.mingster.com:/etc/postgresql/ \
+    $HOME/mx2.mingster.com/etc/postgresql/
 
-makedir $HOME/mx1.mingster.com/var/lib/postgresql/bin/
-
-rsync -avz --exclude='*.log' \
+rsync -avz --exclude='*.log' --exclude='backup' \
     --delete --no-perms --no-owner --no-group \
     --stats --progress --force \
-    root@mx1.mingster.com:/var/lib/postgresql/bin/ \
-    $HOME/mx1.mingster.com/var/lib/postgresql/bin/
+    root@mx2.mingster.com:/var/lib/postgresql/ \
+    $HOME/mx2.mingster.com/var/lib/postgresql/

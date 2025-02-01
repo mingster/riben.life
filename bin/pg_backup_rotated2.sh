@@ -57,7 +57,7 @@ fi
 
 function perform_backups() {
     SUFFIX=$1
-    FINAL_BACKUP_DIR=$BACKUP_DIR"$(date +\%Y-\%m-\%d)/$SUFFIX/"
+    FINAL_BACKUP_DIR=$BACKUP_DIR"/$(date +\%Y-\%m-\%d)/$SUFFIX/"
 
     echo "Making backup directory in $FINAL_BACKUP_DIR"
 
@@ -93,7 +93,7 @@ function perform_incremental_backups() {
     echo -e "\n\nPerforming Incremental Backup"
     echo -e "--------------------------------------------\n"
 
-    echo "$BACKUP_DIR$SUFFIX"
+    echo "$BACKUP_DIR/$SUFFIX"
 
     # if incremental backup dir doesn't exist, create it
     if [ ! -d "$BACKUP_DIR$SUFFIX" ]; then
@@ -105,25 +105,33 @@ function perform_incremental_backups() {
         set +o pipefail
     else
         # otherwise, do subsequent incremental backups
+        echo '  '
+        echo '  '
         echo "Subsequent Incremental Backup"
         #pg_basebackup --incremental=/path/to/incremental_backup/backup_manifest -D /path/to/next_incremental_backup/
         pg_basebackup --incremental=$BACKUP_DIR$SUFFIX/first/backup_manifest -D $BACKUP_DIR$SUFFIX/"$(date +%H_%M)"
     fi
 }
 
-# DAILY BACKUPS
+echo -e "backup dir:"$BACKUP_DIR
 
 # Delete daily backups 7 days old or more
-find $BACKUP_DIR -maxdepth 1 -mtime +$DAYS_TO_KEEP -name "*-daily" -exec rm -rf '{}' ';'
+if [ -d "$BACKUP_DIR" ]; then
+    find $BACKUP_DIR -maxdepth 1 -mtime +$DAYS_TO_KEEP -name "*-daily" -exec rm -rf '{}' ';'
+fi
+
+# DAILY BACKUPS
 
 SUFFIX="daily"
-BASE_BACKUP_DIR=$BACKUP_DIR"$(date +\%Y-\%m-\%d)/"
+BASE_BACKUP_DIR=$BACKUP_DIR"/$(date +\%Y-\%m-\%d)/"
 
-echo 'backup dir:'
-echo "$BASE_BACKUP_DIR$SUFFIX/"
+echo -e "working dir:""$BASE_BACKUP_DIR/$SUFFIX/"
 
-if [ -d "$BACKUP_DIR"$(date +\%Y-\%m-\%d)/$SUFFIX/"" ]; then
+if [ -d "$BACKUP_DIR"/$(date +\%Y-\%m-\%d)/$SUFFIX/"" ]; then
     #full backup exists
+
+    echo '  '
+    echo '  '
     echo 'do incremental backup'
     perform_incremental_backups $BASE_BACKUP_DIR $SUFFIX
     exit 0

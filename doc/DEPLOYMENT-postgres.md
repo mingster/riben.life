@@ -20,7 +20,7 @@
     Open a terminal and update your package index to ensure you have the latest information about available packages:
 
     ```bash
-    sudo apt upgrade && sudo apt update
+    sudo apt update -y && sudo apt upgrade
     sudo apt install wget ca-certificates
     ```
 
@@ -37,8 +37,8 @@
     Start the service and enable it to run at boot time:
 
     ``` bash
-    sudo systemctl start postgresql
     sudo systemctl enable postgresql
+    sudo systemctl start postgresql
     ```
 
 1. Check Service Status:
@@ -75,13 +75,31 @@
 
 ### SSL
 
+1. install certbot
+
+    ``` bash
+    sudo apt install certbot
+    ```
+
+1. Request the SSL certificate
+
+    ``` bash
+    sudo certbot certonly --standalone -d the_host  --key-type rsa
+    ```
+
+    e.g.
+
+    ``` bash
+    sudo certbot certonly --standalone -d mx2.mingster.com  --key-type rsa
+    ```
+
 1. Copy Certificates
 
     You need to copy the generated certificates into the PostgreSQL config directory (usually ```/etc/postgresql/<version>/main/``` or similar). You can create symbolic links for easier management:
 
     ``` bash
-    sudo cp /etc/letsencrypt/live/mx1.mingster.com/fullchain.pem /etc/postgresql/17/main/server.crt
-    sudo cp /etc/letsencrypt/live/mx1.mingster.com/privkey.pem /etc/postgresql/17/main/server.key
+    sudo cp /etc/letsencrypt/live/mx2.mingster.com/fullchain.pem /etc/postgresql/17/main/server.crt
+    sudo cp /etc/letsencrypt/live/mx2.mingster.com/privkey.pem /etc/postgresql/17/main/server.key
     ```
 
 1. Set Permissions
@@ -103,7 +121,7 @@
     ``` bash
     #!/bin/bash
     umask 0177
-    DOMAIN=mx1.mingster.com
+    DOMAIN=mx2.mingster.com
     DATA_DIR=/etc/postgresql/17/main/
     cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem $DATA_DIR/server.crt
     cp /etc/letsencrypt/live/$DOMAIN/privkey.pem $DATA_DIR/server.key
@@ -120,6 +138,19 @@
 
     ``` bash
     sudo certbot renew --force-renewal
+    ```
+
+1. schedule it:
+
+    ```bash
+    crontab -e
+    ```
+
+    And add those line:
+
+    ```bash
+    # renew cert at 3:01AM everyday
+    1   3   *   *   *   certbot renew
     ```
 
 ## Enable Remote Access
@@ -160,13 +191,10 @@
 
     ``` text
     # tc2
-    hostssl    all     all     220.135.171.33/32       scram-sha-256
+    hostssl    all     all     59.126.30.241/32       scram-sha-256
 
-    # stm36
-    hostssl    all     all     192.154.111.78/32       scram-sha-256
-
-    # mx1
-    hostssl    all     all     45.77.133.15/32       scram-sha-256
+    # mx2
+    hostssl    all     all     64.176.50.230/32       scram-sha-256
     ```
 
     This setting allows PostgreSQL to accept connections from the specifed IP address.
@@ -190,27 +218,33 @@
 1. firewall
 
     ``` bash
-    sudo ufw allow 5432
+    # allow only certain client(s)
+    sudo ufw allow proto tcp from 59.126.30.241 to any port 5432
     ```
 
 1. Verify Remote Access
 
-    To test if remote access is working, use a PostgreSQL client from another machine and attempt to connect:
+    Is server running?
 
     ``` bash
     sudo ss -nlt | grep 5432
+    ```
 
+    To test if remote access is working, use a PostgreSQL client from another machine and attempt to connect:
 
+    ``` bash
     psql -h <your_server_ip> -U <your_username> -d <your_database>
     ```
 
     e.g.
 
     ``` bash
-    psql -h mx1.mingster.com -U postgres -d postgres
+    psql -h mx2.mingster.com -U postgres -d postgres
     ```
 
 ## Setup database
+
+On the server:
 
 ``` bash
 su -l postgres
@@ -230,10 +264,10 @@ ALTER ROLE PSTV_USER CREATEDB;
 \q
 ```
 
-reconnect using the new user
+On a clinet machine, reconnect using the new user:
 
 ``` sql
-psql postgres -U pstv_user
+psql -h mx2.mingster.com -d postgres -U pstv_user
 
 # Create new database and its permission:
 CREATE DATABASE pstv_web;
@@ -250,6 +284,11 @@ GRANT ALL PRIVILEGES ON DATABASE pstv_web TO pstv_user;
 1. Prerequisites
 
     Ensure you are using PostgreSQL 17 or later. Set up WAL summarization by executing:
+
+    ``` bash
+    su -l postgres
+    psql
+    ```
 
     ``` sql
     ALTER SYSTEM SET summarize_wal = on;
@@ -269,12 +308,26 @@ GRANT ALL PRIVILEGES ON DATABASE pstv_web TO pstv_user;
     pg_basebackup -D /path/to/full_backup/
     ```
 
+    e.g.
+
+    ``` bash
+    mkdir /var/lib/postgresql/17/backup
+    pg_basebackup -D /var/lib/postgresql/17/backup
+    ```
+
 1. Create an Incremental Backup
 
     After making changes to your database (e.g., adding tables or data), create an incremental backup:
 
     ``` bash
     pg_basebackup --incremental=/path/to/full_backup/backup_manifest -D /path/to/incremental_backup/
+    ```
+
+    e.g.
+
+    ``` bash
+    mkdir /var/lib/postgresql/17/incremental_backup
+    pg_basebackup --incremental=/var/lib/postgresql/17/backup/backup_manifest -D /var/lib/postgresql/17/incremental_backup/
     ```
 
     The --incremental option requires the path to the manifest file from the previous full or incremental backup.
@@ -297,11 +350,24 @@ pg_combinebackup -o /path/to/restore_directory /path/to/full_backup/ /path/to/in
 
 ## Automated Backup
 
-To run the backup script manually:
+1. copy ```$PROJECT_HOME/bin``` to production server
 
-``` bash
-su -l postgres /var/lib/postgresql/bin/pg_backup_rotated2.sh
-```
+    ``` bash
+    cd $PROJECT_HOME
+    scp bin/* root@mx2.mingster.com://var/lib/postgresql/17/bin/
+    ```
+
+1. The setup on the production server:
+
+    ``` bash
+    chown postgres.postgres /var/lib/postgresql/17/bin/
+    ```
+
+1. To run the backup script manually:
+
+    ``` bash
+    su -l postgres /var/lib/postgresql/17/bin/pg_backup_rotated2.sh
+    ```
 
 ### Schedule with Cron
 
@@ -314,20 +380,20 @@ crontab -e
 Add a line to schedule it (e.g., every 3 hours):
 
 ```bash
-0 */3 * * * su postgres -c "/var/lib/postgresql/bin/pg_backup_rotated2.sh >> /var/log/postgresql/backup.log 2>&1"
+0 */3 * * * su postgres -c "/var/lib/postgresql/17/bin/pg_backup_rotated2.sh >> /var/log/postgresql/backup.log 2>&1"
 ```
 
 Ship backup to other serever
 
 ```bash
-0 */3 * * * su root -c "/var/lib/postgresql/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1"
+0 */3 * * * su root -c "/var/lib/postgresql/17/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1"
 ```
 
 ## Continuous Archiving and Point-in-Time Recovery
 
 ``` bash
 chown -R postgres:postgres /var/lib/postgresql/
-chmod 700 -R /var/lib/postgresql/
+chmod -R 0750 /var/lib/postgresql/
 ```
 
 ## Postgres Streaming Replication
@@ -336,12 +402,24 @@ chmod 700 -R /var/lib/postgresql/
 
 1. Edit postgresql.conf:
 
+    ``` bash
+    sudo nano /etc/postgresql/17/main/postgresql.conf
+    ```
+
     ``` text
     wal_level = replica
     max_wal_senders = 3
     ```
 
-    Update pg_hba.conf to allow replication connections:
+    ``` bash
+    sudo systemctl start postgresql
+    ```
+
+1. Update pg_hba.conf to allow replication connections:
+
+    ``` bash
+    sudo nano /etc/postgresql/17/main/pg_hba.conf
+    ```
 
     ``` text
     host replication all <standby_ip>/32 md5
@@ -371,6 +449,15 @@ chmod 700 -R /var/lib/postgresql/
     sudo systemctl restart postgresql
     ```
 
+1. firewall
+
+    allow standby server(s):
+
+    ``` bash
+    sudo ufw allow proto tcp from 107.150.35.210 to any port 5432
+    sudo ufw allow proto tcp from 107.150.51.226 to any port 5432
+    ```
+
 ### Set Up the Standby Server
 
 1. Stop PostgreSQL on the standby server:
@@ -382,13 +469,17 @@ chmod 700 -R /var/lib/postgresql/
 1. Use pg_basebackup to copy data from the primary:
 
     ``` bash
-    pg_basebackup -h <primary_ip> -D /var/lib/postgresql/17/main -U replica_user -P --wal-method=stream
+    pg_basebackup -h <primary_ip> -D $dest_dir -U replica_user -P --wal-method=stream
     ```
 
     e.g.
 
     ``` bash
-    pg_basebackup -h mx1.mingster.com -D /var/lib/postgresql/17/main -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
+    pg_basebackup -h mx2.mingster.com -D $desst_dir -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
+
+    mv /var/lib/postgresql/17/main /var/lib/postgresql/17/main-old
+
+    pg_basebackup -h mx2.mingster.com -D /var/lib/postgresql/17/main -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
     ```
 
 1. change ownership
@@ -411,6 +502,10 @@ chmod 700 -R /var/lib/postgresql/
 ``` bash
 export ${PATH}:/usr/lib/postgresql/17/bin/
 postgres -D /etc/postgresql/17/main/
+```
+
+``` bash
+tail -f /var/log/postgresql/postgresql-17-main.log
 ```
 
 ## Uninstall
