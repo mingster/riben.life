@@ -7,7 +7,7 @@ import { FaDiscord, FaFacebook, FaInstagram, FaLine } from "react-icons/fa";
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { type RefObject, useRef, useState } from "react";
+import { useState } from "react";
 import { BigText, Caption, IconContainer, Paragraph } from "./common";
 
 import { useToast } from "@/components/ui/use-toast";
