@@ -93,7 +93,7 @@ export const columns: ColumnDef<StoreOrderColumn>[] = [
 		accessorKey: "shippingMethod",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("ShippingMethod")} />
+				<DataTableColumnHeader column={column} title={t("shippingMethod")} />
 			);
 		},
 		cell: ({ row }) => {

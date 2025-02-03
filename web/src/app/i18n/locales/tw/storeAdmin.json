@@ -13,9 +13,9 @@
 	"Apply": "套用",
 	"back_to_store": "返回商店首頁",
 	"Balances": "帳務明細",
-	"Balances_usePlatform": "代收款明細",
 	"Balances_available": "可出金金額",
 	"Balances_pending": "金流處理中",
+	"Balances_usePlatform": "代收款明細",
 	"business_hours": "營業時間",
 	"Cancel": "取消",
 	"Canceled": "已取消",
@@ -57,6 +57,7 @@
 	"FaqCategory_Mgmt_descr": "管理常見問題的分類",
 	"FaqCategory_name": "名稱",
 	"FaqCategory_sortOrder": "排序",
+	"Help": "說明文件",
 	"input_placeholder1": "請輸入",
 	"isNotPaid": "未付",
 	"isPaid": "已付款",
@@ -160,6 +161,7 @@
 	"ProductStatus_Deleted": "已刪除",
 	"ProductStatus_Draft": "編輯中",
 	"ProductStatus_Published": "已上架",
+	"QandA": "問題與解答",
 	"Reports": "報表",
 	"RequiredProVersion": "請升級到進階版",
 	"Revenue_Today": "本日營業額",
@@ -277,7 +279,5 @@
 	"Transactions": "訂單紀錄",
 	"Update": "更新",
 	"update_at": "更新時間",
-	"Updated": "已更新",
-	"Help": "說明文件",
-	"QandA": "問題與解答"
+	"Updated": "已更新"
 }
