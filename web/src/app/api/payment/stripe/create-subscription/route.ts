@@ -3,10 +3,10 @@ import Stripe from "stripe";
 
 //create stripe payment intent
 export async function POST(
-  req: Request,
-  //{ params }: { params: { chargeTotal: number } }
+	req: Request,
+	//{ params }: { params: { chargeTotal: number } }
 ) {
-  /*
+	/*
   try {
     const data = await req.json();
     const { name, email, paymentMethod, priceId } = data;

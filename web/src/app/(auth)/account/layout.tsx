@@ -8,23 +8,23 @@ import { use } from "react";
 type Params = Promise<{ storeId: string }>;
 
 export default async function AuthLayout({
-  children,
-  params,
+	children,
+	params,
 }: {
-  children: React.ReactNode;
-  params: Params;
+	children: React.ReactNode;
+	params: Params;
 }) {
-  //const { storeId } = await params;
+	//const { storeId } = await params;
 
-  return (
-    <>
-      <div className="bg-no-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
-        <Navbar title="" />
-        <main className="">{children}</main>
-      </div>
-      <Toaster />
-    </>
-  );
+	return (
+		<>
+			<div className="bg-no-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
+				<Navbar title="" />
+				<main className="">{children}</main>
+			</div>
+			<Toaster />
+		</>
+	);
 }
 
 /*

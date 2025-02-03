@@ -5,17 +5,17 @@ import { CheckAdminApiAccess } from "../../api_helper";
 
 ///!SECTION update default privacy md file in /public/defaults/privacy.md
 export async function POST(req: Request) {
-  CheckAdminApiAccess();
+	CheckAdminApiAccess();
 
-  const body = await req.json();
-  const { privacyPolicy } = body;
+	const body = await req.json();
+	const { privacyPolicy } = body;
 
-  await fs.writeFileSync(
-    `${process.cwd()}/public/defaults/privacy.md`,
-    privacyPolicy,
-  );
+	await fs.writeFileSync(
+		`${process.cwd()}/public/defaults/privacy.md`,
+		privacyPolicy,
+	);
 
-  //console.log(privacyPolicy);
+	//console.log(privacyPolicy);
 
-  return NextResponse.json("ok");
+	return NextResponse.json("ok");
 }

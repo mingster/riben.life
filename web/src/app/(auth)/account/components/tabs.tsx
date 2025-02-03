@@ -16,58 +16,58 @@ import SettingsTab from "./settings-tab";
 type props = { user: User };
 
 export const AccountTabs = ({ user }: props) => {
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng);
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
 
-  const { data: session, status } = useSession();
-  const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState(initialTab || "orders"); //show order tab by default
+	const { data: session, status } = useSession();
+	const searchParams = useSearchParams();
+	const initialTab = searchParams.get("tab");
+	const [activeTab, setActiveTab] = useState(initialTab || "orders"); //show order tab by default
 
-  const handleTabChange = (value: string) => {
-    //update the state
-    setActiveTab(value);
-    // update the URL query parameter
-    //router.push({ query: { tab: value } });
-  };
+	const handleTabChange = (value: string) => {
+		//update the state
+		setActiveTab(value);
+		// update the URL query parameter
+		//router.push({ query: { tab: value } });
+	};
 
-  // if the query parameter changes, update the state
-  useEffect(() => {
-    if (initialTab) setActiveTab(initialTab);
-  }, [initialTab]);
-  //console.log('selectedTab: ' + activeTab);
+	// if the query parameter changes, update the state
+	useEffect(() => {
+		if (initialTab) setActiveTab(initialTab);
+	}, [initialTab]);
+	//console.log('selectedTab: ' + activeTab);
 
-  const title = t("account_page_title");
+	const title = t("account_page_title");
 
-  return (
-    <Container>
-      <Heading title={title} description={""} />
+	return (
+		<Container>
+			<Heading title={title} description={""} />
 
-      <Tabs
-        value={activeTab}
-        defaultValue="orders"
-        onValueChange={handleTabChange}
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="orders">{t("account_tabs_orders")}</TabsTrigger>
-          <TabsTrigger value="address">{t("account_tabs_address")}</TabsTrigger>
-          <TabsTrigger value="account">{t("account_tabs_account")}</TabsTrigger>
-          {/*<TabsTrigger value="password">
+			<Tabs
+				value={activeTab}
+				defaultValue="orders"
+				onValueChange={handleTabChange}
+				className="w-full"
+			>
+				<TabsList className="grid w-full grid-cols-4">
+					<TabsTrigger value="orders">{t("account_tabs_orders")}</TabsTrigger>
+					<TabsTrigger value="address">{t("account_tabs_address")}</TabsTrigger>
+					<TabsTrigger value="account">{t("account_tabs_account")}</TabsTrigger>
+					{/*<TabsTrigger value="password">
             {t("account_tabs_password")}
           </TabsTrigger>
           */}
-        </TabsList>
+				</TabsList>
 
-        <TabsContent value="orders">
-          <OrderTab orders={user.Orders as StoreOrder[]} />
-        </TabsContent>
-        <TabsContent value="address">&nbsp;</TabsContent>
+				<TabsContent value="orders">
+					<OrderTab orders={user.Orders as StoreOrder[]} />
+				</TabsContent>
+				<TabsContent value="address">&nbsp;</TabsContent>
 
-        <TabsContent value="account">
-          <SettingsTab user={user} />
-        </TabsContent>
-        {/*
+				<TabsContent value="account">
+					<SettingsTab user={user} />
+				</TabsContent>
+				{/*
         <TabsContent value="password">
           <Card>
             <CardHeader>
@@ -90,7 +90,7 @@ export const AccountTabs = ({ user }: props) => {
             </CardFooter>
           </Card>
         </TabsContent> */}
-      </Tabs>
-    </Container>
-  );
+			</Tabs>
+		</Container>
+	);
 };

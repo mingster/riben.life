@@ -13,28 +13,28 @@ type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function StoreTablePage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreAccess(params.storeId)) as Store;
 
-  const tables = (await getStoreTables(store.id)) as StoreTables[];
+	const tables = (await getStoreTables(store.id)) as StoreTables[];
 
-  // map FAQ Category to ui
-  const formattedTables: TableColumn[] = tables.map((item: StoreTables) => ({
-    id: item.id.toString(),
-    storeId: store.id.toString(),
-    tableName: item.tableName.toString(),
-    capacity: item.capacity,
-  }));
+	// map FAQ Category to ui
+	const formattedTables: TableColumn[] = tables.map((item: StoreTables) => ({
+		id: item.id.toString(),
+		storeId: store.id.toString(),
+		tableName: item.tableName.toString(),
+		capacity: item.capacity,
+	}));
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        <TableClient data={formattedTables} />
-      </Container>
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<Container>
+				<TableClient data={formattedTables} />
+			</Container>
+		</Suspense>
+	);
 }

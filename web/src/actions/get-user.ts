@@ -6,17 +6,17 @@ import type { StoreOrder, User } from "@/types";
 import type { StoreTables } from "@prisma/client";
 
 const getUser = async (): Promise<User | null> => {
-  const session = await auth();
-  if (!session) {
-    return null;
-  }
+	const session = await auth();
+	if (!session) {
+		return null;
+	}
 
-  const obj = await sqlClient.user.findUnique({
-    where: {
-      id: session.user.id,
-    },
-    include: {
-      /*
+	const obj = await sqlClient.user.findUnique({
+		where: {
+			id: session.user.id,
+		},
+		include: {
+			/*
       NotificationTo: {
         take: 20,
         include: {
@@ -26,27 +26,27 @@ const getUser = async (): Promise<User | null> => {
           updatedAt: "desc",
         },
       },*/
-      Addresses: true,
-      Orders: {
-        include: {
-          ShippingMethod: true,
-          PaymentMethod: true,
-          OrderItemView: true,
-        },
-        orderBy: {
-          updatedAt: "desc",
-        },
-      },
-      Session: true,
-      Account: true,
-    },
-  });
+			Addresses: true,
+			Orders: {
+				include: {
+					ShippingMethod: true,
+					PaymentMethod: true,
+					OrderItemView: true,
+				},
+				orderBy: {
+					updatedAt: "desc",
+				},
+			},
+			Session: true,
+			Account: true,
+		},
+	});
 
-  if (obj) {
-    transformDecimalsToNumbers(obj);
-  }
+	if (obj) {
+		transformDecimalsToNumbers(obj);
+	}
 
-  return obj;
+	return obj;
 };
 
 export default getUser;

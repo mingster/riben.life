@@ -7,50 +7,50 @@ import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 // get unpaid orders in the store.
 export async function GET(
-  req: Request,
-  props: { params: Promise<{ storeId: string }> },
+	req: Request,
+	props: { params: Promise<{ storeId: string }> },
 ) {
-  const params = await props.params;
-  try {
-    CheckStoreAdminApiAccess(params.storeId);
+	const params = await props.params;
+	try {
+		CheckStoreAdminApiAccess(params.storeId);
 
-    const unpaidOrders = (await sqlClient.storeOrder.findMany({
-      where: {
-        storeId: params.storeId,
-        isPaid: false,
-        orderStatus: {
-          not: {
-            in: [OrderStatus.Voided, OrderStatus.Refunded],
-          },
-        },
-        /*
+		const unpaidOrders = (await sqlClient.storeOrder.findMany({
+			where: {
+				storeId: params.storeId,
+				isPaid: false,
+				orderStatus: {
+					not: {
+						in: [OrderStatus.Voided, OrderStatus.Refunded],
+					},
+				},
+				/*
         orderStatus: {
           in: [OrderStatus.Pending, OrderStatus.Processing],
         },*/
-      },
-      include: {
-        OrderNotes: true,
-        OrderItemView: {
-          include: {
-            Product: true,
-          },
-        },
-        User: true,
-        ShippingMethod: true,
-        PaymentMethod: true,
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
-    })) as StoreOrder[];
+			},
+			include: {
+				OrderNotes: true,
+				OrderItemView: {
+					include: {
+						Product: true,
+					},
+				},
+				User: true,
+				ShippingMethod: true,
+				PaymentMethod: true,
+			},
+			orderBy: {
+				updatedAt: "desc",
+			},
+		})) as StoreOrder[];
 
-    transformDecimalsToNumbers(unpaidOrders);
+		transformDecimalsToNumbers(unpaidOrders);
 
-    //console.log("awaiting4ProcessOrders", JSON.stringify(awaiting4ProcessOrders));
-    return NextResponse.json(unpaidOrders);
-  } catch (error) {
-    console.error("[GET_UNPAID_ORDERS]", error);
+		//console.log("awaiting4ProcessOrders", JSON.stringify(awaiting4ProcessOrders));
+		return NextResponse.json(unpaidOrders);
+	} catch (error) {
+		console.error("[GET_UNPAID_ORDERS]", error);
 
-    return new NextResponse("Internal error", { status: 500 });
-  }
+		return new NextResponse("Internal error", { status: 500 });
+	}
 }

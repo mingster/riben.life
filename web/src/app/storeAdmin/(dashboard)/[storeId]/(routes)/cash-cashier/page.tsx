@@ -10,8 +10,8 @@ import { Suspense } from "react";
 import { CashCashier } from "./data-client";
 
 export const metadata: Metadata = {
-  title: "Store Dashboard - Cash Cashier",
-  description: "",
+	title: "Store Dashboard - Cash Cashier",
+	description: "",
 };
 
 // DashboardPage is home of the selected store. It diesplays store operatiing stat such as
@@ -21,26 +21,26 @@ type Params = Promise<{ storeId: string; messageId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function CashCashierAdminPage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  await checkStoreAccess(params.storeId);
-  const store = (await getStoreWithCategories(params.storeId)) as Store;
+	await checkStoreAccess(params.storeId);
+	const store = (await getStoreWithCategories(params.storeId)) as Store;
 
-  const tables = (await sqlClient.storeTables.findMany({
-    where: {
-      storeId: store.id,
-    },
-    orderBy: {
-      tableName: "asc",
-    },
-  })) as StoreTables[];
+	const tables = (await sqlClient.storeTables.findMany({
+		where: {
+			storeId: store.id,
+		},
+		orderBy: {
+			tableName: "asc",
+		},
+	})) as StoreTables[];
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <CashCashier store={store} tables={tables} />
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<CashCashier store={store} tables={tables} />
+		</Suspense>
+	);
 }

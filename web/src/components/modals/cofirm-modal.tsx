@@ -9,50 +9,50 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
 interface props {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  loading: boolean;
-  title: string;
-  description: string;
+	isOpen: boolean;
+	onClose: () => void;
+	onConfirm: () => void;
+	loading: boolean;
+	title: string;
+	description: string;
 }
 
 export const ConfirmModal: React.FC<props> = ({
-  isOpen,
-  onClose,
-  onConfirm,
-  loading,
-  title,
-  description,
+	isOpen,
+	onClose,
+	onConfirm,
+	loading,
+	title,
+	description,
 }) => {
-  const [isMounted, setIsMounted] = useState(false);
+	const [isMounted, setIsMounted] = useState(false);
 
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng);
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
 
-  if (!isMounted) {
-    return null;
-  }
+	if (!isMounted) {
+		return null;
+	}
 
-  return (
-    <Modal
-      title={title}
-      description={description}
-      isOpen={isOpen}
-      onClose={onClose}
-    >
-      <div className="flex w-full items-center justify-end space-x-2 pt-6">
-        <Button disabled={loading} variant="outline" onClick={onClose}>
-          {t("Cancel")}
-        </Button>
-        <Button disabled={loading} variant="destructive" onClick={onConfirm}>
-          {t("confirm")}
-        </Button>
-      </div>
-    </Modal>
-  );
+	return (
+		<Modal
+			title={title}
+			description={description}
+			isOpen={isOpen}
+			onClose={onClose}
+		>
+			<div className="flex w-full items-center justify-end space-x-2 pt-6">
+				<Button disabled={loading} variant="outline" onClick={onClose}>
+					{t("Cancel")}
+				</Button>
+				<Button disabled={loading} variant="destructive" onClick={onConfirm}>
+					{t("confirm")}
+				</Button>
+			</div>
+		</Modal>
+	);
 };

@@ -13,38 +13,38 @@ import { useI18n } from "@/providers/i18n-provider";
 import { type FaqCategoryColumn, columns } from "./columns";
 
 interface FaqCategoryClientProps {
-  data: FaqCategoryColumn[];
+	data: FaqCategoryColumn[];
 }
 
 export const FaqCategoryClient: React.FC<FaqCategoryClientProps> = ({
-  data,
+	data,
 }) => {
-  const params = useParams();
-  const router = useRouter();
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng, "storeAdmin");
+	const params = useParams();
+	const router = useRouter();
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng, "storeAdmin");
 
-  return (
-    <>
-      <div className="flex items-center justify-between">
-        <Heading
-          title={t("FaqCategory_Mgmt")}
-          badge={data.length}
-          description={t("FaqCategory_Mgmt_descr")}
-        />
+	return (
+		<>
+			<div className="flex items-center justify-between">
+				<Heading
+					title={t("FaqCategory_Mgmt")}
+					badge={data.length}
+					description={t("FaqCategory_Mgmt_descr")}
+				/>
 
-        <Button
-          variant={"outline"}
-          onClick={() =>
-            router.push(`/storeAdmin/${params.storeId}/faqCategory/new`)
-          }
-        >
-          <Plus className="mr-0 size-4" />
-          {t("Create")}
-        </Button>
-      </div>
-      <Separator />
-      <DataTable searchKey="name" columns={columns} data={data} />
-    </>
-  );
+				<Button
+					variant={"outline"}
+					onClick={() =>
+						router.push(`/storeAdmin/${params.storeId}/faqCategory/new`)
+					}
+				>
+					<Plus className="mr-0 size-4" />
+					{t("Create")}
+				</Button>
+			</div>
+			<Separator />
+			<DataTable searchKey="name" columns={columns} data={data} />
+		</>
+	);
 };

@@ -7,44 +7,44 @@ import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 // get pending orders in the store.
 export async function GET(
-  req: Request,
-  props: { params: Promise<{ storeId: string }> },
+	req: Request,
+	props: { params: Promise<{ storeId: string }> },
 ) {
-  const params = await props.params;
-  try {
-    CheckStoreAdminApiAccess(params.storeId);
+	const params = await props.params;
+	try {
+		CheckStoreAdminApiAccess(params.storeId);
 
-    const awaitingOrders = (await sqlClient.storeOrder.findMany({
-      where: {
-        storeId: params.storeId,
-        orderStatus: {
-          in: [OrderStatus.Pending],
-        },
-      },
-      include: {
-        OrderNotes: true,
-        OrderItemView: {
-          include: {
-            Product: true,
-          },
-        },
-        User: true,
-        ShippingMethod: true,
-        PaymentMethod: true,
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
-    })) as StoreOrder[];
+		const awaitingOrders = (await sqlClient.storeOrder.findMany({
+			where: {
+				storeId: params.storeId,
+				orderStatus: {
+					in: [OrderStatus.Pending],
+				},
+			},
+			include: {
+				OrderNotes: true,
+				OrderItemView: {
+					include: {
+						Product: true,
+					},
+				},
+				User: true,
+				ShippingMethod: true,
+				PaymentMethod: true,
+			},
+			orderBy: {
+				updatedAt: "desc",
+			},
+		})) as StoreOrder[];
 
-    transformDecimalsToNumbers(awaitingOrders);
+		transformDecimalsToNumbers(awaitingOrders);
 
-    //console.log("awaitingOrders", JSON.stringify(awaitingOrders));
+		//console.log("awaitingOrders", JSON.stringify(awaitingOrders));
 
-    return NextResponse.json(awaitingOrders);
-  } catch (error) {
-    console.error("[GET_PENDING_ORDERS]", error);
+		return NextResponse.json(awaitingOrders);
+	} catch (error) {
+		console.error("[GET_PENDING_ORDERS]", error);
 
-    return new NextResponse("Internal error", { status: 500 });
-  }
+		return new NextResponse("Internal error", { status: 500 });
+	}
 }

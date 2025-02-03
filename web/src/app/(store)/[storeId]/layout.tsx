@@ -15,104 +15,104 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Metadata, ResolvingMetadata } from "next";
 import { redirect } from "next/navigation";
 type Props = {
-  params: Promise<{ storeId: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+	params: Promise<{ storeId: string }>;
+	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export async function generateMetadata(
-  props: Props,
-  parent: ResolvingMetadata,
+	props: Props,
+	parent: ResolvingMetadata,
 ): Promise<Metadata> {
-  const params = await props.params;
-  if (!params.storeId) {
-    return {
-      title: "riben.life",
-    };
-  }
+	const params = await props.params;
+	if (!params.storeId) {
+		return {
+			title: "riben.life",
+		};
+	}
 
-  // read route params
-  const store = (await sqlClient.store.findFirst({
-    where: {
-      id: params.storeId,
-    },
-    include: {
-      Categories: {
-        where: { isFeatured: true },
-        orderBy: { sortOrder: "asc" },
-      },
-      StoreAnnouncement: true,
-    },
-  })) as Store;
+	// read route params
+	const store = (await sqlClient.store.findFirst({
+		where: {
+			id: params.storeId,
+		},
+		include: {
+			Categories: {
+				where: { isFeatured: true },
+				orderBy: { sortOrder: "asc" },
+			},
+			StoreAnnouncement: true,
+		},
+	})) as Store;
 
-  if (!store) return { title: "riben.life" };
+	if (!store) return { title: "riben.life" };
 
-  return {
-    title: store.name,
-    //keywords: searchParams.keywords,
-  };
+	return {
+		title: store.name,
+		//keywords: searchParams.keywords,
+	};
 }
 
 export default async function StoreHomeLayout(props: {
-  params: Promise<{
-    storeId: string;
-  }>;
-  children: React.ReactNode;
+	params: Promise<{
+		storeId: string;
+	}>;
+	children: React.ReactNode;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  const {
-    // will be a page or nested layout
-    children,
-  } = props;
+	const {
+		// will be a page or nested layout
+		children,
+	} = props;
 
-  const store = (await sqlClient.store.findFirst({
-    where: {
-      id: params.storeId,
-    },
-    include: {
-      Categories: {
-        where: { isFeatured: true },
-        orderBy: { sortOrder: "asc" },
-      },
-      StoreAnnouncement: true,
-    },
-  })) as Store;
+	const store = (await sqlClient.store.findFirst({
+		where: {
+			id: params.storeId,
+		},
+		include: {
+			Categories: {
+				where: { isFeatured: true },
+				orderBy: { sortOrder: "asc" },
+			},
+			StoreAnnouncement: true,
+		},
+	})) as Store;
 
-  if (store === null) {
-    redirect("/storeAdmin");
-    //return <Loader/>;
-    //throw new Error("store not found");
-  }
+	if (store === null) {
+		redirect("/storeAdmin");
+		//return <Loader/>;
+		//throw new Error("store not found");
+	}
 
-  transformDecimalsToNumbers(store);
+	transformDecimalsToNumbers(store);
 
-  const storeSettings = (await mongoClient.storeSettings.findFirst({
-    where: {
-      databaseId: params.storeId,
-    },
-  })) as StoreSettings;
-  //console.log(JSON.stringify(store));
+	const storeSettings = (await mongoClient.storeSettings.findFirst({
+		where: {
+			databaseId: params.storeId,
+		},
+	})) as StoreSettings;
+	//console.log(JSON.stringify(store));
 
-  let isStoreOpen = store.isOpen;
-  if (storeSettings != null) {
-    const bizHour = storeSettings.businessHours;
-    if (store.useBusinessHours && bizHour !== null) {
-      const businessHours = new BusinessHours(bizHour);
-      isStoreOpen = businessHours.isOpenNow();
-    }
-  }
+	let isStoreOpen = store.isOpen;
+	if (storeSettings != null) {
+		const bizHour = storeSettings.businessHours;
+		if (store.useBusinessHours && bizHour !== null) {
+			const businessHours = new BusinessHours(bizHour);
+			isStoreOpen = businessHours.isOpenNow();
+		}
+	}
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <div className="bg-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
-        <StoreNavbar visible={true} store={store} />
-        <main>
-          <span className="hash-span" id="top" />
-          {children}
-        </main>
-        <StoreFooter visible={isStoreOpen} store={store} />
-      </div>
-      <Toaster />
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<div className="bg-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
+				<StoreNavbar visible={true} store={store} />
+				<main>
+					<span className="hash-span" id="top" />
+					{children}
+				</main>
+				<StoreFooter visible={isStoreOpen} store={store} />
+			</div>
+			<Toaster />
+		</Suspense>
+	);
 }

@@ -4,18 +4,18 @@ import { StoreOrder } from "prisma/prisma-client";
 // route to payment provider based on region and currency
 //
 const CheckoutHomePage = async (props: {
-  params: Promise<{ orderId: string }>;
+	params: Promise<{ orderId: string }>;
 }) => {
-  const params = await props.params;
-  //console.log('orderId: ' + params.orderId);
+	const params = await props.params;
+	//console.log('orderId: ' + params.orderId);
 
-  if (!params.orderId) {
-    throw new Error("order Id is missing");
-  }
+	if (!params.orderId) {
+		throw new Error("order Id is missing");
+	}
 
-  //redirect(`./stripe/${params.orderId}`);
+	//redirect(`./stripe/${params.orderId}`);
 
-  return <></>;
+	return <></>;
 };
 
 export default CheckoutHomePage;

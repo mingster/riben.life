@@ -16,21 +16,21 @@ import type { ApiHandler, LinePayApiClients } from "../payment-api/type";
  * @returns a handler that retries the request if it fails with a timeout error
  */
 export const createTimeoutRetryHandler =
-  <T extends keyof LinePayApiClients>(
-    maxRetry = 10,
-    retryTimeout = 5000,
-  ): ApiHandler<T> =>
-  async ({ req, next }) =>
-    new Promise((resolve, reject) => {
-      async function f(count = 0) {
-        try {
-          resolve(await next(req));
-        } catch (e) {
-          if (isTimeoutError(e) && count < maxRetry)
-            setTimeout(() => f(count + 1), retryTimeout);
-          else reject(e);
-        }
-      }
+	<T extends keyof LinePayApiClients>(
+		maxRetry = 10,
+		retryTimeout = 5000,
+	): ApiHandler<T> =>
+	async ({ req, next }) =>
+		new Promise((resolve, reject) => {
+			async function f(count = 0) {
+				try {
+					resolve(await next(req));
+				} catch (e) {
+					if (isTimeoutError(e) && count < maxRetry)
+						setTimeout(() => f(count + 1), retryTimeout);
+					else reject(e);
+				}
+			}
 
-      f();
-    });
+			f();
+		});

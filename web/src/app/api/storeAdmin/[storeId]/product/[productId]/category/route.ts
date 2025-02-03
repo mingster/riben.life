@@ -3,42 +3,42 @@ import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 export async function POST(
-  req: Request,
-  props: { params: Promise<{ storeId: string; productId: string }> },
+	req: Request,
+	props: { params: Promise<{ storeId: string; productId: string }> },
 ) {
-  const params = await props.params;
-  CheckStoreAdminApiAccess(params.storeId);
+	const params = await props.params;
+	CheckStoreAdminApiAccess(params.storeId);
 
-  const body = await req.json();
+	const body = await req.json();
 
-  await sqlClient.productCategories.create({
-    data: { ...body },
-  });
+	await sqlClient.productCategories.create({
+		data: { ...body },
+	});
 
-  return NextResponse.json("success", { status: 200 });
+	return NextResponse.json("success", { status: 200 });
 }
 
 export async function DELETE(
-  req: Request,
-  props: { params: Promise<{ storeId: string; productId: string }> },
+	req: Request,
+	props: { params: Promise<{ storeId: string; productId: string }> },
 ) {
-  const params = await props.params;
-  CheckStoreAdminApiAccess(params.storeId);
+	const params = await props.params;
+	CheckStoreAdminApiAccess(params.storeId);
 
-  const body = await req.json();
-  const { categoriesToRemove } = body;
+	const body = await req.json();
+	const { categoriesToRemove } = body;
 
-  //console.log(`categoriesToRemove: ${categoriesToRemove}`);
+	//console.log(`categoriesToRemove: ${categoriesToRemove}`);
 
-  await sqlClient.productCategories.deleteMany({
-    where: {
-      /*
+	await sqlClient.productCategories.deleteMany({
+		where: {
+			/*
       categoryId: {
         contains: categoriesToRemove,
       },*/
-      productId: params.productId,
-    },
-  });
+			productId: params.productId,
+		},
+	});
 
-  return NextResponse.json("success", { status: 200 });
+	return NextResponse.json("success", { status: 200 });
 }

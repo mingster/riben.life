@@ -2,25 +2,25 @@ import type { ConfirmResponseBody } from "../line-pay-api/confirm";
 import { isLinePayApiError } from "../line-pay-api/error/line-pay-api";
 import { isTimeoutError } from "../line-pay-api/error/timeout";
 import {
-  type PaymentDetailsResponseBody,
-  paymentDetailsWithClient,
+	type PaymentDetailsResponseBody,
+	paymentDetailsWithClient,
 } from "../line-pay-api/payment-details";
 import type { RefundResponseBody } from "../line-pay-api/refund";
 import type { HttpClient } from "../line-pay-api/type";
 import { createPaymentApi } from "../payment-api/create";
 import type {
-  ApiHandler,
-  ApiResponse,
-  RequestConfig,
-  ResponseBody,
+	ApiHandler,
+	ApiResponse,
+	RequestConfig,
+	ResponseBody,
 } from "../payment-api/type";
 
 /**
  * Convert confirm response or refund response body to payment details response body
  */
 export type PaymentDetailsConverter<T extends "confirm" | "refund"> = (
-  req: RequestConfig<T>,
-  paymentDetailsResponseBody: PaymentDetailsResponseBody,
+	req: RequestConfig<T>,
+	paymentDetailsResponseBody: PaymentDetailsResponseBody,
 ) => ResponseBody<T>;
 
 /**
@@ -31,21 +31,21 @@ export type PaymentDetailsConverter<T extends "confirm" | "refund"> = (
  * @returns confirm API response body
  */
 export function paymentDetailsToConfirm<T extends "confirm">(
-  req: RequestConfig<T>,
-  paymentDetails: PaymentDetailsResponseBody,
+	req: RequestConfig<T>,
+	paymentDetails: PaymentDetailsResponseBody,
 ): ConfirmResponseBody {
-  const { transactionId } = req;
-  const info = paymentDetails.info.find(
-    (i) => i.transactionId === transactionId,
-  );
+	const { transactionId } = req;
+	const info = paymentDetails.info.find(
+		(i) => i.transactionId === transactionId,
+	);
 
-  if (!info) throw new Error("Transaction ID not found in payment details");
+	if (!info) throw new Error("Transaction ID not found in payment details");
 
-  return {
-    returnCode: paymentDetails.returnCode,
-    returnMessage: paymentDetails.returnMessage,
-    info,
-  };
+	return {
+		returnCode: paymentDetails.returnCode,
+		returnMessage: paymentDetails.returnMessage,
+		info,
+	};
 }
 
 /**
@@ -56,67 +56,67 @@ export function paymentDetailsToConfirm<T extends "confirm">(
  * @returns refund API response body
  */
 export function paymentDetailsToRefund<T extends "refund">(
-  req: RequestConfig<T>,
-  paymentDetails: PaymentDetailsResponseBody,
+	req: RequestConfig<T>,
+	paymentDetails: PaymentDetailsResponseBody,
 ): RefundResponseBody {
-  const { transactionId } = req;
-  const info = paymentDetails.info.find(
-    (i) => i.transactionId === transactionId,
-  );
+	const { transactionId } = req;
+	const info = paymentDetails.info.find(
+		(i) => i.transactionId === transactionId,
+	);
 
-  if (!info) throw new Error("Transaction ID not found in payment details");
+	if (!info) throw new Error("Transaction ID not found in payment details");
 
-  return {
-    returnCode: paymentDetails.returnCode,
-    returnMessage: paymentDetails.returnMessage,
-    info: {
-      refundTransactionId: transactionId,
-      refundTransactionDate: info.transactionDate,
-    },
-  };
+	return {
+		returnCode: paymentDetails.returnCode,
+		returnMessage: paymentDetails.returnMessage,
+		info: {
+			refundTransactionId: transactionId,
+			refundTransactionDate: info.transactionDate,
+		},
+	};
 }
 
 // 1172: There is a record of transaction with the same order number.
 // 1198: API call request has been duplicated.
 const defaultPredicate = (error: unknown) =>
-  isTimeoutError(error) ||
-  (isLinePayApiError(error) &&
-    (error.data.returnCode === "1172" || error.data.returnCode === "1198"));
+	isTimeoutError(error) ||
+	(isLinePayApiError(error) &&
+		(error.data.returnCode === "1172" || error.data.returnCode === "1198"));
 
 async function fix<T extends "confirm" | "refund">(
-  converter: PaymentDetailsConverter<T>,
-  req: RequestConfig<T>,
-  httpClient: HttpClient,
-  error: unknown,
+	converter: PaymentDetailsConverter<T>,
+	req: RequestConfig<T>,
+	httpClient: HttpClient,
+	error: unknown,
 ): Promise<ApiResponse<ResponseBody<T>>> {
-  try {
-    const paymentDetails = createPaymentApi(
-      "paymentDetails",
-      paymentDetailsWithClient,
-      httpClient,
-    );
+	try {
+		const paymentDetails = createPaymentApi(
+			"paymentDetails",
+			paymentDetailsWithClient,
+			httpClient,
+		);
 
-    // Check with payment details API
-    const paymentDetailsResponse = await paymentDetails.send({
-      params: {
-        transactionId: [req.transactionId],
-      },
-    });
+		// Check with payment details API
+		const paymentDetailsResponse = await paymentDetails.send({
+			params: {
+				transactionId: [req.transactionId],
+			},
+		});
 
-    const comments: Record<string, unknown> = {};
+		const comments: Record<string, unknown> = {};
 
-    if (isLinePayApiError(error)) {
-      comments.originalLinePayApiError = error;
-    }
+		if (isLinePayApiError(error)) {
+			comments.originalLinePayApiError = error;
+		}
 
-    return {
-      body: converter(req, paymentDetailsResponse.body),
-      comments,
-    };
-  } catch (paymentDetailsError) {
-    // Failed to fix. Throw the original exception.
-    throw error;
-  }
+		return {
+			body: converter(req, paymentDetailsResponse.body),
+			comments,
+		};
+	} catch (paymentDetailsError) {
+		// Failed to fix. Throw the original exception.
+		throw error;
+	}
 }
 
 /**
@@ -127,16 +127,16 @@ async function fix<T extends "confirm" | "refund">(
  * @returns API handler
  */
 export const createPaymentDetailsRecoveryHandler =
-  <T extends "confirm" | "refund">(
-    converter: PaymentDetailsConverter<T>,
-    predicate = defaultPredicate,
-  ): ApiHandler<T> =>
-  async ({ req, next, httpClient }) => {
-    try {
-      return await next(req);
-    } catch (e) {
-      if (!predicate(e)) throw e;
+	<T extends "confirm" | "refund">(
+		converter: PaymentDetailsConverter<T>,
+		predicate = defaultPredicate,
+	): ApiHandler<T> =>
+	async ({ req, next, httpClient }) => {
+		try {
+			return await next(req);
+		} catch (e) {
+			if (!predicate(e)) throw e;
 
-      return fix(converter, req, httpClient, e);
-    }
-  };
+			return fix(converter, req, httpClient, e);
+		}
+	};

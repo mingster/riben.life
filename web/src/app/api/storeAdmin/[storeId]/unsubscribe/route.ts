@@ -8,27 +8,27 @@ import { NextResponse } from "next/server";
 // called when store operator select the free package (StoreLevel.Free).
 // we will call stripe api to remove the subscription.
 export async function POST(
-  req: Request,
-  props: { params: Promise<{ storeId: string }> },
+	req: Request,
+	props: { params: Promise<{ storeId: string }> },
 ) {
-  const params = await props.params;
-  try {
-    const userId = await IsSignInResponse();
-    if (typeof userId !== "string") {
-      return new NextResponse("Unauthenticated", { status: 400 });
-    }
+	const params = await props.params;
+	try {
+		const userId = await IsSignInResponse();
+		if (typeof userId !== "string") {
+			return new NextResponse("Unauthenticated", { status: 400 });
+		}
 
-    const store = await sqlClient.store.findFirst({
-      where: {
-        id: params.storeId,
-      },
-    });
+		const store = await sqlClient.store.findFirst({
+			where: {
+				id: params.storeId,
+			},
+		});
 
-    if (!store) {
-      return new NextResponse("store not found", { status: 402 });
-    }
+		if (!store) {
+			return new NextResponse("store not found", { status: 402 });
+		}
 
-    /*
+		/*
     if (store.ownerId !== userId) {
       return new NextResponse("Unauthenticated", { status: 401 });
     }
@@ -57,68 +57,68 @@ export async function POST(
     }
     */
 
-    const subscription = await sqlClient.subscription.findUnique({
-      where: {
-        storeId: params.storeId,
-      },
-    });
+		const subscription = await sqlClient.subscription.findUnique({
+			where: {
+				storeId: params.storeId,
+			},
+		});
 
-    if (subscription?.stripeSubscriptionId) {
-      try {
-        const subscriptionSchedule = subscription?.stripeSubscriptionId
-          ? await stripe.subscriptionSchedules.retrieve(
-              subscription.stripeSubscriptionId,
-            )
-          : null;
+		if (subscription?.stripeSubscriptionId) {
+			try {
+				const subscriptionSchedule = subscription?.stripeSubscriptionId
+					? await stripe.subscriptionSchedules.retrieve(
+							subscription.stripeSubscriptionId,
+						)
+					: null;
 
-        if (subscriptionSchedule) {
-          await stripe.subscriptionSchedules.cancel(subscriptionSchedule.id);
+				if (subscriptionSchedule) {
+					await stripe.subscriptionSchedules.cancel(subscriptionSchedule.id);
 
-          if (
-            subscriptionSchedule?.subscription &&
-            typeof subscriptionSchedule.subscription !== "string"
-          ) {
-            await stripe.subscriptions.cancel(
-              subscriptionSchedule.subscription.id,
-            );
-          }
+					if (
+						subscriptionSchedule?.subscription &&
+						typeof subscriptionSchedule.subscription !== "string"
+					) {
+						await stripe.subscriptions.cancel(
+							subscriptionSchedule.subscription.id,
+						);
+					}
 
-          // update in database
-          await sqlClient.subscription.update({
-            where: {
-              storeId: params.storeId,
-            },
-            data: {
-              stripeSubscriptionId: null,
-              status: SubscriptionStatus.Cancelled,
-              note: "Unsubscribed",
-              updatedAt: getUtcNow(),
-            },
-          });
+					// update in database
+					await sqlClient.subscription.update({
+						where: {
+							storeId: params.storeId,
+						},
+						data: {
+							stripeSubscriptionId: null,
+							status: SubscriptionStatus.Cancelled,
+							note: "Unsubscribed",
+							updatedAt: getUtcNow(),
+						},
+					});
 
-          await sqlClient.store.update({
-            where: {
-              id: params.storeId,
-            },
-            data: {
-              level: StoreLevel.Free,
-            },
-          });
-        }
-      } catch (error) {
-        console.log("[SubscriptionPayment_POST]", error);
+					await sqlClient.store.update({
+						where: {
+							id: params.storeId,
+						},
+						data: {
+							level: StoreLevel.Free,
+						},
+					});
+				}
+			} catch (error) {
+				console.log("[SubscriptionPayment_POST]", error);
 
-        return new NextResponse(`Internal error${error}`, { status: 500 });
-      }
-    } else {
-      // Handle the case where subscription or stripeSubscriptionId is null
-      return new NextResponse("Subscription not found", { status: 404 });
-    }
+				return new NextResponse(`Internal error${error}`, { status: 500 });
+			}
+		} else {
+			// Handle the case where subscription or stripeSubscriptionId is null
+			return new NextResponse("Subscription not found", { status: 404 });
+		}
 
-    return NextResponse.json("ok", { status: 200 });
-  } catch (error) {
-    console.log("[SubscriptionPayment_POST]", error);
+		return NextResponse.json("ok", { status: 200 });
+	} catch (error) {
+		console.log("[SubscriptionPayment_POST]", error);
 
-    return new NextResponse(`Internal error${error}`, { status: 500 });
-  }
+		return new NextResponse(`Internal error${error}`, { status: 500 });
+	}
 }

@@ -16,70 +16,70 @@ type Params = Promise<{ storeId: string; tableId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function TableOrderPage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  const store = await getStoreWithProducts(params.storeId);
+	const store = await getStoreWithProducts(params.storeId);
 
-  if (!store) {
-    redirect("/unv");
-  }
+	if (!store) {
+		redirect("/unv");
+	}
 
-  transformDecimalsToNumbers(store);
+	transformDecimalsToNumbers(store);
 
-  const table = (await sqlClient.storeTables.findFirst({
-    where: {
-      id: params.tableId,
-    },
-  })) as StoreTables;
+	const table = (await sqlClient.storeTables.findFirst({
+		where: {
+			id: params.tableId,
+		},
+	})) as StoreTables;
 
-  const storeSettings = (await mongoClient.storeSettings.findFirst({
-    where: {
-      databaseId: params.storeId,
-    },
-  })) as StoreSettings;
-  //console.log(JSON.stringify(storeSettings));
+	const storeSettings = (await mongoClient.storeSettings.findFirst({
+		where: {
+			databaseId: params.storeId,
+		},
+	})) as StoreSettings;
+	//console.log(JSON.stringify(storeSettings));
 
-  let closed_descr = "";
-  let isStoreOpen = store.isOpen;
-  if (store.useBusinessHours && storeSettings.businessHours !== null) {
-    const bizHour = storeSettings.businessHours;
-    const businessHours = new BusinessHours(bizHour);
+	let closed_descr = "";
+	let isStoreOpen = store.isOpen;
+	if (store.useBusinessHours && storeSettings.businessHours !== null) {
+		const bizHour = storeSettings.businessHours;
+		const businessHours = new BusinessHours(bizHour);
 
-    isStoreOpen = businessHours.isOpenNow();
+		isStoreOpen = businessHours.isOpenNow();
 
-    const nextOpeningDate = businessHours.nextOpeningDate();
-    const nextOpeningHour = businessHours.nextOpeningHour();
+		const nextOpeningDate = businessHours.nextOpeningDate();
+		const nextOpeningHour = businessHours.nextOpeningHour();
 
-    closed_descr = `${formatDate(nextOpeningDate, "yyyy-MM-dd")} ${nextOpeningHour}`;
-  }
+		closed_descr = `${formatDate(nextOpeningDate, "yyyy-MM-dd")} ${nextOpeningHour}`;
+	}
 
-  //console.log(`closed_descr: ${closed_descr}`);
-  //console.log(`isStoreOpen: ${isStoreOpen}`);
+	//console.log(`closed_descr: ${closed_descr}`);
+	//console.log(`isStoreOpen: ${isStoreOpen}`);
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        {!isStoreOpen ? (
-          <>
-            <h1>目前店休，無法接受訂單</h1>
-            <div>
-              下次開店時間:
-              {closed_descr}
-            </div>
-          </>
-        ) : (
-          <>
-            <StoreHomeContent
-              storeData={store}
-              mongoData={storeSettings}
-              tableData={table}
-            />
-          </>
-        )}
-      </Container>
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<Container>
+				{!isStoreOpen ? (
+					<>
+						<h1>目前店休，無法接受訂單</h1>
+						<div>
+							下次開店時間:
+							{closed_descr}
+						</div>
+					</>
+				) : (
+					<>
+						<StoreHomeContent
+							storeData={store}
+							mongoData={storeSettings}
+							tableData={table}
+						/>
+					</>
+				)}
+			</Container>
+		</Suspense>
+	);
 }

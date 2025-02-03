@@ -1,84 +1,84 @@
 export type StringNVType = {
-  value: string;
-  label: string;
+	value: string;
+	label: string;
 };
 
 export type GeneralNVType = {
-  value: number;
-  label: string;
+	value: number;
+	label: string;
 };
 export enum ProductStatus {
-  Draft = 0,
-  Published = 1,
-  Archived = 20,
-  Deleted = 30,
+	Draft = 0,
+	Published = 1,
+	Archived = 20,
+	Deleted = 30,
 }
 
 export const ProductStatuses: GeneralNVType[] = [
-  {
-    value: ProductStatus.Draft,
-    label: "Draft",
-  },
-  {
-    value: ProductStatus.Published,
-    label: "Published",
-  },
-  {
-    value: ProductStatus.Archived,
-    label: "Archived",
-  },
+	{
+		value: ProductStatus.Draft,
+		label: "Draft",
+	},
+	{
+		value: ProductStatus.Published,
+		label: "Published",
+	},
+	{
+		value: ProductStatus.Archived,
+		label: "Archived",
+	},
 ];
 
 export enum PayoutScheduleNum {
-  Manual = 0,
-  Auto_Daily = 1,
-  Auto_Weekly = 2,
-  Auto_Monthly = 3,
+	Manual = 0,
+	Auto_Daily = 1,
+	Auto_Weekly = 2,
+	Auto_Monthly = 3,
 }
 
 export const PayoutSchedule: GeneralNVType[] = [
-  {
-    value: PayoutScheduleNum.Manual,
-    label: "Manual",
-  },
-  {
-    value: PayoutScheduleNum.Auto_Daily,
-    label: "Auto_Daily",
-  },
-  {
-    value: PayoutScheduleNum.Auto_Weekly,
-    label: "Auto_Weekly",
-  },
-  {
-    value: PayoutScheduleNum.Auto_Monthly,
-    label: "Auto_Monthly",
-  },
+	{
+		value: PayoutScheduleNum.Manual,
+		label: "Manual",
+	},
+	{
+		value: PayoutScheduleNum.Auto_Daily,
+		label: "Auto_Daily",
+	},
+	{
+		value: PayoutScheduleNum.Auto_Weekly,
+		label: "Auto_Weekly",
+	},
+	{
+		value: PayoutScheduleNum.Auto_Monthly,
+		label: "Auto_Monthly",
+	},
 ];
 
 export enum SubscriptionStatus {
-  Inactive = 0,
-  Active = 1,
-  Cancelled = 20,
+	Inactive = 0,
+	Active = 1,
+	Cancelled = 20,
 }
 
 export enum TicketStatus {
-  Open = 0,
-  Active = 10,
-  Replied = 11,
-  Closed = 20,
-  Postponed = 30,
-  Archived = 40,
-  Merged = 50,
+	Open = 0,
+	Active = 10,
+	Replied = 11,
+	Closed = 20,
+	Postponed = 30,
+	Archived = 40,
+	Merged = 50,
 }
 
 export enum OrderStatus {
-  Pending = 10,
-  Processing = 20,
-  InShipping = 30,
-  Completed = 40,
-  Refunded = 50,
-  Voided = 90,
-  //Cancelled = 100,
+	Pending = 10,
+	Processing = 20,
+	InShipping = 30,
+	Completed = 40,
+	Refunded = 50,
+	Voided = 90,
+	//Cancelled = 100,
 }
 
 /*
@@ -90,19 +90,19 @@ ReturnAuthorized = 30,
   */
 
 export enum StoreLevel {
-  Free = 1,
-  Pro = 2,
-  Multi = 3,
+	Free = 1,
+	Pro = 2,
+	Multi = 3,
 }
 
 export enum PaymentStatus {
-  Pending = 10,
-  SelfPickup = 11,
-  Authorized = 20,
-  Paid = 30,
-  PartiallyRefunded = 40,
-  Refunded = 50,
-  Voided = 60,
+	Pending = 10,
+	SelfPickup = 11,
+	Authorized = 20,
+	Paid = 30,
+	PartiallyRefunded = 40,
+	Refunded = 50,
+	Voided = 60,
 }
 
 /*
@@ -115,26 +115,26 @@ export enum ShippingMethod {
 */
 
 export enum ShippingStatus {
-  ShippigNotRequired = 0,
-  NotYetShipped = 10,
-  PartiallyShipped = 20,
-  Shipped = 30,
-  Delivered = 40,
+	ShippigNotRequired = 0,
+	NotYetShipped = 10,
+	PartiallyShipped = 20,
+	Shipped = 30,
+	Delivered = 40,
 }
 
 export enum ReturnStatus {
-  None = 0,
-  Pending = 10,
-  Received = 20,
-  ReturnAuthorized = 30,
-  ItemRepaired = 40,
-  ItemRefunded = 50,
-  RequestRejected = 60,
-  Cancelled = 70,
+	None = 0,
+	Pending = 10,
+	Received = 20,
+	ReturnAuthorized = 30,
+	ItemRepaired = 40,
+	ItemRefunded = 50,
+	RequestRejected = 60,
+	Cancelled = 70,
 }
 
 export enum PageAction {
-  Create = "Create",
-  Modify = "Modify",
-  Delete = "Delete",
+	Create = "Create",
+	Modify = "Modify",
+	Delete = "Delete",
 }

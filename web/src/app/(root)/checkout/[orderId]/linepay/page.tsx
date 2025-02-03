@@ -5,11 +5,11 @@ import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import {
-  type Currency,
-  type RequestRequestBody,
-  type RequestRequestConfig,
-  getLinePayClient,
-  getLinePayClientByStore,
+	type Currency,
+	type RequestRequestBody,
+	type RequestRequestConfig,
+	getLinePayClient,
+	getLinePayClientByStore,
 } from "@/lib/linepay";
 import type { LinePayClient } from "@/lib/linepay/type";
 import { sqlClient } from "@/lib/prismadb";
@@ -26,107 +26,107 @@ import { Suspense } from "react";
 // https://developers-pay.line.me/online-api
 // https://developers-pay.line.me/online/implement-basic-payment#confirm
 const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
-  const params = await props.params;
-  if (!params.orderId) {
-    throw new Error("order Id is missing");
-  }
-  const headerList = await headers();
-  const host = headerList.get("host"); // stackoverflow.com
-  //const pathname = headerList.get("x-current-path");
-  //console.log("pathname", host, pathname);
-  const isMobile = isMobileUserAgent(headerList.get("user-agent"));
+	const params = await props.params;
+	if (!params.orderId) {
+		throw new Error("order Id is missing");
+	}
+	const headerList = await headers();
+	const host = headerList.get("host"); // stackoverflow.com
+	//const pathname = headerList.get("x-current-path");
+	//console.log("pathname", host, pathname);
+	const isMobile = isMobileUserAgent(headerList.get("user-agent"));
 
-  //console.log('orderId: ' + params.orderId);
+	//console.log('orderId: ' + params.orderId);
 
-  const order = (await getOrderById(params.orderId)) as StoreOrder;
+	const order = (await getOrderById(params.orderId)) as StoreOrder;
 
-  if (!order) {
-    throw new Error("order not found");
-  }
-  //console.log('linepay order', JSON.stringify(order));
+	if (!order) {
+		throw new Error("order not found");
+	}
+	//console.log('linepay order', JSON.stringify(order));
 
-  if (order.isPaid === true) {
-    return (
-      <Suspense fallback={<Loader />}>
-        <Container>
-          <SuccessAndRedirect orderId={order.id} />
-        </Container>
-      </Suspense>
-    );
-  }
+	if (order.isPaid === true) {
+		return (
+			<Suspense fallback={<Loader />}>
+				<Container>
+					<SuccessAndRedirect orderId={order.id} />
+				</Container>
+			</Suspense>
+		);
+	}
 
-  const store = (await getStoreById(order.storeId)) as Store;
-  const linePayClient = await getLinePayClientByStore(store);
+	const store = (await getStoreById(order.storeId)) as Store;
+	const linePayClient = await getLinePayClientByStore(store);
 
-  const env =
-    process.env.NODE_ENV === "development" ? "development" : "production";
+	const env =
+		process.env.NODE_ENV === "development" ? "development" : "production";
 
-  let protocol = "http:";
-  if (env === "production") {
-    protocol = "https:";
-  }
+	let protocol = "http:";
+	if (env === "production") {
+		protocol = "https:";
+	}
 
-  const confirmUrl = `${protocol}//${host}/checkout/${order.id}/linepay/confirmed`;
-  const cancelUrl = `${protocol}//${host}/checkout/${order.id}/linepay/canceled`;
+	const confirmUrl = `${protocol}//${host}/checkout/${order.id}/linepay/confirmed`;
+	const cancelUrl = `${protocol}//${host}/checkout/${order.id}/linepay/canceled`;
 
-  const requestBody: RequestRequestBody = {
-    amount: Number(order.orderTotal),
-    currency: order.currency as Currency,
-    orderId: order.id,
-    packages: order.OrderItemView.map((item) => ({
-      id: item.id,
-      amount: Number(item.unitPrice) * item.quantity,
-      products: [
-        {
-          name: item.name,
-          quantity: item.quantity,
-          price: Number(item.unitPrice),
-        },
-      ],
-    })),
-    redirectUrls: {
-      confirmUrl: confirmUrl,
-      cancelUrl: cancelUrl,
-    },
-  };
+	const requestBody: RequestRequestBody = {
+		amount: Number(order.orderTotal),
+		currency: order.currency as Currency,
+		orderId: order.id,
+		packages: order.OrderItemView.map((item) => ({
+			id: item.id,
+			amount: Number(item.unitPrice) * item.quantity,
+			products: [
+				{
+					name: item.name,
+					quantity: item.quantity,
+					price: Number(item.unitPrice),
+				},
+			],
+		})),
+		redirectUrls: {
+			confirmUrl: confirmUrl,
+			cancelUrl: cancelUrl,
+		},
+	};
 
-  //console.log("linepay request", JSON.stringify(requestBody));
+	//console.log("linepay request", JSON.stringify(requestBody));
 
-  const requestConfig: RequestRequestConfig = {
-    body: requestBody,
-  };
+	const requestConfig: RequestRequestConfig = {
+		body: requestBody,
+	};
 
-  const res = await linePayClient.request.send(requestConfig);
-  //console.log("linepay res", JSON.stringify(res));
+	const res = await linePayClient.request.send(requestConfig);
+	//console.log("linepay res", JSON.stringify(res));
 
-  if (res.body.returnCode === "0000") {
-    const weburl = res.body.info.paymentUrl.web;
-    const appurl = res.body.info.paymentUrl.app;
-    const transactionId = res.body.info.transactionId;
-    const paymentAccessToken = res.body.info.paymentAccessToken;
+	if (res.body.returnCode === "0000") {
+		const weburl = res.body.info.paymentUrl.web;
+		const appurl = res.body.info.paymentUrl.app;
+		const transactionId = res.body.info.transactionId;
+		const paymentAccessToken = res.body.info.paymentAccessToken;
 
-    await sqlClient.storeOrder.update({
-      where: {
-        id: order.id,
-      },
-      data: {
-        checkoutAttributes: transactionId,
-        checkoutRef: paymentAccessToken,
-      },
-    });
+		await sqlClient.storeOrder.update({
+			where: {
+				id: order.id,
+			},
+			data: {
+				checkoutAttributes: transactionId,
+				checkoutRef: paymentAccessToken,
+			},
+		});
 
-    // for pc user, redirect to web
-    // for mobile user, redirect to app
-    if (isMobile) {
-      redirect(appurl);
-    } else {
-      redirect(weburl);
-    }
-  }
+		// for pc user, redirect to web
+		// for mobile user, redirect to app
+		if (isMobile) {
+			redirect(appurl);
+		} else {
+			redirect(weburl);
+		}
+	}
 
-  // something wrong
-  console.error(res.body.returnMessage);
-  throw new Error(res.body.returnMessage);
+	// something wrong
+	console.error(res.body.returnMessage);
+	throw new Error(res.body.returnMessage);
 };
 
 export default PaymentPage;

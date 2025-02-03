@@ -1,188 +1,188 @@
 @tailwind base;
 
 html {
-  height: 100%;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  scroll-behavior: smooth;
-  scroll-padding-top: 65px; /* height of your navbar */
+	height: 100%;
+	font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+	scroll-behavior: smooth;
+	scroll-padding-top: 65px; /* height of your navbar */
 }
 
 body {
-  min-height: 100%;
+	min-height: 100%;
 }
 
 abbr[title] {
-  text-decoration: none;
+	text-decoration: none;
 }
 
 .active-scroll-spy {
-  background-color: #006988;
-  font-weight: bolder;
-  color: #fff;
-  padding: 10px;
-  border-radius: 15px;
-  transition: all 0.5s;
+	background-color: #006988;
+	font-weight: bolder;
+	color: #fff;
+	padding: 10px;
+	border-radius: 15px;
+	transition: all 0.5s;
 }
 .ss-item {
-  margin: 10px;
+	margin: 10px;
 }
 
 .dark {
-  color-scheme: dark;
+	color-scheme: dark;
 }
 
 .beams {
-  background-image: url("../../img/beams/hero@75.jpg");
-  background-size: 150rem;
-  background-blend-mode: multiply;
+	background-image: url("../../img/beams/hero@75.jpg");
+	background-size: 150rem;
+	background-blend-mode: multiply;
 }
 
 [data-theme="dark"] .beams {
-  background-image: url("../../img/beams/hero-dark@90.jpg");
-  background-size: 86.125rem;
-  background-blend-mode: overlay;
+	background-image: url("../../img/beams/hero-dark@90.jpg");
+	background-size: 86.125rem;
+	background-blend-mode: overlay;
 }
 
 .beams-0 {
-  background-image: url("../../img/beams/0.jpg");
-  background-size: 122.375rem 100%;
-  height: 32.9375rem;
-  background-blend-mode: multiply;
-  opacity: 0.3;
+	background-image: url("../../img/beams/0.jpg");
+	background-size: 122.375rem 100%;
+	height: 32.9375rem;
+	background-blend-mode: multiply;
+	opacity: 0.3;
 }
 
 .beams-7 {
-  background-image: url("../../img/beams/7.jpg");
-  background-size: 141.25rem 100%;
-  height: 33.5rem;
-  background-blend-mode: multiply;
-  opacity: 0.3;
+	background-image: url("../../img/beams/7.jpg");
+	background-size: 141.25rem 100%;
+	height: 33.5rem;
+	background-blend-mode: multiply;
+	opacity: 0.3;
 }
 
 .hash-span {
-  margin-top: -100px;
-  padding-bottom: 100px;
-  display: block;
+	margin-top: -100px;
+	padding-bottom: 100px;
+	display: block;
 }
 
 @layer base {
-  a {
-    @apply cursor-pointer;
-  }
+	a {
+		@apply cursor-pointer;
+	}
 
-  a:hover {
-    text-decoration: underline;
-  }
+	a:hover {
+		text-decoration: underline;
+	}
 
-  abbr[title] {
-    text-decoration: none;
-  }
+	abbr[title] {
+		text-decoration: none;
+	}
 
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+	:root {
+		--background: 0 0% 100%;
+		--foreground: 0 0% 3.9%;
 
-    --primary: 0 0% 1%;
-    --primary-foreground: 0 0% 98%;
+		--primary: 0 0% 1%;
+		--primary-foreground: 0 0% 98%;
 
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
+		--secondary: 0 0% 96.1%;
+		--secondary-foreground: 0 0% 9%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+		--destructive: 0 84.2% 60.2%;
+		--destructive-foreground: 0 0% 98%;
 
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
+		--muted: 0 0% 96.1%;
+		--muted-foreground: 0 0% 45.1%;
 
-    --gold: 13 96% 21%;
-    --gold-foreground: 0 0% 98%;
+		--gold: 13 96% 21%;
+		--gold-foreground: 0 0% 98%;
 
-    --descr: 140 100% 16%;
-    --descr-foreground: 0 0% 45.1%;
+		--descr: 140 100% 16%;
+		--descr-foreground: 0 0% 45.1%;
 
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+		--accent: 0 0% 96.1%;
+		--accent-foreground: 0 0% 9%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
+		--popover: 0 0% 100%;
+		--popover-foreground: 0 0% 3.9%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+		--card: 0 0% 100%;
+		--card-foreground: 0 0% 3.9%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 48 96% 89%;
+		--warning: 38 92% 50%;
+		--warning-foreground: 48 96% 89%;
 
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+		--border: 0 0% 89.8%;
+		--input: 0 0% 89.8%;
+		--ring: 0 0% 3.9%;
 
-    --radius: 0.5rem;
-    --link: 38 92% 50%;
+		--radius: 0.5rem;
+		--link: 38 92% 50%;
 
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-  }
+		--chart-1: 12 76% 61%;
+		--chart-2: 173 58% 39%;
+		--chart-3: 197 37% 24%;
+		--chart-4: 43 74% 66%;
+		--chart-5: 27 87% 67%;
+	}
 
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
+	.dark {
+		--background: 0 0% 3.9%;
+		--foreground: 0 0% 98%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
+		--primary: 0 0% 98%;
+		--primary-foreground: 0 0% 9%;
 
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
+		--secondary: 0 0% 14.9%;
+		--secondary-foreground: 0 0% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+		--destructive: 0 62.8% 30.6%;
+		--destructive-foreground: 0 0% 98%;
 
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
+		--muted: 0 0% 14.9%;
+		--muted-foreground: 0 0% 63.9%;
 
-    --gold: 50 86% 45%;
-    --gold-foreground: 0 0% 98%;
+		--gold: 50 86% 45%;
+		--gold-foreground: 0 0% 98%;
 
-    --descr: 140, 100%, 43%, 0.7;
-    --descr-foreground: 0 0% 63.9%;
+		--descr: 140, 100%, 43%, 0.7;
+		--descr-foreground: 0 0% 63.9%;
 
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+		--accent: 0 0% 14.9%;
+		--accent-foreground: 0 0% 98%;
 
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
+		--popover: 0 0% 3.9%;
+		--popover-foreground: 0 0% 98%;
 
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
+		--card: 0 0% 3.9%;
+		--card-foreground: 0 0% 98%;
 
-    --warning: 48 96% 89%;
-    --warning-foreground: 38 92% 50%;
+		--warning: 48 96% 89%;
+		--warning-foreground: 38 92% 50%;
 
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    /*--link: 48 96% 89%;*/
-    --link: 38, 100%, 43%;
+		--border: 0 0% 14.9%;
+		--input: 0 0% 14.9%;
+		--ring: 0 0% 83.1%;
+		/*--link: 48 96% 89%;*/
+		--link: 38, 100%, 43%;
 
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
+		--chart-1: 220 70% 50%;
+		--chart-2: 160 60% 45%;
+		--chart-3: 30 80% 55%;
+		--chart-4: 280 65% 60%;
+		--chart-5: 340 75% 55%;
+	}
 
-  * {
-    @apply border-border;
-  }
+	* {
+		@apply border-border;
+	}
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+	* {
+		@apply border-border;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
 }

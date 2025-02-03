@@ -12,19 +12,19 @@ type Params = Promise<{ storeId: string; orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function OrderEditPage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  await checkStoreAccess(params.storeId);
-  //const store = (await getStoreWithCategories(params.storeId)) as Store;
-  const store = (await getStoreWithProducts(
-    params.storeId,
-  )) as StoreWithProducts;
+	await checkStoreAccess(params.storeId);
+	//const store = (await getStoreWithCategories(params.storeId)) as Store;
+	const store = (await getStoreWithProducts(
+		params.storeId,
+	)) as StoreWithProducts;
 
-  const order = (await getOrderById(params.orderId)) as StoreOrder | null;
-  /*
+	const order = (await getOrderById(params.orderId)) as StoreOrder | null;
+	/*
   let order = (await sqlClient.storeOrder.findUnique({
     where: {
       id: params.orderId,
@@ -43,18 +43,18 @@ export default async function OrderEditPage(props: {
   })) as StoreOrder | null;
   */
 
-  //console.log('order', JSON.stringify(order));
+	//console.log('order', JSON.stringify(order));
 
-  let action = PageAction.Modify;
-  if (order === null) {
-    action = PageAction.Create;
-  }
+	let action = PageAction.Modify;
+	if (order === null) {
+		action = PageAction.Create;
+	}
 
-  return (
-    <div className="flex-col">
-      <div className="flex-1 space-y-4 p-8 pt-6">
-        <OrderEditClient store={store} order={order} action={action} />
-      </div>
-    </div>
-  );
+	return (
+		<div className="flex-col">
+			<div className="flex-1 space-y-4 p-8 pt-6">
+				<OrderEditClient store={store} order={order} action={action} />
+			</div>
+		</div>
+	);
 }

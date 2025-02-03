@@ -6,60 +6,60 @@ import { useEffect, useState } from "react";
 import { useTimer } from "react-timer-hook";
 
 type paymentProps = {
-  orderId: string;
+	orderId: string;
 };
 // show order success prompt and then redirect the customer to view order page (購物明細)
 export const SuccessAndRedirect: React.FC<paymentProps> = ({ orderId }) => {
-  const seconds = 3;
-  const timeStamp = new Date(Date.now() + seconds * 1000);
+	const seconds = 3;
+	const timeStamp = new Date(Date.now() + seconds * 1000);
 
-  return <MyTimer expiryTimestamp={timeStamp} orderId={orderId} />;
+	return <MyTimer expiryTimestamp={timeStamp} orderId={orderId} />;
 };
 
 function MyTimer({
-  expiryTimestamp,
-  orderId,
+	expiryTimestamp,
+	orderId,
 }: { expiryTimestamp: Date; orderId: string }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
-  const router = useRouter();
-  //const session = useSession();
+	const router = useRouter();
+	//const session = useSession();
 
-  const {
-    seconds,
-    minutes,
-    hours,
-    days,
-    isRunning,
-    start,
-    pause,
-    resume,
-    restart,
-  } = useTimer({
-    expiryTimestamp,
-    onExpire: () => {
-      console.warn("onExpire called");
-      //router.reload();
-      router.push("/storeAdmin");
-    },
-  });
+	const {
+		seconds,
+		minutes,
+		hours,
+		days,
+		isRunning,
+		start,
+		pause,
+		resume,
+		restart,
+	} = useTimer({
+		expiryTimestamp,
+		onExpire: () => {
+			console.warn("onExpire called");
+			//router.reload();
+			router.push("/storeAdmin");
+		},
+	});
 
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng, "storeAdmin");
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng, "storeAdmin");
 
-  if (!mounted) return <></>;
+	if (!mounted) return <></>;
 
-  if (!orderId) {
-    return "no order";
-  }
+	if (!orderId) {
+		return "no order";
+	}
 
-  return (
-    <div className="pt-10">
-      <h1>{t("subscription_success_title")}</h1>
-      {t("subscription_success_descr")}
-    </div>
-  );
+	return (
+		<div className="pt-10">
+			<h1>{t("subscription_success_title")}</h1>
+			{t("subscription_success_descr")}
+		</div>
+	);
 }

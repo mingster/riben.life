@@ -7,14 +7,14 @@ import { Suspense } from "react";
 import PaymentStripe from "./components/payment-stripe";
 
 const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
-  const params = await props.params;
-  //console.log('orderId: ' + params.orderId);
+	const params = await props.params;
+	//console.log('orderId: ' + params.orderId);
 
-  if (!params.orderId) {
-    throw new Error("order Id is missing");
-  }
+	if (!params.orderId) {
+		throw new Error("order Id is missing");
+	}
 
-  /*
+	/*
     const session = await getServerSession(authOptions);
     if (!session) {
       //if (status != 'authenticated') {
@@ -25,24 +25,24 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
     const userId = session?.user.id;
     */
 
-  const order = (await getOrderById(params.orderId)) as StoreOrder;
-  //console.log('order: ' + JSON.stringify(order));
+	const order = (await getOrderById(params.orderId)) as StoreOrder;
+	//console.log('order: ' + JSON.stringify(order));
 
-  if (order.isPaid) {
-    return (
-      <Suspense fallback={<Loader />}>
-        <Container>
-          <SuccessAndRedirect orderId={order.id} />
-        </Container>
-      </Suspense>
-    );
-  }
+	if (order.isPaid) {
+		return (
+			<Suspense fallback={<Loader />}>
+				<Container>
+					<SuccessAndRedirect orderId={order.id} />
+				</Container>
+			</Suspense>
+		);
+	}
 
-  return (
-    <div className="px-5 pt-10">
-      <PaymentStripe order={order} />
-    </div>
-  );
+	return (
+		<div className="px-5 pt-10">
+			<PaymentStripe order={order} />
+		</div>
+	);
 };
 
 export default PaymentPage;

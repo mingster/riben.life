@@ -12,12 +12,12 @@ import Currency from "@/components/currency";
 import { DisplayOrderStatus } from "@/components/order-status-display";
 import { Heading } from "@/components/ui/heading";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
 import { formatDateTime, getDateInTz } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
@@ -29,171 +29,171 @@ import Link from "next/link";
 import { ClipLoader } from "react-spinners";
 
 interface props {
-  store: Store;
-  autoAcceptOrder: boolean;
-  orders: StoreOrder[];
-  parentLoading: boolean;
+	store: Store;
+	autoAcceptOrder: boolean;
+	orders: StoreOrder[];
+	parentLoading: boolean;
 }
 
 export const OrderInProgress = ({
-  store,
-  autoAcceptOrder,
-  orders,
-  parentLoading,
+	store,
+	autoAcceptOrder,
+	orders,
+	parentLoading,
 }: props) => {
-  const [mounted, setMounted] = useState(false);
+	const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
-  //const params = useParams();
-  //const router = useRouter();
-  const { toast } = useToast();
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng, "storeAdmin");
+	//const params = useParams();
+	//const router = useRouter();
+	const { toast } = useToast();
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng, "storeAdmin");
 
-  if (parentLoading) {
-    return <ClipLoader color="text-primary" />;
-  }
+	if (parentLoading) {
+		return <ClipLoader color="text-primary" />;
+	}
 
-  const handleChecked = async (orderId: string) => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/mark-as-completed/${orderId}`;
-    await axios.post(url);
+	const handleChecked = async (orderId: string) => {
+		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/mark-as-completed/${orderId}`;
+		await axios.post(url);
 
-    // remove the order from the list
-    orders.filter((order) => order.id !== orderId);
+		// remove the order from the list
+		orders.filter((order) => order.id !== orderId);
 
-    toast({
-      title: t("Order") + t("Updated"),
-      description: "",
-      variant: "success",
-    });
-  };
+		toast({
+			title: t("Order") + t("Updated"),
+			description: "",
+			variant: "success",
+		});
+	};
 
-  if (!mounted) return <></>;
+	if (!mounted) return <></>;
 
-  return (
-    <>
-      <Card>
-        <Heading
-          title={t("Order_accept_mgmt")}
-          description=""
-          badge={orders.length}
-          className="pt-2"
-        />
+	return (
+		<>
+			<Card>
+				<Heading
+					title={t("Order_accept_mgmt")}
+					description=""
+					badge={orders.length}
+					className="pt-2"
+				/>
 
-        <CardContent className="px-0 m-0">
-          {/* display */}
-          <div className="text-muted-foreground text-xs">
-            {orders.length === 0
-              ? t("no_results_found")
-              : autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
-                ? t("Order_accept_mgmt_descr")
-                : t("Order_accept_mgmt_descr2")}
-          </div>
+				<CardContent className="px-0 m-0">
+					{/* display */}
+					<div className="text-muted-foreground text-xs">
+						{orders.length === 0
+							? t("no_results_found")
+							: autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
+								? t("Order_accept_mgmt_descr")
+								: t("Order_accept_mgmt_descr2")}
+					</div>
 
-          {orders.length !== 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {/*單號/桌號*/}
-                  <TableHead className="">{t("Order_number")}</TableHead>
-                  <TableHead className="w-[200px]">
-                    {t("Order_items")}
-                  </TableHead>
-                  <TableHead>{t("Order_note")}</TableHead>
-                  <TableHead className="w-[90px] hidden lg:table-cell">
-                    {t("ordered_at")}
-                  </TableHead>
-                  <TableHead className="w-[90px] text-right">
-                    {t("Order_total")}
-                  </TableHead>
-                  <TableHead className="w-[80px] text-center">
-                    {autoAcceptOrder ? t("Order_accept") : t("Order_accept2")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
+					{orders.length !== 0 && (
+						<Table>
+							<TableHeader>
+								<TableRow>
+									{/*單號/桌號*/}
+									<TableHead className="">{t("Order_number")}</TableHead>
+									<TableHead className="w-[200px]">
+										{t("Order_items")}
+									</TableHead>
+									<TableHead>{t("Order_note")}</TableHead>
+									<TableHead className="w-[90px] hidden lg:table-cell">
+										{t("ordered_at")}
+									</TableHead>
+									<TableHead className="w-[90px] text-right">
+										{t("Order_total")}
+									</TableHead>
+									<TableHead className="w-[80px] text-center">
+										{autoAcceptOrder ? t("Order_accept") : t("Order_accept2")}
+									</TableHead>
+								</TableRow>
+							</TableHeader>
 
-              <TableBody>
-                {orders.map((order: StoreOrder) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="lg:text-2xl font-extrabold">
-                      {order.orderNum}
-                    </TableCell>
+							<TableBody>
+								{orders.map((order: StoreOrder) => (
+									<TableRow key={order.id}>
+										<TableCell className="lg:text-2xl font-extrabold">
+											{order.orderNum}
+										</TableCell>
 
-                    <TableCell className="text-nowrap">
-                      {order.OrderItemView.map((item: orderitemview) => (
-                        <div
-                          key={item.id}
-                        >{`${item.name} x ${item.quantity}`}</div>
-                      ))}
-                    </TableCell>
+										<TableCell className="text-nowrap">
+											{order.OrderItemView.map((item: orderitemview) => (
+												<div
+													key={item.id}
+												>{`${item.name} x ${item.quantity}`}</div>
+											))}
+										</TableCell>
 
-                    <TableCell>
-                      <div className="flex gap-1 text-xs items-center">
-                        <Button
-                          className="text-xs"
-                          variant={"outline"}
-                          size="sm"
-                        >
-                          <Link
-                            href={`/storeAdmin/${order.storeId}/order/${order.id}`}
-                          >
-                            {t("Order_Modify")}
-                          </Link>
-                        </Button>
+										<TableCell>
+											<div className="flex gap-1 text-xs items-center">
+												<Button
+													className="text-xs"
+													variant={"outline"}
+													size="sm"
+												>
+													<Link
+														href={`/storeAdmin/${order.storeId}/order/${order.id}`}
+													>
+														{t("Order_Modify")}
+													</Link>
+												</Button>
 
-                        <div>
-                          {order.isPaid === true ? (
-                            <div className="text-green-700 dark:text-green-700">
-                              {t("isPaid")}
-                            </div>
-                          ) : (
-                            <div className="text-red-400 dark:text-red-700">
-                              {t("isNotPaid")}
-                            </div>
-                          )}
-                        </div>
-                        <div>{order.ShippingMethod?.name}</div>
-                        <div className="hidden lg:table-cell">
-                          {order.PaymentMethod?.name}
-                        </div>
-                        <div>
-                          <DisplayOrderStatus status={order.orderStatus} />
-                        </div>
-                      </div>
+												<div>
+													{order.isPaid === true ? (
+														<div className="text-green-700 dark:text-green-700">
+															{t("isPaid")}
+														</div>
+													) : (
+														<div className="text-red-400 dark:text-red-700">
+															{t("isNotPaid")}
+														</div>
+													)}
+												</div>
+												<div>{order.ShippingMethod?.name}</div>
+												<div className="hidden lg:table-cell">
+													{order.PaymentMethod?.name}
+												</div>
+												<div>
+													<DisplayOrderStatus status={order.orderStatus} />
+												</div>
+											</div>
 
-                      <div className="hidden lg:table-cell text-xs">
-                        {order.OrderNotes.map((note: OrderNote) => (
-                          <div key={note.id}>{note.note}</div>
-                        ))}
-                        <div>{order.User?.name}</div>
-                      </div>
-                    </TableCell>
+											<div className="hidden lg:table-cell text-xs">
+												{order.OrderNotes.map((note: OrderNote) => (
+													<div key={note.id}>{note.note}</div>
+												))}
+												<div>{order.User?.name}</div>
+											</div>
+										</TableCell>
 
-                    <TableCell className="hidden lg:table-cell text-xs">
-                      {/*format(getDateInTz(new Date(order.updatedAt), store.defaultTimezone), "yyyy-MM-dd HH:mm:ss")*/}
-                      {formatDateTime(order.updatedAt)}
-                    </TableCell>
+										<TableCell className="hidden lg:table-cell text-xs">
+											{/*format(getDateInTz(new Date(order.updatedAt), store.defaultTimezone), "yyyy-MM-dd HH:mm:ss")*/}
+											{formatDateTime(order.updatedAt)}
+										</TableCell>
 
-                    <TableCell className="text-right text-2xl font-extrabold">
-                      <Currency value={Number(order.orderTotal)} />
-                    </TableCell>
+										<TableCell className="text-right text-2xl font-extrabold">
+											<Currency value={Number(order.orderTotal)} />
+										</TableCell>
 
-                    <TableCell className="bg-slate-200 dark:bg-slate-900 text-center">
-                      <Checkbox
-                        value={order.id}
-                        onClick={() => handleChecked(order.id)}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </>
-  );
+										<TableCell className="bg-slate-200 dark:bg-slate-900 text-center">
+											<Checkbox
+												value={order.id}
+												onClick={() => handleChecked(order.id)}
+											/>
+										</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
+					)}
+				</CardContent>
+			</Card>
+		</>
+	);
 };

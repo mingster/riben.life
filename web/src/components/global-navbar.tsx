@@ -18,56 +18,56 @@ import Link from "next/link";
 //import { useTranslation } from '@/app/i18n/client';
 
 interface NavbarProps {
-  title: string;
+	title: string;
 }
 
 export function Navbar({ title }: NavbarProps) {
-  const [mounted, setMounted] = useState(false);
+	const [mounted, setMounted] = useState(false);
 
-  const session = useSession();
-  const user = session.data?.user;
+	const session = useSession();
+	const user = session.data?.user;
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  if (!mounted) return <></>;
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+	if (!mounted) return <></>;
 
-  /*
+	/*
   if (process.env.NODE_ENV === 'development') {
     log.debug('session: ' + JSON.stringify(session));
     log.debug('user: ' + JSON.stringify(user));
   }
   */
-  const logo = null;
+	const logo = null;
 
-  return (
-    <header className="sticky top-0 z-10 w-full">
-      <div className="mx-4 flex h-14 items-center sm:mx-8">
-        <div className="flex items-center space-x-4 lg:space-x-0">
-          <Link href="/" className="flex cursor-pointer">
-            {logo != null ? (
-              <>
-                <Image
-                  src={logo}
-                  className="h-17 w-100 pl-0 pt-0"
-                  alt={"LOGO"}
-                />
-              </>
-            ) : (
-              <>
-                <HomeIcon className="mr-0 size-4" />
-                <h1 className="font-bold">{title}</h1>
-              </>
-            )}
-          </Link>
-        </div>
-        <div className="flex flex-1 items-center justify-end space-x-1">
-          <ThemeToggler />
-          <DropdownNotification />
-          <DropdownUser user={user} />
-          <DropdownCart />
-        </div>
-      </div>
-    </header>
-  );
+	return (
+		<header className="sticky top-0 z-10 w-full">
+			<div className="mx-4 flex h-14 items-center sm:mx-8">
+				<div className="flex items-center space-x-4 lg:space-x-0">
+					<Link href="/" className="flex cursor-pointer">
+						{logo != null ? (
+							<>
+								<Image
+									src={logo}
+									className="h-17 w-100 pl-0 pt-0"
+									alt={"LOGO"}
+								/>
+							</>
+						) : (
+							<>
+								<HomeIcon className="mr-0 size-4" />
+								<h1 className="font-bold">{title}</h1>
+							</>
+						)}
+					</Link>
+				</div>
+				<div className="flex flex-1 items-center justify-end space-x-1">
+					<ThemeToggler />
+					<DropdownNotification />
+					<DropdownUser user={user} />
+					<DropdownCart />
+				</div>
+			</div>
+		</header>
+	);
 }

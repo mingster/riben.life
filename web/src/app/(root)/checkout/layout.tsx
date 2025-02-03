@@ -7,15 +7,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { Loader } from "@/components/ui/loader";
 import { Suspense } from "react";
 export default async function StoreHomeLayout({
-  children, // will be a page or nested layout
+	children, // will be a page or nested layout
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  return (
-    <Suspense fallback={<Loader />}>
-      <Navbar title="" />
-      <Container>{children}</Container>
-      <Toaster />
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<Navbar title="" />
+			<Container>{children}</Container>
+			<Toaster />
+		</Suspense>
+	);
 }

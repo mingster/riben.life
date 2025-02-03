@@ -1,8 +1,8 @@
 {
-"TimerFilterSelections_f1": "is in the last",
-"TimerFilterSelections_f2": "is equal to",
-"TimerFilterSelections_f3": "is between",
-"TimerFilterSelections_f4": "is on or after",
-"TimerFilterSelections_f5": "is before or on",
-"days": "days"
+	"TimerFilterSelections_f1": "is in the last",
+	"TimerFilterSelections_f2": "is equal to",
+	"TimerFilterSelections_f3": "is between",
+	"TimerFilterSelections_f4": "is on or after",
+	"TimerFilterSelections_f5": "is before or on",
+	"days": "days"
 }

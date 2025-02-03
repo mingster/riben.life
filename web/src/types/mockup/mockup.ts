@@ -1,3 +1,3 @@
 export type Store = {
-  defaultLocale: string;
+	defaultLocale: string;
 };

@@ -3,9 +3,9 @@ import type { MouseEventHandler } from "react";
 import { cn } from "@/lib/utils";
 
 interface IconButtonProps {
-  onClick?: MouseEventHandler<HTMLButtonElement> | undefined;
-  icon: React.ReactElement;
-  className?: string;
+	onClick?: MouseEventHandler<HTMLButtonElement> | undefined;
+	icon: React.ReactElement;
+	className?: string;
 }
 
 const defaultStyles = `
@@ -24,19 +24,19 @@ transition
 `;
 
 const IconButton: React.FC<IconButtonProps> = ({
-  onClick,
-  icon,
-  className,
+	onClick,
+	icon,
+	className,
 }) => {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={className === "" ? defaultStyles : className}
-    >
-      {icon}
-    </button>
-  );
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			className={className === "" ? defaultStyles : className}
+		>
+			{icon}
+		</button>
+	);
 };
 
 export default IconButton;

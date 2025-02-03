@@ -1,11 +1,11 @@
 export function Widont({
-  children,
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  if (typeof children !== "string") {
-    return children;
-  }
+	if (typeof children !== "string") {
+		return children;
+	}
 
-  return children.replace(/ ([^ ]+)$/, "\u00A0$1");
+	return children.replace(/ ([^ ]+)$/, "\u00A0$1");
 }

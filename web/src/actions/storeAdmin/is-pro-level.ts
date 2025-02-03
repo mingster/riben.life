@@ -3,25 +3,25 @@ import { StoreLevel } from "@/types/enum";
 import type { Store } from "@prisma/client";
 
 const isProLevel = async (storeId: string): Promise<boolean> => {
-  if (!storeId) {
-    throw Error("storeId is required");
-  }
+	if (!storeId) {
+		throw Error("storeId is required");
+	}
 
-  const store = await sqlClient.store.findFirst({
-    where: {
-      id: storeId,
-    },
-  });
-  if (!store) {
-    return false;
-  }
+	const store = await sqlClient.store.findFirst({
+		where: {
+			id: storeId,
+		},
+	});
+	if (!store) {
+		return false;
+	}
 
-  //console.log("store level", store.level);
+	//console.log("store level", store.level);
 
-  if (store.level === StoreLevel.Free) return false;
+	if (store.level === StoreLevel.Free) return false;
 
-  if (store.level === StoreLevel.Pro || store.level === StoreLevel.Multi) {
-    /*
+	if (store.level === StoreLevel.Pro || store.level === StoreLevel.Multi) {
+		/*
     await sqlClient.subscription.update({
       where: {
         storeId,
@@ -32,20 +32,20 @@ const isProLevel = async (storeId: string): Promise<boolean> => {
     });
     */
 
-    const subscriptions = await sqlClient.subscription.findUnique({
-      where: {
-        storeId,
-      },
-    });
+		const subscriptions = await sqlClient.subscription.findUnique({
+			where: {
+				storeId,
+			},
+		});
 
-    //console.log("store is pro. exp is: ", subscriptions?.expiration);
+		//console.log("store is pro. exp is: ", subscriptions?.expiration);
 
-    if (subscriptions && subscriptions.expiration > new Date()) {
-      return true;
-    }
-  }
+		if (subscriptions && subscriptions.expiration > new Date()) {
+			return true;
+		}
+	}
 
-  return false;
+	return false;
 };
 
 export default isProLevel;
