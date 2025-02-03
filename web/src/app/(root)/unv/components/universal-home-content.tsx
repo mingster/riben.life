@@ -21,15 +21,15 @@ import { Footer } from "./Footer";
 import { UseCases } from "./UseCases";
 
 export const UniversalHomeContent = () => {
-  const { toast } = useToast();
+	const { toast } = useToast();
 
-  return (
-    <>
-      <NavBar />
+	return (
+		<>
+			<NavBar />
 
-      <div className="mb-20 overflow-hidden sm:mb-32 md:mb-40 p">
-        <Header />
-        {/*
+			<div className="mb-20 overflow-hidden sm:mb-32 md:mb-40 p">
+				<Header />
+				{/*
         <section className="px-8 mt-20 text-center sm:mt-32 md:mt-40">
           <figure>
             <blockquote>
@@ -70,15 +70,15 @@ export const UniversalHomeContent = () => {
           </figure>
         </section>
          */}
-      </div>
-      <div className="flex flex-col pt-20 mb-20 overflow-hidden gap-y-20 sm:pt-32 sm:mb-32 sm:gap-y-32 md:pt-40 md:mb-40 md:gap-y-40">
-        <ScrollSpy scrollThrottle={100} useBoxMethod={false}>
-          <UseCases />
-          <Features />
-          <Cost />
-          <AboutUs />
+			</div>
+			<div className="flex flex-col pt-20 mb-20 overflow-hidden gap-y-20 sm:pt-32 sm:mb-32 sm:gap-y-32 md:pt-40 md:mb-40 md:gap-y-40">
+				<ScrollSpy scrollThrottle={100} useBoxMethod={false}>
+					<UseCases />
+					<Features />
+					<Cost />
+					<AboutUs />
 
-          {/*
+					{/*
           <FAQ />
           <Testimonials />
           <StateVariants />
@@ -88,9 +88,9 @@ export const UniversalHomeContent = () => {
           <ModernFeatures />
           <ReadyMadeComponents />
           */}
-        </ScrollSpy>
-      </div>
-      <Footer />
-    </>
-  );
+				</ScrollSpy>
+			</div>
+			<Footer />
+		</>
+	);
 };

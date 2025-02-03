@@ -1,7 +1,7 @@
 import { Loader } from "@/components/ui/loader";
 
 const LoadingPage = () => {
-  return <Loader />;
+	return <Loader />;
 };
 
 export default LoadingPage;

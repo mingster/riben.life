@@ -10,22 +10,22 @@ import type { StoreNotification } from "prisma/prisma-client";
 //import type { StoreNotification } from "@/types";
 
 export async function CreateNotification(values: StoreNotification) {
-  const session = (await auth()) as Session;
-  //const session = (await getServerSession(authOptions)) as Session;
-  const userId = IsSignInResponse();
-  if (typeof userId !== "string") {
-    throw Error("Unauthorized");
-  }
+	const session = (await auth()) as Session;
+	//const session = (await getServerSession(authOptions)) as Session;
+	const userId = IsSignInResponse();
+	if (typeof userId !== "string") {
+		throw Error("Unauthorized");
+	}
 
-  const email = session?.user?.email;
+	const email = session?.user?.email;
 
-  if (!email) {
-    throw Error("Unauthorized");
-  }
+	if (!email) {
+		throw Error("Unauthorized");
+	}
 
-  const obj = await sqlClient.storeNotification.create({
-    data: { ...values },
-  });
+	const obj = await sqlClient.storeNotification.create({
+		data: { ...values },
+	});
 
-  revalidatePath("/");
+	revalidatePath("/");
 }

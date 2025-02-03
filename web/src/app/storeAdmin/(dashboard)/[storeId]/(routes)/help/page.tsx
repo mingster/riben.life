@@ -7,19 +7,19 @@ type Params = Promise<{ orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function HelpPage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
-  const searchParams = await props.searchParams;
-  const orderId = params.orderId;
-  const query = searchParams.query;
+	const params = await props.params;
+	const searchParams = await props.searchParams;
+	const orderId = params.orderId;
+	const query = searchParams.query;
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        <FaqClient />
-      </Container>
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<Container>
+				<FaqClient />
+			</Container>
+		</Suspense>
+	);
 }

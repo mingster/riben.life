@@ -12,14 +12,14 @@ type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function OrderAwaiting4Processing(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreAccess(params.storeId)) as Store;
 
-  /*
+	/*
   const pendingOrders = (await sqlClient.storeOrder.findMany({
     where: {
       storeId: params.storeId,
@@ -50,11 +50,11 @@ export default async function OrderAwaiting4Processing(props: {
 
   */
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        <Awaiting4ProcessingClient store={store} />
-      </Container>
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<Container>
+				<Awaiting4ProcessingClient store={store} />
+			</Container>
+		</Suspense>
+	);
 }

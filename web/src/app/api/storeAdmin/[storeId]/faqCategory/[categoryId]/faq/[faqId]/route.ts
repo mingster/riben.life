@@ -4,72 +4,72 @@ import { NextResponse } from "next/server";
 
 ///!SECTION update faq record in database.
 export async function PATCH(
-  req: Request,
-  props: {
-    params: Promise<{ storeId: string; categoryId: string; faqId: string }>;
-  },
+	req: Request,
+	props: {
+		params: Promise<{ storeId: string; categoryId: string; faqId: string }>;
+	},
 ) {
-  const params = await props.params;
-  try {
-    CheckStoreAdminApiAccess(params.storeId);
+	const params = await props.params;
+	try {
+		CheckStoreAdminApiAccess(params.storeId);
 
-    if (!params.categoryId) {
-      return new NextResponse("category id is required", { status: 401 });
-    }
+		if (!params.categoryId) {
+			return new NextResponse("category id is required", { status: 401 });
+		}
 
-    if (!params.faqId) {
-      return new NextResponse("faq id is required", { status: 402 });
-    }
+		if (!params.faqId) {
+			return new NextResponse("faq id is required", { status: 402 });
+		}
 
-    const body = await req.json();
-    const obj = await sqlClient.faq.update({
-      where: {
-        id: params.faqId,
-      },
-      data: { ...body },
-    });
+		const body = await req.json();
+		const obj = await sqlClient.faq.update({
+			where: {
+				id: params.faqId,
+			},
+			data: { ...body },
+		});
 
-    //console.log(`update Faq: ${JSON.stringify(obj)}`);
+		//console.log(`update Faq: ${JSON.stringify(obj)}`);
 
-    return NextResponse.json(obj);
-  } catch (error) {
-    console.log("[FAQ_PATCH]", error);
+		return NextResponse.json(obj);
+	} catch (error) {
+		console.log("[FAQ_PATCH]", error);
 
-    return new NextResponse(`Internal error${error}`, { status: 500 });
-  }
+		return new NextResponse(`Internal error${error}`, { status: 500 });
+	}
 }
 
 ///!SECTION delete faq record in database.
 export async function DELETE(
-  req: Request,
-  props: {
-    params: Promise<{ storeId: string; categoryId: string; faqId: string }>;
-  },
+	req: Request,
+	props: {
+		params: Promise<{ storeId: string; categoryId: string; faqId: string }>;
+	},
 ) {
-  const params = await props.params;
-  try {
-    CheckStoreAdminApiAccess(params.storeId);
+	const params = await props.params;
+	try {
+		CheckStoreAdminApiAccess(params.storeId);
 
-    if (!params.categoryId) {
-      return new NextResponse("category id is required", { status: 401 });
-    }
-    if (!params.faqId) {
-      return new NextResponse("faq id is required", { status: 402 });
-    }
+		if (!params.categoryId) {
+			return new NextResponse("category id is required", { status: 401 });
+		}
+		if (!params.faqId) {
+			return new NextResponse("faq id is required", { status: 402 });
+		}
 
-    const body = await req.json();
-    const obj = await sqlClient.faq.delete({
-      where: {
-        id: params.faqId,
-      },
-    });
+		const body = await req.json();
+		const obj = await sqlClient.faq.delete({
+			where: {
+				id: params.faqId,
+			},
+		});
 
-    //console.log(`delete Faq: ${JSON.stringify(obj)}`);
+		//console.log(`delete Faq: ${JSON.stringify(obj)}`);
 
-    return NextResponse.json(obj);
-  } catch (error) {
-    console.log("[FAQ_DELETE]", error);
+		return NextResponse.json(obj);
+	} catch (error) {
+		console.log("[FAQ_DELETE]", error);
 
-    return new NextResponse(`Internal error${error}`, { status: 500 });
-  }
+		return new NextResponse(`Internal error${error}`, { status: 500 });
+	}
 }

@@ -15,27 +15,27 @@ type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function StoreOrderStatusPage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  const searchParams = await props.searchParams;
-  const storeId = searchParams.storeId as string;
+	const searchParams = await props.searchParams;
+	const storeId = searchParams.storeId as string;
 
-  console.log("searchParams", searchParams);
-  console.log("storeId", storeId);
+	console.log("searchParams", searchParams);
+	console.log("storeId", storeId);
 
-  const store = (await getStoreById(storeId)) as Store;
+	const store = (await getStoreById(storeId)) as Store;
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <div className="bg-no-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
-        <Navbar title="" />
-        <Container>
-          <DisplayStoreOrdersToday store={store} />
-        </Container>
-      </div>
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<div className="bg-no-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
+				<Navbar title="" />
+				<Container>
+					<DisplayStoreOrdersToday store={store} />
+				</Container>
+			</div>
+		</Suspense>
+	);
 }

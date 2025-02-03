@@ -13,32 +13,32 @@ type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function ProductOptionTemplatePage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreAccess(params.storeId)) as Store;
 
-  const storeOptionTemplates =
-    (await sqlClient.storeProductOptionTemplate.findMany({
-      where: {
-        storeId: params.storeId,
-      },
-      include: {
-        StoreProductOptionSelectionsTemplate: true,
-      },
-      orderBy: {
-        sortOrder: "asc",
-      },
-    })) as StoreProductOptionTemplate[];
-  transformDecimalsToNumbers(storeOptionTemplates);
+	const storeOptionTemplates =
+		(await sqlClient.storeProductOptionTemplate.findMany({
+			where: {
+				storeId: params.storeId,
+			},
+			include: {
+				StoreProductOptionSelectionsTemplate: true,
+			},
+			orderBy: {
+				sortOrder: "asc",
+			},
+		})) as StoreProductOptionTemplate[];
+	transformDecimalsToNumbers(storeOptionTemplates);
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        <ProductsOptionTemplateClient data={storeOptionTemplates} />
-      </Container>
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<Container>
+				<ProductsOptionTemplateClient data={storeOptionTemplates} />
+			</Container>
+		</Suspense>
+	);
 }

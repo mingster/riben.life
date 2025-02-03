@@ -23,133 +23,133 @@ type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 // DashboardPage is home of the selected store. It diesplays store operatiing stat such as
 //total revenue, sales count, products, etc..
 export default async function StoreAdminDevMaintPage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  const isAdmin = (await checkAdminAccess()) as boolean;
-  if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
+	const isAdmin = (await checkAdminAccess()) as boolean;
+	if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
 
-  const deleteAllShippingMethods = async () => {
-    "use server";
+	const deleteAllShippingMethods = async () => {
+		"use server";
 
-    await sqlClient.shippingMethodPrice.deleteMany({});
-    await sqlClient.storeShipMethodMapping.deleteMany({});
-    //await sqlClient.shippingMethodPrice.deleteMany({});
+		await sqlClient.shippingMethodPrice.deleteMany({});
+		await sqlClient.storeShipMethodMapping.deleteMany({});
+		//await sqlClient.shippingMethodPrice.deleteMany({});
 
-    const { count } = await sqlClient.shippingMethod.deleteMany({
-      where: {
-        //storeId: params.storeId,
-      },
-    });
-    console.log(`${count} shippingMethod deleted.`);
+		const { count } = await sqlClient.shippingMethod.deleteMany({
+			where: {
+				//storeId: params.storeId,
+			},
+		});
+		console.log(`${count} shippingMethod deleted.`);
 
-    redirect("./admin/maint");
-  };
+		redirect("./admin/maint");
+	};
 
-  const deleteAllPaymentMethods = async () => {
-    "use server";
+	const deleteAllPaymentMethods = async () => {
+		"use server";
 
-    const { count } = await sqlClient.paymentMethod.deleteMany({
-      where: {
-        //storeId: params.storeId,
-      },
-    });
-    console.log(`${count} paymentMethod deleted.`);
-    redirect("./admin/maint");
-  };
+		const { count } = await sqlClient.paymentMethod.deleteMany({
+			where: {
+				//storeId: params.storeId,
+			},
+		});
+		console.log(`${count} paymentMethod deleted.`);
+		redirect("./admin/maint");
+	};
 
-  const storeOrderCount = await sqlClient.storeOrder.count();
-  console.log(`storeOrderCount:${storeOrderCount}`);
+	const storeOrderCount = await sqlClient.storeOrder.count();
+	console.log(`storeOrderCount:${storeOrderCount}`);
 
-  const storeLedgerCount = await sqlClient.storeLedger.count();
-  console.log(`storeLedgerCount:${storeLedgerCount}`);
+	const storeLedgerCount = await sqlClient.storeLedger.count();
+	console.log(`storeLedgerCount:${storeLedgerCount}`);
 
-  const ticketCount = await sqlClient.supportTicket.count();
-  console.log(`ticketCount:${ticketCount}`);
+	const ticketCount = await sqlClient.supportTicket.count();
+	console.log(`ticketCount:${ticketCount}`);
 
-  // populate defaults: privacy policy and terms of service
-  //
-  const termsfilePath = `${process.cwd()}/public/defaults/terms.md`;
-  const tos = fs.readFileSync(termsfilePath, "utf8");
+	// populate defaults: privacy policy and terms of service
+	//
+	const termsfilePath = `${process.cwd()}/public/defaults/terms.md`;
+	const tos = fs.readFileSync(termsfilePath, "utf8");
 
-  const privacyfilePath = `${process.cwd()}/public/defaults/privacy.md`;
-  const privacyPolicy = fs.readFileSync(privacyfilePath, "utf8");
+	const privacyfilePath = `${process.cwd()}/public/defaults/privacy.md`;
+	const privacyPolicy = fs.readFileSync(privacyfilePath, "utf8");
 
-  //console.log(tos);
+	//console.log(tos);
 
-  //<MaintClient storeId={store.id} />
-  return (
-    <Container>
-      <Heading
-        title="Data Maintenance"
-        description="Manage store data -- ONLY DO this in development."
-      />
+	//<MaintClient storeId={store.id} />
+	return (
+		<Container>
+			<Heading
+				title="Data Maintenance"
+				description="Manage store data -- ONLY DO this in development."
+			/>
 
-      <div className="flex flex-row gap-3 pb-2">
-        <div className="relative inline-flex items-center rounded">
-          <span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1">
-            <span className="z-10">{storeLedgerCount}</span>
-          </span>
-          <Button
-            onClick={deleteAllLedgers}
-            type="button"
-            variant="destructive"
-            className="disabled:opacity-50 z-0"
-            size="sm"
-            {...(storeLedgerCount === 0 && { disabled: true })}
-          >
-            <Trash className="size-4 mr-1" /> Delete all Ledger data
-          </Button>
-        </div>
+			<div className="flex flex-row gap-3 pb-2">
+				<div className="relative inline-flex items-center rounded">
+					<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1">
+						<span className="z-10">{storeLedgerCount}</span>
+					</span>
+					<Button
+						onClick={deleteAllLedgers}
+						type="button"
+						variant="destructive"
+						className="disabled:opacity-50 z-0"
+						size="sm"
+						{...(storeLedgerCount === 0 && { disabled: true })}
+					>
+						<Trash className="size-4 mr-1" /> Delete all Ledger data
+					</Button>
+				</div>
 
-        <div className="relative inline-flex items-center rounded">
-          <span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1">
-            <span className="z-10">{storeOrderCount}</span>
-          </span>
-          <Button
-            onClick={deleteAllOrders}
-            type="button"
-            variant="destructive"
-            className="disabled:opacity-50"
-            size="sm"
-            {...(storeOrderCount === 0 && { disabled: true })}
-          >
-            <Trash className="size-4 mr-1" /> Delete all order data
-          </Button>
-        </div>
+				<div className="relative inline-flex items-center rounded">
+					<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1">
+						<span className="z-10">{storeOrderCount}</span>
+					</span>
+					<Button
+						onClick={deleteAllOrders}
+						type="button"
+						variant="destructive"
+						className="disabled:opacity-50"
+						size="sm"
+						{...(storeOrderCount === 0 && { disabled: true })}
+					>
+						<Trash className="size-4 mr-1" /> Delete all order data
+					</Button>
+				</div>
 
-        <div className="relative inline-flex items-center rounded">
-          <span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1">
-            <span className="z-10">{ticketCount}</span>
-          </span>
+				<div className="relative inline-flex items-center rounded">
+					<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1">
+						<span className="z-10">{ticketCount}</span>
+					</span>
 
-          <Button
-            onClick={deleteAllSupportTickets}
-            type="button"
-            variant="destructive"
-            className="disabled:opacity-50"
-            size="sm"
-            {...(ticketCount === 0 && { disabled: true })}
-          >
-            <Trash className="size-4 mr-1" /> Delete all Support Ticket data
-          </Button>
-        </div>
+					<Button
+						onClick={deleteAllSupportTickets}
+						type="button"
+						variant="destructive"
+						className="disabled:opacity-50"
+						size="sm"
+						{...(ticketCount === 0 && { disabled: true })}
+					>
+						<Trash className="size-4 mr-1" /> Delete all Support Ticket data
+					</Button>
+				</div>
 
-        <Button
-          onClick={sendTestNoficiation}
-          type="button"
-          variant="default"
-          className="disabled:opacity-50"
-          size="sm"
-        >
-          <Send className="size-4 mr-1" /> Send test nofication
-        </Button>
-      </div>
+				<Button
+					onClick={sendTestNoficiation}
+					type="button"
+					variant="default"
+					className="disabled:opacity-50"
+					size="sm"
+				>
+					<Send className="size-4 mr-1" /> Send test nofication
+				</Button>
+			</div>
 
-      <EditDefaultPrivacy data={privacyPolicy} />
-      <EditDefaultTerms data={tos} />
-    </Container>
-  );
+			<EditDefaultPrivacy data={privacyPolicy} />
+			<EditDefaultTerms data={tos} />
+		</Container>
+	);
 }

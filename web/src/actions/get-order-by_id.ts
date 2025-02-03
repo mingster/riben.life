@@ -4,15 +4,15 @@ import type { StoreOrder } from "@/types";
 import type { StoreTables } from "@prisma/client";
 
 const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
-  if (!orderId) {
-    throw Error("orderId is required");
-  }
+	if (!orderId) {
+		throw Error("orderId is required");
+	}
 
-  const obj = await sqlClient.storeOrder.findUnique({
-    where: {
-      id: orderId,
-    },
-    /*
+	const obj = await sqlClient.storeOrder.findUnique({
+		where: {
+			id: orderId,
+		},
+		/*
         select: {
           isPaid: true,
           orderTotal: true,
@@ -20,19 +20,19 @@ const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
           paymentMethod: true,
         },
         */
-    include: {
-      Store: true,
-      OrderNotes: true,
-      OrderItemView: true,
-      User: true,
-      ShippingMethod: true,
-      PaymentMethod: true,
-    },
-  });
+		include: {
+			Store: true,
+			OrderNotes: true,
+			OrderItemView: true,
+			User: true,
+			ShippingMethod: true,
+			PaymentMethod: true,
+		},
+	});
 
-  transformDecimalsToNumbers(obj);
+	transformDecimalsToNumbers(obj);
 
-  /*
+	/*
   if (
     obj?.tableId &&
     obj?.tableId !== null &&
@@ -51,7 +51,7 @@ const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
   }
   */
 
-  return obj;
+	return obj;
 };
 
 export default getOrderById;

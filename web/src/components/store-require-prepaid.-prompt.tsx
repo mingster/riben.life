@@ -6,24 +6,24 @@ import { TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const StoreRequirePrepaidPrompt = () => {
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng);
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
-  if (!mounted) return <></>;
+	if (!mounted) return <></>;
 
-  return (
-    <div className="flex gap-1 items-center">
-      <TriangleAlert className="text-yellow-500" />
-      <h1 className="sm:text-xl text-2xl tracking-wider">
-        {t("store-require-prepaid-prompt")}
-      </h1>
-    </div>
-  );
+	return (
+		<div className="flex gap-1 items-center">
+			<TriangleAlert className="text-yellow-500" />
+			<h1 className="sm:text-xl text-2xl tracking-wider">
+				{t("store-require-prepaid-prompt")}
+			</h1>
+		</div>
+	);
 };
 
 export default StoreRequirePrepaidPrompt;

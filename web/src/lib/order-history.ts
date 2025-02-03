@@ -6,25 +6,25 @@ import { useEffect } from "react";
 export const KEY_LOCALORDERS = "orders";
 
 export const saveOrderToLocal = (order: StoreOrder) => {
-  if (typeof window !== "undefined") {
-    const existingOrders = JSON.parse(
-      window.localStorage.getItem(KEY_LOCALORDERS) || "[]",
-    );
-    existingOrders.push(order.id);
-    localStorage.setItem(KEY_LOCALORDERS, JSON.stringify(existingOrders));
-  }
+	if (typeof window !== "undefined") {
+		const existingOrders = JSON.parse(
+			window.localStorage.getItem(KEY_LOCALORDERS) || "[]",
+		);
+		existingOrders.push(order.id);
+		localStorage.setItem(KEY_LOCALORDERS, JSON.stringify(existingOrders));
+	}
 };
 
 export const getOrdersFromLocal = () => {
-  if (typeof window !== "undefined") {
-    return JSON.parse(window.localStorage.getItem(KEY_LOCALORDERS) || "[]");
-  }
+	if (typeof window !== "undefined") {
+		return JSON.parse(window.localStorage.getItem(KEY_LOCALORDERS) || "[]");
+	}
 };
 
 export const removeOrdersFromLocal = () => {
-  if (typeof window !== "undefined") {
-    window.localStorage.removeItem(KEY_LOCALORDERS);
-  }
+	if (typeof window !== "undefined") {
+		window.localStorage.removeItem(KEY_LOCALORDERS);
+	}
 };
 
 /*

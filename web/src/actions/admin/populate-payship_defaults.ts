@@ -6,15 +6,15 @@ import { sqlClient } from "@/lib/prismadb";
 // create default locales
 //
 export async function create_locales() {
-  const locale_Path = `${process.cwd()}/public/install/locales.json`;
+	const locale_Path = `${process.cwd()}/public/install/locales.json`;
 
-  const file = await fs.readFile(locale_Path, "utf8");
-  const data = JSON.parse(file);
-  for (let i = 0; i < data.length; i++) {
-    const c = data[i];
-    //try {
+	const file = await fs.readFile(locale_Path, "utf8");
+	const data = JSON.parse(file);
+	for (let i = 0; i < data.length; i++) {
+		const c = data[i];
+		//try {
 
-    /*
+		/*
     const currency = await sqlClient.currency.findUnique({
       where: { id: c.currency },
     });
@@ -25,42 +25,42 @@ export async function create_locales() {
       }
     */
 
-    const locale = await sqlClient.locale.create({
-      data: {
-        ...c,
-        /*
+		const locale = await sqlClient.locale.create({
+			data: {
+				...c,
+				/*
         id: c.id,
         name: c.name,
         lng: c.lng,
         defaultCurrencyId: c.id,
         */
-      },
-    });
-    console.log(`locale created: ${JSON.stringify(locale)}`);
-    /*} catch (err) {
+			},
+		});
+		console.log(`locale created: ${JSON.stringify(locale)}`);
+		/*} catch (err) {
       console.error(err);
     }*/
-  }
+	}
 }
 
 // create default payment methods and mapping to all countries
 //
 export async function create_paymentMethods() {
-  const payment_methodPath = `${process.cwd()}/public/install/payment_methods.json`;
+	const payment_methodPath = `${process.cwd()}/public/install/payment_methods.json`;
 
-  const file = await fs.readFile(payment_methodPath, "utf8");
-  const data = JSON.parse(file);
+	const file = await fs.readFile(payment_methodPath, "utf8");
+	const data = JSON.parse(file);
 
-  //const countries = await sqlClient.country.findMany();
+	//const countries = await sqlClient.country.findMany();
 
-  for (let i = 0; i < data.length; i++) {
-    const c = data[i];
-    try {
-      const paymentMethod = await sqlClient.paymentMethod.create({
-        data: {
-          ...c,
+	for (let i = 0; i < data.length; i++) {
+		const c = data[i];
+		try {
+			const paymentMethod = await sqlClient.paymentMethod.create({
+				data: {
+					...c,
 
-          /*
+					/*
           name: c.name,
           payUrl: c.payurl,
           isDefault: c.isDefault,
@@ -73,41 +73,41 @@ export async function create_paymentMethods() {
             },
           },
           */
-        },
-      });
-      console.log(paymentMethod);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+				},
+			});
+			console.log(paymentMethod);
+		} catch (err) {
+			console.error(err);
+		}
+	}
 }
 
 // create shipping methods and mapping to all countries
 //
 export async function create_shippingMethods() {
-  const shipping_methodPath = `${process.cwd()}/public/install/shipping_methods.json`;
+	const shipping_methodPath = `${process.cwd()}/public/install/shipping_methods.json`;
 
-  const file = await fs.readFile(shipping_methodPath, "utf8");
-  const data = JSON.parse(file);
+	const file = await fs.readFile(shipping_methodPath, "utf8");
+	const data = JSON.parse(file);
 
-  //const countries = await sqlClient.country.findMany();
+	//const countries = await sqlClient.country.findMany();
 
-  for (let i = 0; i < data.length; i++) {
-    const c = data[i];
-    try {
-      const currency = await sqlClient.currency.findUnique({
-        where: { id: c.currencyId },
-      });
+	for (let i = 0; i < data.length; i++) {
+		const c = data[i];
+		try {
+			const currency = await sqlClient.currency.findUnique({
+				where: { id: c.currencyId },
+			});
 
-      if (!currency) {
-        console.error(`Currency with id ${c.currencyId} not found`);
-        continue;
-      }
+			if (!currency) {
+				console.error(`Currency with id ${c.currencyId} not found`);
+				continue;
+			}
 
-      const shippingMethod = await sqlClient.shippingMethod.create({
-        data: {
-          ...c,
-          /*
+			const shippingMethod = await sqlClient.shippingMethod.create({
+				data: {
+					...c,
+					/*
           name: c.name,
           description: c.description,
           basic_price: c.price,
@@ -122,7 +122,7 @@ export async function create_shippingMethods() {
             },
           },
           */
-          /* create mapping for all countries
+					/* create mapping for all countries
           shippingMethodCountryMapping: {
             createMany: {
               data: countries.map((country) => ({
@@ -131,20 +131,20 @@ export async function create_shippingMethods() {
             },
           },
           */
-        },
-      });
+				},
+			});
 
-      console.log(shippingMethod);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+			console.log(shippingMethod);
+		} catch (err) {
+			console.error(err);
+		}
+	}
 }
 
 export async function wipeoutDefaultData() {
-  await sqlClient.locale.deleteMany();
-  await sqlClient.paymentMethod.deleteMany();
-  await sqlClient.shippingMethod.deleteMany();
-  await sqlClient.currency.deleteMany();
-  await sqlClient.country.deleteMany();
+	await sqlClient.locale.deleteMany();
+	await sqlClient.paymentMethod.deleteMany();
+	await sqlClient.shippingMethod.deleteMany();
+	await sqlClient.currency.deleteMany();
+	await sqlClient.country.deleteMany();
 }

@@ -12,19 +12,19 @@ type Params = Promise<{ storeId: string; messageId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function BalanceMgmtPage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
-  const store = (await checkStoreAccess(params.storeId)) as Store;
-  // this store is pro version or not?
-  const disablePaidOptions = await !isProLevel(store?.id);
+	const params = await props.params;
+	const store = (await checkStoreAccess(params.storeId)) as Store;
+	// this store is pro version or not?
+	const disablePaidOptions = await !isProLevel(store?.id);
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        <MockupDashboardContent disablePaidOptions={disablePaidOptions} />
-      </Container>
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<Container>
+				<MockupDashboardContent disablePaidOptions={disablePaidOptions} />
+			</Container>
+		</Suspense>
+	);
 }

@@ -10,49 +10,49 @@ import Link from "next/link";
 import { CellAction } from "./cell-action";
 
 export type ProductColumn = {
-  id: string;
-  name: string;
-  status: number;
-  price: number;
-  isFeatured: boolean;
-  updatedAt: string;
-  hasOptions: boolean;
-  stock: number | undefined;
-  isRecurring: boolean | undefined;
+	id: string;
+	name: string;
+	status: number;
+	price: number;
+	isFeatured: boolean;
+	updatedAt: string;
+	hasOptions: boolean;
+	stock: number | undefined;
+	isRecurring: boolean | undefined;
 };
 
 export const columns: ColumnDef<ProductColumn>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title={t("Product_name")} />
-      );
-    },
-    cell: ({ row }) => (
-      <Link
-        className="pl-0"
-        title="click to edit"
-        href={`./products/${row.original.id}`}
-      >
-        {row.getValue("name")}
-      </Link>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title={t("Product_status")} />
-      );
-    },
-    cell: ({ row }) => {
-      const status = ProductStatuses[Number(row.getValue("status"))];
+	{
+		accessorKey: "name",
+		header: ({ column }) => {
+			return (
+				<DataTableColumnHeader column={column} title={t("Product_name")} />
+			);
+		},
+		cell: ({ row }) => (
+			<Link
+				className="pl-0"
+				title="click to edit"
+				href={`./products/${row.original.id}`}
+			>
+				{row.getValue("name")}
+			</Link>
+		),
+	},
+	{
+		accessorKey: "status",
+		header: ({ column }) => {
+			return (
+				<DataTableColumnHeader column={column} title={t("Product_status")} />
+			);
+		},
+		cell: ({ row }) => {
+			const status = ProductStatuses[Number(row.getValue("status"))];
 
-      return <div>{t(`ProductStatus_${status.label}`)}</div>;
-    },
-  },
-  /*
+			return <div>{t(`ProductStatus_${status.label}`)}</div>;
+		},
+	},
+	/*
   {
     accessorKey: "isFeatured",
     header: ({ column }) => {
@@ -70,49 +70,49 @@ export const columns: ColumnDef<ProductColumn>[] = [
       return <div className="pl-3">{val}</div>;
     },
   },*/
-  {
-    accessorKey: "hasOptions",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader
-          column={column}
-          title={t("Product_hasOptions")}
-        />
-      );
-    },
-    cell: ({ row }) => {
-      const val =
-        row.getValue("hasOptions") === true ? (
-          <CheckIcon className="text-green-400  size-4" />
-        ) : (
-          <XIcon className="text-red-400 size-4" />
-        );
+	{
+		accessorKey: "hasOptions",
+		header: ({ column }) => {
+			return (
+				<DataTableColumnHeader
+					column={column}
+					title={t("Product_hasOptions")}
+				/>
+			);
+		},
+		cell: ({ row }) => {
+			const val =
+				row.getValue("hasOptions") === true ? (
+					<CheckIcon className="text-green-400  size-4" />
+				) : (
+					<XIcon className="text-red-400 size-4" />
+				);
 
-      return <div className="pl-3">{val}</div>;
-    },
-  },
-  {
-    accessorKey: "price",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title={t("Product_price")} />
-      );
-    },
-    cell: ({ row }) => {
-      const price = Number(row.getValue("price"));
+			return <div className="pl-3">{val}</div>;
+		},
+	},
+	{
+		accessorKey: "price",
+		header: ({ column }) => {
+			return (
+				<DataTableColumnHeader column={column} title={t("Product_price")} />
+			);
+		},
+		cell: ({ row }) => {
+			const price = Number(row.getValue("price"));
 
-      return <Currency value={price} />;
-    },
-  },
-  {
-    accessorKey: "stock",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title={t("Product_stock")} />
-      );
-    },
-  },
-  /*
+			return <Currency value={price} />;
+		},
+	},
+	{
+		accessorKey: "stock",
+		header: ({ column }) => {
+			return (
+				<DataTableColumnHeader column={column} title={t("Product_stock")} />
+			);
+		},
+	},
+	/*
   {
     accessorKey: "isRecurring",
     header: ({ column }) => {
@@ -134,14 +134,14 @@ export const columns: ColumnDef<ProductColumn>[] = [
       return <div className="pl-3">{isRecurring}</div>;
     },
   },*/
-  {
-    accessorKey: "updatedAt",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title={t("updated")} />;
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => <CellAction data={row.original} />,
-  },
+	{
+		accessorKey: "updatedAt",
+		header: ({ column }) => {
+			return <DataTableColumnHeader column={column} title={t("updated")} />;
+		},
+	},
+	{
+		id: "actions",
+		cell: ({ row }) => <CellAction data={row.original} />,
+	},
 ];

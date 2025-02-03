@@ -1,11 +1,11 @@
 import type { HttpClient } from "../line-pay-api/type";
 import type {
-  ApiHandler,
-  ApiResponse,
-  LinePayApiClients,
-  PaymentApi,
-  RequestConfig,
-  ResponseBody,
+	ApiHandler,
+	ApiResponse,
+	LinePayApiClients,
+	PaymentApi,
+	RequestConfig,
+	ResponseBody,
 } from "./type";
 
 /**
@@ -19,43 +19,43 @@ import type {
  * @returns a new Payment API instance
  */
 export function createPaymentApi<T extends keyof LinePayApiClients>(
-  type: T,
-  createSender: (
-    httpClient: HttpClient,
-  ) => (req: RequestConfig<T>) => Promise<ResponseBody<T>>,
-  httpClient: HttpClient,
-  handlers: ApiHandler<T>[] = [],
+	type: T,
+	createSender: (
+		httpClient: HttpClient,
+	) => (req: RequestConfig<T>) => Promise<ResponseBody<T>>,
+	httpClient: HttpClient,
+	handlers: ApiHandler<T>[] = [],
 ): PaymentApi<T> {
-  const addHandlers = (...fs: ApiHandler<T>[]) => {
-    handlers.push(...fs);
+	const addHandlers = (...fs: ApiHandler<T>[]) => {
+		handlers.push(...fs);
 
-    return createPaymentApi(type, createSender, httpClient, handlers);
-  };
+		return createPaymentApi(type, createSender, httpClient, handlers);
+	};
 
-  // Wrap API response to add comments
-  const sender = async (
-    req: RequestConfig<T>,
-  ): Promise<ApiResponse<ResponseBody<T>>> => ({
-    body: await createSender(httpClient)(req),
-    comments: {},
-  });
+	// Wrap API response to add comments
+	const sender = async (
+		req: RequestConfig<T>,
+	): Promise<ApiResponse<ResponseBody<T>>> => ({
+		body: await createSender(httpClient)(req),
+		comments: {},
+	});
 
-  const getHandler = (i: number) => async (req: RequestConfig<T>) =>
-    i < 0
-      ? sender(req)
-      : handlers[i]({
-          type,
-          req,
-          next: getHandler(i - 1),
-          httpClient,
-        });
+	const getHandler = (i: number) => async (req: RequestConfig<T>) =>
+		i < 0
+			? sender(req)
+			: handlers[i]({
+					type,
+					req,
+					next: getHandler(i - 1),
+					httpClient,
+				});
 
-  const send = async (req: RequestConfig<T>) =>
-    getHandler(handlers.length - 1)(req);
+	const send = async (req: RequestConfig<T>) =>
+		getHandler(handlers.length - 1)(req);
 
-  return {
-    addHandler: addHandlers,
-    addHandlers,
-    send,
-  };
+	return {
+		addHandler: addHandlers,
+		addHandlers,
+		send,
+	};
 }

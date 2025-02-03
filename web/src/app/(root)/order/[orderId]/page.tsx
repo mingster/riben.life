@@ -9,26 +9,26 @@ type Params = Promise<{ storeId: string; orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function StoreOrderStatusPage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
-  const orderId = params.orderId;
+	const params = await props.params;
+	const orderId = params.orderId;
 
-  //const searchParams = await props.searchParams;
-  //const query = searchParams.query;
+	//const searchParams = await props.searchParams;
+	//const query = searchParams.query;
 
-  const order = await getOrderById(orderId);
+	const order = await getOrderById(orderId);
 
-  if (!order) {
-    return "no order found";
-  }
+	if (!order) {
+		return "no order found";
+	}
 
-  const store = (await getStoreById(order.storeId)) as Store;
+	const store = (await getStoreById(order.storeId)) as Store;
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <DisplayClient store={store} order={order} />
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<DisplayClient store={store} order={order} />
+		</Suspense>
+	);
 }

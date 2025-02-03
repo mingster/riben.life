@@ -6,17 +6,17 @@ import ChartTwo from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/reports/mo
 import type React from "react";
 
 const Chart: React.FC = () => {
-  return (
-    <>
-      <Breadcrumb pageName="Chart" />
+	return (
+		<>
+			<Breadcrumb pageName="Chart" />
 
-      <div className="grid grid-cols-12 gap-4 md:gap-6 2xl:gap-7.5">
-        <ChartOne />
-        <ChartTwo />
-        <ChartThree />
-      </div>
-    </>
-  );
+			<div className="grid grid-cols-12 gap-4 md:gap-6 2xl:gap-7.5">
+				<ChartOne />
+				<ChartTwo />
+				<ChartThree />
+			</div>
+		</>
+	);
 };
 
 export default Chart;

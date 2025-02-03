@@ -3,15 +3,15 @@ import { sqlClient } from "@/lib/prismadb";
 import { redirect } from "next/navigation";
 
 export const deleteAllOrders = async () => {
-  const { count } = await sqlClient.storeOrder.deleteMany({
-    where: {
-      //storeId: params.storeId,
-    },
-  });
+	const { count } = await sqlClient.storeOrder.deleteMany({
+		where: {
+			//storeId: params.storeId,
+		},
+	});
 
-  console.log(`${count} order deleted.`);
+	console.log(`${count} order deleted.`);
 
-  redirect("/admin/maint");
+	redirect("/admin/maint");
 
-  return count;
+	return count;
 };

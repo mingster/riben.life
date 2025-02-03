@@ -28,28 +28,28 @@ let cachedConnection: Connection | null = null;
 
 // Function to establish a connection to MongoDB
 export async function connectToMongoDB() {
-  // If a cached connection exists, return it
-  if (cachedConnection) {
-    console.log("Using cached db connection");
+	// If a cached connection exists, return it
+	if (cachedConnection) {
+		console.log("Using cached db connection");
 
-    return cachedConnection;
-  }
-  try {
-    // If no cached connection exists, establish a new connection to MongoDB
+		return cachedConnection;
+	}
+	try {
+		// If no cached connection exists, establish a new connection to MongoDB
 
-    const uri = `${process.env.MONGODB_URI}`;
-    const cnx = await mongoose.connect(uri);
+		const uri = `${process.env.MONGODB_URI}`;
+		const cnx = await mongoose.connect(uri);
 
-    // Cache the connection for future use
-    cachedConnection = cnx.connection;
-    // Log message indicating a new MongoDB connection is established
-    console.log("New mongodb connection established");
+		// Cache the connection for future use
+		cachedConnection = cnx.connection;
+		// Log message indicating a new MongoDB connection is established
+		console.log("New mongodb connection established");
 
-    // Return the newly established connection
-    return cachedConnection;
-  } catch (error) {
-    // If an error occurs during connection, log the error and throw it
-    console.log(error);
-    throw error;
-  }
+		// Return the newly established connection
+		return cachedConnection;
+	} catch (error) {
+		// If an error occurs during connection, log the error and throw it
+		console.log(error);
+		throw error;
+	}
 }

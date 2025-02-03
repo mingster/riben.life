@@ -5,19 +5,19 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 export const RequiredProVersion = () => {
-  const params = useParams();
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng, "storeAdmin");
+	const params = useParams();
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng, "storeAdmin");
 
-  return (
-    <div>
-      <Link
-        className="flex gap-2 py-2 font-bold"
-        href={`/storeAdmin/${params.storeId}/subscribe/`}
-      >
-        <FileWarning className="size-6 text-red-500" />
-        {t("RequiredProVersion")}
-      </Link>
-    </div>
-  );
+	return (
+		<div>
+			<Link
+				className="flex gap-2 py-2 font-bold"
+				href={`/storeAdmin/${params.storeId}/subscribe/`}
+			>
+				<FileWarning className="size-6 text-red-500" />
+				{t("RequiredProVersion")}
+			</Link>
+		</div>
+	);
 };

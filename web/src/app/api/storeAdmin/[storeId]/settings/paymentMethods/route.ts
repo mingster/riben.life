@@ -4,29 +4,29 @@ import { NextResponse } from "next/server";
 
 // manage store's payment methods
 export async function POST(
-  req: Request,
-  props: { params: Promise<{ storeId: string }> },
+	req: Request,
+	props: { params: Promise<{ storeId: string }> },
 ) {
-  const params = await props.params;
-  CheckStoreAdminApiAccess(params.storeId);
+	const params = await props.params;
+	CheckStoreAdminApiAccess(params.storeId);
 
-  const body = await req.json();
+	const body = await req.json();
 
-  await sqlClient.storePaymentMethodMapping.create({
-    data: { ...body },
-  });
+	await sqlClient.storePaymentMethodMapping.create({
+		data: { ...body },
+	});
 
-  return NextResponse.json("success", { status: 200 });
+	return NextResponse.json("success", { status: 200 });
 }
 
 export async function DELETE(
-  req: Request,
-  props: { params: Promise<{ storeId: string }> },
+	req: Request,
+	props: { params: Promise<{ storeId: string }> },
 ) {
-  const params = await props.params;
-  CheckStoreAdminApiAccess(params.storeId);
+	const params = await props.params;
+	CheckStoreAdminApiAccess(params.storeId);
 
-  await sqlClient.storePaymentMethodMapping.deleteMany({});
+	await sqlClient.storePaymentMethodMapping.deleteMany({});
 
-  return NextResponse.json("success", { status: 200 });
+	return NextResponse.json("success", { status: 200 });
 }

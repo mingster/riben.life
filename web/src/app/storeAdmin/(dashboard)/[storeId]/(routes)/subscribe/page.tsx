@@ -10,11 +10,11 @@ type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function StoreSubscribePage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
-  /*
+	const params = await props.params;
+	/*
   await sqlClient.subscription.deleteMany({
   });
   await sqlClient.subscriptionPayment.deleteMany({
@@ -29,30 +29,30 @@ export default async function StoreSubscribePage(props: {
   });
   */
 
-  const store = (await checkStoreAccess(params.storeId)) as Store;
-  const subscription = await sqlClient.subscription.findUnique({
-    where: {
-      storeId: store.id,
-    },
-  });
+	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const subscription = await sqlClient.subscription.findUnique({
+		where: {
+			storeId: store.id,
+		},
+	});
 
-  console.log("subscription", JSON.stringify(subscription));
+	console.log("subscription", JSON.stringify(subscription));
 
-  const subscriptionSchedule = subscription?.stripeSubscriptionId
-    ? await stripe.subscriptionSchedules.retrieve(
-        subscription.stripeSubscriptionId,
-      )
-    : null;
+	const subscriptionSchedule = subscription?.stripeSubscriptionId
+		? await stripe.subscriptionSchedules.retrieve(
+				subscription.stripeSubscriptionId,
+			)
+		: null;
 
-  console.log("subscriptionSchedule", JSON.stringify(subscriptionSchedule));
+	console.log("subscriptionSchedule", JSON.stringify(subscriptionSchedule));
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <section className="relative w-full">
-        <div className="container">
-          <PkgSelection store={store} subscription={subscription} />
-        </div>
-      </section>
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<section className="relative w-full">
+				<div className="container">
+					<PkgSelection store={store} subscription={subscription} />
+				</div>
+			</section>
+		</Suspense>
+	);
 }

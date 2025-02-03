@@ -10,8 +10,8 @@ import { Suspense } from "react";
 import { Awaiting4ConfirmationClient } from "./client";
 
 export const metadata: Metadata = {
-  title: "Store Dashboard",
-  description: "",
+	title: "Store Dashboard",
+	description: "",
 };
 
 // DashboardPage is home of the selected store. It diesplays store operatiing stat such as
@@ -21,14 +21,14 @@ type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function OrderAwaiting4ConfirmationPage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreAccess(params.storeId)) as Store;
 
-  /*
+	/*
   const pendingOrders = (await sqlClient.storeOrder.findMany({
     where: {
       storeId: params.storeId,
@@ -59,11 +59,11 @@ export default async function OrderAwaiting4ConfirmationPage(props: {
 
   */
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        <Awaiting4ConfirmationClient store={store} />
-      </Container>
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<Container>
+				<Awaiting4ConfirmationClient store={store} />
+			</Container>
+		</Suspense>
+	);
 }

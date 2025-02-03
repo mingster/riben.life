@@ -11,43 +11,43 @@ import { useTranslation } from "react-i18next";
 import { UserEditBasicTab } from "./user-edit-basic-tab";
 
 interface editProps {
-  initialData:
-    | (User & {
-        Order: StoreOrder[] | [];
-        Session: Session[] | [];
-        Account: Account | null;
-      })
-    | null;
-  action: string;
+	initialData:
+		| (User & {
+				Order: StoreOrder[] | [];
+				Session: Session[] | [];
+				Account: Account | null;
+		  })
+		| null;
+	action: string;
 }
 export const UserEditTabs = ({ initialData, action }: editProps) => {
-  const params = useParams();
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng);
-  //product.storeId = `${params.storeId}`;
+	const params = useParams();
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
+	//product.storeId = `${params.storeId}`;
 
-  return (
-    <>
-      <Heading
-        title={`${action} User`}
-        description="Manage user in the system."
-      />
-      <Tabs defaultValue="basic" className="w-full">
-        <TabsList>
-          <TabsTrigger className="px-5 lg:min-w-40" value="basic">
-            User
-          </TabsTrigger>
-          <TabsTrigger className="px-5 lg:min-w-40" value="attribute">
-            Session
-          </TabsTrigger>
-          <TabsTrigger className="px-5 lg:min-w-40" value="images">
-            Account
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="basic">
-          <UserEditBasicTab initialData={initialData} action={action} />
-        </TabsContent>
-      </Tabs>
-    </>
-  );
+	return (
+		<>
+			<Heading
+				title={`${action} User`}
+				description="Manage user in the system."
+			/>
+			<Tabs defaultValue="basic" className="w-full">
+				<TabsList>
+					<TabsTrigger className="px-5 lg:min-w-40" value="basic">
+						User
+					</TabsTrigger>
+					<TabsTrigger className="px-5 lg:min-w-40" value="attribute">
+						Session
+					</TabsTrigger>
+					<TabsTrigger className="px-5 lg:min-w-40" value="images">
+						Account
+					</TabsTrigger>
+				</TabsList>
+				<TabsContent value="basic">
+					<UserEditBasicTab initialData={initialData} action={action} />
+				</TabsContent>
+			</Tabs>
+		</>
+	);
 };

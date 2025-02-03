@@ -5,22 +5,22 @@ import { withAccelerate } from "@prisma/extension-accelerate";
 import { withOptimize } from "@prisma/extension-optimize";
 
 const prismaClientSingleton = () => {
-  //return new sqlPrismaClient().$extends(withOptimize({ apiKey: process.env.OPTIMIZE_API_KEY as string}));
-  //return new sqlPrismaClient();
-  return new sqlPrismaClient().$extends(withAccelerate());
+	//return new sqlPrismaClient().$extends(withOptimize({ apiKey: process.env.OPTIMIZE_API_KEY as string}));
+	//return new sqlPrismaClient();
+	return new sqlPrismaClient().$extends(withAccelerate());
 };
 
 declare global {
-  var client: undefined | ReturnType<typeof prismaClientSingleton>;
-  var mongo: mongoPrismaClient | undefined;
+	var client: undefined | ReturnType<typeof prismaClientSingleton>;
+	var mongo: mongoPrismaClient | undefined;
 }
 
 export const sqlClient = globalThis.client ?? prismaClientSingleton();
 export const mongoClient = globalThis.mongo || new mongoPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
-  globalThis.client = sqlClient;
-  globalThis.mongo = new mongoPrismaClient();
+	globalThis.client = sqlClient;
+	globalThis.mongo = new mongoPrismaClient();
 }
 
 /*

@@ -1,5 +1,5 @@
 export type Country = {
-  name: string;
-  flag: string;
-  percentage: number;
+	name: string;
+	flag: string;
+	percentage: number;
 };

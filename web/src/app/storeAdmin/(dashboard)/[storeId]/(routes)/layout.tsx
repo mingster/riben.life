@@ -8,69 +8,69 @@ import StoreAdminLayout from "./components/store-admin-layout";
 //import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 
 export default async function StoreLayout(props: {
-  children: React.ReactNode;
-  params: Promise<{ storeId: string }>;
+	children: React.ReactNode;
+	params: Promise<{ storeId: string }>;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  const { children } = props;
+	const { children } = props;
 
-  RequiresSignIn("/storeAdmin");
-  const session = (await GetSession()) as Session;
+	RequiresSignIn("/storeAdmin");
+	const session = (await GetSession()) as Session;
 
-  //console.log('session: ' + JSON.stringify(session));
-  //console.log('userId: ' + user?.id);
+	//console.log('session: ' + JSON.stringify(session));
+	//console.log('userId: ' + user?.id);
 
-  if (session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
-    console.log("access denied");
-    redirect("/error/?code=500");
-  }
+	if (session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
+		console.log("access denied");
+		redirect("/error/?code=500");
+	}
 
-  //const chk = (await checkStoreAccess(params.storeId));
+	//const chk = (await checkStoreAccess(params.storeId));
 
-  const store = await sqlClient.store.findFirst({
-    where: {
-      id: params.storeId,
-      ownerId: session.user?.id,
-    },
-    include: {
-      Owner: true,
-      Products: true,
-      StoreOrders: {
-        orderBy: {
-          updatedAt: "desc",
-        },
-      },
-      StoreShippingMethods: {
-        include: {
-          ShippingMethod: true,
-        },
-      },
-      StorePaymentMethods: {
-        include: {
-          PaymentMethod: true,
-        },
-      },
-      Categories: true,
-      StoreAnnouncement: {
-        orderBy: {
-          updatedAt: "desc",
-        },
-      },
-    },
-  });
+	const store = await sqlClient.store.findFirst({
+		where: {
+			id: params.storeId,
+			ownerId: session.user?.id,
+		},
+		include: {
+			Owner: true,
+			Products: true,
+			StoreOrders: {
+				orderBy: {
+					updatedAt: "desc",
+				},
+			},
+			StoreShippingMethods: {
+				include: {
+					ShippingMethod: true,
+				},
+			},
+			StorePaymentMethods: {
+				include: {
+					PaymentMethod: true,
+				},
+			},
+			Categories: true,
+			StoreAnnouncement: {
+				orderBy: {
+					updatedAt: "desc",
+				},
+			},
+		},
+	});
 
-  if (!store) {
-    console.log("no access to the store...redirect to store creation page.");
-    redirect("/storeAdmin");
-  }
+	if (!store) {
+		console.log("no access to the store...redirect to store creation page.");
+		redirect("/storeAdmin");
+	}
 
-  transformDecimalsToNumbers(store);
+	transformDecimalsToNumbers(store);
 
-  return (
-    <StoreAdminLayout sqlData={store} mongoData={null}>
-      {children}
-      <Toaster />
-    </StoreAdminLayout>
-  );
+	return (
+		<StoreAdminLayout sqlData={store} mongoData={null}>
+			{children}
+			<Toaster />
+		</StoreAdminLayout>
+	);
 }

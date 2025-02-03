@@ -12,27 +12,27 @@ type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function StoreCheckoutPage(props: {
-  params: Params;
-  searchParams: SearchParams;
+	params: Params;
+	searchParams: SearchParams;
 }) {
-  const params = await props.params;
+	const params = await props.params;
 
-  const store = (await getStoreWithCategories(params.storeId)) as Store;
+	const store = (await getStoreWithCategories(params.storeId)) as Store;
 
-  if (!store) {
-    redirect("/unv");
-  }
+	if (!store) {
+		redirect("/unv");
+	}
 
-  //console.log(`store: ${JSON.stringify(store)}`);
+	//console.log(`store: ${JSON.stringify(store)}`);
 
-  const user = await getUser();
-  transformDecimalsToNumbers(user);
+	const user = await getUser();
+	transformDecimalsToNumbers(user);
 
-  return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        <Checkout store={store} user={user} />
-      </Container>
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<Loader />}>
+			<Container>
+				<Checkout store={store} user={user} />
+			</Container>
+		</Suspense>
+	);
 }

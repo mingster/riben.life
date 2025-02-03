@@ -12,14 +12,14 @@ import type { Store } from "@/types";
 import { StoreAdminMenu } from "./store-admin-menu";
 
 interface SidebarProps {
-  store: Store;
+	store: Store;
 }
 export function StoreAdminSidebar({ store }: SidebarProps) {
-  const sidebar = useStore(useSidebarToggle, (state) => state);
+	const sidebar = useStore(useSidebarToggle, (state) => state);
 
-  if (!sidebar) return null;
+	if (!sidebar) return null;
 
-  /*
+	/*
 <Button
           className={cn(
             "mb-1 transition-transform duration-300 ease-in-out",
@@ -44,19 +44,19 @@ export function StoreAdminSidebar({ store }: SidebarProps) {
         </Button>
   */
 
-  //  bg-black/80 dark:shadow-secondary bg-inherit backdrop-invert backdrop-blur backdrop-opacity-10
-  return (
-    <aside
-      className={cn(
-        "invisible md:visible fixed left-0 top-10 z-20 h-screen -translate-x-full transition-[width] duration-300 ease-in-out lg:translate-x-0 shadow",
-        sidebar?.isOpen === false ? "w-[90px]" : "w-72",
-      )}
-    >
-      <SidebarToggle isOpen={sidebar?.isOpen} setIsOpen={sidebar?.setIsOpen} />
+	//  bg-black/80 dark:shadow-secondary bg-inherit backdrop-invert backdrop-blur backdrop-opacity-10
+	return (
+		<aside
+			className={cn(
+				"invisible md:visible fixed left-0 top-10 z-20 h-screen -translate-x-full transition-[width] duration-300 ease-in-out lg:translate-x-0 shadow",
+				sidebar?.isOpen === false ? "w-[90px]" : "w-72",
+			)}
+		>
+			<SidebarToggle isOpen={sidebar?.isOpen} setIsOpen={sidebar?.setIsOpen} />
 
-      <div className="relative h-full flex flex-col px-3 py-4 overflow-y-auto shadow-md dark:shadow-zinc-800">
-        <StoreAdminMenu isOpen={sidebar?.isOpen} store={store} />
-      </div>
-    </aside>
-  );
+			<div className="relative h-full flex flex-col px-3 py-4 overflow-y-auto shadow-md dark:shadow-zinc-800">
+				<StoreAdminMenu isOpen={sidebar?.isOpen} store={store} />
+			</div>
+		</aside>
+	);
 }
