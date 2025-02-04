@@ -1,7 +1,5 @@
 "use client";
 
-import { cookieName } from "@/app/i18n/settings";
-
 import {
 	Card,
 	CardContent,
@@ -13,6 +11,7 @@ import {
 import type { User } from "@/types";
 import { signOut, useSession } from "next-auth/react";
 
+import { cookieName, languages } from "@/app/i18n/settings";
 import { useCookies } from "next-client-cookies";
 import { useForm } from "react-hook-form";
 
@@ -30,7 +29,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 
-import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { LocaleSelectItems } from "@/components/locale-select-items";
@@ -41,8 +39,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import axios from "axios";
-import { z } from "zod";
 import { useState } from "react";
+import { z } from "zod";
 
 export const userFormSchema = z.object({
 	name: z.string().min(1, { message: "name is required" }),
@@ -59,10 +57,12 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 	const { toast } = useToast();
 	const [loading, setLoading] = useState(false);
 
-	const session = useSession();
-	const { lng } = useI18n();
-	//console.log(`lng: ${lng}`);
-	const { t } = useTranslation(lng);
+	const { i18n } = useTranslation();
+	const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
+	//const session = useSession();
+
+	//console.log(`activeLng: ${activeLng}`);
+	const { t } = useTranslation(activeLng);
 
 	const defaultValues = user
 		? {
@@ -83,8 +83,7 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 		clearErrors,
 	} = useForm<userFormValues>();
 
-	if (user === null) return;
-	if (user === undefined) return;
+	if (user === null || user === undefined) return;
 
 	//console.log(`user: ${JSON.stringify(user)}`);
 
@@ -115,10 +114,14 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 		setLoading(false);
 	}
 
-	const handleChangeLanguage = (value: string) => {
-		const cookies = useCookies();
-		//console.log('change language to: ' + value);
-		cookies.set(cookieName, value, { path: "/" });
+	const cookies = useCookies();
+
+	const handleChangeLanguage = (lng: string) => {
+		i18n.changeLanguage(lng);
+		setActiveLng(lng);
+		cookies.set(cookieName, lng, { path: "/" });
+
+		console.log("activeLng set to: ", lng);
 	};
 
 	return (

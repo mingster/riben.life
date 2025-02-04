@@ -6,7 +6,7 @@ import { SelectItem } from "@/components/ui/select";
 import { cookieName, getOptions, languages } from "@/app/i18n/settings";
 
 export const LocaleSelectItems: React.FC = () => {
-	const option = getOptions();
+	//const option = getOptions();
 	//console.log(`supportedLngs: ${option.supportedLngs}`);
 
 	const url = `${process.env.NEXT_PUBLIC_API_URL}/common/get-locales`;

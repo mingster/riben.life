@@ -1,7 +1,8 @@
 "use client";
 
-import { useCookies } from "next-client-cookies";
+import { useTranslation } from "@/app/i18n/client";
 import { cookieName, fallbackLng } from "@/app/i18n/settings";
+import { useCookies } from "next-client-cookies";
 import { createContext, useContext } from "react";
 
 interface i18nContext {
@@ -13,7 +14,12 @@ export const i18nContext = createContext<i18nContext | null>(null);
 const I18nProvider = ({ children }: { children: React.ReactNode }) => {
 	//const I18nProvider = ({ children, store }: { children: React.ReactNode; store: Store }) => {
 
-	const lng = fallbackLng;
+	const { i18n } = useTranslation();
+
+	let lng = i18n.resolvedLanguage;
+
+	//console.log("context resolvedLanguage: " + lng);
+	if (!lng) lng = fallbackLng;
 
 	/*
   let lng = fallbackLng;
