@@ -95,10 +95,7 @@ export default async function RootLayout({
 
 	return (
 		<SessionWrapper session={session}>
-			<html
-				lang="en"
-				className="dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]"
-			>
+			<html className="dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]">
 				<head>
 					<link rel="preconnect" href="https://fonts.googleapis.com" />
 					<link
