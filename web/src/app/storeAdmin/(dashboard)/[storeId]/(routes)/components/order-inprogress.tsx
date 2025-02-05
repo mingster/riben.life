@@ -75,46 +75,57 @@ export const OrderInProgress = ({
 
 	return (
 		<>
-			<Card>
-				<Heading
-					title={t("Order_accept_mgmt")}
-					description=""
-					badge={orders.length}
-					className="pt-2"
-				/>
+			<div className="rounded-sm border border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+				<h4 className="mb-6 text-xl font-semibold text-black dark:text-primary">
+					<Heading
+						title={t("Order_accept_mgmt")}
+						description=""
+						badge={orders.length}
+						className="pt-2"
+					/>
+				</h4>
 
-				<CardContent className="px-0 m-0">
-					{/* display */}
-					<div className="text-muted-foreground text-xs">
-						{orders.length === 0
-							? t("no_results_found")
-							: autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
-								? t("Order_accept_mgmt_descr")
-								: t("Order_accept_mgmt_descr2")}
-					</div>
+				<div className="text-muted-foreground xs:text-xs">
+					{orders.length === 0
+						? t("no_results_found")
+						: autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
+							? t("Order_accept_mgmt_descr")
+							: t("Order_accept_mgmt_descr2")}
+				</div>
 
-					{orders.length !== 0 && (
-						<Table>
-							<TableHeader>
-								<TableRow>
-									{/*單號/桌號*/}
-									<TableHead className="">{t("Order_number")}</TableHead>
-									<TableHead className="w-[200px]">
+				{orders.length !== 0 && (
+					<>
+						<div className="flex flex-col">
+							<div className="grid grid-cols-3 rounded-sm bg-gray-2 dark:bg-meta-4 sm:grid-cols-5">
+								<div className="p-2.5 xl:p-5">
+									<h5 className="text-sm font-medium  xsm:text-base">
+										{t("Order_number")}
+									</h5>
+								</div>
+								<div className="p-2.5 text-center xl:p-5">
+									<h5 className="text-sm font-medium  xsm:text-base">
 										{t("Order_items")}
-									</TableHead>
-									<TableHead>{t("Order_note")}</TableHead>
-									<TableHead className="w-[90px] hidden lg:table-cell">
+									</h5>
+								</div>
+								<div className="p-2.5 text-center xl:p-5">
+									<h5 className="text-sm font-medium  xsm:text-base">
 										{t("ordered_at")}
-									</TableHead>
-									<TableHead className="w-[90px] text-right">
+									</h5>
+								</div>
+								<div className="hidden p-2.5 text-center sm:block xl:p-5">
+									<h5 className="text-sm font-medium  xsm:text-base">
 										{t("Order_total")}
-									</TableHead>
-									<TableHead className="w-[80px] text-center">
+									</h5>
+								</div>
+								<div className="hidden p-2.5 text-center sm:block xl:p-5">
+									<h5 className="text-sm font-medium  xsm:text-base">
 										{autoAcceptOrder ? t("Order_accept") : t("Order_accept2")}
-									</TableHead>
-								</TableRow>
-							</TableHeader>
+									</h5>
+								</div>
+							</div>
+						</div>
 
+						<Table>
 							<TableBody>
 								{orders.map((order: StoreOrder) => (
 									<TableRow key={order.id}>
@@ -191,9 +202,9 @@ export const OrderInProgress = ({
 								))}
 							</TableBody>
 						</Table>
-					)}
-				</CardContent>
-			</Card>
+					</>
+				)}
+			</div>
 		</>
 	);
 };

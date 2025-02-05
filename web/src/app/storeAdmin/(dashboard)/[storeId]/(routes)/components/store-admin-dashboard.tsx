@@ -18,8 +18,8 @@ export interface props {
 // store admin home page.
 // it checks for new orders every 5 seconds.
 export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	//const { lng } = useI18n();
+	//const { t } = useTranslation(lng, "storeAdmin");
 
 	//console.log(JSON.stringify(storeData));
 	return (

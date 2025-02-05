@@ -1,16 +1,11 @@
 "use client";
 
-import type { Store, StoreOrder } from "@/types";
+import type { Store } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
-import { useTranslation } from "@/app/i18n/client";
 import { Loader } from "@/components/ui/loader";
 import { formatDateTime } from "@/lib/utils";
-import { useI18n } from "@/providers/i18n-provider";
-import { OrderStatus, StoreLevel } from "@/types/enum";
-import { format } from "date-fns";
 import { OrderInProgress } from "../../components/order-inprogress";
-import { OrderPending } from "../../components/order-pending";
 
 export interface props {
 	store: Store;
@@ -19,8 +14,8 @@ export interface props {
 // Awaiting4ProcessingClient
 // it checks for new orders every 5 seconds.
 export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	//const { lng } = useI18n();
+	//const { t } = useTranslation(lng, "storeAdmin");
 
 	const [mounted, setMounted] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -127,6 +122,7 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
 					orders={awaiting4ProcessingOrders}
 					parentLoading={loading}
 				/>
+
 				<div className="text-xs">{formatDateTime(date)}</div>
 			</div>
 		</section>
