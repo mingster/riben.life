@@ -48,10 +48,9 @@ export const OrderPending = ({ store, orders, parentLoading }: props) => {
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
-	const [loading, setLoading] = useState(false);
-	const [open, setOpen] = useState(false);
-
-	const [selectedOrderId, setSelectedOrderId] = useState("");
+	//const [loading, setLoading] = useState(false);
+	//const [open, setOpen] = useState(false);
+	//const [selectedOrderId, setSelectedOrderId] = useState("");
 
 	if (parentLoading) {
 		return <ClipLoader color="text-primary" />;
@@ -84,8 +83,7 @@ export const OrderPending = ({ store, orders, parentLoading }: props) => {
 				/>
 
 				<CardContent className="px-0 m-0">
-					{/* display */}
-					<div className="text-muted-foreground text-xs">
+					<div className="text-muted-foreground xs:text-xs">
 						{orders.length === 0
 							? t("no_results_found")
 							: t("Order_pending_descr")}
