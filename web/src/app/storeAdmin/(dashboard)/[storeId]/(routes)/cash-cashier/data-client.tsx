@@ -21,8 +21,8 @@ export interface props {
 // store admin home page.
 // it checks for new orders every 10 seconds.
 export const CashCashier: React.FC<props> = ({ store, tables }) => {
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	//const { lng } = useI18n();
+	//const { t } = useTranslation(lng, "storeAdmin");
 	const [mounted, setMounted] = useState(false);
 	const [loading, setLoading] = useState(false);
 

@@ -109,15 +109,10 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
 	return (
 		<section className="relative w-full">
 			<IntervaledContent />
-			{store.requirePrepaid && (
-				<div className="text-muted-foreground text-xs">
-					只會顯示已付款訂單。
-				</div>
-			)}
-
 			<div className="flex flex-col gap-1">
 				<OrderInProgress
 					store={store}
+					requirePrepaid={store.requirePrepaid}
 					autoAcceptOrder={store.autoAcceptOrder}
 					orders={awaiting4ProcessingOrders}
 					parentLoading={loading}

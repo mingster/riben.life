@@ -22,6 +22,8 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
 	//const { t } = useTranslation(lng, "storeAdmin");
 
 	//console.log(JSON.stringify(storeData));
+	console.log("autoAcceptOrder", store.autoAcceptOrder);
+
 	return (
 		<section className="relative w-full">
 			<Container>
