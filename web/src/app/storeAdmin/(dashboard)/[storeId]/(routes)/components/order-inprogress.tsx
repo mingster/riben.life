@@ -12,12 +12,12 @@ import Currency from "@/components/currency";
 import { DisplayOrderStatus } from "@/components/order-status-display";
 import { Heading } from "@/components/ui/heading";
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";

@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
+import Image from "next/image";
 import { GetMenuList } from "./menu-list";
 
 interface MenuProps {
@@ -33,15 +34,15 @@ export function StoreAdminMenu({ isOpen, store }: MenuProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
-	const params = useParams<{ storeId: string }>();
+	//const params = useParams<{ storeId: string }>();
 	//console.log(params);
 	const menuList = GetMenuList(store, pathname);
 
 	return (
 		<ScrollArea className="[&>div>div[style]]:!block">
-			<nav className="mt-8 size-full">
+			<nav className="mt-8 size-full bg-transparent">
 				<ul className="flex min-h-[calc(100vh-48px-36px-16px-32px-50px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px-50px)]">
-					{menuList.map(({ groupLabel, menus }, index) => (
+					{menuList.map(({ groupLabel, menus }) => (
 						<li
 							className={cn("w-full", groupLabel ? "pt-5" : "")}
 							key={groupLabel}
@@ -69,7 +70,6 @@ export function StoreAdminMenu({ isOpen, store }: MenuProps) {
 							{menus.map(
 								({ href, label, icon: Icon, active, submenus }, index) =>
 									submenus.length === 0 ? (
-										// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 										<div className="w-full" key={index}>
 											<TooltipProvider disableHoverableContent>
 												<Tooltip delayDuration={100}>

@@ -12,7 +12,7 @@ export function SidebarToggle({ isOpen, setIsOpen }: SidebarToggleProps) {
 	return (
 		<div
 			className="invisible md:visible absolute right-[-12px] top-[calc(50%_-_1.5rem)] z-20
-    bg-primary-foreground dark:bg-secondary-foreground"
+    bg-primary-foreground dark:bg-primary-foreground"
 		>
 			<Button
 				onClick={() => setIsOpen?.()}

@@ -9,24 +9,23 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTranslation } from "@/app/i18n/client";
 import { Heading } from "@/components/ui/heading";
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
 import type { OrderNote, StoreTables, orderitemview } from "@prisma/client";
 import axios from "axios";
-import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
 
 import Currency from "@/components/currency";
 import { DisplayOrderStatus } from "@/components/order-status-display";
 import { Button } from "@/components/ui/button";
-import { formatDateTime, getDateInTz, getTableName } from "@/lib/utils";
+import { formatDateTime, getTableName } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -55,10 +54,9 @@ export const OrderUnpaid = ({
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
-	const [loading, setLoading] = useState(false);
-	const [open, setOpen] = useState(false);
-
-	const [selectedOrderId, setSelectedOrderId] = useState("");
+	//const [loading, setLoading] = useState(false);
+	//const [open, setOpen] = useState(false);
+	//const [selectedOrderId, setSelectedOrderId] = useState("");
 
 	if (parentLoading) {
 		return <ClipLoader color="text-primary" />;
@@ -82,29 +80,25 @@ export const OrderUnpaid = ({
 
 	return (
 		<Card>
-			<div className="flex justify-between items-center px-2">
+			<div className="flex justify-between">
 				<Heading
 					title={t("Order_unpiad_title")}
 					description={t("Order_unpiad_descr")}
 					badge={orders.length}
 					className="pt-2"
 				/>
-				<div>
-					<Button
-						variant={"outline"}
-						onClick={() =>
-							router.push(`/storeAdmin/${params.storeId}/order/add`)
-						}
-					>
-						<Plus className="mr-0 size-4" />
-						{t("Create")}
-					</Button>
-				</div>
+
+				<Button
+					variant={"outline"}
+					onClick={() => router.push(`/storeAdmin/${params.storeId}/order/add`)}
+				>
+					<Plus className="mr-0 size-4" />
+					{t("Create")}
+				</Button>
 			</div>
 
 			<CardContent className="px-0 m-0">
-				{/* display */}
-				<div className="text-muted-foreground text-xs">
+				<div className="text-muted-foreground xs:text-xs">
 					{orders.length === 0 ? t("no_results_found") : ""}
 				</div>
 
