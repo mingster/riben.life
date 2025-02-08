@@ -201,6 +201,7 @@ export const StoreHomeContent: React.FC<props> = ({
 							</div>
 						) : (
 							<div className="text-xl font-extrabold">
+								{/*外帶點餐*/}
 								{t("store_orderType_takeoff")}
 							</div>
 						)}
