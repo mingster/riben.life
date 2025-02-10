@@ -44,6 +44,7 @@ import axios, { type AxiosError } from "axios";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { saveOrderToLocal } from "@/lib/order-history";
+import { getRandomNum } from "@/lib/utils";
 
 type props = {
 	store: Store;
@@ -77,7 +78,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 	const params = useParams();
 
 	const cart = useCart();
-	const [numInCart, setNumInCart] = useState(cart.totalItems);
+	const [, setNumInCart] = useState(cart.totalItems);
 
 	useEffect(() => {
 		setNumInCart(cart.totalItems);
@@ -98,14 +99,42 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 	//console.log("tableId", tableId);
 
 	const allShipMethods = store.StoreShippingMethods as StoreShipMethodMapping[];
-	const [shipMethod, setShipMethod] = useState<ShippingMethod>(
+
+	let shipMethod = allShipMethods[0].ShippingMethod;
+
+	/*
+  const [shipMethod, setShipMethod] = useState<ShippingMethod>(
 		allShipMethods[0].ShippingMethod,
 	);
+  */
+	// determine shipping method
+	// if there's table id, use 內用 as shipping method
 
+	//console.log("allShipMethods: " + JSON.stringify(allShipMethods));
+	//console.log("params.tableId", params.tableId);
+
+	if (params.tableId && params.tableId !== "undefined") {
+		const instore = allShipMethods.find(
+			(o: StoreShipMethodMapping) => o.ShippingMethod.identifier === "in-store",
+		);
+		if (instore) {
+			shipMethod = instore.ShippingMethod;
+		}
+	} else {
+		const takeout = allShipMethods.find(
+			(o: StoreShipMethodMapping) => o.ShippingMethod.identifier === "takeout",
+		);
+		if (takeout) {
+			shipMethod = takeout.ShippingMethod;
+		}
+	}
+
+	//console.log("selected shipMethod: " + JSON.stringify(shipMethod));
+
+	// default to cash if available
 	const allpaymentMethods =
 		store.StorePaymentMethods as StorePaymentMethodMapping[];
 
-	// default to cash if available
 	let defaultPaymentMethod = allpaymentMethods.find(
 		(o: StorePaymentMethodMapping) => o.PaymentMethod.name === "cash",
 	);
@@ -123,7 +152,6 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
   console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
 
   //const [selectedPaymentType, setSelectedPaymentType] = useState('creditCard');
-  //console.log('selected shipMethod: ' + shipMethod);
   //console.log('CheckutSteps: ' + JSON.stringify(shipMethods));
   */
 
@@ -213,6 +241,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 			//shippingAddress: displayUserAddress(user),
 			//shippingCost: shipMethod.basic_price,
 			paymentMethodId: paymentMethod.id,
+			//pickupCode: getRandomNum(6),
 		});
 		//console.log(JSON.stringify(body));
 
@@ -277,7 +306,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 										showSubtotal={true}
 									/>
 								</div>
-								<div className="">tableId:{item.tableId}</div>
+								{/* <div className="">table:{item.tableId}</div>*/}
 							</div>
 						))}
 				</CardContent>
@@ -359,6 +388,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 							</div>
 						))}
 					</RadioGroup>
+					<div className="pt-2">{shipMethod && shipMethod.name}</div>
 				</CardContent>
 				<CardFooter>
 					<div className="relative w-full">

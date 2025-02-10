@@ -1,6 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import {
 	getNowTimeInTz,
+	getRandomNum,
 	getUtcNow,
 	transformDecimalsToNumbers,
 } from "@/lib/utils";
@@ -155,6 +156,8 @@ export async function POST(
 		? OrderStatus.Processing
 		: OrderStatus.Pending;
 
+	// shipping method
+
 	const result = await sqlClient.storeOrder.create({
 		data: {
 			storeId: params.storeId,
@@ -165,6 +168,7 @@ export async function POST(
 			currency: currency,
 			paymentMethodId: paymentMethodId,
 			shippingMethodId: shippingMethodId,
+			pickupCode: getRandomNum(6),
 			createdAt: storeTimeNow,
 			updatedAt: storeTimeNow,
 			paymentStatus: PaymentStatus.Pending,

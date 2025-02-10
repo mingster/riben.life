@@ -104,6 +104,7 @@ export const OrderInProgress = ({
 									<TableRow>
 										{/*單號/桌號*/}
 										<TableHead className="">{t("Order_number")}</TableHead>
+                    <TableHead className="">取貨碼</TableHead>
 										<TableHead className="w-[200px]">
 											{t("Order_items")}
 										</TableHead>
@@ -126,7 +127,9 @@ export const OrderInProgress = ({
 											<TableCell className="lg:text-2xl font-extrabold">
 												{order.orderNum}
 											</TableCell>
-
+											<TableCell className="lg:text-2xl font-extrabold">
+                      {order.pickupCode}
+                      </TableCell>
 											<TableCell className="text-nowrap">
 												{order.OrderItemView.map((item: orderitemview) => (
 													<div

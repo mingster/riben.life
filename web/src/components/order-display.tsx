@@ -70,7 +70,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 						{order.Store?.name}
 					</div>
 					<div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
-						交易序號：{order.orderNum}
+						交易序號：{order.orderNum} 取貨碼：{order.pickupCode}
 					</div>
 					<div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
 						{formatDateTime(order.createdAt)}&nbsp;

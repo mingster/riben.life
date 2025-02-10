@@ -19,7 +19,7 @@ const StoreRequirePrepaidPrompt = () => {
 	return (
 		<div className="flex gap-1 items-center">
 			<TriangleAlert className="text-yellow-500" />
-			<h1 className="sm:text-xl text-2xl tracking-wider">
+			<h1 className="sm:text-xl text-3xl tracking-wider">
 				{t("store-require-prepaid-prompt")}
 			</h1>
 		</div>

@@ -2,7 +2,7 @@
 
 import { AskUserToSignIn } from "@/components/ask-user-to-signIn";
 import { DisplayOrder } from "@/components/order-display";
-import StoreRequirePrepaidPrompt from "@/components/store-require-prepaid.-prompt";
+import StoreRequirePrepaidPrompt from "@/components/store-require-prepaid-prompt";
 
 import { Button } from "@/components/ui/button";
 import { Loader } from "@/components/ui/loader";
