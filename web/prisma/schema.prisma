@@ -202,6 +202,7 @@ model StorePaymentMethodMapping {
 
 model ShippingMethod {
   id           String   @id @default(uuid())
+  identifier   String   @default("") //used in the code to identify default methods
   name         String   @unique
   description  String?
   basic_price  Decimal  @default(0)
@@ -220,6 +221,7 @@ model ShippingMethod {
   StoreOrder StoreOrder[]
 
   @@index([name])
+  @@index([identifier])
   @@index([currencyId])
 }
 
@@ -624,12 +626,12 @@ model StoreLedger {
 }
 
 model StoreOrder {
-  id       String  @id @default(uuid())
-  storeId  String
-  userId   String?
-  tableId  String?
-  orderNum Int?    @default(autoincrement())
-
+  id                 String    @id @default(uuid())
+  storeId            String
+  userId             String?
+  tableId            String?
+  orderNum           Int?      @default(autoincrement())
+  pickupCode         String?
   isPaid             Boolean   @default(false)
   paidDate           DateTime?
   checkoutAttributes String    @default("")

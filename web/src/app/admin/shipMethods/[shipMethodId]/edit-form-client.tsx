@@ -27,6 +27,7 @@ import * as z from "zod";
 
 const formSchema = z.object({
 	name: z.string().default(""),
+  identifier: z.string().default(""),
 	description: z.string().optional().default(""),
 	basic_price: z.coerce.number().default(0),
 	isDeleted: z.boolean(),
@@ -48,7 +49,7 @@ interface editProps {
 
 // edit payment method form
 export const EditClient = ({ initialData }: editProps) => {
-	const params = useParams();
+	//const params = useParams();
 	const router = useRouter();
 	const { toast } = useToast();
 	const { lng } = useI18n();
@@ -136,6 +137,24 @@ export const EditClient = ({ initialData }: editProps) => {
 										</FormItem>
 									)}
 								/>
+								<FormField
+									control={form.control}
+									name="identifier"
+									render={({ field }) => (
+										<FormItem className="p-3">
+											<FormLabel>identifier</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													className="font-mono"
+													placeholder="identifier"
+													{...field}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+
 								<FormField
 									control={form.control}
 									name="description"
