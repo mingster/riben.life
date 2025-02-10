@@ -43,7 +43,6 @@ import axios, { type AxiosError } from "axios";
 
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { saveOrderToLocal } from "@/lib/order-history";
 
 type props = {
@@ -53,15 +52,10 @@ type props = {
 };
 
 // parse cart into order, and process to the selected payment method
-// TODO: implement payment method & shipping method
+// TODO: implement shipping method
 export const Checkout = ({ store, user }: props) => {
 	const cart = useCart();
 	const router = useRouter();
-	const searchParams = useSearchParams();
-
-	// see if there is a tableId in querystring
-	const tableId = searchParams.get("tableId");
-	//console.log("tableId", tableId);
 
 	const [inCheckoutSteps, setInCheckoutSteps] = useState(false);
 
@@ -97,6 +91,11 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 		orderId: "",
 		orderNote: "",
 	});
+
+	//const searchParams = useSearchParams();
+	// see if there is a tableId in querystring
+	//const tableId = searchParams.get("tableId");
+	//console.log("tableId", tableId);
 
 	const allShipMethods = store.StoreShippingMethods as StoreShipMethodMapping[];
 	const [shipMethod, setShipMethod] = useState<ShippingMethod>(
@@ -278,6 +277,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 										showSubtotal={true}
 									/>
 								</div>
+								<div className="">tableId:{item.tableId}</div>
 							</div>
 						))}
 				</CardContent>
@@ -448,7 +448,6 @@ const DialogShipping = ({
 				<div className="flex items-center space-x-2">
 					<div className="grid flex-1 gap-2">
 						{allMappings.map((method) => (
-							// biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
 							<div
 								key={method.id}
 								className="cursor-pointer border p-5"

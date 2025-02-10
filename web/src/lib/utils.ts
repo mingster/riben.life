@@ -11,6 +11,17 @@ import { z } from "zod";
 
 export const highlight_css = "border-dashed border-green-500 border-2";
 
+export function getRandomNum(length: number) {
+	const randomNum = (
+		Math.pow(10, length)
+			.toString()
+			.slice(length - 1) +
+		Math.floor(Math.random() * Math.pow(10, length) + 1).toString()
+	).slice(-length);
+
+	return randomNum;
+}
+
 export function getTableName(tables: StoreTables[], tableId: string) {
 	return tables.find((table) => table.id === tableId)?.tableName || "";
 }

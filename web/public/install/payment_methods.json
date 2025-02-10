@@ -9,8 +9,8 @@
     "isDefault": true
   },
   {
-    "name": "payal",
-    "payUrl": "paypal",
+    "name": "PayPal",
+    "payUrl": "payPal",
     "priceDescr": "4% + 30¢",
     "fee": 0.04,
     "feeAdditional": 0.3,
@@ -19,7 +19,7 @@
   },
   {
     "name": "LinePay",
-    "payUrl": "linepay",
+    "payUrl": "linePay",
     "priceDescr": "3.0%",
     "fee": 0.03,
     "feeAdditional": 0,
@@ -28,7 +28,7 @@
   },
   {
     "name": "ApplePay",
-    "payUrl": "Applepay",
+    "payUrl": "applePay",
     "priceDescr": "2.8%",
     "fee": 0.0275,
     "feeAdditional": 0,

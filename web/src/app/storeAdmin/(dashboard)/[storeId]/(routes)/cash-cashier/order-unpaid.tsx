@@ -9,12 +9,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTranslation } from "@/app/i18n/client";
 import { Heading } from "@/components/ui/heading";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
