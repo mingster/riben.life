@@ -86,7 +86,6 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 							{menus.map(
 								({ href, label, icon: Icon, active, submenus }, index) =>
 									submenus.length === 0 ? (
-										// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 										<div className="w-full" key={index}>
 											<TooltipProvider disableHoverableContent>
 												<Tooltip delayDuration={100}>
@@ -137,7 +136,6 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 											</TooltipProvider>
 										</div>
 									) : (
-										// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 										<div className="w-full" key={index}>
 											<CollapseMenuButton
 												icon={Icon}
