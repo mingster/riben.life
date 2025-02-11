@@ -29,31 +29,21 @@ import { ClipLoader } from "react-spinners";
 
 interface props {
 	store: Store;
-	requirePrepaid: boolean;
-	autoAcceptOrder: boolean;
 	orders: StoreOrder[];
 	parentLoading: boolean;
 }
 
 /**
- * Component to display and manage in-progress orders for a store.
- * Store operator can change status to InShipping.
+ * Component to display and ready-to-ship orders for a store.
+ * Store operator can change status to Completed.
  * @param {Store} store - The store object containing store details.
- * @param {boolean} requirePrepaid - Indicates if prepaid orders are required.
- * @param {boolean} autoAcceptOrder - Flag to determine if orders should be auto-accepted.
  * @param {StoreOrder[]} orders - List of store orders (should be in in-progress status).
  * @param {boolean} parentLoading - Flag to determine if parent component is loading.
  *
  * @returns A UI component displaying the list of in-progress orders with options to mark order as in-shipping status.
  */
 
-export const OrderInProgress = ({
-	store,
-	requirePrepaid,
-	autoAcceptOrder,
-	orders,
-	parentLoading,
-}: props) => {
+export const OrderReadyToShip = ({ store, orders, parentLoading }: props) => {
 	const [mounted, setMounted] = useState(false);
 
 	useEffect(() => {
@@ -71,7 +61,7 @@ export const OrderInProgress = ({
 	}
 
 	const handleChecked = async (orderId: string) => {
-		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/mark-as-in-shipping/${orderId}`;
+		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/mark-as-completed/${orderId}`;
 		await axios.post(url);
 
 		// remove the order from the list
@@ -90,11 +80,7 @@ export const OrderInProgress = ({
 		<>
 			<Card>
 				<Heading
-					title={
-						requirePrepaid
-							? t("Order_inProgress_alreadyPaid")
-							: t("Order_inProgress")
-					}
+					title={t("Order_ready_to_ship")}
 					description=""
 					badge={orders.length}
 					className="pt-2"
@@ -104,9 +90,7 @@ export const OrderInProgress = ({
 					<div className="text-muted-foreground xs:text-xs">
 						{orders.length === 0
 							? t("no_results_found")
-							: autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
-								? t("Order_inProgress_descr2")
-								: t("Order_inProgress_descr")}
+							: t("Order_ready_to_ship_descr")}
 					</div>
 
 					{orders.length !== 0 && (
@@ -116,6 +100,7 @@ export const OrderInProgress = ({
 									<TableRow>
 										{/*單號/桌號*/}
 										<TableHead className="">{t("Order_number")}</TableHead>
+										<TableHead className="">{t("Order_pickupCode")}</TableHead>
 										<TableHead className="w-[200px]">
 											{t("Order_items")}
 										</TableHead>
@@ -127,7 +112,7 @@ export const OrderInProgress = ({
 											{t("Order_total")}
 										</TableHead>
 										<TableHead className="w-[80px] text-center">
-											{t("Order_ready_to_ship_button")}
+											{t("Order_shipout")}
 										</TableHead>
 									</TableRow>
 								</TableHeader>
@@ -137,6 +122,9 @@ export const OrderInProgress = ({
 										<TableRow key={order.id}>
 											<TableCell className="lg:text-2xl font-extrabold">
 												{order.orderNum}
+											</TableCell>
+											<TableCell className="lg:text-2xl font-extrabold">
+												{order.pickupCode}
 											</TableCell>
 											<TableCell className="text-nowrap">
 												{order.OrderItemView.map((item: orderitemview) => (
@@ -148,18 +136,6 @@ export const OrderInProgress = ({
 
 											<TableCell>
 												<div className="flex gap-1 text-xs items-center">
-													<Button
-														className="text-xs"
-														variant={"outline"}
-														size="sm"
-													>
-														<Link
-															href={`/storeAdmin/${order.storeId}/order/${order.id}`}
-														>
-															{t("Order_Modify")}
-														</Link>
-													</Button>
-
 													<div>
 														{order.isPaid === true ? (
 															<div className="text-green-700 dark:text-green-700">

@@ -35,6 +35,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 	}
 
 	//console.log('order', JSON.stringify(order));
+  console.log('status', order.orderStatus)
 
 	const buyAgain = async (orderId: string) => {
 		alert(`buy again${orderId}`);

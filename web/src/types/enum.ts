@@ -75,8 +75,9 @@ export enum OrderStatus {
 	Pending = 10,
 	Processing = 20,
 	InShipping = 30,
-	Completed = 40,
-	Refunded = 50,
+	Completed = 40, //store completed its process. Awaiting customer to comfirmed
+	Confirmed = 50, //customer confirmed the order
+	Refunded = 60,
 	Voided = 90,
 	//Cancelled = 100,
 }

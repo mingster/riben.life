@@ -58,7 +58,7 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 
 	const orderConfirmation = {
 		href: `${nav_prefix}/order/awaiting4Confirmation`,
-		label: "確認訂單",
+		label: t("Order_awaiting_to_confirm"),
 		active: pathname.includes(`${nav_prefix}/order/awaiting4Confirmation`),
 		icon: PackageCheck,
 		submenus: [],
@@ -77,6 +77,7 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 				},
 			],
 		},
+
 		{
 			groupLabel: t("Sales"),
 			menus: [
@@ -86,15 +87,10 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 				// otherwise display orderCofirmation
 				...(store.level !== StoreLevel.Free ? [cash] : []),
 
-				// for not pro stores, if autoAcceptOrder is true, show orderConfirmation menu
-				...(store.level === StoreLevel.Free && !store.autoAcceptOrder
-					? [orderConfirmation]
-					: []),
-
 				{
-					href: `${nav_prefix}/order/awaiting4Process`,
-					label: t("Order_readyness"),
-					active: pathname.includes(`${nav_prefix}/order/awaiting4Process`),
+					href: `${nav_prefix}/order/awaiting_to_ship`,
+					label: t("Order_ready_to_ship"),
+					active: pathname.includes(`${nav_prefix}/order/awaiting_to_ship`),
 					icon: ArrowRight,
 					submenus: [],
 				},
@@ -118,6 +114,21 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 					label: t("Sales_Reports"),
 					active: pathname.includes(`${nav_prefix}/reports`),
 					icon: Proportions,
+					submenus: [],
+				},
+			],
+		},
+		{
+			groupLabel: t("Operation"),
+			menus: [
+				// for not pro stores, if autoAcceptOrder is true, show orderConfirmation menu
+				...(!store.autoAcceptOrder ? [orderConfirmation] : []),
+
+				{
+					href: `${nav_prefix}/order/awaiting4Process`,
+					label: t("Order_inProgress"),
+					active: pathname.includes(`${nav_prefix}/order/awaiting4Process`),
+					icon: ArrowRight,
 					submenus: [],
 				},
 			],
