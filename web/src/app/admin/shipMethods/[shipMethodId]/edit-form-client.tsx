@@ -27,7 +27,7 @@ import * as z from "zod";
 
 const formSchema = z.object({
 	name: z.string().default(""),
-  identifier: z.string().default(""),
+	identifier: z.string().default(""),
 	description: z.string().optional().default(""),
 	basic_price: z.coerce.number().default(0),
 	isDeleted: z.boolean(),
