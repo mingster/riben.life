@@ -22,7 +22,14 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
 	//const { t } = useTranslation(lng, "storeAdmin");
 
 	//console.log(JSON.stringify(storeData));
-	console.log("autoAcceptOrder", store.autoAcceptOrder);
+	//console.log("autoAcceptOrder", store.autoAcceptOrder);
+
+	/*
+  {store.level === StoreLevel.Free && !store.autoAcceptOrder && (
+    <Awaiting4ConfirmationClient store={store} />
+  )}
+  <Awaiting4ProcessingClient store={store} />
+  */
 
 	return (
 		<section className="relative w-full">
@@ -37,8 +44,6 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
 				{store.level === StoreLevel.Free && !store.autoAcceptOrder && (
 					<Awaiting4ConfirmationClient store={store} />
 				)}
-
-				<Awaiting4ProcessingClient store={store} />
 			</Container>
 		</section>
 	);
