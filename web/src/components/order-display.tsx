@@ -35,7 +35,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 	}
 
 	//console.log('order', JSON.stringify(order));
-	console.log("status", order.orderStatus);
+	//console.log("status", order.orderStatus);
 
 	const buyAgain = async (orderId: string) => {
 		alert(`buy again${orderId}`);
@@ -71,7 +71,16 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 						{order.Store?.name}
 					</div>
 					<div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
-						交易序號：{order.orderNum} 取貨碼：{order.pickupCode}
+						<div className="flex gap-1">
+							{order.pickupCode && (
+								<>
+									<div>{t("order_pickup_code")}</div>
+									<div>{order.pickupCode}</div>
+								</>
+							)}
+							<div>{t("order_number")}</div>
+							<div>{order.orderNum}</div>
+						</div>
 					</div>
 					<div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
 						{formatDateTime(order.createdAt)}&nbsp;

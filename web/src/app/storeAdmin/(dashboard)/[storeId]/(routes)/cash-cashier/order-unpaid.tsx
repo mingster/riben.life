@@ -83,7 +83,7 @@ export const OrderUnpaid = ({
 			<div className="flex justify-between">
 				<Heading
 					title={t("Order_unpiad_title")}
-					description={t("Order_unpiad_descr")}
+					description={orders.length !== 0 ? t("Order_unpiad_descr") : ""}
 					badge={orders.length}
 					className="pt-2"
 				/>
