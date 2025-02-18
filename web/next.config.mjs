@@ -4,6 +4,8 @@ import { PrismaPlugin } from '@prisma/nextjs-monorepo-workaround-plugin';
 const nextConfig = {
   transpilePackages: ['lucide-react'],
   experimental: {
+    serverComponentsExternalPackages: ["pino", "pino-pretty"],
+
     //ppr: true,  //https://nextjs.org/learn/dashboard-app/partial-prerendering
     //serverComponentsExternalPackages: ['pino', 'pino-pretty'],
     turbo: {
