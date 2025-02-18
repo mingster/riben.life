@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { useRouter } from "next/navigation";
 
+import logger from "@/lib/logger";
 import { formatDateTime, getTableName } from "@/lib/utils";
 import type { StoreOrder } from "@/types";
 import type { PaymentMethod, orderitemview } from "@prisma/client";
@@ -20,6 +21,7 @@ type orderProps = { order: StoreOrder };
 // show order success prompt and then redirect the customer to view order page (購物明細)
 export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 	//console.log("DisplayOrder", JSON.stringify(order));
+	logger.info(order);
 
 	const router = useRouter();
 
