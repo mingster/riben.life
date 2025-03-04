@@ -9,6 +9,7 @@ import { Suspense } from "react";
 import { StoreHomeContent } from "./components/store-home-content";
 
 import getStoreWithProducts from "@/actions/get-store-with-products";
+import logger from "@/lib/logger";
 import { formatDate } from "date-fns";
 
 type Params = Promise<{ storeId: string }>;
@@ -21,7 +22,11 @@ export default async function StoreHomePage(props: {
 	const params = await props.params;
 	const store = await getStoreWithProducts(params.storeId);
 
-	//console.log(JSON.stringify(store));
+	const isProduction = process.env.NODE_ENV === "production";
+	if (!isProduction) {
+		// server logging
+		logger.info(store);
+	}
 
 	if (!store) {
 		redirect("/unv");
