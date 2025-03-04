@@ -3,9 +3,12 @@ import { PrismaPlugin } from '@prisma/nextjs-monorepo-workaround-plugin';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['lucide-react'],
+  serverExternalPackages: ["thread-stream",
+    "pino",
+    "pino-worker",
+    "pino-file",
+    "pino-pretty"],
   experimental: {
-    serverComponentsExternalPackages: ["pino", "pino-pretty"],
-
     //ppr: true,  //https://nextjs.org/learn/dashboard-app/partial-prerendering
     //serverComponentsExternalPackages: ['pino', 'pino-pretty'],
     turbo: {
@@ -70,6 +73,12 @@ const nextConfig = {
       config.experiments = { ...config.experiments, topLevelAwait: true };
       config.plugins = [...config.plugins, new PrismaPlugin()];
     }
+
+    // Add path alias
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@": ".",
+    };
 
     return config;
   },

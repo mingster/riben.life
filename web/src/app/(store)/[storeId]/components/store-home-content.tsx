@@ -6,6 +6,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import { type Item, useCart } from "@/hooks/use-cart";
 import BusinessHours from "@/lib/businessHours";
+import logger from "@/lib/logger";
 import { getAbsoluteUrl, getNowTimeInTz, getUtcNow } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
@@ -68,6 +69,12 @@ export const StoreHomeContent: React.FC<props> = ({
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+
+	const isProduction = process.env.NODE_ENV === "production";
+	if (!isProduction) {
+		// client logging
+		logger.info(storeData);
+	}
 
 	//console.log(JSON.stringify(storeData.isOpen));
 	/*
