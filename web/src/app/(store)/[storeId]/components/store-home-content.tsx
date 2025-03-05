@@ -83,7 +83,6 @@ export const StoreHomeContent: React.FC<props> = ({
 	logger.info("encrypt", result);
 
 	logger.info("decrypt", c.decrypt(result));
-
 	logger.info("decrypt2", c.decrypt("/X4KqzCddx9So7321NJhLw=="));
   */
 
