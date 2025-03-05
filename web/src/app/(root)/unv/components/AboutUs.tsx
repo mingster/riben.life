@@ -29,9 +29,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTheme } from "next-themes";
 
 export function AboutUs({ className, ...props }: { className?: string }) {
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "landing");
-
 	return (
 		<section id="aboutUs" className="relative min-h-screen w-full">
 			{/*background */}
@@ -63,16 +60,11 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 									require("@/img/icons/home/dark/editor-tools.png").default.src
 								}
 							/>
-							<Caption className="text-sky-500">
-								{t("landing_contactus")}
-							</Caption>
+							<Caption className="text-sky-500">聯繫我們</Caption>
 						</div>
 
-						<BigText>World-class system integration.</BigText>
-						<Paragraph>
-							We are a team of engineers, designers, and developers who love to
-							improve things in life.
-						</Paragraph>
+						<BigText></BigText>
+						<Paragraph></Paragraph>
 
 						<ContactForm />
 					</motion.div>
@@ -109,9 +101,6 @@ export default function GoogleCaptchaWrapper({
 export const ContactForm = () => {
 	const [loading, setLoading] = useState(false);
 	const { toast } = useToast();
-
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "landing");
 
 	const [captcha, setCaptcha] = useState<string>("");
 
@@ -163,7 +152,7 @@ export const ContactForm = () => {
 
 			if (result.status === 200) {
 				toast({
-					title: t("landing_submitMessage"),
+					title: "我們已經收到你的訊息，會盡快回覆你。",
 					description: "",
 					variant: "success",
 				});
@@ -212,7 +201,7 @@ export const ContactForm = () => {
 				>
 					{discordUrl && (
 						<div className="flex gap-1 py-10 hover:text-slate">
-							請直接在 Discord 討論或詢問：
+							您可以使用以下社交媒體與我們交流：
 						</div>
 					)}
 					<div className="font-semibold mb-4 flex gap-5 justify-between">
@@ -238,6 +227,10 @@ export const ContactForm = () => {
 						)}
 					</div>
 
+					<div className="flex gap-1 py-1 hover:text-slate">
+						或填寫以下表單，寄訊息給我們：
+					</div>
+
 					<Form {...form}>
 						<form
 							onSubmit={form.handleSubmit(onSubmit)}
@@ -252,7 +245,7 @@ export const ContactForm = () => {
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="placeholder:text-gray-700 rounded-lg outline-none font-mono"
-												placeholder={t("landing_contactus_form_name")}
+												placeholder={"您的大名"}
 												{...field}
 											/>
 										</FormControl>
@@ -269,7 +262,7 @@ export const ContactForm = () => {
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="placeholder:text-gray-700 rounded-lg disabled:opacity-25 outline-none font-mono"
-												placeholder={t("landing_contactus_form_email")}
+												placeholder={"電子郵件"}
 												{...field}
 											/>
 										</FormControl>
@@ -287,7 +280,7 @@ export const ContactForm = () => {
 												rows={7}
 												disabled={loading || form.formState.isSubmitting}
 												className="placeholder:text-gray-700 rounded-lg outline-none font-mono min-h-50"
-												placeholder={t("landing_contactus_form_msg")}
+												placeholder={"您的訊息"}
 												{...field}
 											/>
 										</FormControl>
@@ -313,9 +306,7 @@ export const ContactForm = () => {
 								className="w-full disabled:opacity-25"
 								type="submit"
 							>
-								{loading
-									? t("landing_contactus_form_sending")
-									: t("landing_contactus_form_sendButton")}
+								{loading ? "寄送中..." : "寄出"}
 							</Button>
 						</form>
 					</Form>
