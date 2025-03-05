@@ -3,11 +3,18 @@
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { Heading } from "@/components/ui/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Category, Product, ProductCategories } from "@prisma/client";
 import { useParams } from "next/navigation";
 
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { CategoryEditBasicTab } from "./category-edit-basic-tab";
 import { CategoryEditProductTab } from "./category-edit-product-tab";
 
@@ -34,9 +41,29 @@ export const CategoryEditTabs = ({
 
 	const pageTitle = t(action) + t("Category");
 
+	const link_home = `/storeAdmin/${params.storeId}/`;
+	const link_cat = `/storeAdmin/${params.storeId}/categories`;
+
 	return (
 		<>
-			<Heading title={pageTitle} description="" />
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink href={link_home}>
+							{t("StoreDashboard")}
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href={link_cat}>{t("Category")}</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+
 			<Tabs defaultValue="basic" className="w-full">
 				<TabsList>
 					<TabsTrigger className="px-5 lg:min-w-40" value="basic">
