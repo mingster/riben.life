@@ -6,6 +6,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import { type Item, useCart } from "@/hooks/use-cart";
 import BusinessHours from "@/lib/businessHours";
+import { CryptoUtil } from "@/lib/crypto_util";
 import logger from "@/lib/logger";
 import { getAbsoluteUrl, getNowTimeInTz, getUtcNow } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
@@ -73,8 +74,16 @@ export const StoreHomeContent: React.FC<props> = ({
 	const isProduction = process.env.NODE_ENV === "production";
 	if (!isProduction) {
 		// client logging
-		logger.info(storeData);
+		//logger.info(storeData);
 	}
+
+	const c = new CryptoUtil();
+	const result = c.encrypt("1234567890");
+	logger.info("encrypt", result);
+
+	logger.info("decrypt", c.decrypt(result));
+
+	logger.info("decrypt2", c.decrypt("/X4KqzCddx9So7321NJhLw=="));
 
 	//console.log(JSON.stringify(storeData.isOpen));
 	/*
