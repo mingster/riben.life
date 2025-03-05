@@ -77,6 +77,7 @@ export const StoreHomeContent: React.FC<props> = ({
 		//logger.info(storeData);
 	}
 
+	/*
 	const c = new CryptoUtil();
 	const result = c.encrypt("1234567890");
 	logger.info("encrypt", result);
@@ -84,6 +85,7 @@ export const StoreHomeContent: React.FC<props> = ({
 	logger.info("decrypt", c.decrypt(result));
 
 	logger.info("decrypt2", c.decrypt("/X4KqzCddx9So7321NJhLw=="));
+  */
 
 	//console.log(JSON.stringify(storeData.isOpen));
 	/*
