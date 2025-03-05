@@ -1,16 +1,15 @@
 "use client";
 
-import { Heading } from "@/components/ui/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Product, StoreProductOptionTemplate } from "@/types";
 import type {
-	Category,
-	ProductAttribute,
-	ProductCategories,
-	ProductImages,
-	ProductOption,
+  Category,
+  ProductAttribute,
+  ProductCategories,
+  ProductImages,
+  ProductOption,
 } from "@prisma/client";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { ProductEditAttributeTab } from "./product-edit-attribute-tab";
 import { ProductEditBasicTab } from "./product-edit-basic-tab";
 import { ProductEditCategoryTab } from "./product-edit-category-tab";
@@ -18,6 +17,14 @@ import { ProductEditImageTab } from "./product-edit-image-tab";
 
 import { useTranslation } from "@/app/i18n/client";
 import { AlertModal } from "@/components/modals/alert-modal";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
@@ -46,7 +53,7 @@ export const ProductEditTabs = ({
 	storeOptionTemplates,
 	action,
 }: editProps) => {
-	const router = useRouter();
+	//const router = useRouter();
 	const params = useParams();
 	const { toast } = useToast();
 
@@ -112,6 +119,9 @@ export const ProductEditTabs = ({
 	/*
   <ProductPreviewDialog initialData={initialData} />
 */
+
+	const link_home = `/storeAdmin/${params.storeId}/`;
+	const link_products = `/storeAdmin/${params.storeId}/products`;
 	return (
 		<>
 			<AlertModal
@@ -123,7 +133,25 @@ export const ProductEditTabs = ({
 
 			<div className="flex items-center justify-between">
 				<div className="grow">
-					<Heading title={pageTitle} description="" />
+					<Breadcrumb>
+						<BreadcrumbList>
+							<BreadcrumbItem>
+								<BreadcrumbLink href={link_home}>
+									{t("StoreDashboard")}
+								</BreadcrumbLink>
+							</BreadcrumbItem>
+							<BreadcrumbSeparator />
+							<BreadcrumbItem>
+								<BreadcrumbLink href={link_products}>
+									{t("Products")}
+								</BreadcrumbLink>
+							</BreadcrumbItem>
+							<BreadcrumbSeparator />
+							<BreadcrumbItem>
+								<BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+							</BreadcrumbItem>
+						</BreadcrumbList>
+					</Breadcrumb>
 				</div>
 				{initialData && (
 					<Button
