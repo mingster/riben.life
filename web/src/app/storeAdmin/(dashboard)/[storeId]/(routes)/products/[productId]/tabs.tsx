@@ -3,11 +3,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Product, StoreProductOptionTemplate } from "@/types";
 import type {
-  Category,
-  ProductAttribute,
-  ProductCategories,
-  ProductImages,
-  ProductOption,
+	Category,
+	ProductAttribute,
+	ProductCategories,
+	ProductImages,
+	ProductOption,
 } from "@prisma/client";
 import { useParams, useSearchParams } from "next/navigation";
 import { ProductEditAttributeTab } from "./product-edit-attribute-tab";
@@ -18,12 +18,12 @@ import { ProductEditImageTab } from "./product-edit-image-tab";
 import { useTranslation } from "@/app/i18n/client";
 import { AlertModal } from "@/components/modals/alert-modal";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -122,6 +122,7 @@ export const ProductEditTabs = ({
 
 	const link_home = `/storeAdmin/${params.storeId}/`;
 	const link_products = `/storeAdmin/${params.storeId}/products`;
+
 	return (
 		<>
 			<AlertModal
