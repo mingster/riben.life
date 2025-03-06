@@ -1,4 +1,4 @@
-import { mongoClient } from "@/lib/prismadb";
+import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
@@ -16,14 +16,14 @@ export async function PATCH(
 
 		const { tos } = body;
 
-		const storeSettings = await mongoClient.storeSettings.upsert({
+		const storeSettings = await sqlClient.storeSettings.upsert({
 			where: {
-				databaseId: params.storeId,
+				storeId: params.storeId,
 			},
 			update: { tos, updatedAt: getUtcNow() },
 			create: {
 				tos,
-				databaseId: params.storeId,
+				storeId: params.storeId,
 			},
 		});
 

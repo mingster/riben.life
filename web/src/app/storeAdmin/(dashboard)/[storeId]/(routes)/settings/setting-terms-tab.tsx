@@ -44,7 +44,7 @@ const tosFormSchema = z.object({
 
 type formValues = z.infer<typeof tosFormSchema>;
 
-export const TermsTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
+export const TermsTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
 	const params = useParams();
 	const router = useRouter();
 	const { toast } = useToast();
@@ -53,10 +53,10 @@ export const TermsTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
-	const defaultValues = mongoData
+	const defaultValues = storeSettings
 		? {
 				///...initialData,
-				...mongoData,
+				...storeSettings,
 			}
 		: {};
 

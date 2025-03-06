@@ -6,19 +6,17 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import { type Item, useCart } from "@/hooks/use-cart";
 import BusinessHours from "@/lib/businessHours";
-import { CryptoUtil } from "@/lib/crypto_util";
-import logger from "@/lib/logger";
-import { getAbsoluteUrl, getNowTimeInTz, getUtcNow } from "@/lib/utils";
+import { getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
-	Category,
-	Product,
-	ProductCategories,
-	StoreWithProductNCategories,
+  Category,
+  Product,
+  ProductCategories,
+  StoreWithProductNCategories,
 } from "@/types";
 import { ProductStatus } from "@/types/enum";
-import type { StoreSettings } from "@prisma-mongo/prisma/client";
-import type { StoreTables } from "@prisma/client";
+
+import type { StoreSettings, StoreTables } from "@prisma/client";
 import { formatDate } from "date-fns";
 import { ArrowUpToLine } from "lucide-react";
 import Link from "next/link";
@@ -36,7 +34,7 @@ import ScrollSpy from "react-ui-scrollspy";
 
 export interface props {
 	storeData: StoreWithProductNCategories;
-	mongoData: StoreSettings;
+	storeSettings: StoreSettings;
 	tableData?: StoreTables;
 }
 
@@ -45,7 +43,7 @@ export interface props {
 //
 export const StoreHomeContent: React.FC<props> = ({
 	storeData,
-	mongoData,
+	storeSettings,
 	tableData,
 }) => {
 	/*
@@ -119,9 +117,9 @@ export const StoreHomeContent: React.FC<props> = ({
 	let isStoreOpen = storeData.isOpen;
 
 	//使用所設定的時間來判斷是否營業。若關閉，只會依照「店休/營業中」的設定。
-	if (storeData.useBusinessHours && mongoData.businessHours !== null) {
+	if (storeData.useBusinessHours && storeSettings.businessHours !== null) {
 		// determine store is open using business hour setting
-		const bizHour = mongoData.businessHours;
+		const bizHour = storeSettings.businessHours;
 		const businessHours = new BusinessHours(bizHour);
 		isStoreOpen = businessHours.isOpenNow();
 
@@ -230,9 +228,9 @@ export const StoreHomeContent: React.FC<props> = ({
 					</div>
 				</div>
 
-				{mongoData?.orderNoteToCustomer && (
+				{storeSettings?.orderNoteToCustomer && (
 					<div className="pl-5 pb-5">
-						<pre>{mongoData.orderNoteToCustomer}</pre>
+						<pre>{storeSettings.orderNoteToCustomer}</pre>
 					</div>
 				)}
 

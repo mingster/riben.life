@@ -1,4 +1,4 @@
-import { mongoClient } from "@/lib/prismadb";
+import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
@@ -14,17 +14,18 @@ export async function PATCH(
 
 		const body = await req.json();
 
-		const storeSettings = await mongoClient.storeSettings.upsert({
+		const storeSettings = await sqlClient.storeSettings.upsert({
 			where: {
-				databaseId: params.storeId,
+				storeId: params.storeId,
 			},
 			update: { ...body, updatedAt: getUtcNow() },
 			create: {
-				databaseId: params.storeId,
+				storeId: params.storeId,
 				...body,
 			},
 		});
 
+		/*
 		const { streetLine1 } = body;
 		if (streetLine1) {
 			const address = await mongoClient.address.upsert({
@@ -38,6 +39,7 @@ export async function PATCH(
 				},
 			});
 		}
+    */
 
 		//console.log(`storeSettings: ${JSON.stringify(storeSettings)}`);
 

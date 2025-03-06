@@ -1,9 +1,9 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import BusinessHours from "@/lib/businessHours";
-import { mongoClient } from "@/lib/prismadb";
+
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import type { StoreSettings } from "@prisma-mongo/prisma/client";
+
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { StoreHomeContent } from "./components/store-home-content";
@@ -11,6 +11,8 @@ import { StoreHomeContent } from "./components/store-home-content";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import logger from "@/lib/logger";
 import { formatDate } from "date-fns";
+import { sqlClient } from "@/lib/prismadb";
+import { StoreSettings } from "@prisma/client";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -34,12 +36,11 @@ export default async function StoreHomePage(props: {
 
 	transformDecimalsToNumbers(store);
 
-	const storeSettings = (await mongoClient.storeSettings.findFirst({
+	const storeSettings = (await sqlClient.storeSettings.findFirst({
 		where: {
-			databaseId: params.storeId,
+			storeId: params.storeId,
 		},
 	})) as StoreSettings;
-	//console.log(JSON.stringify(storeSettings));
 
 	/*
 const { t } = await useTranslation(store?.defaultLocale || "en");
@@ -80,7 +81,7 @@ const { t } = await useTranslation(store?.defaultLocale || "en");
 					</>
 				) : (
 					<>
-						<StoreHomeContent storeData={store} mongoData={storeSettings} />
+						<StoreHomeContent storeData={store} storeSettings={storeSettings} />
 					</>
 				)}
 			</Container>

@@ -10,10 +10,9 @@ import {
 } from "@/components/ui/card";
 
 import { slideIn } from "@/lib/motion";
-import type { StoreSettings } from "@prisma-mongo/prisma/client";
+import { StoreSettings } from "@prisma/client";
 import { motion } from "framer-motion";
 import { BellIcon, FacebookIcon, InstagramIcon } from "lucide-react";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import type { Store } from "prisma/prisma-client";
 
@@ -53,7 +52,6 @@ export const StoreContactCard: React.FC<props> = ({ store, storeSettings }) => {
 								{storeSettings.aboutUs && (
 									<div className="text-sm font-medium leading-none">
 										<div
-											// biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
 											dangerouslySetInnerHTML={{
 												__html: storeSettings.aboutUs,
 											}}

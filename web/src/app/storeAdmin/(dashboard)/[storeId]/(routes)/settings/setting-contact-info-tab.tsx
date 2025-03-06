@@ -15,12 +15,12 @@ import { useI18n } from "@/providers/i18n-provider";
 
 import { Button } from "@/components/ui/button";
 import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,7 +43,7 @@ type formValues = z.infer<typeof contactInfoFormSchema>;
 
 export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 	sqlData: initialData,
-	mongoData,
+	storeSettings,
 }) => {
 	const params = useParams();
 	const router = useRouter();
@@ -53,20 +53,20 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
-	const defaultValues = mongoData
+	const defaultValues = storeSettings
 		? {
 				///...initialData,
-				...mongoData,
-				aboutUs: mongoData.aboutUs ?? "",
-				supportEmail: mongoData.supportEmail ?? "",
-				supportPhoneNumber: mongoData.supportPhoneNumber ?? "",
-				facebookUrl: mongoData.facebookUrl ?? "",
-				igUrl: mongoData.igUrl ?? "",
-				lineId: mongoData.lineId ?? "",
-				telegramId: mongoData.telegramId ?? "",
-				twitterId: mongoData.twitterId ?? "",
-				whatsappId: mongoData.whatsappId ?? "",
-				wechatId: mongoData.wechatId ?? "",
+				...storeSettings,
+				aboutUs: storeSettings.aboutUs ?? "",
+				supportEmail: storeSettings.supportEmail ?? "",
+				supportPhoneNumber: storeSettings.supportPhoneNumber ?? "",
+				facebookUrl: storeSettings.facebookUrl ?? "",
+				igUrl: storeSettings.igUrl ?? "",
+				lineId: storeSettings.lineId ?? "",
+				telegramId: storeSettings.telegramId ?? "",
+				twitterId: storeSettings.twitterId ?? "",
+				whatsappId: storeSettings.whatsappId ?? "",
+				wechatId: storeSettings.wechatId ?? "",
 			}
 		: {
 				aboutUs: "",

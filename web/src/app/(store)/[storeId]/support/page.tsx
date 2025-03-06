@@ -1,8 +1,8 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import { mongoClient, sqlClient } from "@/lib/prismadb";
+import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import type { SupportTicket } from "@prisma/client";
+import type { StoreSettings, SupportTicket } from "@prisma/client";
 
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -64,11 +64,11 @@ export default async function StoreSupportPage(props: {
 		}),
 	);
 
-	const storeSettings = await mongoClient.storeSettings.findFirst({
+	const storeSettings = (await sqlClient.storeSettings.findFirst({
 		where: {
-			databaseId: params.storeId,
+			storeId: params.storeId,
 		},
-	});
+	})) as StoreSettings;
 
 	if (!storeSettings) {
 		// Handle the case where storeSettings is null

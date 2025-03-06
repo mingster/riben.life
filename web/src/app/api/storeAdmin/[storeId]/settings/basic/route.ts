@@ -1,5 +1,5 @@
 import { IsSignInResponse } from "@/lib/auth/utils";
-import { mongoClient, sqlClient } from "@/lib/prismadb";
+import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
@@ -73,9 +73,9 @@ export async function PATCH(
 			},
 		});
 
-		const storeSettings = await mongoClient.storeSettings.upsert({
+		await sqlClient.storeSettings.upsert({
 			where: {
-				databaseId: params.storeId,
+				storeId: params.storeId,
 			},
 			update: {
 				orderNoteToCustomer,
@@ -85,7 +85,7 @@ export async function PATCH(
 			create: {
 				orderNoteToCustomer,
 				businessHours,
-				databaseId: params.storeId,
+				storeId: params.storeId,
 			},
 		});
 
@@ -98,7 +98,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;
@@ -135,16 +135,16 @@ export async function DELETE(
 
 		// delete the store if no order exists.
 		if (storeToUpdate.StoreOrders.length === 0) {
-			// remove store from mongodb
-			const storeSetting = await mongoClient.storeSettings.findFirst({
+			const storeSetting = await sqlClient.storeSettings.findFirst({
 				where: {
-					databaseId: storeToUpdate.id,
+					storeId: storeToUpdate.id,
 				},
 			});
 
 			if (storeSetting) {
+				/*
 				try {
-					await mongoClient.address.delete({
+					await sqlClient.address.delete({
 						where: {
 							storeSettingsId: storeSetting.id,
 						},
@@ -152,10 +152,11 @@ export async function DELETE(
 				} catch (error) {
 					console.log(error);
 				}
+          */
 
-				await mongoClient.storeSettings.delete({
+				await sqlClient.storeSettings.delete({
 					where: {
-						databaseId: storeToUpdate.id,
+						storeId: storeToUpdate.id,
 					},
 				});
 			}

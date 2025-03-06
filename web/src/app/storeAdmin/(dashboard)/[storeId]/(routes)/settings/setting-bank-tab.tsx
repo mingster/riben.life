@@ -2,8 +2,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { StoreSettings } from "@prisma-mongo/prisma/client";
-import type { Store } from "@prisma/client";
+
+import type { Store, StoreSettings } from "@prisma/client";
 
 import axios, { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
@@ -43,7 +43,7 @@ type formValues = z.infer<typeof formSchema>;
 
 export interface SettingsFormProps {
 	sqlData: Store;
-	mongoData: StoreSettings | null;
+	storeSettings: StoreSettings | null;
 }
 
 export const BankSettingTab: React.FC<SettingsFormProps> = ({

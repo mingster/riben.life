@@ -1,6 +1,7 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import { mongoClient, sqlClient } from "@/lib/prismadb";
+import { sqlClient } from "@/lib/prismadb";
+import { StoreSettings } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import ReactMarkdown from "react-markdown";
@@ -27,11 +28,11 @@ export default async function StoreTermsPage(props: {
 		redirect("/unv");
 	}
 
-	const storeSettings = await mongoClient.storeSettings.findFirst({
+	const storeSettings = (await sqlClient.storeSettings.findFirst({
 		where: {
-			databaseId: params.storeId,
+			storeId: params.storeId,
 		},
-	});
+	})) as StoreSettings;
 
 	if (storeSettings === null) return;
 	if (storeSettings.tos === null) return;

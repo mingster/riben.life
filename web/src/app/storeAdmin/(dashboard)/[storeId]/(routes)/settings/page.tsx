@@ -2,12 +2,12 @@ import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import { mongoClient, sqlClient } from "@/lib/prismadb";
+import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import {
-	type PaymentMethod,
-	Prisma,
-	type ShippingMethod,
+  type PaymentMethod,
+  Prisma,
+  type ShippingMethod,
 } from "@prisma/client";
 import { Suspense } from "react";
 import { StoreSettingTabs } from "./tabs";
@@ -33,12 +33,11 @@ export default async function StoreSettingsPage(props: {
 
 	transformDecimalsToNumbers(store);
 
-	//console.log(`store: ${JSON.stringify(store)}`);
-	const storeSettings = await mongoClient.storeSettings.findFirst({
+	const storeSettings = (await sqlClient.storeSettings.findFirst({
 		where: {
-			databaseId: params.storeId,
+			storeId: params.storeId,
 		},
-	});
+	}));
 
 	//console.log(`store: ${JSON.stringify(store)}`);
 	//console.log('storeSettings: ' + JSON.stringify(storeSettings));
@@ -76,7 +75,7 @@ export default async function StoreSettingsPage(props: {
 			<Container>
 				<StoreSettingTabs
 					sqlData={store}
-					mongoData={storeSettings}
+					storeSettings={storeSettings}
 					paymentMethods={allPaymentMethods}
 					shippingMethods={allShippingMethods}
 					disablePaidOptions={disablePaidOptions}

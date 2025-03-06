@@ -2,11 +2,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { mongoClient, sqlClient } from "@/lib/prismadb";
+import { sqlClient } from "@/lib/prismadb";
 //import { connectToMongoDB } from '@/lib/mongodb';
 
 import fs from "node:fs";
 import { GetSession } from "@/lib/auth/utils";
+import logger from "@/lib/logger";
 import StoreModel from "@/model/StoreModel";
 import { StoreLevel } from "@/types/enum";
 import type { Session } from "next-auth";
@@ -99,9 +100,9 @@ export const createStore = async (values: z.infer<typeof formSchema>) => {
 	const bizhoursfilePath = `${process.cwd()}/public/defaults/business-hours.json`;
 	const businessHours = fs.readFileSync(bizhoursfilePath, "utf8");
 
-	await mongoClient.storeSettings.create({
+	await sqlClient.storeSettings.create({
 		data: {
-			databaseId,
+			storeId: databaseId,
 			businessHours,
 			privacyPolicy,
 			tos,
@@ -154,6 +155,8 @@ export const deleteStore = async (id: FormData) => {
 		// Returning a success message after deleting the Store
 		return "Store deleted";
 	} catch (error) {
+		logger.error(error);
+
 		// Returning an error message if Store deletion fails
 		return { message: "error deleting Store" };
 	}

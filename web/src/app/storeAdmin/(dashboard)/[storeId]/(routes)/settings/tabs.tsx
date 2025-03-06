@@ -1,11 +1,11 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import type { StoreSettings } from "@prisma-mongo/prisma/client";
+
 import {
 	type PaymentMethod,
-	Prisma,
 	type ShippingMethod,
+	StoreSettings,
 } from "@prisma/client";
 
 import axios, { type AxiosError } from "axios";
@@ -33,7 +33,7 @@ import { ShippingPaymentMethodTab } from "./setting-shipping-payment-method";
 
 export interface SettingsFormProps {
 	sqlData: Store;
-	mongoData: StoreSettings | null;
+	storeSettings: StoreSettings | null;
 	paymentMethods: PaymentMethod[] | [];
 	shippingMethods: ShippingMethod[] | [];
 	disablePaidOptions: boolean;
@@ -49,7 +49,7 @@ export interface SettingsFormProps {
 }
 export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 	sqlData,
-	mongoData,
+	storeSettings,
 	paymentMethods,
 	shippingMethods,
 	disablePaidOptions,
@@ -155,23 +155,23 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 				</TabsList>
 
 				<TabsContent value="basic">
-					<BasicSettingTab sqlData={sqlData} mongoData={mongoData} />
+					<BasicSettingTab sqlData={sqlData} storeSettings={storeSettings} />
 				</TabsContent>
 
 				<TabsContent value="bank">
-					<BankSettingTab sqlData={sqlData} mongoData={mongoData} />
+					<BankSettingTab sqlData={sqlData} storeSettings={storeSettings} />
 				</TabsContent>
 
 				<TabsContent value="contactInfo">
-					<ContactInfoTab sqlData={sqlData} mongoData={mongoData} />
+					<ContactInfoTab sqlData={sqlData} storeSettings={storeSettings} />
 				</TabsContent>
 
 				<TabsContent value="rsvp">
-					<RsvpSettingTab sqlData={sqlData} mongoData={mongoData} />
+					<RsvpSettingTab sqlData={sqlData} storeSettings={storeSettings} />
 				</TabsContent>
 
 				<TabsContent value="privacyStatement">
-					<PrivacyTab sqlData={sqlData} mongoData={mongoData} />
+					<PrivacyTab sqlData={sqlData} storeSettings={storeSettings} />
 				</TabsContent>
 
 				<TabsContent value="ShippingMethod">
@@ -185,7 +185,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 				<TabsContent value="paidOptions">
 					<PaidOptionsTab
 						sqlData={sqlData}
-						mongoData={mongoData}
+						storeSettings={storeSettings}
 						disablePaidOptions={disablePaidOptions}
 					/>
 				</TabsContent>

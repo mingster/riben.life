@@ -41,15 +41,13 @@ const privacyFormSchema = z.object({
 type formValues = z.infer<typeof privacyFormSchema>;
 
 export const EditDefaultPrivacy: React.FC<props> = ({ data }) => {
-	const params = useParams();
+	//const params = useParams();
 	const router = useRouter();
 	const { toast } = useToast();
 	const [loading, setLoading] = useState(false);
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-
-	//if (!mongoData?.privacyPolicy) mongoData.privacyPolicy = '';
 
 	const defaultValues = { privacyPolicy: data };
 
