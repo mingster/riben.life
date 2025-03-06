@@ -3,8 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { StoreSettings } from "@prisma-mongo/prisma/client";
 import type { Store } from "@prisma/client";
+import { StoreSettings } from "@prisma/client";
 
 import axios, { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
@@ -15,13 +15,13 @@ import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
@@ -32,10 +32,10 @@ import { ApiListing } from "@/components/ui/api-listing";
 
 import { useTranslation } from "@/app/i18n/client";
 import {
-	Select,
-	SelectContent,
-	SelectTrigger,
-	SelectValue,
+  Select,
+  SelectContent,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
@@ -60,7 +60,7 @@ type formValues = z.infer<typeof formSchema>;
 
 export interface SettingsFormProps {
 	sqlData: Store;
-	mongoData: StoreSettings | null;
+	storeSettings: StoreSettings | null;
 	/*
   initialData:
     | (Store & {
@@ -74,7 +74,7 @@ export interface SettingsFormProps {
 
 export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 	sqlData,
-	mongoData,
+	storeSettings,
 }) => {
 	const params = useParams();
 	const router = useRouter();
@@ -87,8 +87,8 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 	const defaultValues = sqlData
 		? {
 				...sqlData,
-				orderNoteToCustomer: mongoData?.orderNoteToCustomer || "",
-				businessHours: mongoData?.businessHours || "",
+				orderNoteToCustomer: storeSettings?.orderNoteToCustomer || "",
+				businessHours: storeSettings?.businessHours || "",
 			}
 		: { orderNoteToCustomer: "", businessHours: "" };
 

@@ -21,12 +21,12 @@ const EditorComp = dynamic(
 
 import { Button } from "@/components/ui/button";
 import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import dynamic from "next/dynamic";
 import type { SettingsFormProps } from "./setting-basic-tab";
@@ -38,7 +38,7 @@ const privacyFormSchema = z.object({
 
 type formValues = z.infer<typeof privacyFormSchema>;
 
-export const PrivacyTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
+export const PrivacyTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
 	const params = useParams();
 	const router = useRouter();
 	const { toast } = useToast();
@@ -47,12 +47,12 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ mongoData }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
-	//if (!mongoData?.privacyPolicy) mongoData.privacyPolicy = '';
+	//if (!storeSettings?.privacyPolicy) storeSettings.privacyPolicy = '';
 
-	const defaultValues = mongoData
+	const defaultValues = storeSettings
 		? {
 				///...initialData,
-				...mongoData,
+				...storeSettings,
 			}
 		: {};
 

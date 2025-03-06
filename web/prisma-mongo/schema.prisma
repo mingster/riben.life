@@ -11,7 +11,7 @@ datasource db {
     provider = "mongodb"
     url      = env("MONGODB_URI")
 }
-
+/*
 model StoreSettings {
     id                  String  @id @default(auto()) @map("_id") @db.ObjectId
     databaseId          String  @unique //map to relational db
@@ -59,3 +59,4 @@ model Address {
 
     @@index([id, storeSettingsId, city, district, country, postalCode])
 }
+*/

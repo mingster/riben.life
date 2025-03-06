@@ -1,11 +1,9 @@
 import { Toaster } from "@/components/ui/toaster";
 //import { Metadata } from 'next';
-//import { mongoClient, sqlClient } from '@/lib/prismadb';
 
 import { Loader } from "@/components/ui/loader";
-import { mongoClient, sqlClient } from "@/lib/prismadb";
+import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
-import type { StoreSettings } from "@prisma-mongo/prisma/client";
 import { Suspense } from "react";
 import { StoreFooter } from "./components/store-footer";
 import { StoreNavbar } from "./components/store-navbar";
@@ -14,6 +12,7 @@ import BusinessHours from "@/lib/businessHours";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Metadata, ResolvingMetadata } from "next";
 import { redirect } from "next/navigation";
+import { StoreSettings } from "@prisma/client";
 type Props = {
 	params: Promise<{ storeId: string }>;
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -21,7 +20,7 @@ type Props = {
 
 export async function generateMetadata(
 	props: Props,
-	parent: ResolvingMetadata,
+	//parent: ResolvingMetadata,
 ): Promise<Metadata> {
 	const params = await props.params;
 	if (!params.storeId) {
@@ -86,12 +85,11 @@ export default async function StoreHomeLayout(props: {
 
 	transformDecimalsToNumbers(store);
 
-	const storeSettings = (await mongoClient.storeSettings.findFirst({
+	const storeSettings = (await sqlClient.storeSettings.findFirst({
 		where: {
-			databaseId: params.storeId,
+			storeId: params.storeId,
 		},
 	})) as StoreSettings;
-	//console.log(JSON.stringify(store));
 
 	let isStoreOpen = store.isOpen;
 	if (storeSettings != null) {

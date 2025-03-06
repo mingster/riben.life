@@ -1,10 +1,9 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import BusinessHours from "@/lib/businessHours";
-import { mongoClient, sqlClient } from "@/lib/prismadb";
+import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import type { StoreSettings } from "@prisma-mongo/prisma/client";
-import type { StoreTables } from "@prisma/client";
+import type { StoreSettings, StoreTables } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -35,12 +34,11 @@ export default async function TableOrderPage(props: {
 		},
 	})) as StoreTables;
 
-	const storeSettings = (await mongoClient.storeSettings.findFirst({
+	const storeSettings = (await sqlClient.storeSettings.findFirst({
 		where: {
-			databaseId: params.storeId,
+			storeId: params.storeId,
 		},
 	})) as StoreSettings;
-	//console.log(JSON.stringify(storeSettings));
 
 	let closed_descr = "";
 	let isStoreOpen = store.isOpen;
@@ -74,7 +72,7 @@ export default async function TableOrderPage(props: {
 					<>
 						<StoreHomeContent
 							storeData={store}
-							mongoData={storeSettings}
+							storeSettings={storeSettings}
 							tableData={table}
 						/>
 					</>

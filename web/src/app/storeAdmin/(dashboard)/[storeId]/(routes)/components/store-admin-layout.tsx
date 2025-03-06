@@ -4,20 +4,21 @@ import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/types";
-import type { StoreSettings } from "@prisma-mongo/prisma/client";
+
+import { StoreSettings } from "@prisma/client";
 import { StoreAdminFooter } from "./store-admin-footer";
 import { StoreAdminNavbar } from "./store-admin-navbar";
 import { StoreAdminSidebar } from "./store-admin-sidebar";
 
 export interface props {
 	sqlData: Store;
-	mongoData: StoreSettings | null;
+	storeSettings: StoreSettings | null;
 	children: React.ReactNode;
 }
 
 const StoreAdminLayout: React.FC<props> = ({
 	sqlData,
-	mongoData,
+	storeSettings,
 	children,
 }) => {
 	const sidebar = useStore(useSidebarToggle, (state) => state);

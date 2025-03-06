@@ -389,6 +389,7 @@ model Store {
   StoreTables                StoreTables[]
   StoreProductOptionTemplate StoreProductOptionTemplate[]
   Rsvp                       Rsvp[]
+  StoreSettings              StoreSettings?
 
   @@index([ownerId])
   @@index([name])
@@ -396,6 +397,47 @@ model Store {
   @@index([defaultCurrency])
   @@index([level])
   @@index([customDomain])
+}
+
+model StoreSettings {
+  id                  String  @id @default(uuid())
+  storeId             String  @unique
+  orderNoteToCustomer String?
+  privacyPolicy       String?
+  tos                 String?
+  aboutUs             String?
+  description         String?
+  aboutUsVideoUrl     String?
+  supportEmail        String?
+  supportPhoneNumber  String?
+  facebookUrl         String?
+  igUrl               String?
+  lineId              String?
+  telegramId          String?
+  twitterId           String?
+  whatsappId          String?
+  wechatId            String?
+
+  firstName   String?
+  lastName    String?
+  company     String?
+  country     String?
+  streetLine1 String?
+  streetLine2 String?
+  city        String?
+  district    String?
+  province    String?
+  postalCode  String?
+  phoneNumber String?
+
+  businessHours String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
 }
 
 model StoreTables {

@@ -39,6 +39,8 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 	// normal navbar
 	//<header className="sticky top-0 z-10 w-full shadow backdrop-blur dark:shadow-secondary">
 
+	/*
+
 	const onNavlinkClick = (
 		e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
 	) => {
@@ -51,10 +53,10 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 		}
 	};
 
-	// turn off footer in those pages
+  // turn off footer in those pages
 	const pathName = usePathname();
 
-	if (
+  if (
 		pathName.includes("billing") ||
 		//pathName.includes("checkout") ||
 		pathName.includes("faq") ||
@@ -64,7 +66,7 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 	) {
 		visible = false;
 	}
-	//}, [visible]);
+    */
 
 	if (store == null) return;
 	if (store.Categories == null) return;

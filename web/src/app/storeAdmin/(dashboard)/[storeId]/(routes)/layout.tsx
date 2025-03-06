@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
-import { mongoClient, sqlClient } from "@/lib/prismadb";
+import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
@@ -61,14 +62,15 @@ export default async function StoreLayout(props: {
 	});
 
 	if (!store) {
-		console.log("no access to the store...redirect to store creation page.");
+		logger.info("store not found...redirect to store creation page.");
+		//console.log("no access to the store...redirect to store creation page.");
 		redirect("/storeAdmin");
 	}
 
 	transformDecimalsToNumbers(store);
 
 	return (
-		<StoreAdminLayout sqlData={store} mongoData={null}>
+		<StoreAdminLayout sqlData={store} storeSettings={null}>
 			{children}
 			<Toaster />
 		</StoreAdminLayout>
