@@ -1,7 +1,5 @@
 "use client";
 
-import { useToast } from "@/components/ui/use-toast";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -9,11 +7,13 @@ import {
 	CardDescription,
 	CardHeader,
 } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
 
-import type { StoreOrder, Store } from "@/types";
+import type { Store, StoreOrder } from "@/types";
 
-import type { orderitemview } from "@prisma/client";
 import { useTranslation } from "@/app/i18n/client";
+import Currency from "@/components/currency";
 import {
 	Form,
 	FormControl,
@@ -22,22 +22,23 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import IconButton from "@/components/ui/icon-button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useI18n } from "@/providers/i18n-provider";
-import Currency from "@/components/currency";
-import IconButton from "@/components/ui/icon-button";
+import type { orderitemview } from "@prisma/client";
 import { useCallback, useEffect, useState } from "react";
 
 import { z } from "zod";
 
 import { Input } from "@/components/ui/input";
 
+import logger from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { type AxiosError } from "axios";
 import Decimal from "decimal.js";
+import { Minus, Undo2Icon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
-import { Minus, Undo2Icon, XIcon } from "lucide-react";
 
 interface props {
 	store: Store;
@@ -83,12 +84,14 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 		throw new Error("order is null");
 	}
 
-	const [open, setOpen] = useState(false);
+	//const [open, setOpen] = useState(false);
+	//const [openModal, setOpenModal] = useState(false);
+
 	const [loading, setLoading] = useState(false);
 
 	const [updatedOrder, setUpdatedOrder] = useState<StoreOrder>(order);
 	const [orderTotal, setOrderTotal] = useState(Number(order.orderTotal));
-	const [openModal, setOpenModal] = useState(false);
+	const [refundAmount, setRefundAmount] = useState(orderTotal);
 
 	const { toast } = useToast();
 	const { lng } = useI18n();
@@ -162,18 +165,19 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 		router.back();
 	};
 
-	//console.log('StorePaymentMethods', JSON.stringify(store.StorePaymentMethods));
-
 	//const params = useParams();
 	//console.log('order', JSON.stringify(order));
 
-	console.log("form errors", form.formState.errors);
+	logger.info("form errors", form.formState.errors);
 
 	const handleDecreaseQuality = (index: number) => {
 		if (!updatedOrder) return;
 
 		const row = fields[index];
 		row.quantity = row.quantity - 1;
+		if (row.quantity <= 0) {
+			row.quantity = 0;
+		}
 		update(index, row);
 		setValue(`OrderItemView.${index}.quantity`, row.quantity);
 
@@ -206,6 +210,9 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 				total += Number(item.unitPrice) * item.quantity;
 		});
 		setOrderTotal(total);
+
+    setRefundAmount(Number(order.orderTotal) - total);
+
 		updatedOrder.orderTotal = new Decimal(total);
 	};
 
@@ -261,8 +268,13 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 						</div>
 
 						<div className="pb-1 flex items-center gap-1">
-							<div className="text-bold">
+							<div className="text-bold">訂單金額:</div>
+							<div>
 								<Currency value={orderTotal} />
+							</div>
+							<div className="text-bold">退款金額:</div>
+							<div>
+								<Currency value={refundAmount} />
 							</div>
 						</div>
 
@@ -349,6 +361,17 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 							>
 								<Undo2Icon className="mr-0 size-4" />
 								{t("RefundAll")}
+							</Button>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => {
+									clearErrors();
+									router.back();
+									//router.push(`/${params.storeId}/support`);
+								}}
+							>
+								{t("Cancel")}
 							</Button>
 						</div>
 					</form>
