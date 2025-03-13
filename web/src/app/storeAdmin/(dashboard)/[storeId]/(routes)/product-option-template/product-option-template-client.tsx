@@ -15,6 +15,7 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Heading } from "@/components/ui/heading";
 import { useI18n } from "@/providers/i18n-provider";
+import { StoreProductOptionSelectionsTemplate } from "@prisma/client";
 import type { ColumnDef } from "@tanstack/react-table";
 import { t } from "i18next";
 import { CheckIcon, Trash, XIcon } from "lucide-react";
@@ -26,8 +27,6 @@ interface editProps {
 export const ProductsOptionTemplateClient = ({ data }: editProps) => {
 	//console.log("storeOptionTemplates", JSON.stringify(storeOptionTemplates));
 
-	const params = useParams();
-	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
@@ -196,13 +195,15 @@ const columns: ColumnDef<ProductOptionTemplateColumn>[] = [
 			if ("StoreProductOptionSelectionsTemplate" in val) {
 				return (
 					<div>
-						{val.StoreProductOptionSelectionsTemplate.map((item) => (
-							<div key={item.id} className="pl-0 text-nowrap">
-								{`${item.name}`}{" "}
-								{Number(item.price) !== 0 && `:(${item.price})`}
-								{item.isDefault === true && `:(${t("Default")})`}
-							</div>
-						))}
+						{val.StoreProductOptionSelectionsTemplate.map(
+							(item: StoreProductOptionSelectionsTemplate) => (
+								<div key={item.id} className="pl-0 text-nowrap">
+									{`${item.name}`}{" "}
+									{Number(item.price) !== 0 && `:(${item.price})`}
+									{item.isDefault === true && `:(${t("Default")})`}
+								</div>
+							),
+						)}
 					</div>
 				);
 			}

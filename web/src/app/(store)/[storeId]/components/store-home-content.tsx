@@ -9,10 +9,10 @@ import BusinessHours from "@/lib/businessHours";
 import { getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
-  Category,
-  Product,
-  ProductCategories,
-  StoreWithProductNCategories,
+	Category,
+	Product,
+	ProductCategories,
+	StoreWithProductNCategories,
 } from "@/types";
 import { ProductStatus } from "@/types/enum";
 

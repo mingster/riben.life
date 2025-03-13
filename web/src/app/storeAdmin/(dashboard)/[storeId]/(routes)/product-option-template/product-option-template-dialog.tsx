@@ -28,6 +28,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import type { ProductOption, StoreProductOptionTemplate } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { StoreProductOptionSelectionsTemplate } from "@prisma/client";
 import axios from "axios";
 import { Pencil, Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -78,12 +79,14 @@ export const AddProductOptionTemplateDialog: React.FC<props> = ({
 
 	// parse selection into line separated text
 	let s = "";
-	initialData?.StoreProductOptionSelectionsTemplate.map((selection) => {
-		s += `${selection.name}`;
-		s += `:${selection.price}`;
-		if (selection.isDefault === true) s += ":1";
-		s += "\n";
-	});
+	initialData?.StoreProductOptionSelectionsTemplate.map(
+		(selection: StoreProductOptionSelectionsTemplate) => {
+			s += `${selection.name}`;
+			s += `:${selection.price}`;
+			if (selection.isDefault === true) s += ":1";
+			s += "\n";
+		},
+	);
 
 	const defaultValues = initialData
 		? {

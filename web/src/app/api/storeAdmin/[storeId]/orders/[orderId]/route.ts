@@ -1,18 +1,16 @@
 import getOrderById from "@/actions/get-order-by_id";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import {
-	getNowTimeInTz,
-	getUtcNow,
-	transformDecimalsToNumbers,
-} from "@/lib/utils";
+import { getNowTimeInTz } from "@/lib/utils";
 import type { StoreOrder } from "@/types";
 import { OrderStatus } from "@/types/enum";
+import { orderitemview } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 // mark order as deleted
 export async function DELETE(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ orderId: string; storeId: string }> },
 ) {
 	const params = await props.params;
@@ -53,9 +51,8 @@ export async function DELETE(
 				id: params.orderId,
 			},
 		});
+		logger.info("order deleted", order);
 	}
-
-	console.log("[ORDER_DELETED]", order);
 
 	return NextResponse.json(order);
 	/*} catch (error) {
@@ -113,7 +110,7 @@ export async function PATCH(
 			},
 		});
 
-		updatedOrder.OrderItemView.map(async (item) => {
+		updatedOrder.OrderItemView.map(async (item: orderitemview) => {
 			await sqlClient.orderItem.create({
 				data: {
 					orderId: params.orderId,
@@ -132,7 +129,7 @@ export async function PATCH(
 
 		return NextResponse.json(result);
 	} catch (error) {
-		console.log("[ORDER_PATCH]", error);
+		logger.error("order updated", error);
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

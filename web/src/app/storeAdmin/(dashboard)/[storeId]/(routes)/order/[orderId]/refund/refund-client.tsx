@@ -205,13 +205,13 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 		if (!updatedOrder) return;
 
 		let total = 0;
-		updatedOrder.OrderItemView.map((item) => {
+		updatedOrder.OrderItemView.map((item: orderitemview) => {
 			if (item.unitPrice && item.quantity)
 				total += Number(item.unitPrice) * item.quantity;
 		});
 		setOrderTotal(total);
 
-    setRefundAmount(Number(order.orderTotal) - total);
+		setRefundAmount(Number(order.orderTotal) - total);
 
 		updatedOrder.orderTotal = new Decimal(total);
 	};
@@ -278,71 +278,74 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 							</div>
 						</div>
 
-						{updatedOrder?.OrderItemView.map((item, index) => {
-							const errorForFieldName = errors?.OrderItemView?.[index]?.message;
+						{updatedOrder?.OrderItemView.map(
+							(item: orderitemview, index: number) => {
+								const errorForFieldName =
+									errors?.OrderItemView?.[index]?.message;
 
-							return (
-								<div
-									key={`${item.id}${index}`}
-									className="grid grid-cols-[5%_70%_10%_15%] gap-1 w-full border"
-								>
-									{errorForFieldName && <p>{errorForFieldName}</p>}
+								return (
+									<div
+										key={`${item.id}${index}`}
+										className="grid grid-cols-[5%_70%_10%_15%] gap-1 w-full border"
+									>
+										{errorForFieldName && <p>{errorForFieldName}</p>}
 
-									<div className="flex items-center">
-										<Button
-											variant="ghost"
-											size="icon"
-											type="button"
-											onClick={() => handleDeleteOrderItem(index)}
-										>
-											<XIcon className="text-red-400 size-4" />
-										</Button>
-									</div>
+										<div className="flex items-center">
+											<Button
+												variant="ghost"
+												size="icon"
+												type="button"
+												onClick={() => handleDeleteOrderItem(index)}
+											>
+												<XIcon className="text-red-400 size-4" />
+											</Button>
+										</div>
 
-									<div className="flex items-center">
-										{item.name}
-										{item.variants && (
-											<div className="pl-3 text-sm">- {item.variants}</div>
-										)}
-									</div>
+										<div className="flex items-center">
+											{item.name}
+											{item.variants && (
+												<div className="pl-3 text-sm">- {item.variants}</div>
+											)}
+										</div>
 
-									<div className="place-self-center">
-										<Currency value={Number(item.unitPrice)} />
-									</div>
+										<div className="place-self-center">
+											<Currency value={Number(item.unitPrice)} />
+										</div>
 
-									<div className="place-self-center">
-										<div className="flex">
-											<div className="flex flex-nowrap content-center w-[20px]">
-												{item.quantity && item.quantity > 0 && (
-													//{currentItem.quantity > 0 && (
-													<IconButton
-														onClick={() => handleDecreaseQuality(index)}
-														icon={
-															<Minus
-																size={18}
-																className="dark:text-primary text-slate-500"
-															/>
-														}
-													/>
-												)}
-											</div>
-											<div className="flex flex-nowrap content-center items-center ">
-												<Input
-													{...register(
-														`OrderItemView.${index}.quantity` as const,
+										<div className="place-self-center">
+											<div className="flex">
+												<div className="flex flex-nowrap content-center w-[20px]">
+													{item.quantity && item.quantity > 0 && (
+														//{currentItem.quantity > 0 && (
+														<IconButton
+															onClick={() => handleDecreaseQuality(index)}
+															icon={
+																<Minus
+																	size={18}
+																	className="dark:text-primary text-slate-500"
+																/>
+															}
+														/>
 													)}
-													type="number"
-													className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-													value={Number(item.quantity) || 0}
-													onChange={handleQuantityInputChange}
-												/>
+												</div>
+												<div className="flex flex-nowrap content-center items-center ">
+													<Input
+														{...register(
+															`OrderItemView.${index}.quantity` as const,
+														)}
+														type="number"
+														className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+														value={Number(item.quantity) || 0}
+														onChange={handleQuantityInputChange}
+													/>
+												</div>
+												<div className="flex flex-nowrap content-center w-[20px]"></div>
 											</div>
-											<div className="flex flex-nowrap content-center w-[20px]"></div>
 										</div>
 									</div>
-								</div>
-							);
-						})}
+								);
+							},
+						)}
 
 						<div className="w-full py-2 flex gap-2">
 							<Button

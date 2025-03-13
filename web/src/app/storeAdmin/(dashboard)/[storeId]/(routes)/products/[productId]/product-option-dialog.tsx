@@ -28,6 +28,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import type { ProductOption, StoreProductOptionTemplate } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+	ProductOptionSelections,
+	StoreProductOptionSelectionsTemplate,
+} from "@prisma/client";
 import axios from "axios";
 import { Pencil, Plus } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -79,22 +83,26 @@ export const AddProductOptionDialog: React.FC<props> = ({
 
 	let s = "";
 	if (initialData && "ProductOptionSelections" in initialData) {
-		initialData?.ProductOptionSelections.map((selection) => {
-			s += `${selection.name}`;
-			s += `:${selection.price}`;
-			if (selection.isDefault === true) s += ":1";
-			s += "\n";
-		});
+		initialData?.ProductOptionSelections.map(
+			(selection: ProductOptionSelections) => {
+				s += `${selection.name}`;
+				s += `:${selection.price}`;
+				if (selection.isDefault === true) s += ":1";
+				s += "\n";
+			},
+		);
 	} else if (
 		initialData &&
 		"StoreProductOptionSelectionsTemplate" in initialData
 	) {
-		initialData?.StoreProductOptionSelectionsTemplate.map((selection) => {
-			s += `${selection.name}`;
-			s += `:${selection.price}`;
-			if (selection.isDefault === true) s += ":1";
-			s += "\n";
-		});
+		initialData?.StoreProductOptionSelectionsTemplate.map(
+			(selection: StoreProductOptionSelectionsTemplate) => {
+				s += `${selection.name}`;
+				s += `:${selection.price}`;
+				if (selection.isDefault === true) s += ":1";
+				s += "\n";
+			},
+		);
 	}
 
 	const defaultValues = initialData
