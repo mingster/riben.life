@@ -21,12 +21,12 @@ const EditorComp = dynamic(
 
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
 } from "@/components/ui/form";
 import dynamic from "next/dynamic";
 import type { SettingsFormProps } from "./setting-basic-tab";

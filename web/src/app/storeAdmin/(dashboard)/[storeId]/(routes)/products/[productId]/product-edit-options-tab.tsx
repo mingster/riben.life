@@ -21,6 +21,10 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useI18n } from "@/providers/i18n-provider";
+import {
+	ProductOptionSelections,
+	StoreProductOptionSelectionsTemplate,
+} from "@prisma/client";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { t } from "i18next";
 import { CheckIcon, Trash, XIcon } from "lucide-react";
@@ -339,26 +343,30 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
 			if ("ProductOptionSelections" in val) {
 				return (
 					<div>
-						{val.ProductOptionSelections.map((item) => (
-							<div key={item.id} className="pl-0 text-nowrap">
-								{`${item.name}`}{" "}
-								{Number(item.price) !== 0 && `:(${item.price})`}
-								{item.isDefault === true && `:(${t("Default")})`}
-							</div>
-						))}
+						{val.ProductOptionSelections.map(
+							(item: ProductOptionSelections) => (
+								<div key={item.id} className="pl-0 text-nowrap">
+									{`${item.name}`}{" "}
+									{Number(item.price) !== 0 && `:(${item.price})`}
+									{item.isDefault === true && `:(${t("Default")})`}
+								</div>
+							),
+						)}
 					</div>
 				);
 			}
 			if ("StoreProductOptionSelectionsTemplate" in val) {
 				return (
 					<div>
-						{val.StoreProductOptionSelectionsTemplate.map((item) => (
-							<div key={item.id} className="pl-0 text-nowrap">
-								{`${item.name}`}{" "}
-								{Number(item.price) !== 0 && `:(${item.price})`}
-								{item.isDefault === true && `:(${t("Default")})`}
-							</div>
-						))}
+						{val.StoreProductOptionSelectionsTemplate.map(
+							(item: StoreProductOptionSelectionsTemplate) => (
+								<div key={item.id} className="pl-0 text-nowrap">
+									{`${item.name}`}{" "}
+									{Number(item.price) !== 0 && `:(${item.price})`}
+									{item.isDefault === true && `:(${t("Default")})`}
+								</div>
+							),
+						)}
 					</div>
 				);
 			}
@@ -502,26 +510,30 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
 			if ("ProductOptionSelections" in val) {
 				return (
 					<div>
-						{val.ProductOptionSelections.map((item) => (
-							<div key={item.id} className="pl-0 text-nowrap">
-								{`${item.name}`}{" "}
-								{Number(item.price) !== 0 && `:(${item.price})`}
-								{item.isDefault === true && `:(${t("Default")})`}
-							</div>
-						))}
+						{val.ProductOptionSelections.map(
+							(item: ProductOptionSelections) => (
+								<div key={item.id} className="pl-0 text-nowrap">
+									{`${item.name}`}{" "}
+									{Number(item.price) !== 0 && `:(${item.price})`}
+									{item.isDefault === true && `:(${t("Default")})`}
+								</div>
+							),
+						)}
 					</div>
 				);
 			}
 			if ("StoreProductOptionSelectionsTemplate" in val) {
 				return (
 					<div>
-						{val.StoreProductOptionSelectionsTemplate.map((item) => (
-							<div key={item.id} className="pl-0 text-nowrap">
-								{`${item.name}`}{" "}
-								{Number(item.price) !== 0 && `:(${item.price})`}
-								{item.isDefault === true && `:(${t("Default")})`}
-							</div>
-						))}
+						{val.StoreProductOptionSelectionsTemplate.map(
+							(item: StoreProductOptionSelectionsTemplate) => (
+								<div key={item.id} className="pl-0 text-nowrap">
+									{`${item.name}`}{" "}
+									{Number(item.price) !== 0 && `:(${item.price})`}
+									{item.isDefault === true && `:(${t("Default")})`}
+								</div>
+							),
+						)}
 					</div>
 				);
 			}

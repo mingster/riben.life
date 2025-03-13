@@ -15,6 +15,7 @@ import type { LinePayClient } from "@/lib/linepay/type";
 import { sqlClient } from "@/lib/prismadb";
 import { isMobileUserAgent } from "@/lib/utils";
 import type { Store, StoreOrder } from "@/types";
+import { orderitemview } from "@prisma/client";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -73,7 +74,7 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 		amount: Number(order.orderTotal),
 		currency: order.currency as Currency,
 		orderId: order.id,
-		packages: order.OrderItemView.map((item) => ({
+		packages: order.OrderItemView.map((item: orderitemview) => ({
 			id: item.id,
 			amount: Number(item.unitPrice) * item.quantity,
 			products: [

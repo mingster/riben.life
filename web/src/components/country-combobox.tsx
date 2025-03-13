@@ -1,5 +1,5 @@
+import type { Country } from "@prisma/client";
 import { CheckIcon } from "@radix-ui/react-icons";
-import type { Country } from "prisma/prisma-client";
 import * as React from "react";
 import useSWR from "swr";
 

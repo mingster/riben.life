@@ -14,7 +14,7 @@ import { type TicketColumn, columns } from "./columns";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
-import type { Store, StoreSettings } from "prisma/prisma-client";
+import type { Store, StoreSettings } from "@prisma/client";
 
 interface TicketClientProps {
 	store: Store;

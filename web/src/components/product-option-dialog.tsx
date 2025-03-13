@@ -38,6 +38,7 @@ import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import logger from "@/lib/logger";
 import { useParams } from "next/navigation";
 import { z } from "zod";
 
@@ -129,7 +130,9 @@ export const ProductOptionDialog: React.FC<props> = ({
 				// radio buttons
 				const iteriable_selections: string[] = productOptions.flatMap(
 					(option) =>
-						option.ProductOptionSelections.map((selection) => selection.id),
+						option.ProductOptionSelections.map(
+							(selection: ProductOptionSelections) => selection.id,
+						),
 				);
 
 				if (option.isRequired) {
@@ -233,17 +236,21 @@ export const ProductOptionDialog: React.FC<props> = ({
 
 			if (option.isMultiple) {
 				const defaultSelections = option.ProductOptionSelections.filter(
-					(item) => item.isDefault,
+					(item: ProductOptionSelections) => item.isDefault,
 				);
-				defaultValues[fieldName] = defaultSelections.map((item) => item.id);
+				defaultValues[fieldName] = defaultSelections.map(
+					(item: ProductOptionSelections) => item.id,
+				);
 				initialCheckedTotal += defaultSelections.reduce(
-					(sum, item) => sum + Number(item.price),
+					(sum: number, item: ProductOptionSelections) =>
+						sum + Number(item.price),
 					0,
 				);
 			} else {
 				const defaultItem =
-					option.ProductOptionSelections.find((item) => item.isDefault) ||
-					option.ProductOptionSelections[0];
+					option.ProductOptionSelections.find(
+						(item: ProductOptionSelections) => item.isDefault,
+					) || option.ProductOptionSelections[0];
 				defaultValues[fieldName] = defaultItem ? defaultItem.id : "";
 				initialCheckedTotal += Number(defaultItem?.price || 0);
 			}
@@ -338,7 +345,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 				}
 			} else if (Array.isArray(value)) {
 				// checkboxes
-				value.forEach((selection: string, index: number) => {
+				value.forEach((selection: string) => {
 					//console.log(`selection: [${index}] ${selection}`);
 					const itemOption = getCartItemOption(selection);
 					if (itemOption) {
@@ -407,7 +414,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 					}
 				} else if (Array.isArray(value)) {
 					// checkboxes
-					value.forEach((selection: string, index: number) => {
+					value.forEach((selection: string) => {
 						//console.log(`selection: [${index}] ${selection}`);
 						const itemOption = getCartItemOption(selection);
 						if (itemOption) {
@@ -449,6 +456,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 				type: "submit",
 				message: "An error occurred while submitting the form.",
 			});
+
+			logger.error(error);
 		}
 	};
 

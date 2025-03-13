@@ -1,4 +1,4 @@
-import type { Locale } from "prisma/prisma-client";
+import type { Locale } from "@prisma/client";
 import useSWR, { Fetcher } from "swr";
 
 import { SelectItem } from "@/components/ui/select";

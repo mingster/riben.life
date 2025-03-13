@@ -9,7 +9,7 @@ import { Heading } from "@/components/ui/heading";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
-import type { Store } from "prisma/prisma-client";
+import type { Store } from "@prisma/client";
 
 import { type TicketColumn, columns } from "./columns";
 

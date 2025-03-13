@@ -1,6 +1,3 @@
-import { redirect } from "next/navigation";
-import { StoreOrder } from "prisma/prisma-client";
-
 // route to payment provider based on region and currency
 //
 const CheckoutHomePage = async (props: {

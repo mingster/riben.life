@@ -15,13 +15,13 @@ import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+	Form,
+	FormControl,
+	FormDescription,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
@@ -32,10 +32,10 @@ import { ApiListing } from "@/components/ui/api-listing";
 
 import { useTranslation } from "@/app/i18n/client";
 import {
-  Select,
-  SelectContent,
-  SelectTrigger,
-  SelectValue,
+	Select,
+	SelectContent,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";

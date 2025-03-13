@@ -52,7 +52,8 @@ const getStoreById = async (storeId: string): Promise<Store> => {
 		defaultPaymentMethods.map((paymentMethod) => {
 			if (
 				!store.StorePaymentMethods.find(
-					(existingMethod) => existingMethod.id === paymentMethod.id,
+					(existingMethod: { id: string }) =>
+						existingMethod.id === paymentMethod.id,
 				)
 			) {
 				const mapping = {
@@ -78,7 +79,7 @@ const getStoreById = async (storeId: string): Promise<Store> => {
 		defaultShippingMethods.map((method) => {
 			if (
 				!store.StoreShippingMethods.find(
-					(existingMethod) => existingMethod.id === method.id,
+					(existingMethod: { id: string }) => existingMethod.id === method.id,
 				)
 			) {
 				const mapping = {
