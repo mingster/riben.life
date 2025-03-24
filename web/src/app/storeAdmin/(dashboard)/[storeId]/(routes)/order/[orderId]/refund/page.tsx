@@ -16,7 +16,7 @@ export default async function OrderRefundPage(props: {
 }) {
 	const params = await props.params;
 
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	//const store = (await checkStoreAccess(params.storeId)) as Store;
 
 	const order = (await getOrderById(params.orderId)) as StoreOrder;
 	if (order === null) {
@@ -28,7 +28,7 @@ export default async function OrderRefundPage(props: {
 	return (
 		<div className="flex-col">
 			<div className="flex-1 space-y-4 p-8 pt-6">
-				<OrderRefundClient store={store} order={order} />
+				<OrderRefundClient order={order} />
 			</div>
 		</div>
 	);
