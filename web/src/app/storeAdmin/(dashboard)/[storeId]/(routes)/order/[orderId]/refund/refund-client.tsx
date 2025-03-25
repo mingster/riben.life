@@ -1,32 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 
-import type { Store, StoreOrder } from "@/types";
+import type { StoreOrder } from "@/types";
 
 import { useTranslation } from "@/app/i18n/client";
 import Currency from "@/components/currency";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import IconButton from "@/components/ui/icon-button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useI18n } from "@/providers/i18n-provider";
 import type { orderitemview } from "@prisma/client";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { z } from "zod";
 
@@ -34,14 +21,11 @@ import { Input } from "@/components/ui/input";
 
 import logger from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios, { type AxiosError } from "axios";
 import Decimal from "decimal.js";
-import { Minus, Undo2Icon, XIcon } from "lucide-react";
-import Link from "next/link";
+import { CheckIcon, Minus, Undo2Icon } from "lucide-react";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 
 interface props {
-	store: Store;
 	order: StoreOrder;
 }
 
@@ -77,7 +61,7 @@ function useZodForm<TSchema extends z.ZodType>(
 	return form;
 }
 
-export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
+export const OrderRefundClient: React.FC<props> = ({ order }) => {
 	//console.log('order', JSON.stringify(order));
 
 	if (order == null) {
@@ -90,6 +74,7 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 	const [loading, setLoading] = useState(false);
 
 	const [updatedOrder, setUpdatedOrder] = useState<StoreOrder>(order);
+
 	const [orderTotal, setOrderTotal] = useState(Number(order.orderTotal));
 	const [refundAmount, setRefundAmount] = useState(orderTotal);
 
@@ -241,10 +226,6 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 				{pageTitle}
 			</CardHeader>
 			<CardContent>
-				<div className="text-muted-foreground text-xs pt-0">
-					請刪除或改量要退款的商品。完成後,請點擊下方「退款」鍵。
-				</div>
-
 				<Form {...form}>
 					<form
 						onSubmit={form.handleSubmit(onSubmit)}
@@ -272,10 +253,33 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 							<div>
 								<Currency value={orderTotal} />
 							</div>
-							<div className="text-bold">退款金額:</div>
 							<div>
-								<Currency value={refundAmount} />
+								<Button
+									disabled={loading || !form.formState.isValid}
+									className="disabled:opacity-25 bg-red-700 dark:bg-red-500 dark:text-white hover:bg-red-600"
+									type="submit"
+								>
+									<Undo2Icon className="mr-0 size-4" />
+									{t("RefundAll")}
+								</Button>
 							</div>
+							<div>
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => {
+										clearErrors();
+										router.back();
+										//router.push(`/${params.storeId}/support`);
+									}}
+								>
+									{t("Cancel")}
+								</Button>
+							</div>
+						</div>
+
+						<div className="pt-10 text-muted-foreground text-xs">
+							請勾選要保留的商品。完成後,請點擊下方「退款」鍵。
 						</div>
 
 						{updatedOrder?.OrderItemView.map(
@@ -297,7 +301,7 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 												type="button"
 												onClick={() => handleDeleteOrderItem(index)}
 											>
-												<XIcon className="text-red-400 size-4" />
+												<CheckIcon className="text-green-400 size-4" />
 											</Button>
 										</div>
 
@@ -347,35 +351,21 @@ export const OrderRefundClient: React.FC<props> = ({ store, order }) => {
 							},
 						)}
 
-						<div className="w-full py-2 flex gap-2">
-							<Button
-								disabled={loading || !form.formState.isValid}
-								className="disabled:opacity-25"
-								type="submit"
-							>
-								<Undo2Icon className="mr-0 size-4" />
-								{t("Refund")}
-							</Button>
-
-							<Button
-								disabled={loading || !form.formState.isValid}
-								className="disabled:opacity-25 bg-red-700 dark:bg-red-500 dark:text-white hover:bg-red-600"
-								type="submit"
-							>
-								<Undo2Icon className="mr-0 size-4" />
-								{t("RefundAll")}
-							</Button>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => {
-									clearErrors();
-									router.back();
-									//router.push(`/${params.storeId}/support`);
-								}}
-							>
-								{t("Cancel")}
-							</Button>
+						<div className="pb-1 flex items-center gap-1">
+							<div className="text-bold">退款金額:</div>
+							<div>
+								<Currency value={refundAmount} />
+							</div>
+							<div>
+								<Button
+									disabled={loading || !form.formState.isValid}
+									className="disabled:opacity-25"
+									type="submit"
+								>
+									<Undo2Icon className="mr-0 size-4" />
+									{t("Refund")}
+								</Button>
+							</div>
 						</div>
 					</form>
 				</Form>
