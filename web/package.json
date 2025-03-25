@@ -77,8 +77,8 @@
     "jsvectormap": "^1.6.0",
     "lucide-react": "^0.477.0",
     "mongodb": "^6.15.0",
-    "mongoose": "^8.12.2",
-    "next": "^15.2.3",
+    "mongoose": "^8.13.0",
+    "next": "^15.2.4",
     "next-auth": "^5.0.0-beta.25",
     "next-client-cookies": "^2.0.1",
     "next-qrcode": "^2.5.1",
@@ -129,12 +129,12 @@
     "@types/react-dom": "^19.0.4",
     "@types/react-google-recaptcha": "^2.1.9",
     "@types/uuid": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.27.0",
-    "@typescript-eslint/parser": "^8.27.0",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
     "autoprefixer": "^10.4.21",
     "dotenv": "^16.4.7",
     "eslint": "^9.23.0",
-    "eslint-config-next": "^15.2.3",
+    "eslint-config-next": "^15.2.4",
     "eslint-import-resolver-typescript": "^3.9.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-promise": "^7.2.1",
@@ -144,7 +144,7 @@
     "prisma": "^6.5.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",
-    "typescript-eslint": "^8.27.0"
+    "typescript-eslint": "^8.28.0"
   },
   "packageManager": "yarn@4.6.0+sha512.5383cc12567a95f1d668fbe762dfe0075c595b4bfff433be478dbbe24e05251a8e8c3eb992a986667c1d53b6c3a9c85b8398c35a960587fbd9fa3a0915406728"
 }
