@@ -21,7 +21,7 @@ type orderProps = { order: StoreOrder };
 // show order success prompt and then redirect the customer to view order page (購物明細)
 export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 	//console.log("DisplayOrder", JSON.stringify(order));
-	logger.info(order);
+	//logger.info(order);
 
 	const router = useRouter();
 

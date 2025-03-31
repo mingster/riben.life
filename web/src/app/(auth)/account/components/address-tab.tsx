@@ -1,9 +1,13 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import logger from "@/lib/logger";
-import { Address } from "@prisma/client";
+import type { Address } from "@prisma/client";
 
 type tabProps = { addresses: Address[] };
-export const DisplayAddresses = ({ addresses }: tabProps) => {
+export const AddressesTab = ({ addresses }: tabProps) => {
+	logger.info(addresses);
+
+	if (addresses === null || addresses === undefined) return <></>;
+
 	return (
 		<>
 			<div className="flex-col">
@@ -18,6 +22,7 @@ export const DisplayAddresses = ({ addresses }: tabProps) => {
 		</>
 	);
 };
+
 type prop = { address: Address };
 
 export const DisplayAddress: React.FC<prop> = ({ address }) => {
@@ -25,7 +30,7 @@ export const DisplayAddress: React.FC<prop> = ({ address }) => {
 
 	return (
 		<Card key={address.id} className="py-1">
-			<CardContent></CardContent>
+			<CardContent>addr</CardContent>
 		</Card>
 	);
 };

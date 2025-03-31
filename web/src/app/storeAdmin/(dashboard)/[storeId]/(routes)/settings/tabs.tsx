@@ -44,9 +44,9 @@ export interface SettingsFormProps {
       })
     | null;
   logo: string;
-
   */
 }
+
 export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 	sqlData,
 	storeSettings,
