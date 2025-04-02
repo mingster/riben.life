@@ -1,6 +1,12 @@
+import { useTranslation } from "@/app/i18n/client";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Heading } from "@/components/ui/heading";
+import { Separator } from "@/components/ui/separator";
 import logger from "@/lib/logger";
+import { useI18n } from "@/providers/i18n-provider";
 import type { Address } from "@prisma/client";
+import { Plus } from "lucide-react";
 
 type tabProps = { addresses: Address[] };
 export const AddressesTab = ({ addresses }: tabProps) => {
@@ -8,8 +14,22 @@ export const AddressesTab = ({ addresses }: tabProps) => {
 
 	if (addresses === null || addresses === undefined) return <></>;
 
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
+
 	return (
 		<>
+			<div className="flex items-center justify-between">
+				<div>
+					{/*新增 */}
+					<Button variant={"outline"} onClick={() => <></>}>
+						<Plus className="mr-0 size-4" />
+						{t("Create")}
+					</Button>
+				</div>
+			</div>
+			<Separator />
+
 			<div className="flex-col">
 				<div className="flex-1 p-1 space-y-1">
 					{addresses.map((addr: Address) => (

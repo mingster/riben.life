@@ -13,35 +13,33 @@ import { Heading } from "@/components/ui/heading";
 import { type ProductColumn, columns } from "./columns";
 
 import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { ProductStatus } from "@/types/enum";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
 import { ProductStatusCombobox } from "../[productId]/product-status-combobox";
-import { ProductStatus } from "@/types/enum";
 
 interface ProductsClientProps {
 	data: ProductColumn[];
@@ -88,6 +86,10 @@ export const formSchema = z.object({
 	status: z.coerce.number(),
 });
 
+/**
+ * Dialog to add multiple products at once (批量新增)
+ *
+ */
 export function AddProductsDialog() {
 	const { toast } = useToast();
 	const [loading, setLoading] = useState(false);
