@@ -29,7 +29,11 @@ export default async function AccountPage() {
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<AccountTabs orders={user.Orders} addresses={user.Addresses} user={user} />
+					<AccountTabs
+						orders={user.Orders}
+						addresses={user.Addresses}
+						user={user}
+					/>
 				</Container>
 			</Suspense>
 		);
