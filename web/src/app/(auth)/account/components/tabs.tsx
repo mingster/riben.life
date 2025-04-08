@@ -10,12 +10,23 @@ import { useI18n } from "@/providers/i18n-provider";
 import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
 import type { StoreOrder, User } from "@/types";
+import { Address } from "@prisma/client";
+import { AddressesTab } from "./address-tab";
 import { OrderTab } from "./order-tab";
 import SettingsTab from "./settings-tab";
+import { Loader } from "@/components/ui/loader";
 
-type props = { user: User };
+export interface iUserTabProps {
+	orders: StoreOrder | null;
+	addresses: Address[] | [];
+	user: User;
+}
 
-export const AccountTabs = ({ user }: props) => {
+export const AccountTabs: React.FC<iUserTabProps> = ({
+	orders,
+	addresses,
+	user,
+}) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
@@ -23,6 +34,11 @@ export const AccountTabs = ({ user }: props) => {
 	const searchParams = useSearchParams();
 	const initialTab = searchParams.get("tab");
 	const [activeTab, setActiveTab] = useState(initialTab || "orders"); //show order tab by default
+	const [loading, setLoading] = useState(false);
+
+	if (loading) {
+		return <Loader />;
+	}
 
 	const handleTabChange = (value: string) => {
 		//update the state
@@ -60,9 +76,11 @@ export const AccountTabs = ({ user }: props) => {
 				</TabsList>
 
 				<TabsContent value="orders">
-					<OrderTab orders={user.Orders as StoreOrder[]} />
+					<OrderTab orders={orders} />
 				</TabsContent>
-				<TabsContent value="address">&nbsp;</TabsContent>
+				<TabsContent value="address">
+					<AddressesTab addresses={addresses} />
+				</TabsContent>
 
 				<TabsContent value="account">
 					<SettingsTab user={user} />

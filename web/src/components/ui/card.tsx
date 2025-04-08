@@ -9,12 +9,23 @@ const Card = React.forwardRef<
 	<div
 		ref={ref}
 		className={cn(
-			"rounded-sm border border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1",
+			"rounded-lg border bg-card text-card-foreground shadow-sm",
+			className,
+		)}
+		{...props}
+	/>
+
+	/*
+<div
+		ref={ref}
+		className={cn(
+			"rounded-sm border border-stroke bg-card px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1",
 			//"rounded-xl border border-neutral-200 bg-white text-neutral-950 shadow dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-50",
 			className,
 		)}
 		{...props}
 	/>
+ */
 ));
 Card.displayName = "Card";
 
@@ -24,34 +35,34 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
 	<div
 		ref={ref}
-		className={cn(
-			"flex flex-col space-y-1.5 p-6 mb-6 text-xl font-semibold text-black dark:text-primary",
-			className,
-		)}
+		className={cn("flex flex-col space-y-1.5 p-6", className)}
 		{...props}
 	/>
 ));
 CardHeader.displayName = "CardHeader";
 
 const CardTitle = React.forwardRef<
-	HTMLParagraphElement,
-	React.HTMLAttributes<HTMLHeadingElement>
+	HTMLDivElement,
+	React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-	<h3
+	<div
 		ref={ref}
-		className={cn("font-semibold leading-none tracking-tight", className)}
+		className={cn(
+			"text-2xl font-semibold leading-none tracking-tight",
+			className,
+		)}
 		{...props}
 	/>
 ));
 CardTitle.displayName = "CardTitle";
 
 const CardDescription = React.forwardRef<
-	HTMLParagraphElement,
-	React.HTMLAttributes<HTMLParagraphElement>
+	HTMLDivElement,
+	React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-	<p
+	<div
 		ref={ref}
-		className={cn("text-sm text-neutral-500 dark:text-neutral-400", className)}
+		className={cn("text-sm text-muted-foreground", className)}
 		{...props}
 	/>
 ));
