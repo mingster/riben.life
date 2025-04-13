@@ -30,11 +30,11 @@ const StoreEditPage = async (props: {
 
 	if (store === null) return;
 
-	const subscription = await sqlClient.subscription.findUnique({
+	const subscription = (await sqlClient.subscription.findUnique({
 		where: {
 			storeId: store.id,
 		},
-	}) as Subscription;
+	})) as Subscription;
 
 	console.log("subscription", subscription);
 	const subscriptionScheduleId = subscription?.stripeSubscriptionId as string;
@@ -54,7 +54,11 @@ const StoreEditPage = async (props: {
 	return (
 		<div className="flex-col">
 			<div className="flex-1 space-y-4 p-8 pt-6">
-				<StoreEditTabs initialData={store} subscription={subscription} action={action} />
+				<StoreEditTabs
+					initialData={store}
+					subscription={subscription}
+					action={action}
+				/>
 			</div>
 		</div>
 	);

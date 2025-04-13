@@ -32,7 +32,11 @@ interface editProps {
 	action: string;
 	subscription: Subscription;
 }
-export const StoreEditTabs = ({ initialData, action, subscription }: editProps) => {
+export const StoreEditTabs = ({
+	initialData,
+	action,
+	subscription,
+}: editProps) => {
 	//const params = useParams();
 
 	const { lng } = useI18n();
