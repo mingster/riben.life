@@ -1,5 +1,6 @@
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import { Loader } from "@/components/ui/loader";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import type { Store } from "@/types";
@@ -36,15 +37,20 @@ export default async function StoreSubscribePage(props: {
 		},
 	});
 
-	console.log("subscription", JSON.stringify(subscription));
+	console.log("subscription", subscription);
+	const subscriptionScheduleId = subscription?.stripeSubscriptionId as string;
 
-	const subscriptionSchedule = subscription?.stripeSubscriptionId
-		? await stripe.subscriptionSchedules.retrieve(
-				subscription.stripeSubscriptionId,
-			)
-		: null;
+	console.log("subscriptionScheduleId", subscriptionScheduleId);
 
-	console.log("subscriptionSchedule", JSON.stringify(subscriptionSchedule));
+	let subscriptionSchedule = null;
+	try {
+		subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
+			subscriptionScheduleId,
+		);
+	} catch (err) {
+		logger.error(err);
+	}
+	console.log("subscriptionSchedule", subscriptionSchedule);
 
 	return (
 		<Suspense fallback={<Loader />}>

@@ -14,10 +14,12 @@ import type {
 	Store,
 	StoreAnnouncement,
 	StoreOrder,
+	Subscription,
 	User,
 } from "@prisma/client";
 import { useParams } from "next/navigation";
 import { StoreEditBasicTab } from "./store-edit-basic-tab";
+import { StoreSubscrptionTab } from "./store-subscription";
 
 interface editProps {
 	initialData: Store & {
@@ -28,9 +30,10 @@ interface editProps {
 		StoreOrders: StoreOrder[] | [];
 	};
 	action: string;
+	subscription: Subscription;
 }
-export const StoreEditTabs = ({ initialData, action }: editProps) => {
-	const params = useParams();
+export const StoreEditTabs = ({ initialData, action, subscription }: editProps) => {
+	//const params = useParams();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
@@ -46,9 +49,20 @@ export const StoreEditTabs = ({ initialData, action }: editProps) => {
 					<TabsTrigger className="px-5 lg:min-w-40" value="basic">
 						{t("StoreSettingsTab_Basic")}
 					</TabsTrigger>
+
+					<TabsTrigger className="px-5 lg:min-w-40" value="subscription">
+						Subscrption
+					</TabsTrigger>
 				</TabsList>
+
 				<TabsContent value="basic">
 					<StoreEditBasicTab initialData={initialData} action={action} />
+				</TabsContent>
+				<TabsContent value="subscription">
+					<StoreSubscrptionTab
+						initialData={initialData}
+						subscription={subscription}
+					/>
 				</TabsContent>
 			</Tabs>
 		</>

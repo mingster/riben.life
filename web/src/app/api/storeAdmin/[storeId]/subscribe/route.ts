@@ -67,7 +67,7 @@ export async function POST(
 				{
 					items: [
 						{
-							price: "price_1Q6ZsCRqaK2IhyxPXaDqZbjr",
+							price: "price_0Q6BqQqw2UGRduYS5fQTzV0I",
 							quantity: 1,
 						},
 					],

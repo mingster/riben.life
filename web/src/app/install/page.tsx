@@ -1,4 +1,4 @@
-import Container from "@/components/ui/container";
+"use server";
 
 import { populateCountryData } from "@/actions/admin/populate-country-data";
 import { populateCurrencyData } from "@/actions/admin/populate-currency-data";
@@ -7,58 +7,119 @@ import {
 	create_paymentMethods,
 	create_shippingMethods,
 } from "@/actions/admin/populate-payship_defaults";
+import { updateStoreDefaultPayMethods } from "@/actions/admin/updateStoreDefaultPayMethods";
 
+import { Button } from "@/components/ui/button";
+import Container from "@/components/ui/container";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
+import { stripe } from "@/lib/stripe/config";
+import Link from "next/link";
 
 //type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function InstallDefaultDataPage(props: {
+export default async function InstallDefaultDataPage(_props: {
 	//params: Params;
 	searchParams: SearchParams;
 }) {
 	//const params = await props.params;
 
-	// add default payment methods to all store that does not have the payment methods yet
-	const stores = await sqlClient.store.findMany({});
-	const defaultPaymentMethods = await sqlClient.paymentMethod.findMany({
-		where: {
-			isDefault: true,
-		},
-	});
-
-	for (const store of stores) {
-		for (const defaultPaymentMethod of defaultPaymentMethods) {
-			// delete default payment method that already exists
-			await sqlClient.storePaymentMethodMapping.deleteMany({
-				where: {
-					storeId: store.id,
-					methodId: defaultPaymentMethod.id,
-				},
-			});
-
-			// add default payment methods for each store
-			await sqlClient.storePaymentMethodMapping.create({
-				data: {
-					storeId: store.id,
-					methodId: defaultPaymentMethod.id,
-				},
-			});
-		}
+	const setting = await sqlClient.platformSettings.findFirst();
+	if (!setting) {
+		createStripeProducts();
 	}
-	console.log("default payment method updated.");
+	//logger.info("platform setting", setting);
+	console.log(JSON.stringify(setting));
 
 	const countryCount = await sqlClient.country.count();
+	const currencyCount = await sqlClient.currency.count();
+	const localeCount = await sqlClient.locale.count();
+	const paymentMethodsCount = await sqlClient.paymentMethod.count();
+	const shippingMethodsCount = await sqlClient.shippingMethod.count();
+
+	createBaseObjects(countryCount, currencyCount, localeCount);
+
+	return (
+		<Container className="flex flex-1 items-center justify-end space-x-2 font-mono">
+			<div className="flex">Platform Settings: {JSON.stringify(setting)}</div>
+			<div className="flex">Country Count: {countryCount}</div>
+			<div className="flex">Currency Count: {currencyCount}</div>
+			<div className="flex">Locale Count: {localeCount}</div>
+			<div className="flex">Payment Method Count: {paymentMethodsCount}</div>
+			<div className="flex">Shipping Method Count: {shippingMethodsCount}</div>
+
+			<Button
+				onClick={updateStoreDefaultPayMethods}
+				type="button"
+				variant="destructive"
+				className="disabled:opacity-50 z-0"
+				size="sm"
+			>
+				Click to Update Stores to Default PayMethods
+			</Button>
+
+			<Button variant="default" size="sm">
+				<Link href="/" className="text-xs">
+					Finish
+				</Link>
+			</Button>
+		</Container>
+	);
+}
+
+async function createStripeProducts() {
+	const product = await stripe.products.create({
+		name: "riben.life subscription",
+	});
+
+	const price = await stripe.prices.create({
+		currency: "twd",
+		unit_amount: 300,
+		recurring: {
+			interval: "month",
+		},
+		product: product.id,
+	});
+
+	logger.info("stripe product created", product);
+	logger.info("stripe price created", price);
+
+	if (product && product !== null && product.id !== null) {
+		await sqlClient.platformSettings.create({
+			data: {
+				//id: crypto.randomUUID(), // Generate a unique ID for the record
+				stripeProductId: product.id as string,
+				stripePriceId: price.id as string,
+				//stripeProductName: obj.name,
+			},
+		});
+	}
+
+	console.log(product.id);
+}
+
+//async function updateStoreDefaultPayMethods() {}
+
+async function createBaseObjects(
+	countryCount: number,
+	currencyCount: number,
+	localeCount: number,
+) {
 	if (countryCount === 0) {
 		await populateCountryData();
 	}
 	console.log(`countryCount:${countryCount}`);
 
-	const currencyCount = await sqlClient.currency.count();
 	if (currencyCount === 0) {
 		await populateCurrencyData();
 	}
 	console.log(`currencyCount:${currencyCount}`);
+
+	if (localeCount === 0) {
+		await create_locales();
+	}
+	console.log(`localeCount:${localeCount}`);
 
 	const paymentMethods = await sqlClient.paymentMethod.findMany();
 	if (paymentMethods.length === 0) {
@@ -71,12 +132,4 @@ export default async function InstallDefaultDataPage(props: {
 		await create_shippingMethods();
 	}
 	console.log(`shippingMethods:${JSON.stringify(shippingMethods)}`);
-
-	const localeCount = await sqlClient.locale.count();
-	if (localeCount === 0) {
-		await create_locales();
-	}
-	console.log(`localeCount:${localeCount}`);
-
-	return <Container>DONE</Container>;
 }

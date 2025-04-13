@@ -1,6 +1,8 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["views", "relationJoins"]
+  //output          = "src/app/generated/prisma/client"
+  output          = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -95,6 +97,12 @@ model Authenticator {
   user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, credentialID])
+}
+
+model PlatformSettings {
+  id              String  @id @default(cuid())
+  stripeProductId String?
+  stripePriceId   String?
 }
 
 model Country {
@@ -363,8 +371,7 @@ model Store {
   bankAccount     String?
   bankAccountName String?
 
-  level             Int     @default(0)
-  //paid options
+  level             Int     @default(0) //store's subscription level
   customDomain      String? @unique
   LINE_PAY_ID       String?
   LINE_PAY_SECRET   String?

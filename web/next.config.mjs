@@ -11,17 +11,17 @@ const nextConfig = {
   experimental: {
     //ppr: true,  //https://nextjs.org/learn/dashboard-app/partial-prerendering
     //serverComponentsExternalPackages: ['pino', 'pino-pretty'],
-    turbo: {
-      resolveExtensions: [
-        '.mdx',
-        '.tsx',
-        '.ts',
-        '.jsx',
-        '.js',
-        '.mjs',
-        '.json',
-      ],
-    }
+  },
+  turbopack: {
+    resolveExtensions: [
+      '.mdx',
+      '.tsx',
+      '.ts',
+      '.jsx',
+      '.js',
+      '.mjs',
+      '.json',
+    ],
   },
   images: {
     remotePatterns: [
