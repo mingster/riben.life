@@ -14,6 +14,7 @@ import Container from "@/components/ui/container";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
+import { PlatformSettings } from "@prisma/client";
 import Link from "next/link";
 
 //type Params = Promise<{ storeId: string }>;
@@ -27,7 +28,20 @@ export default async function InstallDefaultDataPage(_props: {
 
 	const setting = await sqlClient.platformSettings.findFirst();
 	if (!setting) {
-		createStripeProducts();
+		createStripeProducts(null);
+	} else {
+		// check if stripe product id is valid
+		try {
+			const product = await stripe.products.retrieve(
+				setting.stripeProductId as string,
+			);
+			if (!product) {
+				createStripeProducts(setting);
+			}
+		} catch (err) {
+			logger.error(err);
+			createStripeProducts(setting);
+		}
 	}
 	//logger.info("platform setting", setting);
 	console.log(JSON.stringify(setting));
@@ -68,14 +82,14 @@ export default async function InstallDefaultDataPage(_props: {
 	);
 }
 
-async function createStripeProducts() {
+async function createStripeProducts(setting: PlatformSettings | null) {
 	const product = await stripe.products.create({
 		name: "riben.life subscription",
 	});
 
 	const price = await stripe.prices.create({
 		currency: "twd",
-		unit_amount: 300,
+		unit_amount: 30000, //NT$300
 		recurring: {
 			interval: "month",
 		},
@@ -86,14 +100,28 @@ async function createStripeProducts() {
 	logger.info("stripe price created", price);
 
 	if (product && product !== null && product.id !== null) {
-		await sqlClient.platformSettings.create({
-			data: {
-				//id: crypto.randomUUID(), // Generate a unique ID for the record
-				stripeProductId: product.id as string,
-				stripePriceId: price.id as string,
-				//stripeProductName: obj.name,
-			},
-		});
+		if (setting === null) {
+			await sqlClient.platformSettings.create({
+				data: {
+					//id: crypto.randomUUID(), // Generate a unique ID for the record
+					stripeProductId: product.id as string,
+					stripePriceId: price.id as string,
+					//stripeProductName: obj.name,
+				},
+			});
+			logger.info("platform setting created", product, price);
+		} else {
+			await sqlClient.platformSettings.update({
+				where: {
+					id: setting.id,
+				},
+				data: {
+					stripeProductId: product.id as string,
+					stripePriceId: price.id as string,
+				},
+			});
+			logger.info("platform setting updated", setting);
+		}
 	}
 
 	console.log(product.id);
