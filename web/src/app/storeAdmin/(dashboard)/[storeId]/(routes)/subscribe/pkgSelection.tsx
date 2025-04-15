@@ -2,7 +2,7 @@
 
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
-import { cn, getAbsoluteUrl } from "@/lib/utils";
+import { cn, formatDateTime, getAbsoluteUrl } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import { useParams, useRouter } from "next/navigation";
@@ -29,6 +29,7 @@ import type { Subscription, SubscriptionPayment } from "@prisma/client";
 import axios from "axios";
 import { formatDate } from "date-fns";
 import { useTheme } from "next-themes";
+import Link from "next/link";
 
 // display package selectiion ui and call back end api to create related payment objects such as paymentintent
 //
@@ -73,7 +74,9 @@ const DisplayPkg: React.FC<props> = ({
 
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
-	//console.log("level", store.level);
+
+	console.log("level", store.level);
+	console.log("subscription", subscription);
 
 	function handleDivClick(selected: number) {
 		if (selected === store.level) {
@@ -101,7 +104,7 @@ const DisplayPkg: React.FC<props> = ({
 		);
 
 		if (ret.status === 200) {
-			store.level = StoreLevel.Free;
+			//store.level = StoreLevel.Free;
 
 			const message = t("storeAdmin_switchLevel_cancel_result").replace(
 				"{0}",
@@ -160,15 +163,14 @@ const DisplayPkg: React.FC<props> = ({
 						}
 					</div>
 					<div>
-						{subscription !== null &&
-							subscription.status === SubscriptionStatus.Cancelled && (
-								<div className="max-w-2xl m-auto mt-5 text-xl text-center">
-									{t("storeAdmin_switchLevel_subscription_expiry").replace(
-										"{0}",
-										formatDate(subscription.expiration, "yyyy-MM-dd"),
-									)}
-								</div>
-							)}
+						{subscription !== null && (
+							<div className="max-w-2xl m-auto mt-5 text-xl text-center">
+								{t("storeAdmin_switchLevel_subscription_expiry").replace(
+									"{0}",
+									formatDate(subscription.expiration, "yyyy-MM-dd"),
+								)}
+							</div>
+						)}
 					</div>
 				</div>
 
@@ -273,6 +275,10 @@ const DisplayPkg: React.FC<props> = ({
 							</ul>
 						</div>
 					</div>
+				</div>
+
+				<div className="mt-12 w-full space-y-0 flex justify-center gap-6 max-w-4xl mx-auto min-h-[calc(100vh-48px-36px-16px-32px-50px)]">
+					<Link href={`./subscribe/history`}>Billing History</Link>
 				</div>
 			</div>
 		</>

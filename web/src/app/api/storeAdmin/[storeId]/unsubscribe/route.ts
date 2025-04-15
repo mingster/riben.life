@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 // called when store operator select the free package (StoreLevel.Free).
 // we will call stripe api to remove the subscription.
 export async function POST(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;

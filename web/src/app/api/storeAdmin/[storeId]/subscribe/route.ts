@@ -1,4 +1,5 @@
 import { IsSignInResponse } from "@/lib/auth/utils";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { getUtcNow, transformDecimalsToNumbers } from "@/lib/utils";
@@ -9,7 +10,7 @@ import { CheckStoreAdminApiAccess } from "../../api_helper";
 // called when store operator select a package to subscribe.
 // create db objects needed in this call.
 export async function POST(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;
@@ -20,7 +21,7 @@ export async function POST(
 			return new NextResponse("Unauthenticated", { status: 400 });
 		}
 
-		const owner = await sqlClient.user.findFirst({
+		let owner = await sqlClient.user.findFirst({
 			where: {
 				id: userId,
 			},
@@ -36,6 +37,8 @@ export async function POST(
 					owner.stripeCustomerId,
 				);
 			} catch (error) {
+				logger.error(`Error retrieving Stripe customer: ${error}`);
+
 				stripeCustomer = null;
 			}
 		}
@@ -48,7 +51,7 @@ export async function POST(
 				name: email,
 			});
 
-			await sqlClient.user.update({
+			owner = await sqlClient.user.update({
 				where: { id: owner?.id },
 				data: {
 					stripeCustomerId: stripeCustomer.id,
@@ -59,6 +62,11 @@ export async function POST(
 		// TODO: should we check?
 		//if (store.level === StoreLevel.Free) {}
 
+		const setting = await sqlClient.platformSettings.findFirst();
+		if (setting === null) {
+			throw new Error("Platform settings not found");
+		}
+
 		const subscriptionSchedule = await stripe.subscriptionSchedules.create({
 			customer: stripeCustomer.id,
 			start_date: "now",
@@ -67,7 +75,7 @@ export async function POST(
 				{
 					items: [
 						{
-							price: "price_0Q6BqQqw2UGRduYS5fQTzV0I",
+							price: setting.stripePriceId as string,
 							quantity: 1,
 						},
 					],

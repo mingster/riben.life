@@ -5,38 +5,30 @@ import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import type { Store } from "@/types";
 import { Suspense } from "react";
-import { PkgSelection } from "./pkgSelection";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function StoreSubscribePage(props: {
+export default async function StoreSubscriptionHistoryPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	/*
-  await sqlClient.subscription.deleteMany({
-  });
-  await sqlClient.subscriptionPayment.deleteMany({
-  });
-  await sqlClient.store.update({
-    where: {
-      id: params.storeId,
-    },
-    data: {
-      level: StoreLevel.Free
-    }
-  });
-  */
-
 	const store = (await checkStoreAccess(params.storeId)) as Store;
 	const subscription = await sqlClient.subscription.findUnique({
 		where: {
 			storeId: store.id,
 		},
 	});
+
 	console.log("subscription", subscription);
+
+	const payments = await sqlClient.subscriptionPayment.findMany({
+		where: {
+			storeId: store.id,
+		},
+	});
+	console.log("payments", payments);
 
 	if (subscription !== null) {
 		const subscriptionScheduleId = subscription.stripeSubscriptionId as string;
@@ -58,7 +50,8 @@ export default async function StoreSubscribePage(props: {
 		<Suspense fallback={<Loader />}>
 			<section className="relative w-full">
 				<div className="container">
-					<PkgSelection store={store} subscription={subscription} />
+					{JSON.stringify(subscription)}
+					<div>{JSON.stringify(payments)}</div>
 				</div>
 			</section>
 		</Suspense>
