@@ -49,7 +49,8 @@ export default async function StoreSubscribePage(props: {
 				subscriptionScheduleId,
 			);
 		} catch (err) {
-			logger.error(err);
+			console.error(err);
+			//logger.error(err);
 		}
 		console.log("subscriptionSchedule", subscriptionSchedule);
 	}

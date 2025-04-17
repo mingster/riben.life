@@ -24,6 +24,7 @@ import { type ChangeEvent, useEffect, useState } from "react";
 
 import getStripe from "@/lib/stripe/client";
 
+import logger from "@/lib/logger";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import type { Subscription, SubscriptionPayment } from "@prisma/client";
 import axios from "axios";
@@ -75,8 +76,8 @@ const DisplayPkg: React.FC<props> = ({
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	console.log("level", store.level);
-	console.log("subscription", subscription);
+	logger.info("current level", store.level);
+	//logger.info("subscription", subscription);
 
 	function handleDivClick(selected: number) {
 		if (selected === store.level) {
@@ -115,7 +116,7 @@ const DisplayPkg: React.FC<props> = ({
 			alert(message);
 		}
 
-		//console.log("ret", ret);
+		//logger.info("ret", ret);
 		setLoading(false);
 		router.replace("/storeAdmin/" + params.storeId + "/subscribe");
 		//router.refresh();
@@ -129,7 +130,7 @@ const DisplayPkg: React.FC<props> = ({
 		);
 
 		const order = ret.data as SubscriptionPayment;
-		//console.log("order", order.id);
+		//logger.info("order", order.id);
 		onValueChange?.(order); // pass back to parent component
 		setOpen(false);
 		setLoading(false);
@@ -305,8 +306,8 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 
 	const [clientSecret, setClientSecret] = useState("");
 
-	//console.log(JSON.stringify(order.isPaid));
-	//console.log(`clientSecret:${JSON.stringify(clientSecret)}`);
+	//logger.info(JSON.stringify(order.isPaid));
+	//logger.info(`clientSecret:${JSON.stringify(clientSecret)}`);
 
 	//call payment intent api to get client secret
 	useEffect(() => {
@@ -330,7 +331,7 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 			.then((res) => res.json())
 			.then((data) => {
 				setClientSecret(data.client_secret);
-				console.log(`clientSecret: ${JSON.stringify(data.client_secret)}`);
+				logger.info(`clientSecret: ${JSON.stringify(data.client_secret)}`);
 			})
 			.catch((error) => {
 				console.error("Error:", error);
@@ -346,7 +347,7 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 	if (!name) name = "";
 
 	const { resolvedTheme } = useTheme();
-	//console.log(resolvedTheme);
+	//logger.info(resolvedTheme);
 	const appearance: Appearance = {
 		theme: resolvedTheme === "light" ? "flat" : "night",
 	};
@@ -441,12 +442,12 @@ const StripeCheckoutForm: React.FC<paymentProps> = ({ order }) => {
 			// confirming the payment. Show error to your customer (for example, payment
 			// details incomplete)
 			setErrorMessage(error.message);
-			console.log(`paymentHandler: ${error.message}`);
+			logger.info(`paymentHandler: ${error.message}`);
 		} else {
 			// Your customer will be redirected to your `return_url`. For some payment
 			// methods like iDEAL, your customer will be redirected to an intermediate
 			// site first to authorize the payment, then redirected to the `return_url`.
-			console.log("payment confirmed");
+			logger.info("payment confirmed");
 			router.push(returnUrl);
 		}
 	};

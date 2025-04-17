@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
 
 // called when store operator select a package to subscribe.
-// create db objects needed in this call.
+// here we create db objects needed for payment intent confirmation.
 export async function POST(
 	_req: Request,
 	props: { params: Promise<{ storeId: string }> },
@@ -21,6 +21,8 @@ export async function POST(
 			return new NextResponse("Unauthenticated", { status: 400 });
 		}
 
+		// 1. make sure we have valid stripeCustomerId
+		//
 		let owner = await sqlClient.user.findFirst({
 			where: {
 				id: userId,
@@ -59,34 +61,13 @@ export async function POST(
 			});
 		}
 
-		// TODO: should we check?
-		//if (store.level === StoreLevel.Free) {}
-
-		const setting = await sqlClient.platformSettings.findFirst();
-		if (setting === null) {
-			throw new Error("Platform settings not found");
-		}
-
-		const subscriptionSchedule = await stripe.subscriptionSchedules.create({
-			customer: stripeCustomer.id,
-			start_date: "now",
-			end_behavior: "release",
-			phases: [
-				{
-					items: [
-						{
-							price: setting.stripePriceId as string,
-							quantity: 1,
-						},
-					],
-				},
-			],
-		});
+		// 2. make sure we have valid subscription record for confirmation process
+		//
+		const new_expiration = getUtcNow(); // default to now
 
 		// make sure we have the subscription record only.
 		// activate the subscription only when payment is confirmed.
 		//
-		const currentDate = getUtcNow(); // Current date and time
 		await sqlClient.subscription.upsert({
 			where: {
 				storeId: params.storeId,
@@ -94,33 +75,43 @@ export async function POST(
 			update: {
 				userId: owner.id,
 				storeId: params.storeId,
-				expiration: currentDate,
+				expiration: new_expiration,
 				status: SubscriptionStatus.Inactive,
 				billingProvider: "stripe",
-				stripeSubscriptionId: subscriptionSchedule.id,
+				//stripeSubscriptionId: subscriptionSchedule.id,
 				note: "re-subscribed",
 			},
 			create: {
 				userId: owner.id,
 				storeId: params.storeId,
-				expiration: currentDate,
+				expiration: new_expiration,
 				status: SubscriptionStatus.Inactive,
 				billingProvider: "stripe",
-				stripeSubscriptionId: subscriptionSchedule.id,
+				//stripeSubscriptionId: subscriptionSchedule.id,
 				note: "subscribe",
 			},
 		});
+
+		const setting = await sqlClient.platformSettings.findFirst();
+		if (setting === null) {
+			throw new Error("Platform settings not found");
+		}
+
+		// 3. create the subscriptionPayment related to this payment intent
+		const price = await stripe.prices.retrieve(setting.stripePriceId as string);
 
 		const obj = await sqlClient.subscriptionPayment.create({
 			data: {
 				storeId: params.storeId,
 				userId: owner.stripeCustomerId || "",
 				isPaid: false,
-				amount: 300,
-				currency: "twd",
+				amount: (price.unit_amount as number) / 100,
+				currency: price.currency as string,
 			},
 		});
 
+		// 4. return the subscription payment object
+		//
 		return NextResponse.json(obj, { status: 200 });
 	} catch (error) {
 		console.log("[SubscriptionPayment_POST]", error);

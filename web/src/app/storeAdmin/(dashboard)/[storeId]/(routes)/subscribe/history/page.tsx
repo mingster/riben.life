@@ -3,8 +3,11 @@ import { Loader } from "@/components/ui/loader";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
+import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Store } from "@/types";
+import { SubscriptionStatus } from "@/types/enum";
 import { Suspense } from "react";
+import { SubscriptionHistoryClient } from "./client";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -20,6 +23,7 @@ export default async function StoreSubscriptionHistoryPage(props: {
 			storeId: store.id,
 		},
 	});
+	//transformDecimalsToNumbers(subscription);
 
 	console.log("subscription", subscription);
 
@@ -28,21 +32,40 @@ export default async function StoreSubscriptionHistoryPage(props: {
 			storeId: store.id,
 		},
 	});
+	transformDecimalsToNumbers(payments);
+
 	console.log("payments", payments);
 
+	let subscriptionSchedule = null;
 	if (subscription !== null) {
 		const subscriptionScheduleId = subscription.stripeSubscriptionId as string;
 
-		console.log("subscriptionScheduleId", subscriptionScheduleId);
-
-		let subscriptionSchedule = null;
 		try {
 			subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
 				subscriptionScheduleId,
 			);
+
+			// if no valid schedule, subscription status = SubscriptionStatus_Incctive
+			subscription.status =
+				subscriptionSchedule.status === "active"
+					? SubscriptionStatus.Active
+					: SubscriptionStatus.Inactive;
+			/*
+			// convert stripe date to js date
+			const startDate = new Date(
+				subscriptionSchedule?.current_phase?.start_date * 1000,
+			);
+			const endDate = new Date(
+				subscriptionSchedule?.current_phase?.end_date * 1000,
+			);
+
+			console.log("startDate", startDate);
+			console.log("endDate", endDate);
+      */
 		} catch (err) {
 			logger.error(err);
 		}
+
 		console.log("subscriptionSchedule", subscriptionSchedule);
 	}
 
@@ -50,8 +73,11 @@ export default async function StoreSubscriptionHistoryPage(props: {
 		<Suspense fallback={<Loader />}>
 			<section className="relative w-full">
 				<div className="container">
-					{JSON.stringify(subscription)}
-					<div>{JSON.stringify(payments)}</div>
+					<SubscriptionHistoryClient
+						store={store}
+						subscription={subscription}
+						payments={payments}
+					/>
 				</div>
 			</section>
 		</Suspense>

@@ -301,19 +301,20 @@ model Subscription {
 }
 
 model SubscriptionPayment {
-  id                 String  @id @default(cuid())
+  id                 String    @id @default(cuid())
   userId             String
   storeId            String
   isPaid             Boolean
   amount             Decimal
-  currency           String  @default("twd")
-  checkoutAttributes String  @default("")
-
-  createdAt DateTime @default(now())
+  currency           String    @default("twd")
+  checkoutAttributes String    @default("")
+  paidAt             DateTime?
+  createdAt          DateTime  @default(now())
+  note               String?
 
   @@index([userId])
   @@index([storeId])
-  @@index([checkoutAttributes])
+  @@index([isPaid])
 }
 
 model Rsvp {

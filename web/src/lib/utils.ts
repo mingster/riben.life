@@ -236,6 +236,7 @@ export const toDateTime = (secs: number) => {
 // https://github.com/you-dont-need/You-Dont-Need-Momentjs?tab=readme-ov-file#string--time-format
 export const formatDateTime = (d: Date | undefined) => {
 	if (d === undefined) return "";
+
 	return format(d, "yyyy-MM-dd H:mm");
 };
 
