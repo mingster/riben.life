@@ -177,7 +177,7 @@ export default async function StripeConfirmedPage(props: {
 				},
 				data: {
 					isPaid: true,
-					paidAt: new Date(),
+					paidAt: getUtcNow(),
 					note: note,
 					checkoutAttributes: checkoutAttributes,
 				},
