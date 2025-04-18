@@ -9,6 +9,9 @@ import { CheckStoreAdminApiAccess } from "../../api_helper";
 
 // called when store operator select a package to subscribe.
 // here we create db objects needed for payment intent confirmation.
+// 1. make sure the customer has valid stripeCustomerId
+// 2. create subscription db record
+// 3. create subscription payment
 export async function POST(
 	_req: Request,
 	props: { params: Promise<{ storeId: string }> },

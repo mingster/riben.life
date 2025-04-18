@@ -47,17 +47,18 @@ export default async function StripeConfirmedPage(props: {
 				throw new Error("Platform settings not found");
 			}
 
-			const order = await sqlClient.subscriptionPayment.findUnique({
-				where: {
-					id: params.orderId,
-				},
-			});
+			const subscriptionPayment =
+				await sqlClient.subscriptionPayment.findUnique({
+					where: {
+						id: params.orderId,
+					},
+				});
 
-			if (!order) throw Error("order not found");
+			if (!subscriptionPayment) throw Error("order not found");
 
 			const store = await sqlClient.store.findUnique({
 				where: {
-					id: order.storeId,
+					id: subscriptionPayment.storeId,
 				},
 			});
 			if (!store) throw Error("store not found");
@@ -91,46 +92,8 @@ export default async function StripeConfirmedPage(props: {
 				59,
 			);
 
-			let owner = await sqlClient.user.findFirst({
-				where: {
-					id: order.userId,
-				},
-			});
-
-			if (!owner) throw Error("owner not found");
-
-			// Ensure stripeCustomerId is a valid string before retrieving the customer
-			let stripeCustomer = null;
-			if (owner?.stripeCustomerId) {
-				try {
-					stripeCustomer = await stripe.customers.retrieve(
-						owner.stripeCustomerId,
-					);
-				} catch (error) {
-					logger.error(`Error retrieving Stripe customer: ${error}`);
-
-					stripeCustomer = null;
-				}
-			}
-
-			if (stripeCustomer === null) {
-				const email = `${owner?.email}`;
-
-				stripeCustomer = await stripe.customers.create({
-					email: email,
-					name: email,
-				});
-
-				owner = await sqlClient.user.update({
-					where: { id: owner?.id },
-					data: {
-						stripeCustomerId: stripeCustomer.id,
-					},
-				});
-			}
-
 			const subscriptionSchedule = await stripe.subscriptionSchedules.create({
-				customer: stripeCustomer.id,
+				customer: subscriptionPayment.userId,
 				start_date: new_exp.getTime() / 1000,
 				end_behavior: "release",
 				phases: [
@@ -185,7 +148,7 @@ export default async function StripeConfirmedPage(props: {
 
 			await sqlClient.store.update({
 				where: {
-					id: order.storeId,
+					id: subscriptionPayment.storeId,
 				},
 				data: {
 					level: StoreLevel.Pro,

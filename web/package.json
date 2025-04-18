@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev --turbopack -p 3000",
     "debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3000",
     "build": "bun run postinstall; next build",
     "start": "next start -p 3000",
@@ -69,7 +69,7 @@
     "embla-carousel-react": "^8.6.0",
     "flatpickr": "^4.6.13",
     "focus-visible": "^5.2.1",
-    "framer-motion": "^12.7.3",
+    "framer-motion": "^12.7.4",
     "i18next": "^23.16.8",
     "i18next-browser-languagedetector": "^8.0.4",
     "i18next-resources-to-backend": "^1.2.1",
@@ -78,7 +78,7 @@
     "lucide-react": "^0.477.0",
     "mongodb": "^6.15.0",
     "mongoose": "^8.13.2",
-    "next": "^15.3.0",
+    "next": "^15.3.1",
     "next-auth": "^5.0.0-beta.25",
     "next-client-cookies": "^2.0.1",
     "next-qrcode": "^2.5.1",
@@ -102,7 +102,7 @@
     "react-spinners": "^0.14.1",
     "react-timer-hook": "^3.0.8",
     "react-ui-scrollspy": "^2.3.0",
-    "recharts": "^2.15.2",
+    "recharts": "^2.15.3",
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
     "remark-html": "^16.0.1",
@@ -133,7 +133,7 @@
     "autoprefixer": "^10.4.21",
     "dotenv": "^16.5.0",
     "eslint": "^9.24.0",
-    "eslint-config-next": "^15.3.0",
+    "eslint-config-next": "^15.3.1",
     "eslint-import-resolver-typescript": "^3.10.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-promise": "^7.2.1",
@@ -144,6 +144,5 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.30.1"
-  },
-  "packageManager": "yarn@4.6.0+sha512.5383cc12567a95f1d668fbe762dfe0075c595b4bfff433be478dbbe24e05251a8e8c3eb992a986667c1d53b6c3a9c85b8398c35a960587fbd9fa3a0915406728"
+  }
 }

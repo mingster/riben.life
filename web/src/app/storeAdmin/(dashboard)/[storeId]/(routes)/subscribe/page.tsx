@@ -45,9 +45,10 @@ export default async function StoreSubscribePage(props: {
 
 		let subscriptionSchedule = null;
 		try {
-			subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
-				subscriptionScheduleId,
-			);
+			if (subscriptionScheduleId !== null)
+				subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
+					subscriptionScheduleId,
+				);
 		} catch (err) {
 			console.error(err);
 			//logger.error(err);
