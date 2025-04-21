@@ -6,9 +6,13 @@ import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
 
 // called when store operator select the free package (StoreLevel.Free).
-// we will call stripe api to remove the subscription.
+// or from admin store mgmt page.
+// we will:
+// 1. call stripe api to cancel subscriptionSchedule.
+// 2. update store level to free.
+// 3. update store subscription
 export async function POST(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;
@@ -83,7 +87,7 @@ export async function POST(
 						);
 					}
 
-					// update in database
+					// update subscription in database
 					await sqlClient.subscription.update({
 						where: {
 							storeId: params.storeId,
@@ -91,7 +95,7 @@ export async function POST(
 						data: {
 							stripeSubscriptionId: null,
 							status: SubscriptionStatus.Cancelled,
-							note: "Unsubscribed",
+							note: "Unsubscribed by " + userId,
 							updatedAt: getUtcNow(),
 						},
 					});

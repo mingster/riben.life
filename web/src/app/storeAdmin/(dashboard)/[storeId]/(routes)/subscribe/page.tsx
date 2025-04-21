@@ -36,21 +36,25 @@ export default async function StoreSubscribePage(props: {
 			storeId: store.id,
 		},
 	});
-
 	console.log("subscription", subscription);
-	const subscriptionScheduleId = subscription?.stripeSubscriptionId as string;
 
-	console.log("subscriptionScheduleId", subscriptionScheduleId);
+	if (subscription !== null) {
+		const subscriptionScheduleId = subscription.stripeSubscriptionId as string;
 
-	let subscriptionSchedule = null;
-	try {
-		subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
-			subscriptionScheduleId,
-		);
-	} catch (err) {
-		logger.error(err);
+		console.log("subscriptionScheduleId", subscriptionScheduleId);
+
+		let subscriptionSchedule = null;
+		try {
+			if (subscriptionScheduleId !== null)
+				subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
+					subscriptionScheduleId,
+				);
+		} catch (err) {
+			console.error(err);
+			//logger.error(err);
+		}
+		console.log("subscriptionSchedule", subscriptionSchedule);
 	}
-	console.log("subscriptionSchedule", subscriptionSchedule);
 
 	return (
 		<Suspense fallback={<Loader />}>

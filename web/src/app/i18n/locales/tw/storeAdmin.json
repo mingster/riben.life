@@ -252,7 +252,6 @@
 	"StoreSettingsDescr": "管理商店設定",
 	"StoreSettingsTab_Bank": "出金設定",
 	"StoreSettingsTab_Basic": "基本設定",
-
 	"StoreSettingsTab_ContactInfo": "聯絡資訊",
 	"StoreSettingsTab_PaidOptions": "進階設定",
 	"StoreSettingsTab_payment_method": "付款方式",
@@ -274,6 +273,9 @@
 	"storeTables": "內用桌號",
 	"subscription_success_descr": "您可以立即開始使用進階功能。",
 	"subscription_success_title": "訂閱成功",
+	"SubscriptionStatus_Active": "訂閱中",
+	"SubscriptionStatus_Cancel": "已取消",
+	"SubscriptionStatus_Inactive": "扣款失敗/未訂閱",
 	"Support": "客服",
 	"Tags": "標籤管理",
 	"Tickets": "工單",

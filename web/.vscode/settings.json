@@ -1,13 +1,4 @@
 {
-  "sqltools.connections": [
-    {
-      "previewLimit": 50,
-      "server": "localhost",
-      "driver": "PostgreSQL",
-      "name": "local",
-      "connectString": "postgres://pstv_user:Sup3rS3cret@localhost:5432/pstv_web?schema=public"
-    }
-  ],
   "prettier.singleQuote": false,
   "prettier.trailingComma": "none"
 }

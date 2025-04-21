@@ -2,8 +2,10 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { GetSession, IsSignInResponse } from "@/lib/auth/utils";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
+import { formatDateTime, getUtcNow } from "@/lib/utils";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -39,43 +41,78 @@ export default async function StripeConfirmedPage(props: {
 			},
 		);
 
-		if (pi) {
-			// save checkout references to related subscriptionPayment in db
-			const checkoutAttributes = JSON.stringify({
-				payment_intent: searchParams.payment_intent,
-				client_secret: searchParams.payment_intent_client_secret,
-			});
+		if (pi && pi.status === "succeeded") {
+			const setting = await sqlClient.platformSettings.findFirst();
+			if (setting === null) {
+				throw new Error("Platform settings not found");
+			}
 
-			const order = await sqlClient.subscriptionPayment.update({
-				where: {
-					id: params.orderId,
-				},
-				data: {
-					isPaid: true,
-					checkoutAttributes: checkoutAttributes,
-				},
-			});
+			const subscriptionPayment =
+				await sqlClient.subscriptionPayment.findUnique({
+					where: {
+						id: params.orderId,
+					},
+				});
+
+			if (!subscriptionPayment) throw Error("order not found");
 
 			const store = await sqlClient.store.findUnique({
 				where: {
-					id: order.storeId,
+					id: subscriptionPayment.storeId,
 				},
 			});
 			if (!store) throw Error("store not found");
 
-			// update subscription object in our database
+			// credit the payment
 			//
-
-			let currentDate = new Date(); // Current date and time
-
 			const subscription = await sqlClient.subscription.findUnique({
 				where: {
 					storeId: store.id,
 				},
 			});
-			if (subscription) {
-				currentDate = subscription.expiration;
+
+			if (subscription === null) {
+				//subscription should already created from subscribe api
+				throw new Error("subscription not found");
 			}
+
+			const now = getUtcNow();
+			let current_exp = subscription.expiration;
+			if (current_exp < now) {
+				//reset to today if expired
+				current_exp = now;
+			}
+
+			const new_exp = new Date(
+				current_exp.getFullYear(),
+				current_exp.getMonth() + 1,
+				current_exp.getDay(),
+				23,
+				59,
+				59,
+			);
+
+			const subscriptionSchedule = await stripe.subscriptionSchedules.create({
+				customer: subscriptionPayment.userId,
+				start_date: new_exp.getTime() / 1000,
+				end_behavior: "release",
+				phases: [
+					{
+						items: [
+							{
+								price: setting.stripePriceId as string,
+								quantity: 1,
+							},
+						],
+					},
+				],
+			});
+
+			const note =
+				"extend subscription from" +
+				formatDateTime(current_exp) +
+				" to " +
+				formatDateTime(new_exp);
 
 			await sqlClient.subscription.update({
 				where: {
@@ -83,30 +120,35 @@ export default async function StripeConfirmedPage(props: {
 				},
 				data: {
 					status: SubscriptionStatus.Active,
-					expiration: new Date(
-						currentDate.getFullYear(),
-						currentDate.getMonth() + 1,
-						currentDate.getDay(),
-						23,
-						59,
-						59,
-					),
+					expiration: new_exp,
+					stripeSubscriptionId: subscriptionSchedule.id,
+					note: note,
 				},
 			});
 
 			// finally update store's subscription level
-			// if more than one store, save as StoreLevel.Multi
-			/*
-      const count = await sqlClient.store.count({
-        where: {
-          ownerId: store?.ownerId,
-        },
-      });
-      */
+			// save checkout references to related subscriptionPayment in db
+			const checkoutAttributes = JSON.stringify({
+				payment_intent: searchParams.payment_intent,
+				client_secret: searchParams.payment_intent_client_secret,
+			});
+
+			// mark as paid
+			const paidOrder = await sqlClient.subscriptionPayment.update({
+				where: {
+					id: params.orderId,
+				},
+				data: {
+					isPaid: true,
+					paidAt: getUtcNow(),
+					note: note,
+					checkoutAttributes: checkoutAttributes,
+				},
+			});
 
 			await sqlClient.store.update({
 				where: {
-					id: order.storeId,
+					id: subscriptionPayment.storeId,
 				},
 				data: {
 					level: StoreLevel.Pro,
@@ -115,13 +157,13 @@ export default async function StripeConfirmedPage(props: {
 			});
 
 			console.log(
-				`StripeConfirmedPage: order confirmed: ${JSON.stringify(order)}`,
+				`StripeConfirmedPage: order confirmed: ${JSON.stringify(paidOrder)}`,
 			);
 
 			return (
 				<Suspense fallback={<Loader />}>
 					<Container>
-						<SuccessAndRedirect orderId={order.id} />
+						<SuccessAndRedirect orderId={paidOrder.id} />
 					</Container>
 				</Suspense>
 			);

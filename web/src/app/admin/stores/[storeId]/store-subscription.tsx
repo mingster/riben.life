@@ -1,34 +1,19 @@
 "use client";
 import { useToast } from "@/components/ui/use-toast";
+import { formatDateTime } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Image from "next/image";
 
+import { useTranslation } from "@/app/i18n/client";
 import { Card, CardContent } from "@/components/ui/card";
-import axios, { type AxiosError } from "axios";
-import { XCircleIcon } from "lucide-react";
+import { useI18n } from "@/providers/i18n-provider";
+import { StoreLevel, SubscriptionStatus } from "@/types/enum";
+import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import {
-	Select,
-	SelectContent,
-	SelectTrigger,
-	SelectValue,
-} from "@radix-ui/react-select";
-
-import type {
-	Category,
-	Product,
-	Store,
-	StoreAnnouncement,
-	StoreOrder,
-	Subscription,
-	User,
-} from "@prisma/client";
+import type { Store, Subscription } from "@prisma/client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,12 +26,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-import { CountryCombobox } from "@/components/country-combobox";
-import { CurrencyCombobox } from "@/components/currency-combobox";
-import ImageUploadBox from "@/components/image-upload-box";
-import { LocaleSelectItems } from "@/components/locale-select-items";
-import { deleteImage, uploadImage } from "@/lib/utils";
-import { StoreLevel } from "@/types/enum";
 import Link from "next/link";
 
 const formSchema = z.object({
@@ -62,6 +41,7 @@ export interface SettingsFormProps {
 
 export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 	initialData,
+	subscription,
 }) => {
 	const params = useParams();
 	const router = useRouter();
@@ -95,13 +75,30 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 
 	const onSubmit = async (data: formValues) => {};
 
+	const onUnsubscribe = async () => {
+		setLoading(true);
+
+		await axios.post(
+			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/unsubscribe`,
+		);
+		router.refresh();
+
+		toast({
+			title: "Subscription cancelled.",
+			description: "",
+			variant: "success",
+		});
+
+		setLoading(false);
+	};
+
 	if (!initialData) return;
 
 	return (
 		<>
 			<Card>
 				<CardContent className="space-y-2">
-					current subscription level:
+					store level
 					<Button variant="outline" size="sm">
 						<Link
 							href={`/storeAdmin/${initialData.id}/subscribe`}
@@ -114,6 +111,26 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 									: t("storeAdmin_switchLevel_multi")}
 						</Link>
 					</Button>
+					{subscription !== null && (
+						<>
+							<div className="grid grid-cols-2">
+								<div>status:</div>
+								<div>{SubscriptionStatus[subscription.status]}</div>
+
+								<div>stripeSubscriptionId:</div>
+								<div>{subscription.stripeSubscriptionId}</div>
+
+								<div>updatedAt:</div>
+								<div>{formatDateTime(subscription.updatedAt)}</div>
+							</div>
+							<Button
+								disabled={subscription.status !== SubscriptionStatus.Active}
+								onClick={onUnsubscribe}
+							>
+								Unsubscribe
+							</Button>
+						</>
+					)}
 					<Form {...form}>
 						<form
 							onSubmit={form.handleSubmit(onSubmit)}
