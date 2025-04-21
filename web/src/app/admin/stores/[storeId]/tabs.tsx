@@ -7,17 +7,14 @@ import { Heading } from "@/components/ui/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import type {
-	Account,
 	Category,
 	Product,
-	Session,
 	Store,
 	StoreAnnouncement,
 	StoreOrder,
 	Subscription,
 	User,
 } from "@prisma/client";
-import { useParams } from "next/navigation";
 import { StoreEditBasicTab } from "./store-edit-basic-tab";
 import { StoreSubscrptionTab } from "./store-subscription";
 
@@ -30,7 +27,7 @@ interface editProps {
 		StoreOrders: StoreOrder[] | [];
 	};
 	action: string;
-	subscription: Subscription;
+	subscription: Subscription | null;
 }
 export const StoreEditTabs = ({
 	initialData,
