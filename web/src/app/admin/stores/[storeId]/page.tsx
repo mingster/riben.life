@@ -36,7 +36,9 @@ const StoreEditPage = async (props: {
 		},
 	})) as Subscription;
 
-	console.log("subscription", subscription);
+	//console.log("subscription", subscription);
+
+	/*
 	const subscriptionScheduleId = subscription?.stripeSubscriptionId as string;
 
 	console.log("subscriptionScheduleId", subscriptionScheduleId);
@@ -50,6 +52,7 @@ const StoreEditPage = async (props: {
 		logger.error(err);
 	}
 	console.log("subscriptionSchedule", subscriptionSchedule);
+	*/
 
 	return (
 		<div className="flex-col">

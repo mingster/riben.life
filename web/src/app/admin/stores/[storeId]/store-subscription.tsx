@@ -1,6 +1,6 @@
 "use client";
 import { useToast } from "@/components/ui/use-toast";
-import { formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -27,8 +28,24 @@ import {
 import { Input } from "@/components/ui/input";
 
 import Link from "next/link";
+import { Calendar } from "@/components/ui/calendar";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 const formSchema = z.object({
+	stripeSubscriptionId: z.string().optional(),
+	expiration: z.date().optional(),
+	/*
+		expiration: z.date({
+			required_error: "expiration is required.",
+		  }),
+	*/
+	note: z.string().optional(),
 	level: z.coerce.number(),
 });
 
@@ -36,7 +53,7 @@ type formValues = z.infer<typeof formSchema>;
 
 export interface SettingsFormProps {
 	initialData: Store;
-	subscription: Subscription;
+	subscription: Subscription | null;
 }
 
 export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
@@ -53,6 +70,7 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 	const defaultValues = initialData
 		? {
 				...initialData,
+				...subscription,
 			}
 		: {};
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
@@ -73,7 +91,25 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
-	const onSubmit = async (data: formValues) => {};
+	const onSubmit = async (data: formValues) => {
+		console.log(data);
+
+		setLoading(true);
+
+		await axios.patch(
+			`${process.env.NEXT_PUBLIC_API_URL}/admin/stores/${params.storeId}/subscription`,
+			data,
+		);
+		router.refresh();
+
+		toast({
+			title: "Subscription updated.",
+			description: "",
+			variant: "success",
+		});
+
+		setLoading(false);
+	};
 
 	const onUnsubscribe = async () => {
 		setLoading(true);
@@ -113,22 +149,19 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 					</Button>
 					{subscription !== null && (
 						<>
-							<div className="grid grid-cols-2">
+							<div className="grid grid-cols-5 text-xs">
 								<div>status:</div>
 								<div>{SubscriptionStatus[subscription.status]}</div>
-
-								<div>stripeSubscriptionId:</div>
-								<div>{subscription.stripeSubscriptionId}</div>
-
 								<div>updatedAt:</div>
 								<div>{formatDateTime(subscription.updatedAt)}</div>
+								<Button
+									size="sm"
+									disabled={subscription.status !== SubscriptionStatus.Active}
+									onClick={onUnsubscribe}
+								>
+									Unsubscribe
+								</Button>
 							</div>
-							<Button
-								disabled={subscription.status !== SubscriptionStatus.Active}
-								onClick={onUnsubscribe}
-							>
-								Unsubscribe
-							</Button>
 						</>
 					)}
 					<Form {...form}>
@@ -141,12 +174,12 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 								name="level"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>change to</FormLabel>
+										<FormLabel>store level</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
-												placeholder={t("Store_Name_Descr")}
+												placeholder=""
 												{...field}
 											/>
 										</FormControl>
@@ -155,6 +188,85 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 								)}
 							/>
 
+							<FormField
+								control={form.control}
+								name="stripeSubscriptionId"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>stripe Subscription schedule Id</FormLabel>
+										<FormControl>
+											<Input
+												disabled={loading || form.formState.isSubmitting}
+												className="font-mono"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="expiration"
+								render={({ field }) => (
+									<FormItem className="flex flex-col">
+										<FormLabel>Expiration</FormLabel>
+										<Popover>
+											<PopoverTrigger asChild>
+												<FormControl>
+													<Button
+														variant={"outline"}
+														className={cn(
+															"w-[240px] pl-3 text-left font-normal",
+															!field.value && "text-muted-foreground",
+														)}
+													>
+														{field.value ? (
+															format(field.value, "PPP")
+														) : (
+															<span>Pick a date</span>
+														)}
+														<CalendarIcon className="ml-auto size-4 opacity-50" />
+													</Button>
+												</FormControl>
+											</PopoverTrigger>
+											<PopoverContent className="w-auto p-0" align="start">
+												<Calendar
+													mode="single"
+													selected={field.value}
+													onSelect={field.onChange}
+													disabled={(date) =>
+														date > new Date("3000-12-31") ||
+														date < new Date("1900-01-01")
+													}
+													initialFocus
+												/>
+											</PopoverContent>
+										</Popover>
+
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="note"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Subscription Note</FormLabel>
+										<FormControl>
+											<Input
+												disabled={loading || form.formState.isSubmitting}
+												className="font-mono"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 							<Button
 								disabled={
 									loading ||

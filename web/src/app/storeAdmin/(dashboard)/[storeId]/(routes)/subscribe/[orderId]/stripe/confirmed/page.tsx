@@ -1,13 +1,10 @@
 "use server";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import { GetSession, IsSignInResponse } from "@/lib/auth/utils";
-import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { formatDateTime, getUtcNow } from "@/lib/utils";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import Stripe from "stripe";
 import { SuccessAndRedirect } from "./SuccessAndRedirect";
@@ -42,6 +39,9 @@ export default async function StripeConfirmedPage(props: {
 		);
 
 		if (pi && pi.status === "succeeded") {
+			// payment confirmed
+			// 1. mark payment a paid
+			// 2. credit the payment
 			const setting = await sqlClient.platformSettings.findFirst();
 			if (setting === null) {
 				throw new Error("Platform settings not found");
@@ -83,14 +83,9 @@ export default async function StripeConfirmedPage(props: {
 				current_exp = now;
 			}
 
-			const new_exp = new Date(
-				current_exp.getFullYear(),
-				current_exp.getMonth() + 1,
-				current_exp.getDay(),
-				23,
-				59,
-				59,
-			);
+			// add one month
+			const new_exp = new Date(current_exp);
+			new_exp.setMonth(new_exp.getMonth() + 1);
 
 			const subscriptionSchedule = await stripe.subscriptionSchedules.create({
 				customer: subscriptionPayment.userId,
@@ -109,7 +104,7 @@ export default async function StripeConfirmedPage(props: {
 			});
 
 			const note =
-				"extend subscription from" +
+				"extend subscription from " +
 				formatDateTime(current_exp) +
 				" to " +
 				formatDateTime(new_exp);

@@ -144,16 +144,16 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 		});
 
 		/* } catch (error: unknown) {
-      const err = error as AxiosError;
-      toast({
-        title: "Something went wrong.",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-      //console.log(data);
-    }*/
+	  const err = error as AxiosError;
+	  toast({
+		title: "Something went wrong.",
+		description: err.message,
+		variant: "destructive",
+	  });
+	} finally {
+	  setLoading(false);
+	  //console.log(data);
+	}*/
 		setLoading(false);
 	};
 
