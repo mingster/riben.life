@@ -1,8 +1,6 @@
 import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
 import { Loader } from "@/components/ui/loader";
-import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import { stripe } from "@/lib/stripe/config";
 import type { Store } from "@/types";
 import { Suspense } from "react";
 import { PkgSelection } from "./pkgSelection";
@@ -21,12 +19,12 @@ export default async function StoreSubscribePage(props: {
   await sqlClient.subscriptionPayment.deleteMany({
   });
   await sqlClient.store.update({
-    where: {
-      id: params.storeId,
-    },
-    data: {
-      level: StoreLevel.Free
-    }
+	where: {
+	  id: params.storeId,
+	},
+	data: {
+	  level: StoreLevel.Free
+	}
   });
   */
 
@@ -36,10 +34,13 @@ export default async function StoreSubscribePage(props: {
 			storeId: store.id,
 		},
 	});
-	console.log("subscription", subscription);
 
+	if (process.env.NODE_ENV === "development")
+		console.log("subscription", subscription);
+
+	/*
 	if (subscription !== null) {
-		const subscriptionScheduleId = subscription.stripeSubscriptionId as string;
+		const subscriptionScheduleId = subscription.subscriptionId as string;
 
 		console.log("subscriptionScheduleId", subscriptionScheduleId);
 
@@ -55,6 +56,7 @@ export default async function StoreSubscribePage(props: {
 		}
 		console.log("subscriptionSchedule", subscriptionSchedule);
 	}
+	*/
 
 	return (
 		<Suspense fallback={<Loader />}>

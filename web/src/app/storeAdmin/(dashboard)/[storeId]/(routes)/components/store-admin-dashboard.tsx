@@ -13,11 +13,12 @@ import { Awaiting4ProcessingClient } from "../order/awaiting4Process/client";
 
 export interface props {
 	store: Store;
+	isProLevel: boolean;
 }
 
 // store admin home page.
 // it checks for new orders every 5 seconds.
-export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
+export const StoreAdminDashboard: React.FC<props> = ({ store, isProLevel }) => {
 	//const { lng } = useI18n();
 	//const { t } = useTranslation(lng, "storeAdmin");
 
@@ -26,7 +27,7 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
 
 	/*
   {store.level === StoreLevel.Free && !store.autoAcceptOrder && (
-    <Awaiting4ConfirmationClient store={store} />
+	<Awaiting4ConfirmationClient store={store} />
   )}
   <Awaiting4ProcessingClient store={store} />
   */
@@ -36,12 +37,10 @@ export const StoreAdminDashboard: React.FC<props> = ({ store }) => {
 			<Container>
 				{
 					//show cash cashier if store subscribes pro level (not free)
-					store.level !== StoreLevel.Free && (
-						<CashCashier store={store} tables={[]} />
-					)
+					isProLevel && <CashCashier store={store} tables={[]} />
 				}
 
-				{store.level === StoreLevel.Free && !store.autoAcceptOrder && (
+				{!isProLevel && !store.autoAcceptOrder && (
 					<Awaiting4ConfirmationClient store={store} />
 				)}
 			</Container>

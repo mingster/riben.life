@@ -38,7 +38,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 
 const formSchema = z.object({
-	stripeSubscriptionId: z.string().optional(),
+	subscriptionId: z.string().optional(),
 	expiration: z.date().optional(),
 	/*
 		expiration: z.date({
@@ -67,12 +67,19 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
 
+	// to avoid input component error
+	if (subscription && subscription.subscriptionId === null) {
+		subscription.subscriptionId = "";
+		//console.log("subscriptionId", subscription.subscriptionId);
+	}
+
 	const defaultValues = initialData
 		? {
 				...initialData,
 				...subscription,
 			}
 		: {};
+
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
 		resolver: zodResolver(formSchema),
@@ -114,9 +121,9 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 	const onUnsubscribe = async () => {
 		setLoading(true);
 
-		await axios.post(
-			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/unsubscribe`,
-		);
+		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/unsubscribe`;
+		await axios.post(url);
+
 		router.refresh();
 
 		toast({
@@ -147,7 +154,7 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 									: t("storeAdmin_switchLevel_multi")}
 						</Link>
 					</Button>
-					{subscription !== null && (
+					{subscription !== null && subscription.subscriptionId !== "" && (
 						<>
 							<div className="grid grid-cols-5 text-xs">
 								<div>status:</div>
@@ -190,10 +197,10 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 
 							<FormField
 								control={form.control}
-								name="stripeSubscriptionId"
+								name="subscriptionId"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>stripe Subscription schedule Id</FormLabel>
+										<FormLabel>Subscription schedule Id</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}

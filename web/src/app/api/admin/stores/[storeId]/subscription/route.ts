@@ -16,7 +16,7 @@ export async function PATCH(
 
 		const body = await req.json();
 
-		const { stripeSubscriptionId, expiration, note, level } = body;
+		const { subscriptionId, expiration, note, level } = body;
 
 		if (!body.level) {
 			return new NextResponse("level is required", { status: 403 });
@@ -49,7 +49,7 @@ export async function PATCH(
 				data: {
 					expiration: expiration,
 					note: note,
-					stripeSubscriptionId: stripeSubscriptionId,
+					subscriptionId: subscriptionId,
 				},
 			});
 		}

@@ -283,15 +283,15 @@ model Shipment {
 }
 
 model Subscription {
-  id                        String   @id @default(cuid())
-  storeId                   String   @unique
-  userId                    String
-  expiration                DateTime
-  status                    Int
-  subscriptionInvoiceNumber String?
-  billingProvider           String
-  stripeSubscriptionId      String?
-  note                      String
+  id              String   @id @default(cuid())
+  storeId         String   @unique
+  userId          String
+  expiration      DateTime
+  status          Int
+  invoiceNumber   String?
+  billingProvider String
+  subscriptionId  String?
+  note            String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

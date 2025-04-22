@@ -38,7 +38,7 @@ export default async function StoreSubscriptionHistoryPage(props: {
 
 	let subscriptionSchedule = null;
 	if (subscription !== null) {
-		const subscriptionScheduleId = subscription.stripeSubscriptionId as string;
+		const subscriptionScheduleId = subscription.subscriptionId as string;
 
 		try {
 			subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
