@@ -1,12 +1,9 @@
 "use server";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import { sqlClient } from "@/lib/prismadb";
-import { stripe } from "@/lib/stripe/config";
-import { formatDateTime, getUtcNow } from "@/lib/utils";
-import { StoreLevel, SubscriptionStatus } from "@/types/enum";
+
+import confirmPayment from "@/actions/storeAdmin/subscription/stripe/confirm-payment";
 import { Suspense } from "react";
-import Stripe from "stripe";
 import { SuccessAndRedirect } from "./SuccessAndRedirect";
 
 // this page is triggered when stripe confirmed the payment.
@@ -20,148 +17,33 @@ export default async function StripeConfirmedPage(props: {
 }) {
 	const searchParams = await props.searchParams;
 	const params = await props.params;
-	if (!params.orderId) {
-		throw new Error("order Id is missing");
+
+	if (process.env.NODE_ENV === "development") {
+		console.log("orderid", params.orderId);
+		console.log("payment_intent", searchParams.payment_intent);
+		console.log(
+			"payment_intent_client_secret",
+			searchParams.payment_intent_client_secret,
+		);
 	}
 
-	if (
-		searchParams.payment_intent &&
-		searchParams.payment_intent_client_secret
-	) {
-		const stripePi = new Stripe(
-			`${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`,
+	const confirmed = (await confirmPayment(
+		params.orderId,
+		searchParams.payment_intent,
+		searchParams.payment_intent_client_secret,
+	)) as boolean;
+
+	console.log("confirmed", confirmed);
+
+	if (confirmed) {
+		return (
+			<Suspense fallback={<Loader />}>
+				<Container>
+					<SuccessAndRedirect orderId={"12345"} />
+				</Container>
+			</Suspense>
 		);
-		const pi = await stripePi.paymentIntents.retrieve(
-			searchParams.payment_intent,
-			{
-				client_secret: searchParams.payment_intent_client_secret,
-			},
-		);
-
-		if (pi && pi.status === "succeeded") {
-			// payment confirmed
-			// 1. mark payment a paid
-			// 2. credit the payment
-			const setting = await sqlClient.platformSettings.findFirst();
-			if (setting === null) {
-				throw new Error("Platform settings not found");
-			}
-
-			const subscriptionPayment =
-				await sqlClient.subscriptionPayment.findUnique({
-					where: {
-						id: params.orderId,
-					},
-				});
-
-			if (!subscriptionPayment) throw Error("order not found");
-
-			const store = await sqlClient.store.findUnique({
-				where: {
-					id: subscriptionPayment.storeId,
-				},
-			});
-			if (!store) throw Error("store not found");
-
-			// credit the payment
-			//
-			const subscription = await sqlClient.subscription.findUnique({
-				where: {
-					storeId: store.id,
-				},
-			});
-
-			if (subscription === null) {
-				//subscription should already created from subscribe api
-				throw new Error("subscription not found");
-			}
-
-			const now = getUtcNow();
-			let current_exp = subscription.expiration;
-			if (current_exp < now) {
-				//reset to today if expired
-				current_exp = now;
-			}
-
-			// add one month
-			const new_exp = new Date(current_exp);
-			new_exp.setMonth(new_exp.getMonth() + 1);
-
-			const subscriptionSchedule = await stripe.subscriptionSchedules.create({
-				customer: subscriptionPayment.userId,
-				start_date: new_exp.getTime() / 1000,
-				end_behavior: "release",
-				phases: [
-					{
-						items: [
-							{
-								price: setting.stripePriceId as string,
-								quantity: 1,
-							},
-						],
-					},
-				],
-			});
-
-			const note =
-				"extend subscription from " +
-				formatDateTime(current_exp) +
-				" to " +
-				formatDateTime(new_exp);
-
-			await sqlClient.subscription.update({
-				where: {
-					storeId: store.id,
-				},
-				data: {
-					status: SubscriptionStatus.Active,
-					expiration: new_exp,
-					stripeSubscriptionId: subscriptionSchedule.id,
-					note: note,
-				},
-			});
-
-			// finally update store's subscription level
-			// save checkout references to related subscriptionPayment in db
-			const checkoutAttributes = JSON.stringify({
-				payment_intent: searchParams.payment_intent,
-				client_secret: searchParams.payment_intent_client_secret,
-			});
-
-			// mark as paid
-			const paidOrder = await sqlClient.subscriptionPayment.update({
-				where: {
-					id: params.orderId,
-				},
-				data: {
-					isPaid: true,
-					paidAt: getUtcNow(),
-					note: note,
-					checkoutAttributes: checkoutAttributes,
-				},
-			});
-
-			await sqlClient.store.update({
-				where: {
-					id: subscriptionPayment.storeId,
-				},
-				data: {
-					level: StoreLevel.Pro,
-					//level: count === 1 ? StoreLevel.Pro : StoreLevel.Multi,
-				},
-			});
-
-			console.log(
-				`StripeConfirmedPage: order confirmed: ${JSON.stringify(paidOrder)}`,
-			);
-
-			return (
-				<Suspense fallback={<Loader />}>
-					<Container>
-						<SuccessAndRedirect orderId={paidOrder.id} />
-					</Container>
-				</Suspense>
-			);
-		}
 	}
+
+	return "error, please try again";
 }

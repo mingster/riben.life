@@ -5,6 +5,13 @@ import { getUtcNow } from "@/lib/utils";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
 
+export async function GET(
+	_req: Request,
+	props: { params: Promise<{ storeId: string }> },
+) {
+	return new NextResponse("Subscription not found", { status: 404 });
+}
+
 // called when store operator select the free package (StoreLevel.Free).
 // or from admin store mgmt page.
 // we will:
@@ -67,11 +74,11 @@ export async function POST(
 			},
 		});
 
-		if (subscription?.stripeSubscriptionId) {
+		if (subscription?.subscriptionId) {
 			try {
-				const subscriptionSchedule = subscription?.stripeSubscriptionId
+				const subscriptionSchedule = subscription?.subscriptionId
 					? await stripe.subscriptionSchedules.retrieve(
-							subscription.stripeSubscriptionId,
+							subscription.subscriptionId,
 						)
 					: null;
 
@@ -93,7 +100,7 @@ export async function POST(
 							storeId: params.storeId,
 						},
 						data: {
-							stripeSubscriptionId: null,
+							subscriptionId: null,
 							status: SubscriptionStatus.Cancelled,
 							note: "Unsubscribed by " + userId,
 							updatedAt: getUtcNow(),
@@ -115,8 +122,8 @@ export async function POST(
 				return new NextResponse(`Internal error${error}`, { status: 500 });
 			}
 		} else {
-			// Handle the case where subscription or stripeSubscriptionId is null
-			return new NextResponse("Subscription not found", { status: 404 });
+			// Handle the case where subscription or subscriptionId is null
+			return new NextResponse("Subscription not found", { status: 501 });
 		}
 
 		return NextResponse.json("ok", { status: 200 });

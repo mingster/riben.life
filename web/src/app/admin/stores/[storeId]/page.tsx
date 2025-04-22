@@ -36,10 +36,10 @@ const StoreEditPage = async (props: {
 		},
 	})) as Subscription;
 
-	//console.log("subscription", subscription);
+	console.log("subscription", subscription);
 
 	/*
-	const subscriptionScheduleId = subscription?.stripeSubscriptionId as string;
+	const subscriptionScheduleId = subscription?.subscriptionId as string;
 
 	console.log("subscriptionScheduleId", subscriptionScheduleId);
 

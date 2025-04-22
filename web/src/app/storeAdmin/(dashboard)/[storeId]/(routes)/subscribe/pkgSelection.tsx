@@ -2,7 +2,7 @@
 
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
-import { cn, formatDateTime, getAbsoluteUrl } from "@/lib/utils";
+import { cn, formatDateTime, getAbsoluteUrl, getUtcNow } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import { useParams, useRouter } from "next/navigation";
@@ -158,13 +158,14 @@ const DisplayPkg: React.FC<props> = ({
 							// if no subscription...
 							subscription === null ||
 							subscription.status === SubscriptionStatus.Inactive ||
-							subscription.status === SubscriptionStatus.Cancelled
+							subscription.status === SubscriptionStatus.Cancelled ||
+							subscription.expiration <= getUtcNow()
 								? t("storeAdmin_switchLevel_pageDescr")
 								: t("storeAdmin_switchLevel_pageDescr_subscribed")
 						}
 					</div>
 					<div>
-						{subscription !== null && (
+						{subscription !== null && subscription.expiration > getUtcNow() && (
 							<div className="max-w-2xl m-auto mt-5 text-xl text-center">
 								{t("storeAdmin_switchLevel_subscription_expiry").replace(
 									"{0}",

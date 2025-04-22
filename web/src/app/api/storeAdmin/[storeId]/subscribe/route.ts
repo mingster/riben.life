@@ -81,7 +81,7 @@ export async function POST(
 				expiration: new_expiration,
 				status: SubscriptionStatus.Inactive,
 				billingProvider: "stripe",
-				//stripeSubscriptionId: subscriptionSchedule.id,
+				//subscriptionId: subscriptionSchedule.id,
 				note: "re-subscribed",
 			},
 			create: {
@@ -90,7 +90,7 @@ export async function POST(
 				expiration: new_expiration,
 				status: SubscriptionStatus.Inactive,
 				billingProvider: "stripe",
-				//stripeSubscriptionId: subscriptionSchedule.id,
+				//subscriptionId: subscriptionSchedule.id,
 				note: "subscribe",
 			},
 		});
