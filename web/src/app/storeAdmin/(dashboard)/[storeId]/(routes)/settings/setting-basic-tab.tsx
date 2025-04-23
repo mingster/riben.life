@@ -63,10 +63,10 @@ export interface SettingsFormProps {
 	storeSettings: StoreSettings | null;
 	/*
   initialData:
-    | (Store & {
-        name: string;
-      })
-    | null;
+	| (Store & {
+		name: string;
+	  })
+	| null;
   logo: string;
 
   */
@@ -86,16 +86,15 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
 	const defaultValues = sqlData
 		? {
-				...sqlData,
-				orderNoteToCustomer: storeSettings?.orderNoteToCustomer || "",
-				businessHours: storeSettings?.businessHours || "",
-			}
+			...sqlData,
+			orderNoteToCustomer: storeSettings?.orderNoteToCustomer || "",
+			businessHours: storeSettings?.businessHours || "",
+		}
 		: { orderNoteToCustomer: "", businessHours: "" };
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
-		defaultValues,
+		resolver: zodResolver(formSchema) as any, defaultValues,
 	});
 
 	const {
@@ -108,10 +107,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
 	/*
   const [isSubmittable, setIsSubmittable] = useState(
-    !!form.formState.isDirty && !!form.formState.isValid,
+	!!form.formState.isDirty && !!form.formState.isValid,
   );
   useEffect(() => {
-    setIsSubmittable(!!form.formState.isDirty && !!form.formState.isValid);
+	setIsSubmittable(!!form.formState.isDirty && !!form.formState.isValid);
   }, [form.formState]);
   console.log(`isSubmittable:${isSubmittable}`);
 

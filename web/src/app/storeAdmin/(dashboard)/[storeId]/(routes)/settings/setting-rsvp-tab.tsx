@@ -27,7 +27,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
 const formSchema = z.object({
-	acceptReservation: z.boolean().optional().default(true),
+	acceptReservation: z.boolean().default(true),
 });
 
 type formValues = z.infer<typeof formSchema>;
@@ -51,13 +51,13 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 
 	const defaultValues = sqlData
 		? {
-				...sqlData,
-			}
+			...sqlData,
+		}
 		: {};
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues,
 	});
 
@@ -71,10 +71,10 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 
 	/*
   const [isSubmittable, setIsSubmittable] = useState(
-    !!form.formState.isDirty && !!form.formState.isValid,
+	!!form.formState.isDirty && !!form.formState.isValid,
   );
   useEffect(() => {
-    setIsSubmittable(!!form.formState.isDirty && !!form.formState.isValid);
+	setIsSubmittable(!!form.formState.isDirty && !!form.formState.isValid);
   }, [form.formState]);
   console.log(`isSubmittable:${isSubmittable}`);
 

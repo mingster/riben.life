@@ -32,13 +32,13 @@ import { AddProductOptionDialog } from "./product-option-dialog";
 
 interface editProps {
 	initialData:
-		| (Product & {
-				//images: ProductImage[];
-				//productPrices: ProductPrice[];
-				//ProductImages: ProductImages[] | null;
-				//ProductAttribute: ProductAttribute | null;
-		  })
-		| null;
+	| (Product & {
+		//images: ProductImage[];
+		//productPrices: ProductPrice[];
+		//ProductImages: ProductImages[] | null;
+		//ProductAttribute: ProductAttribute | null;
+	})
+	| null;
 	storeOptionTemplates: StoreProductOptionTemplate[] | [];
 
 	action: string;
@@ -101,16 +101,16 @@ export const DisplayStoreOptionTemplates = ({
 	);
 
 	/*
-    let storeOptionTemplatesToInclude1 = storeOptionTemplates;
+	let storeOptionTemplatesToInclude1 = storeOptionTemplates;
   if (excludes.length > 0) {
-    for (let i = 0; i < storeOptionTemplates.length; i++) {
-      if (
-        !excludes.some((exclude) =>
-          storeOptionTemplates[i].optionName.includes(exclude.optionName),
-        )
-      )
-        storeOptionTemplatesToInclude.push(storeOptionTemplates[i]);
-    }
+	for (let i = 0; i < storeOptionTemplates.length; i++) {
+	  if (
+		!excludes.some((exclude) =>
+		  storeOptionTemplates[i].optionName.includes(exclude.optionName),
+		)
+	  )
+		storeOptionTemplatesToInclude.push(storeOptionTemplates[i]);
+	}
   }
   */
 
@@ -308,26 +308,26 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
 	},
 	/*
   {
-    accessorKey: "minQuantity",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader
-          column={column}
-          title={t("ProductOption_minQuantity")}
-        />
-      );
-    },
+	accessorKey: "minQuantity",
+	header: ({ column }) => {
+	  return (
+		<DataTableColumnHeader
+		  column={column}
+		  title={t("ProductOption_minQuantity")}
+		/>
+	  );
+	},
   },
   {
-    accessorKey: "maxQuantity",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader
-          column={column}
-          title={t("ProductOption_maxQuantity")}
-        />
-      );
-    },
+	accessorKey: "maxQuantity",
+	header: ({ column }) => {
+	  return (
+		<DataTableColumnHeader
+		  column={column}
+		  title={t("ProductOption_maxQuantity")}
+		/>
+	  );
+	},
   },
 */
 	{
@@ -444,26 +444,26 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
 	},
 	/*
   {
-    accessorKey: "minSelection",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader
-          column={column}
-          title={t("ProductOption_minSelection")}
-        />
-      );
-    },
+	accessorKey: "minSelection",
+	header: ({ column }) => {
+	  return (
+		<DataTableColumnHeader
+		  column={column}
+		  title={t("ProductOption_minSelection")}
+		/>
+	  );
+	},
   },
   {
-    accessorKey: "maxSelection",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader
-          column={column}
-          title={t("ProductOption_maxSelection")}
-        />
-      );
-    },
+	accessorKey: "maxSelection",
+	header: ({ column }) => {
+	  return (
+		<DataTableColumnHeader
+		  column={column}
+		  title={t("ProductOption_maxSelection")}
+		/>
+	  );
+	},
   },*/
 	{
 		accessorKey: "allowQuantity",
@@ -578,16 +578,16 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
 		setLoading(false);
 		setOpen(false);
 		/*} catch (error: unknown) {
-      const err = error as AxiosError;
-      toast({
-        title: "something wrong.",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-      setOpen(false);
-    }*/
+	  const err = error as AxiosError;
+	  toast({
+		title: "something wrong.",
+		description: err.message,
+		variant: "destructive",
+	  });
+	} finally {
+	  setLoading(false);
+	  setOpen(false);
+	}*/
 	};
 
 	//console.log('cellaction:',JSON.stringify(data.productOption));
@@ -618,7 +618,7 @@ export const DisplayOptions = ({
 
 	/*
   productOptions.map((option: ProductOption, index) => {
-    console.log(`DisplayOptions[${index}]: ${JSON.stringify(option)}`);
+	console.log(`DisplayOptions[${index}]: ${JSON.stringify(option)}`);
   });
   */
 

@@ -51,7 +51,8 @@ export const EditDefaultPrivacy: React.FC<props> = ({ data }) => {
 
 	const defaultValues = { privacyPolicy: data };
 
-	const privacyForm = useForm<formValues>({
+	// Automatically infers the output type from the schema
+	const privacyForm = useForm({
 		resolver: zodResolver(privacyFormSchema),
 		defaultValues,
 	});
@@ -102,7 +103,7 @@ export const EditDefaultPrivacy: React.FC<props> = ({ data }) => {
 										<FormLabel>default 隱私權政策</FormLabel>
 										<FormControl>
 											<EditorComp
-												markdown={field.value}
+												markdown={field.value || ""}
 												onPChange={field.onChange}
 											/>
 										</FormControl>

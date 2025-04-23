@@ -51,22 +51,22 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
 
 	const defaultValues = storeSettings
 		? {
-				///...initialData,
-				...storeSettings,
-			}
+			///...initialData,
+			...storeSettings,
+		}
 		: {};
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	/*
-    <Textarea
-      disabled={loading || form.formState.isSubmitting}
-      className="font-mono min-h-100"
-      placeholder="enter your privacy statement here..."
-      {...field}
-    />
+	<Textarea
+	  disabled={loading || form.formState.isSubmitting}
+	  className="font-mono min-h-100"
+	  placeholder="enter your privacy statement here..."
+	  {...field}
+	/>
 */
 	const form = useForm<formValues>({
-		resolver: zodResolver(privacyFormSchema),
+		resolver: zodResolver(privacyFormSchema) as any,
 		defaultValues,
 	});
 

@@ -155,16 +155,16 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 		//close addnew dialog
 		setOpenAddNew(false);
 		/*
-    } catch (err: unknown) {
-      const error = err as AxiosError;
-      toast({
-        title: "Something went wrong.",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
+	} catch (err: unknown) {
+	  const error = err as AxiosError;
+	  toast({
+		title: "Something went wrong.",
+		description: error.message,
+		variant: "destructive",
+	  });
+	} finally {
 
-    }*/
+	}*/
 	};
 
 	const handleDelete = async (index: number) => {
@@ -173,11 +173,11 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 		if (!initialData) return;
 
 		/*
-    console.log(`rowToRemove idx: ${index}`);
-    console.log(`rowToRemove data: ${JSON.stringify(initialData)}`);
-    console.log(`rowToRemove id: ${initialData[index].id}`);
-    console.log(`rowToRemove imgPublicId: ${initialData[index].imgPublicId}`);
-    */
+	console.log(`rowToRemove idx: ${index}`);
+	console.log(`rowToRemove data: ${JSON.stringify(initialData)}`);
+	console.log(`rowToRemove id: ${initialData[index].id}`);
+	console.log(`rowToRemove imgPublicId: ${initialData[index].imgPublicId}`);
+	*/
 
 		await deleteImage(initialData[index].imgPublicId as string);
 
@@ -195,16 +195,16 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 		setLoading(false);
 		router.refresh();
 		/*
-    } catch (err: unknown) {
-      const error = err as AxiosError;
-      toast({
-        title: "Something went wrong.",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-    }
-      */
+	} catch (err: unknown) {
+	  const error = err as AxiosError;
+	  toast({
+		title: "Something went wrong.",
+		description: error.message,
+		variant: "destructive",
+	  });
+	} finally {
+	}
+	  */
 	};
 
 	return (
@@ -224,7 +224,7 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 						<ImageUploadBox
 							disabled={loading}
 							image={image ?? null}
-							setImage={setImage ?? (() => {})}
+							setImage={setImage ?? (() => { })}
 						/>
 					</div>
 					<DialogFooter className="">

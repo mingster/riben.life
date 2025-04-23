@@ -48,12 +48,12 @@ import { deleteImage, uploadImage } from "@/lib/utils";
 
 const formSchema = z.object({
 	name: z.string().min(1, { message: "store name is required" }),
-	customDomain: z.string().optional().default(""),
+	customDomain: z.string().default(""),
 	defaultLocale: z.string().min(1),
 	defaultCountry: z.string().min(1),
 	defaultCurrency: z.string().min(1),
-	logo: z.string().optional().default(""),
-	logoPublicId: z.string().default("").optional().default(""),
+	logo: z.string().default(""),
+	logoPublicId: z.string().default(""),
 });
 
 type formValues = z.infer<typeof formSchema>;
@@ -87,8 +87,16 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 		: {};
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
-		defaultValues,
+		resolver: zodResolver(formSchema) as any,
+		defaultValues: {
+			name: "",
+			customDomain: "",
+			defaultLocale: "",
+			defaultCountry: "",
+			defaultCurrency: "",
+			logo: "",
+			logoPublicId: "",
+		},
 	});
 
 	const {

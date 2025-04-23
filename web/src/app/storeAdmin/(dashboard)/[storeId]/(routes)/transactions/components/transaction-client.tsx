@@ -272,8 +272,8 @@ export const FilterDateTime = ({
 
 	const defaultValues = defaultValue
 		? {
-				...defaultValue,
-			}
+			...defaultValue,
+		}
 		: {};
 
 	const [val, setVal] = useState<TimeFilter>(defaultValue);
@@ -299,7 +299,7 @@ export const FilterDateTime = ({
 	);
 
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues: sanitizedDefaultValues,
 	});
 

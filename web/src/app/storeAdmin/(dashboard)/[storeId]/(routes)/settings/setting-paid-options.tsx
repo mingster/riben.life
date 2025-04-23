@@ -50,10 +50,10 @@ export interface SettingsFormProps {
 	disablePaidOptions: boolean;
 	/*
   initialData:
-    | (Store & {
-        name: string;
-      })
-    | null;
+	| (Store & {
+		name: string;
+	  })
+	| null;
   logo: string;
   */
 }
@@ -69,13 +69,13 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 
 	const defaultValues = initialData
 		? {
-				...initialData,
-			}
+			...initialData,
+		}
 		: {
-				LINE_PAY_ID: "",
-				LINE_PAY_SECRET: "",
-				STRIPE_SECRET_KEY: "",
-			};
+			LINE_PAY_ID: "",
+			LINE_PAY_SECRET: "",
+			STRIPE_SECRET_KEY: "",
+		};
 
 	// Replace null values with undefined
 	const sanitizedDefaultValues = Object.fromEntries(
@@ -87,7 +87,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues: sanitizedDefaultValues,
 	});
 
@@ -353,7 +353,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 											disablePaidOptions
 										}
 										image={image ?? null}
-										setImage={setImage ?? (() => {})}
+										setImage={setImage ?? (() => { })}
 									/>
 								</div>
 								<div className="flex flex-col pl-10 space-y-4 place-content-center">

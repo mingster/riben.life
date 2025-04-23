@@ -26,12 +26,12 @@ import { useTranslation } from "react-i18next";
 import * as z from "zod";
 
 const formSchema = z.object({
-	name: z.string().default(""),
-	payUrl: z.string().default(""),
-	priceDescr: z.string().optional().default(""),
-	fee: z.coerce.number().default(0),
-	feeAdditional: z.coerce.number().default(0),
-	clearDays: z.coerce.number().default(0),
+	name: z.string(),
+	payUrl: z.string(),
+	priceDescr: z.string(),
+	fee: z.coerce.number(),
+	feeAdditional: z.coerce.number(),
+	clearDays: z.coerce.number(),
 	isDeleted: z.boolean(),
 	isDefault: z.boolean(),
 });
@@ -62,6 +62,7 @@ export const EditClient = ({ initialData }: editProps) => {
 		: {};
 
 	//console.log(`product basic: ${JSON.stringify(defaultValues)}`);
+	// Automatically infers the output type from the schema
 	const form = useForm<formValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues,
