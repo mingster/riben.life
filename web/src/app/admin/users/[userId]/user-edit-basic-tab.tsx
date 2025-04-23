@@ -34,19 +34,19 @@ import * as z from "zod";
 import { UserRoleCombobox } from "./user-role-combobox";
 
 const formSchema = z.object({
-	name: z.string().optional().default(""),
-	locale: z.string().optional().default(""),
-	role: z.string().optional().default(""),
+	name: z.string().default(""),
+	locale: z.string().default(""),
+	role: z.string().default(""),
 });
 
 type formValues = z.infer<typeof formSchema>;
 
 interface editProps {
 	initialData:
-		| (User & {
-				//images: ProductImage[];
-		  })
-		| null;
+	| (User & {
+		//images: ProductImage[];
+	})
+	| null;
 	action: string;
 }
 export const UserEditBasicTab = ({ initialData, action }: editProps) => {
@@ -59,13 +59,13 @@ export const UserEditBasicTab = ({ initialData, action }: editProps) => {
 
 	const defaultValues = initialData
 		? {
-				...initialData,
-			}
+			...initialData,
+		}
 		: {};
 
 	//console.log(`product basic: ${JSON.stringify(defaultValues)}`);
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues,
 		mode: "onChange",
 	});
@@ -99,16 +99,16 @@ export const UserEditBasicTab = ({ initialData, action }: editProps) => {
 		setLoading(false);
 
 		/*
-    } catch (err: unknown) {
-      const error = err as AxiosError;
-      toast({
-        title: "Something went wrong.",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-    }
-    */
+	} catch (err: unknown) {
+	  const error = err as AxiosError;
+	  toast({
+		title: "Something went wrong.",
+		description: error.message,
+		variant: "destructive",
+	  });
+	} finally {
+	}
+	*/
 	};
 
 	return (

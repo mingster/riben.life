@@ -129,7 +129,7 @@ export const ProductEditAttributeTab = ({
 	//console.log(`product attribute: ${JSON.stringify(initialData)}`);
 	//console.log(`attribute defaultValues: ${JSON.stringify(defaultValues)}`);
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues: sanitizedDefaultValues,
 		mode: "onChange",
 	});

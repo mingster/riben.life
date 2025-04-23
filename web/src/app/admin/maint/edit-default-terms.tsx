@@ -51,7 +51,7 @@ export const EditDefaultTerms: React.FC<props> = ({ data }) => {
 
 	const defaultValues = { terms: data };
 
-	const form = useForm<formValues>({
+	const form = useForm({
 		resolver: zodResolver(formSchema),
 		defaultValues,
 	});
@@ -102,7 +102,7 @@ export const EditDefaultTerms: React.FC<props> = ({ data }) => {
 										<FormLabel>default 服務條款</FormLabel>
 										<FormControl>
 											<EditorComp
-												markdown={field.value}
+												markdown={field.value || ""}
 												onPChange={field.onChange}
 											/>
 										</FormControl>

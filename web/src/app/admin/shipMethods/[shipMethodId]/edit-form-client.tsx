@@ -26,10 +26,10 @@ import { useTranslation } from "react-i18next";
 import * as z from "zod";
 
 const formSchema = z.object({
-	name: z.string().default(""),
-	identifier: z.string().default(""),
-	description: z.string().optional().default(""),
-	basic_price: z.coerce.number().default(0),
+	name: z.string(),
+	identifier: z.string(),
+	description: z.string(),
+	basic_price: z.coerce.number(),
 	isDeleted: z.boolean(),
 	isDefault: z.boolean(),
 	shipRequried: z.boolean(),

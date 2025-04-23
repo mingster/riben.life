@@ -39,7 +39,7 @@ import dynamic from "next/dynamic";
 import type { SettingsFormProps } from "./setting-basic-tab";
 
 const tosFormSchema = z.object({
-	tos: z.string().optional().default(""),
+	tos: z.string().default(""),
 });
 
 type formValues = z.infer<typeof tosFormSchema>;
@@ -55,15 +55,15 @@ export const TermsTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
 
 	const defaultValues = storeSettings
 		? {
-				///...initialData,
-				...storeSettings,
-			}
+			///...initialData,
+			...storeSettings,
+		}
 		: {};
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 
 	const form = useForm<formValues>({
-		resolver: zodResolver(tosFormSchema),
+		resolver: zodResolver(tosFormSchema) as any,
 		defaultValues,
 	});
 

@@ -96,7 +96,7 @@ export const AddProductOptionTemplateDialog: React.FC<props> = ({
 		: {};
 
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues,
 		mode: "onChange",
 	});

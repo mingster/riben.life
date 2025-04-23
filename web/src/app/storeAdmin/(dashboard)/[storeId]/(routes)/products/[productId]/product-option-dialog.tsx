@@ -107,14 +107,13 @@ export const AddProductOptionDialog: React.FC<props> = ({
 
 	const defaultValues = initialData
 		? {
-				...initialData,
-				selections: s,
-			}
+			...initialData,
+			selections: s,
+		}
 		: {};
 
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
-		defaultValues,
+		resolver: zodResolver(formSchema) as any, defaultValues,
 		mode: "onChange",
 	});
 

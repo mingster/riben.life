@@ -68,9 +68,9 @@ export const ProductEditCategoryTab = ({
 	//console.log(`ProductEditCategoryTab: ${JSON.stringify(initialData)}`);
 	/*
   const initiallySelected1: RowSelectionState = {
-    "f376e45f-2374-4adf-bb01-3f3bb48259a2": false,
-    "60688323-8aa0-45f8-98fb-2d4ff822bf4d": true,
-    "e2a53c05-ad5c-46cc-926b-00982ce24a60": true,
+	"f376e45f-2374-4adf-bb01-3f3bb48259a2": false,
+	"60688323-8aa0-45f8-98fb-2d4ff822bf4d": true,
+	"e2a53c05-ad5c-46cc-926b-00982ce24a60": true,
   };
   */
 
@@ -127,12 +127,12 @@ export const ProductEditCategoryTab = ({
 			} else {
 				// remove from db
 				/*
-        await axios.delete(
-          `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${params.productId}/category`,
-          { data: { categoryId: item.id.toString() } },
-        );
-        console.log(`remove from db: ${item.id.toString()}`);
-        */
+		await axios.delete(
+		  `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${params.productId}/category`,
+		  { data: { categoryId: item.id.toString() } },
+		);
+		console.log(`remove from db: ${item.id.toString()}`);
+		*/
 			}
 		});
 
@@ -250,6 +250,6 @@ const columns: ColumnDef<CategoryColumn>[] = [
 	},
 	/*
   {
-    accessorKey: "id",
+	accessorKey: "id",
   },*/
 ];

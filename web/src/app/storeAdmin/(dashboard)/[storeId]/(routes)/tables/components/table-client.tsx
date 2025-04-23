@@ -92,7 +92,7 @@ export function AddTablesDialog() {
 	const { t } = useTranslation(lng, "storeAdmin");
 
 	const form = useForm<z.infer<typeof formSchema>>({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues: {
 			numOfTables: 1,
 			capacity: 2,
