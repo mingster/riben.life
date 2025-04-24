@@ -232,7 +232,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 													/>
 												</SelectTrigger>
 
-												<SelectContent className="bg-primary-foreground">
+												<SelectContent className="bg-primary-foreground dark:bg-primary">
 													<LocaleSelectItems />
 												</SelectContent>
 											</Select>
