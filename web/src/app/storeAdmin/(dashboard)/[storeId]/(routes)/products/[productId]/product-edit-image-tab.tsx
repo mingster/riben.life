@@ -224,7 +224,7 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 						<ImageUploadBox
 							disabled={loading}
 							image={image ?? null}
-							setImage={setImage ?? (() => { })}
+							setImage={setImage ?? (() => {})}
 						/>
 					</div>
 					<DialogFooter className="">

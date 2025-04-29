@@ -162,7 +162,7 @@ module.exports = {
       // https://medium.com/@tez1969/tailwind-筆記-29cd1e01c061
       fontFamily: {
         sans: [
-          '"Host Grotesk", "Noto Sans TC", sans-serif',
+          '"PlexCircular", "Noto Sans TC", "Open Sans", -apple-system, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
           {
             fontFeatureSettings: '"cv11", "ss01"',
             fontVariationSettings: '"opsz" 32',
@@ -174,7 +174,7 @@ module.exports = {
           ...defaultTheme.fontFamily.mono,
         ],
         display: [
-          '"Noto Sans TC", "Host Grotesk", sans-serif',
+          '"PlexCircular", "Noto Sans TC", "Open Sans", -apple-system, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
           {
             fontFeatureSettings: '"cv11", "ss01"',
             fontVariationSettings: '"opsz" 32',

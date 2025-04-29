@@ -43,10 +43,10 @@ type formValues = z.infer<typeof formSchema>;
 
 interface editProps {
 	initialData:
-	| (User & {
-		//images: ProductImage[];
-	})
-	| null;
+		| (User & {
+				//images: ProductImage[];
+		  })
+		| null;
 	action: string;
 }
 export const UserEditBasicTab = ({ initialData, action }: editProps) => {
@@ -59,8 +59,8 @@ export const UserEditBasicTab = ({ initialData, action }: editProps) => {
 
 	const defaultValues = initialData
 		? {
-			...initialData,
-		}
+				...initialData,
+			}
 		: {};
 
 	//console.log(`product basic: ${JSON.stringify(defaultValues)}`);

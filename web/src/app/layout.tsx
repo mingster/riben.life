@@ -50,13 +50,13 @@ export const metadata: Metadata = {
 	applicationName: title,
 	/*
   appleWebApp: {
-    title: title,
-    capable: true,
-    statusBarStyle: 'default',
+	title: title,
+	capable: true,
+	statusBarStyle: 'default',
   },
   themeColor: [
-    { media: '(prefers-color-scheme: dark)', color: '#38bdf8' },
-    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+	{ media: '(prefers-color-scheme: dark)', color: '#38bdf8' },
+	{ media: '(prefers-color-scheme: light)', color: '#f8fafc' },
   ],
   */
 	icons: {
@@ -103,8 +103,9 @@ export default async function RootLayout({
 						href="https://fonts.gstatic.com"
 						crossOrigin=""
 					/>
+
 					<link
-						href="https://fonts.googleapis.com/css2?family=Host_Grotesk:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Rubik:wght@500;700&display=swap"
+						href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=Noto+Sans+TC:wght@100..900&display=swap"
 						rel="stylesheet"
 					/>
 				</head>

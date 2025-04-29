@@ -71,7 +71,7 @@ export const ProductStatusCombobox = ({
 									onSelect={(value) => {
 										setSelectedStatus(
 											ProductStatuses.find((o) => o.value === Number(value)) ||
-											null,
+												null,
 										);
 
 										//return value to parent component
