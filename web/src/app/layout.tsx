@@ -103,8 +103,9 @@ export default async function RootLayout({
 						href="https://fonts.gstatic.com"
 						crossOrigin=""
 					/>
-					
-					<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=Noto+Sans+TC:wght@100..900&display=swap"
+
+					<link
+						href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=Noto+Sans+TC:wght@100..900&display=swap"
 						rel="stylesheet"
 					/>
 				</head>

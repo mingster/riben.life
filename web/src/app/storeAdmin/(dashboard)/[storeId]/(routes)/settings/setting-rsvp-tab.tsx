@@ -51,8 +51,8 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 
 	const defaultValues = sqlData
 		? {
-			...sqlData,
-		}
+				...sqlData,
+			}
 		: {};
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));

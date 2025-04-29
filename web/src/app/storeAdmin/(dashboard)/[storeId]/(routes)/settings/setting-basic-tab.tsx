@@ -86,15 +86,16 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
 	const defaultValues = sqlData
 		? {
-			...sqlData,
-			orderNoteToCustomer: storeSettings?.orderNoteToCustomer || "",
-			businessHours: storeSettings?.businessHours || "",
-		}
+				...sqlData,
+				orderNoteToCustomer: storeSettings?.orderNoteToCustomer || "",
+				businessHours: storeSettings?.businessHours || "",
+			}
 		: { orderNoteToCustomer: "", businessHours: "" };
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema) as any, defaultValues,
+		resolver: zodResolver(formSchema) as any,
+		defaultValues,
 	});
 
 	const {

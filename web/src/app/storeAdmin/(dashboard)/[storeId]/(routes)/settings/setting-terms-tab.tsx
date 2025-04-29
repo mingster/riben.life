@@ -55,9 +55,9 @@ export const TermsTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
 
 	const defaultValues = storeSettings
 		? {
-			///...initialData,
-			...storeSettings,
-		}
+				///...initialData,
+				...storeSettings,
+			}
 		: {};
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));

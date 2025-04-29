@@ -55,13 +55,13 @@ type formValues = z.infer<typeof formSchema>;
 
 interface editProps {
 	initialData:
-	| (Product & {
-		//images: ProductImage[];
-		//productPrices: ProductPrice[];
-		//ProductImages: ProductImages[] | null;
-		//ProductAttribute: ProductAttribute | null;
-	})
-	| null;
+		| (Product & {
+				//images: ProductImage[];
+				//productPrices: ProductPrice[];
+				//ProductImages: ProductImages[] | null;
+				//ProductAttribute: ProductAttribute | null;
+		  })
+		| null;
 	action: string;
 }
 export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
@@ -78,22 +78,23 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
 
 	const defaultValues = initialData
 		? {
-			...initialData,
-			description: initialData.description ?? undefined,
-			price: Number(initialData.price), // Convert Prisma.Decimal to number
-		}
+				...initialData,
+				description: initialData.description ?? undefined,
+				price: Number(initialData.price), // Convert Prisma.Decimal to number
+			}
 		: {
-			name: "",
-			description: undefined,
-			price: new Prisma.Decimal(0.0).toNumber(), // Convert Prisma.Decimal to number
-			currency: "usd",
-			isFeatured: false,
-			status: Number(ProductStatus.Published),
-		};
+				name: "",
+				description: undefined,
+				price: new Prisma.Decimal(0.0).toNumber(), // Convert Prisma.Decimal to number
+				currency: "usd",
+				isFeatured: false,
+				status: Number(ProductStatus.Published),
+			};
 
 	//console.log(`product basic: ${JSON.stringify(defaultValues)}`);
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema) as any, defaultValues,
+		resolver: zodResolver(formSchema) as any,
+		defaultValues,
 		mode: "onChange",
 	});
 

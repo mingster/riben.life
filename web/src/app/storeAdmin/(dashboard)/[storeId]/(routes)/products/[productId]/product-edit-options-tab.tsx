@@ -32,13 +32,13 @@ import { AddProductOptionDialog } from "./product-option-dialog";
 
 interface editProps {
 	initialData:
-	| (Product & {
-		//images: ProductImage[];
-		//productPrices: ProductPrice[];
-		//ProductImages: ProductImages[] | null;
-		//ProductAttribute: ProductAttribute | null;
-	})
-	| null;
+		| (Product & {
+				//images: ProductImage[];
+				//productPrices: ProductPrice[];
+				//ProductImages: ProductImages[] | null;
+				//ProductAttribute: ProductAttribute | null;
+		  })
+		| null;
 	storeOptionTemplates: StoreProductOptionTemplate[] | [];
 
 	action: string;

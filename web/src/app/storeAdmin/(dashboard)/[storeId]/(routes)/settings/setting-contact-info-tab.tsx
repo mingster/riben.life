@@ -55,31 +55,31 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 
 	const defaultValues = storeSettings
 		? {
-			///...initialData,
-			...storeSettings,
-			aboutUs: storeSettings.aboutUs ?? "",
-			supportEmail: storeSettings.supportEmail ?? "",
-			supportPhoneNumber: storeSettings.supportPhoneNumber ?? "",
-			facebookUrl: storeSettings.facebookUrl ?? "",
-			igUrl: storeSettings.igUrl ?? "",
-			lineId: storeSettings.lineId ?? "",
-			telegramId: storeSettings.telegramId ?? "",
-			twitterId: storeSettings.twitterId ?? "",
-			whatsappId: storeSettings.whatsappId ?? "",
-			wechatId: storeSettings.wechatId ?? "",
-		}
+				///...initialData,
+				...storeSettings,
+				aboutUs: storeSettings.aboutUs ?? "",
+				supportEmail: storeSettings.supportEmail ?? "",
+				supportPhoneNumber: storeSettings.supportPhoneNumber ?? "",
+				facebookUrl: storeSettings.facebookUrl ?? "",
+				igUrl: storeSettings.igUrl ?? "",
+				lineId: storeSettings.lineId ?? "",
+				telegramId: storeSettings.telegramId ?? "",
+				twitterId: storeSettings.twitterId ?? "",
+				whatsappId: storeSettings.whatsappId ?? "",
+				wechatId: storeSettings.wechatId ?? "",
+			}
 		: {
-			aboutUs: "",
-			supportEmail: "",
-			supportPhoneNumber: "",
-			facebookUrl: "",
-			igUrl: "",
-			lineId: "",
-			telegramId: "",
-			twitterId: "",
-			whatsappId: "",
-			wechatId: "",
-		};
+				aboutUs: "",
+				supportEmail: "",
+				supportPhoneNumber: "",
+				facebookUrl: "",
+				igUrl: "",
+				lineId: "",
+				telegramId: "",
+				twitterId: "",
+				whatsappId: "",
+				wechatId: "",
+			};
 
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 

@@ -58,8 +58,8 @@ export const EditStoreTable = ({ initialData, action }: editProps) => {
 
 	const defaultValues = initialData
 		? {
-			...initialData,
-		}
+				...initialData,
+			}
 		: {};
 
 	//console.log(`product basic: ${JSON.stringify(defaultValues)}`);
