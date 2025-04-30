@@ -77,7 +77,7 @@
     "jsvectormap": "^1.6.0",
     "lucide-react": "^0.503.0",
     "mongodb": "^6.16.0",
-    "mongoose": "^8.14.0",
+    "mongoose": "^8.14.1",
     "next": "^15.3.1",
     "next-auth": "^5.0.0-beta.27",
     "next-client-cookies": "^2.1.0",
