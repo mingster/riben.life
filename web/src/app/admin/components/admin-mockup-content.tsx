@@ -47,7 +47,11 @@ export const AdminMockupContent = () => {
 						</Button>
 					</div>
 				</section>
-				<div className="relative flex w-full justify-center"> </div>
+				<div className="relative flex w-full justify-center">
+					<p className="font-sans">The quick brown fox ...</p>
+					<p className="font-serif">The quick brown fox ...</p>
+					<p className="font-mono">The quick brown fox ...</p>
+				</div>
 			</div>
 		</>
 	);
