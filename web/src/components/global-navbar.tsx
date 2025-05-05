@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 
 import { useSession } from "next-auth/react";
 
-import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
 import DropdownUser from "@/components/dropdown-user";
 

@@ -36,10 +36,6 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 	const [activeTab, setActiveTab] = useState(initialTab || "orders"); //show order tab by default
 	const [loading, setLoading] = useState(false);
 
-	if (loading) {
-		return <Loader />;
-	}
-
 	const handleTabChange = (value: string) => {
 		//update the state
 		setActiveTab(value);
@@ -52,6 +48,10 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 		if (initialTab) setActiveTab(initialTab);
 	}, [initialTab]);
 	//console.log('selectedTab: ' + activeTab);
+
+	if (loading) {
+		return <Loader />;
+	}
 
 	const title = t("account_page_title");
 

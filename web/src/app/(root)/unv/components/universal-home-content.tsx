@@ -2,15 +2,13 @@
 
 import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
-import { useToast } from "@/components/ui/use-toast";
+
 import VideoPlayer from "@/components/video-player";
 import type { ColumnDef } from "@tanstack/react-table";
 import useSWR from "swr";
 import { Header, NavBar } from "./Header";
 
 import ScrollSpy from "react-ui-scrollspy";
-import "../../../css/base.css";
-import "../../../css/utilities.css";
 
 import Image from "next/image";
 import { AboutUs } from "./AboutUs";

@@ -1,0 +1,7 @@
+{
+	"success_title": "付款成功",
+	"failure_title": "付款失敗",
+	"success_descr": "我們已收到您的訂單，請等待我們的確認信，謝謝您的訂購。",
+	"payment_stripe_payAmount": "付款金額：",
+	"payment_stripeForm_payButton": "付款"
+}

@@ -6,7 +6,7 @@ import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import StoreAdminLayout from "./components/store-admin-layout";
-//import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
+//import { checkStoreAccess } from "@/lib/store-admin-utils";
 
 export default async function StoreLayout(props: {
 	children: React.ReactNode;

@@ -5,25 +5,25 @@ import { format } from "date-fns";
 import Resizer from "react-image-file-resizer";
 import { twMerge } from "tailwind-merge";
 
-import type { StoreTables } from "@prisma/client";
+//import type { StoreTables } from "@prisma/client";
 import Decimal from "decimal.js"; // gets added if installed
 import { z } from "zod";
 
 export const highlight_css = "border-dashed border-green-500 border-2";
 
+/*
+export function getTableName(tables: StoreTables[], tableId: string) {
+  return tables.find((table) => table.id === tableId)?.tableName || "";
+}
+*/
+
 export function getRandomNum(length: number) {
 	const randomNum = (
-		Math.pow(10, length)
-			.toString()
-			.slice(length - 1) +
-		Math.floor(Math.random() * Math.pow(10, length) + 1).toString()
+		(10 ** length).toString().slice(length - 1) +
+		Math.floor(Math.random() * 10 ** length + 1).toString()
 	).slice(-length);
 
 	return randomNum;
-}
-
-export function getTableName(tables: StoreTables[], tableId: string) {
-	return tables.find((table) => table.id === tableId)?.tableName || "";
 }
 
 // recursive function looping deeply throug an object to find Decimals

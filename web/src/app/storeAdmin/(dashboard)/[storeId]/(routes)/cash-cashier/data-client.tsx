@@ -3,10 +3,6 @@
 import type { Store } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import { format } from "date-fns";
-
 import { Loader } from "@/components/ui/loader";
 import { formatDateTime } from "@/lib/utils";
 import { StoreLevel } from "@/types/enum";
@@ -77,22 +73,20 @@ export const CashCashier: React.FC<props> = ({ store, tables }) => {
 
 	if (loading) return <Loader />;
 
-	return (
-		<section className="relative w-full">
-			<IntervaledContent />
-			<div className="flex flex-col gap-1">
-				{store.level !== StoreLevel.Free && (
-					<>
-						<OrderUnpaid
-							store={store}
-							tables={tables}
-							orders={unpaidOrders}
-							parentLoading={loading}
-						/>
-						<div className="text-xs">{formatDateTime(date)}</div>
-					</>
-				)}
-			</div>
-		</section>
-	);
+	if (store.level !== StoreLevel.Free) {
+		return (
+			<section className="relative w-full">
+				<IntervaledContent />
+				<div className="flex flex-col gap-1">
+					<OrderUnpaid
+						store={store}
+						tables={tables}
+						orders={unpaidOrders}
+						parentLoading={loading}
+					/>
+					<div className="text-xs">{formatDateTime(date)}</div>
+				</div>
+			</section>
+		);
+	}
 };

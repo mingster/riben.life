@@ -1,7 +1,9 @@
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import type { Account, Role, Session, StoreOrder } from "@prisma/client";
+import type { Account, Session, StoreOrder } from "@prisma/client";
 import { UserEditTabs } from "./tabs";
+//import { Role } from "@/types/enum";
+import { Role } from "@prisma/client";
 
 const UserEditPage = async (props: { params: Promise<{ userId: string }> }) => {
 	const params = await props.params;
@@ -31,9 +33,9 @@ const UserEditPage = async (props: { params: Promise<{ userId: string }> }) => {
 		createdAt: Date;
 		updatedAt: Date;
 		isActive: boolean;
+		//role: string | null;
 		role: Role | null;
 		locale: string | null;
-
 		stripeCustomerId: string | null;
 		Order: StoreOrder[];
 		Session: Session[];

@@ -25,10 +25,12 @@ import { ClipLoader } from "react-spinners";
 import Currency from "@/components/currency";
 import { DisplayOrderStatus } from "@/components/order-status-display";
 import { Button } from "@/components/ui/button";
-import { formatDateTime, getTableName } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+
+import { getTableName } from "@/lib/getTableName";
 interface props {
 	store: Store;
 	tables: StoreTables[];

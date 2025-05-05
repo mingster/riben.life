@@ -1,0 +1,905 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["views", "relationJoins"]
+  //output          = "src/app/generated/prisma/client"
+  output          = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider     = "postgres"
+  url          = env("POSTGRES_PRISMA_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  username      String?   @unique
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  isActive      Boolean   @default(false)
+
+  locale String?
+
+  role             Role?           @default(USER)
+  stripeCustomerId String?         @unique
+  Session          Session[]
+  Account          Account?
+  Authenticator    Authenticator[]
+  Orders           StoreOrder[]    @relation("UserOrders")
+
+  SupportTicketFrom SupportTicket[]     @relation("SupportTicketFrom")
+  SupportTicketTo   SupportTicket[]     @relation("SupportTicketTo")
+  NotificationFrom  StoreNotification[] @relation("NotificationFrom")
+  NotificationTo    StoreNotification[] @relation("NotificationTo")
+  Store             Store[]
+  Addresses         Address[]
+  Rsvp              Rsvp[]
+
+  @@index([username])
+  @@index([email])
+}
+
+model Account {
+  id                       String   @id @default(cuid())
+  userId                   String   @unique
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String?
+  access_token             String?
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String?
+  session_state            String?
+  refresh_token_expires_in Int?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  user                     User?    @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+}
+
+model PlatformSettings {
+  id              String  @id @default(cuid())
+  stripeProductId String?
+  stripePriceId   String?
+}
+
+model Country {
+  name          String
+  unCode        String    @unique @db.VarChar(3)
+  allowBilling  Boolean   @default(false)
+  allowShipping Boolean   @default(false)
+  allowInStore  Boolean   @default(false)
+  alpha3        String    @id @unique @db.VarChar(3)
+  Address       Address[]
+
+  @@index([name])
+  @@index([alpha3])
+}
+
+model Currency {
+  id             String           @id @unique
+  name           String
+  symbol         String?
+  ISOdigits      Int?
+  ISOnum         Int?
+  decimals       Int?
+  demonym        String
+  majorPlural    String?
+  majorSingle    String?
+  minorPlural    String?
+  minorSingle    String?
+  numToBasic     Int?
+  symbolNative   String
+  ShippingMethod ShippingMethod[]
+
+  @@index([name])
+  @@index([demonym])
+  @@index([symbol])
+  @@index([symbolNative])
+}
+
+model Locale {
+  id                String @id @unique @db.VarChar(5)
+  name              String
+  lng               String //2 digit language code
+  defaultCurrencyId String
+
+  @@index([id])
+  @@index([name])
+}
+
+model Address {
+  id          String   @id @default(uuid())
+  userId      String
+  firstName   String
+  lastName    String
+  company     String?
+  countryId   String
+  streetLine1 String
+  streetLine2 String?
+  city        String
+  district    String?
+  province    String?
+  postalCode  String?
+  phoneNumber String
+  isDefault   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  reference   String?
+  type        String?
+
+  User    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Country Country @relation(fields: [countryId], references: [alpha3])
+
+  @@index([userId])
+  @@index([countryId])
+}
+
+model PaymentMethod {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  payUrl        String   @default("")
+  priceDescr    String   @default("")
+  fee           Decimal  @default("0.029")
+  feeAdditional Decimal  @default("0")
+  clearDays     Int      @default(3)
+  isDeleted     Boolean  @default(false)
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  StorePaymentMethodMapping StorePaymentMethodMapping[]
+  StoreOrder                StoreOrder[]
+}
+
+model StorePaymentMethodMapping {
+  id                 String  @id @default(uuid())
+  storeId            String
+  methodId           String
+  paymentDisplayName String?
+
+  Store         Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  PaymentMethod PaymentMethod @relation(fields: [methodId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, methodId])
+  @@index([storeId])
+  @@index([methodId])
+}
+
+model ShippingMethod {
+  id           String   @id @default(uuid())
+  identifier   String   @default("") //used in the code to identify default methods
+  name         String   @unique
+  description  String?
+  basic_price  Decimal  @default(0)
+  currencyId   String   @default("twd")
+  isDeleted    Boolean  @default(false)
+  isDefault    Boolean  @default(false)
+  shipRequried Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  currency Currency                 @relation(fields: [currencyId], references: [id])
+  stores   StoreShipMethodMapping[] @relation("ShipMethodStoreMapping")
+  prices   ShippingMethodPrice[]    @relation("ShipMethodPrices")
+
+  Shipment   Shipment[]   @relation("ShipmentToShipMethod")
+  StoreOrder StoreOrder[]
+
+  @@index([name])
+  @@index([identifier])
+  @@index([currencyId])
+}
+
+model ShippingMethodPrice {
+  id               String  @id @default(uuid())
+  methodId         String
+  dimension_length Int //measurement in cm 長寬高
+  dimension_width  Int //measurement in cm
+  dimension_height Int //measurement in cm
+  dimension_weight Int //measurement in kg
+  price            Decimal
+
+  ShippingMethod ShippingMethod @relation("ShipMethodPrices", fields: [methodId], references: [id])
+
+  @@index([methodId])
+}
+
+model StoreShipMethodMapping {
+  id       String @id @default(uuid())
+  storeId  String
+  methodId String
+
+  ShippingMethod ShippingMethod @relation("ShipMethodStoreMapping", fields: [methodId], references: [id])
+  Store          Store          @relation(fields: [storeId], references: [id])
+
+  @@unique([storeId, methodId])
+  @@index([storeId])
+  @@index([methodId])
+}
+
+model Shipment {
+  id                 String    @id @default(uuid())
+  orderId            String
+  shippingMethodId   String
+  trackingNumber     String?
+  trackingUrl        String?
+  shippingCost       Decimal
+  shippingStatus     Int       @default(10) //should be value in @/lib/enum/ShippingStatus
+  totalWeight        Decimal?
+  shippedDate        DateTime?
+  deliveryDate       DateTime?
+  readyForPickupDate DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  Order          StoreOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ShippingMethod ShippingMethod @relation("ShipmentToShipMethod", fields: [shippingMethodId], references: [id])
+
+  @@index([orderId])
+  @@index([shippingMethodId])
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  storeId         String   @unique
+  userId          String
+  expiration      DateTime
+  status          Int
+  invoiceNumber   String?
+  billingProvider String
+  subscriptionId  String?
+  note            String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([storeId])
+}
+
+model SubscriptionPayment {
+  id                 String    @id @default(cuid())
+  userId             String
+  storeId            String
+  isPaid             Boolean
+  amount             Decimal
+  currency           String    @default("twd")
+  checkoutAttributes String    @default("")
+  paidAt             DateTime?
+  createdAt          DateTime  @default(now())
+  note               String?
+
+  @@index([userId])
+  @@index([storeId])
+  @@index([isPaid])
+}
+
+model Rsvp {
+  id         String   @id @default(uuid())
+  storeId    String
+  userId     String?
+  orderId    String?
+  tableId    String?
+  numOfAdult Int      @default(2)
+  numOfChild Int      @default(0)
+  rsvpTime   DateTime
+  arriveTime DateTime
+  status     Int      @default(0)
+  message    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User  User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Order StoreOrder?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Table StoreTables? @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([userId])
+  @@index([orderId])
+  @@index([tableId])
+}
+
+model Store {
+  id      String @id @default(uuid())
+  name    String
+  ownerId String
+
+  defaultCountry  String  @default("USA")
+  defaultCurrency String  @default("usd")
+  isDeleted       Boolean @default(false)
+  defaultLocale   String  @default("en")
+  defaultTimezone Int     @default(-8)
+
+  autoAcceptOrder      Boolean @default(true)
+  isOpen               Boolean @default(true)
+  acceptAnonymousOrder Boolean @default(true)
+
+  acceptReservation Boolean @default(true)
+  rsvpPrepaid       Boolean @default(false) //訂位需付訂金
+
+  requireSeating Boolean @default(false) //需要帶位or not
+  requirePrepaid Boolean @default(false) //先付款再出貨 @map("requirePrepaid")
+
+  useBusinessHours Boolean @default(true)
+
+  payoutSchedule  Int     @default(0)
+  bankCode        String?
+  bankAccount     String?
+  bankAccountName String?
+
+  level             Int     @default(0) //store's subscription level
+  customDomain      String? @unique
+  LINE_PAY_ID       String?
+  LINE_PAY_SECRET   String?
+  STRIPE_SECRET_KEY String?
+
+  logo         String?
+  logoPublicId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  Owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  Products                   Product[]                    @relation("StoreToProduct")
+  Categories                 Category[]
+  StoreOrders                StoreOrder[]                 @relation("StoreToOrder")
+  FaqCategories              FaqCategory[]
+  StoreAnnouncement          StoreAnnouncement[]
+  SupportTicket              SupportTicket[]
+  StoreNotification          StoreNotification[]
+  StoreShippingMethods       StoreShipMethodMapping[]
+  StorePaymentMethods        StorePaymentMethodMapping[]
+  StoreTables                StoreTables[]
+  StoreProductOptionTemplate StoreProductOptionTemplate[]
+  Rsvp                       Rsvp[]
+  StoreSettings              StoreSettings?
+
+  @@index([ownerId])
+  @@index([name])
+  @@index([defaultCountry])
+  @@index([defaultCurrency])
+  @@index([level])
+  @@index([customDomain])
+}
+
+model StoreSettings {
+  id                  String  @id @default(uuid())
+  storeId             String  @unique
+  orderNoteToCustomer String?
+  privacyPolicy       String?
+  tos                 String?
+  aboutUs             String?
+  description         String?
+  aboutUsVideoUrl     String?
+  supportEmail        String?
+  supportPhoneNumber  String?
+  facebookUrl         String?
+  igUrl               String?
+  lineId              String?
+  telegramId          String?
+  twitterId           String?
+  whatsappId          String?
+  wechatId            String?
+
+  firstName   String?
+  lastName    String?
+  company     String?
+  country     String?
+  streetLine1 String?
+  streetLine2 String?
+  city        String?
+  district    String?
+  province    String?
+  postalCode  String?
+  phoneNumber String?
+
+  businessHours String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+}
+
+model StoreTables {
+  id        String @id @default(uuid())
+  storeId   String
+  tableName String
+  capacity  Int    @default(2)
+
+  Store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Rsvp  Rsvp[]
+
+  @@unique([tableName])
+  @@index([storeId])
+  @@index([tableName])
+}
+
+model StoreAnnouncement {
+  id        String   @id @default(uuid())
+  storeId   String
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([updatedAt])
+  @@map("StoreAnnouncement")
+}
+
+model ProductImages {
+  id          String  @id @default(uuid())
+  productId   String
+  url         String  @unique
+  imgPublicId String  @unique
+  Product     Product @relation(fields: [productId], references: [id])
+
+  @@index([url])
+  @@index([imgPublicId])
+  @@index([productId])
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  storeId     String
+  name        String
+  description String?
+  isFeatured  Boolean  @default(false)
+  status      Int      @default(1) //ProductStatus, 1 = Published, 0 = Draft
+  currency    String   @default("twd")
+  price       Decimal  @default(0)
+  useOption   Boolean  @default(true) // when true, price is calculated based on product option
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  Store             Store               @relation("StoreToProduct", fields: [storeId], references: [id], onDelete: Cascade)
+  ProductImages     ProductImages[]
+  ProductCategories ProductCategories[]
+
+  ProductAttribute ProductAttribute? @relation("prodAttrToProduct")
+  OrderItems       OrderItem[]       @relation("itemToProduct")
+  OrderItemViews   orderitemview[]   @relation("itemViewToProduct")
+  ProductOptions   ProductOption[]
+
+  @@index([name])
+  @@index([storeId])
+  @@index([isFeatured])
+  @@index([status])
+}
+
+//產品選項規格 across this store. it's used as template so that we don't need to re-enter option for each product.
+model StoreProductOptionTemplate {
+  id            String  @id @default(uuid())
+  storeId       String
+  optionName    String //規格 | 甜度/冰 | 配料
+  isRequired    Boolean @default(false) //必選
+  isMultiple    Boolean @default(false) // 0:radiobox|1:checkboxes
+  minSelection  Int     @default(0)
+  maxSelection  Int     @default(0) // 至少選1項 | 最多選3項
+  allowQuantity Boolean @default(false)
+  minQuantity   Int     @default(0) // 至少選1項 | 最多選3項
+  maxQuantity   Int     @default(0) // 至少選1項 | 最多選3項
+  sortOrder     Int     @default(1)
+
+  Store                                Store                                  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  StoreProductOptionSelectionsTemplate StoreProductOptionSelectionsTemplate[]
+
+  @@unique([storeId, optionName])
+  @@index([storeId])
+  @@index([optionName])
+}
+
+//產品選項 across this store. it's used as template so that we don't need to re-enter option for each product.
+model StoreProductOptionSelectionsTemplate {
+  id        String  @id @default(uuid())
+  optionId  String
+  name      String // 大,小 | 半糖,少糖,無糖 | 冰,少冰,多冰
+  price     Decimal @default(0)
+  isDefault Boolean @default(false)
+
+  //quantity Int     @default(1)
+
+  StoreProductOptionTemplate StoreProductOptionTemplate @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, name])
+  @@index([optionId])
+  @@index([name])
+}
+
+//產品選項
+model ProductOption {
+  id                      String                    @id @default(uuid())
+  productId               String
+  optionName              String //規格 | 甜度/冰 | 任選3配料
+  isRequired              Boolean                   @default(false) //必選
+  isMultiple              Boolean                   @default(false) // 0:radiobox|1:checkboxes
+  minSelection            Int                       @default(0) //至少選1項
+  maxSelection            Int                       @default(0) // 最多選3項
+  allowQuantity           Boolean                   @default(false)
+  minQuantity             Int                       @default(0) // 至少選1個
+  maxQuantity             Int                       @default(0) // 最多選3個
+  sortOrder               Int                       @default(1)
+  Product                 Product                   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ProductOptionSelections ProductOptionSelections[]
+
+  @@unique([productId, optionName])
+  @@index([productId])
+  @@index([optionName])
+}
+
+model ProductOptionSelections {
+  id        String  @id @default(uuid())
+  optionId  String
+  name      String // 大,小 | 半糖,少糖,無糖 | 冰,少冰,多冰
+  price     Decimal @default(0)
+  isDefault Boolean @default(false)
+  //quantity Int     @default(1)
+
+  ProductOption ProductOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, name])
+  @@index([optionId])
+  @@index([name])
+}
+
+model ProductCategories {
+  id         String @id @default(uuid())
+  categoryId String
+  productId  String
+  sortOrder  Int
+
+  Product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  Category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, productId])
+  @@index([categoryId])
+  @@index([productId])
+}
+
+model Category {
+  id         String   @id @default(uuid())
+  storeId    String
+  name       String
+  isFeatured Boolean  @default(false)
+  sortOrder  Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  Store             Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  ProductCategories ProductCategories[]
+
+  @@index([storeId])
+  @@index([name])
+}
+
+model ProductAttribute {
+  id                       String    @id @default(uuid())
+  productId                String    @unique
+  isRecurring              Boolean   @default(false)
+  interval                 Int?
+  intervalCount            Int?
+  trialPeriodDays          Int?
+  stripePriceId            String?
+  isBrandNew               Boolean   @default(true)
+  isShipRequired           Boolean   @default(false)
+  isFreeShipping           Boolean   @default(false)
+  additionalShipCost       Decimal   @default(0)
+  stock                    Int       @default(0)
+  displayStockAvailability Boolean   @default(false)
+  displayStockQuantity     Boolean   @default(false)
+  allowBackOrder           Boolean   @default(false)
+  orderMinQuantity         Int       @default(1)
+  orderMaxQuantity         Int       @default(0)
+  disableBuyButton         Boolean   @default(false)
+  weight                   Decimal   @default(0)
+  height                   Decimal   @default(0)
+  width                    Decimal   @default(0)
+  availableStartDate       DateTime?
+  availableEndDate         DateTime?
+  mfgPartNumber            String?
+
+  Product Product @relation("prodAttrToProduct", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model StoreLedger {
+  id          String  @id @default(uuid())
+  storeId     String
+  orderId     String
+  amount      Decimal
+  fee         Decimal // fee from payment type. e.g. linepay = 3%
+  platformFee Decimal // riben.life's fee
+  currency    String  @default("twd")
+  type        Int     @default(0) // 0: 代收 | 1: store's own payment provider
+  balance     Decimal
+  description String
+  note        String?
+
+  createdAt   DateTime @default(now())
+  availablity DateTime
+
+  StoreOrder StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+model StoreOrder {
+  id                 String    @id @default(uuid())
+  storeId            String
+  userId             String?
+  tableId            String?
+  orderNum           Int?      @default(autoincrement())
+  pickupCode         String?
+  isPaid             Boolean   @default(false)
+  paidDate           DateTime?
+  checkoutAttributes String    @default("")
+  checkoutRef        String    @default("")
+  currency           String    @default("twd")
+  currencyRate       Decimal   @default(1)
+
+  discount Decimal @default(0)
+
+  paymentMethodId String?
+  paymentStatus   Int     @default(10)
+  refundAmount    Decimal @default(0)
+  returnStatus    Int     @default(0)
+
+  shippingMethodId String
+  shippingAddress  String  @default("")
+  shippingCost     Decimal @default(0)
+  shippingStatus   Int     @default(10)
+
+  orderStatus Int @default(10)
+
+  paymentCost Decimal @default(0)
+  taxRate     Decimal @default(0)
+  orderTax    Decimal @default(0)
+  orderTotal  Decimal @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store          Store           @relation("StoreToOrder", fields: [storeId], references: [id], onDelete: Cascade)
+  User           User?           @relation("UserOrders", fields: [userId], references: [id])
+  OrderNotes     OrderNote[]     @relation("orderNoteToStoreOrder")
+  OrderItems     OrderItem[]     @relation("itemToStoreOrder")
+  OrderItemView  orderitemview[] @relation("itemViewToStoreOrder")
+  ShippingMethod ShippingMethod  @relation(fields: [shippingMethodId], references: [id])
+  Shipment       Shipment[]
+
+  PaymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  Rsvp          Rsvp[]
+  StoreLedger   StoreLedger[]
+
+  @@index([userId])
+  @@index([paymentMethodId])
+  @@index([paymentStatus])
+  @@index([returnStatus])
+  @@index([shippingMethodId])
+  @@index([shippingStatus])
+  @@index([storeId])
+  @@index([checkoutAttributes])
+  @@index([isPaid])
+  @@index([paidDate])
+  @@index([currency])
+  @@index([updatedAt])
+}
+
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String
+  productId String
+
+  //copy over value
+  productName  String
+  variants     String? // hold values of product options selection delimited by comma
+  variantCosts String? // hold values of variant cost delimited by comma
+  quantity     Int
+  unitDiscount Decimal @default(0)
+  unitPrice    Decimal
+
+  Order   StoreOrder @relation("itemToStoreOrder", fields: [orderId], references: [id], onDelete: Cascade)
+  Product Product    @relation("itemToProduct", fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model OrderNote {
+  id                String     @id @default(uuid())
+  orderId           String
+  note              String
+  displayToCustomer Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  Order             StoreOrder @relation("orderNoteToStoreOrder", fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([updatedAt])
+}
+
+model FaqCategory {
+  id        String @id @default(uuid())
+  storeId   String
+  name      String
+  sortOrder Int
+  FAQ       Faq[]
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([name])
+}
+
+model Faq {
+  id          String      @id @default(uuid())
+  categoryId  String
+  question    String
+  answer      String
+  sortOrder   Int
+  FaqCategory FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@index([sortOrder])
+}
+
+model SystemMessage {
+  id        String   @id @default(uuid())
+  message   String
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([updatedAt])
+}
+
+model StoreNotification {
+  id         String   @id @default(uuid())
+  senderId   String
+  recipentId String
+  storeId    String?
+  subject    String
+  message    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  sendTries Int       @default(0)
+  sentOn    DateTime?
+
+  isRead               Boolean @default(false)
+  isDeletedByAuthor    Boolean @default(false)
+  isDeletedByRecipient Boolean @default(false)
+
+  Sender   User @relation("NotificationFrom", fields: [senderId], references: [id])
+  Recipent User @relation("NotificationTo", fields: [recipentId], references: [id])
+
+  Store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([senderId])
+  @@index([recipentId])
+  @@index([updatedAt])
+}
+
+model QueuedEmail {
+  id        String    @id @default(uuid())
+  priority  Int
+  from      String
+  fromName  String    @default("")
+  to        String
+  toName    String    @default("")
+  cc        String    @default("")
+  bcc       String    @default("")
+  subject   String
+  body      String
+  createdOn DateTime  @default(now())
+  sendTries Int       @default(0)
+  sentOn    DateTime?
+
+  @@index([sendTries])
+  @@index([createdOn])
+  @@index([from])
+  @@index([to])
+}
+
+model SupportTicket {
+  id         String   @id @default(uuid())
+  threadId   String
+  storeId    String
+  senderId   String
+  recipentId String
+  department String
+  subject    String
+  message    String
+  status     Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  Store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Sender   User  @relation("SupportTicketFrom", fields: [senderId], references: [id])
+  Recipent User  @relation("SupportTicketTo", fields: [recipentId], references: [id])
+
+  @@index([updatedAt])
+  @@index([threadId])
+  @@index([senderId])
+  @@index([recipentId])
+  @@index([storeId])
+}
+
+/// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+view orderitemview {
+  id           String   @unique
+  orderId      String
+  productId    String
+  quantity     Int
+  unitDiscount Decimal?
+  unitPrice    Decimal
+  name         String
+  url          String?
+  variants     String? // hold values of product options selection delimited by comma
+  variantCosts String? // hold values of variant cost delimited by comma
+
+  Order   StoreOrder @relation("itemViewToStoreOrder", fields: [orderId], references: [id], onDelete: Cascade)
+  Product Product    @relation("itemViewToProduct", fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+enum Role {
+  USER
+  ADMIN
+  OWNER
+}

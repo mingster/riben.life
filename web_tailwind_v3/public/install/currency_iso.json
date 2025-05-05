@@ -1,0 +1,32 @@
+[
+  {
+    "currency": "USD",
+    "name": "United States Dollar",
+    "demonym": "US",
+    "majorSingle": "Dollar",
+    "majorPlural": "Dollars",
+    "ISOnum": 840,
+    "symbol": "$",
+    "symbolNative": "$",
+    "minorSingle": "Cent",
+    "minorPlural": "Cents",
+    "ISOdigits": 2,
+    "decimals": 2,
+    "numToBasic": 100
+  },
+  {
+    "currency": "TWD",
+    "name": "New Taiwan Dollar",
+    "demonym": "New Taiwan",
+    "majorSingle": "Dollar",
+    "majorPlural": "Dollars",
+    "ISOnum": 901,
+    "symbol": "NT$",
+    "symbolNative": "圓",
+    "minorSingle": "Cent",
+    "minorPlural": "Cents",
+    "ISOdigits": 2,
+    "decimals": 2,
+    "numToBasic": 100
+  }
+]

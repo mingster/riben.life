@@ -18,7 +18,7 @@ export default async function AuthLayout({
 
 	return (
 		<>
-			<div className="bg-no-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
+			<div className="bg-no-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
 				<Navbar title="" />
 				<main className="">{children}</main>
 			</div>

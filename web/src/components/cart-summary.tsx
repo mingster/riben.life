@@ -1,7 +1,5 @@
 "use client";
 
-import axios from "axios";
-//import { toast } from "react-hot-toast";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
@@ -35,17 +33,17 @@ const CartSummary = () => {
 	const totalPrice = cart.cartTotal;
 	/*
   const totalPrice = items.reduce((total, item) => {
-    return total + Number(item.price) * item.quantity;
+	return total + Number(item.price) * item.quantity;
   }, 0);
 */
 	/*
   const onCheckout = async () => {
-    //create order and stripe payment intent, and then redirect to stripe's checkout page
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/checkout`, {
-      productIds: items.map((item) => item.id)
-    });
+	//create order and stripe payment intent, and then redirect to stripe's checkout page
+	const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/checkout`, {
+	  productIds: items.map((item) => item.id)
+	});
 
-    window.location = response.data.url;
+	window.location = response.data.url;
   }
   */
 	const router = useRouter();

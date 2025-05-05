@@ -2,7 +2,7 @@
 
 import { useTranslation } from "@/app/i18n/client";
 import { cookieName, fallbackLng } from "@/app/i18n/settings";
-import { useCookies } from "next-client-cookies";
+//import { useCookies } from "next-client-cookies";
 import { createContext, useContext } from "react";
 
 interface i18nContext {

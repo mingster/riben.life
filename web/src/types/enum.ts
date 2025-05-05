@@ -7,6 +7,13 @@ export type GeneralNVType = {
 	value: number;
 	label: string;
 };
+
+export enum Role {
+	USER = 0,
+	ADMIN = 1,
+	OWNER = 2,
+}
+
 export enum ProductStatus {
 	Draft = 0,
 	Published = 1,

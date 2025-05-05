@@ -1,4 +1,4 @@
-import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
+import { checkStoreAccess } from "@/lib/store-admin-utils";
 import { Loader } from "@/components/ui/loader";
 
 import getStoreWithCategories from "@/actions/get-store";
