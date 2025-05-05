@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-import Link from "next/link";
 import { Calendar } from "@/components/ui/calendar";
 import {
 	Popover,
@@ -36,6 +35,7 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import Link from "next/link";
 
 const formSchema = z.object({
 	subscriptionId: z.string().optional(),
@@ -155,21 +155,19 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 						</Link>
 					</Button>
 					{subscription !== null && subscription.subscriptionId !== "" && (
-						<>
-							<div className="grid grid-cols-5 text-xs">
-								<div>status:</div>
-								<div>{SubscriptionStatus[subscription.status]}</div>
-								<div>updatedAt:</div>
-								<div>{formatDateTime(subscription.updatedAt)}</div>
-								<Button
-									size="sm"
-									disabled={subscription.status !== SubscriptionStatus.Active}
-									onClick={onUnsubscribe}
-								>
-									Unsubscribe
-								</Button>
-							</div>
-						</>
+						<div className="grid grid-cols-5 text-xs">
+							<div>status:</div>
+							<div>{SubscriptionStatus[subscription.status]}</div>
+							<div>updatedAt:</div>
+							<div>{formatDateTime(subscription.updatedAt)}</div>
+							<Button
+								size="sm"
+								disabled={subscription.status !== SubscriptionStatus.Active}
+								onClick={onUnsubscribe}
+							>
+								Unsubscribe
+							</Button>
+						</div>
 					)}
 					<Form {...form}>
 						<form

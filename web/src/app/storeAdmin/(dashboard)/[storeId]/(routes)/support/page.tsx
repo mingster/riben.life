@@ -5,8 +5,8 @@ import { formatDateTime } from "@/lib/utils";
 import { TicketStatus } from "@/types/enum";
 import type { Store, SupportTicket } from "@prisma/client";
 
-import { checkStoreAccess } from "@/lib/store-admin-utils";
 import { GetSession } from "@/lib/auth/utils";
+import { checkStoreAccess } from "@/lib/store-admin-utils";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

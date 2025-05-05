@@ -108,7 +108,7 @@ function useZodForm<TSchema extends z.ZodType>(
 export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 	//console.log('order', JSON.stringify(order));
 
-	const [open, setOpen] = useState(false);
+	const [_open, _setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
 	const [updatedOrder, setUpdatedOrder] = useState<StoreOrder | null>(order);
@@ -235,7 +235,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		if (confirm(message)) {
 			setLoading(true);
 			clearErrors();
-			const result = await axios.delete(
+			const _result = await axios.delete(
 				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/${updatedOrder?.id}`,
 			);
 
@@ -253,13 +253,13 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		}
 	};
 
-	const handleShipMethodChange = (fieldName: string, selectedVal: string) => {
+	const handleShipMethodChange = (_fieldName: string, selectedVal: string) => {
 		//console.log("fieldName", fieldName, selectedVal);
 		form.setValue("shippingMethodId", selectedVal);
 
 		if (updatedOrder) updatedOrder.shippingMethodId = selectedVal;
 	};
-	const handlePayMethodChange = (fieldName: string, selectedVal: string) => {
+	const handlePayMethodChange = (_fieldName: string, selectedVal: string) => {
 		//console.log("fieldName", fieldName, selectedVal);
 		form.setValue("paymentMethodId", selectedVal);
 		if (updatedOrder) updatedOrder.paymentMethodId = selectedVal;

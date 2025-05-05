@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 // returns all currencies currently in db
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
 	try {
 		const currencies = await sqlClient.currency.findMany({
 			select: {

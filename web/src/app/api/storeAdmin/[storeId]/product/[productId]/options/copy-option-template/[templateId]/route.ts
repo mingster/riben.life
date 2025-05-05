@@ -11,7 +11,7 @@ import { NextResponse } from "next/server";
 // It's useful when creating many similar products.
 // called by: DisplayStoreOptionTemplates.
 export async function POST(
-	req: Request,
+	_req: Request,
 	props: {
 		params: Promise<{ storeId: string; productId: string; templateId: string }>;
 	},

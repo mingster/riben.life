@@ -46,7 +46,7 @@ export async function DELETE(
 			return new NextResponse("category id is required", { status: 401 });
 		}
 
-		const body = await req.json();
+		const _body = await req.json();
 		const obj = await sqlClient.faqCategory.delete({
 			where: {
 				id: params.categoryId,

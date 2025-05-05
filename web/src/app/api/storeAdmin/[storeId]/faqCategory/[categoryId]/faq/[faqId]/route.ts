@@ -57,7 +57,7 @@ export async function DELETE(
 			return new NextResponse("faq id is required", { status: 402 });
 		}
 
-		const body = await req.json();
+		const _body = await req.json();
 		const obj = await sqlClient.faq.delete({
 			where: {
 				id: params.faqId,

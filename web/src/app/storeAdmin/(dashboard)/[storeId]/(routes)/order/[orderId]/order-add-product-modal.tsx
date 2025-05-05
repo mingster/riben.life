@@ -42,9 +42,9 @@ export const OrderAddProductModal: React.FC<props> = ({
 	onModalClose,
 	onValueChange,
 }) => {
-	const cart = useCart();
+	const _cart = useCart();
 	const { toast } = useToast();
-	const params = useParams<{ storeId: string }>();
+	const _params = useParams<{ storeId: string }>();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
@@ -196,9 +196,9 @@ export const OrderAddProductModal: React.FC<props> = ({
 };
 
 const CustomDialog = DialogPrimitive.Root;
-const DialogTrigger = DialogPrimitive.Trigger;
+const _DialogTrigger = DialogPrimitive.Trigger;
 const DialogPortal = DialogPrimitive.Portal;
-const DialogClose = DialogPrimitive.Close;
+const _DialogClose = DialogPrimitive.Close;
 const DialogOverlay = React.forwardRef<
 	React.ElementRef<typeof DialogPrimitive.Overlay>,
 	React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>

@@ -157,13 +157,13 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 	//logo display and image upload
 	const [image, setImage] = useState<File | null>(null);
 	const [logo, setLogo] = useState<string | null>(initialData?.logo);
-	const [logoPublicId, setlogoPublicId] = useState<string | null>(
+	const [logoPublicId, _setlogoPublicId] = useState<string | null>(
 		initialData?.logoPublicId,
 	);
 	//console.log(`logo: ${logo}`);
 	//console.log(`logoPublicId: ${logoPublicId}`);
 
-	const deleteImageFromClient = async (public_id: string) => {
+	const deleteImageFromClient = async (_public_id: string) => {
 		// remove logo data from client side
 		setLogo(null);
 		//setlogoPublicId(null);

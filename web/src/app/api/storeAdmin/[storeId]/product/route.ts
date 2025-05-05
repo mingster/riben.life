@@ -1,8 +1,8 @@
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow, transformDecimalsToNumbers } from "@/lib/utils";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminApiAccess } from "../../api_helper";
 import { create } from "zustand";
+import { CheckStoreAdminApiAccess } from "../../api_helper";
 
 ///!SECTION create new product.
 export async function POST(

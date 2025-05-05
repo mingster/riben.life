@@ -3,7 +3,7 @@ import Stripe from "stripe";
 
 //create stripe payment intent
 export async function POST(
-	req: Request,
+	_req: Request,
 	//{ params }: { params: { chargeTotal: number } }
 ) {
 	/*

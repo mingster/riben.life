@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Store } from "@prisma/client";
-import { StoreSettings } from "@prisma/client";
+import type { StoreSettings } from "@prisma/client";
 
 import axios, { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";

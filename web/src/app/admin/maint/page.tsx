@@ -8,14 +8,14 @@ import { DiamondPlus, Send, Trash } from "lucide-react";
 import { checkAdminAccess } from "../admin-utils";
 
 import fs from "node:fs";
-import { redirect } from "next/navigation";
-import { EditDefaultPrivacy } from "./edit-default-privacy";
-import { EditDefaultTerms } from "./edit-default-terms";
+import { deleteAllLedgers } from "@/actions/admin/maint/delete-all-ledgers";
 import { deleteAllOrders } from "@/actions/admin/maint/delete-all-orders";
 import { deleteAllSupportTickets } from "@/actions/admin/maint/delete-all-support-tickets";
 import { sendTestNoficiation } from "@/actions/admin/maint/send-test-noficiation";
-import { deleteAllLedgers } from "@/actions/admin/maint/delete-all-ledgers";
 import { Heading } from "@/components/ui/heading";
+import { redirect } from "next/navigation";
+import { EditDefaultPrivacy } from "./edit-default-privacy";
+import { EditDefaultTerms } from "./edit-default-terms";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -26,12 +26,12 @@ export default async function StoreAdminDevMaintPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
-	const params = await props.params;
+	const _params = await props.params;
 
 	const isAdmin = (await checkAdminAccess()) as boolean;
 	if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
 
-	const deleteAllShippingMethods = async () => {
+	const _deleteAllShippingMethods = async () => {
 		"use server";
 
 		await sqlClient.shippingMethodPrice.deleteMany({});
@@ -48,7 +48,7 @@ export default async function StoreAdminDevMaintPage(props: {
 		redirect("./admin/maint");
 	};
 
-	const deleteAllPaymentMethods = async () => {
+	const _deleteAllPaymentMethods = async () => {
 		"use server";
 
 		const { count } = await sqlClient.paymentMethod.deleteMany({

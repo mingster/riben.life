@@ -52,8 +52,8 @@ export function SubscriptionHistoryClient({
 		setMounted(true);
 	}, []);
 
-	const params = useParams();
-	const router = useRouter();
+	const _params = useParams();
+	const _router = useRouter();
 	const { toast } = useToast();
 
 	const { lng } = useI18n();

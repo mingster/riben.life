@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 ///!SECTION mark order as paid
 export async function POST(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string; orderId: string }> },
 ) {
 	const params = await props.params;

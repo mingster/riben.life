@@ -27,7 +27,6 @@ export function getRandomNum(length: number) {
 }
 
 // recursive function looping deeply throug an object to find Decimals
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export const transformDecimalsToNumbers = (obj: any) => {
 	if (!obj) {
 		return;
@@ -212,7 +211,7 @@ export const deleteImage = async (publicId: string) => {
 	const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`;
 
 	try {
-		const response = await axios.post(url, {
+		const _response = await axios.post(url, {
 			public_id: publicId,
 			signature: signature,
 			api_key: apiKey,

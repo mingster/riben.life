@@ -1,10 +1,10 @@
 import isProLevel from "@/actions/storeAdmin/is-pro-level";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
+import { checkStoreAccess } from "@/lib/store-admin-utils";
 
 import { transformDecimalsToNumbers } from "@/lib/utils";
-import { Store } from "@/types";
+import type { Store } from "@/types";
 import type { StoreTables } from "@prisma/client";
 
 import getStoreTables from "@/actions/get-store-tables";
@@ -32,7 +32,7 @@ export default async function StoreSettingsPage(props: {
 		<Suspense fallback={<Loader />}>
 			<Container>
 				QR Code
-				<QrCodeClient store={store} tables={tables}></QrCodeClient>
+				<QrCodeClient store={store} tables={tables} />
 			</Container>
 		</Suspense>
 	);

@@ -1,7 +1,7 @@
 import { type FlatNamespace, type KeyPrefix, createInstance } from "i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
 import resourcesToBackend from "i18next-resources-to-backend";
 import type { FallbackNs } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next/initReactI18next";
 import { getOptions } from "./settings";
 

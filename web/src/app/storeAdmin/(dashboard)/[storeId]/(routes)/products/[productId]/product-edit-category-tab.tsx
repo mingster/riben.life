@@ -45,7 +45,7 @@ export const ProductEditCategoryTab = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
-	const [loading, setLoading] = useState(false);
+	const [loading, _setLoading] = useState(false);
 
 	const [selectedCategoryIds, setSelectedCategoryIds] =
 		useState<RowSelectionState>();
@@ -79,7 +79,7 @@ export const ProductEditCategoryTab = ({
 	const initiallySelected: RowSelectionState = {};
 	if (initialData) {
 		// use index number as row key
-		initialData.map((pc: ProductCategories, index2) => {
+		initialData.map((pc: ProductCategories, _index2) => {
 			allCategories.map((item: Category, index) => {
 				//console.log(`checked: ${index} - ${item.id}-${pc.categoryId === item.id}`,);
 
@@ -93,7 +93,7 @@ export const ProductEditCategoryTab = ({
 	// persist check/uncheck status to database
 	//
 	const saveData = async (
-		event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+		_event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
 	) => {
 		// selectedCategoryIds = RowSelectionState = Record<string, boolean>
 		if (!selectedCategoryIds) return;

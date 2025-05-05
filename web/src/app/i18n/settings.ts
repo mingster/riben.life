@@ -4,7 +4,7 @@ export const defaultNS = "translation"; //default json filename
 export const cookieName = "i18next";
 
 export function getOptions(
-	lng = fallbackLng,
+	_lng = fallbackLng,
 	ns: string | string[] = defaultNS,
 ) {
 	return {

@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic"; // defaults to force-static
 export async function GET(
 	req: NextRequest,
 	{ params }: { params: { storeId: string } },
-	context: { params: { Date: string } },
+	_context: { params: { Date: string } },
 ) {
 	try {
 		CheckStoreAdminApiAccess(params.storeId);

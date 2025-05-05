@@ -1,16 +1,16 @@
-import { checkStoreAccess, isPro } from "@/lib/store-admin-utils";
 //import Scheduled from "@/components/scheduled";
 //import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
+import { checkStoreAccess, isPro } from "@/lib/store-admin-utils";
 import type { Store } from "@/types";
 
+import { sqlClient } from "@/lib/prismadb";
+import { Subscription } from "@prisma/client";
+import { TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/dist/client/link";
 import { Suspense } from "react";
 import { StoreAdminDashboard } from "./components/store-admin-dashboard";
-import { sqlClient } from "@/lib/prismadb";
-import Link from "next/dist/client/link";
-import { TriangleAlert } from "lucide-react";
-import { Subscription } from "@prisma/client";
 
 export const metadata: Metadata = {
 	title: "Store Dashboard",

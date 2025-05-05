@@ -19,7 +19,7 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": false,
+			"recommended": true,
 			"a11y": {
 				"noBlankTarget": "error"
 			},
@@ -51,7 +51,7 @@
 				"noUnsafeOptionalChaining": "error",
 				"noUnusedLabels": "error",
 				"noUnusedPrivateClassMembers": "error",
-				"noUnusedVariables": "error",
+				"noUnusedVariables": "off",
 				"useArrayLiterals": "off",
 				"useExhaustiveDependencies": "off",
 				"useIsNan": "error",
@@ -65,7 +65,8 @@
 			"style": {
 				"noNamespace": "error",
 				"noVar": "off",
-				"useAsConstAssertion": "error"
+				"useAsConstAssertion": "error",
+				"useNodejsImportProtocol": "off"
 			},
 			"suspicious": {
 				"noAsyncPromiseExecutor": "error",
@@ -81,7 +82,7 @@
 				"noDuplicateObjectKeys": "error",
 				"noDuplicateParameters": "error",
 				"noEmptyBlockStatements": "error",
-				"noExplicitAny": "error",
+				"noExplicitAny": "off",
 				"noExtraNonNullAssertion": "error",
 				"noFallthroughSwitchClause": "error",
 				"noFunctionAssign": "error",
@@ -100,9 +101,7 @@
 				"useValidTypeof": "error"
 			}
 		},
-		"ignore": [
-			".next/*"
-		]
+		"ignore": [".next/*"]
 	},
 	"javascript": {
 		"formatter": {
@@ -212,17 +211,10 @@
 	},
 	"overrides": [
 		{
-			"include": [
-				"**/*.{js,mjs,cjs,ts,jsx,tsx,ts}"
-			]
+			"include": ["**/*.{js,mjs,cjs,ts,jsx,tsx,ts}"]
 		},
 		{
-			"include": [
-				"**/*.ts",
-				"**/*.tsx",
-				"**/*.mts",
-				"**/*.cts"
-			],
+			"include": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 			"linter": {
 				"rules": {
 					"correctness": {

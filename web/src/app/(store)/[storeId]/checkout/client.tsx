@@ -388,7 +388,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 							</div>
 						))}
 					</RadioGroup>
-					<div className="pt-2">{shipMethod && shipMethod.name}</div>
+					<div className="pt-2">{shipMethod?.name}</div>
 				</CardContent>
 				<CardFooter>
 					<div className="relative w-full">
@@ -440,76 +440,4 @@ type shippingDialogProps = {
 	allMappings: StoreShipMethodMapping[];
 	user: User | null;
 	onChange?: (newMethod: ShippingMethod) => void;
-};
-
-// display store supported shipping methods, and bind with user's default shipping perference
-const DialogShipping = ({
-	allMappings,
-	user,
-	onChange,
-}: shippingDialogProps) => {
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
-	const [open, setOpen] = useState(false);
-	//console.log(JSON.stringify(user));
-	const [selectedMethod, setSelectedMethod] = useState<ShippingMethod>();
-	function selectShipMethod(method: StoreShipMethodMapping) {
-		setSelectedMethod(method.ShippingMethod);
-		save();
-	}
-	function save() {
-		if (selectedMethod) {
-			onChange?.(selectedMethod);
-			console.log(`selected: ${selectedMethod.name}`);
-			setOpen(false);
-		}
-	}
-
-	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				<Button variant="outline">{t("checkout_shippingButton")}</Button>
-			</DialogTrigger>
-			<DialogDescription />
-			<DialogContent className="sm:max-w-md">
-				<DialogHeader>
-					<DialogTitle>{t("checkout_shippingTitle")}</DialogTitle>
-				</DialogHeader>
-				<div className="flex items-center space-x-2">
-					<div className="grid flex-1 gap-2">
-						{allMappings.map((method) => (
-							<div
-								key={method.id}
-								className="cursor-pointer border p-5"
-								onClick={() => selectShipMethod(method)}
-							>
-								{method.ShippingMethod.name}
-								<Currency value={Number(method.ShippingMethod.basic_price)} />
-							</div>
-						))}
-					</div>
-				</div>
-				<DialogFooter className="sm:justify-start">
-					{/*
-          <DialogClose asChild>
-            <Button type="button" variant="link">
-              取消
-            </Button>
-          </DialogClose>
-          <Button
-            type="button"
-            variant="default"
-            onClick={() =>
-              //return value to parent component
-              save()
-            }
-          >
-            完成
-          </Button>
-
-*/}
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
-	);
 };

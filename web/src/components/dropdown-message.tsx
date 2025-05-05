@@ -2,10 +2,10 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreAnnouncement } from "@prisma/client";
 import { Bell } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 //import { CookiesProvider, useCookies } from "react-cookie";
 import { useCookies } from "next-client-cookies";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 interface props {
 	messages: StoreAnnouncement[] | undefined | null;
@@ -20,7 +20,7 @@ export default function DropdownMessage({ messages }: props) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const cookieName = "messageRead";
+	const _cookieName = "messageRead";
 	//const [cookies, setCookies] = useCookies([cookieName]); //https://github.com/bendotcodes/cookies/tree/main/packages/react-cookie
 
 	const trigger = useRef<any>(null);

@@ -26,7 +26,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const [loading, setLoading] = useState(false);
 	const [open, setOpen] = useState(false);
 	const router = useRouter();
-	const params = useParams();
+	const _params = useParams();
 
 	const onConfirm = async () => {
 		try {

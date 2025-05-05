@@ -114,7 +114,7 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 
 	//user click create new button
 	const handleNewImageSubmit = async (
-		event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+		_event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
 	) => {
 		//try {
 		setLoading(true);

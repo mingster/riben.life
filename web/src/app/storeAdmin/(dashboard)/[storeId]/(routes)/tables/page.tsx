@@ -1,8 +1,8 @@
 import getStoreTables from "@/actions/get-store-tables";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
+import { checkStoreAccess } from "@/lib/store-admin-utils";
 import type { Store } from "@/types";
 import type { StoreTables } from "@prisma/client";
 import { Suspense } from "react";

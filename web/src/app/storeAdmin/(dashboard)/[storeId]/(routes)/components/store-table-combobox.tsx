@@ -59,7 +59,7 @@ export const StoreTableCombobox = ({
 
 	const [open, setOpen] = React.useState(false);
 	const [selected, setSelected] = React.useState<string | "">(defaultValue);
-	const [displayName, setDisplayName] = React.useState<string | "">();
+	const [_displayName, setDisplayName] = React.useState<string | "">();
 
 	//console.log('defaultValue', defaultValue);
 	//console.log('selected', selected);

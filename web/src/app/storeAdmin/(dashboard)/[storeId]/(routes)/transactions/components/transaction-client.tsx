@@ -267,7 +267,7 @@ export const FilterDateTime = ({
 }: filterProps) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
-	const [loading, setLoading] = useState(false);
+	const [loading, _setLoading] = useState(false);
 	const [open, setOpen] = useState(false);
 
 	const defaultValues = defaultValue

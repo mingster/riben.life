@@ -50,7 +50,7 @@ export const columns: ColumnDef<StoreOrderColumn>[] = [
 			);
 		},
 		cell: ({ row }) => {
-			const status = OrderStatus[Number(row.getValue("orderStatus"))];
+			const _status = OrderStatus[Number(row.getValue("orderStatus"))];
 
 			return <DisplayOrderStatus status={row.getValue("orderStatus")} />;
 		},

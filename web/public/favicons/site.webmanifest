@@ -1,14 +1,14 @@
 {
-    "name": "\u5229\u4fbf\u751f\u6d3b",
-    "short_name": "\u5229\u4fbf\u751f\u6d3b",
-    "icons": [
-        {
-            "src": "/android-chrome-48x48.png",
-            "sizes": "48x48",
-            "type": "image/png"
-        }
-    ],
-    "theme_color": "#006988",
-    "background_color": "#006988",
-    "display": "standalone"
+	"name": "\u5229\u4fbf\u751f\u6d3b",
+	"short_name": "\u5229\u4fbf\u751f\u6d3b",
+	"icons": [
+		{
+			"src": "/android-chrome-48x48.png",
+			"sizes": "48x48",
+			"type": "image/png"
+		}
+	],
+	"theme_color": "#006988",
+	"background_color": "#006988",
+	"display": "standalone"
 }

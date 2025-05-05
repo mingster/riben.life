@@ -77,7 +77,7 @@ const CartItemInfo: React.FC<cartItemProps> = ({
   };
 */
 
-	const params = useParams();
+	const _params = useParams();
 
 	function getLink(id: string, name: string) {
 		switch (id) {

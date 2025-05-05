@@ -19,8 +19,8 @@ interface TicketClientProps {
 }
 
 export const TicketClient: React.FC<TicketClientProps> = ({ data, store }) => {
-	const params = useParams();
-	const router = useRouter();
+	const _params = useParams();
+	const _router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 

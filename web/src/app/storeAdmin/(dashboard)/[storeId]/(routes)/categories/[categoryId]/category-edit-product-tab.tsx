@@ -48,7 +48,7 @@ export const CategoryEditProductTab = ({
 
 	const { toast } = useToast();
 
-	const [loading, setLoading] = useState(false);
+	const [loading, _setLoading] = useState(false);
 
 	const [selectedProductIds, setSelectedProductIds] =
 		useState<RowSelectionState>();
@@ -82,7 +82,7 @@ export const CategoryEditProductTab = ({
 	const initiallySelected: RowSelectionState = {};
 	if (initialData) {
 		// use index number as row key
-		initialData.map((pc: ProductCategories, index2) => {
+		initialData.map((pc: ProductCategories, _index2) => {
 			allProducts.map((item: Product, index) => {
 				//console.log(`checked: ${index} - ${item.id}-${pc.categoryId === item.id}`,);
 				if (pc.productId === item.id) {
@@ -115,7 +115,7 @@ export const CategoryEditProductTab = ({
 	// persist check/uncheck status to database
 	//
 	const saveData = async (
-		event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+		_event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
 	) => {
 		// selectedProductIds = RowSelectionState = Record<string, boolean>
 		if (!selectedProductIds) return;

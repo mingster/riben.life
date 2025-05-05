@@ -3,6 +3,7 @@
 import { cookieName, languages } from "@/app/i18n/settings";
 import { useEffect, useState } from "react";
 
+import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -14,7 +15,6 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCookies } from "next-client-cookies";
-import { useTranslation } from "@/app/i18n/client";
 
 export const LanguageToggler = () => {
 	const [mounted, setMounted] = useState(false);

@@ -33,11 +33,11 @@ export const OrderTab = ({ orders }: props) => {
 	const { data: session, status } = useSession();
 	const searchParams = useSearchParams();
 	const initialTab = searchParams.get("ordertab");
-	const [activeTab, setActiveTab] = useState(
+	const [_activeTab, setActiveTab] = useState(
 		initialTab || OrderStatus[OrderStatus.Pending],
 	);
 
-	const handleTabChange = (value: string) => {
+	const _handleTabChange = (value: string) => {
 		//update the state
 		setActiveTab(value);
 		// update the URL query parameter

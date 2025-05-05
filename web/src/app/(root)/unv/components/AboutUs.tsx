@@ -31,14 +31,14 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 		<section id="aboutUs" className="relative min-h-screen w-full">
 			{/*background */}
 			<div className="absolute top-0 inset-x-0 bg-top bg-no-repeat beams-7 dark:hidden" />
+
 			<Image
 				fill={true}
 				decoding="async"
-				src={require("@/img/beams/overlay.webp").default.src}
+				src="/img/beams/overlay.webp"
 				alt=""
 				className="absolute z-10 bottom-0 -left-80 w-[45.0625rem] pointer-events-none dark:hidden"
 			/>
-
 			<motion.section
 				initial="hidden"
 				whileInView="show"
@@ -51,18 +51,17 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 						className="flex-[0.75] bg-black-100 p-2 rounded-2xl"
 					>
 						<div className="flex gap-2">
+							{/*
 							<IconContainer
 								className="dark:bg-sky-500 dark:highlight-white/20"
-								light={require("@/img/icons/home/editor-tools.png").default.src}
-								dark={
-									require("@/img/icons/home/dark/editor-tools.png").default.src
-								}
-							/>
+								light={require("@/img/icons/home/editor-tools.png")}
+								dark={require("@/img/icons/home/dark/editor-tools.png")}
+							/> */}
 							<Caption className="text-sky-500">聯繫我們</Caption>
 						</div>
 
-						<BigText></BigText>
-						<Paragraph></Paragraph>
+						<BigText> </BigText>
+						<Paragraph> </Paragraph>
 
 						<ContactForm />
 					</motion.div>

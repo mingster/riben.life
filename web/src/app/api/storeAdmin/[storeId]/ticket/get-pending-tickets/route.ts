@@ -6,7 +6,7 @@ import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 // returns all countries currently in db
 export async function GET(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;

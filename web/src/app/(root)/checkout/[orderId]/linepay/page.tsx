@@ -15,7 +15,7 @@ import type { LinePayClient } from "@/lib/linepay/type";
 import { sqlClient } from "@/lib/prismadb";
 import { isMobileUserAgent } from "@/lib/utils";
 import type { Store, StoreOrder } from "@/types";
-import { orderitemview } from "@prisma/client";
+import type { orderitemview } from "@prisma/client";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

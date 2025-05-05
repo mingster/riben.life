@@ -1,9 +1,9 @@
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/lib/utils";
+import type { Subscription } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../../api_helper";
-import { Subscription } from "@prisma/client";
 
 // for admin updates a store's subscription
 export async function PATCH(
@@ -32,10 +32,10 @@ export async function PATCH(
 			},
 		});
 		if (store === null) {
-			return new NextResponse(`Store Not Found`, { status: 500 });
+			return new NextResponse("Store Not Found", { status: 500 });
 		}
 
-		const subscription = (await sqlClient.subscription.findUnique({
+		const _subscription = (await sqlClient.subscription.findUnique({
 			where: {
 				storeId: store.id,
 			},

@@ -7,7 +7,7 @@ import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 // get orders in in-shipping status in the store.
 export async function GET(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;

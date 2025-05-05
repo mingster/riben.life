@@ -1,9 +1,9 @@
-import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
-import { stripe } from "@/lib/stripe/config";
-import { StoreEditTabs } from "./tabs";
 import logger from "@/lib/logger";
-import { Subscription } from "@prisma/client";
+import { sqlClient } from "@/lib/prismadb";
+import { stripe } from "@/lib/stripe/config";
+import { transformDecimalsToNumbers } from "@/lib/utils";
+import type { Subscription } from "@prisma/client";
+import { StoreEditTabs } from "./tabs";
 
 const StoreEditPage = async (props: {
 	params: Promise<{ storeId: string }>;

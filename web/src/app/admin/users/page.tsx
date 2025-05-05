@@ -20,11 +20,11 @@ export default async function UsersAdminPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
-	const params = await props.params;
+	const _params = await props.params;
 
 	//console.log('storeid: ' + params.storeId);
 	const session = (await auth()) as Session;
-	const userId = session?.user.id;
+	const _userId = session?.user.id;
 	if (!session) {
 		redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
 	}

@@ -118,7 +118,7 @@ const DisplayPkg: React.FC<props> = ({
 
 		//logger.info("ret", ret);
 		setLoading(false);
-		router.replace("/storeAdmin/" + params.storeId + "/subscribe");
+		router.replace(`/storeAdmin/${params.storeId}/subscribe`);
 		//router.refresh();
 	};
 
@@ -280,7 +280,7 @@ const DisplayPkg: React.FC<props> = ({
 				</div>
 
 				<div className="mt-12 w-full space-y-0 flex justify-center gap-6 max-w-4xl mx-auto min-h-[calc(100vh-48px-36px-16px-32px-50px)]">
-					<Link href={`./subscribe/history`}>Billing History</Link>
+					<Link href={"./subscribe/history"}>Billing History</Link>
 				</div>
 			</div>
 		</>
@@ -487,7 +487,7 @@ const StripeCheckoutForm: React.FC<paymentProps> = ({ order }) => {
 		setIsProcessingPayment(false);
 	};
 
-	const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+	const _handleChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = event.target;
 		setFormFields({ ...formFields, [name]: value });
 	};

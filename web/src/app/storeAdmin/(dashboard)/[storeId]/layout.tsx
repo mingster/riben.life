@@ -14,7 +14,7 @@ type Props = {
 
 export async function generateMetadata(
 	props: Props,
-	parent: ResolvingMetadata,
+	_parent: ResolvingMetadata,
 ): Promise<Metadata> {
 	const params = await props.params;
 	if (!params.storeId) {

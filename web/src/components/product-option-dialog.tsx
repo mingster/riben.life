@@ -73,7 +73,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 	function generateProductOptionSchema(productOptions: ProductOption[]) {
 		const schemaFields: Record<string, z.ZodTypeAny> = {};
 
-		productOptions.forEach((option: ProductOption, index) => {
+		productOptions.map((option: ProductOption, index) => {
 			const fieldName = `option${index}`;
 
 			if (option.isMultiple) {
@@ -148,6 +148,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 						.optional();
 				}
 			}
+			return null;
 		});
 
 		return z.object(schemaFields);
@@ -231,7 +232,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 		const defaultValues: Record<string, string | string[]> = {};
 		let initialCheckedTotal = 0;
 
-		productOptions.forEach((option: ProductOption, index) => {
+		productOptions.map((option: ProductOption, index) => {
+			//productOptions.forEach((option: ProductOption, index) => {
 			const fieldName = `option${index}`;
 
 			if (option.isMultiple) {
@@ -345,7 +347,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 				}
 			} else if (Array.isArray(value)) {
 				// checkboxes
-				value.forEach((selection: string) => {
+				value.map((selection: string) => {
+					//value.forEach((selection: string) => {
 					//console.log(`selection: [${index}] ${selection}`);
 					const itemOption = getCartItemOption(selection);
 					if (itemOption) {
@@ -414,7 +417,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 					}
 				} else if (Array.isArray(value)) {
 					// checkboxes
-					value.forEach((selection: string) => {
+					value.map((selection: string) => {
+						//value.forEach((selection: string) => {
 						//console.log(`selection: [${index}] ${selection}`);
 						const itemOption = getCartItemOption(selection);
 						if (itemOption) {

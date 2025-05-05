@@ -102,7 +102,7 @@ export const ProductEditAttributeTab = ({
 
 	const { toast } = useToast();
 
-	const [open, setOpen] = useState(false);
+	const [_open, _setOpen] = useState(false);
 	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
 

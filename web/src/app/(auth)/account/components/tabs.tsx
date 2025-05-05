@@ -9,12 +9,12 @@ import { useI18n } from "@/providers/i18n-provider";
 
 import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
+import { Loader } from "@/components/ui/loader";
 import type { StoreOrder, User } from "@/types";
-import { Address } from "@prisma/client";
+import type { Address } from "@prisma/client";
 import { AddressesTab } from "./address-tab";
 import { OrderTab } from "./order-tab";
 import SettingsTab from "./settings-tab";
-import { Loader } from "@/components/ui/loader";
 
 export interface iUserTabProps {
 	orders: StoreOrder | null;
@@ -34,7 +34,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 	const searchParams = useSearchParams();
 	const initialTab = searchParams.get("tab");
 	const [activeTab, setActiveTab] = useState(initialTab || "orders"); //show order tab by default
-	const [loading, setLoading] = useState(false);
+	const [loading, _setLoading] = useState(false);
 
 	const handleTabChange = (value: string) => {
 		//update the state

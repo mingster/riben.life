@@ -1,14 +1,14 @@
 [
-    {
-        "id": "en-US",
-        "name": "English",
-        "lng": "en",
-        "defaultCurrencyId": "USD"
-    },
-    {
-        "id": "zh-TW",
-        "name": "正體中文",
-        "lng": "tw",
-        "defaultCurrencyId": "TWD"
-    }
+	{
+		"id": "en-US",
+		"name": "English",
+		"lng": "en",
+		"defaultCurrencyId": "USD"
+	},
+	{
+		"id": "zh-TW",
+		"name": "正體中文",
+		"lng": "tw",
+		"defaultCurrencyId": "TWD"
+	}
 ]

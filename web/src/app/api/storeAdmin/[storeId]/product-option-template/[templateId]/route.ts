@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 //delete product option template by its id
 export async function DELETE(
-	req: Request,
+	_req: Request,
 	props: {
 		params: Promise<{ productId: string; storeId: string; templateId: string }>;
 	},

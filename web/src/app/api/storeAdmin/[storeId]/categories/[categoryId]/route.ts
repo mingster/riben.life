@@ -36,7 +36,7 @@ export async function PATCH(
 
 ///!SECTION delete Category record in database.
 export async function DELETE(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string; categoryId: string }> },
 ) {
 	const params = await props.params;

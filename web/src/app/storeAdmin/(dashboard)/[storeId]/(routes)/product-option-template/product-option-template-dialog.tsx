@@ -28,7 +28,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import type { ProductOption, StoreProductOptionTemplate } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { StoreProductOptionSelectionsTemplate } from "@prisma/client";
+import type { StoreProductOptionSelectionsTemplate } from "@prisma/client";
 import axios from "axios";
 import { Pencil, Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -69,7 +69,7 @@ export const AddProductOptionTemplateDialog: React.FC<props> = ({
 }) => {
 	const { toast } = useToast();
 
-	const router = useRouter();
+	const _router = useRouter();
 	const params = useParams();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");

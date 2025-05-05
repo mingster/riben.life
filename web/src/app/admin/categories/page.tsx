@@ -7,7 +7,7 @@ export default async function CategoryAdminPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
-	const params = await props.params;
+	const _params = await props.params;
 
 	return <Container>admin Category</Container>;
 }

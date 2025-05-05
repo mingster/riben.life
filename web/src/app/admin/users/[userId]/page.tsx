@@ -1,9 +1,9 @@
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/lib/utils";
 import type { Account, Session, StoreOrder } from "@prisma/client";
-import { UserEditTabs } from "./tabs";
 //import { Role } from "@/types/enum";
-import { Role } from "@prisma/client";
+import type { Role } from "@prisma/client";
+import { UserEditTabs } from "./tabs";
 
 const UserEditPage = async (props: { params: Promise<{ userId: string }> }) => {
 	const params = await props.params;
