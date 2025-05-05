@@ -98,11 +98,7 @@ const confirmPayment = async (
 			],
 		});
 
-		const note =
-			"extend subscription from " +
-			formatDateTime(current_exp) +
-			" to " +
-			formatDateTime(new_exp);
+		const note = `extend subscription from ${formatDateTime(current_exp)} to ${formatDateTime(new_exp)}`;
 
 		await sqlClient.subscription.update({
 			where: {

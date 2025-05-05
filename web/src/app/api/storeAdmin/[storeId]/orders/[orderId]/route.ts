@@ -4,7 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { getNowTimeInTz } from "@/lib/utils";
 import type { StoreOrder } from "@/types";
 import { OrderStatus } from "@/types/enum";
-import { orderitemview } from "@prisma/client";
+import type { orderitemview } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 

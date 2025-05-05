@@ -12,7 +12,7 @@ export const VideoPlayer: React.FC<ReactPlayerProps> = () => {
 	];
 
 	// HLS
-	const sources2 = [
+	const _sources2 = [
 		{
 			src: "http://play-flive.ifeng.com/live/06OLEEWQKN4.m3u8",
 			type: "application/x-mpegURL",

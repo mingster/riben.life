@@ -73,7 +73,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 
 	const [loading, setLoading] = useState(false);
 
-	const [updatedOrder, setUpdatedOrder] = useState<StoreOrder>(order);
+	const [updatedOrder, _setUpdatedOrder] = useState<StoreOrder>(order);
 
 	const [orderTotal, setOrderTotal] = useState(Number(order.orderTotal));
 	const [refundAmount, setRefundAmount] = useState(orderTotal);
@@ -133,7 +133,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 	});
 
 	// update order in persisted storage
-	const onSubmit = async (data: formValues) => {
+	const onSubmit = async (_data: formValues) => {
 		if (updatedOrder === null) {
 			return;
 		}
@@ -343,7 +343,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 														onChange={handleQuantityInputChange}
 													/>
 												</div>
-												<div className="flex flex-nowrap content-center w-[20px]"></div>
+												<div className="flex flex-nowrap content-center w-[20px]" />
 											</div>
 										</div>
 									</div>

@@ -73,7 +73,7 @@ export function SheetMenu({ store }: props) {
 					<DropdownCart />
 				</div>{" "}
 				{/*<!-- Hidden by default, but visible if screen is small --> */}
-				<div className="hidden md:block"></div>
+				<div className="hidden md:block" />
 				<div className="pt-1 flex flex-1 items-center justify-center space-x-1 w-full font-mono text-sm">
 					<Link href="/unv">
 						<Button variant="default">{t("system_provider")}</Button>

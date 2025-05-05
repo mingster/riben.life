@@ -44,7 +44,7 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 		router.push(href);
 	}
 
-	const onPress = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+	const _onPress = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
 		e.preventDefault();
 		const target = window.document.getElementById(
 			e.currentTarget.href.split("#")[1],

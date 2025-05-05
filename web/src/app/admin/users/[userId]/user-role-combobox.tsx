@@ -46,7 +46,7 @@ export const UserRoleCombobox = ({ defaultValue, onChange }: ComboboxProps) => {
 					<CommandList>
 						<CommandEmpty>No results found.</CommandEmpty>
 						<CommandGroup>
-							{getEnumKeys(Role).map((key, index) => (
+							{getEnumKeys(Role).map((key, _index) => (
 								<CommandItem
 									key={key}
 									value={key}

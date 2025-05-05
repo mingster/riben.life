@@ -1,6 +1,6 @@
-import { checkStoreAccess } from "@/lib/store-admin-utils";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
+import { checkStoreAccess } from "@/lib/store-admin-utils";
 import type { Store } from "@/types";
 import { Suspense } from "react";
 import { PkgSelection } from "./pkgSelection";

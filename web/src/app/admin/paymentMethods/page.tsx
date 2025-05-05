@@ -14,7 +14,7 @@ export default async function PayMethodAdminPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
-	const params = await props.params;
+	const _params = await props.params;
 	checkAdminAccess();
 
 	const methods = await sqlClient.paymentMethod.findMany({

@@ -1,7 +1,7 @@
 "use client";
 
 import { getAbsoluteUrl } from "@/lib/utils";
-import { Store } from "@/types";
+import type { Store } from "@/types";
 import type { StoreTables } from "@prisma/client";
 import { useQRCode } from "next-qrcode";
 
@@ -24,15 +24,15 @@ export const QrCodeClient: React.FC<props> = ({ store, tables }) => {
 
 		const protocol =
 			typeof window !== "undefined" && window.location.protocol
-				? window.location.protocol + "//"
+				? `${window.location.protocol}//`
 				: "http://";
 
 		takeoffUrl = protocol + store.customDomain;
-		if (port) takeoffUrl = takeoffUrl + ":" + port;
+		if (port) takeoffUrl = `${takeoffUrl}:${port}`;
 
-		takeoffUrl = takeoffUrl + "/" + store.id;
+		takeoffUrl = `${takeoffUrl}/${store.id}`;
 	} else {
-		takeoffUrl = getAbsoluteUrl() + "/" + store.id;
+		takeoffUrl = `${getAbsoluteUrl()}/${store.id}`;
 	}
 
 	if (store.customDomain) {
@@ -62,11 +62,11 @@ export const QrCodeClient: React.FC<props> = ({ store, tables }) => {
 							<h2>
 								{table.tableName}
 								<Link
-									title={takeoffUrl + "/" + table.id}
-									href={takeoffUrl + "/" + table.id}
+									title={`${takeoffUrl}/${table.id}`}
+									href={`${takeoffUrl}/${table.id}`}
 								>
 									<Image
-										text={takeoffUrl + "/" + table.id}
+										text={`${takeoffUrl}/${table.id}`}
 										options={{
 											type: "image/jpeg",
 											quality: 1,

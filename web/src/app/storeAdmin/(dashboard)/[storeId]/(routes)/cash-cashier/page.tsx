@@ -1,5 +1,5 @@
-import { checkStoreAccess } from "@/lib/store-admin-utils";
 import { Loader } from "@/components/ui/loader";
+import { checkStoreAccess } from "@/lib/store-admin-utils";
 
 import getStoreWithCategories from "@/actions/get-store";
 import { sqlClient } from "@/lib/prismadb";

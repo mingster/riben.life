@@ -10,7 +10,7 @@ export default function useLocalStorage(
 				typeof window !== "undefined" && window.localStorage.getItem(key);
 
 			return item ? item : initialValue;
-		} catch (error) {
+		} catch (_error) {
 			return initialValue;
 		}
 	});

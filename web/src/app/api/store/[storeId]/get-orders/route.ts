@@ -20,7 +20,7 @@ export async function POST(
 		const body = await request.json();
 		const { orderIds } = body;
 
-		const params = await props.params;
+		const _params = await props.params;
 
 		//console.log("get-orders", orderIds);
 

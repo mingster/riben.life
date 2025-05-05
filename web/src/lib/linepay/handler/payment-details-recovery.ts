@@ -113,7 +113,7 @@ async function fix<T extends "confirm" | "refund">(
 			body: converter(req, paymentDetailsResponse.body),
 			comments,
 		};
-	} catch (paymentDetailsError) {
+	} catch (_paymentDetailsError) {
 		// Failed to fix. Throw the original exception.
 		throw error;
 	}

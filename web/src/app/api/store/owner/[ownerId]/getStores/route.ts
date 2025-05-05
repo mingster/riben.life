@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 // Called by StoreSwitcher to obtain user's store(s)
 //
 export async function GET(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ ownerId: string }> },
 ) {
 	const params = await props.params;

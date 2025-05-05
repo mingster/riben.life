@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 
 ///!SECTION mark this ticket as close.
 export async function DELETE(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string; ticketId: string }> },
 ) {
 	const params = await props.params;

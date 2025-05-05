@@ -23,8 +23,8 @@ export default async function TicketEditPage(props: {
 	});
 
 	//console.log(`ProductPa//ge: ${JSON.stringify(product)}`);
-	let action = "Reply";
-	if (ticket === null) action = "New";
+	let _action = "Reply";
+	if (ticket === null) _action = "New";
 
 	// get thread for this ticket
 	const thread = await sqlClient.supportTicket.findMany({

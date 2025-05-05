@@ -5,7 +5,7 @@ import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/types";
 
-import { StoreSettings } from "@prisma/client";
+import type { StoreSettings } from "@prisma/client";
 import { StoreAdminFooter } from "./store-admin-footer";
 import { StoreAdminNavbar } from "./store-admin-navbar";
 import { StoreAdminSidebar } from "./store-admin-sidebar";

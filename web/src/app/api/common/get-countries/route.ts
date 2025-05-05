@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 // returns all countries currently in db
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
 	try {
 		const countries = await sqlClient.country.findMany({
 			orderBy: { alpha3: "asc" },

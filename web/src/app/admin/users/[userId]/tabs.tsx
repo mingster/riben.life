@@ -21,7 +21,7 @@ interface editProps {
 	action: string;
 }
 export const UserEditTabs = ({ initialData, action }: editProps) => {
-	const params = useParams();
+	const _params = useParams();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	//product.storeId = `${params.storeId}`;

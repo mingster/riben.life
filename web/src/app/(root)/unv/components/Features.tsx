@@ -174,11 +174,12 @@ export function Features({ className, ...props }: { className?: string }) {
 
 			<div className="relative px-4 pt-5 mx-auto max-w-7xl sm:px-6 md:px-8">
 				<div className="flex gap-2">
+				{/*
 					<IconContainer
 						className="dark:bg-sky-500 dark:highlight-white/20"
 						light={require("@/img/icons/home/editor-tools.png").default.src}
 						dark={require("@/img/icons/home/dark/editor-tools.png").default.src}
-					/>
+					/>*/}
 					<Caption className="text-sky-500">功能表</Caption>
 				</div>
 

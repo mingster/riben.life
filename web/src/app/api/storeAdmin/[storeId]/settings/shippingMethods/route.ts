@@ -20,7 +20,7 @@ export async function POST(
 }
 
 export async function DELETE(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;

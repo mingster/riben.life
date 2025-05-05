@@ -4,11 +4,11 @@ import { redirect } from "next/navigation";
 
 import { sqlClient } from "@/lib/prismadb";
 
+import fs from "node:fs";
 import { GetSession } from "@/lib/auth/utils";
 import logger from "@/lib/logger";
 import { StoreLevel } from "@/types/enum";
 import type { Session } from "next-auth";
-import fs from "node:fs";
 import type { z } from "zod";
 import type { formSchema } from "./store-modal";
 
@@ -143,7 +143,7 @@ export const createStore = async (values: z.infer<typeof formSchema>) => {
 
 export const deleteStore = async (id: FormData) => {
 	// Extracting Store ID from formData
-	const StoreId = id.get("id");
+	const _StoreId = id.get("id");
 	try {
 		// Deleting the Store with the specified ID
 		//await StoreModel.deleteOne({ _id: StoreId });

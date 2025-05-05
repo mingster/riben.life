@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { StoreSettings } from "@prisma/client";
+import type { StoreSettings } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import ReactMarkdown from "react-markdown";

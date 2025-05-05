@@ -7,7 +7,7 @@ import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 // get unpaid orders in the store.
 export async function GET(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;

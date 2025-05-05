@@ -62,7 +62,7 @@ const getStoreWithProducts = async (
 	});
 
 	if (!store) {
-		console.log('store', JSON.stringify(store));
+		console.log("store", JSON.stringify(store));
 
 		throw Error("no store found");
 	}

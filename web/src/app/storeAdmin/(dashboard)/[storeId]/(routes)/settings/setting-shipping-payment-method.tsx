@@ -53,7 +53,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
 	// persist check/uncheck status to database
 	//
 	const saveShippingData = async (
-		event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+		_event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
 	) => {
 		setLoading(true);
 		// selectedCategoryIds = RowSelectionState = Record<string, boolean>
@@ -140,7 +140,7 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
 		});
 	}
 	const savePaymethodData = async (
-		event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+		_event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
 	) => {
 		setLoading(true);
 		if (!selectedPayMethodIds) return;

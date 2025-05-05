@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
 	_req: Request,
-	props: { params: Promise<{ storeId: string }> },
+	_props: { params: Promise<{ storeId: string }> },
 ) {
 	return new NextResponse("Subscription not found", { status: 404 });
 }
@@ -102,7 +102,7 @@ export async function POST(
 						data: {
 							subscriptionId: null,
 							status: SubscriptionStatus.Cancelled,
-							note: "Unsubscribed by " + userId,
+							note: `Unsubscribed by ${userId}`,
 							updatedAt: getUtcNow(),
 						},
 					});

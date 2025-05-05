@@ -33,7 +33,7 @@ const UserNotificationPage: React.FC = async () => {
 	if (!user) {
 		redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
 	} else {
-		const u: User = user as User;
+		const _u: User = user as User;
 		//console.log(`user: ${JSON.stringify(u)}`);
 		const session = (await auth()) as Session;
 

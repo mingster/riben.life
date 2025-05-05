@@ -49,8 +49,8 @@ export default async function StoreFaqHomePage(props: {
 		},
 	});
 
-	const i18Options = getOptions();
-	const user = (await getUser()) as User;
+	const _i18Options = getOptions();
+	const _user = (await getUser()) as User;
 
 	/*
   const lng = user?.locale?.toString() || i18Options.fallbackLng;

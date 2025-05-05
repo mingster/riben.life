@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 
 ///!SECTION get all tickets that belong to the thread
 export async function POST(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string; ticketId: string }> },
 ) {
 	const params = await props.params;

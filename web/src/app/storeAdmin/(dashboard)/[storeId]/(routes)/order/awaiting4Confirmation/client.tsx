@@ -92,6 +92,6 @@ export const Awaiting4ConfirmationClient: React.FC<props> = ({ store }) => {
 		</section>
 	);
 };
-function getDateInTimezone(arg0: number) {
+function getDateInTimezone(_arg0: number) {
 	throw new Error("Function not implemented.");
 }

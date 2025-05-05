@@ -28,7 +28,7 @@ export type BusinessHoursDay = {
 	[day in keyof typeof weekdays]: TimeRange[] | "closed";
 };
 
-export type BusinessHoursData<WeeklySchedule> = {
+export type BusinessHoursData<_WeeklySchedule> = {
 	[P in keyof typeof weekdays]: BusinessHoursDay;
 } & {
 	timeZone: string;
@@ -59,7 +59,7 @@ export default class BusinessHours {
 
 	//validate incoming data
 	init(data: WeeklySchedule) {
-		weekdays.forEach((day, index) => {
+		weekdays.forEach((day, _index) => {
 			if (!(day in data)) {
 				throw new Error(`${day} is missing from incoming data`);
 			}

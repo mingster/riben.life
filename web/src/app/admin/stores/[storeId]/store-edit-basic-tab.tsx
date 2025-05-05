@@ -80,7 +80,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
 
-	const defaultValues = initialData
+	const _defaultValues = initialData
 		? {
 				...initialData,
 			}
@@ -168,7 +168,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 	//logo display and image upload
 	const [image, setImage] = useState<File | null>(null);
 	const [logo, setLogo] = useState<string | null>(initialData?.logo);
-	const [logoPublicId, setlogoPublicId] = useState<string | null>(
+	const [logoPublicId, _setlogoPublicId] = useState<string | null>(
 		initialData.logoPublicId,
 	);
 	//console.log(`logo: ${logo}`);
@@ -182,7 +182,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 
 	if (!initialData) return;
 
-	const deleteImageFromClient = async (public_id: string) => {
+	const deleteImageFromClient = async (_public_id: string) => {
 		// remove logo data from client side
 		setLogo(null);
 		//setlogoPublicId(null);

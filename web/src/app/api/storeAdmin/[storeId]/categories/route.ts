@@ -61,7 +61,7 @@ export async function PATCH(
 		const sort = lastSort?.sortOrder ?? 0;
 
 		for (let i = 0; i < name_array.length; i++) {
-			const obj = await sqlClient.category.create({
+			const _obj = await sqlClient.category.create({
 				data: {
 					storeId: params.storeId,
 					name: name_array[i],

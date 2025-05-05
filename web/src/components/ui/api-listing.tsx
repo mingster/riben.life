@@ -14,7 +14,7 @@ const textMap: Record<ApiListingProps["variant"], string> = {
 	admin: "Admin",
 };
 
-const variantMap: Record<ApiListingProps["variant"], string> = {
+const _variantMap: Record<ApiListingProps["variant"], string> = {
 	public: "secondary",
 	admin: "destructive",
 };

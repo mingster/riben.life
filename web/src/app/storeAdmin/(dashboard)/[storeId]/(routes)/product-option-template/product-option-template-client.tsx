@@ -15,7 +15,7 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Heading } from "@/components/ui/heading";
 import { useI18n } from "@/providers/i18n-provider";
-import { StoreProductOptionSelectionsTemplate } from "@prisma/client";
+import type { StoreProductOptionSelectionsTemplate } from "@prisma/client";
 import type { ColumnDef } from "@tanstack/react-table";
 import { t } from "i18next";
 import { CheckIcon, Trash, XIcon } from "lucide-react";

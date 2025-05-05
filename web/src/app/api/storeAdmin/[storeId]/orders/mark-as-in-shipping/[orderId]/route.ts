@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 
 ///!SECTION mark pending or processing order as in-shipping
 export async function POST(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string; orderId: string }> },
 ) {
 	const params = await props.params;

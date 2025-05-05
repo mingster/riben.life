@@ -41,7 +41,7 @@ const formSchema = z.object({
 type formValues = z.infer<typeof formSchema>;
 
 export const EditDefaultTerms: React.FC<props> = ({ data }) => {
-	const params = useParams();
+	const _params = useParams();
 	const router = useRouter();
 	const { toast } = useToast();
 	const [loading, setLoading] = useState(false);

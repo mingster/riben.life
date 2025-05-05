@@ -239,7 +239,7 @@ const StripePayButton: React.FC<PaymentStripeProp> = ({ orderId }) => {
 		setIsProcessingPayment(false);
 	};
 
-	const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+	const _handleChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = event.target;
 		setFormFields({ ...formFields, [name]: value });
 	};

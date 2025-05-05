@@ -10,9 +10,9 @@ import { StoreNavbar } from "./components/store-navbar";
 
 import BusinessHours from "@/lib/businessHours";
 import { transformDecimalsToNumbers } from "@/lib/utils";
+import type { StoreSettings } from "@prisma/client";
 import type { Metadata, ResolvingMetadata } from "next";
 import { redirect } from "next/navigation";
-import { StoreSettings } from "@prisma/client";
 type Props = {
 	params: Promise<{ storeId: string }>;
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

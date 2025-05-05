@@ -2,9 +2,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 
-import {
-	type PaymentMethod,
-	type ShippingMethod,
+import type {
+	PaymentMethod,
+	ShippingMethod,
 	StoreSettings,
 } from "@prisma/client";
 

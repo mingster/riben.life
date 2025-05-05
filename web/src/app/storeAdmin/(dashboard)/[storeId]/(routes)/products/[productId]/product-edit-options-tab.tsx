@@ -21,7 +21,7 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useI18n } from "@/providers/i18n-provider";
-import {
+import type {
 	ProductOptionSelections,
 	StoreProductOptionSelectionsTemplate,
 } from "@prisma/client";

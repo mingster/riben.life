@@ -5,7 +5,7 @@ import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 //delete storetable by its id
 export async function DELETE(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string; tableId: string }> },
 ) {
 	const params = await props.params;

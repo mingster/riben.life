@@ -14,7 +14,7 @@ import Container from "@/components/ui/container";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
-import { PlatformSettings } from "@prisma/client";
+import type { PlatformSettings } from "@prisma/client";
 import Link from "next/link";
 
 //type Params = Promise<{ storeId: string }>;

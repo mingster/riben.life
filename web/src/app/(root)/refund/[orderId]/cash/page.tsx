@@ -13,7 +13,7 @@ export default async function CashRefundPage(props: {
 	const params = await props.params;
 	const searchParams = await props.searchParams;
 	const orderId = params.orderId;
-	const query = searchParams.query;
+	const _query = searchParams.query;
 
 	return (
 		<Suspense fallback={<Loader />}>

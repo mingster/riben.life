@@ -50,7 +50,7 @@ interface editProps {
 	action: string;
 }
 export const UserEditBasicTab = ({ initialData, action }: editProps) => {
-	const params = useParams();
+	const _params = useParams();
 	const router = useRouter();
 	const { toast } = useToast();
 	const { lng } = useI18n();

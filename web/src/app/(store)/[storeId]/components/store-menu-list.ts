@@ -28,7 +28,7 @@ type Group = {
 };
 
 export function GetMenuList(
-	store: Store,
+	_store: Store,
 	storeId: string,
 	pathname: string,
 ): Group[] {

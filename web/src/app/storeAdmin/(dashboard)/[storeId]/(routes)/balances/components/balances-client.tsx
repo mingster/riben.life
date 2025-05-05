@@ -27,10 +27,10 @@ export const BalancesClient: React.FC<StoreOrderClientProps> = ({
 			<Heading title={t("Balances")} badge={data.length} description="" />
 
 			<div className="grid grid-cols-2 justify-between pb-2">
-				<div className="flex gap-1 items-center"></div>
+				<div className="flex gap-1 items-center" />
 				<div className="flex gap-1 items-center">
 					{/* render date filter descr */}
-					<div className="flex gap-1 text-xs font-mono"></div>
+					<div className="flex gap-1 text-xs font-mono" />
 				</div>
 			</div>
 			<Separator />

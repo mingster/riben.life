@@ -60,42 +60,42 @@ export const FaqClient: React.FC = () => {
 							<AccordionTrigger className="font-bold text-gold">
 								開設商店
 							</AccordionTrigger>
-							<AccordionContent></AccordionContent>
+							<AccordionContent />
 						</AccordionItem>
 
 						<AccordionItem value="item-10">
 							<AccordionTrigger className="font-bold text-gold">
 								新增產品及上架
 							</AccordionTrigger>
-							<AccordionContent></AccordionContent>
+							<AccordionContent />
 						</AccordionItem>
 
 						<AccordionItem value="item-20">
 							<AccordionTrigger className="font-bold text-gold">
 								[基礎篇] 操作教學
 							</AccordionTrigger>
-							<AccordionContent></AccordionContent>
+							<AccordionContent />
 						</AccordionItem>
 
 						<AccordionItem value="item-30">
 							<AccordionTrigger className="font-bold text-gold">
 								[進階篇] 操作教學
 							</AccordionTrigger>
-							<AccordionContent></AccordionContent>
+							<AccordionContent />
 						</AccordionItem>
 
 						<AccordionItem value="item-40">
 							<AccordionTrigger className="font-bold text-gold">
 								[收單篇] 操作教學
 							</AccordionTrigger>
-							<AccordionContent></AccordionContent>
+							<AccordionContent />
 						</AccordionItem>
 
 						<AccordionItem value="item-50">
 							<AccordionTrigger className="font-bold text-gold">
 								開啟客戶支援
 							</AccordionTrigger>
-							<AccordionContent></AccordionContent>
+							<AccordionContent />
 						</AccordionItem>
 					</Accordion>
 				</TabsContent>

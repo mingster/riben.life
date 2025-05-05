@@ -28,7 +28,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import type { ProductOption, StoreProductOptionTemplate } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
+import type {
 	ProductOptionSelections,
 	StoreProductOptionSelectionsTemplate,
 } from "@prisma/client";

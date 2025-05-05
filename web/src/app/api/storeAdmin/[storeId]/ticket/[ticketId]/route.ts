@@ -62,7 +62,7 @@ export async function PATCH(
 		//console.log(`replied ticket: ${JSON.stringify(reply)}`);
 
 		// update status in this thread
-		const cnt = await sqlClient.supportTicket.updateMany({
+		const _cnt = await sqlClient.supportTicket.updateMany({
 			where: {
 				threadId: reply.threadId,
 			},
@@ -82,7 +82,7 @@ export async function PATCH(
 
 ///!SECTION mark this ticket as archived.
 export async function DELETE(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ storeId: string; ticketId: string }> },
 ) {
 	const params = await props.params;

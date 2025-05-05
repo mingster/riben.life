@@ -10,9 +10,9 @@ import { StoreHomeContent } from "./components/store-home-content";
 
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import logger from "@/lib/logger";
-import { formatDate } from "date-fns";
 import { sqlClient } from "@/lib/prismadb";
-import { StoreSettings } from "@prisma/client";
+import type { StoreSettings } from "@prisma/client";
+import { formatDate } from "date-fns";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

@@ -1,7 +1,7 @@
-import { checkStoreAccess } from "@/lib/store-admin-utils";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
+import { checkStoreAccess } from "@/lib/store-admin-utils";
 import type { Faq } from "@/types";
 import type { Store } from "@prisma/client";
 import { Suspense } from "react";
@@ -19,7 +19,7 @@ export default async function FaqPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const _store = (await checkStoreAccess(params.storeId)) as Store;
 
 	//SECTION disallow access if category is not found
 	const category = await sqlClient.faqCategory.findUnique({

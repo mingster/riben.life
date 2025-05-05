@@ -1,7 +1,7 @@
-import { checkStoreAccess } from "@/lib/store-admin-utils";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
+import { checkStoreAccess } from "@/lib/store-admin-utils";
 import type { FaqCategory } from "@/types";
 import type { Store } from "@prisma/client";
 import { Suspense } from "react";

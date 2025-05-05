@@ -5,7 +5,7 @@ import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 //delete product by its id
 export async function DELETE(
-	req: Request,
+	_req: Request,
 	props: { params: Promise<{ productId: string; storeId: string }> },
 ) {
 	const params = await props.params;

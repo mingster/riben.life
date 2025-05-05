@@ -181,7 +181,7 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
 	};
 	//console.log(JSON.stringify(product.ProductOptions));
 
-	const handleAddToCart = (product: Product) => {
+	const _handleAddToCart = (product: Product) => {
 		const item = cart.getItem(product.id);
 		if (item) {
 			cart.updateItemQuantity(product.id, item.quantity + 1);
@@ -235,7 +235,7 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
 		try {
 			console.log("form data", JSON.stringify(data));
 			// Your submission logic here
-		} catch (error) {
+		} catch (_error) {
 			form.setError("root", {
 				type: "submit",
 				message: "An error occurred while submitting the form.",

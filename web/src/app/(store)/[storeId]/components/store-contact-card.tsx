@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 
 import { slideIn } from "@/lib/motion";
-import { Store, StoreSettings } from "@prisma/client";
+import type { Store, StoreSettings } from "@prisma/client";
 import { motion } from "framer-motion";
 import { BellIcon, FacebookIcon, InstagramIcon } from "lucide-react";
 import Link from "next/link";

@@ -187,7 +187,7 @@ export function NavBar() {
 
 	return (
 		<>
-			{/* background image */}
+			{/* background image 
 			<div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">
 				<div className="w-[108rem] flex-none flex justify-end">
 					<picture>
@@ -216,7 +216,7 @@ export function NavBar() {
 					</picture>
 				</div>
 			</div>
-
+*/}
 			{/* navbar */}
 			<div
 				className={clsx(

@@ -4,7 +4,7 @@ import { BigText, Caption, IconContainer, Paragraph } from "./common";
 export function Cost({ className, ...props }: { className?: string }) {
 	return (
 		<section id="cost" className="relative h-screen">
-			{/*background */}
+			{/*background 
 			<div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">
 				<div className="w-[108rem] flex-none flex justify-end">
 					<picture>
@@ -33,15 +33,17 @@ export function Cost({ className, ...props }: { className?: string }) {
 					</picture>
 				</div>
 			</div>
+			*/}
 
 			{/* content */}
 			<div className="pt-10 px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
 				<div className="flex gap-2">
+					{/*
 					<IconContainer
 						className="dark:bg-sky-500 dark:highlight-white/20"
 						light={require("@/img/icons/home/editor-tools.png").default.src}
 						dark={require("@/img/icons/home/dark/editor-tools.png").default.src}
-					/>{" "}
+					/> */}
 					<Caption className="text-sky-500">價格</Caption>
 				</div>
 
