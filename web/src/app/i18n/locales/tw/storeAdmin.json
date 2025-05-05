@@ -274,7 +274,7 @@
 	"subscription_success_descr": "您可以立即開始使用進階功能。",
 	"subscription_success_title": "訂閱成功",
 	"SubscriptionStatus_Active": "訂閱中",
-	"SubscriptionStatus_Cancel": "已取消",
+	"SubscriptionStatus_Canceled": "已取消",
 	"SubscriptionStatus_Inactive": "扣款失敗/未訂閱",
 	"Support": "客服",
 	"Tags": "標籤管理",
