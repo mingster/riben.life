@@ -4,28 +4,23 @@ import { BigText, Caption, IconContainer, Paragraph } from "./common";
 export function Cost({ className, ...props }: { className?: string }) {
 	return (
 		<section id="cost" className="relative h-screen">
-			{/*background 
+			{/*background */}
+
 			<div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">
 				<div className="w-[108rem] flex-none flex justify-end">
 					<picture>
-						<source
-							srcSet={require("@/img/beams/docs@30.avif").default.src}
-							type="image/avif"
-						/>
+						<source srcSet="/img/beams/docs@30.avif" type="image/avif" />
 						<img
-							src={require("@/img/beams/docs@tinypng.png").default.src}
+							src="/img/beams/docs@tinypng.png"
 							alt=""
 							className="w-[71.75rem] flex-none max-w-none dark:hidden"
 							decoding="async"
 						/>
 					</picture>
 					<picture>
-						<source
-							srcSet={require("@/img/beams/docs-dark@30.avif").default.src}
-							type="image/avif"
-						/>
+						<source srcSet="/img/beams/docs-dark@30.avif" type="image/avif" />
 						<img
-							src={require("@/img/beams/docs-dark@tinypng.png").default.src}
+							src="/img/beams/docs-dark@tinypng.png"
 							alt=""
 							className="w-[90rem] flex-none max-w-none hidden dark:block"
 							decoding="async"
@@ -33,7 +28,6 @@ export function Cost({ className, ...props }: { className?: string }) {
 					</picture>
 				</div>
 			</div>
-			*/}
 
 			{/* content */}
 			<div className="pt-10 px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
@@ -41,8 +35,8 @@ export function Cost({ className, ...props }: { className?: string }) {
 					{/*
 					<IconContainer
 						className="dark:bg-sky-500 dark:highlight-white/20"
-						light={require("@/img/icons/home/editor-tools.png").default.src}
-						dark={require("@/img/icons/home/dark/editor-tools.png").default.src}
+						light="/img/icons/home/editor-tools.png"
+						dark="/img/icons/home/dark/editor-tools.png"
 					/> */}
 					<Caption className="text-sky-500">價格</Caption>
 				</div>

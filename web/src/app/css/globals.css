@@ -15,9 +15,8 @@
 	margin: 10px;
 }
 
-a {
+a, button, input {
 	@apply cursor-pointer;
-	color: var(--color-muted-foreground);
 }
 
 a:hover {

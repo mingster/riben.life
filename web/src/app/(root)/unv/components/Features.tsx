@@ -112,10 +112,10 @@ const features_pos = [
 	},
 	/*
   {
-    description: "桌位管理，一個螢幕掌握整間店",
-    basic: true,
-    advanced: true,
-    multi: true,
+	description: "桌位管理，一個螢幕掌握整間店",
+	basic: true,
+	advanced: true,
+	multi: true,
   },*/
 	{
 		description: "商品資訊、庫存管理，菜單即時更新。",
@@ -174,12 +174,11 @@ export function Features({ className, ...props }: { className?: string }) {
 
 			<div className="relative px-4 pt-5 mx-auto max-w-7xl sm:px-6 md:px-8">
 				<div className="flex gap-2">
-				{/*
 					<IconContainer
 						className="dark:bg-sky-500 dark:highlight-white/20"
-						light={require("@/img/icons/home/editor-tools.png").default.src}
-						dark={require("@/img/icons/home/dark/editor-tools.png").default.src}
-					/>*/}
+						light="/img/icons/home/editor-tools.png"
+						dark="/img/icons/home/dark/editor-tools.png"
+					/>
 					<Caption className="text-sky-500">功能表</Caption>
 				</div>
 

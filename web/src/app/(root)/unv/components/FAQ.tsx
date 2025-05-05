@@ -19,8 +19,8 @@ export function FAQ({ className, ...props }: { className?: string }) {
 				<div className="flex gap-2">
 					<IconContainer
 						className="dark:bg-sky-500 dark:highlight-white/20"
-						light={require("@/img/icons/home/editor-tools.png").default.src}
-						dark={require("@/img/icons/home/dark/editor-tools.png").default.src}
+						light="/img/icons/home/editor-tools.png"
+						dark="/img/icons/home/dark/editor-tools.png"
 					/>
 					<Caption className="text-sky-500">常見問題</Caption>
 				</div>
