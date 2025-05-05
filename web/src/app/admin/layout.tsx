@@ -1,12 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
 import { redirect } from "next/navigation";
-
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
-
-import "../css/base.css";
-import "../css/utilities.css";
-
 import { checkAdminAccess } from "./admin-utils";
 import AdminPanelLayout from "./components/admin-panel-layout";
 

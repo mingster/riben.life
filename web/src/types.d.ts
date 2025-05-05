@@ -3,6 +3,8 @@ import type { Notification } from "prisma/prisma-client";
 //import type { Product } from "prisma/prisma-client";
 import { Prisma } from "prisma/prisma-client";
 
+/* #region next-auth */
+
 declare module "next-auth" {
 	interface Session {
 		id: string | null | unknown;
@@ -34,7 +36,10 @@ declare module "next-auth/jwt" {
 	}
 }
 
-//this is for customized product...
+/* #endregion */
+
+/* #region prisma type mod */
+
 export enum CartProductStatus {
 	InProgress = 0, // customization is work-in-progress
 	ReadyToCheckout = 1, //saved in cart, ready to checkout
@@ -237,6 +242,7 @@ const notificationObj = Prisma.validator<Prisma.StoreNotificationDefaultArgs>()(
 export type StoreNotification = Prisma.StoreNotificationGetPayload<
 	typeof notificationObj
 >;
+/* endregion */
 
 /*
 const paymethodMappingObj =

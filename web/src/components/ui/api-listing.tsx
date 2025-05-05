@@ -1,9 +1,7 @@
-import { Copy, Server } from "lucide-react";
-//import { toast } from "react-hot-toast";
-
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge, type BadgeProps } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Copy, Server } from "lucide-react";
 
 interface ApiListingProps {
 	title: string;
@@ -16,7 +14,7 @@ const textMap: Record<ApiListingProps["variant"], string> = {
 	admin: "Admin",
 };
 
-const variantMap: Record<ApiListingProps["variant"], BadgeProps["variant"]> = {
+const variantMap: Record<ApiListingProps["variant"], string> = {
 	public: "secondary",
 	admin: "destructive",
 };
@@ -37,7 +35,7 @@ export const ApiListing: React.FC<ApiListingProps> = ({
 				<Server className="size-4" />
 				<AlertTitle className="flex items-center">
 					{title}
-					<Badge variant={variantMap[variant]}>{textMap[variant]}</Badge>
+					<Badge>{textMap[variant]}</Badge>
 				</AlertTitle>
 				<AlertDescription className="mt-1 flex items-center justify-between">
 					<code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs">

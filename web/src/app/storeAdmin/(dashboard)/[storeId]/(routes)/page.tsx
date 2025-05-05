@@ -1,4 +1,4 @@
-import { checkStoreAccess, isPro } from "@/app/storeAdmin/store-admin-utils";
+import { checkStoreAccess, isPro } from "@/lib/store-admin-utils";
 //import Scheduled from "@/components/scheduled";
 //import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";

@@ -3,14 +3,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { sqlClient } from "@/lib/prismadb";
-//import { connectToMongoDB } from '@/lib/mongodb';
 
-import fs from "node:fs";
 import { GetSession } from "@/lib/auth/utils";
 import logger from "@/lib/logger";
-import StoreModel from "@/model/StoreModel";
 import { StoreLevel } from "@/types/enum";
 import type { Session } from "next-auth";
+import fs from "node:fs";
 import type { z } from "zod";
 import type { formSchema } from "./store-modal";
 
@@ -120,27 +118,27 @@ export const createStore = async (values: z.infer<typeof formSchema>) => {
   //const domainName = formData.get('domainName');
 
   try {
-    // Creating a new Store using Store model
-    const newStore = await StoreModel.create({
-      databaseId,
-      name,
-      //domainName,
-    });
-    // Saving the new Store
-    newStore.save();
-    // Triggering revalidation of the specified path ("/")
-    revalidatePath('/');
-    // Returning the string representation of the new Store
+	// Creating a new Store using Store model
+	const newStore = await StoreModel.create({
+	  databaseId,
+	  name,
+	  //domainName,
+	});
+	// Saving the new Store
+	newStore.save();
+	// Triggering revalidation of the specified path ("/")
+	revalidatePath('/');
+	// Returning the string representation of the new Store
 
-    const result = newStore.toString();
-    console.log(result);
+	const result = newStore.toString();
+	console.log(result);
 
-    return result;
+	return result;
   } catch (error) {
-    console.log(error);
-    return { message: 'error creating Store' };
+	console.log(error);
+	return { message: 'error creating Store' };
   }
-    */
+	*/
 };
 
 export const deleteStore = async (id: FormData) => {
@@ -148,7 +146,7 @@ export const deleteStore = async (id: FormData) => {
 	const StoreId = id.get("id");
 	try {
 		// Deleting the Store with the specified ID
-		await StoreModel.deleteOne({ _id: StoreId });
+		//await StoreModel.deleteOne({ _id: StoreId });
 		// Triggering revalidation of the specified path ("/")
 		revalidatePath("/");
 

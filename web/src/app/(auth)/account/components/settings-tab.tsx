@@ -61,6 +61,8 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 	const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
 	//const session = useSession();
 
+	const cookies = useCookies();
+
 	//console.log(`activeLng: ${activeLng}`);
 	const { t } = useTranslation(activeLng);
 
@@ -114,8 +116,6 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 		setLoading(false);
 	}
 
-	const cookies = useCookies();
-
 	const handleChangeLanguage = (lng: string) => {
 		i18n.changeLanguage(lng);
 		setActiveLng(lng);
@@ -138,7 +138,7 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 						!user.email && user.id
 					}
 					&nbsp;&nbsp;
-					<Button variant="link" onClick={() => signOut()}>
+					<Button variant="secondary" onClick={() => signOut()}>
 						{t("account_tab_signout")}
 					</Button>
 					<Form {...form}>

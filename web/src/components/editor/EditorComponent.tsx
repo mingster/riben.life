@@ -1,6 +1,5 @@
 "use client";
 import type { ContextStore } from "@uiw/react-md-editor";
-import { commands } from "@uiw/react-md-editor";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import type React from "react";

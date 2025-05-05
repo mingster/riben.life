@@ -1,18 +1,30 @@
-import "./css/globals.css";
-
-import { env } from "node:process";
-
-import { Toaster } from "@/components/ui/toaster";
-import { CartProvider } from "@/hooks/use-cart";
+import { Navbar } from "@/components/global-navbar";
+import { Toaster } from "@/components/ui/sonner";
 import { GetSession } from "@/lib/auth/utils";
 import I18nProvider from "@/providers/i18n-provider";
 import SessionWrapper from "@/providers/session-provider";
 import NextThemeProvider from "@/providers/theme-provider";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import type { Session } from "next-auth";
 import { CookiesProvider } from "next-client-cookies/server";
+import { Geist, Geist_Mono, Noto_Sans_TC } from "next/font/google";
+import "./css/globals.css";
+
+const notoSans = Noto_Sans_TC({
+	variable: "--font-noto-sans",
+	weight: ["600"],
+	subsets: ["latin"],
+});
+
+const geistSans = Geist({
+	variable: "--font-geist-sans",
+	subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+	variable: "--font-geist-mono",
+	subsets: ["latin"],
+});
 
 const title = "riben.life 利便生活";
 export const metadata: Metadata = {
@@ -90,40 +102,25 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	//const session = (await getServerSession(authOptions)) as Session;
 	const session = (await GetSession()) as Session;
 
 	return (
 		<SessionWrapper session={session}>
-			<html className="dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]">
-				<head>
-					<link rel="preconnect" href="https://fonts.googleapis.com" />
-					<link
-						rel="preconnect"
-						href="https://fonts.gstatic.com"
-						crossOrigin=""
-					/>
-
-					<link
-						href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=Noto+Sans+TC:wght@100..900&display=swap"
-						rel="stylesheet"
-					/>
-				</head>
-
-				<body className="antialiased text-primary-400 dark:text-primary-400 min-h-screen">
-					<NextThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-						<CartProvider>
-							<CookiesProvider>
-								<I18nProvider>{children}</I18nProvider>
-							</CookiesProvider>
-						</CartProvider>
+			<html lang="en">
+				<body
+					className={`${notoSans.variable} ${geistSans.variable} ${geistMono.variable} antialiased dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]`}
+				>
+					<NextThemeProvider
+						attribute="class"
+						defaultTheme="dark"
+						enableSystem
+						disableTransitionOnChange
+					>
+						<CookiesProvider>
+							<I18nProvider>{children}</I18nProvider>
+						</CookiesProvider>
 					</NextThemeProvider>
 					<Toaster />
-					{env.NODE_ENV === "production" && (
-						<>
-							<SpeedInsights /> <Analytics />
-						</>
-					)}
 				</body>
 			</html>
 		</SessionWrapper>

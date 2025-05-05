@@ -1,14 +1,28 @@
 {
 	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-	"vcs": { "enabled": false, "clientKind": "git", "useIgnoreFile": false },
-	"files": { "ignoreUnknown": false, "ignore": [] },
-	"formatter": { "enabled": true, "indentStyle": "tab" },
-	"organizeImports": { "enabled": true },
+	"vcs": {
+		"enabled": false,
+		"clientKind": "git",
+		"useIgnoreFile": false
+	},
+	"files": {
+		"ignoreUnknown": false,
+		"ignore": []
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab"
+	},
+	"organizeImports": {
+		"enabled": true
+	},
 	"linter": {
 		"enabled": true,
 		"rules": {
 			"recommended": false,
-			"a11y": { "noBlankTarget": "error" },
+			"a11y": {
+				"noBlankTarget": "error"
+			},
 			"complexity": {
 				"noExtraBooleanCast": "error",
 				"noMultipleSpacesInRegularExpressionLiterals": "error",
@@ -45,7 +59,9 @@
 				"useValidForDirection": "error",
 				"useYield": "error"
 			},
-			"security": { "noDangerouslySetInnerHtmlWithChildren": "error" },
+			"security": {
+				"noDangerouslySetInnerHtmlWithChildren": "error"
+			},
 			"style": {
 				"noNamespace": "error",
 				"noVar": "off",
@@ -84,10 +100,14 @@
 				"useValidTypeof": "error"
 			}
 		},
-		"ignore": [".next/*"]
+		"ignore": [
+			".next/*"
+		]
 	},
 	"javascript": {
-		"formatter": { "quoteStyle": "double" },
+		"formatter": {
+			"quoteStyle": "double"
+		},
 		"globals": [
 			"OffscreenCanvas",
 			"onpointerleave",
@@ -191,9 +211,18 @@
 		]
 	},
 	"overrides": [
-		{ "include": ["**/*.{js,mjs,cjs,ts,jsx,tsx}"] },
 		{
-			"include": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+			"include": [
+				"**/*.{js,mjs,cjs,ts,jsx,tsx,ts}"
+			]
+		},
+		{
+			"include": [
+				"**/*.ts",
+				"**/*.tsx",
+				"**/*.mts",
+				"**/*.cts"
+			],
 			"linter": {
 				"rules": {
 					"correctness": {

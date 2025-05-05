@@ -57,11 +57,10 @@ export default function DropdownMessage({ messages }: props) {
 
 	const handleClick = () => {
 		//console.log('change language to: ' + value);
-
 		// TODO - add mark as read button
 		//
-		const cookies = useCookies();
-		cookies.set(cookieName, "true", { path: "/" });
+		//const cookies = useCookies();
+		//cookies.set(cookieName, "true", { path: "/" });
 		/*
     setCookies(cookieName, true, {
       path: "/",

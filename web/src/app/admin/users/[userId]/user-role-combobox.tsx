@@ -15,9 +15,9 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 
+import { getEnumKeys } from "@/lib/utils";
 import { Role } from "@prisma/client";
 
-import { getEnumKeys } from "@/lib/utils";
 import { useState } from "react";
 type ComboboxProps = {
 	defaultValue: string;

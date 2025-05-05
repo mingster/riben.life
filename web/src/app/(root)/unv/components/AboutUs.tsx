@@ -1,16 +1,14 @@
-import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { slideIn } from "@/lib/motion";
-import { useI18n } from "@/providers/i18n-provider";
 import { motion } from "framer-motion";
 import { FaDiscord, FaFacebook, FaInstagram, FaLine } from "react-icons/fa";
+import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { BigText, Caption, IconContainer, Paragraph } from "./common";
 
-import { useToast } from "@/components/ui/use-toast";
 import ReCAPTCHA from "react-google-recaptcha";
 
 import axios, { type AxiosError } from "axios";
@@ -83,24 +81,23 @@ export default function GoogleCaptchaWrapper({
 }) {
   const recaptchaKey: string | undefined = process?.env?.NEXT_PUBLIC_RECAPTCHA;
   return (
-    <GoogleReCaptchaProvider
-      reCaptchaKey={recaptchaKey ?? "NOT DEFINED"}
-      scriptProps={{
-        async: false,
-        defer: false,
-        appendTo: "head",
-        nonce: undefined,
-      }}
-    >
-      {children}
-    </GoogleReCaptchaProvider>
+	<GoogleReCaptchaProvider
+	  reCaptchaKey={recaptchaKey ?? "NOT DEFINED"}
+	  scriptProps={{
+		async: false,
+		defer: false,
+		appendTo: "head",
+		nonce: undefined,
+	  }}
+	>
+	  {children}
+	</GoogleReCaptchaProvider>
   );
 }
 */
 
 export const ContactForm = () => {
 	const [loading, setLoading] = useState(false);
-	const { toast } = useToast();
 
 	const [captcha, setCaptcha] = useState<string>("");
 
@@ -151,28 +148,16 @@ export const ContactForm = () => {
 			);
 
 			if (result.status === 200) {
-				toast({
-					title: "我們已經收到你的訊息，會盡快回覆你。",
-					description: "",
-					variant: "success",
-				});
+				toast("我們已經收到你的訊息，會盡快回覆你。");
 			} else {
-				toast({
-					title: "Ahh, something went wrong. Please try again.",
-					description: `${result.status} ${result.statusText}`,
-					variant: "destructive",
-				});
+				toast("Ahh, something went wrong. Please try again.");
 
 				console.log(JSON.stringify(result));
 			}
 		} catch (error: unknown) {
 			const err = error as AxiosError;
 			console.log(err);
-			toast({
-				title: "Ahh, something went wrong. Please try again.",
-				description: "",
-				variant: "destructive",
-			});
+			toast("Ahh, something went wrong. Please try again.");
 		} finally {
 			setLoading(false);
 		}

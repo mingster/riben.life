@@ -7,7 +7,7 @@ import { useI18n } from "@/providers/i18n-provider";
 
 import Container from "@/components/ui/container";
 import { StoreLevel } from "@/types/enum";
-import { CashCashier } from "../cash-cashier/data-client";
+//import { CashCashier } from "../cash-cashier/data-client";
 import { Awaiting4ConfirmationClient } from "../order/awaiting4Confirmation/client";
 import { Awaiting4ProcessingClient } from "../order/awaiting4Process/client";
 
@@ -37,7 +37,7 @@ export const StoreAdminDashboard: React.FC<props> = ({ store, isProLevel }) => {
 			<Container>
 				{
 					//show cash cashier if store subscribes pro level (not free)
-					isProLevel && <CashCashier store={store} tables={[]} />
+					//isProLevel && <CashCashier store={store} tables={[]} />
 				}
 
 				{!isProLevel && !store.autoAcceptOrder && (

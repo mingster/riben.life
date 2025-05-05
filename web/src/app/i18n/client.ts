@@ -56,30 +56,31 @@ export function useTranslation<
 	if (runsOnServerSide && lng && i18n.resolvedLanguage !== lng) {
 		i18n.changeLanguage(lng);
 	} else {
-		const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
-
-		//console.log('useTranslation: ' + activeLng);
-
-		useEffect(() => {
-			if (activeLng === i18n.resolvedLanguage) return;
-			setActiveLng(i18n.resolvedLanguage);
-		}, [activeLng, i18n.resolvedLanguage]);
-
-		useEffect(() => {
-			if (!lng || i18n.resolvedLanguage === lng) return;
-			i18n.changeLanguage(lng);
-		}, [lng, i18n]);
-
-		useEffect(() => {
-			if (cookies.get(cookieName) === lng) return;
-
-			if (lng) {
-				console.log("will set cookie", cookieName, lng);
-				//setCookie(cookieName, lng, { path: "/" });
-				cookies.set(cookieName, lng, { path: "/" });
-			}
-		}, [lng, cookies]);
 	}
+
+	const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
+
+	//console.log('useTranslation: ' + activeLng);
+
+	useEffect(() => {
+		if (activeLng === i18n.resolvedLanguage) return;
+		setActiveLng(i18n.resolvedLanguage);
+	}, [activeLng, i18n.resolvedLanguage]);
+
+	useEffect(() => {
+		if (!lng || i18n.resolvedLanguage === lng) return;
+		i18n.changeLanguage(lng);
+	}, [lng, i18n]);
+
+	useEffect(() => {
+		if (cookies.get(cookieName) === lng) return;
+
+		if (lng) {
+			console.log("will set cookie", cookieName, lng);
+			//setCookie(cookieName, lng, { path: "/" });
+			cookies.set(cookieName, lng, { path: "/" });
+		}
+	}, [lng, cookies]);
 
 	return ret;
 }

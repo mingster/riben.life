@@ -17,8 +17,9 @@ export default function AdminPanelLayout({
 	if (!sidebar) return null;
 
 	//bg-zinc-200 dark:bg-zinc-900
+	//bg-gradient-to-b from-transparent via-cyan-100 to-green-200 dark:from-blue-900 dark:to-black-900
 	return (
-		<div className="bg-gradient-to-b from-transparent via-cyan-100 to-green-200 dark:from-blue-900 dark:to-black-900">
+		<div className="">
 			<AdminNavbar title="" />
 			<AdminSidebar />
 			<main

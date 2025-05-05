@@ -43,7 +43,7 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
 		<header
 			className={`sticky ${scrollDirection === "down" ? "-top-24" : "top-0"} z-10 w-full shadow backdrop-blur dark:shadow-secondary`}
 		>
-			{/* background image */}
+			{/* background image
 			<div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">
 				<div className="w-[108rem] flex-none flex justify-end">
 					<picture>
@@ -72,7 +72,7 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
 					</picture>
 				</div>
 			</div>
-
+ */}
 			<div className="mx-4 flex h-14 items-center xs:mx-8">
 				<div className="flex items-center space-x-4 lg:space-x-0">
 					<StoreAdminSheetMenu store={store} />

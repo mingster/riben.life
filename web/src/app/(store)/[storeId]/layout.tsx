@@ -102,7 +102,7 @@ export default async function StoreHomeLayout(props: {
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<div className="bg-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
+			<div className="bg-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
 				<StoreNavbar visible={true} store={store} />
 				<main>
 					<span className="hash-span" id="top" />

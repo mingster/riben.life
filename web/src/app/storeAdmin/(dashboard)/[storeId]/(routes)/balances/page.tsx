@@ -1,4 +1,4 @@
-import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
+import { checkStoreAccess } from "@/lib/store-admin-utils";
 import Container from "@/components/ui/container";
 
 import { sqlClient } from "@/lib/prismadb";

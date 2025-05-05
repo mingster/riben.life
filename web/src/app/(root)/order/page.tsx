@@ -30,7 +30,7 @@ export default async function StoreOrderStatusPage(props: {
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<div className="bg-no-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
+			<div className="bg-no-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
 				<Navbar title="" />
 				<Container>
 					<DisplayStoreOrdersToday store={store} />

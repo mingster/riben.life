@@ -25,7 +25,7 @@ const StoreAdminLayout: React.FC<props> = ({
 
 	if (!sidebar) return null;
 
-	//<div className="bg-top bg-cover bg-no-repeat bg-[url('/images/beams/hero@75.jpg')] dark:bg-[url('/images/beams/hero-dark@90.jpg')]">
+	//<div className="bg-top bg-cover bg-no-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
 	return (
 		<div className="bg-body">
 			<StoreAdminNavbar store={sqlData} />

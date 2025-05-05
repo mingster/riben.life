@@ -1,6 +1,6 @@
 //create or edit store order
 
-import { checkStoreAccess } from "@/app/storeAdmin/store-admin-utils";
+import { checkStoreAccess } from "@/lib/store-admin-utils";
 
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreWithProducts from "@/actions/get-store-with-products";
