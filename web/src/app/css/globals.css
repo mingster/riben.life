@@ -15,9 +15,10 @@
 	margin: 10px;
 }
 
-a {
+a,
+button,
+input {
 	@apply cursor-pointer;
-	color: var(--color-muted-foreground);
 }
 
 a:hover {
@@ -25,11 +26,14 @@ a:hover {
 }
 
 @theme inline {
-	--font-serif: var(--font-noto-sans), ui-serif, Georgia, Cambria,
-		"Times New Roman", Times, serif;
-	--font-sans: var(--font-noto-sans), var(--font-geist-sans), ui-sans-serif,
-		system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-		"Segoe UI Symbol", "Noto Color Emoji";
+	--font-serif: var(--font-popins-sans), var(--font-noto-sans), ui-serif,
+		"Microsoft YaHei", "Gothic Pro", Georgia, Cambria, "Times New Roman", Times,
+		serif;
+
+	--font-sans: var(--font-popins-sans), var(--font-noto-sans), ui-sans-serif,
+		system-ui, sans-serif,, -apple-system, "Microsoft YaHei", "Gothic Pro",
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
 	--font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
 		Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
@@ -145,5 +149,6 @@ a:hover {
 	}
 	body {
 		@apply bg-background text-foreground;
+		font-family: var(--font-serif);
 	}
 }

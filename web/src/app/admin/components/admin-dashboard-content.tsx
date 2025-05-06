@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 
-export const AdminMockupContent = () => {
+export const AdminDashboardContent = () => {
 	const { toast } = useToast();
 
 	return (

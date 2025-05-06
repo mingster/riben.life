@@ -29,14 +29,14 @@ export function NavPopover({
 
 	/*
   useEffect(() => {
-    if (!isOpen) return;
-    function handleRouteChange() {
-      setIsOpen(false);
-    }
-    Router.events.on("routeChangeComplete", handleRouteChange);
-    return () => {
-      Router.events.off("routeChangeComplete", handleRouteChange);
-    };
+	if (!isOpen) return;
+	function handleRouteChange() {
+	  setIsOpen(false);
+	}
+	Router.events.on("routeChangeComplete", handleRouteChange);
+	return () => {
+	  Router.events.off("routeChangeComplete", handleRouteChange);
+	};
   }, [isOpen]);
   */
 
@@ -187,28 +187,24 @@ export function NavBar() {
 
 	return (
 		<>
-			{/* background image 
+			{/* background image
+			 */}
+
 			<div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">
 				<div className="w-[108rem] flex-none flex justify-end">
 					<picture>
-						<source
-							srcSet={require("@/img/beams/docs@30.avif").default.src}
-							type="image/avif"
-						/>
+						<source srcSet="/img/beams/docs@30.avif" type="image/avif" />
 						<img
-							src={require("@/img/beams/docs@tinypng.png").default.src}
+							src="/img/beams/docs@tinypng.png"
 							alt=""
 							className="w-[71.75rem] flex-none max-w-none dark:hidden"
 							decoding="async"
 						/>
 					</picture>
 					<picture>
-						<source
-							srcSet={require("@/img/beams/docs-dark@30.avif").default.src}
-							type="image/avif"
-						/>
+						<source srcSet="/img/beams/docs-dark@30.avif" type="image/avif" />
 						<img
-							src={require("@/img/beams/docs-dark@tinypng.png").default.src}
+							src="/img/beams/docs-dark@tinypng.png"
 							alt=""
 							className="w-[90rem] flex-none max-w-none hidden dark:block"
 							decoding="async"
@@ -216,7 +212,7 @@ export function NavBar() {
 					</picture>
 				</div>
 			</div>
-*/}
+
 			{/* navbar */}
 			<div
 				className={clsx(

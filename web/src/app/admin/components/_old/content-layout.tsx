@@ -1,4 +1,4 @@
-import { AdminNavbar } from "./admin-navbar";
+import { AdminNavbar } from "../admin-navbar";
 
 interface ContentLayoutProps {
 	title: string;

@@ -12,7 +12,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -30,6 +30,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import * as z from "zod";
 import { UserRoleCombobox } from "./user-role-combobox";
 
@@ -52,7 +53,7 @@ interface editProps {
 export const UserEditBasicTab = ({ initialData, action }: editProps) => {
 	const _params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
+
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [loading, setLoading] = useState(false);
@@ -88,11 +89,7 @@ export const UserEditBasicTab = ({ initialData, action }: editProps) => {
 			data,
 		);
 
-		toast({
-			title: "user saved.",
-			description: "",
-			variant: "success",
-		});
+		toast("user saved.");
 
 		//router.push(`/storeAdmin/${params.storeId}/users`);
 		router.refresh();

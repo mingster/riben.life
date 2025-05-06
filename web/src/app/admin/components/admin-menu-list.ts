@@ -37,7 +37,7 @@ export function GetMenuList(pathname: string): Group[] {
 
 	return [
 		{
-			groupLabel: "ADMIN",
+			groupLabel: "HOME",
 			menus: [
 				{
 					href: nav_prefix,
