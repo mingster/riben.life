@@ -83,7 +83,7 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 						role="combobox"
 						aria-expanded={open}
 						aria-label={t("storeAdmin_switcher_select_a_store")}
-						className={cn("lg:w-[200px] justify-between", className)}
+						className={cn("lg:w-full justify-between", className)}
 					>
 						<StoreIcon className="mr-0 size-4" />
 						{currentStore?.label}
