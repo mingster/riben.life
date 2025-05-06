@@ -65,7 +65,7 @@ export function StoreAdminSidebar({ store }: prop) {
 					<SidebarMenuItem className="font-mono">
 						<StoreSwitcher />
 						<StoreModal />
-						{/* stpreModal is to create new store when switcher's create store is clicked */}
+						{/* storeModal is to create new store when switcher's create store is clicked */}
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarHeader>
