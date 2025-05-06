@@ -3,11 +3,9 @@ import { HomeIcon } from "lucide-react";
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { StoreAdminSheetMenu } from "./store-admin-sheet-menu";
+//import { StoreAdminSheetMenu } from "./_old/store-admin-sheet-menu";
 
-import { StoreModal } from "@/app/storeAdmin/(root)/store-modal";
-
-import DropdownMessage from "@/components/dropdown-message";
+//import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
 import DropdownUser from "@/components/dropdown-user";
 
@@ -19,7 +17,6 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import { StoreLevel } from "@/types/enum";
 import Link from "next/link";
-import StoreSwitcher from "./store-switcher";
 
 interface StoreAdminNavbarProps {
 	store: Store;
@@ -68,11 +65,7 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
 			</div>
 
 			<div className="mx-4 flex h-14 items-center xs:mx-8">
-				<div className="flex items-center space-x-4 lg:space-x-0">
-					<StoreAdminSheetMenu store={store} />
-				</div>
-
-				<div className="flex items-center space-x-4 lg:pl-10">
+				<div className="flex items-center justify-end space-x-4 lg:pl-25">
 					<h1 className="grow text-center text-xl font-bold leading-tight tracking-tighter lg:leading-[1.1] text-nowrap">
 						<Link
 							className="flex items-center gap-1"
@@ -86,9 +79,6 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
 				</div>
 
 				<div className="flex flex-1 items-center justify-end space-x-2">
-					<StoreSwitcher />
-					<StoreModal />
-					{/* stpreModal is to create new store when switcher's create store is clicked */}
 					{/* level button */}
 					<Button variant="outline" size="sm">
 						<Link
@@ -103,8 +93,8 @@ export function StoreAdminNavbar({ store }: StoreAdminNavbarProps) {
 						</Link>
 					</Button>
 
-					{/*<!--  Hidden by default, but visible if screen is larger than 1024px --> */}
-					<div className="hidden md:block">
+					{/*<!-- hidden md:block Hidden by default, but visible if screen is larger than 1024px --> */}
+					<div className="">
 						<div className="flex flex-1 items-center justify-end space-x-1">
 							<ThemeToggler />
 							<DropdownNotification />

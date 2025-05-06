@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import Image from "next/image";
-import { GetMenuList } from "./menu-list";
+import { GetMenuList } from "../menu-list";
 
 interface MenuProps {
 	isOpen: boolean | undefined;

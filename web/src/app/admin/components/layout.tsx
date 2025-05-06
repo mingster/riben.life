@@ -1,7 +1,7 @@
 "use client";
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "./sidebar";
+import { AdminSidebar } from "./sidebar";
 import { AdminNavbar } from "./admin-navbar";
 import { AdminFooter } from "./admin-footer";
 
@@ -18,7 +18,7 @@ export default function AdminLayout({ defaultOpen, children }: props) {
 			<AdminNavbar title="" />
 			<div className="flex min-h-screen">
 				<SidebarProvider defaultOpen={defaultOpen}>
-					<AppSidebar />
+					<AdminSidebar />
 
 					<main className="flex-1 w-full overflow-auto pl-1">
 						<SidebarTrigger />

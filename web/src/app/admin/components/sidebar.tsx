@@ -46,36 +46,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-// Menu items.
-const items = [
-	{
-		title: "Home",
-		url: "#",
-		icon: Home,
-	},
-	{
-		title: "Inbox",
-		url: "#",
-		icon: Inbox,
-	},
-	{
-		title: "Calendar",
-		url: "#",
-		icon: Calendar,
-	},
-	{
-		title: "Search",
-		url: "#",
-		icon: Search,
-	},
-	{
-		title: "Settings",
-		url: "#",
-		icon: Settings,
-	},
-];
-
-export function AppSidebar() {
+export function AdminSidebar() {
 	const pathname = usePathname();
 	const menuList = GetMenuList(pathname);
 
