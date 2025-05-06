@@ -5,7 +5,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { checkAdminAccess } from "./admin-utils";
-import { AdminMockupContent } from "./components/admin-mockup-content";
+import { AdminDashboardContent } from "./components/admin-dashboard-content";
 
 //
 //
@@ -32,9 +32,9 @@ export default async function AdminPage() {
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<AdminMockupContent />
+			<AdminDashboardContent />
 
-			<div className="container relative pb-10">
+			<div className="container relative pl-10 pb-10">
 				<section className="mx-auto font-mono flex max-w-[980px] flex-col gap-2 py-8 md:py-12 md:pb-8 lg:py-24 lg:pb-6">
 					{countryCount === 0 ||
 						(currencyCount === 0 && (

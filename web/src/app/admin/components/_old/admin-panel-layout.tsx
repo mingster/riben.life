@@ -3,8 +3,8 @@
 import { useSidebarToggle } from "@/hooks/use-sidebar-toggle";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
-import { AdminFooter } from "./admin-footer";
-import { AdminNavbar } from "./admin-navbar";
+import { AdminFooter } from "../admin-footer";
+import { AdminNavbar } from "../admin-navbar";
 import { AdminSidebar } from "./admin-sidebar";
 
 export default function AdminPanelLayout({

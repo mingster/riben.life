@@ -11,20 +11,24 @@ interface props {
 }
 
 export default function AdminLayout({ defaultOpen, children }: props) {
+	/*<SidebarProvider style={{ "--sidebar-width": "240px", "--sidebar-width-icon": "56px" }} */
+
 	return (
-		<div className="">
-			{" "}
+		<>
 			<AdminNavbar title="" />
-			<SidebarProvider defaultOpen={defaultOpen}>
-				<AppSidebar />
-				<main>
-					<SidebarTrigger />
-					{children}
-				</main>
+			<div className="flex min-h-screen">
+				<SidebarProvider defaultOpen={defaultOpen}>
+					<AppSidebar />
+
+					<main className="flex-1 w-full overflow-auto pl-1">
+						<SidebarTrigger />
+						{children}
+					</main>
+				</SidebarProvider>
 				<footer>
 					<AdminFooter />
 				</footer>
-			</SidebarProvider>
-		</div>
+			</div>
+		</>
 	);
 }

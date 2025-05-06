@@ -8,7 +8,6 @@ import ThemeToggler from "@/components/theme-toggler";
 import { useScrollDirection } from "@/lib/use-scroll-direction";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { SheetMenu } from "./sheet-menu";
 
 interface NavbarProps {
 	title: string;
@@ -54,19 +53,14 @@ export function AdminNavbar({ title }: NavbarProps) {
 			</div>
 
 			<div className="mx-4 flex h-14 place-items-center sm:mx-8 justify-end space-x-2">
-				<div className="flex items-center space-x-4 lg:space-x-0">
-					<SheetMenu />
-				</div>
-
 				<div className="flex items-center space-x-4 lg:pl-70">
 					<h1 className="font-bold">{title}</h1>
 				</div>
 
-				{/*<!--  Hidden by default, but visible if screen is larger than 1024px --> */}
-				<div className="hidden md:block">
+				{/*<!--hidden md:block  Hidden by default, but visible if screen is larger than 1024px --> */}
+				<div className="">
 					<div className="flex flex-1 items-center justify-end space-x-1">
 						<ThemeToggler />
-						<DropdownNotification />
 						<DropdownUser user={user} />
 					</div>
 				</div>

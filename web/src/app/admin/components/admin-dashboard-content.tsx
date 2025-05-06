@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 
-export const AdminMockupContent = () => {
+export const AdminDashboardContent = () => {
 	const { toast } = useToast();
 
 	return (
@@ -47,11 +47,7 @@ export const AdminMockupContent = () => {
 						</Button>
 					</div>
 				</section>
-				<div className="relative flex w-full justify-center">
-					<p className="font-sans">The quick brown fox ...</p>
-					<p className="font-serif">The quick brown fox ...</p>
-					<p className="font-mono">The quick brown fox ...</p>
-				</div>
+				<div className="relative flex w-full justify-center"> </div>
 			</div>
 		</>
 	);
