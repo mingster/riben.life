@@ -1,15 +1,6 @@
 "use client";
 
-import {
-	Calendar,
-	ChevronDown,
-	ChevronUp,
-	Home,
-	Inbox,
-	LogOut,
-	Search,
-	Settings,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, LogOut } from "lucide-react";
 
 import {
 	DropdownMenu,
@@ -25,54 +16,42 @@ import {
 	SidebarGroupContent,
 	SidebarGroupLabel,
 	SidebarHeader,
-	SidebarInset,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarMenuSub,
 	SidebarMenuSubItem,
 	SidebarRail,
-	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { signOut } from "next-auth/react";
 
-import { usePathname } from "next/navigation";
-import { GetMenuList } from "./admin-menu-list";
+import { Button } from "@/components/ui/button";
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { GetMenuList } from "./admin-menu-list";
 
 export function AdminSidebar() {
 	const pathname = usePathname();
 	const menuList = GetMenuList(pathname);
 
 	return (
-		<Sidebar variant="sidebar" collapsible="icon">
+		<Sidebar collapsible="icon" variant="inset">
 			<SidebarHeader>
 				<SidebarMenu>
-					<SidebarMenuItem className="font-mono">
-						ADMIN
-						{/*                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <SidebarMenuButton className="font-mono">
-                                    Workspace
-                                    <ChevronDown className="ml-auto" />
-                                </SidebarMenuButton>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-[--radix-popper-anchor-width]">
-                                <DropdownMenuItem>
-                                    <span>Acme Inc</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                    <span>Acme Corp.</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
- */}
+					<SidebarMenuItem>
+						<SidebarMenuButton
+							asChild
+							className="data-[slot=sidebar-menu-button]:!p-1.5"
+						>
+							<a href="/admin">
+								<span className="text-base font-semibold">Admin</span>
+							</a>
+						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarHeader>

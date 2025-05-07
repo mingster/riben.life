@@ -116,9 +116,10 @@ export default async function RootLayout({
 
 	return (
 		<SessionWrapper session={session}>
-			<html lang="en">
+			<html lang="en" suppressHydrationWarning>
 				<body
-					className={`${popinsSans.variable} ${notoSans.variable} ${geistMono.variable} antialiased dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]`}
+					className={`${popinsSans.variable} ${notoSans.variable} ${geistMono.variable} 
+					bg-background overscroll-none font-sans antialiased dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]`}
 				>
 					<NextThemeProvider
 						attribute="class"
