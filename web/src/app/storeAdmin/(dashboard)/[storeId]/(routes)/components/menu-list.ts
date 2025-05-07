@@ -65,6 +65,7 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 	} as Menu;
 
 	return [
+		/*
 		{
 			groupLabel: "",
 			menus: [
@@ -77,6 +78,7 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 				},
 			],
 		},
+		*/
 
 		{
 			groupLabel: t("Sales"),
@@ -248,19 +250,6 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 					label: "QR Code",
 					active: pathname.includes(`${nav_prefix}/qrcode`),
 					icon: QrCode,
-					submenus: [],
-				},
-			],
-		},
-
-		{
-			groupLabel: t("Help"),
-			menus: [
-				{
-					href: `${nav_prefix}/help`,
-					label: t("QandA"),
-					active: pathname.includes(`${nav_prefix}/help`),
-					icon: FileQuestion,
 					submenus: [],
 				},
 			],

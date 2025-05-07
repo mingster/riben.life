@@ -36,6 +36,7 @@ export function GetMenuList(pathname: string): Group[] {
 	const nav_prefix = ADMIN_PATH;
 
 	return [
+		/*
 		{
 			groupLabel: "HOME",
 			menus: [
@@ -57,6 +58,11 @@ export function GetMenuList(pathname: string): Group[] {
 			menus: [],
 		},
 		{
+			groupLabel: "行銷推廣",
+			menus: [],
+		},
+		*/
+		{
 			groupLabel: "客戶",
 			menus: [
 				{
@@ -67,10 +73,6 @@ export function GetMenuList(pathname: string): Group[] {
 					submenus: [],
 				},
 			],
-		},
-		{
-			groupLabel: "行銷推廣",
-			menus: [],
 		},
 		{
 			groupLabel: "商店管理",

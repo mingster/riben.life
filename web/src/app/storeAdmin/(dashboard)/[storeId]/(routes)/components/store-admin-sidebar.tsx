@@ -1,14 +1,11 @@
 "use client";
 
 import {
-	Calendar,
 	ChevronDown,
 	ChevronUp,
-	Home,
-	Inbox,
+	FileQuestion,
+	HomeIcon,
 	LogOut,
-	Search,
-	Settings,
 } from "lucide-react";
 
 import {
@@ -25,14 +22,12 @@ import {
 	SidebarGroupContent,
 	SidebarGroupLabel,
 	SidebarHeader,
-	SidebarInset,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarMenuSub,
 	SidebarMenuSubItem,
 	SidebarRail,
-	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { signOut } from "next-auth/react";
 
@@ -48,20 +43,52 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GetMenuList } from "./menu-list";
 import StoreSwitcher from "./store-switcher";
+import { useI18n } from "@/providers/i18n-provider";
+import { useTranslation } from "@/app/i18n/client";
 
 interface prop {
 	store: Store;
 }
+
+//export function StoreAdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 export function StoreAdminSidebar({ store }: prop) {
 	//console.log('store', JSON.stringify(store));
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng, "storeAdmin");
 
 	const pathname = usePathname();
 	const menuList = GetMenuList(store, pathname);
 
+	/**
+	 
+		{
+			groupLabel: t("Help"),
+			menus: [
+				{
+					href: `${nav_prefix}/help`,
+					label: t("QandA"),
+					active: pathname.includes(`${nav_prefix}/help`),
+					icon: FileQuestion,
+					submenus: [],
+				},
+			],
+		},
+	 */
 	return (
-		<Sidebar variant="sidebar" collapsible="icon">
+		<Sidebar collapsible="icon" variant="inset">
 			<SidebarHeader>
 				<SidebarMenu>
+					<SidebarMenuItem>
+						<SidebarMenuButton
+							asChild
+							className="data-[slot=sidebar-menu-button]:!p-1.5"
+						>
+							<Link href="/siteAdmin">
+								<span className="text-base font-semibold">Store Admin</span>
+							</Link>
+						</SidebarMenuButton>
+					</SidebarMenuItem>
+
 					<SidebarMenuItem className="font-mono">
 						<StoreSwitcher />
 						<StoreModal />
@@ -147,13 +174,23 @@ export function StoreAdminSidebar({ store }: prop) {
 								side="top"
 								className="w-[--radix-popper-anchor-width]"
 							>
-								<DropdownMenuItem>
-									<span>
-										<Link href="/">HOME</Link>
-									</span>
+								<DropdownMenuItem asChild>
+									<Link
+										className="flex items-center gap-1"
+										title={t("back_to_store")}
+										href={`/${store.id}`}
+									>
+										<HomeIcon />
+										{store.name}
+									</Link>
 								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<span>MOCKUP</span>
+								<DropdownMenuItem asChild>
+									<div className="flex">
+										<FileQuestion />
+										<Link className="flex items-center gap-1" href={"/help"}>
+											{t("Help")}
+										</Link>
+									</div>
 								</DropdownMenuItem>
 								<DropdownMenuItem>
 									<Button
