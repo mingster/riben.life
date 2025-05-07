@@ -83,9 +83,9 @@ export function StoreAdminSidebar({ store }: prop) {
 							asChild
 							className="data-[slot=sidebar-menu-button]:!p-1.5"
 						>
-							<a href="/siteAdmin">
+							<Link href="/siteAdmin">
 								<span className="text-base font-semibold">Store Admin</span>
-							</a>
+							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 

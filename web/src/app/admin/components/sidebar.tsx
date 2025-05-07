@@ -48,9 +48,9 @@ export function AdminSidebar() {
 							asChild
 							className="data-[slot=sidebar-menu-button]:!p-1.5"
 						>
-							<a href="/admin">
+							<Link href="/admin">
 								<span className="text-base font-semibold">Admin</span>
-							</a>
+							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
