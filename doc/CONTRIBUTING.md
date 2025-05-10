@@ -48,17 +48,30 @@ In your PR's description you should follow the structure:
 
 We highly encourage that you do a self-review prior to requesting a review. To do a self review click the review button in the top right corner, go through your code and annotate your changes. This makes it easier for the reviewer to process your PR.
 
+#### Commit message
+
+  | command       | description                                     |  
+  | :------------ | :---------------------------------------------- |
+  | feat          | 新增/修改功能 (Feature)                           |
+  | fix           | 修正 Bug (bug fix)                              |
+  | docs          | 修改/新增文件 (documentation)                     |
+  | style         | 修改程式碼格式或風格，不影響原有運作，例如 ESLint)     |
+  | refactor      | 重構 or 優化，不屬於 bug 也不屬於新增功能等           |
+  | test          | 增加測試功能 (when adding missing tests)          |
+  | chore         | 增加或修改第三方套件(輔助工具)等 (maintain)          | 
+
 #### Pull Request (PR) Checklist
 
 - Type of PR: Indicate the type of PR by adding a label in square brackets at the beginning of the title, such as
 
   | command       | example                                         |
   | :------------ | :---------------------------------------------- |
-  | [Fix]      | [fix]-restore the missing pizza-12345        |
-  | [Feature]     | [feat]-add a new pizza-12346                 |
+  | [Fix]         | [fix]-restore the missing pizza-12345           |
+  | [Feature]     | [feat]-add a new pizza-12346                    |
   | [Enhancement] | [enhancement]-add new topping to pizza #1-12347 |
   | [Refactor]    | [refactor]-move cheese to the top-12348         |
-  | [Doc]         | [docs]-writeup recipe for #1-12349               |
+  | [Doc]         | [docs]-writeup recipe for #1-12349              |
+  
 
 - Short Description: Provide a brief, informative description of the PR that explains the changes made.
 - Issue(s) Linked: Mention any related issue(s) by using the keyword Fixes or Closes followed by the respective issue number(s) (e.g., Fixes #123, Closes #456).
