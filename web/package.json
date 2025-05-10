@@ -14,6 +14,7 @@
 		"sql:generate": "npx prisma generate",
 		"sql:dbpush": "npx prisma db push --schema prisma/schema.prisma",
 		"depcheck": "npx depcheck .",
+		"precommit": "lint-staged",
 		"commit": "clear && npx git-cz",
 		"lint_old": "next lint; eslint --fix \"**/*.{js,jsx,ts,tsx}\""
 	},
@@ -113,6 +114,8 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
+		"@commitlint/cli": "^19.8.1",
+		"@commitlint/config-conventional": "^19.8.1",
 		"@eslint/eslintrc": "^3.3.1",
 		"@eslint/js": "^9.26.0",
 		"@prisma/extension-optimize": "^1.1.8",
@@ -136,11 +139,31 @@
 		"eslint-plugin-promise": "^7.2.1",
 		"eslint-plugin-react": "^7.37.5",
 		"git-cz": "^4.9.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^15.5.2",
 		"postcss": "^8.5.3",
 		"prisma": "^6.7.0",
 		"tailwindcss": "^4.1.6",
 		"tw-animate-css": "^1.2.9",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.32.0"
+	},
+	"husky": {
+		"hooks": {
+			"commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+			"pre-commit": "lint-staged"
+		}
+	},
+	"lint-staged": {
+		"**/*.{js,jsx,ts,tsx}": [
+			"prettier --config .prettierrc --write",
+			"eslint --fix \"**/*.{js,jsx,ts,tsx}\"",
+			"eslint \"**/*.{js,jsx,ts,tsx}\""
+		]
+	},
+	"commitlint": {
+		"extends": [
+			"@commitlint/config-conventional"
+		]
 	}
 }
