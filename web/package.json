@@ -16,7 +16,7 @@
 		"depcheck": "npx depcheck .",
 		"precommit": "lint-staged",
 		"commit": "clear && npx git-cz",
-		"lint_old": "next lint; eslint --fix \"**/*.{js,jsx,ts,tsx}\""
+		"lint_old": "next lint; eslint --fix \"./src/**/*.{js,jsx,ts,tsx}\""
 	},
 	"dependencies": {
 		"@auth/prisma-adapter": "^2.9.1",
@@ -104,7 +104,7 @@
 		"sonner": "^2.0.3",
 		"stripe": "^18.1.0",
 		"swr": "^2.3.3",
-		"tailwind-merge": "^3.2.0",
+		"tailwind-merge": "^3.3.0",
 		"task-master-ai": "^0.13.2",
 		"typewriter-effect": "^2.22.0",
 		"uuid": "^11.1.0",
