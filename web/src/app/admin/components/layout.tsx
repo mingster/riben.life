@@ -1,11 +1,11 @@
 "use client";
 
-import { AdminSidebar } from "./sidebar";
 import {
 	SidebarInset,
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { AdminSidebar } from "./sidebar";
 
 import DropdownUser from "@/components/dropdown-user";
 import ThemeToggler from "@/components/theme-toggler";
