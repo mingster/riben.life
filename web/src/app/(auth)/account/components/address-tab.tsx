@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import logger from "@/lib/logger";
+import logger from "@/utils/logger";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Address } from "@prisma/client";
 import { Plus } from "lucide-react";

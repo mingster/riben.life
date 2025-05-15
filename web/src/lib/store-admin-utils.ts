@@ -1,7 +1,7 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import { GetSession } from "@/lib/auth/utils";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 

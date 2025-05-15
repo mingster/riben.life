@@ -3,7 +3,7 @@
 import getUser from "@/actions/get-user";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import logger from "@/lib/logger";
+import logger from "@/utils/logger";
 import type { User } from "@/types";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";

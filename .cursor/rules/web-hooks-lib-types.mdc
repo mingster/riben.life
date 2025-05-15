@@ -1,0 +1,27 @@
+---
+description: 
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+---
+description: Hooks, Lib, and Types Directories
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+
+# Hooks, Lib, and Types Directories
+
+## [src/hooks](mdc:web/src/hooks)
+Contains custom React hooks for state management and logic reuse. Example: [use-cart.tsx](mdc:web/src/hooks/use-cart.tsx) manages cart state.
+
+## [src/lib](mdc:web/src/lib)
+Utility libraries and integrations:
+- [utils.ts](mdc:web/src/lib/utils.ts): General utility functions.
+- [stripe](mdc:web/src/lib/stripe): Stripe payment integration.
+- [linepay](mdc:web/src/lib/linepay): Line Pay integration.
+- [auth](mdc:web/src/lib/auth): Authentication helpers.
+- [businessHours](mdc:web/src/lib/businessHours): Business hours logic.
+- [useTwZipCode2](mdc:web/src/lib/useTwZipCode2): Taiwanese zip code utilities.
+
+## [src/types](mdc:web/src/types)
+Shared TypeScript type definitions for the app. Example: [enum.ts](mdc:web/src/types/enum.ts) contains enums used throughout the codebase.

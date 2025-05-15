@@ -2,14 +2,14 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import BusinessHours from "@/lib/businessHours";
 
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { StoreHomeContent } from "./components/store-home-content";
 
 import getStoreWithProducts from "@/actions/get-store-with-products";
-import logger from "@/lib/logger";
+import logger from "@/utils/logger";
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreSettings } from "@prisma/client";
 import { formatDate } from "date-fns";

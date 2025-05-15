@@ -3,7 +3,7 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
 
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Store } from "@/types";
 import type { StoreTables } from "@prisma/client";
 

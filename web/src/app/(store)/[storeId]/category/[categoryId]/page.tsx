@@ -6,7 +6,7 @@ import { Suspense } from "react";
 //import { Metadata } from 'next';
 
 import { useTranslation } from "@/app/i18n";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Store } from "@/types";
 import { Client } from "./client";
 

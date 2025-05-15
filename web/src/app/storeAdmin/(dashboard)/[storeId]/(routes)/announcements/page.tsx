@@ -2,7 +2,7 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/utils/utils";
 import type { Store, StoreAnnouncement } from "@prisma/client";
 import { Suspense } from "react";
 import type { MessageColumn } from "./components/columns";

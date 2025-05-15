@@ -1,0 +1,19 @@
+---
+description: 
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+---
+description: Prisma Directory Guide
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+
+# Prisma Directory Guide
+
+The [prisma](mdc:web/prisma) directory contains database-related files for the web app.
+
+- **[schema.prisma](mdc:web/prisma/schema.prisma)**: Main Prisma schema file defining the database models and relations.
+- **[views](mdc:web/prisma/views)**: Contains SQL view definitions (e.g., [orderItemView.sql](mdc:web/prisma/views/orderItemView.sql)) and documentation ([README.md](mdc:web/prisma/views/README.md)).
+
+Use these files to manage and extend the database structure.

@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { getNowTimeInTz, getUtcNow } from "@/lib/utils";
+import { getNowTimeInTz, getUtcNow } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../api_helper";
 

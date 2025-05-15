@@ -1,6 +1,6 @@
 import MarkAsPaid from "@/actions/storeAdmin/mark-order-as-paid";
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
-import logger from "@/lib/logger";
+import logger from "@/utils/logger";
 import { NextResponse } from "next/server";
 
 ///!SECTION mark order as paid

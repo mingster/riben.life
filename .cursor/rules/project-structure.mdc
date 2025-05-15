@@ -1,0 +1,71 @@
+---
+description: Project structure and file organization guidelines
+globs: 
+alwaysApply: false
+---
+# Project Structure
+
+## Main Structure
+
+- We use Turborepo with pnpm workspaces
+- Main app is in `web/src`
+- Server actions are in `web/src/actions` folder
+
+```tree
+.
+├── root
+│   ├── .cursor/               # cursor related such rules / features doc
+│   ├── asset/                 # 
+│   ├── bin/                   # cli / shell scripts 
+│   ├── doc/                   # documentation 
+│   ├── web/                   # Main Next.js application
+│   │   ├── public/            # Static assets (images, fonts)
+│   │   ├── prisma/            # Prisma schema and client
+│   │   ├── src/               # Next.js App Router
+│   │   │   ├── actions/       # server actions
+│   │   │   ├── app/           # Next.js App Router
+│   │   │   │   ├── (auth)     # contain user authenicated content such as My Account
+│   │   │   │   ├── (root)     # Marketing/landing pages and other public accessible pages
+│   │   │   │   ├── (store)    # store homepage by storeId.
+│   │   │   │   ├── admin      # admin home (required admin priv.)
+│   │   │   │   ├── api/       # API Routes
+│   │   │   │   ├── storeAdmin # store admin routes for store owners.
+│   │   │   ├── components/    # UI components
+│   │   │   ├── hooks/         # Custom React hooks
+│   │   │   ├── lib/           # helper functions and libraries
+│   │   │   ├── providers/     # React Context providers
+│   │   │   ├── types/         # TypeScript type definitions
+│   │   │   ├── utils/         # Utility functions and helpers
+│   │   │   ├── auth.ts        # next-auth configuration
+│   │   ├── next.config.mjs
+│   │   ├── package.json
+│   │   └── ... (config files)
+│   └── README.md              # 
+```
+
+## File Naming and Organization
+
+- Use kebab case for route directories (e.g., `api/hello-world/route`)
+- Use PascalCase for components (e.g. `components/Button.tsx`)
+- Shadcn components are in `components/ui`
+- All other components are in `components/`
+- Colocate files in the folder where they're used unless they can be used across the app
+- If a component can be used in many places, place it in the `components` folder
+
+## New Pages
+
+- Create new pages at: `web/src/app/(root)/PAGE_NAME/page.tsx`
+- Components for the page are either in `page.tsx` or in the `web/src/app/(root)/PAGE_NAME/components` folder
+- Pages are Server components for direct data loading
+- Use `swr` for data fetching in deeply nested components
+- Components with `onClick` must be client components with `use client` directive
+- Server action files must start with `use server`
+
+## Utility Functions
+
+- Create utility functions in `utils/` folder for reusable logic
+- Use lodash utilities for common operations (arrays, objects, strings)
+- Import specific lodash functions to minimize bundle size:
+  ```ts
+  import groupBy from "lodash/groupBy";
+  ```

@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { getNowTimeInTz, getUtcNow } from "@/lib/utils";
+import { getNowTimeInTz, getUtcNow } from "@/utils/utils";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import getOrderById from "../get-order-by_id";

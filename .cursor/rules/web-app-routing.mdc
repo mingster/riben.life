@@ -1,0 +1,21 @@
+---
+description: 
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+---
+description: App Directory & Routing
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+
+# App Directory & Routing
+
+The [src/app](mdc:web/src/app) directory implements the Next.js App Router structure.
+
+- **[layout.tsx](mdc:web/src/app/layout.tsx)**: Root layout for all pages.
+- **[page.tsx](mdc:web/src/app/page.tsx)**: Main entry point for the homepage (if present).
+- **Subfolders**: Organize routes and features (e.g., [admin](mdc:web/src/app/admin), [api](mdc:web/src/app/api), [(auth)](mdc:web/src/app/(auth)), [storeAdmin](mdc:web/src/app/storeAdmin)).
+- **Nested Routing**: Each folder can have its own `page.tsx` and `layout.tsx` for nested routes and layouts.
+
+See [Next.js App Router documentation](mdc:https:/nextjs.org/docs/app/building-your-application/routing) for more details.

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const useOrigin = (): string => {
 	const [origin, setOrigin] = useState<string>("");

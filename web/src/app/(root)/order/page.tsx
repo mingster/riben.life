@@ -3,7 +3,7 @@ import { Navbar } from "@/components/global-navbar";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Store } from "@/types";
 import { Suspense } from "react";
 import { DisplayStoreOrdersToday } from "./display-order-today";

@@ -8,7 +8,7 @@ import { ProductCard } from "@/components/product-card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import { type Item, useCart } from "@/hooks/use-cart";
-import { cn, getAbsoluteUrl } from "@/lib/utils";
+import { cn, getAbsoluteUrl } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Category,

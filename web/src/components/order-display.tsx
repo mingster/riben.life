@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { useRouter } from "next/navigation";
 
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/utils/utils";
 import type { StoreOrder } from "@/types";
 import type { orderitemview } from "@prisma/client";
 import Currency from "./currency";

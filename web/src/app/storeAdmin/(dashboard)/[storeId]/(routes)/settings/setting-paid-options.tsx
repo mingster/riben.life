@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { deleteImage, uploadImage } from "@/lib/utils";
+import { deleteImage, uploadImage } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import { XCircleIcon } from "lucide-react";
 import { RequiredProVersion } from "../components/require-pro-version";

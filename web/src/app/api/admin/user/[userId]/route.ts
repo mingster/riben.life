@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-import { getUtcNow } from "@/lib/utils";
+import { getUtcNow } from "@/utils/utils";
 import { CheckAdminApiAccess } from "../../api_helper";
 
 ///!SECTION update user in database.

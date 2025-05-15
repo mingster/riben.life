@@ -10,7 +10,7 @@ import type { TicketColumn } from "./components/columns";
 import { TicketClient } from "./components/ticket-client";
 
 import { auth } from "@/auth";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/utils/utils";
 import type { Session } from "next-auth";
 
 type Params = Promise<{ storeId: string }>;

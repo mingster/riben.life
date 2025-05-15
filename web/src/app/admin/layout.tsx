@@ -1,8 +1,8 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { checkAdminAccess } from "./admin-utils";
 //import AdminPanelLayout from "./components/_old/admin-panel-layout";
 import AdminLayout from "./components/layout";
-import { cookies } from "next/headers";
 
 export default async function AdminDashboardLayout({
 	children,

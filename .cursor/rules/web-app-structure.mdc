@@ -1,0 +1,31 @@
+---
+description: 
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+---
+description: Web App Structure (Next.js)
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+
+# Web App Structure (Next.js)
+
+The main web application is located in the [web](mdc:web) directory. It is a [Next.js](mdc:https:/nextjs.org) project bootstrapped with `create-next-app`.
+
+## Key Folders and Files
+- **[src/app](mdc:web/src/app)**: Contains the main application routes and layout files. The entry point for the main page is [page.tsx](mdc:web/src/app/page.tsx) (if present).
+- **[src/components](mdc:web/src/components)**: Houses reusable UI components, including subfolders for `ui`, `modals`, `editor`, and `oauth` components.
+- **[src/hooks](mdc:web/src/hooks)**: Custom React hooks for state and logic reuse.
+- **[src/lib](mdc:web/src/lib)**: Utility libraries and integrations (e.g., Stripe, Line Pay, authentication, business hours, Taiwanese zip code logic).
+- **[src/types](mdc:web/src/types)**: Shared TypeScript type definitions.
+- **[public](mdc:web/public)**: Static assets such as images and favicons.
+- **[prisma](mdc:web/prisma)**: Database schema ([schema.prisma](mdc:web/prisma/schema.prisma)) and SQL views ([views](mdc:web/prisma/views)).
+
+## Configuration
+- **[package.json](mdc:web/package.json)**: Project dependencies and scripts.
+- **[next.config.ts](mdc:web/next.config.ts)**: Next.js configuration.
+- **[tsconfig.json](mdc:web/tsconfig.json)**: TypeScript configuration.
+- **[README.md](mdc:web/README.md)**: Project overview and getting started instructions.
+
+See also: [Project Structure Guide](mdc:web/README.md)

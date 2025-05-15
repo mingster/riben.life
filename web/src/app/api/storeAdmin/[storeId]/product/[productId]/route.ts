@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow, transformDecimalsToNumbers } from "@/lib/utils";
+import { getUtcNow, transformDecimalsToNumbers } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 

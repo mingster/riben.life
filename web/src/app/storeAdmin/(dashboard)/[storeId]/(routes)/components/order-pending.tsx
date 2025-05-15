@@ -19,7 +19,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { formatDateTime, getDateInTz } from "@/lib/utils";
+import { formatDateTime, getDateInTz } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
 //import type { StoreOrder } from "@/types";

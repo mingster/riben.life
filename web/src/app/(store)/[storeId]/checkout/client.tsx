@@ -44,7 +44,7 @@ import axios, { type AxiosError } from "axios";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { saveOrderToLocal } from "@/lib/order-history";
-import { getRandomNum } from "@/lib/utils";
+import { getRandomNum } from "@/utils/utils";
 
 type props = {
 	store: Store;

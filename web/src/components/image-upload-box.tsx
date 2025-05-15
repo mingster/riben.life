@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import { BoxSelect } from "lucide-react";
 import Image from "next/image";
 import type React from "react";

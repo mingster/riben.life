@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/sidebar";
 import { signOut } from "next-auth/react";
 
+import { useTranslation } from "@/app/i18n/client";
 import { StoreModal } from "@/app/storeAdmin/(root)/store-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,13 +39,12 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GetMenuList } from "./menu-list";
 import StoreSwitcher from "./store-switcher";
-import { useI18n } from "@/providers/i18n-provider";
-import { useTranslation } from "@/app/i18n/client";
 
 interface prop {
 	store: Store;

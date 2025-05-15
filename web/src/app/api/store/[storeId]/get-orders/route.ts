@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreOrder } from "@prisma/client";
 import type { Session } from "next-auth";
 import { revalidatePath } from "next/cache";

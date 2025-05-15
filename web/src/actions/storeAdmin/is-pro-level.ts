@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/lib/utils";
+import { getUtcNow } from "@/utils/utils";
 import { StoreLevel } from "@/types/enum";
 import type { Store } from "@prisma/client";
 

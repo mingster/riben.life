@@ -1,0 +1,27 @@
+---
+description: 
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+---
+description: Components Directory Guide
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+
+# Components Directory Guide
+
+The [src/components](mdc:web/src/components) directory contains reusable UI and logic components for the web app.
+
+## Subfolders
+- **[ui](mdc:web/src/components/ui)**: Shared UI elements (e.g., [button.tsx](mdc:web/src/components/ui/button.tsx), [modal.tsx](mdc:web/src/components/ui/modal.tsx), [sidebar.tsx](mdc:web/src/components/ui/sidebar.tsx)).
+- **[modals](mdc:web/src/components/modals)**: Modal dialog components (e.g., [alert-modal.tsx](mdc:web/src/components/modals/alert-modal.tsx)).
+- **[editor](mdc:web/src/components/editor)**: Editor-related components (e.g., [EditorComponent.tsx](mdc:web/src/components/editor/EditorComponent.tsx)).
+- **[oauth](mdc:web/src/components/oauth)**: OAuth login components (e.g., [GoogleLoginButton.tsx](mdc:web/src/components/oauth/GoogleLoginButton.tsx)).
+
+## Example Components
+- [product-option-dialog.tsx](mdc:web/src/components/product-option-dialog.tsx): Product option selection dialog.
+- [cart-item-info.tsx](mdc:web/src/components/cart-item-info.tsx): Displays information about a cart item.
+- [global-navbar.tsx](mdc:web/src/components/global-navbar.tsx): Main navigation bar.
+
+For a full list, see the [components directory](mdc:web/src/components).

@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type {
 	Store,
 	StorePaymentMethodMapping,

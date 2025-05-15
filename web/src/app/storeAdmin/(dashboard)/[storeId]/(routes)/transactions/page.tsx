@@ -3,7 +3,7 @@ import Container from "@/components/ui/container";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
 
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Store, StoreOrder } from "@/types";
 import { format } from "date-fns";
 import type { StoreOrderColumn } from "./components/columns";

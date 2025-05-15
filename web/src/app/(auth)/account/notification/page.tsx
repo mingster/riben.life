@@ -7,7 +7,7 @@ import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/utils/utils";
 import type { User } from "@/types";
 import { MessageCircleMore } from "lucide-react";
 import type { Metadata } from "next";

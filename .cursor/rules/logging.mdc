@@ -1,0 +1,27 @@
+---
+description: How to do backend logging
+globs: 
+alwaysApply: false
+---
+# Logging
+
+We use `logger` to do logging:
+
+```typescript
+import logger from "@/utils/logger";
+
+const user = (await getUser()) as User;
+logger.info(user);
+```
+
+Typically this will be added at the top of a file.
+If we have a large function that reuses multiple variables we can do this within a function:
+
+```typescript
+import logger from "@/utils/logger";
+
+// Can now call without passing userId:
+logger.log("Created rule");
+```
+
+Don't use `.with()` for a global logger. Only use within a specific function.
