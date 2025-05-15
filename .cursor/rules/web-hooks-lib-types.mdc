@@ -1,8 +1,14 @@
 ---
-description:
-globs:
+description: 
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
 alwaysApply: false
 ---
+---
+description: Hooks, Lib, and Types Directories
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+
 # Hooks, Lib, and Types Directories
 
 ## [src/hooks](mdc:web/src/hooks)

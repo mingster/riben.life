@@ -1,11 +1,17 @@
 ---
-description:
-globs:
+description: 
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
 alwaysApply: false
 ---
+---
+description: Web App Structure (Next.js)
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+
 # Web App Structure (Next.js)
 
-The main web application is located in the [web](mdc:web) directory. It is a [Next.js](https://nextjs.org) project bootstrapped with `create-next-app`.
+The main web application is located in the [web](mdc:web) directory. It is a [Next.js](mdc:https:/nextjs.org) project bootstrapped with `create-next-app`.
 
 ## Key Folders and Files
 - **[src/app](mdc:web/src/app)**: Contains the main application routes and layout files. The entry point for the main page is [page.tsx](mdc:web/src/app/page.tsx) (if present).

@@ -1,8 +1,14 @@
 ---
-description:
-globs:
+description: 
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
 alwaysApply: false
 ---
+---
+description: Components Directory Guide
+globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
+alwaysApply: false
+---
+
 # Components Directory Guide
 
 The [src/components](mdc:web/src/components) directory contains reusable UI and logic components for the web app.
