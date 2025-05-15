@@ -9,7 +9,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import type { User } from "@/types";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 
 import { cookieName, languages } from "@/app/i18n/settings";
 import { useCookies } from "next-client-cookies";
@@ -38,16 +38,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import axios from "axios";
 import { useState } from "react";
 import { z } from "zod";
 
-export const userFormSchema = z.object({
-	name: z.string().min(1, { message: "name is required" }),
-	locale: z.string().min(1, { message: "locale is required" }),
-});
-
-export type userFormValues = z.infer<typeof userFormSchema>;
+import {
+	updateUserSettingsSchema,
+	UpdateUserSettingsInput,
+} from "@/actions/update-user-settings.validation";
+import { updateUserSettingsAction } from "@/actions/update-user-settings";
 
 interface SettingsPageProps {
 	user: User | null | undefined;
@@ -59,60 +57,36 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 
 	const { i18n } = useTranslation();
 	const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
-	//const session = useSession();
-
 	const cookies = useCookies();
-
-	//console.log(`activeLng: ${activeLng}`);
 	const { t } = useTranslation(activeLng);
 
 	const defaultValues = user
 		? {
-				...user,
+				name: user.name || "",
+				locale: user.locale || "",
 			}
-		: {};
+		: { name: "", locale: "" };
 
-	const form = useForm<userFormValues>({
-		resolver: zodResolver(userFormSchema),
+	const form = useForm<UpdateUserSettingsInput>({
+		resolver: zodResolver(updateUserSettingsSchema),
 		defaultValues,
 		mode: "onChange",
 	});
 
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		clearErrors,
-	} = useForm<userFormValues>();
+	if (user === null || user === undefined) return null;
 
-	if (user === null || user === undefined) return;
-
-	//console.log(`user: ${JSON.stringify(user)}`);
-
-	async function onSubmit(data: userFormValues) {
-		//try {
-
+	async function onSubmit(data: UpdateUserSettingsInput) {
 		setLoading(true);
-		//console.log(`onSubmit: ${JSON.stringify(data)}`);
-		await axios.patch(
-			`${process.env.NEXT_PUBLIC_API_URL}/auth/account/update-settings`,
-			data,
-		);
-
-		//await updateProfile(data);
-		toast({ variant: "success", description: "Profile updated." });
-
-		handleChangeLanguage(data.locale);
-
-		//session.update();
-		/*
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        description: "An error occurred. Please try again.",
-      });
-    }*/
-
+		const result = await updateUserSettingsAction(data);
+		if (result?.serverError) {
+			toast({
+				variant: "destructive",
+				description: result.serverError,
+			});
+		} else {
+			toast({ variant: "success", description: "Profile updated." });
+			handleChangeLanguage(data.locale);
+		}
 		setLoading(false);
 	}
 
@@ -120,7 +94,6 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 		i18n.changeLanguage(lng);
 		setActiveLng(lng);
 		cookies.set(cookieName, lng, { path: "/" });
-
 		console.log("activeLng set to: ", lng);
 	};
 
@@ -133,10 +106,8 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 				</CardHeader>
 				<CardContent className="space-y-2">
 					{t("account_tab_currentAcct")} {user.email}
-					{
-						// if user doesn't have email, show its userid
-						!user.email && user.id
-					}
+					{/* if user doesn't have email, show its userid */}
+					{!user.email && user.id}
 					&nbsp;&nbsp;
 					<Button variant="secondary" onClick={() => signOut()}>
 						{t("account_tab_signout")}
@@ -179,7 +150,6 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 													<SelectTrigger>
 														<SelectValue placeholder="Select a default locale" />
 													</SelectTrigger>
-
 													<SelectContent>
 														<LocaleSelectItems />
 													</SelectContent>

@@ -3,11 +3,12 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
-import { getUtcNow } from "@/lib/utils";
+import { getUtcNow } from "@/utils/utils";
 import type { Session } from "next-auth";
 
 ///!SECTION update user data on user's own behave.
 export async function PATCH(req: Request) {
+	/*
 	try {
 		const session = (await auth()) as Session;
 		const userId = session?.user.id;
@@ -32,4 +33,6 @@ export async function PATCH(req: Request) {
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
+		*/
+	return new NextResponse("dedicated", { status: 500 });
 }

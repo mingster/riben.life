@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader } from "@/components/ui/loader";
-import { getHostname } from "@/lib/utils";
+import { getHostname } from "@/utils/utils";
 import type { Store } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

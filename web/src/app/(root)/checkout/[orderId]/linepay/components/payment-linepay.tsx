@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { createLinePayClient } from "@/lib/linepay";
 import type { LinePayClient } from "@/lib/linepay/type";
-import { getAbsoluteUrl } from "@/lib/utils";
+import { getAbsoluteUrl } from "@/utils/utils";
 import type { StoreOrder } from "@/types";
 import { useQRCode } from "next-qrcode";
 import { useRouter } from "next/navigation";

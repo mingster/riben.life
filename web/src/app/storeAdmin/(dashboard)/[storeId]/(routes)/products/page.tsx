@@ -2,7 +2,7 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
-import { formatDateTime, transformDecimalsToNumbers } from "@/lib/utils";
+import { formatDateTime, transformDecimalsToNumbers } from "@/utils/utils";
 import type { Product } from "@/types";
 import type { Store } from "@prisma/client";
 import { Suspense } from "react";

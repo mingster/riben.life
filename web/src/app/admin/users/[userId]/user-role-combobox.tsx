@@ -15,7 +15,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 
-import { getEnumKeys } from "@/lib/utils";
+import { getEnumKeys } from "@/utils/utils";
 import { Role } from "@prisma/client";
 
 import { useState } from "react";

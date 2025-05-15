@@ -1,6 +1,6 @@
 //import { globalStyle } from '@/global-style';
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 
 interface ContainerProps {
 	children: React.ReactNode;

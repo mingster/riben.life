@@ -11,7 +11,7 @@ import { updateStoreDefaultPayMethods } from "@/actions/admin/updateStoreDefault
 
 import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
-import logger from "@/lib/logger";
+import logger from "@/utils/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import type { PlatformSettings } from "@prisma/client";

@@ -38,7 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import type { ProductAttribute } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
 import { CalendarIcon } from "lucide-react";

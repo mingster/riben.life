@@ -4,7 +4,7 @@ import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { getAbsoluteUrl } from "@/lib/utils";
+import { getAbsoluteUrl } from "@/utils/utils";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

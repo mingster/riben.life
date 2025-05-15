@@ -1,6 +1,6 @@
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Product, StoreWithProducts } from "@/types";
 import { redirect } from "next/navigation";
 import { Client } from "./client";

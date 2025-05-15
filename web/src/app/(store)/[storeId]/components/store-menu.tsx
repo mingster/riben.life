@@ -9,7 +9,7 @@ import {
 import { Ellipsis } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 
 import { CollapseMenuButton } from "@/components/collapse-menu-button";
 import { Button } from "@/components/ui/button";

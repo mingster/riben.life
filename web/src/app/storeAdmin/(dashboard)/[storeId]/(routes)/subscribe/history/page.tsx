@@ -1,9 +1,9 @@
 import { Loader } from "@/components/ui/loader";
-import logger from "@/lib/logger";
+import logger from "@/utils/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
 import { stripe } from "@/lib/stripe/config";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Store } from "@/types";
 import { SubscriptionStatus } from "@/types/enum";
 import { Suspense } from "react";

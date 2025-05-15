@@ -1,6 +1,6 @@
 "use client";
 import { useToast } from "@/components/ui/use-toast";
-import { cn, formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime } from "@/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useTranslation } from "@/app/i18n/client";

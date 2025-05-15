@@ -1,6 +1,6 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
-import { getNowTimeInTz, getUtcNow } from "@/lib/utils";
+import { getNowTimeInTz, getUtcNow } from "@/utils/utils";
 import { OrderStatus } from "@/types/enum";
 import { NextResponse } from "next/server";
 

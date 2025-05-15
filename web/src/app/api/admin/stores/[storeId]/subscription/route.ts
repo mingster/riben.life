@@ -1,6 +1,6 @@
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/lib/utils";
+import { getUtcNow } from "@/utils/utils";
 import type { Subscription } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../../api_helper";

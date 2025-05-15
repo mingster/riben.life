@@ -2,7 +2,7 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import BusinessHours from "@/lib/businessHours";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreSettings, StoreTables } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

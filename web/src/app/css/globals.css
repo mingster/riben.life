@@ -28,7 +28,7 @@ a:hover {
 @theme inline {
 	--text-3xl: 2rem; /* 32px */
 	--text-7xl: 4rem; /* 64px */
-	--text-xxs: 0.625rem; 
+	--text-xxs: 0.625rem;
 
 	--default-font-family: var(--font-sans);
 

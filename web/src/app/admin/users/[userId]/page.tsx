@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Account, Session, StoreOrder } from "@prisma/client";
 //import { Role } from "@/types/enum";
 import type { Role } from "@prisma/client";

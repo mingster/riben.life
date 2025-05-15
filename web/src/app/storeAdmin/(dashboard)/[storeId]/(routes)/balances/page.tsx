@@ -2,7 +2,7 @@ import Container from "@/components/ui/container";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
 
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Store } from "@/types";
 import type { StoreLedger } from "@prisma/client";
 import { format } from "date-fns";

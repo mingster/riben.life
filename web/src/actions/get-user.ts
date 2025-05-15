@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { getDateInTz, transformDecimalsToNumbers } from "@/lib/utils";
+import { getDateInTz, transformDecimalsToNumbers } from "@/utils/utils";
 //import { User } from 'prisma/prisma-client';
 import type { StoreOrder, User } from "@/types";
 import type { StoreTables } from "@prisma/client";

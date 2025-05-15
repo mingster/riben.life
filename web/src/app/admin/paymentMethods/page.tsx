@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { formatDateTime, transformDecimalsToNumbers } from "@/lib/utils";
+import { formatDateTime, transformDecimalsToNumbers } from "@/utils/utils";
 import { Suspense } from "react";
 import { checkAdminAccess } from "../admin-utils";
 import type { DataColumn } from "./components/columns";

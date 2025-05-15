@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import Stripe from "stripe";
 
-import { formatDateTime, getUtcNow } from "@/lib/utils";
+import { formatDateTime, getUtcNow } from "@/utils/utils";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 
 //NOTE - confirm subscription Payment.

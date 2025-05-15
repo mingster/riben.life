@@ -19,7 +19,7 @@ import { z } from "zod";
 
 import { Input } from "@/components/ui/input";
 
-import logger from "@/lib/logger";
+import logger from "@/utils/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
 import { CheckIcon, Minus, Undo2Icon } from "lucide-react";

@@ -9,7 +9,7 @@ import { StoreFooter } from "./components/store-footer";
 import { StoreNavbar } from "./components/store-navbar";
 
 import BusinessHours from "@/lib/businessHours";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreSettings } from "@prisma/client";
 import type { Metadata, ResolvingMetadata } from "next";
 import { redirect } from "next/navigation";

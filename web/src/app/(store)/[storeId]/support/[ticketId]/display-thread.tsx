@@ -17,7 +17,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { SupportTicket } from "@/types";
 import { TicketStatus } from "@/types/enum";

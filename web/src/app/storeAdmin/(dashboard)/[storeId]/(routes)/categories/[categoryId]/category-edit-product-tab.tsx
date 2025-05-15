@@ -19,7 +19,7 @@ import { t } from "i18next";
 
 import Currency from "@/components/currency";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/utils/utils";
 import { ProductStatuses } from "@/types/enum";
 import Link from "next/link";
 

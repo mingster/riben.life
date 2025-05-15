@@ -2,7 +2,7 @@ import getStoreWithCategories from "@/actions/get-store";
 import getUser from "@/actions/get-user";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Store } from "@/types";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

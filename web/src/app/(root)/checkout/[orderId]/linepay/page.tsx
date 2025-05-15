@@ -13,7 +13,7 @@ import {
 } from "@/lib/linepay";
 import type { LinePayClient } from "@/lib/linepay/type";
 import { sqlClient } from "@/lib/prismadb";
-import { isMobileUserAgent } from "@/lib/utils";
+import { isMobileUserAgent } from "@/utils/utils";
 import type { Store, StoreOrder } from "@/types";
 import type { orderitemview } from "@prisma/client";
 import { headers } from "next/headers";

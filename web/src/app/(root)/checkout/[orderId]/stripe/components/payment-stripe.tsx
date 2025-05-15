@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
-import { getAbsoluteUrl } from "@/lib/utils";
+import { getAbsoluteUrl } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import {
 	Elements,

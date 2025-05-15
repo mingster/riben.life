@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { DisplayOrder } from "@/components/order-display";
-import { cn, highlight_css } from "@/lib/utils";
+import { cn, highlight_css } from "@/utils/utils";
 import type { StoreOrder } from "@/types";
 
 type orderTabProps = { orders: StoreOrder[] };

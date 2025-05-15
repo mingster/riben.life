@@ -6,7 +6,7 @@ import type { StoreProductOptionTemplate } from "@/types";
 import type { Store } from "@prisma/client";
 import { Suspense } from "react";
 
-import { transformDecimalsToNumbers } from "@/lib/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import { ProductsOptionTemplateClient } from "./product-option-template-client";
 
 type Params = Promise<{ storeId: string }>;

@@ -16,7 +16,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreTables } from "@prisma/client";
 import { CaretSortIcon } from "@radix-ui/react-icons";

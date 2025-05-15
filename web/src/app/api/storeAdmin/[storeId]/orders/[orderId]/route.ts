@@ -1,7 +1,7 @@
 import getOrderById from "@/actions/get-order-by_id";
-import logger from "@/lib/logger";
+import logger from "@/utils/logger";
 import { sqlClient } from "@/lib/prismadb";
-import { getNowTimeInTz } from "@/lib/utils";
+import { getNowTimeInTz } from "@/utils/utils";
 import type { StoreOrder } from "@/types";
 import { OrderStatus } from "@/types/enum";
 import type { orderitemview } from "@prisma/client";

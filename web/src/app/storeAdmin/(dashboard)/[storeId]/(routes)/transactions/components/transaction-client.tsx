@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 
 import { Heading } from "@/components/ui/heading";
-import { cn, getUtcNow, highlight_css } from "@/lib/utils";
+import { cn, getUtcNow, highlight_css } from "@/utils/utils";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 
