@@ -5,7 +5,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AdminSidebar } from "./sidebar";
+import { AdminSidebar } from "./admin-sidebar";
 
 import DropdownUser from "@/components/dropdown-user";
 import ThemeToggler from "@/components/theme-toggler";
@@ -13,12 +13,12 @@ import { Separator } from "@/components/ui/separator";
 import { useSession } from "next-auth/react";
 import router from "next/dist/client/router";
 
-interface props {
-	defaultOpen: boolean | undefined;
+export interface props {
+	defaultOpen: boolean;
 	children: React.ReactNode;
 }
 
-function AdminLayout({ defaultOpen, children }: props) {
+const AdminLayout: React.FC<props> = ({ defaultOpen, children }) => {
 	return (
 		<>
 			<SidebarProvider
@@ -44,8 +44,7 @@ function AdminLayout({ defaultOpen, children }: props) {
 			</SidebarProvider>
 		</>
 	);
-}
-export default AdminLayout;
+};
 
 function StoreAdminHeader() {
 	const title = "";
@@ -97,3 +96,5 @@ function StoreAdminHeader() {
 		</header>
 	);
 }
+
+export default AdminLayout;
