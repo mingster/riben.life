@@ -2,11 +2,12 @@
 
 import { ClipLoader } from "react-spinners";
 
-export const Loader = () => {
+//error is optional
+export const Loader = ({ error }: { error?: boolean } = {}) => {
 	return (
 		<div className="w-full">
 			<div className="flex h-screen place-items-center place-content-center">
-				<ClipLoader color="#3498db" size={50} />
+				<ClipLoader color={error ? "#ff0036" : "#3498db"} size={50} />
 			</div>
 		</div>
 	);
