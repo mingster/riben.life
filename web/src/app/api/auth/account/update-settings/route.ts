@@ -7,6 +7,9 @@ import { getUtcNow } from "@/utils/utils";
 import type { Session } from "next-auth";
 
 ///!SECTION update user data on user's own behave.
+/**
+ * @deprecated The method should not be used
+ */
 export async function PATCH(req: Request) {
 	/*
 	try {
@@ -34,5 +37,5 @@ export async function PATCH(req: Request) {
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
 		*/
-	return new NextResponse("dedicated", { status: 500 });
+	return new NextResponse("@deprecated", { status: 500 });
 }

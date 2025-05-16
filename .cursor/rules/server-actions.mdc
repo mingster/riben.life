@@ -9,10 +9,10 @@ alwaysApply: false
 Server actions should follow this format:
 
 Files:
-- `apps/web/src/utils/actions/NAME.validation.ts`
-- `apps/web/src/utils/actions/NAME.ts`
+- `web/src/actions/NAME.validation.ts`
+- `web/src/actions/NAME.ts`
 
-For `apps/web/src/utils/actions/NAME.validation.ts`:
+For `web/src/actions/NAME.validation.ts`:
 
 ```typescript
 import { z } from "zod";
@@ -36,7 +36,7 @@ export type SaveEmailUpdateSettingsBody = z.infer<
 
 ```
 
-For `apps/web/utils/actions/NAME.ts`:
+For `web/src/actions/NAME.ts`:
 
 ```typescript
 "use server";
@@ -88,7 +88,7 @@ export const updateEmailSettingsAction = actionClient
 ```
 
 ## Implementation Guidelines
-- **Use `next-safe-action`:** Implement all server actions using the `next-safe-action` library for type safety, input validation, context management, and error handling. Refer to `apps/web/utils/actions/safe-action.ts` for client definitions (`actionClient`, `actionClientUser`, `adminActionClient`).
+- **Use `next-safe-action`:** Implement all server actions using the `next-safe-action` library for type safety, input validation, context management, and error handling. Refer to `web/src/actions/safe-action.ts` for client definitions (`actionClient`, `actionClientUser`, `adminActionClient`).
 - **Choose the Right Client:**
     - `actionClientUser`: Use when only authenticated user context (`userId`) is needed.
     - `actionClient`: Use when both authenticated user context *and* a specific `emailAccountId` are needed. The `emailAccountId` must be bound when calling the action from the client.
@@ -96,7 +96,7 @@ export const updateEmailSettingsAction = actionClient
 - **Input Validation:** Define input validation schemas using Zod in the corresponding `.validation.ts` file. These schemas are used by `next-safe-action` (`.schema()`) and can also be reused on the client for form validation.
 - **Context (`ctx`):** Access necessary context (like `userId`, `emailAccountId`, etc.) provided by the safe action client via the `ctx` object in the `.action()` handler.
 - **Mutations Only:** Server Actions are **strictly for mutations** (operations that change data, e.g., creating, updating, deleting). **Do NOT use Server Actions for data fetching (GET operations).**
-    - For data fetching, use dedicated [GET API Routes](mdc:.cursor/rules/get-api-route.mdc) combined with [SWR Hooks](mdc:.cursor/rules/data-fetching.mdc).
-- **Error Handling:** `next-safe-action` provides centralized error handling. Use `SafeError` for expected/handled errors within actions if needed (see `apps/web/utils/actions/safe-action.ts`).
+    - For data fetching, use dedicated @GET API Routes combinoks.
+- **Error * `next-safe-action` provides centralized error handling. Use `SafeError` for expected/handled errors within actions if needed (see `web/src/actions/safe-action.ts`).
 - **Instrumentation:** Sentry instrumentation is automatically applied via `withServerActionInstrumentation` within the safe action clients. Use the `.metadata({ name: "actionName" })` method to provide a meaningful name for monitoring.
 - **Cache Invalidation:** If an action modifies data displayed elsewhere, use `revalidatePath` or `revalidateTag` from `next/cache` within the action handler as needed.
