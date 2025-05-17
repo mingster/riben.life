@@ -96,7 +96,85 @@ export const updateEmailSettingsAction = actionClient
 - **Input Validation:** Define input validation schemas using Zod in the corresponding `.validation.ts` file. These schemas are used by `next-safe-action` (`.schema()`) and can also be reused on the client for form validation.
 - **Context (`ctx`):** Access necessary context (like `userId`, `emailAccountId`, etc.) provided by the safe action client via the `ctx` object in the `.action()` handler.
 - **Mutations Only:** Server Actions are **strictly for mutations** (operations that change data, e.g., creating, updating, deleting). **Do NOT use Server Actions for data fetching (GET operations).**
-    - For data fetching, use dedicated @GET API Routes combinoks.
-- **Error * `next-safe-action` provides centralized error handling. Use `SafeError` for expected/handled errors within actions if needed (see `web/src/actions/safe-action.ts`).
+    - For data fetching, use dedicated @GET API Routes combined with @SWR Hooks.
+- **Error Handling:** `next-safe-action` provides centralized error handling. Use `SafeError` for expected/handled errors within actions if needed (see `web/src/actions/safe-action.ts`).
 - **Instrumentation:** Sentry instrumentation is automatically applied via `withServerActionInstrumentation` within the safe action clients. Use the `.metadata({ name: "actionName" })` method to provide a meaningful name for monitoring.
 - **Cache Invalidation:** If an action modifies data displayed elsewhere, use `revalidatePath` or `revalidateTag` from `next/cache` within the action handler as needed.
+# Server Actions Pattern (Next.js 15+)
+
+This rule describes the preferred pattern for implementing server actions in this codebase, especially for user settings and similar forms.
+
+## Key Principles
+- **Colocate validation schemas**: Place Zod schemas in a shared file (e.g., `src/actions/update-user-settings.validation.ts`).
+- **Colocate server actions**: Place server actions in a file in `src/actions/` (e.g., `src/actions/update-user-settings.ts`).
+- **No axios/fetch**: Call server actions directly from client components. Do not use `axios` or `fetch` for internal mutations.
+- **Type safety**: Use Zod schemas for both client and server validation.
+- **Error handling**: Return structured errors from the server action and display them in the client using a toast or similar UI.
+
+## Example Structure
+
+### 1. Validation Schema (`src/actions/update-user-settings.validation.ts`)
+```typescript
+import { z } from "zod";
+
+export const updateUserSettingsSchema = z.object({
+  name: z.string().min(1),
+  locale: z.string().min(1),
+});
+
+export type UpdateUserSettingsInput = z.infer<typeof updateUserSettingsSchema>;
+```
+
+### 2. Server Action (`src/actions/update-user-settings.ts`)
+```typescript
+"use server";
+import { updateUserSettingsSchema } from "./update-user-settings.validation";
+import { db } from "@/lib/db";
+
+export async function updateUserSettingsAction(input: UpdateUserSettingsInput) {
+  const parsed = updateUserSettingsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { serverError: "Invalid input" };
+  }
+  try {
+    // ... update user in db ...
+    await db.user.update({
+      where: { id: input.id },
+      data: parsed.data,
+    });
+    return { success: true };
+  } catch (e) {
+    return { serverError: e instanceof Error ? e.message : "Unknown error" };
+  }
+}
+```
+
+### 3. Client Usage (in a React component)
+```typescript
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { updateUserSettingsSchema, type UpdateUserSettingsInput } from "@/actions/update-user-settings.validation";
+import { updateUserSettingsAction } from "@/actions/update-user-settings";
+
+const form = useForm<UpdateUserSettingsInput>({
+  resolver: zodResolver(updateUserSettingsSchema),
+  defaultValues: { name: user.name || "", locale: user.locale || "" },
+});
+
+async function onSubmit(data: UpdateUserSettingsInput) {
+  const result = await updateUserSettingsAction(data);
+  if (result?.serverError) {
+    toast({ variant: "destructive", description: result.serverError });
+  } else {
+    toast({ variant: "success", description: "Profile updated." });
+  }
+}
+```
+
+## Migration Notes
+- **Remove all axios/fetch calls** for internal mutations. Use direct server action imports.
+- **Always validate** on both client and server using the shared Zod schema.
+- **Return structured errors** from server actions and handle them in the client.
+
+## See Also
+- @Next.js Server Actions documentation

@@ -43,7 +43,7 @@ import { z } from "zod";
 
 import {
 	updateUserSettingsSchema,
-	UpdateUserSettingsInput,
+	type UpdateUserSettingsInput,
 } from "@/actions/update-user-settings.validation";
 import { updateUserSettingsAction } from "@/actions/update-user-settings";
 
