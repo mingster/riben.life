@@ -16,10 +16,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { toast } from "@/components/ui/use-toast";
-import type { UserColumn } from "./columns";
+//import type { UserColumn } from "./columns";
+import type { User } from "@/types";
 
 interface CellActionProps {
-	data: UserColumn;
+	data: User;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {

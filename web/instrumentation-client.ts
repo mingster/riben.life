@@ -6,5 +6,5 @@ export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   integrations: [Sentry.browserTracingIntegration()],
-  tracePropagationTargets: ["https://myproject.org", /^\/api/],
+  tracePropagationTargets: [process.env.NEXT_PUBLIC_API_URL || ""],
 });

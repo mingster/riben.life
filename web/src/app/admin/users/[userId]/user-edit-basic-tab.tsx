@@ -1,72 +1,73 @@
 "use client";
 
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import type { User } from "@/types";
+import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
+import { cookieName } from "@/app/i18n/settings";
+import { useCookies } from "next-client-cookies";
+import { useForm } from "react-hook-form";
+
+import { useTranslation } from "@/app/i18n/client";
+import { LocaleSelectItems } from "@/components/locale-select-items";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
-import { useI18n } from "@/providers/i18n-provider";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-import { LocaleSelectItems } from "@/components/locale-select-items";
 import {
 	Select,
 	SelectContent,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import type { User } from "@prisma/client";
-import axios from "axios";
-import { useParams, useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
-import * as z from "zod";
-import { UserRoleCombobox } from "./user-role-combobox";
+import type { z } from "zod";
 
-const formSchema = z.object({
-	name: z.string().default(""),
-	locale: z.string().default(""),
-	role: z.string().default(""),
-});
+import { updateUserSettingsAction } from "@/actions/admin/user/update-user-settings";
+import {
+	type UpdateUserSettingsInput,
+	updateUserSettingsSchema,
+} from "@/actions/admin/user/update-user-settings.validation";
+import { toastError, toastSuccess } from "@/components/Toaster";
+import { UserRoleCombobox } from "../components/user-role-combobox";
 
-type formValues = z.infer<typeof formSchema>;
-
-interface editProps {
-	initialData:
-		| (User & {
-				//images: ProductImage[];
-		  })
-		| null;
-	action: string;
+interface SettingsPageProps {
+	user: User | null | undefined;
 }
-export const UserEditBasicTab = ({ initialData, action }: editProps) => {
-	const _params = useParams();
+type formValues = z.infer<typeof updateUserSettingsSchema>;
+
+export default function SettingsTab({ user }: SettingsPageProps) {
+	const [loading, setLoading] = useState(false);
 	const router = useRouter();
 
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
-	const [loading, setLoading] = useState(false);
+	const { i18n } = useTranslation();
+	const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
+	const cookies = useCookies();
+	const { t } = useTranslation(activeLng);
 
-	const defaultValues = initialData
+	const defaultValues = user
 		? {
-				...initialData,
-			}
+			...user,
+		}
 		: {};
 
-	//console.log(`product basic: ${JSON.stringify(defaultValues)}`);
-	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema) as any,
+	const form = useForm<UpdateUserSettingsInput>({
+		resolver: zodResolver(updateUserSettingsSchema),
 		defaultValues,
 		mode: "onChange",
 	});
@@ -78,140 +79,122 @@ export const UserEditBasicTab = ({ initialData, action }: editProps) => {
 		clearErrors,
 	} = useForm<formValues>();
 
-	const onSubmit = async (data: formValues) => {
-		//try {
-		if (!initialData) return;
+	//console.log('disabled', loading || form.formState.isSubmitting);
 
+	if (user === null || user === undefined) return null;
+
+	async function onSubmit(data: UpdateUserSettingsInput) {
 		setLoading(true);
-		//console.log(`onSubmit: ${JSON.stringify(data)}`);
-		await axios.patch(
-			`${process.env.NEXT_PUBLIC_API_URL}/admin/user/${initialData.id}`,
-			data,
-		);
-
-		toast("user saved.");
-
-		//router.push(`/storeAdmin/${params.storeId}/users`);
-		router.refresh();
+		const result = await updateUserSettingsAction(data);
+		if (result?.serverError) {
+			toastError({ description: result.serverError });
+		} else {
+			toastSuccess({ description: "Profile updated." });
+			handleChangeLanguage(data.locale);
+		}
 		setLoading(false);
-
-		/*
-	} catch (err: unknown) {
-	  const error = err as AxiosError;
-	  toast({
-		title: "Something went wrong.",
-		description: error.message,
-		variant: "destructive",
-	  });
-	} finally {
+		router.push("../users");
 	}
-	*/
+
+	const handleChangeLanguage = (lng: string) => {
+		i18n.changeLanguage(lng);
+		setActiveLng(lng);
+		cookies.set(cookieName, lng, { path: "/" });
+		console.log("activeLng set to: ", lng);
 	};
 
 	return (
 		<>
 			<Card>
+				<CardHeader>
+					<CardTitle>{t("account_tabs_account")} </CardTitle>
+					<CardDescription> </CardDescription>
+				</CardHeader>
 				<CardContent className="space-y-2">
+					{t("account_tab_currentAcct")} {user.email}
+					{/* if user doesn't have email, show its userid */}
+					{!user.email && user.id}
+					&nbsp;&nbsp;
+					<Button variant="secondary" onClick={() => signOut()}>
+						{t("account_tab_signout")}
+					</Button>
 					<Form {...form}>
 						<form
 							onSubmit={form.handleSubmit(onSubmit)}
-							className="w-full space-y-1"
+							className="max-w-sm space-y-2.5"
 						>
-							<div className="grid grid-flow-row-dense grid-cols-2 gap-3 items-center">
-								<FormField
-									control={form.control}
-									name="name"
-									render={({ field }) => (
-										<FormItem className="p-3">
-											<FormLabel>{t("account_page_title")}</FormLabel>
-											<FormControl>
-												<Input
-													disabled={loading || form.formState.isSubmitting}
-													className="font-mono"
-													placeholder="name"
-													{...field}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
+							<FormField
+								control={form.control}
+								name="name"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Name</FormLabel>
+										<FormControl>
+											<Input
+												disabled={loading || form.formState.isSubmitting}
+												placeholder="Enter your name"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-								<FormField
-									control={form.control}
-									name="locale"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>{t("account_tabs_language")}</FormLabel>
-											<FormControl>
-												<Select
-													disabled={loading || form.formState.isSubmitting}
-													//disabled={form.formState.isSubmitting}
-													onValueChange={field.onChange}
-													defaultValue={field.value}
-												>
-													<SelectTrigger className="font-mono">
-														<SelectValue placeholder="Select a default locale" />
-													</SelectTrigger>
-													<SelectContent className="font-mono">
-														<LocaleSelectItems />
-													</SelectContent>
-												</Select>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-							</div>
+							<FormField
+								control={form.control}
+								name="locale"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("account_tabs_language")}</FormLabel>
+										<FormControl>
+											<Select
+												disabled={loading || form.formState.isSubmitting}
+												onValueChange={field.onChange}
+												defaultValue={field.value}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Select a default locale" />
+												</SelectTrigger>
+												<SelectContent>
+													<LocaleSelectItems />
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
-							<div className="grid grid-flow-row-dense grid-cols-2 gap-3">
-								<FormField
-									control={form.control}
-									name="role"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
-											<div className="space-y-1 leading-none">
-												<FormLabel>Role</FormLabel>
-												<FormDescription>manage user role</FormDescription>
-											</div>
-											<FormControl>
-												<div>
-													<UserRoleCombobox
-														defaultValue={field.value}
-														onChange={field.onChange}
-													/>
-												</div>
-											</FormControl>
-
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-							</div>
-
-							<Separator />
+							<FormField
+								control={form.control}
+								name="role"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Role</FormLabel>
+										<FormControl>
+											<UserRoleCombobox
+												defaultValue={field.value}
+												onChange={field.onChange}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 
 							<Button
+								type="submit"
 								disabled={loading || form.formState.isSubmitting}
 								className="disabled:opacity-25"
-								type="submit"
 							>
-								{t("Save")}
-							</Button>
-
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => {
-									clearErrors();
-									router.push("/admin/users");
-								}}
-								className="ml-5"
-							>
-								{t("Cancel")}
+								{t("Submit")}
 							</Button>
 						</form>
 					</Form>
 				</CardContent>
+				<CardFooter> </CardFooter>
 			</Card>
 		</>
 	);
-};
+}

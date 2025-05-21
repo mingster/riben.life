@@ -1,0 +1,54 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# DataTable Component Rule
+
+This rule documents conventions and best practices for the `DataTable` component located at `src/components/dataTable.tsx`.
+
+## Purpose
+
+The `DataTable` component is a generic, reusable client-side table built with `@tanstack/react-table` and integrated with the project's UI kit and i18n system. It supports sorting, filtering, pagination, and optional search.
+
+## Usage Guidelines
+
+1. **Props**
+   - `columns`: Array of column definitions (`ColumnDef<TData, TValue>[]`).
+   - `data`: Array of row data (`TData[]`).
+   - `noSearch` (optional): Disables the search input if true.
+   - `searchKey` (optional): The key to use for the search filter.
+
+2. **TypeScript**
+   - Always use generic types for strong type safety.
+   - Prefer interfaces over types for prop definitions.
+
+3. **Internationalization**
+   - Use the `useTranslation` and `useI18n` hooks for all user-facing strings.
+   - All button labels and messages (e.g., "search", "no_result", "previous", "next") must be translated.
+
+4. **UI Integration**
+   - Use the project's `Button`, `Input`, and `Table` components for consistent styling.
+   - Pagination controls should be shown only when applicable.
+
+5. **Client Component**
+   - The file must start with `"use client";` since it uses React state and hooks.
+
+6. **Extensibility**
+   - The component should remain generic and not be tied to specific data models.
+   - Additional features (e.g., row selection, bulk actions) should be implemented as optional props or via composition.
+
+## Example Usage
+
+```tsx
+import { DataTable } from "@/components/dataTable";
+import { columns } from "./columns";
+
+<DataTable columns={columns} data={myData} searchKey="name" />;
+```
+
+## Best Practices
+
+- Keep the component stateless regarding data fetching; pass all data via props.
+- Use memoization for columns and data in parent components to avoid unnecessary re-renders.
+- Avoid adding business logic or side effects inside the table component.
