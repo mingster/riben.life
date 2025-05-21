@@ -15,7 +15,6 @@ export default function GlobalHomePage() {
 
 	const router = useRouter();
 	const routeToStore = async () => {
-
 		const host = getHostname();
 		if (host !== null) {
 			const url = `${process.env.NEXT_PUBLIC_API_URL}/store/get-by-hostname`;

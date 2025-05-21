@@ -62,8 +62,8 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 
 	const defaultValues = user
 		? {
-			...user,
-		}
+				...user,
+			}
 		: {};
 
 	const form = useForm<UpdateUserSettingsInput>({

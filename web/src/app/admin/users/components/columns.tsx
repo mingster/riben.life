@@ -24,7 +24,7 @@ import {
 	FormField,
 	FormItem,
 	FormLabel,
-	FormMessage
+	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -99,8 +99,8 @@ function TableCellEditor({
 
 	const defaultValues = item
 		? {
-			...item,
-		}
+				...item,
+			}
 		: {};
 
 	const form = useForm<UpdateUserSettingsInput>({

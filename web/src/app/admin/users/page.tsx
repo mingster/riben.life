@@ -5,7 +5,7 @@ import { formatDateTime, transformDecimalsToNumbers } from "@/utils/utils";
 import type { User } from "@/types";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import type { UserColumn } from "./components/columns";
+//import type { UserColumn } from "./components/columns";
 import { UsersClient } from "./components/user-client";
 
 import { auth } from "@/auth";
@@ -45,6 +45,7 @@ export default async function UsersAdminPage(props: {
 
 	//console.log(`users: ${JSON.stringify(users)}`);
 
+	/*
 	// map user to ui
 	const formattedUsers: UserColumn[] = users.map((item: User) => {
 		return {
@@ -58,11 +59,12 @@ export default async function UsersAdminPage(props: {
 			currentlySignedIn: item.Session.length > 0,
 		};
 	});
+	*/
 
 	return (
 		<Suspense fallback={<Loader />}>
 			<Container>
-				<UsersClient data={formattedUsers} />
+				<UsersClient data={users} />
 			</Container>
 		</Suspense>
 	);

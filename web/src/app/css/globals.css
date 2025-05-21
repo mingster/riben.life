@@ -162,8 +162,8 @@ a:hover {
 	--sidebar-border: oklch(0.87 0 0);
 	--sidebar-ring: oklch(0.65 0.15 150.31);
 
-
-	--font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+	--font-sans:
+		ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 	--font-serif: Roboto, sans-serif;
 	--font-mono: Geist Mono, monospace;
 

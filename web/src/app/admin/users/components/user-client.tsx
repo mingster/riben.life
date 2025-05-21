@@ -25,7 +25,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ data }) => {
 			<DataTableDraggable
 				rowSelectionEnabled={false}
 				columns={columns}
-				data={data.map(user => ({
+				data={data.map((user) => ({
 					id: user.id,
 					name: user.name ?? "",
 					locale: user.locale ?? "",

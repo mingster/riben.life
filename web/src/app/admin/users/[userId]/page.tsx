@@ -8,7 +8,7 @@ import type { User } from "@/types";
 
 const UserEditPage = async (props: { params: Promise<{ userId: string }> }) => {
 	const params = await props.params;
-	const user = await sqlClient.user.findUnique({
+	const user = (await sqlClient.user.findUnique({
 		where: {
 			id: params.userId,
 		},
@@ -17,7 +17,7 @@ const UserEditPage = async (props: { params: Promise<{ userId: string }> }) => {
 			Session: true,
 			Account: true,
 		},
-	}) as User;
+	})) as User;
 
 	//console.log(`UserEditPage: ${JSON.stringify(user)}`);
 

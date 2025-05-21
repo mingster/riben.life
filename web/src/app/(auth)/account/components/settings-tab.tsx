@@ -24,7 +24,7 @@ import {
 	FormField,
 	FormItem,
 	FormLabel,
-	FormMessage
+	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -57,9 +57,9 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 
 	const defaultValues = user
 		? {
-			name: user.name || "",
-			locale: user.locale || "",
-		}
+				name: user.name || "",
+				locale: user.locale || "",
+			}
 		: { name: "", locale: "" };
 
 	const form = useForm<UpdateUserSettingsInput>({
