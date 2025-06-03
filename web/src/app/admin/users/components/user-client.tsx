@@ -1,13 +1,14 @@
 "use client";
 
-import { DataTable } from "@/components/dataTable";
+import { DataTableDraggable } from "@/components/datatable-draggable";
 import { Separator } from "@/components/ui/separator";
 
 import { Heading } from "@/components/ui/heading";
-import { type UserColumn, columns } from "./columns";
+import { columns } from "./columns";
+import type { User } from "@/types";
 
 interface UsersClientProps {
-	data: UserColumn[];
+	data: User[];
 }
 
 export const UsersClient: React.FC<UsersClientProps> = ({ data }) => {
@@ -15,12 +16,22 @@ export const UsersClient: React.FC<UsersClientProps> = ({ data }) => {
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={`Users (${data.length})`}
+					title="Users"
+					badge={data.length}
 					description="Manage Users in this system."
 				/>
 			</div>
 			<Separator />
-			<DataTable searchKey="name" columns={columns} data={data} />
+			<DataTableDraggable
+				rowSelectionEnabled={false}
+				columns={columns}
+				data={data.map((user) => ({
+					id: user.id,
+					name: user.name ?? "",
+					locale: user.locale ?? "",
+					role: user.role ?? "",
+				}))}
+			/>
 		</>
 	);
 };

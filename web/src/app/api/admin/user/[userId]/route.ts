@@ -9,6 +9,9 @@ export async function PATCH(
 	req: Request,
 	props: { params: Promise<{ userId: string }> },
 ) {
+	return new NextResponse("deprecated", { status: 500 });
+
+	/*
 	const params = await props.params;
 	try {
 		CheckAdminApiAccess();
@@ -33,4 +36,5 @@ export async function PATCH(
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
+		*/
 }

@@ -16,7 +16,6 @@ export default async function FaqCategoryPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-
 	const store = (await checkStoreAccess(params.storeId)) as Store;
 
 	const categories = await sqlClient.faqCategory.findMany({

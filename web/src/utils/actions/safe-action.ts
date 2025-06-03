@@ -6,7 +6,7 @@ import logger from "@/utils/logger";
 import { sqlClient } from "@/lib/prismadb";
 
 import { SafeError } from "@/utils/error";
-import { isAdmin } from "../admin";
+import { isAdmin } from "../isAdmin";
 
 // TODO: take functionality from `withActionInstrumentation` and move it here (apps/web/utils/actions/middleware.ts)
 
@@ -83,6 +83,22 @@ export const actionClientUser = baseClient.use(async ({ next, metadata }) => {
 		});
 	});
 });
+
+export const storeOwnerActionClient = baseClient.use(
+	async ({ next, metadata }) => {
+		const session = await auth();
+		if (!session?.user) throw new SafeError("Unauthorized");
+
+		if (session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
+			console.error("access denied");
+			throw new SafeError("Unauthorized");
+		}
+
+		return withServerActionInstrumentation(metadata?.name, async () => {
+			return next({ ctx: {} });
+		});
+	},
+);
 
 export const adminActionClient = baseClient.use(async ({ next, metadata }) => {
 	const session = await auth();

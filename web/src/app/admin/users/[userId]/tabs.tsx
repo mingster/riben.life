@@ -5,15 +5,15 @@ import { useI18n } from "@/providers/i18n-provider";
 import { Heading } from "@/components/ui/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import type { Account, Session, StoreOrder, User } from "@prisma/client";
+import type { User } from "@/types";
+import type { Account, Session } from "@prisma/client";
 import { useParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { UserEditBasicTab } from "./user-edit-basic-tab";
+import SettingsTab from "./user-edit-basic-tab";
 
 interface editProps {
 	initialData:
 		| (User & {
-				Order: StoreOrder[] | [];
 				Session: Session[] | [];
 				Account: Account | null;
 		  })
@@ -45,7 +45,7 @@ export const UserEditTabs = ({ initialData, action }: editProps) => {
 					</TabsTrigger>
 				</TabsList>
 				<TabsContent value="basic">
-					<UserEditBasicTab initialData={initialData} action={action} />
+					<SettingsTab user={initialData} />
 				</TabsContent>
 			</Tabs>
 		</>

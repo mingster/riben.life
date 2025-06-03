@@ -32,7 +32,11 @@ const furls = process.env.FRONTEND_URLS;
 const allowedOrigins =
 	process.env.NODE_ENV === "production"
 		? (furls?.split(",") as string[])
-		: ["http://localhost:3000", "https://api.stripe.com"];
+		: [
+				"http://localhost:3000",
+				"http://localhost:3001",
+				"https://api.stripe.com",
+			];
 
 const badRequest = new NextResponse(null, {
 	status: 400,

@@ -27,7 +27,7 @@ export default async function StoreHomePage(props: {
 	const isProduction = process.env.NODE_ENV === "production";
 	if (!isProduction) {
 		// server logging
-		logger.info(store);
+		//logger.info(store);
 	}
 
 	if (!store) {

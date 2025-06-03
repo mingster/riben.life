@@ -11,48 +11,43 @@ import {
 import type { User } from "@/types";
 import { signOut } from "next-auth/react";
 
-import { cookieName, languages } from "@/app/i18n/settings";
+import { cookieName } from "@/app/i18n/settings";
 import { useCookies } from "next-client-cookies";
 import { useForm } from "react-hook-form";
 
 import { useTranslation } from "@/app/i18n/client";
+import { LocaleSelectItems } from "@/components/locale-select-items";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
-
-import { zodResolver } from "@hookform/resolvers/zod";
-
-import { LocaleSelectItems } from "@/components/locale-select-items";
 import {
 	Select,
 	SelectContent,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { z } from "zod";
 
-import {
-	updateUserSettingsSchema,
-	UpdateUserSettingsInput,
-} from "@/actions/update-user-settings.validation";
 import { updateUserSettingsAction } from "@/actions/update-user-settings";
+import {
+	type UpdateUserSettingsInput,
+	updateUserSettingsSchema,
+} from "@/actions/update-user-settings.validation";
+import { toastError, toastSuccess } from "@/components/Toaster";
 
 interface SettingsPageProps {
 	user: User | null | undefined;
 }
 
 export default function SettingsTab({ user }: SettingsPageProps) {
-	const { toast } = useToast();
 	const [loading, setLoading] = useState(false);
 
 	const { i18n } = useTranslation();
@@ -79,12 +74,9 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 		setLoading(true);
 		const result = await updateUserSettingsAction(data);
 		if (result?.serverError) {
-			toast({
-				variant: "destructive",
-				description: result.serverError,
-			});
+			toastError({ description: result.serverError });
 		} else {
-			toast({ variant: "success", description: "Profile updated." });
+			toastSuccess({ description: "Profile updated." });
 			handleChangeLanguage(data.locale);
 		}
 		setLoading(false);

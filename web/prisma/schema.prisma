@@ -772,6 +772,7 @@ model OrderNote {
 
 model FaqCategory {
   id        String @id @default(uuid())
+  localeId  String
   storeId   String
   name      String
   sortOrder Int
@@ -780,15 +781,19 @@ model FaqCategory {
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
+  @@index([sortOrder])
   @@index([name])
+  @@index([localeId])
 }
 
 model Faq {
-  id          String      @id @default(uuid())
-  categoryId  String
-  question    String
-  answer      String
-  sortOrder   Int
+  id         String  @id @default(uuid())
+  categoryId String
+  question   String
+  answer     String
+  sortOrder  Int
+  published  Boolean @default(false)
+
   FaqCategory FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([categoryId])
@@ -797,12 +802,13 @@ model Faq {
 
 model SystemMessage {
   id        String   @id @default(uuid())
+  localeId  String   @unique
+  published Boolean  @default(false)
   message   String
-  createdBy String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdOn DateTime @default(now())
 
-  @@index([updatedAt])
+  @@index([localeId])
+  @@index([createdOn])
 }
 
 model StoreNotification {
