@@ -797,12 +797,13 @@ model Faq {
 
 model SystemMessage {
   id        String   @id @default(uuid())
+  localeId  String   @unique
+  published Boolean  @default(false)
   message   String
-  createdBy String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdOn DateTime @default(now())
 
-  @@index([updatedAt])
+  @@index([localeId])
+  @@index([createdOn])
 }
 
 model StoreNotification {

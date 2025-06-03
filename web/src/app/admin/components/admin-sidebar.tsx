@@ -22,6 +22,7 @@ import {
 	SidebarMenuSub,
 	SidebarMenuSubItem,
 	SidebarRail,
+	useSidebar,
 } from "@/components/ui/sidebar";
 import { signOut } from "next-auth/react";
 
@@ -34,10 +35,30 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GetMenuList } from "./admin-menu-list";
+import { useEffect } from "react";
 
 export function AdminSidebar() {
 	const pathname = usePathname();
 	const menuList = GetMenuList(pathname);
+
+	const { setOpen } = useSidebar();
+
+	// left to close sidebar, right to open
+	useEffect(() => {
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "ArrowLeft") {
+				setOpen(false);
+			}
+			if (event.key === "ArrowRight") {
+				setOpen(true);
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [setOpen]);
 
 	return (
 		<Sidebar collapsible="icon" variant="inset">

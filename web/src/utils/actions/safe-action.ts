@@ -6,7 +6,7 @@ import logger from "@/utils/logger";
 import { sqlClient } from "@/lib/prismadb";
 
 import { SafeError } from "@/utils/error";
-import { isAdmin } from "../admin";
+import { isAdmin } from "../isAdmin";
 
 // TODO: take functionality from `withActionInstrumentation` and move it here (apps/web/utils/actions/middleware.ts)
 

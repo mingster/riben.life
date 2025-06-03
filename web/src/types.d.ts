@@ -209,6 +209,9 @@ const userObj = Prisma.validator<Prisma.UserDefaultArgs>()({
 });
 export type User = Prisma.UserGetPayload<typeof userObj>;
 
+const sysmsgObj = Prisma.validator<Prisma.SystemMessageDefaultArgs>()({});
+export type SystemMessage = Prisma.SystemMessageGetPayload<typeof sysmsgObj>;
+
 const FaqCategoryObj = Prisma.validator<Prisma.FaqCategoryDefaultArgs>()({
 	include: {
 		FAQ: true,

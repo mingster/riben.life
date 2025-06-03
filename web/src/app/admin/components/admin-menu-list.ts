@@ -2,6 +2,7 @@ import {
 	Bookmark,
 	CircleDollarSign,
 	LayoutGrid,
+	MessageCircle,
 	Settings,
 	SquarePen,
 	Store,
@@ -129,6 +130,13 @@ export function GetMenuList(pathname: string): Group[] {
 		{
 			groupLabel: "系統",
 			menus: [
+				{
+					href: `${nav_prefix}/sysmsg`,
+					label: "System Messages",
+					active: pathname.includes(`${nav_prefix}/sysmsg`),
+					icon: MessageCircle,
+					submenus: [],
+				},
 				{
 					href: `${nav_prefix}/maint`,
 					label: "Data maint",

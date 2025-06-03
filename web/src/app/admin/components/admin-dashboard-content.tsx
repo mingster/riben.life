@@ -1,13 +1,12 @@
 "use client";
 
+import { toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 
 export const AdminDashboardContent = () => {
-	const { toast } = useToast();
-
 	return (
 		<>
 			<div className="container relative pb-10">
@@ -37,7 +36,7 @@ export const AdminDashboardContent = () => {
 						<Button
 							onClick={() => {
 								console.log("click me");
-								toast({
+								toastSuccess({
 									title: "Scheduled: Catch up",
 									description: "Friday, February 10, 2023 at 5:57 PM",
 								});
