@@ -186,7 +186,7 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
         },
         */
 				{
-					href: `${nav_prefix}/faqCategory`,
+					href: `${nav_prefix}/faq`,
 					label: t("FAQ"),
 					active: pathname.includes(`${nav_prefix}/faq`),
 					icon: CircleHelp,

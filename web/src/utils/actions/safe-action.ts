@@ -84,6 +84,22 @@ export const actionClientUser = baseClient.use(async ({ next, metadata }) => {
 	});
 });
 
+export const storeOwnerActionClient = baseClient.use(
+	async ({ next, metadata }) => {
+		const session = await auth();
+		if (!session?.user) throw new SafeError("Unauthorized");
+
+		if (session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
+			console.error("access denied");
+			throw new SafeError("Unauthorized");
+		}
+
+		return withServerActionInstrumentation(metadata?.name, async () => {
+			return next({ ctx: {} });
+		});
+	},
+);
+
 export const adminActionClient = baseClient.use(async ({ next, metadata }) => {
 	const session = await auth();
 	if (!session?.user) throw new SafeError("Unauthorized");

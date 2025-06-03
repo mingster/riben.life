@@ -1,32 +1,25 @@
+import { FaqCategory } from "@/types";
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/utils";
 import { NextResponse } from "next/server";
-import { CheckStoreAdminApiAccess } from "../../api_helper";
 
-///!SECTION create faqCategory record in database.
-export async function POST(
-	req: Request,
-	props: { params: Promise<{ storeId: string }> },
-) {
-	const params = await props.params;
+// return all online peers
+//
+export async function GET(req: Request) {
 	try {
-		CheckStoreAdminApiAccess(params.storeId);
-
-		const body = await req.json();
-		const obj = await sqlClient.faqCategory.create({
-			data: {
-				storeId: params.storeId,
-				...body,
-				updatedAt: getUtcNow(),
+		const messages = (await sqlClient.faqCategory.findMany({
+			include: {
+				FAQ: true,
 			},
-		});
+			orderBy: {
+				sortOrder: "asc",
+			},
+		})) as FaqCategory[];
 
-		console.log(`create FaqCategory: ${JSON.stringify(obj)}`);
+		//transformBigIntToNumbers(messages);
 
-		return NextResponse.json(obj);
+		return NextResponse.json(messages);
 	} catch (error) {
-		console.log("[FAQ_CATEGORY_POST]", error);
-
-		return new NextResponse(`Internal error${error}`, { status: 500 });
+		console.log("[get_faq_category]", error);
+		return new NextResponse("Internal error", { status: 500 });
 	}
 }

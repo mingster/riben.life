@@ -772,6 +772,7 @@ model OrderNote {
 
 model FaqCategory {
   id        String @id @default(uuid())
+  localeId  String
   storeId   String
   name      String
   sortOrder Int
@@ -780,15 +781,19 @@ model FaqCategory {
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
+  @@index([sortOrder])
   @@index([name])
+  @@index([localeId])
 }
 
 model Faq {
-  id          String      @id @default(uuid())
-  categoryId  String
-  question    String
-  answer      String
-  sortOrder   Int
+  id         String  @id @default(uuid())
+  categoryId String
+  question   String
+  answer     String
+  sortOrder  Int
+  published  Boolean @default(false)
+
   FaqCategory FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([categoryId])
