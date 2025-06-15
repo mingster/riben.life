@@ -119,7 +119,7 @@ export default async function RootLayout({
 			<html lang="en" suppressHydrationWarning>
 				<body
 					className={`${popinsSans.variable} ${notoSans.variable} ${geistMono.variable} 
-					bg-background overscroll-none font-sans antialiased dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]`}
+					overscroll-none antialiased dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]`}
 				>
 					<NextThemeProvider
 						attribute="class"

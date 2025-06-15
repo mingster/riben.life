@@ -29,7 +29,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch";
 import type { Category } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
-import { revalidatePath } from "next/cache";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
