@@ -36,13 +36,13 @@ import { ProductEditOptionsTab } from "./product-edit-options-tab";
 
 interface editProps {
 	initialData:
-	| (Product & {
-		ProductImages: ProductImages[] | [];
-		ProductAttribute: ProductAttribute | null;
-		ProductCategories: ProductCategories[] | [];
-		ProductOptions: ProductOption[] | [];
-	})
-	| null;
+		| (Product & {
+				ProductImages: ProductImages[] | [];
+				ProductAttribute: ProductAttribute | null;
+				ProductCategories: ProductCategories[] | [];
+				ProductOptions: ProductOption[] | [];
+		  })
+		| null;
 	allCategories: Category[];
 	storeOptionTemplates: StoreProductOptionTemplate[] | [];
 	action: string;
@@ -175,32 +175,37 @@ export const ProductEditTabs = ({
 				<TabsList>
 					<TabsTrigger
 						className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
-						value="basic">
+						value="basic"
+					>
 						{t("Product_tab_basic")}
 					</TabsTrigger>
 					{params.productId !== "new" && (
 						<>
 							<TabsTrigger
 								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
-								value="categories">
+								value="categories"
+							>
 								{t("Product_tab_category")}
 							</TabsTrigger>
 
 							<TabsTrigger
 								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
-								value="options">
+								value="options"
+							>
 								{t("Product_tab_options")}
 							</TabsTrigger>
 
 							<TabsTrigger
 								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
-								value="attribute">
+								value="attribute"
+							>
 								{t("Product_tab_attribute")}
 							</TabsTrigger>
 
 							<TabsTrigger
 								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
-								value="images">
+								value="images"
+							>
 								{t("Product_tab_images")}
 							</TabsTrigger>
 						</>
