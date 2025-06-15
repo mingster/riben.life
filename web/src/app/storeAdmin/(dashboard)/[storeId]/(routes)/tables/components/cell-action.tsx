@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { toast } from "@/components/ui/use-toast";
 import type { TableColumn } from "./columns";
 
 interface CellActionProps {

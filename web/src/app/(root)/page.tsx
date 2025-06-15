@@ -1,11 +1,11 @@
 "use client";
 
+import { toastError } from "@/components/Toaster";
 import { Loader } from "@/components/ui/loader";
 import { getHostname } from "@/utils/utils";
 import type { Store } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 export default function GlobalHomePage() {
 	const [mounted, setMounted] = useState(false);
@@ -51,7 +51,7 @@ export default function GlobalHomePage() {
 				})
 				.catch((error) => {
 					console.error(error);
-					toast(error.message);
+					toastError(error.message);
 					throw new Error("Something went wrong.");
 				});
 		}

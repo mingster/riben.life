@@ -29,7 +29,6 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Store,

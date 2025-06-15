@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { slideIn } from "@/lib/motion";
 import { motion } from "framer-motion";
 import { FaDiscord, FaFacebook, FaInstagram, FaLine } from "react-icons/fa";
-import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

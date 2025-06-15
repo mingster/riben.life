@@ -16,10 +16,10 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { toast } from "@/components/ui/use-toast";
 import { OrderStatus } from "@/types/enum";
 import Link from "next/link";
 import type { StoreOrderColumn } from "./columns";
+import { toastSuccess } from "@/components/Toaster";
 
 interface CellActionProps {
 	data: StoreOrderColumn;
@@ -38,14 +38,13 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 		setLoading(true);
 		router.push(`/storeAdmin/${params.storeId}/order/${data.id}/refund`);
 		/*} catch (error: unknown) {
-      const err = error as AxiosError;
-      toast({
-        title: "something wrong.",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-    }*/
+	  const err = error as AxiosError;
+	  toastError({
+		title: "something wrong.",
+		description: err.message,
+	  });
+	} finally {
+	}*/
 
 		setLoading(false);
 		setOpen(false);
@@ -53,10 +52,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
-		toast({
+		toastSuccess({
 			title: "Transaction ID copied to clipboard.",
 			description: "",
-			variant: "success",
 		});
 	};
 

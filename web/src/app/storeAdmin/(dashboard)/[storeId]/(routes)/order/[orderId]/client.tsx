@@ -57,7 +57,6 @@ import axios, { type AxiosError } from "axios";
 import Decimal from "decimal.js";
 import Link from "next/link";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { OrderAddProductModal } from "./order-add-product-modal";
 
 interface props {
@@ -409,7 +408,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		store.defaultCurrency,
 		store.id,
 		t,
-		toast,
 	]);
 
 	// receive new items from OrderAddProductModal

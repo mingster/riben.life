@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useTranslation } from "@/app/i18n/client";
-import { toast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import type { MessageColumn } from "./columns";
 

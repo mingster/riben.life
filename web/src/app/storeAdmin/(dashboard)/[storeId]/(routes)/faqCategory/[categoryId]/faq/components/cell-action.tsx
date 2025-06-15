@@ -15,7 +15,6 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { toast } from "@/components/ui/use-toast";
 import type { FaqColumn } from "./columns";
 
 import { useTranslation } from "@/app/i18n/client";
