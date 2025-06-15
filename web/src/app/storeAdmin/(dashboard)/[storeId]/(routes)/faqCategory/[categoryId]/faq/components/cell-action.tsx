@@ -22,6 +22,7 @@ import { useI18n } from "@/providers/i18n-provider";
 interface CellActionProps {
 	data: FaqColumn;
 }
+import { toastError, toastSuccess } from "@/components/Toaster";
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const [loading, setLoading] = useState(false);
@@ -40,18 +41,16 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/faq/${data.id}`,
 			);
 
-			toast({
+			toastSuccess({
 				title: "faq deleted.",
 				description: "",
-				variant: "success",
 			});
 			router.refresh();
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			toast({
+			toastError({
 				title: "something wrong.",
 				description: err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);
@@ -61,10 +60,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
-		toast({
+		toastSuccess({
 			title: "faqID copied to clipboard.",
 			description: "",
-			variant: "success",
 		});
 	};
 

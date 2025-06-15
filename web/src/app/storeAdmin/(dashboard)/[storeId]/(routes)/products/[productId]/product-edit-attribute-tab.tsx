@@ -162,10 +162,9 @@ export const ProductEditAttributeTab = ({
           `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/productAttribute`,
           data,
         );
-        toast({
+        toastError({
           title: "product created.",
           description: "",
-          variant: "success",
         });
          */
 			}

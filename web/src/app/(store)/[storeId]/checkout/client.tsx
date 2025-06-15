@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { type Item, useCart } from "@/hooks/use-cart";
@@ -19,15 +19,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import Container from "@/components/ui/container";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
@@ -40,10 +31,10 @@ import type {
 import type { Address, PaymentMethod, ShippingMethod } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
 
+import { toastError } from "@/components/Toaster";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { saveOrderToLocal } from "@/lib/order-history";
-import { getRandomNum } from "@/utils/utils";
 
 type props = {
 	store: Store;
@@ -208,11 +199,11 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 		cart.items.map((item) => {
 			if (item.id.includes("?")) {
 				/*
-        console.log("item.id", item.id);
-        console.log("productId", item.id.split("?")[0]);
-        console.log("item.variants", item.variants);
-        console.log("item.variantCosts", item.variantCosts);
-        */
+		console.log("item.id", item.id);
+		console.log("productId", item.id.split("?")[0]);
+		console.log("item.variants", item.variants);
+		console.log("item.variantCosts", item.variantCosts);
+		*/
 				productIds.push(item.id.split("?")[0]);
 				variants.push(item.variants);
 				variantCosts.push(item.variantCosts);
@@ -272,10 +263,9 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 		} catch (error: unknown) {
 			const err = error as AxiosError;
 			console.error(error);
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: t("checkout_placeOrder_exception") + err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setIsLoading(false);

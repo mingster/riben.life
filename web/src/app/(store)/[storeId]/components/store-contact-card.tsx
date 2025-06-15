@@ -38,7 +38,10 @@ export const StoreContactCard: React.FC<props> = ({ store, storeSettings }) => {
 			viewport={{ once: true, amount: 0.25 }}
 			//className="w-full relative z-0"
 		>
-			<motion.div variants={slideIn("left", "tween", 0.2, 1)}>
+			<motion.div
+				//variants={slideIn("left", "tween", 0.2, 1)}
+				className="w-full relative z-0"
+			>
 				<Card className="">
 					<CardHeader>
 						<CardTitle>{t("nav_contact")}</CardTitle>

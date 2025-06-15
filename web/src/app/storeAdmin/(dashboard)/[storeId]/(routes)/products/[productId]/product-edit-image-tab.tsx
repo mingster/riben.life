@@ -55,7 +55,8 @@ function useZodForm<TSchema extends z.ZodType>(
 ) {
 	const form = useForm<TSchema["_input"]>({
 		...props,
-		resolver: zodResolver(props.schema, undefined, {
+		resolver: zodResolver(validationSchema, undefined, {
+		//resolver: zodResolver(props.schema, undefined, {
 			// This makes it so we can use `.transform()`s on the schema without same transform getting applied again when it reaches the server
 			//rawValues: true
 		}),
@@ -155,10 +156,9 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 		/*
 	} catch (err: unknown) {
 	  const error = err as AxiosError;
-	  toast({
+	  toastError({
 		title: "Something went wrong.",
 		description: error.message,
-		variant: "destructive",
 	  });
 	} finally {
 
@@ -194,7 +194,7 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 		/*
 	} catch (err: unknown) {
 	  const error = err as AxiosError;
-	  toast({
+	  toastError({
 		title: "Something went wrong.",
 		description: error.message,
 	  });

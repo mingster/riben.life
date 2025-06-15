@@ -114,10 +114,9 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 
     } catch (err: unknown) {
       const error = err as AxiosError;
-      toast({
+      toastError({
         title: "Something went wrong.",
         description: error.message,
-        variant: "destructive",
       });
     } finally {
       setLoading(false);

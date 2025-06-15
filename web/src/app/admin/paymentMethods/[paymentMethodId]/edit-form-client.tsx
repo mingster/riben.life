@@ -77,7 +77,6 @@ export const EditClient = ({ initialData }: editProps) => {
 	} = useForm<formValues>();
 
 	const onSubmit = async (data: formValues) => {
-		//try {
 		if (!initialData) return;
 
 		setLoading(true);
@@ -95,18 +94,6 @@ export const EditClient = ({ initialData }: editProps) => {
 		//router.refresh();
 		router.push("/admin/paymentMethods");
 		setLoading(false);
-
-		/*
-    } catch (err: unknown) {
-      const error = err as AxiosError;
-      toast({
-        title: "Something went wrong.",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-    }
-    */
 	};
 
 	return (

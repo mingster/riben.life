@@ -7,7 +7,7 @@
 		"debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3001",
 		"build": "bun run postinstall; next build",
 		"start": "next start -p 3000",
-		"lint": "npx biome check --fix ./src",
+		"bio_lint": "npx biome check --fix ./src",
 		"pretty": "npx biome format --write ./src",
 		"postinstall": "bun run sql:generate",
 		"dbpush": "bun run sql:dbpush",
@@ -16,7 +16,7 @@
 		"depcheck": "npx depcheck .",
 		"precommit": "lint-staged",
 		"commit": "clear && npx git-cz",
-		"lint_old": "next lint; eslint --fix \"./src/**/*.{js,jsx,ts,tsx}\""
+		"lint": "next lint; eslint --fix \"./src/**/*.{js,jsx,ts,tsx}\""
 	},
 	"dependencies": {
 		"@auth/prisma-adapter": "^2.9.1",

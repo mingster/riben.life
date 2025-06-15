@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import type { StoreProductOptionTemplate } from "@/types";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
@@ -237,20 +238,18 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
 			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product-option-template/${data.id}`,
 		);
 
-		toast({
+		toastSuccess({
 			title: `${t("ProductOption_template")} ${t("Deleted")}`,
 			description: "",
-			variant: "success",
 		});
 		router.refresh();
 		setLoading(false);
 		setOpen(false);
 		/*} catch (error: unknown) {
       const err = error as AxiosError;
-      toast({
+      toastError({
         title: "something wrong.",
         description: err.message,
-        variant: "destructive",
       });
     } finally {
       setLoading(false);

@@ -18,6 +18,7 @@ import {
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { MessageColumn } from "./columns";
+import { toastError, toastSuccess } from "@/components/Toaster";
 
 interface CellActionProps {
 	data: MessageColumn;
@@ -40,18 +41,16 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 		try {
 			setLoading(true);
 
-			toast({
+			toastSuccess({
 				title: t("Announcement_deleted"),
 				description: "",
-				variant: "success",
 			});
 			router.refresh();
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			toast({
+			toastError({
 				title: "something wrong.",
 				description: err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);
@@ -61,10 +60,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
-		toast({
+		toastSuccess({
 			title: "ID copied to clipboard.",
 			description: "",
-			variant: "success",
 		});
 	};
 
