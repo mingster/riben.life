@@ -1,7 +1,8 @@
 "use client";
 
 import useColorMode from "@/hooks/useColorMode";
-import { Moon, SunMoon } from "lucide-react";
+import { IconSun } from "@tabler/icons-react";
+
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
@@ -51,7 +52,7 @@ const ThemeToggler = () => {
 			>
 				<span className="dark:hidden">
 					{/*light*/}
-					<SunMoon className="size-5 text-slate-400" />
+					<IconSun className="size-5 text-slate-400" />
 				</span>
 				<span className="hidden dark:inline-block">
 					{/*dark           <Moon className="w-5 h-5 text-slate-700" />*/}
