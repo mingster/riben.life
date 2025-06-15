@@ -1,12 +1,11 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { ProductCard } from "@/components/product-card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { useToast } from "@/components/ui/use-toast";
 import { type Item, useCart } from "@/hooks/use-cart";
 import BusinessHours from "@/lib/businessHours";
-import { getAbsoluteUrl } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Category,
@@ -15,6 +14,7 @@ import type {
 	StoreWithProductNCategories,
 } from "@/types";
 import { ProductStatus } from "@/types/enum";
+import { getAbsoluteUrl } from "@/utils/utils";
 
 import type { StoreSettings, StoreTables } from "@prisma/client";
 import { formatDate } from "date-fns";
@@ -48,7 +48,7 @@ export const StoreHomeContent: React.FC<props> = ({
 }) => {
 	/*
   const session = useSession();
-  //const { toast } = useToast();
+  //
   //const router = useRouter();
 
   //const [type, setType] = useState<string>('monthly');
@@ -63,7 +63,7 @@ export const StoreHomeContent: React.FC<props> = ({
   */
 
 	const cart = useCart();
-	const { toast } = useToast();
+
 	const params = useParams<{ storeId: string; tableId: string }>();
 
 	const { lng } = useI18n();
@@ -186,10 +186,9 @@ export const StoreHomeContent: React.FC<props> = ({
 		}
 
 		//router.push('/cart');
-		toast({
+		toastSuccess({
 			title: t("product_added_to_cart"),
 			description: "",
-			variant: "success",
 		});
 	};
 

@@ -1,7 +1,7 @@
 "use client";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 
 import {
 	Card,
@@ -67,7 +67,7 @@ interface editProps {
 export const TicketCreate = ({ initialData, order }: editProps) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
+
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [loading, setLoading] = useState(false);
@@ -114,10 +114,9 @@ export const TicketCreate = ({ initialData, order }: editProps) => {
 			data,
 		);
 
-		toast({
+		toastSuccess({
 			title: "ticket created. Please wait for store staff to respond.",
 			description: "",
-			variant: "success",
 		});
 		router.refresh();
 		router.push(`/${params.storeId}/support`);

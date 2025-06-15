@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -24,7 +25,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import type { ProductOption, StoreProductOptionTemplate } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,8 +67,6 @@ export const AddProductOptionTemplateDialog: React.FC<props> = ({
 	initialData,
 	action,
 }) => {
-	const { toast } = useToast();
-
 	const _router = useRouter();
 	const params = useParams();
 	const { lng } = useI18n();
@@ -120,10 +118,9 @@ export const AddProductOptionTemplateDialog: React.FC<props> = ({
 			);
 
 			if (result) {
-				toast({
+				toastSuccess({
 					title: t("ProductOption_template") + t("Updated"),
 					description: "",
-					variant: "success",
 				});
 			}
 		} else {
@@ -134,10 +131,9 @@ export const AddProductOptionTemplateDialog: React.FC<props> = ({
 			);
 
 			if (result) {
-				toast({
+				toastSuccess({
 					title: t("ProductOption_template") + t("Created"),
 					description: "",
-					variant: "success",
 				});
 			}
 		}

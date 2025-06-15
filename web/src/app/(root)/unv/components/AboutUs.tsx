@@ -16,6 +16,7 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import {
 	Form,
 	FormControl,
@@ -47,7 +48,7 @@ export function AboutUs({ className, ...props }: { className?: string }) {
 			>
 				<div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8 overflow-hidden">
 					<motion.div
-						variants={slideIn("left", "tween", 0.2, 1)}
+						//variants={slideIn("left", "tween", 0.2, 1)}
 						className="flex-[0.75] bg-black-100 p-2 rounded-2xl"
 					>
 						<div className="flex gap-2">
@@ -147,16 +148,25 @@ export const ContactForm = () => {
 			);
 
 			if (result.status === 200) {
-				toast("我們已經收到你的訊息，會盡快回覆你。");
+				toastSuccess({
+					title: "我們已經收到你的訊息，會盡快回覆你。",
+					description: "",
+				});
 			} else {
-				toast("Ahh, something went wrong. Please try again.");
+				toastError({
+					title: "Ahh, something went wrong. Please try again.",
+					description: "",
+				});
 
 				console.log(JSON.stringify(result));
 			}
 		} catch (error: unknown) {
 			const err = error as AxiosError;
 			console.log(err);
-			toast("Ahh, something went wrong. Please try again.");
+			toastError({
+				title: "Ahh, something went wrong. Please try again.",
+				description: "",
+			});
 		} finally {
 			setLoading(false);
 		}
@@ -180,7 +190,7 @@ export const ContactForm = () => {
 		>
 			<div className="flex xl:flex-row flex-col-reverse gap-1 overflow-hidden">
 				<motion.div
-					variants={slideIn("left", "tween", 0.2, 1)}
+					//variants={slideIn("left", "tween", 0.2, 1)}
 					className="flex-1 rounded-2xl"
 				>
 					{discordUrl && (

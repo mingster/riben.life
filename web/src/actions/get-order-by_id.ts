@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreOrder } from "@/types";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreTables } from "@prisma/client";
 
 const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {

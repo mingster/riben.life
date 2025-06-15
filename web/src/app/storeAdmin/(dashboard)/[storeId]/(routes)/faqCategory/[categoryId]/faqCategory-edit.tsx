@@ -1,8 +1,8 @@
 "use client";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 
 import {
 	Form,
@@ -40,7 +40,6 @@ interface editProps {
 export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
@@ -82,10 +81,9 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
 					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/faqCategory/${initialData.id}`,
 					data,
 				);
-				toast({
+				toastSuccess({
 					title: "faq category saved.",
 					description: "",
-					variant: "success",
 				});
 			} else {
 				// do create
@@ -93,20 +91,18 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
 					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/faqCategory`,
 					data,
 				);
-				toast({
+				toastSuccess({
 					title: "faq category created.",
 					description: "",
-					variant: "success",
 				});
 			}
 			router.refresh();
 			router.push(`/storeAdmin/${params.storeId}/faqCategory`);
 		} catch (err: unknown) {
 			const error = err as AxiosError;
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: error.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

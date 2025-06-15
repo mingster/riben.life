@@ -1,5 +1,5 @@
 "use client";
-import { useToast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,7 +43,7 @@ type formValues = z.infer<typeof formSchema>;
 export const EditDefaultTerms: React.FC<props> = ({ data }) => {
 	const _params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
+
 	const [loading, setLoading] = useState(false);
 
 	const { lng } = useI18n();
@@ -74,10 +74,9 @@ export const EditDefaultTerms: React.FC<props> = ({ data }) => {
 			data,
 		);
 
-		toast({
+		toastSuccess({
 			title: "terms of service updated.",
 			description: "",
-			variant: "success",
 		});
 
 		router.refresh();

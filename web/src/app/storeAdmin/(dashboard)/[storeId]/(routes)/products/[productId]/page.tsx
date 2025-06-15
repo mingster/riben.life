@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Product, StoreProductOptionTemplate } from "@/types";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import { ProductEditTabs } from "./tabs";
 
 const ProductEditPage = async (props: {

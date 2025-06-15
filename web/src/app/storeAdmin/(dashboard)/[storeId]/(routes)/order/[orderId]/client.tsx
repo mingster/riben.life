@@ -1,6 +1,6 @@
 "use client";
 
-import { useToast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import {
 	Copy,
 	Edit,
@@ -57,6 +57,7 @@ import axios, { type AxiosError } from "axios";
 import Decimal from "decimal.js";
 import Link from "next/link";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { OrderAddProductModal } from "./order-add-product-modal";
 
 interface props {
@@ -115,7 +116,6 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 	const [orderTotal, setOrderTotal] = useState(order?.orderTotal || 0);
 	const [openModal, setOpenModal] = useState(false);
 
-	const { toast } = useToast();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
@@ -200,10 +200,9 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
 		console.log("result", JSON.stringify(result));
 
-		toast({
+		toastSuccess({
 			title: t("Order_edit_updated"),
 			description: "",
-			variant: "success",
 		});
 
 		setLoading(false);
@@ -243,10 +242,9 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
 			setLoading(false);
 
-			toast({
+			toastSuccess({
 				title: t("Order_edit_removed"),
 				description: "",
-				variant: "success",
 			});
 			router.refresh();
 			router.back();
@@ -398,10 +396,9 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		} catch (error: unknown) {
 			const err = error as AxiosError;
 			console.error(error);
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: t("checkout_placeOrder_exception") + err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

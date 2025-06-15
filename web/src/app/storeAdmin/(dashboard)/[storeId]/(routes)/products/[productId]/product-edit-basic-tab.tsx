@@ -1,5 +1,6 @@
 "use client";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -9,7 +10,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 
 import {
 	Form,
@@ -67,7 +67,6 @@ interface editProps {
 export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
@@ -115,10 +114,9 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
 					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${initialData.id}`,
 					data,
 				);
-				toast({
+				toastSuccess({
 					title: t("Product_updated"),
 					description: "",
-					variant: "success",
 				});
 				router.refresh();
 			} else {
@@ -130,20 +128,18 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
 
 				//console.log(`create product: ${JSON.stringify(obj)}`);
 
-				toast({
+				toastSuccess({
 					title: t("Product_created"),
 					description: "",
-					variant: "success",
 				});
 				router.push(`/storeAdmin/${params.storeId}/products/${obj.data.id}`);
 				router.refresh();
 			}
 		} catch (err: unknown) {
 			const error = err as AxiosError;
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: error.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

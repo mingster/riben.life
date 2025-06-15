@@ -15,7 +15,8 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { toast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
+
 import type { CategoryColumn } from "./columns";
 
 interface CellActionProps {
@@ -36,18 +37,16 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/categories/${data.categoryId}`,
 			);
 
-			toast({
+			toastSuccess({
 				title: "category deleted.",
 				description: "",
-				variant: "success",
 			});
 			router.refresh();
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			toast({
+			toastError({
 				title: "something wrong.",
 				description: err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);
@@ -57,10 +56,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
-		toast({
+		toastSuccess({
 			title: "CategoryID copied to clipboard.",
 			description: "",
-			variant: "success",
 		});
 	};
 

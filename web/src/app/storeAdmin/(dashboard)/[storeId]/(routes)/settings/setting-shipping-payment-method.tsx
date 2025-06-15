@@ -1,6 +1,6 @@
 "use client";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -37,7 +37,6 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
 }) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
 
 	const [loading, setLoading] = useState(false);
 
@@ -80,10 +79,9 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
 
 		router.refresh();
 
-		toast({
+		toastSuccess({
 			title: t("Product_category") + t("Updated"),
 			description: "",
-			variant: "success",
 		});
 
 		setLoading(false);
@@ -166,10 +164,9 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
 
 		router.refresh();
 
-		toast({
+		toastSuccess({
 			title: t("Product_category") + t("Updated"),
 			description: "",
-			variant: "success",
 		});
 
 		setLoading(false);

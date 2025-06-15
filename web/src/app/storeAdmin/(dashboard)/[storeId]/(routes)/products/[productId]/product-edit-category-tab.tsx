@@ -3,10 +3,10 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
 import type { Category, ProductCategories } from "@prisma/client";
 
 import { DataTableCheckbox } from "@/components/dataTable-checkbox";
@@ -39,8 +39,6 @@ export const ProductEditCategoryTab = ({
 
 	const params = useParams();
 	const router = useRouter();
-
-	const { toast } = useToast();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
@@ -138,10 +136,9 @@ export const ProductEditCategoryTab = ({
 
 		router.refresh();
 
-		toast({
+		toastSuccess({
 			title: t("Product_category") + t("Updated"),
 			description: "",
-			variant: "success",
 		});
 	};
 

@@ -27,9 +27,9 @@ import {
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import ImageUploadBox from "@/components/image-upload-box";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { deleteImage, uploadImage } from "@/utils/utils";
 import axios from "axios";
 import { XCircleIcon } from "lucide-react";
@@ -79,7 +79,6 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
-	const { toast } = useToast();
 
 	const {
 		handleSubmit,
@@ -144,10 +143,9 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 			append(newImage);
 		}
 
-		toast({
+		toastSuccess({
 			title: "product image saved.",
 			description: "",
-			variant: "success",
 		});
 
 		setLoading(false);
@@ -186,10 +184,9 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 		await axios.delete(urlToDelete, { data: initialData[index] });
 
 		remove(index);
-		toast({
+		toastSuccess({
 			title: "product image deleted.",
 			description: "",
-			variant: "success",
 		});
 
 		setLoading(false);
@@ -200,7 +197,6 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 	  toast({
 		title: "Something went wrong.",
 		description: error.message,
-		variant: "destructive",
 	  });
 	} finally {
 	}

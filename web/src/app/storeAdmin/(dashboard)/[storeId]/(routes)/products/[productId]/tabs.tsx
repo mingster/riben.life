@@ -16,6 +16,7 @@ import { ProductEditCategoryTab } from "./product-edit-category-tab";
 import { ProductEditImageTab } from "./product-edit-image-tab";
 
 import { useTranslation } from "@/app/i18n/client";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { AlertModal } from "@/components/modals/alert-modal";
 import {
 	Breadcrumb,
@@ -26,7 +27,6 @@ import {
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import axios from "axios";
 import { Trash } from "lucide-react";
@@ -55,7 +55,6 @@ export const ProductEditTabs = ({
 }: editProps) => {
 	//const router = useRouter();
 	const params = useParams();
-	const { toast } = useToast();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
@@ -93,10 +92,9 @@ export const ProductEditTabs = ({
 			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${initialData?.id}`,
 		);
 
-		toast({
+		toastSuccess({
 			title: t("Product_deleted"),
 			description: "",
-			variant: "success",
 		});
 
 		window.location.assign(`/storeAdmin/${params.storeId}/products`);
@@ -105,10 +103,10 @@ export const ProductEditTabs = ({
 		setOpen(false);
 		/*} catch (error: unknown) {
       const err = error as AxiosError;
-      toast({
+      toastError({
         title: "something wrong.",
         description: err.message,
-        variant: "destructive",
+        
       });
     } finally {
       setLoading(false);

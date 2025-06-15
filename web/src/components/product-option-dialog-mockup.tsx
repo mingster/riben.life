@@ -1,6 +1,6 @@
 "use client";
 
-import { useToast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { useCart } from "@/hooks/use-cart";
 import type { Product } from "@/types";
 import { useForm } from "react-hook-form";
@@ -50,7 +50,7 @@ interface props {
 export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
 	const [open, setOpen] = useState(false);
 	const cart = useCart();
-	const { toast } = useToast();
+
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [quantity, setQuantity] = useState<number>(1);
@@ -202,10 +202,9 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
 
 		//router.push('/cart');
 
-		toast({
+		toastSuccess({
 			title: t("product_added_to_cart"),
 			description: "",
-			variant: "success",
 		});
 	};
 

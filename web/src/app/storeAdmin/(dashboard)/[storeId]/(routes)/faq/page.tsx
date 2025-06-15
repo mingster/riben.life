@@ -4,12 +4,12 @@ import { Loader } from "@/components/ui/loader";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
 import type { Store } from "@prisma/client";
 
+import { sqlClient } from "@/lib/prismadb";
 import { Suspense } from "react";
 import {
 	FaqCategoryClient,
-	FaqCategoryWithFaqCount,
+	type FaqCategoryWithFaqCount,
 } from "./components/client-faq-category";
-import { sqlClient } from "@/lib/prismadb";
 
 type Params = Promise<{ storeId: string }>;
 //type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

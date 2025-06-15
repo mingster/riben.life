@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
 
 import { useTranslation } from "@/app/i18n/client";
 import { Heading } from "@/components/ui/heading";
@@ -52,7 +52,6 @@ export const OrderUnpaid = ({
 
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
@@ -71,10 +70,9 @@ export const OrderUnpaid = ({
 		// remove the order from the list
 		orders.filter((order) => order.id !== orderId);
 
-		toast({
+		toastSuccess({
 			title: t("Order") + t("Updated"),
 			description: "",
-			variant: "success",
 		});
 	};
 

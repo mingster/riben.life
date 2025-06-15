@@ -1,11 +1,11 @@
 "use client";
-import { useToast } from "@/components/ui/use-toast";
+import { toastSuccess } from "@/components/Toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Card, CardContent } from "@/components/ui/card";
 
-import axios, { type AxiosError } from "axios";
-import { useParams, useRouter } from "next/navigation";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -43,7 +43,7 @@ type formValues = z.infer<typeof privacyFormSchema>;
 export const EditDefaultPrivacy: React.FC<props> = ({ data }) => {
 	//const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
+
 	const [loading, setLoading] = useState(false);
 
 	const { lng } = useI18n();
@@ -75,10 +75,9 @@ export const EditDefaultPrivacy: React.FC<props> = ({ data }) => {
 			data,
 		);
 
-		toast({
+		toastSuccess({
 			title: "privacy statement updated.",
 			description: "",
-			variant: "success",
 		});
 
 		router.refresh();

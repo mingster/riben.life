@@ -16,8 +16,8 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
+import { cn } from "@/utils/utils";
 import type { StoreTables } from "@prisma/client";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { CheckIcon } from "lucide-react";

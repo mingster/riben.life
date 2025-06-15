@@ -3,8 +3,8 @@ import { Navbar } from "@/components/global-navbar";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Store } from "@/types";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import { Suspense } from "react";
 import { DisplayStoreOrdersToday } from "./display-order-today";
 

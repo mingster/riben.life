@@ -1,7 +1,7 @@
 "use client";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -37,7 +37,6 @@ interface editProps {
 export const MessageEdit = ({ initialData, action }: editProps) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
@@ -78,10 +77,9 @@ export const MessageEdit = ({ initialData, action }: editProps) => {
 				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/announcement/${initialData.id}`,
 				data,
 			);
-			toast({
+			toastSuccess({
 				title: t("Announcement_updated"),
 				description: "",
-				variant: "success",
 			});
 		} else {
 			// do create
@@ -89,10 +87,9 @@ export const MessageEdit = ({ initialData, action }: editProps) => {
 				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/announcement`,
 				data,
 			);
-			toast({
+			toastSuccess({
 				title: t("Announcement_created"),
 				description: "",
-				variant: "success",
 			});
 		}
 
@@ -100,10 +97,9 @@ export const MessageEdit = ({ initialData, action }: editProps) => {
 		router.push(`/storeAdmin/${params.storeId}/announcements`);
 		/*} catch (err: unknown) {
       const error = err as AxiosError;
-      toast({
+      toastError({
         title: "Something went wrong.",
         description: error.message,
-        variant: "destructive",
       });
     } finally {
       setLoading(false);

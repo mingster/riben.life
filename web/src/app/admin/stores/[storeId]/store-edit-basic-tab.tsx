@@ -1,5 +1,5 @@
 "use client";
-import { useToast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 
@@ -75,7 +75,6 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 }) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
 
 	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
@@ -145,18 +144,16 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 		);
 		router.refresh();
 
-		toast({
+		toastSuccess({
 			title: "Store updated.",
 			description: "",
-			variant: "success",
 		});
 
 		/* } catch (error: unknown) {
 	  const err = error as AxiosError;
-	  toast({
+	  toastError({
 		title: "Something went wrong.",
 		description: err.message,
-		variant: "destructive",
 	  });
 	} finally {
 	  setLoading(false);
@@ -302,7 +299,12 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 									<ImageUploadBox
 										disabled={loading || form.formState.isSubmitting}
 										image={image ?? null}
-										setImage={setImage ?? (() => {})}
+										setImage={
+											setImage ??
+											(() => {
+												throw new Error("TBD");
+											})
+										}
 									/>
 								</div>
 								<div className="flex flex-col pl-10 space-y-4 place-content-center">

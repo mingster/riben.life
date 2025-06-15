@@ -1,7 +1,7 @@
 "use client";
 
-import { getAbsoluteUrl } from "@/utils/utils";
 import type { Store } from "@/types";
+import { getAbsoluteUrl } from "@/utils/utils";
 import type { StoreTables } from "@prisma/client";
 import { useQRCode } from "next-qrcode";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useToast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import axios, { type AxiosError } from "axios";
 import { MessageSquareText, Trash } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -17,10 +17,10 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
-import { formatDateTime } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { SupportTicket } from "@/types";
 import { TicketStatus } from "@/types/enum";
+import { formatDateTime } from "@/utils/utils";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
 
@@ -41,10 +41,9 @@ interface props {
 export const DisplayThread = ({ thread }: props) => {
 	const router = useRouter();
 	const params = useParams();
-	//const { toast } = useToast();
+	//
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-	const { toast } = useToast();
 
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -55,10 +54,9 @@ export const DisplayThread = ({ thread }: props) => {
 			`${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/ticket/${params.ticketId}/thread/close`,
 		);
 
-		toast({
+		toastSuccess({
 			title: "Ticket closed.",
 			description: "",
-			variant: "success",
 		});
 		setLoading(false);
 		setOpen(false);

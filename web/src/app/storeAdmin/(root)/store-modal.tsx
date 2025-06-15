@@ -1,6 +1,6 @@
 "use client";
 
-import { useToast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -60,18 +60,15 @@ export const StoreModal: React.FC = () => {
 		},
 	});
 
-	const { toast } = useToast();
-
 	const onSubmit = async (values: z.infer<typeof formSchema>) => {
 		setLoading(true);
 		//console.log('values: ' + JSON.stringify(values));
 
 		const databaseId = await createStore(values);
 
-		toast({
+		toastSuccess({
 			title: t("Store_Created"),
 			description: "",
-			variant: "success",
 		});
 
 		// close this modal

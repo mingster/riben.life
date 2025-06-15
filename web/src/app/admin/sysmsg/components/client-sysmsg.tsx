@@ -1,9 +1,11 @@
 "use client";
 
-import { Heading } from "@/components/ui/heading";
-import { Separator } from "@/components/ui/separator";
+import type { updateSystemMessageSchema } from "@/actions/admin/systemMessage/update-system-message.validation";
+import { toastError, toastSuccess } from "@/components/Toaster";
+import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { AlertModal } from "@/components/modals/alert-modal";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -11,18 +13,16 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { ColumnDef } from "@tanstack/react-table";
-import { CheckIcon, Copy, MoreHorizontal, Trash, XIcon } from "lucide-react";
-import type { z } from "zod";
-import type { updateSystemMessageSchema } from "@/actions/admin/systemMessage/update-system-message.validation";
-import { DataTable } from "@/components/dataTable";
-import { toastError, toastSuccess } from "@/components/Toaster";
-import { Button } from "@/components/ui/button";
+import { Heading } from "@/components/ui/heading";
+import { Separator } from "@/components/ui/separator";
+import type { SystemMessage } from "@/types";
 import { formatDateTime, getUtcNow } from "@/utils/utils";
+import type { ColumnDef } from "@tanstack/react-table";
 import axios, { type AxiosError } from "axios";
+import { CheckIcon, Copy, MoreHorizontal, Trash, XIcon } from "lucide-react";
 import { useState } from "react";
+import type { z } from "zod";
 import EditSystemMessage from "./edit-sysmsg";
-import { SystemMessage } from "@/types";
 
 interface props {
 	serverData: SystemMessage[];
