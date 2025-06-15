@@ -34,10 +34,10 @@ import {
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/utils/utils";
 import type { ProductAttribute } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
@@ -100,8 +100,6 @@ export const ProductEditAttributeTab = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
-	const { toast } = useToast();
-
 	const [_open, _setOpen] = useState(false);
 	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
@@ -153,10 +151,9 @@ export const ProductEditAttributeTab = ({
 					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${initialData.productId}/attribute/${initialData.id}`,
 					data,
 				);
-				toast({
+				toastSuccess({
 					title: "product attribute saved.",
 					description: "",
-					variant: "success",
 				});
 			} else {
 				// do create
@@ -165,10 +162,9 @@ export const ProductEditAttributeTab = ({
           `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/productAttribute`,
           data,
         );
-        toast({
+        toastError({
           title: "product created.",
           description: "",
-          variant: "success",
         });
          */
 			}
@@ -177,10 +173,9 @@ export const ProductEditAttributeTab = ({
 			router.refresh();
 		} catch (err: unknown) {
 			const error = err as AxiosError;
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: error.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

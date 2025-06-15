@@ -15,7 +15,6 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { toast } from "@/components/ui/use-toast";
 import type { FaqCategoryColumn } from "./columns";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -24,6 +23,7 @@ import { useI18n } from "@/providers/i18n-provider";
 interface CellActionProps {
 	data: FaqCategoryColumn;
 }
+import { toastError, toastSuccess } from "@/components/Toaster";
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const [loading, setLoading] = useState(false);
@@ -42,18 +42,16 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/faqCategory/${data.faqCategoryId}`,
 			);
 
-			toast({
+			toastSuccess({
 				title: t("FaqCategory") + t("Deleted"),
 				description: "",
-				variant: "success",
 			});
 			router.refresh();
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			toast({
+			toastError({
 				title: "something wrong.",
 				description: err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);
@@ -63,10 +61,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
-		toast({
+		toastSuccess({
 			title: "ID copied to clipboard.",
 			description: "",
-			variant: "success",
 		});
 	};
 

@@ -4,8 +4,8 @@ import { DataTableDraggable } from "@/components/datatable-draggable";
 import { Separator } from "@/components/ui/separator";
 
 import { Heading } from "@/components/ui/heading";
-import { columns } from "./columns";
 import type { User } from "@/types";
+import { columns } from "./columns";
 
 interface UsersClientProps {
 	data: User[];

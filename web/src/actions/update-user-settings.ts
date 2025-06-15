@@ -1,8 +1,8 @@
 "use server";
 
-import { actionClientUser } from "@/utils/actions/safe-action";
 import { updateUserSettingsSchema } from "@/actions/update-user-settings.validation";
 import { sqlClient } from "@/lib/prismadb";
+import { actionClientUser } from "@/utils/actions/safe-action";
 
 export const updateUserSettingsAction = actionClientUser
 	.metadata({ name: "updateUserSettings" })

@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* https://tweakcn.com */
+
 @custom-variant dark (&:is(.dark *));
 
 .active-scroll-spy {
@@ -21,9 +23,12 @@ button,
 input {
 	@apply cursor-pointer;
 }
+a {
+	@apply decoration-1 decoration-primary;
+}
 
 a:hover {
-	text-decoration: underline;
+	@apply font-bold backdrop-contrast-200 backdrop-blur-lg;
 }
 
 .beams {
@@ -165,11 +170,6 @@ a:hover {
 	--sidebar-border: oklch(0.87 0 0);
 	--sidebar-ring: oklch(0.65 0.15 150.31);
 
-	--font-sans:
-		ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-	--font-serif: Roboto, sans-serif;
-	--font-mono: Geist Mono, monospace;
-
 	--radius: 0.5rem;
 	--shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
 	--shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
@@ -183,6 +183,16 @@ a:hover {
 	--shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px
 		hsl(0 0% 0% / 0.1);
 	--shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+	--tracking-normal: 0.025em;
+
+	/*customized*/
+	--gold: oklch(0.47 0.1121 50.85);
+	--warning: oklch(0.41 0.11 46);
+	--warning-foreground: oklch(0.99 0.02 95);
+	--font-sans:
+		ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+	--font-serif: Roboto, sans-serif;
+	--font-mono: Geist Mono, monospace;
 
 	/*
 	--font-sans: Poppins, sans-serif;
@@ -190,12 +200,8 @@ a:hover {
 	--font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 	*/
 
-	--tracking-normal: 0.025em;
-
-	/*customized*/
-	--gold: oklch(0.47 0.1121 50.85);
-	--warning: oklch(0.41 0.11 46);
-	--warning-foreground: oklch(0.99 0.02 95);
+	--font-display--font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+	--font-display--font-variation-settings: "opsz" 32;
 }
 
 .dark {
@@ -232,19 +238,6 @@ a:hover {
 	--sidebar-border: oklch(0.39 0 0);
 	--sidebar-ring: oklch(0.65 0.15 150.31);
 
-	--font-sans: Plus Jakarta Sans, sans-serif;
-	--font-serif: Source Serif 4, serif;
-	--font-mono: JetBrains Mono, monospace;
-	/*
-	--font-sans: var(--font-popins-sans), var(--font-noto-sans), ui-sans-serif,
-		system-ui, sans-serif,, -apple-system, "Microsoft YaHei", "Gothic Pro",
-		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-	--font-serif: var(--font-popins-sans), var(--font-noto-sans), ui-serif,
-		"Microsoft YaHei", "Gothic Pro", Georgia, Cambria, "Times New Roman";
-	--font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
-		Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-	*/
-
 	--radius: 0.5rem;
 	--shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
 	--shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
@@ -258,10 +251,30 @@ a:hover {
 	--shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px
 		hsl(0 0% 0% / 0.1);
 	--shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+	--tracking-normal: 0.025em;
 
+	/*customized*/
 	--gold: oklch(0.75 0.1469 83.99);
 	--warning: oklch(0.84 0.16 84);
 	--warning-foreground: oklch(0.28 0.07 46);
+
+	--font-sans:
+		var(--font-popins-sans), var(--font-noto-sans), "Microsoft YaHei", ui-sans-serif, -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+	--font-serif: Roboto, sans-serif;
+	--font-mono: Geist Mono, monospace;
+	--font-display--font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+	--font-display--font-variation-settings: "opsz" 32;
+
+	/*
+	--font-sans: var(--font-popins-sans), var(--font-noto-sans), ui-sans-serif,
+		system-ui, sans-serif,, -apple-system, "Microsoft YaHei", "Gothic Pro",
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+	--font-serif: var(--font-popins-sans), var(--font-noto-sans), ui-serif,
+		"Microsoft YaHei", "Gothic Pro", Georgia, Cambria, "Times New Roman";
+	--font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
+		Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	*/
+
 }
 
 @layer base {
@@ -271,6 +284,7 @@ a:hover {
 
 	body {
 		@apply bg-background text-foreground;
+		font-family: var(--font-sans);
 		letter-spacing: var(--tracking-normal);
 	}
 }

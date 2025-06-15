@@ -35,18 +35,18 @@ const EditorComp = dynamic(
 	{ ssr: false },
 );
 
-import { toastError, toastSuccess } from "@/components/Toaster";
-import { useI18n } from "@/providers/i18n-provider";
-import { PenIcon, Plus } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Faq } from "@/types";
-import dynamic from "next/dynamic";
-import { Switch } from "@/components/ui/switch";
+import { updateFaqAction } from "@/actions/storeAdmin/faq/update-faq";
 import {
-	UpdateFaqInput,
+	type UpdateFaqInput,
 	updateFaqSchema,
 } from "@/actions/storeAdmin/faq/update-faq.validation";
-import { updateFaqAction } from "@/actions/storeAdmin/faq/update-faq";
+import { toastError, toastSuccess } from "@/components/Toaster";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { useI18n } from "@/providers/i18n-provider";
+import type { Faq } from "@/types";
+import { PenIcon, Plus } from "lucide-react";
+import dynamic from "next/dynamic";
 
 interface props {
 	item: z.infer<typeof updateFaqSchema>;

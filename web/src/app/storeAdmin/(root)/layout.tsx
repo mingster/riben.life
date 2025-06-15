@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/toaster";
 import { GetSession } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import type { Session } from "next-auth";
@@ -57,10 +56,5 @@ export default async function StoreAdminLayout(props: {
 
   //console.log('store: ' + JSON.stringify(store));
 */
-	return (
-		<>
-			{children}
-			<Toaster />
-		</>
-	);
+	return <>{children}</>;
 }

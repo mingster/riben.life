@@ -6,8 +6,8 @@ import { Suspense } from "react";
 //import { Metadata } from 'next';
 
 import { useTranslation } from "@/app/i18n";
-import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Store } from "@/types";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import { Client } from "./client";
 
 const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(

@@ -1,5 +1,6 @@
 "use client";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -12,7 +13,6 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -51,7 +51,7 @@ interface editProps {
 export const EditClient = ({ initialData }: editProps) => {
 	//const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
+
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [loading, setLoading] = useState(false);
@@ -87,10 +87,9 @@ export const EditClient = ({ initialData }: editProps) => {
 			data,
 		);
 
-		toast({
+		toastSuccess({
 			title: "data saved.",
 			description: "",
-			variant: "success",
 		});
 
 		router.refresh();
@@ -100,10 +99,9 @@ export const EditClient = ({ initialData }: editProps) => {
 		/*
     } catch (err: unknown) {
       const error = err as AxiosError;
-      toast({
+      toastError({
         title: "Something went wrong.",
         description: error.message,
-        variant: "destructive",
       });
     } finally {
     }

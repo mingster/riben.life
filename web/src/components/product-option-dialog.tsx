@@ -1,6 +1,5 @@
 "use client";
 
-import { useToast } from "@/components/ui/use-toast";
 import type { Item, ItemOption } from "@/hooks/use-cart";
 import { useCart } from "@/hooks/use-cart";
 
@@ -59,7 +58,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 }) => {
 	const [open, setOpen] = useState(false);
 	//const cart = useCart();
-	const { toast } = useToast();
+
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 

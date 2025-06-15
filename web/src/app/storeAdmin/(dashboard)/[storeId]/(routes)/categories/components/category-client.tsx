@@ -13,6 +13,7 @@ import { type CategoryColumn, columns } from "./columns";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import {
 	Dialog,
 	DialogClose,
@@ -34,7 +35,6 @@ import {
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { useState } from "react";
@@ -88,7 +88,6 @@ export const formSchema = z.object({
 });
 
 export function AddCategoriesDialog() {
-	const { toast } = useToast();
 	const [loading, setLoading] = useState(false);
 	const params = useParams();
 
@@ -107,10 +106,9 @@ export function AddCategoriesDialog() {
 			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/categories`,
 			data,
 		);
-		toast({
+		toastSuccess({
 			title: t("Category") + t("Created"),
 			description: "",
-			variant: "success",
 		});
 
 		setLoading(false);

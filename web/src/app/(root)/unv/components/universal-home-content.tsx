@@ -19,8 +19,6 @@ import { Footer } from "./Footer";
 import { UseCases } from "./UseCases";
 
 export const UniversalHomeContent = () => {
-	//const { toast } = useToast();
-
 	return (
 		<>
 			<NavBar />

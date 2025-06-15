@@ -41,8 +41,8 @@ import {
 	updateFaqCategorySchema,
 } from "@/actions/storeAdmin/faqCategory/update-faq-category.validation";
 import { Input } from "@/components/ui/input";
-import { FaqCategory } from "@/types";
-import { FaqCategoryWithFaqCount } from "./client-faq-category";
+import type { FaqCategory } from "@/types";
+import type { FaqCategoryWithFaqCount } from "./client-faq-category";
 
 interface props {
 	item: FaqCategoryWithFaqCount;

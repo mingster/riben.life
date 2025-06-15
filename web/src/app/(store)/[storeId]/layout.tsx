@@ -1,6 +1,3 @@
-import { Toaster } from "@/components/ui/toaster";
-//import { Metadata } from 'next';
-
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
@@ -110,7 +107,6 @@ export default async function StoreHomeLayout(props: {
 				</main>
 				<StoreFooter visible={isStoreOpen} store={store} />
 			</div>
-			<Toaster />
 		</Suspense>
 	);
 }

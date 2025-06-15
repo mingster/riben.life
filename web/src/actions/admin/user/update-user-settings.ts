@@ -1,8 +1,8 @@
 "use server";
 
-import { actionClientUser } from "@/utils/actions/safe-action";
 import { updateUserSettingsSchema } from "@/actions/admin/user/update-user-settings.validation";
 import { sqlClient } from "@/lib/prismadb";
+import { actionClientUser } from "@/utils/actions/safe-action";
 import type { Role } from "@prisma/client";
 
 export const updateUserSettingsAction = actionClientUser

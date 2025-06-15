@@ -1,7 +1,7 @@
 "use client";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 
 import { useTranslation } from "@/app/i18n/client";
 import {
@@ -29,7 +29,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "@/components/ui/switch";
 import type { Category } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
-import { revalidatePath } from "next/cache";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -51,7 +50,6 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
-	const { toast } = useToast();
 	//const [open, setOpen] = useState(false);
 	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
@@ -89,10 +87,9 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/categories/${initialData.id}`,
 					data,
 				);
-				toast({
+				toastSuccess({
 					title: t("Category") + t("Updated"),
 					description: "",
-					variant: "success",
 				});
 			} else {
 				// do create
@@ -100,20 +97,18 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/categories`,
 					data,
 				);
-				toast({
+				toastSuccess({
 					title: t("Category") + t("Created"),
 					description: "",
-					variant: "success",
 				});
 			}
 			router.push(`/storeAdmin/${params.storeId}/categories`);
 			router.refresh();
 		} catch (err: unknown) {
 			const error = err as AxiosError;
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: error.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

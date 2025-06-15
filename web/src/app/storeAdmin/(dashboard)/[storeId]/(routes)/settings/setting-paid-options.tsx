@@ -1,6 +1,6 @@
 "use client";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import type { Store, StoreSettings } from "@prisma/client";
@@ -26,8 +26,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { deleteImage, uploadImage } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
+import { deleteImage, uploadImage } from "@/utils/utils";
 import { XCircleIcon } from "lucide-react";
 import { RequiredProVersion } from "../components/require-pro-version";
 
@@ -64,7 +64,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 }) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
+
 	const [loading, setLoading] = useState(false);
 
 	const defaultValues = initialData
@@ -136,17 +136,15 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 				data,
 			);
 			router.refresh();
-			toast({
+			toastSuccess({
 				title: t("Store_Updated"),
 				description: "",
-				variant: "success",
 			});
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

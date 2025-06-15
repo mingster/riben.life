@@ -1,8 +1,8 @@
 "use client";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 
 import type { StoreOrder } from "@/types";
@@ -52,7 +52,8 @@ function useZodForm<TSchema extends z.ZodType>(
 ) {
 	const form = useForm<TSchema["_input"]>({
 		...props,
-		resolver: zodResolver(props.schema, undefined, {
+		resolver: zodResolver(formSchema, undefined, {
+		//resolver: zodResolver(props.schema, undefined, {
 			// This makes it so we can use `.transform()`s on the schema without same transform getting applied again when it reaches the server
 			//rawValues: true
 		}),
@@ -78,7 +79,6 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 	const [orderTotal, setOrderTotal] = useState(Number(order.orderTotal));
 	const [refundAmount, setRefundAmount] = useState(orderTotal);
 
-	const { toast } = useToast();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
@@ -138,10 +138,9 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 			return;
 		}
 
-		toast({
+		toastSuccess({
 			title: t("Order_edit_updated"),
 			description: "",
-			variant: "success",
 		});
 
 		setLoading(false);

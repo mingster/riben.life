@@ -3,9 +3,9 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 
+import { revalidateTag } from "next/cache";
 import { Suspense } from "react";
 import { SystemMessageClient } from "./components/client-sysmsg";
-import { revalidateTag } from "next/cache";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

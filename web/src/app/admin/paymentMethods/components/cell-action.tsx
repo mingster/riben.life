@@ -5,6 +5,7 @@ import { Copy, Edit, MoreHorizontal, Trash } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,6 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { toast } from "@/components/ui/use-toast";
 import type { DataColumn } from "./columns";
 
 interface CellActionProps {
@@ -33,18 +33,16 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 			setLoading(true);
 			//await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/${params.storeId}/stores/${data.id}`);
 
-			toast({
+			toastError({
 				title: "not yet implement",
 				description: "",
-				variant: "destructive",
 			});
 			router.refresh();
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			toast({
+			toastError({
 				title: "something wrong.",
 				description: err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);
@@ -54,10 +52,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
-		toast({
+		toastSuccess({
 			title: "ID copied to clipboard.",
 			description: "",
-			variant: "success",
 		});
 	};
 

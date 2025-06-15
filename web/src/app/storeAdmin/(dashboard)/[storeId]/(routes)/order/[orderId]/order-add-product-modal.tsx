@@ -5,10 +5,9 @@ import * as React from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { ProductCard } from "@/components/product-card";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { useToast } from "@/components/ui/use-toast";
 import { type Item, useCart } from "@/hooks/use-cart";
-import { cn, getAbsoluteUrl } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type {
 	Category,
@@ -18,6 +17,7 @@ import type {
 	StoreWithProductNCategories,
 } from "@/types";
 import { OrderStatus, ProductStatus } from "@/types/enum";
+import { cn, getAbsoluteUrl } from "@/utils/utils";
 import type { orderitemview } from "@prisma/client";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import Decimal from "decimal.js";
@@ -43,7 +43,7 @@ export const OrderAddProductModal: React.FC<props> = ({
 	onValueChange,
 }) => {
 	const _cart = useCart();
-	const { toast } = useToast();
+
 	const _params = useParams<{ storeId: string }>();
 
 	const { lng } = useI18n();
@@ -103,10 +103,9 @@ export const OrderAddProductModal: React.FC<props> = ({
 
 		onValueChange?.(result);
 
-		toast({
+		toastSuccess({
 			title: t("Order_add_product_modal_updated"),
 			description: "",
-			variant: "success",
 		});
 	};
 

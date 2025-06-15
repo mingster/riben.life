@@ -1,6 +1,6 @@
 "use client";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import axios, { type AxiosError } from "axios";
@@ -47,7 +47,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 }) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
+
 	const [loading, setLoading] = useState(false);
 
 	const { lng } = useI18n();
@@ -108,17 +108,15 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 				data,
 			);
 			router.refresh();
-			toast({
+			toastSuccess({
 				title: t("Store_Updated"),
 				description: "",
-				variant: "success",
 			});
 		} catch (err: unknown) {
 			const error = err as AxiosError;
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: error.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

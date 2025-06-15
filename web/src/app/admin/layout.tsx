@@ -1,12 +1,12 @@
+//import AdminPanelLayout from "./components/_old/admin-panel-layout";
+import { cookieName, fallbackLng } from "@/app/i18n/settings";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { sqlClient } from "@/lib/prismadb";
+import type { SystemMessage } from "@/types";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { checkAdminAccess } from "./admin-utils";
-//import AdminPanelLayout from "./components/_old/admin-panel-layout";
-import { cookieName, fallbackLng } from "@/app/i18n/settings";
-import { sqlClient } from "@/lib/prismadb";
-import { SystemMessage } from "@/types";
 import AdminLayout from "./components/admin-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function AdminDashboardLayout({
 	children,

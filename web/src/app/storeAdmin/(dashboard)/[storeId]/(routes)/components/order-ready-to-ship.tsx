@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { toastSuccess } from "@/components/Toaster";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
 
 import { useTranslation } from "@/app/i18n/client";
 import Currency from "@/components/currency";
@@ -19,12 +18,11 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { formatDateTime } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
+import { formatDateTime } from "@/utils/utils";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
-import Link from "next/link";
 import { ClipLoader } from "react-spinners";
 
 interface props {
@@ -52,7 +50,7 @@ export const OrderReadyToShip = ({ store, orders, parentLoading }: props) => {
 
 	//const params = useParams();
 	//const router = useRouter();
-	const { toast } = useToast();
+
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
@@ -67,10 +65,9 @@ export const OrderReadyToShip = ({ store, orders, parentLoading }: props) => {
 		// remove the order from the list
 		orders.filter((order) => order.id !== orderId);
 
-		toast({
+		toastSuccess({
 			title: t("Order") + t("Updated"),
 			description: "",
-			variant: "success",
 		});
 	};
 

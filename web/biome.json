@@ -101,7 +101,9 @@
 				"useValidTypeof": "error"
 			}
 		},
-		"ignore": [".next/*"]
+		"ignore": [
+			".next/*"
+		]
 	},
 	"javascript": {
 		"formatter": {
@@ -211,10 +213,17 @@
 	},
 	"overrides": [
 		{
-			"include": ["**/*.{js,mjs,cjs,ts,jsx,tsx,ts}"]
+			"include": [
+				"**/*.{js,mjs,cjs,ts,jsx,tsx,ts}"
+			]
 		},
 		{
-			"include": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+			"include": [
+				"**/*.ts",
+				"**/*.tsx",
+				"**/*.mts",
+				"**/*.cts"
+			],
 			"linter": {
 				"rules": {
 					"correctness": {

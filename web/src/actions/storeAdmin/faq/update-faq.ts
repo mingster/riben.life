@@ -1,9 +1,9 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
 
+import type { Faq } from "@/types";
 import { storeOwnerActionClient } from "@/utils/actions/safe-action";
 import { updateFaqSchema } from "./update-faq.validation";
-import { Faq } from "@/types";
 
 export const updateFaqAction = storeOwnerActionClient
 	.metadata({ name: "updateFaq" })

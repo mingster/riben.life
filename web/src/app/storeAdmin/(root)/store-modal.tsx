@@ -1,6 +1,6 @@
 "use client";
 
-import { useToast } from "@/components/ui/use-toast";
+import { toastSuccess } from "@/components/Toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -9,7 +9,6 @@ import { useTranslation } from "@/app/i18n/client";
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -20,7 +19,6 @@ import { Modal } from "@/components/ui/modal";
 import {
 	Select,
 	SelectContent,
-	SelectItem,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
@@ -31,7 +29,6 @@ import { CurrencyCombobox } from "@/components/currency-combobox";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { Button } from "@/components/ui/button";
 import { useStoreModal } from "@/hooks/storeAdmin/use-store-modal";
-import { useParams } from "next/navigation";
 import { z } from "zod";
 import { createStore } from "./actions";
 
@@ -60,18 +57,15 @@ export const StoreModal: React.FC = () => {
 		},
 	});
 
-	const { toast } = useToast();
-
 	const onSubmit = async (values: z.infer<typeof formSchema>) => {
 		setLoading(true);
 		//console.log('values: ' + JSON.stringify(values));
 
 		const databaseId = await createStore(values);
 
-		toast({
+		toastSuccess({
 			title: t("Store_Created"),
 			description: "",
-			variant: "success",
 		});
 
 		// close this modal
@@ -80,16 +74,15 @@ export const StoreModal: React.FC = () => {
 		//redirect(`/storeAdmin/${databaseId}/settings`);
 
 		/*
-        //try {
-    } catch (error) {
-      toast({
-        title: "Something went wrong",
-        description: "",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }*/
+		//try {
+	} catch (error) {
+	  toastError({
+		title: "Something went wrong",
+		description: "",
+	  });
+	} finally {
+	  setLoading(false);
+	}*/
 		setLoading(false);
 	};
 

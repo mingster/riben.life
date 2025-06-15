@@ -18,9 +18,9 @@ import { Copy, MoreHorizontal, Trash } from "lucide-react";
 //import { useRouter } from "next/navigation";
 import { CheckIcon, XIcon } from "lucide-react";
 
-import { updateFaqSchema } from "@/actions/storeAdmin/faq/update-faq.validation";
-import { DataTable } from "@/components/dataTable";
+import type { updateFaqSchema } from "@/actions/storeAdmin/faq/update-faq.validation";
 import { toastError, toastSuccess } from "@/components/Toaster";
+import { DataTable } from "@/components/dataTable";
 import { Button } from "@/components/ui/button";
 import type { Faq } from "@/types";
 import axios, { type AxiosError } from "axios";
@@ -31,8 +31,8 @@ import type { z } from "zod";
 import { EditFaq } from "./edit-faq";
 import { EditFaqCategory } from "./edit-faq-category";
 
-import { useI18n } from "@/providers/i18n-provider";
 import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
 
 // type for FAQ category with FAQ count
 export type FaqCategoryWithFaqCount = {

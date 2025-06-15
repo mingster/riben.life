@@ -1,7 +1,7 @@
 "use client";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import type { Store, StoreSettings } from "@prisma/client";
@@ -43,7 +43,6 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 }) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
 
 	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
@@ -100,17 +99,15 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 
 			//revalidatePath('/[storeId]', 'page');
 
-			toast({
+			toastSuccess({
 				title: t("Store_Updated"),
 				description: "",
-				variant: "success",
 			});
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

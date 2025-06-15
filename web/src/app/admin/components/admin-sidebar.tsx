@@ -34,8 +34,8 @@ import {
 } from "@/components/ui/collapsible";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GetMenuList } from "./admin-menu-list";
 import { useEffect } from "react";
+import { GetMenuList } from "./admin-menu-list";
 
 export function AdminSidebar() {
 	const pathname = usePathname();

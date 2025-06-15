@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { Faq } from "@/types";
+import type { Faq } from "@/types";
 //import { logDBPrismaClient } from "@/lib/prisma-client-viewLog";
 //import { transformBigIntToNumbers } from "@/utils/utils";
 

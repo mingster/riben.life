@@ -1,5 +1,5 @@
 "use client";
-import { useToast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { cn, formatDateTime } from "@/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -62,7 +62,6 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 }) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
 
 	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
@@ -109,10 +108,9 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 		);
 		router.refresh();
 
-		toast({
+		toastSuccess({
 			title: "Subscription updated.",
 			description: "",
-			variant: "success",
 		});
 
 		setLoading(false);
@@ -126,10 +124,9 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 
 		router.refresh();
 
-		toast({
+		toastSuccess({
 			title: "Subscription cancelled.",
 			description: "",
-			variant: "success",
 		});
 
 		setLoading(false);

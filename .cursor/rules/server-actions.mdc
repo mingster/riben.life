@@ -3,178 +3,115 @@ description: Guidelines for implementing Next.js server actions
 globs: 
 alwaysApply: false
 ---
-# Server Actions
+# Server Action Guide
 
-## Format and Structure
-Server actions should follow this format:
+This project uses @Next.js Server Actions with @safe-action for secure, type-safe server-side mutations and data operations.
 
-Files:
-- `web/src/actions/NAME.validation.ts`
-- `web/src/actions/NAME.ts`
+## Location & Structure
 
-For `web/src/actions/NAME.validation.ts`:
+- **Server actions** are located in the `pstv_web/src/actions/` directory, organized by feature/domain such as:
+  - `admin/sysmsg/` - System message actions
+  - `admin/faq/` - FAQ management actions
+- Each action file typically exports one or more actions using the `adminActionClient` or `baseClient` or `userRequiredActionClient` wrapper. 
+- administration pages within `admin` URL should use `adminActionClient` wrapper.
+- user related pages within `account` URL should use `userRequiredActionClient` wrapper.
+- other actions can use `baseClient`
+- Validation schemas (using Zod) are colocated in the same directory as `[action-name].validation.ts`
 
-```typescript
-import { z } from "zod";
+## Naming Conventions
 
-// Example: Schema for updating AI settings
-export const saveAiSettingsBody = z.object({
-  aiProvider: z.string().optional(), // Adjust types as needed
-  aiModel: z.string().optional(),
-  aiApiKey: z.string().optional(),
-});
-export type SaveAiSettingsBody = z.infer<typeof saveAiSettingsBody>;
+- Action files are named with the pattern: `verb-object.ts` (e.g., `update-opserver.ts`, `update-system-message.ts`)
+- Validation schemas are named: `verb-object.validation.ts`
+- Exported actions are named in camelCase with "Action" suffix, e.g., `updateOpServerAction`
 
-// Example: Schema for updating email settings (requires emailAccountId binding)
-export const saveEmailUpdateSettingsBody = z.object({
-  statsEmailFrequency: z.string().optional(), // Use specific enum/types if applicable
-  summaryEmailFrequency: z.string().optional(),
-});
-export type SaveEmailUpdateSettingsBody = z.infer<
-  typeof saveEmailUpdateSettingsBody
->;
+## Validation & Action Structure
 
+- All server actions use Zod schemas for input validation and type safety
+- Actions are wrapped with `userRequiredActionClient` for general action:
+
+```ts
+export const updateOpServerAction = userRequiredActionClient
+  .metadata({ name: "updateUser" })
+  .schema(updateUserSchema)
+  .action(async ({ parsedInput }) => {
+    // Action implementation
+  });
 ```
 
-For `web/src/actions/NAME.ts`:
+- Actions are wrapped with `emailRequiredActionClient` for if e-mail is required:
 
-```typescript
-"use server";
-
-import { actionClient, actionClientUser } from "@/utils/actions/safe-action";
-import {
-  saveAiSettingsBody,
-  saveEmailUpdateSettingsBody,
-} from "@/utils/actions/settings.validation"; // Adjust path
-import prisma from "@/utils/prisma";
-import { revalidatePath } from "next/cache"; // Import if needed for cache invalidation
-
-// Example using actionClientUser (requires authenticated user context)
-export const updateAiSettingsAction = actionClientUser
-  .metadata({ name: "updateAiSettings" }) // For logging/instrumentation
-  .schema(saveAiSettingsBody) // Zod schema for input validation
-  .action(
-    async ({
-      ctx: { userId }, // Access context provided by the safe-action client
-      parsedInput: { aiProvider, aiModel, aiApiKey }, // Validated and typed input
-    }) => {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { aiProvider, aiModel, aiApiKey },
-      });
-    },
-  );
-
-// Example using actionClient (requires authenticated user + bound emailAccountId)
-export const updateEmailSettingsAction = actionClient
-  .metadata({ name: "updateEmailSettings" })
-  .schema(saveEmailUpdateSettingsBody)
-  // Note: emailAccountId is bound when calling this action from the client
-  .action(
-    async ({
-      ctx: { emailAccountId }, // Access context (includes userId, email etc.)
-      parsedInput: { statsEmailFrequency, summaryEmailFrequency },
-    }) => {
-      await prisma.emailAccount.update({
-        where: { id: emailAccountId },
-        data: {
-          statsEmailFrequency,
-          summaryEmailFrequency,
-        },
-      });
-    },
-  );
-
+```ts
+export const updateOpServerAction = actionClient
+  .metadata({ name: "updateUserBilling" })
+  .schema(updateUserBillingSchema)
+  .action(async ({ parsedInput }) => {
+    // Action implementation
+  });
 ```
 
-## Implementation Guidelines
-- **Use `next-safe-action`:** Implement all server actions using the `next-safe-action` library for type safety, input validation, context management, and error handling. Refer to `web/src/actions/safe-action.ts` for client definitions (`actionClient`, `actionClientUser`, `adminActionClient`).
-- **Choose the Right Client:**
-    - `actionClientUser`: Use when only authenticated user context (`userId`) is needed.
-    - `actionClient`: Use when both authenticated user context *and* a specific `emailAccountId` are needed. The `emailAccountId` must be bound when calling the action from the client.
-    - `adminActionClient`: Use for actions restricted to admin users.
-- **Input Validation:** Define input validation schemas using Zod in the corresponding `.validation.ts` file. These schemas are used by `next-safe-action` (`.schema()`) and can also be reused on the client for form validation.
-- **Context (`ctx`):** Access necessary context (like `userId`, `emailAccountId`, etc.) provided by the safe action client via the `ctx` object in the `.action()` handler.
-- **Mutations Only:** Server Actions are **strictly for mutations** (operations that change data, e.g., creating, updating, deleting). **Do NOT use Server Actions for data fetching (GET operations).**
-    - For data fetching, use dedicated @GET API Routes combined with @SWR Hooks.
-- **Error Handling:** `next-safe-action` provides centralized error handling. Use `SafeError` for expected/handled errors within actions if needed (see `web/src/actions/safe-action.ts`).
-- **Instrumentation:** Sentry instrumentation is automatically applied via `withServerActionInstrumentation` within the safe action clients. Use the `.metadata({ name: "actionName" })` method to provide a meaningful name for monitoring.
-- **Cache Invalidation:** If an action modifies data displayed elsewhere, use `revalidatePath` or `revalidateTag` from `next/cache` within the action handler as needed.
-# Server Actions Pattern (Next.js 15+)
+- Actions are wrapped with `adminActionClient` if administration role is required:
 
-This rule describes the preferred pattern for implementing server actions in this codebase, especially for user settings and similar forms.
-
-## Key Principles
-- **Colocate validation schemas**: Place Zod schemas in a shared file (e.g., `src/actions/update-user-settings.validation.ts`).
-- **Colocate server actions**: Place server actions in a file in `src/actions/` (e.g., `src/actions/update-user-settings.ts`).
-- **No axios/fetch**: Call server actions directly from client components. Do not use `axios` or `fetch` for internal mutations.
-- **Type safety**: Use Zod schemas for both client and server validation.
-- **Error handling**: Return structured errors from the server action and display them in the client using a toast or similar UI.
-
-## Example Structure
-
-### 1. Validation Schema (`src/actions/update-user-settings.validation.ts`)
-```typescript
-import { z } from "zod";
-
-export const updateUserSettingsSchema = z.object({
-  name: z.string().min(1),
-  locale: z.string().min(1),
-});
-
-export type UpdateUserSettingsInput = z.infer<typeof updateUserSettingsSchema>;
+```ts
+export const updateOpServerAction = adminActionClient
+  .metadata({ name: "updateOpServer" })
+  .schema(updateOpServerSchema)
+  .action(async ({ parsedInput }) => {
+    // Action implementation
+  });
 ```
 
-### 2. Server Action (`src/actions/update-user-settings.ts`)
-```typescript
-"use server";
-import { updateUserSettingsSchema } from "./update-user-settings.validation";
-import { db } from "@/lib/db";
+## Common Patterns
 
-export async function updateUserSettingsAction(input: UpdateUserSettingsInput) {
-  const parsed = updateUserSettingsSchema.safeParse(input);
-  if (!parsed.success) {
-    return { serverError: "Invalid input" };
-  }
-  try {
-    // ... update user in db ...
-    await db.user.update({
-      where: { id: input.id },
-      data: parsed.data,
-    });
-    return { success: true };
-  } catch (e) {
-    return { serverError: e instanceof Error ? e.message : "Unknown error" };
-  }
+### Create/Update Pattern
+```ts
+if (guid === undefined || guid === null || guid === "" || guid === "new") {
+  // Create new record
+  const result = await prisma.create({ data: { ... } });
+} else {
+  // Update existing record
+  await prisma.update({ where: { guid }, data: { ... } });
 }
 ```
 
-### 3. Client Usage (in a React component)
-```typescript
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { updateUserSettingsSchema, type UpdateUserSettingsInput } from "@/actions/update-user-settings.validation";
-import { updateUserSettingsAction } from "@/actions/update-user-settings";
+### Date Handling
+- Use `getUtcNow()` from `@/utils/utils` for consistent UTC timestamps
+- Set `creationDate` for new records
+- Set `lastModified` for updates
 
-const form = useForm<UpdateUserSettingsInput>({
-  resolver: zodResolver(updateUserSettingsSchema),
-  defaultValues: { name: user.name || "", locale: user.locale || "" },
-});
+## Example Files
 
-async function onSubmit(data: UpdateUserSettingsInput) {
-  const result = await updateUserSettingsAction(data);
-  if (result?.serverError) {
-    toast({ variant: "destructive", description: result.serverError });
-  } else {
-    toast({ variant: "success", description: "Profile updated." });
-  }
-}
-```
+- @update-opserver.ts
+- @update-opserver.validation.ts
+- @update-system-message.ts
+- @update-system-message.validation.ts
 
-## Migration Notes
-- **Remove all axios/fetch calls** for internal mutations. Use direct server action imports.
-- **Always validate** on both client and server using the shared Zod schema.
-- **Return structured errors** from server actions and handle them in the client.
+## Best Practices
 
-## See Also
-- @Next.js Server Actions documentation
+1. **Type Safety**
+   - Use Zod schemas for input validation
+   - Use TypeScript types from Prisma client
+   - Leverage safe-action for end-to-end type safety
+
+2. **Error Handling**
+   - Return structured results with `data` or `serverError`
+   - Use try-catch blocks for database operations
+   - Log errors with descriptive context
+
+3. **Security**
+   - Use `adminActionClient` for admin actions
+   - Use `actionClient` is e-mail is required
+   - Use `actionClient` for general actions
+   - Validate all input data
+   - Don't expose sensitive information
+
+4. **Data Consistency**
+   - Use transactions for related operations
+   - Set appropriate timestamps
+   - Handle null/undefined values properly
+
+5. **Code Organization**
+   - Keep actions focused and single-purpose
+   - Colocate validation schemas
+   - Use consistent naming patterns
+
+This pattern ensures secure, maintainable, and type-safe server-side operations throughout the app.

@@ -1,5 +1,6 @@
 "use client";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -9,7 +10,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 
 import {
 	Form,
@@ -52,7 +52,6 @@ interface editProps {
 export const FaqEdit = ({ initialData, category, action }: editProps) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
@@ -88,10 +87,9 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 			const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/faqCategory/${category.id}/faq/${initialData.id}`;
 
 			await axios.patch(url, data);
-			toast({
+			toastSuccess({
 				title: t("FAQ") + t("Saved"),
 				description: "",
-				variant: "success",
 			});
 			router.refresh();
 		} else {
@@ -100,10 +98,9 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/faqCategory/${category.id}/faq`,
 				data,
 			);
-			toast({
+			toastSuccess({
 				title: t("FAQ") + t("Created"),
 				description: "",
-				variant: "success",
 			});
 
 			router.refresh();
@@ -117,10 +114,9 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 
     } catch (err: unknown) {
       const error = err as AxiosError;
-      toast({
+      toastError({
         title: "Something went wrong.",
         description: error.message,
-        variant: "destructive",
       });
     } finally {
       setLoading(false);

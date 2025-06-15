@@ -1,6 +1,6 @@
 "use client";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
 
 import type {
 	PaymentMethod,
@@ -56,7 +56,6 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 }) => {
 	const router = useRouter();
 	const params = useParams();
-	const { toast } = useToast();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
@@ -77,19 +76,17 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 			router.refresh();
 			router.push("/storeAdmin/");
 
-			toast({
+			toastSuccess({
 				title: t("Store_Removed"),
 				description: "",
-				variant: "success",
 			});
 		} catch (err: unknown) {
 			const error = err as AxiosError;
 
-			toast({
+			toastError({
 				title:
 					"Something went wrong. Make sure you removed all products and categories first.",
 				description: error.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

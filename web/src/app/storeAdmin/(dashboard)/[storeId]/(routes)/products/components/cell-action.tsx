@@ -17,12 +17,12 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { toast } from "@/components/ui/use-toast";
 import type { ProductColumn } from "./columns";
 
 interface CellActionProps {
 	data: ProductColumn;
 }
+import { toastError, toastSuccess } from "@/components/Toaster";
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const [loading, setLoading] = useState(false);
@@ -39,20 +39,18 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${data.id}`,
 		);
 
-		toast({
+		toastSuccess({
 			title: t("Product_deleted"),
 			description: "",
-			variant: "success",
 		});
 		router.refresh();
 		setLoading(false);
 		setOpen(false);
 		/*} catch (error: unknown) {
       const err = error as AxiosError;
-      toast({
+      toastError({
         title: "something wrong.",
         description: err.message,
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -62,10 +60,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
-		toast({
+		toastSuccess({
 			title: "Product ID copied to clipboard.",
 			description: "",
-			variant: "success",
 		});
 	};
 

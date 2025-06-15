@@ -23,8 +23,8 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
+import { cn } from "@/utils/utils";
 
 import { useStoreModal } from "@/hooks/storeAdmin/use-store-modal";
 

@@ -4,7 +4,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { ProductCard } from "@/components/product-card";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { useToast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { type Item, useCart } from "@/hooks/use-cart";
 import { useParams } from "next/navigation";
 
@@ -22,7 +22,7 @@ export interface props {
 export const Client: React.FC<props> = ({ store, category }) => {
 	/*
   const session = useSession();
-  //const { toast } = useToast();
+  //
   //const router = useRouter();
 
   //const [type, setType] = useState<string>('monthly');
@@ -33,7 +33,7 @@ export const Client: React.FC<props> = ({ store, category }) => {
   */
 
 	const cart = useCart();
-	const { toast } = useToast();
+
 	const params = useParams<{ storeId: string; tableId: string }>();
 
 	const { lng } = useI18n();
@@ -72,10 +72,9 @@ export const Client: React.FC<props> = ({ store, category }) => {
 		}
 
 		//router.push('/cart');
-		toast({
+		toastSuccess({
 			title: t("product_added_to_cart"),
 			description: "",
-			variant: "success",
 		});
 	};
 

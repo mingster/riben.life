@@ -49,9 +49,9 @@ import {
 	type UpdateUserSettingsInput,
 	updateUserSettingsSchema,
 } from "@/actions/admin/user/update-user-settings.validation";
+import type { User } from "@/types";
 import { formatDateTime } from "@/utils/utils";
 import { UserRoleCombobox } from "./user-role-combobox";
-import type { User } from "@/types";
 
 /*
 export type UserColumn = {

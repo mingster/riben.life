@@ -1,21 +1,12 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { cn, formatDateTime, getAbsoluteUrl } from "@/utils/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
+import { formatDateTime } from "@/utils/utils";
 import { useParams, useRouter } from "next/navigation";
 
-import { ConfirmModal } from "@/components/modals/cofirm-modal";
-
-import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
-
-import { useSession } from "next-auth/react";
-import { type ChangeEvent, useEffect, useState } from "react";
-
-import getStripe from "@/lib/stripe/client";
+import { useEffect, useState } from "react";
 
 import Currency from "@/components/currency";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,13 +18,9 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { StoreLevel, SubscriptionStatus } from "@/types/enum";
+import { SubscriptionStatus } from "@/types/enum";
 import type { Subscription, SubscriptionPayment } from "@prisma/client";
-import axios from "axios";
 import { formatDate } from "date-fns";
-import { useTheme } from "next-themes";
-import Link from "next/link";
-import Stripe from "stripe";
 
 export function SubscriptionHistoryClient({
 	store,
@@ -54,7 +41,6 @@ export function SubscriptionHistoryClient({
 
 	const _params = useParams();
 	const _router = useRouter();
-	const { toast } = useToast();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");

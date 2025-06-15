@@ -1,5 +1,6 @@
 "use client";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -17,7 +18,6 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
 import { useI18n } from "@/providers/i18n-provider";
 import { TicketStatus } from "@/types/enum";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,7 +55,7 @@ interface editProps {
 export const TicketReply = ({ initialData }: editProps) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
+
 	const [loading, setLoading] = useState(false);
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -103,10 +103,9 @@ export const TicketReply = ({ initialData }: editProps) => {
 			`${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/ticket/${initialData.id}`,
 			data,
 		);
-		toast({
+		toastSuccess({
 			title: "ticket replied, to be continued.",
 			description: "",
-			variant: "success",
 		});
 		router.refresh();
 		router.push(`/${params.storeId}/support`);

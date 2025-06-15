@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
 
 import { Separator } from "@/components/ui/separator";
 import type {
@@ -29,6 +28,7 @@ import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { t } from "i18next";
 import { CheckIcon, Trash, XIcon } from "lucide-react";
 import { AddProductOptionDialog } from "./product-option-dialog";
+import { toastError, toastSuccess } from "@/components/Toaster";
 
 interface editProps {
 	initialData:
@@ -151,10 +151,9 @@ export const DisplayStoreOptionTemplates = ({
 			},
 		);
 
-		toast({
+		toastSuccess({
 			title: t("ProductOption") + t("Added"),
 			description: "",
-			variant: "success",
 		});
 
 		setLoading(false);
@@ -569,20 +568,18 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
 			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${params.productId}/options/${data.id}`,
 		);
 
-		toast({
+		toastSuccess({
 			title: `${t("ProductOption")} ${t("Deleted")}`,
 			description: "",
-			variant: "success",
 		});
 		router.refresh();
 		setLoading(false);
 		setOpen(false);
 		/*} catch (error: unknown) {
 	  const err = error as AxiosError;
-	  toast({
+	  toastError({
 		title: "something wrong.",
 		description: err.message,
-		variant: "destructive",
 	  });
 	} finally {
 	  setLoading(false);

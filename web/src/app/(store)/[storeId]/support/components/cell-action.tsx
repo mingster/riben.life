@@ -15,7 +15,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { toast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import type { TicketColumn } from "./columns";
 
 interface CellActionProps {
@@ -35,18 +35,16 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 				`${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/ticket/${data.id}`,
 			);
 
-			toast({
+			toastSuccess({
 				title: "ticket deleted.",
 				description: "",
-				variant: "success",
 			});
 			router.refresh();
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			toast({
+			toastError({
 				title: "something wrong.",
 				description: err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);
@@ -56,10 +54,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
-		toast({
+		toastSuccess({
 			title: "Ticket ID copied to clipboard.",
 			description: "",
-			variant: "success",
 		});
 	};
 

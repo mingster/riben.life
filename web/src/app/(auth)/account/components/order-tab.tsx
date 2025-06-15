@@ -8,8 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { DisplayOrder } from "@/components/order-display";
-import { cn, highlight_css } from "@/utils/utils";
 import type { StoreOrder } from "@/types";
+import { cn, highlight_css } from "@/utils/utils";
 
 type orderTabProps = { orders: StoreOrder[] };
 export const DisplayOrders = ({ orders }: orderTabProps) => {

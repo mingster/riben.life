@@ -1,7 +1,6 @@
 "use client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Store } from "@prisma/client";
 import type { StoreSettings } from "@prisma/client";
@@ -31,6 +30,7 @@ import { LocaleSelectItems } from "@/components/locale-select-items";
 import { ApiListing } from "@/components/ui/api-listing";
 
 import { useTranslation } from "@/app/i18n/client";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import {
 	Select,
 	SelectContent,
@@ -78,7 +78,6 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 }) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
 
 	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
@@ -142,17 +141,15 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
 			//revalidatePath('/[storeId]', 'page');
 
-			toast({
+			toastSuccess({
 				title: t("Store_Updated"),
 				description: "",
-				variant: "success",
 			});
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

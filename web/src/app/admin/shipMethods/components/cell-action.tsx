@@ -15,8 +15,8 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { toast } from "@/components/ui/use-toast";
 import type { DataColumn } from "./columns";
+import { toastError, toastSuccess } from "@/components/Toaster";
 
 interface CellActionProps {
 	data: DataColumn;
@@ -33,18 +33,16 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 			setLoading(true);
 			//await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/${params.storeId}/stores/${data.id}`);
 
-			toast({
+			toastError({
 				title: "not yet implement",
 				description: "",
-				variant: "destructive",
 			});
 			router.refresh();
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			toast({
+			toastError({
 				title: "something wrong.",
 				description: err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);
@@ -54,10 +52,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
-		toast({
+		toastSuccess({
 			title: "ID copied to clipboard.",
 			description: "",
-			variant: "success",
 		});
 	};
 

@@ -17,12 +17,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { toast } from "@/components/ui/use-toast";
 import type { TableColumn } from "./columns";
 
 interface CellActionProps {
 	data: TableColumn;
 }
+import { toastError, toastSuccess } from "@/components/Toaster";
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const [loading, setLoading] = useState(false);
@@ -40,19 +40,17 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/tables/${data.id}`,
 			);
 
-			toast({
+			toastSuccess({
 				title: t("StoreTable_Mgmt_Deleted"),
 				description: "",
-				variant: "success",
 			});
 			//router.refresh();
 			window.location.assign(`/storeAdmin/${params.storeId}/tables`);
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			toast({
+			toastError({
 				title: "something wrong.",
 				description: err.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);
@@ -62,10 +60,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
-		toast({
+		toastSuccess({
 			title: "table ID copied to clipboard.",
 			description: "",
-			variant: "success",
 		});
 	};
 

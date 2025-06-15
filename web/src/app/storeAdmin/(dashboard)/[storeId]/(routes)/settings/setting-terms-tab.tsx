@@ -1,5 +1,5 @@
 "use client";
-import { useToast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import axios, { type AxiosError } from "axios";
@@ -47,7 +47,7 @@ type formValues = z.infer<typeof tosFormSchema>;
 export const TermsTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
+
 	const [loading, setLoading] = useState(false);
 
 	const { lng } = useI18n();
@@ -95,17 +95,15 @@ export const TermsTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
 				data,
 			);
 			router.refresh();
-			toast({
+			toastSuccess({
 				title: t("Store_Updated"),
 				description: "",
-				variant: "success",
 			});
 		} catch (err: unknown) {
 			const error = err as AxiosError;
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: error.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

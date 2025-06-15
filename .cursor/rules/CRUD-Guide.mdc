@@ -1,0 +1,248 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+name: CRUD Guide (Modern Client State Pattern)
+description: Guide to managing data (CRUD operations - Create, Read, Update, Delete)
+globs: ["**/*.{js,ts,jsx,tsx,mdx,css}"]
+tags:
+  - CRUD
+alwaysApply: true
+---
+
+# Standard CRUD Operation Pattern  (Modern Client State Pattern)
+
+This application follows a modern pattern for managing data (CRUD operations - Create, Read, Update, Delete) in this Next.js App Router projects.
+
+## Key Principles
+- **Local State Management:** The main client component (e.g., `client-FaqCategory.tsx`) holds the data array in local state (`useState`).
+- **Edit/Create Dialogs:** Edit and create forms (e.g., `edit-FaqCategory`) are rendered as modals or drawers and receive `onUpdated` callbacks from the parent.
+- **Direct State Updates:** After a mutation (create, update, delete), the parent updates its local state array directly, ensuring the UI is always in sync.
+- **No router.refresh for Client State:** Do **not** rely on `router.refresh()` to update client-side state. Only use it if you want to re-fetch server components.
+- **Type Safety:** Always ensure new/updated items include all required fields for the state array's type.
+
+## Structure
+
+- Each CRUD resource has its own directory under `/*/RESOURCE_NAME`.
+- The main page (e.g., @`page.tsx`) fetches data on the server and passes it to a client component.
+- The client component (e.g., @`client-sysmsg.tsx`) handles displaying the data in a table, as well as client-side state for create, update, and delete operations.
+- Editing and creating items is handled by a dedicated form/dialog component (e.g., @`edit-sysmsg.tsx`), which uses a modal dialog and react-hook-form for validation and submission.
+- Actions (edit, delete, copy, etc.) are provided via dropdown menus and confirmation dialogs in `CellAction` function.
+- Data is updated optimistically on the client after successful server actions.
+
+## Key Conventions
+
+1. **Server Data Fetching:**  
+   Fetch all data for the resource in the main page server component and pass it as props to the client component.
+
+2. **Client Table Component:**  
+   - Receives the server data as a prop.
+   - Manages local state for the data array.
+   - `CellAction` function provides dropdown menus and confirmation dialogs for delete mutation.
+
+3. **Edit/Create Dialog:**  
+   - Uses a modal dialog for editing or creating items.
+   - Uses react-hook-form and zod for validation.
+   - Calls server actions for create/edit mutations.
+   - Notifies the parent component to update local state after mutation.
+
+4. **Actions:**  
+   - Use dropdown menus for row actions (edit, delete, copy, etc.).
+   - Use confirmation dialogs for destructive actions.
+
+5. **UI Components:**  
+   - Use shadcn/ui components for table, dialog, button, etc.
+   - Use Suspense and Loader for async loading states.
+
+## Example Reference
+
+- Main CRUD page: @`/storeAdmin/[storeId]/categories/page.tsx`
+- Client table: @`/storeAdmin/[storeId]/categories/components/client-category.tsx`
+- Edit/Create dialog: @`/storeAdmin/[storeId]/categories/components/edit-category.tsx`
+
+---
+
+**Follow this pattern for all new CRUD resources in the admin section for consistency and maintainability.**
+
+
+## Example Pattern
+
+### 1. Define/Create type in `@/src/types.d.ts`
+
+### 2. Create server action and zod validation using as defined in [server-action.mdc](mdc:.cursor/rules/server-action.mdc)
+
+### 3. Create a Server page (page.tsx) to host an unique URL entry
+
+```tsx
+export default async function [object_name]AdminPage(props: {
+	params: Params;
+	searchParams: SearchParams;
+}) {
+	//const _params = await props.params;
+	const obj = (await sqlClient.[object_name].findMany(
+		{},
+	)) as object_name[];
+	transformBigIntToNumbers(obj);
+
+	return (
+		<Suspense fallback={<Loader />}>
+			<Container>
+				<[object_name]Client serverData={obj} />
+			</Container>
+		</Suspense>
+	);
+}
+
+```
+
+### 4. Client List Component (holds state)
+
+```tsx
+const [data, setData] = useState<ItemType[]>(serverData);
+
+const handleCreated = (newItem: ItemType) => {
+  setData(prev => [...prev, newItem]);
+};
+const handleUpdated = (updatedItem: ItemType) => {
+  setData(prev => prev.map(item => item.id === updatedItem.id ? { ...item, ...updatedItem } : item));
+};
+const handleDeleted = (deletedItem: ItemType) => {
+  setData(prev => prev.filter(item => item.id !== deletedItem.id));
+};
+```
+
+### 5. Pass Callbacks to Edit/Create Components
+
+```tsx
+<EditItem item={row.original} onUpdated={handleUpdated} />
+<EditItem item={newObj} onCreated={handleCreated} isNew={true} />
+<ActionCell item={row.original} onDeleted={handleDeleted} />
+```
+
+### 6. Edit/Create Component Calls Callback After Success
+
+```tsx
+async function onSubmit(data: ItemType) {
+  const result = await updateItemAction(data);
+  if (result?.serverError) {
+    toastError({ description: result.serverError });
+    return;
+  }
+  // For create, ensure all required fields are present
+  if (data.id === 'new') {
+    data.id = result.data.id;
+    data.createdOn = result.data.createdOn;
+    onCreated?.(data);
+  } else {
+    onUpdated?.(data);
+  }
+  setIsOpen(false);
+}
+```
+
+### 6. Filter Implementation
+
+#### 6.1 Filter Component Structure
+```typescript
+// filter-channel.tsx or filter-observer.tsx
+export function Filter({
+  selectedStatuses,
+  onStatusChange,
+  onTitleChange,
+  className,
+}: FilterProps) {
+  const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"status" | "title">("status");
+  
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className={className}>
+          <Filter className="mr-2 h-4 w-4" />
+          Filter
+          {selectedStatuses.length > 0 && (
+            <Badge variant="secondary" className="ml-2">
+              {selectedStatuses.length}
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-0">
+        <Tabs defaultValue="status" value={activeTab} onValueChange={(v) => setActiveTab(v as "status" | "title")}>
+          <TabsList className="w-full">
+            <TabsTrigger value="status" className="flex-1">Status</TabsTrigger>
+            <TabsTrigger value="title" className="flex-1">Title</TabsTrigger>
+          </TabsList>
+          <TabsContent value="status" className="p-2">
+            <Command>
+              <CommandInput placeholder="Search status..." />
+              <CommandList>
+                <CommandEmpty>No status found.</CommandEmpty>
+                <CommandGroup>
+                  {statuses.map((status) => (
+                    <CommandItem
+                      key={status}
+                      onSelect={() => {
+                        onStatusChange(
+                          selectedStatuses.includes(status)
+                            ? selectedStatuses.filter((s) => s !== status)
+                            : [...selectedStatuses, status]
+                        );
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedStatuses.includes(status) ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {status}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </TabsContent>
+          <TabsContent value="title" className="p-2">
+            <Input
+              placeholder="Search by title..."
+              value={titleFilter}
+              onChange={(e) => onTitleChange?.(e.target.value)}
+            />
+          </TabsContent>
+        </Tabs>
+      </PopoverContent>
+    </Popover>
+  );
+}
+```
+
+#### 6.2 Filter State Management
+```typescript
+// In client component
+const [selectedStatuses, setSelectedStatuses] = useState<Status[]>([]);
+const [titleFilter, setTitleFilter] = useState("");
+
+const filteredData = useMemo(() => {
+  return data.filter((item) => {
+    const statusMatch = selectedStatuses.length === 0 || 
+                       selectedStatuses.includes(item.status);
+    const titleMatch = !titleFilter || 
+                      item.title.toLowerCase().includes(titleFilter.toLowerCase()) ||
+                      item.etitle?.toLowerCase().includes(titleFilter.toLowerCase());
+    return statusMatch && titleMatch;
+  });
+}, [data, selectedStatuses, titleFilter]);
+```
+
+
+## Summary
+- Use local state for table data in client components.
+- Pass mutation callbacks to edit/create/delete components.
+- Update the state array directly after mutations.
+- Ensure all required fields are present when adding to state.
+- Do not rely on `router.refresh()` for client state updates.
+
+This pattern ensures a fast, reactive UI and avoids common pitfalls with stale or unsynced data.

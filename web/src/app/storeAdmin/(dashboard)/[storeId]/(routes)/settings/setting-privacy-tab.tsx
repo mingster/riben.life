@@ -1,5 +1,5 @@
 "use client";
-import { useToast } from "@/components/ui/use-toast";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,7 +41,7 @@ type formValues = z.infer<typeof privacyFormSchema>;
 export const PrivacyTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
 	const params = useParams();
 	const router = useRouter();
-	const { toast } = useToast();
+
 	const [loading, setLoading] = useState(false);
 
 	const { lng } = useI18n();
@@ -91,19 +91,17 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
 			);
 			//revalidatePath(`/storeAdmin/${params.storeId}/settings`);
 
-			toast({
+			toastSuccess({
 				title: t("Store_Updated"),
 				description: "",
-				variant: "success",
 			});
 
 			router.refresh();
 		} catch (err: unknown) {
 			const error = err as AxiosError;
-			toast({
+			toastError({
 				title: "Something went wrong.",
 				description: error.message,
-				variant: "destructive",
 			});
 		} finally {
 			setLoading(false);

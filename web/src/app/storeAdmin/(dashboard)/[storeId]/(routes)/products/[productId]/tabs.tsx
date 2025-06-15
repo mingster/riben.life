@@ -16,6 +16,7 @@ import { ProductEditCategoryTab } from "./product-edit-category-tab";
 import { ProductEditImageTab } from "./product-edit-image-tab";
 
 import { useTranslation } from "@/app/i18n/client";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { AlertModal } from "@/components/modals/alert-modal";
 import {
 	Breadcrumb,
@@ -26,7 +27,7 @@ import {
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import axios from "axios";
 import { Trash } from "lucide-react";
@@ -35,13 +36,13 @@ import { ProductEditOptionsTab } from "./product-edit-options-tab";
 
 interface editProps {
 	initialData:
-		| (Product & {
-				ProductImages: ProductImages[] | [];
-				ProductAttribute: ProductAttribute | null;
-				ProductCategories: ProductCategories[] | [];
-				ProductOptions: ProductOption[] | [];
-		  })
-		| null;
+	| (Product & {
+		ProductImages: ProductImages[] | [];
+		ProductAttribute: ProductAttribute | null;
+		ProductCategories: ProductCategories[] | [];
+		ProductOptions: ProductOption[] | [];
+	})
+	| null;
 	allCategories: Category[];
 	storeOptionTemplates: StoreProductOptionTemplate[] | [];
 	action: string;
@@ -55,7 +56,6 @@ export const ProductEditTabs = ({
 }: editProps) => {
 	//const router = useRouter();
 	const params = useParams();
-	const { toast } = useToast();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
@@ -76,6 +76,7 @@ export const ProductEditTabs = ({
 	const handleTabChange = (value: string) => {
 		//update the state
 		setActiveTab(value);
+		console.log(`handleTabChange: ${value}`);
 		// update the URL query parameter
 		//router.push({ query: { tab: value } });
 	};
@@ -93,10 +94,9 @@ export const ProductEditTabs = ({
 			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${initialData?.id}`,
 		);
 
-		toast({
+		toastSuccess({
 			title: t("Product_deleted"),
 			description: "",
-			variant: "success",
 		});
 
 		window.location.assign(`/storeAdmin/${params.storeId}/products`);
@@ -104,16 +104,16 @@ export const ProductEditTabs = ({
 		setLoading(false);
 		setOpen(false);
 		/*} catch (error: unknown) {
-      const err = error as AxiosError;
-      toast({
-        title: "something wrong.",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-      setOpen(false);
-    }*/
+	  const err = error as AxiosError;
+	  toastError({
+		title: "something wrong.",
+		description: err.message,
+	    
+	  });
+	} finally {
+	  setLoading(false);
+	  setOpen(false);
+	}*/
 	};
 
 	/*
@@ -169,29 +169,38 @@ export const ProductEditTabs = ({
 
 			<Tabs
 				value={activeTab}
-				defaultValue="orders"
+				defaultValue="basic"
 				onValueChange={handleTabChange}
-				className="w-full"
 			>
 				<TabsList>
-					<TabsTrigger className="px-5 lg:min-w-40" value="basic">
+					<TabsTrigger
+						className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
+						value="basic">
 						{t("Product_tab_basic")}
 					</TabsTrigger>
 					{params.productId !== "new" && (
 						<>
-							<TabsTrigger className="px-5 lg:min-w-40" value="categories">
+							<TabsTrigger
+								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
+								value="categories">
 								{t("Product_tab_category")}
 							</TabsTrigger>
 
-							<TabsTrigger className="px-5 lg:min-w-40" value="options">
+							<TabsTrigger
+								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
+								value="options">
 								{t("Product_tab_options")}
 							</TabsTrigger>
 
-							<TabsTrigger className="px-5 lg:min-w-40" value="attribute">
+							<TabsTrigger
+								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
+								value="attribute">
 								{t("Product_tab_attribute")}
 							</TabsTrigger>
 
-							<TabsTrigger className="px-5 lg:min-w-40" value="images">
+							<TabsTrigger
+								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
+								value="images">
 								{t("Product_tab_images")}
 							</TabsTrigger>
 						</>

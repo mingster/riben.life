@@ -9,8 +9,8 @@ import { Suspense } from "react";
 import { StoreHomeContent } from "./components/store-home-content";
 
 import getStoreWithProducts from "@/actions/get-store-with-products";
-import logger from "@/utils/logger";
 import { sqlClient } from "@/lib/prismadb";
+import logger from "@/utils/logger";
 import type { StoreSettings } from "@prisma/client";
 import { formatDate } from "date-fns";
 

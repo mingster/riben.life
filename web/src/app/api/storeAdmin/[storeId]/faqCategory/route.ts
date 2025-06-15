@@ -1,5 +1,5 @@
-import { FaqCategory } from "@/types";
 import { sqlClient } from "@/lib/prismadb";
+import type { FaqCategory } from "@/types";
 import { NextResponse } from "next/server";
 
 // return all online peers

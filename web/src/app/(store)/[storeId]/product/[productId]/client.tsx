@@ -1,8 +1,8 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { ProductCard } from "@/components/product-card";
-import { useToast } from "@/components/ui/use-toast";
 import { type Item, useCart } from "@/hooks/use-cart";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Product, StoreWithProducts } from "@/types";
@@ -15,7 +15,7 @@ export interface props {
 
 export const Client: React.FC<props> = ({ store, product }) => {
 	const cart = useCart();
-	const { toast } = useToast();
+
 	const params = useParams<{ storeId: string; tableId: string }>();
 
 	const { lng } = useI18n();
@@ -54,10 +54,9 @@ export const Client: React.FC<props> = ({ store, product }) => {
 		}
 
 		//router.push('/cart');
-		toast({
+		toastSuccess({
 			title: t("product_added_to_cart"),
 			description: "",
-			variant: "success",
 		});
 	};
 

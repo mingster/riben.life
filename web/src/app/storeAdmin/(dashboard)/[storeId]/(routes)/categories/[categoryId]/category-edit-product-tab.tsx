@@ -1,8 +1,8 @@
 "use client";
 
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
 import type { Product, ProductCategories } from "@prisma/client";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -19,8 +19,8 @@ import { t } from "i18next";
 
 import Currency from "@/components/currency";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatDateTime } from "@/utils/utils";
 import { ProductStatuses } from "@/types/enum";
+import { formatDateTime } from "@/utils/utils";
 import Link from "next/link";
 
 interface props {
@@ -45,8 +45,6 @@ export const CategoryEditProductTab = ({
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
-
-	const { toast } = useToast();
 
 	const [loading, _setLoading] = useState(false);
 
@@ -158,10 +156,9 @@ export const CategoryEditProductTab = ({
 			}
 		});
 
-		toast({
+		toastSuccess({
 			title: t("Category") + t("Added"),
 			description: "",
-			variant: "success",
 		});
 
 		router.refresh();

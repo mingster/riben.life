@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/utils";
 import { StoreLevel } from "@/types/enum";
+import { getUtcNow } from "@/utils/utils";
 import type { Store } from "@prisma/client";
 
 const isProLevel = async (storeId: string): Promise<boolean> => {
