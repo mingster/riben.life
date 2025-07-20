@@ -1,9 +1,10 @@
 "use client";
 
-import { cookieName, languages } from "@/app/i18n/settings";
+import { useCookies } from "next-client-cookies";
 import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
+import { cookieName, languages } from "@/app/i18n/settings";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -14,14 +15,13 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCookies } from "next-client-cookies";
 
 export const LanguageToggler = () => {
 	const [mounted, setMounted] = useState(false);
 	const { i18n } = useTranslation();
 	const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
 	//const { t } = useTranslation();
-	//const [, setCookie] = useCookies([cookieName]); //https://github.com/bendotcodes/cookies/tree/main/packages/react-cookie
+
 	const cookies = useCookies();
 
 	const changeLanguage = (lng: string) => {
@@ -29,8 +29,7 @@ export const LanguageToggler = () => {
 		setActiveLng(lng);
 		//setCookie(cookieName, lng, { path: "/" });
 		cookies.set(cookieName, lng, { path: "/" });
-
-		console.log("activeLng set to: ", lng);
+		console.log(`activeLng set to: ${lng}`);
 	};
 
 	// useEffect only runs on the client, so now we can safely show the UI
@@ -42,13 +41,16 @@ export const LanguageToggler = () => {
 		return null;
 	}
 
-	//console.log("lng: " + activeLng);
-
 	return (
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost">{activeLng}</Button>
+					<Button
+						className="font-semibold uppercase rounded-full border-1 text-sky-500 dark:text-secondary size-8"
+						variant="ghost"
+					>
+						{activeLng}
+					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className="w-56">
 					<DropdownMenuLabel>{i18n.t("change_language")}</DropdownMenuLabel>
@@ -61,7 +63,11 @@ export const LanguageToggler = () => {
 							//.filter((l) => activeLng !== l)
 							.map((l) => {
 								return (
-									<DropdownMenuRadioItem key={l} value={l}>
+									<DropdownMenuRadioItem
+										className="uppercase"
+										key={l}
+										value={l}
+									>
 										{l}
 									</DropdownMenuRadioItem>
 								);
