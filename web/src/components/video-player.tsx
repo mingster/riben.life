@@ -1,96 +1,62 @@
 //import { useEffect, useRef, useState } from 'react';
-import type { ReactPlayerProps } from "react-player";
-import ReactPlayer from "react-player/lazy";
+import { useEffect, useState } from "react";
+import ReactPlayer from "react-player";
 
-export const VideoPlayer: React.FC<ReactPlayerProps> = () => {
-	// this can contain YouTube URLs only
-	const sources = [
-		"https://youtu.be/oIgbl7t0S_w", //cti
-		"https://youtu.be/oZdzzvxTfUY", //settv
-		"https://youtu.be/oV_i3Hsl_zg", //daai
-		//'https://youtu.be/bEZYrBMYNNg', //cctv4
-	];
+import { Button } from "./ui/button";
 
-	// HLS
-	const _sources2 = [
-		{
-			src: "http://play-flive.ifeng.com/live/06OLEEWQKN4.m3u8",
-			type: "application/x-mpegURL",
-		},
-		{
-			src: "https://stm37.tvcdn.org/livets/ch_jp_f/playlist.m3u8",
-			type: "application/x-mpegURL",
-		},
-	];
+export type MediaSource = {
+	name: string;
+	url: string;
+};
 
-	/*
-  const [calcWidth, setCalcWidth] = useState(0);
-  useEffect(() => {
-    const handleResize = () => {
-      const newWindowDimensions = {
-        width: window.innerWidth -64,
-        height: window.innerHeight,
-      };
+export const VideoPlayer: React.FC<{ sources: MediaSource[] }> = ({
+	sources: initialSources,
+}) => {
+	const [calcWidth, setCalcWidth] = useState(0);
 
-      const viewportHeight = newWindowDimensions.height;
-      const aspectRatio = 16 / 9;
+	const [source, setSource] = useState<MediaSource | null>(initialSources[0]);
+	const [playing, setPlaying] = useState(false);
 
-      if (newWindowDimensions.width < viewportHeight * aspectRatio) {
-        setCalcWidth(viewportHeight * aspectRatio);
-      } else {
-        setCalcWidth(newWindowDimensions.width);
-      }
-    };
+	useEffect(() => {
+		const container = document.querySelector(".aspect-video");
+		if (container) {
+			setCalcWidth(container.clientWidth);
+			const resizeObserver = new ResizeObserver((entries) => {
+				setCalcWidth(entries[0].contentRect.width);
+			});
+			resizeObserver.observe(container);
+			return () => resizeObserver.disconnect();
+		}
+	}, []);
 
-    // Initial setup
-    handleResize();
-
-    // Add event listener
-    window.addEventListener('resize', handleResize);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-  */
+	const handleSourceChange = (mediaSource: MediaSource) => {
+		setSource(mediaSource);
+		setPlaying(true);
+	};
 
 	return (
-		<div style={{}}>
+		<div className="aspect-video">
 			<ReactPlayer
-				url={sources}
-				controls={true}
-				playing={false}
+				src={source?.url}
+				controls={false}
+				playing={playing}
 				loop={true}
-				//height='100%'
 				width="100%"
-				//width={calcWidth ? calcWidth : '100%'}
-				height="100vh"
-				//width={calcWidth}
-				//height={(calcWidth / 16) * 9}
-
-				style={{
-					/*
-          transform: 'translate(-50%, -50%)',
-          */
-					objectFit: "cover",
-					zIndex: -20,
-					opacity: 1,
-				}}
-				config={{
-					youtube: {
-						playerVars: {
-							modestbranding: 1,
-							controls: 1,
-						},
-					},
-					vimeo: {
-						playerOptions: {
-							controls: false,
-						},
-					},
-				}}
+				height={(calcWidth / 16) * 9}
+				config={{}}
 			/>
+
+			<div className="flex flex-row gap-2">
+				{initialSources.map((mediaSource: MediaSource) => (
+					<Button
+						variant="outline"
+						key={mediaSource.name}
+						onClick={() => handleSourceChange(mediaSource)}
+					>
+						{mediaSource.name}
+					</Button>
+				))}
+			</div>
 		</div>
 	);
 };

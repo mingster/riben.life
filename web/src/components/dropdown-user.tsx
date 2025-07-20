@@ -64,7 +64,7 @@ export default function DropdownUser({ user }: UserButtonProps) {
 						<DropdownMenuGroup>
 							<DropdownMenuItem className="cursor-pointer" asChild>
 								<Link href={`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`}>
-									<LogIn className="mr-0 size-4" />
+									<IconLogin className="mr-0 size-4" />
 									<span>
 										{t("user_profile_signIn")}/{t("user_profile_signUp")}
 									</span>

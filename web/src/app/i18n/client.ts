@@ -55,12 +55,11 @@ export function useTranslation<
 
 	if (runsOnServerSide && lng && i18n.resolvedLanguage !== lng) {
 		i18n.changeLanguage(lng);
-	} else {
 	}
 
 	const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
 
-	//console.log('useTranslation: ' + activeLng);
+	//console.log(`useTranslation: ${activeLng}`);
 
 	useEffect(() => {
 		if (activeLng === i18n.resolvedLanguage) return;

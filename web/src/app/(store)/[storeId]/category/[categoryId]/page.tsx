@@ -3,9 +3,6 @@ import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { Prisma } from "@prisma/client";
 import { Suspense } from "react";
-//import { Metadata } from 'next';
-
-import { useTranslation } from "@/app/i18n";
 import type { Store } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { Client } from "./client";

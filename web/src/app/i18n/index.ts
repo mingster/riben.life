@@ -1,14 +1,15 @@
-import { type FlatNamespace, type KeyPrefix, createInstance } from "i18next";
+import { createInstance, type FlatNamespace, type KeyPrefix } from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import resourcesToBackend from "i18next-resources-to-backend";
+import { cookies } from "next/headers";
 import type { FallbackNs } from "react-i18next";
 import { initReactI18next } from "react-i18next/initReactI18next";
-import { getOptions } from "./settings";
+import { cookieName, fallbackLng, getOptions } from "./settings";
 
 // ANCHOR https://phrase.com/blog/posts/localizing-react-apps-with-i18next/
 // ANCHOR https://locize.com/blog/next-app-dir-i18n/
 // ANCHOR https://github.com/i18next/next-app-dir-i18next-example-ts
-const initI18next = async (lng: string, ns: string | string[]) => {
+const initI18next = async (ns: string | string[], lng?: string) => {
 	// on server side we create a new instance for each render, because during compilation everything seems to be executed in parallel
 	const i18nInstance = createInstance();
 
@@ -21,22 +22,56 @@ const initI18next = async (lng: string, ns: string | string[]) => {
 					import(`./locales/${language}/${namespace}.json`),
 			),
 		)
-		.init(getOptions(lng, ns));
+		.init(getOptions(ns));
 
 	return i18nInstance;
 };
 
-export async function useTranslation<
+export async function getT<
 	Ns extends FlatNamespace,
 	KPrefix extends KeyPrefix<FallbackNs<Ns>> = undefined,
->(lng: string, ns?: Ns, options: { keyPrefix?: KPrefix } = {}) {
+>(lng?: string, ns?: Ns, options: { keyPrefix?: KPrefix } = {}) {
 	const i18nextInstance = await initI18next(
-		lng,
 		Array.isArray(ns) ? (ns as string[]) : (ns as string),
 	);
 
+	let useThisLng = lng;
+
+	// lng > cookieLng > activeLng > fallbackLng
+	if (!useThisLng) {
+		// check cookie
+		//determine i18n languageId
+		const cookieStore = await cookies();
+		const cookieLng = cookieStore.get(cookieName)?.value || fallbackLng;
+		//console.log("cookieLng", cookieLng);
+
+		if (cookieLng) {
+			useThisLng = cookieLng;
+		}
+	}
+
+	if (!useThisLng) {
+		//check activeLng
+		const activeLng = i18nextInstance.resolvedLanguage;
+		//console.log("activeLng", activeLng);
+
+		if (activeLng) {
+			useThisLng = activeLng;
+		}
+	}
+
+	if (!useThisLng) {
+		//use fallbackLng as last resort
+		useThisLng = fallbackLng;
+	}
+
+	if (useThisLng) {
+		i18nextInstance.changeLanguage(useThisLng);
+	}
+
 	return {
-		t: i18nextInstance.getFixedT(lng, ns, options.keyPrefix),
+		t: i18nextInstance.getFixedT(useThisLng, ns, options.keyPrefix),
 		i18n: i18nextInstance,
+		lng: useThisLng,
 	};
 }
