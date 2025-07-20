@@ -1,5 +1,4 @@
 import getUser from "@/actions/get-user";
-import { useTranslation } from "@/app/i18n";
 import { getOptions } from "@/app/i18n/settings";
 import {
 	Accordion,

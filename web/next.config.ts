@@ -1,18 +1,19 @@
 import type { NextConfig } from "next";
-import path from "path";
-const { withSentryConfig } = require("@sentry/nextjs");
+
+//const { withSentryConfig } = require("@sentry/nextjs");
 
 const nextConfig: NextConfig = {
+	allowedDevOrigins: ["192.168.2.5", "*.192.168.2.5"],
 	turbopack: {
 		rules: {
-			'*.svg': {
-				loaders: ['@svgr/webpack'],
-				as: '*.js',
+			"*.svg": {
+				loaders: ["@svgr/webpack"],
+				as: "*.js",
 			},
 		},
 	},
 	/* config options here */
-	transpilePackages: ["lucide-react"],
+	transpilePackages: ["lucide-react", "better-auth"],
 	//clientInstrumentationHook: true,
 	serverExternalPackages: [
 		"thread-stream",
@@ -21,10 +22,23 @@ const nextConfig: NextConfig = {
 		"pino-file",
 		"pino-pretty",
 	],
+	/*
+	video: {
+		formats: ["video/mp4", "video/webm", "video/ogg"],
+		qualities: [25, 50, 75],
+		remotePatterns: [
+			{
+				protocol: "https",
+				hostname: "youtu.be",
+			},
+		],
+	},
+	*/
 	images: {
-		//formats: ['image/avif', 'image/webp'],
-		//imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-		//qualities: [25, 50, 75],
+		formats: ["image/avif", "image/webp"],
+		imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+		deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+		qualities: [25, 50, 75],
 		remotePatterns: [
 			{
 				// google user avatar
@@ -57,12 +71,17 @@ const nextConfig: NextConfig = {
 				hostname: "res.cloudinary.com",
 				pathname: "**",
 			},
+			{
+				// google user avatar
+				protocol: "https",
+				hostname: "5ik.tv",
+			},
 		],
 	},
 };
 
 export default nextConfig;
-
+/*
 // Make sure adding Sentry options is the last code to run before exporting
 module.exports = withSentryConfig(nextConfig, {
 	reactComponentAnnotation: {
@@ -86,5 +105,5 @@ module.exports = withSentryConfig(nextConfig, {
 	tunnelRoute: "/monitoring",
 	enabled: process.env.NODE_ENV === 'production',
 	automaticVercelMonitors: true,
-
 });
+*/

@@ -1,10 +1,12 @@
-export const fallbackLng = "en";
-export const languages = [fallbackLng, "tw", "cn"];
+export const fallbackLng = "tw";
+export const languages = [fallbackLng, "en", "cn"];
 export const defaultNS = "translation"; //default json filename
 export const cookieName = "i18next";
+export const headerName = "x-i18next-current-language";
+const runsOnServerSide = typeof window === "undefined";
 
 export function getOptions(
-	_lng = fallbackLng,
+	//_lng = fallbackLng,
 	ns: string | string[] = defaultNS,
 ) {
 	return {
@@ -23,7 +25,7 @@ export function getOptions(
 		// We need to remove this explicit setting
 		// of the the active locale, or it will
 		// override the auto-detected locale.
-		//lng,
+		lng: undefined, // let detect the language on client side
 
 		fallbackLng,
 
@@ -33,6 +35,14 @@ export function getOptions(
 		fallbackNS: defaultNS,
 
 		defaultNS,
+
+		detection: {
+			order: ["path", "cookie", "navigator", "htmlTag"],
+		},
+		preload: runsOnServerSide ? languages : [],
+		// backend: {
+		//   projectId: '01b2e5e8-6243-47d1-b36f-963dbb8bcae3'
+		// }
 
 		ns,
 		// backend: {

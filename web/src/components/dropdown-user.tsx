@@ -1,5 +1,10 @@
 "use client";
-import { Lock, LogIn, LogOut, Settings } from "lucide-react";
+import {
+	IconLock,
+	IconLogin,
+	IconLogout,
+	IconSettings,
+} from "@tabler/icons-react";
 import type { User } from "next-auth";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -59,7 +64,7 @@ export default function DropdownUser({ user }: UserButtonProps) {
 						<DropdownMenuGroup>
 							<DropdownMenuItem className="cursor-pointer" asChild>
 								<Link href={`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`}>
-									<LogIn className="mr-0 size-4" />
+									<IconLogin className="mr-0 size-4" />
 									<span>
 										{t("user_profile_signIn")}/{t("user_profile_signUp")}
 									</span>
@@ -76,13 +81,13 @@ export default function DropdownUser({ user }: UserButtonProps) {
 						<DropdownMenuGroup>
 							<DropdownMenuItem className="cursor-pointer" asChild>
 								<Link href="/account">
-									<Settings className="mr-0 size-4" />
+									<IconSettings className="mr-0 size-4" />
 									<span>{t("user_profile_myAccount")}</span>
 								</Link>
 							</DropdownMenuItem>
 							<DropdownMenuItem className="cursor-pointer" asChild>
 								<Link href="/storeAdmin/">
-									<Lock className="mr-0 size-4" />
+									<IconLock className="mr-0 size-4" />
 									<span>{t("user_profile_linkTo_storeDashboard")}</span>
 								</Link>
 							</DropdownMenuItem>
@@ -90,7 +95,7 @@ export default function DropdownUser({ user }: UserButtonProps) {
 							{user?.role === "ADMIN" && (
 								<DropdownMenuItem className="cursor-pointer" asChild>
 									<Link href="/admin">
-										<Lock className="mr-0 size-4" />
+										<IconLock className="mr-0 size-4" />
 										<span>{t("user_profile_linkTo_admin")}</span>
 									</Link>
 								</DropdownMenuItem>
@@ -104,7 +109,8 @@ export default function DropdownUser({ user }: UserButtonProps) {
 								onClick={() => signOut({ callbackUrl: "/" })}
 								className="flex w-full items-center"
 							>
-								<LogOut className="mr-0 size-4" /> {t("user_profile_signOut")}
+								<IconLogout className="mr-0 size-4" />{" "}
+								{t("user_profile_signOut")}
 							</button>
 						</DropdownMenuItem>
 					</>

@@ -1,4 +1,3 @@
-import { MessageCircleMore } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -6,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { IconMessageCircleCode } from "@tabler/icons-react";
 
 // NOTE - display notifications from session.user.
 const DropdownNotification = () => {
@@ -84,7 +84,7 @@ const DropdownNotification = () => {
 						<span className="absolute -z-1 inline-flex size-full animate-ping rounded-full bg-meta-1 opacity-75" />
 					</span>
 				)}
-				<MessageCircleMore className="text-slate-400 hover:opacity-50 duration-300 ease-in-out size-5" />
+				<IconMessageCircleCode className="text-slate-400 hover:opacity-50 duration-300 ease-in-out size-5" />
 			</Link>
 
 			{/* <!-- Dropdown Start --> */}

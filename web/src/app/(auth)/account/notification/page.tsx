@@ -15,9 +15,6 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { useTranslation } from "@/app/i18n";
-import { useI18n } from "@/providers/i18n-provider";
-
 import { auth } from "@/auth";
 import type { Session } from "next-auth";
 
