@@ -58,7 +58,7 @@
 		"@sentry/nextjs": "^9.40.0",
 		"@stripe/react-stripe-js": "^3.7.0",
 		"@stripe/stripe-js": "^7.5.0",
-		"@tabler/icons-react": "^3.34.0",
+		"@tabler/icons-react": "^3.34.1",
 		"@tanstack/react-table": "^8.21.3",
 		"@uiw/react-md-editor": "^4.0.8",
 		"@vercel/analytics": "^1.5.0",
@@ -144,8 +144,8 @@
 		"@types/react-dom": "^19.1.6",
 		"@types/react-google-recaptcha": "^2.1.9",
 		"@types/uuid": "^10.0.0",
-		"@typescript-eslint/eslint-plugin": "^8.37.0",
-		"@typescript-eslint/parser": "^8.37.0",
+		"@typescript-eslint/eslint-plugin": "^8.38.0",
+		"@typescript-eslint/parser": "^8.38.0",
 		"autoprefixer": "^10.4.21",
 		"dotenv": "^16.6.1",
 		"eslint": "^9.31.0",
@@ -162,7 +162,7 @@
 		"tailwindcss": "^4.1.11",
 		"tw-animate-css": "^1.3.5",
 		"typescript": "^5.8.3",
-		"typescript-eslint": "^8.37.0"
+		"typescript-eslint": "^8.38.0"
 	},
 	"husky": {
 		"hooks": {
