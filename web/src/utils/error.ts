@@ -1,7 +1,3 @@
-import {
-	captureException as sentryCaptureException,
-	setUser,
-} from "@sentry/nextjs";
 import { APICallError, RetryError } from "ai";
 import type { z } from "zod";
 
@@ -50,8 +46,8 @@ export function captureException(
 		return;
 	}
 
-	if (userEmail) setUser({ email: userEmail });
-	sentryCaptureException(error, additionalInfo);
+	// Log error to console
+	console.error(`Error captured for user: ${userEmail}`, error, additionalInfo);
 }
 
 export type ActionError<E extends object = Record<string, unknown>> = {
@@ -118,7 +114,7 @@ export function isServiceUnavailableError(error: unknown): error is Error {
 	return error instanceof Error && error.name === "ServiceUnavailableException";
 }
 
-// we don't want to capture these errors in Sentry
+// we don't want to capture these errors
 export function isKnownApiError(error: unknown): boolean {
 	return (
 		(APICallError.isInstance(error) &&

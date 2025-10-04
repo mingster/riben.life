@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 // if the user doesn't have store, show the create store modal (via page.tsx)
 export default async function StoreAdminLayout(props: {
 	children: React.ReactNode;
-	params: Promise<{ storeId: string }>;
+	params: Promise<{}>;
 }) {
 	const params = await props.params;
 
@@ -18,24 +18,22 @@ export default async function StoreAdminLayout(props: {
 	const session = (await GetSession()) as Session;
 	if (!session) {
 		redirect(
-			`${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=/storeAdmin/${params.storeId}`,
+			`${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=/storeAdmin`,
 		);
 	}
 
 	//const ownerId = session.user?.id;
 	//console.log('userid: ' + userId);
 
-	let storeId = params.storeId;
-	if (!storeId) {
-		const store = await sqlClient.store.findFirst({
-			where: {
-				ownerId: session.user.id,
-				isDeleted: false,
-			},
-		});
+	// Find the user's store
+	const store = await sqlClient.store.findFirst({
+		where: {
+			ownerId: session.user.id,
+			isDeleted: false,
+		},
+	});
 
-		if (store) storeId = store?.id;
-	}
+	const storeId = store?.id;
 
 	//console.log('storeId: ' + storeId);
 	//console.log('ownerId: ' + session.user.id);

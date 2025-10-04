@@ -4,7 +4,6 @@ import type { Store } from "@/types";
 import { getAbsoluteUrl } from "@/utils/utils";
 import type { StoreTables } from "@prisma/client";
 import { useQRCode } from "next-qrcode";
-
 import Link from "next/link";
 export interface props {
 	store: Store;
@@ -40,7 +39,12 @@ export const QrCodeClient: React.FC<props> = ({ store, tables }) => {
 			<div className="pl-5">
 				<h1>外帶</h1>
 
-				<Link title={takeoffUrl} href={takeoffUrl}>
+				<Link
+					title={takeoffUrl}
+					href={takeoffUrl}
+					aria-label={`QR code for takeout ordering at ${store.storeName}`}
+				>
+					{/* eslint-disable-next-line jsx-a11y/alt-text */}
 					<Image
 						text={takeoffUrl}
 						options={{
@@ -64,7 +68,9 @@ export const QrCodeClient: React.FC<props> = ({ store, tables }) => {
 								<Link
 									title={`${takeoffUrl}/${table.id}`}
 									href={`${takeoffUrl}/${table.id}`}
+									aria-label={`QR code for table ${table.tableName} ordering at ${store.storeName}`}
 								>
+									{/* eslint-disable-next-line jsx-a11y/alt-text */}
 									<Image
 										text={`${takeoffUrl}/${table.id}`}
 										options={{

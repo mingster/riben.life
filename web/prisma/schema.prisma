@@ -900,8 +900,8 @@ view orderitemview {
   Order   StoreOrder @relation("itemViewToStoreOrder", fields: [orderId], references: [id], onDelete: Cascade)
   Product Product    @relation("itemViewToProduct", fields: [productId], references: [id])
 
-  @@index([orderId])
-  @@index([productId])
+  //@@index([orderId])
+  //@@index([productId])
 }
 
 enum Role {

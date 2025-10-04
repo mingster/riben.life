@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 export async function DELETE(
 	_req: Request,
 	props: {
-		params: Promise<{ productId: string; storeId: string; templateId: string }>;
+		params: Promise<{ storeId: string; templateId: string }>;
 	},
 ) {
 	const params = await props.params;
@@ -42,7 +42,7 @@ export async function DELETE(
 export async function PATCH(
 	req: Request,
 	props: {
-		params: Promise<{ storeId: string; productId: string; templateId: string }>;
+		params: Promise<{ storeId: string; templateId: string }>;
 	},
 ) {
 	const params = await props.params;
