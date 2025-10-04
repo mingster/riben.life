@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
-import { deleteImage, uploadImage } from "@/utils/utils";
+import { deleteImage, uploadImage } from "@/utils/image-utils";
 import { XCircleIcon } from "lucide-react";
 import { RequiredProVersion } from "../components/require-pro-version";
 
@@ -39,7 +39,7 @@ const formSchema = z.object({
 	logo: z.string().optional().default(""),
 	logoPublicId: z.string().default("").optional().default(""),
 	acceptAnonymousOrder: z.boolean().optional().default(true),
-	defaultTimezone: z.coerce.number().optional().default(8),
+	defaultTimezone: z.number().optional().default(8),
 });
 
 type formValues = z.infer<typeof formSchema>;

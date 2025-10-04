@@ -4,6 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
 import type { StoreSettings, SupportTicket } from "@prisma/client";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { TicketColumn } from "./components/columns";
@@ -20,8 +21,9 @@ export default async function StoreSupportPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const session = (await auth()) as Session;
-	const userId = session?.user.id;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	}); const userId = session?.user.id;
 
 	if (!session) {
 		redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);

@@ -61,6 +61,8 @@ model account {
   createdAt             DateTime
   updatedAt             DateTime
   user                  user      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model session {
@@ -135,6 +137,8 @@ model twoFactor {
   backupCodes String
   userId      String
   user        user   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model apikey {
@@ -160,6 +164,8 @@ model apikey {
   permissions         String?
   metadata            String?
   user                user      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model passkey {
@@ -175,6 +181,8 @@ model passkey {
   createdAt    DateTime?
   aaguid       String?
   user         user      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model subscription {
@@ -190,6 +198,8 @@ model subscription {
   seats                Int?
   trialStart           DateTime?
   trialEnd             DateTime?
+
+  @@index([stripeCustomerId])
 }
 
 model StoreSubscription {
@@ -235,6 +245,8 @@ model member {
   createdAt      DateTime
 
   @@map("member")
+  @@index([organizationId])
+  @@index([userId])
 }
 
 model invitation {
@@ -249,12 +261,14 @@ model invitation {
   user           user         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
   @@map("invitation")
+  @@index([organizationId])
+  @@index([inviterId])
 }
 
 model PlatformSettings {
   id              String  @id @default(cuid())
   stripeProductId String?
-  stripePriceId   String?
+  settings   String?
 }
 
 model Country {

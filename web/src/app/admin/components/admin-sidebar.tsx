@@ -164,7 +164,7 @@ export function AdminSidebar() {
 								</DropdownMenuItem>
 								<DropdownMenuItem>
 									<Button
-										onClick={() => signOut({ callbackUrl: "/" })}
+										onClick={() => signOut()}
 										variant="outline"
 										className="mt-5 h-10 w-full justify-center"
 									>

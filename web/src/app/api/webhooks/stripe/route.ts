@@ -55,30 +55,32 @@ const webhookHandler = async (req: NextRequest) => {
 				case "product.deleted":
 					break;
 				case "customer.subscription.created":
-					await sqlClient.user.update({
-						// Find the customer in our database with the Stripe customer ID linked to this purchase
-						where: {
-							stripeCustomerId: subscription.customer as string,
-						},
-						// Update that customer so their status is now active
-						data: {
-							isActive: true,
-						},
-					});
+					// Handle subscription creation if needed
+					// const user = await sqlClient.user.findFirst({
+					// 	where: {
+					// 		stripeCustomerId: subscription.customer as string,
+					// 	},
+					// });
 					break;
 
 				case "customer.subscription.updated":
 				case "customer.subscription.deleted":
-					await sqlClient.user.update({
-						// Find the customer in our database with the Stripe customer ID linked to this purchase
-						where: {
-							stripeCustomerId: subscription.customer as string,
-						},
-						// Update that customer so their status is now active
-						data: {
-							isActive: false,
-						},
-					});
+					// Handle subscription updates/deletions if needed
+					// const user = await sqlClient.user.findFirst({
+					// 	where: {
+					// 		stripeCustomerId: subscription.customer as string,
+					// 	},
+					// });
+					// if (user) {
+					// 	await sqlClient.user.update({
+					// 		where: {
+					// 			id: user.id,
+					// 		},
+					// 		data: {
+					// 			// Update appropriate fields
+					// 		},
+					// 	});
+					// }
 					break;
 
 				case "checkout.session.completed":

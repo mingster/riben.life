@@ -89,7 +89,7 @@ const confirmPayment = async (
 				{
 					items: [
 						{
-							price: setting.stripePriceId as string,
+							price: setting.stripeProductId as string,
 							quantity: 1,
 						},
 					],

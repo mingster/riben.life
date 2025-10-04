@@ -4,6 +4,7 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreOrder } from "@prisma/client";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
 type Params = Promise<{ storeId: string }>;
@@ -56,8 +57,9 @@ export async function POST(
 		}
 
 		// if no orderIds, try to get user's order if user is signed in
-		const session = (await auth()) as Session;
-		const userId = session?.user.id;
+		const session = await auth.api.getSession({
+			headers: await headers(), // you need to pass the headers object.
+		});		const userId = session?.user.id;
 
 		if (userId) {
 			const orders = (await sqlClient.storeOrder.findMany({

@@ -1,15 +1,16 @@
 import { sqlClient } from "@/lib/prismadb";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 //import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
 
-
 ///!SECTION update user data on user's own behave.
 export async function PATCH(req: Request) {
 	try {
-		const session = (await auth()) as Session;
-		const userId = session?.user.id;
+		const session = await auth.api.getSession({
+			headers: await headers(), // you need to pass the headers object.
+		}); const userId = session?.user.id;
 
 		if (!userId) {
 			return new NextResponse("Unauthenticated", { status: 403 });

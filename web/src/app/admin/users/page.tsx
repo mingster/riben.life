@@ -2,13 +2,15 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
-import { formatDateTime, transformDecimalsToNumbers } from "@/utils/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 //import type { UserColumn } from "./components/columns";
 import { UsersClient } from "./components/user-client";
 
 import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 
 type Params = Promise<{ storeId: string }>;
@@ -23,17 +25,18 @@ export default async function UsersAdminPage(props: {
 	const _params = await props.params;
 
 	//console.log('storeid: ' + params.storeId);
-	const session = (await auth()) as Session;
-	const _userId = session?.user.id;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});	const _userId = session?.user.id;
 	if (!session) {
 		redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
 	}
 
 	const users = await sqlClient.user.findMany({
 		include: {
-			Session: true,
+			sessions: true,
 			Orders: true,
-			Account: true,
+			accounts: true,
 			Addresses: true,
 			NotificationTo: {
 				take: 0,

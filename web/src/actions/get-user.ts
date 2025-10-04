@@ -1,9 +1,8 @@
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 //import { User } from 'prisma/prisma-client';
-import type { StoreOrder, User } from "@/types";
-import { getDateInTz, transformDecimalsToNumbers } from "@/utils/utils";
-import type { StoreTables } from "@prisma/client";
+import type { User } from "@/types";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import { headers } from "next/headers";
 
 const getUser = async (): Promise<User | null> => {
@@ -20,15 +19,15 @@ const getUser = async (): Promise<User | null> => {
 		},
 		include: {
 			/*
-      NotificationTo: {
-        take: 20,
-        include: {
-          Sender: true,
-        },
-        orderBy: {
-          updatedAt: "desc",
-        },
-      },*/
+	  NotificationTo: {
+		take: 20,
+		include: {
+		  Sender: true,
+		},
+		orderBy: {
+		  updatedAt: "desc",
+		},
+	  },*/
 			Addresses: true,
 			Orders: {
 				include: {

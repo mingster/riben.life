@@ -1,15 +1,29 @@
 ---
-description: Project structure and file organization guidelines
+description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Project Structure
 
 ## Main Structure
 
-- We use Turborepo with pnpm workspaces
-- Main app is in `web/src`
-- Server actions are in `web/src/actions` folder
+- We use Turborepo with bun as the package manager (instead of pnpm or npm)
+- Main app is in `pstv_web/src`
+- Server actions are in `pstv_web/src/actions` folder
+
+## Package Management
+
+- **bun** is the required package manager for all workspace operations.
+- Install dependencies with:
+  ```sh
+  bun install
+  ```
+- Run scripts with:
+  ```sh
+  bun run <script>
+  ```
+- Do not use `pnpm`, `npm`, or `yarn` for dependency management in this project.
+- If you add or update dependencies, always commit the updated `bun.lock` file.
 
 ```tree
 .
@@ -18,7 +32,7 @@ alwaysApply: false
 │   ├── asset/                 # 
 │   ├── bin/                   # cli / shell scripts 
 │   ├── doc/                   # documentation 
-│   ├── web/                   # Main Next.js application
+│   ├── pstv_web/              # Main Next.js application
 │   │   ├── public/            # Static assets (images, fonts)
 │   │   ├── prisma/            # Prisma schema and client
 │   │   ├── src/               # Next.js App Router
@@ -29,10 +43,16 @@ alwaysApply: false
 │   │   │   │   ├── (store)    # store homepage by storeId.
 │   │   │   │   ├── admin      # admin home (required admin priv.)
 │   │   │   │   ├── api/       # API Routes
-│   │   │   │   ├── storeAdmin # store admin routes for store owners.
 │   │   │   ├── components/    # UI components
 │   │   │   ├── hooks/         # Custom React hooks
 │   │   │   ├── lib/           # helper functions and libraries
+│   │   │   │   ├── epg/       # EPG processing library
+│   │   │   │   │   ├── constants.ts    # Parser constants
+│   │   │   │   │   ├── client.ts       # Client-safe exports
+│   │   │   │   │   ├── processing-engine.ts # Main engine
+│   │   │   │   │   ├── parsers/        # Parser implementations
+│   │   │   │   │   └── test-runner.ts  # Test system
+│   │   │   │   └── prisma-client-*     # Database clients
 │   │   │   ├── providers/     # React Context providers
 │   │   │   ├── types/         # TypeScript type definitions
 │   │   │   ├── utils/         # Utility functions and helpers
@@ -54,8 +74,8 @@ alwaysApply: false
 
 ## New Pages
 
-- Create new pages at: `web/src/app/(root)/PAGE_NAME/page.tsx`
-- Components for the page are either in `page.tsx` or in the `web/src/app/(root)/PAGE_NAME/components` folder
+- Create new pages at: `pstv_web/src/app/(root)/PAGE_NAME/page.tsx`
+- Components for the page are either in `page.tsx` or in the `pstv_web/src/app/(root)/PAGE_NAME/components` folder
 - Pages are Server components for direct data loading
 - Use `swr` for data fetching in deeply nested components
 - Components with `onClick` must be client components with `use client` directive

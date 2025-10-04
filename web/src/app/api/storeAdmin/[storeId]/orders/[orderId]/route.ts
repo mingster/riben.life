@@ -2,8 +2,8 @@ import getOrderById from "@/actions/get-order-by_id";
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder } from "@/types";
 import { OrderStatus } from "@/types/enum";
+import { getNowTimeInTz } from "@/utils/datetime-utils";
 import logger from "@/utils/logger";
-import { getNowTimeInTz } from "@/utils/utils";
 import type { orderitemview } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
@@ -51,13 +51,13 @@ export async function DELETE(
 				id: params.orderId,
 			},
 		});
-		logger.info("order deleted", order);
+		logger.info({ "order deleted": order });
 	}
 
 	return NextResponse.json(order);
 	/*} catch (error) {
-    console.log("[PRODUCT_DELETE]", error);
-    return new NextResponse("Internal error", { status: 500 });
+	console.log("[PRODUCT_DELETE]", error);
+	return new NextResponse("Internal error", { status: 500 });
   }*/
 }
 
@@ -129,7 +129,7 @@ export async function PATCH(
 
 		return NextResponse.json(result);
 	} catch (error) {
-		logger.error("order updated", error);
+		logger.error({ "order updated": error });
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

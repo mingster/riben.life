@@ -83,8 +83,10 @@ export const CategoryClient: React.FC<categoryClientProps> = ({ data }) => {
 };
 
 export const formSchema = z.object({
-	names: z.string().min(1, { message: "name is required" }),
-	isFeatured: z.boolean().default(true).optional(),
+	names: z.string().min(1, {
+        error: "name is required"
+    }),
+	isFeatured: z.boolean().prefault(true).optional(),
 });
 
 export function AddCategoriesDialog() {

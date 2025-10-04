@@ -2,11 +2,10 @@ import { IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { SubscriptionStatus } from "@/types/enum";
+import { getUtcNow } from "@/utils/datetime-utils";
 import logger from "@/utils/logger";
-import { transformDecimalsToNumbers } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
-import { getUtcNow } from "@/utils/datetime-utils";
 
 // called when store operator select a package to subscribe.
 // here we create db objects needed for payment intent confirmation.
@@ -102,7 +101,7 @@ export async function POST(
 		}
 
 		// 3. create the subscriptionPayment related to this payment intent
-		const price = await stripe.prices.retrieve(setting.stripePriceId as string);
+		const price = await stripe.prices.retrieve(setting.stripeProductId as string);
 
 		const obj = await sqlClient.subscriptionPayment.create({
 			data: {

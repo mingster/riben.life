@@ -5,12 +5,13 @@ import { redirect } from "next/navigation";
 import { sqlClient } from "@/lib/prismadb";
 
 import fs from "node:fs";
-import { GetSession } from "@/lib/auth/utils";
 import { StoreLevel } from "@/types/enum";
 import logger from "@/utils/logger";
 
 import type { z } from "zod";
 import type { formSchema } from "./store-modal";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 //NOTE - do not move this to other folder.
 //
@@ -18,7 +19,7 @@ export const createStore = async (values: z.infer<typeof formSchema>) => {
 	const session = await auth.api.getSession({
 		headers: await headers(), // you need to pass the headers object.
 	});
-	const ownerId = session.user?.id;
+	const ownerId = session?.user?.id;
 
 	if (!session || !session.user || !ownerId) {
 		redirect(

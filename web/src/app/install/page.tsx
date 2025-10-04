@@ -96,8 +96,8 @@ async function createStripeProducts(setting: PlatformSettings | null) {
 		product: product.id,
 	});
 
-	logger.info("stripe product created", product);
-	logger.info("stripe price created", price);
+	logger.info({ "stripe product created": product });
+	logger.info({ "stripe price created": price });
 
 	if (product && product !== null && product.id !== null) {
 		if (setting === null) {
@@ -105,11 +105,14 @@ async function createStripeProducts(setting: PlatformSettings | null) {
 				data: {
 					//id: crypto.randomUUID(), // Generate a unique ID for the record
 					stripeProductId: product.id as string,
-					stripePriceId: price.id as string,
+					settings: "{priceId: " + price.id as string + "}",
 					//stripeProductName: obj.name,
 				},
 			});
-			logger.info("platform setting created", product, price);
+			logger.info({
+				"platform setting created": product,
+				"platform setting created price": price,
+			});
 		} else {
 			await sqlClient.platformSettings.update({
 				where: {
@@ -117,10 +120,12 @@ async function createStripeProducts(setting: PlatformSettings | null) {
 				},
 				data: {
 					stripeProductId: product.id as string,
-					stripePriceId: price.id as string,
+					settings: "{priceId: " + price.id as string + "}",
 				},
 			});
-			logger.info("platform setting updated", setting);
+			logger.info({
+				"platform setting updated": setting,
+			});
 		}
 	}
 

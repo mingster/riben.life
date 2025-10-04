@@ -1,5 +1,7 @@
 import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
+import { headers } from "next/headers";
 import logger from "@/utils/logger";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 
@@ -28,7 +30,7 @@ export default async function StoreLayout(props: {
 	//console.log('session: ' + JSON.stringify(session));
 	//console.log('userId: ' + user?.id);
 
-	if (session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
+	if (session?.user.role !== "OWNER" && session?.user.role !== "ADMIN") {
 		console.log("access denied");
 		redirect("/error/?code=500");
 	}

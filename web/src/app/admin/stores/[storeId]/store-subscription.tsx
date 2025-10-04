@@ -1,6 +1,6 @@
 "use client";
 import { toastError, toastSuccess } from "@/components/Toaster";
-import { cn, formatDateTime } from "@/utils/utils";
+import { cn } from "@/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -13,7 +13,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import type { Store, Subscription } from "@prisma/client";
+import type { Store, StoreSubscription } from "@prisma/client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +36,7 @@ import {
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import Link from "next/link";
+import { formatDateTime } from "@/utils/datetime-utils";
 
 const formSchema = z.object({
 	subscriptionId: z.string().optional(),
@@ -46,14 +47,14 @@ const formSchema = z.object({
 		  }),
 	*/
 	note: z.string().optional(),
-	level: z.coerce.number(),
+	level: z.number(),
 });
 
 type formValues = z.infer<typeof formSchema>;
 
 export interface SettingsFormProps {
 	initialData: Store;
-	subscription: Subscription | null;
+	subscription: StoreSubscription | null;
 }
 
 export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
@@ -184,7 +185,7 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 												placeholder=""
 												{...field}
 											/>
-										</FormControl>
+										</FormControl><FormDescription/>
 										<FormMessage />
 									</FormItem>
 								)}
@@ -202,7 +203,7 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 												className="font-mono"
 												{...field}
 											/>
-										</FormControl>
+										</FormControl><FormDescription/>
 										<FormMessage />
 									</FormItem>
 								)}

@@ -36,7 +36,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 const formSchema = z.object({
 	tableName: z.string().min(1, { message: "name is required" }),
-	capacity: z.coerce.number().min(1),
+	capacity: z.number().min(1),
 });
 
 type formValues = z.infer<typeof formSchema>;

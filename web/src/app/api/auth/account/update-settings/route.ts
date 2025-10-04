@@ -13,8 +13,9 @@ import { getUtcNow } from "@/utils/datetime-utils";
 export async function PATCH(req: Request) {
 	/*
 	try {
-		const session = (await auth()) as Session;
-		const userId = session?.user.id;
+const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});		const userId = session?.user.id;
 
 		if (!userId) {
 			return new NextResponse("Unauthenticated", { status: 403 });

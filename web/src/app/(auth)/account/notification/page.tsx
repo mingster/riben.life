@@ -8,8 +8,10 @@ import { Heading } from "@/components/ui/heading";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
-import { formatDateTime } from "@/utils/datetime-utils";import { MessageCircleMore } from "lucide-react";
+import { formatDateTime } from "@/utils/datetime-utils";
+import { MessageCircleMore } from "lucide-react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -30,8 +32,9 @@ const UserNotificationPage: React.FC = async () => {
 	} else {
 		const _u: User = user as User;
 		//console.log(`user: ${JSON.stringify(u)}`);
-		const session = (await auth()) as Session;
-
+		const session = await auth.api.getSession({
+			headers: await headers(), // you need to pass the headers object.
+		});
 		const notifications = session?.user.notifications;
 		if (notifications === null) return;
 
@@ -44,7 +47,7 @@ const UserNotificationPage: React.FC = async () => {
 		await sqlClient.storeNotification.updateMany({
 			where: {
 				id: {
-					in: notifications.map((n) => n.id),
+					in: notifications.map((n: any) => n.id),
 				},
 			},
 			data: {

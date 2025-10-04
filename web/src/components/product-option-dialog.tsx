@@ -89,8 +89,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 							`You can select up to ${option.maxSelection} items only.`,
 						)
 						.refine((value) => value.some((item) => item), {
-							message: "You have to select at least one item.",
-						});
+                            error: "You have to select at least one item."
+                        });
 				} else {
 					// not required checkbox
 
@@ -120,8 +120,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 								`4You can select up to ${option.maxSelection} items only.`,
 							)
 							.refine((value) => value.some((item) => item), {
-								message: "5You have to select at least one item.",
-							})
+                                error: "5You have to select at least one item."
+                            })
 							.optional();
 					}
 				}
@@ -138,8 +138,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 					schemaFields[fieldName] = z.enum(
 						iteriable_selections as [string, string, string],
 						{
-							required_error: `${option.optionName} is required`,
-						},
+                            error: (issue) => issue.input === undefined ? undefined : undefined
+                        },
 					);
 				} else {
 					schemaFields[fieldName] = z

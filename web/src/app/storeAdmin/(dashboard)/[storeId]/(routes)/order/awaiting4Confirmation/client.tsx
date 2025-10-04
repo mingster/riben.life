@@ -6,9 +6,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { Loader } from "@/components/ui/loader";
 import { useI18n } from "@/providers/i18n-provider";
-import { format } from "date-fns-tz";
 
-import { formatDateTime, getNowTimeInTz } from "@/utils/utils";
+import { formatDateTime, getNowTimeInTz } from "@/utils/datetime-utils";
 import { OrderPending } from "../../components/order-pending";
 
 export interface props {

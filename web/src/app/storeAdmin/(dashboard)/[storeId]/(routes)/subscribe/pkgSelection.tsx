@@ -4,7 +4,8 @@ import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
-import { cn, formatDateTime, getAbsoluteUrl, getUtcNow } from "@/utils/utils";
+import { cn, getAbsoluteUrl } from "@/utils/utils";
+import { formatDateTime, getUtcNow } from "@/utils/datetime-utils";
 import { useParams, useRouter } from "next/navigation";
 
 import { ConfirmModal } from "@/components/modals/cofirm-modal";
@@ -26,7 +27,7 @@ import getStripe from "@/lib/stripe/client";
 
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import logger from "@/utils/logger";
-import type { Subscription, SubscriptionPayment } from "@prisma/client";
+import type { StoreSubscription, SubscriptionPayment } from "@prisma/client";
 import axios from "axios";
 import { formatDate } from "date-fns";
 import { useTheme } from "next-themes";
@@ -39,7 +40,7 @@ export function PkgSelection({
 	subscription,
 }: {
 	store: Store;
-	subscription: Subscription | null;
+	subscription: StoreSubscription | null;
 }) {
 	const [step, setStep] = useState(1);
 	const [order, setOrder] = useState<SubscriptionPayment | null>(null);
@@ -62,7 +63,7 @@ export function PkgSelection({
 
 type props = {
 	store: Store;
-	subscription: Subscription | null;
+	subscription: StoreSubscription | null;
 	onValueChange?: (newValue: SubscriptionPayment) => void;
 };
 // display package ui. As user select a package, call backend api to subscribe or unsubscribe

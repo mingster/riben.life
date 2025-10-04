@@ -30,7 +30,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { toastError, toastSuccess } from "@/components/Toaster";
 import ImageUploadBox from "@/components/image-upload-box";
 import { Button } from "@/components/ui/button";
-import { deleteImage, uploadImage } from "@/utils/utils";
+import { deleteImage, uploadImage } from "@/utils/image-utils";
 import axios from "axios";
 import { XCircleIcon } from "lucide-react";
 import Image from "next/image";
@@ -47,16 +47,15 @@ const validationSchema = z.object({
 });
 
 type ProductImages = z.infer<typeof validationSchema>["productImages"][number];
-
-function useZodForm<TSchema extends z.ZodType>(
-	props: Omit<UseFormProps<TSchema["_input"]>, "resolver"> & {
+/*
+function useZodForm<TSchema extends z.ZodTypeAny>(
+	props: Omit<UseFormProps<z.infer<TSchema>>, "resolver"> & {
 		schema: TSchema;
 	},
 ) {
-	const form = useForm<TSchema["_input"]>({
+	const form = useForm<z.infer<TSchema>>({
 		...props,
-		resolver: zodResolver(validationSchema, undefined, {
-			//resolver: zodResolver(props.schema, undefined, {
+		resolver: zodResolver(props.schema, undefined, {
 			// This makes it so we can use `.transform()`s on the schema without same transform getting applied again when it reaches the server
 			//rawValues: true
 		}),
@@ -64,7 +63,7 @@ function useZodForm<TSchema extends z.ZodType>(
 
 	return form;
 }
-
+*/
 interface props {
 	initialData?: ProductImages[] | [];
 	action: string;
@@ -87,8 +86,8 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 		control,
 		formState: { isValid, errors, isValidating, isDirty },
 		reset,
-	} = useZodForm({
-		schema: validationSchema,
+	} = useForm<ProductImages>({
+		resolver: zodResolver(validationSchema),
 		defaultValues: { productImages: initialData },
 		mode: "onChange",
 	});

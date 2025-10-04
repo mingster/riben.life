@@ -43,11 +43,11 @@ const formSchema = z.object({
 	//storeId: z.string().optional().default(""),
 	name: z.string().min(1, { message: "product name is required" }),
 	description: z.string().optional().default(""),
-	price: z.coerce.number().min(1),
+	price: z.number().min(1),
 	currency: z.string().optional().default("usd"),
 	isFeatured: z.boolean().default(false).optional(),
 	useOption: z.boolean().default(true).optional(),
-	status: z.coerce.number(),
+	status: z.number(),
 	//productAttribute: productAttributeModel.optional(),
 });
 

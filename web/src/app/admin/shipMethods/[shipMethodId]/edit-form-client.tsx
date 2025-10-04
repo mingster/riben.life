@@ -29,7 +29,7 @@ const formSchema = z.object({
 	name: z.string(),
 	identifier: z.string(),
 	description: z.string(),
-	basic_price: z.coerce.number(),
+	basic_price: z.number(),
 	isDeleted: z.boolean(),
 	isDefault: z.boolean(),
 	shipRequried: z.boolean(),

@@ -40,35 +40,35 @@ export async function POST(
 		}
 
 		/*
-    if (store.ownerId !== userId) {
-      return new NextResponse("Unauthenticated", { status: 401 });
-    }
+	if (store.ownerId !== userId) {
+	  return new NextResponse("Unauthenticated", { status: 401 });
+	}
 
-    const owner = await sqlClient.user.findFirst({
-      where: {
-        id: userId,
-      },
-    });
+	const owner = await sqlClient.user.findFirst({
+	  where: {
+		id: userId,
+	  },
+	});
 
-    if (!owner) throw Error("owner not found");
+	if (!owner) throw Error("owner not found");
 
-    // Ensure stripeCustomerId is a valid string before retrieving the customer
-    let stripeCustomer = null;
-    if (owner?.stripeCustomerId) {
-      try {
-        stripeCustomer = await stripe.customers.retrieve(owner.stripeCustomerId);
-      }
-      catch (error) {
-        stripeCustomer = null;
-      }
-    }
+	// Ensure stripeCustomerId is a valid string before retrieving the customer
+	let stripeCustomer = null;
+	if (owner?.stripeCustomerId) {
+	  try {
+		stripeCustomer = await stripe.customers.retrieve(owner.stripeCustomerId);
+	  }
+	  catch (error) {
+		stripeCustomer = null;
+	  }
+	}
 
-    if (stripeCustomer === null) {
+	if (stripeCustomer === null) {
 
-    }
-    */
+	}
+	*/
 
-		const subscription = await sqlClient.subscription.findUnique({
+		const subscription = await sqlClient.storeSubscription.findUnique({
 			where: {
 				storeId: params.storeId,
 			},
@@ -78,8 +78,8 @@ export async function POST(
 			try {
 				const subscriptionSchedule = subscription?.subscriptionId
 					? await stripe.subscriptionSchedules.retrieve(
-							subscription.subscriptionId,
-						)
+						subscription.subscriptionId,
+					)
 					: null;
 
 				if (subscriptionSchedule) {
@@ -95,7 +95,7 @@ export async function POST(
 					}
 
 					// update subscription in database
-					await sqlClient.subscription.update({
+					await sqlClient.storeSubscription.update({
 						where: {
 							storeId: params.storeId,
 						},

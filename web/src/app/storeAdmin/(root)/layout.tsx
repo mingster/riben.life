@@ -1,7 +1,6 @@
-import { GetSession } from "@/lib/auth/utils";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
-
-
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 // this is the main layout for store admin.
@@ -31,7 +30,7 @@ export default async function StoreAdminLayout(props: {
 	if (!storeId) {
 		const store = await sqlClient.store.findFirst({
 			where: {
-				ownerId: session.user.id,
+				ownerId: session?.user?.id,
 				isDeleted: false,
 			},
 		});
@@ -51,8 +50,8 @@ export default async function StoreAdminLayout(props: {
 	/*
 
   if (session.user.role != 'OWNER') {
-    console.log('access denied');
-    redirect('/error/?code=500');
+	console.log('access denied');
+	redirect('/error/?code=500');
 
   }
 

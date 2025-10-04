@@ -121,16 +121,16 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
 	const formSchema = z.object({
 		// option 1 is required radio button
 		option1: z.enum(option1_names as [string, string, string], {
-			required_error: "You need to select at least one option.",
-		}),
+            error: (issue) => issue.input === undefined ? "You need to select at least one option." : undefined
+        }),
 
 		// option 2 is required and can have a maximum of 2 items
 		option2: z
 			.array(z.string())
 			.max(2, "You can select up to 2 items only.")
 			.refine((value) => value.some((item) => item), {
-				message: "You have to select at least one item.",
-			}),
+                error: "You have to select at least one item."
+            }),
 
 		// option 3 is optional checkboxes without additional validation
 		option3: z.array(z.string()).optional(),

@@ -6,7 +6,7 @@ export const updateFaqCategorySchema = z.object({
 	storeId: z.string().min(1, "Store is required"),
 	localeId: z.string().min(1, "Locale is required"),
 	name: z.string().min(1, "Category name is required"),
-	sortOrder: z.coerce.number().min(1),
+	sortOrder: z.number().min(1),
 });
 
 export type UpdateFaqCategoryInput = z.infer<typeof updateFaqCategorySchema>;

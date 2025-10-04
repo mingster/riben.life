@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 
 import { Heading } from "@/components/ui/heading";
-import { cn, getUtcNow, highlight_css } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { cn, highlight_css } from "@/utils/utils";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 
@@ -252,10 +253,10 @@ type filterProps = {
 };
 
 const formSchema = z.object({
-	filter: z.string().optional().default(""),
-	filter1_is_in_the_last_of_days: z.coerce.number().optional().default(1),
-	filter_date1: z.coerce.date().optional(),
-	filter_date2: z.coerce.date().optional(),
+	filter: z.string().optional().prefault(""),
+	filter1_is_in_the_last_of_days: z.number().optional().prefault(1),
+	filter_date1: z.date().optional(),
+	filter_date2: z.date().optional(),
 });
 type formValues = z.infer<typeof formSchema>;
 
@@ -272,8 +273,8 @@ export const FilterDateTime = ({
 
 	const defaultValues = defaultValue
 		? {
-				...defaultValue,
-			}
+			...defaultValue,
+		}
 		: {};
 
 	const [val, setVal] = useState<TimeFilter>(defaultValue);

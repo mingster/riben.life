@@ -1,11 +1,11 @@
 ---
-description: Guidelines for implementing Next.js server actions
+description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Server Action Guide
 
-This project uses @Next.js Server Actions with @safe-action for secure, type-safe server-side mutations and data operations.
+This project uses [Next.js Server Actions](mdc:https:/nextjs.org/docs/app/building-your-application/data-fetching/server-actions) with [safe-action](mdc:https:/next-safe-action.dev) for secure, type-safe server-side mutations and data operations.
 
 ## Location & Structure
 
@@ -80,10 +80,10 @@ if (guid === undefined || guid === null || guid === "" || guid === "new") {
 
 ## Example Files
 
-- @update-opserver.ts
-- @update-opserver.validation.ts
-- @update-system-message.ts
-- @update-system-message.validation.ts
+- [update-opserver.ts](mdc:pstv_web/src/actions/sysAdmin/opserver/update-opserver.ts)
+- [update-opserver.validation.ts](mdc:pstv_web/src/actions/sysAdmin/opserver/update-opserver.validation.ts)
+- [update-system-message.ts](mdc:pstv_web/src/actions/sysAdmin/sysmsg/update-system-message.ts)
+- [update-system-message.validation.ts](mdc:pstv_web/src/actions/sysAdmin/sysmsg/update-system-message.validation.ts)
 
 ## Best Practices
 

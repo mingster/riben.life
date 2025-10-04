@@ -1,27 +1,216 @@
 ---
-description: How to do backend logging
-globs: 
-alwaysApply: false
+alwaysApply: true
 ---
-# Logging
 
-We use `logger` to do logging:
+# Logging System
+
+## Overview
+
+The application uses a dual-mode logging system:
+
+- **Development**: Pino logger with beautiful console output
+- **Production**: Database logging for persistence and analysis
+
+## Environment-Based Logging
+
+### Development Mode
+
+- **Pino Logger**: Beautiful, structured console output with colors and formatting
+- **No Database Calls**: Fast development experience without database dependencies
+- **Structured Logs**: JSON-formatted logs with metadata and context
+- **Pretty Output**: Human-readable logs with timestamps and levels
+
+### Production Mode
+
+- **Database Logging**: All logs stored in `system_logs` table
+- **No Console Output**: Clean production environment
+- **Persistent Storage**: Logs available for analysis and monitoring
+
+## Usage
+
+### Server-Side Logging
 
 ```typescript
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 
-const user = (await getUser()) as User;
-logger.info(user);
+// Basic logging
+logger.info("User logged in", { userId: "user123" });
+logger.warn("High memory usage detected");
+logger.error("Database connection failed", { error: error.stack });
+
+// With metadata
+logger.info("Processing request", {
+  requestId: "req-123",
+  userId: "user456",
+  metadata: { operation: "create-user" },
+  tags: ["auth", "login"],
+});
+
+// Child logger with context
+const childLogger = logger.child({ module: "user-service" });
+childLogger.info("Processing user request", {
+  requestId: "req-123",
+  userId: "user789",
+  metadata: { service: "user-service" },
+});
 ```
 
-Typically this will be added at the top of a file.
-If we have a large function that reuses multiple variables we can do this within a function:
+### Client-Side Logging
 
 ```typescript
-import logger from "@/utils/logger";
+import clientLogger from "@/lib/client-logger";
 
-// Can now call without passing userId:
-logger.log("Created rule");
+// Basic logging
+clientLogger.info("User clicked button");
+clientLogger.warn("Slow network detected");
+clientLogger.error("API call failed", { error: error.message });
+
+// User interactions
+clientLogger.logUserAction("clicked_login_button", {
+  userId: "user123",
+  metadata: { buttonId: "login-btn" },
+});
+
+// Page views
+clientLogger.logPageView("/dashboard", {
+  userId: "user123",
+  metadata: { referrer: document.referrer },
+});
 ```
 
-Don't use `.with()` for a global logger. Only use within a specific function.
+### Server Actions
+
+```typescript
+import logger from "@/lib/logger";
+
+export const createUserAction = userRequiredActionClient
+  .action(async ({ parsedInput, session }) => {
+    logger.info("Creating user", { 
+      userId: session.user.id,
+      email: parsedInput.email,
+      tags: ["user", "creation"],
+    });
+
+    try {
+      const user = await prisma.user.create({ data: parsedInput });
+      logger.info("User created successfully", { 
+        userId: user.id,
+        tags: ["user", "creation", "success"],
+      });
+      return { data: user };
+    } catch (error) {
+      logger.error("Failed to create user", { 
+        error: error.message,
+        userId: session.user.id,
+        tags: ["user", "creation", "error"],
+      });
+      throw error;
+    }
+  });
+```
+
+### API Routes
+
+```typescript
+import logger from "@/lib/logger";
+
+export async function GET(request: NextRequest) {
+  const requestId = request.headers.get("x-request-id");
+  
+  logger.info("Processing API request", {
+    requestId,
+    url: request.url,
+    method: "GET",
+  });
+
+  try {
+    const data = await fetchData();
+    logger.info("API request completed", {
+      requestId,
+      statusCode: 200,
+      tags: ["api", "success"],
+    });
+    return NextResponse.json(data);
+  } catch (error) {
+    logger.error("API request failed", {
+      requestId,
+      error: error.message,
+      tags: ["api", "error"],
+    });
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
+}
+```
+
+### Client Components
+
+```typescript
+"use client";
+
+import clientLogger from "@/lib/client-logger";
+
+export function LoginButton() {
+  const handleClick = () => {
+    clientLogger.logUserAction("clicked_login", {
+      metadata: { buttonId: "login-btn" },
+    });
+    // ... login logic
+  };
+
+  return <button onClick={handleClick}>Login</button>;
+}
+```
+
+## Database Schema
+
+### Table: `system_logs`
+
+All production logs are stored in the `system_logs` table with comprehensive metadata:
+
+- **Basic**: level, message, timestamp, service, environment, version
+- **Request Context**: requestId, userId, sessionId, ip, userAgent, url, method, statusCode, duration
+- **Error Details**: errorCode, stackTrace
+- **Custom**: metadata (JSON), tags, source, line, column
+
+## Middleware Logging
+
+The middleware automatically logs all requests with:
+
+- Request start/end times
+- Duration tracking
+- Status codes
+- Request correlation IDs
+- CORS violations
+- API performance metrics
+
+## Configuration
+
+### Environment Variables
+
+- `NODE_ENV`: Determines logging mode (development/production)
+- `LOG_LEVEL`: Pino log level (default: "info")
+
+### Pino Configuration
+
+```typescript
+const pinoLogger = pino({
+  level: process.env.LOG_LEVEL || "info",
+  transport: {
+    target: "pino-pretty",
+    options: {
+      colorize: true,
+      translateTime: "SYS:standard",
+      ignore: "pid,hostname",
+    },
+  },
+});
+```
+
+## Best Practices
+
+1. **Use appropriate log levels**: info, warn, error, debug
+2. **Include context**: userId, requestId, metadata
+3. **Use tags**: For categorization and filtering
+4. **Child loggers**: For module-specific context
+5. **Error handling**: Always log errors with stack traces
+6. **Performance**: Avoid logging sensitive data in production

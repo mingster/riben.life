@@ -6,7 +6,7 @@ export const updateFaqSchema = z.object({
 	categoryId: z.string().min(1, "categoryId is required"),
 	question: z.string().min(1, "question is required"),
 	answer: z.string().min(1, "answer is required"),
-	sortOrder: z.coerce.number().min(1),
+	sortOrder: z.number().min(1),
 	published: z.boolean(),
 });
 

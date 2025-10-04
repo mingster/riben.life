@@ -1,7 +1,7 @@
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/utils/datetime-utils";
-import type { Subscription } from "@prisma/client";
+import type { StoreSubscription } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../../api_helper";
 
@@ -39,7 +39,7 @@ export async function PATCH(
 			where: {
 				storeId: store.id,
 			},
-		})) as Subscription;
+		})) as StoreSubscription;
 
 		if (store !== null) {
 			await sqlClient.storeSubscription.update({

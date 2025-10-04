@@ -8,6 +8,7 @@ import type { StoreColumn } from "./components/columns";
 import { StoresClient } from "./components/stores-client";
 
 import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 
 type Params = Promise<{ storeId: string }>;
@@ -22,7 +23,9 @@ export default async function StoreAdminPage(props: {
 	const _params = await props.params;
 
 	//console.log('storeid: ' + params.storeId);
-	const session = (await auth()) as Session;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});	
 	const _userId = session?.user.id;
 
 	if (!session) {

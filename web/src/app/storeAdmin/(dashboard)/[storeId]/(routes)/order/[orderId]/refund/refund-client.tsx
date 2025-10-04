@@ -34,14 +34,20 @@ const formSchema = z.object({
 		.object({
 			//id: z.string().min(1),
 			//orderId: z.string().min(1),
-			productId: z.string().min(1, { message: "product is required" }),
-			quantity: z.coerce.number().min(1, { message: "quantity is required" }),
+			productId: z.string().min(1, {
+                error: "product is required"
+            }),
+			quantity: z.number().min(1, {
+                error: "quantity is required"
+            }),
 			//variants: z.string().optional(),
-			//unitDiscount: z.coerce.number().min(1),
-			//unitPrice: z.coerce.number().min(1),
+			//unitDiscount: z.number().min(1),
+			//unitPrice: z.number().min(1),
 		})
 		.array()
-		.min(1, { message: "at least one item is required" })
+		.min(1, {
+            error: "at least one item is required"
+        })
 		.optional(),
 });
 

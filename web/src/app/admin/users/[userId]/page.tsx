@@ -14,8 +14,8 @@ const UserEditPage = async (props: { params: Promise<{ userId: string }> }) => {
 		},
 		include: {
 			Orders: true,
-			Session: true,
-			Account: true,
+			sessions: true,
+			accounts: true,
 		},
 	})) as User;
 

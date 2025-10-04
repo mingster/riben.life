@@ -26,7 +26,7 @@ import type {
 	Store,
 	StoreAnnouncement,
 	StoreOrder,
-	User,
+	user,
 } from "@prisma/client";
 
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,7 @@ import { CountryCombobox } from "@/components/country-combobox";
 import { CurrencyCombobox } from "@/components/currency-combobox";
 import ImageUploadBox from "@/components/image-upload-box";
 import { LocaleSelectItems } from "@/components/locale-select-items";
-import { deleteImage, uploadImage } from "@/utils/utils";
+import { deleteImage, uploadImage } from "@/utils/image-utils";
 
 const formSchema = z.object({
 	name: z.string().min(1, { message: "store name is required" }),
@@ -62,7 +62,7 @@ export interface SettingsFormProps {
 	initialData: Store & {
 		Categories: Category[] | [];
 		StoreAnnouncement: StoreAnnouncement[] | [];
-		Owner: User;
+		Owner: user;
 		Products: Product[] | [];
 		StoreOrders: StoreOrder[] | [];
 	};

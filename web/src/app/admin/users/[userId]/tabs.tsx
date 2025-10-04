@@ -6,7 +6,7 @@ import { Heading } from "@/components/ui/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import type { User } from "@/types";
-import type { Account, Session } from "@prisma/client";
+import type { account, session } from "@prisma/client";
 import { useParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import SettingsTab from "./user-edit-basic-tab";
@@ -14,8 +14,8 @@ import SettingsTab from "./user-edit-basic-tab";
 interface editProps {
 	initialData:
 		| (User & {
-				Session: Session[] | [];
-				Account: Account | null;
+				sessions: session[] | [];
+				accounts: account | null;
 		  })
 		| null;
 	action: string;

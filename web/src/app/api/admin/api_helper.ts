@@ -1,10 +1,12 @@
 import { auth } from "@/lib/auth";
 
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 export const CheckAdminApiAccess = async () => {
-	const session = (await auth()) as Session;
-	const userId = session?.user.id;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	}); const userId = session?.user?.id;
 
 	if (!session) {
 		return new NextResponse("Unauthenticated", { status: 400 });
@@ -15,7 +17,7 @@ export const CheckAdminApiAccess = async () => {
 	}
 
 	// block if not admin
-	if (session.user.role !== "ADMIN") {
+	if (session?.user?.role !== "ADMIN") {
 		return new NextResponse("Unauthenticated", { status: 402 });
 	}
 };
