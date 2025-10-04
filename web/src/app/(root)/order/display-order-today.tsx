@@ -1,11 +1,11 @@
 "use client";
 
-import { AskUserToSignIn } from "@/components/ask-user-to-signIn";
+import { AskUserToSignIn } from "@/components/auth/ask-user-to-signIn";
 import { DisplayOrder } from "@/components/order-display";
 import StoreRequirePrepaidPrompt from "@/components/store-require-prepaid-prompt";
 
 import { Button } from "@/components/ui/button";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import {
 	KEY_LOCALORDERS,
 	getOrdersFromLocal,

@@ -1,6 +1,6 @@
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import type { Store } from "@/types";
 import { Suspense } from "react";
 import { DisplayClient } from "./client";

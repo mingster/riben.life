@@ -2,7 +2,7 @@
 import MarkAsPaid from "@/actions/storeAdmin/mark-order-as-paid";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { getAbsoluteUrl } from "@/utils/utils";

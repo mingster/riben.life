@@ -3,7 +3,7 @@
 import DropdownCart from "@/components/dropdown-cart";
 import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
-import DropdownUser from "@/components/dropdown-user";
+import DropdownUser from "@/components/auth/dropdown-user";
 import ThemeToggler from "@/components/theme-toggler";
 import { useScrollDirection } from "@/lib/use-scroll-direction";
 import type { Store } from "@/types";

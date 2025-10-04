@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack -p 3001",
     "debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3001",
-    "build": "bun run postinstall; next build",
+    "build": "bun run postinstall && bun run next build",
     "start": "next start -p 3000",
     "bio_lint": "npx biome check --fix ./src",
     "format": "biome format . --write ./src",
@@ -94,6 +94,7 @@
     "next-qrcode": "^2.5.1",
     "next-safe-action": "^8.0.11",
     "next-themes": "^0.4.6",
+    "nextjs-current-url": "^1.0.3",
     "nodemailer": "^7.0.6",
     "pino": "^9.13.1",
     "pino-logflare": "^0.5.2",

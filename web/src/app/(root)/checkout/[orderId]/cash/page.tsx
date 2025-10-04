@@ -3,7 +3,7 @@ import type { StoreOrder } from "@/types";
 
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { Suspense } from "react";
 
 /*

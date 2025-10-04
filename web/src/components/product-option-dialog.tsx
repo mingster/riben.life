@@ -89,8 +89,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 							`You can select up to ${option.maxSelection} items only.`,
 						)
 						.refine((value) => value.some((item) => item), {
-                            error: "You have to select at least one item."
-                        });
+							error: "You have to select at least one item."
+						});
 				} else {
 					// not required checkbox
 
@@ -120,8 +120,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 								`4You can select up to ${option.maxSelection} items only.`,
 							)
 							.refine((value) => value.some((item) => item), {
-                                error: "5You have to select at least one item."
-                            })
+								error: "5You have to select at least one item."
+							})
 							.optional();
 					}
 				}
@@ -138,8 +138,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 					schemaFields[fieldName] = z.enum(
 						iteriable_selections as [string, string, string],
 						{
-                            error: (issue) => issue.input === undefined ? undefined : undefined
-                        },
+							error: (issue) => issue.input === undefined ? undefined : undefined
+						},
 					);
 				} else {
 					schemaFields[fieldName] = z
@@ -198,30 +198,30 @@ export const ProductOptionDialog: React.FC<props> = ({
 
 	/*
   function generateDefaultValues(productOptions: ProductOption[]) {
-    const defaultValues: Record<string, string | string[]> = {};
+	const defaultValues: Record<string, string | string[]> = {};
 
-    productOptions.forEach((option: ProductOption, index) => {
-      const fieldName = `option${index}`;
+	productOptions.forEach((option: ProductOption, index) => {
+	  const fieldName = `option${index}`;
 
-      if (option.isMultiple) {
-        defaultValues[fieldName] = option.ProductOptionSelections.filter(
-          (item) => item.isDefault,
-        ).map((item) => item.id);
-      } else {
+	  if (option.isMultiple) {
+		defaultValues[fieldName] = option.ProductOptionSelections.filter(
+		  (item) => item.isDefault,
+		).map((item) => item.id);
+	  } else {
 
-        let defaultItem = option.ProductOptionSelections.find(
-          (item) => item.isDefault,
-        );
-        console.log("defaultItem", defaultItem);
+		let defaultItem = option.ProductOptionSelections.find(
+		  (item) => item.isDefault,
+		);
+		console.log("defaultItem", defaultItem);
 
-        // radio group must have default value, cannot be empty...
-        if (!defaultItem) defaultItem = option.ProductOptionSelections[0];
+		// radio group must have default value, cannot be empty...
+		if (!defaultItem) defaultItem = option.ProductOptionSelections[0];
 
-        defaultValues[fieldName] = defaultItem ? defaultItem.id : "";
-      }
-    });
+		defaultValues[fieldName] = defaultItem ? defaultItem.id : "";
+	  }
+	});
 
-    return defaultValues;
+	return defaultValues;
   }
 */
 
@@ -621,30 +621,30 @@ export const ProductOptionDialog: React.FC<props> = ({
 																						className="flex flex-row items-start space-x-3 space-y-0"
 																					>
 																						<FormControl>
-																							<Checkbox
-																								checked={field.value?.includes(
-																									item.id,
-																								)}
+																						<Checkbox
+																							checked={(field.value as string[])?.includes(
+																								item.id,
+																							)}
 																								onCheckedChange={(checked) => {
 																									return checked
 																										? field.onChange(
-																												[
-																													...field.value,
-																													item.id,
-																												],
-																												handleCheckbox(
-																													Number(item.price),
-																												),
-																											)
+																											[
+																												...(field.value as string[]),
+																												item.id,
+																											],
+																											handleCheckbox(
+																												Number(item.price),
+																											),
+																										)
 																										: field.onChange(
-																												field.value?.filter(
-																													(value: string) =>
-																														value !== item.id,
-																												),
-																												handleCheckbox(
-																													-item.price,
-																												),
-																											);
+																											(field.value as string[])?.filter(
+																												(value: string) =>
+																													value !== item.id,
+																											),
+																											handleCheckbox(
+																												-item.price,
+																											),
+																										);
 																								}}
 																							/>
 																						</FormControl>
@@ -677,7 +677,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 																	onValueChange={(val) =>
 																		handleRadio(field.name, val)
 																	}
-																	defaultValue={field.value}
+																	defaultValue={field.value as string}
 																	className="flex flex-col space-y-1"
 																>
 																	{option.ProductOptionSelections.map(

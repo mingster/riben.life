@@ -1,7 +1,7 @@
 import getStoreById from "@/actions/get-store-by_id";
 import { Navbar } from "@/components/global-navbar";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";

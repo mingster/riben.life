@@ -1,6 +1,6 @@
 //import type { FaqCategory } from "@/../.prisma/client";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
 import type { Store } from "@prisma/client";
 

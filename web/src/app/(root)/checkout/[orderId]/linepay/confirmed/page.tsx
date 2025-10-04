@@ -4,7 +4,7 @@ import getStoreById from "@/actions/get-store-by_id";
 import MarkAsPaid from "@/actions/storeAdmin/mark-order-as-paid";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import {
 	type ConfirmRequestConfig,
 	type Currency,

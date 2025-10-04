@@ -5,7 +5,7 @@ import type { StoreNotification } from "@/actions/send-store-notification";
 
 import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
 import { formatDateTime } from "@/utils/datetime-utils";

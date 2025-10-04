@@ -1,6 +1,6 @@
 import type { SystemMessage } from "@/../.prisma/client";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 
 import { revalidateTag } from "next/cache";

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 
 import DropdownNotification from "@/components/dropdown-notification";
-import DropdownUser from "@/components/dropdown-user";
+import DropdownUser from "@/components/auth/dropdown-user";
 
 import DropdownCart from "@/components/dropdown-cart";
 import ThemeToggler from "@/components/theme-toggler";

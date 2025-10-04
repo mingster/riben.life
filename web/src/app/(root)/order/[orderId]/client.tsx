@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
-import { AskUserToSignIn } from "@/components/ask-user-to-signIn";
+import { AskUserToSignIn } from "@/components/auth/ask-user-to-signIn";
 import { Navbar } from "@/components/global-navbar";
 import { DisplayOrder } from "@/components/order-display";
 import StoreRequirePrepaidPrompt from "@/components/store-require-prepaid-prompt";

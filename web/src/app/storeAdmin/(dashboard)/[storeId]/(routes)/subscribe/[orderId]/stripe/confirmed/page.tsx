@@ -1,6 +1,6 @@
 "use server";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 
 import confirmPayment from "@/actions/storeAdmin/subscription/stripe/confirm-payment";
 import { Suspense } from "react";

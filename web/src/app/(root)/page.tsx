@@ -1,7 +1,7 @@
 "use client";
 
 import { toastError } from "@/components/Toaster";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { getHostname } from "@/utils/utils";
 import type { Store } from "@prisma/client";
 import { useRouter } from "next/navigation";

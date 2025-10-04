@@ -1,8 +1,10 @@
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
+import { auth } from "@/lib/auth";
 import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
 import type { Metadata, ResolvingMetadata } from "next";
+import { headers } from "next/headers";
 
 //import { Metadata } from 'next';
 import { redirect } from "next/navigation";
@@ -67,7 +69,7 @@ export default async function StoreAdminLayout(props: {
 	const store = await sqlClient.store.findFirst({
 		where: {
 			id: params.storeId,
-			ownerId: session.user?.id,
+			ownerId: session?.user?.id,
 		},
 	});
 

@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Heading } from "@/components/ui/heading";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import type { Store } from "./page";
 import { BankSettingTab } from "./setting-bank-tab";
 import { BasicSettingTab } from "./setting-basic-tab";

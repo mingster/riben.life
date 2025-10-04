@@ -6,6 +6,9 @@ import type { Metadata, Viewport } from "next";
 import { CookiesProvider } from "next-client-cookies/server";
 import { Geist_Mono, Noto_Sans_TC, Poppins } from "next/font/google";
 import "./css/globals.css";
+import { IOSVersionCheck } from "@/components/ios-version-check";
+import { PageViewTracker } from "@/components/analytics/page-view-tracker";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const notoSans = Noto_Sans_TC({
 	variable: "--font-noto-sans",
@@ -111,25 +114,30 @@ export default async function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<SessionWrapper>
-			<html lang="en" suppressHydrationWarning>
-				<body
-					className={`${popinsSans.variable} ${notoSans.variable} ${geistMono.variable} 
-					overscroll-none antialiased dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]`}
+		<html lang="en" suppressHydrationWarning>
+			<body className={"antialiased"}>
+				<NextThemeProvider
+					attribute="class"
+					defaultTheme="dark"
+					enableSystem
+					disableTransitionOnChange
 				>
-					<NextThemeProvider
-						attribute="class"
-						defaultTheme="dark"
-						enableSystem
-						disableTransitionOnChange
-					>
-						<CookiesProvider>
-							<I18nProvider>{children}</I18nProvider>
-						</CookiesProvider>
-					</NextThemeProvider>
-					<Toaster />
-				</body>
-			</html>
-		</SessionWrapper>
+					<CookiesProvider>
+						<I18nProvider>
+							<SessionWrapper>
+								<IOSVersionCheck>
+									<PageViewTracker />
+									{children}
+								</IOSVersionCheck>
+							</SessionWrapper>
+						</I18nProvider>
+					</CookiesProvider>
+				</NextThemeProvider>
+				<Toaster />
+				{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+					<GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+				)}
+			</body>
+		</html>
 	);
 }

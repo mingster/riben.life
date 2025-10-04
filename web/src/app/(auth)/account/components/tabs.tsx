@@ -9,7 +9,7 @@ import { useI18n } from "@/providers/i18n-provider";
 
 import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import type { StoreOrder, User } from "@/types";
 import type { Address } from "@prisma/client";
 import { AddressesTab } from "./address-tab";

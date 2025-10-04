@@ -49,9 +49,10 @@ const DropdownNotification = () => {
 		return () => document.removeEventListener("keydown", keyHandler);
 	});
 
-	const notifications = session?.user.notifications;
+	//const notifications = session?.user.notifications;
+	const notifications: any[] = [];
 
-	//console.log(`notifcations: ${JSON.stringify(session?.user.notifications)}`);
+	//console.log(`notifications: ${JSON.stringify(session?.user.notifications)}`);
 
 	useEffect(() => {
 		notifications?.map((n) => {

@@ -13,7 +13,7 @@ import {
 import type { StoreSettings } from "@prisma/client";
 import { StoreAdminSidebar } from "./store-admin-sidebar";
 
-import DropdownUser from "@/components/dropdown-user";
+import DropdownUser from "@/components/auth/dropdown-user";
 import ThemeToggler from "@/components/theme-toggler";
 import { Separator } from "@/components/ui/separator";
 import { useSession } from "@/lib/auth-client";
