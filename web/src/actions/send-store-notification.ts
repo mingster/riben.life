@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { toDateTime } from "@/utils/utils";
+import { toDateTime } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import nodemailer from "nodemailer";
 

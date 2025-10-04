@@ -1,6 +1,6 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 
 import { IsSignInResponse } from "@/lib/auth/utils";
 import { NextResponse } from "next/server";

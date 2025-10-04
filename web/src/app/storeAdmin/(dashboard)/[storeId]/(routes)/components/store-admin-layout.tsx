@@ -16,7 +16,7 @@ import { StoreAdminSidebar } from "./store-admin-sidebar";
 import DropdownUser from "@/components/dropdown-user";
 import ThemeToggler from "@/components/theme-toggler";
 import { Separator } from "@/components/ui/separator";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import router from "next/dist/client/router";
 
 export interface props {

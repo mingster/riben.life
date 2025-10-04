@@ -2,7 +2,7 @@
 
 import type { Store } from "@prisma/client";
 import { Check, ChevronsUpDown, PlusCircle, StoreIcon } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
 import useSWR from "swr";
@@ -43,7 +43,7 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 	const { data: session } = useSession();
 
 	if (!session) {
-		router.push("/api/auth/signin");
+		router.push("/sign-in");
 	}
 
 	const url = `${process.env.NEXT_PUBLIC_API_URL}/store/owner/${session?.user.id}/getStores`;

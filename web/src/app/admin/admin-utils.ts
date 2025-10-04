@@ -1,7 +1,7 @@
 "use server";
 
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
+
 import { redirect } from "next/navigation";
 
 export async function checkAdminAccess() {

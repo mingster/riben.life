@@ -24,7 +24,7 @@ import {
 	SidebarRail,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/lib/auth-client";
 
 import { Button } from "@/components/ui/button";
 import {

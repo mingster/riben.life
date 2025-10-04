@@ -2,10 +2,10 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import type { FaqCategory } from "@/types";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { baseClient } from "@/utils/actions/safe-action";
 import { updateFaqCategorySchema } from "./update-faq-category.validation";
 
-export const updateFaqCategoryAction = storeOwnerActionClient
+export const updateFaqCategoryAction = baseClient
 	.metadata({ name: "updateFaqCategory" })
 	.schema(updateFaqCategorySchema)
 	.action(

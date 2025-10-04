@@ -18,7 +18,7 @@ export default async function AdminPage() {
 	const orderCount = await sqlClient.storeOrder.count();
 	const productCount = await sqlClient.product.count();
 
-	const subscriptionCount = await sqlClient.subscription.count({
+	const subscriptionCount = await sqlClient.storeSubscription.count({
 		where: {
 			status: Number(SubscriptionStatus.Active),
 		},

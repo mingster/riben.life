@@ -7,7 +7,7 @@ import DropdownUser from "@/components/dropdown-user";
 import ThemeToggler from "@/components/theme-toggler";
 import { useScrollDirection } from "@/lib/use-scroll-direction";
 import type { Store } from "@/types";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { SheetMenu } from "./sheet-menu";

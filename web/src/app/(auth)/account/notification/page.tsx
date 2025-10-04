@@ -1,4 +1,4 @@
-//import { auth } from "@/auth";
+//import { auth } from "@/lib/auth";
 
 import getUser from "@/actions/get-user";
 import type { StoreNotification } from "@/actions/send-store-notification";
@@ -8,15 +8,13 @@ import { Heading } from "@/components/ui/heading";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
-import { formatDateTime } from "@/utils/utils";
-import { MessageCircleMore } from "lucide-react";
+import { formatDateTime } from "@/utils/datetime-utils";import { MessageCircleMore } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
 	title: "My Notification",

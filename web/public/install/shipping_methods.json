@@ -1,72 +1,72 @@
 [
-	{
-		"name": "宅配(台灣本島)",
-		"identifier": "",
-		"description": "0-60cm",
-		"basic_price": 70,
-		"currencyId": "TWD",
-		"shipRequried": true,
-		"isDeleted": false,
-		"isDefault": false
-	},
-	{
-		"name": "7-11超商取貨",
-		"identifier": "",
-		"description": "0-60cm",
-		"basic_price": 60,
-		"currencyId": "TWD",
-		"shipRequried": true,
-		"isDeleted": false,
-		"isDefault": false
-	},
-	{
-		"name": "全家超商取貨",
-		"identifier": "",
-		"description": "0-60cm",
-		"basic_price": 60,
-		"currencyId": "TWD",
-		"shipRequried": true,
-		"isDeleted": false,
-		"isDefault": false
-	},
-	{
-		"name": "黑貓宅急便",
-		"identifier": "",
-		"description": "0-60cm",
-		"basic_price": 90,
-		"currencyId": "TWD",
-		"shipRequried": true,
-		"isDeleted": false,
-		"isDefault": false
-	},
-	{
-		"name": "自取",
-		"identifier": "takeout",
-		"description": "",
-		"basic_price": 0,
-		"currencyId": "TWD",
-		"shipRequried": false,
-		"isDeleted": false,
-		"isDefault": true
-	},
-	{
-		"name": "內用",
-		"identifier": "in-store",
-		"description": "",
-		"basic_price": 0,
-		"currencyId": "TWD",
-		"shipRequried": false,
-		"isDeleted": false,
-		"isDefault": true
-	},
-	{
-		"name": "數位",
-		"identifier": "digital",
-		"description": "",
-		"basic_price": 0,
-		"currencyId": "TWD",
-		"shipRequried": false,
-		"isDeleted": false,
-		"isDefault": false
-	}
+  {
+    "name": "宅配(台灣本島)",
+    "identifier": "",
+    "description": "0-60cm",
+    "basic_price": 70,
+    "currencyId": "TWD",
+    "shipRequried": true,
+    "isDeleted": false,
+    "isDefault": false
+  },
+  {
+    "name": "7-11超商取貨",
+    "identifier": "",
+    "description": "0-60cm",
+    "basic_price": 60,
+    "currencyId": "TWD",
+    "shipRequried": true,
+    "isDeleted": false,
+    "isDefault": false
+  },
+  {
+    "name": "全家超商取貨",
+    "identifier": "",
+    "description": "0-60cm",
+    "basic_price": 60,
+    "currencyId": "TWD",
+    "shipRequried": true,
+    "isDeleted": false,
+    "isDefault": false
+  },
+  {
+    "name": "黑貓宅急便",
+    "identifier": "",
+    "description": "0-60cm",
+    "basic_price": 90,
+    "currencyId": "TWD",
+    "shipRequried": true,
+    "isDeleted": false,
+    "isDefault": false
+  },
+  {
+    "name": "自取",
+    "identifier": "takeout",
+    "description": "",
+    "basic_price": 0,
+    "currencyId": "TWD",
+    "shipRequried": false,
+    "isDeleted": false,
+    "isDefault": true
+  },
+  {
+    "name": "內用",
+    "identifier": "in-store",
+    "description": "",
+    "basic_price": 0,
+    "currencyId": "TWD",
+    "shipRequried": false,
+    "isDeleted": false,
+    "isDefault": true
+  },
+  {
+    "name": "數位",
+    "identifier": "digital",
+    "description": "",
+    "basic_price": 0,
+    "currencyId": "TWD",
+    "shipRequried": false,
+    "isDeleted": false,
+    "isDefault": false
+  }
 ]

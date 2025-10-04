@@ -50,8 +50,7 @@ import {
 	updateUserSettingsSchema,
 } from "@/actions/admin/user/update-user-settings.validation";
 import type { User } from "@/types";
-import { formatDateTime } from "@/utils/utils";
-import { UserRoleCombobox } from "./user-role-combobox";
+import { formatDateTime } from "@/utils/datetime-utils";import { UserRoleCombobox } from "./user-role-combobox";
 
 /*
 export type UserColumn = {
@@ -68,7 +67,9 @@ type formValues = z.infer<typeof updateUserSettingsSchema>;
 
 function TableCellEditor({
 	item,
-}: { item: z.infer<typeof updateUserSettingsSchema> }) {
+}: {
+	item: z.infer<typeof updateUserSettingsSchema>;
+}) {
 	const isMobile = useIsMobile();
 	const [loading, setLoading] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);

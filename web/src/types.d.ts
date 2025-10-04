@@ -1,10 +1,10 @@
-import type { DefaultSession, DefaultUser } from "next-auth";
 import type { Notification } from "prisma/prisma-client";
 //import type { Product } from "prisma/prisma-client";
 import { Prisma } from "prisma/prisma-client";
 
-/* #region next-auth */
 
+/* #region next-auth */
+/*
 declare module "next-auth" {
 	interface Session {
 		id: string | null | unknown;
@@ -35,8 +35,44 @@ declare module "next-auth/jwt" {
 		error?: "RefreshAccessTokenError";
 	}
 }
+*/
+
+const userObj = Prisma.validator<Prisma.UserDefaultArgs>()({
+	include: {
+		accounts: true,
+		twofactors: true,
+		passkeys: true,
+		apikeys: true,
+		sessions: true,
+		members: true,
+		invitations: true,
+	},
+});
+export type User = Prisma.UserGetPayload<typeof userObj>;
+
+const subscriptionObj = Prisma.validator<Prisma.SubscriptionDefaultArgs>()({});
+export type Subscription = Prisma.SubscriptionGetPayload<
+	typeof subscriptionObj
+>;
+
+const organizationObj = Prisma.validator<Prisma.OrganizationDefaultArgs>()({
+	include: {
+		members: true,
+		invitations: true,
+	},
+});
+export type Organization = Prisma.OrganizationGetPayload<
+	typeof organizationObj
+>;
+
+const memberObj = Prisma.validator<Prisma.MemberDefaultArgs>()({});
+export type Member = Prisma.MemberGetPayload<typeof memberObj>;
+
+const invitationObj = Prisma.validator<Prisma.InvitationDefaultArgs>()({});
+export type Invitation = Prisma.InvitationGetPayload<typeof invitationObj>;
 
 /* #endregion */
+
 
 /* #region prisma type mod */
 

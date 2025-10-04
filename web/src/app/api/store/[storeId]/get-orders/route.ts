@@ -1,8 +1,8 @@
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreOrder } from "@prisma/client";
-import type { Session } from "next-auth";
+
 import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 

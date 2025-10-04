@@ -5,11 +5,10 @@ import {
 	IconLogout,
 	IconSettings,
 } from "@tabler/icons-react";
-import type { User } from "next-auth";
-import { signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { signOut } from "@/lib/auth-client";
 
 import {
 	DropdownMenu,
@@ -26,7 +25,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
 interface UserButtonProps {
-	user: User | undefined | null;
+	user: any | undefined | null;
 }
 
 export default function DropdownUser({ user }: UserButtonProps) {
@@ -106,7 +105,7 @@ export default function DropdownUser({ user }: UserButtonProps) {
 						<DropdownMenuItem className="cursor-pointer" asChild>
 							<button
 								type="button"
-								onClick={() => signOut({ callbackUrl: "/" })}
+								onClick={() => signOut()}
 								className="flex w-full items-center"
 							>
 								<IconLogout className="mr-0 size-4" />{" "}

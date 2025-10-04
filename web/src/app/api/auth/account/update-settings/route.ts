@@ -2,9 +2,9 @@ import { sqlClient } from "@/lib/prismadb";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
-import { getUtcNow } from "@/utils/utils";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
+import { getUtcNow } from "@/utils/datetime-utils";
+
 
 ///!SECTION update user data on user's own behave.
 /**

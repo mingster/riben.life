@@ -2,7 +2,7 @@
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, useSession } from "@/lib/auth-client";
 import Link from "next/link";
 
 export const AskUserToSignIn = () => {

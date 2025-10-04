@@ -1,6 +1,5 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
 
 export const updateStoreDefaultPayMethods = async () => {
 	// add default payment methods to all store that does not have the payment methods yet

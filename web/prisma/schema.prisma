@@ -11,25 +11,101 @@ datasource db {
   relationMode = "prisma"
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  username      String?   @unique
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  isActive      Boolean   @default(false)
+/// Next.js application logs for log drain functionality
+model system_logs {
+  id          String  @id @default(cuid())
+  timestamp   DateTime @default(now()) 
+  level       String   @db.VarChar(10) // error, warn, info, debug
+  message     String   
+  service     String   @db.VarChar(100) // service name (e.g., "web", "api")
+  environment String   @db.VarChar(20) // production, development, staging
+  version     String?  @db.VarChar(50) // app version
+  requestId   String?  @db.VarChar(100) // request correlation ID
+  userId      String?  @db.VarChar(100) // user ID if available
+  sessionId   String?  @db.VarChar(100) // session ID if available
+  ip          String?  @db.VarChar(45) // IPv4 or IPv6
+  userAgent   String?  @db.VarChar(500)
+  url         String?  @db.VarChar(1000) // request URL
+  method      String?  @db.VarChar(10) // HTTP method
+  statusCode  Int? // HTTP status code
+  duration    Int? // request duration in ms
+  errorCode   String?  @db.VarChar(100) // error code if applicable
+  stackTrace  String?   // full stack trace for errors
+  metadata    String?   // JSON metadata
+  tags        String?  // comma-separated tags
+  source      String?  @db.VarChar(100) // source file/component
+  line        Int? // line number
+  column      Int? // column number
+  createdAt   DateTime @default(now()) 
 
-  locale String?
+  @@index([timestamp])
+  @@index([level])
+  @@index([service])
+  @@index([environment])
+  @@index([requestId])
+  @@index([userId])
+}
 
-  role             Role?           @default(USER)
-  stripeCustomerId String?         @unique
-  Session          Session[]
-  Account          Account?
-  Authenticator    Authenticator[]
-  Orders           StoreOrder[]    @relation("UserOrders")
+model account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+  user                  user      @relation(fields: [userId], references: [id])
+}
+
+model session {
+  id             String   @id @default(cuid())
+  expiresAt      DateTime
+  token          String   @unique
+  createdAt      DateTime
+  updatedAt      DateTime
+  ipAddress      String?  @db.VarChar(15)
+  userAgent      String?
+  userId         String
+  impersonatedBy String?
+  user           user     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model user {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  emailVerified    Int
+  normalizedEmail  String?   @unique
+  image            String?
+  createdAt        DateTime
+  updatedAt        DateTime
+  role             String?
+  locale           String?
+  timezone         String?
+  stripeCustomerId String?
+  twoFactorEnabled Int?
+  banned           Int?
+  banReason        String?
+  banExpires       DateTime?
+
+  sessions    session[]
+  accounts    account[]
+  twofactors  twoFactor[]
+  passkeys    passkey[]
+  apikeys     apikey[]
+  members     member[]
+  invitations invitation[]
+
+  Orders StoreOrder[] @relation("UserOrders")
+  Rsvp       Rsvp[]
 
   SupportTicketFrom SupportTicket[]     @relation("SupportTicketFrom")
   SupportTicketTo   SupportTicket[]     @relation("SupportTicketTo")
@@ -37,66 +113,142 @@ model User {
   NotificationTo    StoreNotification[] @relation("NotificationTo")
   Store             Store[]
   Addresses         Address[]
-  Rsvp              Rsvp[]
 
-  @@index([username])
+  @@index([locale])
+  @@index([role])
   @@index([email])
+  @@index([name])
 }
 
-model Account {
-  id                       String   @id @default(cuid())
-  userId                   String   @unique
-  type                     String
-  provider                 String
-  providerAccountId        String
-  refresh_token            String?
-  access_token             String?
-  expires_at               Int?
-  token_type               String?
-  scope                    String?
-  id_token                 String?
-  session_state            String?
-  refresh_token_expires_in Int?
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
-  user                     User?    @relation(fields: [userId], references: [id])
-
-  @@unique([provider, providerAccountId])
-  @@index([userId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-}
-
-model VerificationToken {
+model verification {
+  id         String    @id @default(cuid())
   identifier String
-  token      String
-  expires    DateTime
-
-  @@unique([identifier, token])
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
 }
 
-model Authenticator {
-  credentialID         String  @unique
-  userId               String
-  providerAccountId    String
-  credentialPublicKey  String
-  counter              Int
-  credentialDeviceType String
-  credentialBackedUp   Boolean
-  transports           String?
-  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+model twoFactor {
+  id          String @id @default(cuid())
+  secret      String
+  backupCodes String
+  userId      String
+  user        user   @relation(fields: [userId], references: [id])
+}
 
-  @@id([userId, credentialID])
+model apikey {
+  id                  String    @id @default(cuid())
+  name                String?
+  start               String?
+  prefix              String?
+  key                 String
+  userId              String
+  refillInterval      Int?
+  refillAmount        Int?
+  lastRefillAt        DateTime?
+  enabled             Int?
+  rateLimitEnabled    Int?
+  rateLimitTimeWindow Int?
+  rateLimitMax        Int?
+  requestCount        Int?
+  remaining           Int?
+  lastRequest         DateTime?
+  expiresAt           DateTime?
+  createdAt           DateTime
+  updatedAt           DateTime
+  permissions         String?
+  metadata            String?
+  user                user      @relation(fields: [userId], references: [id])
+}
+
+model passkey {
+  id           String    @id @default(cuid())
+  name         String?
+  publicKey    String
+  userId       String
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Int
+  transports   String?
+  createdAt    DateTime?
+  aaguid       String?
+  user         user      @relation(fields: [userId], references: [id])
+}
+
+model subscription {
+  id                   String    @id @default(cuid())
+  plan                 String
+  referenceId          String    @unique // The ID this subscription is associated with (user ID by default)
+  stripeCustomerId     String
+  stripeSubscriptionId String
+  status               String
+  periodStart          DateTime
+  periodEnd            DateTime
+  cancelAtPeriodEnd    Boolean   @default(false)
+  seats                Int?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+}
+
+model StoreSubscription {
+  id              String   @id @default(cuid())
+  storeId         String   @unique
+  userId          String
+  expiration      DateTime
+  status          Int
+  invoiceNumber   String?
+  billingProvider String
+  subscriptionId  String?
+  note            String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([storeId])
+}
+
+model organization {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String?
+  logo        String?
+  createdAt   DateTime
+  metadata    String?
+  members     member[]
+  invitations invitation[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model member {
+  id String @id @default(cuid())
+
+  organizationId String
+  organization   organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           user         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String
+  createdAt      DateTime
+
+  @@map("member")
+}
+
+model invitation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String
+  expiresAt      DateTime
+  inviterId      String
+  user           user         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@map("invitation")
 }
 
 model PlatformSettings {
@@ -141,7 +293,7 @@ model Currency {
 }
 
 model Locale {
-  id                String @id @unique @db.VarChar(5)
+  id                String @id @unique
   name              String
   lng               String //2 digit language code
   defaultCurrencyId String
@@ -170,7 +322,7 @@ model Address {
   reference   String?
   type        String?
 
-  User    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User    user    @relation(fields: [userId], references: [id], onDelete: Cascade)
   Country Country @relation(fields: [countryId], references: [alpha3])
 
   @@index([userId])
@@ -282,24 +434,6 @@ model Shipment {
   @@index([shippingMethodId])
 }
 
-model Subscription {
-  id              String   @id @default(cuid())
-  storeId         String   @unique
-  userId          String
-  expiration      DateTime
-  status          Int
-  invoiceNumber   String?
-  billingProvider String
-  subscriptionId  String?
-  note            String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([storeId])
-}
-
 model SubscriptionPayment {
   id                 String    @id @default(cuid())
   userId             String
@@ -334,7 +468,7 @@ model Rsvp {
   updatedAt DateTime @updatedAt
 
   Store Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User  User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User  user?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   Order StoreOrder?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   Table StoreTables? @relation(fields: [tableId], references: [id], onDelete: Cascade)
 
@@ -383,7 +517,7 @@ model Store {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  Owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  Owner user @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   Products                   Product[]                    @relation("StoreToProduct")
   Categories                 Category[]
@@ -712,7 +846,7 @@ model StoreOrder {
   updatedAt DateTime @updatedAt
 
   Store          Store           @relation("StoreToOrder", fields: [storeId], references: [id], onDelete: Cascade)
-  User           User?           @relation("UserOrders", fields: [userId], references: [id])
+  User           user?           @relation("UserOrders", fields: [userId], references: [id])
   OrderNotes     OrderNote[]     @relation("orderNoteToStoreOrder")
   OrderItems     OrderItem[]     @relation("itemToStoreOrder")
   OrderItemView  orderitemview[] @relation("itemViewToStoreOrder")
@@ -828,8 +962,8 @@ model StoreNotification {
   isDeletedByAuthor    Boolean @default(false)
   isDeletedByRecipient Boolean @default(false)
 
-  Sender   User @relation("NotificationFrom", fields: [senderId], references: [id])
-  Recipent User @relation("NotificationTo", fields: [recipentId], references: [id])
+  Sender   user @relation("NotificationFrom", fields: [senderId], references: [id])
+  Recipent user @relation("NotificationTo", fields: [recipentId], references: [id])
 
   Store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
@@ -874,8 +1008,8 @@ model SupportTicket {
   updatedAt  DateTime @updatedAt
 
   Store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Sender   User  @relation("SupportTicketFrom", fields: [senderId], references: [id])
-  Recipent User  @relation("SupportTicketTo", fields: [recipentId], references: [id])
+  Sender   user  @relation("SupportTicketFrom", fields: [senderId], references: [id])
+  Recipent user  @relation("SupportTicketTo", fields: [recipentId], references: [id])
 
   @@index([updatedAt])
   @@index([threadId])
@@ -900,8 +1034,8 @@ view orderitemview {
   Order   StoreOrder @relation("itemViewToStoreOrder", fields: [orderId], references: [id], onDelete: Cascade)
   Product Product    @relation("itemViewToProduct", fields: [productId], references: [id])
 
-  @@index([orderId])
-  @@index([productId])
+  //@@index([orderId])
+  //@@index([productId])
 }
 
 enum Role {

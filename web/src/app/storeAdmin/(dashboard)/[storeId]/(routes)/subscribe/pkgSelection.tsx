@@ -19,7 +19,7 @@ import {
 
 import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { type ChangeEvent, useEffect, useState } from "react";
 
 import getStripe from "@/lib/stripe/client";
@@ -37,7 +37,10 @@ import Link from "next/link";
 export function PkgSelection({
 	store,
 	subscription,
-}: { store: Store; subscription: Subscription | null }) {
+}: {
+	store: Store;
+	subscription: Subscription | null;
+}) {
 	const [step, setStep] = useState(1);
 	const [order, setOrder] = useState<SubscriptionPayment | null>(null);
 	useEffect(() => {

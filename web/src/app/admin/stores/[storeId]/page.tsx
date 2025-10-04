@@ -30,7 +30,7 @@ const StoreEditPage = async (props: {
 
 	if (store === null) return;
 
-	const subscription = (await sqlClient.subscription.findUnique({
+	const subscription = (await sqlClient.storeSubscription.findUnique({
 		where: {
 			storeId: store.id,
 		},

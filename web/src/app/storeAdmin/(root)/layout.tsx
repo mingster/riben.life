@@ -1,6 +1,6 @@
 import { GetSession } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
-import type { Session } from "next-auth";
+
 
 import { redirect } from "next/navigation";
 
@@ -9,23 +9,25 @@ import { redirect } from "next/navigation";
 // if the user doesn't have store, show the create store modal (via page.tsx)
 export default async function StoreAdminLayout(props: {
 	children: React.ReactNode;
-	params: Promise<{ storeId: string }>;
+	params: Promise<{}>;
 }) {
 	const params = await props.params;
 
 	const { children } = props;
 
-	const session = (await GetSession()) as Session;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});
 	if (!session) {
 		redirect(
-			`${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=/storeAdmin/${params.storeId}`,
+			`${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=/storeAdmin`,
 		);
 	}
 
 	//const ownerId = session.user?.id;
 	//console.log('userid: ' + userId);
 
-	let storeId = params.storeId;
+	let storeId: string | undefined;
 	if (!storeId) {
 		const store = await sqlClient.store.findFirst({
 			where: {

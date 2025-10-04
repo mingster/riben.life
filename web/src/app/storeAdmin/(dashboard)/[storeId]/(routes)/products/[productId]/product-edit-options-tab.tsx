@@ -610,7 +610,9 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 export const DisplayOptions = ({
 	productOptions,
-}: { productOptions: ProductOption[] }) => {
+}: {
+	productOptions: ProductOption[];
+}) => {
 	if (!productOptions) return <></>;
 
 	/*

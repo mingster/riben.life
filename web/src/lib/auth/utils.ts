@@ -1,12 +1,14 @@
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 
 // put all auth related functions here so we don't import auth shit everywhere
 
 export async function GetSession() {
-	const session = (await auth()) as Session;
+	const session = await auth.api.getSession({
+		headers: new Headers(),
+	});
+	
 	if (!session) {
 		return null;
 	}
@@ -16,14 +18,10 @@ export async function GetSession() {
 
 // if not signed in, redirect to sign in page
 export async function RequiresSignIn(callbackUrl: string) {
-	const session = (await auth()) as Session;
+	const session = await GetSession();
 
 	if (!session) {
-		if (!session) {
-			redirect(
-				`${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=${callbackUrl}`,
-			);
-		}
+		redirect(`/sign-in?callbackUrl=${callbackUrl}`);
 	}
 }
 
@@ -36,7 +34,7 @@ export async function IsSignInResponse() {
 		return null;
 	}
 
-	const userId = session?.user.id;
+	const userId = session?.user?.id;
 	if (!userId) {
 		return new NextResponse("Unauthenticated", { status: 400 });
 	}

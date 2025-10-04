@@ -13,7 +13,7 @@ export const AddressesTab = ({ addresses }: tabProps) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	logger.info(addresses);
+	//logger.info(addresses);
 
 	if (addresses === null || addresses === undefined) return <></>;
 

@@ -1,15 +1,18 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import isProLevel from "@/actions/storeAdmin/is-pro-level";
-import { GetSession } from "@/lib/auth/utils";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import type { Session } from "next-auth";
+
 import { redirect } from "next/navigation";
+import { auth } from "./auth";
+import { headers } from "next/headers";
 
 // NOTE - protect storeAdmin route by redirect user to appropriate routes.
 export const checkStoreAccess = async (storeId: string) => {
 	//console.log('storeid: ' + params.storeId);
 
-	const session = (await GetSession()) as Session;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});
 	const userId = session?.user.id;
 
 	if (!session || !userId) {

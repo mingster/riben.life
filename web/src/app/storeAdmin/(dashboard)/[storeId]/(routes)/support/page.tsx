@@ -2,12 +2,11 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import { formatDateTime } from "@/utils/utils";
-import type { Store, SupportTicket } from "@prisma/client";
+import { formatDateTime } from "@/utils/datetime-utils";import type { Store, SupportTicket } from "@prisma/client";
 
 import { GetSession } from "@/lib/auth/utils";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
-import type { Session } from "next-auth";
+
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { TicketColumn } from "./components/columns";
@@ -24,7 +23,9 @@ export default async function StoreSupportPage(props: {
 
 	const store = (await checkStoreAccess(params.storeId)) as Store;
 
-	const session = (await GetSession()) as Session;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});
 	const userId = session?.user.id;
 
 	if (!store) {

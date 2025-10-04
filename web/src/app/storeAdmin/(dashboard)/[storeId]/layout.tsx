@@ -3,7 +3,7 @@ import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
 import type { Metadata, ResolvingMetadata } from "next";
-import type { Session } from "next-auth";
+
 //import { Metadata } from 'next';
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -53,7 +53,9 @@ export default async function StoreAdminLayout(props: {
 	const { children } = props;
 
 	RequiresSignIn("/storeAdmin");
-	const session = (await GetSession()) as Session;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});
 	//console.log('session: ' + JSON.stringify(session));
 	//console.log('userid: ' + userId);
 

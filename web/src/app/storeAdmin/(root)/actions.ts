@@ -8,14 +8,16 @@ import fs from "node:fs";
 import { GetSession } from "@/lib/auth/utils";
 import { StoreLevel } from "@/types/enum";
 import logger from "@/utils/logger";
-import type { Session } from "next-auth";
+
 import type { z } from "zod";
 import type { formSchema } from "./store-modal";
 
 //NOTE - do not move this to other folder.
 //
 export const createStore = async (values: z.infer<typeof formSchema>) => {
-	const session = (await GetSession()) as Session;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});
 	const ownerId = session.user?.id;
 
 	if (!session || !session.user || !ownerId) {

@@ -1,15 +1,14 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/ui/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { formatDateTime } from "@/utils/utils";
-
+import { formatDateTime } from "@/utils/datetime-utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { StoreColumn } from "./components/columns";
 import { StoresClient } from "./components/stores-client";
 
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
+
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

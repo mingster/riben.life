@@ -9,9 +9,8 @@ import { Suspense } from "react";
 import type { TicketColumn } from "./components/columns";
 import { TicketClient } from "./components/ticket-client";
 
-import { auth } from "@/auth";
-import { formatDateTime } from "@/utils/utils";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
+import { formatDateTime } from "@/utils/datetime-utils";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

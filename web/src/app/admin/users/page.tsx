@@ -8,8 +8,8 @@ import { Suspense } from "react";
 //import type { UserColumn } from "./components/columns";
 import { UsersClient } from "./components/user-client";
 
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
+
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

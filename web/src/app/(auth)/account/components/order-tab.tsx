@@ -3,7 +3,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 import { OrderStatus } from "@/types/enum";
-import { useSession } from "next-auth/react";
+//import { authClient } from "@/lib/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -30,7 +30,7 @@ export const DisplayOrders = ({ orders }: orderTabProps) => {
 
 type props = { orders: StoreOrder[] };
 export const OrderTab = ({ orders }: props) => {
-	const { data: session, status } = useSession();
+	//const { data: session } = authClient.useSession();
 	const searchParams = useSearchParams();
 	const initialTab = searchParams.get("ordertab");
 	const [_activeTab, setActiveTab] = useState(

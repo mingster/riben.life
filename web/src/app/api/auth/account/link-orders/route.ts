@@ -2,8 +2,8 @@ import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 //import { revalidatePath } from "next/cache";
 
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
+
 
 ///!SECTION update user data on user's own behave.
 export async function PATCH(req: Request) {

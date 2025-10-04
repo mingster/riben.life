@@ -29,7 +29,7 @@ import {
 	SidebarMenuSubItem,
 	SidebarRail,
 } from "@/components/ui/sidebar";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/lib/auth-client";
 
 import { useTranslation } from "@/app/i18n/client";
 import { StoreModal } from "@/app/storeAdmin/(root)/store-modal";

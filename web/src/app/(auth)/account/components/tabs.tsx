@@ -1,6 +1,6 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSession } from "next-auth/react";
+//import { useSession } from "@/lib/auth-client";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -30,7 +30,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const { data: session, status } = useSession();
+	//const { data: session } = authClient.useSession();
 	const searchParams = useSearchParams();
 	const initialTab = searchParams.get("tab");
 	const [activeTab, setActiveTab] = useState(initialTab || "orders"); //show order tab by default

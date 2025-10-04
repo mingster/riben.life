@@ -20,8 +20,7 @@ import { Heading } from "@/components/ui/heading";
 import { useI18n } from "@/providers/i18n-provider";
 import type { SupportTicket } from "@/types";
 import { TicketStatus } from "@/types/enum";
-import { formatDateTime } from "@/utils/utils";
-import Image from "next/image";
+import { formatDateTime } from "@/utils/datetime-utils";import Image from "next/image";
 import { useTranslation } from "react-i18next";
 
 interface props {

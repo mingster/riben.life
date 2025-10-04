@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 
 import DropdownNotification from "@/components/dropdown-notification";
 import DropdownUser from "@/components/dropdown-user";

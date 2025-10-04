@@ -4,8 +4,7 @@ import type { Store } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
 import { Loader } from "@/components/ui/loader";
-import { formatDateTime } from "@/utils/utils";
-import { OrderInProgress } from "../../components/order-inprogress";
+import { formatDateTime } from "@/utils/datetime-utils";import { OrderInProgress } from "../../components/order-inprogress";
 
 export interface props {
 	store: Store;

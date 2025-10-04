@@ -1,13 +1,8 @@
-import crypto from "crypto";
-import axios from "axios";
 import { type ClassValue, clsx } from "clsx";
-import { format } from "date-fns";
-import Resizer from "react-image-file-resizer";
-import { twMerge } from "tailwind-merge";
-
-//import type { StoreTables } from "@prisma/client";
+import crypto from "crypto";
 import Decimal from "decimal.js"; // gets added if installed
-import { z } from "zod";
+import { twMerge } from "tailwind-merge";
+import { z } from "zod/v4";
 
 export const highlight_css = "border-dashed border-green-500 border-2";
 
@@ -16,8 +11,60 @@ export function getTableName(tables: StoreTables[], tableId: string) {
   return tables.find((table) => table.id === tableId)?.tableName || "";
 }
 */
+export function isValidEmail(email: string) {
+	const emailRegex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	return emailRegex.test(email);
+}
 
-export function getRandomNum(length: number) {
+/**
+ * Converts error codes from SNAKE_CASE to camelCase
+ * Example: INVALID_TWO_FACTOR_COOKIE -> invalidTwoFactorCookie
+ */
+export function errorCodeToCamelCase(errorCode: string): string {
+	return errorCode
+		.toLowerCase()
+		.replace(/_([a-z])/g, (_, char) => char.toUpperCase());
+}
+
+export function getAbsoluteUrl() {
+	const origin =
+		typeof window !== "undefined" && window.location.origin
+			? window.location.origin
+			: "";
+
+	return origin;
+}
+
+export function getHostname() {
+	const origin =
+		typeof window !== "undefined" && window.location.hostname
+			? window.location.hostname
+			: "";
+
+	return origin;
+}
+
+// Inspired from https://github.com/microsoft/TypeScript/issues/30611#issuecomment-570773496
+export function getEnumKeys<
+	T extends string,
+	TEnumValue extends string | number,
+>(enumVariable: { [key in T]: TEnumValue }) {
+	//return Object.keys(enumVariable) as Array<T>;
+	return Object.keys(enumVariable).filter((key) =>
+		Number.isNaN(Number(key)),
+	) as T[];
+}
+
+export function getKeyByValue<T extends Record<string, unknown>>(
+	object: T,
+	value?: T[keyof T],
+): keyof T | undefined {
+	return (Object.keys(object) as Array<keyof T>).find(
+		(key) => object[key] === value,
+	);
+}
+
+export function getRandomNum(length: number = 5) {
 	const randomNum = (
 		(10 ** length).toString().slice(length - 1) +
 		Math.floor(Math.random() * 10 ** length + 1).toString()
@@ -26,7 +73,41 @@ export function getRandomNum(length: number) {
 	return randomNum;
 }
 
-// recursive function looping deeply throug an object to find Decimals
+// generate a random string. default length is 16.
+export function generateRandom(length: number = 16) {
+	return crypto.randomBytes(length).toString("hex");
+}
+
+// Helper to generate a random 5-character string
+export function generateRandomString(length: number = 5) {
+	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	let result = "";
+	for (let i = 0; i < length; i++) {
+		result += chars.charAt(Math.floor(Math.random() * chars.length));
+	}
+	return result;
+}
+
+// convert incoming object, if field type is big int, convert it to number
+export const transformBigIntToNumbers = (obj: any): any => {
+	if (obj === null || obj === undefined) return;
+
+	if (Array.isArray(obj)) {
+		return obj.map(transformBigIntToNumbers);
+	}
+	if (typeof obj === "object") {
+		for (const key of Object.keys(obj)) {
+			if (typeof obj[key] === "bigint") {
+				obj[key] = Number(obj[key]);
+			} else if (typeof obj[key] === "object" && obj[key] !== null) {
+				obj[key] = transformBigIntToNumbers(obj[key]);
+			}
+		}
+	}
+	return obj;
+};
+
+// recursive function looping deeply through an object to find Decimals
 export const transformDecimalsToNumbers = (obj: any) => {
 	if (!obj) {
 		return;
@@ -41,7 +122,7 @@ export const transformDecimalsToNumbers = (obj: any) => {
 	}
 };
 
-function nullable<TSchema extends z.AnyZodObject>(schema: TSchema) {
+function nullable<TSchema extends z.ZodObject<any>>(schema: TSchema) {
 	const entries = Object.entries(schema.shape) as [
 		keyof TSchema["shape"],
 		z.ZodTypeAny,
@@ -76,24 +157,6 @@ export const isMobileUserAgent = (userAgent: string | null) => {
 	return /iPhone|iPad|iPod|Android/i.test(userAgent);
 };
 
-export function getAbsoluteUrl() {
-	const origin =
-		typeof window !== "undefined" && window.location.origin
-			? window.location.origin
-			: "";
-
-	return origin;
-}
-
-export function getHostname() {
-	const origin =
-		typeof window !== "undefined" && window.location.hostname
-			? window.location.hostname
-			: "";
-
-	return origin;
-}
-
 export function isIOS() {
 	return (
 		[
@@ -121,189 +184,3 @@ export const generateSignature = (publicId: string, apiSecret: string) => {
 
 	return `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
 };
-
-//https://articles.wesionary.team/image-optimization-in-react-during-upload-5ca351d943d1
-const resizeFile = (
-	file: File,
-	resizeToWidth?: number,
-	resizeToHeight?: number,
-) =>
-	new Promise((resolve) => {
-		let quality = 100;
-		//4MB image file
-		if (file.size > 4000000) {
-			quality = 90;
-		}
-		//8MB image file
-		if (file.size > 8000000) {
-			quality = 85;
-		}
-
-		if (resizeToWidth && resizeToHeight)
-			Resizer.imageFileResizer(
-				file,
-				resizeToWidth,
-				resizeToHeight,
-				"JPEG",
-				quality,
-				0,
-				(uri) => {
-					resolve(uri);
-				},
-				//'blob'
-				"base64",
-			);
-	});
-
-//upload image to cloudinary
-//BUG: resizeToWidth & resizeToHeight must be specified -- otherwise upload won't happen...
-export const uploadImage = async (
-	folderName: string,
-	image: File,
-	resizeToWidth?: number,
-	resizeToHeight?: number,
-) => {
-	const YOUR_CLOUD_NAME = process.env
-		.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME as string;
-	const YOUR_UNSIGNED_UPLOAD_PRESET = process.env
-		.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_UPLOAD_PRESET as string;
-
-	const resizedImage = (await resizeFile(
-		image,
-		resizeToWidth,
-		resizeToHeight,
-	)) as File;
-
-	const formData = new FormData();
-	formData.append("file", resizedImage);
-	formData.append("upload_preset", YOUR_UNSIGNED_UPLOAD_PRESET);
-	formData.append("folder", folderName);
-
-	try {
-		const res = await axios.post(
-			`https://api.cloudinary.com/v1_1/${YOUR_CLOUD_NAME}/image/upload`,
-			formData,
-			{
-				headers: {
-					"Content-Type": "multipart/form-data",
-				},
-			},
-		);
-
-		//upload_response: https://cloudinary.com/documentation/upload_images#upload_response
-		return res.data;
-	} catch (error) {
-		console.error(error);
-
-		return error;
-	}
-};
-
-//call cloudinary to delete the image
-// https://cloudinary.com/documentation/image_upload_api_reference#destroy
-//https://www.obytes.com/blog/cloudinary-in-nextjs
-export const deleteImage = async (publicId: string) => {
-	const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME as string;
-	const timestamp = new Date().getTime();
-	const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_APIKEY as string;
-	const apiSecret = process.env.NEXT_PUBLIC_CLOUDINARY_APISECRET as string;
-	const signature = generateSHA1(generateSignature(publicId, apiSecret));
-	const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`;
-
-	try {
-		const _response = await axios.post(url, {
-			public_id: publicId,
-			signature: signature,
-			api_key: apiKey,
-			timestamp: timestamp,
-		});
-
-		//console.log('handleDeleteImage: ' + JSON.stringify(response));
-	} catch (error) {
-		console.error(error);
-	}
-};
-
-export const toDateTime = (secs: number) => {
-	const t = new Date(+0); // Unix epoch start.
-	t.setSeconds(secs);
-
-	return t;
-};
-
-// https://nextjs.org/learn-pages-router/basics/dynamic-routes/polishing-post-page
-// https://github.com/you-dont-need/You-Dont-Need-Momentjs?tab=readme-ov-file#string--time-format
-export const formatDateTime = (d: Date | undefined) => {
-	if (d === undefined) return "";
-
-	return format(d, "yyyy-MM-dd H:mm");
-};
-
-export function getNowTimeInTz(offsetHours: number) {
-	return getDateInTz(getUtcNow(), offsetHours);
-}
-
-export function getDateInTz(dt: Date, offsetHours: number) {
-	// if dt is not Date object, return empty string
-	if (typeof dt !== "object") return dt;
-
-	const result = new Date(
-		Date.UTC(
-			dt.getFullYear(),
-			dt.getMonth(),
-			dt.getDate(),
-			dt.getHours(),
-			dt.getMinutes(),
-			dt.getSeconds(),
-			offsetHours * 60,
-		),
-	);
-
-	//console.log('dt', dt, result);
-
-	return result;
-}
-
-export function getUtcNow() {
-	const d = new Date();
-	const utcDate = new Date(
-		d.getUTCFullYear(),
-		d.getUTCMonth(),
-		d.getUTCDate(),
-		d.getUTCHours(),
-		d.getUTCMinutes(),
-		d.getUTCSeconds(),
-		d.getUTCMilliseconds(),
-	);
-
-	//console.log('utcDate', utcDate);
-	return utcDate;
-}
-
-export const calculateTrialEndUnixTimestamp = (
-	trialPeriodDays: number | null | undefined,
-) => {
-	// Check if trialPeriodDays is null, undefined, or less than 2 days
-	if (
-		trialPeriodDays === null ||
-		trialPeriodDays === undefined ||
-		trialPeriodDays < 2
-	) {
-		return undefined;
-	}
-
-	const currentDate = new Date(); // Current date and time
-	const trialEnd = new Date(
-		currentDate.getTime() + (trialPeriodDays + 1) * 24 * 60 * 60 * 1000,
-	); // Add trial days
-
-	return Math.floor(trialEnd.getTime() / 1000); // Convert to Unix timestamp in seconds
-};
-
-// Inspired from https://github.com/microsoft/TypeScript/issues/30611#issuecomment-570773496
-export function getEnumKeys<
-	T extends string,
-	TEnumValue extends string | number,
->(enumVariable: { [key in T]: TEnumValue }) {
-	return Object.keys(enumVariable) as Array<T>;
-}

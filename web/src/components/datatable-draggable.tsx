@@ -86,7 +86,9 @@ export function DragHandle({ id }: { id: UniqueIdentifier }) {
 // Draggable row wrapper
 export function DraggableRow<TData extends { id: UniqueIdentifier }>({
 	row,
-}: { row: Row<TData> }) {
+}: {
+	row: Row<TData>;
+}) {
 	const { transform, transition, setNodeRef, isDragging } = useSortable({
 		id: row.original.id,
 	});

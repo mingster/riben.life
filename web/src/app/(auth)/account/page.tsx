@@ -1,4 +1,4 @@
-//import { auth } from "@/auth";
+//import { auth } from "@/lib/auth";
 
 import getUser from "@/actions/get-user";
 import Container from "@/components/ui/container";

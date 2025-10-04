@@ -3,9 +3,10 @@ import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { SubscriptionStatus } from "@/types/enum";
 import logger from "@/utils/logger";
-import { getUtcNow, transformDecimalsToNumbers } from "@/utils/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
+import { getUtcNow } from "@/utils/datetime-utils";
 
 // called when store operator select a package to subscribe.
 // here we create db objects needed for payment intent confirmation.
@@ -71,7 +72,7 @@ export async function POST(
 		// make sure we have the subscription record only.
 		// activate the subscription only when payment is confirmed.
 		//
-		await sqlClient.subscription.upsert({
+		await sqlClient.storeSubscription.upsert({
 			where: {
 				storeId: params.storeId,
 			},

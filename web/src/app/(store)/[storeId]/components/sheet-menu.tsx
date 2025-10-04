@@ -16,7 +16,7 @@ import {
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import type { Store } from "@/types";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useState } from "react";
 import { StoreMenu } from "./store-menu";
 

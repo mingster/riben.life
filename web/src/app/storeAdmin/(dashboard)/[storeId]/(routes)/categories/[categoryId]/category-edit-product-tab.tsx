@@ -20,8 +20,7 @@ import { t } from "i18next";
 import Currency from "@/components/currency";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductStatuses } from "@/types/enum";
-import { formatDateTime } from "@/utils/utils";
-import Link from "next/link";
+import { formatDateTime } from "@/utils/datetime-utils";import Link from "next/link";
 
 interface props {
 	storeId: string;

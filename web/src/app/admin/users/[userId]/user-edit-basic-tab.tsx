@@ -9,7 +9,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import type { User } from "@/types";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
 import { cookieName } from "@/app/i18n/settings";

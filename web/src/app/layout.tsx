@@ -1,10 +1,8 @@
 import { Toaster } from "@/components/ui/sonner";
-import { GetSession } from "@/lib/auth/utils";
 import I18nProvider from "@/providers/i18n-provider";
-import SessionWrapper from "@/providers/session-provider";
+import { SessionWrapper } from "@/providers/session-provider";
 import NextThemeProvider from "@/providers/theme-provider";
 import type { Metadata, Viewport } from "next";
-import type { Session } from "next-auth";
 import { CookiesProvider } from "next-client-cookies/server";
 import { Geist_Mono, Noto_Sans_TC, Poppins } from "next/font/google";
 import "./css/globals.css";
@@ -112,10 +110,8 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const session = (await GetSession()) as Session;
-
 	return (
-		<SessionWrapper session={session}>
+		<SessionWrapper>
 			<html lang="en" suppressHydrationWarning>
 				<body
 					className={`${popinsSans.variable} ${notoSans.variable} ${geistMono.variable} 

@@ -19,7 +19,10 @@ export const SuccessAndRedirect: React.FC<paymentProps> = ({ orderId }) => {
 function MyTimer({
 	expiryTimestamp,
 	orderId,
-}: { expiryTimestamp: Date; orderId: string }) {
+}: {
+	expiryTimestamp: Date;
+	orderId: string;
+}) {
 	const [mounted, setMounted] = useState(false);
 	useEffect(() => {
 		setMounted(true);

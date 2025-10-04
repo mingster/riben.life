@@ -1,9 +1,11 @@
+/*
 import {
 	captureException as sentryCaptureException,
 	setUser,
 } from "@sentry/nextjs";
+*/
 import { APICallError, RetryError } from "ai";
-import type { z } from "zod";
+import type { z } from "zod/v4";
 
 export type ErrorMessage = { error: string; data?: any };
 export type ZodError = {
@@ -24,7 +26,7 @@ export function isErrorMessage(value: any): value is ErrorMessage {
 }
 
 export function formatZodError(error: z.ZodError): string {
-	const formattedError = error.errors
+	const formattedError = error.issues
 		.map((err) => `${err.path.join(".")}: ${err.message}`)
 		.join(", ");
 	return `Invalid data: ${formattedError}`;
@@ -34,12 +36,12 @@ export function formatError(error: unknown): string {
 	if (error instanceof Error) {
 		// Use the standard message for Error instances
 		return error.message;
-	} else {
-		// Fallback for other types
-		return String(error);
 	}
-}
 
+	// Fallback for other types
+	return String(error);
+}
+/*
 export function captureException(
 	error: unknown,
 	additionalInfo?: { extra?: Record<string, any> },
@@ -53,6 +55,7 @@ export function captureException(
 	if (userEmail) setUser({ email: userEmail });
 	sentryCaptureException(error, additionalInfo);
 }
+*/
 
 export type ActionError<E extends object = Record<string, unknown>> = {
 	error: string;
