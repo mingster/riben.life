@@ -86,7 +86,7 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 		control,
 		formState: { isValid, errors, isValidating, isDirty },
 		reset,
-	} = useForm<ProductImages>({
+	} = useForm<z.infer<typeof validationSchema>>({
 		resolver: zodResolver(validationSchema),
 		defaultValues: { productImages: initialData },
 		mode: "onChange",

@@ -50,7 +50,7 @@ const formSchema = z.object({
         })
 		.optional(),
 });
-
+/*
 function useZodForm<TSchema extends z.ZodType>(
 	props: Omit<UseFormProps<TSchema["_input"]>, "resolver"> & {
 		schema: TSchema;
@@ -67,7 +67,7 @@ function useZodForm<TSchema extends z.ZodType>(
 
 	return form;
 }
-
+*/
 export const OrderRefundClient: React.FC<props> = ({ order }) => {
 	//console.log('order', JSON.stringify(order));
 
@@ -108,8 +108,8 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 		watch,
 		clearErrors,
 		setValue,
-	} = useZodForm({
-		schema: formSchema,
+	} = useForm<formValues>({
+		resolver: zodResolver(formSchema),
 		defaultValues,
 		mode: "onChange",
 	});
@@ -158,7 +158,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 	//const params = useParams();
 	//console.log('order', JSON.stringify(order));
 
-	logger.info("form errors", form.formState.errors);
+	//logger.info("form errors", form.formState.errors);
 
 	const handleDecreaseQuality = (index: number) => {
 		if (!updatedOrder) return;
