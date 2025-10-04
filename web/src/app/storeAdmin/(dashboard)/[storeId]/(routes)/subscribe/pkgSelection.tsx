@@ -76,7 +76,7 @@ const DisplayPkg: React.FC<props> = ({
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	logger.info("current level", store.level);
+	logger.info({ level: store.level }, "current level");
 	//logger.info("subscription", subscription);
 
 	function handleDivClick(selected: number) {

@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 // called by: AddProductOptionTemplateDialog.
 export async function POST(
 	req: Request,
-	props: { params: Promise<{ storeId: string; productId: string }> },
+	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;
 	try {

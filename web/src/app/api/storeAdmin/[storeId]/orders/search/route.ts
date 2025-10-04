@@ -1,7 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { OrderStatus } from "@/types/enum";
 import type { StoreOrder } from "@prisma/client";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 import { type NextRequest, NextResponse } from "next/server";
@@ -10,11 +9,11 @@ export const dynamic = "force-dynamic"; // defaults to force-static
 // returns orders in a store
 export async function GET(
 	req: NextRequest,
-	{ params }: { params: { storeId: string } },
-	_context: { params: { Date: string } },
+	{ params }: { params: Promise<{ storeId: string }> },
 ) {
 	try {
-		CheckStoreAdminApiAccess(params.storeId);
+		const { storeId } = await params;
+		CheckStoreAdminApiAccess(storeId);
 
 		const { searchParams } = new URL(req.url);
 		const dateVal = searchParams.get("date") || undefined;
@@ -37,7 +36,7 @@ export async function GET(
 
 		const result = (await sqlClient.storeOrder.findMany({
 			where: {
-				storeId: params.storeId,
+				storeId: storeId,
 				updatedAt: {
 					gte: new Date(date),
 					lte: new Date(today),

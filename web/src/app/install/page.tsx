@@ -96,8 +96,8 @@ async function createStripeProducts(setting: PlatformSettings | null) {
 		product: product.id,
 	});
 
-	logger.info("stripe product created", product);
-	logger.info("stripe price created", price);
+	logger.info({ product }, "stripe product created");
+	logger.info({ price }, "stripe price created");
 
 	if (product && product !== null && product.id !== null) {
 		if (setting === null) {
@@ -109,7 +109,7 @@ async function createStripeProducts(setting: PlatformSettings | null) {
 					//stripeProductName: obj.name,
 				},
 			});
-			logger.info("platform setting created", product, price);
+			logger.info({ product, price }, "platform setting created");
 		} else {
 			await sqlClient.platformSettings.update({
 				where: {
@@ -120,7 +120,7 @@ async function createStripeProducts(setting: PlatformSettings | null) {
 					stripePriceId: price.id as string,
 				},
 			});
-			logger.info("platform setting updated", setting);
+			logger.info({ setting }, "platform setting updated");
 		}
 	}
 

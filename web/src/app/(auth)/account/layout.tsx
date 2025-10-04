@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/global-navbar";
 
 import { use } from "react";
-type Params = Promise<{ storeId: string }>;
+type Params = Promise<{}>;
 
 export default async function AuthLayout({
 	children,

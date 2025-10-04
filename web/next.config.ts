@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
 
-//const { withSentryConfig } = require("@sentry/nextjs");
 
 const nextConfig: NextConfig = {
 	allowedDevOrigins: ["192.168.2.5", "*.192.168.2.5"],
@@ -81,29 +80,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-/*
-// Make sure adding Sentry options is the last code to run before exporting
-module.exports = withSentryConfig(nextConfig, {
-	reactComponentAnnotation: {
-		enabled: true,
-	},
-	org: process.env.SENTRY_ORGANIZATION,
-	project: process.env.SENTRY_PROJECT,
-	// Only print logs for uploading source maps in CI
-	// Set to `true` to suppress logs
-	silent: !process.env.CI,
-	// Automatically tree-shake Sentry logger statements to reduce bundle size
-	disableLogger: true,
-
-	// Pass the auth token
-	authToken: process.env.SENTRY_AUTH_TOKEN,
-	// Upload a larger set of source maps for prettier stack traces (increases build time)
-	widenClientFileUpload: true,
-	// Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-	// This can increase your server load as well as your hosting bill.
-	// Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-side errors will fail.
-	tunnelRoute: "/monitoring",
-	enabled: process.env.NODE_ENV === 'production',
-	automaticVercelMonitors: true,
-});
-*/
