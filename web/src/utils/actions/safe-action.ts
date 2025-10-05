@@ -16,15 +16,17 @@ const baseClient = createSafeActionClient({
 	handleServerError(error, { metadata, ctx, bindArgsClientInputs }) {
 		const context = ctx as any;
 		logger.error(
-			{
-				metadata,
-				userId: context?.userId,
-				userEmail: context?.userEmail,
-				emailAccountId: context?.emailAccountId,
-				bindArgsClientInputs,
-				error: error.message,
-			},
 			"Server action error",
+			{
+				metadata: {
+					metadata,
+					userId: context?.userId,
+					userEmail: context?.userEmail,
+					emailAccountId: context?.emailAccountId,
+					bindArgsClientInputs,
+					error: error.message,
+				},
+			},
 		);
 		// Need a better way to handle this within logger itself
 		if (process.env.NODE_ENV !== "production") console.log("Error:", error);
@@ -32,7 +34,7 @@ const baseClient = createSafeActionClient({
 		return "An unknown error occurred.";
 	},
 }).use(async ({ next, metadata }) => {
-	logger.info({ name: metadata?.name }, "Calling action");
+	logger.info("Calling action", { metadata: { name: metadata?.name } });
 	return next();
 });
 // .schema(z.object({}), {
