@@ -14,7 +14,7 @@ export default async function StoreSubscribePage(props: {
 }) {
 	const params = await props.params;
 	/*
-  await sqlClient.subscription.deleteMany({
+  await sqlClient.storeSubscription.deleteMany({
   });
   await sqlClient.subscriptionPayment.deleteMany({
   });
@@ -29,7 +29,7 @@ export default async function StoreSubscribePage(props: {
   */
 
 	const store = (await checkStoreAccess(params.storeId)) as Store;
-	const subscription = await sqlClient.subscription.findUnique({
+	const subscription = await sqlClient.storeSubscription.findUnique({
 		where: {
 			storeId: store.id,
 		},

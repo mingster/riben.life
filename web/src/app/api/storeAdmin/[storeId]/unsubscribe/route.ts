@@ -68,7 +68,7 @@ export async function POST(
     }
     */
 
-		const subscription = await sqlClient.subscription.findUnique({
+		const subscription = await sqlClient.storeSubscription.findUnique({
 			where: {
 				storeId: params.storeId,
 			},
@@ -95,7 +95,7 @@ export async function POST(
 					}
 
 					// update subscription in database
-					await sqlClient.subscription.update({
+					await sqlClient.storeSubscription.update({
 						where: {
 							storeId: params.storeId,
 						},

@@ -12,7 +12,7 @@ import type {
 	Store,
 	StoreAnnouncement,
 	StoreOrder,
-	Subscription,
+	StoreSubscription,
 	User,
 } from "@prisma/client";
 import { StoreEditBasicTab } from "./store-edit-basic-tab";
@@ -27,7 +27,7 @@ interface editProps {
 		StoreOrders: StoreOrder[] | [];
 	};
 	action: string;
-	subscription: Subscription | null;
+	subscription: StoreSubscription | null;
 }
 export const StoreEditTabs = ({
 	initialData,

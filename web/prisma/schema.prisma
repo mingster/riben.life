@@ -282,7 +282,7 @@ model Shipment {
   @@index([shippingMethodId])
 }
 
-model Subscription {
+model StoreSubscription {
   id              String   @id @default(cuid())
   storeId         String   @unique
   userId          String
@@ -889,8 +889,8 @@ view orderitemview {
   id           String   @unique
   orderId      String
   productId    String
-  quantity     Int
   unitDiscount Decimal?
+  quantity     Int
   unitPrice    Decimal
   name         String
   url          String?

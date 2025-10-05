@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import logger from "@/utils/logger";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import type { Subscription } from "@prisma/client";
+import type { StoreSubscription } from "@prisma/client";
 import { StoreEditTabs } from "./tabs";
 
 const StoreEditPage = async (props: {
@@ -30,11 +30,11 @@ const StoreEditPage = async (props: {
 
 	if (store === null) return;
 
-	const subscription = (await sqlClient.subscription.findUnique({
+	const subscription = (await sqlClient.storeSubscription.findUnique({
 		where: {
 			storeId: store.id,
 		},
-	})) as Subscription;
+	})) as StoreSubscription;
 
 	console.log("subscription", subscription);
 

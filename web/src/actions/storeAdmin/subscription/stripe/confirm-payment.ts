@@ -60,7 +60,7 @@ const confirmPayment = async (
 
 		// credit the payment
 		//
-		const subscription = await sqlClient.subscription.findUnique({
+		const subscription = await sqlClient.storeSubscription.findUnique({
 			where: {
 				storeId: store.id,
 			},
@@ -100,7 +100,7 @@ const confirmPayment = async (
 
 		const note = `extend subscription from ${formatDateTime(current_exp)} to ${formatDateTime(new_exp)}`;
 
-		await sqlClient.subscription.update({
+		await sqlClient.storeSubscription.update({
 			where: {
 				storeId: store.id,
 			},

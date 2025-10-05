@@ -18,7 +18,7 @@ export default async function StoreSubscriptionHistoryPage(props: {
 }) {
 	const params = await props.params;
 	const store = (await checkStoreAccess(params.storeId)) as Store;
-	const subscription = await sqlClient.subscription.findUnique({
+	const subscription = await sqlClient.storeSubscription.findUnique({
 		where: {
 			storeId: store.id,
 		},
