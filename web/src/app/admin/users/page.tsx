@@ -8,8 +8,7 @@ import { Suspense } from "react";
 //import type { UserColumn } from "./components/columns";
 import { UsersClient } from "./components/user-client";
 
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { checkAdminAccess } from "../admin-utils";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -22,12 +21,8 @@ export default async function UsersAdminPage(props: {
 }) {
 	const _params = await props.params;
 
-	//console.log('storeid: ' + params.storeId);
-	const session = (await auth()) as Session;
-	const _userId = session?.user.id;
-	if (!session) {
-		redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
-	}
+	const isAdmin = await checkAdminAccess();
+	if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
 
 	const users = await sqlClient.user.findMany({
 		include: {
