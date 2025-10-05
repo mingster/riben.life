@@ -1,10 +1,10 @@
 import { useState, useCallback } from "react";
 import { clientLogger } from "@/lib/client-logger";
-import type { NopOrder, NopProductVariant, User } from "@/types";
+import type { StoreOrder, Product, User } from "@/types";
 import type Stripe from "stripe";
 
 interface OrderData {
-	productToPurchase: NopProductVariant;
+	productToPurchase: Product;
 	user: User;
 	coupon?: Stripe.Coupon | null;
 }
@@ -14,7 +14,7 @@ export const useSubscription = () => {
 	const [error, setError] = useState<string | null>(null);
 
 	const placeOrder = useCallback(
-		async (orderData: OrderData): Promise<NopOrder | null> => {
+		async (orderData: OrderData): Promise<StoreOrder | null> => {
 			setLoading(true);
 			setError(null);
 
@@ -33,7 +33,7 @@ export const useSubscription = () => {
 				}
 
 				const data = await response.json();
-				return data as NopOrder;
+				return data as StoreOrder;
 			} catch (error) {
 				const message =
 					error instanceof Error ? error.message : "Failed to place order";

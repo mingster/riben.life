@@ -1,0 +1,81 @@
+---
+description: Package manager guidelines for the project
+globs: package.json,bun.lock,package-lock.json,yarn.lock
+alwaysApply: true
+---
+
+# Package Manager Rule
+
+This project uses **Bun** as the primary package manager.
+
+## Key Guidelines
+
+### 1. Use Bun Commands
+
+- **Install dependencies**: `bun install`
+- **Add new packages**: `bun add <package-name>`
+- **Add dev dependencies**: `bun add -d <package-name>`
+- **Remove packages**: `bun remove <package-name>`
+- **Run scripts**: `bun run <script-name>`
+
+### 2. Lock File Management
+
+- **Primary lock file**: `bun.lock` (keep this file)
+- **Remove other lock files**: Delete `package-lock.json`, `yarn.lock`, or `pnpm-lock.yaml` if they exist
+- **Commit lock file**: Always commit `bun.lock` to version control
+
+### 3. Script Execution
+
+- Use `bun run` prefix for npm scripts in package.json
+- Example: `bun run dev`, `bun run build`, `bun run lint`
+
+### 4. Package Installation
+
+- When adding new dependencies, use `bun add` instead of `npm install` or `yarn add`
+- For development dependencies: `bun add -d <package-name>`
+- For specific versions: `bun add <package-name>@<version>`
+
+### 5. CI/CD Considerations
+
+- Ensure CI/CD pipelines use Bun instead of npm/yarn
+- Update Dockerfiles to install Bun: `curl -fsSL https://bun.sh/install | bash`
+
+### 6. Performance Benefits
+
+- Bun is significantly faster than npm/yarn for package installation
+- Better TypeScript support out of the box
+- Built-in bundler and test runner capabilities
+
+## Examples
+
+```bash
+# Install all dependencies
+bun install
+
+# Add a new dependency
+bun add react-query
+
+# Add a dev dependency
+bun add -d @types/node
+
+# Remove a package
+bun remove lodash
+
+# Run development server
+bun run dev
+
+# Run build
+bun run build
+```
+
+## Migration Notes
+
+- If migrating from npm/yarn, delete existing lock files and run `bun install`
+- Bun is compatible with package.json files created for npm/yarn
+- Some npm-specific features may not be available, but core functionality works the same
+
+## Troubleshooting
+
+- If you encounter issues, try clearing Bun's cache: `bun pm cache rm`
+- For version conflicts, use `bun install --force` to reinstall all packages
+- Check Bun version: `bun --version`
