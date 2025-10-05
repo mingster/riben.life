@@ -4,7 +4,7 @@ import type { Store } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { useI18n } from "@/providers/i18n-provider";
 import { format } from "date-fns-tz";
 

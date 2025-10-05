@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { cookieName, languages } from "@/app/i18n/settings";
+import { NotMountSkeleton } from "@/components/not-mount-skeleton";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -29,7 +30,7 @@ export const LanguageToggler = () => {
 		setActiveLng(lng);
 		//setCookie(cookieName, lng, { path: "/" });
 		cookies.set(cookieName, lng, { path: "/" });
-		console.log(`activeLng set to: ${lng}`);
+		//console.log(`activeLng set to: ${lng}`);
 	};
 
 	// useEffect only runs on the client, so now we can safely show the UI
@@ -38,44 +39,37 @@ export const LanguageToggler = () => {
 	}, []);
 
 	if (!mounted) {
-		return null;
+		return <NotMountSkeleton />;
 	}
 
 	return (
-		<>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button
-						className="font-semibold uppercase rounded-full border-1 text-sky-500 dark:text-secondary size-8"
-						variant="ghost"
-					>
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button className="ml-1 rounded-full border-1 size-8" variant="ghost">
+					<div className="font-semibold uppercase text-gray-400  hover:text-orange-800 dark:hover:text-orange-300">
 						{activeLng}
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent className="w-56">
-					<DropdownMenuLabel>{i18n.t("change_language")}</DropdownMenuLabel>
-					<DropdownMenuSeparator />
-					<DropdownMenuRadioGroup
-						value={activeLng}
-						onValueChange={(val) => changeLanguage(val)}
-					>
-						{languages
-							//.filter((l) => activeLng !== l)
-							.map((l) => {
-								return (
-									<DropdownMenuRadioItem
-										className="uppercase"
-										key={l}
-										value={l}
-									>
-										{l}
-									</DropdownMenuRadioItem>
-								);
-							})}
-					</DropdownMenuRadioGroup>
-				</DropdownMenuContent>
-			</DropdownMenu>
-		</>
+					</div>
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent className="w-56">
+				<DropdownMenuLabel>{i18n.t("change_language")}</DropdownMenuLabel>
+				<DropdownMenuSeparator />
+				<DropdownMenuRadioGroup
+					value={activeLng}
+					onValueChange={(val) => changeLanguage(val)}
+				>
+					{languages
+						//.filter((l) => activeLng !== l)
+						.map((l) => {
+							return (
+								<DropdownMenuRadioItem className="uppercase" key={l} value={l}>
+									{l}
+								</DropdownMenuRadioItem>
+							);
+						})}
+				</DropdownMenuRadioGroup>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 };
 

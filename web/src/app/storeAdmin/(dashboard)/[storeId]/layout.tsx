@@ -1,4 +1,4 @@
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";

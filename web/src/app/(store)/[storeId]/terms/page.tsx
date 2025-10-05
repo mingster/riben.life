@@ -1,5 +1,5 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreSettings } from "@prisma/client";
 import { redirect } from "next/navigation";

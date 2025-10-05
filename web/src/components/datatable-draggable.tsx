@@ -1,5 +1,47 @@
 "use client";
 
+import {
+	closestCenter,
+	DndContext,
+	type DragEndEvent,
+	KeyboardSensor,
+	MouseSensor,
+	TouchSensor,
+	type UniqueIdentifier,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+	arrayMove,
+	SortableContext,
+	useSortable,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+	IconChevronDown,
+	IconChevronLeft,
+	IconChevronRight,
+	IconChevronsLeft,
+	IconChevronsRight,
+	IconGripVertical,
+	IconLayoutColumns,
+} from "@tabler/icons-react";
+import {
+	type ColumnDef,
+	type ColumnFiltersState,
+	flexRender,
+	getCoreRowModel,
+	getFilteredRowModel,
+	getPaginationRowModel,
+	getSortedRowModel,
+	type Row,
+	type SortingState,
+	useReactTable,
+	type VisibilityState,
+} from "@tanstack/react-table";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -23,48 +65,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import {
-	DndContext,
-	type DragEndEvent,
-	KeyboardSensor,
-	MouseSensor,
-	TouchSensor,
-	type UniqueIdentifier,
-	closestCenter,
-	useSensor,
-	useSensors,
-} from "@dnd-kit/core";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import {
-	SortableContext,
-	arrayMove,
-	useSortable,
-	verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
-	IconChevronDown,
-	IconChevronLeft,
-	IconChevronRight,
-	IconChevronsLeft,
-	IconChevronsRight,
-	IconGripVertical,
-	IconLayoutColumns,
-} from "@tabler/icons-react";
-import {
-	type ColumnDef,
-	type ColumnFiltersState,
-	type Row,
-	type SortingState,
-	type VisibilityState,
-	flexRender,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	useReactTable,
-} from "@tanstack/react-table";
-import * as React from "react";
 
 // Drag handle for rows
 export function DragHandle({ id }: { id: UniqueIdentifier }) {
@@ -86,7 +86,9 @@ export function DragHandle({ id }: { id: UniqueIdentifier }) {
 // Draggable row wrapper
 export function DraggableRow<TData extends { id: UniqueIdentifier }>({
 	row,
-}: { row: Row<TData> }) {
+}: {
+	row: Row<TData>;
+}) {
 	const { transform, transition, setNodeRef, isDragging } = useSortable({
 		id: row.original.id,
 	});
@@ -117,6 +119,7 @@ export interface DataTableDraggableProps<TData> {
 	rowSelectionEnabled?: boolean;
 	initialPageSize?: number;
 	className?: string;
+	customizeColumns?: boolean;
 }
 
 export function DataTableDraggable<TData extends { id: UniqueIdentifier }>({
@@ -126,6 +129,7 @@ export function DataTableDraggable<TData extends { id: UniqueIdentifier }>({
 	rowSelectionEnabled = true,
 	initialPageSize = 10,
 	className = "",
+	customizeColumns = true,
 }: DataTableDraggableProps<TData>) {
 	const [data, setData] = React.useState(() => initialData);
 	const [rowSelection, setRowSelection] = React.useState({});
@@ -187,37 +191,42 @@ export function DataTableDraggable<TData extends { id: UniqueIdentifier }>({
 
 	return (
 		<div className={className}>
-			<div className="flex items-center justify-between px-4 lg:px-6">
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="outline" size="sm">
-							<IconLayoutColumns />
-							<span className="hidden lg:inline">Customize Columns</span>
-							<span className="lg:hidden">Columns</span>
-							<IconChevronDown />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-56">
-						{table
-							.getAllColumns()
-							.filter(
-								(column) =>
-									typeof column.accessorFn !== "undefined" &&
-									column.getCanHide(),
-							)
-							.map((column) => (
-								<DropdownMenuCheckboxItem
-									key={column.id}
-									className="capitalize"
-									checked={column.getIsVisible()}
-									onCheckedChange={(value) => column.toggleVisibility(!!value)}
-								>
-									{column.id}
-								</DropdownMenuCheckboxItem>
-							))}
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</div>
+			{customizeColumns && (
+				<div className="flex items-center justify-end px-0 lg:px-1">
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="outline" size="sm">
+								<IconLayoutColumns />
+								<span className="hidden lg:inline">Customize Columns</span>
+								<span className="lg:hidden">Columns</span>
+								<IconChevronDown />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end" className="w-56">
+							{table
+								.getAllColumns()
+								.filter(
+									(column) =>
+										typeof column.accessorFn !== "undefined" &&
+										column.getCanHide(),
+								)
+								.map((column) => (
+									<DropdownMenuCheckboxItem
+										key={column.id}
+										className="capitalize"
+										checked={column.getIsVisible()}
+										onCheckedChange={(value) =>
+											column.toggleVisibility(!!value)
+										}
+									>
+										{column.id}
+									</DropdownMenuCheckboxItem>
+								))}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
+			)}
+
 			<div className="overflow-hidden rounded-lg border mt-4">
 				<DndContext
 					collisionDetection={closestCenter}
@@ -269,10 +278,10 @@ export function DataTableDraggable<TData extends { id: UniqueIdentifier }>({
 			</div>
 
 			{/*pagination */}
-			<div className="flex items-center justify-between px-4 mt-4">
+			<div className="flex items-center justify-end space-x-2 py-4">
 				{rowSelectionEnabled && (
 					<div className="text-muted-foreground hidden flex-1 text-xs lg:flex">
-						{table.getFilteredSelectedRowModel().rows.length} of{" "}
+						{table.getFilteredSelectedRowModel().rows.length} of
 						{table.getFilteredRowModel().rows.length} row(s) selected.
 					</div>
 				)}
@@ -287,12 +296,16 @@ export function DataTableDraggable<TData extends { id: UniqueIdentifier }>({
 								table.setPageSize(Number(value));
 							}}
 						>
-							<SelectTrigger size="sm" className="w-20" id="rows-per-page">
+							<SelectTrigger
+								size="sm"
+								className="w-20 text-xs"
+								id="rows-per-page"
+							>
 								<SelectValue
 									placeholder={table.getState().pagination.pageSize}
 								/>
 							</SelectTrigger>
-							<SelectContent side="top" className=" text-xs">
+							<SelectContent side="top" className="text-xs">
 								{[10, 20, 30, 40, 50].map((pageSize) => (
 									<SelectItem key={pageSize} value={`${pageSize}`}>
 										{pageSize}
@@ -302,7 +315,7 @@ export function DataTableDraggable<TData extends { id: UniqueIdentifier }>({
 						</Select>
 					</div>
 					<div className="flex w-fit items-center justify-center">
-						Page {table.getState().pagination.pageIndex + 1} of{" "}
+						Page {table.getState().pagination.pageIndex + 1} of
 						{table.getPageCount()}
 					</div>
 					<div className="ml-auto flex items-center gap-2 lg:ml-0">

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";

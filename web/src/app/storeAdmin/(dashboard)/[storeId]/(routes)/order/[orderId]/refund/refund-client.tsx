@@ -19,7 +19,7 @@ import { z } from "zod";
 
 import { Input } from "@/components/ui/input";
 
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
 import { CheckIcon, Minus, Undo2Icon } from "lucide-react";
@@ -152,7 +152,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 	//const params = useParams();
 	//console.log('order', JSON.stringify(order));
 
-	logger.info({ errors: form.formState.errors }, "form errors");
+	logger.info("form errors", { metadata: { errors: form.formState.errors } });
 
 	const handleDecreaseQuality = (index: number) => {
 		if (!updatedOrder) return;

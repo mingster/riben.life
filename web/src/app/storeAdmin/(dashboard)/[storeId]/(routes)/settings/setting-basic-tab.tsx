@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { CountryCombobox } from "@/components/country-combobox";
 import { CurrencyCombobox } from "@/components/currency-combobox";
 import { LocaleSelectItems } from "@/components/locale-select-items";
-import { ApiListing } from "@/components/ui/api-listing";
+import { ApiListing } from "@/components/api-listing";
 
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/Toaster";

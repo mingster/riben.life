@@ -1,6 +1,6 @@
 "use client";
 
-//import { Currency } from '@prisma/client';
+//import { Currency } from '@/prisma-pstv/pstv-database-client-types';
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import {

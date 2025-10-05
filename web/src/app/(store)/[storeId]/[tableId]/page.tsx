@@ -1,5 +1,5 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import BusinessHours from "@/lib/businessHours";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/utils/utils";

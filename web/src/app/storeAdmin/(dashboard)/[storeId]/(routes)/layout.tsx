@@ -1,6 +1,6 @@
 import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Session } from "next-auth";
 import { redirect } from "next/navigation";

@@ -1,4 +1,4 @@
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { SubscriptionStatus } from "@/types/enum";
 import Link from "next/link";

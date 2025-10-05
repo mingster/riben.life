@@ -1,10 +1,10 @@
 "use client";
 
-import useColorMode from "@/hooks/useColorMode";
 import { IconSun } from "@tabler/icons-react";
-
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import useColorMode from "@/hooks/useColorMode";
+import { NotMountSkeleton } from "@/components/not-mount-skeleton";
 
 const ThemeToggler = () => {
 	const [mounted, setMounted] = useState(false);
@@ -25,13 +25,13 @@ const ThemeToggler = () => {
 	}, []);
 
 	if (!mounted) {
-		return null;
+		return <NotMountSkeleton />;
 	}
 
 	return (
 		<label
 			className={`relative m-0 block h-7.5 w-14 rounded-full ${
-				colorMode === "dark" ? "bg-secondary" : "bg-stroke/20"
+				colorMode === "dark" ? "bg-secondary" : "bg-secondary/50"
 			}`}
 		>
 			<input

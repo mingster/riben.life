@@ -1,8 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, Server } from "lucide-react";
-
+import { IconCopy, IconServer } from "@tabler/icons-react";
 interface ApiListingProps {
 	title: string;
 	description: string;
@@ -14,7 +13,7 @@ const textMap: Record<ApiListingProps["variant"], string> = {
 	admin: "Admin",
 };
 
-const _variantMap: Record<ApiListingProps["variant"], string> = {
+const variantMap: Record<ApiListingProps["variant"], string> = {
 	public: "secondary",
 	admin: "destructive",
 };
@@ -30,10 +29,10 @@ export const ApiListing: React.FC<ApiListingProps> = ({
 	};
 
 	return (
-		<div className="pt-10">
+		<div className="pt-1">
 			<Alert className="font-mono text-sm">
-				<Server className="size-4" />
-				<AlertTitle className="flex items-center">
+				<IconServer className="size-4" />
+				<AlertTitle className="flex gap-1 items-center">
 					{title}
 					<Badge>{textMap[variant]}</Badge>
 				</AlertTitle>
@@ -46,7 +45,7 @@ export const ApiListing: React.FC<ApiListingProps> = ({
 						size="sm"
 						onClick={() => onCopy(description)}
 					>
-						<Copy className="size-4" />
+						<IconCopy className="size-4" />
 					</Button>
 				</AlertDescription>
 			</Alert>

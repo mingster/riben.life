@@ -32,13 +32,17 @@ interface DataTableProps<TData, TValue> {
 	data: TData[];
 	noSearch?: boolean;
 	searchKey?: string;
+	noPagination?: boolean; //default is false
+	defaultPageSize?: number; //default is 30
 }
 
 export function DataTable<TData, TValue>({
 	columns,
 	data,
-	noSearch,
+	noSearch = true,
 	searchKey,
+	noPagination = false,
+	defaultPageSize = 30,
 }: DataTableProps<TData, TValue>) {
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [sorting, setSorting] = useState<SortingState>([]);
@@ -47,7 +51,7 @@ export function DataTable<TData, TValue>({
 
 	const [pagination, setPagination] = useState({
 		pageIndex: 0, //initial page index
-		pageSize: 20, //default page size
+		pageSize: noPagination ? data.length : defaultPageSize, //default page size
 	});
 
 	const table = useReactTable({
@@ -68,7 +72,7 @@ export function DataTable<TData, TValue>({
 	});
 
 	// make optional params not null and give it a default value
-	noSearch = noSearch || false;
+	//noSearch = noSearch || false;
 	searchKey = searchKey || "";
 
 	const s = `${t("search")} ${searchKey}`;

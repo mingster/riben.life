@@ -2,7 +2,7 @@ import { IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { SubscriptionStatus } from "@/types/enum";
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import { getUtcNow, transformDecimalsToNumbers } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";

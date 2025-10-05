@@ -1,4 +1,7 @@
+"use client";
+
 import * as React from "react";
+import { clientLogger } from "@/lib/client-logger";
 
 export default function useLocalStorage(
 	key: string,
@@ -26,7 +29,14 @@ export default function useLocalStorage(
 
 			window.localStorage.setItem(key, valueToStore);
 		} catch (error) {
-			console.log(error);
+			clientLogger.error(error as Error, {
+				message: "Failed to set localStorage value",
+				metadata: { key },
+				tags: ["setValue"],
+				service: "useLocalStorage",
+				environment: process.env.NODE_ENV,
+				version: process.env.npm_package_version,
+			});
 		}
 	};
 

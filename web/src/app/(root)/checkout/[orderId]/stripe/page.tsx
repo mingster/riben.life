@@ -1,7 +1,7 @@
 import getOrderById from "@/actions/get-order-by_id";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import type { StoreOrder } from "@/types";
 import { Suspense } from "react";
 import PaymentStripe from "./components/payment-stripe";
