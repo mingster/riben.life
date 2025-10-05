@@ -1,10 +1,10 @@
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
 import { stripe } from "@/lib/stripe/config";
 import type { Store } from "@/types";
 import { SubscriptionStatus } from "@/types/enum";
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { Suspense } from "react";
 import { SubscriptionHistoryClient } from "./client";

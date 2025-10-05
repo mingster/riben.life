@@ -37,7 +37,7 @@ import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import { useParams } from "next/navigation";
 import { z } from "zod";
 

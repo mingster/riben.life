@@ -1,6 +1,6 @@
 import MarkAsPaid from "@/actions/storeAdmin/mark-order-as-paid";
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import { NextResponse } from "next/server";
 
 ///!SECTION mark order as paid
@@ -20,7 +20,7 @@ export async function POST(
 		const checkoutAttributes = "cash";
 
 		const updated_order = await MarkAsPaid(params.orderId, checkoutAttributes);
-		logger.info({ order: updated_order }, "order marked as paid");
+		logger.info({ order: updated_order }, { message: "order marked as paid" });
 
 		return NextResponse.json("success", { status: 200 });
 	} catch (error) {

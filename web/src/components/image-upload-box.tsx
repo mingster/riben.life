@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/utils/utils";
 import { BoxSelect } from "lucide-react";
 import Image from "next/image";
@@ -101,9 +103,7 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
 						onChange={(e) => {
 							//console.log(e.target.files);
 							//setImage(e.target.files && e.target.files[0]);
-							if (e.target.files) {
-								setImage(e.target.files[0]);
-							}
+							setImage(e.target.files?.[0] || null);
 						}}
 						className="hidden"
 						id="post_image"
@@ -131,10 +131,7 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
 							accept="image/*"
 							onChange={(e) => {
 								console.log(e.target.files);
-								//setImage(e.target.files && e.target.files[0]);
-								if (e.target.files) {
-									setImage(e.target.files[0]);
-								}
+								setImage(e.target.files?.[0] || null);
 							}}
 							className="hidden"
 							id="post_image"

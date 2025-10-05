@@ -1,7 +1,7 @@
 import getStoreWithCategories from "@/actions/get-store";
 import getUser from "@/actions/get-user";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import type { Store } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { redirect } from "next/navigation";

@@ -99,6 +99,41 @@ model Authenticator {
   @@id([userId, credentialID])
 }
 
+
+/// Next.js application logs for log drain functionality
+model system_logs {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  level       String   @db.VarChar(10) // error, warn, info, debug
+  message     String   
+  service     String   @db.VarChar(100) // service name (e.g., "web", "api")
+  environment String   @db.VarChar(20) // production, development, staging
+  version     String?  @db.VarChar(50) // app version
+  requestId   String?  @db.VarChar(100) // request correlation ID
+  userId      String?  @db.VarChar(100) // user ID if available
+  sessionId   String?  @db.VarChar(100) // session ID if available
+  ip          String?  @db.VarChar(45) // IPv4 or IPv6
+  userAgent   String?  @db.VarChar(500)
+  url         String?  @db.VarChar(1000) // request URL
+  method      String?  @db.VarChar(10) // HTTP method
+  statusCode  Int? // HTTP status code
+  duration    Int? // request duration in ms
+  errorCode   String?  @db.VarChar(100) // error code if applicable
+  stackTrace  String?  
+  metadata    String?
+  tags        String?
+  source      String?  @db.VarChar(100) // source file/component
+  line        Int? // line number
+  column      Int? // column number
+  createdAt   DateTime @default(now())
+  @@index([timestamp])
+  @@index([level])
+  @@index([service])
+  @@index([environment])
+  @@index([requestId])
+  @@index([userId])
+}
+
 model PlatformSettings {
   id              String  @id @default(cuid())
   stripeProductId String?

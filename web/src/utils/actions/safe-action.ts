@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import { createSafeActionClient } from "next-safe-action";
 import { z } from "zod";
 

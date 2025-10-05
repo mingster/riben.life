@@ -1,6 +1,6 @@
-import type { Country } from "@prisma/client";
-import { CheckIcon } from "@radix-ui/react-icons";
-import * as React from "react";
+"use client";
+
+import type { Country } from "@/../.prisma/client";
 import useSWR from "swr";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/popover";
 import { useI18n } from "@/providers/i18n-provider";
 import { cn } from "@/utils/utils";
+import { IconCheck } from "@tabler/icons-react";
 import { useState } from "react";
 
 type ComboboxProps = {
@@ -104,7 +105,7 @@ export const CountryCombobox = ({
 											}}
 										>
 											{obj.name} ({obj.alpha3})
-											<CheckIcon
+											<IconCheck
 												className={cn(
 													"ml-auto h-4 w-4",
 													selected === obj.alpha3 ? "opacity-100" : "opacity-0",

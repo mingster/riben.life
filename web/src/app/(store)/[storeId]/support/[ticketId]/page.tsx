@@ -2,7 +2,7 @@
 
 import getOrderById from "@/actions/get-order-by_id";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder } from "@/types";
 import { Suspense } from "react";

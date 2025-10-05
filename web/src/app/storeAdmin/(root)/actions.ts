@@ -7,7 +7,7 @@ import { sqlClient } from "@/lib/prismadb";
 import fs from "node:fs";
 import { GetSession } from "@/lib/auth/utils";
 import { StoreLevel } from "@/types/enum";
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import type { Session } from "next-auth";
 import type { z } from "zod";
 import type { formSchema } from "./store-modal";

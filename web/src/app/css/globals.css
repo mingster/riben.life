@@ -1,69 +1,14 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap");
+
 @import "tailwindcss";
 @import "tw-animate-css";
+/*@source "../node_modules/@daveyplate/better-auth-ui";*/
+
+@custom-variant dark (&:is(.dark *));
 
 /* https://tweakcn.com */
 
 @custom-variant dark (&:is(.dark *));
-
-.active-scroll-spy {
-	background-color: #9c600b;
-	font-weight: bolder;
-	color: #fff;
-	padding: 10px;
-	border-radius: 15px;
-	transition: all 0.5s;
-}
-
-.ss-item {
-	margin: 10px;
-}
-
-a,
-button,
-input {
-	@apply cursor-pointer;
-}
-a {
-	@apply decoration-1 decoration-primary;
-}
-
-a:hover {
-	@apply font-bold backdrop-contrast-200 backdrop-blur-lg;
-}
-
-.beams {
-	background-image: url("../../../public/img/beams/hero@75.jpg");
-	background-size: 150rem;
-	background-blend-mode: multiply;
-}
-
-[data-theme="dark"] .beams {
-	background-image: url("../../../public/img/beams/hero-dark@90.jpg");
-	background-size: 86.125rem;
-	background-blend-mode: overlay;
-}
-
-.beams-0 {
-	background-image: url("../../../public/img/beams/0.jpg");
-	background-size: 122.375rem 100%;
-	height: 32.9375rem;
-	background-blend-mode: multiply;
-	opacity: 0.3;
-}
-
-.beams-7 {
-	background-image: url("../../../public/img/beams/7.jpg");
-	background-size: 141.25rem 100%;
-	height: 33.5rem;
-	background-blend-mode: multiply;
-	opacity: 0.3;
-}
-
-.hash-span {
-	margin-top: -100px;
-	padding-bottom: 100px;
-	display: block;
-}
 
 @theme inline {
 	--color-background: var(--background);
@@ -134,6 +79,10 @@ a:hover {
 	--color-gold: var(--gold);
 	--color-warning: var(--warning);
 	--color-warning-foreground: var(--warning-foreground);
+
+	--font-display: var(--font-sans);
+	--font-display--font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+	--font-display--font-variation-settings: "opsz" 32;
 }
 
 :root {
@@ -189,19 +138,11 @@ a:hover {
 	--gold: oklch(0.47 0.1121 50.85);
 	--warning: oklch(0.41 0.11 46);
 	--warning-foreground: oklch(0.99 0.02 95);
-	--font-sans:
-		ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-	--font-serif: Roboto, sans-serif;
-	--font-mono: Geist Mono, monospace;
 
-	/*
-	--font-sans: Poppins, sans-serif;
-	--font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-	--font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-	*/
-
-	--font-display--font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-	--font-display--font-variation-settings: "opsz" 32;
+	--font-sans: "Noto Sans TC", -apple-system, "Microsoft YaHei", system-ui,
+		sans-serif;
+	--font-serif: Montserrat, sans-serif;
+	--font-mono: Roboto Mono, monospace;
 }
 
 .dark {
@@ -258,22 +199,10 @@ a:hover {
 	--warning: oklch(0.84 0.16 84);
 	--warning-foreground: oklch(0.28 0.07 46);
 
-	--font-sans:
-		var(--font-popins-sans), var(--font-noto-sans), "Microsoft YaHei", ui-sans-serif, -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-	--font-serif: Roboto, sans-serif;
-	--font-mono: Geist Mono, monospace;
-	--font-display--font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-	--font-display--font-variation-settings: "opsz" 32;
-
-	/*
-	--font-sans: var(--font-popins-sans), var(--font-noto-sans), ui-sans-serif,
-		system-ui, sans-serif,, -apple-system, "Microsoft YaHei", "Gothic Pro",
-		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-	--font-serif: var(--font-popins-sans), var(--font-noto-sans), ui-serif,
-		"Microsoft YaHei", "Gothic Pro", Georgia, Cambria, "Times New Roman";
-	--font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
-		Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-	*/
+	--font-sans: "Noto Sans TC", -apple-system, "Microsoft YaHei", system-ui,
+		sans-serif;
+	--font-serif: Montserrat, sans-serif;
+	--font-mono: Roboto Mono, monospace;
 }
 
 @layer base {
@@ -286,4 +215,64 @@ a:hover {
 		font-family: var(--font-sans);
 		letter-spacing: var(--tracking-normal);
 	}
+}
+
+.active-scroll-spy {
+	background-color: #9c600b;
+	font-weight: bolder;
+	color: #fff;
+	padding: 10px;
+	border-radius: 15px;
+	transition: all 0.5s;
+}
+
+.ss-item {
+	margin: 10px;
+}
+
+a,
+button,
+input {
+	@apply cursor-pointer;
+}
+a {
+	@apply decoration-1 decoration-primary;
+}
+
+a:hover {
+	@apply font-bold backdrop-contrast-200 backdrop-blur-lg;
+}
+
+.beams {
+	background-image: url("../../../public/img/beams/hero@75.jpg");
+	background-size: 150rem;
+	background-blend-mode: multiply;
+}
+
+[data-theme="dark"] .beams {
+	background-image: url("../../../public/img/beams/hero-dark@90.jpg");
+	background-size: 86.125rem;
+	background-blend-mode: overlay;
+}
+
+.beams-0 {
+	background-image: url("../../../public/img/beams/0.jpg");
+	background-size: 122.375rem 100%;
+	height: 32.9375rem;
+	background-blend-mode: multiply;
+	opacity: 0.3;
+}
+
+.beams-7 {
+	background-image: url("../../../public/img/beams/7.jpg");
+	background-size: 141.25rem 100%;
+	height: 33.5rem;
+	background-blend-mode: multiply;
+	opacity: 0.3;
+}
+
+.hash-span {
+	margin-top: -100px;
+	padding-bottom: 100px;
+	display: block;
 }

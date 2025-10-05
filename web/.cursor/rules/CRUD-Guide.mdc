@@ -1,14 +1,7 @@
 ---
-description: 
-globs: 
-alwaysApply: true
----
----
 name: CRUD Guide (Modern Client State Pattern)
 description: Guide to managing data (CRUD operations - Create, Read, Update, Delete)
 globs: ["**/*.{js,ts,jsx,tsx,mdx,css}"]
-tags:
-  - CRUD
 alwaysApply: true
 ---
 
@@ -17,6 +10,7 @@ alwaysApply: true
 This application follows a modern pattern for managing data (CRUD operations - Create, Read, Update, Delete) in this Next.js App Router projects.
 
 ## Key Principles
+
 - **Local State Management:** The main client component (e.g., `client-FaqCategory.tsx`) holds the data array in local state (`useState`).
 - **Edit/Create Dialogs:** Edit and create forms (e.g., `edit-FaqCategory`) are rendered as modals or drawers and receive `onUpdated` callbacks from the parent.
 - **Direct State Updates:** After a mutation (create, update, delete), the parent updates its local state array directly, ensuring the UI is always in sync.
@@ -66,7 +60,6 @@ This application follows a modern pattern for managing data (CRUD operations - C
 
 **Follow this pattern for all new CRUD resources in the admin section for consistency and maintainability.**
 
-
 ## Example Pattern
 
 ### 1. Define/Create type in `@/src/types.d.ts`
@@ -77,22 +70,22 @@ This application follows a modern pattern for managing data (CRUD operations - C
 
 ```tsx
 export default async function [object_name]AdminPage(props: {
-	params: Params;
-	searchParams: SearchParams;
+ params: Params;
+ searchParams: SearchParams;
 }) {
-	//const _params = await props.params;
-	const obj = (await sqlClient.[object_name].findMany(
-		{},
-	)) as object_name[];
-	transformBigIntToNumbers(obj);
+ //const _params = await props.params;
+ const obj = (await sqlClient.[object_name].findMany(
+  {},
+ )) as object_name[];
+ transformBigIntToNumbers(obj);
 
-	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<[object_name]Client serverData={obj} />
-			</Container>
-		</Suspense>
-	);
+ return (
+  <Suspense fallback={<Loader />}>
+   <Container>
+    <[object_name]Client serverData={obj} />
+   </Container>
+  </Suspense>
+ );
 }
 
 ```
@@ -145,6 +138,7 @@ async function onSubmit(data: ItemType) {
 ### 6. Filter Implementation
 
 #### 6.1 Filter Component Structure
+
 ```typescript
 // filter-channel.tsx or filter-observer.tsx
 export function Filter({
@@ -220,6 +214,7 @@ export function Filter({
 ```
 
 #### 6.2 Filter State Management
+
 ```typescript
 // In client component
 const [selectedStatuses, setSelectedStatuses] = useState<Status[]>([]);
@@ -237,8 +232,8 @@ const filteredData = useMemo(() => {
 }, [data, selectedStatuses, titleFilter]);
 ```
 
-
 ## Summary
+
 - Use local state for table data in client components.
 - Pass mutation callbacks to edit/create/delete components.
 - Update the state array directly after mutations.

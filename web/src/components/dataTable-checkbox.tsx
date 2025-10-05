@@ -2,15 +2,16 @@
 
 import {
 	type ColumnDef,
-	type OnChangeFn,
-	type RowSelectionState,
 	flexRender,
 	getCoreRowModel,
 	getPaginationRowModel,
+	type OnChangeFn,
+	type RowSelectionState,
 	useReactTable,
 } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
 
+import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,7 +23,6 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
-import { useTranslation } from "react-i18next";
 
 interface props<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
@@ -36,6 +36,15 @@ interface props<TData, TValue> {
 	onRowSelectionChange?: (rows: RowSelectionState) => void;
 }
 
+// DataTableCheckbox is a table with checkbox for each row.
+// It is used to select rows and perform actions on them.
+// initiallySelected is used to pre-select rows.
+// onRowSelectionChange is used to handle the selection change.
+// noSearch is used to disable the search input.
+// searchKey is used to search the table.
+// disabled is used to disable the checkbox and the table.
+// onRowSelectionChange is used to handle the selection change.
+//
 export function DataTableCheckbox<TData, TValue>({
 	columns,
 	data,

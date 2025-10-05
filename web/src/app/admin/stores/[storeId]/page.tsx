@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreSubscription } from "@prisma/client";
 import { StoreEditTabs } from "./tabs";

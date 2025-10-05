@@ -1,5 +1,5 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import BusinessHours from "@/lib/businessHours";
 
 import { transformDecimalsToNumbers } from "@/utils/utils";
@@ -10,7 +10,7 @@ import { StoreHomeContent } from "./components/store-home-content";
 
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import { sqlClient } from "@/lib/prismadb";
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import type { StoreSettings } from "@prisma/client";
 import { formatDate } from "date-fns";
 

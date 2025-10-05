@@ -1,5 +1,5 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/ui/loader";
+import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
 import { formatDateTime } from "@/utils/utils";

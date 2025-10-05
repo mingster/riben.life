@@ -139,10 +139,8 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 										<div className="w-full" key={index}>
 											<CollapseMenuButton
 												icon={Icon}
-												label={label}
-												active={active}
-												submenus={submenus}
-												isOpen={isOpen}
+												title={label}
+												isCollapsed={!isOpen}
 											/>
 										</div>
 									),

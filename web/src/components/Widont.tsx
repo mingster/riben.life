@@ -1,8 +1,4 @@
-export function Widont({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
+export function Widont({ children }: { children: React.ReactNode }) {
 	if (typeof children !== "string") {
 		return children;
 	}

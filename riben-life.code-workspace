@@ -22,6 +22,9 @@
 				"name": "local",
 				"connectString": "postgres://pstv_user:Sup3rS3cret@localhost:5432/pstv_web?schema=public"
 			}
+		],
+		"cSpell.words": [
+			"prismadb"
 		]
 	}
 }

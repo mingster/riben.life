@@ -25,7 +25,7 @@ import { type ChangeEvent, useEffect, useState } from "react";
 import getStripe from "@/lib/stripe/client";
 
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import type { StoreSubscription, SubscriptionPayment } from "@prisma/client";
 import axios from "axios";
 import { formatDate } from "date-fns";

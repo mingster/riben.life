@@ -1,9 +1,9 @@
 "use client";
 
-import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
-import { MixerHorizontalIcon } from "@radix-ui/react-icons";
+import { IconFileHorizontal } from "@tabler/icons-react";
 import type { Table } from "@tanstack/react-table";
 
+import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -11,9 +11,9 @@ import {
 	DropdownMenuContent,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/providers/i18n-provider";
-import { useTranslation } from "react-i18next";
 
 interface DataTableViewOptionsProps<TData> {
 	table: Table<TData>;
@@ -33,7 +33,7 @@ export function DataTableViewOptions<TData>({
 					size="sm"
 					className="ml-auto hidden h-8 lg:flex"
 				>
-					<MixerHorizontalIcon className="mr-0 size-4" />
+					<IconFileHorizontal className="mr-0 size-4" />
 					{t("view")}
 				</Button>
 			</DropdownMenuTrigger>

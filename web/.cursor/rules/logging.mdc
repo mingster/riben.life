@@ -8,7 +8,7 @@ alwaysApply: false
 We use `logger` to do logging:
 
 ```typescript
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 
 const user = (await getUser()) as User;
 logger.info(user);
@@ -18,7 +18,7 @@ Typically this will be added at the top of a file.
 If we have a large function that reuses multiple variables we can do this within a function:
 
 ```typescript
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 
 // Can now call without passing userId:
 logger.log("Created rule");

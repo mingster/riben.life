@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
-import logger from "@/utils/logger";
+import logger from "@/lib/logger";
 import type { PlatformSettings } from "@prisma/client";
 import Link from "next/link";
 
