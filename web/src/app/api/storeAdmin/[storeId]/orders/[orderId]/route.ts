@@ -51,7 +51,7 @@ export async function DELETE(
 				id: params.orderId,
 			},
 		});
-		logger.info({ order }, { message: "order deleted" });
+		logger.info("order deleted", { metadata: { order } });
 	}
 
 	return NextResponse.json(order);
@@ -129,7 +129,7 @@ export async function PATCH(
 
 		return NextResponse.json(result);
 	} catch (error) {
-		logger.error({ error }, { message: "order updated" });
+		logger.error("order updated", { metadata: { error } });
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

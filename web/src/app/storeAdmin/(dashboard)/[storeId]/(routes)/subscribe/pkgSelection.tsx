@@ -76,7 +76,7 @@ const DisplayPkg: React.FC<props> = ({
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	logger.info({ level: store.level }, "current level");
+	logger.info("current level", { metadata: { level: store.level } });
 	//logger.info("subscription", subscription);
 
 	function handleDivClick(selected: number) {
@@ -332,7 +332,7 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 			.then((res) => res.json())
 			.then((data) => {
 				setClientSecret(data.client_secret);
-				logger.info(`clientSecret: ${JSON.stringify(data.client_secret)}`);
+				logger.info("clientSecret", { metadata: { clientSecret: data.client_secret } });
 			})
 			.catch((error) => {
 				console.error("Error:", error);
@@ -443,7 +443,7 @@ const StripeCheckoutForm: React.FC<paymentProps> = ({ order }) => {
 			// confirming the payment. Show error to your customer (for example, payment
 			// details incomplete)
 			setErrorMessage(error.message);
-			logger.info(`paymentHandler: ${error.message}`);
+			logger.info("paymentHandler", { metadata: { error: error.message } });
 		} else {
 			// Your customer will be redirected to your `return_url`. For some payment
 			// methods like iDEAL, your customer will be redirected to an intermediate

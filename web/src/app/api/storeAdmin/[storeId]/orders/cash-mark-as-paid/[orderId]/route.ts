@@ -20,7 +20,7 @@ export async function POST(
 		const checkoutAttributes = "cash";
 
 		const updated_order = await MarkAsPaid(params.orderId, checkoutAttributes);
-		logger.info({ order: updated_order }, { message: "order marked as paid" });
+		logger.info("order marked as paid", { metadata: { order: updated_order } });
 
 		return NextResponse.json("success", { status: 200 });
 	} catch (error) {

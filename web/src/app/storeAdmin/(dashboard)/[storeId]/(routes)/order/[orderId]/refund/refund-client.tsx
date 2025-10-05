@@ -152,7 +152,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 	//const params = useParams();
 	//console.log('order', JSON.stringify(order));
 
-	logger.info({ errors: form.formState.errors }, "form errors");
+	logger.info("form errors", { metadata: { errors: form.formState.errors } });
 
 	const handleDecreaseQuality = (index: number) => {
 		if (!updatedOrder) return;
