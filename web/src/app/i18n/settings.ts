@@ -1,5 +1,5 @@
 export const fallbackLng = "tw";
-export const languages = [fallbackLng, "en", "cn"];
+export const languages = [fallbackLng, "en", "jp"];
 export const defaultNS = "translation"; //default json filename
 export const cookieName = "i18next";
 export const headerName = "x-i18next-current-language";

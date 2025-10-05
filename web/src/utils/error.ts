@@ -30,10 +30,10 @@ export function formatError(error: unknown): string {
 	if (error instanceof Error) {
 		// Use the standard message for Error instances
 		return error.message;
-	} else {
-		// Fallback for other types
-		return String(error);
 	}
+
+	// Fallback for other types
+	return String(error);
 }
 
 export function captureException(
