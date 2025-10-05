@@ -5,7 +5,7 @@ import { checkStoreAccess, isPro } from "@/lib/store-admin-utils";
 import type { Store } from "@/types";
 
 import { sqlClient } from "@/lib/prismadb";
-import { Subscription } from "@prisma/client";
+import { StoreSubscription } from "@prisma/client";
 import { TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/dist/client/link";

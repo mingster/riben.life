@@ -1,4 +1,5 @@
 import { Loader } from "@/components/ui/loader";
+import { CartProvider } from "@/hooks/use-cart";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
 import { Suspense } from "react";
@@ -99,14 +100,16 @@ export default async function StoreHomeLayout(props: {
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<div className="bg-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
-				<StoreNavbar visible={true} store={store} />
-				<main>
-					<span className="hash-span" id="top" />
-					{children}
-				</main>
-				<StoreFooter visible={isStoreOpen} store={store} />
-			</div>
+			<CartProvider>
+				<div className="bg-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
+					<StoreNavbar visible={true} store={store} />
+					<main>
+						<span className="hash-span" id="top" />
+						{children}
+					</main>
+					<StoreFooter visible={isStoreOpen} store={store} />
+				</div>
+			</CartProvider>
 		</Suspense>
 	);
 }

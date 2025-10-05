@@ -13,7 +13,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import type { Store, Subscription } from "@prisma/client";
+import type { Store, StoreSubscription } from "@prisma/client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -53,7 +53,7 @@ type formValues = z.infer<typeof formSchema>;
 
 export interface SettingsFormProps {
 	initialData: Store;
-	subscription: Subscription | null;
+	subscription: StoreSubscription | null;
 }
 
 export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({

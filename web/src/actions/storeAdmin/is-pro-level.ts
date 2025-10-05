@@ -22,7 +22,7 @@ const isProLevel = async (storeId: string): Promise<boolean> => {
 	if (store.level === StoreLevel.Free) return false;
 
 	if (store.level === StoreLevel.Pro || store.level === StoreLevel.Multi) {
-		const subscriptions = await sqlClient.subscription.findUnique({
+		const subscriptions = await sqlClient.storeSubscription.findUnique({
 			where: {
 				storeId,
 			},

@@ -19,7 +19,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { SubscriptionStatus } from "@/types/enum";
-import type { Subscription, SubscriptionPayment } from "@prisma/client";
+import type { StoreSubscription, SubscriptionPayment } from "@prisma/client";
 import { formatDate } from "date-fns";
 
 export function SubscriptionHistoryClient({
@@ -29,7 +29,7 @@ export function SubscriptionHistoryClient({
 	payments,
 }: {
 	store: Store;
-	subscription: Subscription | null;
+	subscription: StoreSubscription | null;
 	//subscriptionSchedule: Stripe.SubscriptionSchedule | null;
 	payments: SubscriptionPayment[];
 }) {

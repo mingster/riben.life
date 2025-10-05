@@ -71,7 +71,7 @@ export async function POST(
 		// make sure we have the subscription record only.
 		// activate the subscription only when payment is confirmed.
 		//
-		await sqlClient.subscription.upsert({
+		await sqlClient.storeSubscription.upsert({
 			where: {
 				storeId: params.storeId,
 			},

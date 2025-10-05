@@ -26,7 +26,7 @@ import getStripe from "@/lib/stripe/client";
 
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import logger from "@/utils/logger";
-import type { Subscription, SubscriptionPayment } from "@prisma/client";
+import type { StoreSubscription, SubscriptionPayment } from "@prisma/client";
 import axios from "axios";
 import { formatDate } from "date-fns";
 import { useTheme } from "next-themes";
@@ -37,7 +37,7 @@ import Link from "next/link";
 export function PkgSelection({
 	store,
 	subscription,
-}: { store: Store; subscription: Subscription | null }) {
+}: { store: Store; subscription: StoreSubscription | null }) {
 	const [step, setStep] = useState(1);
 	const [order, setOrder] = useState<SubscriptionPayment | null>(null);
 	useEffect(() => {
@@ -59,7 +59,7 @@ export function PkgSelection({
 
 type props = {
 	store: Store;
-	subscription: Subscription | null;
+	subscription: StoreSubscription | null;
 	onValueChange?: (newValue: SubscriptionPayment) => void;
 };
 // display package ui. As user select a package, call backend api to subscribe or unsubscribe
