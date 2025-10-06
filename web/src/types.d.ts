@@ -275,3 +275,6 @@ const reviewObj = Prisma.validator<Prisma.ProductReviewDefaultArgs>()({
 });
 export type ProductReview = Prisma.ProductReviewGetPayload<typeof revieObj>;
 */
+
+// EmailQueue type definition
+export type EmailQueue = Prisma.EmailQueueGetPayload<{}>;

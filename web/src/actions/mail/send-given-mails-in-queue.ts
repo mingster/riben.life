@@ -1,4 +1,4 @@
-import { pstvDBPrismaClient } from "@/lib/prisma-client-pstv";
+import { sqlClient } from "@/lib/prismadb";
 import { EmailQueue } from "@/types";
 import logger from "@/lib/logger";
 import { sendMail } from "./send-mail";
@@ -12,7 +12,7 @@ export const sendGivenMailsInQueue = async (mailQueueIds: string[]) => {
 	// log.info(`mailQueueIds: ${mailQueueIds}`);
 
 	// Get the given mails from queue, regardless of status
-	const mailsToSend = (await pstvDBPrismaClient.emailQueue.findMany({
+	const mailsToSend = (await sqlClient.emailQueue.findMany({
 		where: {
 			id: { in: mailQueueIds },
 			// not sent yet
@@ -47,7 +47,7 @@ export const sendGivenMailsInQueue = async (mailQueueIds: string[]) => {
 
 		if (success) {
 			// Update as sent
-			await pstvDBPrismaClient.emailQueue.update({
+			await sqlClient.emailQueue.update({
 				where: { id: email.id },
 				data: { sentOn: getUtcNow() },
 			});
@@ -58,7 +58,7 @@ export const sendGivenMailsInQueue = async (mailQueueIds: string[]) => {
 			// log.info(`Email ${email.id} sent successfully`);
 		} else {
 			// Update as failed
-			await pstvDBPrismaClient.emailQueue.update({
+			await sqlClient.emailQueue.update({
 				where: { id: email.id },
 				data: { sendTries: { increment: 1 } },
 			});
@@ -70,7 +70,7 @@ export const sendGivenMailsInQueue = async (mailQueueIds: string[]) => {
 		}
 	}
 
-	const mailsSent = (await pstvDBPrismaClient.emailQueue.findMany({
+	const mailsSent = (await sqlClient.emailQueue.findMany({
 		where: {
 			id: { in: mailQueueIds },
 		},

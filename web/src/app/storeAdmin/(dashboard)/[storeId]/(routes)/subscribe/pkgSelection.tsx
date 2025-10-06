@@ -332,7 +332,9 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 			.then((res) => res.json())
 			.then((data) => {
 				setClientSecret(data.client_secret);
-				logger.info("clientSecret", { metadata: { clientSecret: data.client_secret } });
+				logger.info("clientSecret", {
+					metadata: { clientSecret: data.client_secret },
+				});
 			})
 			.catch((error) => {
 				console.error("Error:", error);

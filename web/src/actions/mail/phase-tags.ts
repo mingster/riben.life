@@ -1,5 +1,5 @@
-import { pstvDBPrismaClient } from "@/lib/prisma-client-pstv";
-import { NopCustomer, NopOrder, User } from "@/types";
+import { sqlClient } from "@/lib/prismadb";
+import { StoreOrder, User } from "@/types";
 import { StringNVType } from "@/types/enum";
 import { formatDateTime } from "@/utils/datetime-utils";
 
@@ -15,8 +15,8 @@ interface TagReplacement {
 //
 export async function PhaseTags(
 	messageToBePhased: string,
-	customer?: NopCustomer | null,
-	order?: NopOrder | null,
+	customer?: User | null,
+	order?: StoreOrder | null,
 	user?: User | null,
 ): Promise<string> {
 	const result = messageToBePhased;
@@ -30,8 +30,7 @@ export async function PhaseTags(
 	const replacements: TagReplacement[] = [];
 
 	// replacements from platform settings
-	const platformSettings =
-		await pstvDBPrismaClient.platformSettings.findFirst();
+	const platformSettings = await sqlClient.platformSettings.findFirst();
 	if (platformSettings) {
 		const settingsKV = JSON.parse(
 			platformSettings.settings as string,
@@ -64,32 +63,19 @@ export async function PhaseTags(
 		replacements.push(
 			{ pattern: /%Customer\.Email%/gi, value: user.email || "" },
 			{ pattern: /%Customer\.FullName%/gi, value: user.fullName || "" },
-		);
-	}
-
-	// Customer data replacements
-	if (customer) {
-		replacements.push(
-			{
-				pattern: /%Customer\.AffiliateId%/gi,
-				value: customer.AffiliateId?.toString() || "",
-			},
-			{ pattern: /%Customer\.Username%/gi, value: customer.Username || "" },
+			{ pattern: /%Customer\.Username%/gi, value: user.email || "" },
 			{
 				pattern: /%Customer\.CustomerId%/gi,
-				value: customer.CustomerId?.toString() || "",
+				value: user.id || "",
 			},
-			{ pattern: /%Customer\.Email%/gi, value: customer.Email || "" },
-			{ pattern: /%Customer\.FullName%/gi, value: customer.FullName || "" },
 		);
 	}
 
 	// Order data replacements
 	if (order) {
 		// Parallel database queries for better performance
-		const [orderCustomer, pstvSubscriber] = await Promise.allSettled([
+		const [orderCustomer] = await Promise.allSettled([
 			getCachedCustomer(order.CustomerID),
-			getCachedSubscriber(order.CustomerID),
 		]);
 
 		replacements.push(
@@ -100,19 +86,10 @@ export async function PhaseTags(
 				value: formatDateTime(order.CreatedOn) || "",
 			},
 			{
-				pattern: /%Subscription\.Expiration%/gi,
-				value:
-					formatDateTime(
-						pstvSubscriber.status === "fulfilled"
-							? pstvSubscriber.value?.expiration
-							: null,
-					) || "",
-			},
-			{
 				pattern: /%Order\.CustomerFullName%/gi,
 				value:
 					orderCustomer.status === "fulfilled"
-						? orderCustomer.value?.FullName || ""
+						? orderCustomer.value?.name || ""
 						: "",
 			},
 		);
@@ -125,15 +102,15 @@ export async function PhaseTags(
 }
 
 // Helper functions for caching database queries
-async function getCachedCustomer(customerId: number) {
+async function getCachedCustomer(customerId: string) {
 	const cacheKey = `customer_${customerId}`;
 
 	if (queryCache.has(cacheKey)) {
 		return queryCache.get(cacheKey);
 	}
 
-	const customer = await pstvDBPrismaClient.nop_Customer.findUnique({
-		where: { CustomerID: customerId },
+	const customer = await sqlClient.user.findUnique({
+		where: { id: customerId },
 	});
 
 	queryCache.set(cacheKey, customer);
@@ -143,26 +120,6 @@ async function getCachedCustomer(customerId: number) {
 
 	return customer;
 }
-
-async function getCachedSubscriber(customerId: number) {
-	const cacheKey = `subscriber_${customerId}`;
-
-	if (queryCache.has(cacheKey)) {
-		return queryCache.get(cacheKey);
-	}
-
-	const subscriber = await pstvDBPrismaClient.pstv_subscriber.findUnique({
-		where: { customer_id: customerId },
-	});
-
-	queryCache.set(cacheKey, subscriber);
-
-	// Clear cache after 5 minutes to prevent memory leaks
-	setTimeout(() => queryCache.delete(cacheKey), 5 * 60 * 1000);
-
-	return subscriber;
-}
-
 // Utility function to clear cache (useful for testing or manual cache management)
 export function clearPhaseTagsCache(): void {
 	queryCache.clear();

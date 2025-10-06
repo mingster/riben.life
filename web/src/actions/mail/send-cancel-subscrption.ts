@@ -1,10 +1,10 @@
-import { pstvDBPrismaClient } from "@/lib/prisma-client-pstv";
 import { User } from "@/types";
 import logger from "@/lib/logger";
 import { loadOuterHtmTemplate } from "./load-outer-htm-template";
 import { PhaseTags } from "./phase-tags";
 import { StringNVType } from "@/types/enum";
 import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
+import { sqlClient } from "@/lib/prismadb";
 
 // send email to customer when subscription is cancelled
 //
@@ -24,7 +24,7 @@ export const sendCancelSubscription = async (user: User) => {
 	// find the localized message template where messageTemplate name = message_content_template_id,
 	//  and localeId = user.locale
 	const message_content_template =
-		await pstvDBPrismaClient.messageTemplateLocalized.findFirst({
+		await sqlClient.messageTemplateLocalized.findFirst({
 			where: {
 				MessageTemplate: {
 					name: message_content_template_id,
@@ -65,7 +65,7 @@ export const sendCancelSubscription = async (user: User) => {
 	htmMessage = htmMessage.replace(/{{footer}}/g, "");
 
 	// 3. add the email to the queue
-	const setting = await pstvDBPrismaClient.platformSettings.findFirst();
+	const setting = await sqlClient.platformSettings.findFirst();
 	if (!setting) {
 		log.error(`🔔 Platform settings not found`);
 		return;
@@ -75,7 +75,7 @@ export const sendCancelSubscription = async (user: User) => {
 		(item) => item.label === "Support.Email",
 	);
 
-	const email_queue = await pstvDBPrismaClient.emailQueue.create({
+	const email_queue = await sqlClient.emailQueue.create({
 		data: {
 			from: supportEmail?.value || "support@5ik.tv",
 			fromName: supportEmail?.value || "5ik.TV",

@@ -68,22 +68,30 @@ interface props {
 const formSchema = z.object({
 	tableId: z.string().optional().nullable(),
 	orderNum: z.number().optional(),
-	paymentMethodId: z.string().min(1, { message: "payment method is required" }),
-	shippingMethodId: z
-		.string()
-		.min(1, { message: "shipping method is required" }),
+	paymentMethodId: z.string().min(1, {
+		error: "payment method is required",
+	}),
+	shippingMethodId: z.string().min(1, {
+		error: "shipping method is required",
+	}),
 	OrderItemView: z
 		.object({
 			//id: z.string().min(1),
 			//orderId: z.string().min(1),
-			productId: z.string().min(1, { message: "product is required" }),
-			quantity: z.coerce.number().min(1, { message: "quantity is required" }),
+			productId: z.string().min(1, {
+				error: "product is required",
+			}),
+			quantity: z.coerce.number().min(1, {
+				error: "quantity is required",
+			}),
 			//variants: z.string().optional(),
 			//unitDiscount: z.coerce.number().min(1),
 			//unitPrice: z.coerce.number().min(1),
 		})
 		.array()
-		.min(1, { message: "at least one item is required" })
+		.min(1, {
+			error: "at least one item is required",
+		})
 		.optional(),
 });
 

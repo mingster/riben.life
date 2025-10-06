@@ -1,7 +1,7 @@
-import { pstvDBPrismaClient } from "@/lib/prisma-client-pstv";
 import { sendMail } from "./send-mail";
 import { getUtcNow } from "@/utils/datetime-utils";
 import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
 
 export interface EmailProcessingResult {
 	success: boolean;
@@ -20,7 +20,7 @@ export const sendMailsInQueue = async (
 
 	try {
 		// Get emails from queue
-		const emailsInQueue = await pstvDBPrismaClient.emailQueue.findMany({
+		const emailsInQueue = await sqlClient.emailQueue.findMany({
 			where: {
 				sentOn: null,
 				sendTries: {
@@ -66,7 +66,7 @@ export const sendMailsInQueue = async (
 
 					if (success) {
 						// Update as sent
-						await pstvDBPrismaClient.emailQueue.update({
+						await sqlClient.emailQueue.update({
 							where: { id: email.id },
 							data: { sentOn: getUtcNow() },
 						});
@@ -78,7 +78,7 @@ export const sendMailsInQueue = async (
 						};
 					} else {
 						// Update as failed
-						await pstvDBPrismaClient.emailQueue.update({
+						await sqlClient.emailQueue.update({
 							where: { id: email.id },
 							data: { sendTries: { increment: 1 } },
 						});
@@ -94,7 +94,7 @@ export const sendMailsInQueue = async (
 					const duration = Date.now() - emailStartTime;
 
 					// Update as failed
-					await pstvDBPrismaClient.emailQueue.update({
+					await sqlClient.emailQueue.update({
 						where: { id: email.id },
 						data: { sendTries: { increment: 1 } },
 					});
@@ -174,13 +174,13 @@ export const sendMailsInQueue = async (
 // Utility function to get queue statistics
 export const getQueueStats = async () => {
 	const [pending, failed, sent] = await Promise.all([
-		pstvDBPrismaClient.emailQueue.count({
+		sqlClient.emailQueue.count({
 			where: { sentOn: null, sendTries: { lt: 3 } },
 		}),
-		pstvDBPrismaClient.emailQueue.count({
+		sqlClient.emailQueue.count({
 			where: { sentOn: null, sendTries: { gte: 3 } },
 		}),
-		pstvDBPrismaClient.emailQueue.count({
+		sqlClient.emailQueue.count({
 			where: { sentOn: { not: null } },
 		}),
 	]);

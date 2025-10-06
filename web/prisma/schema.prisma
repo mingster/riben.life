@@ -99,13 +99,12 @@ model Authenticator {
   @@id([userId, credentialID])
 }
 
-
 /// Next.js application logs for log drain functionality
 model system_logs {
   id          String   @id @default(cuid())
   timestamp   DateTime @default(now())
   level       String   @db.VarChar(10) // error, warn, info, debug
-  message     String   
+  message     String
   service     String   @db.VarChar(100) // service name (e.g., "web", "api")
   environment String   @db.VarChar(20) // production, development, staging
   version     String?  @db.VarChar(50) // app version
@@ -119,13 +118,14 @@ model system_logs {
   statusCode  Int? // HTTP status code
   duration    Int? // request duration in ms
   errorCode   String?  @db.VarChar(100) // error code if applicable
-  stackTrace  String?  
+  stackTrace  String?
   metadata    String?
   tags        String?
   source      String?  @db.VarChar(100) // source file/component
   line        Int? // line number
   column      Int? // column number
   createdAt   DateTime @default(now())
+
   @@index([timestamp])
   @@index([level])
   @@index([service])
@@ -137,7 +137,7 @@ model system_logs {
 model PlatformSettings {
   id              String  @id @default(cuid())
   stripeProductId String?
-  stripePriceId   String?
+  settings        String?
 }
 
 model Country {
@@ -180,6 +180,9 @@ model Locale {
   name              String
   lng               String //2 digit language code
   defaultCurrencyId String
+
+  SystemMessage            SystemMessage[]
+  MessageTemplateLocalized MessageTemplateLocalized[]
 
   @@index([id])
   @@index([name])
@@ -842,6 +845,8 @@ model SystemMessage {
   message   String
   createdOn DateTime @default(now())
 
+  Locale Locale @relation(fields: [localeId], references: [id])
+
   @@index([localeId])
   @@index([createdOn])
 }
@@ -874,20 +879,44 @@ model StoreNotification {
   @@index([updatedAt])
 }
 
-model QueuedEmail {
-  id        String    @id @default(uuid())
-  priority  Int
-  from      String
-  fromName  String    @default("")
-  to        String
-  toName    String    @default("")
-  cc        String    @default("")
-  bcc       String    @default("")
-  subject   String
-  body      String
-  createdOn DateTime  @default(now())
-  sendTries Int       @default(0)
-  sentOn    DateTime?
+model MessageTemplate {
+  id                       String                     @id @default(uuid())
+  name                     String
+  MessageTemplateLocalized MessageTemplateLocalized[]
+
+  @@index([name])
+}
+
+model MessageTemplateLocalized {
+  id                String          @id @default(uuid())
+  messageTemplateId String
+  localeId          String
+  bCCEmailAddresses String?
+  subject           String
+  body              String
+  isActive          Boolean         @default(true)
+  Locale            Locale          @relation(fields: [localeId], references: [id], onDelete: Cascade)
+  MessageTemplate   MessageTemplate @relation(fields: [messageTemplateId], references: [id], onDelete: Cascade)
+
+  @@unique([localeId, messageTemplateId])
+  @@index([localeId])
+  @@index([messageTemplateId])
+}
+
+model EmailQueue {
+  id          String    @id @default(uuid())
+  from        String
+  fromName    String    @default("")
+  to          String
+  toName      String    @default("")
+  cc          String    @default("")
+  bcc         String    @default("")
+  subject     String
+  textMessage String
+  htmMessage  String
+  createdOn   DateTime  @default(now())
+  sendTries   Int       @default(0)
+  sentOn      DateTime?
 
   @@index([sendTries])
   @@index([createdOn])
@@ -896,27 +925,55 @@ model QueuedEmail {
 }
 
 model SupportTicket {
-  id         String   @id @default(uuid())
-  threadId   String
-  storeId    String
-  senderId   String
-  recipentId String
+  id       String @id @default(uuid())
+  threadId String
+
+  senderId String
+  storeId  String
+
+  priority Int
+
+  recipientId String
+
   department String
   subject    String
   message    String
-  status     Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  status     Int    @default(0)
 
-  Store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Sender   User  @relation("SupportTicketFrom", fields: [senderId], references: [id])
-  Recipent User  @relation("SupportTicketTo", fields: [recipentId], references: [id])
+  creator      String
+  createdAt    DateTime @default(now())
+  modifier     String
+  lastModified DateTime @updatedAt
 
-  @@index([updatedAt])
+  Store     Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Sender    User  @relation("SupportTicketFrom", fields: [senderId], references: [id])
+  Recipient User  @relation("SupportTicketTo", fields: [recipientId], references: [id])
+
+  parent SupportTicket?  @relation("TicketThread", fields: [threadId], references: [id], onUpdate: Restrict, onDelete: Restrict)
+  Thread SupportTicket[] @relation("TicketThread")
+
   @@index([threadId])
+  @@index([lastModified])
+  @@index([status])
   @@index([senderId])
-  @@index([recipentId])
+  @@index([recipientId])
   @@index([storeId])
+}
+
+model ContactUs {
+  id           String   @id @default(uuid())
+  ipaddr       String   @db.Char(12)
+  name         String?
+  gender       String?
+  phone        String?
+  email        String?
+  inquireType  String?
+  subject      String?
+  questionBody String?
+  status       Int      @default(0)
+  lastModified DateTime @default(now())
+
+  @@index([status])
 }
 
 /// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.

@@ -2,7 +2,11 @@ import { stripe } from "@better-auth/stripe";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
 
-import { betterAuth, type BetterAuthOptions, type OAuth2Tokens } from "better-auth";
+import {
+	betterAuth,
+	type BetterAuthOptions,
+	type OAuth2Tokens,
+} from "better-auth";
 import {
 	admin,
 	apiKey,
@@ -32,8 +36,8 @@ const options = {
 
 export const auth = betterAuth({
 	database: prismaAdapter(prisma, {
-        provider: "postgresql", // or "mysql", "postgresql", ...etc
-    }),
+		provider: "postgresql", // or "mysql", "postgresql", ...etc
+	}),
 	session: {
 		expiresIn: 60 * 60 * 24 * 365, // 365 days
 		updateAge: 60 * 60 * 24, // 1 day (every 1 day the session expiration is updated)

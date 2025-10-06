@@ -1,5 +1,3 @@
-// send email to customer when credit is successful
-
 import type { StringNVType } from "@/types/enum";
 import logger from "@/lib/logger";
 import { loadOuterHtmTemplate } from "./load-outer-htm-template";

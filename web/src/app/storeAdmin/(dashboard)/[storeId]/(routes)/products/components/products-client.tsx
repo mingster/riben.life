@@ -82,7 +82,9 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({ data }) => {
 };
 
 export const formSchema = z.object({
-	names: z.string().min(1, { message: "product data is required" }),
+	names: z.string().min(1, {
+		error: "product data is required",
+	}),
 	status: z.coerce.number(),
 });
 

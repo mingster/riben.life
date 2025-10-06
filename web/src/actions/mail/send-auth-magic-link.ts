@@ -1,5 +1,3 @@
-// send email to customer when credit is successful
-
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { PhaseTags } from "./phase-tags";

@@ -252,8 +252,8 @@ type filterProps = {
 };
 
 const formSchema = z.object({
-	filter: z.string().optional().default(""),
-	filter1_is_in_the_last_of_days: z.coerce.number().optional().default(1),
+	filter: z.string().optional().prefault(""),
+	filter1_is_in_the_last_of_days: z.coerce.number().optional().prefault(1),
 	filter_date1: z.coerce.date().optional(),
 	filter_date2: z.coerce.date().optional(),
 });

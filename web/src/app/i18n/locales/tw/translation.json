@@ -382,7 +382,7 @@
 	"subscription_start_date": "訂閱日期：",
 	"subscription_tabs_billing": "帳單記錄",
 	"subscription_tabs_devices": "裝置管理",
-  
+
 	"subscription_tabs_info": "訂閱資訊",
 	"success_descr": "我們已收到您的訂單，店家確認後會立即為您處理，謝謝您的訂購。",
 	"success_title": "已完成訂購",
@@ -454,5 +454,4 @@
 	"Weekday_Wednesday": "週三",
 	"yes": "是",
 	"you_are_not_allowed_to_register_this_passkey": "你不能註冊這個Passkey"
-  }
-  
+}

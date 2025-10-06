@@ -15,19 +15,16 @@ const baseClient = createSafeActionClient({
 	},
 	handleServerError(error, { metadata, ctx, bindArgsClientInputs }) {
 		const context = ctx as any;
-		logger.error(
-			"Server action error",
-			{
-				metadata: {
-					metadata,
-					userId: context?.userId,
-					userEmail: context?.userEmail,
-					emailAccountId: context?.emailAccountId,
-					bindArgsClientInputs,
-					error: error.message,
-				},
+		logger.error("Server action error", {
+			metadata: {
+				metadata,
+				userId: context?.userId,
+				userEmail: context?.userEmail,
+				emailAccountId: context?.emailAccountId,
+				bindArgsClientInputs,
+				error: error.message,
 			},
-		);
+		});
 		// Need a better way to handle this within logger itself
 		if (process.env.NODE_ENV !== "production") console.log("Error:", error);
 		if (error instanceof SafeError) return error.message;
