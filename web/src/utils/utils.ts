@@ -5,6 +5,7 @@ import { twMerge } from "tailwind-merge";
 //import type { StoreTables } from "@prisma/client";
 import Decimal from "decimal.js"; // gets added if installed
 import { z } from "zod";
+import { getNumOfDaysInTheMonth, getUtcNow } from "./datetime-utils";
 
 export const highlight_css = "border-dashed border-green-500 border-2";
 
@@ -13,6 +14,25 @@ export function getTableName(tables: StoreTables[], tableId: string) {
   return tables.find((table) => table.id === tableId)?.tableName || "";
 }
 */
+
+export function GetSubscriptionLength(totalCycles: number) {
+	const now = getUtcNow();
+
+	if (totalCycles === 1) return getNumOfDaysInTheMonth(now);
+	if (totalCycles === 12) return 365;
+
+	// for quarterly and semi-annual, we need to calculate the number of days in the month
+	let days = 0;
+	let date = new Date(now);
+	for (let i = 1; i <= totalCycles; i++) {
+		const mo = date.getMonth() + 1; // JS months are 0-based
+		const yr = date.getFullYear();
+		days += getNumOfDaysInTheMonth(date);
+		// Move to next month
+		date = new Date(yr, date.getMonth() + 1, 1);
+	}
+	return days;
+}
 
 export function getRandomNum(length: number) {
 	const randomNum = (
