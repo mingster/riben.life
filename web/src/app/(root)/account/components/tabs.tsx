@@ -51,26 +51,21 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 		return <Loader />;
 	}
 
-	const title = t("account_page_title");
-
 	return (
-		<Container>
-			<Heading title={title} description={""} />
-
+		<Container className="bg-transparent">
 			<Tabs
 				value={activeTab}
 				defaultValue="orders"
 				onValueChange={handleTabChange}
-				className="w-full"
+				className=""
 			>
-				<TabsList className="grid w-full grid-cols-4">
-					<TabsTrigger value="orders">{t("account_tabs_orders")}</TabsTrigger>
-					<TabsTrigger value="address">{t("account_tabs_address")}</TabsTrigger>
-					<TabsTrigger value="account">{t("account_tabs_account")}</TabsTrigger>
-					{/*<TabsTrigger value="password">
-            {t("account_tabs_password")}
-          </TabsTrigger>
-          */}
+				<TabsList className="grid w-full grid-cols-2">
+					<TabsTrigger className="px-5 lg:min-w-40" value="orders">
+						{t("account_tabs_orders")}
+					</TabsTrigger>
+					<TabsTrigger className="px-5 lg:min-w-40" value="address">
+						{t("account_tabs_address")}
+					</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="orders">

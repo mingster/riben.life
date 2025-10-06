@@ -3,7 +3,7 @@
 export const BackgroundImage: React.FC = () => {
 	//const imgHost = '/img';
 
-	const imgHost = process.env.NEXT_PUBLIC_pstv_img_host as string | "/img";
+	const imgHost = "/img";
 
 	//console.log(imgHost);
 

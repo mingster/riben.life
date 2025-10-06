@@ -46,7 +46,6 @@ export default function ClientSignIn({
 			)}
 
 			<CardContent className="flex flex-col gap-2">
-
 				<GoogleLoginButton callbackUrl={callbackUrl} />
 				<LineLoginButton callbackUrl={callbackUrl} />
 				<FormMagicLink callbackUrl={callbackUrl} />

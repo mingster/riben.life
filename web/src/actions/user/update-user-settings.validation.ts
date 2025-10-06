@@ -11,7 +11,7 @@ export const updateUserSettingsSchema = z.object({
 	timezone: z.string().min(1, {
 		error: "timezone is required",
 	}),
-	useNewWebsite: z.boolean(),
+	//useNewWebsite: z.boolean(),
 });
 
 export type UpdateUserSettingsInput = z.infer<typeof updateUserSettingsSchema>;

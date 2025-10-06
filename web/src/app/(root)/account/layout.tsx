@@ -1,6 +1,3 @@
-import { GlobalNavbar } from "@/components/global-navbar";
-
-import { use } from "react";
 type Params = Promise<{}>;
 
 export default async function AuthLayout({
@@ -15,7 +12,6 @@ export default async function AuthLayout({
 	return (
 		<>
 			<div className="bg-no-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
-				<GlobalNavbar title="" />
 				<main className="">{children}</main>
 			</div>
 		</>

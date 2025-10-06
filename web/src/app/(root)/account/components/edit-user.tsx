@@ -1,15 +1,16 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCookies } from "next-client-cookies";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { updateUserSettingsAction } from "@/actions/user/update-user-settings";
+import {
+	UpdateUserSettingsInput,
+	updateUserSettingsSchema,
+} from "@/actions/user/update-user-settings.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { cookieName } from "@/app/i18n/settings";
 import SignOutButton from "@/components/auth/sign-out-button";
 import { LocaleSelectItems } from "@/components/locale-select-items";
-import { toastError, toastSuccess } from "@/components/Toaster";
 import { TimezoneSelect } from "@/components/timezone-select";
+import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -35,11 +36,10 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import type { User } from "@/types";
-import { Switch } from "@/components/ui/switch";
-import Link from "next/link";
-import { UpdateUserSettingsInput } from "@/actions/user/update-user-settings.validation";
-import { updateUserSettingsSchema } from "@/actions/user/update-user-settings.validation";
-import { updateUserSettingsAction } from "@/actions/user/update-user-settings";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCookies } from "next-client-cookies";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 interface props {
 	serverData: User | null | undefined;
@@ -171,25 +171,6 @@ export default function EditUser({ serverData }: props) {
 											value={field.value}
 											onValueChange={field.onChange}
 											disabled={loading || form.formState.isSubmitting}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="useNewWebsite"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>使用新版網站</FormLabel>
-									<FormControl>
-										<Switch
-											checked={field.value}
-											onCheckedChange={(checked) =>
-												field.onChange(checked ? true : false)
-											}
 										/>
 									</FormControl>
 									<FormMessage />

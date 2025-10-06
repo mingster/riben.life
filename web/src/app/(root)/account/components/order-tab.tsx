@@ -10,6 +10,12 @@ import { DisplayOrder } from "@/components/order-display";
 import { authClient } from "@/lib/auth-client";
 import type { StoreOrder } from "@/types";
 import { cn, highlight_css } from "@/utils/utils";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardFooter,
+} from "@/components/ui/card";
 
 type orderTabProps = { orders: StoreOrder[] };
 export const DisplayOrders = ({ orders }: orderTabProps) => {
@@ -69,34 +75,39 @@ export const OrderTab = ({ orders }: props) => {
 	result.sort((a, b) => (b.orderNum ?? 0) - (a.orderNum ?? 0));
 
 	return (
-		<>
-			<div className="flex gap-1 pb-2">
-				<Button
-					className={cn("sm:text-xs h-12", filterStatus === 0 && highlight_css)}
-					variant="outline"
-					onClick={() => {
-						setFilterStatus(0);
-					}}
-				>
-					ALL
-				</Button>
-				{keys.map((key) => (
+		<Card>
+			<CardContent className="space-y-0 p-0">
+				<div className="flex gap-1 pb-2">
 					<Button
-						key={key}
 						className={cn(
 							"sm:text-xs h-12",
-							filterStatus === Number(key) && highlight_css,
+							filterStatus === 0 && highlight_css,
 						)}
 						variant="outline"
 						onClick={() => {
-							setFilterStatus(Number(key));
+							setFilterStatus(0);
 						}}
 					>
-						{t(`OrderStatus_${OrderStatus[Number(key)]}`)}
+						ALL
 					</Button>
-				))}
-			</div>
-			<DisplayOrders orders={result} />
-		</>
+					{keys.map((key) => (
+						<Button
+							key={key}
+							className={cn(
+								"sm:text-xs h-12",
+								filterStatus === Number(key) && highlight_css,
+							)}
+							variant="outline"
+							onClick={() => {
+								setFilterStatus(Number(key));
+							}}
+						>
+							{t(`OrderStatus_${OrderStatus[Number(key)]}`)}
+						</Button>
+					))}
+				</div>
+				<DisplayOrders orders={result} />
+			</CardContent>
+		</Card>
 	);
 };
