@@ -3,7 +3,8 @@ import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { SubscriptionStatus } from "@/types/enum";
 import logger from "@/lib/logger";
-import { getUtcNow, transformDecimalsToNumbers } from "@/utils/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
 

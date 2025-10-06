@@ -2,7 +2,8 @@ import { auth } from "@/auth";
 import { sqlClient } from "@/lib/prismadb";
 //import { User } from 'prisma/prisma-client';
 import type { StoreOrder, User } from "@/types";
-import { getDateInTz, transformDecimalsToNumbers } from "@/utils/utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
+import { getDateInTz } from "@/utils/datetime-utils";
 import type { StoreTables } from "@prisma/client";
 
 const getUser = async (): Promise<User | null> => {

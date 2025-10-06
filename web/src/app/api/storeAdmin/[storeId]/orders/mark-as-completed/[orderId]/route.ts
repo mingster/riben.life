@@ -1,7 +1,7 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
-import { getNowTimeInTz, getUtcNow } from "@/utils/utils";
+import { getNowTimeInTz, getUtcNow } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
 
 ///!SECTION mark pending or processing order as completed

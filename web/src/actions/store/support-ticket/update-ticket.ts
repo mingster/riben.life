@@ -27,7 +27,6 @@ export const updateTicketAction = userRequiredActionClient
 				modifier,
 			},
 		}) => {
-
 			if (id === undefined || id === null || id === "") {
 				const result = await sqlClient.supportTicket.create({
 					data: {

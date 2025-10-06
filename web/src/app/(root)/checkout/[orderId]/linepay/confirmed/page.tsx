@@ -18,7 +18,8 @@ import type { LinePayClient } from "@/lib/linepay/type";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
-import { getAbsoluteUrl, getUtcNow } from "@/utils/utils";
+import { getAbsoluteUrl } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 

@@ -8,7 +8,7 @@ import { Heading } from "@/components/ui/heading";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
-import { formatDateTime } from "@/utils/utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import { MessageCircleMore } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";

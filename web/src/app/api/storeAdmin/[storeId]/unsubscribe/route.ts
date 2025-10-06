@@ -2,7 +2,7 @@ import { IsSignInResponse } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
-import { getUtcNow } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
 
 export async function GET(

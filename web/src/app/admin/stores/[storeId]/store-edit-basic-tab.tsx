@@ -44,7 +44,7 @@ import { CountryCombobox } from "@/components/country-combobox";
 import { CurrencyCombobox } from "@/components/currency-combobox";
 import ImageUploadBox from "@/components/image-upload-box";
 import { LocaleSelectItems } from "@/components/locale-select-items";
-import { deleteImage, uploadImage } from "@/utils/utils";
+import { deleteImage, uploadImage } from "@/utils/image-utils";
 
 const formSchema = z.object({
 	name: z.string().min(1, { message: "store name is required" }),

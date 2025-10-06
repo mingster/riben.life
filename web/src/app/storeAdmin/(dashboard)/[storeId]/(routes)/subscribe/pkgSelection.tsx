@@ -4,7 +4,9 @@ import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
-import { cn, formatDateTime, getAbsoluteUrl, getUtcNow } from "@/utils/utils";
+import { cn, getAbsoluteUrl } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import { useParams, useRouter } from "next/navigation";
 
 import { ConfirmModal } from "@/components/modals/cofirm-modal";

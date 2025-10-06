@@ -136,9 +136,11 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 
 						<Separator className="my-2" />
 						<div className="w-full space-y-2">
-							{row.original.Thread.map((thread: SupportTicket, index: number) => (
-								<TicketThread key={thread.id} thread={thread} index={index} />
-							))}
+							{row.original.Thread.map(
+								(thread: SupportTicket, index: number) => (
+									<TicketThread key={thread.id} thread={thread} index={index} />
+								),
+							)}
 						</div>
 					</div>
 				),

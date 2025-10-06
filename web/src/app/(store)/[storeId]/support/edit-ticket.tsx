@@ -8,9 +8,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
 
-
 import { updateTicketAction } from "@/actions/store/support-ticket/update-ticket";
-import { updateTicketSchema, type UpdateTicketInput } from "@/actions/store/support-ticket/update-ticket.validation";
+import {
+	updateTicketSchema,
+	type UpdateTicketInput,
+} from "@/actions/store/support-ticket/update-ticket.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/Toaster";
 import { Button } from "@/components/ui/button";
@@ -71,28 +73,28 @@ export const EditTicket: React.FC<props> = ({
 
 	const defaultValues = !isNew
 		? {
-			// for reply - create a new reply ticket and use previous ticket's info
-			id: "",
-			senderId: currentUser.id,
-			creator: currentUser.Email,
-			modifier: currentUser.Email,
-			department: item.department,
-			subject: item.subject,
-			status: item.status,
-			// if item has threadId, use it. If not, this item will be the main thread - use its id.
-			threadId: item.threadId || item.id,
-			storeId: params.storeId as string,
-		}
+				// for reply - create a new reply ticket and use previous ticket's info
+				id: "",
+				senderId: currentUser.id,
+				creator: currentUser.Email,
+				modifier: currentUser.Email,
+				department: item.department,
+				subject: item.subject,
+				status: item.status,
+				// if item has threadId, use it. If not, this item will be the main thread - use its id.
+				threadId: item.threadId || item.id,
+				storeId: params.storeId as string,
+			}
 		: {
-			// create a new root ticket
-			id: "",
-			senderId: currentUser.id,
-			creator: currentUser.Email,
-			modifier: currentUser.Email,
-			status: Number(TicketStatus.Open),
-			department: "technical",
-			storeId: params.storeId as string,
-		};
+				// create a new root ticket
+				id: "",
+				senderId: currentUser.id,
+				creator: currentUser.Email,
+				modifier: currentUser.Email,
+				status: Number(TicketStatus.Open),
+				department: "technical",
+				storeId: params.storeId as string,
+			};
 
 	//console.log("defaultValues", isNew, defaultValues);
 

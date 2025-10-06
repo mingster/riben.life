@@ -1,6 +1,7 @@
 "use client";
 import { toastError, toastSuccess } from "@/components/Toaster";
-import { cn, formatDateTime } from "@/utils/utils";
+import { cn } from "@/utils/utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useTranslation } from "@/app/i18n/client";

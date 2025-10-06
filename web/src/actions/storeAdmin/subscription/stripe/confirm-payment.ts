@@ -3,7 +3,8 @@ import { stripe } from "@/lib/stripe/config";
 import Stripe from "stripe";
 
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
-import { formatDateTime, getUtcNow } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import logger from "@/lib/logger";
 
 /**

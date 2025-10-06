@@ -16,7 +16,8 @@ import {
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import type { SystemMessage } from "@/types";
-import { formatDateTime, getUtcNow } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import axios, { type AxiosError } from "axios";
 import { CheckIcon, Copy, MoreHorizontal, Trash, XIcon } from "lucide-react";

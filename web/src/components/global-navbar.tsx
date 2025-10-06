@@ -67,7 +67,9 @@ export function GlobalNavbar({ title }: NavbarProps) {
 					? "bg-transparent supports-backdrop-blur:bg-white/95 dark:bg-gray-900/5"
 					: "bg-primary/20 supports-backdrop-blur:bg-white/60 dark:bg-gray-900/50",
 			)}
-		>			<div className="mx-4 flex h-14 items-center sm:mx-8">
+		>
+			{" "}
+			<div className="mx-4 flex h-14 items-center sm:mx-8">
 				<div className="flex items-center space-x-4 lg:space-x-0">
 					<Link href="/" className="flex cursor-pointer">
 						{logo != null ? (

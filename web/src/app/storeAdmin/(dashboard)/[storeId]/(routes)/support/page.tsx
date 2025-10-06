@@ -2,7 +2,7 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import { formatDateTime } from "@/utils/utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import type { Store, SupportTicket } from "@prisma/client";
 
 import { GetSession } from "@/lib/auth/utils";

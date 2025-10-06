@@ -50,7 +50,7 @@ import {
 	updateUserSettingsSchema,
 } from "@/actions/admin/user/update-user-settings.validation";
 import type { User } from "@/types";
-import { formatDateTime } from "@/utils/utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import { UserRoleCombobox } from "./user-role-combobox";
 
 /*

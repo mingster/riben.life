@@ -30,7 +30,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { toastError, toastSuccess } from "@/components/Toaster";
 import ImageUploadBox from "@/components/image-upload-box";
 import { Button } from "@/components/ui/button";
-import { deleteImage, uploadImage } from "@/utils/utils";
+import { deleteImage, uploadImage } from "@/utils/image-utils";
 import axios from "axios";
 import { XCircleIcon } from "lucide-react";
 import Image from "next/image";

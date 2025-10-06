@@ -1,11 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
-import {
-	getNowTimeInTz,
-	getRandomNum,
-	getUtcNow,
-	transformDecimalsToNumbers,
-} from "@/utils/utils";
+import { getRandomNum, transformDecimalsToNumbers } from "@/utils/utils";
+import { getNowTimeInTz, getUtcNow } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 

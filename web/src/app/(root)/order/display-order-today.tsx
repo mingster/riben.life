@@ -13,7 +13,7 @@ import {
 } from "@/lib/order-history";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
-import { getUtcNow } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
