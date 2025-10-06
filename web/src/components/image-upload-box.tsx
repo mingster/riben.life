@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/utils/utils";
-import { IconBoxSelect } from "@tabler/icons-react";
+import { IconSelect } from "@tabler/icons-react";
 import Image from "next/image";
 import type React from "react";
 import { useState } from "react";
@@ -116,7 +116,7 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
 						disabled && "opacity-25 cursor-not-allowed text-gary-100",
 					)}
 				>
-					<IconBoxSelect className="size-10" />
+					<IconSelect className="size-10" />
 					<p className="my-0 text-sm font-medium">Drag and Drop</p>
 
 					<div aria-disabled={disabled}>

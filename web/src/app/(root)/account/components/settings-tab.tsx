@@ -35,11 +35,11 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 
-import { updateUserSettingsAction } from "@/actions/update-user-settings";
+import { updateUserSettingsAction } from "@/actions/user/update-user-settings";
 import {
 	type UpdateUserSettingsInput,
 	updateUserSettingsSchema,
-} from "@/actions/update-user-settings.validation";
+} from "@/actions/user/update-user-settings.validation";
 import { toastError, toastSuccess } from "@/components/Toaster";
 import SignOutButton from "@/components/auth/sign-out-button";
 

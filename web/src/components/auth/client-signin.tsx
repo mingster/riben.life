@@ -45,22 +45,19 @@ export default function ClientSignIn({
 				</CardHeader>
 			)}
 
-			<CardContent>
+			<CardContent className="flex flex-col gap-2">
+
 				<GoogleLoginButton callbackUrl={callbackUrl} />
-				{/*
 				<LineLoginButton callbackUrl={callbackUrl} />
-				*/}
-				<Separator className="!w-auto grow pt-5 pb-5 bg-transparent" />
-
 				<FormMagicLink callbackUrl={callbackUrl} />
-
-				<Separator className="!w-auto grow pt-5 pb-5 bg-transparent" />
 
 				{/* display supported 3rd party login buttons */}
 				<div className="flex items-center justify-center gap-1">
 					<PasskeyLoginButton callbackUrl={callbackUrl} />
 					<IconBrandMeta className="mr-0 size-4" />
 				</div>
+
+				<Separator className="!w-auto grow pt-5 pb-5 bg-transparent" />
 
 				<CardFooter className="flex py-1 justify-end items-center pt-10">
 					<div className="flex gap-1">
