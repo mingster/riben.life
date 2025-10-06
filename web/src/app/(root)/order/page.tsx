@@ -1,5 +1,5 @@
 import getStoreById from "@/actions/get-store-by_id";
-import { Navbar } from "@/components/global-navbar";
+import { GlobalNavbar } from "@/components/global-navbar";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
@@ -31,7 +31,7 @@ export default async function StoreOrderStatusPage(props: {
 	return (
 		<Suspense fallback={<Loader />}>
 			<div className="bg-no-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
-				<Navbar title="" />
+				<GlobalNavbar title="" />
 				<Container>
 					<DisplayStoreOrdersToday store={store} />
 				</Container>

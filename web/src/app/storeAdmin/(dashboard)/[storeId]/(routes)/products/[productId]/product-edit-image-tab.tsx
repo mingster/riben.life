@@ -48,18 +48,14 @@ const validationSchema = z.object({
 
 type ProductImages = z.infer<typeof validationSchema>["productImages"][number];
 
-function useZodForm<TSchema extends z.ZodType>(
-	props: Omit<UseFormProps<TSchema["_input"]>, "resolver"> & {
+function useZodForm<TSchema extends z.ZodType<any, any, any>>(
+	props: Omit<UseFormProps<z.infer<TSchema>>, "resolver"> & {
 		schema: TSchema;
 	},
 ) {
-	const form = useForm<TSchema["_input"]>({
+	const form = useForm<z.infer<TSchema>>({
 		...props,
-		resolver: zodResolver(validationSchema, undefined, {
-			//resolver: zodResolver(props.schema, undefined, {
-			// This makes it so we can use `.transform()`s on the schema without same transform getting applied again when it reaches the server
-			//rawValues: true
-		}),
+		resolver: zodResolver(props.schema) as any,
 	});
 
 	return form;

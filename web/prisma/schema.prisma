@@ -137,6 +137,7 @@ model system_logs {
 model PlatformSettings {
   id              String  @id @default(cuid())
   stripeProductId String?
+  stripePriceId   String?
   settings        String?
 }
 

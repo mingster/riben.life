@@ -56,17 +56,17 @@ export const formSchema = z.object({
 	// 0:radiobox|1:checkboxes
 	isMultiple: z.boolean().prefault(false).optional(),
 	// 至少選1項 | 最多選3項
-	minSelection: z.coerce.number().prefault(1),
-	maxSelection: z.coerce.number().prefault(1),
+	minSelection: z.number().prefault(1),
+	maxSelection: z.number().prefault(1),
 
 	allowQuantity: z.boolean().prefault(false).optional(),
-	minQuantity: z.coerce.number().prefault(1),
-	maxQuantity: z.coerce.number().prefault(1),
+	minQuantity: z.number().prefault(1),
+	maxQuantity: z.number().prefault(1),
 
 	selections: z.string().min(1, {
 		error: "selections is required",
 	}),
-	sortOrder: z.coerce.number().min(1),
+	sortOrder: z.number().min(1),
 });
 
 // dialog to handle create and update for ProductOption and ProductOptionSelections object.

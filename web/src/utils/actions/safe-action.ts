@@ -69,7 +69,7 @@ export const actionClient = baseClient
 	});
 
 // doesn't bind to a specific email
-export const actionClientUser = baseClient.use(async ({ next, metadata }) => {
+export const userRequiredActionClient = baseClient.use(async ({ next, metadata }) => {
 	const session = await auth();
 
 	if (!session?.user) throw new SafeError("Unauthorized");

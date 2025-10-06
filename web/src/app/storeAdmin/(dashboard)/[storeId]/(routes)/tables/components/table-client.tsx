@@ -79,8 +79,8 @@ export const TableClient: React.FC<props> = ({ data }) => {
 
 export const formSchema = z.object({
 	prefix: z.string().optional().prefault(""),
-	numOfTables: z.coerce.number().prefault(1),
-	capacity: z.coerce.number().prefault(2),
+	numOfTables: z.number().prefault(1),
+	capacity: z.number().prefault(2),
 });
 
 export function AddTablesDialog() {

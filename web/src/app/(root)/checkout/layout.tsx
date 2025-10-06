@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/global-navbar";
+import { GlobalNavbar } from "@/components/global-navbar";
 import Container from "@/components/ui/container";
 
 import { Loader } from "@/components/loader";
@@ -10,7 +10,7 @@ export default async function StoreHomeLayout({
 }) {
 	return (
 		<Suspense fallback={<Loader />}>
-			<Navbar title="" />
+			<GlobalNavbar title="" />
 			<Container>{children}</Container>
 		</Suspense>
 	);

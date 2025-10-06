@@ -38,12 +38,15 @@ export async function POST(
 				storeId: params.storeId,
 				threadId: uuidv4(),
 				senderId: userId,
-				recipentId: store.ownerId,
+				recipientId: store.ownerId,
+				priority: 1,
+				creator: userId,
+				modifier: userId,
 				status: TicketStatus.Open,
 				department,
 				subject,
 				message,
-				updatedAt: getUtcNow(),
+				lastModified: getUtcNow(),
 			},
 		});
 

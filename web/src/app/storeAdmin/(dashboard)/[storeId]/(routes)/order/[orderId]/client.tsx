@@ -81,12 +81,12 @@ const formSchema = z.object({
 			productId: z.string().min(1, {
 				error: "product is required",
 			}),
-			quantity: z.coerce.number().min(1, {
+			quantity: z.number().min(1, {
 				error: "quantity is required",
 			}),
 			//variants: z.string().optional(),
-			//unitDiscount: z.coerce.number().min(1),
-			//unitPrice: z.coerce.number().min(1),
+			//unitDiscount: z.number().min(1),
+			//unitPrice: z.number().min(1),
 		})
 		.array()
 		.min(1, {
@@ -95,24 +95,20 @@ const formSchema = z.object({
 		.optional(),
 });
 
-function useZodForm<TSchema extends z.ZodType>(
-	props: Omit<UseFormProps<TSchema["_input"]>, "resolver"> & {
+function useZodForm<TSchema extends z.ZodType<any, any, any>>(
+	props: Omit<UseFormProps<z.infer<TSchema>>, "resolver"> & {
 		schema: TSchema;
 	},
 ) {
-	const form = useForm<TSchema["_input"]>({
+	const form = useForm<z.infer<TSchema>>({
 		...props,
-		resolver: zodResolver(formSchema, undefined, {
-			//resolver: zodResolver(props.schema, undefined, {
-			// This makes it so we can use `.transform()`s on the schema without same transform getting applied again when it reaches the server
-			//rawValues: true
-		}),
+		resolver: zodResolver(props.schema) as any,
 	});
 
 	return form;
 }
 
-// Modifiy Order Dialog
+// Modify Order Dialog
 //
 export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 	//console.log('order', JSON.stringify(order));

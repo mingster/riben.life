@@ -35,7 +35,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 const formSchema = z.object({
 	name: z.string().min(1, { message: "name is required" }),
-	sortOrder: z.coerce.number().min(1),
+	sortOrder: z.number().min(1),
 	isFeatured: z.boolean().default(false).optional(),
 });
 

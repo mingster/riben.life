@@ -50,12 +50,15 @@ export async function PATCH(
 				storeId: params.storeId,
 				threadId: orig_ticket.threadId,
 				senderId: userId,
-				recipentId: store.ownerId,
+				recipientId: store.ownerId,
+				priority: 1,
+				creator: userId,
+				modifier: userId,
 				status: TicketStatus.Replied,
 				department: orig_ticket.department,
 				subject: orig_ticket.subject,
 				message,
-				updatedAt: getUtcNow(),
+				lastModified: getUtcNow(),
 			},
 		});
 
@@ -68,7 +71,7 @@ export async function PATCH(
 			},
 			data: {
 				status: TicketStatus.Replied,
-				updatedAt: getUtcNow(),
+				lastModified: getUtcNow(),
 			},
 		});
 
@@ -126,7 +129,7 @@ export async function DELETE(
 			},
 			data: {
 				status: TicketStatus.Archived,
-				updatedAt: getUtcNow(),
+				lastModified: getUtcNow(),
 			},
 		});
 

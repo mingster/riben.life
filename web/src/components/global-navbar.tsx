@@ -1,4 +1,6 @@
 "use client";
+import clsx from "clsx";
+
 import { useEffect, useState } from "react";
 
 import { useSession } from "next-auth/react";
@@ -20,11 +22,29 @@ interface NavbarProps {
 	title: string;
 }
 
-export function Navbar({ title }: NavbarProps) {
+export function GlobalNavbar({ title }: NavbarProps) {
 	const [mounted, setMounted] = useState(false);
+	const [isOpaque, setIsOpaque] = useState(false);
 
 	const session = useSession();
 	const user = session.data?.user;
+	useEffect(() => {
+		const offset = 50;
+		function onScroll() {
+			if (!isOpaque && window.scrollY > offset) {
+				setIsOpaque(true);
+			} else if (isOpaque && window.scrollY <= offset) {
+				setIsOpaque(false);
+			}
+		}
+		onScroll();
+		window.addEventListener("scroll", onScroll, { passive: true });
+
+		return () => {
+			window.removeEventListener("scroll", onScroll);
+			//window.addEventListener("scroll", onScroll, { passive: true } as any);
+		};
+	}, [isOpaque]);
 
 	useEffect(() => {
 		setMounted(true);
@@ -33,15 +53,21 @@ export function Navbar({ title }: NavbarProps) {
 
 	/*
   if (process.env.NODE_ENV === 'development') {
-    log.debug('session: ' + JSON.stringify(session));
-    log.debug('user: ' + JSON.stringify(user));
+	log.debug('session: ' + JSON.stringify(session));
+	log.debug('user: ' + JSON.stringify(user));
   }
   */
 	const logo = null;
 
 	return (
-		<header className="sticky top-0 z-10 w-full">
-			<div className="mx-4 flex h-14 items-center sm:mx-8">
+		<header
+			className={clsx(
+				"sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-slate-900/10 dark:border-slate-50/[0.06]",
+				isOpaque
+					? "bg-transparent supports-backdrop-blur:bg-white/95 dark:bg-gray-900/5"
+					: "bg-primary/20 supports-backdrop-blur:bg-white/60 dark:bg-gray-900/50",
+			)}
+		>			<div className="mx-4 flex h-14 items-center sm:mx-8">
 				<div className="flex items-center space-x-4 lg:space-x-0">
 					<Link href="/" className="flex cursor-pointer">
 						{logo != null ? (

@@ -85,7 +85,7 @@ export const formSchema = z.object({
 	names: z.string().min(1, {
 		error: "product data is required",
 	}),
-	status: z.coerce.number(),
+	status: z.number(),
 });
 
 /**

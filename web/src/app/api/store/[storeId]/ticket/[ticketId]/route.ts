@@ -53,12 +53,15 @@ export async function PATCH(
 				storeId: params.storeId,
 				threadId: orig_ticket.threadId,
 				senderId: userId,
-				recipentId: store.ownerId,
+				recipientId: store.ownerId,
+				priority: 1,
+				creator: userId,
+				modifier: userId,
 				status: TicketStatus.Active,
 				department: orig_ticket.department,
 				subject: orig_ticket.subject,
 				message,
-				updatedAt: getUtcNow(),
+				lastModified: getUtcNow(),
 			},
 		});
 		console.log(`reply ticket created: ${JSON.stringify(reply)}`);
@@ -70,7 +73,7 @@ export async function PATCH(
 			},
 			data: {
 				status: TicketStatus.Active,
-				updatedAt: getUtcNow(),
+				lastModified: getUtcNow(),
 			},
 		});
 
@@ -135,7 +138,7 @@ export async function DELETE(
 			},
 			data: {
 				status: TicketStatus.Archived,
-				updatedAt: getUtcNow(),
+				lastModified: getUtcNow(),
 			},
 		});
 

@@ -46,7 +46,7 @@ const formSchema = z.object({
 		  }),
 	*/
 	note: z.string().optional(),
-	level: z.coerce.number(),
+	level: z.number(),
 });
 
 type formValues = z.infer<typeof formSchema>;

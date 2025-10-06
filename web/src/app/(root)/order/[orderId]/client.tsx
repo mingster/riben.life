@@ -2,7 +2,7 @@
 
 import { useTranslation } from "@/app/i18n/client";
 import { AskUserToSignIn } from "@/components/ask-user-to-signIn";
-import { Navbar } from "@/components/global-navbar";
+import { GlobalNavbar } from "@/components/global-navbar";
 import { DisplayOrder } from "@/components/order-display";
 import StoreRequirePrepaidPrompt from "@/components/store-require-prepaid-prompt";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ export const DisplayClient: React.FC<props> = ({ store, order }) => {
 
 	return (
 		<div className="bg-no-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
-			<Navbar title="" />
+			<GlobalNavbar title="" />
 			<Container>
 				<h1 className="text-4xl sm:text-xl pb-2">{t("order_view_title")}</h1>
 

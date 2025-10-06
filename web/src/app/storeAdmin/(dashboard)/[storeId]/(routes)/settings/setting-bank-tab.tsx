@@ -31,7 +31,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { PayoutScheduleCombobox } from "./payout-schedule-combobox";
 
 const formSchema = z.object({
-	payoutSchedule: z.coerce.number(),
+	payoutSchedule: z.number(),
 	bankCode: z.string().min(3, { message: "bank code is required" }),
 	bankAccount: z
 		.string()

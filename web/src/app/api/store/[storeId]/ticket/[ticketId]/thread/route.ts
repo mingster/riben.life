@@ -38,7 +38,7 @@ export async function POST(
 				threadId: params.ticketId,
 			},
 			orderBy: {
-				updatedAt: "desc",
+				lastModified: "desc",
 			},
 		});
 

@@ -29,9 +29,9 @@ const formSchema = z.object({
 	name: z.string(),
 	payUrl: z.string(),
 	priceDescr: z.string(),
-	fee: z.coerce.number(),
-	feeAdditional: z.coerce.number(),
-	clearDays: z.coerce.number(),
+	fee: z.number(),
+	feeAdditional: z.number(),
+	clearDays: z.number(),
 	isDeleted: z.boolean(),
 	isDefault: z.boolean(),
 });

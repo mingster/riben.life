@@ -57,29 +57,29 @@ const formSchema = z.object({
 	isRecurring: z.boolean().optional().prefault(false),
 	isBrandNew: z.boolean().optional().prefault(true),
 
-	interval: z.coerce.number().prefault(0),
-	intervalCount: z.coerce.number().prefault(0),
-	trialPeriodDays: z.coerce.number().prefault(0),
+	interval: z.number().prefault(0),
+	intervalCount: z.number().prefault(0),
+	trialPeriodDays: z.number().prefault(0),
 
 	isShipRequired: z.boolean().optional().prefault(false),
 	isFreeShipping: z.boolean().optional().prefault(false),
-	additionalShipCost: z.coerce.number().prefault(0),
+	additionalShipCost: z.number().prefault(0),
 
-	stock: z.coerce.number().prefault(0),
+	stock: z.number().prefault(0),
 	displayStockAvailability: z.boolean().optional().prefault(false),
 	displayStockQuantity: z.boolean().optional().prefault(false),
 	allowBackOrder: z.boolean().optional().prefault(false),
 	disableBuyButton: z.boolean().optional().prefault(false),
 
-	orderMinQuantity: z.coerce.number().prefault(1),
-	orderMaxQuantity: z.coerce.number().prefault(0),
+	orderMinQuantity: z.number().prefault(1),
+	orderMaxQuantity: z.number().prefault(0),
 
-	weight: z.coerce.number().optional().prefault(0),
-	height: z.coerce.number().optional().prefault(0),
-	width: z.coerce.number().optional().prefault(0),
+	weight: z.number().optional().prefault(0),
+	height: z.number().optional().prefault(0),
+	width: z.number().optional().prefault(0),
 
-	availableStartDate: z.coerce.date().optional(),
-	availableEndDate: z.coerce.date().optional(),
+	availableStartDate: z.date().optional(),
+	availableEndDate: z.date().optional(),
 
 	stripePriceId: z.string().optional().prefault(""),
 	mfgPartNumber: z.string().optional().prefault(""),
