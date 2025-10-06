@@ -21,7 +21,6 @@ import {
 
 import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
 
-import { useSession } from "next-auth/react";
 import { type ChangeEvent, useEffect, useState } from "react";
 
 import getStripe from "@/lib/stripe/client";
@@ -33,6 +32,7 @@ import axios from "axios";
 import { formatDate } from "date-fns";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
 
 // display package selectiion ui and call back end api to create related payment objects such as paymentintent
 //
@@ -344,11 +344,12 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 			});
 	}, [order]);
 
-	const session = useSession();
-	let email = session.data?.user?.email as string;
+	const { data: session } = authClient.useSession();
+
+	let email = session?.user?.email as string;
 	if (!email) email = "";
 
-	let name = session.data?.user?.name as string;
+	let name = session?.user?.name as string;
 	if (!name) name = "";
 
 	const { resolvedTheme } = useTheme();

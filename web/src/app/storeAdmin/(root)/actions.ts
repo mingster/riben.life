@@ -5,23 +5,23 @@ import { redirect } from "next/navigation";
 import { sqlClient } from "@/lib/prismadb";
 
 import fs from "node:fs";
-import { GetSession } from "@/lib/auth/utils";
 import { StoreLevel } from "@/types/enum";
 import logger from "@/lib/logger";
-import type { Session } from "next-auth";
 import type { z } from "zod";
 import type { formSchema } from "./store-modal";
+import { auth, Session } from "@/lib/auth";
+import { headers } from "next/headers";
 
 //NOTE - do not move this to other folder.
 //
 export const createStore = async (values: z.infer<typeof formSchema>) => {
-	const session = (await GetSession()) as Session;
+	const session = (await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	})) as unknown as Session;
 	const ownerId = session.user?.id;
 
 	if (!session || !session.user || !ownerId) {
-		redirect(
-			`${process.env.NEXT_PUBLIC_API_URL}/auth/signin/?callbackUrl=/storeAdmin`,
-		);
+		redirect(`/signin/?callbackUrl=/storeAdmin`);
 	}
 
 	//console.log(values);

@@ -15,26 +15,28 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
 	title: "My Notification",
 };
 
 const UserNotificationPage: React.FC = async () => {
+	return null;
+	/*
 	const user = await getUser();
 
 	//const { t } = await useTranslation(user?.locale || "en");
 
 	if (!user) {
-		redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
+		redirect(`/signin`);
 	} else {
 		const _u: User = user as User;
 		//console.log(`user: ${JSON.stringify(u)}`);
-		const session = (await auth()) as Session;
-
-		const notifications = session?.user.notifications;
+const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});
+		const notifications = session?.user?.NotificationTo;
 		if (notifications === null) return;
 
 		//console.log(`notifcations: ${JSON.stringify(session.user.notifications)}`);
@@ -46,7 +48,7 @@ const UserNotificationPage: React.FC = async () => {
 		await sqlClient.storeNotification.updateMany({
 			where: {
 				id: {
-					in: notifications.map((n) => n.id),
+					in: notifications.map((n: StoreNotification) => n.id),
 				},
 			},
 			data: {
@@ -70,7 +72,6 @@ const UserNotificationPage: React.FC = async () => {
 								className="flex flex-row gap-5 border-collapse pb-5"
 							>
 								<div className="pl-1 max-w-120">
-									{/*user box*/}
 									<div className="basis-1/3 flex gap-2">
 										<Image
 											src={obj.Sender?.image || avatarPlaceholder}
@@ -99,5 +100,6 @@ const UserNotificationPage: React.FC = async () => {
 			</Suspense>
 		);
 	}
+	*/
 };
 export default UserNotificationPage;

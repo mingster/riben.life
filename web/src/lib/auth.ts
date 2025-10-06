@@ -22,7 +22,7 @@ import { emailHarmony } from "better-auth-harmony";
 
 import { sendAuthMagicLink } from "@/actions/mail/send-auth-magic-link";
 import { sendAuthPasswordReset } from "@/actions/mail/send-auth-password-reset";
-//import { sendAuthEmailValidation } from "@/actions/mail/send-auth-email-validation";
+import { sendAuthEmailValidation } from "@/actions/mail/send-auth-email-validation";
 import { stripe as stripeClient } from "@/lib/stripe/config";
 import { customSession } from "better-auth/plugins";
 import { sqlClient } from "./prismadb";
@@ -75,12 +75,11 @@ export const auth = betterAuth({
 			accessType: "offline",
 			prompt: "select_account consent",
 		},
-		/*
 		line: {
 			clientId: process.env.AUTH_LINE_ID as string,
 			clientSecret: process.env.AUTH_LINE_SECRET as string,
 			scopes: ["openid", "profile", "email"],
-		},*/
+		},
 	},
 	plugins: [
 		...(options.plugins ?? []),
@@ -152,7 +151,7 @@ export const auth = betterAuth({
 		*/
 		organization(),
 		admin({
-			adminRoles: ["admin"],
+			adminRoles: ["ADMIN"],
 			//sysAdminUserIds: ["Nz6WKKKMKvadXXmgZgaHiqIYOuXr31w1"],
 			//impersonationSessionDuration: 60 * 60 * 24, // 1 day
 		}),

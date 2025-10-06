@@ -1,6 +1,6 @@
 "use client";
 
-import { AskUserToSignIn } from "@/components/ask-user-to-signIn";
+import { AskUserToSignIn } from "@/components/auth/ask-user-to-signIn";
 import { DisplayOrder } from "@/components/order-display";
 import StoreRequirePrepaidPrompt from "@/components/store-require-prepaid-prompt";
 
@@ -15,11 +15,11 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
 import { getUtcNow } from "@/utils/datetime-utils";
 import axios from "axios";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 //import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { authClient } from "@/lib/auth-client";
 
 export interface props {
 	store: Store;
@@ -32,7 +32,7 @@ export const DisplayStoreOrdersToday: React.FC<props> = ({ store }) => {
 	const [orders, setOrders] = useState([]);
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-	const { data: session } = useSession();
+	const { data: session } = authClient.useSession();
 
 	const [loading, setLoading] = useState(false);
 	const [mounted, setMounted] = useState(false);

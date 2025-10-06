@@ -3,7 +3,7 @@
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import axios, { type AxiosError } from "axios";
-import { Copy, Edit, MoreHorizontal, Trash } from "lucide-react";
+import { IconCopy, IconEdit, IconDots, IconTrash } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -78,23 +78,23 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" className="size-8 p-0">
 						<span className="sr-only">Open menu</span>
-						<MoreHorizontal className="size-4" />
+						<IconDots className="size-4" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
 					<DropdownMenuItem onClick={() => onCopy(data.id)}>
-						<Copy className="mr-0 size-4" /> Copy Id
+						<IconCopy className="mr-0 size-4" /> Copy Id
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						onClick={() =>
 							router.push(`/storeAdmin/${params.storeId}/products/${data.id}`)
 						}
 					>
-						<Edit className="mr-0 size-4" /> {t("Edit")}
+						<IconEdit className="mr-0 size-4" /> {t("Edit")}
 					</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => setOpen(true)}>
-						<Trash className="mr-0 size-4" /> {t("Delete")}
+						<IconTrash className="mr-0 size-4" /> {t("Delete")}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

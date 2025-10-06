@@ -1,9 +1,12 @@
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 export const CheckAdminApiAccess = async () => {
-	const session = (await auth()) as Session;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});
+
 	const userId = session?.user.id;
 
 	if (!session) {

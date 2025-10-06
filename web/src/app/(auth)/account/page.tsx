@@ -1,10 +1,8 @@
-//import { auth } from "@/auth";
-
 import getUser from "@/actions/get-user";
-import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
-import type { User } from "@/types";
+import Container from "@/components/ui/container";
 import logger from "@/lib/logger";
+import type { User } from "@/types";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -20,9 +18,7 @@ export default async function AccountPage() {
 	logger.info(user);
 
 	if (!user) {
-		redirect(
-			`${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=/account`,
-		);
+		redirect(`/signin?callbackUrl=/account`);
 	} else {
 		//console.log(`user: ${JSON.stringify(u)}`);
 

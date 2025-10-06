@@ -1,15 +1,14 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
+import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
-import { Loader } from "@/components/loader";
 import type { StoreOrder, User } from "@/types";
 import type { Address } from "@prisma/client";
 import { AddressesTab } from "./address-tab";
@@ -30,7 +29,6 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const { data: session, status } = useSession();
 	const searchParams = useSearchParams();
 	const initialTab = searchParams.get("tab");
 	const [activeTab, setActiveTab] = useState(initialTab || "orders"); //show order tab by default

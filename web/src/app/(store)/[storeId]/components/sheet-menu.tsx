@@ -1,10 +1,11 @@
-import { HomeIcon, MenuIcon } from "lucide-react";
+"use client";
+
+import { IconHome, IconMenu2 } from "@tabler/icons-react";
 import Link from "next/link";
 
 import DropdownCart from "@/components/dropdown-cart";
 import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
-import DropdownUser from "@/components/dropdown-user";
 import ThemeToggler from "@/components/theme-toggler";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,11 +17,12 @@ import {
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import type { Store } from "@/types";
-import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { StoreMenu } from "./store-menu";
 
 import { useTranslation } from "@/app/i18n/client";
+import DropdownUser from "@/components/auth/dropdown-user";
+import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
 
 interface props {
@@ -36,9 +38,8 @@ export function SheetMenu({ store }: props) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	//const router = useRouter();
-	const session = useSession();
-	const user = session.data?.user;
+	const { data: session } = authClient.useSession();
+	const user = session?.user;
 
 	return (
 		<Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -48,7 +49,7 @@ export function SheetMenu({ store }: props) {
 					variant="outline"
 					size="icon"
 				>
-					<MenuIcon size={20} />
+					<IconMenu2 size={20} />
 				</Button>
 			</SheetTrigger>
 			<SheetContent
@@ -58,7 +59,7 @@ export function SheetMenu({ store }: props) {
 				<SheetHeader>
 					<Button className="flex pb-2 pt-1" variant="link" asChild>
 						<Link href="/" className="flex gap-2">
-							<HomeIcon className="mr-1 size-6" />
+							<IconHome className="mr-1 size-6" />
 						</Link>
 					</Button>
 				</SheetHeader>
@@ -69,7 +70,7 @@ export function SheetMenu({ store }: props) {
 					<ThemeToggler />
 					<DropdownMessage messages={store.StoreAnnouncement} />
 					<DropdownNotification />
-					<DropdownUser user={user} />
+					<DropdownUser />
 					<DropdownCart />
 				</div>{" "}
 				{/*<!-- Hidden by default, but visible if screen is small --> */}

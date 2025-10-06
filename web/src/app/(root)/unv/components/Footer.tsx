@@ -1,4 +1,4 @@
-import { ArrowBigUpDash } from "lucide-react";
+import { IconArrowUp } from "@tabler/icons-react";
 import React from "react";
 
 export function Footer({ className, ...props }: { className?: string }) {
@@ -7,7 +7,7 @@ export function Footer({ className, ...props }: { className?: string }) {
 			{/* scroll up to top */}
 			<div className="flex justify-center w-full">
 				<a href="#top" title="scroll up to top">
-					<ArrowBigUpDash className="size-[35px]" />
+					<IconArrowUp className="size-[35px]" />
 				</a>
 			</div>
 

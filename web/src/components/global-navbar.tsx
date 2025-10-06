@@ -1,20 +1,18 @@
 "use client";
 import clsx from "clsx";
 
-import { useEffect, useState } from "react";
-
-import { useSession } from "next-auth/react";
-
 import DropdownNotification from "@/components/dropdown-notification";
-import DropdownUser from "@/components/dropdown-user";
+import { useEffect, useState } from "react";
 
 import DropdownCart from "@/components/dropdown-cart";
 import ThemeToggler from "@/components/theme-toggler";
-import { HomeIcon } from "lucide-react";
+import { IconHome } from "@tabler/icons-react";
 //import { cn } from '@/lib/utils';
+import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 import Link from "next/link";
 import { BackgroundImage } from "./BackgroundImage";
+import DropdownUser from "./auth/dropdown-user";
 
 //import { useI18n } from '@/providers/i18n-provider';
 //import { useTranslation } from '@/app/i18n/client';
@@ -27,8 +25,9 @@ export function GlobalNavbar({ title }: NavbarProps) {
 	const [mounted, setMounted] = useState(false);
 	const [isOpaque, setIsOpaque] = useState(false);
 
-	const session = useSession();
-	const user = session.data?.user;
+	const { data: session } = authClient.useSession();
+	const user = session?.user;
+
 	useEffect(() => {
 		const offset = 50;
 		function onScroll() {
@@ -85,7 +84,7 @@ export function GlobalNavbar({ title }: NavbarProps) {
 								</>
 							) : (
 								<>
-									<HomeIcon className="mr-0 size-4" />
+									<IconHome className="mr-0 size-4" />
 									<h1 className="font-bold">{title}</h1>
 								</>
 							)}
@@ -94,7 +93,7 @@ export function GlobalNavbar({ title }: NavbarProps) {
 					<div className="flex flex-1 items-center justify-end space-x-1">
 						<ThemeToggler />
 						<DropdownNotification />
-						<DropdownUser user={user} />
+						<DropdownUser />
 						<DropdownCart />
 					</div>
 				</div>

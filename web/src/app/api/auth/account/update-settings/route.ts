@@ -2,9 +2,9 @@ import { sqlClient } from "@/lib/prismadb";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { getUtcNow } from "@/utils/datetime-utils";
-import type { Session } from "next-auth";
+import { headers } from "next/headers";
 
 ///!SECTION update user data on user's own behave.
 /**
@@ -13,7 +13,9 @@ import type { Session } from "next-auth";
 export async function PATCH(req: Request) {
 	/*
 	try {
-		const session = (await auth()) as Session;
+		const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+		});
 		const userId = session?.user.id;
 
 		if (!userId) {

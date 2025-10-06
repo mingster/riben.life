@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { CheckIcon, XIcon } from "lucide-react";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import { BigText, Caption, IconContainer, Paragraph } from "./common";
 
 import {
@@ -205,13 +205,13 @@ export function Features({ className, ...props }: { className?: string }) {
 							>
 								<TableCell className="">{feature.description}</TableCell>
 								<TableCell>
-									{feature.basic ? <CheckIcon /> : <XIcon />}
+									{feature.basic ? <IconCheck /> : <IconX />}
 								</TableCell>
 								<TableCell>
-									{feature.advanced ? <CheckIcon /> : <XIcon />}
+									{feature.advanced ? <IconCheck /> : <IconX />}
 								</TableCell>
 								<TableCell>
-									{feature.multi ? <CheckIcon /> : <XIcon />}
+									{feature.multi ? <IconCheck /> : <IconX />}
 								</TableCell>
 							</TableRow>
 						))}
@@ -241,13 +241,13 @@ export function Features({ className, ...props }: { className?: string }) {
 							>
 								<TableCell className="">{feature.description}</TableCell>
 								<TableCell>
-									{feature.basic ? <CheckIcon /> : <XIcon />}
+									{feature.basic ? <IconCheck /> : <IconX />}
 								</TableCell>
 								<TableCell>
-									{feature.advanced ? <CheckIcon /> : <XIcon />}
+									{feature.advanced ? <IconCheck /> : <IconX />}
 								</TableCell>
 								<TableCell>
-									{feature.multi ? <CheckIcon /> : <XIcon />}
+									{feature.multi ? <IconCheck /> : <IconX />}
 								</TableCell>
 							</TableRow>
 						))}
@@ -276,13 +276,13 @@ export function Features({ className, ...props }: { className?: string }) {
 							>
 								<TableCell className="">{feature.description}</TableCell>
 								<TableCell>
-									{feature.basic ? <CheckIcon /> : <XIcon />}
+									{feature.basic ? <IconCheck /> : <IconX />}
 								</TableCell>
 								<TableCell>
-									{feature.advanced ? <CheckIcon /> : <XIcon />}
+									{feature.advanced ? <IconCheck /> : <IconX />}
 								</TableCell>
 								<TableCell>
-									{feature.multi ? <CheckIcon /> : <XIcon />}
+									{feature.multi ? <IconCheck /> : <IconX />}
 								</TableCell>
 							</TableRow>
 						))}

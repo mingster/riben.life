@@ -1,30 +1,14 @@
 import { Toaster } from "@/components/ui/sonner";
-import { GetSession } from "@/lib/auth/utils";
 import I18nProvider from "@/providers/i18n-provider";
-import SessionWrapper from "@/providers/session-provider";
 import NextThemeProvider from "@/providers/theme-provider";
 import type { Metadata, Viewport } from "next";
-import type { Session } from "next-auth";
 import { CookiesProvider } from "next-client-cookies/server";
-import { Geist_Mono, Noto_Sans_TC, Poppins } from "next/font/google";
+import { SessionWrapper } from "@/providers/session-provider";
+
 import "./css/globals.css";
-
-const notoSans = Noto_Sans_TC({
-	variable: "--font-noto-sans",
-	weight: ["600"],
-	subsets: ["latin"],
-});
-
-const popinsSans = Poppins({
-	variable: "--font-popins-sans",
-	subsets: ["latin"],
-	weight: "400",
-});
-
-const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
-});
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { IOSVersionCheck } from "@/components/ios-version-check";
+import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 
 export const viewport: Viewport = {
 	width: "device-width",
@@ -112,28 +96,31 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const session = (await GetSession()) as Session;
-
 	return (
-		<SessionWrapper session={session}>
-			<html lang="en" suppressHydrationWarning>
-				<body
-					className={`${popinsSans.variable} ${notoSans.variable} ${geistMono.variable} 
-					overscroll-none antialiased dark [--scroll-mt:9.875rem] lg:[--scroll-mt:6.3125rem] [scrollbar-gutter:stable]`}
+		<html lang="en" suppressHydrationWarning>
+			<body className={"antialiased"}>
+				<NextThemeProvider
+					attribute="class"
+					defaultTheme="dark"
+					enableSystem
+					disableTransitionOnChange
 				>
-					<NextThemeProvider
-						attribute="class"
-						defaultTheme="dark"
-						enableSystem
-						disableTransitionOnChange
-					>
-						<CookiesProvider>
-							<I18nProvider>{children}</I18nProvider>
-						</CookiesProvider>
-					</NextThemeProvider>
-					<Toaster />
-				</body>
-			</html>
-		</SessionWrapper>
+					<CookiesProvider>
+						<I18nProvider>
+							<SessionWrapper>
+								<IOSVersionCheck>
+									<PageViewTracker />
+									{children}
+								</IOSVersionCheck>
+							</SessionWrapper>
+						</I18nProvider>
+					</CookiesProvider>
+				</NextThemeProvider>
+				<Toaster />
+				{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+					<GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+				)}
+			</body>
+		</html>
 	);
 }

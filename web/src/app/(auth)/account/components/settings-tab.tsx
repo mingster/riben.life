@@ -9,7 +9,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import type { User } from "@/types";
-import { signOut } from "next-auth/react";
 
 import { cookieName } from "@/app/i18n/settings";
 import { useCookies } from "next-client-cookies";
@@ -42,6 +41,7 @@ import {
 	updateUserSettingsSchema,
 } from "@/actions/update-user-settings.validation";
 import { toastError, toastSuccess } from "@/components/Toaster";
+import SignOutButton from "@/components/auth/sign-out-button";
 
 interface SettingsPageProps {
 	user: User | null | undefined;
@@ -101,9 +101,7 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 					{/* if user doesn't have email, show its userid */}
 					{!user.email && user.id}
 					&nbsp;&nbsp;
-					<Button variant="secondary" onClick={() => signOut()}>
-						{t("account_tab_signout")}
-					</Button>
+					<SignOutButton variant="secondary" />
 					<Form {...form}>
 						<form
 							onSubmit={form.handleSubmit(onSubmit)}

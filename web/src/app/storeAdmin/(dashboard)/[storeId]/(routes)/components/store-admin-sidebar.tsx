@@ -1,13 +1,20 @@
 "use client";
 
 import {
-	ChevronDown,
-	ChevronUp,
-	FileQuestion,
-	HomeIcon,
-	LogOut,
-} from "lucide-react";
+	IconChevronDown,
+	IconChevronUp,
+	IconHelp,
+	IconHome,
+} from "@tabler/icons-react";
 
+import { useTranslation } from "@/app/i18n/client";
+import { StoreModal } from "@/app/storeAdmin/(root)/store-modal";
+import SignOutButton from "@/components/auth/sign-out-button";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -29,16 +36,6 @@ import {
 	SidebarMenuSubItem,
 	SidebarRail,
 } from "@/components/ui/sidebar";
-import { signOut } from "next-auth/react";
-
-import { useTranslation } from "@/app/i18n/client";
-import { StoreModal } from "@/app/storeAdmin/(root)/store-modal";
-import { Button } from "@/components/ui/button";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import Link from "next/link";
@@ -68,7 +65,7 @@ export function StoreAdminSidebar({ store }: prop) {
 					href: `${nav_prefix}/help`,
 					label: t("QandA"),
 					active: pathname.includes(`${nav_prefix}/help`),
-					icon: FileQuestion,
+					icon: IconHelp,
 					submenus: [],
 				},
 			],
@@ -108,7 +105,7 @@ export function StoreAdminSidebar({ store }: prop) {
 							<SidebarGroupLabel asChild>
 								<CollapsibleTrigger>
 									{groupLabel}
-									<ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+									<IconChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
 								</CollapsibleTrigger>
 							</SidebarGroupLabel>
 							<CollapsibleContent>
@@ -167,7 +164,7 @@ export function StoreAdminSidebar({ store }: prop) {
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<SidebarMenuButton>
-									<ChevronUp className="ml-auto" />
+									<IconChevronUp className="ml-auto" />
 								</SidebarMenuButton>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent
@@ -180,29 +177,20 @@ export function StoreAdminSidebar({ store }: prop) {
 										title={t("back_to_store")}
 										href={`/${store.id}`}
 									>
-										<HomeIcon />
+										<IconHome />
 										{store.name}
 									</Link>
 								</DropdownMenuItem>
 								<DropdownMenuItem asChild>
 									<div className="flex">
-										<FileQuestion />
+										<IconHelp />
 										<Link className="flex items-center gap-1" href={"/help"}>
 											{t("Help")}
 										</Link>
 									</div>
 								</DropdownMenuItem>
 								<DropdownMenuItem>
-									<Button
-										onClick={() => signOut({ callbackUrl: "/" })}
-										variant="outline"
-										className="mt-5 h-10 w-full justify-center"
-									>
-										<span className="mr-4">
-											<LogOut size={18} />
-										</span>
-										<p className="whitespace-nowrap">Sign out</p>
-									</Button>
+									<SignOutButton />
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>

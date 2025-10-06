@@ -1,10 +1,9 @@
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreOrder } from "@prisma/client";
-import type { Session } from "next-auth";
-import { revalidatePath } from "next/cache";
-import { type NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 
 type Params = Promise<{ storeId: string }>;
 
@@ -56,13 +55,16 @@ export async function POST(
 		}
 
 		// if no orderIds, try to get user's order if user is signed in
-		const session = (await auth()) as Session;
+		const session = await auth.api.getSession({
+			headers: await headers(), // you need to pass the headers object.
+		});
+
 		const userId = session?.user.id;
 
 		if (userId) {
 			const orders = (await sqlClient.storeOrder.findMany({
 				where: {
-					userId: session.user.id,
+					userId: userId,
 					//updateAt = today
 					updatedAt: {
 						gte: new Date(new Date().setHours(0, 0, 0, 0)),

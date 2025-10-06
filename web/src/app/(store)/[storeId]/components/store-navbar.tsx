@@ -1,17 +1,14 @@
 "use client";
 
+import { BackgroundImage } from "@/components/BackgroundImage";
 import DropdownCart from "@/components/dropdown-cart";
 import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
-import DropdownUser from "@/components/dropdown-user";
+import DropdownUser from "@/components/auth/dropdown-user";
 import ThemeToggler from "@/components/theme-toggler";
 import { useScrollDirection } from "@/lib/use-scroll-direction";
 import type { Store } from "@/types";
-import { useSession } from "next-auth/react";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { SheetMenu } from "./sheet-menu";
-import { BackgroundImage } from "@/components/BackgroundImage";
 
 export interface props {
 	visible: boolean;
@@ -25,13 +22,10 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
   const [visible, setVisible] = useState(true);
   const pathName = usePathname();
   if (pathName.includes("checkout")) {
-    setVisible(false);
+	setVisible(false);
   }
   //const router = useRouter();
   */
-
-	const session = useSession();
-	const user = session.data?.user;
 
 	// auto hide navbar on scroll
 	const scrollDirection = useScrollDirection();
@@ -67,7 +61,7 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 	) {
 		visible = false;
 	}
-    */
+	*/
 
 	if (store == null) return;
 	if (store.Categories == null) return;
@@ -96,7 +90,7 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 							<ThemeToggler />
 							<DropdownMessage messages={store.StoreAnnouncement} />
 							<DropdownNotification />
-							<DropdownUser user={user} />
+							<DropdownUser />
 							<DropdownCart />
 						</div>
 					</div>

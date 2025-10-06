@@ -2,7 +2,6 @@
 
 import type { Store } from "@prisma/client";
 import { Check, ChevronsUpDown, PlusCircle, StoreIcon } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
 import useSWR from "swr";
@@ -27,6 +26,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { cn } from "@/utils/utils";
 
 import { useStoreModal } from "@/hooks/storeAdmin/use-store-modal";
+import { authClient } from "@/lib/auth-client";
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<
 	typeof PopoverTrigger
@@ -40,8 +40,7 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 	const { t } = useTranslation(lng, "storeAdmin");
 
 	// load user's store data
-	const { data: session } = useSession();
-
+	const { data: session } = authClient.useSession();
 	if (!session) {
 		router.push("/api/auth/signin");
 	}

@@ -12,24 +12,27 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  username      String?   @unique
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  isActive      Boolean   @default(false)
+  id               String    @id @default(cuid())
+  name             String?
+  username         String?   @unique
+  email            String?   @unique
+  emailVerified    DateTime?
+  twoFactorEnabled Boolean?  @default(false)
+  normalizedEmail  String?
+  banned           Boolean?  @default(false)
+  banReason        String?
+  banExpires       DateTime?
+  image            String?
+  role             String?   @default("USER")
+  locale           String?
+  timezone         String?
+  stripeCustomerId String?   @unique
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  isActive         Boolean   @default(false)
 
-  locale String?
-
-  role             Role?           @default(USER)
-  stripeCustomerId String?         @unique
-  Session          Session[]
-  Account          Account?
-  Authenticator    Authenticator[]
-  Orders           StoreOrder[]    @relation("UserOrders")
+  Authenticator Authenticator[]
+  Orders        StoreOrder[]    @relation("UserOrders")
 
   SupportTicketFrom SupportTicket[]     @relation("SupportTicketFrom")
   SupportTicketTo   SupportTicket[]     @relation("SupportTicketTo")
@@ -39,29 +42,35 @@ model User {
   Addresses         Address[]
   Rsvp              Rsvp[]
 
+  sessions    Session[]
+  accounts    Account[]
+  twofactors  TwoFactor[]
+  passkeys    Passkey[]
+  apikeys     Apikey[]
+  members     Member[]
+  invitations Invitation[]
+
+  @@unique([normalizedEmail])
   @@index([username])
   @@index([email])
+  @@map("user")
 }
 
 model Account {
-  id                       String   @id @default(cuid())
-  userId                   String   @unique
-  type                     String
-  provider                 String
-  providerAccountId        String
-  refresh_token            String?
-  access_token             String?
-  expires_at               Int?
-  token_type               String?
-  scope                    String?
-  id_token                 String?
-  session_state            String?
-  refresh_token_expires_in Int?
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
-  user                     User?    @relation(fields: [userId], references: [id])
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User?     @relation(fields: [userId], references: [id])
 
-  @@unique([provider, providerAccountId])
   @@index([userId])
 }
 
@@ -74,7 +83,16 @@ model Session {
   updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id])
 
+  expiresAt            DateTime
+  token                String
+  ipAddress            String?
+  userAgent            String?
+  activeOrganizationId String?
+  impersonatedBy       String?
+
+  @@unique([token])
   @@index([userId])
+  @@map("session")
 }
 
 model VerificationToken {
@@ -99,7 +117,126 @@ model Authenticator {
   @@id([userId, credentialID])
 }
 
+enum Role {
+  USER
+  ADMIN
+  OWNER
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
+
+model TwoFactor {
+  id          String @id
+  secret      String
+  backupCodes String
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("twoFactor")
+}
+
+model Passkey {
+  id           String    @id
+  name         String?
+  publicKey    String
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  createdAt    DateTime?
+  aaguid       String?
+
+  @@index([userId])
+  @@map("passkey")
+}
+
+model Apikey {
+  id                  String    @id
+  name                String?
+  start               String?
+  prefix              String?
+  key                 String
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refillInterval      Int?
+  refillAmount        Int?
+  lastRefillAt        DateTime?
+  enabled             Boolean?  @default(true)
+  rateLimitEnabled    Boolean?  @default(true)
+  rateLimitTimeWindow Int?
+  rateLimitMax        Int?
+  requestCount        Int?
+  remaining           Int?
+  lastRequest         DateTime?
+  expiresAt           DateTime?
+  createdAt           DateTime
+  updatedAt           DateTime
+  permissions         String?
+  metadata            String?
+
+  @@index([userId])
+  @@map("apikey")
+}
+
+model Organization {
+  id          String       @id
+  name        String
+  slug        String
+  logo        String?
+  createdAt   DateTime
+  metadata    String?
+  members     Member[]
+  invitations Invitation[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String
+  createdAt      DateTime
+
+  @@index([userId])
+  @@index([organizationId])
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String
+  expiresAt      DateTime
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([inviterId])
+  @@index([organizationId])
+  @@map("invitation")
+}
+
 /// Next.js application logs for log drain functionality
+
 model system_logs {
   id          String   @id @default(cuid())
   timestamp   DateTime @default(now())
@@ -556,6 +693,7 @@ model Product {
 }
 
 //產品選項規格 across this store. it's used as template so that we don't need to re-enter option for each product.
+
 model StoreProductOptionTemplate {
   id            String  @id @default(uuid())
   storeId       String
@@ -578,6 +716,7 @@ model StoreProductOptionTemplate {
 }
 
 //產品選項 across this store. it's used as template so that we don't need to re-enter option for each product.
+
 model StoreProductOptionSelectionsTemplate {
   id        String  @id @default(uuid())
   optionId  String
@@ -595,6 +734,7 @@ model StoreProductOptionSelectionsTemplate {
 }
 
 //產品選項
+
 model ProductOption {
   id                      String                    @id @default(uuid())
   productId               String
@@ -978,6 +1118,7 @@ model ContactUs {
 }
 
 /// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+
 view orderitemview {
   id           String   @unique
   orderId      String
@@ -995,10 +1136,4 @@ view orderitemview {
 
   //@@index([orderId])
   //@@index([productId])
-}
-
-enum Role {
-  USER
-  ADMIN
-  OWNER
 }

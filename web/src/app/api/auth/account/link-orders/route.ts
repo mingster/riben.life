@@ -2,13 +2,15 @@ import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 //import { revalidatePath } from "next/cache";
 
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 ///!SECTION update user data on user's own behave.
 export async function PATCH(req: Request) {
 	try {
-		const session = (await auth()) as Session;
+		const session = await auth.api.getSession({
+			headers: await headers(), // you need to pass the headers object.
+		});
 		const userId = session?.user.id;
 
 		if (!userId) {

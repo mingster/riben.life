@@ -1,10 +1,12 @@
-import { auth } from "@/auth";
-import type { Session } from "next-auth";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function isAdmin({ email }: { email?: string | null }) {
 	if (!email) return false;
 
-	const session = (await auth()) as Session;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});
 
 	if (!session) {
 		return false;

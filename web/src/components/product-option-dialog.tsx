@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useI18n } from "@/providers/i18n-provider";
-import { Minus, Plus } from "lucide-react";
+import { IconMinus, IconPlus } from "@tabler/icons-react";
 
 import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
@@ -727,7 +727,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 												<IconButton
 													onClick={handleDecreaseQuality}
 													icon={
-														<Minus
+														<IconMinus
 															size={18}
 															className="dark:text-primary text-slate-500"
 														/>
@@ -748,7 +748,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 											<IconButton
 												onClick={handleIncraseQuality}
 												icon={
-													<Plus
+													<IconPlus
 														size={18}
 														className="dark:text-primary text-slate-500"
 													/>

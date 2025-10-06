@@ -1,14 +1,6 @@
-import { useSession } from "next-auth/react";
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-
-import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
-import { IconMessageCircleCode } from "@tabler/icons-react";
-
 // NOTE - display notifications from session.user.
 const DropdownNotification = () => {
+	/*
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [notifying, setNotifying] = useState(true);
 	const [isRead, setIsRead] = useState(true);
@@ -19,7 +11,7 @@ const DropdownNotification = () => {
 	const dropdown = useRef<any>(null);
 	const avatarPlaceholder = "/images/user/avatar_placeholder.png";
 
-	const { data: session } = useSession();
+	const { data: session } = authClient.useSession();
 
 	// close on click outside
 	useEffect(() => {
@@ -54,7 +46,7 @@ const DropdownNotification = () => {
 	//console.log(`notifcations: ${JSON.stringify(session?.user.notifications)}`);
 
 	useEffect(() => {
-		notifications?.map((n) => {
+		notifications?.map((n: Notification) => {
 			if (n.isRead === false) setIsRead(false);
 		});
 	}, [notifications]);
@@ -71,10 +63,9 @@ const DropdownNotification = () => {
 					setDropdownOpen(!dropdownOpen);
 				}}
 				className="relative flex size-8.5 items-center justify-center rounded-full border-[0.5px] border-gray/20
-         bg-stroke/20 hover:text-meta-1 dark:border-strokedark dark:bg-meta-4 dark:text-primary dark:hover:text-meta-1"
+		 bg-stroke/20 hover:text-meta-1 dark:border-strokedark dark:bg-meta-4 dark:text-primary dark:hover:text-meta-1"
 				href="#"
 			>
-				{/* show if there's unread notification */}
 				{!isRead && (
 					<span
 						className={`absolute -right-0.5 -top-0.5 z-1 size-2 rounded-full bg-meta-1 ${
@@ -86,8 +77,6 @@ const DropdownNotification = () => {
 				)}
 				<IconMessageCircleCode className="text-slate-400 hover:opacity-50 duration-300 ease-in-out size-5" />
 			</Link>
-
-			{/* <!-- Dropdown Start --> */}
 			<div
 				ref={dropdown}
 				onFocus={() => setDropdownOpen(true)}
@@ -138,9 +127,11 @@ const DropdownNotification = () => {
 					))}
 				</ul>
 			</div>
-			{/* <!-- Dropdown End --> */}
+			
 		</div>
 	);
+	*/
+	return null;
 };
 
 export default DropdownNotification;

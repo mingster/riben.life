@@ -110,7 +110,9 @@ export function Answer({
 	);
 }
 
-export const FAQ: React.FC<{ storeId: string|undefined|null }> = ({ storeId }) => {
+export const FAQ: React.FC<{ storeId: string | undefined | null }> = ({
+	storeId,
+}) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 

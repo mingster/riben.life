@@ -1,8 +1,7 @@
-import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/utils/datetime-utils";
-
-import { IsSignInResponse } from "@/lib/auth/utils";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
 
@@ -13,7 +12,10 @@ export async function POST(
 ) {
 	const params = await props.params;
 	try {
-		const userId = await IsSignInResponse();
+		const session = await auth.api.getSession({
+			headers: await headers(), // you need to pass the headers object.
+		});
+		const userId = session?.user.id;
 		if (typeof userId !== "string") {
 			return new NextResponse("Unauthenticated", { status: 403 });
 		}
