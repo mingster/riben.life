@@ -41,7 +41,7 @@ export const transformDecimalsToNumbers = (obj: any) => {
 	}
 };
 
-function nullable<TSchema extends z.AnyZodObject>(schema: TSchema) {
+function nullable<TSchema extends z.ZodObject<any>>(schema: TSchema) {
 	const entries = Object.entries(schema.shape) as [
 		keyof TSchema["shape"],
 		z.ZodTypeAny,

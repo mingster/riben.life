@@ -623,14 +623,15 @@ export const ProductOptionDialog: React.FC<props> = ({
 																					>
 																						<FormControl>
 																							<Checkbox
-																								checked={field.value?.includes(
+																								checked={Array.isArray(field.value) && field.value.includes(
 																									item.id,
 																								)}
 																								onCheckedChange={(checked) => {
+																									const currentValue = Array.isArray(field.value) ? field.value : [];
 																									return checked
 																										? field.onChange(
 																												[
-																													...field.value,
+																													...currentValue,
 																													item.id,
 																												],
 																												handleCheckbox(
@@ -638,7 +639,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 																												),
 																											)
 																										: field.onChange(
-																												field.value?.filter(
+																												currentValue.filter(
 																													(value: string) =>
 																														value !== item.id,
 																												),
@@ -678,7 +679,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 																	onValueChange={(val) =>
 																		handleRadio(field.name, val)
 																	}
-																	defaultValue={field.value}
+																	defaultValue={field.value as string | undefined}
 																	className="flex flex-col space-y-1"
 																>
 																	{option.ProductOptionSelections.map(

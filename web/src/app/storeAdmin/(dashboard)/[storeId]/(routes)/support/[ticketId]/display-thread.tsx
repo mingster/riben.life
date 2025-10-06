@@ -127,7 +127,7 @@ export const DisplayThread = ({ thread }: props) => {
 							<MessageSquareText className="size-6 pr-2" />
 							{ticket.message}
 						</div>
-						<div className="text-xs">{formatDateTime(ticket.updatedAt)}</div>
+						<div className="text-xs">{formatDateTime(ticket.lastModified)}</div>
 					</div>
 				</div>
 			))}

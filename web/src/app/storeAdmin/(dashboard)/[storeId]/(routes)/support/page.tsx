@@ -40,7 +40,7 @@ export default async function StoreSupportPage(props: {
 		},
 		include: {},
 		orderBy: {
-			updatedAt: "desc",
+			lastModified: "desc",
 		},
 	});
 
@@ -51,7 +51,7 @@ export default async function StoreSupportPage(props: {
 			department: item.department,
 			subject: item.subject,
 			status: item.status,
-			updatedAt: formatDateTime(item.updatedAt),
+			updatedAt: formatDateTime(item.lastModified),
 		}),
 	);
 

@@ -35,7 +35,7 @@ export default async function TicketEditPage(props: {
 			Sender: true,
 		},
 		orderBy: {
-			updatedAt: "desc",
+			lastModified: "desc",
 		},
 	});
 	//console.log(`thread: ${JSON.stringify(thread)}`);
