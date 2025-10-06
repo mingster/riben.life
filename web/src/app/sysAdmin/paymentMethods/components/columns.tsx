@@ -2,7 +2,7 @@
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CheckIcon, XIcon } from "lucide-react";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { CellAction } from "./cell-action";
 
@@ -78,9 +78,9 @@ export const columns: ColumnDef<DataColumn>[] = [
 		cell: ({ row }) => {
 			const val =
 				row.getValue("isDefault") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{val}</div>;
@@ -94,9 +94,9 @@ export const columns: ColumnDef<DataColumn>[] = [
 		cell: ({ row }) => {
 			const val =
 				row.getValue("isDeleted") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{val}</div>;

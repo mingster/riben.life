@@ -32,7 +32,7 @@ export default function ClientSignIn({
 	const storeId = params.storeId as string;
 
 	if (storeId) {
-		callbackUrl = `/${storeId}/trial`;
+		callbackUrl = `/${storeId}`;
 	}
 
 	//console.log(callbackUrl);

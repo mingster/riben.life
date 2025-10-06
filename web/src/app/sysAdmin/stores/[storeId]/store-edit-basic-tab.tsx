@@ -5,7 +5,7 @@ import Image from "next/image";
 
 import { Card, CardContent } from "@/components/ui/card";
 import axios, { type AxiosError } from "axios";
-import { XCircleIcon } from "lucide-react";
+import { IconX } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -327,7 +327,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 																	deleteImageFromClient(logoPublicId as string)
 																}
 															>
-																<XCircleIcon className="text-red-700" />
+																<IconX className="text-red-700" />
 															</Button>
 														</div>
 														<Image

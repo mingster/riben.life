@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
 import { deleteImage, uploadImage } from "@/utils/image-utils";
-import { XCircleIcon } from "lucide-react";
+import { IconX } from "@tabler/icons-react";
 import { RequiredProVersion } from "../components/require-pro-version";
 
 const formSchema = z.object({
@@ -377,7 +377,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 																	deleteImageFromClient(logoPublicId as string)
 																}
 															>
-																<XCircleIcon className="text-red-700" />
+																<IconX className="text-red-700" />
 															</Button>
 														</div>
 

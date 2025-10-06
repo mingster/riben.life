@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import logger from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
-import { CheckIcon, Minus, Undo2Icon } from "lucide-react";
+import { IconCheck, IconMinus, IconArrowBack } from "@tabler/icons-react";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 
 interface props {
@@ -260,7 +260,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 									className="disabled:opacity-25 bg-red-700 dark:bg-red-500 dark:text-white hover:bg-red-600"
 									type="submit"
 								>
-									<Undo2Icon className="mr-0 size-4" />
+									<IconArrowBack className="mr-0 size-4" />
 									{t("RefundAll")}
 								</Button>
 							</div>
@@ -302,7 +302,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 												type="button"
 												onClick={() => handleDeleteOrderItem(index)}
 											>
-												<CheckIcon className="text-green-400 size-4" />
+												<IconCheck className="text-green-400 size-4" />
 											</Button>
 										</div>
 
@@ -325,7 +325,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 														<IconButton
 															onClick={() => handleDecreaseQuality(index)}
 															icon={
-																<Minus
+																<IconMinus
 																	size={18}
 																	className="dark:text-primary text-slate-500"
 																/>
@@ -363,7 +363,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 									className="disabled:opacity-25"
 									type="submit"
 								>
-									<Undo2Icon className="mr-0 size-4" />
+									<IconArrowBack className="mr-0 size-4" />
 									{t("Refund")}
 								</Button>
 							</div>

@@ -2,17 +2,15 @@
 
 import { toastError, toastSuccess } from "@/components/Toaster";
 import {
-	Copy,
-	Edit,
-	Minus,
-	MoreHorizontal,
-	PenBoxIcon,
-	PenIcon,
-	Plus,
-	Trash,
-	Undo2Icon,
-	XIcon,
-} from "lucide-react";
+	IconCopy,
+	IconEdit,
+	IconMinus,
+	IconDots,
+	IconPlus,
+	IconTrash,
+	IconArrowBack,
+	IconX,
+} from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -478,7 +476,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 							);
 						}}
 					>
-						<Undo2Icon className="mr-0 size-4" />
+						<IconArrowBack className="mr-0 size-4" />
 						{t("Refund")}
 					</Button>
 
@@ -516,7 +514,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 							);
 						}}
 					>
-						<Undo2Icon className="mr-0 size-4" />
+						<IconArrowBack className="mr-0 size-4" />
 						{t("Refund")}
 					</Button>
 
@@ -716,7 +714,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 												type="button"
 												onClick={() => handleDeleteOrderItem(index)}
 											>
-												<XIcon className="text-red-400 size-4" />
+												<IconX className="text-red-400 size-4" />
 											</Button>
 										</div>
 
@@ -739,7 +737,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 														<IconButton
 															onClick={() => handleDecreaseQuality(index)}
 															icon={
-																<Minus
+																<IconMinus
 																	size={18}
 																	className="dark:text-primary text-slate-500"
 																/>
@@ -762,7 +760,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 													<IconButton
 														onClick={() => handleIncraseQuality(index)}
 														icon={
-															<Plus
+															<IconPlus
 																size={18}
 																className="dark:text-primary text-slate-500"
 															/>

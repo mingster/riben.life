@@ -35,7 +35,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { IconCalendar } from "@tabler/icons-react";
 import Link from "next/link";
 
 const formSchema = z.object({
@@ -230,7 +230,7 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 														) : (
 															<span>Pick a date</span>
 														)}
-														<CalendarIcon className="ml-auto size-4 opacity-50" />
+														<IconCalendar className="ml-auto size-4 opacity-50" />
 													</Button>
 												</FormControl>
 											</PopoverTrigger>

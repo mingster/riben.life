@@ -29,7 +29,7 @@ const EditorComp = dynamic(
 	{ ssr: false },
 );
 
-import { PenIcon, Plus } from "lucide-react";
+import { IconEdit, IconPlus } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
 import { updateMessageTemplateLocalizedAction } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized";
 import { updateMessageTemplateLocalizedSchema } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized.validation";
@@ -135,9 +135,9 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 						}}
 					>
 						{isNew ? (
-							<Plus className="mr-0 size-3" />
+							<IconPlus className="mr-0 size-3" />
 						) : (
-							<PenIcon className="mr-0 size-3" />
+							<IconEdit className="mr-0 size-3" />
 						)}
 					</Button>
 				</DialogTrigger>

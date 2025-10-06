@@ -18,7 +18,7 @@ import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import axios from "axios";
 import { t } from "i18next";
-import { CheckIcon, XIcon } from "lucide-react";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import { RequiredProVersion } from "../components/require-pro-version";
 import type { Store } from "./page";
 
@@ -298,9 +298,9 @@ const PayMethodColumns: ColumnDef<PayMethodColumn>[] = [
 		cell: ({ row }) => {
 			const isDefault =
 				row.getValue("isDefault") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{isDefault}</div>;
@@ -396,9 +396,9 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
 		cell: ({ row }) => {
 			const shipRequried =
 				row.getValue("shipRequried") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{shipRequried}</div>;
@@ -417,9 +417,9 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
 		cell: ({ row }) => {
 			const isDefault =
 				row.getValue("isDefault") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{isDefault}</div>;

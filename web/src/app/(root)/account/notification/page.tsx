@@ -9,7 +9,7 @@ import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
 import { formatDateTime } from "@/utils/datetime-utils";
-import { MessageCircleMore } from "lucide-react";
+import { IconMessageCircle } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { redirect } from "next/navigation";
@@ -86,7 +86,7 @@ const session = await auth.api.getSession({
 
 								<div>
 									<div className="flex">
-										<MessageCircleMore className="size-6 pr-2" />
+										<IconMessageCircle className="size-6 pr-2" />
 										{obj.subject}
 									</div>
 									<div>{obj.message}</div>

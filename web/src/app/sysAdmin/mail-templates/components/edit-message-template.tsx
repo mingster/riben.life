@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PenIcon, Plus } from "lucide-react";
+import { IconEdit, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
@@ -115,7 +115,7 @@ export const EditMessageTemplate: React.FC<props> = ({ item, onUpdated }) => {
 								setIsOpen(true);
 							}}
 						>
-							<Plus className="mr-0 size-4" />
+							<IconPlus className="mr-0 size-4" />
 							{t("create")}
 						</Button>
 					) : (
@@ -124,7 +124,7 @@ export const EditMessageTemplate: React.FC<props> = ({ item, onUpdated }) => {
 							className="text-foreground w-fit px-0 text-left"
 							onClick={() => setIsOpen(true)}
 						>
-							<PenIcon className="mr-0 size-3" />
+							<IconEdit className="mr-0 size-3" />
 						</Button>
 					)}
 				</DrawerTrigger>

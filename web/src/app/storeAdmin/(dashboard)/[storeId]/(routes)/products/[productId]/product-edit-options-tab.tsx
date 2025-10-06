@@ -26,7 +26,7 @@ import type {
 } from "@prisma/client";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { t } from "i18next";
-import { CheckIcon, Trash, XIcon } from "lucide-react";
+import { IconCheck, IconTrash, IconX } from "@tabler/icons-react";
 import { AddProductOptionDialog } from "./product-option-dialog";
 import { toastError, toastSuccess } from "@/components/Toaster";
 
@@ -233,9 +233,9 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
 		cell: ({ row }) => {
 			const val =
 				row.getValue("isRequired") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{val}</div>;
@@ -254,9 +254,9 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
 		cell: ({ row }) => {
 			const val =
 				row.getValue("isMultiple") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{val}</div>;
@@ -297,9 +297,9 @@ const soColumns: ColumnDef<ProductOptionColumn>[] = [
 		cell: ({ row }) => {
 			const val =
 				row.getValue("allowQuantity") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{val}</div>;
@@ -412,9 +412,9 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
 		cell: ({ row }) => {
 			const val =
 				row.getValue("isRequired") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{val}</div>;
@@ -433,9 +433,9 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
 		cell: ({ row }) => {
 			const val =
 				row.getValue("isMultiple") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{val}</div>;
@@ -477,9 +477,9 @@ const columns: ColumnDef<ProductOptionColumn>[] = [
 		cell: ({ row }) => {
 			const val =
 				row.getValue("allowQuantity") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{val}</div>;
@@ -602,7 +602,7 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
 				className="text-white bg-red-600 dark:bg-red-900"
 				onClick={() => setOpen(true)}
 			>
-				<Trash className="mr-0 size-4" /> {t("Delete")}
+				<IconTrash className="mr-0 size-4" /> {t("Delete")}
 			</Button>
 		</>
 	);

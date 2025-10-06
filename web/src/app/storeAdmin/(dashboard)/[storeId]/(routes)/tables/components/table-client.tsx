@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { IconPlus } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 
 import { DataTable } from "@/components/dataTable";
@@ -65,7 +65,7 @@ export const TableClient: React.FC<props> = ({ data }) => {
 							router.push(`/storeAdmin/${params.storeId}/tables/new`)
 						}
 					>
-						<Plus className="mr-0 size-4" />
+						<IconPlus className="mr-0 size-4" />
 						{t("Create")}
 					</Button>
 					<AddTablesDialog />
@@ -118,7 +118,7 @@ export function AddTablesDialog() {
 		<Dialog>
 			<DialogTrigger asChild>
 				<Button variant={"outline"}>
-					<Plus className="mr-0 size-4" />
+					<IconPlus className="mr-0 size-4" />
 					{t("StoreTable_Mgmt_AddButton")}
 				</Button>
 			</DialogTrigger>

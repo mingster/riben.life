@@ -4,7 +4,7 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 
 import { DragHandle } from "@/components/datatable-draggable";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CheckIcon, XIcon } from "lucide-react";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import { CellAction } from "./cell-action";
 
 import { Button } from "@/components/ui/button";
@@ -287,9 +287,9 @@ export const columns: ColumnDef<z.infer<typeof updateUserSettingsSchema>>[] = [
 			//console.log( typeof(row.getValue("isRecurring")) );
 			const currentlySignedIn =
 				row.getValue("currentlySignedIn") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{currentlySignedIn}</div>;

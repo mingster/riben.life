@@ -4,7 +4,7 @@ import { wipeoutDefaultData } from "@/actions/admin/populate-payship_defaults";
 import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { DiamondPlus, Send, Trash } from "lucide-react";
+import { IconDiamond, IconSend, IconTrash } from "@tabler/icons-react";
 import { checkAdminAccess } from "../admin-utils";
 
 import fs from "node:fs";
@@ -100,7 +100,7 @@ export default async function StoreAdminDevMaintPage(props: {
 						size="sm"
 						{...(storeLedgerCount === 0 && { disabled: true })}
 					>
-						<Trash className="size-4 mr-1" /> Delete all Ledger data
+						<IconTrash className="size-4 mr-1" /> Delete all Ledger data
 					</Button>
 				</div>
 
@@ -116,7 +116,7 @@ export default async function StoreAdminDevMaintPage(props: {
 						size="sm"
 						{...(storeOrderCount === 0 && { disabled: true })}
 					>
-						<Trash className="size-4 mr-1" /> Delete all order data
+						<IconTrash className="size-4 mr-1" /> Delete all order data
 					</Button>
 				</div>
 
@@ -133,7 +133,7 @@ export default async function StoreAdminDevMaintPage(props: {
 						size="sm"
 						{...(ticketCount === 0 && { disabled: true })}
 					>
-						<Trash className="size-4 mr-1" /> Delete all Support Ticket data
+						<IconTrash className="size-4 mr-1" /> Delete all Support Ticket data
 					</Button>
 				</div>
 
@@ -144,7 +144,7 @@ export default async function StoreAdminDevMaintPage(props: {
 					className="disabled:opacity-50"
 					size="sm"
 				>
-					<Send className="size-4 mr-1" /> Send test nofication
+					<IconSend className="size-4 mr-1" /> Send test nofication
 				</Button>
 			</div>
 

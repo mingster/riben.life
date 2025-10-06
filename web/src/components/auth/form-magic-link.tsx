@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { BetterFetchOption } from "better-auth/react";
-import { Loader2 } from "lucide-react";
+import { IconLoader2 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod/v4";
@@ -124,7 +124,7 @@ export default function FormMagicLink({
 
 					<Button type="submit" disabled={isSubmitting} className="w-full">
 						{isSubmitting ? (
-							<Loader2 className="animate-spin" />
+							<IconLoader2 className="animate-spin" />
 						) : (
 							t("sign_in_with_magic_link")
 						)}

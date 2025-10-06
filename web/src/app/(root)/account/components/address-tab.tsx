@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import logger from "@/lib/logger";
 import type { Address } from "@prisma/client";
-import { Plus } from "lucide-react";
+import { IconPlus } from "@tabler/icons-react";
 
 type tabProps = { addresses: Address[] };
 export const AddressesTab = ({ addresses }: tabProps) => {
@@ -23,7 +23,7 @@ export const AddressesTab = ({ addresses }: tabProps) => {
 				<div>
 					{/*新增 */}
 					<Button variant={"outline"} onClick={() => <></>}>
-						<Plus className="mr-0 size-4" />
+						<IconPlus className="mr-0 size-4" />
 						{t("Create")}
 					</Button>
 				</div>

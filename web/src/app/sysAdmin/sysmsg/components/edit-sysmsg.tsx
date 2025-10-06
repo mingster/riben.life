@@ -8,7 +8,7 @@ import {
 import { useTranslation } from "@/app/i18n/client";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
@@ -123,7 +123,7 @@ export const EditSystemMessage: React.FC<props> = ({ item, onUpdated }) => {
 								//open EditSystemMessage dialog
 							}}
 						>
-							<Plus className="mr-0 size-4" />
+							<IconPlus className="mr-0 size-4" />
 							{t("create")}
 						</Button>
 					) : (
