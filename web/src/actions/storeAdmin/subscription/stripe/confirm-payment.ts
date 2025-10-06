@@ -3,10 +3,53 @@ import { stripe } from "@/lib/stripe/config";
 import Stripe from "stripe";
 
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
-import { formatDateTime, getUtcNow } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { formatDateTime } from "@/utils/datetime-utils";
+import logger from "@/lib/logger";
+
+/**
+ * Calculate a safe billing start date that complies with Stripe's 5-year limit
+ */
+function calculateSafeBillingStartDate(
+	currentExpiration: Date,
+	daysToAdd: number,
+): { billingStartDate: Date; wasCapped: boolean } {
+	const now = new Date();
+	const maxFutureDate = new Date();
+	maxFutureDate.setFullYear(maxFutureDate.getFullYear() + 5); // Stripe limit: 5 years
+
+	//if currentExpiration is in the past, set it to now
+	if (currentExpiration < now) {
+		currentExpiration = now;
+	}
+
+	// Calculate the intended billing start date
+	let billingStartDate = new Date(
+		currentExpiration.getTime() + daysToAdd * 24 * 60 * 60 * 1000,
+	);
+
+	// If the calculated date is more than 5 years in the future, cap it
+	let wasCapped = false;
+
+	if (billingStartDate > maxFutureDate) {
+		logger.warn(
+			`Billing start date ${billingStartDate.toISOString()} exceeds 5 years. Capping to ${maxFutureDate.toISOString()}`,
+		);
+		billingStartDate = maxFutureDate;
+		wasCapped = true;
+	}
+
+	return { billingStartDate, wasCapped };
+}
+
+// confirmSubscriptionAction is called when stripe element confirmed the payment.
+// As confirmed, it will:
+// 1. mark the order as paid,
+// 2. credit the user
+// 3. create new stripe schedule.
+// When done, redirect customer to its account page.
 
 //NOTE - confirm subscription Payment.
-
 const confirmPayment = async (
 	orderId: string,
 	payment_intent: string,
@@ -26,15 +69,15 @@ const confirmPayment = async (
 	const stripePi = new Stripe(
 		`${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`,
 	);
-	const pi = await stripePi.paymentIntents.retrieve(payment_intent, {
+	const paymentIntent = await stripePi.paymentIntents.retrieve(payment_intent, {
 		client_secret: payment_intent_client_secret,
 	});
 
 	if (process.env.NODE_ENV === "development") {
-		console.log(JSON.stringify(pi));
+		console.log(JSON.stringify(paymentIntent));
 	}
 
-	if (pi && pi.status === "succeeded") {
+	if (paymentIntent && paymentIntent.status === "succeeded") {
 		// payment confirmed
 		// 1. mark payment a paid
 		// 2. credit the payment
@@ -71,6 +114,18 @@ const confirmPayment = async (
 			throw new Error("subscription not found");
 		}
 
+		const db_user = await sqlClient.user.findUnique({
+			where: {
+				id: subscription.userId,
+			},
+		});
+
+		const order = await sqlClient.storeOrder.findUnique({
+			where: {
+				id: orderId,
+			},
+		});
+
 		const now = getUtcNow();
 		let current_exp = subscription.expiration;
 		if (current_exp < now) {
@@ -82,6 +137,27 @@ const confirmPayment = async (
 		const new_exp = new Date(current_exp);
 		new_exp.setMonth(new_exp.getMonth() + 1);
 
+		let stripeSubscription: Stripe.Subscription | null = null;
+
+		//create stripe subscription
+		stripeSubscription = await stripe.subscriptions.create({
+			customer: db_user?.stripeCustomerId as string,
+			items: [{ price: setting.stripePriceId as string }],
+			collection_method: "charge_automatically",
+			default_payment_method: paymentIntent.payment_method as string,
+			expand: ["latest_invoice.payment_intent"],
+			metadata: {
+				order_id: order?.id as string,
+			},
+			//discounts: coupon ? [{ coupon: coupon.id }] : [],
+			// Prevent double charging:
+			trial_end: "now",
+			proration_behavior: "none",
+
+			//billing_cycle_anchor: billingCycleAnchor,
+		});
+
+		/*
 		const subscriptionSchedule = await stripe.subscriptionSchedules.create({
 			customer: subscriptionPayment.userId,
 			start_date: Math.floor(new_exp.getTime() / 1000),
@@ -97,7 +173,7 @@ const confirmPayment = async (
 				},
 			],
 		});
-
+*/
 		const note = `extend subscription from ${formatDateTime(current_exp)} to ${formatDateTime(new_exp)}`;
 
 		await sqlClient.storeSubscription.update({
@@ -107,7 +183,7 @@ const confirmPayment = async (
 			data: {
 				status: SubscriptionStatus.Active,
 				expiration: new_exp,
-				subscriptionId: subscriptionSchedule.id,
+				subscriptionId: stripeSubscription.id,
 				note: note,
 			},
 		});

@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
-import { getNowTimeInTz, getUtcNow } from "@/utils/utils";
+import { getNowTimeInTz, getUtcNow } from "@/utils/datetime-utils";
 import getOrderById from "../get-order-by_id";
 import isProLevel from "./is-pro-level";
 

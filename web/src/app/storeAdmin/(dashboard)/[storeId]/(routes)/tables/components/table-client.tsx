@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { IconPlus } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 
 import { DataTable } from "@/components/dataTable";
@@ -65,7 +65,7 @@ export const TableClient: React.FC<props> = ({ data }) => {
 							router.push(`/storeAdmin/${params.storeId}/tables/new`)
 						}
 					>
-						<Plus className="mr-0 size-4" />
+						<IconPlus className="mr-0 size-4" />
 						{t("Create")}
 					</Button>
 					<AddTablesDialog />
@@ -78,9 +78,9 @@ export const TableClient: React.FC<props> = ({ data }) => {
 };
 
 export const formSchema = z.object({
-	prefix: z.string().optional().default(""),
-	numOfTables: z.coerce.number().default(1),
-	capacity: z.coerce.number().default(2),
+	prefix: z.string().optional().prefault(""),
+	numOfTables: z.number().prefault(1),
+	capacity: z.number().prefault(2),
 });
 
 export function AddTablesDialog() {
@@ -118,7 +118,7 @@ export function AddTablesDialog() {
 		<Dialog>
 			<DialogTrigger asChild>
 				<Button variant={"outline"}>
-					<Plus className="mr-0 size-4" />
+					<IconPlus className="mr-0 size-4" />
 					{t("StoreTable_Mgmt_AddButton")}
 				</Button>
 			</DialogTrigger>

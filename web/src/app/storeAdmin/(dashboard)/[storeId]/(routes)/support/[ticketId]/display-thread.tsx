@@ -20,7 +20,7 @@ import { Heading } from "@/components/ui/heading";
 import { useI18n } from "@/providers/i18n-provider";
 import type { SupportTicket } from "@/types";
 import { TicketStatus } from "@/types/enum";
-import { formatDateTime } from "@/utils/utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
 
@@ -127,7 +127,7 @@ export const DisplayThread = ({ thread }: props) => {
 							<MessageSquareText className="size-6 pr-2" />
 							{ticket.message}
 						</div>
-						<div className="text-xs">{formatDateTime(ticket.updatedAt)}</div>
+						<div className="text-xs">{formatDateTime(ticket.lastModified)}</div>
 					</div>
 				</div>
 			))}

@@ -45,21 +45,25 @@ type formValues = z.infer<typeof formSchema>;
 
 export const formSchema = z.object({
 	// 規格 | 甜度/冰 | 配料
-	optionName: z.string().min(1, { message: "option name is required" }),
+	optionName: z.string().min(1, {
+		error: "option name is required",
+	}),
 	////必選
-	isRequired: z.boolean().default(false).optional(),
+	isRequired: z.boolean().prefault(false).optional(),
 	// 0:radiobox|1:checkboxes
-	isMultiple: z.boolean().default(false).optional(),
+	isMultiple: z.boolean().prefault(false).optional(),
 	// 至少選1項 | 最多選3項
-	minSelection: z.coerce.number().default(1),
-	maxSelection: z.coerce.number().default(1),
+	minSelection: z.number().prefault(1),
+	maxSelection: z.number().prefault(1),
 
-	allowQuantity: z.boolean().default(false).optional(),
-	minQuantity: z.coerce.number().default(1),
-	maxQuantity: z.coerce.number().default(1),
+	allowQuantity: z.boolean().prefault(false).optional(),
+	minQuantity: z.number().prefault(1),
+	maxQuantity: z.number().prefault(1),
 
-	selections: z.string().min(1, { message: "selections is required" }),
-	sortOrder: z.coerce.number().min(1),
+	selections: z.string().min(1, {
+		error: "selections is required",
+	}),
+	sortOrder: z.number().min(1),
 });
 
 // dialog to handle create and update for ProductOption and ProductOptionSelections object.

@@ -33,7 +33,7 @@ const formSchema = z.object({
 	//department: z.string().min(1, { message: "department is required" }),
 	//subject: z.string().min(1, { message: "subject is required" }),
 	message: z.string().min(1, { message: "message is required" }),
-	status: z.coerce.number(),
+	status: z.number(),
 });
 
 type formValues = z.infer<typeof formSchema>;

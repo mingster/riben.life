@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import logger from "@/lib/logger";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Decimal from "decimal.js";
-import { CheckIcon, Minus, Undo2Icon } from "lucide-react";
+import { IconCheck, IconMinus, IconArrowBack } from "@tabler/icons-react";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 
 interface props {
@@ -34,29 +34,31 @@ const formSchema = z.object({
 		.object({
 			//id: z.string().min(1),
 			//orderId: z.string().min(1),
-			productId: z.string().min(1, { message: "product is required" }),
-			quantity: z.coerce.number().min(1, { message: "quantity is required" }),
+			productId: z.string().min(1, {
+				error: "product is required",
+			}),
+			quantity: z.number().min(1, {
+				error: "quantity is required",
+			}),
 			//variants: z.string().optional(),
-			//unitDiscount: z.coerce.number().min(1),
-			//unitPrice: z.coerce.number().min(1),
+			//unitDiscount: z.number().min(1),
+			//unitPrice: z.number().min(1),
 		})
 		.array()
-		.min(1, { message: "at least one item is required" })
+		.min(1, {
+			error: "at least one item is required",
+		})
 		.optional(),
 });
 
-function useZodForm<TSchema extends z.ZodType>(
-	props: Omit<UseFormProps<TSchema["_input"]>, "resolver"> & {
+function useZodForm<TSchema extends z.ZodType<any, any, any>>(
+	props: Omit<UseFormProps<z.infer<TSchema>>, "resolver"> & {
 		schema: TSchema;
 	},
 ) {
-	const form = useForm<TSchema["_input"]>({
+	const form = useForm<z.infer<TSchema>>({
 		...props,
-		resolver: zodResolver(formSchema, undefined, {
-			//resolver: zodResolver(props.schema, undefined, {
-			// This makes it so we can use `.transform()`s on the schema without same transform getting applied again when it reaches the server
-			//rawValues: true
-		}),
+		resolver: zodResolver(props.schema) as any,
 	});
 
 	return form;
@@ -258,7 +260,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 									className="disabled:opacity-25 bg-red-700 dark:bg-red-500 dark:text-white hover:bg-red-600"
 									type="submit"
 								>
-									<Undo2Icon className="mr-0 size-4" />
+									<IconArrowBack className="mr-0 size-4" />
 									{t("RefundAll")}
 								</Button>
 							</div>
@@ -300,7 +302,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 												type="button"
 												onClick={() => handleDeleteOrderItem(index)}
 											>
-												<CheckIcon className="text-green-400 size-4" />
+												<IconCheck className="text-green-400 size-4" />
 											</Button>
 										</div>
 
@@ -323,7 +325,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 														<IconButton
 															onClick={() => handleDecreaseQuality(index)}
 															icon={
-																<Minus
+																<IconMinus
 																	size={18}
 																	className="dark:text-primary text-slate-500"
 																/>
@@ -361,7 +363,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 									className="disabled:opacity-25"
 									type="submit"
 								>
-									<Undo2Icon className="mr-0 size-4" />
+									<IconArrowBack className="mr-0 size-4" />
 									{t("Refund")}
 								</Button>
 							</div>

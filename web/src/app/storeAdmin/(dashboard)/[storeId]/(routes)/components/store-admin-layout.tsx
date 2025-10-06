@@ -12,12 +12,11 @@ import {
 } from "@/components/ui/sidebar";
 import type { StoreSettings } from "@prisma/client";
 import { StoreAdminSidebar } from "./store-admin-sidebar";
-
-import DropdownUser from "@/components/dropdown-user";
 import ThemeToggler from "@/components/theme-toggler";
 import { Separator } from "@/components/ui/separator";
-import { useSession } from "next-auth/react";
+import { authClient } from "@/lib/auth-client";
 import router from "next/dist/client/router";
+import DropdownUser from "@/components/auth/dropdown-user";
 
 export interface props {
 	sqlData: Store;
@@ -66,11 +65,11 @@ const StoreAdminLayout: React.FC<props> = ({
 function StoreAdminHeader() {
 	const title = "";
 
-	const session = useSession();
+	const { data: session } = authClient.useSession();
 	if (!session) {
-		router.push("/api/auth/signin");
+		router.push("/signin?callbackUrl=/storeAdmin");
 	}
-	const user = session.data?.user;
+	const user = session?.user;
 
 	return (
 		<header className="flex h-(--header-height) shrink-0 items-center gap-0 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -107,7 +106,7 @@ function StoreAdminHeader() {
 				<h1 className="text-base font-medium">{title}</h1>
 				<div className="ml-auto flex items-center gap-2">
 					<ThemeToggler />
-					<DropdownUser user={user} />
+					<DropdownUser />
 				</div>
 			</div>
 		</header>

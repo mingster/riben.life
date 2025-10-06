@@ -1,7 +1,8 @@
-import { IsSignInResponse } from "@/lib/auth/utils";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import { getUtcNow } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
@@ -12,7 +13,10 @@ export async function POST(
 ) {
 	const params = await props.params;
 	try {
-		const userId = await IsSignInResponse();
+		const session = await auth.api.getSession({
+			headers: await headers(), // you need to pass the headers object.
+		});
+		const userId = session?.user.id;
 		if (typeof userId !== "string") {
 			return new NextResponse("Unauthenticated", { status: 403 });
 		}
@@ -38,12 +42,15 @@ export async function POST(
 				storeId: params.storeId,
 				threadId: uuidv4(),
 				senderId: userId,
-				recipentId: store.ownerId,
+				recipientId: store.ownerId,
+				priority: 1,
+				creator: userId,
+				modifier: userId,
 				status: TicketStatus.Open,
 				department,
 				subject,
 				message,
-				updatedAt: getUtcNow(),
+				lastModified: getUtcNow(),
 			},
 		});
 

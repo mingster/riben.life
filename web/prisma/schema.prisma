@@ -12,100 +12,235 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String?
-  username      String?   @unique
-  email         String?   @unique
-  emailVerified DateTime?
+  email         String?  @unique
+  emailVerified Boolean?
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  isActive      Boolean   @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  locale String?
+  role             String? @default("USER")
+  locale           String?
+  timezone         String?
+  stripeCustomerId String? @unique
 
-  role             Role?           @default(USER)
-  stripeCustomerId String?         @unique
-  Session          Session[]
-  Account          Account?
-  Authenticator    Authenticator[]
-  Orders           StoreOrder[]    @relation("UserOrders")
+  twoFactorEnabled Boolean?  @default(false)
+  
+  banned           Boolean?  @default(false)
+  banReason        String?
+  banExpires       DateTime?
 
+normalizedEmail  String?
+  
   SupportTicketFrom SupportTicket[]     @relation("SupportTicketFrom")
   SupportTicketTo   SupportTicket[]     @relation("SupportTicketTo")
   NotificationFrom  StoreNotification[] @relation("NotificationFrom")
   NotificationTo    StoreNotification[] @relation("NotificationTo")
   Store             Store[]
+  Orders            StoreOrder[]        @relation("UserOrders")
   Addresses         Address[]
-  Rsvp              Rsvp[]
 
-  @@index([username])
+  Rsvp        Rsvp[]
+  sessions    Session[]
+  accounts    Account[]
+  twofactors  TwoFactor[]
+  passkeys    Passkey[]
+  apikeys     Apikey[]
+  members     Member[]
+  invitations Invitation[]
+
+  @@unique([normalizedEmail])
   @@index([email])
+  @@map("user")
 }
 
 model Account {
-  id                       String   @id @default(cuid())
-  userId                   String   @unique
-  type                     String
-  provider                 String
-  providerAccountId        String
-  refresh_token            String?
-  access_token             String?
-  expires_at               Int?
-  token_type               String?
-  scope                    String?
-  id_token                 String?
-  session_state            String?
-  refresh_token_expires_in Int?
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
-  user                     User?    @relation(fields: [userId], references: [id])
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
 
-  @@unique([provider, providerAccountId])
+  scope     String?
+  idToken   String?
+  password  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User?    @relation(fields: [userId], references: [id])
+
   @@index([userId])
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  userId    String
+  token     String
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  impersonatedBy       String?
+  activeOrganizationId String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+enum Role {
+  USER
+  ADMIN
+  OWNER
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
+
+model TwoFactor {
+  id          String @id
+  userId      String
+
+  secret      String
+  backupCodes String
+
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@map("twoFactor")
 }
 
-model VerificationToken {
-  identifier String
-  token      String
-  expires    DateTime
+model Passkey {
+  id           String    @id
+  name         String?
+  publicKey    String
+  userId       String
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  createdAt    DateTime?
+  aaguid       String?
 
-  @@unique([identifier, token])
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("passkey")
 }
 
-model Authenticator {
-  credentialID         String  @unique
-  userId               String
-  providerAccountId    String
-  credentialPublicKey  String
-  counter              Int
-  credentialDeviceType String
-  credentialBackedUp   Boolean
-  transports           String?
-  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Apikey {
+  id                  String    @id
+  name                String?
+  start               String?
+  prefix              String?
+  key                 String
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refillInterval      Int?
+  refillAmount        Int?
+  lastRefillAt        DateTime?
+  enabled             Boolean?  @default(true)
+  rateLimitEnabled    Boolean?  @default(true)
+  rateLimitTimeWindow Int?
+  rateLimitMax        Int?
+  requestCount        Int?
+  remaining           Int?
+  lastRequest         DateTime?
+  expiresAt           DateTime?
+  createdAt           DateTime
+  updatedAt           DateTime
+  permissions         String?
+  metadata            String?
 
-  @@id([userId, credentialID])
+  @@index([userId])
+  @@map("apikey")
 }
 
+model Organization {
+  id          String       @id
+  name        String
+  slug        String
+  logo        String?
+  metadata    String?
+  createdAt   DateTime
+  
+  members     Member[]
+  invitations Invitation[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id
+  userId         String
+  organizationId String
+  role           String
+  createdAt      DateTime
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([organizationId])
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id
+  email          String
+  inviterId      String
+  organizationId String
+  role           String?
+  status         String
+  expiresAt      DateTime
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([inviterId])
+  @@index([organizationId])
+  @@map("invitation")
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  plan                 String
+  referenceId          String    @unique // The ID this subscription is associated with (user ID by default)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               String
+  periodStart          DateTime?
+  periodEnd            DateTime?
+  cancelAtPeriodEnd    Boolean?   @default(false)
+  seats                Int?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+}
 
 /// Next.js application logs for log drain functionality
+
 model system_logs {
   id          String   @id @default(cuid())
   timestamp   DateTime @default(now())
   level       String   @db.VarChar(10) // error, warn, info, debug
-  message     String   
+  message     String
   service     String   @db.VarChar(100) // service name (e.g., "web", "api")
   environment String   @db.VarChar(20) // production, development, staging
   version     String?  @db.VarChar(50) // app version
@@ -119,13 +254,14 @@ model system_logs {
   statusCode  Int? // HTTP status code
   duration    Int? // request duration in ms
   errorCode   String?  @db.VarChar(100) // error code if applicable
-  stackTrace  String?  
+  stackTrace  String?
   metadata    String?
   tags        String?
   source      String?  @db.VarChar(100) // source file/component
   line        Int? // line number
   column      Int? // column number
   createdAt   DateTime @default(now())
+
   @@index([timestamp])
   @@index([level])
   @@index([service])
@@ -138,6 +274,7 @@ model PlatformSettings {
   id              String  @id @default(cuid())
   stripeProductId String?
   stripePriceId   String?
+  settings        String?
 }
 
 model Country {
@@ -180,6 +317,9 @@ model Locale {
   name              String
   lng               String //2 digit language code
   defaultCurrencyId String
+
+  SystemMessage            SystemMessage[]
+  MessageTemplateLocalized MessageTemplateLocalized[]
 
   @@index([id])
   @@index([name])
@@ -552,6 +692,7 @@ model Product {
 }
 
 //產品選項規格 across this store. it's used as template so that we don't need to re-enter option for each product.
+
 model StoreProductOptionTemplate {
   id            String  @id @default(uuid())
   storeId       String
@@ -574,6 +715,7 @@ model StoreProductOptionTemplate {
 }
 
 //產品選項 across this store. it's used as template so that we don't need to re-enter option for each product.
+
 model StoreProductOptionSelectionsTemplate {
   id        String  @id @default(uuid())
   optionId  String
@@ -591,6 +733,7 @@ model StoreProductOptionSelectionsTemplate {
 }
 
 //產品選項
+
 model ProductOption {
   id                      String                    @id @default(uuid())
   productId               String
@@ -842,6 +985,8 @@ model SystemMessage {
   message   String
   createdOn DateTime @default(now())
 
+  Locale Locale @relation(fields: [localeId], references: [id])
+
   @@index([localeId])
   @@index([createdOn])
 }
@@ -874,20 +1019,44 @@ model StoreNotification {
   @@index([updatedAt])
 }
 
-model QueuedEmail {
-  id        String    @id @default(uuid())
-  priority  Int
-  from      String
-  fromName  String    @default("")
-  to        String
-  toName    String    @default("")
-  cc        String    @default("")
-  bcc       String    @default("")
-  subject   String
-  body      String
-  createdOn DateTime  @default(now())
-  sendTries Int       @default(0)
-  sentOn    DateTime?
+model MessageTemplate {
+  id                       String                     @id @default(uuid())
+  name                     String
+  MessageTemplateLocalized MessageTemplateLocalized[]
+
+  @@index([name])
+}
+
+model MessageTemplateLocalized {
+  id                String          @id @default(uuid())
+  messageTemplateId String
+  localeId          String
+  bCCEmailAddresses String?
+  subject           String
+  body              String
+  isActive          Boolean         @default(true)
+  Locale            Locale          @relation(fields: [localeId], references: [id], onDelete: Cascade)
+  MessageTemplate   MessageTemplate @relation(fields: [messageTemplateId], references: [id], onDelete: Cascade)
+
+  @@unique([localeId, messageTemplateId])
+  @@index([localeId])
+  @@index([messageTemplateId])
+}
+
+model EmailQueue {
+  id          String    @id @default(uuid())
+  from        String
+  fromName    String    @default("")
+  to          String
+  toName      String    @default("")
+  cc          String    @default("")
+  bcc         String    @default("")
+  subject     String
+  textMessage String
+  htmMessage  String
+  createdOn   DateTime  @default(now())
+  sendTries   Int       @default(0)
+  sentOn      DateTime?
 
   @@index([sendTries])
   @@index([createdOn])
@@ -896,30 +1065,59 @@ model QueuedEmail {
 }
 
 model SupportTicket {
-  id         String   @id @default(uuid())
-  threadId   String
-  storeId    String
-  senderId   String
-  recipentId String
+  id       String @id @default(uuid())
+  threadId String
+
+  senderId String
+  storeId  String
+
+  priority Int
+
+  recipientId String
+
   department String
   subject    String
   message    String
-  status     Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  status     Int    @default(0)
 
-  Store    Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Sender   User  @relation("SupportTicketFrom", fields: [senderId], references: [id])
-  Recipent User  @relation("SupportTicketTo", fields: [recipentId], references: [id])
+  creator      String
+  createdAt    DateTime @default(now())
+  modifier     String
+  lastModified DateTime @updatedAt
 
-  @@index([updatedAt])
+  Store     Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Sender    User  @relation("SupportTicketFrom", fields: [senderId], references: [id])
+  Recipient User  @relation("SupportTicketTo", fields: [recipientId], references: [id])
+
+  parent SupportTicket?  @relation("TicketThread", fields: [threadId], references: [id], onUpdate: Restrict, onDelete: Restrict)
+  Thread SupportTicket[] @relation("TicketThread")
+
   @@index([threadId])
+  @@index([lastModified])
+  @@index([status])
   @@index([senderId])
-  @@index([recipentId])
+  @@index([recipientId])
   @@index([storeId])
 }
 
+model ContactUs {
+  id           String   @id @default(uuid())
+  ipaddr       String   @db.Char(12)
+  name         String?
+  gender       String?
+  phone        String?
+  email        String?
+  inquireType  String?
+  subject      String?
+  questionBody String?
+  status       Int      @default(0)
+  lastModified DateTime @default(now())
+
+  @@index([status])
+}
+
 /// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+
 view orderitemview {
   id           String   @unique
   orderId      String
@@ -937,10 +1135,4 @@ view orderitemview {
 
   //@@index([orderId])
   //@@index([productId])
-}
-
-enum Role {
-  USER
-  ADMIN
-  OWNER
 }

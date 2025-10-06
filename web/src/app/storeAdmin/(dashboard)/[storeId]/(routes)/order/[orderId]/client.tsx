@@ -2,17 +2,15 @@
 
 import { toastError, toastSuccess } from "@/components/Toaster";
 import {
-	Copy,
-	Edit,
-	Minus,
-	MoreHorizontal,
-	PenBoxIcon,
-	PenIcon,
-	Plus,
-	Trash,
-	Undo2Icon,
-	XIcon,
-} from "lucide-react";
+	IconCopy,
+	IconEdit,
+	IconMinus,
+	IconDots,
+	IconPlus,
+	IconTrash,
+	IconArrowBack,
+	IconX,
+} from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -68,43 +66,47 @@ interface props {
 const formSchema = z.object({
 	tableId: z.string().optional().nullable(),
 	orderNum: z.number().optional(),
-	paymentMethodId: z.string().min(1, { message: "payment method is required" }),
-	shippingMethodId: z
-		.string()
-		.min(1, { message: "shipping method is required" }),
+	paymentMethodId: z.string().min(1, {
+		error: "payment method is required",
+	}),
+	shippingMethodId: z.string().min(1, {
+		error: "shipping method is required",
+	}),
 	OrderItemView: z
 		.object({
 			//id: z.string().min(1),
 			//orderId: z.string().min(1),
-			productId: z.string().min(1, { message: "product is required" }),
-			quantity: z.coerce.number().min(1, { message: "quantity is required" }),
+			productId: z.string().min(1, {
+				error: "product is required",
+			}),
+			quantity: z.number().min(1, {
+				error: "quantity is required",
+			}),
 			//variants: z.string().optional(),
-			//unitDiscount: z.coerce.number().min(1),
-			//unitPrice: z.coerce.number().min(1),
+			//unitDiscount: z.number().min(1),
+			//unitPrice: z.number().min(1),
 		})
 		.array()
-		.min(1, { message: "at least one item is required" })
+		.min(1, {
+			error: "at least one item is required",
+		})
 		.optional(),
 });
 
-function useZodForm<TSchema extends z.ZodType>(
-	props: Omit<UseFormProps<TSchema["_input"]>, "resolver"> & {
+function useZodForm<TSchema extends z.ZodType<any, any, any>>(
+	props: Omit<UseFormProps<z.infer<TSchema>>, "resolver"> & {
 		schema: TSchema;
 	},
 ) {
-	const form = useForm<TSchema["_input"]>({
+	const form = useForm<z.infer<TSchema>>({
 		...props,
-		resolver: zodResolver(formSchema, undefined, {
-			//resolver: zodResolver(props.schema, undefined, {
-			// This makes it so we can use `.transform()`s on the schema without same transform getting applied again when it reaches the server
-			//rawValues: true
-		}),
+		resolver: zodResolver(props.schema) as any,
 	});
 
 	return form;
 }
 
-// Modifiy Order Dialog
+// Modify Order Dialog
 //
 export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 	//console.log('order', JSON.stringify(order));
@@ -474,7 +476,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 							);
 						}}
 					>
-						<Undo2Icon className="mr-0 size-4" />
+						<IconArrowBack className="mr-0 size-4" />
 						{t("Refund")}
 					</Button>
 
@@ -512,7 +514,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 							);
 						}}
 					>
-						<Undo2Icon className="mr-0 size-4" />
+						<IconArrowBack className="mr-0 size-4" />
 						{t("Refund")}
 					</Button>
 
@@ -712,7 +714,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 												type="button"
 												onClick={() => handleDeleteOrderItem(index)}
 											>
-												<XIcon className="text-red-400 size-4" />
+												<IconX className="text-red-400 size-4" />
 											</Button>
 										</div>
 
@@ -735,7 +737,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 														<IconButton
 															onClick={() => handleDecreaseQuality(index)}
 															icon={
-																<Minus
+																<IconMinus
 																	size={18}
 																	className="dark:text-primary text-slate-500"
 																/>
@@ -758,7 +760,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 													<IconButton
 														onClick={() => handleIncraseQuality(index)}
 														icon={
-															<Plus
+															<IconPlus
 																size={18}
 																className="dark:text-primary text-slate-500"
 															/>

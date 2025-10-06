@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
-import { formatDateTime } from "@/utils/utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import { ClipLoader } from "react-spinners";

@@ -2,16 +2,15 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import { formatDateTime } from "@/utils/utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import type { Store, SupportTicket } from "@prisma/client";
-
-import { GetSession } from "@/lib/auth/utils";
 import { checkStoreAccess } from "@/lib/store-admin-utils";
-import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { TicketColumn } from "./components/columns";
 import { TicketClient } from "./components/ticket-client";
+import { auth, Session } from "@/lib/auth";
+import { headers } from "next/headers";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -24,12 +23,14 @@ export default async function StoreSupportPage(props: {
 
 	const store = (await checkStoreAccess(params.storeId)) as Store;
 
-	const session = (await GetSession()) as Session;
-	const userId = session?.user.id;
-
 	if (!store) {
 		redirect("/unv");
 	}
+
+	const session = (await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	})) as unknown as Session;
+	const userId = session?.user.id;
 
 	const tickets = await sqlClient.supportTicket.findMany({
 		distinct: ["threadId"],
@@ -40,7 +41,7 @@ export default async function StoreSupportPage(props: {
 		},
 		include: {},
 		orderBy: {
-			updatedAt: "desc",
+			lastModified: "desc",
 		},
 	});
 
@@ -51,7 +52,7 @@ export default async function StoreSupportPage(props: {
 			department: item.department,
 			subject: item.subject,
 			status: item.status,
-			updatedAt: formatDateTime(item.updatedAt),
+			updatedAt: formatDateTime(item.lastModified),
 		}),
 	);
 

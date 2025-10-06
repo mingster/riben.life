@@ -1,6 +1,7 @@
-import { IsSignInResponse } from "@/lib/auth/utils";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
@@ -12,7 +13,10 @@ export async function PATCH(
 	try {
 		CheckStoreAdminApiAccess(params.storeId);
 
-		const userId = await IsSignInResponse();
+		const session = await auth.api.getSession({
+			headers: await headers(), // you need to pass the headers object.
+		});
+		const userId = session?.user.id;
 		if (typeof userId !== "string") {
 			return new NextResponse("Unauthenticated", { status: 400 });
 		}
@@ -39,9 +43,9 @@ export async function PATCH(
 		}
 
 		/*
-    const locale = await prismadb.locale.findUnique({ where: { id: defaultLocale } });
-    const defaultCurrency = locale?.defaultCurrencyId;
-    */
+	const locale = await prismadb.locale.findUnique({ where: { id: defaultLocale } });
+	const defaultCurrency = locale?.defaultCurrencyId;
+	*/
 
 		const store = await sqlClient.store.update({
 			where: {
@@ -61,15 +65,15 @@ export async function PATCH(
 				requirePrepaid,
 				updatedAt: getUtcNow(),
 				/*
-        storeLocales: {
-          upsert: {
-            // create or update storeLocale record
-            create: { localeId: defaultLocale! },
-            update: { localeId: defaultLocale! },
-            where: { storeId_localeId: { storeId: params.storeId, localeId: defaultLocale } },
-          },
-        },
-        */
+		storeLocales: {
+		  upsert: {
+			// create or update storeLocale record
+			create: { localeId: defaultLocale! },
+			update: { localeId: defaultLocale! },
+			where: { storeId_localeId: { storeId: params.storeId, localeId: defaultLocale } },
+		  },
+		},
+		*/
 			},
 		});
 
@@ -107,7 +111,11 @@ export async function DELETE(
 		CheckStoreAdminApiAccess(params.storeId);
 
 		// get the userId
-		const userId = await IsSignInResponse();
+		const session = await auth.api.getSession({
+			headers: await headers(), // you need to pass the headers object.
+		});
+		const userId = session?.user.id;
+
 		if (typeof userId !== "string") {
 			return new NextResponse("Unauthenticated", { status: 400 });
 		}
@@ -152,7 +160,7 @@ export async function DELETE(
 				} catch (error) {
 					console.log(error);
 				}
-          */
+		  */
 
 				await sqlClient.storeSettings.delete({
 					where: {

@@ -1,13 +1,11 @@
-import crypto from "crypto";
-import axios from "axios";
 import { type ClassValue, clsx } from "clsx";
-import { format } from "date-fns";
-import Resizer from "react-image-file-resizer";
+import crypto from "crypto";
 import { twMerge } from "tailwind-merge";
 
 //import type { StoreTables } from "@prisma/client";
 import Decimal from "decimal.js"; // gets added if installed
 import { z } from "zod";
+import { getNumOfDaysInTheMonth, getUtcNow } from "./datetime-utils";
 
 export const highlight_css = "border-dashed border-green-500 border-2";
 
@@ -16,6 +14,25 @@ export function getTableName(tables: StoreTables[], tableId: string) {
   return tables.find((table) => table.id === tableId)?.tableName || "";
 }
 */
+
+export function GetSubscriptionLength(totalCycles: number) {
+	const now = getUtcNow();
+
+	if (totalCycles === 1) return getNumOfDaysInTheMonth(now);
+	if (totalCycles === 12) return 365;
+
+	// for quarterly and semi-annual, we need to calculate the number of days in the month
+	let days = 0;
+	let date = new Date(now);
+	for (let i = 1; i <= totalCycles; i++) {
+		const mo = date.getMonth() + 1; // JS months are 0-based
+		const yr = date.getFullYear();
+		days += getNumOfDaysInTheMonth(date);
+		// Move to next month
+		date = new Date(yr, date.getMonth() + 1, 1);
+	}
+	return days;
+}
 
 export function getRandomNum(length: number) {
 	const randomNum = (
@@ -41,7 +58,7 @@ export const transformDecimalsToNumbers = (obj: any) => {
 	}
 };
 
-function nullable<TSchema extends z.AnyZodObject>(schema: TSchema) {
+function nullable<TSchema extends z.ZodObject<any>>(schema: TSchema) {
 	const entries = Object.entries(schema.shape) as [
 		keyof TSchema["shape"],
 		z.ZodTypeAny,
@@ -120,184 +137,6 @@ export const generateSignature = (publicId: string, apiSecret: string) => {
 	const timestamp = new Date().getTime();
 
 	return `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
-};
-
-//https://articles.wesionary.team/image-optimization-in-react-during-upload-5ca351d943d1
-const resizeFile = (
-	file: File,
-	resizeToWidth?: number,
-	resizeToHeight?: number,
-) =>
-	new Promise((resolve) => {
-		let quality = 100;
-		//4MB image file
-		if (file.size > 4000000) {
-			quality = 90;
-		}
-		//8MB image file
-		if (file.size > 8000000) {
-			quality = 85;
-		}
-
-		if (resizeToWidth && resizeToHeight)
-			Resizer.imageFileResizer(
-				file,
-				resizeToWidth,
-				resizeToHeight,
-				"JPEG",
-				quality,
-				0,
-				(uri) => {
-					resolve(uri);
-				},
-				//'blob'
-				"base64",
-			);
-	});
-
-//upload image to cloudinary
-//BUG: resizeToWidth & resizeToHeight must be specified -- otherwise upload won't happen...
-export const uploadImage = async (
-	folderName: string,
-	image: File,
-	resizeToWidth?: number,
-	resizeToHeight?: number,
-) => {
-	const YOUR_CLOUD_NAME = process.env
-		.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME as string;
-	const YOUR_UNSIGNED_UPLOAD_PRESET = process.env
-		.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_UPLOAD_PRESET as string;
-
-	const resizedImage = (await resizeFile(
-		image,
-		resizeToWidth,
-		resizeToHeight,
-	)) as File;
-
-	const formData = new FormData();
-	formData.append("file", resizedImage);
-	formData.append("upload_preset", YOUR_UNSIGNED_UPLOAD_PRESET);
-	formData.append("folder", folderName);
-
-	try {
-		const res = await axios.post(
-			`https://api.cloudinary.com/v1_1/${YOUR_CLOUD_NAME}/image/upload`,
-			formData,
-			{
-				headers: {
-					"Content-Type": "multipart/form-data",
-				},
-			},
-		);
-
-		//upload_response: https://cloudinary.com/documentation/upload_images#upload_response
-		return res.data;
-	} catch (error) {
-		console.error(error);
-
-		return error;
-	}
-};
-
-//call cloudinary to delete the image
-// https://cloudinary.com/documentation/image_upload_api_reference#destroy
-//https://www.obytes.com/blog/cloudinary-in-nextjs
-export const deleteImage = async (publicId: string) => {
-	const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME as string;
-	const timestamp = new Date().getTime();
-	const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_APIKEY as string;
-	const apiSecret = process.env.NEXT_PUBLIC_CLOUDINARY_APISECRET as string;
-	const signature = generateSHA1(generateSignature(publicId, apiSecret));
-	const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`;
-
-	try {
-		const _response = await axios.post(url, {
-			public_id: publicId,
-			signature: signature,
-			api_key: apiKey,
-			timestamp: timestamp,
-		});
-
-		//console.log('handleDeleteImage: ' + JSON.stringify(response));
-	} catch (error) {
-		console.error(error);
-	}
-};
-
-export const toDateTime = (secs: number) => {
-	const t = new Date(+0); // Unix epoch start.
-	t.setSeconds(secs);
-
-	return t;
-};
-
-// https://nextjs.org/learn-pages-router/basics/dynamic-routes/polishing-post-page
-// https://github.com/you-dont-need/You-Dont-Need-Momentjs?tab=readme-ov-file#string--time-format
-export const formatDateTime = (d: Date | undefined) => {
-	if (d === undefined) return "";
-
-	return format(d, "yyyy-MM-dd H:mm");
-};
-
-export function getNowTimeInTz(offsetHours: number) {
-	return getDateInTz(getUtcNow(), offsetHours);
-}
-
-export function getDateInTz(dt: Date, offsetHours: number) {
-	// if dt is not Date object, return empty string
-	if (typeof dt !== "object") return dt;
-
-	const result = new Date(
-		Date.UTC(
-			dt.getFullYear(),
-			dt.getMonth(),
-			dt.getDate(),
-			dt.getHours(),
-			dt.getMinutes(),
-			dt.getSeconds(),
-			offsetHours * 60,
-		),
-	);
-
-	//console.log('dt', dt, result);
-
-	return result;
-}
-
-export function getUtcNow() {
-	const d = new Date();
-	const utcDate = new Date(
-		d.getUTCFullYear(),
-		d.getUTCMonth(),
-		d.getUTCDate(),
-		d.getUTCHours(),
-		d.getUTCMinutes(),
-		d.getUTCSeconds(),
-		d.getUTCMilliseconds(),
-	);
-
-	//console.log('utcDate', utcDate);
-	return utcDate;
-}
-
-export const calculateTrialEndUnixTimestamp = (
-	trialPeriodDays: number | null | undefined,
-) => {
-	// Check if trialPeriodDays is null, undefined, or less than 2 days
-	if (
-		trialPeriodDays === null ||
-		trialPeriodDays === undefined ||
-		trialPeriodDays < 2
-	) {
-		return undefined;
-	}
-
-	const currentDate = new Date(); // Current date and time
-	const trialEnd = new Date(
-		currentDate.getTime() + (trialPeriodDays + 1) * 24 * 60 * 60 * 1000,
-	); // Add trial days
-
-	return Math.floor(trialEnd.getTime() / 1000); // Convert to Unix timestamp in seconds
 };
 
 // Inspired from https://github.com/microsoft/TypeScript/issues/30611#issuecomment-570773496

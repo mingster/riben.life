@@ -13,7 +13,7 @@ import { DataTableCheckbox } from "@/components/dataTable-checkbox";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import axios from "axios";
-import { CheckIcon, XIcon } from "lucide-react";
+import { IconCheck, IconX } from "@tabler/icons-react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -237,9 +237,9 @@ const columns: ColumnDef<CategoryColumn>[] = [
 			//console.log( typeof(row.getValue("isFeatured")) );
 			const isFeatured =
 				row.getValue("isFeatured") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
+					<IconCheck className="text-green-400  size-4" />
 				) : (
-					<XIcon className="text-red-400 size-4" />
+					<IconX className="text-red-400 size-4" />
 				);
 
 			return <div className="pl-3">{isFeatured}</div>;

@@ -1,14 +1,10 @@
-import type { Locale } from "@prisma/client";
-import useSWR, { Fetcher } from "swr";
+"use client";
 
+import type { Locale } from "@prisma/client";
+import useSWR from "swr";
 import { SelectItem } from "@/components/ui/select";
 
-import { cookieName, getOptions, languages } from "@/app/i18n/settings";
-
 export const LocaleSelectItems: React.FC = () => {
-	//const option = getOptions();
-	//console.log(`supportedLngs: ${option.supportedLngs}`);
-
 	const url = `${process.env.NEXT_PUBLIC_API_URL}/common/get-locales`;
 
 	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
@@ -17,7 +13,7 @@ export const LocaleSelectItems: React.FC = () => {
 	let locales: Locale[] = [];
 	if (!isLoading && !error) locales = data;
 
-	//console.log(`locales:${JSON.stringify(locales)}`);
+	console.log(`locales:${JSON.stringify(locales)}`);
 
 	return (
 		<>

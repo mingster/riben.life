@@ -1,10 +1,10 @@
 SELECT
-  item.id,
-  item."orderId",
-  item."productId",
-  item.quantity,
-  item."unitDiscount",
-  item."unitPrice",
+  id,
+  "orderId",
+  "productId",
+  quantity,
+  "unitDiscount",
+  "unitPrice",
   (
     SELECT
       p.name
@@ -22,6 +22,8 @@ SELECT
       (pi."productId" = item."productId")
     LIMIT
       1
-  ) AS url
+  ) AS url,
+  variants,
+  "variantCosts"
 FROM
   "OrderItem" item;

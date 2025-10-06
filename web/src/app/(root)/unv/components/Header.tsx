@@ -4,6 +4,9 @@ import { Logo } from "@/components/logo";
 import TypewriterComponent from "typewriter-effect";
 import { Hero } from "./Hero";
 
+import DropdownUser from "@/components/auth/dropdown-user";
+import { BackgroundImage } from "@/components/BackgroundImage";
+import LanguageToggler from "@/components/language-toggler";
 import ThemeToggler from "@/components/theme-toggler";
 import {
 	Sheet,
@@ -13,9 +16,10 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
+import { authClient } from "@/lib/auth-client";
 import clsx from "clsx";
-import Router from "next/router";
 import { useEffect, useState } from "react";
+import DialogSignIn from "@/components/auth/dialog-sign-in";
 
 export function NavPopover({
 	display = "md:hidden",
@@ -76,6 +80,7 @@ export function NavPopover({
 						</ul>
 						<div className="pt-6 mt-6 border-t border-slate-200 dark:border-slate-200/10">
 							<ThemeToggler />
+							<DropdownUser /> <LanguageToggler />
 						</div>
 					</div>
 				</SheetContent>
@@ -165,6 +170,7 @@ export function NavItems() {
 
 export function NavBar() {
 	const [isOpaque, setIsOpaque] = useState(false);
+	const { data: session } = authClient.useSession();
 
 	//const router = useRouter();
 	useEffect(() => {
@@ -189,37 +195,16 @@ export function NavBar() {
 		<>
 			{/* background image
 			 */}
-
-			<div className="absolute inset-x-0 top-0 z-20 flex justify-center overflow-hidden pointer-events-none">
-				<div className="w-[108rem] flex-none flex justify-end">
-					<picture>
-						<source srcSet="/img/beams/docs@30.avif" type="image/avif" />
-						<img
-							src="/img/beams/docs@tinypng.png"
-							alt=""
-							className="w-[71.75rem] flex-none max-w-none dark:hidden"
-							decoding="async"
-						/>
-					</picture>
-					<picture>
-						<source srcSet="/img/beams/docs-dark@30.avif" type="image/avif" />
-						<img
-							src="/img/beams/docs-dark@tinypng.png"
-							alt=""
-							className="w-[90rem] flex-none max-w-none hidden dark:block"
-							decoding="async"
-						/>
-					</picture>
-				</div>
-			</div>
+			<BackgroundImage />
 
 			{/* navbar */}
+
 			<div
 				className={clsx(
 					"sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-slate-900/10 dark:border-slate-50/[0.06]",
 					isOpaque
-						? "bg-white supports-backdrop-blur:bg-white/95 dark:bg-slate-900/75"
-						: "bg-white/95 supports-backdrop-blur:bg-white/60 dark:bg-transparent",
+						? "bg-transparent supports-backdrop-blur:bg-white/95 dark:bg-gray-900/5"
+						: "bg-primary/20 supports-backdrop-blur:bg-white/60 dark:bg-gray-900/50",
 				)}
 			>
 				<div className="mx-auto max-w-8xl">
@@ -241,11 +226,13 @@ export function NavBar() {
 								<Logo className="w-auto" />
 							</Link>
 							<div className="relative items-center hidden ml-auto lg:flex">
-								<nav className="text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">
-									<ul className="flex space-x-8">
+								<nav className="text-sm font-semibold leading-6 text-slate-400 dark:text-slate-200">
+									<ul className="flex space-x-8 items-center">
 										<NavItems />
-										<li className="pl-6 ml-6 border-l border-slate-200 dark:border-slate-800">
+										<li className="flex pl-6 ml-6 items-center border-slate-200 dark:border-slate-800">
 											<ThemeToggler />
+											{session !== null ? <DropdownUser /> : <DialogSignIn />}
+											<LanguageToggler />
 										</li>
 									</ul>
 								</nav>

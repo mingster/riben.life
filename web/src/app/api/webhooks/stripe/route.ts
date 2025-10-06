@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
+import { GetSubscriptionLength } from "@/utils/utils";
 import { type NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
@@ -55,30 +56,64 @@ const webhookHandler = async (req: NextRequest) => {
 				case "product.deleted":
 					break;
 				case "customer.subscription.created":
-					await sqlClient.user.update({
-						// Find the customer in our database with the Stripe customer ID linked to this purchase
+					// update pstv_subscriber table for the new subscription
+					const new_subscription = event.data.object as Stripe.Subscription;
+
+					//get user by its stripe customer id
+					const user = await sqlClient.user.findFirst({
 						where: {
-							stripeCustomerId: subscription.customer as string,
-						},
-						// Update that customer so their status is now active
-						data: {
-							isActive: true,
+							stripeCustomerId: new_subscription.customer as string,
 						},
 					});
+
+					if (!user) {
+						throw new Error("User not found");
+					}
+
+					const daysToAdd = GetSubscriptionLength(1);
+
+					await sqlClient.subscription.upsert({
+						where: {
+							referenceId: user.id,
+						},
+						update: {
+							id: crypto.randomUUID(),
+							stripeSubscriptionId: new_subscription.id,
+							status: "active",
+							periodStart: new Date(new_subscription.start_date),
+							periodEnd: new Date(
+								new_subscription.start_date + daysToAdd * 24 * 60 * 60 * 1000,
+							),
+							cancelAtPeriodEnd: false,
+							plan: new_subscription.items.data[0].price.id as string,
+							seats: new_subscription.items.data[0].quantity,
+							trialStart: null,
+							trialEnd: null,
+						},
+						create: {
+							id: crypto.randomUUID(),
+							referenceId: user.id,
+							stripeCustomerId: user.stripeCustomerId,
+							stripeSubscriptionId: new_subscription.id,
+							status: "active",
+							periodStart: new Date(new_subscription.start_date),
+							periodEnd: new Date(
+								new_subscription.start_date + daysToAdd * 24 * 60 * 60 * 1000,
+							),
+							cancelAtPeriodEnd: false,
+							plan: new_subscription.items.data[0].price.id as string,
+							seats: new_subscription.items.data[0].quantity,
+							trialStart: null,
+							trialEnd: null,
+						},
+					});
+
 					break;
 
 				case "customer.subscription.updated":
 				case "customer.subscription.deleted":
-					await sqlClient.user.update({
-						// Find the customer in our database with the Stripe customer ID linked to this purchase
-						where: {
-							stripeCustomerId: subscription.customer as string,
-						},
-						// Update that customer so their status is now active
-						data: {
-							isActive: false,
-						},
-					});
+					//update subscription table
+
 					break;
 
 				case "checkout.session.completed":

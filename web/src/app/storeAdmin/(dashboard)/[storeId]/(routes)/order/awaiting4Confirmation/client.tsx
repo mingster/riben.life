@@ -8,7 +8,8 @@ import { Loader } from "@/components/loader";
 import { useI18n } from "@/providers/i18n-provider";
 import { format } from "date-fns-tz";
 
-import { formatDateTime, getNowTimeInTz } from "@/utils/utils";
+import { getNowTimeInTz } from "@/utils/datetime-utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import { OrderPending } from "../../components/order-pending";
 
 export interface props {

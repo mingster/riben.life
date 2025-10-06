@@ -9,7 +9,7 @@ import type {
 } from "@prisma/client";
 
 import axios, { type AxiosError } from "axios";
-import { Trash } from "lucide-react";
+import { IconTrash } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -118,7 +118,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 					size="sm"
 					onClick={() => setOpen(true)}
 				>
-					<Trash className="size-4" />
+					<IconTrash className="size-4" />
 				</Button>
 			</div>
 

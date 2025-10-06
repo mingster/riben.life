@@ -39,7 +39,7 @@ import * as z from "zod";
 const formSchema = z.object({
 	question: z.string().min(1, { message: "question is required" }),
 	answer: z.string().min(1, { message: "answer is required" }),
-	sortOrder: z.coerce.number().min(1),
+	sortOrder: z.number().min(1),
 });
 
 type formValues = z.infer<typeof formSchema>;

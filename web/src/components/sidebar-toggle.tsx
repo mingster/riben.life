@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/utils";
@@ -21,14 +21,14 @@ export function SidebarToggle({ isOpen, setIsOpen }: SidebarToggleProps) {
 				size="icon"
 			>
 				{isOpen ? (
-					<ChevronLeft
+					<IconChevronLeft
 						className={cn(
 							"h-4 w-4 transition-transform duration-700 ease-in-out ",
 							//isOpen === false ? "rotate-180" : "rotate-0",
 						)}
 					/>
 				) : (
-					<ChevronRight
+					<IconChevronRight
 						className={cn(
 							"h-4 w-4 transition-transform duration-700 ease-in-out ",
 						)}

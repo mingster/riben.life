@@ -1,7 +1,7 @@
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreAnnouncement } from "@prisma/client";
-import { Bell } from "lucide-react";
+import { IconBell } from "@tabler/icons-react";
 //import { CookiesProvider, useCookies } from "react-cookie";
 import { useCookies } from "next-client-cookies";
 import Link from "next/link";
@@ -118,7 +118,7 @@ export default function DropdownMessage({ messages }: props) {
 						<span className="absolute -z-1 inline-flex size-full animate-ping rounded-full bg-meta-1 opacity-75" />
 					</span>
 				)}
-				<Bell className="text-slate-400 hover:opacity-50 duration-300 ease-in-out size-5" />
+				<IconBell className="text-slate-400 hover:opacity-50 duration-300 ease-in-out size-5" />
 			</Link>
 
 			<div

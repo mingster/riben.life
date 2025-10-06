@@ -1,16 +1,14 @@
-import { GetSession, RequiresSignIn } from "@/lib/auth/utils";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import type { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import StoreAdminLayout from "./components/store-admin-layout";
 
-//import { checkStoreAccess } from "@/lib/store-admin-utils";
 import { cookieName, fallbackLng } from "@/app/i18n/settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SystemMessage } from "@/types";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { auth, Session } from "@/lib/auth";
 
 export default async function StoreLayout(props: {
 	children: React.ReactNode;
@@ -20,8 +18,9 @@ export default async function StoreLayout(props: {
 
 	const { children } = props;
 
-	RequiresSignIn("/storeAdmin");
-	const session = (await GetSession()) as Session;
+	const session = (await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	})) as unknown as Session;
 
 	//console.log('session: ' + JSON.stringify(session));
 	//console.log('userId: ' + user?.id);

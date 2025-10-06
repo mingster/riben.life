@@ -4,7 +4,7 @@ import type { Store } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
 import { Loader } from "@/components/loader";
-import { formatDateTime } from "@/utils/utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import { OrderInProgress } from "../../components/order-inprogress";
 import { OrderReadyToShip } from "../../components/order-ready-to-ship";
 

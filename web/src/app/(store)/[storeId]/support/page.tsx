@@ -1,90 +1,67 @@
-import Container from "@/components/ui/container";
+import { getT } from "@/app/i18n";
+import { GlobalNavbar } from "@/components/global-navbar";
 import { Loader } from "@/components/loader";
-import { sqlClient } from "@/lib/prismadb";
-import { TicketStatus } from "@/types/enum";
-import type { StoreSettings, SupportTicket } from "@prisma/client";
-
+import { auth } from "@/lib/auth";
+import type { SupportTicket, User } from "@/types";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import type { TicketColumn } from "./components/columns";
-import { TicketClient } from "./components/ticket-client";
-
-import { auth } from "@/auth";
-import { formatDateTime } from "@/utils/utils";
-import type { Session } from "next-auth";
+//import logger from "@/utils/logger";
+import { sqlClient } from "@/lib/prismadb";
+import { ClientSupport } from "./client-support";
 
 type Params = Promise<{ storeId: string }>;
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+type SearchParams = Promise<{ [ch: string]: string | string[] | undefined }>;
 
-export default async function StoreSupportPage(props: {
+// Support home - implement support system as spec'ed in
+// @/doc/AI-Powered-Support-Ticket-System-Requirements.md
+//
+export default async function SupportHomePage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const session = (await auth()) as Session;
-	const userId = session?.user.id;
+
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});
 
 	if (!session) {
-		redirect(`${process.env.NEXT_PUBLIC_API_URL}/auth/signin`);
+		redirect(`/signIn/?callbackUrl=/${params.storeId}/support`);
 	}
 
-	const store = await sqlClient.store.findFirst({
-		where: {
-			id: params.storeId,
-		},
-	});
+	//const log = logger.child({ module: "SupportHomePage" });
 
-	if (!store) {
-		redirect("/unv");
-	}
+	const { t } = await getT();
+	const title = t("page_title_support");
 
-	const tickets = await sqlClient.supportTicket.findMany({
-		distinct: ["threadId"],
+	//get current user
+	const user = (await sqlClient.user.findFirst({
 		where: {
-			senderId: userId,
-			storeId: store.id,
-			status: {
-				in: [TicketStatus.Open, TicketStatus.Active, TicketStatus.Replied],
-			},
+			email: session.user.email,
 		},
-		include: {},
+	})) as User;
+
+	// get all top level tickets for the customer
+	// top level ticket = main ticket = threadId is null
+	const tickets = (await sqlClient.supportTicket.findMany({
+		where: {
+			senderId: user.id,
+			threadId: "",
+		},
 		orderBy: {
-			updatedAt: "desc",
+			lastModified: "desc",
 		},
-	});
-
-	// map tickets to ui
-	const formattedTickets: TicketColumn[] = tickets.map(
-		(item: SupportTicket) => ({
-			id: item.id,
-			department: item.department,
-			subject: item.subject,
-			status: item.status,
-			updatedAt: formatDateTime(item.updatedAt),
-		}),
-	);
-
-	const storeSettings = (await sqlClient.storeSettings.findFirst({
-		where: {
-			storeId: params.storeId,
+		distinct: ["threadId"],
+		include: {
+			Thread: true,
 		},
-	})) as StoreSettings;
-
-	if (!storeSettings) {
-		// Handle the case where storeSettings is null
-		// For example, you can return a default value or an error message
-		return <div>Store settings not found</div>;
-	}
+	})) as SupportTicket[];
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<Container>
-				<TicketClient
-					data={formattedTickets}
-					store={store}
-					storeSettings={storeSettings ?? {}}
-				/>
-			</Container>
+			<GlobalNavbar title={title} />
+			<ClientSupport user={user} serverData={tickets} />
 		</Suspense>
 	);
 }

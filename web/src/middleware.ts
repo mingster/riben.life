@@ -1,9 +1,7 @@
 //export { auth as middleware } from "@/auth"
 
 //Protect all routes
-//https://next-auth.js.org/configuration/nextjs#middleware
 import { type NextRequest, NextResponse } from "next/server";
-//export { default } from "next-auth/middleware";
 
 export const config = {
 	matcher: [

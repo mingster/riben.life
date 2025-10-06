@@ -27,8 +27,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
-import { deleteImage, uploadImage } from "@/utils/utils";
-import { XCircleIcon } from "lucide-react";
+import { deleteImage, uploadImage } from "@/utils/image-utils";
+import { IconX } from "@tabler/icons-react";
 import { RequiredProVersion } from "../components/require-pro-version";
 
 const formSchema = z.object({
@@ -39,7 +39,7 @@ const formSchema = z.object({
 	logo: z.string().optional().default(""),
 	logoPublicId: z.string().default("").optional().default(""),
 	acceptAnonymousOrder: z.boolean().optional().default(true),
-	defaultTimezone: z.coerce.number().optional().default(8),
+	defaultTimezone: z.number().optional().default(8),
 });
 
 type formValues = z.infer<typeof formSchema>;
@@ -377,7 +377,7 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 																	deleteImageFromClient(logoPublicId as string)
 																}
 															>
-																<XCircleIcon className="text-red-700" />
+																<IconX className="text-red-700" />
 															</Button>
 														</div>
 

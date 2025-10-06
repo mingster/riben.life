@@ -4,7 +4,9 @@ import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
-import { cn, formatDateTime, getAbsoluteUrl, getUtcNow } from "@/utils/utils";
+import { cn, getAbsoluteUrl } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import { useParams, useRouter } from "next/navigation";
 
 import { ConfirmModal } from "@/components/modals/cofirm-modal";
@@ -19,7 +21,6 @@ import {
 
 import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
 
-import { useSession } from "next-auth/react";
 import { type ChangeEvent, useEffect, useState } from "react";
 
 import getStripe from "@/lib/stripe/client";
@@ -31,6 +32,7 @@ import axios from "axios";
 import { formatDate } from "date-fns";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
 
 // display package selectiion ui and call back end api to create related payment objects such as paymentintent
 //
@@ -332,7 +334,9 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 			.then((res) => res.json())
 			.then((data) => {
 				setClientSecret(data.client_secret);
-				logger.info("clientSecret", { metadata: { clientSecret: data.client_secret } });
+				logger.info("clientSecret", {
+					metadata: { clientSecret: data.client_secret },
+				});
 			})
 			.catch((error) => {
 				console.error("Error:", error);
@@ -340,11 +344,12 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 			});
 	}, [order]);
 
-	const session = useSession();
-	let email = session.data?.user?.email as string;
+	const { data: session } = authClient.useSession();
+
+	let email = session?.user?.email as string;
 	if (!email) email = "";
 
-	let name = session.data?.user?.name as string;
+	let name = session?.user?.name as string;
 	if (!name) name = "";
 
 	const { resolvedTheme } = useTheme();

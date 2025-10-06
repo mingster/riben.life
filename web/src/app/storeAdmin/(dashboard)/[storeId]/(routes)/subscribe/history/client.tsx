@@ -3,7 +3,7 @@
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
-import { formatDateTime } from "@/utils/utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import { useParams, useRouter } from "next/navigation";
 
 import { useEffect, useState } from "react";

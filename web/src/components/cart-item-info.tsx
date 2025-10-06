@@ -1,4 +1,4 @@
-import { Minus, Plus } from "lucide-react";
+import { IconMinus, IconPlus } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -159,7 +159,7 @@ const CartItemInfo: React.FC<cartItemProps> = ({
 												<IconButton
 													onClick={handleDecreaseQuality}
 													icon={
-														<Minus
+														<IconMinus
 															size={18}
 															className="dark:text-primary text-slate-500"
 														/>
@@ -180,7 +180,7 @@ const CartItemInfo: React.FC<cartItemProps> = ({
 											<IconButton
 												onClick={handleIncraseQuality}
 												icon={
-													<Plus
+													<IconPlus
 														size={18}
 														className="dark:text-primary text-slate-500"
 													/>

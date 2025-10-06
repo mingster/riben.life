@@ -1,7 +1,8 @@
-import { IsSignInResponse } from "@/lib/auth/utils";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import { getUtcNow } from "@/utils/utils";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
@@ -13,7 +14,10 @@ export async function PATCH(
 	const params = await props.params;
 	try {
 		CheckStoreAdminApiAccess(params.storeId);
-		const userId = IsSignInResponse();
+		const session = await auth.api.getSession({
+			headers: await headers(), // you need to pass the headers object.
+		});
+		const userId = session?.user.id;
 		if (typeof userId !== "string") {
 			return new NextResponse("Unauthenticated", { status: 400 });
 		}
@@ -50,12 +54,15 @@ export async function PATCH(
 				storeId: params.storeId,
 				threadId: orig_ticket.threadId,
 				senderId: userId,
-				recipentId: store.ownerId,
+				recipientId: store.ownerId,
+				priority: 1,
+				creator: userId,
+				modifier: userId,
 				status: TicketStatus.Replied,
 				department: orig_ticket.department,
 				subject: orig_ticket.subject,
 				message,
-				updatedAt: getUtcNow(),
+				lastModified: getUtcNow(),
 			},
 		});
 
@@ -68,7 +75,7 @@ export async function PATCH(
 			},
 			data: {
 				status: TicketStatus.Replied,
-				updatedAt: getUtcNow(),
+				lastModified: getUtcNow(),
 			},
 		});
 
@@ -103,21 +110,21 @@ export async function DELETE(
 			return new NextResponse("ticket not found", { status: 502 });
 		}
 		/*
-    const body = await req.json();
-    const obj = await sqlClient.supportTicket.delete({
-      where: {
-        id: params.ticketId,
-      },
-    });
-    const obj = await sqlClient.supportTicket.update({
-      where: {
-        id: params.ticketId,
-      },
-      data: {
-        status: TicketStatus.Archived,
-      },
-    });
-    */
+	const body = await req.json();
+	const obj = await sqlClient.supportTicket.delete({
+	  where: {
+		id: params.ticketId,
+	  },
+	});
+	const obj = await sqlClient.supportTicket.update({
+	  where: {
+		id: params.ticketId,
+	  },
+	  data: {
+		status: TicketStatus.Archived,
+	  },
+	});
+	*/
 
 		// update status in this thread
 		sqlClient.supportTicket.updateMany({
@@ -126,7 +133,7 @@ export async function DELETE(
 			},
 			data: {
 				status: TicketStatus.Archived,
-				updatedAt: getUtcNow(),
+				lastModified: getUtcNow(),
 			},
 		});
 

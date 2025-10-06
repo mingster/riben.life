@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Loader } from "@/components/loader";
 import { StoreLevel } from "@/types/enum";
-import { formatDateTime } from "@/utils/utils";
+import { formatDateTime } from "@/utils/datetime-utils";
 import type { StoreTables } from "@prisma/client";
 import { OrderUnpaid } from "./order-unpaid";
 

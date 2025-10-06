@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import axios from "axios";
-import { Trash } from "lucide-react";
+import { IconTrash } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { ProductEditOptionsTab } from "./product-edit-options-tab";
 
@@ -162,7 +162,7 @@ export const ProductEditTabs = ({
 						size="sm"
 						onClick={() => setOpen(true)}
 					>
-						<Trash className="size-4" />
+						<IconTrash className="size-4" />
 					</Button>
 				)}
 			</div>

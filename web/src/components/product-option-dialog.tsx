@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useI18n } from "@/providers/i18n-provider";
-import { Minus, Plus } from "lucide-react";
+import { IconMinus, IconPlus } from "@tabler/icons-react";
 
 import Currency from "@/components/currency";
 import IconButton from "@/components/ui/icon-button";
@@ -89,7 +89,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 							`You can select up to ${option.maxSelection} items only.`,
 						)
 						.refine((value) => value.some((item) => item), {
-							message: "You have to select at least one item.",
+							error: "You have to select at least one item.",
 						});
 				} else {
 					// not required checkbox
@@ -120,7 +120,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 								`4You can select up to ${option.maxSelection} items only.`,
 							)
 							.refine((value) => value.some((item) => item), {
-								message: "5You have to select at least one item.",
+								error: "5You have to select at least one item.",
 							})
 							.optional();
 					}
@@ -138,7 +138,8 @@ export const ProductOptionDialog: React.FC<props> = ({
 					schemaFields[fieldName] = z.enum(
 						iteriable_selections as [string, string, string],
 						{
-							required_error: `${option.optionName} is required`,
+							error: (issue) =>
+								issue.input === undefined ? undefined : undefined,
 						},
 					);
 				} else {
@@ -622,14 +623,19 @@ export const ProductOptionDialog: React.FC<props> = ({
 																					>
 																						<FormControl>
 																							<Checkbox
-																								checked={field.value?.includes(
-																									item.id,
-																								)}
+																								checked={
+																									Array.isArray(field.value) &&
+																									field.value.includes(item.id)
+																								}
 																								onCheckedChange={(checked) => {
+																									const currentValue =
+																										Array.isArray(field.value)
+																											? field.value
+																											: [];
 																									return checked
 																										? field.onChange(
 																												[
-																													...field.value,
+																													...currentValue,
 																													item.id,
 																												],
 																												handleCheckbox(
@@ -637,7 +643,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 																												),
 																											)
 																										: field.onChange(
-																												field.value?.filter(
+																												currentValue.filter(
 																													(value: string) =>
 																														value !== item.id,
 																												),
@@ -677,7 +683,9 @@ export const ProductOptionDialog: React.FC<props> = ({
 																	onValueChange={(val) =>
 																		handleRadio(field.name, val)
 																	}
-																	defaultValue={field.value}
+																	defaultValue={
+																		field.value as string | undefined
+																	}
 																	className="flex flex-col space-y-1"
 																>
 																	{option.ProductOptionSelections.map(
@@ -719,7 +727,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 												<IconButton
 													onClick={handleDecreaseQuality}
 													icon={
-														<Minus
+														<IconMinus
 															size={18}
 															className="dark:text-primary text-slate-500"
 														/>
@@ -740,7 +748,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 											<IconButton
 												onClick={handleIncraseQuality}
 												icon={
-													<Plus
+													<IconPlus
 														size={18}
 														className="dark:text-primary text-slate-500"
 													/>

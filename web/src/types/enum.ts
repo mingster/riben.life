@@ -14,6 +14,22 @@ export enum Role {
 	OWNER = 2,
 }
 
+export enum TicketPriority {
+	Low = 1,
+	Medium = 2,
+	High = 3,
+}
+
+export enum TicketStatus {
+	Open = 0,
+	Active = 10,
+	Replied = 11,
+	Closed = 20,
+	Postponed = 30,
+	Archived = 40,
+	Merged = 50,
+}
+
 export enum ProductStatus {
 	Draft = 0,
 	Published = 1,
@@ -66,16 +82,6 @@ export enum SubscriptionStatus {
 	Inactive = 0,
 	Active = 1,
 	Cancelled = 20,
-}
-
-export enum TicketStatus {
-	Open = 0,
-	Active = 10,
-	Replied = 11,
-	Closed = 20,
-	Postponed = 30,
-	Archived = 40,
-	Merged = 50,
 }
 
 export enum OrderStatus {

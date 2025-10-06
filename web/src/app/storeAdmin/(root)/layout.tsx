@@ -1,8 +1,7 @@
-import { GetSession } from "@/lib/auth/utils";
+import { auth, Session } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
-import type { Session } from "next-auth";
-
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 // this is the main layout for store admin.
 // if the user has a store, redirect to the store dashboard (dashboard/[storeId])
@@ -15,11 +14,12 @@ export default async function StoreAdminLayout(props: {
 
 	const { children } = props;
 
-	const session = (await GetSession()) as Session;
+	const session = (await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	})) as unknown as Session;
+
 	if (!session) {
-		redirect(
-			`${process.env.NEXT_PUBLIC_API_URL}/auth/signin?callbackUrl=/storeAdmin`,
-		);
+		redirect(`/signin?callbackUrl=/storeAdmin`);
 	}
 
 	//const ownerId = session.user?.id;
@@ -47,8 +47,8 @@ export default async function StoreAdminLayout(props: {
 	/*
 
   if (session.user.role != 'OWNER') {
-    console.log('access denied');
-    redirect('/error/?code=500');
+	console.log('access denied');
+	redirect('/error/?code=500');
 
   }
 
