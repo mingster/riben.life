@@ -14,6 +14,7 @@ import { HomeIcon } from "lucide-react";
 //import { cn } from '@/lib/utils';
 import Image from "next/image";
 import Link from "next/link";
+import { BackgroundImage } from "./BackgroundImage";
 
 //import { useI18n } from '@/providers/i18n-provider';
 //import { useTranslation } from '@/app/i18n/client';
@@ -60,41 +61,44 @@ export function GlobalNavbar({ title }: NavbarProps) {
 	const logo = null;
 
 	return (
-		<header
-			className={clsx(
-				"sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-slate-900/10 dark:border-slate-50/[0.06]",
-				isOpaque
-					? "bg-transparent supports-backdrop-blur:bg-white/95 dark:bg-gray-900/5"
-					: "bg-primary/20 supports-backdrop-blur:bg-white/60 dark:bg-gray-900/50",
-			)}
-		>
-			{" "}
-			<div className="mx-4 flex h-14 items-center sm:mx-8">
-				<div className="flex items-center space-x-4 lg:space-x-0">
-					<Link href="/" className="flex cursor-pointer">
-						{logo != null ? (
-							<>
-								<Image
-									src={logo}
-									className="h-17 w-100 pl-0 pt-0"
-									alt={"LOGO"}
-								/>
-							</>
-						) : (
-							<>
-								<HomeIcon className="mr-0 size-4" />
-								<h1 className="font-bold">{title}</h1>
-							</>
-						)}
-					</Link>
+		<>
+			<BackgroundImage />
+			<header
+				className={clsx(
+					"sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-slate-900/10 dark:border-slate-50/[0.06]",
+					isOpaque
+						? "bg-transparent supports-backdrop-blur:bg-white/95 dark:bg-gray-900/5"
+						: "bg-primary/20 supports-backdrop-blur:bg-white/60 dark:bg-gray-900/50",
+				)}
+			>
+				{" "}
+				<div className="mx-4 flex h-14 items-center sm:mx-8">
+					<div className="flex items-center space-x-4 lg:space-x-0">
+						<Link href="/" className="flex cursor-pointer">
+							{logo != null ? (
+								<>
+									<Image
+										src={logo}
+										className="h-17 w-100 pl-0 pt-0"
+										alt={"LOGO"}
+									/>
+								</>
+							) : (
+								<>
+									<HomeIcon className="mr-0 size-4" />
+									<h1 className="font-bold">{title}</h1>
+								</>
+							)}
+						</Link>
+					</div>
+					<div className="flex flex-1 items-center justify-end space-x-1">
+						<ThemeToggler />
+						<DropdownNotification />
+						<DropdownUser user={user} />
+						<DropdownCart />
+					</div>
 				</div>
-				<div className="flex flex-1 items-center justify-end space-x-1">
-					<ThemeToggler />
-					<DropdownNotification />
-					<DropdownUser user={user} />
-					<DropdownCart />
-				</div>
-			</div>
-		</header>
+			</header>
+		</>
 	);
 }

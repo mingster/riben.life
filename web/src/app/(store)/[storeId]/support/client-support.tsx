@@ -317,7 +317,7 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 					defaultSize={DEFAULT_PANEL_SIZE}
 					aria-label="FAQ section"
 				>
-					<FAQ />
+					<FAQ storeId={params.storeId as string} />
 				</ResizablePanel>
 			</ResizablePanelGroup>
 		</section>
