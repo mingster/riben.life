@@ -8,10 +8,18 @@ export type GeneralNVType = {
 	label: string;
 };
 
+/*
 export enum Role {
 	USER = 0,
 	ADMIN = 1,
-	OWNER = 2,
+	owner = 2,
+}
+*/
+
+export enum Role {
+	user = "user",
+	admin = "admin",
+	owner = "owner",
 }
 
 export enum TicketPriority {
@@ -77,6 +85,16 @@ export const PayoutSchedule: GeneralNVType[] = [
 		label: "Auto_Monthly",
 	},
 ];
+
+export type SubscriptionForUI = {
+	id: string;
+	customer: string;
+	priceId: string;
+	productName: string;
+	status: string;
+	start_date: Date;
+	canceled_at: Date | null;
+};
 
 export enum SubscriptionStatus {
 	Inactive = 0,

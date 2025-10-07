@@ -23,7 +23,7 @@ import axios from "axios";
 import { ClipLoader } from "react-spinners";
 
 import Currency from "@/components/currency";
-import { DisplayOrderStatus } from "@/components/order-status-display";
+import { DisplayOrderStatus } from "@/components/display-order-status";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/utils/datetime-utils";
 import { Plus } from "lucide-react";

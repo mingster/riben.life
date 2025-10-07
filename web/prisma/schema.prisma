@@ -20,7 +20,7 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  role             String? @default("USER")
+  role             String? @default("user")
   locale           String?
   timezone         String?
   stripeCustomerId String? @unique
@@ -96,9 +96,9 @@ model Session {
 }
 
 enum Role {
-  USER
-  ADMIN
-  OWNER
+  user
+  admin
+  owner
 }
 
 model Verification {

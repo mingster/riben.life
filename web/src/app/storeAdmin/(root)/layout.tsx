@@ -46,7 +46,7 @@ export default async function StoreAdminLayout(props: {
 	//console.log('userId: ' + user?.id);
 	/*
 
-  if (session.user.role != 'OWNER') {
+  if (session.user.role != 'owner') {
 	console.log('access denied');
 	redirect('/error/?code=500');
 

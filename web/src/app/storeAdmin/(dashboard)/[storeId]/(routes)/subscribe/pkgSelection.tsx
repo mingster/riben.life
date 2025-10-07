@@ -39,7 +39,10 @@ import { authClient } from "@/lib/auth-client";
 export function PkgSelection({
 	store,
 	subscription,
-}: { store: Store; subscription: StoreSubscription | null }) {
+}: {
+	store: Store;
+	subscription: StoreSubscription | null;
+}) {
 	const [step, setStep] = useState(1);
 	const [order, setOrder] = useState<SubscriptionPayment | null>(null);
 	useEffect(() => {

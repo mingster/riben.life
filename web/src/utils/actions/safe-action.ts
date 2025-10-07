@@ -60,7 +60,7 @@ export const storeOwnerActionClient = baseClient.use(
 		});
 		if (!session?.user) throw new SafeError("Unauthorized");
 
-		if (session.user.role !== "OWNER" && session.user.role !== "ADMIN") {
+		if (session.user.role !== "owner" && session.user.role !== "admin") {
 			console.error("access denied");
 			throw new SafeError("Unauthorized");
 		}

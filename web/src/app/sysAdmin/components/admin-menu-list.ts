@@ -126,6 +126,13 @@ export function GetMenuList(pathname: string): Group[] {
 					icon: IconTruck,
 					submenus: [],
 				},
+				{
+					href: `${nav_prefix}/mail-templates`,
+					label: "Mail Templates",
+					active: pathname.includes(`${nav_prefix}/mail-templates`),
+					icon: IconMail,
+					submenus: [],
+				},
 			],
 		},
 		{
@@ -136,13 +143,6 @@ export function GetMenuList(pathname: string): Group[] {
 					label: "System Messages",
 					active: pathname.includes(`${nav_prefix}/sysmsg`),
 					icon: IconMessageCircle,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/mail-templates`,
-					label: "Mail Templates",
-					active: pathname.includes(`${nav_prefix}/mail-templates`),
-					icon: IconMail,
 					submenus: [],
 				},
 				{

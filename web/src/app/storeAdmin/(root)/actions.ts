@@ -68,19 +68,19 @@ export const createStore = async (values: z.infer<typeof formSchema>) => {
 	});
 
 	try {
-		if (session.user.role === "USER") {
-			// mark the user as OWNER
+		if (session.user.role === "user") {
+			// mark the user as owner
 			await sqlClient.user.update({
 				where: {
 					id: ownerId,
 				},
 				data: {
-					role: "OWNER",
+					role: "owner",
 				},
 			});
 		}
 	} catch (error) {
-		console.log(`${error}the user is not in USER role`);
+		console.log(`${error}the user is not in user role`);
 	}
 
 	const databaseId = store.id;

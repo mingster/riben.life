@@ -1,8 +1,11 @@
 "use client";
+
 import {
+	AccountsCard,
 	ApiKeysCard,
 	PasskeysCard,
 	ProvidersCard,
+	SessionsCard,
 	TwoFactorCard,
 } from "@daveyplate/better-auth-ui";
 import { useSearchParams } from "next/navigation";
@@ -116,6 +119,17 @@ export const UserClient: React.FC<iUserTabProps> = ({ user }) => {
 							}}
 						/>
 					</div>
+					<SessionsCard
+						classNames={{
+							base: "",
+							header: "",
+							title: "text-sm",
+							description: "text-muted-foreground",
+							content: "bg-transparent",
+							footer: "",
+							button: "",
+						}}
+					/>
 				</TabsContent>
 				{/* 
 				<TabsContent value="changePassword">
