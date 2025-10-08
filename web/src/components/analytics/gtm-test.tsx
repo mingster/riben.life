@@ -42,19 +42,27 @@ export function GATest() {
 	}, []);
 
 	const testEvent = () => {
-		sendGAEvent({
-			event: "ga_test",
-			test_parameter: "test_value",
-			timestamp: new Date().toISOString(),
-		});
+		if (process.env.NODE_ENV === "production") {
+			sendGAEvent({
+				event: "ga_test",
+				test_parameter: "test_value",
+				timestamp: new Date().toISOString(),
+			});
+		} else {
+			console.log("GA Test Event (dev mode, not sent to GA)");
+		}
 	};
 
 	const testPageView = () => {
-		sendGAEvent({
-			event: "page_view",
-			page_title: document.title,
-			page_location: window.location.href,
-		});
+		if (process.env.NODE_ENV === "production") {
+			sendGAEvent({
+				event: "page_view",
+				page_title: document.title,
+				page_location: window.location.href,
+			});
+		} else {
+			console.log("GA Test Page View (dev mode, not sent to GA)");
+		}
 	};
 
 	return (

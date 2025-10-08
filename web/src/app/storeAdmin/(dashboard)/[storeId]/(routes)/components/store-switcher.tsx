@@ -41,7 +41,7 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 
 	// load user's store data
 	const { data: session } = authClient.useSession();
-	
+
 	// Redirect to signin if no session (must be in useEffect to avoid setState during render)
 	React.useEffect(() => {
 		if (!session) {
@@ -50,11 +50,11 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 	}, [session, router]);
 
 	// Only construct URL if session exists
-	const url = session?.user.id 
+	const url = session?.user.id
 		? `${process.env.NEXT_PUBLIC_API_URL}/store/owner/${session.user.id}/getStores`
 		: null;
 	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
-	
+
 	// SWR won't fetch if url is null
 	// Optimize: prevent unnecessary re-fetching once data is loaded
 	const { data, error, isLoading } = useSWR(url, fetcher, {

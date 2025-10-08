@@ -81,17 +81,16 @@ export function StoreAdminSidebar({ store }: prop) {
 						<SidebarMenuButton
 							asChild
 							className="data-[slot=sidebar-menu-button]:!p-1.5"
-						>
-						</SidebarMenuButton>
+						></SidebarMenuButton>
 					</SidebarMenuItem>
 
-				{open && (
-					<SidebarMenuItem className="font-mono">
-						<StoreSwitcher />
-						<StoreModal />
-						{/* storeModal is to create new store when switcher's create store is clicked */}
-					</SidebarMenuItem>
-				)}
+					{open && (
+						<SidebarMenuItem className="font-mono">
+							<StoreSwitcher />
+							<StoreModal />
+							{/* storeModal is to create new store when switcher's create store is clicked */}
+						</SidebarMenuItem>
+					)}
 				</SidebarMenu>
 			</SidebarHeader>
 

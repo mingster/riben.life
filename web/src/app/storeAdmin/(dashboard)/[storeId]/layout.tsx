@@ -1,9 +1,7 @@
 import { Loader } from "@/components/loader";
-import { auth, Session } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
 import type { Metadata, ResolvingMetadata } from "next";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -48,32 +46,16 @@ export default async function StoreAdminLayout(props: {
 	params: Promise<{ storeId: string }>;
 }) {
 	const params = await props.params;
-
 	const { children } = props;
-
-	//console.log('session: ' + JSON.stringify(session));
-	//console.log('userid: ' + userId);
 
 	if (!params.storeId) {
 		// this will allow the user to set up a store
 		redirect("/storeAdmin/");
 	}
 
-	const session = (await auth.api.getSession({
-		headers: await headers(), // you need to pass the headers object.
-	})) as unknown as Session;
-
-	const store = await sqlClient.store.findFirst({
-		where: {
-			id: params.storeId,
-			ownerId: session.user?.id,
-		},
-	});
-
-	if (!store) {
-		console.log("no access to the store...redirect to store creation page.");
-		redirect("/storeAdmin");
-	}
+	// Note: Authentication and store access check is handled by child route layout
+	// using checkStoreStaffAccess() which is cached per request
+	// No need to duplicate checks here
 
 	return <Suspense fallback={<Loader />}>{children}</Suspense>;
 }

@@ -1,6 +1,6 @@
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import { stripe } from "@/lib/stripe/config";
 import type { Store } from "@/types";
 import { SubscriptionStatus } from "@/types/enum";
@@ -17,7 +17,7 @@ export default async function StoreSubscriptionHistoryPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 	const subscription = await sqlClient.storeSubscription.findUnique({
 		where: {
 			storeId: store.id,

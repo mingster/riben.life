@@ -21,12 +21,14 @@ export function TrackedForm({
 	action,
 }: TrackedFormProps) {
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-		// Track form submission
-		sendGAEvent({
-			event: "form_submit",
-			event_category: "form",
-			form_name: formName,
-		});
+		// Track form submission (production only)
+		if (process.env.NODE_ENV === "production") {
+			sendGAEvent({
+				event: "form_submit",
+				event_category: "form",
+				form_name: formName,
+			});
+		}
 
 		// Execute the original onSubmit handler
 		if (onSubmit) {

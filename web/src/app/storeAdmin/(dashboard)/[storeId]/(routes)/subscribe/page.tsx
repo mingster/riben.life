@@ -1,6 +1,6 @@
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { Store } from "@/types";
 import { Suspense } from "react";
 import { PkgSelection } from "./pkgSelection";
@@ -28,7 +28,7 @@ export default async function StoreSubscribePage(props: {
   });
   */
 
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 	const subscription = await sqlClient.storeSubscription.findUnique({
 		where: {
 			storeId: store.id,

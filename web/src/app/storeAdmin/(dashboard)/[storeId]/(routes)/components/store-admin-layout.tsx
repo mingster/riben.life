@@ -5,6 +5,11 @@
 //import { cn } from "@/lib/utils";
 import type { Store } from "@/types";
 
+import DropdownUser from "@/components/auth/dropdown-user";
+import { BackgroundImage } from "@/components/BackgroundImage";
+import LanguageToggler from "@/components/language-toggler";
+import ThemeToggler from "@/components/theme-toggler";
+import { Separator } from "@/components/ui/separator";
 import {
 	SidebarInset,
 	SidebarProvider,
@@ -12,12 +17,6 @@ import {
 } from "@/components/ui/sidebar";
 import type { StoreSettings } from "@prisma/client";
 import { StoreAdminSidebar } from "./store-admin-sidebar";
-import ThemeToggler from "@/components/theme-toggler";
-import { Separator } from "@/components/ui/separator";
-import { authClient } from "@/lib/auth-client";
-import router from "next/dist/client/router";
-import DropdownUser from "@/components/auth/dropdown-user";
-import { BackgroundImage } from "@/components/BackgroundImage";
 
 export interface props {
 	sqlData: Store;
@@ -81,6 +80,7 @@ function StoreAdminHeader() {
 				<div className="ml-auto flex items-center gap-2">
 					<ThemeToggler />
 					<DropdownUser />
+					<LanguageToggler />
 				</div>
 			</div>
 		</header>

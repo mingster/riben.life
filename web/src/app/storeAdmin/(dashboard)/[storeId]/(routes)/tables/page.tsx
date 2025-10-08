@@ -2,7 +2,7 @@ import getStoreTables from "@/actions/get-store-tables";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { Store } from "@/types";
 import type { StoreTables } from "@prisma/client";
 import { Suspense } from "react";
@@ -18,7 +18,7 @@ export default async function StoreTablePage(props: {
 }) {
 	const params = await props.params;
 
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
 	const tables = (await getStoreTables(store.id)) as StoreTables[];
 

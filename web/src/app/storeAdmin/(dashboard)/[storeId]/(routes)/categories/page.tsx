@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { Category, Store } from "@/types";
 import { Suspense } from "react";
 import { CategoryClient } from "./components/category-client";
@@ -15,7 +15,7 @@ export default async function CategoryPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
 	const _lastSort = await sqlClient.category.findFirst({
 		where: { storeId: params.storeId },

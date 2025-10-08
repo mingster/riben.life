@@ -33,19 +33,21 @@ export function TrackedButton({
 	type = "button",
 }: TrackedButtonProps) {
 	const handleClick = () => {
-		// Track the button click
-		if (trackingEvent) {
-			sendGAEvent({
-				event: trackingEvent,
-				...trackingParameters,
-			});
-		} else {
-			// Default tracking for button clicks
-			sendGAEvent({
-				event: "click",
-				event_category: "button",
-				event_label: typeof children === "string" ? children : "button",
-			});
+		// Track the button click (production only)
+		if (process.env.NODE_ENV === "production") {
+			if (trackingEvent) {
+				sendGAEvent({
+					event: trackingEvent,
+					...trackingParameters,
+				});
+			} else {
+				// Default tracking for button clicks
+				sendGAEvent({
+					event: "click",
+					event_category: "button",
+					event_label: typeof children === "string" ? children : "button",
+				});
+			}
 		}
 
 		// Execute the original onClick handler

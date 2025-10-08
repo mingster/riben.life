@@ -1,5 +1,5 @@
 import Container from "@/components/ui/container";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 
 import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
@@ -17,7 +17,7 @@ export default async function BalanceMgmtPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 	// this store is pro version or not?
 	//const disablePaidOptions = await !isProLevel(store?.id);
 
