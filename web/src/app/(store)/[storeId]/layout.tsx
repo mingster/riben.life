@@ -21,7 +21,7 @@ export async function generateMetadata(
 	//parent: ResolvingMetadata,
 ): Promise<Metadata> {
 	const params = await props.params;
-	
+
 	// Prevent admin routes from being treated as store routes
 	if (
 		!params.storeId ||

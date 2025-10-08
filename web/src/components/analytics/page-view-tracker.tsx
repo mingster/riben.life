@@ -9,7 +9,10 @@ export function PageViewTracker() {
 	const searchParams = useSearchParams();
 
 	useEffect(() => {
-		if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
+		if (
+			typeof window !== "undefined" &&
+			process.env.NODE_ENV === "production"
+		) {
 			const url = `${window.location.origin}${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
 			const title = document.title;
 

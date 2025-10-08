@@ -17,6 +17,11 @@ import {
 } from "@/components/ui/sidebar";
 import type { StoreSettings } from "@prisma/client";
 import { StoreAdminSidebar } from "./store-admin-sidebar";
+import { StoreLevel } from "@/types/enum";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
 
 export interface props {
 	sqlData: Store;
@@ -48,7 +53,7 @@ const StoreAdminLayout: React.FC<props> = ({
 			>
 				<StoreAdminSidebar store={sqlData} />
 				<SidebarInset>
-					<StoreAdminHeader />
+					<StoreAdminHeader store={sqlData} />
 					<div className="flex flex-1 flex-col">
 						<div className="@container/main flex flex-1 flex-col">
 							<div className="flex flex-col gap-0 py-0 md:gap-6 md:py-6">
@@ -62,8 +67,11 @@ const StoreAdminLayout: React.FC<props> = ({
 	);
 };
 
-function StoreAdminHeader() {
+function StoreAdminHeader({ store }: { store: Store }) {
 	const title = "Store Admin";
+
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng, "storeAdmin");
 
 	return (
 		<header className="flex h-(--header-height) shrink-0 items-center gap-0 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -78,6 +86,19 @@ function StoreAdminHeader() {
 				/>
 				<h1 className="text-base font-medium">{title}</h1>
 				<div className="ml-auto flex items-center gap-2">
+					<Button variant="outline" size="sm">
+						<Link
+							href={`/storeAdmin/${store.id}/subscribe`}
+							className="text-xs"
+						>
+							{store.level === StoreLevel.Free
+								? t("storeAdmin_switchLevel_free")
+								: store.level === StoreLevel.Pro
+									? t("storeAdmin_switchLevel_pro")
+									: t("storeAdmin_switchLevel_multi")}
+						</Link>
+					</Button>
+
 					<ThemeToggler />
 					<DropdownUser />
 					<LanguageToggler />

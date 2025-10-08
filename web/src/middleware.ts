@@ -45,7 +45,7 @@ const badRequest = new NextResponse(null, {
 export function middleware(req: NextRequest) {
 	// Prevent storeAdmin routes from being matched by (store)/[storeId] pattern
 	const pathname = req.nextUrl.pathname;
-	
+
 	// If path contains storeAdmin but might be hitting store routes, ensure proper handling
 	if (pathname.startsWith("/storeAdmin")) {
 		// Let storeAdmin routes pass through normally

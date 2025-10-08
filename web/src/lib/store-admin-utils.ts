@@ -29,7 +29,8 @@ export const checkStoreStaffAccess = cache(async (storeId: string) => {
 	if (!session?.user?.id) {
 		console.log("no session or userId");
 		// Get the current path from headers to preserve the full URL for callback
-		const pathname = headersList.get("x-current-path") || `/storeAdmin/${storeId}`;
+		const pathname =
+			headersList.get("x-current-path") || `/storeAdmin/${storeId}`;
 		const callbackUrl = encodeURIComponent(pathname);
 		redirect(`/signin?callbackUrl=${callbackUrl}`);
 	}
