@@ -10,7 +10,7 @@ import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 const getStoreWithProducts = async (
 	storeId: string,
 ): Promise<StoreWithProducts> => {
-	if (!storeId) {
+	if (!storeId || storeId === "undefined" || storeId === "") {
 		throw Error("storeId is required");
 	}
 

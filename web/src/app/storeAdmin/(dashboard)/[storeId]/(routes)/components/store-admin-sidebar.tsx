@@ -35,6 +35,7 @@ import {
 	SidebarMenuSub,
 	SidebarMenuSubItem,
 	SidebarRail,
+	useSidebar,
 } from "@/components/ui/sidebar";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
@@ -52,6 +53,7 @@ export function StoreAdminSidebar({ store }: prop) {
 	//console.log('store', JSON.stringify(store));
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
+	const { open } = useSidebar();
 
 	const pathname = usePathname();
 	const menuList = GetMenuList(store, pathname);
@@ -80,17 +82,16 @@ export function StoreAdminSidebar({ store }: prop) {
 							asChild
 							className="data-[slot=sidebar-menu-button]:!p-1.5"
 						>
-							<Link href="/siteAdmin">
-								<span className="text-base font-semibold">Store Admin</span>
-							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 
+				{open && (
 					<SidebarMenuItem className="font-mono">
 						<StoreSwitcher />
 						<StoreModal />
 						{/* storeModal is to create new store when switcher's create store is clicked */}
 					</SidebarMenuItem>
+				)}
 				</SidebarMenu>
 			</SidebarHeader>
 

@@ -25,7 +25,7 @@ export default async function StoreLayout(props: {
 	//console.log('session: ' + JSON.stringify(session));
 	//console.log('userId: ' + user?.id);
 
-	if (session.user.role !== "owner" && session.user.role !== "admin") {
+	if (session.user?.role !== "owner" && session.user?.role !== "admin") {
 		console.log("access denied");
 		redirect("/error/?code=500");
 	}
@@ -63,6 +63,7 @@ export default async function StoreLayout(props: {
 			},
 		},
 	});
+	transformDecimalsToNumbers(store);
 
 	if (!store) {
 		logger.info("store not found...redirect to store creation page.");
@@ -70,7 +71,6 @@ export default async function StoreLayout(props: {
 		redirect("/storeAdmin");
 	}
 
-	transformDecimalsToNumbers(store);
 
 	// determine i18n languageId
 	const cookieStore = await cookies();

@@ -9,13 +9,15 @@ import { redirect } from "next/navigation";
 export const checkStoreAccess = async (storeId: string) => {
 	//console.log('storeid: ' + params.storeId);
 
-	const session = (await auth.api.getSession({
+	const session = await auth.api.getSession({
 		headers: await headers(), // you need to pass the headers object.
-	})) as unknown as Session;
+	});
+
 	const userId = session?.user.id;
 
 	if (!session || !userId) {
-		redirect(`/signin`);
+		console.log('no session or userId');
+		//redirect(`/signin`);
 	}
 
 	const store = await checkStoreAdminAccess(storeId, userId);
