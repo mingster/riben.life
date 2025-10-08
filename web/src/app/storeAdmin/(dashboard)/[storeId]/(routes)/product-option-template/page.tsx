@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { StoreProductOptionTemplate } from "@/types";
 import type { Store } from "@prisma/client";
 import { Suspense } from "react";
@@ -18,7 +18,7 @@ export default async function ProductOptionTemplatePage(props: {
 }) {
 	const params = await props.params;
 
-	const _store = (await checkStoreAccess(params.storeId)) as Store;
+	const _store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
 	const storeOptionTemplates =
 		(await sqlClient.storeProductOptionTemplate.findMany({

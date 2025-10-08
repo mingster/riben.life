@@ -1,67 +1,35 @@
-import Container from "@/components/ui/container";
+"use server";
+
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
-import { formatDateTime } from "@/utils/datetime-utils";
-import { redirect } from "next/navigation";
+import logger from "@/lib/logger";
 import { Suspense } from "react";
-//import type { UserColumn } from "./components/columns";
-import { UsersClient } from "./components/user-client";
-
-import { checkAdminAccess } from "../admin-utils";
+import { UsersClient } from "./components/client-user";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-// here we save store settings to mangodb
-//
 export default async function UsersAdminPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
-	const _params = await props.params;
-
-	const isAdmin = await checkAdminAccess();
-	if (!isAdmin) redirect("/error/?code=500&message=Unauthorized");
-
-	const users = await sqlClient.user.findMany({
+	//const _params = await props.params;
+	const log = logger.child({ module: "UsersAdminPage" });
+	const users = (await sqlClient.user.findMany({
 		include: {
 			sessions: true,
-			Orders: true,
-			accounts: true,
-			Addresses: true,
-			NotificationTo: {
-				take: 0,
-			},
 		},
-	});
+		orderBy: {
+			createdAt: "desc",
+		},
+	})) as User[];
 
-	transformDecimalsToNumbers(users);
-
-	//console.log(`users: ${JSON.stringify(users)}`);
-
-	/*
-	// map user to ui
-	const formattedUsers: UserColumn[] = users.map((item: User) => {
-		return {
-			id: item.id,
-			name: item.name || "",
-			username: item.username || "",
-			email: item.email || "",
-			role: item.role || "",
-			createdAt: formatDateTime(item.updatedAt),
-			orders: item.Orders,
-			currentlySignedIn: item.sessions.length > 0,
-		};
-	});
-	*/
+	//log.info({ users });
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<Container>
-				<UsersClient data={users} />
-			</Container>
+			<UsersClient serverData={users} />
 		</Suspense>
 	);
 }

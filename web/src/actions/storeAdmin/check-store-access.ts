@@ -21,8 +21,29 @@ const checkStoreAdminAccess = async (
 			ownerId: ownerId,
 		},
 		include: {
-			StorePaymentMethods: true,
-			StoreShippingMethods: true,
+			Owner: true,
+			Products: true,
+			StoreOrders: {
+				orderBy: {
+					updatedAt: "desc",
+				},
+			},
+			StoreShippingMethods: {
+				include: {
+					ShippingMethod: true,
+				},
+			},
+			StorePaymentMethods: {
+				include: {
+					PaymentMethod: true,
+				},
+			},
+			Categories: true,
+			StoreAnnouncement: {
+				orderBy: {
+					updatedAt: "desc",
+				},
+			},
 		},
 	});
 

@@ -3,7 +3,7 @@
 import { useTranslation } from "@/app/i18n/client";
 import { AskUserToSignIn } from "@/components/auth/ask-user-to-signIn";
 import { GlobalNavbar } from "@/components/global-navbar";
-import { DisplayOrder } from "@/components/order-display";
+import { DisplayOrder } from "@/components/display-order";
 import StoreRequirePrepaidPrompt from "@/components/store-require-prepaid-prompt";
 import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";

@@ -1,10 +1,9 @@
 //create or edit store order
 
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 
 import getOrderById from "@/actions/get-order-by_id";
-import getStoreWithProducts from "@/actions/get-store-with-products";
-import type { StoreOrder, StoreWithProducts } from "@/types";
+import type { StoreOrder } from "@/types";
 import { PageAction } from "@/types/enum";
 import { OrderEditClient } from "./client";
 
@@ -17,11 +16,8 @@ export default async function OrderEditPage(props: {
 }) {
 	const params = await props.params;
 
-	await checkStoreAccess(params.storeId);
-	//const store = (await getStoreWithCategories(params.storeId)) as Store;
-	const store = (await getStoreWithProducts(
-		params.storeId,
-	)) as StoreWithProducts;
+	// checkStoreAccess already returns the store, no need to call getStoreWithProducts
+	const store = await checkStoreStaffAccess(params.storeId);
 
 	const order = (await getOrderById(params.orderId)) as StoreOrder | null;
 	/*

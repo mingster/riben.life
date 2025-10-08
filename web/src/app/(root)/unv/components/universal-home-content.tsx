@@ -72,8 +72,8 @@ export const UniversalHomeContent = () => {
 					<UseCases />
 					<Features />
 					<Cost />
-					<AboutUs />
 
+					<AboutUs />
 					{/*
           <FAQ />
           <Testimonials />

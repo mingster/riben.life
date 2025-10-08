@@ -1,7 +1,7 @@
 "use client";
 
 import { AskUserToSignIn } from "@/components/auth/ask-user-to-signIn";
-import { DisplayOrder } from "@/components/order-display";
+import { DisplayOrder } from "@/components/display-order";
 import StoreRequirePrepaidPrompt from "@/components/store-require-prepaid-prompt";
 
 import { Button } from "@/components/ui/button";

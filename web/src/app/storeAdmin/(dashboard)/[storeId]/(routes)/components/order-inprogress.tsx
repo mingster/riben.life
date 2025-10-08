@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { useTranslation } from "@/app/i18n/client";
 import Currency from "@/components/currency";
-import { DisplayOrderStatus } from "@/components/order-status-display";
+import { DisplayOrderStatus } from "@/components/display-order-status";
 import { Heading } from "@/components/ui/heading";
 import {
 	Table,

@@ -1,7 +1,7 @@
 //import type { FaqCategory } from "@/../.prisma/client";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { Store } from "@prisma/client";
 
 import { sqlClient } from "@/lib/prismadb";
@@ -25,7 +25,7 @@ export default async function FaqAdminPage(props: {
 	//searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
 	// get FAQ categories and its FAQ count only
 	const categories = await sqlClient.faqCategory.findMany({

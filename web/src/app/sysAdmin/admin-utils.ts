@@ -14,7 +14,7 @@ export async function checkAdminAccess() {
 		return false;
 	}
 
-	if (session.user.role !== Role.ADMIN) {
+	if (session.user.role !== Role.admin) {
 		// check if email is in ADMINS
 		if (process.env.ADMINS?.includes(session.user.email)) {
 			return true;

@@ -4,7 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
 import { formatDateTime } from "@/utils/datetime-utils";
 import type { Store, SupportTicket } from "@prisma/client";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { TicketColumn } from "./components/columns";
@@ -21,7 +21,7 @@ export default async function StoreSupportPage(props: {
 }) {
 	const params = await props.params;
 
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
 	if (!store) {
 		redirect("/unv");

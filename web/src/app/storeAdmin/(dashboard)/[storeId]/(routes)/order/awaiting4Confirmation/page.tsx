@@ -1,7 +1,7 @@
 //import Scheduled from "@/components/scheduled";
 //import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { Store } from "@/types";
 
 import Container from "@/components/ui/container";
@@ -26,7 +26,7 @@ export default async function OrderAwaiting4ConfirmationPage(props: {
 }) {
 	const params = await props.params;
 
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
 	/*
   const pendingOrders = (await sqlClient.storeOrder.findMany({

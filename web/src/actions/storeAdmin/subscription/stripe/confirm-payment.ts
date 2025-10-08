@@ -139,12 +139,32 @@ const confirmPayment = async (
 
 		let stripeSubscription: Stripe.Subscription | null = null;
 
+		// Attach the payment method to the customer if not already attached
+		const paymentMethodId = paymentIntent.payment_method as string;
+		try {
+			await stripe.paymentMethods.attach(paymentMethodId, {
+				customer: db_user?.stripeCustomerId as string,
+			});
+		} catch (error: any) {
+			// If already attached, Stripe throws an error - we can ignore it
+			if (!error.message?.includes("already been attached")) {
+				throw error;
+			}
+		}
+
+		// Set as default payment method for the customer
+		await stripe.customers.update(db_user?.stripeCustomerId as string, {
+			invoice_settings: {
+				default_payment_method: paymentMethodId,
+			},
+		});
+
 		//create stripe subscription
 		stripeSubscription = await stripe.subscriptions.create({
 			customer: db_user?.stripeCustomerId as string,
 			items: [{ price: setting.stripePriceId as string }],
 			collection_method: "charge_automatically",
-			default_payment_method: paymentIntent.payment_method as string,
+			default_payment_method: paymentMethodId,
 			expand: ["latest_invoice.payment_intent"],
 			metadata: {
 				order_id: order?.id as string,

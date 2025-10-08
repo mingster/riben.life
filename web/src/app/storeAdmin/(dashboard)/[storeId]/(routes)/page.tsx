@@ -1,7 +1,7 @@
 //import Scheduled from "@/components/scheduled";
 //import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
-import { checkStoreAccess, isPro } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess, isPro } from "@/lib/store-admin-utils";
 import type { Store } from "@/types";
 
 import { sqlClient } from "@/lib/prismadb";
@@ -28,38 +28,8 @@ export default async function StoreAdminHomePage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 	const hasProLevel = (await isPro(params.storeId)) as boolean;
-
-	/*
-  const pendingOrders = (await sqlClient.storeOrder.findMany({
-	where: {
-	  storeId: params.storeId,
-	  orderStatus: Number(OrderStatus.Processing),
-	},
-  })) as StoreOrder[];
-  const pendingTickets = (await sqlClient.supportTicket.findMany({
-	where: {
-	  storeId: params.storeId,
-	  status: TicketStatus.Active || TicketStatus.Open,
-	},
-  })) as SupportTicket[];
-  //console.log(`pendingOrders: ${JSON.stringify(pendingOrders)}`);
-
-  <Container>
-		<Scheduled timestamp={Date.now()}>
-		  <div>{Date.now().toString()}</div>
-		  <div>
-			<span className="text-2xl">{pendingTickets.length}</span> open
-			tickets
-		  </div>
-		  <div>
-			<span className="text-2xl">{pendingOrders.length}</span> pending
-			orders
-		  </div>
-		</Scheduled>
-	  </Container>
-  */
 
 	//NOTE - display store's to-do list
 	// if no category, show prompt

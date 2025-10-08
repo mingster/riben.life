@@ -10,8 +10,16 @@ import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 const getStoreWithProducts = async (
 	storeId: string,
 ): Promise<StoreWithProducts> => {
-	if (!storeId) {
-		throw Error("storeId is required");
+	// Validate storeId format and prevent admin routes from being treated as storeIds
+	if (
+		!storeId ||
+		storeId === "undefined" ||
+		storeId === "null" ||
+		storeId === "" ||
+		storeId === "storeAdmin" ||
+		storeId.startsWith("storeAdmin")
+	) {
+		throw Error("Invalid storeId");
 	}
 
 	const store = await sqlClient.store.findFirst({

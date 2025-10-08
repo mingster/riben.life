@@ -20,7 +20,10 @@ export const CancelAndRedirect: React.FC<paymentProps> = ({ orderId }) => {
 function MyTimer({
 	expiryTimestamp,
 	orderId,
-}: { expiryTimestamp: Date; orderId: string }) {
+}: {
+	expiryTimestamp: Date;
+	orderId: string;
+}) {
 	const router = useRouter();
 	//const session = useSession();
 

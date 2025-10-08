@@ -15,8 +15,9 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 
+//import { Role } from "@/../.prisma/client";
+import { Role } from "@/types/enum";
 import { getEnumKeys } from "@/utils/utils";
-import { Role } from "@prisma/client";
 
 import { useState } from "react";
 type ComboboxProps = {
@@ -25,7 +26,7 @@ type ComboboxProps = {
 };
 
 export const UserRoleCombobox = ({ defaultValue, onChange }: ComboboxProps) => {
-	const [open, setOpen] = useState(false);
+	const [openRoleBox, setOpenRoleBox] = useState(false);
 
 	const roleAsArray = getEnumKeys(Role);
 
@@ -34,7 +35,7 @@ export const UserRoleCombobox = ({ defaultValue, onChange }: ComboboxProps) => {
 	);
 
 	return (
-		<Popover open={open} onOpenChange={setOpen}>
+		<Popover open={openRoleBox} onOpenChange={setOpenRoleBox}>
 			<PopoverTrigger asChild className="font-mono">
 				<Button variant="outline" className="w-[150px] justify-start">
 					{selectedRole ? <>{selectedRole}</> : <>+ Set role</>}
@@ -54,7 +55,7 @@ export const UserRoleCombobox = ({ defaultValue, onChange }: ComboboxProps) => {
 										setSelectedRole(value);
 										//return value to parent component
 										onChange?.(value);
-										setOpen(false);
+										setOpenRoleBox(false);
 									}}
 								>
 									{key}

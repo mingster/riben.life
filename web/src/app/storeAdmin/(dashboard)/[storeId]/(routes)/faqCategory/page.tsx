@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { FaqCategory } from "@/types";
 import type { Store } from "@prisma/client";
 import { Suspense } from "react";
@@ -16,7 +16,7 @@ export default async function FaqCategoryPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
 	const categories = await sqlClient.faqCategory.findMany({
 		where: {

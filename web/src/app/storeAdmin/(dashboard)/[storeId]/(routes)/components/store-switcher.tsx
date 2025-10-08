@@ -41,16 +41,31 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 
 	// load user's store data
 	const { data: session } = authClient.useSession();
-	if (!session) {
-		router.push("/api/auth/signin");
-	}
 
-	const url = `${process.env.NEXT_PUBLIC_API_URL}/store/owner/${session?.user.id}/getStores`;
+	// Redirect to signin if no session (must be in useEffect to avoid setState during render)
+	React.useEffect(() => {
+		if (!session) {
+			router.push("/signin");
+		}
+	}, [session, router]);
+
+	// Only construct URL if session exists
+	const url = session?.user.id
+		? `${process.env.NEXT_PUBLIC_API_URL}/store/owner/${session.user.id}/getStores`
+		: null;
 	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
-	const { data, error, isLoading } = useSWR(url, fetcher);
+
+	// SWR won't fetch if url is null
+	// Optimize: prevent unnecessary re-fetching once data is loaded
+	const { data, error, isLoading } = useSWR(url, fetcher, {
+		revalidateIfStale: false, // Don't revalidate even if data is marked stale
+		revalidateOnFocus: false, // Don't revalidate when window regains focus
+		revalidateOnReconnect: false, // Don't revalidate when network reconnects
+		dedupingInterval: 3600000, // Dedupe requests within 1 hour
+	});
 
 	let items: Store[] = [];
-	if (!isLoading && !error) items = data;
+	if (!isLoading && !error && data) items = data;
 
 	const formattedItems = items.map((item) => ({
 		label: item.name,

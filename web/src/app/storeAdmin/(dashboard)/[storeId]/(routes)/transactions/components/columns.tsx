@@ -2,7 +2,7 @@
 
 import Currency from "@/components/currency";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
-import { DisplayOrderStatus } from "@/components/order-status-display";
+import { DisplayOrderStatus } from "@/components/display-order-status";
 import { Button } from "@/components/ui/button";
 import { OrderStatus } from "@/types/enum";
 import type { orderitemview } from "@prisma/client";

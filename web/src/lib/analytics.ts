@@ -1,24 +1,31 @@
 import { sendGAEvent } from "@next/third-parties/google";
 
+// Wrapper to only send GA events in production
+const sendGAEventSafe = (params: Parameters<typeof sendGAEvent>[0]) => {
+	if (process.env.NODE_ENV === "production") {
+		sendGAEvent(params);
+	}
+};
+
 // Enhanced analytics utilities for the 5ik.TV platform
 export const analytics = {
 	// User authentication events
 	trackLogin: (method: "email" | "google" | "line" | "passkey" = "email") => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "login",
 			method: method,
 		});
 	},
 
 	trackSignUp: (method: "email" | "google" | "line" = "email") => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "sign_up",
 			method: method,
 		});
 	},
 
 	trackLogout: () => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "logout",
 			event_category: "authentication",
 		});
@@ -26,7 +33,7 @@ export const analytics = {
 
 	// Video/TV content events
 	trackChannelWatch: (channelName: string, channelId?: string) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "channel_watched",
 			event_category: "content",
 			event_label: channelName,
@@ -39,7 +46,7 @@ export const analytics = {
 		videoId?: string,
 		channelName?: string,
 	) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "video_play",
 			event_category: "video",
 			event_label: videoTitle,
@@ -53,7 +60,7 @@ export const analytics = {
 		videoId?: string,
 		channelName?: string,
 	) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "video_complete",
 			event_category: "video",
 			event_label: videoTitle,
@@ -67,7 +74,7 @@ export const analytics = {
 		videoId?: string,
 		position?: number,
 	) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "video_pause",
 			event_category: "video",
 			event_label: videoTitle,
@@ -82,7 +89,7 @@ export const analytics = {
 		fromPosition?: number,
 		toPosition?: number,
 	) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "video_seek",
 			event_category: "video",
 			event_label: videoTitle,
@@ -98,7 +105,7 @@ export const analytics = {
 		channelName: string,
 		startTime?: string,
 	) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "epg_view",
 			event_category: "epg",
 			event_label: programTitle,
@@ -112,7 +119,7 @@ export const analytics = {
 		channelName: string,
 		reminderTime?: string,
 	) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "program_reminder",
 			event_category: "epg",
 			event_label: programTitle,
@@ -126,7 +133,7 @@ export const analytics = {
 		deviceType: "android_tv" | "roku" | "web",
 		deviceId?: string,
 	) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "device_registration",
 			event_category: "device",
 			device_type: deviceType,
@@ -138,7 +145,7 @@ export const analytics = {
 		deviceType: "android_tv" | "roku",
 		success: boolean = true,
 	) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "device_linking",
 			event_category: "device",
 			device_type: deviceType,
@@ -148,7 +155,7 @@ export const analytics = {
 
 	// Search and discovery events
 	trackChannelSearch: (searchTerm: string, resultsCount?: number) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "search",
 			search_term: searchTerm,
 			results_count: resultsCount,
@@ -156,7 +163,7 @@ export const analytics = {
 	},
 
 	trackProgramSearch: (searchTerm: string, resultsCount?: number) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "program_search",
 			event_category: "search",
 			search_term: searchTerm,
@@ -166,7 +173,7 @@ export const analytics = {
 
 	// User preferences and settings
 	trackLanguageChange: (fromLanguage: string, toLanguage: string) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "language_change",
 			event_category: "preferences",
 			from_language: fromLanguage,
@@ -175,7 +182,7 @@ export const analytics = {
 	},
 
 	trackThemeChange: (theme: "light" | "dark" | "system") => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "theme_change",
 			event_category: "preferences",
 			theme: theme,
@@ -184,7 +191,7 @@ export const analytics = {
 
 	// Error tracking
 	trackError: (errorType: string, errorMessage: string, page?: string) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "exception",
 			event_category: "error",
 			error_type: errorType,
@@ -198,7 +205,7 @@ export const analytics = {
 		videoId?: string,
 		channelName?: string,
 	) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "video_error",
 			event_category: "error",
 			error_type: errorType,
@@ -209,7 +216,7 @@ export const analytics = {
 
 	// Performance tracking
 	trackPageLoadTime: (page: string, loadTime: number) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "timing_complete",
 			event_category: "performance",
 			page: page,
@@ -218,7 +225,7 @@ export const analytics = {
 	},
 
 	trackVideoLoadTime: (videoId: string, loadTime: number) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "video_load_time",
 			event_category: "performance",
 			video_id: videoId,
@@ -232,7 +239,7 @@ export const analytics = {
 		content: string,
 		contentType: "channel" | "program" | "video",
 	) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "share",
 			event_category: "social",
 			method: platform,
@@ -247,7 +254,7 @@ export const analytics = {
 		price?: number,
 		currency?: string,
 	) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "purchase",
 			event_category: "subscription",
 			plan_type: planType,
@@ -257,7 +264,7 @@ export const analytics = {
 	},
 
 	trackSubscriptionCancel: (planType: string, reason?: string) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: "subscription_cancel",
 			event_category: "subscription",
 			plan_type: planType,
@@ -267,7 +274,7 @@ export const analytics = {
 
 	// Custom event tracking
 	trackCustomEvent: (eventName: string, parameters?: Record<string, any>) => {
-		sendGAEvent({
+		sendGAEventSafe({
 			event: eventName,
 			...parameters,
 		});

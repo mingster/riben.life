@@ -1,32 +1,51 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import isProLevel from "@/actions/storeAdmin/is-pro-level";
-import { auth, Session } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 // NOTE - protect storeAdmin route by redirect user to appropriate routes.
-export const checkStoreAccess = async (storeId: string) => {
-	//console.log('storeid: ' + params.storeId);
+// Using React cache to deduplicate calls within the same request
+// This ensures only one database query even if multiple components call it
+export const checkStoreStaffAccess = cache(async (storeId: string) => {
+	const headersList = await headers();
+	const session = await auth.api.getSession({
+		headers: headersList,
+	});
 
-	const session = (await auth.api.getSession({
-		headers: await headers(), // you need to pass the headers object.
-	})) as unknown as Session;
-	const userId = session?.user.id;
-
-	if (!session || !userId) {
-		redirect(`/signin`);
+	if (!session) {
+		console.log("no session");
+		redirect(`/signin?callbackUrl=/storeAdmin/${storeId}`);
 	}
 
-	const store = await checkStoreAdminAccess(storeId, userId);
+	// Check if user has admin/owner role
+	if (session.user.role !== "owner" && session.user.role !== "admin") {
+		console.log("access denied - insufficient role");
+		redirect("/error/?code=403");
+	}
+
+	if (!session?.user?.id) {
+		console.log("no session or userId");
+		// Get the current path from headers to preserve the full URL for callback
+		const pathname =
+			headersList.get("x-current-path") || `/storeAdmin/${storeId}`;
+		const callbackUrl = encodeURIComponent(pathname);
+		redirect(`/signin?callbackUrl=${callbackUrl}`);
+	}
+
+	const store = await checkStoreAdminAccess(storeId, session.user.id);
 
 	if (!store) {
+		console.log("store not found or access denied");
 		redirect("/storeAdmin");
 	}
+
 	transformDecimalsToNumbers(store);
 
 	return store;
-};
+});
 
 // return true if this store level is not free
 export const isPro = async (storeId: string) => {

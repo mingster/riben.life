@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import { formatDateTime } from "@/utils/datetime-utils";
 import type { Store, StoreAnnouncement } from "@prisma/client";
 import { Suspense } from "react";
@@ -18,7 +18,7 @@ export default async function AnnouncementsAdminPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
 	const messages = await sqlClient.storeAnnouncement.findMany({
 		where: {

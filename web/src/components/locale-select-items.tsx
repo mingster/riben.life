@@ -13,7 +13,7 @@ export const LocaleSelectItems: React.FC = () => {
 	let locales: Locale[] = [];
 	if (!isLoading && !error) locales = data;
 
-	console.log(`locales:${JSON.stringify(locales)}`);
+	//console.log(`locales:${JSON.stringify(locales)}`);
 
 	return (
 		<>

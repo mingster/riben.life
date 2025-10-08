@@ -117,9 +117,10 @@ export default async function RootLayout({
 					</CookiesProvider>
 				</NextThemeProvider>
 				<Toaster />
-				{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
-					<GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
-				)}
+				{process.env.NODE_ENV === "production" &&
+					process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+						<GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+					)}
 			</body>
 		</html>
 	);

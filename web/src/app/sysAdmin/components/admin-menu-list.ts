@@ -6,6 +6,7 @@ import {
 	IconMail,
 	IconMapPin,
 	IconMessageCircle,
+	IconMoneybag,
 	IconSettings,
 	IconTag,
 	IconTruck,
@@ -51,10 +52,7 @@ export function GetMenuList(pathname: string): Group[] {
 				},
 			],
 		},
-		{
-			groupLabel: "營運統計",
-			menus: [],
-		},
+		
 		{
 			groupLabel: "商品目錄",
 			menus: [],
@@ -64,6 +62,18 @@ export function GetMenuList(pathname: string): Group[] {
 			menus: [],
 		},
 		*/
+		{
+			groupLabel: "營運統計",
+			menus: [
+				{
+					href: `${nav_prefix}/subscriptions`,
+					label: "Subscriptions",
+					active: pathname.includes(`${nav_prefix}/subscriptions`),
+					icon: IconMoneybag,
+					submenus: [],
+				},
+			],
+		},
 		{
 			groupLabel: "客戶",
 			menus: [
@@ -102,6 +112,48 @@ export function GetMenuList(pathname: string): Group[] {
 				},
 			],
 		},
+
+		{
+			groupLabel: "系統",
+			menus: [
+				{
+					href: `${nav_prefix}/sysmsg`,
+					label: "System Messages",
+					active: pathname.includes(`${nav_prefix}/sysmsg`),
+					icon: IconMessageCircle,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/mail-queue`,
+					label: "Mail Queue",
+					active: pathname.includes(`${nav_prefix}/mail-queue`),
+					icon: IconMail,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/syslog`,
+					label: "System Logs",
+					active: pathname.includes(`${nav_prefix}/syslog`),
+					icon: IconClock,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/maint`,
+					label: "Data maint",
+					active: pathname.includes(`${nav_prefix}/maint`),
+					icon: IconWreckingBall,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/geo-ip`,
+					label: "Geo IP",
+					active: pathname.includes(`${nav_prefix}/geo-ip`),
+					icon: IconMapPin,
+					submenus: [],
+				},
+			],
+		},
+
 		{
 			groupLabel: "設定",
 			menus: [
@@ -126,44 +178,11 @@ export function GetMenuList(pathname: string): Group[] {
 					icon: IconTruck,
 					submenus: [],
 				},
-			],
-		},
-		{
-			groupLabel: "系統",
-			menus: [
-				{
-					href: `${nav_prefix}/sysmsg`,
-					label: "System Messages",
-					active: pathname.includes(`${nav_prefix}/sysmsg`),
-					icon: IconMessageCircle,
-					submenus: [],
-				},
 				{
 					href: `${nav_prefix}/mail-templates`,
 					label: "Mail Templates",
 					active: pathname.includes(`${nav_prefix}/mail-templates`),
 					icon: IconMail,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/syslog`,
-					label: "System Logs",
-					active: pathname.includes(`${nav_prefix}/syslog`),
-					icon: IconClock,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/maint`,
-					label: "Data maint",
-					active: pathname.includes(`${nav_prefix}/maint`),
-					icon: IconWreckingBall,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/geo-ip`,
-					label: "Geo IP",
-					active: pathname.includes(`${nav_prefix}/geo-ip`),
-					icon: IconMapPin,
 					submenus: [],
 				},
 			],

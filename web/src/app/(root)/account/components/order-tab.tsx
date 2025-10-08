@@ -5,8 +5,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { OrderStatus } from "@/types/enum";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
-import { DisplayOrder } from "@/components/order-display";
+import { DisplayOrders } from "@/components/display-orders";
 import { authClient } from "@/lib/auth-client";
 import type { StoreOrder } from "@/types";
 import { cn, highlight_css } from "@/utils/utils";
@@ -16,23 +15,6 @@ import {
 	CardHeader,
 	CardFooter,
 } from "@/components/ui/card";
-
-type orderTabProps = { orders: StoreOrder[] };
-export const DisplayOrders = ({ orders }: orderTabProps) => {
-	return (
-		<>
-			<div className="flex-col">
-				<div className="flex-1 p-1 space-y-1">
-					{orders.map((order: StoreOrder) => (
-						<div key={order.id}>
-							<DisplayOrder order={order} />
-						</div>
-					))}
-				</div>
-			</div>
-		</>
-	);
-};
 
 type props = { orders: StoreOrder[] };
 export const OrderTab = ({ orders }: props) => {

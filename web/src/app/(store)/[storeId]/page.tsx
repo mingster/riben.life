@@ -22,6 +22,18 @@ export default async function StoreHomePage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
+
+	// Prevent admin routes from being treated as customer store pages
+	if (
+		!params.storeId ||
+		params.storeId === "storeAdmin" ||
+		params.storeId.startsWith("storeAdmin") ||
+		params.storeId === "undefined" ||
+		params.storeId === "null"
+	) {
+		redirect("/");
+	}
+
 	const store = await getStoreWithProducts(params.storeId);
 
 	const isProduction = process.env.NODE_ENV === "production";

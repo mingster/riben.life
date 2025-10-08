@@ -21,7 +21,16 @@ export async function generateMetadata(
 	//parent: ResolvingMetadata,
 ): Promise<Metadata> {
 	const params = await props.params;
-	if (!params.storeId) {
+
+	// Prevent admin routes from being treated as store routes
+	if (
+		!params.storeId ||
+		params.storeId === "storeAdmin" ||
+		params.storeId.includes("storeAdmin") ||
+		params.storeId === "sysAdmin" ||
+		params.storeId === "api" ||
+		params.storeId === "auth"
+	) {
 		return {
 			title: "riben.life",
 		};
@@ -61,6 +70,22 @@ export default async function StoreHomeLayout(props: {
 		// will be a page or nested layout
 		children,
 	} = props;
+
+	// Prevent admin routes from being treated as customer store pages
+	// Pass through children without store layout for admin routes
+	if (
+		!params.storeId ||
+		params.storeId === "storeAdmin" ||
+		params.storeId.includes("storeAdmin") ||
+		params.storeId === "sysAdmin" ||
+		params.storeId === "api" ||
+		params.storeId === "auth" ||
+		params.storeId === "undefined" ||
+		params.storeId === "null"
+	) {
+		// Admin routes - pass through children without store layout
+		return <>{children}</>;
+	}
 
 	const store = (await sqlClient.store.findFirst({
 		where: {

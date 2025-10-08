@@ -7,7 +7,10 @@ import { PrismaClient as sqlPrismaClient } from "@prisma/client";
 
 const prismaClientSingleton = () => {
 	//return new sqlPrismaClient().$extends(withOptimize({ apiKey: process.env.OPTIMIZE_API_KEY as string}));
-	return new sqlPrismaClient();
+	return new sqlPrismaClient({
+		datasourceUrl: process.env.POSTGRES_PRISMA_URL,
+		log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+	});
 	//return new sqlPrismaClient().$extends(withAccelerate());
 };
 

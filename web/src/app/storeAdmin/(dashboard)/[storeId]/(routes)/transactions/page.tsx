@@ -1,6 +1,6 @@
 import Container from "@/components/ui/container";
 
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
@@ -18,7 +18,7 @@ export default async function TransactionMgmtPage(props: {
 }) {
 	const params = await props.params;
 
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
 	const orders = (await sqlClient.storeOrder.findMany({
 		where: {

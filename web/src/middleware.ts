@@ -43,11 +43,22 @@ const badRequest = new NextResponse(null, {
 });
 
 export function middleware(req: NextRequest) {
+	// Prevent storeAdmin routes from being matched by (store)/[storeId] pattern
+	const pathname = req.nextUrl.pathname;
+
+	// If path contains storeAdmin but might be hitting store routes, ensure proper handling
+	if (pathname.startsWith("/storeAdmin")) {
+		// Let storeAdmin routes pass through normally
+		const res = NextResponse.next();
+		res.headers.set("x-current-path", pathname);
+		return res;
+	}
+
 	// retrieve the current response
 	const res = NextResponse.next();
 
 	// Add a new header x-current-path which passes the path to downstream components
-	res.headers.set("x-current-path", req.nextUrl.pathname);
+	res.headers.set("x-current-path", pathname);
 
 	// CORS apply only to api routes
 	//

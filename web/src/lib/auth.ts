@@ -46,6 +46,7 @@ export const auth = betterAuth({
 		accountLinking: {
 			enabled: true,
 			allowDifferentEmails: true,
+			trustedProviders: ["google", "line"],
 		},
 	},
 	emailAndPassword: {
@@ -91,13 +92,13 @@ export const auth = betterAuth({
 			return {
 				user: {
 					...typedUser,
-					role: typedUser?.role || "USER", // Ensure role is always present
+					role: typedUser?.role || "user", // Ensure role is always present
 				},
 				session: {
 					...typedSession,
 					user: {
 						...typedSession?.user,
-						role: typedUser?.role || "USER", // Include role in session.user
+						role: typedUser?.role || "user", // Include role in session.user
 					},
 				},
 			};
@@ -151,7 +152,7 @@ export const auth = betterAuth({
 		*/
 		organization(),
 		admin({
-			adminRoles: ["ADMIN"],
+			adminRoles: ["admin"],
 			//sysAdminUserIds: ["Nz6WKKKMKvadXXmgZgaHiqIYOuXr31w1"],
 			//impersonationSessionDuration: 60 * 60 * 24, // 1 day
 		}),
@@ -161,7 +162,7 @@ export const auth = betterAuth({
 			role: {
 				type: "string",
 				required: false,
-				defaultValue: "USER",
+				defaultValue: "user",
 				input: false, // don't allow user to set role
 			},
 			locale: {

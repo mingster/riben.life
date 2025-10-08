@@ -1,5 +1,5 @@
 import { Loader } from "@/components/loader";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 
 import getStoreWithCategories from "@/actions/get-store";
 import { sqlClient } from "@/lib/prismadb";
@@ -26,7 +26,7 @@ export default async function CashCashierAdminPage(props: {
 }) {
 	const params = await props.params;
 
-	await checkStoreAccess(params.storeId);
+	await checkStoreStaffAccess(params.storeId);
 	const store = (await getStoreWithCategories(params.storeId)) as Store;
 
 	const tables = (await sqlClient.storeTables.findMany({

@@ -1,7 +1,7 @@
 import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
-import { checkStoreAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 
 import type { Store } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
@@ -20,7 +20,7 @@ export default async function StoreSettingsPage(props: {
 }) {
 	const params = await props.params;
 	//NOTE - we call checkStoreAccess here to get the store object
-	const store = (await checkStoreAccess(params.storeId)) as Store;
+	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
 	transformDecimalsToNumbers(store);
 
