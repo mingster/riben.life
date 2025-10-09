@@ -6,6 +6,7 @@ import { stripe } from "@/lib/stripe/config";
 import type { StringNVType } from "@/types/enum";
 import logger from "@/lib/logger";
 import ClientSettings from "./components/client-settings";
+import type { PlatformSettings } from "@prisma/client";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -17,7 +18,8 @@ export default async function SettingsAdminPage(props: {
 	const _params = await props.params;
 	const log = logger.child({ module: "SettingsAdminPage" });
 
-	const setting = await sqlClient.platformSettings.findFirst();
+	const setting =
+		(await sqlClient.platformSettings.findFirst()) as PlatformSettings;
 
 	// log.info({ setting: setting });
 
@@ -58,7 +60,10 @@ export default async function SettingsAdminPage(props: {
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<ClientSettings platformSettings={setting} prices={prices} />
+			<ClientSettings
+				platformSettings={setting as PlatformSettings}
+				prices={prices}
+			/>
 		</Suspense>
 	);
 }

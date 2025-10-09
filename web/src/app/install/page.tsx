@@ -1,5 +1,3 @@
-"use server";
-
 import { populateCountryData } from "@/actions/admin/populate-country-data";
 import { populateCurrencyData } from "@/actions/admin/populate-currency-data";
 import {
@@ -20,6 +18,8 @@ import Link from "next/link";
 //type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
+export const revalidate = false; // Never revalidate
+export const dynamic = "force-static"; // Build once
 export default async function InstallDefaultDataPage(_props: {
 	//params: Params;
 	searchParams: SearchParams;

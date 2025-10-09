@@ -10,7 +10,7 @@ import { headers } from "next/headers";
 
 // TODO: take functionality from `withActionInstrumentation` and move it here (apps/web/utils/actions/middleware.ts)
 
-const baseClient = createSafeActionClient({
+export const baseClient = createSafeActionClient({
 	defineMetadataSchema() {
 		return z.object({ name: z.string() });
 	},
