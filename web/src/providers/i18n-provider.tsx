@@ -14,7 +14,7 @@ export const i18nContext = createContext<i18nContext | null>(null);
 const I18nProvider = ({ children }: { children: React.ReactNode }) => {
 	//const I18nProvider = ({ children, store }: { children: React.ReactNode; store: Store }) => {
 
-	const { i18n } = useTranslation();
+	const { i18n } = useTranslation(fallbackLng);
 
 	let lng = i18n.resolvedLanguage;
 

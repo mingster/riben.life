@@ -2,12 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { BetterFetchOption } from "better-auth/react";
-import { IconLoader2 } from "@tabler/icons-react";
+import { useGoogleReCaptcha } from "@wojtekmaj/react-recaptcha-v3";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod/v4";
 import { useTranslation } from "@/app/i18n/client";
-//import { useCaptcha } from "@/hooks/use-captcha";
 import { useIsHydrated } from "@/hooks/use-hydrated";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -24,18 +24,13 @@ import {
 import { Input } from "../ui/input";
 import { RecaptchaV3 } from "./recaptcha-v3";
 import { clientLogger } from "@/lib/client-logger";
-import logger from "@/lib/logger";
 import { analytics } from "@/lib/analytics";
 
-export default function FormMagicLink({
-	callbackUrl = "/",
-}: {
-	callbackUrl?: string;
-}) {
+function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const isHydrated = useIsHydrated();
-	//const { getCaptchaHeaders } = useCaptcha();
+	const { executeRecaptcha } = useGoogleReCaptcha();
 
 	const formSchema = z.object({
 		email: z
@@ -63,8 +58,29 @@ export default function FormMagicLink({
 
 	async function sendMagicLink({ email }: z.infer<typeof formSchema>) {
 		try {
+			// Execute reCAPTCHA before submission
+			if (!executeRecaptcha) {
+				toastError({
+					description: "reCAPTCHA not ready. Please try again.",
+				});
+				return;
+			}
+
+			// Get reCAPTCHA token
+			const recaptchaToken = await executeRecaptcha("magic_link_signin");
+
+			if (!recaptchaToken) {
+				toastError({
+					description: "reCAPTCHA verification failed. Please try again.",
+				});
+				return;
+			}
+
 			const fetchOptions: BetterFetchOption = {
 				throw: true,
+				headers: {
+					"X-Recaptcha-Token": recaptchaToken,
+				},
 			};
 
 			const { data, error } = await authClient.signIn.magicLink({
@@ -95,45 +111,80 @@ export default function FormMagicLink({
 	}
 
 	return (
-		<RecaptchaV3 actionName="magic-link">
-			<Form {...form}>
-				<form
-					onSubmit={form.handleSubmit(sendMagicLink)}
-					noValidate={isHydrated}
-					className="grid w-full gap-6"
-				>
-					<FormField
-						control={form.control}
-						name="email"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>{t("email")}</FormLabel>
-								<FormControl>
-									<Input
-										type="email"
-										placeholder={t("email_placeholder")}
-										disabled={isSubmitting}
-										{...field}
-									/>
-								</FormControl>
+		<Form {...form}>
+			<form
+				onSubmit={form.handleSubmit(sendMagicLink)}
+				noValidate={isHydrated}
+				className="grid w-full gap-1"
+			>
+				<FormField
+					control={form.control}
+					name="email"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>{t("email")}</FormLabel>
+							<FormControl>
+								<Input
+									type="email"
+									placeholder={t("email_placeholder")}
+									disabled={isSubmitting}
+									{...field}
+								/>
+							</FormControl>
 
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
 
-					<Button type="submit" disabled={isSubmitting} className="w-full">
-						{isSubmitting ? (
-							<IconLoader2 className="animate-spin" />
-						) : (
-							t("sign_in_with_magic_link")
-						)}
-					</Button>
-					<span className="text-xs text-gray-500">
+				<Button type="submit" disabled={isSubmitting} className="w-full">
+					{isSubmitting ? (
+						<Loader2 className="animate-spin" />
+					) : (
+						t("sign_in_with_magic_link")
+					)}
+				</Button>
+
+				<div className="space-y-1">
+					<span className="text-xs text-muted-foreground">
 						{t("signin_cannot_receive_email")}
 					</span>
-				</form>
-			</Form>
+					<span className="text-xs text-muted-foreground">
+						This site is protected by reCAPTCHA and the Google
+						<a
+							href="https://policies.google.com/privacy"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-primary hover:underline"
+						>
+							Privacy Policy
+						</a>
+						and
+						<a
+							href="https://policies.google.com/terms"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-primary hover:underline"
+						>
+							Terms of Service
+						</a>
+						apply.
+					</span>
+				</div>
+			</form>
+		</Form>
+	);
+}
+
+// Wrapper component with RecaptchaV3 provider
+export default function FormMagicLink({
+	callbackUrl = "/",
+}: {
+	callbackUrl?: string;
+}) {
+	return (
+		<RecaptchaV3 actionName="magic-link">
+			<FormMagicLinkInner callbackUrl={callbackUrl} />
 		</RecaptchaV3>
 	);
 }

@@ -51,7 +51,7 @@ const PasskeyLoginButton = ({
 	};
 
 	return (
-		<Button variant="outline" onClick={signInPassKey}>
+		<Button variant="outline" className="w-full" onClick={signInPassKey}>
 			<IconKey className="mr-0 size-4" />
 			<span>{t("sign_in_with_passkey")}</span>
 		</Button>
