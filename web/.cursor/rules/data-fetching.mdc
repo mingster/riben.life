@@ -6,6 +6,7 @@ alwaysApply: false
 # Data Fetching
 
 There are two ways we fetch data in the app:
+
 1. SWR (default)
 2. Server Components
 
@@ -18,6 +19,7 @@ Here's how we use SWR:
 - For mutating data, use Next.js server actions
 
 ## SWR Example
+
 ```typescript
 const searchParams = useSearchParams();
 const page = searchParams.get("page") || "1";
@@ -44,4 +46,4 @@ const onSubmit: SubmitHandler<TestRulesInputs> = useCallback(async (data) => {
     toastSuccess({ description: "Saved!" });
   }
 }, []);
-``` 
+```

@@ -1,18 +1,18 @@
 ---
-description: Guidelines for implementing Next.js server actions
+description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Server Action Guide
 
-This project uses @Next.js Server Actions with @safe-action for secure, type-safe server-side mutations and data operations.
+This project uses [Next.js Server Actions](mdc:https:/nextjs.org/docs/app/building-your-application/data-fetching/server-actions) with [safe-action](mdc:https:/next-safe-action.dev) for secure, type-safe server-side mutations and data operations.
 
 ## Location & Structure
 
 - **Server actions** are located in the `pstv_web/src/actions/` directory, organized by feature/domain such as:
   - `admin/sysmsg/` - System message actions
   - `admin/faq/` - FAQ management actions
-- Each action file typically exports one or more actions using the `adminActionClient` or `baseClient` or `userRequiredActionClient` wrapper. 
+- Each action file typically exports one or more actions using the `adminActionClient` or `baseClient` or `userRequiredActionClient` wrapper.
 - administration pages within `admin` URL should use `adminActionClient` wrapper.
 - user related pages within `account` URL should use `userRequiredActionClient` wrapper.
 - other actions can use `baseClient`
@@ -63,6 +63,7 @@ export const updateOpServerAction = adminActionClient
 ## Common Patterns
 
 ### Create/Update Pattern
+
 ```ts
 if (guid === undefined || guid === null || guid === "" || guid === "new") {
   // Create new record
@@ -74,16 +75,17 @@ if (guid === undefined || guid === null || guid === "" || guid === "new") {
 ```
 
 ### Date Handling
+
 - Use `getUtcNow()` from `@/utils/utils` for consistent UTC timestamps
 - Set `creationDate` for new records
 - Set `lastModified` for updates
 
 ## Example Files
 
-- @update-opserver.ts
-- @update-opserver.validation.ts
-- @update-system-message.ts
-- @update-system-message.validation.ts
+- [update-opserver.ts](mdc:pstv_web/src/actions/sysAdmin/opserver/update-opserver.ts)
+- [update-opserver.validation.ts](mdc:pstv_web/src/actions/sysAdmin/opserver/update-opserver.validation.ts)
+- [update-system-message.ts](mdc:pstv_web/src/actions/sysAdmin/sysmsg/update-system-message.ts)
+- [update-system-message.validation.ts](mdc:pstv_web/src/actions/sysAdmin/sysmsg/update-system-message.validation.ts)
 
 ## Best Practices
 

@@ -1,6 +1,9 @@
 ---
-alwaysApply: true
+description: DataTable Component
+globs:
+alwaysApply: false
 ---
+
 # DataTable Component Rule
 
 This rule documents conventions and best practices for the `DataTable` component located at `src/components/dataTable.tsx`.

@@ -1,0 +1,152 @@
+# File Organization Standards
+
+This rule defines the standard locations for different types of files in the project.
+
+## Scripts Location
+
+All deployment, build, and utility scripts should be placed in the `/web/bin` directory.
+
+### Script Types and Locations
+
+- **Deployment Scripts**: `/web/bin/deploy-*.{ps1,sh,bat}`
+- **Build Scripts**: `/web/bin/build-*.{js,ts,sh}`
+- **Utility Scripts**: `/web/bin/*.{js,ts,sh,ps1,bat}`
+- **Shell Scripts**: `/web/bin/*.sh`
+- **PowerShell Scripts**: `/web/bin/*.ps1`
+- **Batch Files**: `/web/bin/*.bat`
+- **Node.js Scripts**: `/web/bin/*.js`
+
+### Examples
+
+```
+/web/bin/
+├── deploy-windows-iis.ps1
+├── deploy-cygwin.sh
+├── deploy-windows.bat
+├── build-performance.js
+├── optimize-build.js
+├── upgrade_pkg.sh
+└── ...
+```
+
+## Documentation Location
+
+All documentation files should be placed in the `/web/doc` directory.
+
+### Documentation Types and Locations
+
+- **Technical Documentation**: `/web/doc/*.md`
+- **Deployment Guides**: `/web/doc/DEPLOYMENT-*.md`
+- **Build Guides**: `/web/doc/BUILD-*.md`
+- **API Documentation**: `/web/doc/API-*.md`
+- **User Guides**: `/web/doc/USER-*.md`
+- **Configuration Guides**: `/web/doc/CONFIG-*.md`
+
+### Examples
+
+```
+/web/doc/
+├── BUILD_OPTIMIZATION.md
+├── BUILD_QUICK_REFERENCE.md
+├── BUILD_DOCUMENTATION_SUMMARY.md
+├── WINDOWS_IIS_DEPLOYMENT.md
+├── WINDOWS_DEPLOYMENT_QUICK_REFERENCE.md
+├── API_DOCUMENTATION.md
+├── USER_GUIDE.md
+└── ...
+```
+
+## Migration Guidelines
+
+When moving files to their standard locations:
+
+1. **Scripts**: Move from `/web/scripts/` to `/web/bin/`
+2. **Documentation**: Move from `/web/pstv_web/docs/` to `/web/doc/`
+3. **Update References**: Update all file paths and links
+4. **Update Package.json**: Update script paths in package.json files
+5. **Update Documentation**: Update documentation links
+
+## File Naming Conventions
+
+### Scripts
+
+- Use kebab-case for script names: `deploy-windows-iis.ps1`
+- Include the script type in the name: `build-performance.js`
+- Use descriptive prefixes: `deploy-`, `build-`, `test-`, `clean-`
+
+### Documentation
+
+- Use UPPER_SNAKE_CASE for documentation files: `BUILD_OPTIMIZATION.md`
+- Include the type in the name: `WINDOWS_IIS_DEPLOYMENT.md`
+- Use descriptive names that indicate the content
+
+## Import/Reference Guidelines
+
+### In Package.json
+
+```json
+{
+  "scripts": {
+    "build:perf": "node bin/build-performance.js",
+    "deploy:windows": "powershell -File bin/deploy-windows-iis.ps1",
+    "deploy:cygwin": "bin/deploy-cygwin.sh"
+  }
+}
+```
+
+### In Documentation
+
+```markdown
+# Link to documentation
+See [Build Optimization Guide](../doc/BUILD_OPTIMIZATION.md)
+
+# Link to scripts
+Run the deployment script: `bin/deploy-windows-iis.ps1`
+```
+
+### In Code
+
+```javascript
+// Import scripts
+const buildScript = require('../bin/build-performance.js');
+
+// Reference documentation
+// See: ../doc/BUILD_OPTIMIZATION.md for details
+```
+
+## Exceptions
+
+Some files may remain in their current locations for specific reasons:
+
+- **Next.js Configuration**: `pstv_web/next.config.ts` (framework-specific)
+- **Package Configuration**: `pstv_web/package.json` (project-specific)
+- **TypeScript Configuration**: `pstv_web/tsconfig.json` (project-specific)
+- **Framework Scripts**: Scripts that are tightly coupled to the Next.js application
+
+## Best Practices
+
+1. **Consistency**: Always place new scripts in `/web/bin/`
+2. **Documentation**: Always place new documentation in `/web/doc/`
+3. **References**: Update all references when moving files
+4. **Naming**: Follow the established naming conventions
+5. **Organization**: Group related files together
+6. **Maintenance**: Keep the directory structure clean and organized
+
+## Migration Checklist
+
+When moving files:
+
+- [ ] Move script files to `/web/bin/`
+- [ ] Move documentation files to `/web/doc/`
+- [ ] Update all file references
+- [ ] Update package.json scripts
+- [ ] Update documentation links
+- [ ] Test all scripts after moving
+- [ ] Verify documentation links work
+- [ ] Update any CI/CD configurations
+- [ ] Update any IDE configurations
+description:
+globs:
+alwaysApply: true
+
+---

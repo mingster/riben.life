@@ -19,9 +19,9 @@ All learned project-specific knowledge and preferences should be stored and refe
 
 When new information relevant to the project's conventions, user preferences, or specific technical details is learned (either explicitly told by the user or inferred through conversation), the AI should:
 
-1.  **Identify Key Information:** Determine the core piece of knowledge to be stored.
-2.  **Check Existing Memory:** Review `learned-memories.mdc` to see if this information contradicts or updates existing entries.
-3.  **Propose Update:** Suggest an edit to `learned-memories.mdc` to add or modify the relevant information. Keep entries concise and clear.
+1. **Identify Key Information:** Determine the core piece of knowledge to be stored.
+2. **Check Existing Memory:** Review `learned-memories.mdc` to see if this information contradicts or updates existing entries.
+3. **Propose Update:** Suggest an edit to `learned-memories.mdc` to add or modify the relevant information. Keep entries concise and clear.
 
 ## Using Memory
 
@@ -33,15 +33,17 @@ Before proposing solutions, code changes, or answering questions, the AI should 
 
 **AI Action:**
 
-1.  Recognize this as a project-specific technical decision.
-2.  Check `learned-memories.mdc` for existing Tailwind version information.
-3.  Propose adding or updating an entry in `learned-memories.mdc`:
+1. Recognize this as a project-specific technical decision.
+2. Check `learned-memories.mdc` for existing Tailwind version information.
+3. Propose adding or updating an entry in `learned-memories.mdc`:
+
     ```markdown
     ## Technical Decisions
 
     *   **CSS Framework:** Tailwind v4 is used. Ensure usage aligns with v4 documentation and practices, noting differences from v3.
     ```
-4.  In subsequent interactions involving Tailwind, the AI will refer to this entry and consult v4 documentation if necessary.
+
+4. In subsequent interactions involving Tailwind, the AI will refer to this entry and consult v4 documentation if necessary.
 
 ## Memory File (`.cursor/rules/learned-memories.mdc`)
 

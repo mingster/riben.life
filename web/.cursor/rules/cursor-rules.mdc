@@ -8,6 +8,7 @@ alwaysApply: true
 How to add new cursor rules to the project
 
 1. Always place rule files in PROJECT_ROOT/.cursor/rules/:
+
     ```
     .cursor/rules/
     ├── your-rule-name.mdc
@@ -21,6 +22,7 @@ How to add new cursor rules to the project
     - Make names descriptive of the rule's purpose
 
 3. Directory structure:
+
     ```
     PROJECT_ROOT/
     ├── .cursor/

@@ -3,7 +3,7 @@ description:
 globs: 
 alwaysApply: true
 ---
----
+
 description: This rule explains Next.js conventions and best practices for fullstack development.
 globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
 alwaysApply: false
