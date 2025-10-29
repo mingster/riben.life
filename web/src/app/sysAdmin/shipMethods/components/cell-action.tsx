@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import type { DataColumn } from "./columns";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 
 interface CellActionProps {
 	data: DataColumn;

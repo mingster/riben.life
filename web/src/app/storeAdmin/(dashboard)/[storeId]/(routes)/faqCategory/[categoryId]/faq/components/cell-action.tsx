@@ -22,7 +22,7 @@ import { useI18n } from "@/providers/i18n-provider";
 interface CellActionProps {
 	data: FaqColumn;
 }
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const [loading, setLoading] = useState(false);

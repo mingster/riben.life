@@ -1,6 +1,6 @@
 "use client";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import axios, { type AxiosError } from "axios";
 import { MessageSquareText, Trash } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";

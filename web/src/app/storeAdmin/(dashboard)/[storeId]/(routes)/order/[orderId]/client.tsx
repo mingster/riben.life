@@ -1,6 +1,6 @@
 "use client";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import {
 	IconCopy,
 	IconEdit,

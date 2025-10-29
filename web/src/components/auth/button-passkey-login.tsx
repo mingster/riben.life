@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
-import { toastError } from "../Toaster";
+import { toastError } from "../toaster";
 import { Button } from "../ui/button";
 import { clientLogger } from "@/lib/client-logger";
 import { analytics } from "@/lib/analytics";

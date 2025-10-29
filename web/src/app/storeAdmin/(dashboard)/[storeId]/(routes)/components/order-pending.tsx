@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { toastSuccess } from "@/components/Toaster";
+import { toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";

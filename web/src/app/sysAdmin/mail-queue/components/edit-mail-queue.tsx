@@ -34,7 +34,7 @@ import {
 	UpdateEmailQueueInput,
 	updateEmailQueueSchema,
 } from "@/actions/sysAdmin/emailQueue/update-emailQueue.validation";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";

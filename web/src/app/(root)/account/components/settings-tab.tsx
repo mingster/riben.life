@@ -40,7 +40,7 @@ import {
 	type UpdateUserSettingsInput,
 	updateUserSettingsSchema,
 } from "@/actions/user/update-user-settings.validation";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import SignOutButton from "@/components/auth/sign-out-button";
 
 interface SettingsPageProps {
@@ -97,11 +97,11 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 					<CardDescription> </CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-2">
-					{t("account_tab_currentAcct")} {user.email}
-					{/* if user doesn't have email, show its userid */}
-					{!user.email && user.id}
-					&nbsp;&nbsp;
-					<SignOutButton variant="secondary" />
+				{t("account_tab_currentAcct")} {user.email}
+				{/* if user doesn't have email, show its userid */}
+				{!user.email && user.id}
+				&nbsp;&nbsp;
+				<SignOutButton />
 					<Form {...form}>
 						<form
 							onSubmit={form.handleSubmit(onSubmit)}

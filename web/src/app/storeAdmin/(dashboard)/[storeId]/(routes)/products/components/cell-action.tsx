@@ -22,7 +22,7 @@ import type { ProductColumn } from "./columns";
 interface CellActionProps {
 	data: ProductColumn;
 }
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const [loading, setLoading] = useState(false);

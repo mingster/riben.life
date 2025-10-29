@@ -5,7 +5,7 @@ import type { User } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { headers } from "next/headers";
 
-const getUser = async (): Promise<User | null> => {
+const getCurrentUser = async (): Promise<User | null> => {
 	const session = await auth.api.getSession({
 		headers: await headers(), // you need to pass the headers object.
 	});
@@ -52,4 +52,4 @@ const getUser = async (): Promise<User | null> => {
 	return obj;
 };
 
-export default getUser;
+export default getCurrentUser;

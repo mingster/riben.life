@@ -6,18 +6,22 @@ import { Modal } from "@/components/modals/modal";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 
-interface AlertModalProps {
+interface props {
 	isOpen: boolean;
 	onClose: () => void;
 	onConfirm: () => void;
 	loading: boolean;
+	title: string;
+	description: string;
 }
 
-export const AlertModal: React.FC<AlertModalProps> = ({
+export const ConfirmModal: React.FC<props> = ({
 	isOpen,
 	onClose,
 	onConfirm,
 	loading,
+	title,
+	description,
 }) => {
 	const [isMounted, setIsMounted] = useState(false);
 
@@ -34,8 +38,8 @@ export const AlertModal: React.FC<AlertModalProps> = ({
 
 	return (
 		<Modal
-			title={t("AlertTitle")}
-			description={t("AlertDescr")}
+			title={title}
+			description={description}
 			isOpen={isOpen}
 			onClose={onClose}
 		>

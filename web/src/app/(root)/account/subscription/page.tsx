@@ -1,4 +1,4 @@
-import getUser from "@/actions/get-user";
+import getCurrentUser from "@/actions/user/get-current-user";
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import logger from "@/lib/logger";
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SubscriptionPage() {
-	const user = (await getUser()) as User;
+	const user = (await getCurrentUser()) as User;
 
 	if (!user) {
 		redirect(`/signin?callbackUrl=/account`);

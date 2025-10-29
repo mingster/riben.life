@@ -11,12 +11,6 @@
 		},
 		{
 			"path": "fileServer"
-		},
-		{
-			"path": "../mingster.com"
-		},
-		{
-			"path": "../packages"
 		}
 	],
 	"settings": {

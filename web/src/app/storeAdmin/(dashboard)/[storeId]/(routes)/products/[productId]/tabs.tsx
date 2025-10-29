@@ -16,7 +16,7 @@ import { ProductEditCategoryTab } from "./product-edit-category-tab";
 import { ProductEditImageTab } from "./product-edit-image-tab";
 
 import { useTranslation } from "@/app/i18n/client";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { AlertModal } from "@/components/modals/alert-modal";
 import {
 	Breadcrumb,

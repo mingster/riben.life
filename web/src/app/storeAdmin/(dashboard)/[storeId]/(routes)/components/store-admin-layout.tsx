@@ -8,7 +8,7 @@ import type { Store } from "@/types";
 import DropdownUser from "@/components/auth/dropdown-user";
 import { BackgroundImage } from "@/components/BackgroundImage";
 import LanguageToggler from "@/components/language-toggler";
-import ThemeToggler from "@/components/theme-toggler";
+import { ThemeToggler } from "@/components/theme-toggler";
 import { Separator } from "@/components/ui/separator";
 import {
 	SidebarInset,

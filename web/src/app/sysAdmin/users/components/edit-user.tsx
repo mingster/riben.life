@@ -13,7 +13,7 @@ import {
 } from "@/actions/sysAdmin/user/user.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { LocaleSelectItems } from "@/components/locale-select-items";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { TimezoneSelect } from "@/components/timezone-select";
 import { Button } from "@/components/ui/button";
 import {

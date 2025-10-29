@@ -31,7 +31,7 @@ import type {
 import type { Address, PaymentMethod, ShippingMethod } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
 
-import { toastError } from "@/components/Toaster";
+import { toastError } from "@/components/toaster";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { saveOrderToLocal } from "@/lib/order-history";

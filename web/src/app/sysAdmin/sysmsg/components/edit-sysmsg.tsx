@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
 import type { z } from "zod/v4";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,

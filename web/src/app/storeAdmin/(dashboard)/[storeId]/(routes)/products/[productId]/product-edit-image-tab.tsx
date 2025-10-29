@@ -27,7 +27,7 @@ import {
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import ImageUploadBox from "@/components/image-upload-box";
 import { Button } from "@/components/ui/button";
 import { deleteImage, uploadImage } from "@/utils/image-utils";

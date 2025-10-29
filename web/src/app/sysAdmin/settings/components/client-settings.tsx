@@ -3,7 +3,7 @@
 import { updatePlatformSettingsAction } from "@/actions/sysAdmin/platformSettings/update-platform-settings";
 import { updatePlatformSettingsSchema } from "@/actions/sysAdmin/platformSettings/update-platform-settings.validation";
 import { useTranslation } from "@/app/i18n/client";
-import { toastSuccess } from "@/components/Toaster";
+import { toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Form,

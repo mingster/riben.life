@@ -30,7 +30,7 @@ import { LocaleSelectItems } from "@/components/locale-select-items";
 import { ApiListing } from "@/components/api-listing";
 
 import { useTranslation } from "@/app/i18n/client";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import {
 	Select,
 	SelectContent,

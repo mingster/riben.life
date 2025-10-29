@@ -1,5 +1,5 @@
 import getStoreWithCategories from "@/actions/get-store";
-import getUser from "@/actions/get-user";
+import getCurrentUser from "@/actions/user/get-current-user";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import type { Store } from "@/types";
@@ -25,7 +25,7 @@ export default async function StoreCheckoutPage(props: {
 
 	//console.log(`store: ${JSON.stringify(store)}`);
 
-	const user = await getUser();
+	const user = await getCurrentUser();
 	transformDecimalsToNumbers(user);
 
 	return (

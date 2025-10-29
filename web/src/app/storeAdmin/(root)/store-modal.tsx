@@ -1,6 +1,6 @@
 "use client";
 
-import { toastSuccess } from "@/components/Toaster";
+import { toastSuccess } from "@/components/toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";

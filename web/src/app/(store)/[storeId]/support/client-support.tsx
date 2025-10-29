@@ -8,7 +8,7 @@ import { AlertModal } from "@/components/modals/alert-modal";
 import { DisplayTicket } from "@/components/store/display-ticket";
 import { DisplayTicketStatus } from "@/components/store/display-ticket-status";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	ResizableHandle,

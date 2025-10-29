@@ -1,6 +1,6 @@
 //import { auth } from "@/auth";
 
-import getUser from "@/actions/get-user";
+import getCurrentUser from "@/actions/user/get-current-user";
 import type { StoreNotification } from "@/actions/send-store-notification";
 
 import Container from "@/components/ui/container";

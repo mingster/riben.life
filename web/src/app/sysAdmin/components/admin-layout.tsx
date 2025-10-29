@@ -1,7 +1,7 @@
 "use client";
 
 import DropdownUser from "@/components/auth/dropdown-user";
-import ThemeToggler from "@/components/theme-toggler";
+import { ThemeToggler } from "@/components/theme-toggler";
 import { Separator } from "@/components/ui/separator";
 import {
 	SidebarInset,

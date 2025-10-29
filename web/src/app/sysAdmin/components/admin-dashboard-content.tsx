@@ -1,6 +1,6 @@
 "use client";
 
-import { toastSuccess } from "@/components/Toaster";
+import { toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 
 import { ArrowRightIcon } from "@radix-ui/react-icons";

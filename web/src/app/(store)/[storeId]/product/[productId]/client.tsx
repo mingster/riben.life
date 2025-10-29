@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { ProductCard } from "@/components/product-card";
 import { type Item, useCart } from "@/hooks/use-cart";
 import { useI18n } from "@/providers/i18n-provider";
