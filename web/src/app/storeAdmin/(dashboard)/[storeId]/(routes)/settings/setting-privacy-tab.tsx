@@ -1,5 +1,5 @@
 "use client";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -56,6 +56,14 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
 			}
 		: {};
 
+	// Replace null values with empty strings for string fields
+	const sanitizedDefaultValues = Object.fromEntries(
+		Object.entries(defaultValues).map(([key, value]) => [
+			key,
+			value === null ? "" : value,
+		]),
+	);
+
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	/*
 	<Textarea
@@ -67,7 +75,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
 */
 	const form = useForm<formValues>({
 		resolver: zodResolver(privacyFormSchema) as any,
-		defaultValues,
+		defaultValues: sanitizedDefaultValues,
 	});
 
 	const {

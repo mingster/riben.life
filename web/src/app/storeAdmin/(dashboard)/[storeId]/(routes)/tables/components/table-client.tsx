@@ -13,7 +13,7 @@ import { type TableColumn, columns } from "./columns";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import {
 	Dialog,
 	DialogClose,

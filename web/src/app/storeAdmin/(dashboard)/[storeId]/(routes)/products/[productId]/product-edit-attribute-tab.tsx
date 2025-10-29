@@ -34,7 +34,7 @@ import {
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -109,18 +109,18 @@ export const ProductEditAttributeTab = ({
 	const defaultValues = initialData
 		? {
 				...initialData,
-				stripePriceId: initialData.stripePriceId ?? undefined,
-				mfgPartNumber: initialData.mfgPartNumber ?? undefined,
+				stripePriceId: initialData.stripePriceId ?? "",
+				mfgPartNumber: initialData.mfgPartNumber ?? "",
 				intervalCount: initialData.intervalCount ?? undefined,
 				trialPeriodDays: initialData.trialPeriodDays ?? undefined,
 			}
 		: {};
 
-	// Replace null values with undefined
+	// Replace null values with empty strings for string fields
 	const sanitizedDefaultValues = Object.fromEntries(
 		Object.entries(defaultValues).map(([key, value]) => [
 			key,
-			value ?? undefined,
+			value === null ? "" : value,
 		]),
 	);
 

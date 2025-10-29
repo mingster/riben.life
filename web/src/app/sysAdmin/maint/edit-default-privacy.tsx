@@ -1,5 +1,5 @@
 "use client";
-import { toastSuccess } from "@/components/Toaster";
+import { toastSuccess } from "@/components/toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Card, CardContent } from "@/components/ui/card";

@@ -10,7 +10,7 @@ import { cookieName } from "@/app/i18n/settings";
 import SignOutButton from "@/components/auth/sign-out-button";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { TimezoneSelect } from "@/components/timezone-select";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -58,8 +58,8 @@ export default function EditUser({ serverData }: props) {
 		...dbUser,
 		//id: user.id,
 		//name: user.name || "",
-		locale: dbUser.locale || activeLng,
-		timezone: dbUser.timezone || "America/Los_Angeles",
+		locale: dbUser?.locale || activeLng,
+		timezone: dbUser?.timezone || "America/Los_Angeles",
 	};
 
 	const form = useForm<UpdateUserSettingsInput>({
@@ -82,9 +82,8 @@ export default function EditUser({ serverData }: props) {
 		const result = await updateUserSettingsAction(data);
 		if (result?.serverError) {
 			toastError({ description: result.serverError });
-		} else {
-			setDbUser(result?.data as User);
-
+		} else if (result?.data) {
+			setDbUser(result.data as User);
 			toastSuccess({ description: "Profile updated." });
 			handleChangeLanguage(data.locale);
 		}

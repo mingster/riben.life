@@ -14,7 +14,7 @@ import {
 	type UpdateTicketInput,
 } from "@/actions/store/support-ticket/update-ticket.validation";
 import { useTranslation } from "@/app/i18n/client";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Drawer,

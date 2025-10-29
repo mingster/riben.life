@@ -6,7 +6,7 @@ import Link from "next/link";
 import DropdownCart from "@/components/dropdown-cart";
 import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/dropdown-notification";
-import ThemeToggler from "@/components/theme-toggler";
+import { ThemeToggler } from "@/components/theme-toggler";
 import { Button } from "@/components/ui/button";
 import {
 	Sheet,

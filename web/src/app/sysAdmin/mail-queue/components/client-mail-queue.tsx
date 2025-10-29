@@ -8,7 +8,7 @@ import { DataTableCheckbox } from "@/components/dataTable-checkbox";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Heading } from "@/components/heading";
 import { AlertModal } from "@/components/modals/alert-modal";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {

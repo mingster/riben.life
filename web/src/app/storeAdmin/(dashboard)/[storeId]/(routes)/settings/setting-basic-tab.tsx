@@ -30,7 +30,7 @@ import { LocaleSelectItems } from "@/components/locale-select-items";
 import { ApiListing } from "@/components/api-listing";
 
 import { useTranslation } from "@/app/i18n/client";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import {
 	Select,
 	SelectContent,
@@ -91,10 +91,18 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 			}
 		: { orderNoteToCustomer: "", businessHours: "" };
 
+	// Replace null values with empty strings for string fields
+	const sanitizedDefaultValues = Object.fromEntries(
+		Object.entries(defaultValues).map(([key, value]) => [
+			key,
+			value === null ? "" : value,
+		]),
+	);
+
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
 		resolver: zodResolver(formSchema) as any,
-		defaultValues,
+		defaultValues: sanitizedDefaultValues,
 	});
 
 	const {

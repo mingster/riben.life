@@ -19,7 +19,7 @@ import { Copy, MoreHorizontal, Trash } from "lucide-react";
 import { CheckIcon, XIcon } from "lucide-react";
 
 import type { updateFaqSchema } from "@/actions/storeAdmin/faq/update-faq.validation";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { DataTable } from "@/components/dataTable";
 import { Button } from "@/components/ui/button";
 import type { Faq } from "@/types";

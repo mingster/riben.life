@@ -40,7 +40,7 @@ import {
 	type UpdateFaqInput,
 	updateFaqSchema,
 } from "@/actions/storeAdmin/faq/update-faq.validation";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";

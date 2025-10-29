@@ -3,7 +3,7 @@ import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Heading } from "@/components/heading";
 import { AlertModal } from "@/components/modals/alert-modal";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { IconAlertCircle, IconCheck, IconX } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";

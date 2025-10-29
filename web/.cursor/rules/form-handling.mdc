@@ -1,7 +1,7 @@
 ---
-description: Form handling
+description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Form Handling
 

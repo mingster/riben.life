@@ -1,4 +1,4 @@
-import getUser from "@/actions/get-user";
+import getCurrentUser from "@/actions/user/get-current-user";
 import { getOptions } from "@/app/i18n/settings";
 import {
 	Accordion,
@@ -49,7 +49,7 @@ export default async function StoreFaqHomePage(props: {
 	});
 
 	const _i18Options = getOptions();
-	const _user = (await getUser()) as User;
+	const _user = (await getCurrentUser()) as User;
 
 	/*
   const lng = user?.locale?.toString() || i18Options.fallbackLng;

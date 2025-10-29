@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import useColorMode from "@/hooks/useColorMode";
 import { NotMountSkeleton } from "@/components/not-mount-skeleton";
 
-const ThemeToggler = () => {
+export const ThemeToggler = () => {
 	const [mounted, setMounted] = useState(false);
 
 	const [colorMode, setColorMode] = useColorMode();
@@ -31,7 +31,7 @@ const ThemeToggler = () => {
 	return (
 		<label
 			className={`relative m-0 block h-7.5 w-14 rounded-full ${
-				colorMode === "dark" ? "bg-secondary" : "bg-secondary/50"
+				colorMode === "dark" ? "bg-secondary/50" : "bg-amber-50/50"
 			}`}
 		>
 			<input
@@ -52,7 +52,7 @@ const ThemeToggler = () => {
 			>
 				<span className="dark:hidden">
 					{/*light*/}
-					<IconSun className="size-5 text-slate-400" />
+					<IconSun className="size-5 text-amber-600" />
 				</span>
 				<span className="hidden dark:inline-block">
 					{/*dark           <Moon className="w-5 h-5 text-slate-700" />*/}
@@ -74,5 +74,3 @@ const ThemeToggler = () => {
 		</label>
 	);
 };
-
-export default ThemeToggler;

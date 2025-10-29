@@ -33,7 +33,7 @@ import { IconEdit, IconPlus } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
 import { updateMessageTemplateLocalizedAction } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized";
 import { updateMessageTemplateLocalizedSchema } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized.validation";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Input } from "@/components/ui/input";
 import {
 	Select,

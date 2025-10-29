@@ -19,7 +19,7 @@ import {
 import { OrderStatus } from "@/types/enum";
 import Link from "next/link";
 import type { StoreOrderColumn } from "./columns";
-import { toastSuccess } from "@/components/Toaster";
+import { toastSuccess } from "@/components/toaster";
 
 interface CellActionProps {
 	data: StoreOrderColumn;

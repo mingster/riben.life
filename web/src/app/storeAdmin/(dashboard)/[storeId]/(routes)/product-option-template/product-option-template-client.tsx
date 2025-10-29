@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import type { StoreProductOptionTemplate } from "@/types";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";

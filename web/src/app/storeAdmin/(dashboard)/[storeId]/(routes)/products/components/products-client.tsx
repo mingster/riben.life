@@ -12,7 +12,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { Heading } from "@/components/ui/heading";
 import { type ProductColumn, columns } from "./columns";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import {
 	Dialog,
 	DialogClose,

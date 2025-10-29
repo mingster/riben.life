@@ -1,5 +1,6 @@
+"use client";
+
 import { useTranslation } from "@/app/i18n/client";
-import * as React from "react";
 
 import { useI18n } from "@/providers/i18n-provider";
 import { type TwBankCode, TwBankCodes } from "@/types/bank3";
@@ -33,7 +34,7 @@ export const TwBankCodeCombobox = ({
 	onValueChange,
 }: ComboboxProps) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng, "domain");
 	const [selected, setSelected] = useState<string | undefined>(defaultValue);
 	const [open, setOpen] = useState(false);
 

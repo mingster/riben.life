@@ -2,7 +2,7 @@
 import clsx from "clsx";
 //import { cn } from '@/lib/utils';
 import DropdownUser from "@/components/auth/dropdown-user";
-import ThemeToggler from "@/components/theme-toggler";
+import { ThemeToggler } from "@/components/theme-toggler";
 import {
 	Sheet,
 	SheetContent,

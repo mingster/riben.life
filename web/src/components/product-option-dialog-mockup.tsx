@@ -1,6 +1,6 @@
 "use client";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { useCart } from "@/hooks/use-cart";
 import type { Product } from "@/types";
 import { useForm } from "react-hook-form";

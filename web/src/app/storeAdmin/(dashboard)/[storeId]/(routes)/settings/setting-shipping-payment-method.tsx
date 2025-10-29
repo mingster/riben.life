@@ -1,5 +1,5 @@
 "use client";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { useParams, useRouter } from "next/navigation";

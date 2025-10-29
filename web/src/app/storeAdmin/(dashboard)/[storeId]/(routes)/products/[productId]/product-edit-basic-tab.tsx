@@ -1,6 +1,6 @@
 "use client";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -78,22 +78,30 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
 	const defaultValues = initialData
 		? {
 				...initialData,
-				description: initialData.description ?? undefined,
+				description: initialData.description ?? "",
 				price: Number(initialData.price), // Convert Prisma.Decimal to number
 			}
 		: {
 				name: "",
-				description: undefined,
+				description: "",
 				price: new Prisma.Decimal(0.0).toNumber(), // Convert Prisma.Decimal to number
 				currency: "usd",
 				isFeatured: false,
 				status: Number(ProductStatus.Published),
 			};
 
+	// Replace null values with empty strings for string fields
+	const sanitizedDefaultValues = Object.fromEntries(
+		Object.entries(defaultValues).map(([key, value]) => [
+			key,
+			value === null ? "" : value,
+		]),
+	);
+
 	//console.log(`product basic: ${JSON.stringify(defaultValues)}`);
 	const form = useForm<formValues>({
 		resolver: zodResolver(formSchema) as any,
-		defaultValues,
+		defaultValues: sanitizedDefaultValues,
 		mode: "onChange",
 	});
 

@@ -28,7 +28,7 @@ import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { t } from "i18next";
 import { IconCheck, IconTrash, IconX } from "@tabler/icons-react";
 import { AddProductOptionDialog } from "./product-option-dialog";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 
 interface editProps {
 	initialData:

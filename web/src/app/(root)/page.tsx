@@ -1,6 +1,6 @@
 "use client";
 
-import { toastError } from "@/components/Toaster";
+import { toastError } from "@/components/toaster";
 import { Loader } from "@/components/loader";
 import { getHostname } from "@/utils/utils";
 import type { Store } from "@prisma/client";

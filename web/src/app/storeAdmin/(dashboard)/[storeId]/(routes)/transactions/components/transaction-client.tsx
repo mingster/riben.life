@@ -291,11 +291,11 @@ export const FilterDateTime = ({
 		[val, onValueChange],
 	);
 
-	// Replace null values with undefined
+	// Replace null values with empty strings for string fields
 	const sanitizedDefaultValues = Object.fromEntries(
 		Object.entries(defaultValues).map(([key, value]) => [
 			key,
-			value ?? undefined,
+			value === null ? "" : value,
 		]),
 	);
 

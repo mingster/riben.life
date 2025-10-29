@@ -10,18 +10,11 @@ export const updateUserSettingsAction = userRequiredActionClient
 	.schema(updateUserSettingsSchema)
 	.action(
 		async ({ ctx: { userId }, parsedInput: { name, locale, timezone } }) => {
-			await sqlClient.user.update({
+			const updatedUser = await sqlClient.user.update({
 				where: { id: userId },
 				data: { name, locale, timezone, updatedAt: getUtcNow() },
 			});
 
-			const user = await sqlClient.user.findUnique({
-				where: { id: userId },
-			});
-
-			return {
-				success: true,
-				data: user, // return the updated user
-			};
+			return updatedUser;
 		},
 	);

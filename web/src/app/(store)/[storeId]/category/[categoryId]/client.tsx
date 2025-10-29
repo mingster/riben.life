@@ -4,7 +4,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { ProductCard } from "@/components/product-card";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { type Item, useCart } from "@/hooks/use-cart";
 import { useParams } from "next/navigation";
 

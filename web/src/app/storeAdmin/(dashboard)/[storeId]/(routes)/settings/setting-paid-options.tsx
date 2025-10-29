@@ -1,5 +1,5 @@
 "use client";
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Card, CardContent } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -77,11 +77,11 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 				STRIPE_SECRET_KEY: "",
 			};
 
-	// Replace null values with undefined
+	// Replace null values with empty strings for string fields
 	const sanitizedDefaultValues = Object.fromEntries(
 		Object.entries(defaultValues).map(([key, value]) => [
 			key,
-			value ?? undefined,
+			value === null ? "" : value,
 		]),
 	);
 

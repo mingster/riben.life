@@ -11,7 +11,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { useIsHydrated } from "@/hooks/use-hydrated";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
-import { toastError, toastSuccess } from "../Toaster";
+import { toastError, toastSuccess } from "../toaster";
 import { Button } from "../ui/button";
 import {
 	Form,

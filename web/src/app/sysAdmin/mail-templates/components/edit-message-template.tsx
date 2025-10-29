@@ -10,7 +10,7 @@ import { updateMessageTemplateAction } from "@/actions/sysAdmin/messageTemplate/
 import { updateMessageTemplateSchema } from "@/actions/sysAdmin/messageTemplate/update-message-template.validation";
 import { useTranslation } from "@/app/i18n/client";
 
-import { toastError, toastSuccess } from "@/components/Toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Drawer,

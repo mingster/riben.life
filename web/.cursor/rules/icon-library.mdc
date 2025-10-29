@@ -1,0 +1,195 @@
+---
+description: Icon Library Standards - Use @tabler/icons-react for all icons
+globs: ["**/*.{js,ts,jsx,tsx}"]
+alwaysApply: true
+---
+# Icon Library Standards
+
+This project uses **@tabler/icons-react** as the primary icon library. All icons should be imported from this library for consistency and maintainability.
+
+## Icon Library
+
+- **Primary Library**: `@tabler/icons-react`
+- **Alternative**: `lucide-react` (only when specific icons are not available in @tabler/icons-react)
+- **Avoid**: Other icon libraries unless absolutely necessary
+
+## Import Pattern
+
+### @tabler/icons-react Icons
+
+```tsx
+import { 
+  IconPlus, 
+  IconTrash, 
+  IconSettings, 
+  IconUser,
+  IconCheck,
+  IconX,
+  IconDots,
+  IconCopy,
+  IconEdit
+} from "@tabler/icons-react";
+```
+
+### Usage in Components
+
+```tsx
+// Good - Using @tabler/icons-react
+import { IconPlus, IconTrash } from "@tabler/icons-react";
+
+export const MyComponent = () => {
+  return (
+    <div>
+      <button>
+        <IconPlus className="h-4 w-4" />
+        Add Item
+      </button>
+      <button>
+        <IconTrash className="h-4 w-4" />
+        Delete
+      </button>
+    </div>
+  );
+};
+```
+
+## Icon Naming Convention
+
+- **@tabler/icons-react**: All icons are prefixed with `Icon` (e.g., `IconPlus`, `IconTrash`)
+- **lucide-react**: No prefix (e.g., `Plus`, `Trash`)
+
+## Common Icons
+
+### Action Icons
+
+- `IconPlus` - Add/Create
+- `IconTrash` - Delete/Remove
+- `IconEdit` - Edit/Modify
+- `IconCopy` - Copy/Duplicate
+- `IconCheck` - Confirm/Success
+- `IconX` - Cancel/Close
+- `IconDots` - More options menu
+
+### Navigation Icons
+
+- `IconHome` - Home/Dashboard
+- `IconSettings` - Settings/Configuration
+- `IconUser` - User/Profile
+- `IconUsers` - Users/Team
+- `IconSearch` - Search
+- `IconMenu` - Menu/Hamburger
+
+### Status Icons
+
+- `IconCheck` - Success/Complete
+- `IconX` - Error/Failed
+- `IconLoader` - Loading/Processing
+- `IconAlertCircle` - Warning/Alert
+- `IconInfoCircle` - Information
+
+### UI Icons
+
+- `IconChevronDown` - Dropdown/Expand
+- `IconChevronUp` - Collapse
+- `IconChevronLeft` - Previous/Back
+- `IconChevronRight` - Next/Forward
+- `IconEye` - View/Show
+- `IconEyeOff` - Hide
+
+## Icon Sizing
+
+Use consistent sizing classes:
+
+- `h-4 w-4` - Small icons (16px)
+- `h-5 w-5` - Medium icons (20px)
+- `h-6 w-6` - Large icons (24px)
+
+## Examples
+
+### Button with Icon
+
+```tsx
+import { IconPlus } from "@tabler/icons-react";
+
+<Button>
+  <IconPlus className="h-4 w-4 mr-2" />
+  Add New
+</Button>
+```
+
+### Dropdown Menu with Icons
+
+```tsx
+import { IconEdit, IconTrash, IconCopy } from "@tabler/icons-react";
+
+<DropdownMenuItem>
+  <IconEdit className="mr-2 h-4 w-4" />
+  Edit
+</DropdownMenuItem>
+<DropdownMenuItem>
+  <IconCopy className="mr-2 h-4 w-4" />
+  Copy
+</DropdownMenuItem>
+<DropdownMenuItem>
+  <IconTrash className="mr-2 h-4 w-4" />
+  Delete
+</DropdownMenuItem>
+```
+
+### Status Indicators
+
+```tsx
+import { IconCheck, IconX, IconLoader } from "@tabler/icons-react";
+
+{status === 'success' && <IconCheck className="h-4 w-4 text-green-500" />}
+{status === 'error' && <IconX className="h-4 w-4 text-red-500" />}
+{status === 'loading' && <IconLoader className="h-4 w-4 animate-spin" />}
+```
+
+## Migration from Other Libraries
+
+When migrating from other icon libraries:
+
+1. **Replace lucide-react imports**:
+
+   ```tsx
+   // Old
+   import { Plus, Trash } from "lucide-react";
+   
+   // New
+   import { IconPlus, IconTrash } from "@tabler/icons-react";
+   ```
+
+2. **Update icon usage**:
+
+   ```tsx
+   // Old
+   <Plus className="h-4 w-4" />
+   
+   // New
+   <IconPlus className="h-4 w-4" />
+   ```
+
+## Best Practices
+
+1. **Consistency**: Always use @tabler/icons-react for new components
+2. **Import Efficiency**: Import only the icons you need
+3. **Semantic Usage**: Choose icons that clearly represent their function
+4. **Accessibility**: Ensure icons have proper ARIA labels when used without text
+5. **Sizing**: Use consistent sizing across similar UI elements
+6. **Color**: Use semantic colors (text-green-500 for success, text-red-500 for errors)
+
+## When to Use lucide-react
+
+Only use `lucide-react` when:
+
+- A specific icon is not available in @tabler/icons-react
+- The icon is part of a third-party component that requires lucide-react
+- You need a very specific icon that only exists in lucide-react
+
+```tsx
+// Only when necessary
+import { Plus } from "lucide-react";
+```
+
+This standardization ensures a consistent visual language across the application and makes maintenance easier.
