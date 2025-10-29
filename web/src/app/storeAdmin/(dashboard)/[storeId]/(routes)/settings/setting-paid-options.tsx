@@ -77,11 +77,11 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 				STRIPE_SECRET_KEY: "",
 			};
 
-	// Replace null values with undefined
+	// Replace null values with empty strings for string fields
 	const sanitizedDefaultValues = Object.fromEntries(
 		Object.entries(defaultValues).map(([key, value]) => [
 			key,
-			value ?? undefined,
+			value === null ? "" : value,
 		]),
 	);
 

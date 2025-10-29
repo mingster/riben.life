@@ -109,18 +109,18 @@ export const ProductEditAttributeTab = ({
 	const defaultValues = initialData
 		? {
 				...initialData,
-				stripePriceId: initialData.stripePriceId ?? undefined,
-				mfgPartNumber: initialData.mfgPartNumber ?? undefined,
+				stripePriceId: initialData.stripePriceId ?? "",
+				mfgPartNumber: initialData.mfgPartNumber ?? "",
 				intervalCount: initialData.intervalCount ?? undefined,
 				trialPeriodDays: initialData.trialPeriodDays ?? undefined,
 			}
 		: {};
 
-	// Replace null values with undefined
+	// Replace null values with empty strings for string fields
 	const sanitizedDefaultValues = Object.fromEntries(
 		Object.entries(defaultValues).map(([key, value]) => [
 			key,
-			value ?? undefined,
+			value === null ? "" : value,
 		]),
 	);
 

@@ -91,10 +91,18 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 			}
 		: { orderNoteToCustomer: "", businessHours: "" };
 
+	// Replace null values with empty strings for string fields
+	const sanitizedDefaultValues = Object.fromEntries(
+		Object.entries(defaultValues).map(([key, value]) => [
+			key,
+			value === null ? "" : value,
+		]),
+	);
+
 	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
 		resolver: zodResolver(formSchema) as any,
-		defaultValues,
+		defaultValues: sanitizedDefaultValues,
 	});
 
 	const {
