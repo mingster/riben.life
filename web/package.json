@@ -7,6 +7,7 @@
 		"debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3001",
 		"build": "bun run postinstall; next build",
 		"start": "next start -p 3000",
+		"install:platform": "bun run ../bin/install.ts",
 		"bio_lint": "npx biome check --fix ./src",
 		"format": "npx biome format --write ./src",
 		"postinstall": "bun run sql:generate",

@@ -34,6 +34,11 @@ bunx prisma db push
 
 # Run database migrations (if any)
 bunx prisma migrate dev
+
+# Initialize platform (run once after database setup)
+# This populates countries, currencies, locales, payment methods, shipping methods,
+# and creates Stripe products
+bun run install:platform
 ```
 
 ### Development
@@ -90,8 +95,11 @@ Additional documentation can be found in the `/doc` directory:
 - `bun run dev` - Start development server
 - `bun run build` - Build for production
 - `bun run start` - Start production server
+- `bun run install:platform` - Initialize platform data (run once after setup)
 - `bun run lint` - Run linting
-- `bun run type-check` - Run TypeScript type checking
+- `bun run format` - Format code with Biome
+- `bun run sql:generate` - Generate Prisma client
+- `bun run sql:dbpush` - Push schema changes to database
 
 ## Learn More
 
