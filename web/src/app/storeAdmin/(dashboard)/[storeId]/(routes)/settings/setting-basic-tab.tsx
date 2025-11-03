@@ -86,10 +86,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
 	const defaultValues = sqlData
 		? {
-			...sqlData,
-			orderNoteToCustomer: storeSettings?.orderNoteToCustomer || "",
-			businessHours: storeSettings?.businessHours || "",
-		}
+				...sqlData,
+				orderNoteToCustomer: storeSettings?.orderNoteToCustomer || "",
+				businessHours: storeSettings?.businessHours || "",
+			}
 		: { orderNoteToCustomer: "", businessHours: "" };
 
 	// Replace null values with empty strings for string fields

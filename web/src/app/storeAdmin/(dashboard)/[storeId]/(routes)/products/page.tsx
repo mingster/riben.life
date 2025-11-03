@@ -1,12 +1,10 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { Product } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { formatDateTime } from "@/utils/datetime-utils";
 import type { Store } from "@prisma/client";
-import { Suspense } from "react";
 import type { ProductColumn } from "./components/columns";
 import { ProductsClient } from "./components/products-client";
 
@@ -18,57 +16,48 @@ export default async function ProductsPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
-	const products = (await sqlClient.product.findMany({
-		where: {
-			storeId: store.id,
-		},
-		include: {
-			ProductImages: true,
-			ProductAttribute: true,
-			ProductCategories: true,
-			ProductOptions: {
-				include: {
-					ProductOptionSelections: true,
-				},
-				orderBy: {
-					sortOrder: "asc",
+	// Parallel queries for optimal performance
+	const [store, products] = await Promise.all([
+		checkStoreStaffAccess(params.storeId),
+		sqlClient.product.findMany({
+			where: { storeId: params.storeId },
+			include: {
+				ProductImages: true,
+				ProductAttribute: true,
+				ProductCategories: true,
+				ProductOptions: {
+					include: {
+						ProductOptionSelections: true,
+					},
+					orderBy: {
+						sortOrder: "asc",
+					},
 				},
 			},
-		},
-	})) as Product[];
+		}),
+	]);
+
 	transformDecimalsToNumbers(products);
 
-	//console.log(`products: ${JSON.stringify(products)}`);
-	/*
-	//products[0].price= decimal(12.95);
-	products[0].isFeatured = true;
-	products[0].isRecurring = true;
-	products[0].status = 20;
-	*/
-
-	// map product to ui
-	const formattedProducts: ProductColumn[] = products.map((item: Product) => ({
-		id: item.id,
-		name: item.name,
-		status: item.status,
-		price: Number(item.price),
-		isFeatured: item.isFeatured,
-		updatedAt: formatDateTime(item.updatedAt),
-		stock: item.ProductAttribute?.stock || 0,
-		isRecurring: item.ProductAttribute?.isRecurring,
-		hasOptions: item.ProductOptions?.length > 0,
-		//category: item.category.name,
-		//size: item.size.name,
-		//color: item.c.color.value,
-	}));
+	// Map products to UI columns
+	const formattedProducts: ProductColumn[] = (products as Product[]).map(
+		(item) => ({
+			id: item.id,
+			name: item.name,
+			status: item.status,
+			price: Number(item.price),
+			isFeatured: item.isFeatured,
+			updatedAt: formatDateTime(item.updatedAt),
+			stock: item.ProductAttribute?.stock || 0,
+			isRecurring: item.ProductAttribute?.isRecurring,
+			hasOptions: item.ProductOptions?.length > 0,
+		}),
+	);
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<ProductsClient data={formattedProducts} />
-			</Container>
-		</Suspense>
+		<Container>
+			<ProductsClient data={formattedProducts} />
+		</Container>
 	);
 }

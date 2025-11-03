@@ -1,15 +1,12 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { Faq } from "@/types";
 import type { Store } from "@prisma/client";
-import { Suspense } from "react";
 import type { FaqColumn } from "./components/columns";
 import { FaqClient } from "./components/faq-client";
 
-//!SECTION here we list FAQs under the given faq category.
-//
+// FAQ management page for a specific category
 
 type Params = Promise<{ storeId: string; categoryId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -19,34 +16,26 @@ export default async function FaqPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const _store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
-	//SECTION disallow access if category is not found
-	const category = await sqlClient.faqCategory.findUnique({
-		where: {
-			id: params.categoryId,
-		},
-		include: {
-			//FAQ: true, // Include the FAQ property
-		},
-	});
+	// Parallel queries for optimal performance
+	const [_store, category, faqs] = await Promise.all([
+		checkStoreStaffAccess(params.storeId),
+		sqlClient.faqCategory.findUnique({
+			where: { id: params.categoryId },
+		}),
+		sqlClient.faq.findMany({
+			where: { categoryId: params.categoryId },
+			include: {
+				FaqCategory: true,
+			},
+			orderBy: { sortOrder: "asc" },
+		}),
+	]);
 
-	if (category === null) return;
+	if (category === null) return null;
 
-	const faqs = await sqlClient.faq.findMany({
-		where: {
-			categoryId: params.categoryId,
-		},
-		include: {
-			FaqCategory: true,
-		},
-		orderBy: {
-			sortOrder: "asc",
-		},
-	});
-
-	// map FAQ to ui
-	const formattedFaq: FaqColumn[] = faqs.map((item: Faq) => ({
+	// Map FAQ to UI columns
+	const formattedFaq: FaqColumn[] = (faqs as Faq[]).map((item) => ({
 		id: item.id,
 		categoryId: item.categoryId,
 		category: item.FaqCategory.name,
@@ -55,10 +44,8 @@ export default async function FaqPage(props: {
 	}));
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<FaqClient data={formattedFaq} category={category} />
-			</Container>
-		</Suspense>
+		<Container>
+			<FaqClient data={formattedFaq} category={category} />
+		</Container>
 	);
 }

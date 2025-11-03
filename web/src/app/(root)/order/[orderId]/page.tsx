@@ -1,8 +1,6 @@
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
-import { Loader } from "@/components/loader";
 import type { Store } from "@/types";
-import { Suspense } from "react";
 import { DisplayClient } from "./client";
 
 type Params = Promise<{ storeId: string; orderId: string }>;
@@ -13,22 +11,16 @@ export default async function StoreOrderStatusPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const orderId = params.orderId;
 
-	//const searchParams = await props.searchParams;
-	//const query = searchParams.query;
-
-	const order = await getOrderById(orderId);
+	// Get order first to get storeId
+	const order = await getOrderById(params.orderId);
 
 	if (!order) {
-		return "no order found";
+		return <div>Order not found</div>;
 	}
 
+	// Fetch store after we have the storeId
 	const store = (await getStoreById(order.storeId)) as Store;
 
-	return (
-		<Suspense fallback={<Loader />}>
-			<DisplayClient store={store} order={order} />
-		</Suspense>
-	);
+	return <DisplayClient store={store} order={order} />;
 }

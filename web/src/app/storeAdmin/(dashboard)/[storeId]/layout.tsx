@@ -1,9 +1,7 @@
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
 import type { Metadata, ResolvingMetadata } from "next";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 
 type Props = {
 	params: Promise<{ storeId: string }>;
@@ -20,19 +18,11 @@ export async function generateMetadata(
 		};
 	}
 
-	// read route params
-	const store = (await sqlClient.store.findFirst({
-		where: {
-			id: params.storeId,
-		},
-		include: {
-			Categories: {
-				where: { isFeatured: true },
-				orderBy: { sortOrder: "asc" },
-			},
-			StoreAnnouncement: true,
-		},
-	})) as Store;
+	// Get store name for metadata (minimal query)
+	const store = await sqlClient.store.findFirst({
+		where: { id: params.storeId },
+		select: { name: true },
+	});
 
 	if (!store) return { title: "pstv" };
 
@@ -49,7 +39,7 @@ export default async function StoreAdminLayout(props: {
 	const { children } = props;
 
 	if (!params.storeId) {
-		// this will allow the user to set up a store
+		// Redirect to store selection if no storeId
 		redirect("/storeAdmin/");
 	}
 
@@ -57,5 +47,5 @@ export default async function StoreAdminLayout(props: {
 	// using checkStoreStaffAccess() which is cached per request
 	// No need to duplicate checks here
 
-	return <Suspense fallback={<Loader />}>{children}</Suspense>;
+	return <>{children}</>;
 }

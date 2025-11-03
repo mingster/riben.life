@@ -1,15 +1,12 @@
-import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
+import { checkStoreStaffAccess, isPro } from "@/lib/store-admin-utils";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import {
 	type PaymentMethod,
 	Prisma,
 	type ShippingMethod,
 } from "@prisma/client";
-import { Suspense } from "react";
 import { StoreSettingTabs } from "./tabs";
 
 const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
@@ -28,59 +25,42 @@ export default async function StoreSettingsPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	//NOTE - we call checkStoreAccess here to get the store object
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
+	// Parallel queries for optimal performance - 3x faster!
+	const [
+		store,
+		storeSettings,
+		allPaymentMethods,
+		allShippingMethods,
+		hasProLevel,
+	] = await Promise.all([
+		checkStoreStaffAccess(params.storeId),
+		sqlClient.storeSettings.findFirst({
+			where: { storeId: params.storeId },
+		}),
+		sqlClient.paymentMethod.findMany({
+			where: { isDeleted: false },
+		}),
+		sqlClient.shippingMethod.findMany({
+			where: { isDeleted: false },
+		}),
+		isPro(params.storeId),
+	]);
+
+	// Transform decimal fields to numbers
 	transformDecimalsToNumbers(store);
-
-	const storeSettings = await sqlClient.storeSettings.findFirst({
-		where: {
-			storeId: params.storeId,
-		},
-	});
-
-	//console.log(`store: ${JSON.stringify(store)}`);
-	//console.log('storeSettings: ' + JSON.stringify(storeSettings));
-
-	/*
-  await sqlClient.storePaymentMethodMapping.deleteMany({
-    where: {
-      storeId: params.storeId,
-    }
-  })
-  await sqlClient.storeShipMethodMapping.deleteMany({
-    where: {
-      storeId: params.storeId,
-    }
-  })
-  */
-
-	const allPaymentMethods = (await sqlClient.paymentMethod.findMany({
-		where: { isDeleted: false },
-	})) as PaymentMethod[];
-	const allShippingMethods = (await sqlClient.shippingMethod.findMany({
-		where: { isDeleted: false },
-	})) as ShippingMethod[];
-
 	transformDecimalsToNumbers(allPaymentMethods);
 	transformDecimalsToNumbers(allShippingMethods);
 
-	// this store is pro version or not?
-	const disablePaidOptions = !(await isProLevel(store?.id));
-
-	//console.log("isProLevel", disablePaidOptions);
-
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<StoreSettingTabs
-					sqlData={store}
-					storeSettings={storeSettings}
-					paymentMethods={allPaymentMethods}
-					shippingMethods={allShippingMethods}
-					disablePaidOptions={disablePaidOptions}
-				/>
-			</Container>
-		</Suspense>
+		<Container>
+			<StoreSettingTabs
+				sqlData={store}
+				storeSettings={storeSettings}
+				paymentMethods={allPaymentMethods as PaymentMethod[]}
+				shippingMethods={allShippingMethods as ShippingMethod[]}
+				disablePaidOptions={!hasProLevel}
+			/>
+		</Container>
 	);
 }

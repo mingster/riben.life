@@ -9,11 +9,12 @@ This project uses [Next.js Server Actions](mdc:https:/nextjs.org/docs/app/buildi
 
 ## Location & Structure
 
-- **Server actions** are located in the `pstv_web/src/actions/` directory, organized by feature/domain such as:
-  - `admin/sysmsg/` - System message actions
-  - `admin/faq/` - FAQ management actions
-- Each action file typically exports one or more actions using the `adminActionClient` or `baseClient` or `userRequiredActionClient` wrapper.
-- administration pages within `admin` URL should use `adminActionClient` wrapper.
+- **Server actions** are located in the `web/src/actions/` directory, organized by feature/domain such as:
+  - `admin/systemMessage/` - System message actions
+  - `admin/user/` - user management actions
+- Each action file typically exports one or more actions using the `adminActionClient` or `storeOwnerActionClient` or `userRequiredActionClient` wrapper.
+- administration pages within `sysAdmin` URL should use `adminActionClient` wrapper.
+- user related pages within `storeAdmin` URL should use `storeOwnerActionClient` wrapper.
 - user related pages within `account` URL should use `userRequiredActionClient` wrapper.
 - other actions can use `baseClient`
 - Validation schemas (using Zod) are colocated in the same directory as `[action-name].validation.ts`

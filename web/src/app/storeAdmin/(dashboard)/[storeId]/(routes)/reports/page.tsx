@@ -1,26 +1,25 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import { Suspense } from "react";
-
-import isProLevel from "@/actions/storeAdmin/is-pro-level";
+import { checkStoreStaffAccess, isPro } from "@/lib/store-admin-utils";
 import type { Store } from "@prisma/client";
 
 type Params = Promise<{ storeId: string; messageId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function BalanceMgmtPage(props: {
+export default async function ReportsPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
-	// this store is pro version or not?
-	const _disablePaidOptions = await !isProLevel(store?.id);
+
+	// Parallel queries for optimal performance
+	const [store, hasProLevel] = await Promise.all([
+		checkStoreStaffAccess(params.storeId),
+		isPro(params.storeId),
+	]);
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>TBD</Container>
-		</Suspense>
+		<Container>
+			<div>Reports - Coming Soon</div>
+		</Container>
 	);
 }

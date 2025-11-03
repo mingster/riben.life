@@ -1,10 +1,7 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { formatDateTime } from "@/utils/datetime-utils";
-import { Suspense } from "react";
 import { checkAdminAccess } from "../admin-utils";
 import type { DataColumn } from "./components/columns";
 import { DataClient } from "./components/data-client";
@@ -12,18 +9,23 @@ import { DataClient } from "./components/data-client";
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function PayMethodAdminPage(props: {
+export default async function ShipMethodAdminPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
 	const _params = await props.params;
 	checkAdminAccess();
 
+	// Optimized query using _count instead of loading all related data
 	const methods = await sqlClient.shippingMethod.findMany({
 		include: {
-			stores: true,
-			StoreOrder: true,
-			Shipment: true,
+			_count: {
+				select: {
+					stores: true,
+					StoreOrder: true,
+					Shipment: true,
+				},
+			},
 		},
 		orderBy: {
 			name: "asc",
@@ -32,29 +34,24 @@ export default async function PayMethodAdminPage(props: {
 
 	transformDecimalsToNumbers(methods);
 
-	//console.log(`users: ${JSON.stringify(users)}`);
-	// map stores to UI format
-	const formattedData: DataColumn[] = methods.map((item) => {
-		return {
-			id: item.id,
-			name: item.name || "",
-			currencyId: item.currencyId || "",
-			basic_price: Number(item.basic_price) || 0,
-			isDefault: item.isDefault,
-			isDeleted: item.isDeleted,
-			shipRequried: item.shipRequried,
-			updatedAt: formatDateTime(item.updatedAt),
-			stores: item.stores.length,
-			StoreOrder: item.StoreOrder.length,
-			Shipment: item.Shipment.length,
-		};
-	});
+	// Map methods to UI format
+	const formattedData: DataColumn[] = methods.map((item) => ({
+		id: item.id,
+		name: item.name || "",
+		currencyId: item.currencyId || "",
+		basic_price: Number(item.basic_price) || 0,
+		isDefault: item.isDefault,
+		isDeleted: item.isDeleted,
+		shipRequried: item.shipRequried,
+		updatedAt: formatDateTime(item.updatedAt),
+		stores: item._count.stores,
+		StoreOrder: item._count.StoreOrder,
+		Shipment: item._count.Shipment,
+	}));
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<DataClient data={formattedData} />
-			</Container>
-		</Suspense>
+		<Container>
+			<DataClient data={formattedData} />
+		</Container>
 	);
 }

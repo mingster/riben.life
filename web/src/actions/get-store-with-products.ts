@@ -13,7 +13,9 @@ const getStoreWithProducts = async (
 ): Promise<StoreWithProducts> => {
 	// Validate storeId format and prevent reserved routes from being treated as storeIds
 	if (isReservedRoute(storeId)) {
-		throw new Error(`Invalid storeId: "${storeId}" is a reserved route or invalid format`);
+		throw new Error(
+			`Invalid storeId: "${storeId}" is a reserved route or invalid format`,
+		);
 	}
 
 	const store = await sqlClient.store.findFirst({
@@ -68,7 +70,9 @@ const getStoreWithProducts = async (
 		console.error("Attempted query returned null. Verify that:");
 		console.error("1. The store exists in the database");
 		console.error("2. The storeId format is correct (should be a UUID/GUID)");
-		console.error("3. You've created at least one store via /storeAdmin or /sysAdmin/stores");
+		console.error(
+			"3. You've created at least one store via /storeAdmin or /sysAdmin/stores",
+		);
 
 		throw new Error(`Store not found with id: ${storeId}`);
 	}

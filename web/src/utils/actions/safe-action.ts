@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { createSafeActionClient } from "next-safe-action";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 import { SafeError } from "@/utils/error";
 import { isAdmin } from "../isAdmin";
@@ -52,6 +52,39 @@ export const userRequiredActionClient = baseClient.use(
 		});
 	},
 );
+
+export const emailRequiredActionClient = baseClient
+	.bindArgsSchemas<[emailAccountId: z.ZodString]>([z.string()])
+	.use(async ({ next, metadata, bindArgsClientInputs }) => {
+		const session = await auth.api.getSession({
+			headers: await headers(), // you need to pass the headers object.
+		});
+
+		if (!session?.user) throw new SafeError("Unauthorized");
+		const userEmail = session.user.email;
+		if (!userEmail) throw new SafeError("Unauthorized");
+
+		const userId = session.user.id;
+		const emailAccountId = bindArgsClientInputs[0] as string;
+
+		// validate user owns this email
+		const user = await sqlClient.user.findUnique({
+			where: { id: userId },
+		});
+
+		if (!user) throw new SafeError("Unauthorized");
+
+		//return withServerActionInstrumentation(metadata?.name, async () => {
+		return next({
+			ctx: {
+				userId,
+				userEmail,
+				session,
+				emailAccountId,
+			},
+		});
+		//});
+	});
 
 export const storeOwnerActionClient = baseClient.use(
 	async ({ next, metadata }) => {

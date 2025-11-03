@@ -1,9 +1,7 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { Category, Store } from "@/types";
-import { Suspense } from "react";
 import { CategoryClient } from "./components/category-client";
 import type { CategoryColumn } from "./components/columns";
 
@@ -48,10 +46,8 @@ export default async function CategoryPage(props: {
 	);
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<CategoryClient data={formattedCategories} />
-			</Container>
-		</Suspense>
+		<Container>
+			<CategoryClient data={formattedCategories} />
+		</Container>
 	);
 }

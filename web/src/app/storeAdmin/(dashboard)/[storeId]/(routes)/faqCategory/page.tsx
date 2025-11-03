@@ -1,12 +1,11 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { FaqCategory } from "@/types";
 import type { Store } from "@prisma/client";
-import { Suspense } from "react";
 import type { FaqCategoryColumn } from "./components/columns";
 import { FaqCategoryClient } from "./components/faqCategory-client";
+import { FaqCategoryWithFaqCount } from "../faq/components/client-faq-category";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -16,36 +15,35 @@ export default async function FaqCategoryPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
-	const categories = await sqlClient.faqCategory.findMany({
-		where: {
-			storeId: store.id,
-		},
-		include: {
-			FAQ: true,
-		},
-		orderBy: {
-			sortOrder: "asc",
-		},
-	});
+	// Parallel queries with optimized data fetching
+	const [store, categories] = await Promise.all([
+		checkStoreStaffAccess(params.storeId),
+		sqlClient.faqCategory.findMany({
+			where: { storeId: params.storeId },
+			include: {
+				_count: {
+					select: { FAQ: true },
+				},
+			},
+			orderBy: { sortOrder: "asc" },
+		}),
+	]);
 
-	// map FAQ Category to ui
+	// Map FAQ Category to UI columns
 	const formattedCategories: FaqCategoryColumn[] = categories.map(
-		(item: FaqCategory) => ({
-			faqCategoryId: item.id.toString(),
-			storeId: store.id.toString(),
-			name: item.name.toString(),
+		(item: FaqCategoryWithFaqCount) => ({
+			faqCategoryId: item.id,
+			storeId: store.id,
+			name: item.name,
 			sortOrder: Number(item.sortOrder) || 0,
-			faqCount: Number(item.FAQ.length) || 0,
+			faqCount: item.faqCount,
 		}),
 	);
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<FaqCategoryClient data={formattedCategories} />
-			</Container>
-		</Suspense>
+		<Container>
+			<FaqCategoryClient data={formattedCategories} />
+		</Container>
 	);
 }
