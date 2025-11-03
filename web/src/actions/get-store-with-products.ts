@@ -1,4 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
+import { isReservedRoute } from "@/lib/reserved-routes";
 import type {
 	StorePaymentMethodMapping,
 	StoreShipMethodMapping,
@@ -10,16 +11,9 @@ import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 const getStoreWithProducts = async (
 	storeId: string,
 ): Promise<StoreWithProducts> => {
-	// Validate storeId format and prevent admin routes from being treated as storeIds
-	if (
-		!storeId ||
-		storeId === "undefined" ||
-		storeId === "null" ||
-		storeId === "" ||
-		storeId === "storeAdmin" ||
-		storeId.startsWith("storeAdmin")
-	) {
-		throw Error("Invalid storeId");
+	// Validate storeId format and prevent reserved routes from being treated as storeIds
+	if (isReservedRoute(storeId)) {
+		throw new Error(`Invalid storeId: "${storeId}" is a reserved route or invalid format`);
 	}
 
 	const store = await sqlClient.store.findFirst({
@@ -70,9 +64,13 @@ const getStoreWithProducts = async (
 	});
 
 	if (!store) {
-		console.log("store", JSON.stringify(store));
+		console.error(`Store not found: storeId="${storeId}"`);
+		console.error("Attempted query returned null. Verify that:");
+		console.error("1. The store exists in the database");
+		console.error("2. The storeId format is correct (should be a UUID/GUID)");
+		console.error("3. You've created at least one store via /storeAdmin or /sysAdmin/stores");
 
-		throw Error("no store found");
+		throw new Error(`Store not found with id: ${storeId}`);
 	}
 
 	// add default payment methods to the store

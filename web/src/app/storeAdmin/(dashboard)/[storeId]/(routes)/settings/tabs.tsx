@@ -8,8 +8,8 @@ import type {
 	StoreSettings,
 } from "@prisma/client";
 
-import axios, { type AxiosError } from "axios";
 import { IconTrash } from "@tabler/icons-react";
+import axios, { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -18,9 +18,9 @@ import { useI18n } from "@/providers/i18n-provider";
 
 import { Button } from "@/components/ui/button";
 
+import { Loader } from "@/components/loader";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Heading } from "@/components/ui/heading";
-import { Loader } from "@/components/loader";
 import type { Store } from "./page";
 import { BankSettingTab } from "./setting-bank-tab";
 import { BasicSettingTab } from "./setting-basic-tab";
@@ -39,10 +39,10 @@ export interface SettingsFormProps {
 	disablePaidOptions: boolean;
 	/*
   initialData:
-    | (Store & {
-        name: string;
-      })
-    | null;
+	| (Store & {
+		name: string;
+	  })
+	| null;
   logo: string;
   */
 }

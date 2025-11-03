@@ -17,7 +17,8 @@ export const checkStoreStaffAccess = cache(async (storeId: string) => {
 
 	if (!session) {
 		console.log("no session");
-		redirect(`/signin?callbackUrl=/storeAdmin/${storeId}`);
+		throw new Error("No session");
+		//redirect(`/signin?callbackUrl=/storeAdmin/${storeId}`);
 	}
 
 	// Check if user has admin/owner role

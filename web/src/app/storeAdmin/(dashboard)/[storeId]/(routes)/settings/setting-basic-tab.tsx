@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
+import useOrigin from "@/hooks/use-origin";
 
 const formSchema = z.object({
 	name: z.string().min(1, { message: "store name is required" }),
@@ -79,16 +80,16 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 	const params = useParams();
 	const router = useRouter();
 
-	//const origin = useOrigin();
+	const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
 	//const [openAddNew, setOpenAddNew] = useState(false);
 
 	const defaultValues = sqlData
 		? {
-				...sqlData,
-				orderNoteToCustomer: storeSettings?.orderNoteToCustomer || "",
-				businessHours: storeSettings?.businessHours || "",
-			}
+			...sqlData,
+			orderNoteToCustomer: storeSettings?.orderNoteToCustomer || "",
+			businessHours: storeSettings?.businessHours || "",
+		}
 		: { orderNoteToCustomer: "", businessHours: "" };
 
 	// Replace null values with empty strings for string fields
