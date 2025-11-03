@@ -1,0 +1,57 @@
+# Bun configuration for optimized builds
+
+[install]
+# Cache configuration
+cache = true
+cacheDir = ".bun-cache"
+
+# Parallel installation
+concurrent = true
+
+# Registry configuration
+registry = "https://registry.npmjs.org/"
+
+# Security
+audit = false
+save = true
+
+[run]
+# Enable bun's native bundler for faster builds
+bun = true
+
+# Environment variables
+env = [
+  "NODE_ENV=production",
+  "NEXT_TELEMETRY_DISABLED=1"
+]
+
+# Performance optimizations
+hot = false
+watch = false
+
+[install.scopes]
+# Optimize package resolution
+"@types" = "https://registry.npmjs.org/"
+"@prisma" = "https://registry.npmjs.org/"
+"@radix-ui" = "https://registry.npmjs.org/"
+"@tabler" = "https://registry.npmjs.org/"
+"@vercel" = "https://registry.npmjs.org/"
+"@next" = "https://registry.npmjs.org/"
+"@biomejs" = "https://registry.npmjs.org/"
+"@eslint" = "https://registry.npmjs.org/"
+"@typescript-eslint" = "https://registry.npmjs.org/"
+
+[install.lockfile]
+# Optimize lockfile generation
+save = true
+saveDev = true
+saveOptional = true
+
+# Performance settings
+[install.performance]
+# Enable parallel downloads
+concurrent = true
+# Cache packages
+cache = true
+# Optimize network requests
+network = "fast"

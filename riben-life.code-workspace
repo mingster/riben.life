@@ -1,15 +1,11 @@
 {
 	"folders": [
 		{
+			"name": "web",
 			"path": "web"
 		},
 		{
-			"path": "doc"
-		},
-		{
-			"path": "bin"
-		},
-		{
+			"name": "fileServer",
 			"path": "fileServer"
 		}
 	],
