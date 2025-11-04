@@ -42,7 +42,7 @@ const contactInfoFormSchema = z.object({
 type formValues = z.infer<typeof contactInfoFormSchema>;
 
 export const ContactInfoTab: React.FC<SettingsFormProps> = ({
-	sqlData: initialData,
+	store,
 	storeSettings,
 }) => {
 	const params = useParams();

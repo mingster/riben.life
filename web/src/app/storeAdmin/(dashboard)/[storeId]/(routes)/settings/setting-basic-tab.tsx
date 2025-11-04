@@ -1,8 +1,8 @@
 "use client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import type { Store } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Store } from "@prisma/client";
 import type { StoreSettings } from "@prisma/client";
 
 import axios, { type AxiosError } from "axios";
@@ -24,10 +24,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
+import { ApiListing } from "@/components/api-listing";
 import { CountryCombobox } from "@/components/country-combobox";
 import { CurrencyCombobox } from "@/components/currency-combobox";
 import { LocaleSelectItems } from "@/components/locale-select-items";
-import { ApiListing } from "@/components/api-listing";
 
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -38,8 +38,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useI18n } from "@/providers/i18n-provider";
 import useOrigin from "@/hooks/use-origin";
+import { useI18n } from "@/providers/i18n-provider";
 
 const formSchema = z.object({
 	name: z.string().min(1, { message: "store name is required" }),
@@ -60,7 +60,7 @@ const formSchema = z.object({
 type formValues = z.infer<typeof formSchema>;
 
 export interface SettingsFormProps {
-	sqlData: Store;
+	store: Store;
 	storeSettings: StoreSettings | null;
 	/*
   initialData:
@@ -74,7 +74,7 @@ export interface SettingsFormProps {
 }
 
 export const BasicSettingTab: React.FC<SettingsFormProps> = ({
-	sqlData,
+	store,
 	storeSettings,
 }) => {
 	const params = useParams();
@@ -84,9 +84,9 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 	const [loading, setLoading] = useState(false);
 	//const [openAddNew, setOpenAddNew] = useState(false);
 
-	const defaultValues = sqlData
+	const defaultValues = store
 		? {
-				...sqlData,
+				...store,
 				orderNoteToCustomer: storeSettings?.orderNoteToCustomer || "",
 				businessHours: storeSettings?.businessHours || "",
 			}

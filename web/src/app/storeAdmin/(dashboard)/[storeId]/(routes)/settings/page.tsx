@@ -1,21 +1,11 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreStaffAccess, isPro } from "@/lib/store-admin-utils";
+import { isPro } from "@/lib/store-admin-utils";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import {
-	type PaymentMethod,
-	Prisma,
-	type ShippingMethod,
-} from "@prisma/client";
+import { type PaymentMethod, type ShippingMethod } from "@prisma/client";
 import { StoreSettingTabs } from "./tabs";
-
-const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
-	include: {
-		StoreShippingMethods: true,
-		StorePaymentMethods: true,
-	},
-});
-export type Store = Prisma.StoreGetPayload<typeof storeObj>;
+import { getStoreWithRelations } from "@/lib/store-access";
+import { Store } from "@/types";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -26,7 +16,8 @@ export default async function StoreSettingsPage(props: {
 }) {
 	const params = await props.params;
 
-	// Parallel queries for optimal performance - 3x faster!
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	// Parallel queries for optimal performance
 	const [
 		store,
 		storeSettings,
@@ -34,7 +25,10 @@ export default async function StoreSettingsPage(props: {
 		allShippingMethods,
 		hasProLevel,
 	] = await Promise.all([
-		checkStoreStaffAccess(params.storeId),
+		getStoreWithRelations(params.storeId, {
+			includePaymentMethods: true,
+			includeShippingMethods: true,
+		}) as Store,
 		sqlClient.storeSettings.findFirst({
 			where: { storeId: params.storeId },
 		}),
@@ -48,14 +42,13 @@ export default async function StoreSettingsPage(props: {
 	]);
 
 	// Transform decimal fields to numbers
-	transformDecimalsToNumbers(store);
 	transformDecimalsToNumbers(allPaymentMethods);
 	transformDecimalsToNumbers(allShippingMethods);
 
 	return (
 		<Container>
 			<StoreSettingTabs
-				sqlData={store}
+				store={store as Store}
 				storeSettings={storeSettings}
 				paymentMethods={allPaymentMethods as PaymentMethod[]}
 				shippingMethods={allShippingMethods as ShippingMethod[]}

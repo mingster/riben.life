@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Loader } from "@/components/loader";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { Heading } from "@/components/ui/heading";
-import type { Store } from "./page";
+import type { Store } from "@/types";
 import { BankSettingTab } from "./setting-bank-tab";
 import { BasicSettingTab } from "./setting-basic-tab";
 import { ContactInfoTab } from "./setting-contact-info-tab";
@@ -32,7 +32,7 @@ import { RsvpSettingTab } from "./setting-rsvp-tab";
 import { ShippingPaymentMethodTab } from "./setting-shipping-payment-method";
 
 export interface SettingsFormProps {
-	sqlData: Store;
+	store: Store;
 	storeSettings: StoreSettings | null;
 	paymentMethods: PaymentMethod[] | [];
 	shippingMethods: ShippingMethod[] | [];
@@ -48,7 +48,7 @@ export interface SettingsFormProps {
 }
 
 export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
-	sqlData,
+	store,
 	storeSettings,
 	paymentMethods,
 	shippingMethods,
@@ -63,9 +63,9 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	if (!sqlData.customDomain) sqlData.customDomain = "";
-	if (!sqlData.logo) sqlData.logo = "";
-	if (!sqlData.logoPublicId) sqlData.logoPublicId = "";
+	if (!store.customDomain) store.customDomain = "";
+	if (!store.logo) store.logo = "";
+	if (!store.logoPublicId) store.logoPublicId = "";
 
 	const onDelete = async () => {
 		try {
@@ -152,28 +152,28 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 				</TabsList>
 
 				<TabsContent value="basic">
-					<BasicSettingTab sqlData={sqlData} storeSettings={storeSettings} />
+					<BasicSettingTab store={store} storeSettings={storeSettings} />
 				</TabsContent>
 
 				<TabsContent value="bank">
-					<BankSettingTab sqlData={sqlData} storeSettings={storeSettings} />
+					<BankSettingTab store={store} storeSettings={storeSettings} />
 				</TabsContent>
 
 				<TabsContent value="contactInfo">
-					<ContactInfoTab sqlData={sqlData} storeSettings={storeSettings} />
+					<ContactInfoTab store={store} storeSettings={storeSettings} />
 				</TabsContent>
 
 				<TabsContent value="rsvp">
-					<RsvpSettingTab sqlData={sqlData} storeSettings={storeSettings} />
+					<RsvpSettingTab store={store} storeSettings={storeSettings} />
 				</TabsContent>
 
 				<TabsContent value="privacyStatement">
-					<PrivacyTab sqlData={sqlData} storeSettings={storeSettings} />
+					<PrivacyTab store={store} storeSettings={storeSettings} />
 				</TabsContent>
 
 				<TabsContent value="ShippingMethod">
 					<ShippingPaymentMethodTab
-						sqlData={sqlData}
+						store={store}
 						allPaymentMethods={paymentMethods}
 						allShippingMethods={shippingMethods}
 						disablePaidOptions={disablePaidOptions}
@@ -181,7 +181,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 				</TabsContent>
 				<TabsContent value="paidOptions">
 					<PaidOptionsTab
-						sqlData={sqlData}
+						store={store}
 						storeSettings={storeSettings}
 						disablePaidOptions={disablePaidOptions}
 					/>

@@ -3,9 +3,6 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-import type { Store, StoreSettings } from "@prisma/client";
-
 import axios, { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -25,6 +22,7 @@ import {
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { SettingsFormProps } from "./setting-basic-tab";
 
 const formSchema = z.object({
 	acceptReservation: z.boolean().default(true),
@@ -32,13 +30,8 @@ const formSchema = z.object({
 
 type formValues = z.infer<typeof formSchema>;
 
-export interface SettingsFormProps {
-	sqlData: Store;
-	storeSettings: StoreSettings | null;
-}
-
 export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
-	sqlData,
+	store,
 	storeSettings,
 }) => {
 	const params = useParams();
@@ -48,9 +41,9 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 	const [loading, setLoading] = useState(false);
 	//const [openAddNew, setOpenAddNew] = useState(false);
 
-	const defaultValues = sqlData
+	const defaultValues = store
 		? {
-				...sqlData,
+				...store,
 			}
 		: {};
 

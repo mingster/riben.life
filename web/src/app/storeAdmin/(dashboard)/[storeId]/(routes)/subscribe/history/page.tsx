@@ -1,11 +1,11 @@
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import { stripe } from "@/lib/stripe/config";
-import type { Store } from "@/types";
 import { SubscriptionStatus } from "@/types/enum";
 import logger from "@/lib/logger";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { SubscriptionHistoryClient } from "./client";
+import { getStoreWithRelations } from "@/lib/store-access";
+import { Store } from "@/types";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -16,9 +16,10 @@ export default async function StoreSubscriptionHistoryPage(props: {
 }) {
 	const params = await props.params;
 
+	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance
 	const [store, subscription, payments] = await Promise.all([
-		checkStoreStaffAccess(params.storeId),
+		getStoreWithRelations(params.storeId) as Store,
 		sqlClient.storeSubscription.findUnique({
 			where: { storeId: params.storeId },
 		}),

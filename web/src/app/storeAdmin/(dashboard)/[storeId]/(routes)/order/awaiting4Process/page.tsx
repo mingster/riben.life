@@ -1,6 +1,5 @@
 import Container from "@/components/ui/container";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import type { Store } from "@/types";
+import { getStoreWithRelations } from "@/lib/store-access";
 import { Awaiting4ProcessingClient } from "./client";
 
 type Params = Promise<{ storeId: string }>;
@@ -12,8 +11,8 @@ export default async function OrderAwaiting4Processing(props: {
 }) {
 	const params = await props.params;
 
-	// Check store access
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	const store = await getStoreWithRelations(params.storeId);
 
 	return (
 		<Container>

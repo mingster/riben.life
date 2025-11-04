@@ -1,7 +1,5 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import type { Store } from "@/types";
 import type { StoreTables } from "@prisma/client";
 import type { TableColumn } from "./components/columns";
 import { TableClient } from "./components/table-client";
@@ -15,20 +13,17 @@ export default async function StoreTablePage(props: {
 }) {
 	const params = await props.params;
 
-	// Parallel queries for optimal performance
-	const [store, tables] = await Promise.all([
-		checkStoreStaffAccess(params.storeId),
-		sqlClient.storeTables.findMany({
-			where: { storeId: params.storeId },
-			orderBy: { tableName: "asc" },
-		}),
-	]);
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	const tables = await sqlClient.storeTables.findMany({
+		where: { storeId: params.storeId },
+		orderBy: { tableName: "asc" },
+	});
 
 	// Map tables to UI columns
 	const formattedTables: TableColumn[] = (tables as StoreTables[]).map(
 		(item) => ({
 			id: item.id,
-			storeId: store.id,
+			storeId: params.storeId,
 			tableName: item.tableName,
 			capacity: item.capacity,
 		}),

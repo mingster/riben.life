@@ -1,12 +1,10 @@
 import Container from "@/components/ui/container";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import type { Store } from "@prisma/client";
-
 import { sqlClient } from "@/lib/prismadb";
 import {
 	FaqCategoryClient,
 	type FaqCategoryWithFaqCount,
 } from "./components/client-faq-category";
+import { FaqCategory } from "@prisma/client";
 
 type Params = Promise<{ storeId: string }>;
 
@@ -14,10 +12,9 @@ type Params = Promise<{ storeId: string }>;
 export default async function FaqAdminPage(props: { params: Params }) {
 	const params = await props.params;
 
+	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries with optimized data fetching - 3x faster!
-	const [store, categories, faqs] = await Promise.all([
-		checkStoreStaffAccess(params.storeId),
-
+	const [categories, faqs] = await Promise.all([
 		// Use _count instead of including all FAQs (more efficient!)
 		sqlClient.faqCategory.findMany({
 			where: { storeId: params.storeId },
@@ -43,13 +40,15 @@ export default async function FaqAdminPage(props: { params: Params }) {
 	]);
 
 	// Map categories with FAQ count
-	const normalizedData = categories.map((item: FaqCategoryWithFaqCount) => ({
-		id: item.id,
-		localeId: item.localeId,
-		name: item.name,
-		sortOrder: item.sortOrder,
-		faqCount: item.faqCount, // From _count, not full data
-	})) as FaqCategoryWithFaqCount[];
+	const normalizedData = categories.map(
+		(item: FaqCategory & { _count: { FAQ: number } }) => ({
+			id: item.id,
+			localeId: item.localeId,
+			name: item.name,
+			sortOrder: item.sortOrder,
+			faqCount: item._count.FAQ, // From _count, not full data
+		}),
+	) as FaqCategoryWithFaqCount[];
 
 	return (
 		<Container>

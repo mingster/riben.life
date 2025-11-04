@@ -3,7 +3,7 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { Card, CardContent } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import type { Store, StoreSettings } from "@prisma/client";
+import type { Store } from "@/types";
 
 import axios, { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/app/i18n/client";
 import { TwBankCodeCombobox } from "@/components/tw-bankcode-combobox";
 import { useI18n } from "@/providers/i18n-provider";
+import { StoreSettings } from "@prisma/client";
 import { PayoutScheduleCombobox } from "./payout-schedule-combobox";
 
 const formSchema = z.object({
@@ -42,12 +43,12 @@ const formSchema = z.object({
 type formValues = z.infer<typeof formSchema>;
 
 export interface SettingsFormProps {
-	sqlData: Store;
+	store: Store;
 	storeSettings: StoreSettings | null;
 }
 
 export const BankSettingTab: React.FC<SettingsFormProps> = ({
-	sqlData: initialData,
+	store: initialData,
 }) => {
 	const params = useParams();
 	const router = useRouter();

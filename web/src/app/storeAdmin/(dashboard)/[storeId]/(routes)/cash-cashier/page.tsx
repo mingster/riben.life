@@ -1,6 +1,5 @@
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import getStoreWithCategories from "@/actions/get-store";
 import { sqlClient } from "@/lib/prismadb";
+import { getStoreWithRelations } from "@/lib/store-access";
 import type { Store } from "@/types";
 import type { StoreTables } from "@prisma/client";
 import type { Metadata } from "next";
@@ -20,10 +19,10 @@ export default async function CashCashierAdminPage(props: {
 }) {
 	const params = await props.params;
 
+	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance
-	const [_accessCheck, store, tables] = await Promise.all([
-		checkStoreStaffAccess(params.storeId),
-		getStoreWithCategories(params.storeId),
+	const [store, tables] = await Promise.all([
+		await getStoreWithRelations(params.storeId),
 		sqlClient.storeTables.findMany({
 			where: { storeId: params.storeId },
 			orderBy: { tableName: "asc" },

@@ -10,12 +10,14 @@ import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 
 const getStoreWithProducts = async (
 	storeId: string,
-): Promise<StoreWithProducts> => {
+): Promise<StoreWithProducts | null> => {
 	// Validate storeId format and prevent reserved routes from being treated as storeIds
 	if (isReservedRoute(storeId)) {
 		throw new Error(
 			`Invalid storeId: "${storeId}" is a reserved route or invalid format`,
 		);
+
+		return null;
 	}
 
 	const store = await sqlClient.store.findFirst({

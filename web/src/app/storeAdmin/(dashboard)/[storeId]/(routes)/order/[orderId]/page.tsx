@@ -1,8 +1,7 @@
 //create or edit store order
 
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-
 import getOrderById from "@/actions/get-order-by_id";
+import getStoreWithCategories from "@/actions/get-store";
 import type { StoreOrder } from "@/types";
 import { PageAction } from "@/types/enum";
 import { OrderEditClient } from "./client";
@@ -16,10 +15,11 @@ export default async function OrderEditPage(props: {
 }) {
 	const params = await props.params;
 
-	// checkStoreAccess already returns the store, no need to call getStoreWithProducts
-	const store = await checkStoreStaffAccess(params.storeId);
-
-	const order = (await getOrderById(params.orderId)) as StoreOrder | null;
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	const [store, order] = await Promise.all([
+		getStoreWithCategories(params.storeId),
+		getOrderById(params.orderId),
+	]);
 	/*
   let order = (await sqlClient.storeOrder.findUnique({
     where: {
@@ -49,7 +49,11 @@ export default async function OrderEditPage(props: {
 	return (
 		<div className="flex-col">
 			<div className="flex-1 space-y-4 p-8 pt-6">
-				<OrderEditClient store={store} order={order} action={action} />
+				<OrderEditClient
+					store={store}
+					order={order as StoreOrder | null}
+					action={action}
+				/>
 			</div>
 		</div>
 	);

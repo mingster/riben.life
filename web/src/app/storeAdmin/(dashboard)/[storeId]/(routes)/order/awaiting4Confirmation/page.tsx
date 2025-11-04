@@ -1,8 +1,8 @@
 import Container from "@/components/ui/container";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import type { Store } from "@/types";
+import getStoreWithCategories from "@/actions/get-store";
 import type { Metadata } from "next";
 import { Awaiting4ConfirmationClient } from "./client";
+import { getStoreWithRelations } from "@/lib/store-access";
 
 export const metadata: Metadata = {
 	title: "Orders Awaiting Confirmation",
@@ -17,7 +17,9 @@ export default async function OrderAwaiting4ConfirmationPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
+
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	const store = await getStoreWithRelations(params.storeId);
 
 	return (
 		<Container>

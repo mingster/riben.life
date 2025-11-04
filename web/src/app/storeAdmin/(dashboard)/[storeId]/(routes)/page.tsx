@@ -1,9 +1,7 @@
-//import Scheduled from "@/components/scheduled";
-//import Container from "@/components/ui/container";
-import { checkStoreStaffAccess, isPro } from "@/lib/store-admin-utils";
-import type { Store } from "@/types";
-
 import { sqlClient } from "@/lib/prismadb";
+import { getStoreWithRelations } from "@/lib/store-access";
+import { isPro } from "@/lib/store-admin-utils";
+import { Store } from "@/types";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -26,9 +24,10 @@ export default async function StoreAdminHomePage(props: {
 }) {
 	const params = await props.params;
 
+	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance - 3x faster!
 	const [store, hasProLevel, categoryCount, productCount] = await Promise.all([
-		checkStoreStaffAccess(params.storeId),
+		getStoreWithRelations(params.storeId) as Store,
 		isPro(params.storeId),
 		sqlClient.category.count({ where: { storeId: params.storeId } }),
 		sqlClient.product.count({ where: { storeId: params.storeId } }),
@@ -60,7 +59,7 @@ export default async function StoreAdminHomePage(props: {
 				)}
 			</div>
 
-			<StoreAdminDashboard store={store} isProLevel={hasProLevel} />
+			<StoreAdminDashboard isProLevel={hasProLevel} store={store} />
 		</div>
 	);
 }

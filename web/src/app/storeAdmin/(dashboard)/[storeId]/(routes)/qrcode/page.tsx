@@ -1,10 +1,8 @@
 import Container from "@/components/ui/container";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import { sqlClient } from "@/lib/prismadb";
-import type { Store } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreTables } from "@prisma/client";
 import { QrCodeClient } from "./client";
+import { getStoreWithRelations } from "@/lib/store-access";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -15,16 +13,15 @@ export default async function QrCodePage(props: {
 }) {
 	const params = await props.params;
 
+	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance
 	const [store, tables] = await Promise.all([
-		checkStoreStaffAccess(params.storeId),
+		getStoreWithRelations(params.storeId),
 		sqlClient.storeTables.findMany({
 			where: { storeId: params.storeId },
 			orderBy: { tableName: "asc" },
 		}),
 	]);
-
-	transformDecimalsToNumbers(store);
 
 	return (
 		<Container>

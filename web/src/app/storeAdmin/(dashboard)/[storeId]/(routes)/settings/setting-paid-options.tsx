@@ -3,7 +3,6 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { Card, CardContent } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import type { Store, StoreSettings } from "@prisma/client";
 import Image from "next/image";
 
 import axios, { type AxiosError } from "axios";
@@ -30,6 +29,8 @@ import { useI18n } from "@/providers/i18n-provider";
 import { deleteImage, uploadImage } from "@/utils/image-utils";
 import { IconX } from "@tabler/icons-react";
 import { RequiredProVersion } from "../components/require-pro-version";
+import { StoreSettings } from "@prisma/client";
+import { Store } from "@/types";
 
 const formSchema = z.object({
 	customDomain: z.string().optional().default(""),
@@ -44,22 +45,14 @@ const formSchema = z.object({
 
 type formValues = z.infer<typeof formSchema>;
 
-export interface SettingsFormProps {
-	sqlData: Store;
+export interface PaidOptionsSettingsProps {
+	store: Store;
 	storeSettings: StoreSettings | null;
 	disablePaidOptions: boolean;
-	/*
-  initialData:
-	| (Store & {
-		name: string;
-	  })
-	| null;
-  logo: string;
-  */
 }
-
-export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
-	sqlData: initialData,
+export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
+	store,
+	storeSettings,
 	disablePaidOptions,
 }) => {
 	const params = useParams();
@@ -67,9 +60,9 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 
 	const [loading, setLoading] = useState(false);
 
-	const defaultValues = initialData
+	const defaultValues = store
 		? {
-				...initialData,
+				...store,
 			}
 		: {
 				LINE_PAY_ID: "",
@@ -154,9 +147,9 @@ export const PaidOptionsTab: React.FC<SettingsFormProps> = ({
 
 	//logo display and image upload
 	const [image, setImage] = useState<File | null>(null);
-	const [logo, setLogo] = useState<string | null>(initialData?.logo);
+	const [logo, setLogo] = useState<string | null>(store?.logo);
 	const [logoPublicId, _setlogoPublicId] = useState<string | null>(
-		initialData?.logoPublicId,
+		store?.logoPublicId,
 	);
 	//console.log(`logo: ${logo}`);
 	//console.log(`logoPublicId: ${logoPublicId}`);

@@ -1,5 +1,5 @@
 "use client";
-import { toastError, toastSuccess } from "@/components/toaster";
+import { toastSuccess } from "@/components/toaster";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 import { useParams, useRouter } from "next/navigation";
@@ -14,27 +14,28 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import Currency from "@/components/currency";
 import { useI18n } from "@/providers/i18n-provider";
-import type { PaymentMethod, ShippingMethod } from "@prisma/client";
+import { Store } from "@/types";
+import type {
+	PaymentMethod,
+	ShippingMethod,
+	StorePaymentMethodMapping,
+	StoreShipMethodMapping,
+} from "@prisma/client";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import axios from "axios";
 import { t } from "i18next";
-import { IconCheck, IconX } from "@tabler/icons-react";
 import { RequiredProVersion } from "../components/require-pro-version";
-import type { Store } from "./page";
-
-export interface SettingsFormProps {
-	sqlData: Store;
+export interface ShippingPaymentSettingsFormProps {
+	store: Store;
 	allPaymentMethods: PaymentMethod[] | [];
 	allShippingMethods: ShippingMethod[] | [];
 	disablePaidOptions: boolean;
 }
 
-export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
-	sqlData,
-	allPaymentMethods,
-	allShippingMethods,
-	disablePaidOptions,
-}) => {
+export const ShippingPaymentMethodTab: React.FC<
+	ShippingPaymentSettingsFormProps
+> = ({ store, allPaymentMethods, allShippingMethods, disablePaidOptions }) => {
 	const params = useParams();
 	const router = useRouter();
 
@@ -104,9 +105,9 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
 	// biome-ignore lint/style/noVar: <explanation>
 	const savedStoreShippingMethods: RowSelectionState = {};
 
-	if (sqlData) {
+	if (store) {
 		// use index number as row key
-		sqlData.StoreShippingMethods.map((mapping) => {
+		store.StoreShippingMethods.map((mapping: StoreShipMethodMapping) => {
 			allShippingMethods.map((item: ShippingMethod, index) => {
 				if (mapping.methodId === item.id) {
 					savedStoreShippingMethods[index] = true;
@@ -127,9 +128,9 @@ export const ShippingPaymentMethodTab: React.FC<SettingsFormProps> = ({
 	);
 	// biome-ignore lint/style/noVar: <explanation>
 	const savedStorePayMethods: RowSelectionState = {};
-	if (sqlData) {
+	if (store) {
 		// use index number as row key
-		sqlData.StorePaymentMethods.map((mapping) => {
+		store.StorePaymentMethods.map((mapping: StorePaymentMethodMapping) => {
 			allPaymentMethods.map((item: PaymentMethod, index) => {
 				if (mapping.methodId === item.id) {
 					savedStorePayMethods[index] = true;
@@ -308,7 +309,7 @@ const PayMethodColumns: ColumnDef<PayMethodColumn>[] = [
 	},
 	/*
   {
-    accessorKey: "id",
+	accessorKey: "id",
   },*/
 ];
 
@@ -427,6 +428,6 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
 	},
 	/*
   {
-    accessorKey: "id",
+	accessorKey: "id",
   },*/
 ];

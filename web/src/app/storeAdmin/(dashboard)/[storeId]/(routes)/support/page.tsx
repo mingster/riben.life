@@ -1,14 +1,13 @@
 import Container from "@/components/ui/container";
+import { auth, Session } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
+import { getStoreWithRelations } from "@/lib/store-access";
 import { TicketStatus } from "@/types/enum";
 import { formatDateTime } from "@/utils/datetime-utils";
-import type { Store, SupportTicket } from "@prisma/client";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import { redirect } from "next/navigation";
+import type { SupportTicket } from "@prisma/client";
+import { headers } from "next/headers";
 import type { TicketColumn } from "./components/columns";
 import { TicketClient } from "./components/ticket-client";
-import { auth, Session } from "@/lib/auth";
-import { headers } from "next/headers";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -19,12 +18,7 @@ export default async function StoreSupportPage(props: {
 }) {
 	const params = await props.params;
 
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
-
-	if (!store) {
-		redirect("/unv");
-	}
-
+	// Note: checkStoreStaffAccess already called in layout (cached)
 	const session = (await auth.api.getSession({
 		headers: await headers(),
 	})) as unknown as Session;
@@ -34,7 +28,7 @@ export default async function StoreSupportPage(props: {
 		distinct: ["threadId"],
 		where: {
 			senderId: userId,
-			storeId: store.id,
+			storeId: params.storeId,
 			status: { in: [TicketStatus.Open, TicketStatus.Active] },
 		},
 		orderBy: {
@@ -53,6 +47,7 @@ export default async function StoreSupportPage(props: {
 		}),
 	);
 
+	const store = await getStoreWithRelations(params.storeId);
 	return (
 		<Container>
 			<TicketClient data={formattedTickets} store={store} />

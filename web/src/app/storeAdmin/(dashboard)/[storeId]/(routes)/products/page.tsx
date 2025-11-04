@@ -1,10 +1,8 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { Product } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { formatDateTime } from "@/utils/datetime-utils";
-import type { Store } from "@prisma/client";
 import type { ProductColumn } from "./components/columns";
 import { ProductsClient } from "./components/products-client";
 
@@ -17,26 +15,23 @@ export default async function ProductsPage(props: {
 }) {
 	const params = await props.params;
 
-	// Parallel queries for optimal performance
-	const [store, products] = await Promise.all([
-		checkStoreStaffAccess(params.storeId),
-		sqlClient.product.findMany({
-			where: { storeId: params.storeId },
-			include: {
-				ProductImages: true,
-				ProductAttribute: true,
-				ProductCategories: true,
-				ProductOptions: {
-					include: {
-						ProductOptionSelections: true,
-					},
-					orderBy: {
-						sortOrder: "asc",
-					},
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	const products = await sqlClient.product.findMany({
+		where: { storeId: params.storeId },
+		include: {
+			ProductImages: true,
+			ProductAttribute: true,
+			ProductCategories: true,
+			ProductOptions: {
+				include: {
+					ProductOptionSelections: true,
+				},
+				orderBy: {
+					sortOrder: "asc",
 				},
 			},
-		}),
-	]);
+		},
+	});
 
 	transformDecimalsToNumbers(products);
 

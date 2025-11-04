@@ -1,8 +1,6 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { Faq } from "@/types";
-import type { Store } from "@prisma/client";
 import type { FaqColumn } from "./components/columns";
 import { FaqClient } from "./components/faq-client";
 
@@ -17,9 +15,9 @@ export default async function FaqPage(props: {
 }) {
 	const params = await props.params;
 
+	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance
-	const [_store, category, faqs] = await Promise.all([
-		checkStoreStaffAccess(params.storeId),
+	const [category, faqs] = await Promise.all([
 		sqlClient.faqCategory.findUnique({
 			where: { id: params.categoryId },
 		}),

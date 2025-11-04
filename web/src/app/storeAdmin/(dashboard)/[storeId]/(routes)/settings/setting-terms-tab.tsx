@@ -36,7 +36,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import dynamic from "next/dynamic";
-import type { SettingsFormProps } from "./setting-basic-tab";
+import { SettingsFormProps } from "./tabs";
 
 const tosFormSchema = z.object({
 	tos: z.string().default(""),
@@ -44,7 +44,10 @@ const tosFormSchema = z.object({
 
 type formValues = z.infer<typeof tosFormSchema>;
 
-export const TermsTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
+export const TermsTab: React.FC<SettingsFormProps> = ({
+	store,
+	storeSettings,
+}) => {
 	const params = useParams();
 	const router = useRouter();
 
