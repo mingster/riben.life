@@ -1,13 +1,7 @@
 ---
-description: 
-globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
-alwaysApply: false
----
----
-
 description: App Directory & Routing
 globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
-alwaysApply: false
+alwaysApply: true
 ---
 
 # App Directory & Routing

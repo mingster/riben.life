@@ -1,18 +1,10 @@
 ---
-description: 
-globs: 
-alwaysApply: true
----
----
 name: tailwind_v4
 description: Guide for using Tailwind CSS v4 instead of v3.x
 globs: ["**/*.{js,ts,jsx,tsx,mdx,css}"]
 tags:
-
-- tailwind
-- css
+globs: 
 alwaysApply: true
-
 ---
 
 # Tailwind CSS v4

@@ -1,7 +1,7 @@
 ---
 description: How to do backend logging with structured metadata
 globs: **/*.ts,**/*.tsx
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Logging Standards
@@ -363,6 +363,82 @@ export async function processOrder(orderId: string, userId: string) {
 }
 ```
 
+## Error Handling in Catch Blocks
+
+### ✅ Correct Pattern
+
+Always match the catch variable name with what you use in the logger:
+
+```typescript
+try {
+  await riskyOperation();
+} catch (err: unknown) {
+  logger.error("Operation failed", {
+    metadata: {
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    },
+    tags: ["operation", "error"],
+  });
+  throw err;
+}
+```
+
+### ❌ Common Mistakes
+
+```typescript
+// DON'T: Mismatched variable names
+try {
+  await riskyOperation();
+} catch (err: unknown) {
+  logger.error("Operation failed", {
+    metadata: {
+      error: error.message, // ❌ 'error' is not defined, should be 'err'
+    },
+  });
+}
+
+// DON'T: Assume error is always an Error object
+try {
+  await riskyOperation();
+} catch (err) {
+  logger.error("Operation failed", {
+    metadata: {
+      error: err.message, // ❌ err might not be an Error object
+    },
+  });
+}
+```
+
+### Best Practices for Error Logging
+
+1. **Type check before accessing properties:**
+   ```typescript
+   error: err instanceof Error ? err.message : String(err)
+   ```
+
+2. **Include stack traces for debugging:**
+   ```typescript
+   stack: err instanceof Error ? err.stack : undefined
+   ```
+
+3. **Use consistent variable names:**
+   ```typescript
+   // Use 'err' or 'error' consistently throughout the catch block
+   catch (err: unknown) {
+     logger.error("...", { metadata: { error: err... } });
+     throw err;
+   }
+   ```
+
+4. **Log before re-throwing:**
+   ```typescript
+   catch (err: unknown) {
+     logger.error("Failed", { metadata: { ... } });
+     throw err; // Re-throw after logging
+   }
+   ```
+
 ## Summary
 
 1. **Always use `logger`**, never `console.log`
@@ -372,3 +448,5 @@ export async function processOrder(orderId: string, userId: string) {
 5. **Add tags** for categorization
 6. **Never log sensitive data**
 7. **Make logs actionable** - include info needed to debug issues
+8. **Match catch variable names** with what you use in logger
+9. **Type check errors** before accessing properties

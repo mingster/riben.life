@@ -1,3 +1,9 @@
+---
+description: File Organization Standards
+globs: 
+alwaysApply: true
+---
+
 # File Organization Standards
 
 This document defines the standard locations and organization for different types of files in the Next.js 15 App Router project.
