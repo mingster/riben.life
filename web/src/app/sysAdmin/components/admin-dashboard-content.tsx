@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
+import logger from "@/lib/logger";
 
 export const AdminDashboardContent = () => {
 	return (
@@ -35,7 +36,7 @@ export const AdminDashboardContent = () => {
 						</Button>
 						<Button
 							onClick={() => {
-								console.log("click me");
+								logger.info("click me");
 								toastSuccess({
 									title: "Scheduled: Catch up",
 									description: "Friday, February 10, 2023 at 5:57 PM",

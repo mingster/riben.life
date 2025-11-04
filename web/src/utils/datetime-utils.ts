@@ -1,5 +1,5 @@
-import logger from "@/lib/logger";
 import { format } from "date-fns";
+import logger from "@/lib/logger";
 
 // https://nextjs.org/learn-pages-router/basics/dynamic-routes/polishing-post-page
 // https://github.com/you-dont-need/You-Dont-Need-Momentjs?tab=readme-ov-file#string--time-format
@@ -32,14 +32,15 @@ export function getDateInTz(dt: Date, offsetHours: number): Date {
 	// if dt is not Date object, return empty string
 	if (typeof dt !== "object") return dt;
 
+	// Use UTC getters since we store dates as UTC components
 	const result = new Date(
 		Date.UTC(
-			dt.getFullYear(),
-			dt.getMonth(),
-			dt.getDate(),
-			dt.getHours(),
-			dt.getMinutes(),
-			dt.getSeconds(),
+			dt.getUTCFullYear(),
+			dt.getUTCMonth(),
+			dt.getUTCDate(),
+			dt.getUTCHours(),
+			dt.getUTCMinutes(),
+			dt.getUTCSeconds(),
 			offsetHours * 60,
 		),
 	);
@@ -105,14 +106,18 @@ export function getTimezoneOffset(timezone: string): number {
 
 export function getUtcNow() {
 	const d = new Date();
+	// Use Date.UTC() to ensure server-independent UTC time
+	// This was previously using local timezone constructor which is server-dependent!
 	const utcDate = new Date(
-		d.getUTCFullYear(),
-		d.getUTCMonth(),
-		d.getUTCDate(),
-		d.getUTCHours(),
-		d.getUTCMinutes(),
-		d.getUTCSeconds(),
-		d.getUTCMilliseconds(),
+		Date.UTC(
+			d.getUTCFullYear(),
+			d.getUTCMonth(),
+			d.getUTCDate(),
+			d.getUTCHours(),
+			d.getUTCMinutes(),
+			d.getUTCSeconds(),
+			d.getUTCMilliseconds(),
+		),
 	);
 
 	//console.log('utcDate', utcDate);
@@ -205,11 +210,13 @@ export const toDateTime = (secs: number) => {
  * @returns The number of days in the month of the given datetime
  */
 export function getNumOfDaysInTheMonth(dt: Date): number {
-	const day = dt.getDate();
-	let yr = dt.getFullYear();
-	let mo = dt.getMonth() + 1; // JS months are 0-based, so +1 for 1-based
+	// Use UTC getters since we store dates as UTC components
+	const day = dt.getUTCDate();
+	let yr = dt.getUTCFullYear();
+	let mo = dt.getUTCMonth() + 1; // JS months are 0-based, so +1 for 1-based
 
-	const eom = new Date(yr, mo, 0).getDate(); // last day of this month
+	// Get last day of this month using UTC
+	const eom = new Date(Date.UTC(yr, mo - 1 + 1, 0)).getUTCDate(); // last day of this month
 
 	if (day === eom) {
 		mo = mo + 1;
@@ -219,14 +226,15 @@ export function getNumOfDaysInTheMonth(dt: Date): number {
 		}
 	}
 
-	// JS Date: new Date(year, month, 0) gives last day of previous month, so month is 1-based here
-	return new Date(yr, mo, 0).getDate();
+	// JS Date: Date.UTC(year, month, 0) gives last day of previous month, so month is 1-based here
+	return new Date(Date.UTC(yr, mo, 0)).getUTCDate();
 }
 
 export function getFirstDayOfWeek(d: Date): Date {
-	const day = d.getDay();
-	const diff = d.getDate() - day;
-	return new Date(d.getFullYear(), d.getMonth(), diff);
+	// Use UTC getters since we store dates as UTC components
+	const day = d.getUTCDay(); // 0 = Sunday, 6 = Saturday
+	const diff = d.getUTCDate() - day; // Days to subtract to get to Sunday
+	return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), diff));
 }
 
 export function addDays(dt: Date, days: number): Date {

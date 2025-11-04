@@ -1,0 +1,533 @@
+---
+description: Documentation standards and organization
+globs: **/*.md
+alwaysApply: true
+---
+
+# Documentation Standards
+
+This rule defines how documentation should be created, organized, and maintained in the project.
+
+## Core Principle
+
+**One Topic, One Document**
+
+Each topic should have exactly ONE authoritative document. Avoid creating multiple documents that cover the same subject matter.
+
+## Documentation Location
+
+All project documentation belongs in `/doc/` directory:
+
+```plaintext
+/web/doc/
+├── DEPLOYMENT.md
+├── ENVIRONMENT_VARIABLES.md
+├── CONTRIBUTING.md
+├── SECURITY.md
+├── REFACTOR-SUMMARY.md
+└── references/
+```
+
+### Exception
+
+Development rules belong in `.cursor/rules/` (for AI assistance)
+
+## Naming Conventions
+
+### Standard Documents
+
+Use `UPPER_SNAKE_CASE.md` for standard documentation:
+
+- `DEPLOYMENT.md` - Deployment guides
+- `ENVIRONMENT_VARIABLES.md` - Configuration
+- `SECURITY.md` - Security guidelines
+- `CONTRIBUTING.md` - Contribution guide
+- `README.md` - Project overview
+
+### Specialized Documents
+
+Use descriptive names with prefixes:
+
+**Prefixes:**
+
+- `DEPLOYMENT-` - Deployment-specific guides (e.g., `DEPLOYMENT-postgres.md`)
+- `REVIEW-` - Code/architecture reviews (e.g., `REVIEW-checkStoreStaffAccess.md`)
+- `MIGRATION-` - Migration guides (e.g., `MIGRATION-store-access-refactor.md`)
+- `REFACTOR-` - Refactoring summaries (e.g., `REFACTOR-SUMMARY.md`)
+- `GUIDE-` - How-to guides (e.g., `GUIDE-testing.md`)
+
+**Examples:**
+
+```
+DEPLOYMENT-postgres.md         # PostgreSQL deployment
+DEPLOYMENT-vercel.md           # Vercel deployment
+REVIEW-authentication.md       # Auth system review
+MIGRATION-tailwind-v4.md       # Tailwind v4 migration
+GUIDE-server-actions.md        # Server actions guide
+```
+
+## Document Structure
+
+Every documentation file should follow this structure:
+
+```markdown
+# Title
+
+**Date:** YYYY-MM-DD (for reviews/migrations)
+**Status:** Draft | Active | Deprecated
+**Related:** Links to related docs
+
+## Overview
+
+Brief summary of what this document covers (2-3 sentences).
+
+## [Main Sections]
+
+Organize content logically with clear headings.
+
+## Examples
+
+Provide practical examples.
+
+## Summary
+
+Key takeaways and next steps.
+```
+
+## Anti-Patterns: Avoid Document Duplication
+
+### ❌ DON'T Create Multiple Docs for Same Topic
+
+**Bad Example:**
+
+```plaintext
+/doc/
+├── DEPLOYMENT.md
+├── DEPLOYMENT_GUIDE.md         # ❌ Duplicate!
+├── HOW_TO_DEPLOY.md            # ❌ Duplicate!
+├── deployment-instructions.md  # ❌ Duplicate!
+└── QUICK_DEPLOY.md             # ❌ Duplicate!
+```
+
+**Problem:**
+
+- Confusing - which one is correct?
+- Hard to maintain - updates needed in multiple places
+- Inconsistent - documents may contradict each other
+- Wasted effort - duplicated content
+
+### ✅ DO Create One Comprehensive Doc
+
+**Good Example:**
+
+```plaintext
+/doc/
+├── DEPLOYMENT.md               # ✅ Single source of truth
+│   ├── Quick Start
+│   ├── Detailed Instructions
+│   ├── Platform-Specific Guides
+│   └── Troubleshooting
+└── DEPLOYMENT-postgres.md      # ✅ Specialized subset
+```
+
+**Benefits:**
+
+- Clear - one place to look
+- Maintainable - update once
+- Consistent - no contradictions
+- Efficient - no duplication
+
+## Consolidation Rules
+
+### When Multiple Docs Exist for Same Topic
+
+1. **Identify the primary document** - Best structure, most complete
+2. **Merge content** - Combine unique information from other docs
+3. **Archive or delete** - Remove redundant documents
+4. **Update links** - Fix references to point to consolidated doc
+
+### Consolidation Example
+
+**Before:**
+
+```plaintext
+/doc/
+├── BUILD_OPTIMIZATION.md
+├── BUILD_QUICK_REFERENCE.md
+├── BUILD_DOCUMENTATION_SUMMARY.md
+└── WINDOWS_IIS_DEPLOYMENT.md
+```
+
+**After:**
+
+```plaintext
+/doc/
+├── BUILD.md                    # ✅ Consolidated all build docs
+│   ├── Overview
+│   ├── Optimization
+│   ├── Quick Reference
+│   └── Troubleshooting
+└── DEPLOYMENT-windows-iis.md   # ✅ Specific deployment guide
+```
+
+## Document Organization Strategies
+
+### Strategy 1: Single Comprehensive Document
+
+For smaller topics, keep everything in one file:
+
+```markdown
+# Authentication
+
+## Overview
+## Setup
+## Usage
+## Testing
+## Troubleshooting
+## API Reference
+```
+
+**Use when:**
+
+- Topic is focused and well-defined
+- Total content < 500 lines
+- All sections are related
+
+### Strategy 2: Main Doc + Specialized Docs
+
+For larger topics, create a main document with specialized sub-docs:
+
+```plaintext
+/doc/
+├── DEPLOYMENT.md              # Main deployment guide
+├── DEPLOYMENT-postgres.md     # PostgreSQL-specific
+├── DEPLOYMENT-vercel.md       # Vercel-specific
+└── DEPLOYMENT-docker.md       # Docker-specific
+```
+
+#### Main doc should
+
+- Provide overview
+- Link to specialized docs
+- Cover common scenarios
+
+**Specialized docs should:**
+
+- Focus on specific platform/tool
+- Reference main doc
+- Avoid duplicating general information
+
+### Strategy 3: Topic Directories (for very large topics)
+
+For very large topics, use a directory:
+
+```plaintext
+/doc/
+└── api/
+    ├── README.md              # Overview and index
+    ├── authentication.md
+    ├── endpoints.md
+    ├── webhooks.md
+    └── examples.md
+```
+
+#### Use when
+
+- Topic has 5+ distinct sub-topics
+- Each sub-topic is substantial (100+ lines)
+- Content needs to be frequently updated
+
+## Version Control for Documentation
+
+### Include Version/Date for Technical Docs
+
+```markdown
+# Migration Guide: Tailwind v3 to v4
+
+**Created:** 2025-11-01
+**Last Updated:** 2025-11-03
+**Status:** Active
+**Applies to:** Tailwind CSS v4.0+
+```
+
+### Mark Deprecated Documentation
+
+```markdown
+# Old Authentication System
+
+**Status:** ⚠️ DEPRECATED - See [New Authentication](./AUTHENTICATION.md)
+**Deprecated on:** 2025-10-15
+**Reason:** Replaced with Better Auth
+
+This document is kept for historical reference only.
+```
+
+## Documentation Maintenance
+
+### Regular Reviews
+
+Every 3-6 months:
+
+- [ ] Review all documentation for accuracy
+- [ ] Consolidate duplicate content
+- [ ] Archive outdated documents
+- [ ] Update version information
+- [ ] Fix broken links
+
+### When Creating New Docs
+
+Before creating a new document, ask:
+
+1. **Does a document for this topic already exist?**
+   - Yes → Update existing document
+   - No → Create new document
+
+2. **Is this topic covered partially in another doc?**
+   - Yes → Expand existing document or split properly
+   - No → Create new document
+
+3. **Will this create duplication?**
+   - Yes → Consolidate instead
+   - No → Proceed
+
+4. **Is this topic substantial enough for its own doc?**
+   - Yes (>50 lines) → Create document
+   - No (<50 lines) → Add to related document or README
+
+## Linking Between Documents
+
+### Internal Links
+
+```markdown
+<!-- Good: Relative links -->
+See [Deployment Guide](./DEPLOYMENT.md) for details.
+See [Environment Variables](./ENVIRONMENT_VARIABLES.md).
+
+<!-- Good: Links to specific sections -->
+See [Deployment Guide - PostgreSQL](./DEPLOYMENT.md#postgresql-setup).
+
+<!-- Bad: Absolute paths -->
+See /web/doc/DEPLOYMENT.md  <!-- ❌ -->
+```
+
+### External Links
+
+```markdown
+<!-- Good: Descriptive text with link -->
+See [Next.js Documentation](https://nextjs.org/docs) for more details.
+
+<!-- Bad: Raw URLs -->
+See https://nextjs.org/docs  <!-- ❌ -->
+```
+
+## Code Examples in Documentation
+
+### Use Proper Code Blocks
+
+```markdown
+<!-- Good: With language tag -->
+```typescript
+export async function example() {
+  return "Hello";
+}
+```
+
+<!-- --> (closing the example)
+
+<!-- Bad: No language tag -->
+```
+export async function example() {
+  return "Hello";
+}
+```
+
+<!-- --> (closing the example)
+
+```
+
+### Keep Examples Current
+
+- ✅ Test code examples to ensure they work
+- ✅ Update examples when APIs change
+- ✅ Use actual project patterns
+- ❌ Don't use outdated syntax
+- ❌ Don't use deprecated APIs
+
+## Documentation Types
+
+### 1. Guides (How-to)
+**Purpose:** Teach how to do something  
+**Structure:** Step-by-step instructions  
+**Example:** `DEPLOYMENT.md`, `CONTRIBUTING.md`
+
+### 2. References (What is)
+**Purpose:** Technical specifications  
+**Structure:** Organized by topic/API  
+**Example:** `ENVIRONMENT_VARIABLES.md`, `API-reference.md`
+
+### 3. Reviews (Analysis)
+**Purpose:** Analyze code/architecture  
+**Structure:** Problem → Analysis → Solution  
+**Example:** `REVIEW-checkStoreStaffAccess.md`
+
+### 4. Migrations (Change)
+**Purpose:** Guide through changes  
+**Structure:** Old → New → Migration steps  
+**Example:** `MIGRATION-store-access-refactor.md`
+
+### 5. Summaries (Results)
+**Purpose:** Document outcomes  
+**Structure:** What → Why → Impact  
+**Example:** `REFACTOR-SUMMARY.md`, `OPTIMIZATION-COMPLETE.md`
+
+## Quality Standards
+
+### Required Elements
+
+Every document must have:
+- ✅ Clear title
+- ✅ Brief overview/purpose
+- ✅ Organized sections with headers
+- ✅ Examples (where applicable)
+- ✅ Summary or next steps
+
+### Optional but Recommended
+
+- Date created/updated (for technical docs)
+- Status (draft/active/deprecated)
+- Related documents
+- Author information
+- Table of contents (for long docs >200 lines)
+
+### Writing Style
+
+- ✅ Use clear, concise language
+- ✅ Write in present tense
+- ✅ Use active voice
+- ✅ Include examples
+- ✅ Use consistent formatting
+- ❌ Avoid jargon without explanation
+- ❌ Don't assume knowledge
+- ❌ Don't skip important steps
+
+## Consolidation Checklist
+
+When you find duplicate documentation:
+
+- [ ] Identify all documents covering the same topic
+- [ ] Choose the best document as primary
+- [ ] Extract unique content from others
+- [ ] Merge into primary document
+- [ ] Mark others as deprecated or delete
+- [ ] Update all links to point to primary doc
+- [ ] Verify no information was lost
+- [ ] Test that all examples still work
+
+## Examples
+
+### Good: Single Source of Truth
+
+```
+
+/doc/
+└── AUTHENTICATION.md
+    ├── Overview
+    ├── Better Auth Setup
+    ├── Email Authentication
+    ├── Magic Link
+    ├── OAuth (Google, LINE)
+    ├── Passkeys
+    ├── API Reference
+    └── Troubleshooting
+
+```
+
+### Bad: Fragmented Information
+
+```
+
+/doc/
+├── AUTH.md
+├── authentication-guide.md
+├── HOW_TO_AUTH.md
+├── OAUTH_SETUP.md
+├── passkey-guide.md
+└── auth-troubleshooting.md
+
+```
+
+## Special Cases
+
+### Platform-Specific Guides
+
+When you have platform-specific variations:
+
+**Pattern:** Main guide + Platform-specific supplements
+
+```
+
+/doc/
+├── DEPLOYMENT.md              # General deployment guide
+├── DEPLOYMENT-postgres.md     # PostgreSQL-specific
+├── DEPLOYMENT-vercel.md       # Vercel-specific
+└── DEPLOYMENT-docker.md       # Docker-specific
+
+```
+
+Each specialized doc should:
+- Reference the main doc
+- Only cover platform-specific details
+- Link back to main doc for general information
+
+### Changelog vs Documentation
+
+**Changelog:**
+- Tracks what changed and when
+- Historical record
+- Chronological organization
+- Can have multiple entries for same feature
+
+**Documentation:**
+- Explains how things work NOW
+- Current state reference
+- Topical organization
+- One topic, one doc
+
+## Summary
+
+### Key Rules
+
+1. **One Topic → One Document** (primary rule)
+2. **Consolidate duplicates** when found
+3. **Use clear naming conventions**
+4. **Maintain single source of truth**
+5. **Link between related docs**
+6. **Keep examples current**
+7. **Review regularly** (every 3-6 months)
+
+### Before Creating a New Doc
+
+Ask yourself:
+1. Does this topic already have a document?
+2. Should this be added to an existing document?
+3. Is this substantial enough for its own document?
+4. Am I creating duplication?
+
+### Document Lifecycle
+
+```
+
+Create → Maintain → Update → Consolidate → Archive
+   ↑                                           ↓
+   └─────────────── Review ←──────────────────┘
+
+```
+
+**Remember:** Documentation is only valuable if it's:
+- ✅ Easy to find
+- ✅ Up to date
+- ✅ Accurate
+- ✅ Complete
+- ✅ Consistent
+
+**One topic, one document** ensures all of these qualities.

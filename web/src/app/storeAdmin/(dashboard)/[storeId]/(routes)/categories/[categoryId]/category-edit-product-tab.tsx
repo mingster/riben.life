@@ -22,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ProductStatuses } from "@/types/enum";
 import { formatDateTime } from "@/utils/datetime-utils";
 import Link from "next/link";
+import logger from "@/lib/logger";
 
 interface props {
 	storeId: string;
@@ -151,7 +152,7 @@ export const CategoryEditProductTab = ({
           `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${params.productId}/category`,
           { data: { categoryId: item.id.toString() } },
         );
-        console.log(`remove from db: ${item.id.toString()}`);
+        logger.info("Operation log");
         */
 			}
 		});

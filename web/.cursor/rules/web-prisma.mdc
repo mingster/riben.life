@@ -1,13 +1,7 @@
 ---
-description: 
-globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
-alwaysApply: false
----
----
-
 description: Prisma Directory Guide
 globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Prisma Directory Guide

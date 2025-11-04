@@ -5,6 +5,7 @@ import { BoxSelect } from "lucide-react";
 import Image from "next/image";
 import type React from "react";
 import { useState } from "react";
+import logger from "@/lib/logger";
 //render a image upload box
 
 interface ImageUploadBoxProp {
@@ -130,7 +131,7 @@ const ImageUploadBox: React.FC<ImageUploadBoxProp> = ({
 							disabled={disabled}
 							accept="image/*"
 							onChange={(e) => {
-								console.log(e.target.files);
+								logger.info("Operation log");
 								setImage(e.target.files?.[0] || null);
 							}}
 							className="hidden"

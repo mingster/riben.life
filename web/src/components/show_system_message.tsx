@@ -6,6 +6,7 @@ import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "@/app/i18n/client";
 import { useCookies } from "next-client-cookies";
 import { cookieName } from "@/app/i18n/settings";
+import logger from "@/lib/logger";
 
 interface SystemMessage {
 	id: string;
@@ -58,7 +59,12 @@ export function SystemMessageDisplay() {
 					setSystemMessage(data.message);
 				}
 			} catch (error) {
-				console.error("Failed to fetch system message:", error);
+				logger.error("Failed to fetch system message:", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["error"],
+				});
 			} finally {
 				setLoading(false);
 			}

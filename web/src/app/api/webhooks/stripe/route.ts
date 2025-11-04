@@ -3,6 +3,7 @@ import { stripe } from "@/lib/stripe/config";
 import { GetSubscriptionLength } from "@/utils/utils";
 import { type NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
+import logger from "@/lib/logger";
 
 const relevantEvents = new Set([
 	"product.created",
@@ -27,9 +28,16 @@ const webhookHandler = async (req: NextRequest) => {
 		if (!sig || !webhookSecret)
 			return new Response("Webhook secret not found.", { status: 400 });
 		event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-		console.log(`🔔  Webhook received: ${event.type}`);
+		logger.info("Operation log", {
+			tags: ["api"],
+		});
 	} catch (err: unknown) {
-		console.log(`Error message: ${err as Error}.message}`);
+		logger.error("Stripe webhook error", {
+			metadata: {
+				error: err instanceof Error ? err.message : String(err),
+			},
+			tags: ["api", "stripe", "webhook", "error"],
+		});
 
 		return new Response(`Webhook Error: ${(err as Error).message}`, {
 			status: 400,
@@ -37,7 +45,9 @@ const webhookHandler = async (req: NextRequest) => {
 	}
 
 	// Successfully constructed event.
-	console.log("✅ Success:", event.id);
+	logger.info("✅ Success:", {
+		tags: ["api"],
+	});
 
 	// getting to the data we want from the event
 	const subscription = event.data.object as Stripe.Subscription;
@@ -127,7 +137,12 @@ const webhookHandler = async (req: NextRequest) => {
 			});
 		}
 	} catch (error: unknown) {
-		console.log(error);
+		logger.info("Operation log", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse("Webhook handler failed. View your server logs.", {
 			status: 400,

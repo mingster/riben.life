@@ -42,7 +42,7 @@ const contactInfoFormSchema = z.object({
 type formValues = z.infer<typeof contactInfoFormSchema>;
 
 export const ContactInfoTab: React.FC<SettingsFormProps> = ({
-	sqlData: initialData,
+	store,
 	storeSettings,
 }) => {
 	const params = useParams();
@@ -98,8 +98,6 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 
 	//const isSubmittable = !!form.formState.isDirty && !!form.formState.isValid;
 	const oncontactInfoSubmit = async (data: formValues) => {
-		console.log(`contactInfo onSubmit: ${JSON.stringify(data)}`);
-
 		try {
 			setLoading(true);
 

@@ -4,6 +4,7 @@ import { TicketStatus } from "@/types/enum";
 import { headers } from "next/headers";
 
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 ///!SECTION mark this ticket as close.
 export async function DELETE(
@@ -63,11 +64,18 @@ export async function DELETE(
 				status: TicketStatus.Closed,
 			},
 		});
-		console.log(`${obj.count} tickets closed`);
+		logger.info("Operation log", {
+			tags: ["api"],
+		});
 
 		return NextResponse.json({ success: true });
 	} catch (error) {
-		console.log("[TICKET_DELETE]", error);
+		logger.info("ticket delete", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

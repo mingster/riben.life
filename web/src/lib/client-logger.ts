@@ -1,6 +1,7 @@
 "use client";
 
 import { analytics } from "./analytics";
+import logger from "@/lib/logger";
 
 interface LogEntry {
 	level: "error" | "warn" | "info" | "debug";
@@ -59,10 +60,17 @@ class ClientLogger {
 			});
 
 			if (!response.ok) {
-				console.error("Failed to send log to server:", response.statusText);
+				logger.error("Failed to send log to server:", {
+					tags: ["error"],
+				});
 			}
 		} catch (error) {
-			console.error("Failed to send log to server:", error);
+			logger.error("Failed to send log to server:", {
+				metadata: {
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["error"],
+			});
 		}
 	}
 
@@ -95,7 +103,12 @@ class ClientLogger {
 				this.queue.unshift(...batch);
 			}
 		} catch (error) {
-			console.error("Failed to send log batch to server:", error);
+			logger.error("Failed to send log batch to server:", {
+				metadata: {
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["error"],
+			});
 			// Put logs back in queue for retry
 			this.queue.unshift(...this.queue.splice(0, 10));
 		} finally {
@@ -149,7 +162,7 @@ class ClientLogger {
 
 		// Also log to console in development
 		if (this.environment === "development") {
-			console.log(`[INFO] ${message}`, options || {});
+			logger.info("info");
 		}
 	}
 
@@ -160,7 +173,7 @@ class ClientLogger {
 
 		// Also log to console
 		if (this.environment === "development") {
-			console.warn(`[WARN] ${message}`, options || {});
+			logger.warn("warn");
 		}
 	}
 
@@ -201,7 +214,7 @@ class ClientLogger {
 			this.processQueue();
 
 			// Also log to console
-			console.debug(`[DEBUG] ${message}`, options || {});
+			logger.info("debug");
 		}
 	}
 

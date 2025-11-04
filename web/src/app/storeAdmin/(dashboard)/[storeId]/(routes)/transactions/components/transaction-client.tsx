@@ -43,6 +43,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { PopoverClose } from "@radix-ui/react-popover";
+import logger from "@/lib/logger";
 interface StoreOrderClientProps {
 	store: Store;
 	data: StoreOrderColumn[];
@@ -80,7 +81,7 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
 
 	// implement time filter
 	if (filterByTime) {
-		console.log("filterByTime", filterByTime);
+		logger.info("filterByTime");
 
 		if (filterByTime.filter === "f1") {
 			// filter result that are greater than in_last_of_days

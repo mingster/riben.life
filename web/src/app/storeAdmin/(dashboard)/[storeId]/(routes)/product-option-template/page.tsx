@@ -1,11 +1,6 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import type { StoreProductOptionTemplate } from "@/types";
-import type { Store } from "@prisma/client";
-import { Suspense } from "react";
-
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { ProductsOptionTemplateClient } from "./product-option-template-client";
 
@@ -18,27 +13,23 @@ export default async function ProductOptionTemplatePage(props: {
 }) {
 	const params = await props.params;
 
-	const _store = (await checkStoreStaffAccess(params.storeId)) as Store;
-
+	// Note: checkStoreStaffAccess already called in layout (cached)
 	const storeOptionTemplates =
-		(await sqlClient.storeProductOptionTemplate.findMany({
-			where: {
-				storeId: params.storeId,
-			},
+		await sqlClient.storeProductOptionTemplate.findMany({
+			where: { storeId: params.storeId },
 			include: {
 				StoreProductOptionSelectionsTemplate: true,
 			},
-			orderBy: {
-				sortOrder: "asc",
-			},
-		})) as StoreProductOptionTemplate[];
+			orderBy: { sortOrder: "asc" },
+		});
+
 	transformDecimalsToNumbers(storeOptionTemplates);
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<ProductsOptionTemplateClient data={storeOptionTemplates} />
-			</Container>
-		</Suspense>
+		<Container>
+			<ProductsOptionTemplateClient
+				data={storeOptionTemplates as StoreProductOptionTemplate[]}
+			/>
+		</Container>
 	);
 }

@@ -6,6 +6,7 @@ import { getHostname } from "@/utils/utils";
 import type { Store } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import logger from "@/lib/logger";
 
 export default function GlobalHomePage() {
 	const [mounted, setMounted] = useState(false);
@@ -50,7 +51,12 @@ export default function GlobalHomePage() {
 					router.push(url);
 				})
 				.catch((error) => {
-					console.error(error);
+					logger.error("Operation log", {
+						metadata: {
+							error: error instanceof Error ? error.message : String(error),
+						},
+						tags: ["error"],
+					});
 					toastError(error.message);
 					throw new Error("Something went wrong.");
 				});

@@ -1,3 +1,4 @@
+import logger from "@/lib/logger";
 export const weekdays = [
 	"Monday",
 	"Tuesday",
@@ -73,12 +74,16 @@ export default class BusinessHours {
 				const bizHourPair = bizhours[0] as object;
 				if (!("from" in bizHourPair)) {
 					const err = `${day} is missing 'from' in config`;
-					console.error(err);
+					logger.error("Operation log", {
+						tags: ["error"],
+					});
 					throw new Error(err);
 				}
 				if (!("to" in bizHourPair)) {
 					const err = `${day} is missing 'to' in config`;
-					console.error(err);
+					logger.error("Operation log", {
+						tags: ["error"],
+					});
 					throw new Error(err);
 				}
 
@@ -92,7 +97,9 @@ export default class BusinessHours {
 						const t = bizHourPair.to;
 						if (!this._isHourValid(f) || !this._isHourValid(t)) {
 							const err = `${f} or ${t} is not valid`;
-							console.error(err);
+							logger.error("Operation log", {
+								tags: ["error"],
+							});
 							throw new Error(err);
 						}
 					}

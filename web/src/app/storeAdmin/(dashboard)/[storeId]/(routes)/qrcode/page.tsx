@@ -1,39 +1,32 @@
-import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-
-import type { Store } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { sqlClient } from "@/lib/prismadb";
 import type { StoreTables } from "@prisma/client";
-
-import getStoreTables from "@/actions/get-store-tables";
-import { Suspense } from "react";
 import { QrCodeClient } from "./client";
+import { getStoreWithRelations } from "@/lib/store-access";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function StoreSettingsPage(props: {
+export default async function QrCodePage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	//NOTE - we call checkStoreAccess here to get the store object
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
-	transformDecimalsToNumbers(store);
-
-	const tables = (await getStoreTables(store.id)) as StoreTables[];
-
-	//console.log("isProLevel", disablePaidOptions);
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	// Parallel queries for optimal performance
+	const [store, tables] = await Promise.all([
+		getStoreWithRelations(params.storeId),
+		sqlClient.storeTables.findMany({
+			where: { storeId: params.storeId },
+			orderBy: { tableName: "asc" },
+		}),
+	]);
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				QR Code
-				<QrCodeClient store={store} tables={tables} />
-			</Container>
-		</Suspense>
+		<Container>
+			<div className="mb-4 text-xl font-semibold">QR Code</div>
+			<QrCodeClient store={store} tables={tables as StoreTables[]} />
+		</Container>
 	);
 }

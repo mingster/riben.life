@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { authClient } from "@/lib/auth-client";
+import logger from "@/lib/logger";
 
 export interface props {
 	store: Store;
@@ -103,7 +104,12 @@ export const DisplayStoreOrdersToday: React.FC<props> = ({ store }) => {
 				setOrders(data);
 			})
 			.catch((error) => {
-				console.error("Error:", error);
+				logger.error("Error:", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["error"],
+				});
 				throw error;
 			});
 

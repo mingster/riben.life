@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
 import { type NextRequest, NextResponse } from "next/server";
+import logger from "@/lib/logger";
 export const dynamic = "force-dynamic"; // defaults to force-static
 
 // returns orders in a store
@@ -60,7 +61,12 @@ export async function GET(
 
 		return NextResponse.json(result);
 	} catch (error) {
-		console.error("[SEARCH_ORDERS]", error);
+		logger.error("search orders", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api", "error"],
+		});
 
 		return new NextResponse("Internal error", { status: 500 });
 	}

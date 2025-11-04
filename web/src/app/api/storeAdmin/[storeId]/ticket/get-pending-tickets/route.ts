@@ -3,6 +3,7 @@ import { TicketStatus } from "@/types/enum";
 import type { SupportTicket } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import logger from "@/lib/logger";
 
 // returns all countries currently in db
 export async function GET(
@@ -22,7 +23,12 @@ export async function GET(
 
 		return NextResponse.json(pendingTickets);
 	} catch (error) {
-		console.error("[GET_PENDING_ORDERS]", error);
+		logger.error("get pending orders", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api", "error"],
+		});
 
 		return new NextResponse("Internal error", { status: 500 });
 	}

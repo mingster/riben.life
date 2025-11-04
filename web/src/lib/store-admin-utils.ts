@@ -1,53 +1,81 @@
-import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
+/**
+ * Store Admin Utilities
+ *
+ * High-level utilities for store admin routes.
+ * Combines authentication, authorization, and store access checks.
+ */
+
 import isProLevel from "@/actions/storeAdmin/is-pro-level";
-import { auth } from "@/lib/auth";
-import { transformDecimalsToNumbers } from "@/utils/utils";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { requireAuthWithRole, UserRole } from "@/lib/auth-utils";
+import { requireStoreAccess } from "@/lib/store-access";
+import type { Store } from "@/types";
+import { Role } from "@prisma/client";
 import { cache } from "react";
 
-// NOTE - protect storeAdmin route by redirect user to appropriate routes.
-// Using React cache to deduplicate calls within the same request
-// This ensures only one database query even if multiple components call it
-export const checkStoreStaffAccess = cache(async (storeId: string) => {
-	const headersList = await headers();
-	const session = await auth.api.getSession({
-		headers: headersList,
-	});
+/**
+ * Check if current user has staff access to a specific store
+ *
+ * This function:
+ * 1. Validates user authentication
+ * 2. Verifies user has owner/admin role
+ * 3. Checks store access/ownership
+ * 4. Returns minimal store data for access control
+ *
+ * Uses React cache() to deduplicate calls within the same request.
+ * This ensures only one database query even if multiple components call it.
+ *
+ * Note: This returns minimal store data. If you need products, orders, etc.,
+ * fetch them separately in your page using getStoreWithRelations().
+ *
+ * @param storeId - The store ID to check access for
+ * @returns Minimal store object with basic information
+ * @throws Redirects to appropriate page if access denied
+ *
+ * @example
+ * ```typescript
+ * // In a page component
+ * export default async function Page(props: { params: Params }) {
+ *   const params = await props.params;
+ *
+ *   // Check access (returns minimal store data)
+ *   const store = await checkStoreStaffAccess(params.storeId);
+ *
+ *   // Fetch only what this page needs
+ *   const categories = await sqlClient.category.findMany({
+ *     where: { storeId: params.storeId },
+ *   });
+ *
+ *   return <CategoryClient data={categories} store={store} />;
+ * }
+ * ```
+ */
+export const checkStoreStaffAccess = cache(
+	async (storeId: string): Promise<Store> => {
+		// 1. Require authentication with owner/admin role
+		const session = await requireAuthWithRole([
+			Role.owner,
+			Role.admin,
+		] as UserRole[]);
 
-	if (!session) {
-		console.log("no session");
-		redirect(`/signin?callbackUrl=/storeAdmin/${storeId}`);
-	}
+		// 2. Require store access/ownership
+		// Pass user role so admins can access any store
+		const store = await requireStoreAccess(
+			storeId,
+			session.user.id,
+			session.user.role ?? undefined,
+		);
 
-	// Check if user has admin/owner role
-	if (session.user.role !== "owner" && session.user.role !== "admin") {
-		console.log("access denied - insufficient role");
-		redirect("/error/?code=403");
-	}
+		// 3. Return minimal store data
+		return store;
+	},
+);
 
-	if (!session?.user?.id) {
-		console.log("no session or userId");
-		// Get the current path from headers to preserve the full URL for callback
-		const pathname =
-			headersList.get("x-current-path") || `/storeAdmin/${storeId}`;
-		const callbackUrl = encodeURIComponent(pathname);
-		redirect(`/signin?callbackUrl=${callbackUrl}`);
-	}
-
-	const store = await checkStoreAdminAccess(storeId, session.user.id);
-
-	if (!store) {
-		console.log("store not found or access denied");
-		redirect("/storeAdmin");
-	}
-
-	transformDecimalsToNumbers(store);
-
-	return store;
-});
-
-// return true if this store level is not free
-export const isPro = async (storeId: string) => {
+/**
+ * Check if store has an active Pro or Multi subscription
+ *
+ * @param storeId - The store ID to check
+ * @returns true if store has active pro-level subscription
+ */
+export const isPro = async (storeId: string): Promise<boolean> => {
 	return await isProLevel(storeId);
 };

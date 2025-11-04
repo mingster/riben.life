@@ -1,16 +1,15 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import BusinessHours from "@/lib/businessHours";
 
 import { transformDecimalsToNumbers } from "@/utils/utils";
 
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 import { StoreHomeContent } from "./components/store-home-content";
 
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
+import { isReservedRoute } from "@/lib/reserved-routes";
 import type { StoreSettings } from "@prisma/client";
 import { formatDate } from "date-fns";
 
@@ -23,18 +22,19 @@ export default async function StoreHomePage(props: {
 }) {
 	const params = await props.params;
 
-	// Prevent admin routes from being treated as customer store pages
-	if (
-		!params.storeId ||
-		params.storeId === "storeAdmin" ||
-		params.storeId.startsWith("storeAdmin") ||
-		params.storeId === "undefined" ||
-		params.storeId === "null"
-	) {
+	// Prevent admin and reserved routes from being treated as customer store pages
+	if (isReservedRoute(params.storeId)) {
 		redirect("/");
 	}
 
-	const store = await getStoreWithProducts(params.storeId);
+	let store;
+	try {
+		store = await getStoreWithProducts(params.storeId);
+	} catch (error) {
+		logger.error(`Failed to load store: ${params.storeId}`);
+		// Redirect to homepage or a "store not found" page
+		redirect("/unv");
+	}
 
 	const isProduction = process.env.NODE_ENV === "production";
 	if (!isProduction) {
@@ -42,10 +42,7 @@ export default async function StoreHomePage(props: {
 		//logger.info(store);
 	}
 
-	if (!store) {
-		redirect("/unv");
-	}
-
+	// Store is guaranteed to exist here due to try-catch above
 	transformDecimalsToNumbers(store);
 
 	const storeSettings = (await sqlClient.storeSettings.findFirst({
@@ -81,22 +78,20 @@ const { t } = await useTranslation(store?.defaultLocale || "en");
 	//console.log(`isStoreOpen: ${isStoreOpen}`);
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				{!isStoreOpen ? (
-					<>
-						<h1>目前店休，無法接受訂單</h1>
-						<div>
-							下次開店時間:
-							{closed_descr}
-						</div>
-					</>
-				) : (
-					<>
-						<StoreHomeContent storeData={store} storeSettings={storeSettings} />
-					</>
-				)}
-			</Container>
-		</Suspense>
+		<Container>
+			{!isStoreOpen ? (
+				<>
+					<h1>目前店休，無法接受訂單</h1>
+					<div>
+						下次開店時間:
+						{closed_descr}
+					</div>
+				</>
+			) : (
+				<>
+					<StoreHomeContent storeData={store} storeSettings={storeSettings} />
+				</>
+			)}
+		</Container>
 	);
 }

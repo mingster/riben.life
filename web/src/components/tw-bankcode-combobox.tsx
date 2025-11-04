@@ -22,6 +22,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { CheckIcon } from "lucide-react";
+import logger from "@/lib/logger";
 type ComboboxProps = {
 	disabled: boolean;
 	defaultValue: string | undefined;
@@ -38,7 +39,7 @@ export const TwBankCodeCombobox = ({
 	const [selected, setSelected] = useState<string | undefined>(defaultValue);
 	const [open, setOpen] = useState(false);
 
-	console.log(`selected: ${selected}`);
+	logger.info("Operation log");
 
 	return (
 		<>

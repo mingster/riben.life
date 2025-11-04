@@ -7,6 +7,7 @@ import type { Store } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { Suspense } from "react";
 import { DisplayStoreOrdersToday } from "./display-order-today";
+import logger from "@/lib/logger";
 
 // 點餐記錄 - show order history from local storage.
 //NOTE - why local storage?  because we allow anonymous user to place order.
@@ -23,8 +24,8 @@ export default async function StoreOrderStatusPage(props: {
 	const searchParams = await props.searchParams;
 	const storeId = searchParams.storeId as string;
 
-	console.log("searchParams", searchParams);
-	console.log("storeId", storeId);
+	logger.info("searchParams");
+	logger.info("storeId");
 
 	const store = (await getStoreById(storeId)) as Store;
 

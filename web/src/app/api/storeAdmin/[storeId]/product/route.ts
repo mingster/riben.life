@@ -4,6 +4,7 @@ import { getUtcNow } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
 import { create } from "zustand";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
+import logger from "@/lib/logger";
 
 ///!SECTION create new product.
 export async function POST(
@@ -51,7 +52,12 @@ export async function POST(
 
 		return NextResponse.json(product);
 	} catch (error) {
-		console.log("[PRODUCT_POST]", error);
+		logger.info("product post", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
@@ -94,7 +100,12 @@ export async function GET(
 
 		return NextResponse.json(products);
 	} catch (error) {
-		console.log("[PRODUCT_GET]", error);
+		logger.info("product get", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse("Internal error", { status: 500 });
 	}
@@ -222,13 +233,20 @@ export async function PATCH(
 					}
 				}
 			} else {
-				console.log(`invalid product data: ${name_array[i]}`);
+				logger.info("i", {
+					tags: ["api"],
+				});
 			}
 		}
 
 		return NextResponse.json({ success: true });
 	} catch (error) {
-		console.log("[PRODUCT_PATCH]", error);
+		logger.info("product patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

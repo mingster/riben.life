@@ -44,6 +44,7 @@ import { authClient } from "@/lib/auth-client";
 import type { User } from "@/types";
 import { UserRoleCombobox } from "./user-role-combobox";
 import { ResetPasswordDialog } from "./reset-password-dialog";
+import logger from "@/lib/logger";
 
 type formValues = z.infer<typeof updateUserSettingsSchema>;
 
@@ -106,7 +107,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 		i18n.changeLanguage(lng);
 		setActiveLng(lng);
 		//cookies.set(cookieName, lng, { path: "/" });
-		console.log("activeLng set to: ", lng);
+		logger.info("activeLng set to: ");
 	};
 
 	// if timezone is not set, set it to America/New_York

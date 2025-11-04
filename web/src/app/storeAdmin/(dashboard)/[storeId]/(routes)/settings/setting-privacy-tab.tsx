@@ -29,7 +29,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import dynamic from "next/dynamic";
-import type { SettingsFormProps } from "./setting-basic-tab";
+import { SettingsFormProps } from "./setting-basic-tab";
 
 const privacyFormSchema = z.object({
 	privacyPolicy: z.string().optional().default(""),
@@ -38,7 +38,10 @@ const privacyFormSchema = z.object({
 
 type formValues = z.infer<typeof privacyFormSchema>;
 
-export const PrivacyTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
+export const PrivacyTab: React.FC<SettingsFormProps> = ({
+	store,
+	storeSettings,
+}) => {
 	const params = useParams();
 	const router = useRouter();
 

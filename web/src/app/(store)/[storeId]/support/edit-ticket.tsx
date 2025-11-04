@@ -14,6 +14,7 @@ import {
 	type UpdateTicketInput,
 } from "@/actions/store/support-ticket/update-ticket.validation";
 import { useTranslation } from "@/app/i18n/client";
+import logger from "@/lib/logger";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -145,7 +146,7 @@ export const EditTicket: React.FC<props> = ({
 					} else {
 						toast("Ahh, something went wrong. Please try again.");
 
-						console.log(JSON.stringify(result));
+						logger.info("Operation log");
 					}*/
 
 					toastSuccess({ description: t("ticket_create_success") });

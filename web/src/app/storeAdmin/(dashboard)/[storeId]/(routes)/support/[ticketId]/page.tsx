@@ -1,9 +1,7 @@
 "use server";
 
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { Suspense } from "react";
 import { DisplayThread } from "./display-thread";
 import { TicketReply } from "./ticket-reply";
 
@@ -16,51 +14,36 @@ export default async function TicketEditPage(props: {
 }) {
 	const params = await props.params;
 
-	const ticket = await sqlClient.supportTicket.findUnique({
-		where: {
-			id: params.ticketId,
-		},
-	});
-
-	//console.log(`ProductPa//ge: ${JSON.stringify(product)}`);
-	let _action = "Reply";
-	if (ticket === null) _action = "New";
-
-	// get thread for this ticket
-	const thread = await sqlClient.supportTicket.findMany({
-		where: {
-			threadId: ticket?.threadId,
-		},
-		include: {
-			Sender: true,
-		},
-		orderBy: {
-			lastModified: "desc",
-		},
-	});
-	//console.log(`thread: ${JSON.stringify(thread)}`);
+	// Parallel queries for optimal performance
+	const [ticket, thread] = await Promise.all([
+		sqlClient.supportTicket.findUnique({
+			where: { id: params.ticketId },
+		}),
+		sqlClient.supportTicket.findMany({
+			where: { threadId: params.ticketId },
+			include: {
+				Sender: true,
+			},
+			orderBy: {
+				lastModified: "desc",
+			},
+		}),
+	]);
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<div className="flex-col">
-					<div className="flex-1 space-y-4 p-8 pt-6">
-						{
-							// if there's thread, display them along with reply form
-							ticket !== null ? (
-								<>
-									<DisplayThread thread={thread} />
-									<TicketReply initialData={ticket} />
-								</>
-							) : (
-								<>
-									{/* otherwise display create form <TicketCreate initialData={null} />*/}
-								</>
-							)
-						}
-					</div>
+		<Container>
+			<div className="flex-col">
+				<div className="flex-1 space-y-4 p-8 pt-6">
+					{ticket !== null ? (
+						<>
+							<DisplayThread thread={thread} />
+							<TicketReply initialData={ticket} />
+						</>
+					) : (
+						<div>Ticket not found</div>
+					)}
 				</div>
-			</Container>
-		</Suspense>
+			</div>
+		</Container>
 	);
 }

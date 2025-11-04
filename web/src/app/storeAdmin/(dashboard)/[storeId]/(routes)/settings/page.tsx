@@ -1,24 +1,11 @@
-import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
+import { isPro } from "@/lib/store-admin-utils";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import {
-	type PaymentMethod,
-	Prisma,
-	type ShippingMethod,
-} from "@prisma/client";
-import { Suspense } from "react";
+import { type PaymentMethod, type ShippingMethod } from "@prisma/client";
 import { StoreSettingTabs } from "./tabs";
-
-const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
-	include: {
-		StoreShippingMethods: true,
-		StorePaymentMethods: true,
-	},
-});
-export type Store = Prisma.StoreGetPayload<typeof storeObj>;
+import { getStoreWithRelations } from "@/lib/store-access";
+import { Store } from "@/types";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -28,59 +15,45 @@ export default async function StoreSettingsPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	//NOTE - we call checkStoreAccess here to get the store object
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
 
-	transformDecimalsToNumbers(store);
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	// Parallel queries for optimal performance
+	const [
+		store,
+		storeSettings,
+		allPaymentMethods,
+		allShippingMethods,
+		hasProLevel,
+	] = await Promise.all([
+		getStoreWithRelations(params.storeId, {
+			includePaymentMethods: true,
+			includeShippingMethods: true,
+		}) as Store,
+		sqlClient.storeSettings.findFirst({
+			where: { storeId: params.storeId },
+		}),
+		sqlClient.paymentMethod.findMany({
+			where: { isDeleted: false },
+		}),
+		sqlClient.shippingMethod.findMany({
+			where: { isDeleted: false },
+		}),
+		isPro(params.storeId),
+	]);
 
-	const storeSettings = await sqlClient.storeSettings.findFirst({
-		where: {
-			storeId: params.storeId,
-		},
-	});
-
-	//console.log(`store: ${JSON.stringify(store)}`);
-	//console.log('storeSettings: ' + JSON.stringify(storeSettings));
-
-	/*
-  await sqlClient.storePaymentMethodMapping.deleteMany({
-    where: {
-      storeId: params.storeId,
-    }
-  })
-  await sqlClient.storeShipMethodMapping.deleteMany({
-    where: {
-      storeId: params.storeId,
-    }
-  })
-  */
-
-	const allPaymentMethods = (await sqlClient.paymentMethod.findMany({
-		where: { isDeleted: false },
-	})) as PaymentMethod[];
-	const allShippingMethods = (await sqlClient.shippingMethod.findMany({
-		where: { isDeleted: false },
-	})) as ShippingMethod[];
-
+	// Transform decimal fields to numbers
 	transformDecimalsToNumbers(allPaymentMethods);
 	transformDecimalsToNumbers(allShippingMethods);
 
-	// this store is pro version or not?
-	const disablePaidOptions = !(await isProLevel(store?.id));
-
-	//console.log("isProLevel", disablePaidOptions);
-
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<StoreSettingTabs
-					sqlData={store}
-					storeSettings={storeSettings}
-					paymentMethods={allPaymentMethods}
-					shippingMethods={allShippingMethods}
-					disablePaidOptions={disablePaidOptions}
-				/>
-			</Container>
-		</Suspense>
+		<Container>
+			<StoreSettingTabs
+				store={store as Store}
+				storeSettings={storeSettings}
+				paymentMethods={allPaymentMethods as PaymentMethod[]}
+				shippingMethods={allShippingMethods as ShippingMethod[]}
+				disablePaidOptions={!hasProLevel}
+			/>
+		</Container>
 	);
 }

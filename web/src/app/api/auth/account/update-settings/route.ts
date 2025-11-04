@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getUtcNow } from "@/utils/datetime-utils";
 import { headers } from "next/headers";
+import logger from "@/lib/logger";
 
 ///!SECTION update user data on user's own behave.
 /**
@@ -34,7 +35,12 @@ export async function PATCH(req: Request) {
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[USER_PATCH]", error);
+		logger.info("user patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

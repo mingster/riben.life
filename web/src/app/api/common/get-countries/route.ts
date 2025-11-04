@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 // returns all countries currently in db
 export async function GET(_req: Request) {
@@ -10,7 +11,12 @@ export async function GET(_req: Request) {
 
 		return NextResponse.json(countries);
 	} catch (error) {
-		console.error("[GET_COUNTRIES]", error);
+		logger.error("Failed to get countries", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api", "countries", "error"],
+		});
 
 		return new NextResponse("Internal error", { status: 500 });
 	}

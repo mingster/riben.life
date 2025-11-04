@@ -97,8 +97,13 @@ class Logger {
 			});
 		} catch (error) {
 			// Fallback to console if database logging fails
-			console.error("Failed to log to database:", error);
-			console.log(`[${entry.level.toUpperCase()}] ${entry.message}`, entry);
+			logger.error("Failed to log to database:", {
+				metadata: {
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["error"],
+			});
+			logger.info("${entry.level.touppercase()}");
 		}
 	}
 

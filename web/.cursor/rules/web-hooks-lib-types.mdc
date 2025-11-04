@@ -1,13 +1,7 @@
 ---
-description: 
-globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
-alwaysApply: false
----
----
-
 description: Hooks, Lib, and Types Directories
 globs: **/*.js,**/*.jsx,**/*.ts,**/*.tsx
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Hooks, Lib, and Types Directories

@@ -1,6 +1,4 @@
 import Container from "@/components/ui/container";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import type { Store } from "@prisma/client";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -10,7 +8,8 @@ export default async function CustomerMgmtPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const _store = (await checkStoreStaffAccess(params.storeId)) as Store;
+
+	// Note: checkStoreStaffAccess already called in layout (cached)
 
 	return <Container>Customer Management</Container>;
 }

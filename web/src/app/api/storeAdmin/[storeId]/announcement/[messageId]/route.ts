@@ -4,6 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import logger from "@/lib/logger";
 
 ///!SECTION update Category record in database.
 export async function PATCH(
@@ -30,7 +31,12 @@ export async function PATCH(
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[StoreAnnouncement_PATCH]", error);
+		logger.info("storeannouncement patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
@@ -62,7 +68,12 @@ export async function DELETE(
 	return NextResponse.json(obj);
 	/*
   } catch (error) {
-    console.log("[StoreAnnouncement_DELETE]", error);
+    logger.info("storeannouncement delete", {
+    	metadata: {
+    		error: error instanceof Error ? error.message : String(error),
+    	},
+    	tags: ["api"],
+    });
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }
      */

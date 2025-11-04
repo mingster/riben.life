@@ -34,6 +34,7 @@ import { deleteImage, uploadImage } from "@/utils/image-utils";
 import axios from "axios";
 import { XCircleIcon } from "lucide-react";
 import Image from "next/image";
+import logger from "@/lib/logger";
 
 const validationSchema = z.object({
 	productImages: z.array(
@@ -101,8 +102,8 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 
 	/*
   product.storeId = `${params.storeId}`;
-  console.log(`initialData images: ${JSON.stringify(initialData)}`);
-  console.log(`initialData fields: ${JSON.stringify(fields)}`);
+  logger.info("Operation log");
+  logger.info("Operation log");
   */
 	//console.log(`product id: ${params.productId}`);
 	//console.log(`defaultValues: ${JSON.stringify(defaultValues)}`);
@@ -122,7 +123,7 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 			//const folderName = `${params.storeId}/product/${params.productId}`;
 			const folderName = "product";
 			const result = await uploadImage(folderName, image, 500, 500);
-			console.log(`upload result: ${JSON.stringify(result)}`);
+			logger.info("Operation log");
 
 			const newImage = {
 				productId: `${params.productId}`,
@@ -167,10 +168,10 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 		if (!initialData) return;
 
 		/*
-	console.log(`rowToRemove idx: ${index}`);
-	console.log(`rowToRemove data: ${JSON.stringify(initialData)}`);
-	console.log(`rowToRemove id: ${initialData[index].id}`);
-	console.log(`rowToRemove imgPublicId: ${initialData[index].imgPublicId}`);
+	logger.info("Operation log");
+	logger.info("Operation log");
+	logger.info("index");
+	logger.info("index");
 	*/
 
 		await deleteImage(initialData[index].imgPublicId as string);

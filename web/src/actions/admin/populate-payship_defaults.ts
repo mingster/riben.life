@@ -2,6 +2,7 @@
 
 import { promises as fs } from "fs";
 import { sqlClient } from "@/lib/prismadb";
+import logger from "@/lib/logger";
 
 // create default locales
 //
@@ -20,7 +21,9 @@ export async function create_locales() {
     });
 
     if (!currency) {
-        console.error(`Currency with id ${c.currency} not found`);
+        logger.error("Operation log", {
+        	tags: ["action", "error"],
+        });
         continue;
       }
     */
@@ -36,9 +39,13 @@ export async function create_locales() {
         */
 			},
 		});
-		console.log(`locale created: ${JSON.stringify(locale)}`);
+		logger.info("Operation log", {
+			tags: ["action"],
+		});
 		/*} catch (err) {
-      console.error(err);
+      logger.error("Operation log", {
+      	tags: ["action", "error"],
+      });
     }*/
 	}
 }
@@ -75,9 +82,13 @@ export async function create_paymentMethods() {
           */
 				},
 			});
-			console.log(paymentMethod);
+			logger.info("Operation log", {
+				tags: ["action"],
+			});
 		} catch (err) {
-			console.error(err);
+			logger.error("Operation log", {
+				tags: ["action", "error"],
+			});
 		}
 	}
 }
@@ -100,7 +111,9 @@ export async function create_shippingMethods() {
 			});
 
 			if (!currency) {
-				console.error(`Currency with id ${c.currencyId} not found`);
+				logger.error("Operation log", {
+					tags: ["action", "error"],
+				});
 				continue;
 			}
 
@@ -134,9 +147,13 @@ export async function create_shippingMethods() {
 				},
 			});
 
-			console.log(shippingMethod);
+			logger.info("Operation log", {
+				tags: ["action"],
+			});
 		} catch (err) {
-			console.error(err);
+			logger.error("Operation log", {
+				tags: ["action", "error"],
+			});
 		}
 	}
 }

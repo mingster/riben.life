@@ -1,13 +1,11 @@
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
 import { stripe } from "@/lib/stripe/config";
-import type { Store } from "@/types";
 import { SubscriptionStatus } from "@/types/enum";
 import logger from "@/lib/logger";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import { Suspense } from "react";
 import { SubscriptionHistoryClient } from "./client";
+import { getStoreWithRelations } from "@/lib/store-access";
+import { Store } from "@/types";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -17,25 +15,22 @@ export default async function StoreSubscriptionHistoryPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
-	const subscription = await sqlClient.storeSubscription.findUnique({
-		where: {
-			storeId: store.id,
-		},
-	});
-	//transformDecimalsToNumbers(subscription);
 
-	console.log("subscription", subscription);
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	// Parallel queries for optimal performance
+	const [store, subscription, payments] = await Promise.all([
+		getStoreWithRelations(params.storeId) as Store,
+		sqlClient.storeSubscription.findUnique({
+			where: { storeId: params.storeId },
+		}),
+		sqlClient.subscriptionPayment.findMany({
+			where: { storeId: params.storeId },
+		}),
+	]);
 
-	const payments = await sqlClient.subscriptionPayment.findMany({
-		where: {
-			storeId: store.id,
-		},
-	});
 	transformDecimalsToNumbers(payments);
 
-	console.log("payments", payments);
-
+	// Get Stripe subscription schedule if exists
 	let subscriptionSchedule = null;
 	if (subscription !== null) {
 		const subscriptionScheduleId = subscription.subscriptionId as string;
@@ -45,41 +40,37 @@ export default async function StoreSubscriptionHistoryPage(props: {
 				subscriptionScheduleId,
 			);
 
-			// if no valid schedule, subscription status = SubscriptionStatus_Incctive
+			// Update subscription status based on Stripe schedule
 			subscription.status =
 				subscriptionSchedule.status === "active"
 					? SubscriptionStatus.Active
 					: SubscriptionStatus.Inactive;
-			/*
-			// convert stripe date to js date
-			const startDate = new Date(
-				subscriptionSchedule?.current_phase?.start_date * 1000,
-			);
-			const endDate = new Date(
-				subscriptionSchedule?.current_phase?.end_date * 1000,
-			);
-
-			console.log("startDate", startDate);
-			console.log("endDate", endDate);
-      */
 		} catch (err) {
-			logger.error(err);
+			logger.error("Failed to retrieve Stripe subscription schedule", {
+				metadata: {
+					subscriptionScheduleId,
+					error: err instanceof Error ? err.message : String(err),
+				},
+				tags: ["subscription", "stripe", "error"],
+			});
 		}
+	}
 
-		console.log("subscriptionSchedule", subscriptionSchedule);
+	if (process.env.NODE_ENV === "development") {
+		logger.info("subscription");
+		logger.info("payments");
+		logger.info("subscriptionSchedule");
 	}
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<section className="relative w-full">
-				<div className="container">
-					<SubscriptionHistoryClient
-						store={store}
-						subscription={subscription}
-						payments={payments}
-					/>
-				</div>
-			</section>
-		</Suspense>
+		<section className="relative w-full">
+			<div className="container">
+				<SubscriptionHistoryClient
+					store={store as Store}
+					subscription={subscription}
+					payments={payments}
+				/>
+			</div>
+		</section>
 	);
 }

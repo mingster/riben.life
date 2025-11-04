@@ -1,7 +1,11 @@
 {
 	"compilerOptions": {
-		"target": "ES2017",
-		"lib": ["dom", "dom.iterable", "esnext"],
+		"target": "ES2023",
+		"lib": [
+			"dom",
+			"dom.iterable",
+			"esnext"
+		],
 		"allowJs": true,
 		"skipLibCheck": true,
 		"strict": true,
@@ -20,9 +24,36 @@
 			}
 		],
 		"paths": {
-			"@/*": ["./src/*"]
-		}
+			"@/*": [
+				"./src/*"
+			]
+		},
+		// Performance optimizations
+		"assumeChangesOnlyAffectDirectDependencies": true,
+		"disableSourceOfProjectReferenceRedirect": true,
+		"disableSolutionSearching": true,
+		"noEmitOnError": false,
+		"preserveWatchOutput": false,
+		// Additional build optimizations
+		"forceConsistentCasingInFileNames": true,
+		"exactOptionalPropertyTypes": false,
+		"noImplicitReturns": false,
+		"noFallthroughCasesInSwitch": false,
+		"noUncheckedIndexedAccess": false,
+		"noImplicitOverride": false,
+		// Faster compilation
+		"importsNotUsedAsValues": "remove",
+		"verbatimModuleSyntax": false,
+		"allowSyntheticDefaultImports": true,
+		"useDefineForClassFields": true
 	},
-	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-	"exclude": ["node_modules"]
+	"include": [
+		"next-env.d.ts",
+		"**/*.ts",
+		"**/*.tsx",
+		".next/types/**/*.ts"
+	],
+	"exclude": [
+		"node_modules", ".next", "out", "dist"
+	]
 }

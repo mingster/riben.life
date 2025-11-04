@@ -28,6 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import type { SystemMessage } from "@/types";
 import { formatDateTime, getUtcNow } from "@/utils/datetime-utils";
 import EditSystemMessage from "./edit-sysmsg";
+import logger from "@/lib/logger";
 
 interface props {
 	serverData: SystemMessage[];
@@ -61,7 +62,7 @@ export const SystemMessageClient: React.FC<props> = ({ serverData }) => {
 				createdOn: getUtcNow(),
 			},
 		]);
-		console.log("handleCreated", newVal);
+		logger.info("handleCreated");
 	};
 
 	// Handle updated value in the data array
@@ -73,14 +74,14 @@ export const SystemMessageClient: React.FC<props> = ({ serverData }) => {
 				cat.id === updatedVal.id ? { ...cat, ...updatedVal } : cat,
 			),
 		);
-		console.log("handleUpdated", updatedVal);
+		logger.info("handleUpdated");
 	};
 
 	const handleDeleted = (
 		deletedVal: z.infer<typeof updateSystemMessageSchema>,
 	) => {
 		setData((prev) => prev.filter((cat) => cat.id !== deletedVal.id));
-		console.log("handleDeleted", deletedVal);
+		logger.info("handleDeleted");
 	};
 	/* #endregion */
 

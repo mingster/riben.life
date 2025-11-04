@@ -1,21 +1,13 @@
-//import Scheduled from "@/components/scheduled";
-//import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import type { Store } from "@/types";
-
 import Container from "@/components/ui/container";
+import getStoreWithCategories from "@/actions/get-store";
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { Awaiting4ConfirmationClient } from "./client";
+import { getStoreWithRelations } from "@/lib/store-access";
 
 export const metadata: Metadata = {
-	title: "Store Dashboard",
-	description: "",
+	title: "Orders Awaiting Confirmation",
+	description: "Manage orders awaiting confirmation",
 };
-
-// DashboardPage is home of the selected store. It diesplays store operatiing stat such as
-//total revenue, sales count, products, etc..
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -26,44 +18,12 @@ export default async function OrderAwaiting4ConfirmationPage(props: {
 }) {
 	const params = await props.params;
 
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
-
-	/*
-  const pendingOrders = (await sqlClient.storeOrder.findMany({
-    where: {
-      storeId: params.storeId,
-      orderStatus: Number(OrderStatus.Processing),
-    },
-  })) as StoreOrder[];
-  const pendingTickets = (await sqlClient.supportTicket.findMany({
-    where: {
-      storeId: params.storeId,
-      status: TicketStatus.Active || TicketStatus.Open,
-    },
-  })) as SupportTicket[];
-  //console.log(`pendingOrders: ${JSON.stringify(pendingOrders)}`);
-
-  <Container>
-        <Scheduled timestamp={Date.now()}>
-          <div>{Date.now().toString()}</div>
-          <div>
-            <span className="text-2xl">{pendingTickets.length}</span> open
-            tickets
-          </div>
-          <div>
-            <span className="text-2xl">{pendingOrders.length}</span> pending
-            orders
-          </div>
-        </Scheduled>
-      </Container>
-
-  */
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	const store = await getStoreWithRelations(params.storeId);
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<Awaiting4ConfirmationClient store={store} />
-			</Container>
-		</Suspense>
+		<Container>
+			<Awaiting4ConfirmationClient store={store} />
+		</Container>
 	);
 }

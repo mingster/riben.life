@@ -5,6 +5,7 @@ import { IconBrandLine } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
 import { analytics } from "@/lib/analytics";
+import logger from "@/lib/logger";
 
 const LineLoginButton = ({ callbackUrl = "/" }: { callbackUrl?: string }) => {
 	const { lng } = useI18n();
@@ -12,7 +13,7 @@ const LineLoginButton = ({ callbackUrl = "/" }: { callbackUrl?: string }) => {
 
 	const handleClick = async () => {
 		try {
-			console.log("Starting Line OAuth flow...");
+			logger.info("Starting Line OAuth flow...");
 			const { data, error } = await authClient.signIn.social({
 				provider: "line",
 				callbackURL: callbackUrl,
@@ -21,12 +22,19 @@ const LineLoginButton = ({ callbackUrl = "/" }: { callbackUrl?: string }) => {
 			analytics.trackLogin("line");
 
 			if (error) {
-				console.error("Line OAuth error:", error);
+				logger.error("Line OAuth error:", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["error"],
+				});
 			} else {
-				console.log("Line OAuth success:", data);
+				logger.info("Line OAuth success:");
 			}
 		} catch (err) {
-			console.error("Line OAuth exception:", err);
+			logger.error("Line OAuth exception:", {
+				tags: ["error"],
+			});
 		}
 	};
 	return (

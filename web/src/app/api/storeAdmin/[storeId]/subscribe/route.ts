@@ -121,7 +121,12 @@ export async function POST(
 		//
 		return NextResponse.json(obj, { status: 200 });
 	} catch (error) {
-		console.log("[SubscriptionPayment_POST]", error);
+		logger.info("subscriptionpayment post", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

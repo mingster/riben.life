@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 // gate keeper for store admin api access
 export async function CheckStoreAdminApiAccess(storeId: string) {
@@ -33,7 +34,12 @@ export async function CheckStoreAdminApiAccess(storeId: string) {
 
 		return true;
 	} catch (error) {
-		console.error("[CheckAccess]", error);
+		logger.error("checkaccess", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api", "error"],
+		});
 
 		return false;
 	}

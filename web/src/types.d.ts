@@ -38,8 +38,11 @@ declare module "next-auth/jwt" {
 
 /* #region prisma type mod */
 
-const platformSettingsObj = Prisma.validator<Prisma.PlatformSettingsDefaultArgs>()({});
-export type PlatformSettings = Prisma.PlatformSettingsGetPayload<typeof platformSettingsObj>;
+const platformSettingsObj =
+	Prisma.validator<Prisma.PlatformSettingsDefaultArgs>()({});
+export type PlatformSettings = Prisma.PlatformSettingsGetPayload<
+	typeof platformSettingsObj
+>;
 
 const systemLogObj = Prisma.validator<Prisma.system_logDefaultArgs>()({});
 export type SystemLog = Prisma.SystemLogGetPayload<typeof systemLogObj>;

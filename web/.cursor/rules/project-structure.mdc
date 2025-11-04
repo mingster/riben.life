@@ -1,7 +1,7 @@
 ---
 description: Project structure and file organization guidelines
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Project Structure
 
@@ -66,6 +66,7 @@ alwaysApply: false
 - Create utility functions in `utils/` folder for reusable logic
 - Use lodash utilities for common operations (arrays, objects, strings)
 - Import specific lodash functions to minimize bundle size:
+
   ```ts
   import groupBy from "lodash/groupBy";
   ```

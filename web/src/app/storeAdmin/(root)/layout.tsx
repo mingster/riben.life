@@ -2,6 +2,7 @@ import { auth, Session } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import logger from "@/lib/logger";
 
 // this is the main layout for store admin.
 // if the user has a store, redirect to the store dashboard (dashboard/[storeId])
@@ -47,7 +48,7 @@ export default async function StoreAdminLayout(props: {
 	/*
 
   if (session.user.role != 'owner') {
-	console.log('access denied');
+	logger.info("access denied");
 	redirect('/error/?code=500');
 
   }

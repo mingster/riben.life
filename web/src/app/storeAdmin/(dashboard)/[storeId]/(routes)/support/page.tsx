@@ -1,16 +1,13 @@
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
+import { auth, Session } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
+import { getStoreWithRelations } from "@/lib/store-access";
 import { TicketStatus } from "@/types/enum";
 import { formatDateTime } from "@/utils/datetime-utils";
-import type { Store, SupportTicket } from "@prisma/client";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
+import type { SupportTicket } from "@prisma/client";
+import { headers } from "next/headers";
 import type { TicketColumn } from "./components/columns";
 import { TicketClient } from "./components/ticket-client";
-import { auth, Session } from "@/lib/auth";
-import { headers } from "next/headers";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -21,14 +18,9 @@ export default async function StoreSupportPage(props: {
 }) {
 	const params = await props.params;
 
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
-
-	if (!store) {
-		redirect("/unv");
-	}
-
+	// Note: checkStoreStaffAccess already called in layout (cached)
 	const session = (await auth.api.getSession({
-		headers: await headers(), // you need to pass the headers object.
+		headers: await headers(),
 	})) as unknown as Session;
 	const userId = session?.user.id;
 
@@ -36,16 +28,15 @@ export default async function StoreSupportPage(props: {
 		distinct: ["threadId"],
 		where: {
 			senderId: userId,
-			storeId: store.id,
+			storeId: params.storeId,
 			status: { in: [TicketStatus.Open, TicketStatus.Active] },
 		},
-		include: {},
 		orderBy: {
 			lastModified: "desc",
 		},
 	});
 
-	// map tickets to ui
+	// Map tickets to UI columns
 	const formattedTickets: TicketColumn[] = tickets.map(
 		(item: SupportTicket) => ({
 			id: item.id,
@@ -56,11 +47,10 @@ export default async function StoreSupportPage(props: {
 		}),
 	);
 
+	const store = await getStoreWithRelations(params.storeId);
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<TicketClient data={formattedTickets} store={store} />
-			</Container>
-		</Suspense>
+		<Container>
+			<TicketClient data={formattedTickets} store={store} />
+		</Container>
 	);
 }

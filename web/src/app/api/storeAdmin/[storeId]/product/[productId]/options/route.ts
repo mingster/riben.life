@@ -2,6 +2,7 @@ import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 ///!SECTION create product option and its selections.
 // called by: AddProductOptionDialog.
@@ -180,7 +181,12 @@ export async function POST(
 
 		return NextResponse.json(result);
 	} catch (error) {
-		console.log("[PRODUCTOPTION_POST]", error);
+		logger.info("productoption post", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

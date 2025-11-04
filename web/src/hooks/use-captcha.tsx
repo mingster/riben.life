@@ -4,6 +4,7 @@ import { AuthUIContext } from "@daveyplate/better-auth-ui";
 import { useGoogleReCaptcha } from "@wojtekmaj/react-recaptcha-v3";
 import type ReCAPTCHA from "react-google-recaptcha";
 import { type RefObject, useContext, useRef } from "react";
+import logger from "@/lib/logger";
 
 // Default captcha endpoints
 const DEFAULT_CAPTCHA_ENDPOINTS = [
@@ -37,7 +38,9 @@ export function useCaptcha() {
 
 	const executeCaptcha = async (action: string) => {
 		if (!captcha) {
-			console.error("Captcha context not available in executeCaptcha");
+			logger.error("Captcha context not available in executeCaptcha", {
+				tags: ["error"],
+			});
 			throw new Error("MISSING_RESPONSE");
 		}
 
@@ -54,9 +57,9 @@ export function useCaptcha() {
 		switch (captcha.provider) {
 			case "google-recaptcha-v3": {
 				const sanitizedAction = sanitizeActionName(action);
-				console.log("Sanitized action:", sanitizedAction);
+				logger.info("Sanitized action:");
 				response = await executeRecaptcha?.(sanitizedAction);
-				console.log("reCAPTCHA response:", response ? "Received" : "None");
+				logger.info("reCAPTCHA response:");
 				break;
 			}
 			/*
@@ -95,27 +98,32 @@ export function useCaptcha() {
 
 	const getCaptchaHeaders = async (action: string) => {
 		if (!captcha) {
-			console.log("Captcha context not available");
+			logger.info("Captcha context not available");
 			return undefined;
 		}
 
 		// Use custom endpoints if provided, otherwise use defaults
 		const endpoints = captcha.endpoints || DEFAULT_CAPTCHA_ENDPOINTS;
-		console.log("Captcha endpoints:", endpoints, "Action:", action);
+		logger.info("Captcha endpoints:");
 
 		// Only execute captcha if the action is in the endpoints list
 		if (endpoints.includes(action)) {
 			try {
 				const token = await executeCaptcha(action);
-				console.log("Captcha token generated:", token ? "Yes" : "No");
+				logger.info("Captcha token generated:");
 				return { "x-captcha-response": token };
 			} catch (error) {
-				console.error("Captcha execution failed:", error);
+				logger.error("Captcha execution failed:", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["error"],
+				});
 				throw error;
 			}
 		}
 
-		console.log("Action not in captcha endpoints, skipping captcha");
+		logger.info("Action not in captcha endpoints, skipping captcha");
 		return undefined;
 	};
 

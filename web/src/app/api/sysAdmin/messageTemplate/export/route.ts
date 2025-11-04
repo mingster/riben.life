@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import { sqlClient } from "@/lib/prismadb";
+import logger from "@/lib/logger";
 
 export async function POST() {
 	try {
@@ -31,7 +32,12 @@ export async function POST() {
 
 		return NextResponse.json({ success: true, fileName });
 	} catch (error: any) {
-		console.error("[MESSAGE_TEMPLATE_EXPORT]", error);
+		logger.error("message template export", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api", "error"],
+		});
 		return NextResponse.json(
 			{ success: false, error: error?.message || "Unknown error" },
 			{ status: 500 },

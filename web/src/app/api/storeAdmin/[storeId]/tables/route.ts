@@ -4,6 +4,7 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreTables } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
+import logger from "@/lib/logger";
 
 ///!SECTION create new store table.
 export async function POST(
@@ -29,7 +30,12 @@ export async function POST(
 
 		return NextResponse.json({ success: true });
 	} catch (error) {
-		console.log("[TABLES_POST]", error);
+		logger.info("tables post", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

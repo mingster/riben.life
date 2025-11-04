@@ -4,13 +4,16 @@ import { sqlClient } from "@/lib/prismadb";
 import type { FaqCategory } from "@/types";
 import { storeOwnerActionClient } from "@/utils/actions/safe-action";
 import { updateFaqCategorySchema } from "./update-faq-category.validation";
+import logger from "@/lib/logger";
 
 export const updateFaqCategoryAction = storeOwnerActionClient
 	.metadata({ name: "updateFaqCategory" })
 	.schema(updateFaqCategorySchema)
 	.action(
 		async ({ parsedInput: { id, localeId, storeId, name, sortOrder } }) => {
-			console.log("id", id);
+			logger.info("id", {
+				tags: ["action"],
+			});
 
 			//if there's no id, then this is a new message
 			//
@@ -20,14 +23,18 @@ export const updateFaqCategoryAction = storeOwnerActionClient
 				});
 				id = result.id;
 
-				console.log("create", result);
+				logger.info("create", {
+					tags: ["action"],
+				});
 			}
 
 			await sqlClient.faqCategory.update({
 				where: { id },
 				data: { localeId, storeId, name, sortOrder },
 			});
-			console.log("update", id);
+			logger.info("update", {
+				tags: ["action"],
+			});
 
 			const result = (await sqlClient.faqCategory.findFirst({
 				where: { id },

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Loader } from "@/components/loader";
 import { formatDateTime } from "@/utils/datetime-utils";
 import { OrderInProgress } from "../../components/order-inprogress";
+import logger from "@/lib/logger";
 
 export interface props {
 	store: Store;
@@ -72,7 +73,12 @@ export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
         */
 			})
 			.catch((error) => {
-				console.error("Error:", error);
+				logger.error("Error:", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["error"],
+				});
 				throw error;
 			});
 

@@ -22,6 +22,7 @@ import { ArrowUpToLine } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import ScrollSpy from "react-ui-scrollspy";
+import logger from "@/lib/logger";
 
 /*
   <Image
@@ -57,9 +58,9 @@ export const StoreHomeContent: React.FC<props> = ({
   //const [order, setOrder] = useState<StoreOrder>();
   const params = useParams<{ storeId: string }>();
 
-  console.log("storeData", storeData.defaultTimezone);
-  console.log("utc", getUtcDate());
-  console.log("now", getNowDateInTz(storeData.defaultTimezone));
+  logger.info("storeData");
+  logger.info("utc");
+  logger.info("now");
   */
 
 	const cart = useCart();

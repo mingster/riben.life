@@ -1,8 +1,6 @@
 import Container from "@/components/ui/container";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-
 import { sqlClient } from "@/lib/prismadb";
-import type { Store } from "@/types";
+import { getStoreWithRelations } from "@/lib/store-access";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreLedger } from "@prisma/client";
 import { format } from "date-fns";
@@ -17,13 +15,11 @@ export default async function BalanceMgmtPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
-	// this store is pro version or not?
-	//const disablePaidOptions = await !isProLevel(store?.id);
 
+	// Note: checkStoreStaffAccess already called in layout (cached)
 	const legers = (await sqlClient.storeLedger.findMany({
 		where: {
-			storeId: store.id,
+			storeId: params.storeId,
 			type: 0,
 		},
 		orderBy: {
@@ -32,6 +28,7 @@ export default async function BalanceMgmtPage(props: {
 	})) as StoreLedger[];
 	transformDecimalsToNumbers(legers);
 
+	const store = await getStoreWithRelations(params.storeId);
 	//console.log(JSON.stringify(legers));
 
 	// map order to ui

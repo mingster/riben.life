@@ -16,6 +16,7 @@ import { Heading } from "@/components/ui/heading";
 import { redirect } from "next/navigation";
 import { EditDefaultPrivacy } from "./edit-default-privacy";
 import { EditDefaultTerms } from "./edit-default-terms";
+import logger from "@/lib/logger";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -43,7 +44,7 @@ export default async function StoreAdminDevMaintPage(props: {
 				//storeId: params.storeId,
 			},
 		});
-		console.log(`${count} shippingMethod deleted.`);
+		logger.info("Operation log");
 
 		redirect("./admin/maint");
 	};
@@ -56,18 +57,18 @@ export default async function StoreAdminDevMaintPage(props: {
 				//storeId: params.storeId,
 			},
 		});
-		console.log(`${count} paymentMethod deleted.`);
+		logger.info("Operation log");
 		redirect("./admin/maint");
 	};
 
 	const storeOrderCount = await sqlClient.storeOrder.count();
-	console.log(`storeOrderCount:${storeOrderCount}`);
+	logger.info("Operation log");
 
 	const storeLedgerCount = await sqlClient.storeLedger.count();
-	console.log(`storeLedgerCount:${storeLedgerCount}`);
+	logger.info("Operation log");
 
 	const ticketCount = await sqlClient.supportTicket.count();
-	console.log(`ticketCount:${ticketCount}`);
+	logger.info("Operation log");
 
 	// populate defaults: privacy policy and terms of service
 	//

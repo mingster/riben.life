@@ -1,11 +1,5 @@
-//import Scheduled from "@/components/scheduled";
-//import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import type { Store } from "@/types";
-
 import Container from "@/components/ui/container";
-import { Suspense } from "react";
+import { getStoreWithRelations } from "@/lib/store-access";
 import { Awaiting4ProcessingClient } from "./client";
 
 type Params = Promise<{ storeId: string }>;
@@ -17,44 +11,12 @@ export default async function OrderAwaiting4Processing(props: {
 }) {
 	const params = await props.params;
 
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
-
-	/*
-  const pendingOrders = (await sqlClient.storeOrder.findMany({
-    where: {
-      storeId: params.storeId,
-      orderStatus: Number(OrderStatus.Processing),
-    },
-  })) as StoreOrder[];
-  const pendingTickets = (await sqlClient.supportTicket.findMany({
-    where: {
-      storeId: params.storeId,
-      status: TicketStatus.Active || TicketStatus.Open,
-    },
-  })) as SupportTicket[];
-  //console.log(`pendingOrders: ${JSON.stringify(pendingOrders)}`);
-
-  <Container>
-        <Scheduled timestamp={Date.now()}>
-          <div>{Date.now().toString()}</div>
-          <div>
-            <span className="text-2xl">{pendingTickets.length}</span> open
-            tickets
-          </div>
-          <div>
-            <span className="text-2xl">{pendingOrders.length}</span> pending
-            orders
-          </div>
-        </Scheduled>
-      </Container>
-
-  */
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	const store = await getStoreWithRelations(params.storeId);
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<Awaiting4ProcessingClient store={store} />
-			</Container>
-		</Suspense>
+		<Container>
+			<Awaiting4ProcessingClient store={store} />
+		</Container>
 	);
 }

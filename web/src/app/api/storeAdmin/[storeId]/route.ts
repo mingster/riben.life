@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import getStoreWithCategories from "@/actions/get-store";
 import type { Store } from "@/types";
 import { CheckStoreAdminApiAccess } from "../api_helper";
+import logger from "@/lib/logger";
 
 // get unpaid orders in the store.
 export async function GET(
@@ -22,7 +23,12 @@ export async function GET(
 		//console.log("getStore", JSON.stringify(store));
 		return NextResponse.json(store);
 	} catch (error) {
-		console.error("[GET_STORE]", error);
+		logger.error("get store", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api", "error"],
+		});
 
 		return new NextResponse("Internal error", { status: 500 });
 	}

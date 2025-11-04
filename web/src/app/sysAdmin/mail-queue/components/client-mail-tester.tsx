@@ -17,6 +17,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import logger from "@/lib/logger";
 
 export const mailTesterSchema = z.object({
 	email: z.email(),
@@ -42,13 +43,13 @@ export default function ClientMailTester() {
 
 	const onSubmit = async (data: MailTesterInput) => {
 		setLoading(true);
-		console.log(data);
+		logger.info("Operation log");
 		const result = await fetch("/api/sysAdmin/emailQueue/send-test", {
 			method: "POST",
 			body: JSON.stringify(data),
 		});
 		const resultData = await result.json();
-		console.log(resultData);
+		logger.info("Operation log");
 		toastSuccess({ description: resultData.toString() });
 		setLoading(false);
 	};

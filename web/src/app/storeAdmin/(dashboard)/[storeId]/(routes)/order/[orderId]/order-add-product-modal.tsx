@@ -23,6 +23,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import Decimal from "decimal.js";
 import { useParams } from "next/navigation";
 import ScrollSpy from "react-ui-scrollspy";
+import logger from "@/lib/logger";
 
 export interface props {
 	store: StoreWithProductNCategories;
@@ -64,7 +65,7 @@ export const OrderAddProductModal: React.FC<props> = ({
 	// called when user click Add button in ProductCard
 	const handleAddToOrder = (product: Product, newItem: Item | null) => {
 		if (!order) {
-			console.log("create new order");
+			logger.info("create new order");
 
 			return;
 		}

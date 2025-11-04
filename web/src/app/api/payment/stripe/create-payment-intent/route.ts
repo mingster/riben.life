@@ -1,5 +1,6 @@
 import { stripe } from "@/lib/stripe/config";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 //create stripe payment intent
 export async function POST(
@@ -42,7 +43,12 @@ export async function POST(
 
 		return NextResponse.json(paymentIntent);
 	} catch (error) {
-		console.log("[STRIPE_payment_intent]", error);
+		logger.info("stripe payment intent", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse("Internal error", { status: 500 });
 	}

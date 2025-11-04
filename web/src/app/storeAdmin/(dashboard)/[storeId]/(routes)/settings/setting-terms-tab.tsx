@@ -10,14 +10,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 import * as z from "zod";
 
@@ -36,7 +29,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import dynamic from "next/dynamic";
-import type { SettingsFormProps } from "./setting-basic-tab";
+import { SettingsFormProps } from "./tabs";
 
 const tosFormSchema = z.object({
 	tos: z.string().default(""),
@@ -44,7 +37,10 @@ const tosFormSchema = z.object({
 
 type formValues = z.infer<typeof tosFormSchema>;
 
-export const TermsTab: React.FC<SettingsFormProps> = ({ storeSettings }) => {
+export const TermsTab: React.FC<SettingsFormProps> = ({
+	store,
+	storeSettings,
+}) => {
 	const params = useParams();
 	const router = useRouter();
 

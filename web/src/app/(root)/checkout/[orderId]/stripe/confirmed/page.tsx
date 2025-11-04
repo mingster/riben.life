@@ -9,6 +9,7 @@ import { getAbsoluteUrl } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import Stripe from "stripe";
+import logger from "@/lib/logger";
 
 // this page is hit when stripe element confirmed the payment.
 // here we mark the order as paid, show customer a message and redirect to account page.
@@ -63,7 +64,7 @@ export default async function StripeConfirmedPage(props: {
 			);
 
 			if (process.env.NODE_ENV === "development")
-				console.log("StripeConfirmedPage", JSON.stringify(updated_order));
+				logger.info("StripeConfirmedPage");
 
 			redirect(
 				`${getAbsoluteUrl()}/checkout/${updated_order.id}/stripe/success`,

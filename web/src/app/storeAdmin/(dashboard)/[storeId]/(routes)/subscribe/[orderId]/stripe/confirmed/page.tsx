@@ -1,13 +1,11 @@
 "use server";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
-
 import confirmPayment from "@/actions/storeAdmin/subscription/stripe/confirm-payment";
-import { Suspense } from "react";
 import { SuccessAndRedirect } from "./SuccessAndRedirect";
+import logger from "@/lib/logger";
 
-// this page is triggered when stripe confirmed the payment.
-// here we mark the SubscriptionPayment as paid, activate the subscription, and show customer a message.
+// This page is triggered when Stripe confirms the payment.
+// Marks the SubscriptionPayment as paid, activates the subscription, and shows confirmation.
 export default async function StripeConfirmedPage(props: {
 	params: Promise<{ orderId: string }>;
 	searchParams: Promise<{
@@ -19,8 +17,8 @@ export default async function StripeConfirmedPage(props: {
 	const params = await props.params;
 
 	if (process.env.NODE_ENV === "development") {
-		console.log("orderid", params.orderId);
-		console.log("payment_intent", searchParams.payment_intent);
+		logger.info("orderid");
+		logger.info("payment_intent");
 		console.log(
 			"payment_intent_client_secret",
 			searchParams.payment_intent_client_secret,
@@ -33,17 +31,17 @@ export default async function StripeConfirmedPage(props: {
 		searchParams.payment_intent_client_secret,
 	)) as boolean;
 
-	console.log("confirmed", confirmed);
+	logger.info("confirmed");
 
 	if (confirmed) {
 		return (
-			<Suspense fallback={<Loader />}>
-				<Container>
-					<SuccessAndRedirect orderId={"12345"} />
-				</Container>
-			</Suspense>
+			<Container>
+				<SuccessAndRedirect orderId={"12345"} />
+			</Container>
 		);
 	}
 
-	return "error, please try again";
+	return (
+		<Container>Error: Payment confirmation failed. Please try again.</Container>
+	);
 }

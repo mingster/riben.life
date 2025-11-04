@@ -1,150 +1,397 @@
+---
+description: File Organization Standards
+globs: 
+alwaysApply: true
+---
+
 # File Organization Standards
 
-This rule defines the standard locations for different types of files in the project.
+This document defines the standard locations and organization for different types of files in the Next.js 15 App Router project.
 
-## Scripts Location
+## Root Directory Structure
 
-All deployment, build, and utility scripts should be placed in the `/web/bin` directory.
+```
+/web/
+├── bin/              # Scripts and utilities
+├── doc/              # Documentation
+├── prisma/           # Database schema and migrations
+├── public/           # Static assets
+├── src/              # Source code
+├── next.config.ts    # Next.js configuration
+├── package.json      # Package configuration
+├── tsconfig.json     # TypeScript configuration
+└── README.md         # Project overview
+```
+
+## Scripts Location (`/web/bin/`)
+
+All deployment, build, database, and utility scripts.
 
 ### Script Types and Locations
 
-- **Deployment Scripts**: `/web/bin/deploy-*.{ps1,sh,bat}`
-- **Build Scripts**: `/web/bin/build-*.{js,ts,sh}`
-- **Utility Scripts**: `/web/bin/*.{js,ts,sh,ps1,bat}`
-- **Shell Scripts**: `/web/bin/*.sh`
-- **PowerShell Scripts**: `/web/bin/*.ps1`
-- **Batch Files**: `/web/bin/*.bat`
-- **Node.js Scripts**: `/web/bin/*.js`
+- **Installation Scripts**: `/web/bin/install.ts`
+- **Build Scripts**: `/web/bin/optimize-build.js`
+- **Database Scripts**: `/web/bin/pg_backup*.sh`
+- **Deployment Scripts**: `/web/bin/sync_*.sh`
+- **Package Management**: `/web/bin/upgrade_pkg.sh`
 
 ### Examples
 
 ```
 /web/bin/
-├── deploy-windows-iis.ps1
-├── deploy-cygwin.sh
-├── deploy-windows.bat
-├── build-performance.js
+├── install.ts
 ├── optimize-build.js
-├── upgrade_pkg.sh
-└── ...
+├── pg_backup.sh
+├── pg_backup_rotated2.sh
+├── pg_backup_ship.sh
+├── sync_from_production.sh
+├── sync_to_production.sh
+└── upgrade_pkg.sh
 ```
 
-## Documentation Location
+## Documentation Location (`/web/doc/`)
 
-All documentation files should be placed in the `/web/doc` directory.
+All project documentation, guides, and references.
 
-### Documentation Types and Locations
+### Documentation Types
 
-- **Technical Documentation**: `/web/doc/*.md`
-- **Deployment Guides**: `/web/doc/DEPLOYMENT-*.md`
-- **Build Guides**: `/web/doc/BUILD-*.md`
-- **API Documentation**: `/web/doc/API-*.md`
-- **User Guides**: `/web/doc/USER-*.md`
-- **Configuration Guides**: `/web/doc/CONFIG-*.md`
+- **Deployment Guides**: `DEPLOYMENT-*.md`
+- **Setup Guides**: `*_SETUP.md`
+- **Environment Configuration**: `ENVIRONMENT_VARIABLES.md`
+- **Security**: `SECURITY.md`
+- **Contributing**: `CONTRIBUTING.md`
+- **Reference Materials**: `doc/refernces/`
 
 ### Examples
 
 ```
 /web/doc/
-├── BUILD_OPTIMIZATION.md
-├── BUILD_QUICK_REFERENCE.md
-├── BUILD_DOCUMENTATION_SUMMARY.md
-├── WINDOWS_IIS_DEPLOYMENT.md
-├── WINDOWS_DEPLOYMENT_QUICK_REFERENCE.md
-├── API_DOCUMENTATION.md
-├── USER_GUIDE.md
-└── ...
+├── DEPLOYMENT.md
+├── DEPLOYMENT-postgres.md
+├── ENVIRONMENT_VARIABLES.md
+├── RECAPTCHA_SETUP.md
+├── GOOGLE_ANALYTICS_COMPLETE_GUIDE.md
+├── SECURITY.md
+├── CONTRIBUTING.md
+└── refernces/
 ```
 
-## Migration Guidelines
+## Source Code Structure (`/web/src/`)
 
-When moving files to their standard locations:
+### Actions (`/web/src/actions/`)
 
-1. **Scripts**: Move from `/web/scripts/` to `/web/bin/`
-2. **Documentation**: Move from `/web/pstv_web/docs/` to `/web/doc/`
-3. **Update References**: Update all file paths and links
-4. **Update Package.json**: Update script paths in package.json files
-5. **Update Documentation**: Update documentation links
+Server actions organized by domain and feature.
+
+```
+src/actions/
+├── admin/                    # Admin-related actions
+│   ├── maint/               # Maintenance actions
+│   ├── systemMessage/       # System message management
+│   ├── user/                # User management
+│   └── populate-*.ts        # Data population scripts
+├── storeAdmin/              # Store admin actions
+├── sysAdmin/                # System admin actions
+├── store/                   # Store-related actions
+├── user/                    # User-related actions
+├── mail/                    # Email sending and queue management
+├── geo/                     # Geolocation services
+└── *.ts                     # Shared actions
+```
+
+**Naming Convention**: `verb-object.ts` (e.g., `get-store-by_id.ts`, `create-store-notification.ts`)
+
+### App Router (`/web/src/app/`)
+
+Next.js 15 App Router pages, layouts, and API routes.
+
+```
+src/app/
+├── (root)/                  # Root route group
+│   ├── account/            # User account management
+│   ├── checkout/           # Checkout process
+│   ├── order/              # Order viewing
+│   ├── privacy/            # Privacy policy
+│   ├── terms/              # Terms of service
+│   └── unv/                # Universal landing pages
+├── (store)/                 # Store route group
+│   └── [storeId]/          # Dynamic store routes
+│       ├── category/       # Category pages
+│       ├── product/        # Product pages
+│       ├── faq/            # Store FAQ
+│       ├── support/        # Customer support
+│       └── components/     # Store-specific components
+├── api/                     # API routes
+│   ├── auth/               # Authentication endpoints
+│   ├── common/             # Common utilities
+│   ├── payment/            # Payment processing
+│   ├── store/              # Store API endpoints
+│   ├── storeAdmin/         # Store admin API
+│   └── sysAdmin/           # System admin API
+├── auth/                    # Authentication pages
+├── storeAdmin/              # Store admin dashboard
+│   ├── (dashboard)/        # Dashboard route group
+│   └── (root)/             # Store admin root
+├── sysAdmin/                # System admin dashboard
+├── css/                     # Global styles
+├── i18n/                    # Internationalization
+├── layout.tsx               # Root layout
+└── not-found.tsx            # 404 page
+```
+
+**Route Groups**: Use parentheses `(group)` for organizing routes without affecting URL structure.
+
+### Components (`/web/src/components/`)
+
+Reusable UI components organized by category.
+
+```
+src/components/
+├── ui/                      # shadcn/ui components
+├── modals/                  # Modal dialogs
+├── analytics/               # Analytics components
+├── auth/                    # Authentication components
+├── editor/                  # Rich text editors
+├── store/                   # Store-specific components
+└── *.tsx                    # Shared components
+```
+
+**Naming Convention**: 
+- Component files: `kebab-case.tsx` (e.g., `cart-summary.tsx`)
+- Component names: `PascalCase` (e.g., `CartSummary`)
+
+### Hooks (`/web/src/hooks/`)
+
+Custom React hooks.
+
+```
+src/hooks/
+├── storeAdmin/              # Store admin hooks
+└── use-*.{ts,tsx}           # Custom hooks
+```
+
+**Naming Convention**: `use-feature-name.ts` (e.g., `use-cart.tsx`, `use-geo-ip.tsx`)
+
+### Library (`/web/src/lib/`)
+
+Core utilities and integrations.
+
+```
+src/lib/
+├── auth.ts                  # Authentication logic
+├── auth-client.ts           # Client-side auth
+├── prismadb.ts              # Database client
+├── analytics.ts             # Analytics integration
+├── logger.ts                # Server logging
+├── client-logger.ts         # Client logging
+├── utils.ts                 # General utilities
+├── businessHours/           # Business hours logic
+├── linepay/                 # LINE Pay integration
+├── stripe/                  # Stripe integration
+└── useTwZipCode2/           # Taiwan zip code utilities
+```
+
+### Providers (`/web/src/providers/`)
+
+React context providers for global state.
+
+```
+src/providers/
+├── i18n-provider.tsx        # Internationalization
+├── session-provider.tsx     # Authentication session
+└── theme-provider.tsx       # Theme management
+```
+
+### Types (`/web/src/types/`)
+
+TypeScript type definitions.
+
+```
+src/types/
+├── types.d.ts               # Global type definitions
+├── bank3.ts                 # Bank-related types
+└── enum.ts                  # Enumerations
+```
+
+### Utilities (`/web/src/utils/`)
+
+Helper functions and utilities.
+
+```
+src/utils/
+├── actions/                 # Action utilities
+├── chinese-util.ts          # Chinese language utilities
+├── datetime-utils.ts        # Date/time helpers
+├── geo-ip.ts                # Geo IP utilities
+├── guid-utils.ts            # GUID generation
+├── image-utils.ts           # Image processing
+├── error.ts                 # Error handling
+└── utils.ts                 # General utilities
+```
+
+## Static Assets (`/web/public/`)
+
+Public files served directly by Next.js.
+
+```
+public/
+├── defaults/                # Default content files
+│   ├── bank3.json
+│   ├── business-hours.json
+│   ├── privacy.md
+│   └── terms.md
+├── favicons/                # Favicon assets
+├── images/                  # General images
+│   ├── brand/              # Brand assets
+│   └── country/            # Country flags
+├── img/                     # Additional images
+│   ├── beams/              # Background effects
+│   └── icons/              # Icon sets
+└── install/                 # Installation data
+    ├── country_iso.json
+    ├── currency_iso.json
+    └── locales.json
+```
+
+## Database (`/web/prisma/`)
+
+Prisma schema and database-related files.
+
+```
+prisma/
+├── schema.prisma            # Database schema
+└── views/                   # SQL views
+    └── orderItemView.sql
+```
 
 ## File Naming Conventions
 
-### Scripts
+### General Rules
 
-- Use kebab-case for script names: `deploy-windows-iis.ps1`
-- Include the script type in the name: `build-performance.js`
-- Use descriptive prefixes: `deploy-`, `build-`, `test-`, `clean-`
+1. **Directories**: Use `kebab-case` (e.g., `store-admin/`, `mail-queue/`)
+2. **Components**: Use `kebab-case.tsx` (e.g., `cart-summary.tsx`)
+3. **Hooks**: Prefix with `use-` (e.g., `use-cart.tsx`)
+4. **Actions**: Use `verb-object.ts` (e.g., `get-store-by_id.ts`)
+5. **API Routes**: Use `route.ts` for route handlers
+6. **Utilities**: Use descriptive names (e.g., `datetime-utils.ts`)
+7. **Documentation**: Use `UPPER_SNAKE_CASE.md` (e.g., `DEPLOYMENT.md`)
+8. **Scripts**: Use `kebab-case` with extension (e.g., `sync_from_production.sh`)
 
-### Documentation
+### Next.js Conventions
 
-- Use UPPER_SNAKE_CASE for documentation files: `BUILD_OPTIMIZATION.md`
-- Include the type in the name: `WINDOWS_IIS_DEPLOYMENT.md`
-- Use descriptive names that indicate the content
+- **Pages**: `page.tsx` (required for routes)
+- **Layouts**: `layout.tsx` (required for layouts)
+- **Loading**: `loading.tsx` (loading UI)
+- **Error**: `error.tsx` (error handling)
+- **Not Found**: `not-found.tsx` (404 pages)
+- **API Routes**: `route.ts` (API endpoints)
+- **Route Groups**: `(group-name)/` (organizing without URL impact)
+- **Dynamic Routes**: `[param]/` (dynamic segments)
 
-## Import/Reference Guidelines
+## Import Path Guidelines
 
-### In Package.json
+### Absolute Imports
 
-```json
-{
-  "scripts": {
-    "build:perf": "node bin/build-performance.js",
-    "deploy:windows": "powershell -File bin/deploy-windows-iis.ps1",
-    "deploy:cygwin": "bin/deploy-cygwin.sh"
-  }
-}
+Use `@/` alias for cleaner imports:
+
+```typescript
+// Good
+import { Button } from '@/components/ui/button';
+import { prisma } from '@/lib/prismadb';
+import { getStore } from '@/actions/get-store';
+
+// Avoid
+import { Button } from '../../../components/ui/button';
 ```
 
-### In Documentation
+### Import Organization
 
-```markdown
-# Link to documentation
-See [Build Optimization Guide](../doc/BUILD_OPTIMIZATION.md)
+Order imports by category:
 
-# Link to scripts
-Run the deployment script: `bin/deploy-windows-iis.ps1`
+```typescript
+// 1. External dependencies
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+// 2. Internal components
+import { Button } from '@/components/ui/button';
+import { DataTable } from '@/components/dataTable';
+
+// 3. Actions and utilities
+import { getStore } from '@/actions/get-store';
+import { formatDate } from '@/utils/datetime-utils';
+
+// 4. Types
+import type { Store } from '@prisma/client';
+import type { StoreConfig } from '@/types';
 ```
 
-### In Code
+## Component Organization
 
-```javascript
-// Import scripts
-const buildScript = require('../bin/build-performance.js');
+### Within Files
 
-// Reference documentation
-// See: ../doc/BUILD_OPTIMIZATION.md for details
+```typescript
+// 1. Imports
+import { ... } from '...';
+
+// 2. Types/Interfaces
+interface ComponentProps { ... }
+
+// 3. Main Component
+export function Component() { ... }
+
+// 4. Sub-components (if needed)
+function SubComponent() { ... }
+
+// 5. Helper functions
+function helperFunction() { ... }
 ```
 
-## Exceptions
+### Within Directories
 
-Some files may remain in their current locations for specific reasons:
-
-- **Next.js Configuration**: `pstv_web/next.config.ts` (framework-specific)
-- **Package Configuration**: `pstv_web/package.json` (project-specific)
-- **TypeScript Configuration**: `pstv_web/tsconfig.json` (project-specific)
-- **Framework Scripts**: Scripts that are tightly coupled to the Next.js application
+```
+feature/
+├── page.tsx                 # Main page component
+├── layout.tsx               # Layout wrapper
+├── components/              # Feature-specific components
+│   ├── client-feature.tsx  # Client component
+│   └── edit-feature.tsx    # Edit dialog
+└── [id]/                    # Dynamic routes
+    └── page.tsx
+```
 
 ## Best Practices
 
-1. **Consistency**: Always place new scripts in `/web/bin/`
-2. **Documentation**: Always place new documentation in `/web/doc/`
-3. **References**: Update all references when moving files
-4. **Naming**: Follow the established naming conventions
-5. **Organization**: Group related files together
-6. **Maintenance**: Keep the directory structure clean and organized
+1. **Modularity**: Keep components focused and single-purpose
+2. **Colocation**: Keep related files close together
+3. **Server Components**: Default to Server Components, use Client Components only when needed
+4. **Type Safety**: Define types for all props and data structures
+5. **Naming Consistency**: Follow established naming conventions
+6. **File Size**: Keep files under 300 lines when possible
+7. **Documentation**: Add comments for complex logic
+8. **Exports**: Use named exports for components
 
-## Migration Checklist
+## Migration Guidelines
 
-When moving files:
+When reorganizing existing code:
 
-- [ ] Move script files to `/web/bin/`
-- [ ] Move documentation files to `/web/doc/`
-- [ ] Update all file references
-- [ ] Update package.json scripts
-- [ ] Update documentation links
-- [ ] Test all scripts after moving
-- [ ] Verify documentation links work
-- [ ] Update any CI/CD configurations
-- [ ] Update any IDE configurations
+1. **Plan**: Map out new structure before moving files
+2. **Update Imports**: Use find-and-replace for import paths
+3. **Test**: Verify functionality after each move
+4. **Commit**: Make atomic commits for each logical change
+5. **Document**: Update documentation to reflect new structure
+
+## Configuration Files
+
+Keep configuration files at the root level:
+
+- `next.config.ts` - Next.js configuration
+- `tsconfig.json` - TypeScript configuration
+- `package.json` - Dependencies and scripts
+- `biome.json` - Biome linter configuration
+- `eslint.config.mjs` - ESLint configuration
+- `postcss.config.mjs` - PostCSS configuration
+- `components.json` - shadcn/ui configuration
+- `vercel.json` - Vercel deployment configuration
 description:
 globs:
 alwaysApply: true

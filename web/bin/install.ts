@@ -10,17 +10,17 @@
  * Usage: bun run ./bin/install.ts
  */
 
-import { populateCountryData } from "../web/src/actions/admin/populate-country-data";
-import { populateCurrencyData } from "../web/src/actions/admin/populate-currency-data";
+import { populateCountryData } from "../src/actions/admin/populate-country-data";
+import { populateCurrencyData } from "../src/actions/admin/populate-currency-data";
 import {
 	create_locales,
 	create_paymentMethods,
 	create_shippingMethods,
-} from "../web/src/actions/admin/populate-payship_defaults";
-import { sqlClient } from "../web/src/lib/prismadb";
-import { stripe } from "../web/src/lib/stripe/config";
-import logger from "../web/src/lib/logger";
-import type { PlatformSettings } from "../web/src/types";
+} from "../src/actions/admin/populate-payship_defaults";
+import { sqlClient } from "../src/lib/prismadb";
+import { stripe } from "../src/lib/stripe/config";
+import logger from "../src/lib/logger";
+import type { PlatformSettings } from "../src/types";
 
 async function createStripeProducts(setting: PlatformSettings | null) {
 	console.log("Creating Stripe products and prices...");

@@ -3,9 +3,6 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-import type { Store, StoreSettings } from "@prisma/client";
-
 import axios, { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -22,9 +19,11 @@ import {
 	FormItem,
 	FormLabel,
 } from "@/components/ui/form";
+import logger from "@/lib/logger";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { SettingsFormProps } from "./setting-basic-tab";
 
 const formSchema = z.object({
 	acceptReservation: z.boolean().default(true),
@@ -32,13 +31,8 @@ const formSchema = z.object({
 
 type formValues = z.infer<typeof formSchema>;
 
-export interface SettingsFormProps {
-	sqlData: Store;
-	storeSettings: StoreSettings | null;
-}
-
 export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
-	sqlData,
+	store,
 	storeSettings,
 }) => {
 	const params = useParams();
@@ -48,9 +42,9 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 	const [loading, setLoading] = useState(false);
 	//const [openAddNew, setOpenAddNew] = useState(false);
 
-	const defaultValues = sqlData
+	const defaultValues = store
 		? {
-				...sqlData,
+				...store,
 			}
 		: {};
 
@@ -75,10 +69,10 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
   useEffect(() => {
 	setIsSubmittable(!!form.formState.isDirty && !!form.formState.isValid);
   }, [form.formState]);
-  console.log(`isSubmittable:${isSubmittable}`);
+  logger.info("Operation log");
 
   const useBusinessHours = form.watch("useBusinessHours");
-  console.log(`useBusinessHours: ${useBusinessHours}`);
+  logger.info("Operation log");
   //form.setValue("isOpen", !useBusinessHours);
   */
 	const { lng } = useI18n();

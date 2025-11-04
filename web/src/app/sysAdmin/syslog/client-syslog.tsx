@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import type { SystemLog } from "@/types";
 import { formatDateTime } from "@/utils/datetime-utils";
 import { format } from "date-fns";
+import logger from "@/lib/logger";
 
 export const SystemLogClient: React.FC = () => {
 	const [data, setData] = useState<SystemLog[]>();
@@ -144,7 +145,7 @@ export const SystemLogClient: React.FC = () => {
 			});
 			const data = await response.json();
 
-			console.log(data);
+			logger.info("Operation log");
 			toastSuccess({
 				title: "Success",
 				description: data.message,

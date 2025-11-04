@@ -9,6 +9,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import type { User } from "@/types";
+import logger from "@/lib/logger";
 
 import { cookieName } from "@/app/i18n/settings";
 import { useCookies } from "next-client-cookies";
@@ -86,7 +87,7 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 		i18n.changeLanguage(lng);
 		setActiveLng(lng);
 		cookies.set(cookieName, lng, { path: "/" });
-		console.log("activeLng set to: ", lng);
+		logger.info("activeLng set to: ");
 	};
 
 	return (

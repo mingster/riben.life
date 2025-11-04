@@ -2,6 +2,7 @@
 
 import { promises as fs } from "fs";
 import { sqlClient } from "@/lib/prismadb";
+import logger from "@/lib/logger";
 
 //this is used in install page. It populates country json file into database.
 export async function populateCountryData() {
@@ -24,7 +25,9 @@ export async function populateCountryData() {
 				unCode: c.unCode,
 			},
 		});
-		console.log(country);
+		logger.info("Operation log", {
+			tags: ["action"],
+		});
 	}
 
 	return true;

@@ -1,6 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import type { FaqCategory } from "@/types";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 // return all online peers
 //
@@ -19,7 +20,12 @@ export async function GET(req: Request) {
 
 		return NextResponse.json(messages);
 	} catch (error) {
-		console.log("[get_faq_category]", error);
+		logger.info("get faq category", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 		return new NextResponse("Internal error", { status: 500 });
 	}
 }

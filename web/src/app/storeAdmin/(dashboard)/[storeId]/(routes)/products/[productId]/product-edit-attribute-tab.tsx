@@ -42,6 +42,7 @@ import { cn } from "@/utils/utils";
 import type { ProductAttribute } from "@prisma/client";
 import axios, { type AxiosError } from "axios";
 import { CalendarIcon } from "lucide-react";
+import logger from "@/lib/logger";
 
 /*
 export const productAttributeModel = z.object({
@@ -143,7 +144,7 @@ export const ProductEditAttributeTab = ({
 		try {
 			setLoading(true);
 
-			console.log(`onSubmit: ${JSON.stringify(data)}`);
+			logger.info("Operation log");
 
 			if (initialData) {
 				// do edit

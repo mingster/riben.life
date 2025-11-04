@@ -1,13 +1,11 @@
 import Container from "@/components/ui/container";
-
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { format } from "date-fns";
 import type { StoreOrderColumn } from "./components/columns";
 import { TransactionClient } from "./components/transaction-client";
+import { getStoreWithRelations } from "@/lib/store-access";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -18,11 +16,10 @@ export default async function TransactionMgmtPage(props: {
 }) {
 	const params = await props.params;
 
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
-
+	// Note: checkStoreStaffAccess already called in layout (cached)
 	const orders = (await sqlClient.storeOrder.findMany({
 		where: {
-			storeId: store.id,
+			storeId: params.storeId,
 		},
 		include: {
 			//Store: true,
@@ -59,6 +56,7 @@ export default async function TransactionMgmtPage(props: {
 		note: item.OrderNotes[0]?.note || "",
 	}));
 
+	const store = (await getStoreWithRelations(params.storeId)) as Store;
 	return (
 		<Container>
 			<TransactionClient store={store} data={formattedData} />

@@ -14,9 +14,6 @@ export const Heading: React.FC<HeadingProps> = ({
 	className,
 }) => {
 	if (!badge) badge = 0;
-	//console.log(`badge:${badge}`);
-
-	// lg:font-extrabold
 
 	return (
 		<div className={clsx("", className)}>
@@ -30,7 +27,14 @@ export const Heading: React.FC<HeadingProps> = ({
 					{title}
 				</h1>
 			</strong>
-			<div className="text-muted-foreground text-xs p-0">{description}</div>
+			{description && (
+				<div
+					className="text-muted-foreground text-xs p-0"
+					suppressHydrationWarning
+				>
+					{description}
+				</div>
+			)}
 		</div>
 	);
 };

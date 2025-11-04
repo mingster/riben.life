@@ -42,12 +42,9 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 	// load user's store data
 	const { data: session } = authClient.useSession();
 
-	// Redirect to signin if no session (must be in useEffect to avoid setState during render)
-	React.useEffect(() => {
-		if (!session) {
-			router.push("/signin");
-		}
-	}, [session, router]);
+	// Note: No need to redirect here - server-side auth (checkStoreStaffAccess)
+	// already handles authentication. Client-side redirect causes issues during
+	// initial hydration when session is still loading.
 
 	// Only construct URL if session exists
 	const url = session?.user.id

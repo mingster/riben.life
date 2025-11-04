@@ -56,6 +56,7 @@ import Decimal from "decimal.js";
 import Link from "next/link";
 import { type UseFormProps, useFieldArray, useForm } from "react-hook-form";
 import { OrderAddProductModal } from "./order-add-product-modal";
+import logger from "@/lib/logger";
 
 interface props {
 	store: StoreWithProducts;
@@ -200,7 +201,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 			updatedOrder,
 		);
 
-		console.log("result", JSON.stringify(result));
+		logger.info("result");
 
 		toastSuccess({
 			title: t("Order_edit_updated"),
@@ -218,7 +219,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 	//const params = useParams();
 	//console.log('order', JSON.stringify(order));
 
-	console.log("form errors", form.formState.errors);
+	logger.info("form errors");
 
 	// mark order as voided if total is zero.  Delete the order if total is zero.
 	const onCancel = async () => {
@@ -340,14 +341,18 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
 		if (!store.StorePaymentMethods[0]) {
 			const errmsg = t("checkout_no_paymentMethod");
-			console.error(errmsg);
+			logger.error("Operation log", {
+				tags: ["error"],
+			});
 			setLoading(false);
 
 			return;
 		}
 		if (!store.StoreShippingMethods[0]) {
 			const errmsg = t("checkout_no_shippingMethod");
-			console.error(errmsg);
+			logger.error("Operation log", {
+				tags: ["error"],
+			});
 			setLoading(false);
 
 			return;
@@ -381,11 +386,11 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
 		try {
 			const result = await axios.post(url, body);
-			console.log("featch result", JSON.stringify(result));
+			logger.info("featch result");
 			const newOrder = result.data.order as StoreOrder;
 			setUpdatedOrder(newOrder);
 
-			console.log(JSON.stringify(result));
+			logger.info("Operation log");
 
 			//console.log('order.id', order.id);
 
@@ -397,7 +402,12 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 			//router.push(paymenturl);
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			console.error(error);
+			logger.error("Operation log", {
+				metadata: {
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["error"],
+			});
 			toastError({
 				title: "Something went wrong.",
 				description: t("checkout_placeOrder_exception") + err.message,
@@ -435,7 +445,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 			}),
 		);
 
-		console.log("fields", JSON.stringify(fields));
+		logger.info("fields");
 
 		recalc();
 	};

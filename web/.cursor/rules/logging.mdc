@@ -1,27 +1,452 @@
 ---
-description: How to do backend logging
-globs: 
-alwaysApply: false
+description: How to do backend logging with structured metadata
+globs: **/*.ts,**/*.tsx
+alwaysApply: true
 ---
-# Logging
 
-We use `logger` to do logging:
+# Logging Standards
+
+We use the `logger` utility for structured backend logging. All logging should follow these patterns for consistency and better observability.
+
+## Import
 
 ```typescript
 import logger from "@/lib/logger";
+```
 
-const user = (await getUser()) as User;
+## Log Levels
+
+- `logger.info()` - General information, successful operations
+- `logger.warn()` - Warnings, recoverable issues
+- `logger.error()` - Errors, failed operations
+- `logger.debug()` - Debug information (development only)
+
+## Basic Usage
+
+### Simple Logging
+
+```typescript
+// Log a simple message
+logger.info("User authenticated successfully");
+
+// Log an object directly
+const user = await getUser();
 logger.info(user);
 ```
 
-Typically this will be added at the top of a file.
-If we have a large function that reuses multiple variables we can do this within a function:
+### Logging with Context
+
+For better observability, always use structured logging with metadata:
+
+```typescript
+logger.info("Order created", {
+  metadata: {
+    orderId: order.id,
+    userId: user.id,
+    amount: order.total,
+  }
+});
+```
+
+## Structured Metadata Format
+
+### Recommended Pattern
+
+Use an object with the following optional fields:
+
+```typescript
+logger.warn("Authentication required", {
+  message?: string,      // Additional context (optional if already in first param)
+  metadata?: object,     // Structured data for filtering/searching
+  tags?: string[],       // Tags for categorization
+  service?: string,      // Service/module name
+});
+```
+
+### Metadata Field
+
+The `metadata` field should contain structured data that you want to search/filter by:
+
+```typescript
+logger.error("Failed to load store", {
+  metadata: {
+    storeId: string,           // Entity IDs
+    userId: string,
+    orderId?: string,
+    
+    // Error details
+    error?: string,
+    errorCode?: string,
+    
+    // Request context
+    ip?: string,
+    userAgent?: string,
+    path?: string,
+    
+    // Performance
+    duration?: number,
+    
+    // Business context
+    amount?: number,
+    currency?: string,
+    status?: string,
+    
+    // Any other relevant data
+    [key: string]: any,
+  }
+});
+```
+
+### Tags Field
+
+Use tags to categorize logs for easier filtering:
+
+```typescript
+logger.error("Payment failed", {
+  metadata: { orderId, amount },
+  tags: ["payment", "stripe", "error"],
+  service: "payment-service",
+});
+```
+
+## Common Patterns
+
+### Authentication/Authorization
+
+```typescript
+// Authentication required
+logger.warn("Authentication required - redirecting to signin");
+
+// Insufficient permissions
+logger.warn("Insufficient permissions", {
+  metadata: {
+    userId: session.user.id,
+    role: session.user.role,
+    requiredRoles: ["owner", "admin"],
+  }
+});
+```
+
+### Store Access Control
+
+```typescript
+// Access denied
+logger.warn("Store access denied or store not found", {
+  metadata: {
+    storeId,
+    userId,
+  }
+});
+
+// Missing parameters
+logger.error("Missing storeId or userId for access check", {
+  metadata: { storeId, userId }
+});
+```
+
+### API/Network Errors
+
+```typescript
+logger.error("Failed to fetch data from API", {
+  metadata: {
+    endpoint: "/api/users",
+    statusCode: response.status,
+    error: error.message,
+    duration: Date.now() - startTime,
+  },
+  tags: ["api", "network", "error"],
+});
+```
+
+### Database Operations
+
+```typescript
+logger.error("Database query failed", {
+  metadata: {
+    query: "findFirst",
+    table: "Store",
+    storeId,
+    error: error.message,
+  },
+  tags: ["database", "prisma", "error"],
+});
+```
+
+### Performance Monitoring
+
+```typescript
+const startTime = Date.now();
+// ... operation ...
+const duration = Date.now() - startTime;
+
+logger.info("Operation completed", {
+  metadata: {
+    operation: "processOrder",
+    duration,
+    itemCount: items.length,
+  },
+  tags: ["performance"],
+});
+```
+
+### Payment Operations
+
+```typescript
+logger.info("Payment processed successfully", {
+  metadata: {
+    paymentId: payment.id,
+    orderId: order.id,
+    amount: payment.amount,
+    currency: payment.currency,
+    provider: "stripe",
+  },
+  tags: ["payment", "stripe", "success"],
+  service: "payment-service",
+});
+```
+
+### Email Operations
+
+```typescript
+logger.error("Email send failed", {
+  metadata: {
+    to: email.to,
+    subject: email.subject,
+    templateId: email.templateId,
+    error: error.message,
+    retryCount: 3,
+  },
+  tags: ["email", "smtp", "error"],
+  service: "email-service",
+});
+```
+
+## Best Practices
+
+### ✅ DO
+
+```typescript
+// Use structured metadata
+logger.warn("Store access denied", {
+  metadata: {
+    storeId,
+    userId,
+  }
+});
+
+// Include relevant context
+logger.error("Payment failed", {
+  metadata: {
+    orderId: order.id,
+    amount: order.total,
+    provider: "stripe",
+    error: error.message,
+  },
+  tags: ["payment", "error"],
+});
+
+// Use appropriate log levels
+logger.info("Order created");    // Success
+logger.warn("Rate limit reached"); // Warning
+logger.error("Payment failed");    // Error
+```
+
+### ❌ DON'T
+
+```typescript
+// Don't use console.log
+console.log("User logged in"); // ❌
+
+// Don't log without context
+logger.error("Failed"); // ❌ Too vague
+
+// Don't mix message and metadata
+logger.error({ error: "Failed", userId }); // ❌
+
+// Don't log sensitive data
+logger.info("User password: " + password); // ❌ Security risk
+```
+
+## Security Considerations
+
+**Never log sensitive data:**
+
+- ❌ Passwords
+- ❌ Credit card numbers
+- ❌ API keys/tokens
+- ❌ Personal identification numbers
+- ❌ Full email addresses (use hashed or masked versions)
+
+**Safe to log:**
+
+- ✅ User IDs (UUIDs)
+- ✅ Order IDs
+- ✅ Timestamps
+- ✅ Status codes
+- ✅ Error messages (sanitized)
+- ✅ Performance metrics
+
+## Development vs Production
+
+### Development
+
+```typescript
+if (process.env.NODE_ENV !== "production") {
+  logger.debug("Debug info", { metadata: { data } });
+}
+```
+
+### Production
+
+Focus on actionable logs that help diagnose issues:
+
+- Authentication failures
+- Authorization errors
+- Payment failures
+- API errors
+- Performance issues
+
+## Example: Complete Function
 
 ```typescript
 import logger from "@/lib/logger";
 
-// Can now call without passing userId:
-logger.log("Created rule");
+export async function processOrder(orderId: string, userId: string) {
+  const startTime = Date.now();
+  
+  try {
+    // Log operation start
+    logger.info("Processing order", {
+      metadata: { orderId, userId },
+      tags: ["order", "processing"],
+    });
+    
+    const order = await db.order.findUnique({ where: { id: orderId } });
+    
+    if (!order) {
+      logger.warn("Order not found", {
+        metadata: { orderId, userId },
+        tags: ["order", "not-found"],
+      });
+      return null;
+    }
+    
+    // Process order...
+    const result = await doProcessing(order);
+    
+    // Log success
+    logger.info("Order processed successfully", {
+      metadata: {
+        orderId,
+        userId,
+        amount: order.total,
+        duration: Date.now() - startTime,
+      },
+      tags: ["order", "success"],
+    });
+    
+    return result;
+    
+  } catch (error) {
+    // Log error with context
+    logger.error("Order processing failed", {
+      metadata: {
+        orderId,
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+        duration: Date.now() - startTime,
+      },
+      tags: ["order", "error"],
+    });
+    throw error;
+  }
+}
 ```
 
-Don't use `.with()` for a global logger. Only use within a specific function.
+## Error Handling in Catch Blocks
+
+### ✅ Correct Pattern
+
+Always match the catch variable name with what you use in the logger:
+
+```typescript
+try {
+  await riskyOperation();
+} catch (err: unknown) {
+  logger.error("Operation failed", {
+    metadata: {
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    },
+    tags: ["operation", "error"],
+  });
+  throw err;
+}
+```
+
+### ❌ Common Mistakes
+
+```typescript
+// DON'T: Mismatched variable names
+try {
+  await riskyOperation();
+} catch (err: unknown) {
+  logger.error("Operation failed", {
+    metadata: {
+      error: error.message, // ❌ 'error' is not defined, should be 'err'
+    },
+  });
+}
+
+// DON'T: Assume error is always an Error object
+try {
+  await riskyOperation();
+} catch (err) {
+  logger.error("Operation failed", {
+    metadata: {
+      error: err.message, // ❌ err might not be an Error object
+    },
+  });
+}
+```
+
+### Best Practices for Error Logging
+
+1. **Type check before accessing properties:**
+   ```typescript
+   error: err instanceof Error ? err.message : String(err)
+   ```
+
+2. **Include stack traces for debugging:**
+   ```typescript
+   stack: err instanceof Error ? err.stack : undefined
+   ```
+
+3. **Use consistent variable names:**
+   ```typescript
+   // Use 'err' or 'error' consistently throughout the catch block
+   catch (err: unknown) {
+     logger.error("...", { metadata: { error: err... } });
+     throw err;
+   }
+   ```
+
+4. **Log before re-throwing:**
+   ```typescript
+   catch (err: unknown) {
+     logger.error("Failed", { metadata: { ... } });
+     throw err; // Re-throw after logging
+   }
+   ```
+
+## Summary
+
+1. **Always use `logger`**, never `console.log`
+2. **Use structured metadata** for searchability
+3. **Include relevant context** (IDs, status, duration)
+4. **Use appropriate log levels** (info, warn, error)
+5. **Add tags** for categorization
+6. **Never log sensitive data**
+7. **Make logs actionable** - include info needed to debug issues
+8. **Match catch variable names** with what you use in logger
+9. **Type check errors** before accessing properties

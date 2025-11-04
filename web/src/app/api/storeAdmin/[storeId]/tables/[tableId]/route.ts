@@ -2,6 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import logger from "@/lib/logger";
 
 //delete storetable by its id
 export async function DELETE(
@@ -24,11 +25,18 @@ export async function DELETE(
 		},
 	});
 
-	console.log("[STORE_TABLE_DELETED]", obj);
+	logger.info("store table deleted", {
+		tags: ["api"],
+	});
 
 	return NextResponse.json(obj);
 	/*} catch (error) {
-    console.log("[PRODUCT_DELETE]", error);
+    logger.info("product delete", {
+    	metadata: {
+    		error: error instanceof Error ? error.message : String(error),
+    	},
+    	tags: ["api"],
+    });
     return new NextResponse("Internal error", { status: 500 });
   }*/
 }
@@ -65,7 +73,12 @@ export async function PATCH(
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[STORE_TABLE_PATCH]", error);
+		logger.info("store table patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

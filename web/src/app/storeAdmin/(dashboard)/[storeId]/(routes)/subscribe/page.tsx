@@ -1,13 +1,11 @@
-import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
-import type { Store } from "@/types";
-import { Suspense } from "react";
 import { PkgSelection } from "./pkgSelection";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ensureStripeCustomer } from "@/actions/user/ensure-stripe-customer";
+import { getStoreWithRelations } from "@/lib/store-access";
+import logger from "@/lib/logger";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -17,67 +15,35 @@ export default async function StoreSubscribePage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
-	/*
-  await sqlClient.storeSubscription.deleteMany({
-  });
-  await sqlClient.subscriptionPayment.deleteMany({
-  });
-  await sqlClient.store.update({
-	where: {
-	  id: params.storeId,
-	},
-	data: {
-	  level: StoreLevel.Free
-	}
-  });
-  */
-	//1. make sure the user has stripe customer id
+
+	// Check authentication first
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});
+
 	if (!session) {
 		redirect(`/signin?callbackUrl=/storeAdmin/${params.storeId}/subscribe`);
 	}
 
-	await ensureStripeCustomer(session.user.id);
+	// Note: checkStoreStaffAccess already called in layout (cached)
+	// Parallel queries for optimal performance
+	const [_customerCheck, store, subscription] = await Promise.all([
+		ensureStripeCustomer(session.user.id),
+		getStoreWithRelations(params.storeId),
+		sqlClient.storeSubscription.findUnique({
+			where: { storeId: params.storeId },
+		}),
+	]);
 
-	const store = (await checkStoreStaffAccess(params.storeId)) as Store;
-	const subscription = await sqlClient.storeSubscription.findUnique({
-		where: {
-			storeId: store.id,
-		},
-	});
-
-	if (process.env.NODE_ENV === "development")
-		console.log("subscription", subscription);
-
-	/*
-	if (subscription !== null) {
-		const subscriptionScheduleId = subscription.subscriptionId as string;
-
-		console.log("subscriptionScheduleId", subscriptionScheduleId);
-
-		let subscriptionSchedule = null;
-		try {
-			if (subscriptionScheduleId !== null)
-				subscriptionSchedule = await stripe.subscriptionSchedules.retrieve(
-					subscriptionScheduleId,
-				);
-		} catch (err) {
-			console.error(err);
-			//logger.error(err);
-		}
-		console.log("subscriptionSchedule", subscriptionSchedule);
+	if (process.env.NODE_ENV === "development") {
+		logger.info("subscription");
 	}
-	*/
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<section className="relative w-full">
-				<div className="container">
-					<PkgSelection store={store} subscription={subscription} />
-				</div>
-			</section>
-		</Suspense>
+		<section className="relative w-full">
+			<div className="container">
+				<PkgSelection store={store} subscription={subscription} />
+			</div>
+		</section>
 	);
 }

@@ -22,6 +22,7 @@ import {
 	IconLocation,
 } from "@tabler/icons-react";
 import { ApiListing } from "@/components/api-listing";
+import logger from "@/lib/logger";
 
 export function ClientGeoIP() {
 	const [customIP, setCustomIP] = useState("");
@@ -51,7 +52,7 @@ export function ClientGeoIP() {
 				`/api/geo?ip=${encodeURIComponent(customIP.trim())}`,
 			);
 			const data = await result.json();
-			console.log("Custom IP lookup result:", data);
+			logger.info("Custom IP lookup result:");
 		}
 	};
 
@@ -64,7 +65,12 @@ export function ClientGeoIP() {
 				refetch();
 			}
 		} catch (error) {
-			console.error("Failed to clear cache:", error);
+			logger.error("Failed to clear cache:", {
+				metadata: {
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["error"],
+			});
 		}
 	};
 
@@ -72,9 +78,14 @@ export function ClientGeoIP() {
 		try {
 			const response = await fetch("/api/geo?action=cache-stats");
 			const data = await response.json();
-			console.log("Cache stats:", data);
+			logger.info("Cache stats:");
 		} catch (error) {
-			console.error("Failed to get cache stats:", error);
+			logger.error("Failed to get cache stats:", {
+				metadata: {
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["error"],
+			});
 		}
 	};
 

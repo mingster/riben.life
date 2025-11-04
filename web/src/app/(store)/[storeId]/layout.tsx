@@ -1,8 +1,7 @@
-import { Loader } from "@/components/loader";
 import { CartProvider } from "@/hooks/use-cart";
 import { sqlClient } from "@/lib/prismadb";
+import { isReservedRoute } from "@/lib/reserved-routes";
 import type { Store } from "@/types";
-import { Suspense } from "react";
 import { StoreFooter } from "./components/store-footer";
 import { StoreNavbar } from "./components/store-navbar";
 
@@ -22,15 +21,8 @@ export async function generateMetadata(
 ): Promise<Metadata> {
 	const params = await props.params;
 
-	// Prevent admin routes from being treated as store routes
-	if (
-		!params.storeId ||
-		params.storeId === "storeAdmin" ||
-		params.storeId.includes("storeAdmin") ||
-		params.storeId === "sysAdmin" ||
-		params.storeId === "api" ||
-		params.storeId === "auth"
-	) {
+	// Prevent admin and reserved routes from being treated as store routes
+	if (isReservedRoute(params.storeId)) {
 		return {
 			title: "riben.life",
 		};
@@ -71,19 +63,10 @@ export default async function StoreHomeLayout(props: {
 		children,
 	} = props;
 
-	// Prevent admin routes from being treated as customer store pages
-	// Pass through children without store layout for admin routes
-	if (
-		!params.storeId ||
-		params.storeId === "storeAdmin" ||
-		params.storeId.includes("storeAdmin") ||
-		params.storeId === "sysAdmin" ||
-		params.storeId === "api" ||
-		params.storeId === "auth" ||
-		params.storeId === "undefined" ||
-		params.storeId === "null"
-	) {
-		// Admin routes - pass through children without store layout
+	// Prevent admin and reserved routes from being treated as customer store pages
+	// Pass through children without store layout for reserved routes
+	if (isReservedRoute(params.storeId)) {
+		// Reserved routes - pass through children without store layout
 		return <>{children}</>;
 	}
 
@@ -124,17 +107,15 @@ export default async function StoreHomeLayout(props: {
 	}
 
 	return (
-		<Suspense fallback={<Loader />}>
-			<CartProvider>
-				<div className="bg-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
-					<StoreNavbar visible={true} store={store} />
-					<main>
-						<span className="hash-span" id="top" />
-						{children}
-					</main>
-					<StoreFooter visible={isStoreOpen} store={store} />
-				</div>
-			</CartProvider>
-		</Suspense>
+		<CartProvider>
+			<div className="bg-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
+				<StoreNavbar visible={true} store={store} />
+				<main>
+					<span className="hash-span" id="top" />
+					{children}
+				</main>
+				<StoreFooter visible={isStoreOpen} store={store} />
+			</div>
+		</CartProvider>
 	);
 }

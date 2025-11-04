@@ -2,6 +2,7 @@ import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 //delete product option template by its id
 export async function DELETE(
@@ -32,7 +33,12 @@ export async function DELETE(
 
 	return NextResponse.json(obj);
 	/*} catch (error) {
-    console.log("[PRODUCT_DELETE]", error);
+    logger.info("product delete", {
+    	metadata: {
+    		error: error instanceof Error ? error.message : String(error),
+    	},
+    	tags: ["api"],
+    });
     return new NextResponse("Internal error", { status: 500 });
   }*/
 }

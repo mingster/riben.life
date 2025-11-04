@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { clientLogger } from "@/lib/client-logger";
+import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -186,7 +187,11 @@ const ContactFormInner = () => {
 					}
 					captchaToken = token;
 				} catch (error) {
-					console.warn("ReCAPTCHA execution failed:", error);
+					logger.warn("ReCAPTCHA execution failed:", {
+						metadata: {
+							error: error instanceof Error ? error.message : String(error),
+						},
+					});
 					// Continue without captcha token - let server handle it
 				}
 			}
@@ -409,7 +414,9 @@ export const ContactForm = () => {
 	const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA as string;
 
 	if (!siteKey) {
-		console.error("NEXT_PUBLIC_RECAPTCHA environment variable is not set");
+		logger.error("NEXT_PUBLIC_RECAPTCHA environment variable is not set", {
+			tags: ["error"],
+		});
 		return (
 			<div className="text-red-500 p-4">
 				reCAPTCHA configuration error. Please contact support.

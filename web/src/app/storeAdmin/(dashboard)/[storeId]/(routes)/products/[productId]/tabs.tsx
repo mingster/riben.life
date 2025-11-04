@@ -33,6 +33,7 @@ import axios from "axios";
 import { IconTrash } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { ProductEditOptionsTab } from "./product-edit-options-tab";
+import logger from "@/lib/logger";
 
 interface editProps {
 	initialData:
@@ -76,7 +77,7 @@ export const ProductEditTabs = ({
 	const handleTabChange = (value: string) => {
 		//update the state
 		setActiveTab(value);
-		console.log(`handleTabChange: ${value}`);
+		logger.info("Operation log");
 		// update the URL query parameter
 		//router.push({ query: { tab: value } });
 	};

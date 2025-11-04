@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import logger from "@/lib/logger";
 
 ///!SECTION update user data on user's own behave.
 export async function PATCH(req: Request) {
@@ -41,7 +42,12 @@ export async function PATCH(req: Request) {
 
 		return NextResponse.json("success");
 	} catch (error) {
-		console.log("[PATCH]", error);
+		logger.info("patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
