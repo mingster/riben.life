@@ -10,6 +10,7 @@ import logger from "@/lib/logger";
 import type { Session } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import type { Role } from "@/types/enum";
 
 // Route constants
 const ROUTES = {
@@ -18,7 +19,7 @@ const ROUTES = {
 } as const;
 
 // Allowed roles
-export type UserRole = "admin" | "owner" | "user";
+export type UserRole = (typeof Role)[keyof typeof Role];
 
 /**
  * Require user to be authenticated

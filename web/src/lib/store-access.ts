@@ -20,13 +20,19 @@ const ROUTES = {
  * Check if user has access to a specific store
  * Returns minimal store data for access control - does NOT include relations
  *
+ * Note: This function checks store ownership (ownerId === userId).
+ * For role-based access (admin access to all stores), use requireStoreAccess
+ * which should be called AFTER role verification via requireAuthWithRole.
+ *
  * @param storeId - The store ID to check
  * @param userId - The user ID to check access for
+ * @param userRole - Optional user role for admin bypass
  * @returns Minimal store object or null if no access
  */
 export async function checkStoreOwnership(
 	storeId: string,
 	userId: string,
+	userRole?: string,
 ): Promise<Store | null> {
 	if (!storeId || !userId) {
 		logger.error("Missing storeId or userId for access check", {
@@ -35,11 +41,13 @@ export async function checkStoreOwnership(
 		return null;
 	}
 
+	// Admin users can access any store
+	const where = userRole === "admin" 
+		? { id: storeId }
+		: { id: storeId, ownerId: userId };
+
 	const store = await sqlClient.store.findFirst({
-		where: {
-			id: storeId,
-			ownerId: userId,
-		},
+		where,
 		select: {
 			// Only select essential fields for access control
 			id: true,
@@ -80,20 +88,23 @@ export async function checkStoreOwnership(
  *
  * @param storeId - The store ID to check
  * @param userId - The user ID to check access for
+ * @param userRole - Optional user role (admin can access any store)
  * @returns Minimal store object
  * @throws Redirects to /storeAdmin if access denied
  */
 export async function requireStoreAccess(
 	storeId: string,
 	userId: string,
+	userRole?: string,
 ): Promise<Store> {
-	const store = await checkStoreOwnership(storeId, userId);
+	const store = await checkStoreOwnership(storeId, userId, userRole);
 
 	if (!store) {
 		logger.warn("Store access denied or store not found", {
 			metadata: {
 				storeId,
 				userId,
+				userRole,
 			},
 		});
 		redirect(ROUTES.STORE_ADMIN);

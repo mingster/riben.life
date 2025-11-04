@@ -6,9 +6,10 @@
  */
 
 import isProLevel from "@/actions/storeAdmin/is-pro-level";
-import { requireAuthWithRole } from "@/lib/auth-utils";
+import { requireAuthWithRole, UserRole } from "@/lib/auth-utils";
 import { requireStoreAccess } from "@/lib/store-access";
 import type { Store } from "@/types";
+import { Role } from "@prisma/client";
 import { cache } from "react";
 
 /**
@@ -51,10 +52,15 @@ import { cache } from "react";
 export const checkStoreStaffAccess = cache(
 	async (storeId: string): Promise<Store> => {
 		// 1. Require authentication with owner/admin role
-		const session = await requireAuthWithRole(["owner", "admin"]);
+		const session = await requireAuthWithRole([Role.owner, Role.admin] as UserRole[]);
 
 		// 2. Require store access/ownership
-		const store = await requireStoreAccess(storeId, session.user.id);
+		// Pass user role so admins can access any store
+		const store = await requireStoreAccess(
+			storeId, 
+			session.user.id, 
+			session.user.role ?? undefined
+		);
 
 		// 3. Return minimal store data
 		return store;
