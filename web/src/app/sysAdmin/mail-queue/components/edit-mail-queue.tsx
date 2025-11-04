@@ -41,6 +41,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { EmailQueue } from "@/types";
 import { IconEdit, IconPlus } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
+import logger from "@/lib/logger";
 
 interface props {
 	item: z.infer<typeof updateEmailQueueSchema>;
@@ -85,7 +86,7 @@ export const EditMailQueue: React.FC<props> = ({ item, onUpdated, isNew }) => {
 	//console.log("disabled", loading || form.formState.isSubmitting);
 
 	async function onSubmit(data: UpdateEmailQueueInput) {
-		console.log("data", data);
+		logger.info("data");
 		setLoading(true);
 		const result = (await updateEmailQueueAction(data)) as EmailQueue;
 		if (result?.serverError) {

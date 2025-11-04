@@ -5,6 +5,7 @@ import { StoreLevel, SubscriptionStatus } from "@/types/enum";
 import { getUtcNow } from "@/utils/datetime-utils";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 export async function GET(
 	_req: Request,
@@ -121,7 +122,12 @@ export async function POST(
 					});
 				}
 			} catch (error) {
-				console.log("[SubscriptionPayment_POST]", error);
+				logger.info("subscriptionpayment post", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["api"],
+				});
 
 				return new NextResponse(`Internal error${error}`, { status: 500 });
 			}
@@ -132,7 +138,12 @@ export async function POST(
 
 		return NextResponse.json("ok", { status: 200 });
 	} catch (error) {
-		console.log("[SubscriptionPayment_POST]", error);
+		logger.info("subscriptionpayment post", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

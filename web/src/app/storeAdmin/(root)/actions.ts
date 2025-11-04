@@ -80,7 +80,11 @@ export const createStore = async (values: z.infer<typeof formSchema>) => {
 			});
 		}
 	} catch (error) {
-		console.log(`${error}the user is not in user role`);
+		logger.info("Operation log", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+		});
 	}
 
 	const databaseId = store.id;
@@ -131,11 +135,15 @@ export const createStore = async (values: z.infer<typeof formSchema>) => {
 	// Returning the string representation of the new Store
 
 	const result = newStore.toString();
-	console.log(result);
+	logger.info("Operation log");
 
 	return result;
   } catch (error) {
-	console.log(error);
+	logger.info("Operation log", {
+		metadata: {
+			error: error instanceof Error ? error.message : String(error),
+		},
+	});
 	return { message: 'error creating Store' };
   }
 	*/

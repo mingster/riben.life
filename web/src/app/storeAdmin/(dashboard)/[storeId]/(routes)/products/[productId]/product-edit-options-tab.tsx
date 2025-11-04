@@ -29,6 +29,7 @@ import { t } from "i18next";
 import { IconCheck, IconTrash, IconX } from "@tabler/icons-react";
 import { AddProductOptionDialog } from "./product-option-dialog";
 import { toastError, toastSuccess } from "@/components/toaster";
+import logger from "@/lib/logger";
 
 interface editProps {
 	initialData:
@@ -617,7 +618,7 @@ export const DisplayOptions = ({
 
 	/*
   productOptions.map((option: ProductOption, index) => {
-	console.log(`DisplayOptions[${index}]: ${JSON.stringify(option)}`);
+	logger.info("${index}");
   });
   */
 

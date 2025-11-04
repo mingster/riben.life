@@ -19,6 +19,7 @@ import type { orderitemview } from "@prisma/client";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import logger from "@/lib/logger";
 
 // customer select linepay as payment method. here we will make a payment request
 // and redirect user to linepay payment page
@@ -126,7 +127,9 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 	}
 
 	// something wrong
-	console.error(res.body.returnMessage);
+	logger.error("Operation log", {
+		tags: ["error"],
+	});
 	throw new Error(res.body.returnMessage);
 };
 

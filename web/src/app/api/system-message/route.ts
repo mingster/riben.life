@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
 import { SystemMessage } from "@/types";
+import logger from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
 	try {
@@ -17,7 +18,12 @@ export async function GET(req: NextRequest) {
 			message: message,
 		});
 	} catch (error) {
-		console.error("Error fetching system message:", error);
+		logger.error("Failed to fetch system message", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api", "system-message", "error"],
+		});
 		return NextResponse.json(
 			{ error: "Failed to fetch system message" },
 			{ status: 500 },

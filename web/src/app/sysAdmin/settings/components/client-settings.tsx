@@ -22,6 +22,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type Stripe from "stripe";
 import type { z } from "zod/v4";
+import logger from "@/lib/logger";
 
 // update platform settings.
 //
@@ -69,7 +70,7 @@ export const ClientSettings = ({
 
 	// commit to db and return the updated category
 	async function onSubmit(data: formValues) {
-		console.log("onSubmit", data);
+		logger.info("onSubmit");
 		setLoading(true);
 
 		// stringify kv array

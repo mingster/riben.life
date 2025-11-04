@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { FaqEdit } from "./faq-edit";
+import logger from "@/lib/logger";
 
 const FaqEditPage = async (props: {
 	params: Promise<{ storeId: string; categoryId: string; faqId: string }>;
@@ -24,7 +25,7 @@ const FaqEditPage = async (props: {
 			FaqCategory: true, // Include the FaqCategory property
 		},
 	});
-	console.log(`FaqEditPage: ${JSON.stringify(obj)}`);
+	logger.info("Operation log");
 
 	let action = "Edit";
 	if (obj === null) action = "Create";

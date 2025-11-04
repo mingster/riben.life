@@ -19,6 +19,7 @@ import {
 	FormItem,
 	FormLabel,
 } from "@/components/ui/form";
+import logger from "@/lib/logger";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -68,10 +69,10 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
   useEffect(() => {
 	setIsSubmittable(!!form.formState.isDirty && !!form.formState.isValid);
   }, [form.formState]);
-  console.log(`isSubmittable:${isSubmittable}`);
+  logger.info("Operation log");
 
   const useBusinessHours = form.watch("useBusinessHours");
-  console.log(`useBusinessHours: ${useBusinessHours}`);
+  logger.info("Operation log");
   //form.setValue("isOpen", !useBusinessHours);
   */
 	const { lng } = useI18n();

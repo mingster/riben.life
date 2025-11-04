@@ -5,6 +5,7 @@ import { getUtcNow } from "@/utils/datetime-utils";
 import { headers } from "next/headers";
 
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 ///!SECTION add reply to this ticket.
 export async function PATCH(
@@ -68,7 +69,9 @@ export async function PATCH(
 				lastModified: getUtcNow(),
 			},
 		});
-		console.log(`reply ticket created: ${JSON.stringify(reply)}`);
+		logger.info("Operation log", {
+			tags: ["api"],
+		});
 
 		// update status in this thread
 		const _cnt = await sqlClient.supportTicket.updateMany({
@@ -83,7 +86,12 @@ export async function PATCH(
 
 		return NextResponse.json(reply);
 	} catch (error) {
-		console.log("[TICKET_PATCH]", error);
+		logger.info("ticket patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
@@ -151,7 +159,12 @@ export async function DELETE(
 
 		return NextResponse.json({ success: true });
 	} catch (error) {
-		console.log("[TICKET_DELETE]", error);
+		logger.info("ticket delete", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

@@ -1,6 +1,7 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 ///!SECTION update faq record in database.
 export async function PATCH(
@@ -33,7 +34,12 @@ export async function PATCH(
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[FAQ_PATCH]", error);
+		logger.info("faq patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
@@ -68,7 +74,12 @@ export async function DELETE(
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[FAQ_DELETE]", error);
+		logger.info("faq delete", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

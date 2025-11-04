@@ -16,8 +16,6 @@ export default async function StoreLayout(props: {
 	const params = await props.params;
 	const { children } = props;
 
-	console.log(`storeId: ${params.storeId}`);
-
 	// Use checkStoreAccess to consolidate session check and store query
 	// This prevents duplicate database connections
 	const store = await checkStoreStaffAccess(params.storeId);

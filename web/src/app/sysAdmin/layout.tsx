@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { checkAdminAccess } from "./admin-utils";
 import AdminLayout from "./components/admin-layout";
+import logger from "@/lib/logger";
 
 export default async function AdminDashboardLayout({
 	children,
@@ -24,7 +25,7 @@ export default async function AdminDashboardLayout({
 		redirect("/signIn/?redirect_url=/sysAdmin");
 	}
 
-	console.log("admin user", session.user?.email, session.user?.role);
+	logger.info("admin user");
 	*/
 
 	const cookieStore = await cookies();

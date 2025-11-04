@@ -50,6 +50,7 @@ import type {
 } from "@/types";
 import { EditMessageTemplate } from "./edit-message-template";
 import { EditMessageTemplateLocalized } from "./edit-message-template-localized";
+import logger from "@/lib/logger";
 
 interface props {
 	serverData: MessageTemplate[];
@@ -169,7 +170,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 				...newVal,
 			},
 		]);
-		console.log("handleCreated", newVal);
+		logger.info("handleCreated");
 	};
 
 	// Handle updated value in the data array
@@ -177,14 +178,14 @@ export const MessageTemplateClient: React.FC<props> = ({
 		setMessageTemplateData((prev) =>
 			prev.map((cat) => (cat.id === updatedVal.id ? updatedVal : cat)),
 		);
-		console.log("handleUpdated", updatedVal);
+		logger.info("handleUpdated");
 	};
 
 	const handleDeleted = (deletedVal: MessageTemplate) => {
 		setMessageTemplateData((prev) =>
 			prev.filter((cat) => cat.id !== deletedVal.id),
 		);
-		console.log("handleDeleted", deletedVal);
+		logger.info("handleDeleted");
 	};
 
 	/* #endregion */
@@ -376,7 +377,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 		setMessageTemplateLocalizedData((prev) =>
 			prev.map((cat) => (cat.id === updatedVal.id ? updatedVal : cat)),
 		);
-		console.log("handleMessageTemplateLocalizedUpdated", updatedVal);
+		logger.info("handleMessageTemplateLocalizedUpdated");
 	};
 
 	const handleMessageTemplateLocalizedDeleted = (
@@ -402,7 +403,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 			handleUpdated(template);
 		}
 
-		console.log("handleMessageTemplateLocalizedDeleted", deletedVal);
+		logger.info("handleMessageTemplateLocalizedDeleted");
 	};
 	/* #endregion */
 

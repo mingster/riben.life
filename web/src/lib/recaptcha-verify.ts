@@ -1,4 +1,5 @@
 import { RecaptchaEnterpriseServiceClient } from "@google-cloud/recaptcha-enterprise";
+import logger from "@/lib/logger";
 
 interface RecaptchaVerificationResult {
 	success: boolean;
@@ -117,7 +118,12 @@ export async function verifyRecaptchaV3({
 			reasons: reasons.map((reason) => reason.toString()),
 		};
 	} catch (error) {
-		console.error("reCAPTCHA verification error:", error);
+		logger.error("reCAPTCHA verification error:", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["error"],
+		});
 		return {
 			success: false,
 			error: error instanceof Error ? error.message : "Unknown error",
@@ -173,7 +179,12 @@ export async function verifyRecaptchaBasic(
 			};
 		}
 	} catch (error) {
-		console.error("Basic reCAPTCHA verification error:", error);
+		logger.error("Basic reCAPTCHA verification error:", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["error"],
+		});
 		return {
 			success: false,
 			error: error instanceof Error ? error.message : "Network error",
@@ -199,7 +210,7 @@ export async function verifyRecaptcha(
 		try {
 			const result = await verifyRecaptchaV3({ token, ...options });
 			if (result.success) {
-				console.log("✓ Enterprise reCAPTCHA verification successful");
+				logger.info("✓ Enterprise reCAPTCHA verification successful");
 				return result;
 			}
 			// If Enterprise fails, log and continue to basic verification
@@ -225,7 +236,7 @@ export async function verifyRecaptcha(
 		process.env.RECAPTCHA_SECRET_KEY,
 	);
 	if (result.success) {
-		console.log("✓ Basic reCAPTCHA verification successful");
+		logger.info("✓ Basic reCAPTCHA verification successful");
 	}
 	return result;
 }

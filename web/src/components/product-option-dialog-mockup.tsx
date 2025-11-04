@@ -36,6 +36,7 @@ import Currency from "./currency";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { z } from "zod";
+import logger from "@/lib/logger";
 
 type item_props = {
 	id: string;
@@ -235,7 +236,7 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
 
 	const onSubmit = async (data: z.infer<typeof formSchema>) => {
 		try {
-			console.log("form data", JSON.stringify(data));
+			logger.info("form data");
 			// Your submission logic here
 		} catch (_error) {
 			form.setError("root", {
@@ -256,7 +257,7 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
 			selected = option1_items.find((item) => item.name === selectedVal);
 		} else if (fieldName === "option4") {
 			selected = option4_items.find((item) => item.name === selectedVal);
-			console.log("selected", selected);
+			logger.info("selected");
 		}
 
 		if (selected) {

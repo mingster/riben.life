@@ -2,6 +2,7 @@
 import Container from "@/components/ui/container";
 import confirmPayment from "@/actions/storeAdmin/subscription/stripe/confirm-payment";
 import { SuccessAndRedirect } from "./SuccessAndRedirect";
+import logger from "@/lib/logger";
 
 // This page is triggered when Stripe confirms the payment.
 // Marks the SubscriptionPayment as paid, activates the subscription, and shows confirmation.
@@ -16,8 +17,8 @@ export default async function StripeConfirmedPage(props: {
 	const params = await props.params;
 
 	if (process.env.NODE_ENV === "development") {
-		console.log("orderid", params.orderId);
-		console.log("payment_intent", searchParams.payment_intent);
+		logger.info("orderid");
+		logger.info("payment_intent");
 		console.log(
 			"payment_intent_client_secret",
 			searchParams.payment_intent_client_secret,
@@ -30,7 +31,7 @@ export default async function StripeConfirmedPage(props: {
 		searchParams.payment_intent_client_secret,
 	)) as boolean;
 
-	console.log("confirmed", confirmed);
+	logger.info("confirmed");
 
 	if (confirmed) {
 		return (

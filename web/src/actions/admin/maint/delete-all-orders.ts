@@ -1,6 +1,7 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
 import { redirect } from "next/navigation";
+import logger from "@/lib/logger";
 
 export const deleteAllOrders = async () => {
 	const { count } = await sqlClient.storeOrder.deleteMany({
@@ -9,7 +10,9 @@ export const deleteAllOrders = async () => {
 		},
 	});
 
-	console.log(`${count} order deleted.`);
+	logger.info("Operation log", {
+		tags: ["action"],
+	});
 
 	redirect("/admin/maint");
 

@@ -2,6 +2,7 @@
 
 import { promises as fs } from "fs";
 import { sqlClient } from "@/lib/prismadb";
+import logger from "@/lib/logger";
 
 export async function populateCurrencyData() {
 	const filePath = `${process.cwd()}/public/install/currency_iso.json`;
@@ -32,10 +33,16 @@ export async function populateCurrencyData() {
 					numToBasic: c.numToBasic,
 				},
 			});
-			console.log(currency);
+			logger.info("Operation log", {
+				tags: ["action"],
+			});
 		} catch (err) {
-			console.log(`${i}: ${c.currency}`, c.name, c.symbolNative);
-			console.error(err);
+			logger.info("Operation log", {
+				tags: ["action"],
+			});
+			logger.error("Operation log", {
+				tags: ["action", "error"],
+			});
 		}
 	}
 

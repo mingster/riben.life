@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { sqlClient } from "@/lib/prismadb";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import logger from "@/lib/logger";
 
 ///!SECTION delete given faq in database.
 export async function DELETE(
@@ -33,7 +34,12 @@ export async function DELETE(
 		) {
 			return new NextResponse("Faq not found", { status: 404 });
 		}
-		console.log("[DELETE]", error);
+		logger.info("delete", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 		return new NextResponse(`Internal error: ${(error as Error).message}`, {
 			status: 500,
 		});

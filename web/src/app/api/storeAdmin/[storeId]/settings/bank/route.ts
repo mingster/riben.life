@@ -4,6 +4,7 @@ import { getUtcNow } from "@/utils/datetime-utils";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import logger from "@/lib/logger";
 
 export async function PATCH(
 	req: Request,
@@ -37,7 +38,12 @@ export async function PATCH(
 
 		return NextResponse.json(store);
 	} catch (error) {
-		console.log("[STORE_PATCH]", error);
+		logger.info("store patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

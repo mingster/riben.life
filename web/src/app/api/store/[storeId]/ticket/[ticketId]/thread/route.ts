@@ -3,6 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { headers } from "next/headers";
 
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 ///!SECTION get all tickets that belong to the thread
 export async function POST(
@@ -47,7 +48,12 @@ export async function POST(
 
 		return NextResponse.json(thread);
 	} catch (error) {
-		console.log("[TICKET_POST]", error);
+		logger.info("ticket post", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

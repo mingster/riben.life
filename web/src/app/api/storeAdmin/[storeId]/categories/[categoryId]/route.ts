@@ -2,6 +2,7 @@ import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import logger from "@/lib/logger";
 
 ///!SECTION update Category record in database.
 export async function PATCH(
@@ -24,11 +25,18 @@ export async function PATCH(
 			data: { ...body },
 		});
 
-		console.log(`update Category: ${JSON.stringify(obj)}`);
+		logger.info("Operation log", {
+			tags: ["api"],
+		});
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[CATEGORY_PATCH]", error);
+		logger.info("category patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
@@ -53,11 +61,18 @@ export async function DELETE(
 		},
 	});
 
-	console.log(`delete Category: ${JSON.stringify(obj)}`);
+	logger.info("Operation log", {
+		tags: ["api"],
+	});
 
 	return NextResponse.json(obj);
 	/*} catch (error) {
-    console.log("[CATEGORY_DELETE]", error);
+    logger.info("category delete", {
+    	metadata: {
+    		error: error instanceof Error ? error.message : String(error),
+    	},
+    	tags: ["api"],
+    });
     return new NextResponse(`Internal error${error}`, { status: 500 });
   }*/
 }

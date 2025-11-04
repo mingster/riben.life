@@ -52,14 +52,17 @@ import { cache } from "react";
 export const checkStoreStaffAccess = cache(
 	async (storeId: string): Promise<Store> => {
 		// 1. Require authentication with owner/admin role
-		const session = await requireAuthWithRole([Role.owner, Role.admin] as UserRole[]);
+		const session = await requireAuthWithRole([
+			Role.owner,
+			Role.admin,
+		] as UserRole[]);
 
 		// 2. Require store access/ownership
 		// Pass user role so admins can access any store
 		const store = await requireStoreAccess(
-			storeId, 
-			session.user.id, 
-			session.user.role ?? undefined
+			storeId,
+			session.user.id,
+			session.user.role ?? undefined,
 		);
 
 		// 3. Return minimal store data

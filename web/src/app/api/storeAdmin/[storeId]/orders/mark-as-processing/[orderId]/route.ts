@@ -3,6 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
 import { getNowTimeInTz, getUtcNow } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 ///!SECTION mark the pending order as Processing
 export async function POST(
@@ -52,7 +53,12 @@ export async function POST(
 
 		return NextResponse.json("success", { status: 200 });
 	} catch (error) {
-		console.log("[ORDER_MARK_AS_COMPLETED]", error);
+		logger.info("order mark as completed", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

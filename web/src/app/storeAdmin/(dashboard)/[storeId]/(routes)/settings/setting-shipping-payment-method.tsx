@@ -101,8 +101,6 @@ export const ShippingPaymentMethodTab: React.FC<
 	);
 
 	// check the saved shipping methods
-	//
-	// biome-ignore lint/style/noVar: <explanation>
 	const savedStoreShippingMethods: RowSelectionState = {};
 
 	if (store) {
@@ -126,7 +124,6 @@ export const ShippingPaymentMethodTab: React.FC<
 			disabled: disablePaidOptions,
 		}),
 	);
-	// biome-ignore lint/style/noVar: <explanation>
 	const savedStorePayMethods: RowSelectionState = {};
 	if (store) {
 		// use index number as row key
@@ -179,7 +176,7 @@ export const ShippingPaymentMethodTab: React.FC<
 			<Card>
 				<CardHeader>請勾選本店所支援的配送方式:</CardHeader>
 				<CardContent
-					className="space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900"
+					className="space-y-2 data-disabled:text-gary-900 data-disabled:bg-gary-900"
 					data-disabled={disablePaidOptions}
 				>
 					<DataTableCheckbox
@@ -206,7 +203,7 @@ export const ShippingPaymentMethodTab: React.FC<
 			<Card>
 				<CardHeader>請勾選本店所支援的付款方式:</CardHeader>
 				<CardContent
-					className="space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900"
+					className="space-y-2 data-disabled:text-gary-900 data-disabled:bg-gary-900"
 					data-disabled={disablePaidOptions}
 				>
 					<DataTableCheckbox

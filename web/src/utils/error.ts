@@ -1,5 +1,6 @@
 import { APICallError, RetryError } from "ai";
 import type { z } from "zod";
+import logger from "@/lib/logger";
 
 export type ErrorMessage = { error: string; data?: any };
 export type ZodError = {
@@ -42,12 +43,21 @@ export function captureException(
 	userEmail?: string,
 ) {
 	if (isKnownApiError(error)) {
-		console.warn(`Known API error. email: ${userEmail}`, error, additionalInfo);
+		logger.warn("Operation log", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+		});
 		return;
 	}
 
 	// Log error to console
-	console.error(`Error captured for user: ${userEmail}`, error, additionalInfo);
+	logger.error("Operation log", {
+		metadata: {
+			error: error instanceof Error ? error.message : String(error),
+		},
+		tags: ["error"],
+	});
 }
 
 export type ActionError<E extends object = Record<string, unknown>> = {
@@ -131,7 +141,7 @@ export function checkCommonErrors(
 	url: string,
 ): ApiErrorType | null {
 	if (RetryError.isInstance(error) && isOpenAIRetryError(error)) {
-		console.warn(`OpenAI quota exceeded for url: ${url}`);
+		logger.warn("Operation log");
 		return {
 			type: "OpenAI Quota Exceeded",
 			message: `OpenAI error: ${error.message}`,

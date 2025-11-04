@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { getUtcNow } from "@/utils/datetime-utils";
 import { CheckAdminApiAccess } from "../../api_helper";
+import logger from "@/lib/logger";
 
 ///!SECTION update user in database.
 export async function PATCH(
@@ -28,11 +29,18 @@ export async function PATCH(
 			data: { ...body, updatedAt: getUtcNow() },
 		});
 
-		console.log(`updated user: ${JSON.stringify(obj)}`);
+		logger.info("Operation log", {
+			tags: ["api"],
+		});
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[USER_PATCH]", error);
+		logger.info("user patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

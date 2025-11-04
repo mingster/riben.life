@@ -342,7 +342,12 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 				});
 			})
 			.catch((error) => {
-				console.error("Error:", error);
+				logger.error("Error:", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["error"],
+				});
 				throw error;
 			});
 	}, [order]);

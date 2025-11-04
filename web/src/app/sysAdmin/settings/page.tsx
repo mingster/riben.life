@@ -36,7 +36,7 @@ export default async function SettingsAdminPage(props: {
 			settingsKV.push({ label: "Support.Email", value: "support@riben.life" });
 
 			setting.settings = JSON.stringify(settingsKV);
-			console.log("setting.settings", setting.settings);
+			logger.info("setting.settings");
 			await sqlClient.platformSettings.update({
 				where: { id: setting.id },
 				data: { settings: setting.settings },

@@ -1,12 +1,15 @@
 import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
 import { sendMail } from "@/actions/mail/send-mail";
 import { NextRequest } from "next/server";
+import logger from "@/lib/logger";
 
 // api to send a test email
 //
 export async function POST(request: NextRequest) {
 	const { email } = await request.json();
-	console.log("send test email to: ", email);
+	logger.info("send test email to: ", {
+		tags: ["api"],
+	});
 
 	const txtMessage = "Test";
 	const template = await loadOuterHtmTemplate();

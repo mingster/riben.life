@@ -26,8 +26,6 @@ export const baseClient = createSafeActionClient({
 				error: error.message,
 			},
 		});
-		// Need a better way to handle this within logger itself
-		if (process.env.NODE_ENV !== "production") console.log("Error:", error);
 		if (error instanceof SafeError) return error.message;
 		return "An unknown error occurred.";
 	},
@@ -94,7 +92,9 @@ export const storeOwnerActionClient = baseClient.use(
 		if (!session?.user) throw new SafeError("Unauthorized");
 
 		if (session.user.role !== "owner" && session.user.role !== "admin") {
-			console.error("access denied");
+			logger.error("access denied", {
+				tags: ["action", "error"],
+			});
 			throw new SafeError("Unauthorized");
 		}
 

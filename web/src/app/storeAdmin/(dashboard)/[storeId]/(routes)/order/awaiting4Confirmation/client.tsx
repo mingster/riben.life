@@ -11,6 +11,7 @@ import { format } from "date-fns-tz";
 import { getNowTimeInTz } from "@/utils/datetime-utils";
 import { formatDateTime } from "@/utils/datetime-utils";
 import { OrderPending } from "../../components/order-pending";
+import logger from "@/lib/logger";
 
 export interface props {
 	store: Store;
@@ -44,7 +45,12 @@ export const Awaiting4ConfirmationClient: React.FC<props> = ({ store }) => {
 				setPendingOrders(data);
 			})
 			.catch((error) => {
-				console.error("Error:", error);
+				logger.error("Error:", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["error"],
+				});
 				throw error;
 			});
 

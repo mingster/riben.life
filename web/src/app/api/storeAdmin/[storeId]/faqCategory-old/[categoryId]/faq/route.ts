@@ -1,6 +1,7 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 ///!SECTION create faq record in database.
 export async function POST(
@@ -24,7 +25,12 @@ export async function POST(
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[FAQ_POST]", error);
+		logger.info("faq post", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

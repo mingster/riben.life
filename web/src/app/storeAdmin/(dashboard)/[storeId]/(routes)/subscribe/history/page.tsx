@@ -57,9 +57,9 @@ export default async function StoreSubscriptionHistoryPage(props: {
 	}
 
 	if (process.env.NODE_ENV === "development") {
-		console.log("subscription", subscription);
-		console.log("payments", payments);
-		console.log("subscriptionSchedule", subscriptionSchedule);
+		logger.info("subscription");
+		logger.info("payments");
+		logger.info("subscriptionSchedule");
 	}
 
 	return (

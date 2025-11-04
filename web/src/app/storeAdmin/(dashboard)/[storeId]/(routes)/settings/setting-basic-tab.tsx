@@ -23,6 +23,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import logger from "@/lib/logger";
 
 import { ApiListing } from "@/components/api-listing";
 import { CountryCombobox } from "@/components/country-combobox";
@@ -121,10 +122,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
   useEffect(() => {
 	setIsSubmittable(!!form.formState.isDirty && !!form.formState.isValid);
   }, [form.formState]);
-  console.log(`isSubmittable:${isSubmittable}`);
+  logger.info("Operation log");
 
   const useBusinessHours = form.watch("useBusinessHours");
-  console.log(`useBusinessHours: ${useBusinessHours}`);
+  logger.info("Operation log");
   //form.setValue("isOpen", !useBusinessHours);
   */
 

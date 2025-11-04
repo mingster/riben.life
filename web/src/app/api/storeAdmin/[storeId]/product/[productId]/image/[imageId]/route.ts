@@ -1,6 +1,7 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 export async function DELETE(
 	req: Request,
@@ -19,7 +20,9 @@ export async function DELETE(
 			return new NextResponse("image id is required", { status: 400 });
 		}
 
-		console.log(`delete product image: ${params.imageId}`);
+		logger.info("Operation log", {
+			tags: ["api"],
+		});
 
 		const body = await req.json();
 		const { publicId } = body;
@@ -33,7 +36,12 @@ export async function DELETE(
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[PRODUCT_IMAGE_DELETE]", error);
+		logger.info("product image delete", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse("Internal error", { status: 500 });
 	}

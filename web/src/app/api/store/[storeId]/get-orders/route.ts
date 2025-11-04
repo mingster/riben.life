@@ -4,6 +4,7 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreOrder } from "@prisma/client";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 type Params = Promise<{ storeId: string }>;
 
@@ -93,11 +94,13 @@ export async function POST(
 		// otherwise, return empty
 		return NextResponse.json([]);
 	} catch (error) {
-		console.log("[POST]", error);
+		logger.error("Failed to get orders", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api", "store", "orders", "error"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
-}
-function getServerSession() {
-	throw new Error("Function not implemented.");
 }

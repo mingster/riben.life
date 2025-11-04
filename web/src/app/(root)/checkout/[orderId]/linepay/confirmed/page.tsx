@@ -22,6 +22,7 @@ import { getAbsoluteUrl } from "@/utils/utils";
 import { getUtcNow } from "@/utils/datetime-utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import logger from "@/lib/logger";
 
 // linepay confirmed page: once user completed the linepay payment, linepay will redirect to this page
 // here we check the payment status. Upon success, we mark the order as paid, and then redirect to success page.
@@ -79,7 +80,7 @@ export default async function LinePayConfirmedPage({
 		const updated_order = await MarkAsPaid(order.id, checkoutAttributes);
 
 		if (process.env.NODE_ENV === "development")
-			console.log("LinePayConfirmedPage", JSON.stringify(updated_order));
+			logger.info("LinePayConfirmedPage");
 
 		redirect(
 			`${getAbsoluteUrl()}/checkout/${updated_order.id}/linepay/success`,

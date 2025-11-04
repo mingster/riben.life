@@ -4,6 +4,7 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { StoreOrder } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import logger from "@/lib/logger";
 
 // get pending and processing orders in the store.
 export async function GET(
@@ -85,7 +86,12 @@ export async function GET(
 	return NextResponse.json(awaiting4ProcessOrders);
 
 	/*} catch (error) {
-    console.error("[GET_PENDING_ORDERS]", error);
+    logger.error("get pending orders", {
+    	metadata: {
+    		error: error instanceof Error ? error.message : String(error),
+    	},
+    	tags: ["api", "error"],
+    });
     return new NextResponse("Internal error", { status: 500 });
   }*/
 }

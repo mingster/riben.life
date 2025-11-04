@@ -6,6 +6,7 @@ import type {
 	StoreProductOptionTemplate,
 } from "@prisma/client";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 ///!SECTION copy product option and its selections from store template.
 // It's useful when creating many similar products.
@@ -120,7 +121,12 @@ export async function POST(
 
 		return NextResponse.json(result);
 	} catch (error) {
-		console.log("[PRODUCTOPTION_POST]", error);
+		logger.info("productoption post", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

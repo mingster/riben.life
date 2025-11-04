@@ -36,12 +36,12 @@ const StoreEditPage = async (props: {
 		},
 	})) as StoreSubscription;
 
-	console.log("subscription", subscription);
+	logger.info("subscription");
 
 	/*
 	const subscriptionScheduleId = subscription?.subscriptionId as string;
 
-	console.log("subscriptionScheduleId", subscriptionScheduleId);
+	logger.info("subscriptionScheduleId");
 
 	let subscriptionSchedule = null;
 	try {
@@ -51,7 +51,7 @@ const StoreEditPage = async (props: {
 	} catch (err) {
 		logger.error(err);
 	}
-	console.log("subscriptionSchedule", subscriptionSchedule);
+	logger.info("subscriptionSchedule");
 	*/
 
 	return (

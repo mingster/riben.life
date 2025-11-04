@@ -8,6 +8,7 @@ import { StoreLevel } from "@/types/enum";
 import { formatDateTime } from "@/utils/datetime-utils";
 import type { StoreTables } from "@prisma/client";
 import { OrderUnpaid } from "./order-unpaid";
+import logger from "@/lib/logger";
 
 export interface props {
 	store: Store;
@@ -39,7 +40,12 @@ export const CashCashier: React.FC<props> = ({ store, tables }) => {
 				setUnpaidOrders(data);
 			})
 			.catch((error) => {
-				console.error("Error:", error);
+				logger.error("Error:", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["error"],
+				});
 				throw error;
 			});
 

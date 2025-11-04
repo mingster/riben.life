@@ -18,6 +18,7 @@ import { IconCheck, IconX } from "@tabler/icons-react";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { t } from "i18next";
+import logger from "@/lib/logger";
 
 interface props {
 	initialData?: ProductCategories[] | []; // persisted category relationship for this product
@@ -129,7 +130,7 @@ export const ProductEditCategoryTab = ({
 		  `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${params.productId}/category`,
 		  { data: { categoryId: item.id.toString() } },
 		);
-		console.log(`remove from db: ${item.id.toString()}`);
+		logger.info("Operation log");
 		*/
 			}
 		});

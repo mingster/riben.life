@@ -2,6 +2,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../api_helper";
 import { sqlClient } from "@/lib/prismadb";
+import logger from "@/lib/logger";
 
 ///!SECTION delete given message template localized in database.
 export async function DELETE(
@@ -34,7 +35,12 @@ export async function DELETE(
 				status: 404,
 			});
 		}
-		console.log("[DELETE]", error);
+		logger.info("delete", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 		return new NextResponse(`Internal error: ${(error as Error).message}`, {
 			status: 500,
 		});

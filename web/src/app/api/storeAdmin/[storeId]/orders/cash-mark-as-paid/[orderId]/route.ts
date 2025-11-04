@@ -24,7 +24,12 @@ export async function POST(
 
 		return NextResponse.json("success", { status: 200 });
 	} catch (error) {
-		console.log("[CASH_ORDER_MARK_AS_PAID]", error);
+		logger.info("cash order mark as paid", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

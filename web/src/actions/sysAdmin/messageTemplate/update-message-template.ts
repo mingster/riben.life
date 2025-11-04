@@ -4,12 +4,15 @@ import { sqlClient } from "@/lib/prismadb";
 import type { MessageTemplate } from "@prisma/client";
 import { adminActionClient } from "@/utils/actions/safe-action";
 import { updateMessageTemplateSchema } from "./update-message-template.validation";
+import logger from "@/lib/logger";
 
 export const updateMessageTemplateAction = adminActionClient
 	.metadata({ name: "updateMessageTemplate" })
 	.schema(updateMessageTemplateSchema)
 	.action(async ({ parsedInput: { id, name } }) => {
-		console.log("id", id);
+		logger.info("id", {
+			tags: ["action"],
+		});
 
 		//if there's no id, this is a new object
 		//

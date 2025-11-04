@@ -7,6 +7,7 @@ import { Loader } from "@/components/loader";
 import { formatDateTime } from "@/utils/datetime-utils";
 import { OrderInProgress } from "../../components/order-inprogress";
 import { OrderReadyToShip } from "../../components/order-ready-to-ship";
+import logger from "@/lib/logger";
 
 export interface props {
 	store: Store;
@@ -71,7 +72,12 @@ export const AwaitingToShipClient: React.FC<props> = ({ store }) => {
         */
 			})
 			.catch((error) => {
-				console.error("Error:", error);
+				logger.error("Error:", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["error"],
+				});
 				throw error;
 			});
 

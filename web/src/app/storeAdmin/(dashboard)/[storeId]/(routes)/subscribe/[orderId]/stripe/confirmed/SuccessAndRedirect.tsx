@@ -4,6 +4,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTimer } from "react-timer-hook";
+import logger from "@/lib/logger";
 
 type paymentProps = {
 	orderId: string;
@@ -44,7 +45,7 @@ function MyTimer({
 	} = useTimer({
 		expiryTimestamp,
 		onExpire: () => {
-			console.warn("onExpire called");
+			logger.warn("onExpire called");
 			//router.reload();
 			router.push("/storeAdmin");
 		},

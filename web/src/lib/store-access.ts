@@ -42,9 +42,8 @@ export async function checkStoreOwnership(
 	}
 
 	// Admin users can access any store
-	const where = userRole === "admin" 
-		? { id: storeId }
-		: { id: storeId, ownerId: userId };
+	const where =
+		userRole === "admin" ? { id: storeId } : { id: storeId, ownerId: userId };
 
 	const store = await sqlClient.store.findFirst({
 		where,

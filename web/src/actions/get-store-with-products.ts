@@ -1,3 +1,4 @@
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { isReservedRoute } from "@/lib/reserved-routes";
 import type {
@@ -68,13 +69,17 @@ const getStoreWithProducts = async (
 	});
 
 	if (!store) {
-		console.error(`Store not found: storeId="${storeId}"`);
-		console.error("Attempted query returned null. Verify that:");
-		console.error("1. The store exists in the database");
-		console.error("2. The storeId format is correct (should be a UUID/GUID)");
-		console.error(
-			"3. You've created at least one store via /storeAdmin or /sysAdmin/stores",
-		);
+		logger.error("Store not found", {
+			metadata: {
+				storeId,
+				troubleshooting: [
+					"Verify the store exists in the database",
+					"Check storeId format is correct (UUID/GUID)",
+					"Ensure at least one store has been created via /storeAdmin or /sysAdmin/stores",
+				],
+			},
+			tags: ["store", "not-found", "error"],
+		});
 
 		throw new Error(`Store not found with id: ${storeId}`);
 	}

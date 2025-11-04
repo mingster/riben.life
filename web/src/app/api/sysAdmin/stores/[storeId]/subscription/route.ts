@@ -3,6 +3,7 @@ import { getUtcNow } from "@/utils/datetime-utils";
 import type { StoreSubscription } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../../api_helper";
+import logger from "@/lib/logger";
 
 // for admin updates a store's subscription
 export async function PATCH(
@@ -55,7 +56,12 @@ export async function PATCH(
 
 		return NextResponse.json(store);
 	} catch (error) {
-		console.log("[STORE_PATCH]", error);
+		logger.info("store patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

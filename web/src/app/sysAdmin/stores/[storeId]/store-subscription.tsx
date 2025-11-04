@@ -27,6 +27,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import logger from "@/lib/logger";
 
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -99,7 +100,7 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 	const { t } = useTranslation(lng, "storeAdmin");
 
 	const onSubmit = async (data: formValues) => {
-		console.log(data);
+		logger.info("Operation log");
 
 		setLoading(true);
 

@@ -19,6 +19,7 @@ import type { StoreOrder } from "@prisma/client";
 import type { Appearance, StripeElementsOptions } from "@stripe/stripe-js";
 import { useTheme } from "next-themes";
 import { authClient } from "@/lib/auth-client";
+import logger from "@/lib/logger";
 
 type paymentProps = {
 	order: StoreOrder;
@@ -68,11 +69,15 @@ const PaymentStripe: React.FC<paymentProps> = ({ order }) => {
 					//console.log('clientSecret: ' + JSON.stringify(data.client_secret));
 				})
 				.catch((e) => {
-					console.error(e);
+					logger.error("Operation log", {
+						tags: ["error"],
+					});
 					throw e;
 				});
 		} catch (e) {
-			console.error(e);
+			logger.error("Operation log", {
+				tags: ["error"],
+			});
 		}
 	}, [order]);
 
@@ -196,12 +201,16 @@ const StripePayButton: React.FC<PaymentStripeProp> = ({ orderId }) => {
 			// confirming the payment. Show error to your customer (for example, payment
 			// details incomplete)
 			setErrorMessage(error.message);
-			console.log(`paymentHandler: ${error.message}`);
+			logger.info("Operation log", {
+				metadata: {
+					error: error instanceof Error ? error.message : String(error),
+				},
+			});
 		} else {
 			// Your customer will be redirected to your `return_url`. For some payment
 			// methods like iDEAL, your customer will be redirected to an intermediate
 			// site first to authorize the payment, then redirected to the `return_url`.
-			console.log("payment confirmed");
+			logger.info("payment confirmed");
 			router.push(returnUrl);
 		}
 	};

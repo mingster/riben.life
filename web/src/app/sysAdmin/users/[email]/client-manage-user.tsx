@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import logger from "@/lib/logger";
 
 export interface iUserTabProps {
 	user: User | null;
@@ -108,7 +109,12 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 					});
 				}
 			} catch (error) {
-				console.error("Error cancelling subscription:", error);
+				logger.error("Error cancelling subscription:", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["error"],
+				});
 				toastError({
 					description: "Failed to cancel subscription. Please try again.",
 				});

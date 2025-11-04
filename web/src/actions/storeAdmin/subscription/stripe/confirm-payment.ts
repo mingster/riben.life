@@ -74,7 +74,9 @@ const confirmPayment = async (
 	});
 
 	if (process.env.NODE_ENV === "development") {
-		console.log(JSON.stringify(paymentIntent));
+		logger.info("Operation log", {
+			tags: ["action"],
+		});
 	}
 
 	if (paymentIntent && paymentIntent.status === "succeeded") {
@@ -238,7 +240,9 @@ const confirmPayment = async (
 			},
 		});
 
-		console.log(`confirmPayment: ${JSON.stringify(paidOrder)}`);
+		logger.info("Operation log", {
+			tags: ["action"],
+		});
 
 		return true;
 	}

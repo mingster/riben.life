@@ -1,6 +1,7 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
 import { redirect } from "next/navigation";
+import logger from "@/lib/logger";
 
 export const deleteAllLedgers = async () => {
 	const { count } = await sqlClient.storeLedger.deleteMany({
@@ -9,7 +10,9 @@ export const deleteAllLedgers = async () => {
 		},
 	});
 
-	console.log(`${count} ledger deleted.`);
+	logger.info("Operation log", {
+		tags: ["action"],
+	});
 	redirect("/admin/maint");
 
 	return count;

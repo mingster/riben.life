@@ -3,6 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 ///!SECTION update product attribute in database.
 export async function PATCH(
@@ -30,7 +31,12 @@ export async function PATCH(
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[PRODUCT_ATTRIBUTE_PATCH]", error);
+		logger.info("product attribute patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

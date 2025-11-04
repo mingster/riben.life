@@ -56,7 +56,12 @@ export async function DELETE(
 
 	return NextResponse.json(order);
 	/*} catch (error) {
-    console.log("[PRODUCT_DELETE]", error);
+    logger.info("product delete", {
+    	metadata: {
+    		error: error instanceof Error ? error.message : String(error),
+    	},
+    	tags: ["api"],
+    });
     return new NextResponse("Internal error", { status: 500 });
   }*/
 }

@@ -3,6 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
+import logger from "@/lib/logger";
 
 ///!SECTION create Category record in database.
 export async function POST(
@@ -30,7 +31,12 @@ export async function POST(
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[CATEGORY_POST]", error);
+		logger.info("category post", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
@@ -74,7 +80,12 @@ export async function PATCH(
 
 		return NextResponse.json({ success: true });
 	} catch (error) {
-		console.log("[CATEGORY_PATCH]", error);
+		logger.info("category patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

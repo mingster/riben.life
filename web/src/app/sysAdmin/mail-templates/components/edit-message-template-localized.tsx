@@ -45,6 +45,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Locale, MessageTemplateLocalized } from "@/types";
+import logger from "@/lib/logger";
 
 interface props {
 	item: z.infer<typeof updateMessageTemplateLocalizedSchema>;
@@ -101,7 +102,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 	async function onSubmit(
 		data: z.infer<typeof updateMessageTemplateLocalizedSchema>,
 	) {
-		console.log("data", data);
+		logger.info("data");
 		setLoading(true);
 		const result = (await updateMessageTemplateLocalizedAction(
 			data,

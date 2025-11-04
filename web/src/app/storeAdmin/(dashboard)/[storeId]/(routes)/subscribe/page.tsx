@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ensureStripeCustomer } from "@/actions/user/ensure-stripe-customer";
 import { getStoreWithRelations } from "@/lib/store-access";
+import logger from "@/lib/logger";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -35,7 +36,7 @@ export default async function StoreSubscribePage(props: {
 	]);
 
 	if (process.env.NODE_ENV === "development") {
-		console.log("subscription", subscription);
+		logger.info("subscription");
 	}
 
 	return (

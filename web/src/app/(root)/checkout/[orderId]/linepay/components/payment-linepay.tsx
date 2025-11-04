@@ -7,6 +7,7 @@ import { getAbsoluteUrl } from "@/utils/utils";
 import { useQRCode } from "next-qrcode";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import logger from "@/lib/logger";
 
 type paymentProps = {
 	order: StoreOrder;
@@ -17,7 +18,7 @@ const PaymentLinePay: React.FC<paymentProps> = ({ order, webUrl, appUrl }) => {
 	if (!order) throw Error("order is required.");
 	const { SVG } = useQRCode();
 
-	console.log("appUrl", appUrl);
+	logger.info("appUrl");
 
 	return (
 		<div>

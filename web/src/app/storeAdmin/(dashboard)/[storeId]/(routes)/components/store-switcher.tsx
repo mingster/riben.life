@@ -42,8 +42,8 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 	// load user's store data
 	const { data: session } = authClient.useSession();
 
-	// Note: No need to redirect here - server-side auth (checkStoreStaffAccess) 
-	// already handles authentication. Client-side redirect causes issues during 
+	// Note: No need to redirect here - server-side auth (checkStoreStaffAccess)
+	// already handles authentication. Client-side redirect causes issues during
 	// initial hydration when session is still loading.
 
 	// Only construct URL if session exists

@@ -81,8 +81,6 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 	//console.log(`form error: ${JSON.stringify(form.formState.errors)}`);
 
 	const onSubmit = async (data: formValues) => {
-		console.log(`onSubmit: ${JSON.stringify(data)}`);
-
 		try {
 			setLoading(true);
 

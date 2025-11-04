@@ -33,6 +33,7 @@ import { EditFaqCategory } from "./edit-faq-category";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import logger from "@/lib/logger";
 
 // type for FAQ category with FAQ count
 export type FaqCategoryWithFaqCount = {
@@ -84,7 +85,7 @@ export const FaqCategoryClient: React.FC<props> = ({
 				...newVal,
 			},
 		]);
-		console.log("handleCreated", newVal);
+		logger.info("handleCreated");
 	};
 
 	// Handle updated value in the data array
@@ -92,12 +93,12 @@ export const FaqCategoryClient: React.FC<props> = ({
 		setData((prev) =>
 			prev.map((cat) => (cat.id === updatedVal.id ? updatedVal : cat)),
 		);
-		console.log("handleUpdated", updatedVal);
+		logger.info("handleUpdated");
 	};
 
 	const handleDeleted = (deletedVal: FaqCategoryWithFaqCount) => {
 		setData((prev) => prev.filter((cat) => cat.id !== deletedVal.id));
-		console.log("handleDeleted", deletedVal);
+		logger.info("handleDeleted");
 	};
 
 	const handleFaqCreated = (newFaq: Faq) => {
@@ -107,7 +108,7 @@ export const FaqCategoryClient: React.FC<props> = ({
 			//update the FAQ count of the category
 			category.faqCount++;
 			handleUpdated(category);
-			console.log("handleFaqCreated", category, newFaq);
+			logger.info("handleFaqCreated");
 		}
 
 		setFaqData((prev) => [
@@ -257,7 +258,7 @@ export const FaqCategoryClient: React.FC<props> = ({
 		setFaqData((prev) =>
 			prev.map((cat) => (cat.id === updatedVal.id ? updatedVal : cat)),
 		);
-		console.log("handleFaqUpdated", updatedVal);
+		logger.info("handleFaqUpdated");
 	};
 
 	const handleFaqDeleted = (deletedVal: z.infer<typeof updateFaqSchema>) => {
@@ -271,7 +272,7 @@ export const FaqCategoryClient: React.FC<props> = ({
 			handleUpdated(category);
 		}
 
-		console.log("handleFaqDeleted", deletedVal);
+		logger.info("handleFaqDeleted");
 	};
 	/* #endregion */
 

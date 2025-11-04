@@ -35,6 +35,7 @@ import { toastError } from "@/components/toaster";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { saveOrderToLocal } from "@/lib/order-history";
+import logger from "@/lib/logger";
 
 type props = {
 	store: Store;
@@ -138,8 +139,8 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 	);
 
 	/*
-  console.log("StorePaymentMethods", JSON.stringify(allpaymentMethods));
-  console.log(`selected paymentMethod: ${JSON.stringify(paymentMethod)}`);
+  logger.info("StorePaymentMethods");
+  logger.info("Operation log");
 
   //const [selectedPaymentType, setSelectedPaymentType] = useState('creditCard');
   //console.log('CheckutSteps: ' + JSON.stringify(shipMethods));
@@ -175,14 +176,18 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 
 		if (!paymentMethod) {
 			const errmsg = t("checkout_no_paymentMethod");
-			console.error(errmsg);
+			logger.error("Operation log", {
+				tags: ["error"],
+			});
 			setIsLoading(false);
 
 			return;
 		}
 		if (!shipMethod) {
 			const errmsg = t("checkout_no_shippingMethod");
-			console.error(errmsg);
+			logger.error("Operation log", {
+				tags: ["error"],
+			});
 			setIsLoading(false);
 
 			return;
@@ -199,10 +204,10 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 		cart.items.map((item) => {
 			if (item.id.includes("?")) {
 				/*
-		console.log("item.id", item.id);
-		console.log("productId", item.id.split("?")[0]);
-		console.log("item.variants", item.variants);
-		console.log("item.variantCosts", item.variantCosts);
+		logger.info("item.id");
+		logger.info("0");
+		logger.info("item.variants");
+		logger.info("item.variantCosts");
 		*/
 				productIds.push(item.id.split("?")[0]);
 				variants.push(item.variants);
@@ -262,7 +267,12 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 			router.push(paymenturl);
 		} catch (error: unknown) {
 			const err = error as AxiosError;
-			console.error(error);
+			logger.error("Operation log", {
+				metadata: {
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["error"],
+			});
 			toastError({
 				title: "Something went wrong.",
 				description: t("checkout_placeOrder_exception") + err.message,

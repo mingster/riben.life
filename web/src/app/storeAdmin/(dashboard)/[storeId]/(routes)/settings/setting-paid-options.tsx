@@ -98,8 +98,6 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 	const { t } = useTranslation(lng, "storeAdmin");
 
 	const onSubmit = async (data: formValues) => {
-		console.log("onSubmit", JSON.stringify(data));
-		//console.log('logo: ' + image?.name);
 		try {
 			setLoading(true);
 
@@ -166,15 +164,13 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 		}
 	}, [logo]);
 
-	//console.log("data", JSON.stringify(initialData));
-	console.log("disablePaidOptions", disablePaidOptions);
-	console.log("form errors", form.formState.errors);
+	// Form validation handled by react-hook-form
 
 	return (
 		<>
 			<Card>
 				<CardContent
-					className="space-y-2 data-[disabled]:text-gary-900 data-[disabled]:bg-gary-900"
+					className="space-y-2 data-disabled:text-gary-900 data-disabled:bg-gary-900"
 					data-disabled={disablePaidOptions}
 				>
 					{disablePaidOptions && <RequiredProVersion />}

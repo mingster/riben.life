@@ -1,6 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 // returns store by its custom domain name
 //
@@ -21,7 +22,12 @@ export async function POST(req: Request) {
 
 		return NextResponse.json(store);
 	} catch (error) {
-		console.log("[GET_BY_HOSTNAME]", error);
+		logger.error("Failed to get store by hostname", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api", "store", "hostname", "error"],
+		});
 
 		return new NextResponse("Internal error", { status: 500 });
 	}

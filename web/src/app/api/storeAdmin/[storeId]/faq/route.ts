@@ -4,6 +4,7 @@ import type { Faq } from "@/types";
 //import { transformBigIntToNumbers } from "@/utils/utils";
 
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 // return all online peers
 //
@@ -22,7 +23,12 @@ export async function GET(req: Request) {
 
 		return NextResponse.json(faqs);
 	} catch (error) {
-		console.log("[get_faq]", error);
+		logger.info("get faq", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 		return new NextResponse("Internal error", { status: 500 });
 	}
 }

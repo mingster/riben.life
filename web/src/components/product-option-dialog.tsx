@@ -213,7 +213,7 @@ export const ProductOptionDialog: React.FC<props> = ({
         let defaultItem = option.ProductOptionSelections.find(
           (item) => item.isDefault,
         );
-        console.log("defaultItem", defaultItem);
+        logger.info("defaultItem");
 
         // radio group must have default value, cannot be empty...
         if (!defaultItem) defaultItem = option.ProductOptionSelections[0];

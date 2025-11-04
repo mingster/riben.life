@@ -1,6 +1,7 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
+import logger from "@/lib/logger";
 
 ///!SECTION create product image in database.
 export async function PATCH(
@@ -20,11 +21,18 @@ export async function PATCH(
 			data: { ...body },
 		});
 
-		console.log(`updated product image: ${JSON.stringify(obj)}`);
+		logger.info("Operation log", {
+			tags: ["api"],
+		});
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[PRODUCT_IMAGE_PATCH]", error);
+		logger.info("product image patch", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}
@@ -44,8 +52,12 @@ export async function DELETE(
 
 		const body = await req.json();
 		const { id, publicId } = body;
-		console.log(`delete product image id: ${id}`);
-		console.log(`delete product image pubid: ${publicId}`);
+		logger.info("Operation log", {
+			tags: ["api"],
+		});
+		logger.info("Operation log", {
+			tags: ["api"],
+		});
 
 		const obj = await sqlClient.productImages.delete({
 			where: {
@@ -56,7 +68,12 @@ export async function DELETE(
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[PRODUCT_IMAGE_DELETE]", error);
+		logger.info("product image delete", {
+			metadata: {
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api"],
+		});
 
 		return new NextResponse("Internal error", { status: 500 });
 	}

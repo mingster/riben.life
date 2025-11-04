@@ -5,6 +5,7 @@ import { getUtcNow } from "@/utils/datetime-utils";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
+import logger from "@/lib/logger";
 
 ///!SECTION create new ticket from store's support page.
 export async function POST(
@@ -63,12 +64,20 @@ export async function POST(
         threadId: obj.id,
       },
     });
-    console.log(`create ticket: ${JSON.stringify(obj)}`);
+    logger.info("Operation log", {
+    	tags: ["api"],
+    });
     */
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		console.log("[TICKET_POST]", error);
+		logger.error("Failed to create support ticket", {
+			metadata: {
+				storeId: params.storeId,
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api", "store", "ticket", "error"],
+		});
 
 		return new NextResponse(`Internal error${error}`, { status: 500 });
 	}

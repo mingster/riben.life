@@ -4,6 +4,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { fallbackLng } from "@/app/i18n/settings";
 //import { useCookies } from "next-client-cookies";
 import { createContext, useContext } from "react";
+import logger from "@/lib/logger";
 
 interface i18nContext {
 	lng: string;
@@ -40,7 +41,7 @@ const I18nProvider = ({ children }: { children: React.ReactNode }) => {
 	/*
   if (lng) {
     lng = acceptLanguage.get(lng);
-    console.log('lng2: ' + lng);
+    logger.info("lng2: ");
   }
   */
 

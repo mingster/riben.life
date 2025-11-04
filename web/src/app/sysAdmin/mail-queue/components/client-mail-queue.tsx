@@ -24,6 +24,7 @@ import { EditMailQueue } from "./edit-mail-queue";
 import { Loader } from "@/components/loader";
 import { format } from "date-fns";
 import Link from "next/link";
+import logger from "@/lib/logger";
 
 // MailQueueAdminPage provides the following features:
 // 1. review the mail queue in the table
@@ -58,12 +59,12 @@ export default function MailQueueAdminClient({
 		setMailQueueData((prev) =>
 			prev.map((obj) => (obj.id === updatedVal.id ? updatedVal : obj)),
 		);
-		console.log("handleUpdated", updatedVal);
+		logger.info("handleUpdated");
 	};
 
 	const handleDeleted = (deletedVal: EmailQueue) => {
 		setMailQueueData((prev) => prev.filter((obj) => obj.id !== deletedVal.id));
-		console.log("handleDeleted", deletedVal);
+		logger.info("handleDeleted");
 	};
 
 	//console.log("selectedMailQueueIds", selectedMailQueueIds);
@@ -220,7 +221,7 @@ export default function MailQueueAdminClient({
 		const onSend = (id: string) => {
 			// send mail to the recipient
 
-			console.log("onSend", id);
+			logger.info("onSend");
 		};
 
 		return (
@@ -278,10 +279,10 @@ export default function MailQueueAdminClient({
 		const success = result.data.result.success;
 		const failed = result.data.result.failed;
 
-		console.log("mailsSent", mailsSent);
-		console.log("processed", processed);
-		console.log("success", success);
-		console.log("failed", failed);
+		logger.info("mailsSent");
+		logger.info("processed");
+		logger.info("success");
+		logger.info("failed");
 
 		// update mailQueueData
 		setMailQueueData((prev) =>
@@ -305,13 +306,13 @@ export default function MailQueueAdminClient({
 		}
 
 		setSending(true);
-		console.log("deleteSelectedMails", selectedMailQueueIds);
+		logger.info("deleteSelectedMails");
 		for (const id of selectedMailQueueIds) {
 			try {
 				const result = await axios.delete(
 					`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/emailQueue/${id}`,
 				);
-				console.log("result", result);
+				logger.info("result");
 				handleDeleted(result.data);
 			} catch (error: unknown) {
 				const err = error as AxiosError;
@@ -337,11 +338,11 @@ export default function MailQueueAdminClient({
 	// send all mails in the mail queue
 	const handleSendAllInQueue = async () => {
 		// call sendMailsInQueue from a button click
-		console.log("handleSendAllInQueue");
+		logger.info("handleSendAllInQueue");
 		const result = await axios.post(
 			`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/emailQueue/send-mails-in-queue`,
 		);
-		console.log("result", result);
+		logger.info("result");
 		toastSuccess({
 			title: "Mails in queue called",
 			description: "Mails in queue called - please check the console log",
