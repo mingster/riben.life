@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "tvcdn.org",
@@ -80,7 +81,7 @@
         "next-themes": "^0.4.6",
         "nextjs-current-url": "^1.0.3",
         "nodemailer": "^7.0.10",
-        "nuqs": "^2.7.2",
+        "nuqs": "^2.7.3",
         "pino": "^9.14.0",
         "pino-pretty": "^13.1.2",
         "postcss-focus-visible": "^10.0.1",
@@ -106,7 +107,7 @@
         "sonner": "^2.0.7",
         "stripe": "^19.3.0",
         "swr": "^2.3.6",
-        "tailwind-merge": "^3.3.1",
+        "tailwind-merge": "^3.4.0",
         "task-master-ai": "^0.13.2",
         "typewriter-effect": "^2.22.0",
         "usehooks-ts": "^3.1.1",
@@ -2672,7 +2673,7 @@
 
     "swr": ["swr@2.3.6", "", { "dependencies": { "dequal": "^2.0.3", "use-sync-external-store": "^1.4.0" }, "peerDependencies": { "react": "^16.11.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-wfHRmHWk/isGNMwlLGlZX5Gzz/uTgo0o2IRuTMcf4CPuPFJZlq0rDaKUx+ozB5nBOReNV1kiOyzMfj+MBMikLw=="],
 
-    "tailwind-merge": ["tailwind-merge@3.3.1", "", {}, "sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g=="],
+    "tailwind-merge": ["tailwind-merge@3.4.0", "", {}, "sha512-uSaO4gnW+b3Y2aWoWfFpX62vn2sR3skfhbjsEnaBI81WD1wBLlHZe5sWf0AqjksNdYTbGBEd0UasQMT3SNV15g=="],
 
     "tailwindcss": ["tailwindcss@4.1.17", "", {}, "sha512-j9Ee2YjuQqYT9bbRTfTZht9W/ytp5H+jJpZKiYdP/bpnXARAuELt9ofP0lPnmHjbga7SNQIxdTAXCmtKVYjN+Q=="],
 
