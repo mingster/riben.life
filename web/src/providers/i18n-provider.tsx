@@ -4,7 +4,6 @@ import { useTranslation } from "@/app/i18n/client";
 import { fallbackLng } from "@/app/i18n/settings";
 //import { useCookies } from "next-client-cookies";
 import { createContext, useContext } from "react";
-import logger from "@/lib/logger";
 
 interface i18nContext {
 	lng: string;
@@ -15,7 +14,7 @@ export const i18nContext = createContext<i18nContext | null>(null);
 const I18nProvider = ({ children }: { children: React.ReactNode }) => {
 	//const I18nProvider = ({ children, store }: { children: React.ReactNode; store: Store }) => {
 
-	const { i18n } = useTranslation(fallbackLng);
+	const { i18n } = useTranslation();
 
 	let lng = i18n.resolvedLanguage;
 
@@ -29,7 +28,7 @@ const I18nProvider = ({ children }: { children: React.ReactNode }) => {
   const cookie = cookies.get(cookieName);
 
   if (cookie && cookies.get(cookieName) !== lng) {
-    lng = cookies.get(cookieName);
+	lng = cookies.get(cookieName);
   };
   */
 
@@ -40,8 +39,8 @@ const I18nProvider = ({ children }: { children: React.ReactNode }) => {
 	//
 	/*
   if (lng) {
-    lng = acceptLanguage.get(lng);
-    logger.info("lng2: ");
+	lng = acceptLanguage.get(lng);
+	console.log('lng2: ' + lng);
   }
   */
 
