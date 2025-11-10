@@ -11,7 +11,7 @@ import type {
 } from "@/types";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
@@ -25,11 +25,10 @@ import type {
 	StoreProductOptionSelectionsTemplate,
 } from "@prisma/client";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import { t } from "i18next";
+import type { TFunction } from "i18next";
 import { IconCheck, IconTrash, IconX } from "@tabler/icons-react";
 import { AddProductOptionDialog } from "./product-option-dialog";
-import { toastError, toastSuccess } from "@/components/toaster";
-import logger from "@/lib/logger";
+import { toastSuccess } from "@/components/toaster";
 
 interface editProps {
 	initialData:
@@ -92,6 +91,8 @@ export const DisplayStoreOptionTemplates = ({
 	const { t } = useTranslation(lng, "storeAdmin");
 
 	if (!storeOptionTemplates) return <></>;
+
+	const storeOptionColumns = useMemo(() => createStoreOptionColumns(t), [t]);
 
 	// exclude options already in the product
 	const storeOptionTemplatesToInclude = storeOptionTemplates.filter(
@@ -170,7 +171,7 @@ export const DisplayStoreOptionTemplates = ({
 			<DataTableCheckbox
 				disabled={loading}
 				noSearch={true}
-				columns={soColumns}
+				columns={storeOptionColumns}
 				data={formattedProductOption}
 				initiallySelected={initiallySelected}
 				onRowSelectionChange={setSelectedIdx}
@@ -187,193 +188,6 @@ export const DisplayStoreOptionTemplates = ({
 	);
 };
 
-const soColumns: ColumnDef<ProductOptionColumn>[] = [
-	{
-		id: "select",
-		header: ({ table }) => (
-			<Checkbox
-				checked={
-					table.getIsAllPageRowsSelected() ||
-					(table.getIsSomePageRowsSelected() && "indeterminate")
-				}
-				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-				aria-label="Select all"
-			/>
-		),
-		cell: ({ row }) => (
-			<Checkbox
-				checked={row.getIsSelected()}
-				onCheckedChange={(value) => row.toggleSelected(!!value)}
-				aria-label="Select row"
-			/>
-		),
-		enableSorting: false,
-		enableHiding: false,
-	},
-	{
-		accessorKey: "optionName",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("ProductOption_optionName")}
-				/>
-			);
-		},
-	},
-	{
-		accessorKey: "isRequired",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("ProductOption_isRequired")}
-				/>
-			);
-		},
-		cell: ({ row }) => {
-			const val =
-				row.getValue("isRequired") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "isMultiple",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("ProductOption_isMultiple")}
-				/>
-			);
-		},
-		cell: ({ row }) => {
-			const val =
-				row.getValue("isMultiple") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "minSelection",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("ProductOption_minSelection")}
-				/>
-			);
-		},
-	},
-	{
-		accessorKey: "maxSelection",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("ProductOption_maxSelection")}
-				/>
-			);
-		},
-	},
-	{
-		accessorKey: "allowQuantity",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("ProductOption_allowQuantity")}
-				/>
-			);
-		},
-		cell: ({ row }) => {
-			const val =
-				row.getValue("allowQuantity") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	/*
-  {
-	accessorKey: "minQuantity",
-	header: ({ column }) => {
-	  return (
-		<DataTableColumnHeader
-		  column={column}
-		  title={t("ProductOption_minQuantity")}
-		/>
-	  );
-	},
-  },
-  {
-	accessorKey: "maxQuantity",
-	header: ({ column }) => {
-	  return (
-		<DataTableColumnHeader
-		  column={column}
-		  title={t("ProductOption_maxQuantity")}
-		/>
-	  );
-	},
-  },
-*/
-	{
-		accessorKey: "productOption",
-		header: ({ column }) => {
-			return <div className="pl-3">{t("ProductOption_selections")}</div>;
-		},
-		cell: ({ row }) => {
-			const val = row.getValue("productOption") as
-				| ProductOption
-				| StoreProductOptionTemplate;
-
-			if ("ProductOptionSelections" in val) {
-				return (
-					<div>
-						{val.ProductOptionSelections.map(
-							(item: ProductOptionSelections) => (
-								<div key={item.id} className="pl-0 text-nowrap">
-									{`${item.name}`}{" "}
-									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("Default")})`}
-								</div>
-							),
-						)}
-					</div>
-				);
-			}
-			if ("StoreProductOptionSelectionsTemplate" in val) {
-				return (
-					<div>
-						{val.StoreProductOptionSelectionsTemplate.map(
-							(item: StoreProductOptionSelectionsTemplate) => (
-								<div key={item.id} className="pl-0 text-nowrap">
-									{`${item.name}`}{" "}
-									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("Default")})`}
-								</div>
-							),
-						)}
-					</div>
-				);
-			}
-		},
-	},
-];
-
 export type ProductOptionColumn = {
 	id: string;
 	optionName: string;
@@ -387,168 +201,6 @@ export type ProductOptionColumn = {
 	sortOrder: number;
 	productOption: ProductOption | StoreProductOptionTemplate;
 };
-
-const columns: ColumnDef<ProductOptionColumn>[] = [
-	{
-		accessorKey: "optionName",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("ProductOption_optionName")}
-				/>
-			);
-		},
-	},
-	{
-		accessorKey: "isRequired",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("ProductOption_isRequired")}
-				/>
-			);
-		},
-		cell: ({ row }) => {
-			const val =
-				row.getValue("isRequired") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "isMultiple",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("ProductOption_isMultiple")}
-				/>
-			);
-		},
-		cell: ({ row }) => {
-			const val =
-				row.getValue("isMultiple") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	/*
-  {
-	accessorKey: "minSelection",
-	header: ({ column }) => {
-	  return (
-		<DataTableColumnHeader
-		  column={column}
-		  title={t("ProductOption_minSelection")}
-		/>
-	  );
-	},
-  },
-  {
-	accessorKey: "maxSelection",
-	header: ({ column }) => {
-	  return (
-		<DataTableColumnHeader
-		  column={column}
-		  title={t("ProductOption_maxSelection")}
-		/>
-	  );
-	},
-  },*/
-	{
-		accessorKey: "allowQuantity",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("ProductOption_allowQuantity")}
-				/>
-			);
-		},
-		cell: ({ row }) => {
-			const val =
-				row.getValue("allowQuantity") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "sortOrder",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader
-					column={column}
-					title={t("ProductOption_sortOrder")}
-				/>
-			);
-		},
-	},
-	{
-		accessorKey: "productOption",
-		header: ({ column }) => {
-			return <div className="pl-3">{t("ProductOption_selections")}</div>;
-		},
-		cell: ({ row }) => {
-			const val = row.getValue("productOption") as
-				| ProductOption
-				| StoreProductOptionTemplate;
-
-			if ("ProductOptionSelections" in val) {
-				return (
-					<div>
-						{val.ProductOptionSelections.map(
-							(item: ProductOptionSelections) => (
-								<div key={item.id} className="pl-0 text-nowrap">
-									{`${item.name}`}{" "}
-									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("Default")})`}
-								</div>
-							),
-						)}
-					</div>
-				);
-			}
-			if ("StoreProductOptionSelectionsTemplate" in val) {
-				return (
-					<div>
-						{val.StoreProductOptionSelectionsTemplate.map(
-							(item: StoreProductOptionSelectionsTemplate) => (
-								<div key={item.id} className="pl-0 text-nowrap">
-									{`${item.name}`}{" "}
-									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("Default")})`}
-								</div>
-							),
-						)}
-					</div>
-				);
-			}
-		},
-	},
-
-	{
-		id: "actions",
-		cell: ({ row }) => (
-			<div className="text-right">
-				<CellAction data={row.original} />
-			</div>
-		),
-	},
-];
 
 interface CellActionProps {
 	data: ProductOptionColumn;
@@ -614,6 +266,9 @@ export const DisplayOptions = ({
 }: {
 	productOptions: ProductOption[];
 }) => {
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng, "storeAdmin");
+
 	if (!productOptions) return <></>;
 
 	/*
@@ -639,13 +294,294 @@ export const DisplayOptions = ({
 		}),
 	);
 
+	const productColumns = useMemo(() => createProductOptionColumns(t), [t]);
+
 	return (
 		<>
 			<DataTable
 				noSearch={true}
-				columns={columns}
+				columns={productColumns}
 				data={formattedProductOption}
 			/>
 		</>
 	);
 };
+
+const createStoreOptionColumns = (
+	t: TFunction,
+): ColumnDef<ProductOptionColumn>[] => [
+	{
+		id: "select",
+		header: ({ table }) => (
+			<Checkbox
+				checked={
+					table.getIsAllPageRowsSelected() ||
+					(table.getIsSomePageRowsSelected() && "indeterminate")
+				}
+				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+				aria-label="Select all"
+			/>
+		),
+		cell: ({ row }) => (
+			<Checkbox
+				checked={row.getIsSelected()}
+				onCheckedChange={(value) => row.toggleSelected(!!value)}
+				aria-label="Select row"
+			/>
+		),
+		enableSorting: false,
+		enableHiding: false,
+	},
+	{
+		accessorKey: "optionName",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("ProductOption_optionName")}
+			/>
+		),
+	},
+	{
+		accessorKey: "isRequired",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("ProductOption_isRequired")}
+			/>
+		),
+		cell: ({ row }) => {
+			const val =
+				row.getValue("isRequired") === true ? (
+					<IconCheck className="text-green-400  size-4" />
+				) : (
+					<IconX className="text-red-400 size-4" />
+				);
+
+			return <div className="pl-3">{val}</div>;
+		},
+	},
+	{
+		accessorKey: "isMultiple",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("ProductOption_isMultiple")}
+			/>
+		),
+		cell: ({ row }) => {
+			const val =
+				row.getValue("isMultiple") === true ? (
+					<IconCheck className="text-green-400  size-4" />
+				) : (
+					<IconX className="text-red-400 size-4" />
+				);
+
+			return <div className="pl-3">{val}</div>;
+		},
+	},
+	{
+		accessorKey: "minSelection",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("ProductOption_minSelection")}
+			/>
+		),
+	},
+	{
+		accessorKey: "maxSelection",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("ProductOption_maxSelection")}
+			/>
+		),
+	},
+	{
+		accessorKey: "allowQuantity",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("ProductOption_allowQuantity")}
+			/>
+		),
+		cell: ({ row }) => {
+			const val =
+				row.getValue("allowQuantity") === true ? (
+					<IconCheck className="text-green-400  size-4" />
+				) : (
+					<IconX className="text-red-400 size-4" />
+				);
+
+			return <div className="pl-3">{val}</div>;
+		},
+	},
+	{
+		accessorKey: "productOption",
+		header: () => <div className="pl-3">{t("ProductOption_selections")}</div>,
+		cell: ({ row }) => {
+			const val = row.getValue("productOption") as
+				| ProductOption
+				| StoreProductOptionTemplate;
+
+			if ("ProductOptionSelections" in val) {
+				return (
+					<div>
+						{val.ProductOptionSelections.map(
+							(item: ProductOptionSelections) => (
+								<div key={item.id} className="pl-0 text-nowrap">
+									{`${item.name}`}{" "}
+									{Number(item.price) !== 0 && `:(${item.price})`}
+									{item.isDefault === true && `:(${t("Default")})`}
+								</div>
+							),
+						)}
+					</div>
+				);
+			}
+			if ("StoreProductOptionSelectionsTemplate" in val) {
+				return (
+					<div>
+						{val.StoreProductOptionSelectionsTemplate.map(
+							(item: StoreProductOptionSelectionsTemplate) => (
+								<div key={item.id} className="pl-0 text-nowrap">
+									{`${item.name}`}{" "}
+									{Number(item.price) !== 0 && `:(${item.price})`}
+									{item.isDefault === true && `:(${t("Default")})`}
+								</div>
+							),
+						)}
+					</div>
+				);
+			}
+		},
+	},
+];
+
+const createProductOptionColumns = (
+	t: TFunction,
+): ColumnDef<ProductOptionColumn>[] => [
+	{
+		accessorKey: "optionName",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("ProductOption_optionName")}
+			/>
+		),
+	},
+	{
+		accessorKey: "isRequired",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("ProductOption_isRequired")}
+			/>
+		),
+		cell: ({ row }) => {
+			const val =
+				row.getValue("isRequired") === true ? (
+					<IconCheck className="text-green-400  size-4" />
+				) : (
+					<IconX className="text-red-400 size-4" />
+				);
+
+			return <div className="pl-3">{val}</div>;
+		},
+	},
+	{
+		accessorKey: "isMultiple",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("ProductOption_isMultiple")}
+			/>
+		),
+		cell: ({ row }) => {
+			const val =
+				row.getValue("isMultiple") === true ? (
+					<IconCheck className="text-green-400  size-4" />
+				) : (
+					<IconX className="text-red-400 size-4" />
+				);
+
+			return <div className="pl-3">{val}</div>;
+		},
+	},
+	{
+		accessorKey: "allowQuantity",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("ProductOption_allowQuantity")}
+			/>
+		),
+		cell: ({ row }) => {
+			const val =
+				row.getValue("allowQuantity") === true ? (
+					<IconCheck className="text-green-400  size-4" />
+				) : (
+					<IconX className="text-red-400 size-4" />
+				);
+
+			return <div className="pl-3">{val}</div>;
+		},
+	},
+	{
+		accessorKey: "sortOrder",
+		header: ({ column }) => (
+			<DataTableColumnHeader
+				column={column}
+				title={t("ProductOption_sortOrder")}
+			/>
+		),
+	},
+	{
+		accessorKey: "productOption",
+		header: () => <div className="pl-3">{t("ProductOption_selections")}</div>,
+		cell: ({ row }) => {
+			const val = row.getValue("productOption") as
+				| ProductOption
+				| StoreProductOptionTemplate;
+
+			if ("ProductOptionSelections" in val) {
+				return (
+					<div>
+						{val.ProductOptionSelections.map(
+							(item: ProductOptionSelections) => (
+								<div key={item.id} className="pl-0 text-nowrap">
+									{`${item.name}`}{" "}
+									{Number(item.price) !== 0 && `:(${item.price})`}
+									{item.isDefault === true && `:(${t("Default")})`}
+								</div>
+							),
+						)}
+					</div>
+				);
+			}
+			if ("StoreProductOptionSelectionsTemplate" in val) {
+				return (
+					<div>
+						{val.StoreProductOptionSelectionsTemplate.map(
+							(item: StoreProductOptionSelectionsTemplate) => (
+								<div key={item.id} className="pl-0 text-nowrap">
+									{`${item.name}`}{" "}
+									{Number(item.price) !== 0 && `:(${item.price})`}
+									{item.isDefault === true && `:(${t("Default")})`}
+								</div>
+							),
+						)}
+					</div>
+				);
+			}
+		},
+	},
+	{
+		id: "actions",
+		cell: ({ row }) => (
+			<div className="text-right">
+				<CellAction data={row.original} />
+			</div>
+		),
+	},
+];

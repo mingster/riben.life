@@ -105,7 +105,6 @@ const onNavlinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
 };
 
 export function NavItems() {
-
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 

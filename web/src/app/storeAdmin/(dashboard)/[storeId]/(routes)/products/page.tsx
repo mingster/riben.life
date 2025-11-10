@@ -52,7 +52,7 @@ export default async function ProductsPage(props: {
 
 	return (
 		<Container>
-			<ProductsClient data={formattedProducts} />
+			<ProductsClient serverData={formattedProducts} />
 		</Container>
 	);
 }

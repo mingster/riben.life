@@ -33,7 +33,6 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarMenuSub,
-	SidebarMenuSubItem,
 	SidebarRail,
 	useSidebar,
 } from "@/components/ui/sidebar";
@@ -41,6 +40,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { GetMenuList } from "./menu-list";
 import StoreSwitcher from "./store-switcher";
 
@@ -58,21 +58,25 @@ export function StoreAdminSidebar({ store }: prop) {
 	const pathname = usePathname();
 	const menuList = GetMenuList(store, pathname);
 
-	/**
-	 
-		{
-			groupLabel: t("Help"),
-			menus: [
-				{
-					href: `${nav_prefix}/help`,
-					label: t("QandA"),
-					active: pathname.includes(`${nav_prefix}/help`),
-					icon: IconHelp,
-					submenus: [],
-				},
-			],
-		},
-	 */
+	const { setOpen } = useSidebar();
+
+	// left to close sidebar, right to open
+	useEffect(() => {
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "ArrowLeft") {
+				setOpen(false);
+			}
+			if (event.key === "ArrowRight") {
+				setOpen(true);
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [setOpen]);
+
 	return (
 		<Sidebar collapsible="icon" variant="inset">
 			<SidebarHeader>
@@ -114,7 +118,7 @@ export function StoreAdminSidebar({ store }: prop) {
 										{menus.map(
 											({ href, label, icon: Icon, active, submenus }) =>
 												submenus.length === 0 ? (
-													<SidebarMenuItem key={label}>
+													<SidebarMenuItem key={label} className="font-mono">
 														<SidebarMenuButton asChild isActive={active}>
 															<a href={href}>
 																<Icon />
@@ -138,11 +142,14 @@ export function StoreAdminSidebar({ store }: prop) {
 															<CollapsibleContent>
 																<SidebarMenuSub className="pl-5">
 																	{submenus.map(({ href, label, active }) => (
-																		<SidebarMenuSubItem key={label}>
-																			<a href={href}>
+																		<SidebarMenuItem key={label}>
+																			<SidebarMenuButton
+																				tooltip={label}
+																				isActive={active}
+																			>
 																				<span>{label}</span>
-																			</a>
-																		</SidebarMenuSubItem>
+																			</SidebarMenuButton>
+																		</SidebarMenuItem>
 																	))}
 																</SidebarMenuSub>
 															</CollapsibleContent>

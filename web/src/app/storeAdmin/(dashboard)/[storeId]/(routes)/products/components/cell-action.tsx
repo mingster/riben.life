@@ -21,10 +21,11 @@ import type { ProductColumn } from "./columns";
 
 interface CellActionProps {
 	data: ProductColumn;
+	onDeleted?: (productId: string) => void;
 }
 import { toastError, toastSuccess } from "@/components/toaster";
 
-export const CellAction: React.FC<CellActionProps> = ({ data }) => {
+export const CellAction: React.FC<CellActionProps> = ({ data, onDeleted }) => {
 	const [loading, setLoading] = useState(false);
 	const [open, setOpen] = useState(false);
 	const router = useRouter();
@@ -33,29 +34,24 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const { t } = useTranslation(lng, "storeAdmin");
 
 	const onConfirm = async () => {
-		//try {
-		setLoading(true);
-		await axios.delete(
-			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${data.id}`,
-		);
+		try {
+			setLoading(true);
+			await axios.delete(
+				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${data.id}`,
+			);
 
-		toastSuccess({
-			title: t("Product_deleted"),
-			description: "",
-		});
-		router.refresh();
-		setLoading(false);
-		setOpen(false);
-		/*} catch (error: unknown) {
-      const err = error as AxiosError;
-      toastError({
-        title: "something wrong.",
-        description: err.message,
-      });
-    } finally {
-      setLoading(false);
-      setOpen(false);
-    }*/
+			toastSuccess({
+				title: t("Product_deleted"),
+				description: "",
+			});
+			onDeleted?.(data.id);
+		} catch (error: unknown) {
+			const err = error as AxiosError;
+			toastError({ title: t("Error"), description: err.message });
+		} finally {
+			setLoading(false);
+			setOpen(false);
+		}
 	};
 
 	const onCopy = (id: string) => {
