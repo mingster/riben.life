@@ -1,55 +1,344 @@
 ---
-description: DataTable Component
-globs:
+description: DataTable components from mingster.backbone
 alwaysApply: true
 ---
+# DataTable Components
 
-# DataTable Component Rule
+## Overview
 
-This rule documents conventions and best practices for the `DataTable` component located at `src/components/dataTable.tsx`.
+DataTable components are part of the `mingster.backbone` shared package. They provide advanced table functionality built on `@tanstack/react-table` with sorting, filtering, pagination, row selection, and drag-and-drop support.
 
-## Purpose
+## Available Components
 
-The `DataTable` component is a generic, reusable client-side table built with `@tanstack/react-table` and integrated with the project's UI kit and i18n system. It supports sorting, filtering, pagination, and optional search.
+### 1. DataTable (Standard)
 
-## Usage Guidelines
+- Main table component with sorting, filtering, and pagination
+- Optional search functionality
+- Column visibility controls
 
-1. **Props**
-   - `columns`: Array of column definitions (`ColumnDef<TData, TValue>[]`).
-   - `data`: Array of row data (`TData[]`).
-   - `noSearch` (optional): Disables the search input if true.
-   - `searchKey` (optional): The key to use for the search filter.
+### 2. DataTableCheckbox
 
-2. **TypeScript**
-   - Always use generic types for strong type safety.
-   - Prefer interfaces over types for prop definitions.
+- Table with row selection via checkboxes
+- Bulk actions support
+- Select all functionality
 
-3. **Internationalization**
-   - Use the `useTranslation` and `useI18n` hooks for all user-facing strings.
-   - All button labels and messages (e.g., "search", "no_result", "previous", "next") must be translated.
+### 3. DataTableDraggable
 
-4. **UI Integration**
-   - Use the project's `Button`, `Input`, and `Table` components for consistent styling.
-   - Pagination controls should be shown only when applicable.
+- Table with drag-and-drop row reordering
+- Uses `@dnd-kit` for smooth interactions
+- Maintains state during drag operations
 
-5. **Client Component**
-   - The file must start with `"use client";` since it uses React state and hooks.
+### 4. Supporting Components
 
-6. **Extensibility**
-   - The component should remain generic and not be tied to specific data models.
-   - Additional features (e.g., row selection, bulk actions) should be implemented as optional props or via composition.
+- **DataTableColumnHeader**: Sortable column headers
+- **DataTablePagination**: Pagination controls
+- **DataTableViewOptions**: Column visibility dropdown
 
-## Example Usage
+## Import Pattern
+
+All DataTable components come from `mingster.backbone`:
 
 ```tsx
-import { DataTable } from "@/components/dataTable";
-import { columns } from "./columns";
+import {
+  DataTable,
+  DataTableCheckbox,
+  DataTableDraggable,
+  DataTableColumnHeader,
+  DataTablePagination,
+  DataTableViewOptions,
+} from "mingster.backbone";
+```
 
-<DataTable columns={columns} data={myData} searchKey="name" />;
+## Basic Usage
+
+### Standard DataTable
+
+```tsx
+import { DataTable, DataTableColumnHeader } from "mingster.backbone";
+import type { ColumnDef } from "@tanstack/react-table";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  status: string;
+}
+
+const columns: ColumnDef<User>[] = [
+  {
+    accessorKey: "name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
+  },
+  {
+    accessorKey: "email",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Email" />
+    ),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+  },
+];
+
+function UserTable({ users }: { users: User[] }) {
+  return (
+    <DataTable 
+      columns={columns} 
+      data={users} 
+      searchKey="name"
+    />
+  );
+}
+```
+
+### DataTable with Row Selection
+
+```tsx
+import { DataTableCheckbox } from "mingster.backbone";
+
+function SelectableUserTable({ users }: { users: User[] }) {
+  const [selectedRows, setSelectedRows] = useState<User[]>([]);
+
+  const handleSelectionChange = (rows: User[]) => {
+    setSelectedRows(rows);
+    console.log("Selected rows:", rows);
+  };
+
+  return (
+    <>
+      {selectedRows.length > 0 && (
+        <div>
+          Selected {selectedRows.length} row(s)
+          <Button onClick={() => handleBulkDelete(selectedRows)}>
+            Delete Selected
+          </Button>
+        </div>
+      )}
+      <DataTableCheckbox
+        columns={columns}
+        data={users}
+        onSelectionChange={handleSelectionChange}
+      />
+    </>
+  );
+}
+```
+
+### Draggable DataTable
+
+```tsx
+import { DataTableDraggable } from "mingster.backbone";
+
+function DraggableUserTable({ users }: { users: User[] }) {
+  const [data, setData] = useState(users);
+
+  const handleReorder = (reorderedData: User[]) => {
+    setData(reorderedData);
+    // Save new order to backend
+    await updateOrder(reorderedData);
+  };
+
+  return (
+    <DataTableDraggable
+      columns={columns}
+      data={data}
+      onReorder={handleReorder}
+    />
+  );
+}
+```
+
+## Column Definition Patterns
+
+### Basic Column
+
+```tsx
+{
+  accessorKey: "name",
+  header: "Name",
+}
+```
+
+### Sortable Column
+
+```tsx
+{
+  accessorKey: "name",
+  header: ({ column }) => (
+    <DataTableColumnHeader column={column} title="Name" />
+  ),
+}
+```
+
+### Custom Cell Rendering
+
+```tsx
+{
+  accessorKey: "status",
+  header: "Status",
+  cell: ({ row }) => {
+    const status = row.getValue("status") as string;
+    return (
+      <Badge variant={status === "active" ? "success" : "default"}>
+        {status}
+      </Badge>
+    );
+  },
+}
+```
+
+### Actions Column
+
+```tsx
+{
+  id: "actions",
+  cell: ({ row }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <IconDots />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => handleEdit(row.original)}>
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleDelete(row.original)}>
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  ),
+}
+```
+
+### Hide Column by Default
+
+```tsx
+{
+  accessorKey: "id",
+  header: "ID",
+  enableHiding: true,
+}
+```
+
+## Props Reference
+
+### DataTable Props
+
+```tsx
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[];  // Column definitions
+  data: TData[];                        // Table data
+  searchKey?: string;                   // Key for search functionality
+  noSearch?: boolean;                   // Disable search (default: false)
+  rowSelectionEnabled?: boolean;        // Enable row selection
+}
+```
+
+### DataTableCheckbox Props
+
+```tsx
+interface DataTableCheckboxProps<TData> {
+  columns: ColumnDef<TData>[];
+  data: TData[];
+  onSelectionChange?: (rows: TData[]) => void;  // Callback for selection
+  searchKey?: string;
+}
+```
+
+### DataTableDraggable Props
+
+```tsx
+interface DataTableDraggableProps<TData> {
+  columns: ColumnDef<TData>[];
+  data: TData[];
+  onReorder: (data: TData[]) => void;   // Callback when order changes
+  idKey?: string;                       // Unique identifier key (default: "id")
+}
+```
+
+## Internationalization
+
+DataTable components use i18n for user-facing strings:
+
+- Search placeholder: "Search..."
+- No results: "No results found"
+- Pagination: "Previous", "Next", "Page X of Y"
+
+These are handled internally by the backbone package.
+
+## TypeScript
+
+Always use generic types for type safety:
+
+```tsx
+const columns: ColumnDef<User>[] = [...];
+<DataTable<User> columns={columns} data={users} />
 ```
 
 ## Best Practices
 
-- Keep the component stateless regarding data fetching; pass all data via props.
-- Use memoization for columns and data in parent components to avoid unnecessary re-renders.
-- Avoid adding business logic or side effects inside the table component.
+1. **Import from backbone**: Always use `import { DataTable } from "mingster.backbone"`
+2. **Type safety**: Use TypeScript generics for your data type
+3. **Memoize columns**: Define columns outside component or use `useMemo`
+4. **Stable data**: Ensure data array reference stability to avoid re-renders
+5. **Column keys**: Use unique `accessorKey` or `id` for each column
+6. **Server data**: Fetch data in server components, pass to client table
+7. **Search key**: Provide `searchKey` prop for search functionality
+8. **Stateless table**: Keep table component stateless; manage state in parent
+
+## Common Patterns
+
+### With State Management
+
+```tsx
+const [data, setData] = useState<User[]>(serverData);
+
+// Update, create, delete handlers
+const handleUpdated = (updatedUser: User) => {
+  setData(prev => 
+    prev.map(user => user.id === updatedUser.id ? updatedUser : user)
+  );
+};
+
+<DataTable columns={columns} data={data} />
+```
+
+### With Filtering
+
+```tsx
+const [filter, setFilter] = useState("");
+
+const filteredData = useMemo(() => 
+  data.filter(item => 
+    item.name.toLowerCase().includes(filter.toLowerCase())
+  ),
+  [data, filter]
+);
+
+<DataTable columns={columns} data={filteredData} searchKey="name" />
+```
+
+### With Loading State
+
+```tsx
+{isLoading ? (
+  <Loader />
+) : (
+  <DataTable columns={columns} data={data} />
+)}
+```
+
+## Source Location
+
+DataTable components are maintained in:
+
+- **Package**: `packages/mingster.backbone/src/components/`
+- **Files**: `dataTable.tsx`, `dataTable-checkbox.tsx`, `datatable-draggable.tsx`, etc.
+- **Documentation**: `packages/mingster.backbone/README.md`
+
+Do not create local copies—always import from the backbone package.

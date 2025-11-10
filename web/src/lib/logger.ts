@@ -8,20 +8,23 @@ import { sqlClient } from "./prismadb";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// Create Pino logger for development
-const pinoLogger = pino({
-	//level: process.env.LOG_LEVEL || "info",
-	transport: {
-		target: "pino-pretty",
-		options: {
-			colorize: true, // Enables colored output
-			colorizeObjects: true, //--colorizeObjects
-			translateTime: true, // Adds timestamps
-			ignore: "pid,hostname", // Removes unnecessary fields
-		},
-	},
-	level: "debug", // Default level for development
-});
+// Create Pino logger with conditional configuration
+const pinoLogger = isProduction
+	? pino({
+			level: process.env.LOG_LEVEL || "info",
+		})
+	: pino({
+			transport: {
+				target: "pino-pretty",
+				options: {
+					colorize: true, // Enables colored output
+					colorizeObjects: true, //--colorizeObjects
+					translateTime: true, // Adds timestamps
+					ignore: "pid,hostname", // Removes unnecessary fields
+				},
+			},
+			level: "debug", // Default level for development
+		});
 
 interface LogEntry {
 	level: "error" | "warn" | "info" | "debug";
@@ -97,13 +100,8 @@ class Logger {
 			});
 		} catch (error) {
 			// Fallback to console if database logging fails
-			logger.error("Failed to log to database:", {
-				metadata: {
-					error: error instanceof Error ? error.message : String(error),
-				},
-				tags: ["error"],
-			});
-			logger.info("${entry.level.touppercase()}");
+			console.error("Failed to log to database:", error);
+			console.log(`[${entry.level.toUpperCase()}] ${entry.message}`, entry);
 		}
 	}
 
