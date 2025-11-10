@@ -1,3 +1,4 @@
+"use client";
 import { IconArrowUp } from "@tabler/icons-react";
 import React from "react";
 

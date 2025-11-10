@@ -1,3 +1,4 @@
+"use client";
 export function IconContainer({
 	as: Component = "div",
 	className = "",

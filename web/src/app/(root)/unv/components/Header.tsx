@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 
 import { Logo } from "@/components/logo";
@@ -20,6 +21,8 @@ import { authClient } from "@/lib/auth-client";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import DialogSignIn from "@/components/auth/dialog-sign-in";
+import { useI18n } from "@/providers/i18n-provider";
+import { useTranslation } from "react-i18next";
 
 export function NavPopover({
 	display = "md:hidden",
@@ -43,6 +46,7 @@ export function NavPopover({
 	};
   }, [isOpen]);
   */
+	const { data: session } = authClient.useSession();
 
 	return (
 		<div className={clsx(className, display)} {...props}>
@@ -80,7 +84,8 @@ export function NavPopover({
 						</ul>
 						<div className="pt-6 mt-6 border-t border-slate-200 dark:border-slate-200/10">
 							<ThemeToggler />
-							<DropdownUser /> <LanguageToggler />
+							{session !== null ? <DropdownUser /> : <DialogSignIn />}
+							<LanguageToggler />
 						</div>
 					</div>
 				</SheetContent>
@@ -100,6 +105,10 @@ const onNavlinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
 };
 
 export function NavItems() {
+
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
+
 	return (
 		<>
 			<li>
@@ -107,9 +116,9 @@ export function NavItems() {
 					data-to-scrollspy-id="useCases"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#useCases"
-					className="hover:text-sky-500 dark:hover:text-sky-400"
+					className="hover:text-sky-500 dark:hover:text-sky-400 capitalize"
 				>
-					使用情境
+					{t("nav_useCases")}
 				</Link>
 			</li>
 
@@ -118,9 +127,9 @@ export function NavItems() {
 					data-to-scrollspy-id="features"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#features"
-					className="hover:text-sky-500 dark:hover:text-sky-400"
+					className="hover:text-sky-500 dark:hover:text-sky-400 capitalize"
 				>
-					功能表
+					{t("nav_features")}
 				</Link>
 			</li>
 
@@ -129,9 +138,9 @@ export function NavItems() {
 					data-to-scrollspy-id="cost"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#cost"
-					className="hover:text-sky-500 dark:hover:text-sky-400"
+					className="hover:text-sky-500 dark:hover:text-sky-400 capitalize"
 				>
-					價格
+					{t("nav_price")}
 				</Link>
 			</li>
 			{/*
@@ -151,17 +160,17 @@ export function NavItems() {
 					data-to-scrollspy-id="aboutUs"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#aboutUs"
-					className="hover:text-sky-500 dark:hover:text-sky-400"
+					className="hover:text-sky-500 dark:hover:text-sky-400 capitalize"
 				>
-					聯繫我們
+					{t("nav_about")}
 				</Link>
 			</li>
 			<li>
 				<Link
 					href="/storeAdmin/"
-					className="hover:text-sky-500 dark:hover:text-sky-400"
+					className="hover:text-sky-500 dark:hover:text-sky-400 capitalize"
 				>
-					店家後台
+					{t("nav_storeAdmin")}
 				</Link>
 			</li>
 		</>
