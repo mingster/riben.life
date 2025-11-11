@@ -40,7 +40,7 @@ export const columns: ColumnDef<CategoryColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("Category_numofProduct")}
+					title={t("Category_numOfProduct")}
 				/>
 			);
 		},

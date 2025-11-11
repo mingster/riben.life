@@ -1,8 +1,8 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreTables } from "@prisma/client";
-import type { TableColumn } from "./components/columns";
-import { TableClient } from "./components/table-client";
+import { TableClient } from "./components/client-table";
+import { mapStoreTableToColumn, type TableColumn } from "./table-column";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -21,17 +21,12 @@ export default async function StoreTablePage(props: {
 
 	// Map tables to UI columns
 	const formattedTables: TableColumn[] = (tables as StoreTables[]).map(
-		(item) => ({
-			id: item.id,
-			storeId: params.storeId,
-			tableName: item.tableName,
-			capacity: item.capacity,
-		}),
+		mapStoreTableToColumn,
 	);
 
 	return (
 		<Container>
-			<TableClient data={formattedTables} />
+			<TableClient serverData={formattedTables} />
 		</Container>
 	);
 }

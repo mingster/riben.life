@@ -6,7 +6,7 @@ alwaysApply: true
 
 ## Overview
 
-`client-faq-category.tsx` in the store admin FAQ route is the canonical reference for how we build data tables in this project. It demonstrates the project-standard pattern for wiring `@/components/dataTable` (and related helpers) with TanStack Table, client-side state, modals, and safe actions.
+The store admin tables feature (`client-table.tsx`, `edit-table-dialog.tsx`, `bulk-add-tables-dialog.tsx`, `cell-action.tsx`) is the canonical reference for our interactive data tables. It demonstrates the full pattern for wiring `@/components/dataTable` (and related helpers) with TanStack Table, safe actions, client-side state, and controlled dialogs. The FAQ category screen remains a secondary example that focuses on filtering-heavy tables.
 
 ## Available Components
 
@@ -43,25 +43,25 @@ import { DataTableViewOptions } from "@/components/dataTable-view-options";
 
 ### Standard listing
 
-`client-faq-category.tsx` loads FAQ categories from props, stores them locally, and renders the `DataTable` with action buttons. Key elements:
+`client-table.tsx` loads store tables from props, keeps them in local state, and renders `DataTable` with per-row actions. Key elements:
 
 ```tsx
-const faqColumns: ColumnDef<FaqCategoryRow>[] = [
+const tableColumns: ColumnDef<TableRow>[] = [
   {
-    accessorKey: "name",
+    accessorKey: "tableName",
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={t("FaqCategory_name")}
+        title={t("StoreTable_Name")}
       />
     ),
   },
   {
-    accessorKey: "sortOrder",
+    accessorKey: "capacity",
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={t("FaqCategory_sortOrder")}
+        title={t("StoreTable_Seats")}
       />
     ),
   },
@@ -74,10 +74,10 @@ const faqColumns: ColumnDef<FaqCategoryRow>[] = [
 ];
 
 return (
-  <DataTable<FaqCategoryRow>
-    data={filteredData}
-    columns={faqColumns}
-    searchKey="name"
+  <DataTable<TableRow>
+    data={data}
+    columns={tableColumns}
+    searchKey="tableName"
   />
 );
 ```
@@ -207,14 +207,14 @@ Tables are localized via the i18n hooks (`useTranslation`). Column titles are al
 Always type your rows:
 
 ```tsx
-interface FaqCategoryRow {
+interface TableRow {
   id: string;
-  name: string;
-  sortOrder: number;
-  isPublished: boolean;
+  tableName: string;
+  capacity: number;
+  storeId: string;
 }
 
-const columns: ColumnDef<FaqCategoryRow>[] = [...];
+const columns: ColumnDef<TableRow>[] = [...];
 ```
 
 ## Best Practices
@@ -225,13 +225,14 @@ const columns: ColumnDef<FaqCategoryRow>[] = [...];
 4. **Stable state**: Store data in local `useState` and update via callbacks (create/update/delete) to keep UI responsive.
 5. **Search/filter**: Use the `searchKey` prop plus optional custom filter components (`FilterFaqCategories` in the FAQ screen).
 6. **Actions**: Keep per-row actions (`CellAction`) colocated with the table for clarity.
+7. **Controlled dialogs**: When opening dialogs from dropdown menus, control the dialog’s `open` state in the table row component (see tables `cell-action.tsx`) so it stays mounted.
 
 ## Common Patterns
 
 ### With Client State Management
 
 ```tsx
-const [data, setData] = useState<FaqCategoryRow[]>(serverFaqCategories);
+const [data, setData] = useState<TableRow[]>(serverTables);
 
 // Update, create, delete handlers
 const handleUpdated = (updatedUser: User) => {
@@ -240,7 +241,7 @@ const handleUpdated = (updatedUser: User) => {
   );
 };
 
-<DataTable<FaqCategoryRow> columns={columns} data={data} />
+<DataTable<TableRow> columns={columns} data={data} />
 ```
 
 ### With Filtering
@@ -262,10 +263,10 @@ const filteredData = useMemo(
   [data, selectedStatus, searchTerm],
 );
 
-<DataTable<FaqCategoryRow>
+<DataTable<TableRow>
   columns={columns}
   data={filteredData}
-  searchKey="name"
+  searchKey="tableName"
 />
 ```
 
@@ -275,7 +276,7 @@ const filteredData = useMemo(
 {isLoading ? (
   <Loader />
 ) : (
-  <DataTable<FaqCategoryRow> columns={columns} data={data} />
+  <DataTable<TableRow> columns={columns} data={data} />
 )}
 ```
 
@@ -283,8 +284,13 @@ const filteredData = useMemo(
 
 Canonical implementation:
 
-- `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/faq/components/client-faq-category.tsx`
-- `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/faq/components/columns.tsx` (if split out)
+- `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/tables/components/client-table.tsx`
+- `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/tables/components/edit-table-dialog.tsx`
+- `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/tables/components/bulk-add-tables-dialog.tsx`
+- `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/tables/components/cell-action.tsx`
+- `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/tables/components/columns.tsx`
+- `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/faq/components/client-faq-category.tsx` (filter-focused example)
+- `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/faq/components/columns.tsx`
 
 Shared table primitives:
 

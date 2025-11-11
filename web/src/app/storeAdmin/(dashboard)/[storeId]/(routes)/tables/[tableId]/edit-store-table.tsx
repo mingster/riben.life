@@ -1,5 +1,7 @@
 "use client";
 
+import { createStoreTableAction } from "@/actions/storeAdmin/tables/create-store-table";
+import { updateStoreTableAction } from "@/actions/storeAdmin/tables/update-store-table";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 
@@ -29,14 +31,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import type { StoreTables } from "@prisma/client";
-import axios, { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 const formSchema = z.object({
 	tableName: z.string().min(1, { message: "name is required" }),
-	capacity: z.number().min(1),
+	capacity: z.coerce.number().min(1),
 });
 
 type formValues = z.infer<typeof formSchema>;
@@ -55,58 +56,64 @@ export const EditStoreTable = ({ initialData, action }: editProps) => {
 	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
 
-	const defaultValues = initialData
-		? {
-				...initialData,
-			}
-		: {};
-
-	//console.log(`product basic: ${JSON.stringify(defaultValues)}`);
 	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema),
-		defaultValues,
+		resolver: zodResolver(formSchema) as any,
+		defaultValues: {
+			tableName: initialData?.tableName ?? "",
+			capacity: initialData?.capacity ?? 2,
+		},
 		mode: "onChange",
 	});
-
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		clearErrors,
-	} = useForm<formValues>();
 
 	const onSubmit = async (data: formValues) => {
 		try {
 			setLoading(true);
-			//console.log(`onSubmit: ${JSON.stringify(data)}`);
+
 			if (initialData) {
-				// do edit
-				await axios.patch(
-					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/tables/${initialData.id}`,
-					data,
-				);
+				const result = await updateStoreTableAction({
+					storeId: String(params.storeId),
+					id: initialData.id,
+					tableName: data.tableName,
+					capacity: data.capacity,
+				});
+
+				if (result?.serverError) {
+					toastError({
+						title: t("Error"),
+						description: result.serverError,
+					});
+					return;
+				}
+
 				toastSuccess({
 					title: t("storeTables") + t("Updated"),
 					description: "",
 				});
 			} else {
-				// do create
-				await axios.patch(
-					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/tables`,
-					data,
-				);
+				const result = await createStoreTableAction({
+					storeId: String(params.storeId),
+					tableName: data.tableName,
+					capacity: data.capacity,
+				});
+
+				if (result?.serverError) {
+					toastError({
+						title: t("Error"),
+						description: result.serverError,
+					});
+					return;
+				}
+
 				toastSuccess({
 					title: t("storeTables") + t("Created"),
 					description: "",
 				});
 			}
 			router.push(`/storeAdmin/${params.storeId}/tables`);
-			router.refresh();
-		} catch (err: unknown) {
-			const error = err as AxiosError;
+		} catch (error: unknown) {
 			toastError({
-				title: "Something went wrong.",
-				description: error.message,
+				title: t("Error"),
+				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
 			setLoading(false);
@@ -150,7 +157,11 @@ export const EditStoreTable = ({ initialData, action }: editProps) => {
 									<FormItem>
 										<FormLabel>{t("StoreTable_Seats")}</FormLabel>
 										<FormControl>
-											<Input type="number" {...field} />
+											<Input
+												type="number"
+												value={field.value?.toString() ?? ""}
+												onChange={(event) => field.onChange(event.target.value)}
+											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -174,7 +185,6 @@ export const EditStoreTable = ({ initialData, action }: editProps) => {
 									type="button"
 									variant="outline"
 									onClick={() => {
-										clearErrors();
 										router.push(`/storeAdmin/${params.storeId}/tables`);
 									}}
 									className="ml-5"

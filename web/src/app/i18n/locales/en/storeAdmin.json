@@ -263,7 +263,7 @@
   "StoreTable_Mgmt": "Table Management",
   "StoreTable_Mgmt_Add": "Add table",
   "StoreTable_Mgmt_Add_Descr": "Enter number to batch add tables.",
-  "StoreTable_Mgmt_AddButton": "Batch Add",
+  "StoreTable_Mgmt_AddButton": "Bulk Add",
   "StoreTable_Mgmt_Deleted": "Deleted table",
   "StoreTable_Mgmt_Edit": "Edit table",
   "StoreTable_Mgmt_Prefix": "Table prefix",

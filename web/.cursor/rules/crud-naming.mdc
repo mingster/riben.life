@@ -1,0 +1,53 @@
+---
+description: Naming conventions for CRUD resources
+alwaysApply: true
+---
+# CRUD Naming Standard
+
+Use the store admin **tables** implementation as the canonical naming pattern for new CRUD features.
+
+## Directory Layout
+
+``` dtd
+/(route)/RESOURCE/
+  ├── page.tsx                // Server component, fetches data
+  ├── table-column.ts         // Shared row type + mapper
+  └── components/
+      ├── client-resource.tsx         // Client table component
+      ├── edit-resource-dialog.tsx    // Create/edit dialog
+      ├── bulk-add-resources-dialog.tsx (optional)
+      ├── cell-action.tsx             // Row action menu
+      ├── columns.tsx                 // Column definitions
+      └── … (additional helpers)
+```
+
+## File Naming
+
+- **Client table**: `client-resource.tsx` (e.g., `client-table.tsx`)
+- **Edit dialog**: `edit-resource-dialog.tsx` (e.g., `edit-table-dialog.tsx`)
+- **Bulk dialog**: `bulk-add-resources-dialog.tsx` (e.g., `bulk-add-tables-dialog.tsx`)
+- **Cell actions**: `cell-action.tsx`
+- **Columns**: `columns.tsx`
+- **Row type & mapper**: `resource-column.ts` (e.g., `table-column.ts`)
+
+Use the `resource` name in plural form for directories/files when they represent collections (e.g., `tables`), but singular for the core row type (`TableColumn`).
+
+## Component Naming
+
+- Exported React components are PascalCase (`TableClient`, `EditStoreTableDialog`).
+- Client table component should be `ResourceClient` (e.g., `TableClient`).
+- Dialog components follow the pattern `EditStoreResourceDialog`, matching the file name.
+
+## Server Actions
+
+Place server actions in `web/src/actions/storeAdmin/RESOURCE/` using verb-first names:
+
+- `create-resource.ts`
+- `create-resources.ts` (bulk)
+- `update-resource.ts`
+- `delete-resource.ts`
+- Matching validation files: `create-resource.validation.ts`, etc.
+
+Example: tables actions use `create-store-table.ts`, `create-store-tables.ts`, `update-store-table.ts`, `delete-store-table.ts`.
+
+Following these naming conventions keeps CRUD features predictable and consistent across the codebase.

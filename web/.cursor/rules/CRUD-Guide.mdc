@@ -11,8 +11,8 @@ This application follows a modern pattern for managing data (CRUD operations - C
 
 ## Key Principles
 
-- **Local State Management:** The main client component (e.g., `client-FaqCategory.tsx`) holds the data array in local state (`useState`).
-- **Edit/Create Dialogs:** Edit and create forms (e.g., `edit-FaqCategory`) are rendered as modals or drawers and receive `onUpdated` callbacks from the parent.
+- **Local State Management:** The main client component (e.g., `client-table.tsx`) holds the data array in local state (`useState`).
+- **Edit/Create Dialogs:** Edit and create forms (e.g., `edit-table-dialog.tsx`) are rendered as modals or drawers and receive callbacks from the parent.
 - **Direct State Updates:** After a mutation (create, update, delete), the parent updates its local state array directly, ensuring the UI is always in sync.
 - **No router.refresh for Client State:** Do **not** rely on `router.refresh()` to update client-side state. Only use it if you want to re-fetch server components.
 - **Type Safety:** Always ensure new/updated items include all required fields for the state array's type.
@@ -52,9 +52,10 @@ This application follows a modern pattern for managing data (CRUD operations - C
 
 ## Example Reference
 
-- Main CRUD page: @`/storeAdmin/[storeId]/categories/page.tsx`
-- Client table: @`/storeAdmin/[storeId]/categories/components/client-category.tsx`
-- Edit/Create dialog: @`/storeAdmin/[storeId]/categories/components/edit-category.tsx`
+- Main CRUD page: @`/storeAdmin/[storeId]/tables/page.tsx`
+- Client table: @`/storeAdmin/[storeId]/(routes)/tables/components/client-table.tsx`
+- Edit/Create dialog: @`/storeAdmin/[storeId]/(routes)/tables/components/edit-table-dialog.tsx`
+- Bulk create dialog: @`/storeAdmin/[storeId]/(routes)/tables/components/bulk-add-tables-dialog.tsx`
 
 ---
 

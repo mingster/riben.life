@@ -1,0 +1,31 @@
+---
+description: Ensure all validation uses Zod v4 conventions
+alwaysApply: true
+---
+# Zod v4 Usage
+
+All validation schemas in this project must use **Zod v4** with the following conventions:
+
+1. **Imports**
+
+   ```ts
+   import { z } from "zod";
+   ```
+
+2. **Schema Creation**
+   - Always instantiate schemas with the `z` namespace from v4 (`z.object`, `z.string`, etc.).
+   - Use v4 helpers such as `z.coerce.number()` when coercion from strings is required.
+   - Prefer chaining v4 transformations/validations (e.g., `.min()`, `.max()`, `.default()`).
+
+3. **Type Inference**
+
+   ```ts
+   const schema = z.object({ ... });
+   type SchemaType = z.infer<typeof schema>;
+   ```
+
+4. **Legacy Code**
+   - If you encounter schemas written for earlier versions of Zod, refactor them to follow the v4 API before making changes.
+   - Remove any deprecated helpers or patterns not supported in v4.
+
+Following these rules keeps our validation layer consistent, type-safe, and aligned with the rest of the codebase.***

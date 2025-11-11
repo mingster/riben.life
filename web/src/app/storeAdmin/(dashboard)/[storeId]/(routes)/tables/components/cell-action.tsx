@@ -1,12 +1,13 @@
 "use client";
 
-import axios, { type AxiosError } from "axios";
-import { IconCopy, IconEdit, IconDots, IconTrash } from "@tabler/icons-react";
-import { useParams, useRouter } from "next/navigation";
+import { IconCopy, IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
+import { deleteStoreTableAction } from "@/actions/storeAdmin/tables/delete-store-table";
 import { AlertModal } from "@/components/modals/alert-modal";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -17,40 +18,52 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/providers/i18n-provider";
 
-import type { TableColumn } from "./columns";
+import type { TableColumn } from "../table-column";
+import { EditStoreTableDialog } from "./edit-table-dialog";
 
 interface CellActionProps {
 	data: TableColumn;
+	onDeleted?: (tableId: string) => void;
+	onUpdated?: (table: TableColumn) => void;
 }
-import { toastError, toastSuccess } from "@/components/toaster";
 
-export const CellAction: React.FC<CellActionProps> = ({ data }) => {
+export const CellAction: React.FC<CellActionProps> = ({
+	data,
+	onDeleted,
+	onUpdated,
+}) => {
 	const [loading, setLoading] = useState(false);
 	const [open, setOpen] = useState(false);
-	const router = useRouter();
-	const params = useParams();
+	const [isEditOpen, setIsEditOpen] = useState(false);
+	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
 	const onConfirm = async () => {
 		try {
 			setLoading(true);
+			const result = await deleteStoreTableAction({
+				storeId: String(params.storeId),
+				id: data.id,
+			});
 
-			await axios.delete(
-				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/tables/${data.id}`,
-			);
+			if (result?.serverError) {
+				toastError({
+					title: t("Error"),
+					description: result.serverError,
+				});
+				return;
+			}
 
 			toastSuccess({
 				title: t("StoreTable_Mgmt_Deleted"),
 				description: "",
 			});
-			//router.refresh();
-			window.location.assign(`/storeAdmin/${params.storeId}/tables`);
+			onDeleted?.(data.id);
 		} catch (error: unknown) {
-			const err = error as AxiosError;
 			toastError({
-				title: "something wrong.",
-				description: err.message,
+				title: t("Error"),
+				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
 			setLoading(false);
@@ -92,9 +105,10 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 
 					<DropdownMenuItem
 						className="cursor-pointer"
-						onClick={() =>
-							router.push(`/storeAdmin/${params.storeId}/tables/${data.id}`)
-						}
+						onSelect={(event) => {
+							event.preventDefault();
+							setIsEditOpen(true);
+						}}
 					>
 						<IconEdit className="mr-0 size-4" /> {t("Edit")}
 					</DropdownMenuItem>
@@ -106,6 +120,13 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
+			<EditStoreTableDialog
+				isNew={false}
+				table={data}
+				onUpdated={onUpdated}
+				open={isEditOpen}
+				onOpenChange={setIsEditOpen}
+			/>
 		</>
 	);
 };

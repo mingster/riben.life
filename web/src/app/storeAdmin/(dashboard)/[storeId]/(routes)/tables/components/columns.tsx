@@ -1,18 +1,14 @@
 "use client";
 
-import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
-import { t } from "i18next";
-import { useQRCode } from "next-qrcode";
+import type { TFunction } from "i18next";
 import Link from "next/link";
-import { CellAction } from "./cell-action";
+import { useQRCode } from "next-qrcode";
 
-export type TableColumn = {
-	id: string;
-	storeId: string;
-	tableName: string;
-	capacity: number;
-};
+import { DataTableColumnHeader } from "@/components/dataTable-column-header";
+
+import type { TableColumn } from "../table-column";
+import { CellAction } from "./cell-action";
 
 interface QrCodeProps {
 	data: TableColumn;
@@ -37,44 +33,47 @@ export const QRCode: React.FC<QrCodeProps> = ({ data }) => {
 		</Link>
 	);
 };
-export const columns: ColumnDef<TableColumn>[] = [
-	{
-		accessorKey: "tableName",
-		header: ({ column }) => {
-			return (
+
+interface CreateTableColumnsOptions {
+	onDeleted?: (tableId: string) => void;
+	onUpdated?: (table: TableColumn) => void;
+}
+
+export const createTableColumns = (
+	t: TFunction,
+	options: CreateTableColumnsOptions = {},
+): ColumnDef<TableColumn>[] => {
+	const { onDeleted, onUpdated } = options;
+
+	return [
+		{
+			accessorKey: "tableName",
+			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("StoreTable_Name")} />
-			);
+			),
+			cell: ({ row }) => <span>{row.getValue("tableName") as string}</span>,
 		},
-		cell: ({ row }) => (
-			<Link
-				className="pl-0"
-				title="click to edit"
-				href={`./tables/${row.original.id}`}
-			>
-				{row.getValue("tableName")}
-			</Link>
-		),
-	},
-	{
-		accessorKey: "capacity",
-		header: ({ column }) => {
-			return (
+		{
+			accessorKey: "capacity",
+			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("StoreTable_Seats")} />
-			);
+			),
 		},
-	},
-	{
-		id: "qrcode",
-		header: ({ column }) => {
-			return "";
+		{
+			id: "qrcode",
+			header: () => "",
+			cell: ({ row }) => <QRCode data={row.original} />,
 		},
-		cell: ({ row }) => <QRCode data={row.original} />,
-	},
-	{
-		id: "actions",
-		header: ({ column }) => {
-			return t("actions");
+		{
+			id: "actions",
+			header: () => t("actions"),
+			cell: ({ row }) => (
+				<CellAction
+					data={row.original}
+					onDeleted={onDeleted}
+					onUpdated={onUpdated}
+				/>
+			),
 		},
-		cell: ({ row }) => <CellAction data={row.original} />,
-	},
-];
+	];
+};

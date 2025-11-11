@@ -1,6 +1,4 @@
 {
-  "Pstv.Web.Account.Expired.Title": "您的服務已到期",
-  "Pstv.Web.Account.Expired.BecomeSubscriber": "請成為訂戶來讓我們有能力持續提供服務",
   "account_tab_currentAcct": "登入帳號：",
   "account_tab_signout": "登出",
   "account_tabs_account": "帳號設定",
@@ -165,14 +163,12 @@
   "model": "型號",
   "monthly": "每月",
   "name": "名稱",
-
   "nav_about": "關於我們",
   "nav_contact": "聯繫我們",
   "nav_features": "功能",
   "nav_price": "價格",
-  "nav_useCases": "使用情境",
   "nav_storeAdmin": "管理店家",
-
+  "nav_useCases": "使用情境",
   "new_password": "新密碼",
   "next": "下一頁",
   "no": "否",
@@ -300,6 +296,8 @@
   "PSTV_TV_CodePage_Prompt": "請輸入電視畫面所顯示的五位數連結碼",
   "PSTV_TV_CodePage_Success": "您已完成登錄。電視過幾秒後即可使用。",
   "pstv_watchNow_title": "直播頻道",
+  "Pstv.Web.Account.Expired.BecomeSubscriber": "請成為訂戶來讓我們有能力持續提供服務",
+  "Pstv.Web.Account.Expired.Title": "您的服務已到期",
   "quarterly": "每季",
   "Refund": "退款",
   "RefundAll": "退整張訂單",
@@ -387,7 +385,6 @@
   "subscription_start_date": "訂閱日期：",
   "subscription_tabs_billing": "帳單記錄",
   "subscription_tabs_devices": "裝置管理",
-
   "subscription_tabs_info": "訂閱資訊",
   "success_descr": "我們已收到您的訂單，店家確認後會立即為您處理，謝謝您的訂購。",
   "success_title": "已完成訂購",
