@@ -4,7 +4,7 @@ import {
 	type RefundRequestBody,
 	type RefundRequestConfig,
 	getLinePayClientByStore,
-} from "@/lib/linepay";
+} from "@/lib/linePay";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";

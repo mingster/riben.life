@@ -13,8 +13,8 @@ import {
 	createLinePayClient,
 	getLinePayClient,
 	getLinePayClientByStore,
-} from "@/lib/linepay";
-import type { LinePayClient } from "@/lib/linepay/type";
+} from "@/lib/linePay";
+import type { LinePayClient } from "@/lib/linePay/type";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
@@ -24,7 +24,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import logger from "@/lib/logger";
 
-// linepay confirmed page: once user completed the linepay payment, linepay will redirect to this page
+// linePay confirmed page: once user completed the linePay payment, linePay will redirect to this page
 // here we check the payment status. Upon success, we mark the order as paid, and then redirect to success page.
 // https://developers-pay.line.me/merchant/redirection-pages/
 //
@@ -49,7 +49,7 @@ export default async function LinePayConfirmedPage({
 		throw new Error("transactionId not match");
 	}
 
-	// call linepay confirm api
+	// call linePay confirm api
 	if (order.isPaid) {
 		return (
 			<Suspense fallback={<Loader />}>
@@ -83,7 +83,7 @@ export default async function LinePayConfirmedPage({
 			logger.info("LinePayConfirmedPage");
 
 		redirect(
-			`${getAbsoluteUrl()}/checkout/${updated_order.id}/linepay/success`,
+			`${getAbsoluteUrl()}/checkout/${updated_order.id}/linePay/success`,
 		);
 	}
 

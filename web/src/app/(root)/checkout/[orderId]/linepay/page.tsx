@@ -10,8 +10,8 @@ import {
 	type RequestRequestConfig,
 	getLinePayClient,
 	getLinePayClientByStore,
-} from "@/lib/linepay";
-import type { LinePayClient } from "@/lib/linepay/type";
+} from "@/lib/linePay";
+import type { LinePayClient } from "@/lib/linePay/type";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { isMobileUserAgent } from "@/utils/utils";
@@ -21,8 +21,8 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import logger from "@/lib/logger";
 
-// customer select linepay as payment method. here we will make a payment request
-// and redirect user to linepay payment page
+// customer select linePay as payment method. here we will make a payment request
+// and redirect user to linePay payment page
 //
 // https://developers-pay.line.me/online
 // https://developers-pay.line.me/online-api
@@ -45,7 +45,7 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 	if (!order) {
 		throw new Error("order not found");
 	}
-	//console.log('linepay order', JSON.stringify(order));
+	//console.log('linePay order', JSON.stringify(order));
 
 	if (order.isPaid === true) {
 		return (
@@ -68,8 +68,8 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 		protocol = "https:";
 	}
 
-	const confirmUrl = `${protocol}//${host}/checkout/${order.id}/linepay/confirmed`;
-	const cancelUrl = `${protocol}//${host}/checkout/${order.id}/linepay/canceled`;
+	const confirmUrl = `${protocol}//${host}/checkout/${order.id}/linePay/confirmed`;
+	const cancelUrl = `${protocol}//${host}/checkout/${order.id}/linePay/canceled`;
 
 	const requestBody: RequestRequestBody = {
 		amount: Number(order.orderTotal),
@@ -92,14 +92,14 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 		},
 	};
 
-	//console.log("linepay request", JSON.stringify(requestBody));
+	//console.log("linePay request", JSON.stringify(requestBody));
 
 	const requestConfig: RequestRequestConfig = {
 		body: requestBody,
 	};
 
 	const res = await linePayClient.request.send(requestConfig);
-	//console.log("linepay res", JSON.stringify(res));
+	//console.log("linePay res", JSON.stringify(res));
 
 	if (res.body.returnCode === "0000") {
 		const weburl = res.body.info.paymentUrl.web;

@@ -149,7 +149,7 @@ bun run start
     ├── lib/              # Core utilities and integrations
     │   ├── auth.ts       # Authentication logic
     │   ├── prismadb.ts   # Database client
-    │   ├── linepay/      # LINE Pay integration
+    │   ├── linePay/      # LINE Pay integration
     │   └── stripe/       # Stripe integration
     ├── providers/        # React context providers
     ├── types/            # TypeScript type definitions
