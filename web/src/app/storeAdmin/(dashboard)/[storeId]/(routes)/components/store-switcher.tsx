@@ -90,10 +90,9 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 					<Button
 						variant="outline"
 						size="sm"
-						// biome-ignore lint/a11y/useSemanticElements: <explanation>
-						role="combobox"
+						//role="combobox"
 						aria-expanded={open}
-						aria-label={t("storeAdmin_switcher_select_a_store")}
+						//aria-label={t("storeAdmin_switcher_select_a_store")}
 						className={cn("lg:w-full justify-between", className)}
 					>
 						<StoreIcon className="mr-0 size-4" />

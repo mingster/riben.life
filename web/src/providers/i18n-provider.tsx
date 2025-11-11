@@ -2,8 +2,7 @@
 
 import { useTranslation } from "@/app/i18n/client";
 import { fallbackLng } from "@/app/i18n/settings";
-//import { useCookies } from "next-client-cookies";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 
 interface i18nContext {
 	lng: string;
@@ -11,58 +10,31 @@ interface i18nContext {
 
 export const i18nContext = createContext<i18nContext | null>(null);
 
-const I18nProvider = ({ children }: { children: React.ReactNode }) => {
-	//const I18nProvider = ({ children, store }: { children: React.ReactNode; store: Store }) => {
+const I18nProvider = ({
+	children,
+	initialLng,
+}: {
+	children: React.ReactNode;
+	initialLng?: string;
+}) => {
+	const { i18n } = useTranslation(initialLng);
 
-	const { i18n } = useTranslation();
+	const resolvedLanguage = useMemo(() => {
+		if (i18n.resolvedLanguage) {
+			return i18n.resolvedLanguage;
+		}
 
-	let lng = i18n.resolvedLanguage;
+		if (initialLng) {
+			return initialLng;
+		}
 
-	//console.log("context resolvedLanguage: " + lng);
-	if (!lng) lng = fallbackLng;
-
-	/*
-  let lng = fallbackLng;
-
-  const cookies = useCookies();
-  const cookie = cookies.get(cookieName);
-
-  if (cookie && cookies.get(cookieName) !== lng) {
-    lng = cookies.get(cookieName);
-  };
-  */
-
-	//console.log('cookies lng: ' + lng);
-	//setCookie(cookieName, null);
-
-	//try get language from cookie
-	//
-	/*
-  if (lng) {
-    lng = acceptLanguage.get(lng);
-    console.log('lng2: ' + lng);
-  }
-  */
-
-	// if not set, use store's default
-	//
-	if (!lng) {
-		//lng = store.defaultLocale;
-		//console.log('store default: ' + lng);
-	}
-
-	//console.log('cookies: ' + JSON.stringify(cookies));
-	//console.log('cookieName: ' + cookies[cookieName]);
-	//console.log('fallbackLng: ' + fallbackLng);
-	//console.log('lng: ' + lng);
-
-	/*
-  if (cookies.has(cookieName)) lng = acceptLanguage.get(req.cookies.get(cookieName).value);
-  if (!lng) lng = acceptLanguage.get(req.headers.get('Accept-Language'));
-*/
+		return fallbackLng;
+	}, [i18n.resolvedLanguage, initialLng]);
 
 	return (
-		<i18nContext.Provider value={{ lng }}>{children}</i18nContext.Provider>
+		<i18nContext.Provider value={{ lng: resolvedLanguage }}>
+			{children}
+		</i18nContext.Provider>
 	);
 };
 

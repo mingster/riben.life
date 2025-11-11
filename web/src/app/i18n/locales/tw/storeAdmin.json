@@ -90,7 +90,7 @@
   "Order_pending": "待確認訂單",
   "Order_pending_descr": "請勾選來確認接單。",
   "Order_pickupCode": "取貨碼",
-  "Order_ready_to_ship": "待取貨/出貨訂單",
+  "Order_ready_to_ship": "待取貨訂單",
   "Order_ready_to_ship_button": "完成",
   "Order_ready_to_ship_descr": "請勾選來確認出貨。",
   "Order_shipout": "出貨",

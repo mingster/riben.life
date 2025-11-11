@@ -104,8 +104,12 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	const cookieStore = await cookies();
+	const langCookie = cookieStore.get("i18next");
+	const htmlLang = langCookie?.value ?? fallbackLng;
+
 	return (
-		<html lang="en" suppressHydrationWarning>
+		<html lang={htmlLang} suppressHydrationWarning>
 			<body className={"antialiased"}>
 				<NextThemeProvider
 					attribute="class"
@@ -114,7 +118,7 @@ export default async function RootLayout({
 					disableTransitionOnChange
 				>
 					<CookiesProvider>
-						<I18nProvider>
+						<I18nProvider initialLng={htmlLang}>
 							<SessionWrapper>
 								<IOSVersionCheck>
 									<PageViewTracker />

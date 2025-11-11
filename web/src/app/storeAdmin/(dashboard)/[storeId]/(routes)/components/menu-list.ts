@@ -67,26 +67,10 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 	} as Menu;
 
 	return [
-		/*
-		{
-			groupLabel: "",
-			menus: [
-				{
-					href: nav_prefix,
-					label: t("StoreDashboard"),
-					active: pathname.includes("#"),
-					icon: LayoutGrid,
-					submenus: [],
-				},
-			],
-		},
-		*/
-
 		{
 			groupLabel: t("Sales"),
 			menus: [
 				//...(store.autoAcceptOrder ? [] : [orderConfirmation]),
-
 				// add cash (現金結帳) menu if store level is not free
 				// otherwise display orderCofirmation
 				...(store.level !== StoreLevel.Free ? [cash] : []),
@@ -167,53 +151,13 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 					icon: Box,
 					submenus: [],
 				},
-				/*
-		{
-		  href: `${nav_prefix}/products`,
-		  label: t("Products"),
-		  active: pathname.includes("/products"),
-		  icon: Box,
-		  submenus: [
-			{
-			  href: `${nav_prefix}/products`,
-			  label: t("AllProducts"),
-			  active: pathname === `${nav_prefix}/products`,
-			},
-			{
-			  href: `${nav_prefix}/products/new`,
-			  label: t("NewProduct"),
-			  active: pathname === `${nav_prefix}/products/new`,
-			},
-		  ],
-		},
-		*/
 				{
 					href: `${nav_prefix}/faq`,
 					label: t("FAQ"),
 					active: pathname.includes(`${nav_prefix}/faq`),
 					icon: CircleHelp,
-					submenus: [
-						/*
-			{
-			  href: `${nav_prefix}/faqCategory`,
-			  label: "FAQ Category",
-			  active: pathname === `${nav_prefix}/faqCategory`,
-			},
-			{
-			  href: `${nav_prefix}/faq`,
-			  label: "FAQ",
-			  active: pathname === `${nav_prefix}/faq`,
-			},*/
-					],
+					submenus: [],
 				},
-				/*
-		{
-		  href: `${nav_prefix}/tags`,
-		  label: t("Tags"),
-		  active: pathname.includes(`${nav_prefix}/tags`),
-		  icon: Tag,
-		  submenus: [],
-		},*/
 			],
 		},
 		{
