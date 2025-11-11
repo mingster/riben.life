@@ -22,7 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 
 const EditorComp = dynamic(
 	() => import("@/components/editor/EditorComponent"),

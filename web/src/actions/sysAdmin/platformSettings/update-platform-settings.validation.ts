@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const updatePlatformSettingsSchema = z.object({
 	//id: z.string().uuid().optional(), // Optional for create, required for update

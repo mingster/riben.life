@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import {

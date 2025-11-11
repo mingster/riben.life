@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const updateStoreTermsSchema = z.object({
 	storeId: z.string().min(1),

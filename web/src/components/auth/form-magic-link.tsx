@@ -6,7 +6,7 @@ import { useGoogleReCaptcha } from "@wojtekmaj/react-recaptcha-v3";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { useTranslation } from "@/app/i18n/client";
 import { useIsHydrated } from "@/hooks/use-hydrated";
 import { authClient } from "@/lib/auth-client";

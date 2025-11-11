@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import logger from "@/lib/logger";
 import { adminActionClient } from "@/utils/actions/safe-action";
 import { headers } from "next/headers";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 const setUserPasswordSchema = z.object({
 	userId: z.string().min(1, "User ID is required"),

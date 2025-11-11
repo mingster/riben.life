@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { createSafeActionClient } from "next-safe-action";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 import { SafeError } from "@/utils/error";
 import { isAdmin } from "../isAdmin";

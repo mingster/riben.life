@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPencil, IconPlus, IconKey } from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import { createUserAction } from "@/actions/sysAdmin/user/create-user";
 import { updateUserAction } from "@/actions/sysAdmin/user/update-user";
 import {

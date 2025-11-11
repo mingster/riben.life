@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const updateStoreContactInfoSchema = z.object({
 	storeId: z.string().min(1),

@@ -1,4 +1,4 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const deleteProductSchema = z.object({
 	storeId: z.string().min(1),

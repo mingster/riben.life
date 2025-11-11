@@ -177,9 +177,7 @@ export function EditStoreTableDialog({
 
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
-			{trigger ? (
-				<DialogTrigger asChild>{trigger}</DialogTrigger>
-			) : null}
+			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>

@@ -31,7 +31,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaLine } from "react-icons/fa";
 import { toast } from "sonner";
-import * as z from "zod/v4";
+import * as z from "zod";
 
 // Constants
 const SOCIAL_LINKS = {

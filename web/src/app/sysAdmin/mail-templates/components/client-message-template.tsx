@@ -11,7 +11,7 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 import axios, { type AxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import type { updateMessageTemplateLocalizedSchema } from "@/actions/sysAdmin/messageTemplateLocalized/update-message-template-localized.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";

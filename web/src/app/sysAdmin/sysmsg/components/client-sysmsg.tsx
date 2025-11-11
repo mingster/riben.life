@@ -9,7 +9,7 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 import axios, { type AxiosError } from "axios";
 import { useState } from "react";
-import type { z } from "zod/v4";
+import type { z } from "zod";
 import type { updateSystemMessageSchema } from "@/actions/sysAdmin/systemMessage/update-system-message.validation";
 import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
