@@ -3,9 +3,9 @@ import { sqlClient } from "@/lib/prismadb";
 import { isPro } from "@/lib/store-admin-utils";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { type PaymentMethod, type ShippingMethod } from "@prisma/client";
-import { StoreSettingTabs } from "./tabs";
 import { getStoreWithRelations } from "@/lib/store-access";
 import { Store } from "@/types";
+import { SettingsClient } from "./settings-client";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -47,11 +47,11 @@ export default async function StoreSettingsPage(props: {
 
 	return (
 		<Container>
-			<StoreSettingTabs
-				store={store as Store}
-				storeSettings={storeSettings}
-				paymentMethods={allPaymentMethods as PaymentMethod[]}
-				shippingMethods={allShippingMethods as ShippingMethod[]}
+			<SettingsClient
+				serverStore={store as Store}
+				serverStoreSettings={storeSettings}
+				serverPaymentMethods={allPaymentMethods as PaymentMethod[]}
+				serverShippingMethods={allShippingMethods as ShippingMethod[]}
 				disablePaidOptions={!hasProLevel}
 			/>
 		</Container>

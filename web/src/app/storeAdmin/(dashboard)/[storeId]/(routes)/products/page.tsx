@@ -4,7 +4,7 @@ import type { Product } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { formatDateTime } from "@/utils/datetime-utils";
 import type { ProductColumn } from "./components/columns";
-import { ProductsClient } from "./components/products-client";
+import { ProductsClient } from "./components/client-product";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

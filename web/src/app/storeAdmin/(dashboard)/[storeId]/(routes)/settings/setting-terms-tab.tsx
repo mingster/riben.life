@@ -2,7 +2,7 @@
 import { toastError, toastSuccess } from "@/components/toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import axios, { type AxiosError } from "axios";
+import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -29,7 +29,10 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import dynamic from "next/dynamic";
+import type { StoreSettings } from "@prisma/client";
 import { SettingsFormProps } from "./tabs";
+import { updateStoreTermsAction } from "@/actions/storeAdmin/settings/update-store-terms";
+import type { UpdateStoreTermsInput } from "@/actions/storeAdmin/settings/update-store-terms.validation";
 
 const tosFormSchema = z.object({
 	tos: z.string().default(""),
@@ -40,6 +43,7 @@ type formValues = z.infer<typeof tosFormSchema>;
 export const TermsTab: React.FC<SettingsFormProps> = ({
 	store,
 	storeSettings,
+	onStoreSettingsUpdated,
 }) => {
 	const params = useParams();
 	const router = useRouter();
@@ -63,14 +67,6 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 		defaultValues,
 	});
 
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		watch,
-		clearErrors,
-	} = useForm<formValues>();
-
 	/*
   <Textarea
   disabled={loading || form.formState.isSubmitting}
@@ -86,15 +82,25 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 		try {
 			setLoading(true);
 
-			await axios.patch(
-				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/settings/terms`,
-				data,
-			);
-			router.refresh();
-			toastSuccess({
-				title: t("Store_Updated"),
-				description: "",
-			});
+			const payload: UpdateStoreTermsInput = {
+				storeId: params.storeId as string,
+				tos: data.tos ?? "",
+			};
+
+			const result = await updateStoreTermsAction(payload);
+
+			if (result?.serverError) {
+				toastError({ title: t("Error"), description: result.serverError });
+			} else if (result?.data) {
+				onStoreSettingsUpdated?.(
+					(result.data.storeSettings as StoreSettings | null | undefined) ??
+						null,
+				);
+				toastSuccess({
+					title: t("Store_Updated"),
+					description: "",
+				});
+			}
 		} catch (err: unknown) {
 			const error = err as AxiosError;
 			toastError({
@@ -147,7 +153,7 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 							type="button"
 							variant="outline"
 							onClick={() => {
-								clearErrors();
+								form.clearErrors();
 								router.push("../");
 							}}
 							disabled={loading || form.formState.isSubmitting}

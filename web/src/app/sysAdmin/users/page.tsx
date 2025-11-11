@@ -1,7 +1,9 @@
 "use server";
 
+import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
+import { Suspense } from "react";
 import { UsersClient } from "./components/client-user";
 
 type Params = Promise<{ storeId: string }>;
@@ -20,5 +22,9 @@ export default async function UsersAdminPage(props: {
 		},
 	})) as User[];
 
-	return <UsersClient serverData={users} />;
+	return (
+		<Suspense fallback={<Loader />}>
+			<UsersClient serverData={users} />
+		</Suspense>
+	);
 }

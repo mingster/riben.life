@@ -3,7 +3,7 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { Card, CardContent } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import axios, { type AxiosError } from "axios";
+import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -24,7 +24,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { StoreSettings } from "@prisma/client";
 import type { SettingsFormProps } from "./setting-basic-tab";
+import { updateStoreContactInfoAction } from "@/actions/storeAdmin/settings/update-store-contact-info";
+import type { UpdateStoreContactInfoInput } from "@/actions/storeAdmin/settings/update-store-contact-info.validation";
 
 const contactInfoFormSchema = z.object({
 	aboutUs: z.string().optional().default(""),
@@ -44,6 +47,7 @@ type formValues = z.infer<typeof contactInfoFormSchema>;
 export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 	store,
 	storeSettings,
+	onStoreSettingsUpdated,
 }) => {
 	const params = useParams();
 	const router = useRouter();
@@ -88,28 +92,39 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 		defaultValues,
 	});
 
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		watch,
-		clearErrors,
-	} = useForm<formValues>();
-
 	//const isSubmittable = !!form.formState.isDirty && !!form.formState.isValid;
 	const oncontactInfoSubmit = async (data: formValues) => {
 		try {
 			setLoading(true);
 
-			await axios.patch(
-				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/settings/contactInfo`,
-				data,
-			);
-			router.refresh();
-			toastSuccess({
-				title: t("Store_Updated"),
-				description: "",
-			});
+			const payload: UpdateStoreContactInfoInput = {
+				storeId: params.storeId as string,
+				aboutUs: data.aboutUs ?? "",
+				supportEmail: data.supportEmail ?? "",
+				supportPhoneNumber: data.supportPhoneNumber ?? "",
+				facebookUrl: data.facebookUrl ?? "",
+				igUrl: data.igUrl ?? "",
+				lineId: data.lineId ?? "",
+				telegramId: data.telegramId ?? "",
+				twitterId: data.twitterId ?? "",
+				whatsappId: data.whatsappId ?? "",
+				wechatId: data.wechatId ?? "",
+			};
+
+			const result = await updateStoreContactInfoAction(payload);
+
+			if (result?.serverError) {
+				toastError({ title: "Error", description: result.serverError });
+			} else if (result?.data) {
+				onStoreSettingsUpdated?.(
+					(result.data.storeSettings as StoreSettings | null | undefined) ??
+						null,
+				);
+				toastSuccess({
+					title: t("Store_Updated"),
+					description: "",
+				});
+			}
 		} catch (err: unknown) {
 			const error = err as AxiosError;
 			toastError({
@@ -118,7 +133,6 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 			});
 		} finally {
 			setLoading(false);
-			//console.log(data);
 		}
 	};
 
@@ -347,7 +361,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 								type="button"
 								variant="outline"
 								onClick={() => {
-									clearErrors();
+									form.clearErrors();
 									router.push("../");
 								}}
 								disabled={loading || form.formState.isSubmitting}

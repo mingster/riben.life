@@ -90,9 +90,11 @@ export const DisplayStoreOptionTemplates = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
-	if (!storeOptionTemplates) return <></>;
-
 	const storeOptionColumns = useMemo(() => createStoreOptionColumns(t), [t]);
+
+	if (!storeOptionTemplates || storeOptionTemplates.length === 0) {
+		return <></>;
+	}
 
 	// exclude options already in the product
 	const storeOptionTemplatesToInclude = storeOptionTemplates.filter(
@@ -269,13 +271,11 @@ export const DisplayOptions = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
-	if (!productOptions) return <></>;
+	const productColumns = useMemo(() => createProductOptionColumns(t), [t]);
 
-	/*
-  productOptions.map((option: ProductOption, index) => {
-	logger.info("${index}");
-  });
-  */
+	if (!productOptions || productOptions.length === 0) {
+		return <></>;
+	}
 
 	// map product to ui
 	const formattedProductOption: ProductOptionColumn[] = productOptions.map(
@@ -293,8 +293,6 @@ export const DisplayOptions = ({
 			productOption: item,
 		}),
 	);
-
-	const productColumns = useMemo(() => createProductOptionColumns(t), [t]);
 
 	return (
 		<>

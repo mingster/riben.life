@@ -28,8 +28,11 @@ import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/app/i18n/client";
 import { TwBankCodeCombobox } from "@/components/tw-bankcode-combobox";
 import { useI18n } from "@/providers/i18n-provider";
-import { StoreSettings } from "@prisma/client";
+import type { StoreSettings } from "@prisma/client";
 import { PayoutScheduleCombobox } from "./payout-schedule-combobox";
+import type { SettingsFormProps } from "./setting-basic-tab";
+import { updateStoreBankAction } from "@/actions/storeAdmin/settings/update-store-bank";
+import type { UpdateStoreBankInput } from "@/actions/storeAdmin/settings/update-store-bank.validation";
 
 const formSchema = z.object({
 	payoutSchedule: z.number(),
@@ -42,13 +45,9 @@ const formSchema = z.object({
 
 type formValues = z.infer<typeof formSchema>;
 
-export interface SettingsFormProps {
-	store: Store;
-	storeSettings: StoreSettings | null;
-}
-
 export const BankSettingTab: React.FC<SettingsFormProps> = ({
 	store: initialData,
+	onStoreUpdated,
 }) => {
 	const params = useParams();
 	const router = useRouter();
@@ -67,14 +66,6 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 		defaultValues,
 	});
 
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		watch,
-		clearErrors,
-	} = useForm<formValues>();
-
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
 
@@ -84,21 +75,26 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 		try {
 			setLoading(true);
 
-			//console.log('onSubmit: ' + JSON.stringify(data));
+			const payload: UpdateStoreBankInput = {
+				storeId: params.storeId as string,
+				payoutSchedule: data.payoutSchedule,
+				bankCode: data.bankCode,
+				bankAccount: data.bankAccount,
+				bankAccountName: data.bankAccountName,
+			};
 
-			await axios.patch(
-				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/settings/bank`,
-				data,
-			);
+			const result = await updateStoreBankAction(payload);
 
-			router.refresh();
+			if (result?.serverError) {
+				toastError({ title: t("Error"), description: result.serverError });
+			} else if (result?.data) {
+				onStoreUpdated?.(result.data.store as Store);
 
-			//revalidatePath('/[storeId]', 'page');
-
-			toastSuccess({
-				title: t("Store_Updated"),
-				description: "",
-			});
+				toastSuccess({
+					title: t("Store_Updated"),
+					description: "",
+				});
+			}
 		} catch (error: unknown) {
 			const err = error as AxiosError;
 			toastError({
@@ -220,7 +216,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 								type="button"
 								variant="outline"
 								onClick={() => {
-									clearErrors();
+									form.clearErrors();
 									router.push("../");
 								}}
 								disabled={loading || form.formState.isSubmitting}

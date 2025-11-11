@@ -1,10 +1,12 @@
 import { getT } from "@/app/i18n";
+import { fallbackLng } from "@/app/i18n/settings";
 import { Toaster } from "@/components/ui/sonner";
 import I18nProvider from "@/providers/i18n-provider";
 import { SessionWrapper } from "@/providers/session-provider";
 import NextThemeProvider from "@/providers/theme-provider";
 import type { Viewport } from "next";
 import { CookiesProvider } from "next-client-cookies/server";
+import { cookies } from "next/headers";
 
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { IOSVersionCheck } from "@/components/ios-version-check";

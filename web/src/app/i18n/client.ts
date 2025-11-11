@@ -15,7 +15,6 @@ import {
 	useTranslation as useTranslationOrg,
 } from "react-i18next";
 import { cookieName, getOptions, languages } from "./settings";
-import logger from "@/lib/logger";
 
 const runsOnServerSide = typeof window === "undefined";
 
@@ -76,7 +75,7 @@ export function useTranslation<
 		if (cookies.get(cookieName) === lng) return;
 
 		if (lng) {
-			logger.info("will set cookie");
+			console.log("will set cookie", cookieName, lng);
 			//setCookie(cookieName, lng, { path: "/" });
 			cookies.set(cookieName, lng, { path: "/" });
 		}
