@@ -6,6 +6,8 @@ import type { StoreColumn } from "./components/columns";
 import { StoresClient } from "./components/stores-client";
 import { checkAdminAccess } from "../admin-utils";
 import type { Store } from "@/types";
+import { Suspense } from "react";
+import { Loader } from "@/components/loader";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -52,8 +54,8 @@ export default async function StoreAdminPage(props: {
 	}));
 
 	return (
-		<Container>
+		<Suspense fallback={<Loader />}>
 			<StoresClient data={formattedStores} />
-		</Container>
+		</Suspense>
 	);
 }

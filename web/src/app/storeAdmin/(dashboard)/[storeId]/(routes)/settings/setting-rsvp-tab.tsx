@@ -3,7 +3,7 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios, { type AxiosError } from "axios";
+import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -19,11 +19,13 @@ import {
 	FormItem,
 	FormLabel,
 } from "@/components/ui/form";
-import logger from "@/lib/logger";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { SettingsFormProps } from "./setting-basic-tab";
+import { updateStoreRsvpAction } from "@/actions/storeAdmin/settings/update-store-rsvp";
+import type { UpdateStoreRsvpInput } from "@/actions/storeAdmin/settings/update-store-rsvp.validation";
+import type { Store } from "@/types";
 
 const formSchema = z.object({
 	acceptReservation: z.boolean().default(true),
@@ -34,6 +36,7 @@ type formValues = z.infer<typeof formSchema>;
 export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 	store,
 	storeSettings,
+	onStoreUpdated,
 }) => {
 	const params = useParams();
 	const router = useRouter();
@@ -54,14 +57,6 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 		defaultValues,
 	});
 
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		watch,
-		clearErrors,
-	} = useForm<formValues>();
-
 	/*
   const [isSubmittable, setIsSubmittable] = useState(
 	!!form.formState.isDirty && !!form.formState.isValid,
@@ -79,24 +74,26 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 	const { t } = useTranslation(lng, "storeAdmin");
 	//console.log(`form error: ${JSON.stringify(form.formState.errors)}`);
 	const onSubmit = async (data: formValues) => {
-		//console.log('onSubmit: ' + JSON.stringify(data));
 		try {
 			setLoading(true);
-			//console.log('onSubmit: ' + JSON.stringify(data));
 
-			await axios.patch(
-				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/settings/rsvp`,
-				data,
-			);
+			const payload: UpdateStoreRsvpInput = {
+				storeId: params.storeId as string,
+				acceptReservation: data.acceptReservation,
+			};
 
-			router.refresh();
+			const result = await updateStoreRsvpAction(payload);
 
-			//revalidatePath('/[storeId]', 'page');
+			if (result?.serverError) {
+				toastError({ title: t("Error"), description: result.serverError });
+			} else if (result?.data) {
+				onStoreUpdated?.(result.data.store as Store);
 
-			toastSuccess({
-				title: t("Store_Updated"),
-				description: "",
-			});
+				toastSuccess({
+					title: t("Store_Updated"),
+					description: "",
+				});
+			}
 		} catch (error: unknown) {
 			const err = error as AxiosError;
 			toastError({
@@ -105,8 +102,6 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 			});
 		} finally {
 			setLoading(false);
-			//setIsSubmittable(false);
-			//console.log(data);
 		}
 	};
 
@@ -163,7 +158,7 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 								type="button"
 								variant="outline"
 								onClick={() => {
-									clearErrors();
+									form.clearErrors();
 									router.push("../");
 								}}
 								disabled={loading || form.formState.isSubmitting}

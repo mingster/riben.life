@@ -1,3 +1,4 @@
+"use client";
 import clsx from "clsx";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { BigText, Caption, IconContainer, Paragraph } from "./common";

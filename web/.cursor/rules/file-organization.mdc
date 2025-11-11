@@ -185,7 +185,7 @@ src/lib/
 ├── client-logger.ts         # Client logging
 ├── utils.ts                 # General utilities
 ├── businessHours/           # Business hours logic
-├── linepay/                 # LINE Pay integration
+├── linePay/                 # LINE Pay integration
 ├── stripe/                  # Stripe integration
 └── useTwZipCode2/           # Taiwan zip code utilities
 ```

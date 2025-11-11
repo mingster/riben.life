@@ -3,8 +3,8 @@ import { sqlClient } from "@/lib/prismadb";
 import type { Product } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { formatDateTime } from "@/utils/datetime-utils";
-import type { ProductColumn } from "./components/columns";
-import { ProductsClient } from "./components/products-client";
+import type { ProductColumn } from "./product-column";
+import { ProductsClient } from "./components/client-product";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -52,7 +52,7 @@ export default async function ProductsPage(props: {
 
 	return (
 		<Container>
-			<ProductsClient data={formattedProducts} />
+			<ProductsClient serverData={formattedProducts} />
 		</Container>
 	);
 }

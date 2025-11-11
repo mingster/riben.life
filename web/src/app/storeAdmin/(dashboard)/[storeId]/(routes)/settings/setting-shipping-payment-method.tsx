@@ -1,9 +1,9 @@
 "use client";
-import { toastSuccess } from "@/components/toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useParams } from "next/navigation";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -15,29 +15,34 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Currency from "@/components/currency";
 import { useI18n } from "@/providers/i18n-provider";
 import { Store } from "@/types";
-import type {
-	PaymentMethod,
-	ShippingMethod,
-	StorePaymentMethodMapping,
-	StoreShipMethodMapping,
-} from "@prisma/client";
+import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 import { IconCheck, IconX } from "@tabler/icons-react";
 import type { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import axios from "axios";
 import { t } from "i18next";
 import { RequiredProVersion } from "../components/require-pro-version";
+import { updateStoreShippingMethodsAction } from "@/actions/storeAdmin/settings/update-store-shipping-methods";
+import { updateStorePaymentMethodsAction } from "@/actions/storeAdmin/settings/update-store-payment-methods";
 export interface ShippingPaymentSettingsFormProps {
 	store: Store;
 	allPaymentMethods: PaymentMethod[] | [];
 	allShippingMethods: ShippingMethod[] | [];
 	disablePaidOptions: boolean;
+	onStoreUpdated?: (store: Store) => void;
 }
 
 export const ShippingPaymentMethodTab: React.FC<
 	ShippingPaymentSettingsFormProps
-> = ({ store, allPaymentMethods, allShippingMethods, disablePaidOptions }) => {
+> = ({
+	store,
+	allPaymentMethods,
+	allShippingMethods,
+	disablePaidOptions,
+	onStoreUpdated,
+}) => {
+	type StoreShipMapping = NonNullable<Store["StoreShippingMethods"]>[number];
+	type StorePayMapping = NonNullable<Store["StorePaymentMethods"]>[number];
+
 	const params = useParams();
-	const router = useRouter();
 
 	const [loading, setLoading] = useState(false);
 
@@ -56,116 +61,120 @@ export const ShippingPaymentMethodTab: React.FC<
 		_event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
 	) => {
 		setLoading(true);
-		// selectedCategoryIds = RowSelectionState = Record<string, boolean>
-		if (!selectedShippingIds) return;
-		//console.log(selectedShippingIds);
+		const selectionState = selectedShippingIds ?? savedStoreShippingMethods;
+		const selectedIndexes = Object.entries(selectionState)
+			.filter(([, value]) => value)
+			.map(([key]) => Number(key));
 
-		// remove all categories associated with the product
-		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/settings/shippingMethods`;
-		await axios.delete(url, { data: {} });
+		const methodIds = selectedIndexes
+			.map((index) => allShippingMethods[index]?.id?.toString())
+			.filter((id): id is string => Boolean(id));
 
-		allShippingMethods.map(async (item: ShippingMethod, index) => {
-			const selected = selectedShippingIds[index];
-			//console.log(`selected shippingMethod: ${item.id.toString()} : ${selected}`);
-			if (selected) {
-				// save to db
-				const obj = {
-					storeId: params.storeId as string,
-					methodId: item.id.toString(),
-				};
-				await axios.post(url, obj);
-				//console.log(`save to db: ${item.id.toString()}`);
-			}
+		const result = await updateStoreShippingMethodsAction({
+			storeId: params.storeId as string,
+			methodIds,
 		});
 
-		router.refresh();
+		if (result?.serverError) {
+			toastError({ title: t("Error"), description: result.serverError });
+		} else if (result?.data) {
+			onStoreUpdated?.(result.data.store as Store);
+			const nextSelection: RowSelectionState = {};
+			selectedIndexes.forEach((index) => {
+				nextSelection[index] = true;
+			});
+			setSelectedShippingIds(nextSelection);
 
-		toastSuccess({
-			title: t("Product_category") + t("Updated"),
-			description: "",
-		});
+			toastSuccess({
+				title: t("Product_category") + t("Updated"),
+				description: "",
+			});
+		}
 
 		setLoading(false);
 	};
 
-	const formattedShippings: ShippingMethodColumn[] = allShippingMethods.map(
-		(item: ShippingMethod) => ({
-			id: item.id.toString(),
-			name: item.name.toString(),
-			basic_price: Number(item.basic_price),
-			currencyId: item.currencyId.toString(),
-			isDefault: item.isDefault,
-			shipRequried: item.shipRequried,
-			disabled: disablePaidOptions,
-		}),
+	const formattedShippings: ShippingMethodColumn[] = useMemo(
+		() =>
+			allShippingMethods.map((item: ShippingMethod) => ({
+				id: item.id.toString(),
+				name: item.name.toString(),
+				basic_price: Number(item.basic_price),
+				currencyId: item.currencyId.toString(),
+				isDefault: item.isDefault,
+				shipRequried: item.shipRequried,
+				disabled: disablePaidOptions,
+			})),
+		[allShippingMethods, disablePaidOptions],
 	);
 
 	// check the saved shipping methods
 	const savedStoreShippingMethods: RowSelectionState = {};
 
-	if (store) {
-		// use index number as row key
-		store.StoreShippingMethods.map((mapping: StoreShipMethodMapping) => {
-			allShippingMethods.map((item: ShippingMethod, index) => {
-				if (mapping.methodId === item.id) {
-					savedStoreShippingMethods[index] = true;
-				}
-			});
+	// use index number as row key
+	store.StoreShippingMethods?.forEach((mapping: StoreShipMapping) => {
+		allShippingMethods.forEach((item: ShippingMethod, index) => {
+			if (mapping.methodId === item.id) {
+				savedStoreShippingMethods[index] = true;
+			}
 		});
-	}
+	});
 
-	const formattedPaymethods: PayMethodColumn[] = allPaymentMethods.map(
-		(item: PaymentMethod) => ({
-			id: item.id.toString(),
-			name: item.name.toString(),
-			fee: Number(item.fee),
-			priceDescr: item.priceDescr.toString(),
-			isDefault: item.isDefault,
-			disabled: disablePaidOptions,
-		}),
+	const formattedPaymethods: PayMethodColumn[] = useMemo(
+		() =>
+			allPaymentMethods.map((item: PaymentMethod) => ({
+				id: item.id.toString(),
+				name: item.name.toString(),
+				fee: Number(item.fee),
+				priceDescr: item.priceDescr.toString(),
+				isDefault: item.isDefault,
+				disabled: disablePaidOptions,
+			})),
+		[allPaymentMethods, disablePaidOptions],
 	);
 	const savedStorePayMethods: RowSelectionState = {};
-	if (store) {
-		// use index number as row key
-		store.StorePaymentMethods.map((mapping: StorePaymentMethodMapping) => {
-			allPaymentMethods.map((item: PaymentMethod, index) => {
-				if (mapping.methodId === item.id) {
-					savedStorePayMethods[index] = true;
-				}
-			});
+	// use index number as row key
+	store.StorePaymentMethods?.forEach((mapping: StorePayMapping) => {
+		allPaymentMethods.forEach((item: PaymentMethod, index) => {
+			if (mapping.methodId === item.id) {
+				savedStorePayMethods[index] = true;
+			}
 		});
-	}
+	});
 	const savePaymethodData = async (
 		_event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
 	) => {
 		setLoading(true);
-		if (!selectedPayMethodIds) return;
-		//console.log(selectedShippingIds);
 
-		// remove all categories associated with the product
-		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/settings/paymentMethods`;
-		await axios.delete(url, { data: {} });
+		const selectionState = selectedPayMethodIds ?? savedStorePayMethods;
+		const selectedIndexes = Object.entries(selectionState)
+			.filter(([, value]) => value)
+			.map(([key]) => Number(key));
 
-		allPaymentMethods.map(async (item: PaymentMethod, index) => {
-			const selected = selectedPayMethodIds[index];
-			//console.log(`selected shippingMethod: ${item.id.toString()} : ${selected}`);
-			if (selected) {
-				// save to db
-				const obj = {
-					storeId: params.storeId as string,
-					methodId: item.id.toString(),
-				};
-				await axios.post(url, obj);
-				//console.log(`save to db: ${item.id.toString()}`);
-			}
+		const methodIds = selectedIndexes
+			.map((index) => allPaymentMethods[index]?.id?.toString())
+			.filter((id): id is string => Boolean(id));
+
+		const result = await updateStorePaymentMethodsAction({
+			storeId: params.storeId as string,
+			methodIds,
 		});
 
-		router.refresh();
+		if (result?.serverError) {
+			toastError({ title: t("Error"), description: result.serverError });
+		} else if (result?.data) {
+			onStoreUpdated?.(result.data.store as Store);
+			const nextSelection: RowSelectionState = {};
+			selectedIndexes.forEach((index) => {
+				nextSelection[index] = true;
+			});
+			setSelectedPayMethodIds(nextSelection);
 
-		toastSuccess({
-			title: t("Product_category") + t("Updated"),
-			description: "",
-		});
+			toastSuccess({
+				title: t("Product_category") + t("Updated"),
+				description: "",
+			});
+		}
 
 		setLoading(false);
 	};

@@ -48,7 +48,7 @@ export const FaqClient: React.FC = () => {
 				<TabsList className="grid w-full grid-cols-4">
 					<TabsTrigger value="getStarted">如何開始</TabsTrigger>
 					<TabsTrigger value="accounting">帳務</TabsTrigger>
-					<TabsTrigger value="linepay">Line Pay</TabsTrigger>
+					<TabsTrigger value="linePay">Line Pay</TabsTrigger>
 					{/*<TabsTrigger value="password">
             {t("account_tabs_password")}
           </TabsTrigger>
@@ -144,7 +144,7 @@ export const FaqClient: React.FC = () => {
 					</Accordion>
 				</TabsContent>
 
-				<TabsContent value="linepay">
+				<TabsContent value="linePay">
 					<Accordion type="single" collapsible>
 						<AccordionItem value="item-1">
 							<AccordionTrigger className="font-bold text-gold">

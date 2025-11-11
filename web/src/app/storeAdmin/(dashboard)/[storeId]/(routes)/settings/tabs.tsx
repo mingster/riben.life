@@ -9,9 +9,9 @@ import type {
 } from "@prisma/client";
 
 import { IconTrash } from "@tabler/icons-react";
-import axios, { type AxiosError } from "axios";
+import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -30,6 +30,7 @@ import { PrivacyTab } from "./setting-privacy-tab";
 import { RsvpSettingTab } from "./setting-rsvp-tab";
 //import { TermsTab } from "./setting-terms-tab";
 import { ShippingPaymentMethodTab } from "./setting-shipping-payment-method";
+import { deleteStoreAction } from "@/actions/storeAdmin/settings/delete-store";
 
 export interface SettingsFormProps {
 	store: Store;
@@ -37,6 +38,10 @@ export interface SettingsFormProps {
 	paymentMethods: PaymentMethod[] | [];
 	shippingMethods: ShippingMethod[] | [];
 	disablePaidOptions: boolean;
+	onStoreUpdated?: (store: Store) => void;
+	onStoreSettingsUpdated?: (settings: StoreSettings | null) => void;
+	onPaymentMethodsUpdated?: (items: PaymentMethod[]) => void;
+	onShippingMethodsUpdated?: (items: ShippingMethod[]) => void;
 	/*
   initialData:
 	| (Store & {
@@ -53,6 +58,10 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 	paymentMethods,
 	shippingMethods,
 	disablePaidOptions,
+	onStoreUpdated,
+	onStoreSettingsUpdated,
+	onPaymentMethodsUpdated,
+	onShippingMethodsUpdated,
 }) => {
 	const router = useRouter();
 	const params = useParams();
@@ -63,30 +72,40 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	if (!store.customDomain) store.customDomain = "";
-	if (!store.logo) store.logo = "";
-	if (!store.logoPublicId) store.logoPublicId = "";
+	const normalizedStore = useMemo(
+		() => ({
+			...store,
+			customDomain: store.customDomain ?? "",
+			logo: store.logo ?? "",
+			logoPublicId: store.logoPublicId ?? "",
+		}),
+		[store],
+	);
 
 	const onDelete = async () => {
 		try {
 			setLoading(true);
-			await axios.delete(
-				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/settings/basic`,
-			);
-			router.refresh();
-			router.push("/storeAdmin/");
-
-			toastSuccess({
-				title: t("Store_Removed"),
-				description: "",
+			const result = await deleteStoreAction({
+				storeId: params.storeId as string,
 			});
-		} catch (err: unknown) {
-			const error = err as AxiosError;
 
+			if (result?.serverError) {
+				toastError({
+					title: t("Error"),
+					description: result.serverError,
+				});
+			} else {
+				router.push("/storeAdmin/");
+				toastSuccess({
+					title: t("Store_Removed"),
+					description: "",
+				});
+			}
+		} catch (error: unknown) {
+			const err = error as AxiosError;
 			toastError({
-				title:
-					"Something went wrong. Make sure you removed all products and categories first.",
-				description: error.message,
+				title: t("Error"),
+				description: err.message,
 			});
 		} finally {
 			setLoading(false);
@@ -152,38 +171,61 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 				</TabsList>
 
 				<TabsContent value="basic">
-					<BasicSettingTab store={store} storeSettings={storeSettings} />
+					<BasicSettingTab
+						store={normalizedStore}
+						storeSettings={storeSettings}
+						onStoreUpdated={onStoreUpdated}
+						onStoreSettingsUpdated={onStoreSettingsUpdated}
+					/>
 				</TabsContent>
 
 				<TabsContent value="bank">
-					<BankSettingTab store={store} storeSettings={storeSettings} />
+					<BankSettingTab
+						store={normalizedStore}
+						storeSettings={storeSettings}
+						onStoreUpdated={onStoreUpdated}
+					/>
 				</TabsContent>
 
 				<TabsContent value="contactInfo">
-					<ContactInfoTab store={store} storeSettings={storeSettings} />
+					<ContactInfoTab
+						store={normalizedStore}
+						storeSettings={storeSettings}
+						onStoreSettingsUpdated={onStoreSettingsUpdated}
+					/>
 				</TabsContent>
 
 				<TabsContent value="rsvp">
-					<RsvpSettingTab store={store} storeSettings={storeSettings} />
+					<RsvpSettingTab
+						store={normalizedStore}
+						storeSettings={storeSettings}
+						onStoreUpdated={onStoreUpdated}
+					/>
 				</TabsContent>
 
 				<TabsContent value="privacyStatement">
-					<PrivacyTab store={store} storeSettings={storeSettings} />
+					<PrivacyTab
+						store={normalizedStore}
+						storeSettings={storeSettings}
+						onStoreSettingsUpdated={onStoreSettingsUpdated}
+					/>
 				</TabsContent>
 
 				<TabsContent value="ShippingMethod">
 					<ShippingPaymentMethodTab
-						store={store}
+						store={normalizedStore}
 						allPaymentMethods={paymentMethods}
 						allShippingMethods={shippingMethods}
 						disablePaidOptions={disablePaidOptions}
+						onStoreUpdated={onStoreUpdated}
 					/>
 				</TabsContent>
 				<TabsContent value="paidOptions">
 					<PaidOptionsTab
-						store={store}
+						store={normalizedStore}
 						storeSettings={storeSettings}
 						disablePaidOptions={disablePaidOptions}
+						onStoreUpdated={onStoreUpdated}
 					/>
 				</TabsContent>
 			</Tabs>

@@ -1,3 +1,4 @@
+"use client";
 //import debounce from "debounce";
 import { LayoutGroup } from "framer-motion";
 

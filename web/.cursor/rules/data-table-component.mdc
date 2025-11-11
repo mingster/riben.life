@@ -1,155 +1,101 @@
 ---
-description: DataTable components from mingster.backbone
+description: DataTable components pattern
 alwaysApply: true
 ---
 # DataTable Components
 
 ## Overview
 
-DataTable components are part of the `mingster.backbone` shared package. They provide advanced table functionality built on `@tanstack/react-table` with sorting, filtering, pagination, row selection, and drag-and-drop support.
+`client-faq-category.tsx` in the store admin FAQ route is the canonical reference for how we build data tables in this project. It demonstrates the project-standard pattern for wiring `@/components/dataTable` (and related helpers) with TanStack Table, client-side state, modals, and safe actions.
 
 ## Available Components
 
-### 1. DataTable (Standard)
+### 1. `DataTable` (standard view)
 
-- Main table component with sorting, filtering, and pagination
-- Optional search functionality
-- Column visibility controls
+- Base component showing the FAQ category list.
+- Used for read-only listings with action columns.
 
-### 2. DataTableCheckbox
+### 2. `DataTableCheckbox`
 
-- Table with row selection via checkboxes
-- Bulk actions support
-- Select all functionality
+- Used when the user needs to select multiple rows (e.g., assign templates).
+- Provides bulk actions and select-all behavior.
 
-### 3. DataTableDraggable
+### 3. Supporting helpers
 
-- Table with drag-and-drop row reordering
-- Uses `@dnd-kit` for smooth interactions
-- Maintains state during drag operations
-
-### 4. Supporting Components
-
-- **DataTableColumnHeader**: Sortable column headers
-- **DataTablePagination**: Pagination controls
-- **DataTableViewOptions**: Column visibility dropdown
+- **`DataTableColumnHeader`** for sortable headers with icons.
+- **`DataTablePagination`** when lists exceed default page size.
+- **`DataTableViewOptions`** for toggling column visibility (optional).
 
 ## Import Pattern
 
-All DataTable components come from `mingster.backbone`:
+All table components are local to the repo and live in `@/components`. Never import from external packages like `mingster.backbone`.
 
 ```tsx
-import {
-  DataTable,
-  DataTableCheckbox,
-  DataTableDraggable,
-  DataTableColumnHeader,
-  DataTablePagination,
-  DataTableViewOptions,
-} from "mingster.backbone";
+import { DataTable } from "@/components/dataTable";
+import { DataTableCheckbox } from "@/components/dataTable-checkbox";
+import { DataTableColumnHeader } from "@/components/dataTable-column-header";
+// Optional extras used in other screens
+import { DataTablePagination } from "@/components/dataTable-pagination";
+import { DataTableViewOptions } from "@/components/dataTable-view-options";
 ```
 
 ## Basic Usage
 
-### Standard DataTable
+### Standard listing
+
+`client-faq-category.tsx` loads FAQ categories from props, stores them locally, and renders the `DataTable` with action buttons. Key elements:
 
 ```tsx
-import { DataTable, DataTableColumnHeader } from "mingster.backbone";
-import type { ColumnDef } from "@tanstack/react-table";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  status: string;
-}
-
-const columns: ColumnDef<User>[] = [
+const faqColumns: ColumnDef<FaqCategoryRow>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
+      <DataTableColumnHeader
+        column={column}
+        title={t("FaqCategory_name")}
+      />
     ),
   },
   {
-    accessorKey: "email",
+    accessorKey: "sortOrder",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Email" />
+      <DataTableColumnHeader
+        column={column}
+        title={t("FaqCategory_sortOrder")}
+      />
     ),
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    id: "actions",
+    cell: ({ row }) => (
+      <CellAction item={row.original} onDelete={handleDeleted} />
+    ),
   },
 ];
 
-function UserTable({ users }: { users: User[] }) {
-  return (
-    <DataTable 
-      columns={columns} 
-      data={users} 
-      searchKey="name"
-    />
-  );
-}
+return (
+  <DataTable<FaqCategoryRow>
+    data={filteredData}
+    columns={faqColumns}
+    searchKey="name"
+  />
+);
 ```
 
-### DataTable with Row Selection
+### With row selection
+
+The template picker in the same module demonstrates `DataTableCheckbox` with bulk actions:
 
 ```tsx
-import { DataTableCheckbox } from "mingster.backbone";
-
-function SelectableUserTable({ users }: { users: User[] }) {
-  const [selectedRows, setSelectedRows] = useState<User[]>([]);
-
-  const handleSelectionChange = (rows: User[]) => {
-    setSelectedRows(rows);
-    console.log("Selected rows:", rows);
-  };
-
-  return (
-    <>
-      {selectedRows.length > 0 && (
-        <div>
-          Selected {selectedRows.length} row(s)
-          <Button onClick={() => handleBulkDelete(selectedRows)}>
-            Delete Selected
-          </Button>
-        </div>
-      )}
-      <DataTableCheckbox
-        columns={columns}
-        data={users}
-        onSelectionChange={handleSelectionChange}
-      />
-    </>
-  );
-}
+<DataTableCheckbox
+  columns={templateColumns}
+  data={templateOptions}
+  initiallySelected={initialSelection}
+  onRowSelectionChange={setSelectedTemplates}
+/>
 ```
 
-### Draggable DataTable
-
-```tsx
-import { DataTableDraggable } from "mingster.backbone";
-
-function DraggableUserTable({ users }: { users: User[] }) {
-  const [data, setData] = useState(users);
-
-  const handleReorder = (reorderedData: User[]) => {
-    setData(reorderedData);
-    // Save new order to backend
-    await updateOrder(reorderedData);
-  };
-
-  return (
-    <DataTableDraggable
-      columns={columns}
-      data={data}
-      onReorder={handleReorder}
-    />
-  );
-}
-```
+Bulk actions run inside a handler that iterates `selectedTemplates` and call server actions (or axios endpoints) before updating local state.
 
 ## Column Definition Patterns
 
@@ -173,7 +119,7 @@ function DraggableUserTable({ users }: { users: User[] }) {
 }
 ```
 
-### Custom Cell Rendering
+### Custom cell rendering
 
 ```tsx
 {
@@ -190,7 +136,7 @@ function DraggableUserTable({ users }: { users: User[] }) {
 }
 ```
 
-### Actions Column
+### Actions column pattern
 
 ```tsx
 {
@@ -215,7 +161,7 @@ function DraggableUserTable({ users }: { users: User[] }) {
 }
 ```
 
-### Hide Column by Default
+### Hide column by default
 
 ```tsx
 {
@@ -227,7 +173,7 @@ function DraggableUserTable({ users }: { users: User[] }) {
 
 ## Props Reference
 
-### DataTable Props
+### `DataTable` props
 
 ```tsx
 interface DataTableProps<TData, TValue> {
@@ -239,7 +185,7 @@ interface DataTableProps<TData, TValue> {
 }
 ```
 
-### DataTableCheckbox Props
+### `DataTableCheckbox` props
 
 ```tsx
 interface DataTableCheckboxProps<TData> {
@@ -250,53 +196,42 @@ interface DataTableCheckboxProps<TData> {
 }
 ```
 
-### DataTableDraggable Props
-
-```tsx
-interface DataTableDraggableProps<TData> {
-  columns: ColumnDef<TData>[];
-  data: TData[];
-  onReorder: (data: TData[]) => void;   // Callback when order changes
-  idKey?: string;                       // Unique identifier key (default: "id")
-}
-```
+`client-faq-category.tsx` does not use `DataTableDraggable`. Follow existing product option templates or reorderable feature screens if drag/drop is required.
 
 ## Internationalization
 
-DataTable components use i18n for user-facing strings:
-
-- Search placeholder: "Search..."
-- No results: "No results found"
-- Pagination: "Previous", "Next", "Page X of Y"
-
-These are handled internally by the backbone package.
+Tables are localized via the i18n hooks (`useTranslation`). Column titles are always translated strings, passed to `DataTableColumnHeader`. Use the same approach when adding new tables.
 
 ## TypeScript
 
-Always use generic types for type safety:
+Always type your rows:
 
 ```tsx
-const columns: ColumnDef<User>[] = [...];
-<DataTable<User> columns={columns} data={users} />
+interface FaqCategoryRow {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isPublished: boolean;
+}
+
+const columns: ColumnDef<FaqCategoryRow>[] = [...];
 ```
 
 ## Best Practices
 
-1. **Import from backbone**: Always use `import { DataTable } from "mingster.backbone"`
-2. **Type safety**: Use TypeScript generics for your data type
-3. **Memoize columns**: Define columns outside component or use `useMemo`
-4. **Stable data**: Ensure data array reference stability to avoid re-renders
-5. **Column keys**: Use unique `accessorKey` or `id` for each column
-6. **Server data**: Fetch data in server components, pass to client table
-7. **Search key**: Provide `searchKey` prop for search functionality
-8. **Stateless table**: Keep table component stateless; manage state in parent
+1. **Import locally**: Always import from `@/components`.
+2. **Type safety**: Define a row interface and use generics on `DataTable`.
+3. **Memoize columns**: Use `useMemo` inside client components to avoid hydration differences when translations change.
+4. **Stable state**: Store data in local `useState` and update via callbacks (create/update/delete) to keep UI responsive.
+5. **Search/filter**: Use the `searchKey` prop plus optional custom filter components (`FilterFaqCategories` in the FAQ screen).
+6. **Actions**: Keep per-row actions (`CellAction`) colocated with the table for clarity.
 
 ## Common Patterns
 
-### With State Management
+### With Client State Management
 
 ```tsx
-const [data, setData] = useState<User[]>(serverData);
+const [data, setData] = useState<FaqCategoryRow[]>(serverFaqCategories);
 
 // Update, create, delete handlers
 const handleUpdated = (updatedUser: User) => {
@@ -305,22 +240,33 @@ const handleUpdated = (updatedUser: User) => {
   );
 };
 
-<DataTable columns={columns} data={data} />
+<DataTable<FaqCategoryRow> columns={columns} data={data} />
 ```
 
 ### With Filtering
 
 ```tsx
-const [filter, setFilter] = useState("");
+const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("all");
+const [searchTerm, setSearchTerm] = useState("");
 
-const filteredData = useMemo(() => 
-  data.filter(item => 
-    item.name.toLowerCase().includes(filter.toLowerCase())
-  ),
-  [data, filter]
+const filteredData = useMemo(
+  () =>
+    data.filter((item) => {
+      const matchesStatus =
+        selectedStatus === "all" || item.status === selectedStatus;
+      const matchesSearch = item.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      return matchesStatus && matchesSearch;
+    }),
+  [data, selectedStatus, searchTerm],
 );
 
-<DataTable columns={columns} data={filteredData} searchKey="name" />
+<DataTable<FaqCategoryRow>
+  columns={columns}
+  data={filteredData}
+  searchKey="name"
+/>
 ```
 
 ### With Loading State
@@ -329,16 +275,21 @@ const filteredData = useMemo(() =>
 {isLoading ? (
   <Loader />
 ) : (
-  <DataTable columns={columns} data={data} />
+  <DataTable<FaqCategoryRow> columns={columns} data={data} />
 )}
 ```
 
 ## Source Location
 
-DataTable components are maintained in:
+Canonical implementation:
 
-- **Package**: `packages/mingster.backbone/src/components/`
-- **Files**: `dataTable.tsx`, `dataTable-checkbox.tsx`, `datatable-draggable.tsx`, etc.
-- **Documentation**: `packages/mingster.backbone/README.md`
+- `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/faq/components/client-faq-category.tsx`
+- `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/faq/components/columns.tsx` (if split out)
 
-Do not create local copies—always import from the backbone package.
+Shared table primitives:
+
+- `web/src/components/dataTable.tsx`
+- `web/src/components/dataTable-checkbox.tsx`
+- `web/src/components/dataTable-column-header.tsx`
+- `web/src/components/dataTable-pagination.tsx`
+- `web/src/components/dataTable-view-options.tsx`

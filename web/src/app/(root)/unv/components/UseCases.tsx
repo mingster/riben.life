@@ -1,3 +1,4 @@
+"use client";
 import { BigText, Caption, IconContainer, Paragraph } from "./common";
 
 export function UseCases({ className, ...props }: { className?: string }) {

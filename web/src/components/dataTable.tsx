@@ -11,7 +11,7 @@ import {
 	getSortedRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,8 +32,8 @@ interface DataTableProps<TData, TValue> {
 	data: TData[];
 	noSearch?: boolean;
 	searchKey?: string;
-	noPagination?: boolean; //default is false
-	defaultPageSize?: number; //default is 30
+	noPagination?: boolean; // default is true
+	defaultPageSize?: number; // default is 30 when pagination enabled
 }
 
 export function DataTable<TData, TValue>({
@@ -53,6 +53,16 @@ export function DataTable<TData, TValue>({
 		pageIndex: 0, //initial page index
 		pageSize: noPagination ? data.length : defaultPageSize, //default page size
 	});
+
+	useEffect(() => {
+		if (noPagination) {
+			setPagination((prev) => ({
+				...prev,
+				pageIndex: 0,
+				pageSize: data.length || prev.pageSize,
+			}));
+		}
+	}, [noPagination, data.length]);
 
 	const table = useReactTable({
 		data,
@@ -143,8 +153,8 @@ export function DataTable<TData, TValue>({
 					</TableBody>
 				</Table>
 			</div>
-			<div className="flex items-center justify-end space-x-2 py-4">
-				{table.getCanPreviousPage() && (
+			{!noPagination && (
+				<div className="flex items-center justify-end space-x-2 py-4">
 					<Button
 						variant="outline"
 						size="sm"
@@ -153,8 +163,6 @@ export function DataTable<TData, TValue>({
 					>
 						{t("previous")}
 					</Button>
-				)}
-				{table.getCanNextPage() && (
 					<Button
 						variant="outline"
 						size="sm"
@@ -163,8 +171,8 @@ export function DataTable<TData, TValue>({
 					>
 						{t("next")}
 					</Button>
-				)}
-			</div>
+				</div>
+			)}
 		</div>
 	);
 }

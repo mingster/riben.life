@@ -29,7 +29,7 @@ const MarkAsPaid = async (
 		usePlatform = true; //for free level, always use platform
 	} else {
 		if (store.LINE_PAY_ID !== null || store.STRIPE_SECRET_KEY !== null) {
-			//store has its own linepay or stripe
+			//store has its own linePay or stripe
 			usePlatform = true;
 		}
 	}
@@ -51,7 +51,7 @@ const MarkAsPaid = async (
 	let fee = 0;
 	let feeTax = 0;
 
-	// if store does not have its own linepay or stripe, calc balance and fee
+	// if store does not have its own linePay or stripe, calc balance and fee
 	if (usePlatform) {
 		// fee rate is determined by payment method
 		fee = -Number(

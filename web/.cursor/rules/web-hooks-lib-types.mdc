@@ -16,7 +16,7 @@ Utility libraries and integrations:
 
 - [utils.ts](mdc:web/src/lib/utils.ts): General utility functions.
 - [stripe](mdc:web/src/lib/stripe): Stripe payment integration.
-- [linepay](mdc:web/src/lib/linepay): Line Pay integration.
+- [linePay](mdc:web/src/lib/linePay): Line Pay integration.
 - [auth](mdc:web/src/lib/auth): Authentication helpers.
 - [businessHours](mdc:web/src/lib/businessHours): Business hours logic.
 - [useTwZipCode2](mdc:web/src/lib/useTwZipCode2): Taiwanese zip code utilities.

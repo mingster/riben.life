@@ -1,5 +1,4 @@
 import { sqlClient } from "@/lib/prismadb";
-import type { Store } from "@/types";
 import type { Metadata, ResolvingMetadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -24,7 +23,7 @@ export async function generateMetadata(
 		select: { name: true },
 	});
 
-	if (!store) return { title: "pstv" };
+	if (!store) return { title: "riben.life" };
 
 	return {
 		title: `${store.name} - 店家後台`,

@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import Image from "next/image";
 
-import axios, { type AxiosError } from "axios";
+import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -31,6 +31,8 @@ import { IconX } from "@tabler/icons-react";
 import { RequiredProVersion } from "../components/require-pro-version";
 import { StoreSettings } from "@prisma/client";
 import { Store } from "@/types";
+import { updateStorePaidOptionsAction } from "@/actions/storeAdmin/settings/update-store-paid-options";
+import type { UpdateStorePaidOptionsInput } from "@/actions/storeAdmin/settings/update-store-paid-options.validation";
 
 const formSchema = z.object({
 	customDomain: z.string().optional().default(""),
@@ -49,11 +51,13 @@ export interface PaidOptionsSettingsProps {
 	store: Store;
 	storeSettings: StoreSettings | null;
 	disablePaidOptions: boolean;
+	onStoreUpdated?: (store: Store) => void;
 }
 export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 	store,
 	storeSettings,
 	disablePaidOptions,
+	onStoreUpdated,
 }) => {
 	const params = useParams();
 	const router = useRouter();
@@ -83,14 +87,6 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 		resolver: zodResolver(formSchema) as any,
 		defaultValues: sanitizedDefaultValues,
 	});
-
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		watch,
-		clearErrors,
-	} = useForm<formValues>();
 
 	//const isSubmittable = !!form.formState.isDirty && !!form.formState.isValid;
 
@@ -122,15 +118,35 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 			//console.log('logoPublicId: ' + data.logoPublicId);
 			//console.log('onSubmit: ' + JSON.stringify(data));
 
-			await axios.patch(
-				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/settings/paidOptions`,
-				data,
-			);
-			router.refresh();
-			toastSuccess({
-				title: t("Store_Updated"),
-				description: "",
-			});
+			const payload: UpdateStorePaidOptionsInput = {
+				storeId: params.storeId as string,
+				customDomain: data.customDomain ?? "",
+				LINE_PAY_ID: data.LINE_PAY_ID ?? "",
+				LINE_PAY_SECRET: data.LINE_PAY_SECRET ?? "",
+				STRIPE_SECRET_KEY: data.STRIPE_SECRET_KEY ?? "",
+				logo: data.logo ?? "",
+				logoPublicId: data.logoPublicId ?? "",
+				acceptAnonymousOrder: data.acceptAnonymousOrder ?? true,
+				defaultTimezone:
+					typeof data.defaultTimezone === "number"
+						? data.defaultTimezone
+						: Number(data.defaultTimezone ?? store.defaultTimezone ?? 0),
+			};
+
+			const result = await updateStorePaidOptionsAction(payload);
+
+			if (result?.serverError) {
+				toastError({ title: t("Error"), description: result.serverError });
+			} else if (result?.data) {
+				const updatedStore = result.data.store as Store;
+				onStoreUpdated?.(updatedStore);
+				setLogo(updatedStore.logo ?? null);
+
+				toastSuccess({
+					title: t("Store_Updated"),
+					description: "",
+				});
+			}
 		} catch (error: unknown) {
 			const err = error as AxiosError;
 			toastError({
@@ -417,7 +433,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 								type="button"
 								variant="outline"
 								onClick={() => {
-									clearErrors();
+									form.clearErrors();
 									router.push("../");
 								}}
 								className="ml-2 disabled:opacity-25"

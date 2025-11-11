@@ -34,6 +34,8 @@ interface props<TData, TValue> {
 	disabled: boolean;
 	// return
 	onRowSelectionChange?: (rows: RowSelectionState) => void;
+	noPagination?: boolean; // default true
+	defaultPageSize?: number; // default 30 when pagination enabled
 }
 
 // DataTableCheckbox is a table with checkbox for each row.
@@ -53,6 +55,8 @@ export function DataTableCheckbox<TData, TValue>({
 	initiallySelected,
 	disabled,
 	onRowSelectionChange,
+	noPagination = true,
+	defaultPageSize = 30,
 }: props<TData, TValue>) {
 	//const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	//const [sorting, setSorting] = useState<SortingState>([]);
@@ -77,9 +81,19 @@ export function DataTableCheckbox<TData, TValue>({
 	}, [rowSelection, onRowSelectionChange]);
 
 	const [pagination, setPagination] = useState({
-		pageIndex: 0, //initial page index
-		pageSize: 10, //default page size
+		pageIndex: 0,
+		pageSize: noPagination ? data.length : defaultPageSize,
 	});
+
+	useEffect(() => {
+		if (noPagination) {
+			setPagination((prev) => ({
+				...prev,
+				pageIndex: 0,
+				pageSize: data.length || prev.pageSize,
+			}));
+		}
+	}, [noPagination, data.length]);
 
 	const table = useReactTable({
 		data,
@@ -94,8 +108,6 @@ export function DataTableCheckbox<TData, TValue>({
 		getPaginationRowModel: getPaginationRowModel(),
 		onPaginationChange: setPagination, //update the pagination state when internal APIs mutate the pagination state
 		state: {
-			//sorting,
-			//columnFilters,
 			pagination,
 			rowSelection,
 		},
@@ -187,8 +199,8 @@ export function DataTableCheckbox<TData, TValue>({
 					{`${table.getFilteredSelectedRowModel().rows.length} of ${table.getFilteredRowModel().rows.length} ${t("item")}${t("selected")}`}
 				</div>
 
-				<div className="space-x-2">
-					{table.getCanPreviousPage() && (
+				{!noPagination && (
+					<div className="space-x-2">
 						<Button
 							variant="outline"
 							size="sm"
@@ -197,8 +209,6 @@ export function DataTableCheckbox<TData, TValue>({
 						>
 							{t("previous")}
 						</Button>
-					)}
-					{table.getCanNextPage() && (
 						<Button
 							variant="outline"
 							size="sm"
@@ -207,8 +217,8 @@ export function DataTableCheckbox<TData, TValue>({
 						>
 							{t("next")}
 						</Button>
-					)}
-				</div>
+					</div>
+				)}
 			</div>
 		</div>
 	);

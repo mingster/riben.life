@@ -118,6 +118,8 @@
   "Product_created": "Product Created",
   "Product_deleted": "Product Deleted",
   "Product_description": "Product Description",
+  "Product_description_placeholder": "Enter product description",
+  "Product_description_helper": "The description will be displayed on the product page.",
   "Product_isFeatured": "Show on Homepage?",
   "Product_isFeatured_descr": "Display the product on the homepage",
   "Product_Mgmt": "Product List",

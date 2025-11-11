@@ -165,9 +165,14 @@
   "model": "型號",
   "monthly": "每月",
   "name": "名稱",
+
   "nav_about": "關於我們",
   "nav_contact": "聯繫我們",
-  "nav_product": "產品介紹",
+  "nav_features": "功能",
+  "nav_price": "價格",
+  "nav_useCases": "使用情境",
+  "nav_storeAdmin": "管理店家",
+
   "new_password": "新密碼",
   "next": "下一頁",
   "no": "否",

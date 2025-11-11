@@ -5,7 +5,7 @@ import type { Store } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { StoreSettings } from "@prisma/client";
 
-import axios, { type AxiosError } from "axios";
+import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -23,7 +23,6 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import logger from "@/lib/logger";
 
 import { ApiListing } from "@/components/api-listing";
 import { CountryCombobox } from "@/components/country-combobox";
@@ -41,6 +40,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import useOrigin from "@/hooks/use-origin";
 import { useI18n } from "@/providers/i18n-provider";
+import { updateStoreBasicAction } from "@/actions/storeAdmin/settings/update-store-basic";
+import type { UpdateStoreBasicInput } from "@/actions/storeAdmin/settings/update-store-basic.validation";
 
 const formSchema = z.object({
 	name: z.string().min(1, { message: "store name is required" }),
@@ -63,6 +64,8 @@ type formValues = z.infer<typeof formSchema>;
 export interface SettingsFormProps {
 	store: Store;
 	storeSettings: StoreSettings | null;
+	onStoreUpdated?: (store: Store) => void;
+	onStoreSettingsUpdated?: (settings: StoreSettings | null) => void;
 	/*
   initialData:
 	| (Store & {
@@ -77,6 +80,8 @@ export interface SettingsFormProps {
 export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 	store,
 	storeSettings,
+	onStoreUpdated,
+	onStoreSettingsUpdated,
 }) => {
 	const params = useParams();
 	const router = useRouter();
@@ -107,14 +112,6 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 		defaultValues: sanitizedDefaultValues,
 	});
 
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		watch,
-		clearErrors,
-	} = useForm<formValues>();
-
 	/*
   const [isSubmittable, setIsSubmittable] = useState(
 	!!form.formState.isDirty && !!form.formState.isValid,
@@ -135,26 +132,42 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 	//console.log(`form error: ${JSON.stringify(form.formState.errors)}`);
 
 	const onSubmit = async (data: formValues) => {
-		//console.log('onSubmit: ' + JSON.stringify(data));
-
 		try {
 			setLoading(true);
 
-			//console.log('onSubmit: ' + JSON.stringify(data));
+			const payload: UpdateStoreBasicInput = {
+				storeId: params.storeId as string,
+				name: data.name,
+				orderNoteToCustomer: data.orderNoteToCustomer ?? "",
+				defaultLocale: data.defaultLocale,
+				defaultCountry: data.defaultCountry,
+				defaultCurrency: data.defaultCurrency,
+				autoAcceptOrder: data.autoAcceptOrder ?? false,
+				isOpen: data.isOpen ?? false,
+				acceptAnonymousOrder: store.acceptAnonymousOrder,
+				useBusinessHours: data.useBusinessHours ?? true,
+				businessHours: data.businessHours ?? "",
+				requireSeating: data.requireSeating ?? false,
+				requirePrepaid: data.requirePrepaid ?? true,
+			};
 
-			await axios.patch(
-				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/settings/basic`,
-				data,
-			);
+			const result = await updateStoreBasicAction(payload);
 
-			router.refresh();
+			if (result?.serverError) {
+				toastError({ title: t("Error"), description: result.serverError });
+			} else if (result?.data) {
+				const { store: updatedStore, storeSettings: updatedSettings } =
+					result.data;
+				onStoreUpdated?.(updatedStore as Store);
+				onStoreSettingsUpdated?.(
+					(updatedSettings as StoreSettings | null | undefined) ?? null,
+				);
 
-			//revalidatePath('/[storeId]', 'page');
-
-			toastSuccess({
-				title: t("Store_Updated"),
-				description: "",
-			});
+				toastSuccess({
+					title: t("Store_Updated"),
+					description: "",
+				});
+			}
 		} catch (error: unknown) {
 			const err = error as AxiosError;
 			toastError({
@@ -163,8 +176,6 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 			});
 		} finally {
 			setLoading(false);
-			//setIsSubmittable(false);
-			//console.log(data);
 		}
 	};
 
@@ -439,7 +450,6 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 								type="button"
 								variant="outline"
 								onClick={() => {
-									clearErrors();
 									router.push("../");
 								}}
 								disabled={loading || form.formState.isSubmitting}

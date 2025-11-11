@@ -1,4 +1,5 @@
-import Container from "@/components/ui/container";
+import { Loader } from "@/components/loader";
+import { Suspense } from "react";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -7,7 +8,7 @@ export default async function CategoryAdminPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
-	const _params = await props.params;
+	//const _params = await props.params;
 
-	return <Container>admin Category</Container>;
+	return <Suspense fallback={<Loader />}>CategoryClient</Suspense>;
 }

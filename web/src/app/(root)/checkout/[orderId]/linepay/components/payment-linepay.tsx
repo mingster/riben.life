@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { createLinePayClient } from "@/lib/linepay";
-import type { LinePayClient } from "@/lib/linepay/type";
+import { createLinePayClient } from "@/lib/linePay";
+import type { LinePayClient } from "@/lib/linePay/type";
 import type { StoreOrder } from "@/types";
 import { getAbsoluteUrl } from "@/utils/utils";
 import { useQRCode } from "next-qrcode";

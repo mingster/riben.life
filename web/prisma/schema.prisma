@@ -835,7 +835,7 @@ model StoreLedger {
   storeId     String
   orderId     String
   amount      Decimal
-  fee         Decimal // fee from payment type. e.g. linepay = 3%
+  fee         Decimal // fee from payment type. e.g. linePay = 3%
   platformFee Decimal // riben.life's fee
   currency    String  @default("twd")
   type        Int     @default(0) // 0: 代收 | 1: store's own payment provider

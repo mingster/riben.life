@@ -7,7 +7,7 @@
 		"debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3001",
 		"build": "bun run postinstall; next build",
 		"start": "next start -p 3000",
-		"install:platform": "bun run ../bin/install.ts",
+		"install:platform": "bun run ./bin/install.ts",
 		"bio_lint": "npx biome check --fix ./src",
 		"format": "npx biome format --write ./src",
 		"postinstall": "bun run sql:generate",
@@ -85,6 +85,7 @@
 		"framer-motion": "^12.23.24",
 		"i18next": "^25.6.1",
 		"i18next-browser-languagedetector": "^8.2.0",
+		"i18next-resources-for-ts": "^1.7.4",
 		"i18next-resources-to-backend": "^1.2.1",
 		"input-otp": "^1.4.2",
 		"jsvectormap": "^1.7.0",
@@ -124,7 +125,6 @@
 		"stripe": "^19.3.0",
 		"swr": "^2.3.6",
 		"tailwind-merge": "^3.4.0",
-		"task-master-ai": "^0.13.2",
 		"typewriter-effect": "^2.22.0",
 		"usehooks-ts": "^3.1.1",
 		"uuid": "^11.1.0",
@@ -148,9 +148,9 @@
 		"@types/react-dom": "^19.2.2",
 		"@types/react-google-recaptcha": "^2.1.9",
 		"@types/uuid": "^10.0.0",
-		"@typescript-eslint/eslint-plugin": "^8.46.3",
-		"@typescript-eslint/parser": "^8.46.3",
-		"autoprefixer": "^10.4.21",
+		"@typescript-eslint/eslint-plugin": "^8.46.4",
+		"@typescript-eslint/parser": "^8.46.4",
+		"autoprefixer": "^10.4.22",
 		"dotenv": "^16.6.1",
 		"eslint": "^9.39.1",
 		"eslint-config-next": "15.3.1",
@@ -166,7 +166,7 @@
 		"tailwindcss": "^4.1.17",
 		"tw-animate-css": "^1.4.0",
 		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.46.3"
+		"typescript-eslint": "^8.46.4"
 	},
 	"husky": {
 		"hooks": {

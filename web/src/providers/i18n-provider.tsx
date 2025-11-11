@@ -28,7 +28,7 @@ const I18nProvider = ({ children }: { children: React.ReactNode }) => {
   const cookie = cookies.get(cookieName);
 
   if (cookie && cookies.get(cookieName) !== lng) {
-	lng = cookies.get(cookieName);
+    lng = cookies.get(cookieName);
   };
   */
 
@@ -39,8 +39,8 @@ const I18nProvider = ({ children }: { children: React.ReactNode }) => {
 	//
 	/*
   if (lng) {
-	lng = acceptLanguage.get(lng);
-	console.log('lng2: ' + lng);
+    lng = acceptLanguage.get(lng);
+    console.log('lng2: ' + lng);
   }
   */
 
