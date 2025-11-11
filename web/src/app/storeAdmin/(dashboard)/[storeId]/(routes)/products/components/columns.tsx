@@ -8,18 +8,7 @@ import { t } from "i18next";
 import { CheckIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { CellAction } from "./cell-action";
-
-export type ProductColumn = {
-	id: string;
-	name: string;
-	status: number;
-	price: number;
-	isFeatured: boolean;
-	updatedAt: string;
-	hasOptions: boolean;
-	stock: number | undefined;
-	isRecurring: boolean | undefined;
-};
+import type { ProductColumn } from "../product-column";
 
 export const columns: ColumnDef<ProductColumn>[] = [
 	{

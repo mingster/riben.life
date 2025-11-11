@@ -3,7 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 import type { Product } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { formatDateTime } from "@/utils/datetime-utils";
-import type { ProductColumn } from "./components/columns";
+import type { ProductColumn } from "./product-column";
 import { ProductsClient } from "./components/client-product";
 
 type Params = Promise<{ storeId: string }>;

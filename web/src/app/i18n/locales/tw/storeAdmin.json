@@ -118,6 +118,8 @@
   "Product_created": "產品已新增",
   "Product_deleted": "產品已刪除",
   "Product_description": "產品說明",
+  "Product_description_placeholder": "請輸入產品說明",
+  "Product_description_helper": "說明會顯示在產品頁面上。",
   "Product_isFeatured": "顯示於首頁？",
   "Product_isFeatured_descr": "將產品顯示於首頁上",
   "Product_Mgmt": "產品列表",
