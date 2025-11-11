@@ -2,7 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import logger from "./lib/logger";
 
 export const config = {
-	matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+	//matcher: ["/((>!api|?!_next/static|_next/image|favicon.ico).*)"],
+	matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
 
 const CORS_HEADERS = {
