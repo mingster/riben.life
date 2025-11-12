@@ -37,7 +37,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 	const [isEditOpen, setIsEditOpen] = useState(false);
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const onConfirm = async () => {
 		try {

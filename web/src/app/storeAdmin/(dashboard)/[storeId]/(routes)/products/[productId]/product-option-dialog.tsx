@@ -46,27 +46,25 @@ interface props {
 
 type formValues = z.infer<typeof formSchema>;
 
+// 規格 | 甜度/冰 | 配料
 export const formSchema = z.object({
-	// 規格 | 甜度/冰 | 配料
-	optionName: z.string().min(1, {
-		error: "option name is required",
-	}),
-	////必選
-	isRequired: z.boolean().prefault(false).optional(),
-	// 0:radiobox|1:checkboxes
-	isMultiple: z.boolean().prefault(false).optional(),
+	//storeId: z.string().min(1),
+	optionName: z.string().min(1),
+	isRequired: z.boolean(), //必選
+	isMultiple: z.boolean(), // 0:radiobox|1:checkboxes
+
 	// 至少選1項 | 最多選3項
-	minSelection: z.number().prefault(1),
-	maxSelection: z.number().prefault(1),
+	minSelection: z.coerce.number().int().min(0),
+	maxSelection: z.coerce.number().int().min(1),
+	allowQuantity: z.boolean(), // 允許選擇數量
+	minQuantity: z.coerce.number().int().min(0),
+	maxQuantity: z.coerce.number().int().min(1),
 
-	allowQuantity: z.boolean().prefault(false).optional(),
-	minQuantity: z.number().prefault(1),
-	maxQuantity: z.number().prefault(1),
-
+	// 選項列表
 	selections: z.string().min(1, {
-		error: "selections is required",
+		error: "每行輸入一個選項，例如：無糖、少糖、正常。",
 	}),
-	sortOrder: z.number().min(1),
+	sortOrder: z.coerce.number().int().min(1),
 });
 
 // dialog to handle create and update for ProductOption and ProductOptionSelections object.
@@ -78,7 +76,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 	const params = useParams();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	//console.log('AddProductOptionDialog:',JSON.stringify(initialData));
 

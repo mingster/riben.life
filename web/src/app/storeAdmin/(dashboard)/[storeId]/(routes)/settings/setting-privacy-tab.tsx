@@ -52,7 +52,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({
 	const [loading, setLoading] = useState(false);
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	//if (!storeSettings?.privacyPolicy) storeSettings.privacyPolicy = '';
 

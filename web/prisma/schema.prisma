@@ -1066,7 +1066,7 @@ model EmailQueue {
 
 model SupportTicket {
   id       String @id @default(uuid())
-  threadId String
+  threadId String?
 
   senderId String
   storeId  String

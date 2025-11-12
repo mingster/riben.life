@@ -99,7 +99,7 @@ export const ProductEditAttributeTab = ({
 	const router = useRouter();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const [_open, _setOpen] = useState(false);
 	//const origin = useOrigin();

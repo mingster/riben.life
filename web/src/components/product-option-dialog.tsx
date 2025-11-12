@@ -1,7 +1,6 @@
 "use client";
 
 import type { Item, ItemOption } from "@/hooks/use-cart";
-import { useCart } from "@/hooks/use-cart";
 
 import { Button } from "@/components/ui/button";
 import type { Product, ProductOption } from "@/types";
@@ -92,8 +91,9 @@ export const ProductOptionDialog: React.FC<props> = ({
 							error: "You have to select at least one item.",
 						});
 				} else {
-					// not required checkbox
+					// non-required checkbox
 
+					console.log("option.minSelection", option.minSelection);
 					if (option.minSelection === 0) {
 						if (option.maxSelection > 0) {
 							//最多選?項
@@ -120,7 +120,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 								`4You can select up to ${option.maxSelection} items only.`,
 							)
 							.refine((value) => value.some((item) => item), {
-								error: "5You have to select at least one item.",
+								error: "You have to select at least one item.",
 							})
 							.optional();
 					}
@@ -199,30 +199,30 @@ export const ProductOptionDialog: React.FC<props> = ({
 
 	/*
   function generateDefaultValues(productOptions: ProductOption[]) {
-    const defaultValues: Record<string, string | string[]> = {};
+	const defaultValues: Record<string, string | string[]> = {};
 
-    productOptions.forEach((option: ProductOption, index) => {
-      const fieldName = `option${index}`;
+	productOptions.forEach((option: ProductOption, index) => {
+	  const fieldName = `option${index}`;
 
-      if (option.isMultiple) {
-        defaultValues[fieldName] = option.ProductOptionSelections.filter(
-          (item) => item.isDefault,
-        ).map((item) => item.id);
-      } else {
+	  if (option.isMultiple) {
+		defaultValues[fieldName] = option.ProductOptionSelections.filter(
+		  (item) => item.isDefault,
+		).map((item) => item.id);
+	  } else {
 
-        let defaultItem = option.ProductOptionSelections.find(
-          (item) => item.isDefault,
-        );
-        logger.info("defaultItem");
+		let defaultItem = option.ProductOptionSelections.find(
+		  (item) => item.isDefault,
+		);
+		logger.info("defaultItem");
 
-        // radio group must have default value, cannot be empty...
-        if (!defaultItem) defaultItem = option.ProductOptionSelections[0];
+		// radio group must have default value, cannot be empty...
+		if (!defaultItem) defaultItem = option.ProductOptionSelections[0];
 
-        defaultValues[fieldName] = defaultItem ? defaultItem.id : "";
-      }
-    });
+		defaultValues[fieldName] = defaultItem ? defaultItem.id : "";
+	  }
+	});
 
-    return defaultValues;
+	return defaultValues;
   }
 */
 

@@ -2,8 +2,8 @@
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Store } from "@/types";
-import { StoreLevel } from "@/types/enum";
+import type { Store, SupportTicket } from "@/types";
+import { StoreLevel, TicketStatus } from "@/types/enum";
 import {
 	ArrowRight,
 	BadgeDollarSign,
@@ -36,6 +36,7 @@ type Menu = {
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	icon: any;
 	submenus: Submenu[];
+	badge?: number;
 };
 
 type Group = {
@@ -48,7 +49,12 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 	const nav_prefix = STORE_ADMIN_PATH + store.id;
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
+
+	const openSupportTicketCount =
+		store.SupportTicket?.filter(
+			(ticket: SupportTicket) => ticket.status === TicketStatus.Open,
+		).length ?? 0;
 
 	const cash = {
 		href: `${nav_prefix}/cash-cashier`,
@@ -130,6 +136,7 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 					active: pathname.includes(`${nav_prefix}/support`),
 					icon: Ticket,
 					submenus: [],
+					badge: openSupportTicketCount,
 				},
 			],
 		},

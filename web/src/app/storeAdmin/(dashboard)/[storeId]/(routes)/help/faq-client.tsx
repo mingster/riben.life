@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 
 export const FaqClient: React.FC = () => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const searchParams = useSearchParams();
 

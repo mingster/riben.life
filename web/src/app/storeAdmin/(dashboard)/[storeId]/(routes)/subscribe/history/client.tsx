@@ -43,7 +43,7 @@ export function SubscriptionHistoryClient({
 	const _router = useRouter();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 	if (!mounted) return <></>;
 
 	return (

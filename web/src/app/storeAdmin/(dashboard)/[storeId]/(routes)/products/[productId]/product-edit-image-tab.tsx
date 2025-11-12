@@ -76,7 +76,7 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 	const router = useRouter();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const {
 		handleSubmit,

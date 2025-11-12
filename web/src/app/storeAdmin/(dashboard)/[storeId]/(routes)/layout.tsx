@@ -5,9 +5,10 @@ import StoreAdminLayout from "./components/store-admin-layout";
 
 import { cookieName, fallbackLng } from "@/app/i18n/settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { SystemMessage } from "@/types";
+import type { Store, SystemMessage } from "@/types";
 import { cookies } from "next/headers";
 import { checkStoreStaffAccess } from "@/lib/store-admin-utils";
+import { getStoreWithRelations } from "@/lib/store-access";
 
 export default async function StoreLayout(props: {
 	children: React.ReactNode;
@@ -18,9 +19,9 @@ export default async function StoreLayout(props: {
 
 	// Use checkStoreAccess to consolidate session check and store query
 	// This prevents duplicate database connections
-	const store = await checkStoreStaffAccess(params.storeId);
+	const checkStoreAccess = await checkStoreStaffAccess(params.storeId);
 
-	if (!store) {
+	if (!checkStoreAccess) {
 		logger.info("store not found...redirect to store creation page.");
 		redirect("/storeAdmin");
 	}
@@ -33,6 +34,19 @@ export default async function StoreLayout(props: {
 		where: { published: true, localeId: lng },
 		orderBy: { createdOn: "desc" },
 	})) as SystemMessage[];
+
+	const [store] = await Promise.all([
+		getStoreWithRelations(params.storeId, {
+			includeProducts: true,
+			includeOrders: true,
+			includeCategories: true,
+			includePaymentMethods: true,
+			includeShippingMethods: true,
+			includeAnnouncements: true,
+			includeTables: true,
+			includeSupportTickets: true,
+		}) as Store,
+	]);
 
 	return (
 		<StoreAdminLayout sqlData={store} storeSettings={null}>

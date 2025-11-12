@@ -1,8 +1,11 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import type { StoreProductOptionTemplate } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import { ProductsOptionTemplateClient } from "./product-option-template-client";
+import { ProductOptionTemplateClient } from "./components/client-product-option-template";
+import {
+	mapProductOptionTemplateToColumn,
+	type ProductOptionTemplateColumn,
+} from "./product-option-template-column";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -25,11 +28,12 @@ export default async function ProductOptionTemplatePage(props: {
 
 	transformDecimalsToNumbers(storeOptionTemplates);
 
+	const formattedTemplates: ProductOptionTemplateColumn[] =
+		storeOptionTemplates.map(mapProductOptionTemplateToColumn);
+
 	return (
 		<Container>
-			<ProductsOptionTemplateClient
-				data={storeOptionTemplates as StoreProductOptionTemplate[]}
-			/>
+			<ProductOptionTemplateClient serverData={formattedTemplates} />
 		</Container>
 	);
 }

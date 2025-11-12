@@ -45,7 +45,7 @@ export const CategoryEditProductTab = ({
 	const params = useParams();
 	const router = useRouter();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const [loading, _setLoading] = useState(false);
 

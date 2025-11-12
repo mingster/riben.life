@@ -88,7 +88,7 @@ export const DisplayStoreOptionTemplates = ({
 	const initiallySelected: RowSelectionState = {};
 	const [loading, setLoading] = useState(false);
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const storeOptionColumns = useMemo(() => createStoreOptionColumns(t), [t]);
 
@@ -214,7 +214,7 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const router = useRouter();
 	const params = useParams();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 	const onConfirm = async () => {
 		//try {
 		setLoading(true);
@@ -269,7 +269,7 @@ export const DisplayOptions = ({
 	productOptions: ProductOption[];
 }) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const productColumns = useMemo(() => createProductOptionColumns(t), [t]);
 
@@ -416,7 +416,11 @@ const createStoreOptionColumns = (
 	},
 	{
 		accessorKey: "productOption",
-		header: () => <div className="pl-3">{t("ProductOption_selections")}</div>,
+		header: () => (
+			<div className="pl-3 text-xs font-mono">
+				{t("ProductOption_selections")}
+			</div>
+		),
 		cell: ({ row }) => {
 			const val = row.getValue("productOption") as
 				| ProductOption
@@ -536,7 +540,11 @@ const createProductOptionColumns = (
 	},
 	{
 		accessorKey: "productOption",
-		header: () => <div className="pl-3">{t("ProductOption_selections")}</div>,
+		header: () => (
+			<div className="pl-3 text-xs font-mono">
+				{t("ProductOption_selections")}
+			</div>
+		),
 		cell: ({ row }) => {
 			const val = row.getValue("productOption") as
 				| ProductOption

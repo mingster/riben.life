@@ -54,7 +54,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 	const router = useRouter();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 	//const [open, setOpen] = useState(false);
 	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);

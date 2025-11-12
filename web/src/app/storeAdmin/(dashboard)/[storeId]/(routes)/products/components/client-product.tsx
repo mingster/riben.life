@@ -28,7 +28,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 	serverData,
 }) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 	const [data, setData] = useState<ProductColumn[]>(serverData);
 
 	useEffect(() => {

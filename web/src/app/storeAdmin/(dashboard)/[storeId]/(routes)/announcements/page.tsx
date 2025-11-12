@@ -1,9 +1,10 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { formatDateTime } from "@/utils/datetime-utils";
-import type { StoreAnnouncement } from "@prisma/client";
-import type { MessageColumn } from "./components/columns";
-import { MessageClient } from "./components/message-client";
+import { AnnouncementClient } from "./components/client-announcement";
+import {
+	mapAnnouncementToColumn,
+	type AnnouncementColumn,
+} from "./announcement-column";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -21,19 +22,13 @@ export default async function AnnouncementsAdminPage(props: {
 		orderBy: { updatedAt: "desc" },
 	});
 
-	// Map announcements to UI columns
-	const formattedMessages: MessageColumn[] = (
-		messages as StoreAnnouncement[]
-	).map((item) => ({
-		id: item.id,
-		storeId: params.storeId,
-		message: item.message,
-		updatedAt: formatDateTime(item.updatedAt),
-	}));
+	const formattedMessages: AnnouncementColumn[] = messages.map((item) =>
+		mapAnnouncementToColumn(item, params.storeId),
+	);
 
 	return (
 		<Container>
-			<MessageClient data={formattedMessages} />
+			<AnnouncementClient serverData={formattedMessages} />
 		</Container>
 	);
 }

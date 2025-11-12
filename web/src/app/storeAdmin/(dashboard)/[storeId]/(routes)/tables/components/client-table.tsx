@@ -21,7 +21,7 @@ interface TableClientProps {
 
 export const TableClient: React.FC<TableClientProps> = ({ serverData }) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const sortTables = useCallback((tables: TableColumn[]) => {
 		return [...tables].sort((a, b) =>

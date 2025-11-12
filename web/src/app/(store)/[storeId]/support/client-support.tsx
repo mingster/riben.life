@@ -75,6 +75,7 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 	const { t } = useTranslation(lng);
 	const params = useParams();
 
+	//#region client side handlers
 	// Memoized ticket creation handler
 	const handleCreated = useCallback((newVal: SupportTicket) => {
 		setTickets((prev) => [
@@ -91,6 +92,7 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 			prev.map((ticket) => (ticket.id === updatedVal.id ? updatedVal : ticket)),
 		);
 	}, []);
+	//#endregion
 
 	// Memoized filtered tickets
 	const filteredTickets = useMemo(() => {

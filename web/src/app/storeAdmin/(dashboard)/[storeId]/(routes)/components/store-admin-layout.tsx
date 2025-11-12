@@ -41,6 +41,8 @@ const StoreAdminLayout: React.FC<props> = ({
 	)}
 	*/
 
+	//console.log("sqlData", sqlData);
+
 	return (
 		<>
 			<SidebarProvider
@@ -71,7 +73,7 @@ function StoreAdminHeader({ store }: { store: Store }) {
 	const title = "Store Admin";
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	return (
 		<header className="flex h-(--header-height) shrink-0 items-center gap-0 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">

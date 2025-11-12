@@ -37,7 +37,7 @@ export const StoreEditTabs = ({
 	//const params = useParams();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	return (
 		<>

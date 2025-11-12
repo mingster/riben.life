@@ -1,13 +1,10 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { getStoreWithRelations } from "@/lib/store-access";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import type { StoreLedger } from "@prisma/client";
-import { format } from "date-fns";
-import { BalancesClient } from "./components/balances-client";
-import type { StoreLedgerColumn } from "./components/columns";
+import { BalanceClient } from "./components/client-balance";
+import { mapStoreLedgerToColumn, type BalanceColumn } from "./balance-column";
 
-type Params = Promise<{ storeId: string; messageId: string }>;
+type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function BalanceMgmtPage(props: {
@@ -16,8 +13,7 @@ export default async function BalanceMgmtPage(props: {
 }) {
 	const params = await props.params;
 
-	// Note: checkStoreStaffAccess already called in layout (cached)
-	const legers = (await sqlClient.storeLedger.findMany({
+	const ledgers = await sqlClient.storeLedger.findMany({
 		where: {
 			storeId: params.storeId,
 			type: 0,
@@ -25,33 +21,17 @@ export default async function BalanceMgmtPage(props: {
 		orderBy: {
 			createdAt: "desc",
 		},
-	})) as StoreLedger[];
-	transformDecimalsToNumbers(legers);
+	});
 
-	const store = await getStoreWithRelations(params.storeId);
-	//console.log(JSON.stringify(legers));
+	transformDecimalsToNumbers(ledgers);
 
-	// map order to ui
-	const formattedData: StoreLedgerColumn[] = legers.map(
-		(item: StoreLedger) => ({
-			id: item.id,
-			storeId: item.storeId,
-			orderId: item.orderId,
-			amount: Number(item.amount),
-			fee: Number(item.fee),
-			platformFee: Number(item.platformFee),
-			currency: item.currency,
-			balance: Math.round(Number(item.balance)),
-			description: item.description,
-			note: item.note,
-			createdAt: format(item.createdAt, "yyyy-MM-dd HH:mm:ss"),
-			availablity: format(item.availablity, "yyyy-MM-dd HH:mm:ss"),
-		}),
+	const formattedData: BalanceColumn[] = ledgers.map((ledger) =>
+		mapStoreLedgerToColumn(ledger, params.storeId),
 	);
 
 	return (
 		<Container>
-			<BalancesClient store={store} data={formattedData} />
+			<BalanceClient serverData={formattedData} />
 		</Container>
 	);
 }

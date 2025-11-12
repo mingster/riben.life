@@ -52,7 +52,7 @@ export const OrderReadyToShip = ({ store, orders, parentLoading }: props) => {
 	//const router = useRouter();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	if (parentLoading) {
 		return <ClipLoader color="text-primary" />;

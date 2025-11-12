@@ -71,7 +71,7 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
   //form.setValue("isOpen", !useBusinessHours);
   */
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 	//console.log(`form error: ${JSON.stringify(form.formState.errors)}`);
 	const onSubmit = async (data: formValues) => {
 		try {

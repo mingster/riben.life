@@ -23,7 +23,7 @@ interface props {
 
 export const ProductPreviewDialog: React.FC<props> = ({ initialData }) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	if (!initialData) {
 		return <></>;

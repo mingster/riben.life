@@ -2,36 +2,44 @@
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
-import { t } from "i18next";
+import type { TFunction } from "i18next";
+import type { AnnouncementColumn } from "../announcement-column";
 import { CellAction } from "./cell-action";
 
-export type MessageColumn = {
-	id: string;
-	storeId: string;
-	message: string;
-	updatedAt: string;
-};
+interface CreateAnnouncementColumnsOptions {
+	onUpdated?: (announcement: AnnouncementColumn) => void;
+	onDeleted?: (id: string) => void;
+}
 
-export const columns: ColumnDef<MessageColumn>[] = [
-	{
-		accessorKey: "message",
-		header: ({ column }) => {
-			return (
+export const createAnnouncementColumns = (
+	t: TFunction,
+	options: CreateAnnouncementColumnsOptions = {},
+): ColumnDef<AnnouncementColumn>[] => {
+	const { onUpdated, onDeleted } = options;
+
+	return [
+		{
+			accessorKey: "message",
+			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("announcement_body")} />
-			);
+			),
 		},
-	},
-	{
-		accessorKey: "updatedAt",
-		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title={t("updated")} />;
+		{
+			accessorKey: "updatedAt",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("updated")} />
+			),
 		},
-	},
-	{
-		id: "actions",
-		header: ({ column }) => {
-			return t("actions");
+		{
+			id: "actions",
+			header: () => t("actions"),
+			cell: ({ row }) => (
+				<CellAction
+					data={row.original}
+					onUpdated={onUpdated}
+					onDeleted={onDeleted}
+				/>
+			),
 		},
-		cell: ({ row }) => <CellAction data={row.original} />,
-	},
-];
+	];
+};

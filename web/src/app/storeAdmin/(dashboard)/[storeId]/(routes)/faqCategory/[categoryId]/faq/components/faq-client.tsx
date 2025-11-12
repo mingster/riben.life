@@ -24,7 +24,7 @@ export const FaqClient: React.FC<FaqClientProps> = ({ data, category }) => {
 	const router = useRouter();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	return (
 		<>

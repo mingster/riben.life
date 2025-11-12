@@ -76,7 +76,7 @@ const DisplayPkg: React.FC<props> = ({
 	const params = useParams();
 	const router = useRouter();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);

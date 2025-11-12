@@ -45,7 +45,7 @@ export const OrderPending = ({ store, orders, parentLoading }: props) => {
 	//const router = useRouter();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 	//const [loading, setLoading] = useState(false);
 	//const [open, setOpen] = useState(false);
 	//const [selectedOrderId, setSelectedOrderId] = useState("");

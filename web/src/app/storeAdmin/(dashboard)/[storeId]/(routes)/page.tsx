@@ -27,12 +27,15 @@ export default async function StoreAdminHomePage(props: {
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance - 3x faster!
 	const [store, hasProLevel, categoryCount, productCount] = await Promise.all([
-		getStoreWithRelations(params.storeId) as Store,
+		getStoreWithRelations(params.storeId, {
+			includeSupportTickets: true,
+		}) as Store,
 		isPro(params.storeId),
 		sqlClient.category.count({ where: { storeId: params.storeId } }),
 		sqlClient.product.count({ where: { storeId: params.storeId } }),
 	]);
 
+	//console.log("store", store);
 	return (
 		<div>
 			{/* Display setup prompts if needed */}

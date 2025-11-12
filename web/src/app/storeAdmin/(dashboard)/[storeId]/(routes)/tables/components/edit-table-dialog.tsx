@@ -61,7 +61,7 @@ export function EditStoreTableDialog({
 }: EditStoreTableDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
