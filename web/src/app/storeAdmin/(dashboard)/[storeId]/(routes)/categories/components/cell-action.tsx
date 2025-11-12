@@ -1,11 +1,9 @@
 "use client";
 
-import axios, { type AxiosError } from "axios";
-import { Copy, Edit, MoreHorizontal, Trash, UserRoundPen } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-
+import { deleteStoreCategoryAction } from "@/actions/storeAdmin/categories/delete-category";
+import { useTranslation } from "@/app/i18n/client";
 import { AlertModal } from "@/components/modals/alert-modal";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -14,39 +12,66 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useI18n } from "@/providers/i18n-provider";
+import {
+	IconActivity,
+	IconCopy,
+	IconDots,
+	IconEdit,
+	IconEditCircle,
+	IconListDetails,
+	IconTrash,
+} from "@tabler/icons-react";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 
-import { toastError, toastSuccess } from "@/components/toaster";
-
-import type { CategoryColumn } from "./columns";
+import type { CategoryColumn } from "../category-column";
+import { EditCategoryDialog } from "./edit-category-dialog";
 
 interface CellActionProps {
 	data: CategoryColumn;
+	onDeleted?: (categoryId: string) => void;
+	onUpdated?: (category: CategoryColumn) => void;
 }
 
-export const CellAction: React.FC<CellActionProps> = ({ data }) => {
+export const CellAction: React.FC<CellActionProps> = ({
+	data,
+	onDeleted,
+	onUpdated,
+}) => {
 	const [loading, setLoading] = useState(false);
 	const [open, setOpen] = useState(false);
+	const [isEditOpen, setIsEditOpen] = useState(false);
+	const params = useParams<{ storeId: string }>();
 	const router = useRouter();
-	const params = useParams();
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng, "storeAdmin");
 
 	const onConfirm = async () => {
 		try {
 			setLoading(true);
+			const result = await deleteStoreCategoryAction({
+				storeId: String(params.storeId),
+				id: data.id,
+			});
 
-			await axios.delete(
-				`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/categories/${data.categoryId}`,
-			);
+			if (result?.serverError) {
+				toastError({
+					title: t("Error"),
+					description: result.serverError,
+				});
+				return;
+			}
 
 			toastSuccess({
-				title: "category deleted.",
+				title: t("Category") + t("Deleted"),
 				description: "",
 			});
-			router.refresh();
+			onDeleted?.(data.id);
 		} catch (error: unknown) {
-			const err = error as AxiosError;
 			toastError({
-				title: "something wrong.",
-				description: err.message,
+				title: t("Error"),
+				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
 			setLoading(false);
@@ -57,7 +82,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
 		toastSuccess({
-			title: "CategoryID copied to clipboard.",
+			title: t("Category") + " ID copied",
 			description: "",
 		});
 	};
@@ -70,38 +95,57 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 				onConfirm={onConfirm}
 				loading={loading}
 			/>
+			<EditCategoryDialog
+				category={data}
+				isNew={false}
+				onUpdated={onUpdated}
+				open={isEditOpen}
+				onOpenChange={setIsEditOpen}
+			/>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" className="size-8 p-0">
 						<span className="sr-only">Open menu</span>
-						<MoreHorizontal className="size-4" />
+						<IconDots className="size-4" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
-					<DropdownMenuLabel>Actions</DropdownMenuLabel>
+					<DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
 					<DropdownMenuItem
 						className="cursor-pointer"
-						onClick={() => onCopy(data.categoryId)}
+						onClick={() => onCopy(data.id)}
 					>
-						<Copy className="mr-0 size-4" /> Copy Id
+						<IconCopy className="mr-0 size-4" /> {t("Copy")}
 					</DropdownMenuItem>
 
 					<DropdownMenuItem
 						className="cursor-pointer"
-						onClick={() =>
-							router.push(
-								`/storeAdmin/${params.storeId}/categories/${data.categoryId}`,
-							)
-						}
+						onSelect={(event) => {
+							event.preventDefault();
+							setIsEditOpen(true);
+						}}
 					>
-						<Edit className="mr-0 size-4" /> Update
+						<IconEdit className="mr-0 size-4" /> {t("Edit")}
+					</DropdownMenuItem>
+
+					<DropdownMenuItem
+						className="cursor-pointer"
+						onSelect={(event) => {
+							event.preventDefault();
+							router.push(
+								`/storeAdmin/${params.storeId}/categories/${data.id}`,
+							);
+						}}
+					>
+						<IconActivity className="mr-0 size-4" />
+						{t("Category_EditProducts")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
-						{...(data.numOfProducts !== 0 && { disabled: true })}
+						disabled={data.numOfProducts !== 0}
 						className="cursor-pointer"
 						onClick={() => setOpen(true)}
 					>
-						<Trash className="mr-0 size-4" /> Delete
+						<IconTrash className="mr-0 size-4" /> {t("Delete")}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

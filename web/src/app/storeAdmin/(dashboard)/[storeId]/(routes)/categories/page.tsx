@@ -1,8 +1,7 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import type { Category } from "@/types";
+import { mapCategoryToColumn, type CategoryColumn } from "./category-column";
 import { CategoryClient } from "./components/category-client";
-import type { CategoryColumn } from "./components/columns";
 
 type Params = Promise<{ storeId: string; messageId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -38,20 +37,12 @@ export default async function CategoryPage(props: {
 	});
 
 	// Map categories to UI columns
-	const formattedCategories: CategoryColumn[] = categories.map(
-		(item: Category) => ({
-			categoryId: item.id,
-			storeId: params.storeId,
-			name: item.name,
-			isFeatured: item.isFeatured,
-			sortOrder: Number(item.sortOrder) || 0,
-			numOfProducts: item.ProductCategories.length,
-		}),
-	);
+	const formattedCategories: CategoryColumn[] =
+		categories.map(mapCategoryToColumn);
 
 	return (
 		<Container>
-			<CategoryClient data={formattedCategories} />
+			<CategoryClient serverData={formattedCategories} />
 		</Container>
 	);
 }

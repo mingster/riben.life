@@ -1,88 +1,81 @@
 "use client";
 
-import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
-import { t } from "i18next";
-import { CheckIcon, XIcon } from "lucide-react";
-import Link from "next/link";
+import type { TFunction } from "i18next";
+import { IconCheck, IconX } from "@tabler/icons-react";
+
+import { DataTableColumnHeader } from "@/components/dataTable-column-header";
+
+import type { CategoryColumn } from "../category-column";
 import { CellAction } from "./cell-action";
 
-export type CategoryColumn = {
-	categoryId: string;
-	storeId: string;
-	name: string;
-	isFeatured: boolean;
-	sortOrder: number;
-	numOfProducts: number;
-};
+interface CreateCategoryColumnsOptions {
+	onDeleted?: (categoryId: string) => void;
+	onUpdated?: (category: CategoryColumn) => void;
+}
 
-export const columns: ColumnDef<CategoryColumn>[] = [
-	{
-		accessorKey: "name",
-		header: ({ column }) => {
-			return (
+export const createCategoryColumns = (
+	t: TFunction,
+	options: CreateCategoryColumnsOptions = {},
+): ColumnDef<CategoryColumn>[] => {
+	const { onDeleted, onUpdated } = options;
+
+	return [
+		{
+			accessorKey: "name",
+			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("Category_name")} />
-			);
+			),
 		},
-		cell: ({ row }) => (
-			<Link
-				className="pl-0"
-				title="click to edit"
-				href={`./categories/${row.original.categoryId}`}
-			>
-				{row.getValue("name")}
-			</Link>
-		),
-	},
-	{
-		accessorKey: "numOfProducts",
-		header: ({ column }) => {
-			return (
+		{
+			accessorKey: "numOfProducts",
+			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
 					title={t("Category_numOfProduct")}
 				/>
-			);
+			),
 		},
-	},
-	{
-		accessorKey: "isFeatured",
-		header: ({ column }) => {
-			return (
+		{
+			accessorKey: "isFeatured",
+			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
 					title={t("Category_isFeatured")}
 				/>
-			);
-		},
-		cell: ({ row }) => {
-			//console.log( typeof(row.getValue("isFeatured")) );
-			const isFeatured =
-				row.getValue("isFeatured") === true ? (
-					<CheckIcon className="text-green-400  size-4" />
-				) : (
-					<XIcon className="text-red-400 size-4" />
+			),
+			cell: ({ row }) => {
+				const isFeatured = row.getValue<boolean>("isFeatured") === true;
+				return (
+					<div className="pl-3">
+						{isFeatured ? (
+							<IconCheck className="text-green-500 size-4" />
+						) : (
+							<IconX className="text-red-500 size-4" />
+						)}
+					</div>
 				);
-
-			return <div className="pl-3">{isFeatured}</div>;
+			},
 		},
-	},
-	{
-		accessorKey: "sortOrder",
-		header: ({ column }) => {
-			return (
+		{
+			accessorKey: "sortOrder",
+			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
 					title={t("Category_sortOrder")}
 				/>
-			);
+			),
 		},
-	},
-	{
-		id: "actions",
-		header: ({ column }) => {
-			return t("actions");
+		{
+			id: "actions",
+			header: () => t("actions"),
+			cell: ({ row }) => (
+				<CellAction
+					data={row.original}
+					onDeleted={onDeleted}
+					onUpdated={onUpdated}
+				/>
+			),
 		},
-		cell: ({ row }) => <CellAction data={row.original} />,
-	},
-];
+	];
+};

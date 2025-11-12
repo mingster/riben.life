@@ -1,55 +1,112 @@
 "use client";
 
-import { Plus } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-
-import { DataTable } from "@/components/dataTable";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-
-import { Heading } from "@/components/ui/heading";
-import { type CategoryColumn, columns } from "./columns";
+import { IconPlus } from "@tabler/icons-react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
+import { DataTable } from "@/components/dataTable";
+import { Button } from "@/components/ui/button";
+import { Heading } from "@/components/ui/heading";
+import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { toastError, toastSuccess } from "@/components/toaster";
-import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import type { CategoryColumn } from "../category-column";
+import { BulkAddCategoriesDialog } from "./bulk-add-categories-dialog";
+import { createCategoryColumns } from "./columns";
+import { EditCategoryDialog } from "./edit-category-dialog";
 
-interface categoryClientProps {
-	data: CategoryColumn[];
+interface CategoryClientProps {
+	serverData: CategoryColumn[];
 }
 
-export const CategoryClient: React.FC<categoryClientProps> = ({ data }) => {
-	const params = useParams();
-	const router = useRouter();
+export const CategoryClient: React.FC<CategoryClientProps> = ({
+	serverData,
+}) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
+
+	const sortCategories = useCallback((list: CategoryColumn[]) => {
+		return [...list].sort((a, b) => {
+			const sortA = a.sortOrder ?? 0;
+			const sortB = b.sortOrder ?? 0;
+			if (sortA !== sortB) {
+				return sortA - sortB;
+			}
+			return a.name.localeCompare(b.name);
+		});
+	}, []);
+
+	const [data, setData] = useState<CategoryColumn[]>(() =>
+		sortCategories(serverData),
+	);
+
+	useEffect(() => {
+		setData(sortCategories(serverData));
+	}, [serverData, sortCategories]);
+
+	const handleCreated = useCallback(
+		(newCategory: CategoryColumn) => {
+			if (!newCategory) return;
+
+			setData((prev) => {
+				const exists = prev.some((item) => item.id === newCategory.id);
+				if (exists) return prev;
+				return sortCategories([...prev, newCategory]);
+			});
+		},
+		[sortCategories],
+	);
+
+	const handleBulkCreated = useCallback(
+		(newCategories: CategoryColumn[]) => {
+			if (!newCategories?.length) return;
+
+			setData((prev) => {
+				const existingIds = new Set(prev.map((item) => item.id));
+				const filtered = newCategories.filter(
+					(item) => !existingIds.has(item.id),
+				);
+				if (!filtered.length) {
+					return prev;
+				}
+				return sortCategories([...prev, ...filtered]);
+			});
+		},
+		[sortCategories],
+	);
+
+	const handleDeleted = useCallback((categoryId: string) => {
+		setData((prev) => prev.filter((item) => item.id !== categoryId));
+	}, []);
+
+	const handleUpdated = useCallback(
+		(updatedCategory: CategoryColumn) => {
+			setData((prev) => {
+				const next = prev.map((item) =>
+					item.id === updatedCategory.id ? updatedCategory : item,
+				);
+				return sortCategories(next);
+			});
+		},
+		[sortCategories],
+	);
+
+	const nextSortOrder = useMemo(() => {
+		const maxSort = data.reduce(
+			(max, item) => Math.max(max, item.sortOrder ?? 0),
+			0,
+		);
+		return maxSort + 1;
+	}, [data]);
+
+	const columns = useMemo(
+		() =>
+			createCategoryColumns(t, {
+				onDeleted: handleDeleted,
+				onUpdated: handleUpdated,
+			}),
+		[t, handleDeleted, handleUpdated],
+	);
 
 	return (
 		<>
@@ -59,146 +116,28 @@ export const CategoryClient: React.FC<categoryClientProps> = ({ data }) => {
 					badge={data.length}
 					description={t("Category_Mgmt_descr")}
 				/>
-				<div>
-					{/*新增 */}
-					<Button
-						variant={"outline"}
-						onClick={() =>
-							router.push(`/storeAdmin/${params.storeId}/categories/new`)
+				<div className="flex gap-2">
+					<EditCategoryDialog
+						isNew
+						defaultSortOrder={nextSortOrder}
+						onCreated={handleCreated}
+						trigger={
+							<Button variant="outline">
+								<IconPlus className="mr-0 size-4" />
+								{t("Create")}
+							</Button>
 						}
-					>
-						<Plus className="mr-0 size-4" />
-						{t("Create")}
-					</Button>
-
-					{/*批量新增 */}
-					<AddCategoriesDialog />
+					/>
+					<BulkAddCategoriesDialog onCreatedMany={handleBulkCreated} />
 				</div>
 			</div>
 
 			<Separator />
-			<DataTable searchKey="name" columns={columns} data={data} />
+			<DataTable<CategoryColumn, unknown>
+				searchKey="name"
+				columns={columns}
+				data={data}
+			/>
 		</>
 	);
 };
-
-export const formSchema = z.object({
-	names: z.string().min(1, {
-		error: "name is required",
-	}),
-	isFeatured: z.boolean().prefault(true).optional(),
-});
-
-export function AddCategoriesDialog() {
-	const [loading, setLoading] = useState(false);
-	const params = useParams();
-
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
-
-	const form = useForm<z.infer<typeof formSchema>>({
-		resolver: zodResolver(formSchema),
-		defaultValues: { isFeatured: true },
-	});
-
-	const onSubmit = async (data: z.infer<typeof formSchema>) => {
-		setLoading(true);
-
-		await axios.patch(
-			`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/categories`,
-			data,
-		);
-		toastSuccess({
-			title: t("Category") + t("Created"),
-			description: "",
-		});
-
-		setLoading(false);
-		window.location.assign(`/storeAdmin/${params.storeId}/categories`);
-	};
-
-	return (
-		<Dialog>
-			<DialogTrigger asChild>
-				<Button variant={"outline"}>
-					<Plus className="mr-0 size-4" />
-					{t("Category_Mgmt_AddButton")}
-				</Button>
-			</DialogTrigger>
-			<DialogContent className="sm:max-w-md">
-				<DialogHeader>
-					{/*批量新增*/}
-					<DialogTitle>{t("Category_Mgmt_Add")}</DialogTitle>
-					<DialogDescription>{t("Category_Mgmt_Add_Descr")}</DialogDescription>
-				</DialogHeader>
-
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)}>
-						<FormField
-							control={form.control}
-							name="names"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{t("Category_names")}</FormLabel>
-									<FormControl>
-										<Textarea
-											disabled={loading || form.formState.isSubmitting}
-											{...field}
-										/>
-									</FormControl>
-									<FormDescription>{t("Category_names_Descr")}</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="isFeatured"
-							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between p-0 rounded-lg shadow-sm">
-									<div className="space-y-0.5">
-										<FormLabel>{t("Category_isFeatured")}</FormLabel>
-										<FormDescription>
-											{t("Category_isFeatured_descr")}
-										</FormDescription>
-									</div>
-									<FormControl>
-										<Switch
-											disabled={loading || form.formState.isSubmitting}
-											checked={field.value}
-											onCheckedChange={field.onChange}
-										/>
-									</FormControl>
-								</FormItem>
-							)}
-						/>
-						<div className="flex w-full items-center justify-end space-x-2 pt-6">
-							<Button
-								disabled={
-									loading ||
-									!form.formState.isValid ||
-									form.formState.isSubmitting
-								}
-								type="submit"
-							>
-								{t("Create")}
-							</Button>
-
-							<DialogFooter className="sm:justify-start">
-								<DialogClose asChild>
-									<Button
-										disabled={loading || form.formState.isSubmitting}
-										variant="outline"
-									>
-										{t("Cancel")}
-									</Button>
-								</DialogClose>
-							</DialogFooter>
-						</div>
-					</form>
-				</Form>
-			</DialogContent>
-		</Dialog>
-	);
-}

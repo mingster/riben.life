@@ -45,7 +45,7 @@ import { cache } from "react";
  *     where: { storeId: params.storeId },
  *   });
  *
- *   return <CategoryClient data={categories} store={store} />;
+ *   return <CategoryClient serverData={categories} />;
  * }
  * ```
  */
