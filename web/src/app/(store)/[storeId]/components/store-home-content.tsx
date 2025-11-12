@@ -40,7 +40,9 @@ export interface props {
 }
 
 // store home page.
-// if store is opened (according to business hours), display menu (categorized products), and seating status (take off/in store).
+// if store is opened (according to business hours), display menu (categorized products),
+// and seating status (take off/in store).
+// If store is closed, display the closing time.
 //
 export const StoreHomeContent: React.FC<props> = ({
 	storeData,

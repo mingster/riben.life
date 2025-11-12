@@ -416,7 +416,11 @@ const createStoreOptionColumns = (
 	},
 	{
 		accessorKey: "productOption",
-		header: () => <div className="pl-3">{t("ProductOption_selections")}</div>,
+		header: () => (
+			<div className="pl-3 text-xs font-mono">
+				{t("ProductOption_selections")}
+			</div>
+		),
 		cell: ({ row }) => {
 			const val = row.getValue("productOption") as
 				| ProductOption
@@ -536,7 +540,11 @@ const createProductOptionColumns = (
 	},
 	{
 		accessorKey: "productOption",
-		header: () => <div className="pl-3">{t("ProductOption_selections")}</div>,
+		header: () => (
+			<div className="pl-3 text-xs font-mono">
+				{t("ProductOption_selections")}
+			</div>
+		),
 		cell: ({ row }) => {
 			const val = row.getValue("productOption") as
 				| ProductOption
