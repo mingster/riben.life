@@ -82,7 +82,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 	const [refundAmount, setRefundAmount] = useState(orderTotal);
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const router = useRouter();
 

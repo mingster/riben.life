@@ -34,7 +34,7 @@ export const ProductStatusCombobox = ({
 	const [open, setOpen] = React.useState(false);
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const [selectedStatus, setSelectedStatus] =
 		React.useState<GeneralNVType | null>(

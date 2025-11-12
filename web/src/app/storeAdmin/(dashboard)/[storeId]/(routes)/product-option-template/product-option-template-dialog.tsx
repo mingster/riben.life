@@ -74,7 +74,7 @@ export const AddProductOptionTemplateDialog: React.FC<props> = ({
 	const _router = useRouter();
 	const params = useParams();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 	const [loading, setLoading] = useState(false);
 
 	//console.log("AddProductOptionDialog:", JSON.stringify(initialData));

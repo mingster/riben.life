@@ -23,7 +23,7 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 	serverData,
 }) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const sortCategories = useCallback((list: CategoryColumn[]) => {
 		return [...list].sort((a, b) => {

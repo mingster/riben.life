@@ -67,7 +67,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 	});
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	//console.log(`form error: ${JSON.stringify(form.formState.errors)}`);
 

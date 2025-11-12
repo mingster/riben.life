@@ -120,7 +120,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 	const [openModal, setOpenModal] = useState(false);
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const router = useRouter();
 

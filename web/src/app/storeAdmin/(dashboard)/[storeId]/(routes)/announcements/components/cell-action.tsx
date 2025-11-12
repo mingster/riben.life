@@ -30,7 +30,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const router = useRouter();
 	const params = useParams();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const onConfirm = async () => {
 		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/announcement/${data.id}`;

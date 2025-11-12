@@ -88,7 +88,7 @@ export const DisplayStoreOptionTemplates = ({
 	const initiallySelected: RowSelectionState = {};
 	const [loading, setLoading] = useState(false);
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const storeOptionColumns = useMemo(() => createStoreOptionColumns(t), [t]);
 
@@ -214,7 +214,7 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const router = useRouter();
 	const params = useParams();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 	const onConfirm = async () => {
 		//try {
 		setLoading(true);
@@ -269,7 +269,7 @@ export const DisplayOptions = ({
 	productOptions: ProductOption[];
 }) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const productColumns = useMemo(() => createProductOptionColumns(t), [t]);
 

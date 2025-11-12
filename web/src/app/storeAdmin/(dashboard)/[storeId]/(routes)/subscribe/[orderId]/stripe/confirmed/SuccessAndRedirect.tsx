@@ -52,7 +52,7 @@ function MyTimer({
 	});
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	if (!mounted) return <></>;
 

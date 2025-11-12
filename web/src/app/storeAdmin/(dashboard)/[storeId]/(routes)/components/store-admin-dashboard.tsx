@@ -15,7 +15,7 @@ export interface props {
 // it checks for new orders every 5 seconds.
 export const StoreAdminDashboard: React.FC<props> = ({ store, isProLevel }) => {
 	//const { lng } = useI18n();
-	//const { t } = useTranslation(lng, "storeAdmin");
+	//const { t } = useTranslation(lng);
 
 	//console.log(JSON.stringify(storeData));
 	//console.log("autoAcceptOrder", store.autoAcceptOrder);

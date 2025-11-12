@@ -91,7 +91,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 	//const isSubmittable = !!form.formState.isDirty && !!form.formState.isValid;
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const onSubmit = async (data: formValues) => {
 		try {

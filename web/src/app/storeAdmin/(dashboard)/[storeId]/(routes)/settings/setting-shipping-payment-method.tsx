@@ -53,7 +53,7 @@ export const ShippingPaymentMethodTab: React.FC<
 		useState<RowSelectionState>();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	// persist check/uncheck status to database
 	//

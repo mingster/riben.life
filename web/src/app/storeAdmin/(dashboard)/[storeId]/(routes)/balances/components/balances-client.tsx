@@ -20,7 +20,7 @@ export const BalancesClient: React.FC<StoreOrderClientProps> = ({
 	data,
 }) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	return (
 		<>

@@ -39,7 +39,7 @@ export const MessageEdit = ({ initialData, action }: editProps) => {
 	const router = useRouter();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	//const [open, setOpen] = useState(false);
 	//const origin = useOrigin();

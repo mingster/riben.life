@@ -63,7 +63,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 }) => {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);

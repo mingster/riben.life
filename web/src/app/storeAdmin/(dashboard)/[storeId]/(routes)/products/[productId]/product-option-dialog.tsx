@@ -78,7 +78,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 	const params = useParams();
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	//console.log('AddProductOptionDialog:',JSON.stringify(initialData));
 

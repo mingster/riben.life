@@ -48,7 +48,7 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 	const nav_prefix = STORE_ADMIN_PATH + store.id;
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const cash = {
 		href: `${nav_prefix}/cash-cashier`,

@@ -63,7 +63,7 @@ export const FaqCategoryClient: React.FC<props> = ({
 	const [faqData, setFaqData] = useState<Faq[]>(faqServerData);
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const params = useParams();
 

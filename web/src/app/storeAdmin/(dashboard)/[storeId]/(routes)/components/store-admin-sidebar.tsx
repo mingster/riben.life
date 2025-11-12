@@ -52,7 +52,7 @@ interface prop {
 export function StoreAdminSidebar({ store }: prop) {
 	//console.log('store', JSON.stringify(store));
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 	const { open } = useSidebar();
 
 	const pathname = usePathname();

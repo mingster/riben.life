@@ -43,7 +43,7 @@ export const formSchema = z.object({
 
 export const StoreModal: React.FC = () => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 	const storeModal = useStoreModal();
 	const [loading, setLoading] = useState(false);
 

@@ -54,7 +54,7 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 	const [loading, setLoading] = useState(false);
 
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const windowSize = useWindowSize();
 	const isMobile = windowSize.width < 768;

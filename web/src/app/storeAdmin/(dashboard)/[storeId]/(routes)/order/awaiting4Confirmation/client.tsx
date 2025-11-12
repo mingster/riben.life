@@ -21,7 +21,7 @@ export interface props {
 // it checks for new orders every 5 seconds.
 export const Awaiting4ConfirmationClient: React.FC<props> = ({ store }) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const [mounted, setMounted] = useState(false);
 	const [loading, setLoading] = useState(false);

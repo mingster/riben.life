@@ -45,7 +45,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 	const params = useParams<{ storeId: string }>();
 	const router = useRouter();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	const onConfirm = async () => {
 		try {

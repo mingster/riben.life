@@ -54,7 +54,7 @@ export const TransactionClient: React.FC<StoreOrderClientProps> = ({
 	data,
 }) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	// orderStatus numeric key
 	const keys = Object.keys(OrderStatus).filter((v) => !Number.isNaN(Number(v)));
@@ -268,7 +268,7 @@ export const FilterDateTime = ({
 	...props
 }: filterProps) => {
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 	const [loading, _setLoading] = useState(false);
 	const [open, setOpen] = useState(false);
 

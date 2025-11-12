@@ -22,7 +22,7 @@ export const FaqCategoryClient: React.FC<FaqCategoryClientProps> = ({
 	const params = useParams();
 	const router = useRouter();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng, "storeAdmin");
+	const { t } = useTranslation(lng);
 
 	return (
 		<>
