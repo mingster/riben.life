@@ -1,56 +1,69 @@
-import Container from "@/components/ui/container";
-import { auth, Session } from "@/lib/auth";
+import { getT } from "@/app/i18n";
+import { Loader } from "@/components/loader";
+import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { getStoreWithRelations } from "@/lib/store-access";
-import { TicketStatus } from "@/types/enum";
-import { formatDateTime } from "@/utils/datetime-utils";
-import type { SupportTicket } from "@prisma/client";
+import type { SupportTicket, User } from "@/types";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 import { headers } from "next/headers";
-import type { TicketColumn } from "./components/columns";
-import { TicketClient } from "./components/ticket-client";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { ClientSupport } from "./components/client-support";
 
 type Params = Promise<{ storeId: string }>;
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+type SearchParams = Promise<{ [ch: string]: string | string[] | undefined }>;
 
-export default async function StoreSupportPage(props: {
+// Support admin - implement support system as spec'ed in
+// @/doc/AI-Powered-Support-Ticket-System-Requirements.md
+//
+export default async function SupportAdminPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
 
-	// Note: checkStoreStaffAccess already called in layout (cached)
-	const session = (await auth.api.getSession({
-		headers: await headers(),
-	})) as unknown as Session;
-	const userId = session?.user.id;
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});
 
-	const tickets = await sqlClient.supportTicket.findMany({
-		distinct: ["threadId"],
+	if (!session) {
+		redirect(`/signIn/?callbackUrl=/${params.storeId}/support`);
+	}
+
+	const { t } = await getT();
+	const title = t("page_title_support");
+
+	//get the nop customer
+	const user = (await sqlClient.user.findFirst({
 		where: {
-			senderId: userId,
-			storeId: params.storeId,
-			status: { in: [TicketStatus.Open, TicketStatus.Active] },
+			email: session.user.email,
+		},
+	})) as User;
+
+	// get all top level, open tickets for entire system
+	// top level ticket = main ticket = threadId is null
+	const tickets = (await sqlClient.supportTicket.findMany({
+		where: {
+			/*
+			status: {
+				not: TicketStatus.Closed, // get all except closed
+			},*/
+			//customer_id: nopCustomer.CustomerID,
+			threadId: "",
 		},
 		orderBy: {
 			lastModified: "desc",
 		},
-	});
+		//distinct: ["threadId"],
+		include: {
+			Thread: true,
+		},
+	})) as SupportTicket[];
 
-	// Map tickets to UI columns
-	const formattedTickets: TicketColumn[] = tickets.map(
-		(item: SupportTicket) => ({
-			id: item.id,
-			department: item.department,
-			subject: item.subject,
-			status: item.status,
-			updatedAt: formatDateTime(item.lastModified),
-		}),
-	);
+	//transformDecimalsToNumbers(tickets);
 
-	const store = await getStoreWithRelations(params.storeId);
 	return (
-		<Container>
-			<TicketClient data={formattedTickets} store={store} />
-		</Container>
+		<Suspense fallback={<Loader />}>
+			<ClientSupport user={user} serverData={tickets} />
+		</Suspense>
 	);
 }

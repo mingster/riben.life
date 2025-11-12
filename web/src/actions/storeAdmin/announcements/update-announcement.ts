@@ -1,0 +1,36 @@
+"use server";
+
+import { mapAnnouncementToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/announcements/announcement-column";
+import { sqlClient } from "@/lib/prismadb";
+import { SafeError } from "@/utils/error";
+import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { updateAnnouncementSchema } from "./update-announcement.validation";
+
+export const updateAnnouncementAction = storeOwnerActionClient
+	.metadata({ name: "updateAnnouncement" })
+	.schema(updateAnnouncementSchema)
+	.action(async ({ parsedInput }) => {
+		const { storeId, id, message } = parsedInput;
+
+		const existing = await sqlClient.storeAnnouncement.findFirst({
+			where: {
+				id,
+				storeId,
+			},
+		});
+
+		if (!existing) {
+			throw new SafeError("Announcement not found");
+		}
+
+		const updated = await sqlClient.storeAnnouncement.update({
+			where: { id },
+			data: {
+				message,
+			},
+		});
+
+		return {
+			announcement: mapAnnouncementToColumn(updated, storeId),
+		};
+	});

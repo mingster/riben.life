@@ -3,96 +3,74 @@
 import Currency from "@/components/currency";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
-import { t } from "i18next";
+import type { TFunction } from "i18next";
+import type { BalanceColumn } from "../balance-column";
 
-// #region data table realted
-export type StoreLedgerColumn = {
-	id: string;
-	storeId: string;
-	orderId: string;
-	amount: number;
-	fee: number;
-	platformFee: number;
-	currency: string;
-	balance: number;
-	description: string | null | undefined;
-	note: string | null | undefined;
-	createdAt: string;
-	availablity: string;
-};
-
-export const columns: ColumnDef<StoreLedgerColumn>[] = [
+export const createBalanceColumns = (
+	t: TFunction,
+): ColumnDef<BalanceColumn>[] => [
 	{
 		accessorKey: "createdAt",
-		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title={t("createdAt")} />;
-		},
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title={t("createdAt")} />
+		),
 	},
 	{
-		accessorKey: "availablity",
-		header: ({ column }) => {
-			return (
-				<DataTableColumnHeader column={column} title={t("availablityDate")} />
-			);
-		},
+		accessorKey: "availability",
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title={t("availablityDate")} />
+		),
 	},
 	{
 		accessorKey: "description",
-		header: ({ column }) => {
-			return t("description");
-		},
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title={t("description")} />
+		),
 	},
 	{
 		accessorKey: "amount",
-		header: ({ column }) => {
-			return <div className="pl-2">{t("amount")}</div>;
-		},
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title={t("amount")} />
+		),
 		cell: ({ row }) => {
 			const amount = Number(row.getValue("amount"));
-
 			return <Currency value={amount} />;
 		},
 	},
 	{
 		accessorKey: "fee",
-		header: ({ column }) => {
-			return t("fee");
-		},
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title={t("fee")} />
+		),
 		cell: ({ row }) => {
 			const fee = Number(row.getValue("fee"));
-
 			return <Currency value={fee} />;
 		},
 	},
-
 	{
 		accessorKey: "platformFee",
-		header: ({ column }) => {
-			return t("platformFee");
-		},
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title={t("platformFee")} />
+		),
 		cell: ({ row }) => {
 			const platformFee = Number(row.getValue("platformFee"));
-
 			return <Currency value={platformFee} />;
 		},
 	},
-
 	{
 		accessorKey: "balance",
-		header: ({ column }) => {
-			return t("balance");
-		},
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title={t("balance")} />
+		),
 		cell: ({ row }) => {
 			const balance = Number(row.getValue("balance"));
-
 			return <Currency value={balance} />;
 		},
 	},
-
 	{
 		accessorKey: "note",
-		header: ({ column }) => {
-			return t("note");
-		},
+		header: ({ column }) => (
+			<DataTableColumnHeader column={column} title={t("note")} />
+		),
 	},
 ];

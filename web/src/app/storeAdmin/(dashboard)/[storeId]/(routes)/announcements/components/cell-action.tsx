@@ -1,11 +1,9 @@
 "use client";
 
-import axios, { type AxiosError } from "axios";
-import { Copy, Edit, MoreHorizontal, Trash, UserRoundPen } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-
+import { deleteAnnouncementAction } from "@/actions/storeAdmin/announcements/delete-announcement";
+import { useTranslation } from "@/app/i18n/client";
 import { AlertModal } from "@/components/modals/alert-modal";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -14,101 +12,116 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import type { MessageColumn } from "./columns";
-import { toastError, toastSuccess } from "@/components/toaster";
+import { IconCopy, IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
+import { useParams } from "next/navigation";
+import { useState } from "react";
+import type { AnnouncementColumn } from "../announcement-column";
+import { EditAnnouncementDialog } from "./edit-announcement-dialog";
 
 interface CellActionProps {
-	data: MessageColumn;
+	data: AnnouncementColumn;
+	onUpdated?: (announcement: AnnouncementColumn) => void;
+	onDeleted?: (id: string) => void;
 }
 
-export const CellAction: React.FC<CellActionProps> = ({ data }) => {
-	const [loading, setLoading] = useState(false);
-	const [open, setOpen] = useState(false);
-	const router = useRouter();
-	const params = useParams();
+export function CellAction({ data, onUpdated, onDeleted }: CellActionProps) {
+	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
+	const { t } = useTranslation(lng, "storeAdmin");
 
-	const onConfirm = async () => {
-		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/announcement/${data.id}`;
-		//console.log(url);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [isEditOpen, setIsEditOpen] = useState(false);
 
-		await axios.delete(url);
-
+	const handleDelete = async () => {
 		try {
 			setLoading(true);
-
-			toastSuccess({
-				title: t("Announcement_deleted"),
-				description: "",
+			const result = await deleteAnnouncementAction({
+				storeId: String(params.storeId),
+				id: data.id,
 			});
-			router.refresh();
+
+			if (result?.serverError) {
+				toastError({
+					title: t("Error"),
+					description: result.serverError,
+				});
+			} else {
+				toastSuccess({
+					title: t("Announcement_deleted"),
+					description: "",
+				});
+				onDeleted?.(data.id);
+			}
 		} catch (error: unknown) {
-			const err = error as AxiosError;
 			toastError({
-				title: "something wrong.",
-				description: err.message,
+				title: t("Error"),
+				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
 			setLoading(false);
-			setOpen(false);
+			setIsConfirmOpen(false);
 		}
 	};
 
-	const onCopy = (id: string) => {
-		navigator.clipboard.writeText(id);
-		toastSuccess({
-			title: "ID copied to clipboard.",
-			description: "",
-		});
+	const handleCopy = async () => {
+		try {
+			await navigator.clipboard.writeText(data.id);
+			toastSuccess({
+				title: t("Copy"),
+				description: data.id,
+			});
+		} catch (error: unknown) {
+			toastError({
+				title: t("Error"),
+				description: error instanceof Error ? error.message : String(error),
+			});
+		}
 	};
 
 	return (
 		<>
 			<AlertModal
-				isOpen={open}
-				onClose={() => setOpen(false)}
-				onConfirm={onConfirm}
+				isOpen={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={handleDelete}
 				loading={loading}
 			/>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" className="size-8 p-0">
 						<span className="sr-only">Open menu</span>
-						<MoreHorizontal className="size-4" />
+						<IconDots className="size-4" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
-					<DropdownMenuLabel>Actions</DropdownMenuLabel>
-					<DropdownMenuItem
-						className="cursor-pointer"
-						onClick={() => onCopy(data.id)}
-					>
-						<Copy className="mr-0 size-4" /> Copy Id
-					</DropdownMenuItem>
-
-					<DropdownMenuItem
-						className="cursor-pointer"
-						onClick={() =>
-							router.push(
-								`/storeAdmin/${params.storeId}/announcements/${data.id}`,
-							)
-						}
-					>
-						<Edit className="mr-0 size-4" />
-						{t("Update")}
+					<DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
+					<DropdownMenuItem onClick={handleCopy}>
+						<IconCopy className="mr-0 size-4" /> {t("Copy")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
-						className="cursor-pointer"
-						onClick={() => setOpen(true)}
+						onSelect={(event) => {
+							event.preventDefault();
+							setIsEditOpen(true);
+						}}
 					>
-						<Trash className="mr-0 size-4" /> {t("Delete")}
+						<IconEdit className="mr-0 size-4" /> {t("Edit")}
+					</DropdownMenuItem>
+					<DropdownMenuItem
+						onClick={() => setIsConfirmOpen(true)}
+						className="text-red-600 focus:text-red-600"
+					>
+						<IconTrash className="mr-0 size-4" /> {t("Delete")}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
+			<EditAnnouncementDialog
+				announcement={data}
+				onUpdated={onUpdated}
+				open={isEditOpen}
+				onOpenChange={setIsEditOpen}
+			/>
 		</>
 	);
-};
+}
