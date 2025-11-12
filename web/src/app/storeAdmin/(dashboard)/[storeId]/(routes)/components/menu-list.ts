@@ -44,7 +44,13 @@ type Group = {
 	menus: Menu[];
 };
 
-export function GetMenuList(store: Store, pathname: string): Group[] {
+export function GetMenuList(
+	store: Store,
+	pathname: string,
+	options?: {
+		supportTicketCount?: number;
+	},
+): Group[] {
 	const STORE_ADMIN_PATH = "/storeAdmin/";
 	const nav_prefix = STORE_ADMIN_PATH + store.id;
 
@@ -52,9 +58,11 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 	const { t } = useTranslation(lng);
 
 	const openSupportTicketCount =
+		options?.supportTicketCount ??
 		store.SupportTicket?.filter(
 			(ticket: SupportTicket) => ticket.status === TicketStatus.Open,
-		).length ?? 0;
+		).length ??
+		0;
 
 	const cash = {
 		href: `${nav_prefix}/cash-cashier`,

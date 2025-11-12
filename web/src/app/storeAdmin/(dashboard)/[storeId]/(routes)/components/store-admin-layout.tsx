@@ -17,6 +17,10 @@ import {
 } from "@/components/ui/sidebar";
 import type { StoreSettings } from "@prisma/client";
 import { StoreAdminSidebar } from "./store-admin-sidebar";
+import {
+	StoreAdminProvider,
+	useStoreAdminContext,
+} from "./store-admin-context";
 import { StoreLevel } from "@/types/enum";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -45,35 +49,38 @@ const StoreAdminLayout: React.FC<props> = ({
 
 	return (
 		<>
-			<SidebarProvider
-				style={
-					{
-						"--sidebar-width": "calc(var(--spacing) * 52)",
-						"--header-height": "calc(var(--spacing) * 12)",
-					} as React.CSSProperties
-				}
-			>
-				<StoreAdminSidebar store={sqlData} />
-				<SidebarInset>
-					<StoreAdminHeader store={sqlData} />
-					<div className="flex flex-1 flex-col">
-						<div className="@container/main flex flex-1 flex-col">
-							<div className="flex flex-col gap-0 py-0 md:gap-6 md:py-6">
-								<div className="px-4 lg:px-6 pb-1">{children}</div>
+			<StoreAdminProvider store={sqlData}>
+				<SidebarProvider
+					style={
+						{
+							"--sidebar-width": "calc(var(--spacing) * 52)",
+							"--header-height": "calc(var(--spacing) * 12)",
+						} as React.CSSProperties
+					}
+				>
+					<StoreAdminSidebar />
+					<SidebarInset>
+						<StoreAdminHeader />
+						<div className="flex flex-1 flex-col">
+							<div className="@container/main flex flex-1 flex-col">
+								<div className="flex flex-col gap-0 py-0 md:gap-6 md:py-6">
+									<div className="px-4 lg:px-6 pb-1">{children}</div>
+								</div>
 							</div>
 						</div>
-					</div>
-				</SidebarInset>
-			</SidebarProvider>
+					</SidebarInset>
+				</SidebarProvider>
+			</StoreAdminProvider>
 		</>
 	);
 };
 
-function StoreAdminHeader({ store }: { store: Store }) {
+function StoreAdminHeader() {
 	const title = "Store Admin";
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const { store } = useStoreAdminContext();
 
 	return (
 		<header className="flex h-(--header-height) shrink-0 items-center gap-0 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">

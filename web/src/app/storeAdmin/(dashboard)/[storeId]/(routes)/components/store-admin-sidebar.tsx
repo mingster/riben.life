@@ -37,26 +37,25 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Store } from "@/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { GetMenuList } from "./menu-list";
 import StoreSwitcher from "./store-switcher";
-
-interface prop {
-	store: Store;
-}
+import { useStoreAdminContext } from "./store-admin-context";
 
 //export function StoreAdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-export function StoreAdminSidebar({ store }: prop) {
+export function StoreAdminSidebar() {
 	//console.log('store', JSON.stringify(store));
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const { open } = useSidebar();
+	const { store, supportTicketCount } = useStoreAdminContext();
 
 	const pathname = usePathname();
-	const menuList = GetMenuList(store, pathname);
+	const menuList = GetMenuList(store, pathname, {
+		supportTicketCount,
+	});
 
 	const { setOpen } = useSidebar();
 
