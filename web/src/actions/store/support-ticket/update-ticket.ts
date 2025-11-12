@@ -17,7 +17,7 @@ export const updateTicketAction = userRequiredActionClient
 				threadId,
 				senderId,
 				storeId,
-				recipientId,
+				//recipientId,
 				priority,
 				department,
 				subject,
@@ -27,13 +27,19 @@ export const updateTicketAction = userRequiredActionClient
 				modifier,
 			},
 		}) => {
+			if (!storeId) {
+				throw new Error("storeId is required");
+			}
+
+			const recipientId = storeId;
+
 			if (id === undefined || id === null || id === "") {
 				const result = await sqlClient.supportTicket.create({
 					data: {
 						threadId: threadId || "",
 						senderId,
-						storeId: storeId || "",
-						recipientId,
+						storeId,
+						recipientId: recipientId || "",
 						priority,
 						department,
 						subject,

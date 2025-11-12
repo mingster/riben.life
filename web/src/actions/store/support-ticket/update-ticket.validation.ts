@@ -6,7 +6,7 @@ export const updateTicketSchema = z.object({
 	senderId: z.string(),
 	storeId: z.string().optional(),
 	priority: z.number(),
-	recipientId: z.string(),
+	//recipientId: z.string(),
 	department: z.string().min(1, "department is required"),
 	subject: z.string().min(1, "subject is required"),
 	message: z.string().min(1, "message is required"),

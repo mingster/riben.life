@@ -77,6 +77,17 @@ export function StoreAdminSidebar({ store }: prop) {
 		};
 	}, [setOpen]);
 
+	const renderMenuLabel = (text: string, badge?: number) => (
+		<span className="relative inline-flex items-center pr-3">
+			<span>{text}</span>
+			{badge && badge > 0 ? (
+				<span className="absolute -top-0.2 -right-1 size-4 rounded-full bg-green-800 text-slate-100 flex justify-center items-center text-[10px]">
+					<span>{badge}</span>
+				</span>
+			) : null}
+		</span>
+	);
+
 	return (
 		<Sidebar collapsible="icon" variant="inset">
 			<SidebarHeader>
@@ -84,7 +95,7 @@ export function StoreAdminSidebar({ store }: prop) {
 					<SidebarMenuItem>
 						<SidebarMenuButton
 							asChild
-							className="data-[slot=sidebar-menu-button]:!p-1.5"
+							className="data-[slot=sidebar-menu-button]:p-1.5"
 						></SidebarMenuButton>
 					</SidebarMenuItem>
 
@@ -116,13 +127,13 @@ export function StoreAdminSidebar({ store }: prop) {
 								<SidebarGroupContent>
 									<SidebarMenu>
 										{menus.map(
-											({ href, label, icon: Icon, active, submenus }) =>
+											({ href, label, icon: Icon, active, submenus, badge }) =>
 												submenus.length === 0 ? (
 													<SidebarMenuItem key={label} className="font-mono">
 														<SidebarMenuButton asChild isActive={active}>
 															<a href={href}>
 																<Icon />
-																<span>{label}</span>
+																{renderMenuLabel(label, badge)}
 															</a>
 														</SidebarMenuButton>
 													</SidebarMenuItem>
@@ -136,7 +147,7 @@ export function StoreAdminSidebar({ store }: prop) {
 															<CollapsibleTrigger asChild>
 																<SidebarMenuButton isActive={active}>
 																	<Icon />
-																	<span>{label}</span>
+																	{renderMenuLabel(label, badge)}
 																</SidebarMenuButton>
 															</CollapsibleTrigger>
 															<CollapsibleContent>

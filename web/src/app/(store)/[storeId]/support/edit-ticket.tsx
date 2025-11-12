@@ -44,7 +44,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import type { SupportTicket, User } from "@/types";
-import { TicketStatus } from "@/types/enum";
+import { TicketPriority, TicketStatus } from "@/types/enum";
 
 interface props {
 	item: SupportTicket | null;
@@ -72,13 +72,15 @@ export const EditTicket: React.FC<props> = ({
 	const windowSize = useWindowSize();
 	const isMobile = windowSize.width < 768;
 
+	//console.log("currentUser", currentUser);
+
 	const defaultValues = !isNew
 		? {
 				// for reply - create a new reply ticket and use previous ticket's info
 				id: "",
 				senderId: currentUser.id,
-				creator: currentUser.Email,
-				modifier: currentUser.Email,
+				creator: currentUser.email,
+				modifier: currentUser.email,
 				department: item.department,
 				subject: item.subject,
 				status: item.status,
@@ -89,9 +91,10 @@ export const EditTicket: React.FC<props> = ({
 		: {
 				// create a new root ticket
 				id: "",
+				priority: Number(TicketPriority.Medium),
 				senderId: currentUser.id,
-				creator: currentUser.Email,
-				modifier: currentUser.Email,
+				creator: currentUser.email,
+				modifier: currentUser.email,
 				status: Number(TicketStatus.Open),
 				department: "technical",
 				storeId: params.storeId as string,
@@ -136,7 +139,7 @@ export const EditTicket: React.FC<props> = ({
 					// add to mail-queue
 					// don't use updatedData, it's for UI display
 					const result = await axios.post(
-						`${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/support-ticket/send`,
+						`${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/ticket/send`,
 						updatedData,
 					);
 

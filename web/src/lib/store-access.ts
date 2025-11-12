@@ -130,6 +130,7 @@ export async function getStoreWithRelations(
 		includeShippingMethods?: boolean;
 		includeAnnouncements?: boolean;
 		includeTables?: boolean;
+		includeSupportTickets?: boolean;
 		productsLimit?: number;
 		ordersLimit?: number;
 	} = {},
@@ -142,6 +143,7 @@ export async function getStoreWithRelations(
 		includeShippingMethods = false,
 		includeAnnouncements = false,
 		includeTables = false,
+		includeSupportTickets = false,
 		productsLimit = 100,
 		ordersLimit = 50,
 	} = options;
@@ -200,6 +202,14 @@ export async function getStoreWithRelations(
 			...(includeTables && {
 				StoreTables: {
 					orderBy: { tableName: "asc" },
+				},
+			}),
+			...(includeSupportTickets && {
+				SupportTicket: {
+					orderBy: { lastModified: "desc" },
+					include: {
+						Sender: true,
+					},
 				},
 			}),
 		},

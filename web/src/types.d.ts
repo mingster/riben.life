@@ -125,6 +125,7 @@ const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
 				PaymentMethod: true,
 			},
 		},
+		SupportTicket: true,
 	},
 });
 export type Store = Prisma.StoreGetPayload<typeof storeObj>;

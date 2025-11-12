@@ -41,6 +41,8 @@ const StoreAdminLayout: React.FC<props> = ({
 	)}
 	*/
 
+	//console.log("sqlData", sqlData);
+
 	return (
 		<>
 			<SidebarProvider

@@ -115,6 +115,7 @@ export const ReplyTicket: React.FC<props> = ({
 
 		const result = (await updateTicketAdminAction({
 			...data,
+			recipientId: item?.recipientId || "",
 			storeId: data.storeId || "",
 		})) as SupportTicket;
 
@@ -126,13 +127,16 @@ export const ReplyTicket: React.FC<props> = ({
 			//console.log("onSubmit", updatedData);
 			onUpdated?.(updatedData); // update the parent component
 
+
+			toastSuccess({ description: t("ticket_reply_success") });
+
 			if (updatedData) {
-				/*
+				
 				// send email to store owner
 				try {
 					// add to mail-queue
 					const result = await axios.patch(
-						`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/support-ticket/reply`,
+						`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${data.storeId}/ticket/reply`,
 						data,
 					);
 
@@ -150,7 +154,7 @@ export const ReplyTicket: React.FC<props> = ({
 				} finally {
 					setLoading(false);
 				}
-				*/
+				
 			}
 		}
 		setLoading(false);

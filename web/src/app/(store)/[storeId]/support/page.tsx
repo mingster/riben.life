@@ -6,6 +6,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { sqlClient } from "@/lib/prismadb";
 import { ClientSupport } from "./client-support";
+import { Suspense } from "react";
+import { Loader } from "@/components/loader";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [ch: string]: string | string[] | undefined }>;
@@ -53,15 +55,16 @@ export default async function SupportHomePage(props: {
 		}),
 	]);
 
-	const title = t("page_title_support");
+	//const title = t("page_title_support");
+
+	//console.log("user", user);
 
 	return (
-		<>
-			<GlobalNavbar title={title} />
+		<Suspense fallback={<Loader />}>
 			<ClientSupport
 				user={user as User}
 				serverData={tickets as SupportTicket[]}
 			/>
-		</>
+		</Suspense>
 	);
 }
