@@ -104,10 +104,10 @@ Ticket URL: ${ticketUrl}
 			from: "system@riben.life",
 			fromName: "system@riben.life (do not reply)",
 
-			to: ticketOwner.Email,
-			toName: ticketOwner.Name
-				? `${ticketOwner.Name} <${ticketOwner.Email}>`
-				: ticketOwner.Email,
+			to: ticketOwner.email,
+			toName: ticketOwner.name
+				? `${ticketOwner.name} <${ticketOwner.email}>`
+				: ticketOwner.email,
 
 			cc: "",
 			bcc: "",

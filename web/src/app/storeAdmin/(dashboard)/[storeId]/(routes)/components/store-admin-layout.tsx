@@ -17,11 +17,17 @@ import {
 } from "@/components/ui/sidebar";
 import type { StoreSettings } from "@prisma/client";
 import { StoreAdminSidebar } from "./store-admin-sidebar";
+import {
+	StoreAdminProvider,
+	useStoreAdminContext,
+} from "./store-admin-context";
 import { StoreLevel } from "@/types/enum";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { IconHome } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
 
 export interface props {
 	sqlData: Store;
@@ -45,36 +51,40 @@ const StoreAdminLayout: React.FC<props> = ({
 
 	return (
 		<>
-			<SidebarProvider
-				style={
-					{
-						"--sidebar-width": "calc(var(--spacing) * 52)",
-						"--header-height": "calc(var(--spacing) * 12)",
-					} as React.CSSProperties
-				}
-			>
-				<StoreAdminSidebar store={sqlData} />
-				<SidebarInset>
-					<StoreAdminHeader store={sqlData} />
-					<div className="flex flex-1 flex-col">
-						<div className="@container/main flex flex-1 flex-col">
-							<div className="flex flex-col gap-0 py-0 md:gap-6 md:py-6">
-								<div className="px-4 lg:px-6 pb-1">{children}</div>
+			<StoreAdminProvider store={sqlData}>
+				<SidebarProvider
+					style={
+						{
+							"--sidebar-width": "calc(var(--spacing) * 52)",
+							"--header-height": "calc(var(--spacing) * 12)",
+						} as React.CSSProperties
+					}
+				>
+					<StoreAdminSidebar />
+					<SidebarInset>
+						<StoreAdminHeader />
+						<div className="flex flex-1 flex-col">
+							<div className="@container/main flex flex-1 flex-col">
+								<div className="flex flex-col gap-0 py-0 md:gap-6 md:py-6">
+									<div className="px-4 lg:px-6 pb-1">{children}</div>
+								</div>
 							</div>
 						</div>
-					</div>
-				</SidebarInset>
-			</SidebarProvider>
+					</SidebarInset>
+				</SidebarProvider>
+			</StoreAdminProvider>
 		</>
 	);
 };
 
-function StoreAdminHeader({ store }: { store: Store }) {
+function StoreAdminHeader() {
 	const title = "Store Admin";
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const { store } = useStoreAdminContext();
 
+	const router = useRouter();
 	return (
 		<header className="flex h-(--header-height) shrink-0 items-center gap-0 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
 			{/* background image */}
@@ -86,7 +96,20 @@ function StoreAdminHeader({ store }: { store: Store }) {
 					orientation="vertical"
 					className="mx-2 data-[orientation=vertical]:h-4"
 				/>
-				<h1 className="text-base font-medium">{title}</h1>
+				<div className="flex items-center gap-2">
+					<h1 className="text-base font-medium">{title}</h1>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => router.push(`/${store.id}`)}
+						className="flex items-center gap-1 text-xs"
+						title={t("back_to_store")}
+					>
+						<IconHome />
+						{t("back_to_store")}
+					</Button>
+				</div>
+
 				<div className="ml-auto flex items-center gap-2">
 					<Button variant="outline" size="sm">
 						<Link

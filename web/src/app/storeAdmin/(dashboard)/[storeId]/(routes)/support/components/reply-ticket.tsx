@@ -43,8 +43,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User, SupportTicket } from "@/types";
-import { TicketStatus } from "@/types/enum";
+import { TicketPriority, TicketStatus } from "@/types/enum";
 import { clientLogger } from "@/lib/client-logger";
+import { useStoreAdminContext } from "../../components/store-admin-context";
 
 interface props {
 	item: SupportTicket | null;
@@ -71,6 +72,7 @@ export const ReplyTicket: React.FC<props> = ({
 	const { t } = useTranslation(lng);
 	const windowSize = useWindowSize();
 	const isMobile = windowSize.width < 768;
+	const { setSupportTicketCount } = useStoreAdminContext();
 
 	const defaultValues = !isNew
 		? {
@@ -81,9 +83,10 @@ export const ReplyTicket: React.FC<props> = ({
 				department: item.department,
 				subject: item.subject,
 
+				priority: Number(TicketPriority.Medium),
 				senderId: currentUser.id,
-				creator: currentUser.Email,
-				modifier: currentUser.Email,
+				creator: currentUser.email,
+				modifier: currentUser.email,
 				status: TicketStatus.Replied,
 				// if item has threadId, use it. If not, this item will be the main thread - use its id.
 				threadId: item.threadId || item.id,
@@ -127,11 +130,9 @@ export const ReplyTicket: React.FC<props> = ({
 			//console.log("onSubmit", updatedData);
 			onUpdated?.(updatedData); // update the parent component
 
-
 			toastSuccess({ description: t("ticket_reply_success") });
 
 			if (updatedData) {
-				
 				// send email to store owner
 				try {
 					// add to mail-queue
@@ -139,8 +140,30 @@ export const ReplyTicket: React.FC<props> = ({
 						`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${data.storeId}/ticket/reply`,
 						data,
 					);
+					if (result.status === 200) {
+						toastSuccess({ description: t("ticket_reply_success") });
 
-					toastSuccess({ description: t("ticket_reply_success") });
+						setSupportTicketCount((prev) => {
+							if (!item) {
+								return prev;
+							}
+
+							const wasOpen = item.status === TicketStatus.Open;
+							const isOpen = updatedData.status === TicketStatus.Open;
+
+							if (wasOpen && !isOpen) {
+								return Math.max(prev - 1, 0);
+							}
+
+							if (!wasOpen && isOpen) {
+								return prev + 1;
+							}
+
+							return prev;
+						});
+					} else {
+						toastError({ description: t("ticket_reply_failed") });
+					}
 				} catch (error: unknown) {
 					const err = error as AxiosError;
 					clientLogger.error(`Error replying to ticket: ${err.message}`, {
@@ -154,7 +177,6 @@ export const ReplyTicket: React.FC<props> = ({
 				} finally {
 					setLoading(false);
 				}
-				
 			}
 		}
 		setLoading(false);

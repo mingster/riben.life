@@ -27,7 +27,7 @@ import { BasicSettingTab } from "./setting-basic-tab";
 import { ContactInfoTab } from "./setting-contact-info-tab";
 import { PaidOptionsTab } from "./setting-paid-options";
 import { PrivacyTab } from "./setting-privacy-tab";
-import { RsvpSettingTab } from "./setting-rsvp-tab";
+
 //import { TermsTab } from "./setting-terms-tab";
 import { ShippingPaymentMethodTab } from "./setting-shipping-payment-method";
 import { deleteStoreAction } from "@/actions/storeAdmin/settings/delete-store";
@@ -147,10 +147,6 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 						{t("StoreSettingsTab_Basic")}
 					</TabsTrigger>
 
-					<TabsTrigger className="px-1 lg:min-w-25" value="rsvp">
-						{t("StoreSettingsTab_RSVP")}
-					</TabsTrigger>
-
 					<TabsTrigger className="px-1 lg:min-w-25" value="bank">
 						{t("StoreSettingsTab_Bank")}
 					</TabsTrigger>
@@ -195,14 +191,6 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 					/>
 				</TabsContent>
 
-				<TabsContent value="rsvp">
-					<RsvpSettingTab
-						store={normalizedStore}
-						storeSettings={storeSettings}
-						onStoreUpdated={onStoreUpdated}
-					/>
-				</TabsContent>
-
 				<TabsContent value="privacyStatement">
 					<PrivacyTab
 						store={normalizedStore}
@@ -220,6 +208,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 						onStoreUpdated={onStoreUpdated}
 					/>
 				</TabsContent>
+
 				<TabsContent value="paidOptions">
 					<PaidOptionsTab
 						store={normalizedStore}

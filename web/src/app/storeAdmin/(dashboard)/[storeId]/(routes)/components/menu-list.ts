@@ -4,25 +4,28 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, SupportTicket } from "@/types";
 import { StoreLevel, TicketStatus } from "@/types/enum";
+
 import {
-	ArrowRight,
-	BadgeDollarSign,
-	Box,
-	CircleHelp,
-	Dock,
-	DollarSign,
-	FileQuestion,
-	LayoutGrid,
-	MenuIcon,
-	MessageCircleMore,
-	PackageCheck,
-	Proportions,
-	QrCode,
-	Scale,
-	Settings,
-	Ticket,
-	UtensilsCrossed,
-} from "lucide-react";
+	IconArrowRight,
+	IconBox,
+	IconCalendarCheck,
+	IconClock,
+	IconCreditCard,
+	IconCurrencyDollar,
+	IconHelp,
+	IconHttpOptions,
+	IconLockOpen,
+	IconMenu,
+	IconMessageCircle,
+	IconPackage,
+	IconQrcode,
+	IconScale,
+	IconSettings,
+	IconTable,
+	IconTicket,
+	IconUsers,
+} from "@tabler/icons-react";
+
 type Submenu = {
 	href: string;
 	label: string;
@@ -44,7 +47,13 @@ type Group = {
 	menus: Menu[];
 };
 
-export function GetMenuList(store: Store, pathname: string): Group[] {
+export function GetMenuList(
+	store: Store,
+	pathname: string,
+	options?: {
+		supportTicketCount?: number;
+	},
+): Group[] {
 	const STORE_ADMIN_PATH = "/storeAdmin/";
 	const nav_prefix = STORE_ADMIN_PATH + store.id;
 
@@ -52,15 +61,17 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 	const { t } = useTranslation(lng);
 
 	const openSupportTicketCount =
+		options?.supportTicketCount ??
 		store.SupportTicket?.filter(
 			(ticket: SupportTicket) => ticket.status === TicketStatus.Open,
-		).length ?? 0;
+		).length ??
+		0;
 
 	const cash = {
 		href: `${nav_prefix}/cash-cashier`,
 		label: t("cash-cashier"),
 		active: pathname.includes(`${nav_prefix}/cash-cashier`),
-		icon: Scale,
+		icon: IconScale,
 		submenus: [],
 	} as Menu;
 
@@ -68,7 +79,7 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 		href: `${nav_prefix}/order/awaiting4Confirmation`,
 		label: t("Order_awaiting_to_confirm"),
 		active: pathname.includes(`${nav_prefix}/order/awaiting4Confirmation`),
-		icon: PackageCheck,
+		icon: IconPackage,
 		submenus: [],
 	} as Menu;
 
@@ -85,29 +96,28 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 					href: `${nav_prefix}/order/awaiting_to_ship`,
 					label: t("Order_ready_to_ship"),
 					active: pathname.includes(`${nav_prefix}/order/awaiting_to_ship`),
-					icon: ArrowRight,
+					icon: IconCreditCard,
 					submenus: [],
 				},
-
 				{
 					href: `${nav_prefix}/transactions`,
 					label: t("Transactions"),
 					active: pathname.includes(`${nav_prefix}/transactions`),
-					icon: BadgeDollarSign,
+					icon: IconCurrencyDollar,
 					submenus: [],
 				},
 				{
 					href: `${nav_prefix}/balances`,
 					label: t("Balances"),
 					active: pathname.includes(`${nav_prefix}/balances`),
-					icon: DollarSign,
+					icon: IconCurrencyDollar,
 					submenus: [],
 				},
 				{
-					href: `${nav_prefix}/reports`,
+					href: `${nav_prefix}/dashboard`,
 					label: t("Sales_Reports"),
-					active: pathname.includes(`${nav_prefix}/reports`),
-					icon: Proportions,
+					active: pathname.includes(`${nav_prefix}/dashboard`),
+					icon: IconHttpOptions,
 					submenus: [],
 				},
 			],
@@ -122,7 +132,33 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 					href: `${nav_prefix}/order/awaiting4Process`,
 					label: t("Order_inProgress"),
 					active: pathname.includes(`${nav_prefix}/order/awaiting4Process`),
-					icon: ArrowRight,
+					icon: IconArrowRight,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/rsvp`,
+					label: t("Rsvp_List"),
+					active: pathname.includes(`${nav_prefix}/rsvp`),
+					icon: IconCalendarCheck,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/waiting-list`,
+					label: t("Waiting_List"),
+					active: pathname.includes(`${nav_prefix}/waiting-list`),
+					icon: IconClock,
+					submenus: [],
+				},
+			],
+		},
+		{
+			groupLabel: t("Customers"),
+			menus: [
+				{
+					href: `${nav_prefix}/customers`,
+					label: t("Customer_mgmt"),
+					active: pathname.includes(`${nav_prefix}/customers`),
+					icon: IconUsers,
 					submenus: [],
 				},
 			],
@@ -134,9 +170,16 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 					href: `${nav_prefix}/support`,
 					label: t("Tickets"),
 					active: pathname.includes(`${nav_prefix}/support`),
-					icon: Ticket,
+					icon: IconTicket,
 					submenus: [],
 					badge: openSupportTicketCount,
+				},
+				{
+					href: `${nav_prefix}/announcements`,
+					label: t("Announcements"),
+					active: pathname.includes(`${nav_prefix}/announcements`),
+					icon: IconMessageCircle,
+					submenus: [],
 				},
 			],
 		},
@@ -148,21 +191,28 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 					href: `${nav_prefix}/categories`,
 					label: t("Category"),
 					active: pathname.includes(`${nav_prefix}/categories`),
-					icon: MenuIcon,
+					icon: IconMenu,
 					submenus: [],
 				},
 				{
 					href: `${nav_prefix}/products`,
 					label: t("Products"),
 					active: pathname.includes(`${nav_prefix}/products`),
-					icon: Box,
+					icon: IconBox,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/product-option-template`,
+					label: t("ProductOption_template"),
+					active: pathname.includes(`${nav_prefix}/product-option-template`),
+					icon: IconLockOpen,
 					submenus: [],
 				},
 				{
 					href: `${nav_prefix}/faq`,
 					label: t("FAQ"),
 					active: pathname.includes(`${nav_prefix}/faq`),
-					icon: CircleHelp,
+					icon: IconHelp,
 					submenus: [],
 				},
 			],
@@ -174,35 +224,30 @@ export function GetMenuList(store: Store, pathname: string): Group[] {
 					href: `${nav_prefix}/settings`,
 					label: t("Settings"),
 					active: pathname.includes(`${nav_prefix}/settings`),
-					icon: Settings,
+					icon: IconSettings,
 					submenus: [],
 				},
 				{
-					href: `${nav_prefix}/announcements`,
-					label: t("Announcements"),
-					active: pathname.includes(`${nav_prefix}/announcements`),
-					icon: MessageCircleMore,
+					href: `${nav_prefix}/rsvp-settings`,
+					label: t("StoreSettingsTab_RSVP"),
+					active: pathname.includes(`${nav_prefix}/rsvp-settings`),
+					icon: IconCalendarCheck,
 					submenus: [],
 				},
+
 				{
 					href: `${nav_prefix}/tables`,
 					label: t("storeTables"),
 					active: pathname.includes(`${nav_prefix}/tables`),
-					icon: UtensilsCrossed,
+					icon: IconTable,
 					submenus: [],
 				},
-				{
-					href: `${nav_prefix}/product-option-template`,
-					label: t("ProductOption_template"),
-					active: pathname.includes(`${nav_prefix}/product-option-template`),
-					icon: Dock,
-					submenus: [],
-				},
+
 				{
 					href: `${nav_prefix}/qrcode`,
 					label: "QR Code",
 					active: pathname.includes(`${nav_prefix}/qrcode`),
-					icon: QrCode,
+					icon: IconQrcode,
 					submenus: [],
 				},
 			],

@@ -22,7 +22,7 @@ import {
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import { SettingsFormProps } from "./setting-basic-tab";
+import { RsvpSettingsProps } from "./tabs";
 import { updateStoreRsvpAction } from "@/actions/storeAdmin/settings/update-store-rsvp";
 import type { UpdateStoreRsvpInput } from "@/actions/storeAdmin/settings/update-store-rsvp.validation";
 import type { Store } from "@/types";
@@ -33,9 +33,8 @@ const formSchema = z.object({
 
 type formValues = z.infer<typeof formSchema>;
 
-export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
+export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 	store,
-	storeSettings,
 	onStoreUpdated,
 }) => {
 	const params = useParams();
@@ -105,6 +104,32 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 		}
 	};
 
+	//
+	//https://tinybook.cc/courses/
+	//https://menushop.tw/booking_system
+
+	//Google預訂:在Google搜尋、地圖上新增您的「訂位」按鈕
+
+	//線上排隊
+	/*
+零設備成本
+不需添購設備，電腦或平板就能操作，不必再買叫號燈、熱感應紙，現省五位數成本！
+
+不需綁定機台
+開網頁就能操作，不必綁定iPad或特定機台、不必安裝軟體，節省軟硬體費用。
+
+簡化現場流程
+告別人工叫號、手寫資料，讓客人以手機留下資訊，節省人力成本。
+
+快速完成排隊
+無需下載App，客人只要以手機掃描QRcode登入網址，30秒內就能完成排隊。
+
+降低客訴可能
+客人隨時能以手機查看排隊狀況與等候時間，避免來回詢問增加現場人員負擔與不耐感。
+
+一鍵通知顧客
+不必在現場大喊，一鍵就能送出通知，自動發送簡訊或email提醒即將可入座的顧客。
+*/
 	return (
 		<>
 			<Card>
@@ -114,11 +139,18 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 							onSubmit={form.handleSubmit(onSubmit)}
 							className="w-full space-y-1"
 						>
-							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-								{" "}
-								&nbsp;{" "}
+							<div className="grid grid-flow-row-dense grid-cols-1 gap-1">
+								預付制：儲值後才可預約 Yes / No ？小時內可預約 ？小時前可取消
+								無需確認，直接接受預約 開放預約時段
 							</div>
-
+							預約提醒與通知 ？小時前發送確認通知 簡訊和 Line官方帳號 電子簽名
+							客戶需確認簽名 同步Google月曆 同步Apple日曆 會員系統
+							消費習慣、數據統計 會員標籤
+							依據客人習性、喜好，給予不同的標籤進行分群分眾，還能依據標籤群發訊息，給予最貼心的促銷。
+							黑名單/觀察名單
+							壞客人、爽約、殺價客，你可以透過黑名單功能限制客人預約，經營不再煩惱。
+							儲值金/紅利點數
+							支援你的營運，直覺管理會員的儲值金跟紅利點數，會員也可以自行查看。
 							<FormField
 								control={form.control}
 								name="acceptReservation"
@@ -141,7 +173,6 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 									</FormItem>
 								)}
 							/>
-
 							<Button
 								disabled={
 									loading ||
@@ -153,7 +184,6 @@ export const RsvpSettingTab: React.FC<SettingsFormProps> = ({
 							>
 								{t("Save")}
 							</Button>
-
 							<Button
 								type="button"
 								variant="outline"

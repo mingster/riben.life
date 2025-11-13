@@ -5,7 +5,7 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 import { type PaymentMethod, type ShippingMethod } from "@prisma/client";
 import { getStoreWithRelations } from "@/lib/store-access";
 import { Store } from "@/types";
-import { SettingsClient } from "./settings-client";
+import { SettingsClient } from "./client-settings";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
