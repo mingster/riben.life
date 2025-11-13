@@ -39,7 +39,7 @@ import {
 import { useI18n } from "@/providers/i18n-provider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { GetMenuList } from "./menu-list";
 import StoreSwitcher from "./store-switcher";
 import { useStoreAdminContext } from "./store-admin-context";
@@ -58,6 +58,11 @@ export function StoreAdminSidebar() {
 	});
 
 	const { setOpen } = useSidebar();
+	const [isMounted, setIsMounted] = useState(false);
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
 
 	// left to close sidebar, right to open
 	useEffect(() => {
@@ -98,7 +103,7 @@ export function StoreAdminSidebar() {
 						></SidebarMenuButton>
 					</SidebarMenuItem>
 
-					{open && (
+					{isMounted && open && (
 						<SidebarMenuItem className="font-mono">
 							<StoreSwitcher />
 							<StoreModal />
