@@ -112,9 +112,9 @@ export function GetMenuList(
 					submenus: [],
 				},
 				{
-					href: `${nav_prefix}/reports`,
+					href: `${nav_prefix}/dashboard`,
 					label: t("Sales_Reports"),
-					active: pathname.includes(`${nav_prefix}/reports`),
+					active: pathname.includes(`${nav_prefix}/dashboard`),
 					icon: Proportions,
 					submenus: [],
 				},

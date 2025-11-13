@@ -26,6 +26,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { IconHome } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
 
 export interface props {
 	sqlData: Store;
@@ -82,6 +84,7 @@ function StoreAdminHeader() {
 	const { t } = useTranslation(lng);
 	const { store } = useStoreAdminContext();
 
+	const router = useRouter();
 	return (
 		<header className="flex h-(--header-height) shrink-0 items-center gap-0 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
 			{/* background image */}
@@ -93,7 +96,20 @@ function StoreAdminHeader() {
 					orientation="vertical"
 					className="mx-2 data-[orientation=vertical]:h-4"
 				/>
-				<h1 className="text-base font-medium">{title}</h1>
+				<div className="flex items-center gap-2">
+					<h1 className="text-base font-medium">{title}</h1>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => router.push(`/${store.id}`)}
+						className="flex items-center gap-1 text-xs"
+						title={t("back_to_store")}
+					>
+						<IconHome />
+						{t("back_to_store")}
+					</Button>
+				</div>
+
 				<div className="ml-auto flex items-center gap-2">
 					<Button variant="outline" size="sm">
 						<Link
