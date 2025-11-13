@@ -288,7 +288,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 			<div className="text-lg font-medium">{t("checkout")}</div>
 			<Card>
 				<CardHeader>
-					<CardTitle>{t("checkout_orderitems")}</CardTitle>
+					<CardTitle>{t("checkout_order_items")}</CardTitle>
 					<CardDescription> </CardDescription>
 				</CardHeader>
 				<CardContent>

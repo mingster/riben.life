@@ -26,6 +26,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useI18n } from "@/providers/i18n-provider";
 import { IconMinus, IconPlus } from "@tabler/icons-react";
@@ -92,8 +93,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 						});
 				} else {
 					// non-required checkbox
-
-					console.log("option.minSelection", option.minSelection);
+					//console.log("option.minSelection", option.minSelection);
 					if (option.minSelection === 0) {
 						if (option.maxSelection > 0) {
 							//最多選?項
@@ -573,9 +573,9 @@ export const ProductOptionDialog: React.FC<props> = ({
 											{/* render product option and its requirement */}
 											<div className="pb-2">
 												<div className="flex items-center justify-between gap-1">
-													<FormLabel className="grow font-bold text-xl">
+													<Label className="grow font-bold text-xl">
 														{option.optionName}
-													</FormLabel>
+													</Label>
 													{option.isRequired && (
 														<div className="w-10 text-center text-green-800 text-sm bg-slate-300">
 															{t("ProductOptionDialog_required")}
