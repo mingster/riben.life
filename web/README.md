@@ -95,7 +95,7 @@ bun run install:platform
 bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3001) with your browser to see the result.
 
 ### Build
 
@@ -109,7 +109,7 @@ bun run start
 
 ## Project Structure
 
-```
+``` dtd
 /web/
 ├── bin/                    # Scripts and utilities
 │   ├── install.ts         # Platform initialization
