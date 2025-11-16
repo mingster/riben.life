@@ -234,7 +234,13 @@ export function GetMenuList(
 					icon: IconCalendarCheck,
 					submenus: [],
 				},
-
+				{
+					href: `${nav_prefix}/waiting-list-settings`,
+					label: t("StoreSettings_WaitingList"),
+					active: pathname.includes(`${nav_prefix}/waiting-list-settings`),
+					icon: IconClock,
+					submenus: [],
+				},
 				{
 					href: `${nav_prefix}/tables`,
 					label: t("storeTables"),
