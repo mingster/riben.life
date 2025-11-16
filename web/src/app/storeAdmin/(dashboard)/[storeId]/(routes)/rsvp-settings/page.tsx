@@ -7,7 +7,8 @@ import { RsvpSettingTabs } from "./components/tabs";
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function StoreSettingsPage(props: {
+//https://tinybook.cc/spacebooking/
+export default async function RsvpSettingsPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {

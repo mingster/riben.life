@@ -578,6 +578,7 @@
   "StoreSettings_terms": "服務條款",
   "StoreSettings_useBusinessHours": "使用營業時間",
   "StoreSettings_useBusinessHours_descr": "使用所設定的時間來判斷是否營業。若關閉，只會依照「店休/營業中」的設定。",
+  "StoreSettings_WaitingList": "排隊/等待設定",
   "StoreSettingsDescr": "管理商店設定",
   "StoreSettingsTab_Bank": "出金設定",
   "StoreSettingsTab_Basic": "基本設定",

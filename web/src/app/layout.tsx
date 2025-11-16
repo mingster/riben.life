@@ -1,5 +1,5 @@
 import { getT } from "@/app/i18n";
-import { fallbackLng } from "@/app/i18n/settings";
+import { cookieName, fallbackLng } from "@/app/i18n/settings";
 import { Toaster } from "@/components/ui/sonner";
 import I18nProvider from "@/providers/i18n-provider";
 import { SessionWrapper } from "@/providers/session-provider";
@@ -12,6 +12,7 @@ import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { IOSVersionCheck } from "@/components/ios-version-check";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./css/globals.css";
+import { Suspense } from "react";
 
 export const viewport: Viewport = {
 	width: "device-width",
@@ -105,7 +106,7 @@ export default async function RootLayout({
 	children: React.ReactNode;
 }>) {
 	const cookieStore = await cookies();
-	const langCookie = cookieStore.get("i18next");
+	const langCookie = cookieStore.get(cookieName);
 	const htmlLang = langCookie?.value ?? fallbackLng;
 
 	return (
@@ -121,7 +122,9 @@ export default async function RootLayout({
 						<I18nProvider initialLng={htmlLang}>
 							<SessionWrapper>
 								<IOSVersionCheck>
-									<PageViewTracker />
+									<Suspense fallback={null}>
+										<PageViewTracker />
+									</Suspense>
 									{children}
 								</IOSVersionCheck>
 							</SessionWrapper>

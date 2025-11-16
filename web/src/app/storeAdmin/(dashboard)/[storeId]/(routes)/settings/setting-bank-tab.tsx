@@ -152,7 +152,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 										<TwBankCodeCombobox
 											disabled={loading || form.formState.isSubmitting}
 											onValueChange={field.onChange}
-											defaultValue={field.value}
+											defaultValue={field.value ?? ""}
 										/>
 									</FormItem>
 								)}
@@ -171,6 +171,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 												className="font-mono"
 												placeholder={t("StoreSettings_BankAccountName")}
 												{...field}
+												value={field.value ?? ""}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -191,7 +192,8 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
 													placeholder={t("StoreSettings_BankAccount")}
-													{...field}
+												{...field}
+												value={field.value ?? ""}
 												/>
 											</FormControl>
 											<FormMessage />

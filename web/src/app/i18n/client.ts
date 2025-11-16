@@ -31,9 +31,11 @@ i18next
 	// .use(LocizeBackend) // locize backend could be used on client side, but prefer to keep it in sync with server side
 	.init({
 		...getOptions(),
-		lng: undefined, // let detect the language on client side
+		lng: undefined, // let detect the language on client side (prioritize cookie/htmlTag below)
 		detection: {
-			order: ["path", "cookie", "navigator", "htmlTag"],
+			// Avoid navigator-first to prevent flicker to browser locale (e.g., 'en') during navigation.
+			// Prefer persisted cookie and server-rendered <html lang="..."> to keep language stable.
+			order: ["cookie", "htmlTag", "path"],
 		},
 		preload: runsOnServerSide ? languages : [],
 	});
