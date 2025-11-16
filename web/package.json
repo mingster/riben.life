@@ -5,7 +5,16 @@
 	"scripts": {
 		"dev": "next dev --turbopack -p 3001",
 		"debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3001",
-		"build": "bun run postinstall; next build",
+		
+		"build:perf": "node ../bin/build-performance.js",
+		"build:analyze": "ANALYZE=true bun run build",
+		"build:fast": "NEXT_TELEMETRY_DISABLED=1 bun run postinstall:parallel && next build",
+		"build:optimized": "node scripts/build-optimize.js optimized",
+		"build:parallel": "node scripts/build-optimize.js parallel",
+		"build:production": "node scripts/build-optimize.js production",
+		"build:fast-optimized": "node scripts/build-optimize.js fast",
+		"build": "bun run postinstall && bun run next build",
+
 		"start": "next start -p 3000",
 		"install:platform": "bun run ./bin/install.ts",
 		"bio_lint": "npx biome check --fix ./src",
@@ -18,7 +27,8 @@
 		"precommit": "lint-staged",
 		"commit": "clear && npx git-cz",
 		"lint": "next lint; eslint --fix \"./src/**/*.{js,jsx,ts,tsx}\"",
-		"cleanup:console": "bun run scripts/cleanup-console-logs.ts"
+		"cleanup:console": "bun run scripts/cleanup-console-logs.ts",
+		"optimize:cache": "node scripts/cache-optimize.js"
 	},
 	"dependencies": {
 		"@better-auth/stripe": "^1.3.34",
