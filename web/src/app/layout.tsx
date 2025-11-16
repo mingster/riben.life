@@ -12,6 +12,7 @@ import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { IOSVersionCheck } from "@/components/ios-version-check";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./css/globals.css";
+import { Suspense } from "react";
 
 export const viewport: Viewport = {
 	width: "device-width",
@@ -121,7 +122,9 @@ export default async function RootLayout({
 						<I18nProvider initialLng={htmlLang}>
 							<SessionWrapper>
 								<IOSVersionCheck>
-									<PageViewTracker />
+									<Suspense fallback={null}>
+										<PageViewTracker />
+									</Suspense>
 									{children}
 								</IOSVersionCheck>
 							</SessionWrapper>

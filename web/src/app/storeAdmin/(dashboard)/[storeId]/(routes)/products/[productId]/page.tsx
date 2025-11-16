@@ -2,6 +2,8 @@ import { sqlClient } from "@/lib/prismadb";
 import type { Product, StoreProductOptionTemplate } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { ProductEditTabs } from "./tabs";
+import { Suspense } from "react";
+import { Loader } from "@/components/loader";
 
 const ProductEditPage = async (props: {
 	params: Promise<{ productId: string; storeId: string }>;
@@ -55,12 +57,14 @@ const ProductEditPage = async (props: {
 	return (
 		<div className="flex-col">
 			<div className="flex-1 space-y-4 p-8 pt-6">
-				<ProductEditTabs
-					initialData={product}
-					allCategories={allCategories}
-					storeOptionTemplates={storeOptionTemplates}
-					action={action}
-				/>
+				<Suspense fallback={<Loader />}>
+					<ProductEditTabs
+						initialData={product}
+						allCategories={allCategories}
+						storeOptionTemplates={storeOptionTemplates}
+						action={action}
+					/>
+				</Suspense>
 			</div>
 		</div>
 	);
