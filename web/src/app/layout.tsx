@@ -1,5 +1,5 @@
 import { getT } from "@/app/i18n";
-import { fallbackLng } from "@/app/i18n/settings";
+import { cookieName, fallbackLng } from "@/app/i18n/settings";
 import { Toaster } from "@/components/ui/sonner";
 import I18nProvider from "@/providers/i18n-provider";
 import { SessionWrapper } from "@/providers/session-provider";
@@ -105,7 +105,7 @@ export default async function RootLayout({
 	children: React.ReactNode;
 }>) {
 	const cookieStore = await cookies();
-	const langCookie = cookieStore.get("i18next");
+	const langCookie = cookieStore.get(cookieName);
 	const htmlLang = langCookie?.value ?? fallbackLng;
 
 	return (
