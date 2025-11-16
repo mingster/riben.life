@@ -138,14 +138,18 @@ export function GetMenuList(
 				{
 					href: `${nav_prefix}/rsvp`,
 					label: t("Rsvp_List"),
-					active: pathname.includes(`${nav_prefix}/rsvp`),
+					active:
+						pathname.includes(`${nav_prefix}/rsvp`) &&
+						!pathname.includes(`${nav_prefix}/rsvp-settings`),
 					icon: IconCalendarCheck,
 					submenus: [],
 				},
 				{
 					href: `${nav_prefix}/waiting-list`,
 					label: t("Waiting_List"),
-					active: pathname.includes(`${nav_prefix}/waiting-list`),
+					active:
+						pathname.includes(`${nav_prefix}/waiting-list`) &&
+						!pathname.includes(`${nav_prefix}/waiting-list-settings`),
 					icon: IconClock,
 					submenus: [],
 				},
