@@ -1,7 +1,7 @@
 import getStoreTables from "@/actions/get-store-tables";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import type { StoreTables } from "@prisma/client";
+import type { StoreFacility } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
 import logger from "@/lib/logger";
@@ -19,7 +19,7 @@ export async function POST(
 		const { prefix, numOfTables, capacity } = body;
 
 		for (let i = 1; i < numOfTables + 1; i++) {
-			await sqlClient.storeTables.create({
+			await sqlClient.storeFacility.create({
 				data: {
 					storeId: params.storeId,
 					tableName: `${prefix}${i}`,
@@ -48,7 +48,7 @@ export async function GET(
 	const params = await props.params;
 	CheckStoreAdminApiAccess(params.storeId);
 
-	const tables = await sqlClient.storeTables.findMany({
+	const tables = await sqlClient.storeFacility.findMany({
 		where: {
 			storeId: params.storeId,
 		},

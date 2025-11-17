@@ -86,7 +86,8 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 			if (result?.serverError) {
 				toastError({ title: t("Error"), description: result.serverError });
 			} else if (result?.data) {
-				onStoreUpdated?.(result.data.store as Store);
+				// RsvpSettings updated, refresh the page data
+				router.refresh();
 
 				toastSuccess({
 					title: t("Store_Updated"),
@@ -123,15 +124,12 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 								預付制：儲值後才可預約 Yes / No ？小時內可預約 ？小時前可取消
 								無需確認，直接接受預約 開放預約時段
 							</div>
-							預約提醒與通知 ？小時前發送確認通知 簡訊和 Line官方帳號 電子簽名
-							客戶需確認簽名 同步Google月曆 同步Apple日曆 會員系統
-							
+							預約提醒與通知 ？小時前發送確認通知 簡訊和 Line官方帳號
+							電子簽名:客戶需確認簽名 同步Google月曆 同步Apple日曆 會員系統
 							消費習慣、數據統計 會員標籤
 							依據客人習性、喜好，給予不同的標籤進行分群分眾，還能依據標籤群發訊息，給予最貼心的促銷。
-							
 							黑名單/觀察名單
 							壞客人、爽約、殺價客，你可以透過黑名單功能限制客人預約，經營不再煩惱。
-							
 							儲值金/紅利點數
 							支援你的營運，直覺管理會員的儲值金跟紅利點數，會員也可以自行查看。
 							<FormField

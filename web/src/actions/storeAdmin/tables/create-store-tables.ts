@@ -24,7 +24,7 @@ export const createStoreTablesAction = storeOwnerActionClient
 		}
 
 		const operations = Array.from({ length: numOfTables }, (_, index) =>
-			sqlClient.storeTables.create({
+			sqlClient.storeFacility.create({
 				data: {
 					storeId,
 					tableName: `${prefix}${index + 1}`,

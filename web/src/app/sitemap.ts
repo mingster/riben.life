@@ -21,28 +21,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		priority: 0.8,
 	}));
 
-
 	staticRoutes.push({
 		url: `${baseUrl}/unv`,
-			lastModified: new Date(),
-				changeFrequency: "monthly",
-					priority: 0.8,
+		lastModified: new Date(),
+		changeFrequency: "monthly",
+		priority: 0.8,
 	});
-	
+
 	staticRoutes.push({
 		url: `${baseUrl}/privacy`,
-			lastModified: new Date(),
-				changeFrequency: "monthly",
-					priority: 0.5,
+		lastModified: new Date(),
+		changeFrequency: "monthly",
+		priority: 0.5,
 	});
-	
+
 	staticRoutes.push({
 		url: `${baseUrl}/terms`,
-			lastModified: new Date(),
-				changeFrequency: "monthly",
-					priority: 0.5,
+		lastModified: new Date(),
+		changeFrequency: "monthly",
+		priority: 0.5,
 	});
-	
-	
+
 	return staticRoutes;
 }

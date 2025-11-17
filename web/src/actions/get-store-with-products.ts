@@ -26,7 +26,7 @@ const getStoreWithProducts = async (
 			id: storeId,
 		},
 		include: {
-			StoreTables: true,
+			StoreFacilities: true,
 			StoreShippingMethods: {
 				include: {
 					ShippingMethod: true,

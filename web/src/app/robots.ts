@@ -5,8 +5,7 @@ export default function robots(): MetadataRoute.Robots {
 	const isProduction =
 		process.env.VERCEL_ENV === "production" ||
 		process.env.NODE_ENV === "production";
-	const noIndex =
-		process.env.NEXT_PUBLIC_NO_INDEX === "true" || !isProduction;
+	const noIndex = process.env.NEXT_PUBLIC_NO_INDEX === "true" || !isProduction;
 
 	// Disallow everything for non-production or explicitly no-index environments
 	if (noIndex) {

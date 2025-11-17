@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { getStoreWithRelations } from "@/lib/store-access";
 import type { Store } from "@/types";
-import type { StoreTables } from "@prisma/client";
+import type { StoreFacility } from "@prisma/client";
 import type { Metadata } from "next";
 import { CashCashier } from "./data-client";
 
@@ -23,13 +23,13 @@ export default async function CashCashierAdminPage(props: {
 	// Parallel queries for optimal performance
 	const [store, tables] = await Promise.all([
 		await getStoreWithRelations(params.storeId),
-		sqlClient.storeTables.findMany({
+		sqlClient.storeFacility.findMany({
 			where: { storeId: params.storeId },
 			orderBy: { tableName: "asc" },
 		}),
 	]);
 
 	return (
-		<CashCashier store={store as Store} tables={tables as StoreTables[]} />
+		<CashCashier store={store as Store} tables={tables as StoreFacility[]} />
 	);
 }

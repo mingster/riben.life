@@ -24,7 +24,7 @@ export const createStoreTableAction = storeOwnerActionClient
 		}
 
 		try {
-			const table = await sqlClient.storeTables.create({
+			const table = await sqlClient.storeFacility.create({
 				data: {
 					storeId,
 					tableName,

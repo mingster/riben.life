@@ -2,7 +2,7 @@ import Container from "@/components/ui/container";
 import BusinessHours from "@/lib/businessHours";
 import { sqlClient } from "@/lib/prismadb";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import type { StoreSettings, StoreTables } from "@prisma/client";
+import type { StoreSettings, StoreFacility } from "@prisma/client";
 import { redirect } from "next/navigation";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import { formatDate } from "date-fns";
@@ -20,7 +20,7 @@ export default async function TableOrderPage(props: {
 	// Parallel queries for optimal performance - 3x faster!
 	const [store, table, storeSettings] = await Promise.all([
 		getStoreWithProducts(params.storeId),
-		sqlClient.storeTables.findFirst({
+		sqlClient.storeFacility.findFirst({
 			where: { id: params.tableId },
 		}),
 		sqlClient.storeSettings.findFirst({
@@ -61,7 +61,7 @@ export default async function TableOrderPage(props: {
 				<StoreHomeContent
 					storeData={store}
 					storeSettings={storeSettings as StoreSettings}
-					tableData={table as StoreTables}
+					tableData={table as StoreFacility}
 				/>
 			)}
 		</Container>

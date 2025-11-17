@@ -200,7 +200,7 @@ export async function getStoreWithRelations(
 				},
 			}),
 			...(includeTables && {
-				StoreTables: {
+				StoreFacilities: {
 					orderBy: { tableName: "asc" },
 				},
 			}),

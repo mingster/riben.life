@@ -19,7 +19,7 @@ export async function DELETE(
 
 	// TO-DO: only archive the product if there's order already placed.
 
-	const obj = await sqlClient.storeTables.delete({
+	const obj = await sqlClient.storeFacility.delete({
 		where: {
 			id: params.tableId,
 		},
@@ -62,7 +62,7 @@ export async function PATCH(
 			return new NextResponse("Name is required", { status: 400 });
 		}
 
-		const obj = await sqlClient.storeTables.update({
+		const obj = await sqlClient.storeFacility.update({
 			where: {
 				id: params.tableId,
 			},

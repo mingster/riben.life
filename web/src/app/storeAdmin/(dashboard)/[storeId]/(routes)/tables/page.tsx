@@ -1,6 +1,6 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import type { StoreTables } from "@prisma/client";
+import type { StoreFacility } from "@prisma/client";
 import { TableClient } from "./components/client-table";
 import { mapStoreTableToColumn, type TableColumn } from "./table-column";
 
@@ -14,13 +14,13 @@ export default async function StoreTablePage(props: {
 	const params = await props.params;
 
 	// Note: checkStoreStaffAccess already called in layout (cached)
-	const tables = await sqlClient.storeTables.findMany({
+	const tables = await sqlClient.storeFacility.findMany({
 		where: { storeId: params.storeId },
 		orderBy: { tableName: "asc" },
 	});
 
 	// Map tables to UI columns
-	const formattedTables: TableColumn[] = (tables as StoreTables[]).map(
+	const formattedTables: TableColumn[] = (tables as StoreFacility[]).map(
 		mapStoreTableToColumn,
 	);
 

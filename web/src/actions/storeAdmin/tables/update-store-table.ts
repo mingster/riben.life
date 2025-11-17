@@ -14,7 +14,7 @@ export const updateStoreTableAction = storeOwnerActionClient
 	.action(async ({ parsedInput }) => {
 		const { storeId, id, tableName, capacity } = parsedInput;
 
-		const table = await sqlClient.storeTables.findUnique({
+		const table = await sqlClient.storeFacility.findUnique({
 			where: { id },
 			select: { id: true, storeId: true },
 		});
@@ -24,7 +24,7 @@ export const updateStoreTableAction = storeOwnerActionClient
 		}
 
 		try {
-			const updated = await sqlClient.storeTables.update({
+			const updated = await sqlClient.storeFacility.update({
 				where: { id },
 				data: {
 					tableName,

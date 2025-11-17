@@ -16,7 +16,7 @@ import type {
 import { ProductStatus } from "@/types/enum";
 import { getAbsoluteUrl } from "@/utils/utils";
 
-import type { StoreSettings, StoreTables } from "@prisma/client";
+import type { StoreSettings, StoreFacility } from "@prisma/client";
 import { formatDate } from "date-fns";
 import { ArrowUpToLine } from "lucide-react";
 import Link from "next/link";
@@ -36,7 +36,7 @@ import logger from "@/lib/logger";
 export interface props {
 	storeData: StoreWithProductNCategories;
 	storeSettings: StoreSettings;
-	tableData?: StoreTables;
+	tableData?: StoreFacility;
 }
 
 // store home page.

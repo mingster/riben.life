@@ -2,12 +2,12 @@
 
 import type { Store } from "@/types";
 import { getAbsoluteUrl } from "@/utils/utils";
-import type { StoreTables } from "@prisma/client";
+import type { StoreFacility } from "@prisma/client";
 import { useQRCode } from "next-qrcode";
 import Link from "next/link";
 export interface props {
 	store: Store;
-	tables: StoreTables[];
+	tables: StoreFacility[];
 }
 export const QrCodeClient: React.FC<props> = ({ store, tables }) => {
 	const { Image } = useQRCode();

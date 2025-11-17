@@ -12,7 +12,7 @@ export const deleteStoreTableAction = storeOwnerActionClient
 	.action(async ({ parsedInput }) => {
 		const { storeId, id } = parsedInput;
 
-		const table = await sqlClient.storeTables.findUnique({
+		const table = await sqlClient.storeFacility.findUnique({
 			where: { id },
 			select: { id: true, storeId: true },
 		});
@@ -21,7 +21,7 @@ export const deleteStoreTableAction = storeOwnerActionClient
 			throw new SafeError("Table not found");
 		}
 
-		await sqlClient.storeTables.delete({
+		await sqlClient.storeFacility.delete({
 			where: { id },
 		});
 

@@ -5,7 +5,6 @@
 	"scripts": {
 		"dev": "next dev --turbopack -p 3001",
 		"debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3001",
-		
 		"build:perf": "node ../bin/build-performance.js",
 		"build:analyze": "ANALYZE=true bun run build",
 		"build:fast": "NEXT_TELEMETRY_DISABLED=1 bun run postinstall:parallel && next build",
@@ -14,7 +13,6 @@
 		"build:production": "node scripts/build-optimize.js production",
 		"build:fast-optimized": "node scripts/build-optimize.js fast",
 		"build": "bun run postinstall && bun run next build",
-
 		"start": "next start -p 3000",
 		"install:platform": "bun run ./bin/install.ts",
 		"bio_lint": "npx biome check --fix ./src",

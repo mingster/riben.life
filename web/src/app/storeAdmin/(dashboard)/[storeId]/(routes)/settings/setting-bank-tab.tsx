@@ -192,8 +192,8 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
 													placeholder={t("StoreSettings_BankAccount")}
-												{...field}
-												value={field.value ?? ""}
+													{...field}
+													value={field.value ?? ""}
 												/>
 											</FormControl>
 											<FormMessage />

@@ -1,4 +1,4 @@
-import type { StoreTables } from "@prisma/client";
+import type { StoreFacility } from "@prisma/client";
 
 export interface TableColumn {
 	id: string;
@@ -7,7 +7,7 @@ export interface TableColumn {
 	capacity: number;
 }
 
-export const mapStoreTableToColumn = (table: StoreTables): TableColumn => ({
+export const mapStoreTableToColumn = (table: StoreFacility): TableColumn => ({
 	id: table.id,
 	storeId: table.storeId,
 	tableName: table.tableName,

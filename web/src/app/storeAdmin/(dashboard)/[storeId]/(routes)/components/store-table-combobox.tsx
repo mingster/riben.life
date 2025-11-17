@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/popover";
 import { useI18n } from "@/providers/i18n-provider";
 import { cn } from "@/utils/utils";
-import type { StoreTables } from "@prisma/client";
+import type { StoreFacility } from "@prisma/client";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { CheckIcon } from "lucide-react";
 import * as React from "react";
@@ -44,9 +44,9 @@ export const StoreTableCombobox = ({
 	const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/tables`;
 	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
 	const { data, error, isLoading } = useSWR(url, fetcher);
-	let tables: StoreTables[] = [];
+	let tables: StoreFacility[] = [];
 	if (!isLoading && !error) {
-		tables = data as StoreTables[];
+		tables = data as StoreFacility[];
 	}
 
 	/*

@@ -23,7 +23,8 @@ import Container from "@/components/ui/container";
 一鍵通知顧客
 不必在現場大喊，一鍵就能送出通知，自動發送簡訊、LINE、或email提醒即將可入座的顧客。
 */
-export default async function WaitingListSettingsPage(props: { // Note: rename to WaitingListSettingsPage to match the file name
+export default async function WaitingListSettingsPage(props: {
+	// Note: rename to WaitingListSettingsPage to match the file name
 	params: Params;
 	searchParams: SearchParams;
 }) {
