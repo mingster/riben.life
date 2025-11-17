@@ -70,7 +70,7 @@
     Run the following command to change the default peer value in the scram-sha-256 field in the main PostgreSQL configuration file pg_hba.conf to enable password authentication on the server.
 
     ``` bash
-    sudo sed -i '/^local/s/peer/scram-sha-256/' /etc/postgresql/17/main/pg_hba.conf
+    sudo sed -i '/^local/s/peer/scram-sha-256/' /etc/postgresql/18/main/pg_hba.conf
     ```
 
 ### SSL
@@ -98,16 +98,16 @@
     You need to copy the generated certificates into the PostgreSQL config directory (usually ```/etc/postgresql/<version>/main/``` or similar). You can create symbolic links for easier management:
 
     ``` bash
-    sudo cp /etc/letsencrypt/live/mx2.mingster.com/fullchain.pem /etc/postgresql/17/main/server.crt
-    sudo cp /etc/letsencrypt/live/mx2.mingster.com/privkey.pem /etc/postgresql/17/main/server.key
+    sudo cp /etc/letsencrypt/live/mx2.mingster.com/fullchain.pem /etc/postgresql/18/main/server.crt
+    sudo cp /etc/letsencrypt/live/mx2.mingster.com/privkey.pem /etc/postgresql/18/main/server.key
     ```
 
 1. Set Permissions
 
     ``` bash
-    sudo chown postgres:postgres /etc/postgresql/17/main/server.crt /etc/postgresql/17/main/server.key
+    sudo chown postgres:postgres /etc/postgresql/18/main/server.crt /etc/postgresql/18/main/server.key
 
-    sudo chmod 600 /etc/postgresql/17/main/server.crt /etc/postgresql/17/main/server.key
+    sudo chmod 600 /etc/postgresql/18/main/server.crt /etc/postgresql/18/main/server.key
     ```
 
 1. certbot post-hook
@@ -120,9 +120,9 @@
 
     ``` bash
     #!/bin/bash
-    umask 0177
+    umask 0187
     DOMAIN=mx2.mingster.com
-    DATA_DIR=/etc/postgresql/17/main/
+    DATA_DIR=/etc/postgresql/18/main/
     cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem $DATA_DIR/server.crt
     cp /etc/letsencrypt/live/$DOMAIN/privkey.pem $DATA_DIR/server.key
     chown postgres:postgres $DATA_DIR/server.crt $DATA_DIR/server.key
@@ -160,7 +160,7 @@
     Open the postgresql.conf file, which is typically located in ```/var/lib/pgsql/data/``` or ```/etc/postgresql/<version>/main/```. Use a text editor like nano or vim:
 
     ``` bash
-    sudo nano /etc/postgresql/17/main/postgresql.conf
+    sudo nano /etc/postgresql/18/main/postgresql.conf
     ```
 
     Find the line that contains listen_addresses, which is usually commented out:
@@ -176,15 +176,15 @@
     port = 5432
 
     ssl = on
-    ssl_cert_file = '/etc/postgresql/17/main/server.crt'
-    ssl_key_file = '/etc/postgresql/17/main/server.key'
+    ssl_cert_file = '/etc/postgresql/18/main/server.crt'
+    ssl_key_file = '/etc/postgresql/18/main/server.key'
     ssl_prefer_server_ciphers = on
     ```
 
 1. Configure Client Authentication
 
     ``` bash
-    sudo nano /etc/postgresql/17/main/pg_hba.conf
+    sudo nano /etc/postgresql/18/main/pg_hba.conf
     ```
 
     Add the following line at the end of the file to allow connections from any IP address using sha-256 password authentication:
@@ -194,7 +194,7 @@
     hostssl    all     all     59.126.30.241/32       scram-sha-256
 
     # mx2
-    hostssl    all     all     64.176.50.230/32       scram-sha-256
+    hostssl    all     all     64.186.50.230/32       scram-sha-256
     ```
 
     This setting allows PostgreSQL to accept connections from the specifed IP address.
@@ -211,8 +211,8 @@
     For RHEL systems:
 
     ``` bash
-    sudo systemctl restart postgresql-17
-    sudo systemctl status postgresql-17
+    sudo systemctl restart postgresql-18
+    sudo systemctl status postgresql-18
     ```
 
 1. firewall
@@ -283,7 +283,7 @@ GRANT ALL PRIVILEGES ON DATABASE pstv_web TO pstv_user;
 
 1. Prerequisites
 
-    Ensure you are using PostgreSQL 17 or later. Set up WAL summarization by executing:
+    Ensure you are using PostgreSQL 18 or later. Set up WAL summarization by executing:
 
     ``` bash
     su -l postgres
@@ -311,8 +311,8 @@ GRANT ALL PRIVILEGES ON DATABASE pstv_web TO pstv_user;
     e.g.
 
     ``` bash
-    mkdir /var/lib/postgresql/17/backup
-    pg_basebackup -D /var/lib/postgresql/17/backup
+    mkdir /var/lib/postgresql/18/backup
+    pg_basebackup -D /var/lib/postgresql/18/backup
     ```
 
 1. Create an Incremental Backup
@@ -326,8 +326,8 @@ GRANT ALL PRIVILEGES ON DATABASE pstv_web TO pstv_user;
     e.g.
 
     ``` bash
-    mkdir /var/lib/postgresql/17/incremental_backup
-    pg_basebackup --incremental=/var/lib/postgresql/17/backup/backup_manifest -D /var/lib/postgresql/17/incremental_backup/
+    mkdir /var/lib/postgresql/18/incremental_backup
+    pg_basebackup --incremental=/var/lib/postgresql/18/backup/backup_manifest -D /var/lib/postgresql/18/incremental_backup/
     ```
 
     The --incremental option requires the path to the manifest file from the previous full or incremental backup.
@@ -354,19 +354,19 @@ pg_combinebackup -o /path/to/restore_directory /path/to/full_backup/ /path/to/in
 
     ``` bash
     cd $PROJECT_HOME
-    scp bin/* root@mx2.mingster.com://var/lib/postgresql/17/bin/
+    scp bin/* root@mx2.mingster.com://var/lib/postgresql/18/bin/
     ```
 
 1. The setup on the production server:
 
     ``` bash
-    chown postgres.postgres /var/lib/postgresql/17/bin/
+    chown postgres.postgres /var/lib/postgresql/18/bin/
     ```
 
 1. To run the backup script manually:
 
     ``` bash
-    su -l postgres /var/lib/postgresql/17/bin/pg_backup_rotated2.sh
+    su -l postgres /var/lib/postgresql/18/bin/pg_backup_rotated2.sh
     ```
 
 ### Schedule with Cron
@@ -380,13 +380,13 @@ crontab -e
 Add a line to schedule it (e.g., every 3 hours):
 
 ```bash
-0 */3 * * * su postgres -c "/var/lib/postgresql/17/bin/pg_backup_rotated2.sh >> /var/log/postgresql/backup.log 2>&1"
+0 */3 * * * su postgres -c "/var/lib/postgresql/18/bin/pg_backup_rotated2.sh >> /var/log/postgresql/backup.log 2>&1"
 ```
 
 Ship backup to other serever
 
 ```bash
-0 */3 * * * su root -c "/var/lib/postgresql/17/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1"
+0 */3 * * * su root -c "/var/lib/postgresql/18/bin/pg_backup_ship.sh >> /var/log/postgresql/backup.log 2>&1"
 ```
 
 ## Continuous Archiving and Point-in-Time Recovery
@@ -403,7 +403,7 @@ chmod -R 0750 /var/lib/postgresql/
 1. Edit postgresql.conf:
 
     ``` bash
-    sudo nano /etc/postgresql/17/main/postgresql.conf
+    sudo nano /etc/postgresql/18/main/postgresql.conf
     ```
 
     ``` text
@@ -418,7 +418,7 @@ chmod -R 0750 /var/lib/postgresql/
 1. Update pg_hba.conf to allow replication connections:
 
     ``` bash
-    sudo nano /etc/postgresql/17/main/pg_hba.conf
+    sudo nano /etc/postgresql/18/main/pg_hba.conf
     ```
 
     ``` text
@@ -477,16 +477,16 @@ chmod -R 0750 /var/lib/postgresql/
     ``` bash
     pg_basebackup -h mx2.mingster.com -D $desst_dir -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
 
-    mv /var/lib/postgresql/17/main /var/lib/postgresql/17/main-old
+    mv /var/lib/postgresql/18/main /var/lib/postgresql/18/main-old
 
-    pg_basebackup -h mx2.mingster.com -D /var/lib/postgresql/17/main -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
+    pg_basebackup -h mx2.mingster.com -D /var/lib/postgresql/18/main -U replica_user --wal-method=stream -P -v -R -X stream -C -S slaveslot1
     ```
 
 1. change ownership
 
     ``` bash
-    sudo chown -R postgres:postgres /var/lib/postgresql/17/main/
-    chmod -R 0750 /var/lib/postgresql/17/main/
+    sudo chown -R postgres:postgres /var/lib/postgresql/18/main/
+    chmod -R 0750 /var/lib/postgresql/18/main/
     ```
 
 1. Start the Standby Server:
@@ -500,12 +500,12 @@ chmod -R 0750 /var/lib/postgresql/
 ## Debug
 
 ``` bash
-export ${PATH}:/usr/lib/postgresql/17/bin/
-postgres -D /etc/postgresql/17/main/
+export ${PATH}:/usr/lib/postgresql/18/bin/
+postgres -D /etc/postgresql/18/main/
 ```
 
 ``` bash
-tail -f /var/log/postgresql/postgresql-17-main.log
+tail -f /var/log/postgresql/postgresql-18-main.log
 ```
 
 ## Uninstall
@@ -514,7 +514,7 @@ if you fuc'ed up the installation, you might [try this](https://neon.tech/postgr
 
 ## Ref
 
-- [Comprehensive Guide: Setting Up PostgreSQL 17 on Ubuntu](https://www.sqlpassion.at/archive/2024/10/14/comprehensive-guide-setting-up-postgresql-17-on-ubuntu-24-04/)
+- [Comprehensive Guide: Setting Up PostgreSQL 18 on Ubuntu](https://www.sqlpassion.at/archive/2024/10/14/comprehensive-guide-setting-up-postgresql-18-on-ubuntu-24-04/)
 - [How to Install PostgreSQL on Ubuntu](https://docs.vultr.com/how-to-install-postgresql-on-ubuntu-24-04)
 - [Use SSL Encryption with PostgreSQL on Ubuntu](https://docs.vultr.com/use-ssl-encryption-with-postgresql-on-ubuntu-20-04)
 - [How To Set Up Continuous Archiving and Perform Point-In-Time-Recovery with PostgreSQL](https://www.digitalocean.com/community/tutorials/how-to-set-up-continuous-archiving-and-perform-point-in-time-recovery-with-postgresql-12-on-ubuntu-20-04)
