@@ -1,9 +1,12 @@
 # Functional Requirements: RSVP System
 
-**Date:** 2025-01-27  
+**Date:** 2025-01-27
 **Status:** Active  
-**Version:** 1.3  
-**Related Documents:** [PRD-restaurant-reservation.md](./PRD-restaurant-reservation.md)
+**Version:** 1.4  
+**Related Documents:** 
+- [PRD-restaurant-reservation.md](./PRD-restaurant-reservation.md)
+- [TECHNICAL-REQUIREMENTS-RSVP.md](./TECHNICAL-REQUIREMENTS-RSVP.md)
+- [GITHUB-ISSUES-CHECKLIST.md](./GITHUB-ISSUES-CHECKLIST.md)
 
 ---
 
@@ -116,8 +119,11 @@ Store Admins have all Store Staff permissions, plus:
 
 - If `prepaidRequired` is true, customer must be signed in (authentication required)
 - Customer must pay `prepaidAmount` before reservation is confirmed
-- Payment can be made using existing customer credit from `CustomerCredit` database table
-- If customer credit is insufficient, customer must top up credit or purchase products to refill credit
+- `prepaidAmount` can be specified as either:
+  - A dollar amount (currency value, e.g., $50.00)
+  - A CustomerCredit amount (points/credits value, e.g., 100 credits)
+- Payment can be made using existing customer credit (`CustomerCredit` database table)
+- If customer credit is insufficient, customer must top up credit or purchase products to refill his/her credit
 - Payment status tracked via `alreadyPaid` flag
 - Reservation linked to order via `orderId` when prepaid
 - Customer credit balance is deducted when credit is used for prepaid reservation
@@ -129,7 +135,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **FR-RSVP-006:** The system must support dual confirmation:
 
-- `confirmedByStore`: Store has confirmed the reservation
+- `confirmedByStore`: Store staff or admin has confirmed the reservation
 - `confirmedByCustomer`: Customer has confirmed the reservation
 
 #### 3.1.2 Staff-Created Reservations
@@ -279,7 +285,9 @@ Store Admins have all Store Staff permissions, plus:
 **FR-RSVP-029:** Store admins must be able to configure prepaid requirements:
 
 - Enable/disable prepaid requirement (`prepaidRequired`)
-- Set prepaid amount (`prepaidAmount`)
+- Set prepaid amount (`prepaidAmount`) which can be specified as:
+  - A dollar amount (currency value)
+  - A CustomerCredit amount (points/credits value)
 - Require payment before reservation confirmation
 
 #### 3.4.3 Cancellation Settings
@@ -308,9 +316,19 @@ Store Admins have all Store Staff permissions, plus:
 - Apple Calendar sync (`syncWithApple`)
 - Automatic event creation for reservations
 
-#### 3.4.6 Signature Settings
+#### 3.4.7 Google Maps Integration Settings
 
-**FR-RSVP-033:** Store admins must be able to configure signature requirements:
+**FR-RSVP-033:** Store admins must be able to configure Google Maps integration:
+
+- Enable/disable Google Maps Reserve integration
+- Configure Google Maps API credentials (API key, service account)
+- Set up store location information for Google Maps
+- Map store facilities to Google Maps reservation slots
+- View Google Maps integration status and sync health
+
+#### 3.4.8 Signature Settings
+
+**FR-RSVP-034:** Store admins must be able to configure signature requirements:
 
 - Enable/disable signature requirement for reservations
 - Require signature before reservation confirmation
@@ -323,26 +341,26 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.5.1 Waitlist Creation
 
-**FR-RSVP-033:** When no availability exists, customers must be able to join a waitlist:
+**FR-RSVP-035:** When no availability exists, customers must be able to join a waitlist:
 
 - Select desired date/time
 - Provide contact information
 - Receive waitlist confirmation
 
-**FR-RSVP-034:** The system must automatically add customers to waitlist when:
+**FR-RSVP-036:** The system must automatically add customers to waitlist when:
 
 - Requested time slot is fully booked
 - No facilities available for party size
 
 #### 3.5.2 Waitlist Management
 
-**FR-RSVP-035:** Store staff and Store admins must be able to view waitlist:
+**FR-RSVP-037:** Store staff and Store admins must be able to view waitlist:
 
 - See all waitlist entries
 - Filter by date/time
 - View customer contact information
 
-**FR-RSVP-036:** Store staff and Store admins must be able to confirm waitlist entries:
+**FR-RSVP-038:** Store staff and Store admins must be able to confirm waitlist entries:
 
 - Manually convert waitlist to reservation when availability opens
 - Notify customers when their waitlist request can be confirmed
@@ -354,14 +372,14 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.6.1 Confirmation Notifications
 
-**FR-RSVP-037:** The system must send confirmation notifications immediately upon reservation creation:
+**FR-RSVP-039:** The system must send confirmation notifications immediately upon reservation creation:
 
 - On-screen confirmation message
 - Email confirmation (if email provided)
 - SMS confirmation (if `useReminderSMS` enabled and phone provided)
 - LINE notification (if `useReminderLine` enabled and LINE account linked)
 
-**FR-RSVP-038:** Confirmation notifications must include:
+**FR-RSVP-040:** Confirmation notifications must include:
 
 - Reservation date and time
 - Party size (adults and children)
@@ -372,26 +390,26 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.6.2 Reminder Notifications
 
-**FR-RSVP-039:** The system must send reminder notifications:
+**FR-RSVP-041:** The system must send reminder notifications:
 
 - At configured time before reservation (`reminderHours`)
 - Via enabled channels (SMS, LINE, Email)
 - Include reservation details and confirmation request
 
-**FR-RSVP-040:** The system must support multiple reminder times:
+**FR-RSVP-042:** The system must support multiple reminder times:
 
 - Primary reminder (default: 24 hours before)
 - Secondary reminder (future: 2 hours before, if configured)
 
 #### 3.6.3 Update Notifications
 
-**FR-RSVP-041:** The system must notify customers when reservations are modified:
+**FR-RSVP-043:** The system must notify customers when reservations are modified:
 
 - Date/time changes
 - Facility reassignments
 - Status changes (confirmed, cancelled, etc.)
 
-**FR-RSVP-042:** The system must notify customers when reservations are cancelled:
+**FR-RSVP-044:** The system must notify customers when reservations are cancelled:
 
 - By customer (self-cancellation confirmation)
 - By store (cancellation notice with reason if applicable)
@@ -402,13 +420,13 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.7.1 Blacklist Configuration
 
-**FR-RSVP-043:** Store admins must be able to manage customer blacklist (Store Staff access not permitted):
+**FR-RSVP-045:** Store admins must be able to manage customer blacklist (Store Staff access not permitted):
 
 - Add users to blacklist (`RsvpBlacklist`)
 - Remove users from blacklist
 - View blacklist entries
 
-**FR-RSVP-044:** The system must prevent blacklisted users from creating reservations:
+**FR-RSVP-046:** The system must prevent blacklisted users from creating reservations:
 
 - Check blacklist before allowing reservation creation
 - Display appropriate message to blacklisted users
@@ -416,7 +434,7 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.7.2 Blacklist Reasons
 
-**FR-RSVP-045:** Store admins must be able to track blacklist reasons:
+**FR-RSVP-047:** Store admins must be able to track blacklist reasons:
 
 - No-show history
 - Cancellation abuse
@@ -429,13 +447,13 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.8.1 Customer Tags
 
-**FR-RSVP-046:** Store admins must be able to create and manage customer tags (Store Staff access not permitted):
+**FR-RSVP-048:** Store admins must be able to create and manage customer tags (Store Staff access not permitted):
 
 - Create tags (`RsvpTag`) with unique names per store
 - Assign tags to reservations/customers
 - Use tags for customer segmentation and communication
 
-**FR-RSVP-047:** Tag examples:
+**FR-RSVP-049:** Tag examples:
 
 - VIP customers
 - Regular customers
@@ -444,7 +462,7 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.8.2 Tag Usage
 
-**FR-RSVP-048:** Store admins must be able to filter reservations by tags (Store Staff can view tags but not create/manage):
+**FR-RSVP-050:** Store admins must be able to filter reservations by tags (Store Staff can view tags but not create/manage):
 
 - View all reservations with specific tag
 - Group customers by tags for targeted communications
@@ -455,33 +473,59 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.9.1 Google Maps Integration
 
-**FR-RSVP-049:** The system must support Google Maps Reserve integration:
+**FR-RSVP-051:** The system must support Google Maps Reserve integration:
 
 - Sync reservation availability to Google Maps
 - Accept reservations initiated from Google Maps
 - Handle reservation modifications from Google Maps
 - Handle cancellations from Google Maps
+- Two-way synchronization of reservation data between the system and Google Maps
+- Real-time availability updates sent to Google Maps
 
-**FR-RSVP-050:** The system must support deep linking from Google Maps:
+**FR-RSVP-052:** The system must support deep linking from Google Maps:
 
 - Pre-fill store context when arriving from Google Maps
 - Maintain reservation source tracking
+- Preserve customer information when redirected from Google Maps
+- Support direct reservation creation from Google Maps deep links
+
+**FR-RSVP-052a:** The system must support Google Maps Reserve API configuration:
+
+- Store admins can enable/disable Google Maps integration
+- Configure Google Maps API credentials
+- Set up store location and business information for Google Maps
+- Map store facilities to Google Maps reservation slots
+
+**FR-RSVP-052b:** The system must handle Google Maps reservation webhooks:
+
+- Receive reservation creation notifications from Google Maps
+- Receive reservation update notifications from Google Maps
+- Receive reservation cancellation notifications from Google Maps
+- Process and validate webhook payloads from Google Maps
+- Update local reservation records based on Google Maps events
+
+**FR-RSVP-052c:** The system must display Google Maps integration status:
+
+- Show whether Google Maps integration is enabled
+- Display sync status (active, error, disconnected)
+- Show last successful sync timestamp
+- Provide error messages if sync fails
 
 #### 3.9.2 LINE Integration
 
-**FR-RSVP-051:** The system must support LINE Login:
+**FR-RSVP-053:** The system must support LINE Login:
 
 - Allow customers to authenticate via LINE
 - Link LINE account to user profile
 - Share contact information from LINE profile
 
-**FR-RSVP-052:** The system must support LINE notifications:
+**FR-RSVP-054:** The system must support LINE notifications:
 
 - Send confirmations via LINE Official Account
 - Send reminders via LINE messaging
 - Send updates and cancellations via LINE
 
-**FR-RSVP-053:** The system must support LINE broadcast messaging:
+**FR-RSVP-055:** The system must support LINE broadcast messaging:
 
 - Store staff and Store admins can send messages to waitlisted customers
 - Broadcast day-of updates to confirmed reservations
@@ -492,7 +536,7 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.10.1 Reservation Statistics
 
-**FR-RSVP-054:** Store admins must be able to view reservation statistics (Store Staff access not permitted):
+**FR-RSVP-056:** Store admins must be able to view reservation statistics (Store Staff access not permitted):
 
 - Total reservations by date range
 - Reservations by status
@@ -502,7 +546,7 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.10.2 Customer Analytics
 
-**FR-RSVP-055:** Store admins must be able to view customer history (Store Staff access not permitted):
+**FR-RSVP-057:** Store admins must be able to view customer history (Store Staff access not permitted):
 
 - Reservation history per customer
 - Frequency of visits
@@ -511,7 +555,7 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.10.3 Resource Utilization
 
-**FR-RSVP-056:** Store admins must be able to view resource utilization (Store Staff access not permitted):
+**FR-RSVP-058:** Store admins must be able to view resource utilization (Store Staff access not permitted):
 
 - Resource occupancy rates
 - Most/least used resources
@@ -523,7 +567,7 @@ Store Admins have all Store Staff permissions, plus:
 
 ### 4.1 Reservation Data Model
 
-**FR-RSVP-057:** The system must store the following reservation data:
+**FR-RSVP-059:** The system must store the following reservation data:
 
 - Unique reservation ID
 - Store ID
@@ -547,19 +591,20 @@ Store Admins have all Store Staff permissions, plus:
 
 ### 4.2 Settings Data Model
 
-**FR-RSVP-058:** The system must store RSVP settings per store:
+**FR-RSVP-060:** The system must store RSVP settings per store:
 
 - Accept reservation flag
-- Prepaid requirements and amount
+- Prepaid requirements and amount (can be dollar amount or CustomerCredit amount)
 - Cancellation policy (enabled, hours)
 - Business hours configuration
 - Reminder settings (hours, channels)
 - Calendar sync preferences
+- Google Maps integration settings (enabled/disabled, API credentials, sync status)
 - Signature requirements (enabled, required before confirmation, required at check-in)
 
 ### 4.3 Resource Data Model (Facilities/Appointment Slots)
 
-**FR-RSVP-059:** The system must store resource information (facilities/appointment slots):
+**FR-RSVP-061:** The system must store resource information (facilities/appointment slots):
 
 - Unique resource ID
 - Store ID
@@ -568,7 +613,7 @@ Store Admins have all Store Staff permissions, plus:
 
 ### 4.4 Customer Credit Data Model
 
-**FR-RSVP-060:** The system must store customer credit information:
+**FR-RSVP-062:** The system must store customer credit information:
 
 - Unique credit record ID
 - Store ID
@@ -607,7 +652,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **BR-RSVP-009:** If `prepaidRequired` is true, reservation is not confirmed until payment is received.
 
-**BR-RSVP-010:** Prepaid amount must be paid before reservation time.
+**BR-RSVP-010:** Prepaid amount (which can be specified as a dollar amount or CustomerCredit amount) must be paid before reservation time.
 
 **BR-RSVP-010a:** Customers can pay prepaid amount using existing credit from `CustomerCredit` table.
 
@@ -642,6 +687,18 @@ Store Admins have all Store Staff permissions, plus:
 **BR-RSVP-020:** Signature data must be stored securely and associated with the reservation record.
 
 **BR-RSVP-021:** Store staff and Store admins can view customer signatures for verification purposes.
+
+### 5.5 Google Maps Integration Rules
+
+**BR-RSVP-022:** Reservations created from Google Maps must be tracked with source identifier.
+
+**BR-RSVP-023:** When Google Maps integration is enabled, reservation availability must be synced in real-time.
+
+**BR-RSVP-024:** Reservations modified in Google Maps must be reflected in the system within the configured sync interval.
+
+**BR-RSVP-025:** If Google Maps sync fails, the system must continue to accept reservations through other channels.
+
+**BR-RSVP-026:** Google Maps reservations must follow the same business rules as regular reservations (prepaid requirements, cancellation policy, etc.).
 
 ---
 
@@ -703,6 +760,14 @@ Store Admins have all Store Staff permissions, plus:
 **UI-RSVP-011:** Analytics and reporting pages must be clearly marked as Store Admin only (optimized for tablets and phones).
 
 **UI-RSVP-012:** Blacklist and tag management pages must be clearly marked as Store Admin only (optimized for tablets and phones).
+
+**UI-RSVP-014:** Google Maps integration settings page must allow Store Admins to:
+
+- Enable/disable Google Maps integration
+- Configure API credentials securely
+- View integration status and sync health
+- Map facilities to Google Maps reservation slots
+- View error logs and sync history (optimized for tablets and phones).
 
 ---
 
@@ -847,6 +912,7 @@ Store Admins have all Store Staff permissions, plus:
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2025-01-27 | System | Added comprehensive Google Maps integration requirements including Reserve API integration, webhook handling, configuration settings, status monitoring, and business rules. Added new section 3.4.7 for Google Maps Integration Settings. |
 | 1.3 | 2025-01-27 | System | Separated Store Admin and Store Staff into distinct roles with different access levels. Added access control summary section. Updated all requirements to specify which role has access to which features. |
 | 1.2 | 2025-01-27 | System | Changed terminology from "table" to "facility" throughout document to better reflect generic bookable resources |
 | 1.1 | 2025-01-27 | System | Updated to be business-agnostic: clarified that RSVP system can be used by any business type (not just restaurants), added generic terminology notes for "facility" and "seated", updated resource management terminology |
