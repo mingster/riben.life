@@ -32,6 +32,8 @@ This project uses [Next.js Server Actions](mdc:https:/nextjs.org/docs/app/buildi
 
 - All server actions use Zod schemas for input validation and type safety
 - Only files that export async server actions should include the `"use server"` directive. Validation modules and other helpers should omit it.
+- **Validation schemas must be imported and reused in form components** - Never duplicate schemas in UI components
+- Form components should import schemas from action validation files to ensure consistency between client and server validation
 - Actions are wrapped with `userRequiredActionClient` for general action:
 
 ```ts

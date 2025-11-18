@@ -59,8 +59,66 @@ export const ExampleForm = ({ emailAccountId }: { emailAccountId: string }) => {
 
 ## Validation Guidelines
 
-- Define validation schemas using Zod
-- Apply the same validation in both client and server
+- **Always import validation schemas from action folders** - Never define local schemas in components
+- Use the same validation schema for both client form validation and server action validation
+- Import schemas from `@/actions/[domain]/[feature]/[action-name].validation.ts`
+- If the schema includes fields not needed in the form (e.g., `storeId`), use `.omit()` to exclude them
 - Use descriptive error messages
 - Validate form inputs before submission
 - Show validation errors inline next to form fields
+
+## Schema Import Pattern
+
+```tsx
+// ✅ CORRECT: Import schema from action folder
+import {
+  updateRsvpSettingsSchema,
+  type UpdateRsvpSettingsInput,
+} from "@/actions/storeAdmin/rsvpSettings/update-rsvp-settings.validation";
+
+// Form type: Omit fields that are added in submit handler (e.g., storeId)
+type FormValues = Omit<UpdateRsvpSettingsInput, "storeId">;
+
+const form = useForm<FormValues>({
+  resolver: zodResolver(updateRsvpSettingsSchema.omit({ storeId: true })),
+  defaultValues,
+});
+```
+
+```tsx
+// ❌ WRONG: Don't define local schema in component
+const formSchema = z.object({
+  // ... fields
+});
+```
+
+## Conditional Schema Usage (Create vs Update)
+
+When a form handles both create and update operations:
+
+```tsx
+import {
+  createFacilitySchema,
+  type CreateFacilityInput,
+} from "@/actions/storeAdmin/facility/create-facility.validation";
+import {
+  updateFacilitySchema,
+  type UpdateFacilityInput,
+} from "@/actions/storeAdmin/facility/update-facility.validation";
+
+const isEditMode = Boolean(facility) && !isNew;
+
+// Use createFacilitySchema when isNew, updateFacilitySchema when editing
+const schema = useMemo(
+  () => (isEditMode ? updateFacilitySchema : createFacilitySchema),
+  [isEditMode],
+);
+
+// Form input type: UpdateFacilityInput when editing, CreateFacilityInput when creating
+type FormInput = Omit<UpdateFacilityInput, "id"> & { id?: string };
+
+const form = useForm<FormInput>({
+  resolver: zodResolver(schema) as Resolver<FormInput>,
+  defaultValues,
+});
+```
