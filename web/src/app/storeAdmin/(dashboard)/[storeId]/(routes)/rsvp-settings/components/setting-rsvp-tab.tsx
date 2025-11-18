@@ -155,59 +155,61 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 							<h3 className="text-lg font-semibold">
 								{t("RSVP_Basic_Settings")}
 							</h3>
-							<FormField
-								control={form.control}
-								name="acceptReservation"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>
-												{t("StoreSettings_acceptReservation")}
-											</FormLabel>
-											<FormDescription>
-												{t("StoreSettings_acceptReservation_descr")}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+								<FormField
+									control={form.control}
+									name="acceptReservation"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+											<div className="space-y-0.5">
+												<FormLabel>
+													{t("StoreSettings_acceptReservation")}
+												</FormLabel>
+												<FormDescription>
+													{t("StoreSettings_acceptReservation_descr")}
+												</FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
 
-							<FormField
-								control={form.control}
-								name="defaultDuration"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("RSVP_Default_Duration")}</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												disabled={loading || form.formState.isSubmitting}
-												value={field.value?.toString() ?? ""}
-												onChange={(event) =>
-													field.onChange(Number(event.target.value))
-												}
-											/>
-										</FormControl>
-										<FormDescription>
-											{t("RSVP_Default_Duration_Descr")}
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+								<FormField
+									control={form.control}
+									name="defaultDuration"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("RSVP_Default_Duration")}</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													disabled={loading || form.formState.isSubmitting}
+													value={field.value?.toString() ?? ""}
+													onChange={(event) =>
+														field.onChange(Number(event.target.value))
+													}
+												/>
+											</FormControl>
+											<FormDescription>
+												{t("RSVP_Default_Duration_Descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
 
 							<FormField
 								control={form.control}
 								name="useBusinessHours"
 								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
 											<FormLabel>{t("RSVP_Use_Business_Hours")}</FormLabel>
 											<FormDescription>
@@ -225,27 +227,29 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 								)}
 							/>
 
-							<FormField
-								control={form.control}
-								name="rsvpHours"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("RSVP_Hours")}</FormLabel>
-										<FormControl>
-											<Textarea
-												disabled={loading || form.formState.isSubmitting}
-												placeholder="M-F 09:00-18:00"
-												value={field.value ?? ""}
-												onChange={(event) =>
-													field.onChange(event.target.value || null)
-												}
-											/>
-										</FormControl>
-										<FormDescription>{t("RSVP_Hours_Descr")}</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+							{!form.watch("useBusinessHours") && (
+								<FormField
+									control={form.control}
+									name="rsvpHours"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("RSVP_Hours")}</FormLabel>
+											<FormControl>
+												<Textarea
+													disabled={loading || form.formState.isSubmitting}
+													className="font-mono min-h-100"
+													value={field.value ?? ""}
+													onChange={(event) =>
+														field.onChange(event.target.value || null)
+													}
+												/>
+											</FormControl>
+											<FormDescription>{t("RSVP_Hours_Descr")}</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							)}
 						</div>
 
 						<Separator />
@@ -259,7 +263,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 								control={form.control}
 								name="prepaidRequired"
 								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
 											<FormLabel>{t("RSVP_Prepaid_Required")}</FormLabel>
 											<FormDescription>
@@ -321,7 +325,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 								control={form.control}
 								name="canCancel"
 								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
 											<FormLabel>{t("RSVP_Can_Cancel")}</FormLabel>
 											<FormDescription>
@@ -377,7 +381,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 								control={form.control}
 								name="showCostToCustomer"
 								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
 											<FormLabel>{t("RSVP_Show_Cost")}</FormLabel>
 											<FormDescription>
@@ -399,7 +403,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 								control={form.control}
 								name="requireSignature"
 								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
 											<FormLabel>{t("RSVP_Require_Signature")}</FormLabel>
 											<FormDescription>
@@ -449,126 +453,117 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 								)}
 							/>
 
-							<FormField
-								control={form.control}
-								name="useReminderEmail"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>{t("RSVP_Reminder_Email")}</FormLabel>
-											<FormDescription>
-												{t("RSVP_Reminder_Email_Descr")}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+							<div className="grid grid-flow-row-dense grid-cols-3 gap-1">
+								<FormField
+									control={form.control}
+									name="useReminderEmail"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+											<div className="space-y-0.5">
+												<FormLabel>{t("RSVP_Reminder_Email")}</FormLabel>
+												<FormDescription></FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
 
-							<FormField
-								control={form.control}
-								name="useReminderSMS"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>{t("RSVP_Reminder_SMS")}</FormLabel>
-											<FormDescription>
-												{t("RSVP_Reminder_SMS_Descr")}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+								<FormField
+									control={form.control}
+									name="useReminderSMS"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+											<div className="space-y-0.5">
+												<FormLabel>{t("RSVP_Reminder_SMS")}</FormLabel>
+												<FormDescription></FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
 
-							<FormField
-								control={form.control}
-								name="useReminderLine"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>{t("RSVP_Reminder_Line")}</FormLabel>
-											<FormDescription>
-												{t("RSVP_Reminder_Line_Descr")}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+								<FormField
+									control={form.control}
+									name="useReminderLine"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+											<div className="space-y-0.5">
+												<FormLabel>{t("RSVP_Reminder_Line")}</FormLabel>
+												<FormDescription></FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+							</div>
 						</div>
 
 						<Separator />
 
 						{/* Calendar Sync Settings */}
 						<div className="space-y-4">
-							<h3 className="text-lg font-semibold">
-								{t("RSVP_Calendar_Sync")}
-							</h3>
-							<FormField
-								control={form.control}
-								name="syncWithGoogle"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>{t("RSVP_Sync_Google")}</FormLabel>
-											<FormDescription>
-												{t("RSVP_Sync_Google_Descr")}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+								<FormField
+									control={form.control}
+									name="syncWithGoogle"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+											<div className="space-y-0.5">
+												<FormLabel>{t("RSVP_Sync_Google")}</FormLabel>
+												<FormDescription></FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
 
-							<FormField
-								control={form.control}
-								name="syncWithApple"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>{t("RSVP_Sync_Apple")}</FormLabel>
-											<FormDescription>
-												{t("RSVP_Sync_Apple_Descr")}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+								<FormField
+									control={form.control}
+									name="syncWithApple"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+											<div className="space-y-0.5">
+												<FormLabel>{t("RSVP_Sync_Apple")}</FormLabel>
+												<FormDescription></FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+							</div>
 						</div>
 
-						<div className="flex justify-end space-x-2 pt-4">
+						<div className="flex space-x-2 pt-4">
 							<Button
 								type="submit"
 								disabled={

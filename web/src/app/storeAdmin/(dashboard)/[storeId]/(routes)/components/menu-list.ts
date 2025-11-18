@@ -234,7 +234,7 @@ export function GetMenuList(
 				},
 				{
 					href: `${nav_prefix}/rsvp-settings`,
-					label: t("StoreSettingsTab_RSVP"),
+					label: t("RSVP_Tab_System"),
 					active: pathname.includes(`${nav_prefix}/rsvp-settings`),
 					icon: IconCalendarCheck,
 					submenus: [],

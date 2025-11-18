@@ -85,18 +85,18 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 			<Tabs defaultValue="rsvp" className="w-full">
 				<TabsList>
 					<TabsTrigger className="px-1 lg:min-w-25" value="rsvp">
-						{t("StoreSettingsTab_RSVP")}
+						{t("RSVP_Tab_System")}
 					</TabsTrigger>
 					<TabsTrigger className="px-1 lg:min-w-25" value="credit">
-						儲值金/紅利點數
+						{t("RSVP_Tab_Credit")}
 					</TabsTrigger>
 
 					<TabsTrigger className="px-1 lg:min-w-25" value="tag">
-						會員標籤
+						{t("RSVP_Tab_Tag")}
 					</TabsTrigger>
 
 					<TabsTrigger className="px-1 lg:min-w-25" value="blacklist">
-						黑名單
+						{t("RSVP_Tab_Blacklist")}
 					</TabsTrigger>
 				</TabsList>
 
