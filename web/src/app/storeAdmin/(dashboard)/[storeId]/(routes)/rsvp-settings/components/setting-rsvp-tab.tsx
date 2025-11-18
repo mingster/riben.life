@@ -1,14 +1,11 @@
 "use client";
 import { toastError, toastSuccess } from "@/components/toaster";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-
-import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,75 +15,100 @@ import {
 	FormField,
 	FormItem,
 	FormLabel,
+	FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 
+import { updateRsvpSettingsAction } from "@/actions/storeAdmin/rsvpSettings/update-rsvp-settings";
+import {
+	updateRsvpSettingsSchema,
+	type UpdateRsvpSettingsInput,
+} from "@/actions/storeAdmin/rsvpSettings/update-rsvp-settings.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { RsvpSettingsProps } from "./tabs";
-import { updateStoreRsvpAction } from "@/actions/storeAdmin/settings/update-store-rsvp";
-import type { UpdateStoreRsvpInput } from "@/actions/storeAdmin/settings/update-store-rsvp.validation";
-import type { Store } from "@/types";
 
-const formSchema = z.object({
-	acceptReservation: z.boolean().default(true),
-});
-
-type formValues = z.infer<typeof formSchema>;
+type FormValues = Omit<UpdateRsvpSettingsInput, "storeId">;
 
 export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 	store,
+	rsvpSettings,
 	onStoreUpdated,
 }) => {
 	const params = useParams();
 	const router = useRouter();
 
-	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
-	//const [openAddNew, setOpenAddNew] = useState(false);
 
-	const defaultValues = store
-		? {
-				...store,
-			}
-		: {};
-
-	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
-	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema) as any,
-		defaultValues,
-	});
-
-	/*
-  const [isSubmittable, setIsSubmittable] = useState(
-	!!form.formState.isDirty && !!form.formState.isValid,
-  );
-  useEffect(() => {
-	setIsSubmittable(!!form.formState.isDirty && !!form.formState.isValid);
-  }, [form.formState]);
-  logger.info("Operation log");
-
-  const useBusinessHours = form.watch("useBusinessHours");
-  logger.info("Operation log");
-  //form.setValue("isOpen", !useBusinessHours);
-  */
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-	//console.log(`form error: ${JSON.stringify(form.formState.errors)}`);
-	const onSubmit = async (data: formValues) => {
+
+	const defaultValues: FormValues = rsvpSettings
+		? {
+				acceptReservation: rsvpSettings.acceptReservation,
+				prepaidRequired: rsvpSettings.prepaidRequired,
+				prepaidAmount:
+					rsvpSettings.prepaidAmount !== null
+						? Number(rsvpSettings.prepaidAmount)
+						: null,
+				canCancel: rsvpSettings.canCancel,
+				cancelHours: rsvpSettings.cancelHours,
+				defaultDuration: rsvpSettings.defaultDuration,
+				requireSignature: rsvpSettings.requireSignature,
+				showCostToCustomer: rsvpSettings.showCostToCustomer,
+				useBusinessHours: rsvpSettings.useBusinessHours,
+				rsvpHours: rsvpSettings.rsvpHours,
+				reminderHours: rsvpSettings.reminderHours,
+				useReminderSMS: rsvpSettings.useReminderSMS,
+				useReminderLine: rsvpSettings.useReminderLine,
+				useReminderEmail: rsvpSettings.useReminderEmail,
+				syncWithGoogle: rsvpSettings.syncWithGoogle,
+				syncWithApple: rsvpSettings.syncWithApple,
+			}
+		: {
+				acceptReservation: true,
+				prepaidRequired: false,
+				prepaidAmount: null,
+				canCancel: true,
+				cancelHours: 24,
+				defaultDuration: 60,
+				requireSignature: false,
+				showCostToCustomer: false,
+				useBusinessHours: true,
+				rsvpHours: null,
+				reminderHours: 24,
+				useReminderSMS: false,
+				useReminderLine: false,
+				useReminderEmail: false,
+				syncWithGoogle: false,
+				syncWithApple: false,
+			};
+
+	const form = useForm<FormValues>({
+		resolver: zodResolver(
+			updateRsvpSettingsSchema.omit({ storeId: true }),
+		) as any,
+		defaultValues,
+		mode: "onChange",
+		reValidateMode: "onChange",
+	});
+
+	const onSubmit = async (data: FormValues) => {
 		try {
 			setLoading(true);
 
-			const payload: UpdateStoreRsvpInput = {
+			const payload: UpdateRsvpSettingsInput = {
 				storeId: params.storeId as string,
-				acceptReservation: data.acceptReservation,
+				...data,
 			};
 
-			const result = await updateStoreRsvpAction(payload);
+			const result = await updateRsvpSettingsAction(payload);
 
 			if (result?.serverError) {
 				toastError({ title: t("Error"), description: result.serverError });
 			} else if (result?.data) {
-				// RsvpSettings updated, refresh the page data
 				router.refresh();
 
 				toastSuccess({
@@ -95,48 +117,49 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 				});
 			}
 		} catch (error: unknown) {
-			const err = error as AxiosError;
 			toastError({
-				title: "Something went wrong.",
-				description: err.message,
+				title: t("Error"),
+				description:
+					error instanceof Error ? error.message : "Something went wrong.",
 			});
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	//
-	//https://tinybook.cc/courses/
-	//https://menushop.tw/booking_system
-
-	//Google預訂:在Google搜尋、地圖上新增您的「訂位」按鈕
-
 	return (
-		<>
-			<Card>
-				<CardContent className="">
-					<Form {...form}>
-						<form
-							onSubmit={form.handleSubmit(onSubmit)}
-							className="w-full space-y-1"
-						>
-							<div className="grid grid-flow-row-dense grid-cols-1 gap-1">
-								預付制：儲值後才可預約 Yes / No ？小時內可預約 ？小時前可取消
-								無需確認，直接接受預約 開放預約時段
-							</div>
-							預約提醒與通知 ？小時前發送確認通知 簡訊和 Line官方帳號
-							電子簽名:客戶需確認簽名 同步Google月曆 同步Apple日曆 會員系統
-							消費習慣、數據統計 會員標籤
-							依據客人習性、喜好，給予不同的標籤進行分群分眾，還能依據標籤群發訊息，給予最貼心的促銷。
-							黑名單/觀察名單
-							壞客人、爽約、殺價客，你可以透過黑名單功能限制客人預約，經營不再煩惱。
-							儲值金/紅利點數
-							支援你的營運，直覺管理會員的儲值金跟紅利點數，會員也可以自行查看。
+		<Card>
+			<CardHeader>
+				<CardTitle>{t("StoreSettings_RSVP")}</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<Form {...form}>
+					<form
+						onSubmit={form.handleSubmit(onSubmit, (errors) => {
+							const firstErrorKey = Object.keys(errors)[0];
+							if (firstErrorKey) {
+								const error = errors[firstErrorKey as keyof typeof errors];
+								const errorMessage = error?.message;
+								if (errorMessage) {
+									toastError({
+										title: t("Error"),
+										description: errorMessage,
+									});
+								}
+							}
+						})}
+						className="space-y-6"
+					>
+						{/* Basic Settings */}
+						<div className="space-y-4">
+							<h3 className="text-lg font-semibold">
+								{t("RSVP_Basic_Settings")}
+							</h3>
 							<FormField
 								control={form.control}
 								name="acceptReservation"
 								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
 										<div className="space-y-0.5">
 											<FormLabel>
 												{t("StoreSettings_acceptReservation")}
@@ -149,38 +172,426 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 											<Switch
 												checked={field.value}
 												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
 											/>
 										</FormControl>
 									</FormItem>
 								)}
 							/>
+
+							<FormField
+								control={form.control}
+								name="defaultDuration"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("RSVP_Default_Duration")}</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading || form.formState.isSubmitting}
+												value={field.value?.toString() ?? ""}
+												onChange={(event) =>
+													field.onChange(Number(event.target.value))
+												}
+											/>
+										</FormControl>
+										<FormDescription>
+											{t("RSVP_Default_Duration_Descr")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="useBusinessHours"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("RSVP_Use_Business_Hours")}</FormLabel>
+											<FormDescription>
+												{t("RSVP_Use_Business_Hours_Descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="rsvpHours"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("RSVP_Hours")}</FormLabel>
+										<FormControl>
+											<Textarea
+												disabled={loading || form.formState.isSubmitting}
+												placeholder="M-F 09:00-18:00"
+												value={field.value ?? ""}
+												onChange={(event) =>
+													field.onChange(event.target.value || null)
+												}
+											/>
+										</FormControl>
+										<FormDescription>{t("RSVP_Hours_Descr")}</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+
+						<Separator />
+
+						{/* Prepaid Settings */}
+						<div className="space-y-4">
+							<h3 className="text-lg font-semibold">
+								{t("RSVP_Prepaid_Settings")}
+							</h3>
+							<FormField
+								control={form.control}
+								name="prepaidRequired"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("RSVP_Prepaid_Required")}</FormLabel>
+											<FormDescription>
+												{t("RSVP_Prepaid_Required_Descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							{form.watch("prepaidRequired") && (
+								<FormField
+									control={form.control}
+									name="prepaidAmount"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("RSVP_Prepaid_Amount")}</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													step="0.01"
+													disabled={loading || form.formState.isSubmitting}
+													value={
+														field.value !== null && field.value !== undefined
+															? field.value.toString()
+															: ""
+													}
+													onChange={(event) => {
+														const value = event.target.value;
+														field.onChange(value === "" ? null : Number(value));
+													}}
+												/>
+											</FormControl>
+											<FormDescription>
+												{t("RSVP_Prepaid_Amount_Descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							)}
+						</div>
+
+						<Separator />
+
+						{/* Cancellation Settings */}
+						<div className="space-y-4">
+							<h3 className="text-lg font-semibold">
+								{t("RSVP_Cancellation_Settings")}
+							</h3>
+							<FormField
+								control={form.control}
+								name="canCancel"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("RSVP_Can_Cancel")}</FormLabel>
+											<FormDescription>
+												{t("RSVP_Can_Cancel_Descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							{form.watch("canCancel") && (
+								<FormField
+									control={form.control}
+									name="cancelHours"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("RSVP_Cancel_Hours")}</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													disabled={loading || form.formState.isSubmitting}
+													value={field.value?.toString() ?? ""}
+													onChange={(event) =>
+														field.onChange(Number(event.target.value))
+													}
+												/>
+											</FormControl>
+											<FormDescription>
+												{t("RSVP_Cancel_Hours_Descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							)}
+						</div>
+
+						<Separator />
+
+						{/* Display & Signature Settings */}
+						<div className="space-y-4">
+							<h3 className="text-lg font-semibold">
+								{t("RSVP_Display_Settings")}
+							</h3>
+							<FormField
+								control={form.control}
+								name="showCostToCustomer"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("RSVP_Show_Cost")}</FormLabel>
+											<FormDescription>
+												{t("RSVP_Show_Cost_Descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="requireSignature"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("RSVP_Require_Signature")}</FormLabel>
+											<FormDescription>
+												{t("RSVP_Require_Signature_Descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+						</div>
+
+						<Separator />
+
+						{/* Reminder Settings */}
+						<div className="space-y-4">
+							<h3 className="text-lg font-semibold">
+								{t("RSVP_Reminder_Settings")}
+							</h3>
+							<FormField
+								control={form.control}
+								name="reminderHours"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("RSVP_Reminder_Hours")}</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading || form.formState.isSubmitting}
+												value={field.value?.toString() ?? ""}
+												onChange={(event) =>
+													field.onChange(Number(event.target.value))
+												}
+											/>
+										</FormControl>
+										<FormDescription>
+											{t("RSVP_Reminder_Hours_Descr")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="useReminderEmail"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("RSVP_Reminder_Email")}</FormLabel>
+											<FormDescription>
+												{t("RSVP_Reminder_Email_Descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="useReminderSMS"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("RSVP_Reminder_SMS")}</FormLabel>
+											<FormDescription>
+												{t("RSVP_Reminder_SMS_Descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="useReminderLine"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("RSVP_Reminder_Line")}</FormLabel>
+											<FormDescription>
+												{t("RSVP_Reminder_Line_Descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+						</div>
+
+						<Separator />
+
+						{/* Calendar Sync Settings */}
+						<div className="space-y-4">
+							<h3 className="text-lg font-semibold">
+								{t("RSVP_Calendar_Sync")}
+							</h3>
+							<FormField
+								control={form.control}
+								name="syncWithGoogle"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("RSVP_Sync_Google")}</FormLabel>
+											<FormDescription>
+												{t("RSVP_Sync_Google_Descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="syncWithApple"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("RSVP_Sync_Apple")}</FormLabel>
+											<FormDescription>
+												{t("RSVP_Sync_Apple_Descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+						</div>
+
+						<div className="flex justify-end space-x-2 pt-4">
 							<Button
+								type="submit"
 								disabled={
 									loading ||
 									!form.formState.isValid ||
 									form.formState.isSubmitting
 								}
 								className="disabled:opacity-25"
-								type="submit"
 							>
 								{t("Save")}
 							</Button>
 							<Button
 								type="button"
 								variant="outline"
-								onClick={() => {
-									form.clearErrors();
-									router.push("../");
-								}}
+								onClick={() => router.back()}
 								disabled={loading || form.formState.isSubmitting}
-								className="ml-2 disabled:opacity-25"
 							>
 								{t("Cancel")}
 							</Button>
-						</form>
-					</Form>
-				</CardContent>
-			</Card>
-		</>
+						</div>
+					</form>
+				</Form>
+			</CardContent>
+		</Card>
 	);
 };

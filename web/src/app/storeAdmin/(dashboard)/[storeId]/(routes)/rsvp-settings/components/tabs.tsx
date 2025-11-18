@@ -22,11 +22,34 @@ import { Heading } from "@/components/ui/heading";
 
 export interface RsvpSettingsProps {
 	store: Store;
+	rsvpSettings?: {
+		id: string;
+		storeId: string;
+		acceptReservation: boolean;
+		prepaidRequired: boolean;
+		prepaidAmount: number | null;
+		canCancel: boolean;
+		cancelHours: number;
+		defaultDuration: number;
+		requireSignature: boolean;
+		showCostToCustomer: boolean;
+		useBusinessHours: boolean;
+		rsvpHours: string | null;
+		reminderHours: number;
+		useReminderSMS: boolean;
+		useReminderLine: boolean;
+		useReminderEmail: boolean;
+		syncWithGoogle: boolean;
+		syncWithApple: boolean;
+		createdAt: Date;
+		updatedAt: Date;
+	} | null;
 	onStoreUpdated?: (store: Store) => void;
 }
 
 export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 	store,
+	rsvpSettings,
 	onStoreUpdated,
 }) => {
 	const router = useRouter();
@@ -78,7 +101,11 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 				</TabsList>
 
 				<TabsContent value="rsvp">
-					<RsvpSettingTab store={store} onStoreUpdated={onStoreUpdated} />
+					<RsvpSettingTab
+						store={store}
+						rsvpSettings={rsvpSettings}
+						onStoreUpdated={onStoreUpdated}
+					/>
 				</TabsContent>
 			</Tabs>
 		</>

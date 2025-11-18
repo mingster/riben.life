@@ -53,9 +53,10 @@ export function BulkAddFacilitiesDialog({
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-
 	const form = useForm<CreateFacilitiesInput>({
-		resolver: zodResolver(createFacilitiesSchema) as Resolver<CreateFacilitiesInput>,
+		resolver: zodResolver(
+			createFacilitiesSchema,
+		) as Resolver<CreateFacilitiesInput>,
 		defaultValues: {
 			storeId: String(params.storeId),
 			prefix: "",
@@ -68,7 +69,6 @@ export function BulkAddFacilitiesDialog({
 		mode: "onChange",
 		reValidateMode: "onChange",
 	});
-
 
 	const onSubmit = async (values: CreateFacilitiesInput) => {
 		setLoading(true);
@@ -293,6 +293,7 @@ export function BulkAddFacilitiesDialog({
 						<div className="flex w-full items-center justify-end space-x-2 pt-2">
 							<Button
 								type="submit"
+								className="disabled:opacity-25"
 								disabled={
 									loading ||
 									!form.formState.isValid ||
