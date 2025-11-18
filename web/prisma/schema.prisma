@@ -568,6 +568,7 @@ model Store {
   rsvpBlacklists             RsvpBlacklist[]
   rsvpTags                   RsvpTag[]
   customerCredits            CustomerCredit[]
+  facilityPricingRules       FacilityPricingRule[]
 
   @@index([ownerId])
   @@index([name])
@@ -696,18 +697,25 @@ model Rsvp {
   confirmedByStore    Boolean @default(false) //店家已確認預約
   confirmedByCustomer Boolean @default(false) //客戶已確認預約
 
+  // Pricing at time of reservation
+  facilityCost   Decimal? // The cost that was charged
+  facilityCredit Decimal? // The credit that was charged
+  pricingRuleId  String? // Reference to the pricing rule used
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User     User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Order    StoreOrder?    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  Facility StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  Store               Store                @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User                User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Order               StoreOrder?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Facility            StoreFacility?       @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  FacilityPricingRule FacilityPricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
   @@index([userId])
   @@index([orderId])
   @@index([facilityId])
+  @@index([pricingRuleId])
 }
 
 model StoreFacility {
@@ -715,16 +723,55 @@ model StoreFacility {
   storeId         String
   facilityName    String
   capacity        Int     @default(4)
-  defaultCost     Decimal @default(0)
-  defaultCredit   Decimal @default(0)
-  defaultDuration Int     @default(60)  //60 minutes
+  defaultCost     Decimal @default(0) // default cost for using the facility
+  defaultCredit   Decimal @default(0) // default credit for using the facility
+  defaultDuration Int     @default(60) // default duration for using the facility in minutes
 
-  Store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Rsvp  Rsvp[]
+  Store                Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Rsvp                 Rsvp[]
+  FacilityPricingRules FacilityPricingRule[]
 
   @@unique([storeId, facilityName])
   @@index([storeId])
   @@index([facilityName])
+}
+
+model FacilityPricingRule {
+  id         String  @id @default(uuid())
+  storeId    String
+  facilityId String? // null = applies to all facilities in store
+  name       String // e.g., "Weekend Pricing", "Peak Hours"
+  priority   Int     @default(0) // Higher priority = evaluated first
+
+  // Day of week rules
+  // null = applies to all days
+  // Array of day numbers: 0=Sunday, 1=Monday, ..., 6=Saturday
+  // Special values: "weekend" = [0, 6], "weekday" = [1,2,3,4,5]
+  dayOfWeek String? // JSON array: [0,6] or "weekend" or "weekday" or null
+
+  // Time range (in store's timezone)
+  startTime String? // HH:mm format, e.g., "18:00"
+  endTime   String? // HH:mm format, e.g., "22:00"
+  // If both null, applies to all times
+
+  // Pricing
+  cost   Decimal? // Override defaultCost (null = use facility default)
+  credit Decimal? // Override defaultCredit (null = use facility default)
+
+  // Status
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Facility StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  rsvps    Rsvp[]
+
+  @@index([storeId])
+  @@index([facilityId])
+  @@index([storeId, facilityId, isActive])
+  @@index([priority])
 }
 
 model StoreAnnouncement {
