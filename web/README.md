@@ -1,8 +1,8 @@
 # Riben.life Web Application
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/mingster/riben.life2/CI?label=build)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/mingster/riben.life/CI?label=build)
 
-[![Coverage](https://img.shields.io/badge/Coverage-83%25-brightgreen.svg)](https://v2.5ik.tv/coverage/report.html)
+[![Coverage](https://img.shields.io/badge/Coverage-83%25-brightgreen.svg)](https://riben.life/coverage/report.html)
 
 [![Dependencies](https://img.shields.io/librariesio/release/npm/riben.life)](https://libraries.io/npm/riben.life)
 

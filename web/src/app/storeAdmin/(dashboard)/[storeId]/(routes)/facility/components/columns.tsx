@@ -47,16 +47,16 @@ export const createTableColumns = (
 
 	return [
 		{
-			accessorKey: "tableName",
+			accessorKey: "facilityName",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("StoreTable_Name")} />
+				<DataTableColumnHeader column={column} title={t("Facility_Name")} />
 			),
-			cell: ({ row }) => <span>{row.getValue("tableName") as string}</span>,
+			cell: ({ row }) => <span>{row.getValue("facilityName") as string}</span>,
 		},
 		{
 			accessorKey: "capacity",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("StoreTable_Seats")} />
+				<DataTableColumnHeader column={column} title={t("Facility_Seats")} />
 			),
 		},
 		{

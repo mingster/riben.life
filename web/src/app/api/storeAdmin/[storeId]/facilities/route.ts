@@ -1,12 +1,9 @@
-import getStoreTables from "@/actions/get-store-tables";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
-import type { StoreFacility } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
-import logger from "@/lib/logger";
 
-///!SECTION create new store table.
+///!SECTION create new store facility.
 export async function POST(
 	req: Request,
 	props: { params: Promise<{ storeId: string }> },
@@ -16,13 +13,13 @@ export async function POST(
 		CheckStoreAdminApiAccess(params.storeId);
 
 		const body = await req.json();
-		const { prefix, numOfTables, capacity } = body;
+		const { prefix, numOfFacilities, capacity } = body;
 
-		for (let i = 1; i < numOfTables + 1; i++) {
+		for (let i = 1; i < numOfFacilities + 1; i++) {
 			await sqlClient.storeFacility.create({
 				data: {
 					storeId: params.storeId,
-					tableName: `${prefix}${i}`,
+					facilityName: `${prefix}${i}`, // e.g. "A1", "A2", "A3"
 					capacity,
 				},
 			});
@@ -30,7 +27,7 @@ export async function POST(
 
 		return NextResponse.json({ success: true });
 	} catch (error) {
-		logger.info("tables post", {
+		logger.info("create new store facility", {
 			metadata: {
 				error: error instanceof Error ? error.message : String(error),
 			},
@@ -48,14 +45,14 @@ export async function GET(
 	const params = await props.params;
 	CheckStoreAdminApiAccess(params.storeId);
 
-	const tables = await sqlClient.storeFacility.findMany({
+	const facilities = await sqlClient.storeFacility.findMany({
 		where: {
 			storeId: params.storeId,
 		},
 		orderBy: {
-			tableName: "asc",
+			facilityName: "asc",
 		},
 	});
 
-	return NextResponse.json(tables);
+	return NextResponse.json(facilities);
 }

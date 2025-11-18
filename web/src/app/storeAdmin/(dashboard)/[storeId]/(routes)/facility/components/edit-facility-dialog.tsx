@@ -1,7 +1,5 @@
 "use client";
 
-import { createStoreTableAction } from "@/actions/storeAdmin/tables/create-store-table";
-import { updateStoreTableAction } from "@/actions/storeAdmin/tables/update-store-table";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -25,40 +23,41 @@ import {
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconPlus } from "@tabler/icons-react";
 import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { TableColumn } from "../table-column";
+import { createFacilityAction } from "@/actions/storeAdmin/facility/create-facility";
+import { updateFacilityAction } from "@/actions/storeAdmin/facility/update-facility";
 
 const formSchema = z.object({
-	tableName: z.string().min(1, { message: "name is required" }),
+	facilityName: z.string().min(1, { message: "name is required" }),
 	capacity: z.coerce.number().int().min(1),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface EditStoreTableDialogProps {
-	table?: TableColumn | null;
+interface EditFacilityDialogProps {
+	facility?: TableColumn | null;
 	isNew?: boolean;
 	trigger?: React.ReactNode;
-	onCreated?: (table: TableColumn) => void;
-	onUpdated?: (table: TableColumn) => void;
+	onCreated?: (facility: TableColumn) => void;
+	onUpdated?: (facility: TableColumn) => void;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 }
 
-export function EditStoreTableDialog({
-	table,
+export function EditFacilityDialog({
+	facility,
 	isNew = false,
 	trigger,
 	onCreated,
 	onUpdated,
 	open,
 	onOpenChange,
-}: EditStoreTableDialogProps) {
+}: EditFacilityDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -66,14 +65,14 @@ export function EditStoreTableDialog({
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	const isEditMode = Boolean(table) && !isNew;
+	const isEditMode = Boolean(facility) && !isNew;
 
 	const defaultValues = useMemo<FormValues>(
 		() => ({
-			tableName: table?.tableName ?? "",
-			capacity: table?.capacity ?? 2,
+			facilityName: facility?.facilityName ?? "",
+			capacity: facility?.capacity ?? 2,
 		}),
-		[table],
+		[facility],
 	);
 
 	const form = useForm<FormValues>({
@@ -98,11 +97,11 @@ export function EditStoreTableDialog({
 		}
 	};
 
-	const handleSuccess = (updatedTable: TableColumn) => {
+	const handleSuccess = (updatedFacility: TableColumn) => {
 		if (isEditMode) {
-			onUpdated?.(updatedTable);
+			onUpdated?.(updatedFacility);
 		} else {
-			onCreated?.(updatedTable);
+			onCreated?.(updatedFacility);
 		}
 
 		toastSuccess({
@@ -119,9 +118,9 @@ export function EditStoreTableDialog({
 			setLoading(true);
 
 			if (!isEditMode) {
-				const result = await createStoreTableAction({
+				const result = await createFacilityAction({
 					storeId: String(params.storeId),
-					tableName: values.tableName,
+					facilityName: values.facilityName,
 					capacity: values.capacity,
 				});
 
@@ -133,23 +132,23 @@ export function EditStoreTableDialog({
 					return;
 				}
 
-				if (result?.data?.table) {
-					handleSuccess(result.data.table);
+				if (result?.data?.facility) {
+					handleSuccess(result.data.facility);
 				}
 			} else {
-				const tableId = table?.id;
-				if (!tableId) {
+				const facilityId = facility?.id;
+				if (!facilityId) {
 					toastError({
 						title: t("Error"),
-						description: "Table not found.",
+						description: "Facility not found.",
 					});
 					return;
 				}
 
-				const result = await updateStoreTableAction({
+				const result = await updateFacilityAction({
 					storeId: String(params.storeId),
-					id: tableId,
-					tableName: values.tableName,
+					id: facilityId,
+					facilityName: values.facilityName,
 					capacity: values.capacity,
 				});
 
@@ -161,8 +160,8 @@ export function EditStoreTableDialog({
 					return;
 				}
 
-				if (result?.data?.table) {
-					handleSuccess(result.data.table);
+				if (result?.data?.facility) {
+					handleSuccess(result.data.facility);
 				}
 			}
 		} catch (error: unknown) {
@@ -181,12 +180,12 @@ export function EditStoreTableDialog({
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>
-						{isEditMode ? t("StoreTable_Mgmt_Edit") : t("StoreTable_Mgmt_Add")}
+						{isEditMode ? t("Facility_Mgmt_Edit") : t("Facility_Mgmt_Add")}
 					</DialogTitle>
 					<DialogDescription>
 						{isEditMode
-							? t("StoreTable_Name_Descr")
-							: t("StoreTable_Mgmt_Add_Descr")}
+							? t("Facility_Name_Descr")
+							: t("Facility_Mgmt_Add_Descr")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -194,10 +193,10 @@ export function EditStoreTableDialog({
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 						<FormField
 							control={form.control}
-							name="tableName"
+							name="facilityName"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("StoreTable_Name")}</FormLabel>
+									<FormLabel>{t("Facility_Name")}</FormLabel>
 									<FormControl>
 										<Input
 											type="text"
@@ -215,7 +214,7 @@ export function EditStoreTableDialog({
 							name="capacity"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("StoreTable_Seats")}</FormLabel>
+									<FormLabel>{t("Facility_Seats")}</FormLabel>
 									<FormControl>
 										<Input
 											type="number"

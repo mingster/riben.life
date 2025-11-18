@@ -25,7 +25,7 @@ export default async function CashCashierAdminPage(props: {
 		await getStoreWithRelations(params.storeId),
 		sqlClient.storeFacility.findMany({
 			where: { storeId: params.storeId },
-			orderBy: { tableName: "asc" },
+			orderBy: { facilityName: "asc" },
 		}),
 	]);
 

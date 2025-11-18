@@ -2,20 +2,20 @@ import { sqlClient } from "@/lib/prismadb";
 
 import type { StoreFacility } from "@prisma/client";
 
-const getStoreTables = async (storeId: string): Promise<StoreFacility[]> => {
+const getFacilities = async (storeId: string): Promise<StoreFacility[]> => {
 	if (!storeId) {
 		throw Error("storeId is required");
 	}
 
-	const tables = await sqlClient.storeFacility.findMany({
+	const facilities = await sqlClient.storeFacility.findMany({
 		where: {
 			storeId: storeId,
 		},
 		orderBy: {
-			tableName: "asc",
+			facilityName: "asc",
 		},
 	});
 
-	return tables;
+	return facilities;
 };
-export default getStoreTables;
+export default getFacilities;

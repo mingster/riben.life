@@ -1,6 +1,6 @@
 "use client";
 
-import { createStoreTablesAction } from "@/actions/storeAdmin/tables/create-store-tables";
+import { createFacilitiesAction } from "@/actions/storeAdmin/facility/create-facilities";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,7 @@ interface BulkAddTablesDialogProps {
 	onCreatedMany?: (tables: TableColumn[]) => void;
 }
 
-export function BulkAddTablesDialog({
+export function BulkAddFacilitiesDialog({
 	onCreatedMany,
 }: BulkAddTablesDialogProps) {
 	const params = useParams<{ storeId: string }>();
@@ -69,10 +69,10 @@ export function BulkAddTablesDialog({
 	const onSubmit = async (values: FormValues) => {
 		setLoading(true);
 		try {
-			const result = await createStoreTablesAction({
+			const result = await createFacilitiesAction({
 				storeId: String(params.storeId),
 				prefix: values.prefix?.trim() ?? "",
-				numOfTables: values.numOfTables,
+				numOfFacilities: values.numOfTables,
 				capacity: values.capacity,
 			});
 
@@ -84,11 +84,11 @@ export function BulkAddTablesDialog({
 				return;
 			}
 
-			const createdTables = result?.data?.createdTables ?? [];
-			onCreatedMany?.(createdTables);
+			const createdFacilities = result?.data?.createdFacilities ?? [];
+			onCreatedMany?.(createdFacilities);
 
 			toastSuccess({
-				title: t("storeTables") + t("Created"),
+				title: t("Facility") + t("Created"),
 				description: "",
 			});
 
@@ -124,15 +124,13 @@ export function BulkAddTablesDialog({
 			<DialogTrigger asChild>
 				<Button variant="outline" onClick={() => setOpen(true)}>
 					<IconPlus className="mr-0 size-4" />
-					{t("StoreTable_Mgmt_AddButton")}
+					{t("Facility_Mgmt_AddButton")}
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>{t("StoreTable_Mgmt_Add")}</DialogTitle>
-					<DialogDescription>
-						{t("StoreTable_Mgmt_Add_Descr")}
-					</DialogDescription>
+					<DialogTitle>{t("Facility_Mgmt_Add")}</DialogTitle>
+					<DialogDescription>{t("Facility_Mgmt_Add_Descr")}</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>
@@ -142,7 +140,7 @@ export function BulkAddTablesDialog({
 							name="prefix"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("StoreTable_Mgmt_Prefix")}</FormLabel>
+									<FormLabel>{t("Facility_Mgmt_Prefix")}</FormLabel>
 									<FormControl>
 										<Input
 											type="text"
@@ -152,7 +150,7 @@ export function BulkAddTablesDialog({
 										/>
 									</FormControl>
 									<FormDescription>
-										{t("StoreTable_Mgmt_Prefix_Descr")}
+										{t("Facility_Mgmt_Prefix_Descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -163,7 +161,7 @@ export function BulkAddTablesDialog({
 							name="numOfTables"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("StoreTable_NumToAdd")}</FormLabel>
+									<FormLabel>{t("Facility_NumToAdd")}</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -183,7 +181,7 @@ export function BulkAddTablesDialog({
 							name="capacity"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("StoreTable_Seats")}</FormLabel>
+									<FormLabel>{t("Facility_Seats")}</FormLabel>
 									<FormControl>
 										<Input
 											type="number"

@@ -11,7 +11,7 @@ export const highlight_css = "border-dashed border-green-500 border-2";
 
 /*
 export function getTableName(tables: StoreFacility[], tableId: string) {
-  return tables.find((table) => table.id === tableId)?.tableName || "";
+  return tables.find((table) => table.id === tableId)?.facilityName || "";
 }
 */
 

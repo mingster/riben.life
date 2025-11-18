@@ -64,11 +64,11 @@ export const QrCodeClient: React.FC<props> = ({ store, tables }) => {
 					{tables.map((table) => (
 						<div key={table.id}>
 							<h2>
-								{table.tableName}
+								{table.facilityName}
 								<Link
 									title={`${takeoffUrl}/${table.id}`}
 									href={`${takeoffUrl}/${table.id}`}
-									aria-label={`QR code for table ${table.tableName} ordering at ${store.storeName}`}
+									aria-label={`QR code for table ${table.facilityName} ordering at ${store.storeName}`}
 								>
 									{/* eslint-disable-next-line jsx-a11y/alt-text */}
 									<Image

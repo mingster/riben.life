@@ -495,10 +495,10 @@ model SubscriptionPayment {
 }
 
 model CustomerCredit {
-  id        String   @id @default(uuid())
-  storeId   String
-  userId    String
-  credit    Decimal  @default(0)
+  id      String  @id @default(uuid())
+  storeId String
+  userId  String
+  credit  Decimal @default(0)
 
   updatedAt DateTime @updatedAt
 
@@ -624,12 +624,14 @@ model RsvpSettings {
 
   acceptReservation Boolean  @default(true) // turn on/off the reservation system
   prepaidRequired   Boolean  @default(false) //預付制：儲值後才可預約 / //訂位需付訂金
-  prepaidAmount     Decimal? //預付金額
+  prepaidAmount     Decimal? //預付金額/點數
 
   canCancel   Boolean @default(true) //可取消預約
   cancelHours Int     @default(24) //取消預約時間：小時前可取消
 
-  defaultDuration Int     @default(60) //預約時間：60分鐘
+  defaultDuration    Int     @default(60) //預約時間：60分鐘
+  requireSignature   Boolean @default(false) //需要簽名
+  showCostToCustomer Boolean @default(false) //顯示預約金額
 
   useBusinessHours Boolean @default(true)
   rsvpHours        String? //營業時間：M-F 09:00-18:00
@@ -683,7 +685,7 @@ model Rsvp {
   alreadyPaid Boolean   @default(false) //已付款
   userId      String?
   orderId     String?
-  tableId     String?
+  facilityId  String?
   numOfAdult  Int       @default(1)
   numOfChild  Int       @default(0)
   rsvpTime    DateTime
@@ -697,29 +699,32 @@ model Rsvp {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Store Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User  User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Order StoreOrder?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  Facility StoreFacility? @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  Store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User     User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Order    StoreOrder?    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Facility StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
   @@index([userId])
   @@index([orderId])
-  @@index([tableId])
+  @@index([facilityId])
 }
 
 model StoreFacility {
-  id        String @id @default(uuid())
-  storeId   String
-  tableName String
-  capacity  Int    @default(2)
+  id              String  @id @default(uuid())
+  storeId         String
+  facilityName    String
+  capacity        Int     @default(4)
+  defaultCost     Decimal @default(0)
+  defaultCredit   Decimal @default(0)
+  defaultDuration Int     @default(60)  //60 minutes
 
   Store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Rsvp  Rsvp[]
 
-  @@unique([tableName])
+  @@unique([storeId, facilityName])
   @@index([storeId])
-  @@index([tableName])
+  @@index([facilityName])
 }
 
 model StoreAnnouncement {

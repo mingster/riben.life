@@ -4,21 +4,21 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeOwnerActionClient } from "@/utils/actions/safe-action";
 
-import { deleteStoreTableSchema } from "./delete-store-table.validation";
+import { deleteFacilitySchema } from "./delete-facility.validation";
 
-export const deleteStoreTableAction = storeOwnerActionClient
-	.metadata({ name: "deleteStoreTable" })
-	.schema(deleteStoreTableSchema)
+export const deleteFacilityAction = storeOwnerActionClient
+	.metadata({ name: "deleteFacility" })
+	.schema(deleteFacilitySchema)
 	.action(async ({ parsedInput }) => {
 		const { storeId, id } = parsedInput;
 
-		const table = await sqlClient.storeFacility.findUnique({
+		const facility = await sqlClient.storeFacility.findUnique({
 			where: { id },
 			select: { id: true, storeId: true },
 		});
 
-		if (!table || table.storeId !== storeId) {
-			throw new SafeError("Table not found");
+		if (!facility || facility.storeId !== storeId) {
+			throw new SafeError("Facility not found");
 		}
 
 		await sqlClient.storeFacility.delete({

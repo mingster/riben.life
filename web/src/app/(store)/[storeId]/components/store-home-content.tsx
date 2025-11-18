@@ -211,7 +211,7 @@ export const StoreHomeContent: React.FC<props> = ({
 							<div className="">
 								<div className="flex gap-2">{t("store_orderTotal")}</div>
 								<div className="text-xl font-extrabold">
-									{t("storeTables")}: {tableData.tableName}
+									{t("storeTables")}: {tableData.facilityName}
 								</div>
 								<div>{t("store_seatingTime")}</div>
 								<div>2大人 0小孩</div>

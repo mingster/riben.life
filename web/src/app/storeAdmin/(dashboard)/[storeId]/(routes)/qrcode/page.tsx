@@ -19,7 +19,7 @@ export default async function QrCodePage(props: {
 		getStoreWithRelations(params.storeId),
 		sqlClient.storeFacility.findMany({
 			where: { storeId: params.storeId },
-			orderBy: { tableName: "asc" },
+			orderBy: { facilityName: "asc" },
 		}),
 	]);
 

@@ -48,6 +48,6 @@ Place server actions in `web/src/actions/storeAdmin/RESOURCE/` using verb-first 
 - `delete-resource.ts`
 - Matching validation files: `create-resource.validation.ts`, etc.
 
-Example: tables actions use `create-store-table.ts`, `create-store-tables.ts`, `update-store-table.ts`, `delete-store-table.ts`.
+Example: tables actions use `create-facility.ts`, `create-facilitys.ts`, `update-facility.ts`, `delete-facility.ts`.
 
 Following these naming conventions keeps CRUD features predictable and consistent across the codebase.

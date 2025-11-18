@@ -1,18 +1,18 @@
 "use server";
 
-import { mapStoreTableToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/tables/table-column";
+import { mapFacilityToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/facility/table-column";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeOwnerActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
 
-import { createStoreTableSchema } from "./create-store-table.validation";
+import { createFacilitySchema } from "./create-facility.validation";
 
-export const createStoreTableAction = storeOwnerActionClient
-	.metadata({ name: "createStoreTable" })
-	.schema(createStoreTableSchema)
+export const createFacilityAction = storeOwnerActionClient
+	.metadata({ name: "createFacility" })
+	.schema(createFacilitySchema)
 	.action(async ({ parsedInput }) => {
-		const { storeId, tableName, capacity } = parsedInput;
+		const { storeId, facilityName, capacity } = parsedInput;
 
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
@@ -24,23 +24,23 @@ export const createStoreTableAction = storeOwnerActionClient
 		}
 
 		try {
-			const table = await sqlClient.storeFacility.create({
+			const facility = await sqlClient.storeFacility.create({
 				data: {
 					storeId,
-					tableName,
+					facilityName,
 					capacity,
 				},
 			});
 
 			return {
-				table: mapStoreTableToColumn(table),
+				facility: mapFacilityToColumn(facility),
 			};
 		} catch (error: unknown) {
 			if (
 				error instanceof Prisma.PrismaClientKnownRequestError &&
 				error.code === "P2002"
 			) {
-				throw new SafeError("Table name already exists.");
+				throw new SafeError("Facility name already exists.");
 			}
 
 			throw error;

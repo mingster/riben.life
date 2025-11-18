@@ -10,22 +10,22 @@ import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { createTableColumns } from "./columns";
-import { BulkAddTablesDialog } from "./bulk-add-tables-dialog";
-import { EditStoreTableDialog } from "./edit-table-dialog";
 import type { TableColumn } from "../table-column";
+import { BulkAddFacilitiesDialog } from "./bulk-add-facilities-dialog";
+import { createTableColumns } from "./columns";
+import { EditFacilityDialog } from "./edit-facility-dialog";
 
 interface TableClientProps {
 	serverData: TableColumn[];
 }
 
-export const TableClient: React.FC<TableClientProps> = ({ serverData }) => {
+export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
 	const sortTables = useCallback((tables: TableColumn[]) => {
 		return [...tables].sort((a, b) =>
-			a.tableName.localeCompare(b.tableName, undefined, {
+			a.facilityName.localeCompare(b.facilityName, undefined, {
 				numeric: true,
 				sensitivity: "base",
 			}),
@@ -95,12 +95,12 @@ export const TableClient: React.FC<TableClientProps> = ({ serverData }) => {
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("StoreTable_Mgmt")}
+					title={t("Facility_Mgmt")}
 					badge={data.length}
 					description=""
 				/>
 				<div className="flex gap-2">
-					<EditStoreTableDialog
+					<EditFacilityDialog
 						isNew
 						onCreated={handleCreated}
 						trigger={
@@ -110,14 +110,14 @@ export const TableClient: React.FC<TableClientProps> = ({ serverData }) => {
 							</Button>
 						}
 					/>
-					<BulkAddTablesDialog onCreatedMany={handleBulkCreated} />
+					<BulkAddFacilitiesDialog onCreatedMany={handleBulkCreated} />
 				</div>
 			</div>
 			<Separator />
 			<DataTable<TableColumn, unknown>
 				columns={columns}
 				data={data}
-				searchKey="tableName"
+				searchKey="facilityName"
 			/>
 		</>
 	);

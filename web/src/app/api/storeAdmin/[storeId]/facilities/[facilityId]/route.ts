@@ -1,19 +1,18 @@
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import logger from "@/lib/logger";
 
-//delete storetable by its id
+//delete store facility by its id
 export async function DELETE(
 	_req: Request,
-	props: { params: Promise<{ storeId: string; tableId: string }> },
+	props: { params: Promise<{ storeId: string; facilityId: string }> },
 ) {
 	const params = await props.params;
 	//try {
 	CheckStoreAdminApiAccess(params.storeId);
 
-	if (!params.tableId) {
+	if (!params.facilityId) {
 		return new NextResponse("table id is required", { status: 400 });
 	}
 
@@ -21,50 +20,50 @@ export async function DELETE(
 
 	const obj = await sqlClient.storeFacility.delete({
 		where: {
-			id: params.tableId,
+			id: params.facilityId,
 		},
 	});
 
-	logger.info("store table deleted", {
+	logger.info("store facility deleted", {
 		tags: ["api"],
 	});
 
 	return NextResponse.json(obj);
 	/*} catch (error) {
-    logger.info("product delete", {
-    	metadata: {
-    		error: error instanceof Error ? error.message : String(error),
-    	},
-    	tags: ["api"],
-    });
-    return new NextResponse("Internal error", { status: 500 });
+	logger.info("delete store facility", {
+		metadata: {
+			error: error instanceof Error ? error.message : String(error),
+		},
+		tags: ["api"],
+	});
+	return new NextResponse(`Internal error${error}`, { status: 500 });
   }*/
 }
 
-///!SECTION update tableId in database.
+///!SECTION update facilityId in database.
 export async function PATCH(
 	req: Request,
-	props: { params: Promise<{ storeId: string; tableId: string }> },
+	props: { params: Promise<{ storeId: string; facilityId: string }> },
 ) {
 	const params = await props.params;
 	try {
 		CheckStoreAdminApiAccess(params.storeId);
 
-		if (!params.tableId) {
+		if (!params.facilityId) {
 			return new NextResponse("table id is required", { status: 400 });
 		}
 
 		const body = await req.json();
 
-		const { tableName } = body;
+		const { facilityName } = body;
 
-		if (!tableName) {
+		if (!facilityName) {
 			return new NextResponse("Name is required", { status: 400 });
 		}
 
 		const obj = await sqlClient.storeFacility.update({
 			where: {
-				id: params.tableId,
+				id: params.facilityId,
 			},
 			data: {
 				...body,
@@ -73,7 +72,7 @@ export async function PATCH(
 
 		return NextResponse.json(obj);
 	} catch (error) {
-		logger.info("store table patch", {
+		logger.info("update store facility", {
 			metadata: {
 				error: error instanceof Error ? error.message : String(error),
 			},

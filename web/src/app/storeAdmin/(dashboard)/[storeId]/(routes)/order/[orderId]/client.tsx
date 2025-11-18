@@ -46,7 +46,7 @@ import IconButton from "@/components/ui/icon-button";
 import { useCallback, useEffect, useState } from "react";
 
 import { z } from "zod";
-import { StoreTableCombobox } from "../../components/store-table-combobox";
+import { FacilityCombobox } from "../../components/facility-combobox";
 
 import { Input } from "@/components/ui/input";
 import { OrderStatus, PageAction } from "@/types/enum";
@@ -65,7 +65,7 @@ interface props {
 }
 
 const formSchema = z.object({
-	tableId: z.string().optional().nullable(),
+	facilityId: z.string().optional().nullable(),
 	orderNum: z.number().optional(),
 	paymentMethodId: z.string().min(1, {
 		error: "payment method is required",
@@ -189,7 +189,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		//const order: StoreOrder = { /* initialize properties here */ };
 		updatedOrder.paymentMethodId = data.paymentMethodId ?? "";
 		updatedOrder.shippingMethodId = data.shippingMethodId ?? "";
-		updatedOrder.tableId = data.tableId ?? null;
+		updatedOrder.facilityId = data.facilityId ?? null;
 		updatedOrder.orderTotal = new Decimal(orderTotal);
 		// NOTE: take OrderItemView data in order object instead of fieldArray
 
@@ -619,12 +619,12 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 							/>
 							<FormField
 								control={form.control}
-								name="tableId"
+								name="facilityId"
 								render={({ field }) => (
 									<FormItem className="flex items-center space-x-1 space-y-0">
 										<FormLabel className="text-nowrap">桌號</FormLabel>
 
-										<StoreTableCombobox
+										<FacilityCombobox
 											disabled={
 												loading ||
 												form.watch("shippingMethodId") !==

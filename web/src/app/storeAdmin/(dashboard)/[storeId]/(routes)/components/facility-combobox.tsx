@@ -31,7 +31,7 @@ type ComboboxProps = {
 	onValueChange?: (newValue: string) => void;
 };
 
-export const StoreTableCombobox = ({
+export const FacilityCombobox = ({
 	storeId,
 	disabled,
 	defaultValue,
@@ -41,7 +41,7 @@ export const StoreTableCombobox = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/tables`;
+	const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/facilities`;
 	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
 	const { data, error, isLoading } = useSWR(url, fetcher);
 	let tables: StoreFacility[] = [];
@@ -52,7 +52,7 @@ export const StoreTableCombobox = ({
 	/*
   tables.push({
     id: "",
-    tableName: "---",
+    facilityName: "---",
     storeId: storeId, capacity: 0
   });
   */
@@ -80,7 +80,7 @@ export const StoreTableCombobox = ({
 							className="w-[200px] justify-between"
 						>
 							{selected
-								? tables.find((table) => table.id === selected)?.tableName
+								? tables.find((table) => table.id === selected)?.facilityName
 								: "Select a table"}
 							<CaretSortIcon className="ml-2 size-4 shrink-0 opacity-50" />
 						</Button>
@@ -98,12 +98,12 @@ export const StoreTableCombobox = ({
 											onSelect={(newValue) => {
 												//console.log('onSelect: ' + value);
 												setSelected(newValue);
-												setDisplayName(table.tableName);
+												setDisplayName(table.facilityName);
 												onValueChange?.(newValue); //return value to parent component
 												setOpen(false);
 											}}
 										>
-											{table.tableName}
+											{table.facilityName}
 											<CheckIcon
 												className={cn(
 													"ml-auto h-4 w-4",

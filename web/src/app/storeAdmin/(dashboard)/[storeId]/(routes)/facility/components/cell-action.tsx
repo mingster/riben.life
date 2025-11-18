@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
-import { deleteStoreTableAction } from "@/actions/storeAdmin/tables/delete-store-table";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -18,8 +17,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useI18n } from "@/providers/i18n-provider";
 
+import { deleteFacilityAction } from "@/actions/storeAdmin/facility/delete-facility";
 import type { TableColumn } from "../table-column";
-import { EditStoreTableDialog } from "./edit-table-dialog";
+import { EditFacilityDialog } from "./edit-facility-dialog";
 
 interface CellActionProps {
 	data: TableColumn;
@@ -42,7 +42,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 	const onConfirm = async () => {
 		try {
 			setLoading(true);
-			const result = await deleteStoreTableAction({
+			const result = await deleteFacilityAction({
 				storeId: String(params.storeId),
 				id: data.id,
 			});
@@ -56,7 +56,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 			}
 
 			toastSuccess({
-				title: t("StoreTable_Mgmt_Deleted"),
+				title: t("Facility_Mgmt_Deleted"),
 				description: "",
 			});
 			onDeleted?.(data.id);
@@ -120,9 +120,9 @@ export const CellAction: React.FC<CellActionProps> = ({
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
-			<EditStoreTableDialog
+			<EditFacilityDialog
 				isNew={false}
-				table={data}
+				facility={data}
 				onUpdated={onUpdated}
 				open={isEditOpen}
 				onOpenChange={setIsEditOpen}

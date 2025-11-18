@@ -46,7 +46,7 @@ const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
       },
     })) as StoreFacility;
 
-    if (table) obj.tableId = table.tableName;
+    if (table) obj.tableId = table.facilityName;
     //console.log(obj.tableId);
   }
   */
