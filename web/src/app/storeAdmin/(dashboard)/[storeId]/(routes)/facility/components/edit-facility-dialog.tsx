@@ -31,13 +31,14 @@ import { z } from "zod";
 import type { TableColumn } from "../table-column";
 import { createFacilityAction } from "@/actions/storeAdmin/facility/create-facility";
 import { updateFacilityAction } from "@/actions/storeAdmin/facility/update-facility";
-
-const formSchema = z.object({
-	facilityName: z.string().min(1, { message: "name is required" }),
-	capacity: z.coerce.number().int().min(1),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import {
+	createFacilitySchema,
+	type CreateFacilityInput,
+} from "@/actions/storeAdmin/facility/create-facility.validation";
+import {
+	updateFacilitySchema,
+	type UpdateFacilityInput,
+} from "@/actions/storeAdmin/facility/update-facility.validation";
 
 interface EditFacilityDialogProps {
 	facility?: TableColumn | null;
@@ -67,18 +68,43 @@ export function EditFacilityDialog({
 
 	const isEditMode = Boolean(facility) && !isNew;
 
-	const defaultValues = useMemo<FormValues>(
-		() => ({
-			facilityName: facility?.facilityName ?? "",
-			capacity: facility?.capacity ?? 2,
-		}),
-		[facility],
+	const defaultValues = facility
+		? {
+				...facility,
+			}
+		: {
+				storeId: String(params.storeId),
+				id: "",
+				facilityName: "",
+				capacity: 1,
+				defaultCost: 0,
+				defaultCredit: 0,
+				defaultDuration: 60,
+			};
+
+	// Use createFacilitySchema when isNew, updateFacilitySchema when editing
+	const schema = useMemo(
+		() => (isEditMode ? updateFacilitySchema : createFacilitySchema),
+		[isEditMode],
 	);
 
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema) as Resolver<FormValues>,
+	// Form input type: UpdateFacilityInput when editing, CreateFacilityInput when creating
+	// We use UpdateFacilityInput as base but id is optional for create mode
+	type FormInput = Omit<UpdateFacilityInput, "id"> & { id?: string };
+
+	const form = useForm<FormInput>({
+		resolver: zodResolver(schema) as Resolver<FormInput>,
 		defaultValues,
+		mode: "onChange",
+		reValidateMode: "onChange",
 	});
+
+	const {
+		register,
+		formState: { errors },
+		handleSubmit,
+		clearErrors,
+	} = form;
 
 	const isControlled = typeof open === "boolean";
 	const dialogOpen = isControlled ? open : internalOpen;
@@ -105,7 +131,7 @@ export function EditFacilityDialog({
 		}
 
 		toastSuccess({
-			title: t("storeTables") + t(isEditMode ? "Updated" : "Created"),
+			title: t("Facility") + t(isEditMode ? "Updated" : "Created"),
 			description: "",
 		});
 
@@ -113,7 +139,7 @@ export function EditFacilityDialog({
 		handleOpenChange(false);
 	};
 
-	const onSubmit = async (values: FormValues) => {
+	const onSubmit = async (values: FormInput) => {
 		try {
 			setLoading(true);
 
@@ -122,6 +148,9 @@ export function EditFacilityDialog({
 					storeId: String(params.storeId),
 					facilityName: values.facilityName,
 					capacity: values.capacity,
+					defaultCost: values.defaultCost,
+					defaultCredit: values.defaultCredit,
+					defaultDuration: values.defaultDuration,
 				});
 
 				if (result?.serverError) {
@@ -150,6 +179,9 @@ export function EditFacilityDialog({
 					id: facilityId,
 					facilityName: values.facilityName,
 					capacity: values.capacity,
+					defaultCost: values.defaultCost,
+					defaultCredit: values.defaultCredit,
+					defaultDuration: values.defaultDuration,
 				});
 
 				if (result?.serverError) {
@@ -190,7 +222,23 @@ export function EditFacilityDialog({
 				</DialogHeader>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					<form
+						onSubmit={form.handleSubmit(onSubmit, (errors) => {
+							// Show validation errors when form is invalid
+							const firstErrorKey = Object.keys(errors)[0];
+							if (firstErrorKey) {
+								const error = errors[firstErrorKey as keyof typeof errors];
+								const errorMessage = error?.message;
+								if (errorMessage) {
+									toastError({
+										title: t("Error"),
+										description: errorMessage,
+									});
+								}
+							}
+						})}
+						className="space-y-4"
+					>
 						<FormField
 							control={form.control}
 							name="facilityName"
@@ -215,6 +263,67 @@ export function EditFacilityDialog({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>{t("Facility_Seats")}</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											disabled={loading || form.formState.isSubmitting}
+											value={
+												field.value !== undefined ? field.value.toString() : ""
+											}
+											onChange={(event) => field.onChange(event.target.value)}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="defaultCredit"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("Facility_Default_Credit")}</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											disabled={loading || form.formState.isSubmitting}
+											value={
+												field.value !== undefined ? field.value.toString() : ""
+											}
+											onChange={(event) => field.onChange(event.target.value)}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="defaultCost"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("Facility_Default_Cost")}</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											disabled={loading || form.formState.isSubmitting}
+											value={
+												field.value !== undefined ? field.value.toString() : ""
+											}
+											onChange={(event) => field.onChange(event.target.value)}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="defaultDuration"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("Facility_Default_Duration")}</FormLabel>
 									<FormControl>
 										<Input
 											type="number"

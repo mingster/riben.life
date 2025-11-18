@@ -58,6 +58,39 @@ export const createTableColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("Facility_Seats")} />
 			),
+			cell: ({ row }) => <span>{row.getValue("capacity") as number}</span>,
+		},
+		{
+			accessorKey: "defaultCost",
+			header: ({ column }) => (
+				<DataTableColumnHeader
+					column={column}
+					title={t("Facility_Default_Cost")}
+				/>
+			),
+			cell: ({ row }) => <span>{row.getValue("defaultCost") as number}</span>,
+		},
+		{
+			accessorKey: "defaultCredit",
+			header: ({ column }) => (
+				<DataTableColumnHeader
+					column={column}
+					title={t("Facility_Default_Credit")}
+				/>
+			),
+			cell: ({ row }) => <span>{row.getValue("defaultCredit") as number}</span>,
+		},
+		{
+			accessorKey: "defaultDuration",
+			header: ({ column }) => (
+				<DataTableColumnHeader
+					column={column}
+					title={t("Facility_Default_Duration")}
+				/>
+			),
+			cell: ({ row }) => (
+				<span>{row.getValue("defaultDuration") as number}</span>
+			),
 		},
 		{
 			id: "qrcode",
@@ -66,7 +99,7 @@ export const createTableColumns = (
 		},
 		{
 			id: "actions",
-			header: () => t("actions"),
+			header: ({ column }) => <div className="text-xs">{t("actions")}</div>,
 			cell: ({ row }) => (
 				<CellAction
 					data={row.original}

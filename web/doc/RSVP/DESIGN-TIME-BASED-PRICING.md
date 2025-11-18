@@ -101,8 +101,9 @@ model FacilityPricingRule {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
-  Store           Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Facility        StoreFacility?  @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  Store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Facility StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  rsvps    Rsvp[]
   
   @@index([storeId])
   @@index([facilityId])
@@ -301,10 +302,18 @@ export const calculateFacilityPricingAction = baseClient
   .action(async ({ parsedInput }) => {
     const { storeId, facilityId, dateTime } = parsedInput;
     
+    if (!facilityId) {
+      return { serverError: "facilityId is required" };
+    }
+    
     // Get facility
     const facility = await sqlClient.storeFacility.findUnique({
       where: { id: facilityId },
     });
+    
+    if (!facility) {
+      return { serverError: "Facility not found" };
+    }
     
     // Get applicable rules
     const rules = await getApplicablePricingRules(storeId, facilityId, dateTime);
@@ -323,17 +332,55 @@ export const calculateFacilityPricingAction = baseClient
 ```typescript
 /**
  * Get all applicable pricing rules for a given date/time
+ * 
+ * @param storeId - The store ID
+ * @param facilityId - The facility ID (null for store-wide rules)
+ * @param dateTime - The date/time to check (must be in store's timezone)
+ * @returns Array of matching pricing rules, sorted by priority (descending)
+ * 
+ * Note: The dateTime parameter should already be converted to the store's timezone
+ * before calling this function. Use the store's defaultTimezone to convert UTC dates.
  */
 export async function getApplicablePricingRules(
   storeId: string,
   facilityId: string | null,
   dateTime: Date,
 ): Promise<FacilityPricingRule[]> {
-  // Implementation
+  // Get all active rules for this store and facility (or store-wide)
+  const rules = await sqlClient.facilityPricingRule.findMany({
+    where: {
+      storeId,
+      isActive: true,
+      OR: [
+        { facilityId: facilityId },
+        { facilityId: null }, // Store-wide rules
+      ],
+    },
+    orderBy: { priority: "desc" },
+  });
+  
+  // Filter by day of week and time range
+  return rules.filter((rule) => {
+    if (!matchesDayOfWeek(dateTime, rule.dayOfWeek)) {
+      return false;
+    }
+    
+    const timeStr = formatTime(dateTime); // "HH:mm" format
+    if (!matchesTimeRange(timeStr, rule.startTime, rule.endTime)) {
+      return false;
+    }
+    
+    return true;
+  });
 }
 
 /**
  * Calculate the cost and credit for a reservation
+ * 
+ * @param facility - The facility
+ * @param rules - Array of matching pricing rules (already sorted by priority)
+ * @param dateTime - The date/time of the reservation
+ * @returns Calculated pricing with the rule ID that was applied
  */
 export function calculatePricing(
   facility: StoreFacility,
@@ -344,28 +391,120 @@ export function calculatePricing(
   credit: Decimal;
   ruleId: string | null;
 } {
-  // Implementation
+  // Use the first matching rule (highest priority)
+  const rule = rules[0];
+  
+  if (rule) {
+    return {
+      cost: rule.cost ?? facility.defaultCost,
+      credit: rule.credit ?? facility.defaultCredit,
+      ruleId: rule.id,
+    };
+  }
+  
+  // No rule matches, use facility defaults
+  return {
+    cost: facility.defaultCost,
+    credit: facility.defaultCredit,
+    ruleId: null,
+  };
 }
 
 /**
  * Check if a date/time matches a day of week rule
+ * 
+ * @param dateTime - The date/time to check
+ * @param dayOfWeek - The day of week rule (JSON array, "weekend", "weekday", or null)
+ * @returns True if the date/time matches the rule
  */
 export function matchesDayOfWeek(
   dateTime: Date,
   dayOfWeek: string | null,
 ): boolean {
-  // Implementation
+  if (!dayOfWeek) {
+    return true; // null = all days
+  }
+  
+  const day = dateTime.getDay(); // 0 = Sunday, 6 = Saturday
+  
+  if (dayOfWeek === "weekend") {
+    return day === 0 || day === 6; // Sunday or Saturday
+  }
+  
+  if (dayOfWeek === "weekday") {
+    return day >= 1 && day <= 5; // Monday to Friday
+  }
+  
+  // Parse JSON array
+  try {
+    const days = JSON.parse(dayOfWeek) as number[];
+    return days.includes(day);
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Check if a time matches a time range
+ * 
+ * @param time - The time to check (HH:mm format)
+ * @param startTime - Start of range (HH:mm format, or null)
+ * @param endTime - End of range (HH:mm format, or null)
+ * @returns True if the time falls within the range
  */
 export function matchesTimeRange(
   time: string, // HH:mm format
   startTime: string | null,
   endTime: string | null,
 ): boolean {
-  // Implementation
+  // Both null = all day
+  if (!startTime && !endTime) {
+    return true;
+  }
+  
+  // Parse time strings to minutes since midnight
+  const timeMinutes = parseTimeToMinutes(time);
+  const startMinutes = startTime ? parseTimeToMinutes(startTime) : 0;
+  const endMinutes = endTime ? parseTimeToMinutes(endTime) : 1439; // 23:59
+  
+  // Normal range (startTime < endTime)
+  if (startTime && endTime && startMinutes <= endMinutes) {
+    return timeMinutes >= startMinutes && timeMinutes < endMinutes;
+  }
+  
+  // Range spanning midnight (startTime > endTime)
+  if (startTime && endTime && startMinutes > endMinutes) {
+    return timeMinutes >= startMinutes || timeMinutes < endMinutes;
+  }
+  
+  // Only startTime set (from startTime to end of day)
+  if (startTime && !endTime) {
+    return timeMinutes >= startMinutes;
+  }
+  
+  // Only endTime set (from start of day to endTime)
+  if (!startTime && endTime) {
+    return timeMinutes < endMinutes;
+  }
+  
+  return false;
+}
+
+/**
+ * Parse time string (HH:mm) to minutes since midnight
+ */
+function parseTimeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+/**
+ * Format a Date object to HH:mm string
+ */
+function formatTime(dateTime: Date): string {
+  const hours = dateTime.getHours().toString().padStart(2, "0");
+  const minutes = dateTime.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
 ```
 

@@ -12,3 +12,4 @@ export const createFacilitiesSchema = z.object({
 		.int()
 		.min(1, "Default Duration is required"),
 });
+export type CreateFacilitiesInput = z.infer<typeof createFacilitiesSchema>;

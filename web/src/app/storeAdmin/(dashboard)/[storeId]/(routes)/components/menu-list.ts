@@ -8,6 +8,7 @@ import { StoreLevel, TicketStatus } from "@/types/enum";
 import {
 	IconArrowRight,
 	IconBox,
+	IconBuilding,
 	IconCalendarCheck,
 	IconClock,
 	IconCreditCard,
@@ -246,10 +247,10 @@ export function GetMenuList(
 					submenus: [],
 				},
 				{
-					href: `${nav_prefix}/tables`,
-					label: t("storeTables"),
-					active: pathname.includes(`${nav_prefix}/tables`),
-					icon: IconTable,
+					href: `${nav_prefix}/facility`,
+					label: t("Facility_Mgmt"),
+					active: pathname.includes(`${nav_prefix}/facility`),
+					icon: IconBuilding,
 					submenus: [],
 				},
 

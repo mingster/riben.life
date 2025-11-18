@@ -34,22 +34,18 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import type { TableColumn } from "../table-column";
+import {
+	CreateFacilitiesInput,
+	createFacilitiesSchema,
+} from "@/actions/storeAdmin/facility/create-facilities.validation";
 
-const formSchema = z.object({
-	prefix: z.string().trim().optional(),
-	numOfTables: z.coerce.number().int().min(1).max(100),
-	capacity: z.coerce.number().int().min(1),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-interface BulkAddTablesDialogProps {
-	onCreatedMany?: (tables: TableColumn[]) => void;
+interface BulkAddFacilitiesDialogProps {
+	onCreatedMany?: (facilities: TableColumn[]) => void;
 }
 
 export function BulkAddFacilitiesDialog({
 	onCreatedMany,
-}: BulkAddTablesDialogProps) {
+}: BulkAddFacilitiesDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -57,23 +53,34 @@ export function BulkAddFacilitiesDialog({
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema) as Resolver<FormValues>,
+
+	const form = useForm<CreateFacilitiesInput>({
+		resolver: zodResolver(createFacilitiesSchema) as Resolver<CreateFacilitiesInput>,
 		defaultValues: {
+			storeId: String(params.storeId),
 			prefix: "",
-			numOfTables: 1,
+			numOfFacilities: 1,
 			capacity: 2,
+			defaultCost: 0,
+			defaultCredit: 0,
+			defaultDuration: 60,
 		},
+		mode: "onChange",
+		reValidateMode: "onChange",
 	});
 
-	const onSubmit = async (values: FormValues) => {
+
+	const onSubmit = async (values: CreateFacilitiesInput) => {
 		setLoading(true);
 		try {
 			const result = await createFacilitiesAction({
 				storeId: String(params.storeId),
 				prefix: values.prefix?.trim() ?? "",
-				numOfFacilities: values.numOfTables,
+				numOfFacilities: values.numOfFacilities,
 				capacity: values.capacity,
+				defaultCost: values.defaultCost,
+				defaultCredit: values.defaultCredit,
+				defaultDuration: values.defaultDuration,
 			});
 
 			if (result?.serverError) {
@@ -94,8 +101,11 @@ export function BulkAddFacilitiesDialog({
 
 			form.reset({
 				prefix: "",
-				numOfTables: 1,
-				capacity: values.capacity,
+				numOfFacilities: 1,
+				capacity: 2,
+				defaultCost: 0,
+				defaultCredit: 0,
+				defaultDuration: 60,
 			});
 			setOpen(false);
 		} catch (error: unknown) {
@@ -113,8 +123,11 @@ export function BulkAddFacilitiesDialog({
 		if (!nextOpen) {
 			form.reset({
 				prefix: "",
-				numOfTables: 1,
-				capacity: form.getValues("capacity"),
+				numOfFacilities: 1,
+				capacity: 2,
+				defaultCost: 0,
+				defaultCredit: 0,
+				defaultDuration: 60,
 			});
 		}
 	};
@@ -124,17 +137,35 @@ export function BulkAddFacilitiesDialog({
 			<DialogTrigger asChild>
 				<Button variant="outline" onClick={() => setOpen(true)}>
 					<IconPlus className="mr-0 size-4" />
-					{t("Facility_Mgmt_AddButton")}
+					{t("Facility_Mgmt_BulkAddButton")}
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>{t("Facility_Mgmt_Add")}</DialogTitle>
-					<DialogDescription>{t("Facility_Mgmt_Add_Descr")}</DialogDescription>
+					<DialogTitle>{t("Facility_Mgmt_BulkAddButton")}</DialogTitle>
+					<DialogDescription>
+						{t("Facility_Mgmt_BulkAdd_Descr")}
+					</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					<form
+						onSubmit={form.handleSubmit(onSubmit, (errors) => {
+							// Show validation errors when form is invalid
+							const firstErrorKey = Object.keys(errors)[0];
+							if (firstErrorKey) {
+								const error = errors[firstErrorKey as keyof typeof errors];
+								const errorMessage = error?.message;
+								if (errorMessage) {
+									toastError({
+										title: t("Error"),
+										description: errorMessage,
+									});
+								}
+							}
+						})}
+						className="space-y-4"
+					>
 						<FormField
 							control={form.control}
 							name="prefix"
@@ -158,7 +189,7 @@ export function BulkAddFacilitiesDialog({
 						/>
 						<FormField
 							control={form.control}
-							name="numOfTables"
+							name="numOfFacilities"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>{t("Facility_NumToAdd")}</FormLabel>
@@ -196,6 +227,69 @@ export function BulkAddFacilitiesDialog({
 								</FormItem>
 							)}
 						/>
+
+						<FormField
+							control={form.control}
+							name="defaultCost"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("Facility_Default_Cost")}</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											disabled={loading || form.formState.isSubmitting}
+											value={
+												field.value !== undefined ? field.value.toString() : ""
+											}
+											onChange={(event) => field.onChange(event.target.value)}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="defaultCredit"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("Facility_Default_Credit")}</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											disabled={loading || form.formState.isSubmitting}
+											value={
+												field.value !== undefined ? field.value.toString() : ""
+											}
+											onChange={(event) => field.onChange(event.target.value)}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="defaultDuration"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("Facility_Default_Duration")}</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											disabled={loading || form.formState.isSubmitting}
+											value={
+												field.value !== undefined ? field.value.toString() : ""
+											}
+											onChange={(event) => field.onChange(event.target.value)}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
 						<div className="flex w-full items-center justify-end space-x-2 pt-2">
 							<Button
 								type="submit"
