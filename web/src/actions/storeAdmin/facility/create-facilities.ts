@@ -12,7 +12,15 @@ export const createFacilitiesAction = storeOwnerActionClient
 	.metadata({ name: "createFacilities" })
 	.schema(createFacilitiesSchema)
 	.action(async ({ parsedInput }) => {
-		const { storeId, prefix, numOfFacilities, capacity } = parsedInput;
+		const {
+			storeId,
+			prefix,
+			numOfFacilities,
+			capacity,
+			defaultCost,
+			defaultCredit,
+			defaultDuration,
+		} = parsedInput;
 
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
@@ -29,6 +37,9 @@ export const createFacilitiesAction = storeOwnerActionClient
 					storeId,
 					facilityName: `${prefix}${index + 1}`, // e.g. "A1", "A2", "A3"
 					capacity,
+					defaultCost,
+					defaultCredit,
+					defaultDuration,
 				},
 			}),
 		);

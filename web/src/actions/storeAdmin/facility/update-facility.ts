@@ -11,7 +11,15 @@ export const updateFacilityAction = storeOwnerActionClient
 	.metadata({ name: "updateFacility" })
 	.schema(updateFacilitySchema)
 	.action(async ({ parsedInput }) => {
-		const { storeId, id, facilityName, capacity } = parsedInput;
+		const {
+			storeId,
+			id,
+			facilityName,
+			capacity,
+			defaultCost,
+			defaultCredit,
+			defaultDuration,
+		} = parsedInput;
 
 		const facility = await sqlClient.storeFacility.findUnique({
 			where: { id },
@@ -28,6 +36,9 @@ export const updateFacilityAction = storeOwnerActionClient
 				data: {
 					facilityName,
 					capacity,
+					defaultCost,
+					defaultCredit,
+					defaultDuration,
 				},
 			});
 
