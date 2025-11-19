@@ -184,6 +184,7 @@ model Organization {
 
   members     Member[]
   invitations Invitation[]
+  stores      Store[]
 
   @@unique([slug])
   @@map("organization")
@@ -511,9 +512,10 @@ model CustomerCredit {
 }
 
 model Store {
-  id      String @id @default(uuid())
-  name    String
-  ownerId String
+  id             String @id @default(uuid())
+  organizationId String
+  name           String
+  ownerId        String
 
   defaultCountry  String  @default("TW")
   defaultCurrency String  @default("twd")
@@ -549,8 +551,8 @@ model Store {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  Owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-
+  Owner                      User                         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  Organization               Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   Products                   Product[]                    @relation("StoreToProduct")
   Categories                 Category[]
   StoreOrders                StoreOrder[]                 @relation("StoreToOrder")
@@ -567,10 +569,11 @@ model Store {
   rsvpSettings               RsvpSettings[]
   rsvpBlacklists             RsvpBlacklist[]
   rsvpTags                   RsvpTag[]
-  customerCredits            CustomerCredit[]
-  facilityPricingRules       FacilityPricingRule[]
+  CustomerCredits            CustomerCredit[]
+  FacilityPricingRules       FacilityPricingRule[]
 
   @@index([ownerId])
+  @@index([organizationId])
   @@index([name])
   @@index([defaultCountry])
   @@index([defaultCurrency])

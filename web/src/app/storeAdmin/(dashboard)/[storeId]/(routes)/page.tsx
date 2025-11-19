@@ -6,6 +6,11 @@ import { IconAlertTriangle } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { StoreAdminDashboard } from "./components/store-admin-dashboard";
+import { Organization } from "@prisma/client";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { auth } from "@/lib/auth";
+import { logger } from "better-auth";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
 	title: "Store Dashboard",
@@ -34,6 +39,47 @@ export default async function StoreAdminHomePage(props: {
 		sqlClient.category.count({ where: { storeId: params.storeId } }),
 		sqlClient.product.count({ where: { storeId: params.storeId } }),
 	]);
+
+	if (!store.organizationId) {
+		let organization;
+		organization = (await sqlClient.organization.findFirst({
+			where: {
+				slug: store.name,
+			},
+		})) as unknown as Organization;
+
+		if (!organization) {
+			// Get headers for authentication
+			const headersList = await headers();
+
+			organization = (await auth.api.createOrganization({
+				headers: headersList,
+				body: {
+					name: store.name, // Use original name for organization display name
+					slug: store.name,
+					keepCurrentActiveOrganization: true,
+				},
+			})) as unknown as Organization;
+
+			if (!organization || !organization.id) {
+				throw new Error("Failed to create organization");
+			}
+		}
+
+		store.organizationId = organization.id;
+		await sqlClient.store.update({
+			where: { id: store.id },
+			data: { organizationId: organization.id },
+		});
+
+		logger.info("organization created successfully", {
+			metadata: {
+				organizationId: organization.id,
+				storeId: store.id,
+				storeName: store.name,
+			},
+		});
+	}
 
 	//console.log("store", store);
 	return (
