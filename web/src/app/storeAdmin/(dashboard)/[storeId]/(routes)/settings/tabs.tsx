@@ -30,7 +30,7 @@ import { PrivacyTab } from "./setting-privacy-tab";
 
 //import { TermsTab } from "./setting-terms-tab";
 import { ShippingPaymentMethodTab } from "./setting-shipping-payment-method";
-import { deleteStoreAction } from "@/actions/storeAdmin/settings/delete-store";
+import { deleteStoreAction } from "@/actions/storeAdmin/store/delete-store";
 
 export interface SettingsFormProps {
 	store: Store;

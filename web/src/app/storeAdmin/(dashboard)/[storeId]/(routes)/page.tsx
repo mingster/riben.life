@@ -40,18 +40,18 @@ export default async function StoreAdminHomePage(props: {
 		sqlClient.product.count({ where: { storeId: params.storeId } }),
 	]);
 
+	let organization;
+	organization = (await sqlClient.organization.findFirst({
+		where: {
+			slug: store.name,
+		},
+	})) as unknown as Organization;
+
+	// Get headers for authentication
+	const headersList = await headers();
+
 	if (!store.organizationId) {
-		let organization;
-		organization = (await sqlClient.organization.findFirst({
-			where: {
-				slug: store.name,
-			},
-		})) as unknown as Organization;
-
 		if (!organization) {
-			// Get headers for authentication
-			const headersList = await headers();
-
 			organization = (await auth.api.createOrganization({
 				headers: headersList,
 				body: {
@@ -81,7 +81,16 @@ export default async function StoreAdminHomePage(props: {
 		});
 	}
 
-	//console.log("store", store);
+	const data = await auth.api.setActiveOrganization({
+		headers: headersList,
+		body: {
+			organizationId: organization.id,
+			organizationSlug: organization.slug,
+		},
+	});
+
+	//console.log("data", data);
+
 	return (
 		<div>
 			{/* Display setup prompts if needed */}
