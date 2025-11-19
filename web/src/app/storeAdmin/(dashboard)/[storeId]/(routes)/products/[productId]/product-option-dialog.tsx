@@ -202,7 +202,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 											{...field}
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										{t("ProductOption_optionName_Descr")}
 									</FormDescription>
 									<FormMessage />
@@ -217,7 +217,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 								<FormItem className="flex flex-row items-center justify-between p-1 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
 										<FormLabel>{t("ProductOption_isRequired")}</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("ProductOption_isRequired_Descr")}
 										</FormDescription>
 									</div>
@@ -239,7 +239,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 								<FormItem className="flex flex-row items-center justify-between p-1 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
 										<FormLabel>{t("ProductOption_isMultiple")}</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("ProductOption_isMultiple_Descr")}
 										</FormDescription>
 									</div>
@@ -269,7 +269,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 												{...field}
 											/>
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("ProductOption_minSelection_Descr")}
 										</FormDescription>
 										<FormMessage />
@@ -290,7 +290,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 												{...field}
 											/>
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("ProductOption_maxSelection_Descr")}
 										</FormDescription>
 										<FormMessage />
@@ -306,7 +306,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 								<FormItem className="flex flex-row items-center justify-between p-1 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
 										<FormLabel>{t("ProductOption_allowQuantity")}</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("ProductOption_allowQuantity_Descr")}
 										</FormDescription>
 									</div>
@@ -335,7 +335,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 												{...field}
 											/>
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("ProductOption_minQuantity_Descr")}
 										</FormDescription>
 										<FormMessage />
@@ -356,7 +356,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 												{...field}
 											/>
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("ProductOption_maxQuantity_Descr")}
 										</FormDescription>
 										<FormMessage />
@@ -374,7 +374,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 									<FormControl>
 										<Textarea {...field} />
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										{t("ProductOption_selections_Descr")}
 									</FormDescription>
 									<FormMessage />

@@ -239,7 +239,7 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
 										<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 											<div className="space-y-1 leading-none">
 												<FormLabel>{t("Product_status")}</FormLabel>
-												<FormDescription>
+												<FormDescription className="text-xs font-mono text-gray-500">
 													{t("Product_status_descr")}
 												</FormDescription>
 											</div>
@@ -265,7 +265,7 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
                     <FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
                       <div className="space-y-0.5">
                         <FormLabel>{t("Product_isFeatured")}</FormLabel>
-                        <FormDescription>
+                        <FormDescription className="text-xs font-mono text-gray-500">
                           {t("Product_isFeatured_descr")}
                         </FormDescription>
                       </div>
@@ -286,7 +286,7 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
                     <FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
                       <div className="space-y-0.5">
                         <FormLabel>{t("Product_useOption")}</FormLabel>
-                        <FormDescription>
+                        <FormDescription className="text-xs font-mono text-gray-500">
                           {t("Product_useOption_descr")}
                         </FormDescription>
                       </div>

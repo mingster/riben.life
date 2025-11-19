@@ -152,7 +152,7 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 									<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
 											<FormLabel>{t("Category_isFeatured")}</FormLabel>
-											<FormDescription>
+											<FormDescription className="text-xs font-mono text-gray-500">
 												{t("Category_isFeatured_descr")}
 											</FormDescription>
 										</div>

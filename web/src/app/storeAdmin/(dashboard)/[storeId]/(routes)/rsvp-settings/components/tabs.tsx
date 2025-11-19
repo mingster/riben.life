@@ -69,22 +69,14 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("StoreSettings")}
-					description={t("StoreSettingsDescr")}
+					title={t("RSVP_Settings")}
+					description={t("RSVP_Settings_Descr")}
 				/>
-				<Button
-					disabled={loading}
-					variant="destructive"
-					size="sm"
-					onClick={() => setOpen(true)}
-				>
-					<IconTrash className="size-4" />
-				</Button>
 			</div>
 
-			<Tabs defaultValue="rsvp" className="w-full">
+			<Tabs defaultValue="basic" className="w-full">
 				<TabsList>
-					<TabsTrigger className="px-1 lg:min-w-25" value="rsvp">
+					<TabsTrigger className="px-1 lg:min-w-25" value="basic">
 						{t("RSVP_Tab_System")}
 					</TabsTrigger>
 					<TabsTrigger className="px-1 lg:min-w-25" value="credit">
@@ -100,7 +92,7 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 					</TabsTrigger>
 				</TabsList>
 
-				<TabsContent value="rsvp">
+				<TabsContent value="basic">
 					<RsvpSettingTab
 						store={store}
 						rsvpSettings={rsvpSettings}

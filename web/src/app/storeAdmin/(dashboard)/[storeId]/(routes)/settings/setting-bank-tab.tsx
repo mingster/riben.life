@@ -134,7 +134,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 											/>
 										</FormControl>
 
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("StoreSettings_PayoutSchedule_Descr")}
 										</FormDescription>
 

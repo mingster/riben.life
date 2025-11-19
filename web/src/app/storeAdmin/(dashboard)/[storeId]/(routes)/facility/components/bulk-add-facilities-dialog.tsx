@@ -180,7 +180,7 @@ export function BulkAddFacilitiesDialog({
 											onChange={(event) => field.onChange(event.target.value)}
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										{t("Facility_Mgmt_Prefix_Descr")}
 									</FormDescription>
 									<FormMessage />

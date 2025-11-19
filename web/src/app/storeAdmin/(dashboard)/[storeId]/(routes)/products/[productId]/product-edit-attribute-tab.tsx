@@ -200,7 +200,7 @@ export const ProductEditAttributeTab = ({
 									<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
 											<FormLabel>Recurring?</FormLabel>
-											<FormDescription>
+											<FormDescription className="text-xs font-mono text-gray-500">
 												this product will set up a recurring billing for
 												customer.
 											</FormDescription>
@@ -281,7 +281,7 @@ export const ProductEditAttributeTab = ({
 									<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
 											<FormLabel>is brand new?</FormLabel>
-											<FormDescription>
+											<FormDescription className="text-xs font-mono text-gray-500">
 												this product is brand new.
 											</FormDescription>
 										</div>
@@ -491,7 +491,7 @@ export const ProductEditAttributeTab = ({
 													/>
 												</PopoverContent>
 											</Popover>
-											<FormDescription>
+											<FormDescription className="text-xs font-mono text-gray-500">
 												start date will be used if dated in the future.
 											</FormDescription>
 											<FormMessage />

@@ -166,7 +166,7 @@ export function BulkCreateProductsDialog({
 											{...field}
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										{`${t("Product_names_Descr")} (name|price|description|category|option)`}
 									</FormDescription>
 									<FormMessage />

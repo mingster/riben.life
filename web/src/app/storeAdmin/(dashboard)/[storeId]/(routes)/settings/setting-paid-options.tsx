@@ -302,7 +302,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 												<FormLabel>
 													{t("StoreSettings_acceptAnonymousOrder")}
 												</FormLabel>
-												<FormDescription>
+												<FormDescription className="text-xs font-mono text-gray-500">
 													{t("StoreSettings_acceptAnonymousOrder_descr")}
 												</FormDescription>
 											</div>
