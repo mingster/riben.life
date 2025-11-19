@@ -47,3 +47,55 @@ const onSubmit: SubmitHandler<TestRulesInputs> = useCallback(async (data) => {
   }
 }, []);
 ```
+
+## State Management After Mutations
+
+**Important:** After server action mutations, update local state directly instead of using `router.refresh()`.
+
+### For Lists/Arrays
+
+```typescript
+// In parent component
+const [data, setData] = useState<ItemType[]>(serverData);
+
+const handleUpdated = (updatedItem: ItemType) => {
+  setData(prev => prev.map(item => 
+    item.id === updatedItem.id ? updatedItem : item
+  ));
+};
+
+// In form component
+const onSubmit = async (data: FormValues) => {
+  const result = await updateItemAction(data);
+  if (result?.serverError) {
+    toastError({ description: result.serverError });
+  } else {
+    onUpdated?.(result.data.item); // Update parent state
+    toastSuccess({ description: "Updated!" });
+  }
+};
+```
+
+### For Single Objects (Settings/Configuration)
+
+```typescript
+// In parent component
+const [settings, setSettings] = useState(initialSettings);
+
+const handleSettingsUpdated = (updated: SettingsData) => {
+  setSettings(updated);
+};
+
+// In form component
+const onSubmit = async (data: FormValues) => {
+  const result = await updateSettingsAction(data);
+  if (result?.serverError) {
+    toastError({ description: result.serverError });
+  } else {
+    onSettingsUpdated?.(result.data.settings); // Update parent state
+    toastSuccess({ description: "Updated!" });
+  }
+};
+```
+
+**Never use `router.refresh()` for client state updates** - it causes unnecessary server round-trips and slower UX. Only use `router.refresh()` if you need to re-fetch server components.

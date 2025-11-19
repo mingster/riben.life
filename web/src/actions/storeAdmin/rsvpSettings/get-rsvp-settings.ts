@@ -4,6 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeOwnerActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 
 const getRsvpSettingsSchema = z.object({
 	storeId: z.string().uuid(),
@@ -29,6 +30,7 @@ export const getRsvpSettingsAction = storeOwnerActionClient
 		const rsvpSettings = await sqlClient.rsvpSettings.findFirst({
 			where: { storeId },
 		});
+		transformDecimalsToNumbers(rsvpSettings);
 
 		return { rsvpSettings };
 	});

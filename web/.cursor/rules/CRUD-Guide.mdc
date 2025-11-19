@@ -273,12 +273,91 @@ const filteredData = useMemo(() => {
 }, [data, selectedStatuses, titleFilter]);
 ```
 
+### 7. Settings/Configuration Forms (Single Object Update)
+
+For settings or configuration forms that update a single object (not a list):
+
+```tsx
+// Parent component (tabs.tsx or similar)
+export const SettingsTabs: React.FC<SettingsProps> = ({
+  store,
+  settings: initialSettings,
+}) => {
+  // Manage settings state in client component
+  const [settings, setSettings] = useState(initialSettings);
+
+  // Handle updated settings
+  const handleSettingsUpdated = (updated: NonNullable<typeof settings>) => {
+    setSettings(updated);
+  };
+
+  return (
+    <SettingsTab
+      settings={settings}
+      onSettingsUpdated={handleSettingsUpdated}
+    />
+  );
+};
+
+// Form component (tab-settings.tsx)
+export const SettingsTab: React.FC<SettingsTabProps> = ({
+  settings,
+  onSettingsUpdated,
+}) => {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(settingsSchema.omit({ storeId: true })),
+    defaultValues: useMemo(() => settings ? { ...settings } : defaults, [settings]),
+  });
+
+  // Reset form when settings changes (after update)
+  useEffect(() => {
+    form.reset(settings ? { ...settings } : defaults);
+  }, [settings, form]);
+
+  const onSubmit = async (data: FormValues) => {
+    const result = await updateSettingsAction({ 
+      storeId: params.storeId, 
+      ...data 
+    });
+    
+    if (result?.serverError) {
+      toastError({ description: result.serverError });
+      return;
+    }
+    
+    // Update local state instead of refreshing router
+    const updatedSettings = result.data.settings as SettingsData;
+    onSettingsUpdated?.(updatedSettings);
+    
+    toastSuccess({ description: "Settings updated!" });
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        {/* Form fields */}
+      </form>
+    </Form>
+  );
+};
+```
+
+**Key Points for Settings Forms:**
+- Parent component manages the settings state with `useState`
+- Form component receives `onSettingsUpdated` callback
+- After successful mutation, transform server response and call callback
+- Use `useMemo` for `defaultValues` to recalculate when settings change
+- Use `useEffect` to reset form when settings prop changes
+- **Never use `router.refresh()`** - update state directly via callback
+
 ## Summary
 
 - Use local state for table data in client components.
+- Use local state for settings/configuration objects in client components.
 - Pass mutation callbacks to edit/create/delete components.
-- Update the state array directly after mutations.
+- Update the state directly after mutations (arrays or single objects).
 - Ensure all required fields are present when adding to state.
 - Do not rely on `router.refresh()` for client state updates.
+- Only use `router.refresh()` if you need to re-fetch server components.
 
 This pattern ensures a fast, reactive UI and avoids common pitfalls with stale or unsynced data.

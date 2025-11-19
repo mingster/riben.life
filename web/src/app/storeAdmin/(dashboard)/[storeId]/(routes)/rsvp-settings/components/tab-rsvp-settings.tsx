@@ -3,8 +3,8 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -28,63 +28,71 @@ import {
 } from "@/actions/storeAdmin/rsvpSettings/update-rsvp-settings.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import { RsvpSettingsProps } from "./tabs";
+import { RsvpSettingsProps, type RsvpSettingsData } from "./tabs";
 
 type FormValues = Omit<UpdateRsvpSettingsInput, "storeId">;
 
-export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
+interface RsvpSettingTabProps extends RsvpSettingsProps {
+	onRsvpSettingsUpdated?: (updated: RsvpSettingsData) => void;
+}
+
+export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 	store,
 	rsvpSettings,
 	onStoreUpdated,
+	onRsvpSettingsUpdated,
 }) => {
 	const params = useParams();
-	const router = useRouter();
 
 	const [loading, setLoading] = useState(false);
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const defaultValues: FormValues = rsvpSettings
-		? {
-				acceptReservation: rsvpSettings.acceptReservation,
-				prepaidRequired: rsvpSettings.prepaidRequired,
-				prepaidAmount:
-					rsvpSettings.prepaidAmount !== null
-						? Number(rsvpSettings.prepaidAmount)
-						: null,
-				canCancel: rsvpSettings.canCancel,
-				cancelHours: rsvpSettings.cancelHours,
-				defaultDuration: rsvpSettings.defaultDuration,
-				requireSignature: rsvpSettings.requireSignature,
-				showCostToCustomer: rsvpSettings.showCostToCustomer,
-				useBusinessHours: rsvpSettings.useBusinessHours,
-				rsvpHours: rsvpSettings.rsvpHours,
-				reminderHours: rsvpSettings.reminderHours,
-				useReminderSMS: rsvpSettings.useReminderSMS,
-				useReminderLine: rsvpSettings.useReminderLine,
-				useReminderEmail: rsvpSettings.useReminderEmail,
-				syncWithGoogle: rsvpSettings.syncWithGoogle,
-				syncWithApple: rsvpSettings.syncWithApple,
-			}
-		: {
-				acceptReservation: true,
-				prepaidRequired: false,
-				prepaidAmount: null,
-				canCancel: true,
-				cancelHours: 24,
-				defaultDuration: 60,
-				requireSignature: false,
-				showCostToCustomer: false,
-				useBusinessHours: true,
-				rsvpHours: null,
-				reminderHours: 24,
-				useReminderSMS: false,
-				useReminderLine: false,
-				useReminderEmail: false,
-				syncWithGoogle: false,
-				syncWithApple: false,
-			};
+	const defaultValues: FormValues = useMemo(
+		() =>
+			rsvpSettings
+				? {
+						acceptReservation: rsvpSettings.acceptReservation,
+						prepaidRequired: rsvpSettings.prepaidRequired,
+						prepaidAmount:
+							rsvpSettings.prepaidAmount !== null
+								? Number(rsvpSettings.prepaidAmount)
+								: null,
+						canCancel: rsvpSettings.canCancel,
+						cancelHours: rsvpSettings.cancelHours,
+						defaultDuration: rsvpSettings.defaultDuration,
+						requireSignature: rsvpSettings.requireSignature,
+						showCostToCustomer: rsvpSettings.showCostToCustomer,
+						useBusinessHours: rsvpSettings.useBusinessHours,
+						rsvpHours: rsvpSettings.rsvpHours,
+						reminderHours: rsvpSettings.reminderHours,
+						useReminderSMS: rsvpSettings.useReminderSMS,
+						useReminderLine: rsvpSettings.useReminderLine,
+						useReminderEmail: rsvpSettings.useReminderEmail,
+						syncWithGoogle: rsvpSettings.syncWithGoogle,
+						syncWithApple: rsvpSettings.syncWithApple,
+					}
+				: {
+						acceptReservation: true,
+						prepaidRequired: false,
+						prepaidAmount: null,
+						canCancel: true,
+						cancelHours: 24,
+						defaultDuration: 60,
+						requireSignature: false,
+						showCostToCustomer: false,
+						useBusinessHours: true,
+						rsvpHours: null,
+						reminderHours: 24,
+						useReminderSMS: false,
+						useReminderLine: false,
+						useReminderEmail: false,
+						syncWithGoogle: false,
+						syncWithApple: false,
+					},
+		[rsvpSettings],
+	);
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(
@@ -94,6 +102,11 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 		mode: "onChange",
 		reValidateMode: "onChange",
 	});
+
+	// Reset form when rsvpSettings changes (after update)
+	useEffect(() => {
+		form.reset(defaultValues);
+	}, [defaultValues, form]);
 
 	const onSubmit = async (data: FormValues) => {
 		try {
@@ -109,7 +122,38 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 			if (result?.serverError) {
 				toastError({ title: t("Error"), description: result.serverError });
 			} else if (result?.data) {
-				router.refresh();
+				// Update local state instead of refreshing router
+				const updatedRsvpSettings = result.data
+					.rsvpSettings as RsvpSettingsData;
+				/*
+				const updatedRsvpSettings: RsvpSettingsData = {
+					id: result.data.rsvpSettings.id,
+					storeId: result.data.rsvpSettings.storeId,
+					acceptReservation: result.data.rsvpSettings.acceptReservation,
+					prepaidRequired: result.data.rsvpSettings.prepaidRequired,
+					prepaidAmount: result.data.rsvpSettings.prepaidAmount
+						? Number(result.data.rsvpSettings.prepaidAmount)
+						: null,
+					canCancel: result.data.rsvpSettings.canCancel,
+					cancelHours: Number(result.data.rsvpSettings.cancelHours),
+					defaultDuration: Number(result.data.rsvpSettings.defaultDuration),
+					requireSignature: result.data.rsvpSettings.requireSignature,
+					showCostToCustomer: result.data.rsvpSettings.showCostToCustomer,
+					useBusinessHours: result.data.rsvpSettings.useBusinessHours,
+					rsvpHours: result.data.rsvpSettings.rsvpHours,
+					reminderHours: Number(result.data.rsvpSettings.reminderHours),
+					useReminderSMS: result.data.rsvpSettings.useReminderSMS,
+					useReminderLine: result.data.rsvpSettings.useReminderLine,
+					useReminderEmail: result.data.rsvpSettings.useReminderEmail,
+					syncWithGoogle: result.data.rsvpSettings.syncWithGoogle,
+					syncWithApple: result.data.rsvpSettings.syncWithApple,
+					createdAt: result.data.rsvpSettings.createdAt,
+					updatedAt: result.data.rsvpSettings.updatedAt,
+				};
+				*/
+
+				// Notify parent to update state
+				onRsvpSettingsUpdated?.(updatedRsvpSettings);
 
 				toastSuccess({
 					title: t("Store_Updated"),
@@ -200,7 +244,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 							control={form.control}
 							name="useBusinessHours"
 							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+								<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
 										<FormLabel>{t("RSVP_Use_Business_Hours")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
@@ -251,59 +295,64 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 							<h3 className="text-lg font-semibold">
 								{t("RSVP_Prepaid_Settings")}
 							</h3>
-							<FormField
-								control={form.control}
-								name="prepaidRequired"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>{t("RSVP_Prepaid_Required")}</FormLabel>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Prepaid_Required_Descr")}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
 
-							{form.watch("prepaidRequired") && (
+							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
 								<FormField
 									control={form.control}
-									name="prepaidAmount"
+									name="prepaidRequired"
 									render={({ field }) => (
-										<FormItem>
-											<FormLabel>{t("RSVP_Prepaid_Amount")}</FormLabel>
+										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
+											<div className="space-y-0.5">
+												<FormLabel>{t("RSVP_Prepaid_Required")}</FormLabel>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("RSVP_Prepaid_Required_Descr")}
+												</FormDescription>
+											</div>
 											<FormControl>
-												<Input
-													type="number"
-													step="0.01"
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
 													disabled={loading || form.formState.isSubmitting}
-													value={
-														field.value !== null && field.value !== undefined
-															? field.value.toString()
-															: ""
-													}
-													onChange={(event) => {
-														const value = event.target.value;
-														field.onChange(value === "" ? null : Number(value));
-													}}
 												/>
 											</FormControl>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Prepaid_Amount_Descr")}
-											</FormDescription>
-											<FormMessage />
 										</FormItem>
 									)}
 								/>
-							)}
+
+								{form.watch("prepaidRequired") && (
+									<FormField
+										control={form.control}
+										name="prepaidAmount"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>{t("RSVP_Prepaid_Amount")}</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														step="0.01"
+														disabled={loading || form.formState.isSubmitting}
+														value={
+															field.value !== null && field.value !== undefined
+																? field.value.toString()
+																: ""
+														}
+														onChange={(event) => {
+															const value = event.target.value;
+															field.onChange(
+																value === "" ? null : Number(value),
+															);
+														}}
+													/>
+												</FormControl>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("RSVP_Prepaid_Amount_Descr")}
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								)}
+							</div>
 						</div>
 
 						<Separator />
@@ -313,15 +362,66 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 							<h3 className="text-lg font-semibold">
 								{t("RSVP_Cancellation_Settings")}
 							</h3>
+
+							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+								<FormField
+									control={form.control}
+									name="canCancel"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
+											<div className="space-y-0.5">
+												<FormLabel>{t("RSVP_Can_Cancel")}</FormLabel>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("RSVP_Can_Cancel_Descr")}
+												</FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+
+								{form.watch("canCancel") && (
+									<FormField
+										control={form.control}
+										name="cancelHours"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>{t("RSVP_Cancel_Hours")}</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														disabled={loading || form.formState.isSubmitting}
+														value={field.value?.toString() ?? ""}
+														onChange={(event) =>
+															field.onChange(Number(event.target.value))
+														}
+													/>
+												</FormControl>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("RSVP_Cancel_Hours_Descr")}
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								)}
+							</div>
+
 							<FormField
 								control={form.control}
-								name="canCancel"
+								name="requireSignature"
 								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+									<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
-											<FormLabel>{t("RSVP_Can_Cancel")}</FormLabel>
+											<FormLabel>{t("RSVP_Require_Signature")}</FormLabel>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Can_Cancel_Descr")}
+												{t("RSVP_Require_Signature_Descr")}
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -334,32 +434,6 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 									</FormItem>
 								)}
 							/>
-
-							{form.watch("canCancel") && (
-								<FormField
-									control={form.control}
-									name="cancelHours"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>{t("RSVP_Cancel_Hours")}</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													disabled={loading || form.formState.isSubmitting}
-													value={field.value?.toString() ?? ""}
-													onChange={(event) =>
-														field.onChange(Number(event.target.value))
-													}
-												/>
-											</FormControl>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Cancel_Hours_Descr")}
-											</FormDescription>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-							)}
 						</div>
 
 						<Separator />
@@ -373,33 +447,11 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 								control={form.control}
 								name="showCostToCustomer"
 								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+									<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
 											<FormLabel>{t("RSVP_Show_Cost")}</FormLabel>
 											<FormDescription className="text-xs font-mono text-gray-500">
 												{t("RSVP_Show_Cost_Descr")}
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="requireSignature"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-										<div className="space-y-0.5">
-											<FormLabel>{t("RSVP_Require_Signature")}</FormLabel>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Require_Signature_Descr")}
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -450,7 +502,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 									control={form.control}
 									name="useReminderEmail"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>{t("RSVP_Reminder_Email")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
@@ -470,7 +522,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 									control={form.control}
 									name="useReminderSMS"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>{t("RSVP_Reminder_SMS")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
@@ -490,7 +542,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 									control={form.control}
 									name="useReminderLine"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>{t("RSVP_Reminder_Line")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
@@ -508,16 +560,14 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 							</div>
 						</div>
 
-						<Separator />
-
 						{/* Calendar Sync Settings */}
 						<div className="space-y-4">
-							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+							<div className="grid grid-flow-row-dense grid-cols-3 gap-1">
 								<FormField
 									control={form.control}
 									name="syncWithGoogle"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>{t("RSVP_Sync_Google")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
@@ -537,7 +587,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 									control={form.control}
 									name="syncWithApple"
 									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>{t("RSVP_Sync_Apple")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
@@ -570,7 +620,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingsProps> = ({
 							<Button
 								type="button"
 								variant="outline"
-								onClick={() => router.back()}
+								onClick={() => form.reset(defaultValues)}
 								disabled={loading || form.formState.isSubmitting}
 							>
 								{t("Cancel")}

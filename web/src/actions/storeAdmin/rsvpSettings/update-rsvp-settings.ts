@@ -5,6 +5,7 @@ import { SafeError } from "@/utils/error";
 import { storeOwnerActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
 import { updateRsvpSettingsSchema } from "./update-rsvp-settings.validation";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 
 export const updateRsvpSettingsAction = storeOwnerActionClient
 	.metadata({ name: "updateRsvpSettings" })
@@ -129,6 +130,7 @@ export const updateRsvpSettingsAction = storeOwnerActionClient
 						},
 					});
 
+			transformDecimalsToNumbers(rsvpSettings);
 			return { rsvpSettings };
 		} catch (error: unknown) {
 			if (

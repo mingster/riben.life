@@ -1,0 +1,53 @@
+"use server";
+
+import { updateStoreCreditSchema } from "./update-store-credit.validation";
+import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { SafeError } from "@/utils/error";
+import { sqlClient } from "@/lib/prismadb";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { Prisma } from "@prisma/client";
+import { transformDecimalsToNumbers } from "@/utils/utils";
+import { getStoreWithRelations } from "@/lib/store-access";
+import { Store } from "@/types";
+
+export const updateStoreCreditAction = storeOwnerActionClient
+	.metadata({ name: "updateStoreCredit" })
+	.schema(updateStoreCreditSchema)
+	.action(async ({ parsedInput }) => {
+		const { storeId, useCustomerCredit, creditExchangeRate } = parsedInput;
+
+		const session = await auth.api.getSession({
+			headers: await headers(),
+		});
+
+		const userId = session?.user?.id;
+
+		if (typeof userId !== "string") {
+			throw new SafeError("Unauthorized");
+		}
+
+		// Ensure store belongs to the user
+		await sqlClient.store.findFirstOrThrow({
+			where: {
+				id: storeId,
+				ownerId: userId,
+			},
+			select: { id: true },
+		});
+
+		const updated = await sqlClient.store.update({
+			where: { id: storeId },
+			data: {
+				useCustomerCredit,
+				creditExchangeRate: new Prisma.Decimal(creditExchangeRate),
+				updatedAt: getUtcNow(),
+			},
+		});
+
+		const store = await getStoreWithRelations(updated.id, {});
+		transformDecimalsToNumbers(store as Store);
+
+		return { store: store as Store };
+	});
