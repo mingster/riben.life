@@ -5,7 +5,6 @@
 	"scripts": {
 		"dev": "next dev --turbopack -p 3001",
 		"debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev --turbopack -p 3001",
-		
 		"build:perf": "node ../bin/build-performance.js",
 		"build:analyze": "ANALYZE=true bun run build",
 		"build:fast": "NEXT_TELEMETRY_DISABLED=1 bun run postinstall:parallel && next build",
@@ -14,7 +13,6 @@
 		"build:production": "node scripts/build-optimize.js production",
 		"build:fast-optimized": "node scripts/build-optimize.js fast",
 		"build": "bun run postinstall && bun run next build",
-
 		"start": "next start -p 3000",
 		"install:platform": "bun run ./bin/install.ts",
 		"bio_lint": "npx biome check --fix ./src",
@@ -94,7 +92,7 @@
 		"framer-motion": "^12.23.24",
 		"i18next": "^25.6.2",
 		"i18next-browser-languagedetector": "^8.2.0",
-		"i18next-resources-for-ts": "^1.7.4",
+		"i18next-resources-for-ts": "^1.8.0",
 		"i18next-resources-to-backend": "^1.2.1",
 		"input-otp": "^1.4.2",
 		"lodash": "^4.17.21",
@@ -106,7 +104,7 @@
 		"next-themes": "^0.4.6",
 		"nextjs-current-url": "^1.0.3",
 		"nodemailer": "^7.0.10",
-		"nuqs": "^2.7.3",
+		"nuqs": "^2.8.0",
 		"pino": "10.1.0",
 		"pino-pretty": "^13.1.2",
 		"postcss": "^8.5.6",
@@ -114,7 +112,7 @@
 		"react-day-picker": "^9.11.1",
 		"react-dom": "^19.2.0",
 		"react-google-recaptcha": "^3.1.0",
-		"react-hook-form": "^7.66.0",
+		"react-hook-form": "^7.66.1",
 		"react-i18next": "16.3.1",
 		"react-icons": "^5.5.0",
 		"react-image-file-resizer": "^0.4.8",
@@ -142,7 +140,7 @@
 		"zustand": "^5.0.8"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.3.5",
+		"@biomejs/biome": "^2.3.6",
 		"@commitlint/cli": "^19.8.1",
 		"@commitlint/config-conventional": "^19.8.1",
 		"@eslint/eslintrc": "^3.3.1",
@@ -151,12 +149,12 @@
 		"@types/crypto-js": "^4.2.2",
 		"@types/node": "^20.19.25",
 		"@types/nodemailer": "^6.4.21",
-		"@types/react": "^19.2.5",
+		"@types/react": "^19.2.6",
 		"@types/react-dom": "^19.2.3",
 		"@types/react-google-recaptcha": "^2.1.9",
 		"@types/uuid": "^10.0.0",
-		"@typescript-eslint/eslint-plugin": "^8.46.4",
-		"@typescript-eslint/parser": "^8.46.4",
+		"@typescript-eslint/eslint-plugin": "^8.47.0",
+		"@typescript-eslint/parser": "^8.47.0",
 		"autoprefixer": "^10.4.22",
 		"dotenv": "^16.6.1",
 		"eslint": "^9.39.1",
@@ -172,7 +170,7 @@
 		"shadcn": "^3.5.0",
 		"tailwindcss": "^4.1.17",
 		"typescript": "^5.9.3",
-		"typescript-eslint": "^8.46.4"
+		"typescript-eslint": "^8.47.0"
 	},
 	"husky": {
 		"hooks": {

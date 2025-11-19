@@ -24,16 +24,33 @@ export const updateStoreRsvpAction = storeOwnerActionClient
 			throw new SafeError("Unauthorized");
 		}
 
-		const store = await sqlClient.store.update({
+		// Ensure store belongs to the user
+		await sqlClient.store.findFirstOrThrow({
 			where: {
 				id: storeId,
 				ownerId: userId,
 			},
-			data: {
-				acceptReservation,
-				updatedAt: getUtcNow(),
-			},
+			select: { id: true },
 		});
 
-		return { store };
+		// Find existing RsvpSettings or create new one
+		const existing = await sqlClient.rsvpSettings.findFirst({
+			where: { storeId },
+		});
+
+		const rsvpSettings = existing
+			? await sqlClient.rsvpSettings.update({
+					where: { id: existing.id },
+					data: {
+						acceptReservation,
+					},
+				})
+			: await sqlClient.rsvpSettings.create({
+					data: {
+						storeId,
+						acceptReservation,
+					},
+				});
+
+		return { rsvpSettings };
 	});

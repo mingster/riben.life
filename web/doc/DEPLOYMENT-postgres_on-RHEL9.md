@@ -1,14 +1,6 @@
-# Depolyment - Postgres on RHEL 9
+# Deployment - Postgres on RHEL 9
 
 ## Installation
-
-1. Add PostgreSQL Repository:
-
-    First, add the PostgreSQL repository for version 16 (or whichever version you need):
-
-    ```bash
-    sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-    ```
 
 1. Disable Built-in PostgreSQL Module:
 
@@ -18,12 +10,20 @@
     sudo dnf -qy module disable postgresql
     ```
 
+1. Add PostgreSQL Repository:
+
+    First, add the PostgreSQL repository for version 18 (or whichever version you need):
+
+    ```bash
+    sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    ```
+
 1. Install PostgreSQL:
 
     Install PostgreSQL by running:
 
     ``` bash
-    sudo dnf install -y postgresql17-server
+    sudo dnf install -y postgresql18-server
     ```
 
 1. Initialize the Database:

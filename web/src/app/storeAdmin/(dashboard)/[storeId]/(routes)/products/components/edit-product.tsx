@@ -186,7 +186,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 											{...field}
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										{t("Product_description_helper")}
 									</FormDescription>
 									<FormMessage />
@@ -248,7 +248,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
 									<div className="space-y-0.5">
 										<FormLabel>{t("Product_featured")}</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("Product_isFeatured_descr")}
 										</FormDescription>
 									</div>

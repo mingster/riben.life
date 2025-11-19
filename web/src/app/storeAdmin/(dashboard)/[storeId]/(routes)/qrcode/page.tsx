@@ -1,6 +1,6 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import type { StoreTables } from "@prisma/client";
+import type { StoreFacility } from "@prisma/client";
 import { QrCodeClient } from "./client";
 import { getStoreWithRelations } from "@/lib/store-access";
 
@@ -17,16 +17,16 @@ export default async function QrCodePage(props: {
 	// Parallel queries for optimal performance
 	const [store, tables] = await Promise.all([
 		getStoreWithRelations(params.storeId),
-		sqlClient.storeTables.findMany({
+		sqlClient.storeFacility.findMany({
 			where: { storeId: params.storeId },
-			orderBy: { tableName: "asc" },
+			orderBy: { facilityName: "asc" },
 		}),
 	]);
 
 	return (
 		<Container>
 			<div className="mb-4 text-xl font-semibold">QR Code</div>
-			<QrCodeClient store={store} tables={tables as StoreTables[]} />
+			<QrCodeClient store={store} tables={tables as StoreFacility[]} />
 		</Container>
 	);
 }

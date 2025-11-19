@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder } from "@/types";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import type { StoreTables } from "@prisma/client";
+import type { StoreFacility } from "@prisma/client";
 
 const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
 	if (!orderId) {
@@ -40,13 +40,13 @@ const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
     obj?.tableId !== ""
   ) {
     // mock tableId to its display name
-    const table = (await sqlClient.storeTables.findUnique({
+    const table = (await sqlClient.storeFacility.findUnique({
       where: {
         id: obj?.tableId,
       },
-    })) as StoreTables;
+    })) as StoreFacility;
 
-    if (table) obj.tableId = table.tableName;
+    if (table) obj.tableId = table.facilityName;
     //console.log(obj.tableId);
   }
   */

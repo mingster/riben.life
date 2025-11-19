@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import crypto from "crypto";
 import { twMerge } from "tailwind-merge";
 
-//import type { StoreTables } from "@prisma/client";
+//import type { StoreFacility } from "@prisma/client";
 import Decimal from "decimal.js"; // gets added if installed
 import { z } from "zod";
 import { getNumOfDaysInTheMonth, getUtcNow } from "./datetime-utils";
@@ -10,8 +10,8 @@ import { getNumOfDaysInTheMonth, getUtcNow } from "./datetime-utils";
 export const highlight_css = "border-dashed border-green-500 border-2";
 
 /*
-export function getTableName(tables: StoreTables[], tableId: string) {
-  return tables.find((table) => table.id === tableId)?.tableName || "";
+export function getTableName(tables: StoreFacility[], tableId: string) {
+  return tables.find((table) => table.id === tableId)?.facilityName || "";
 }
 */
 

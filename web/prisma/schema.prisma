@@ -25,14 +25,14 @@ model User {
   timezone         String?
   stripeCustomerId String? @unique
 
-  twoFactorEnabled Boolean?  @default(false)
-  
-  banned           Boolean?  @default(false)
-  banReason        String?
-  banExpires       DateTime?
+  twoFactorEnabled Boolean? @default(false)
 
-normalizedEmail  String?
-  
+  banned     Boolean?  @default(false)
+  banReason  String?
+  banExpires DateTime?
+
+  normalizedEmail String?
+
   SupportTicketFrom SupportTicket[]     @relation("SupportTicketFrom")
   SupportTicketTo   SupportTicket[]     @relation("SupportTicketTo")
   NotificationFrom  StoreNotification[] @relation("NotificationFrom")
@@ -41,14 +41,15 @@ normalizedEmail  String?
   Orders            StoreOrder[]        @relation("UserOrders")
   Addresses         Address[]
 
-  Rsvp        Rsvp[]
-  sessions    Session[]
-  accounts    Account[]
-  twofactors  TwoFactor[]
-  passkeys    Passkey[]
-  apikeys     Apikey[]
-  members     Member[]
-  invitations Invitation[]
+  Rsvp            Rsvp[]
+  sessions        Session[]
+  accounts        Account[]
+  twofactors      TwoFactor[]
+  passkeys        Passkey[]
+  apikeys         Apikey[]
+  members         Member[]
+  invitations     Invitation[]
+  customerCredits CustomerCredit[]
 
   @@unique([normalizedEmail])
   @@index([email])
@@ -99,6 +100,7 @@ enum Role {
   user
   admin
   owner
+  staff
 }
 
 model Verification {
@@ -113,13 +115,13 @@ model Verification {
 }
 
 model TwoFactor {
-  id          String @id
-  userId      String
+  id     String @id
+  userId String
 
   secret      String
   backupCodes String
 
-  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("twoFactor")
@@ -138,7 +140,7 @@ model Passkey {
   createdAt    DateTime?
   aaguid       String?
 
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("passkey")
@@ -173,13 +175,13 @@ model Apikey {
 }
 
 model Organization {
-  id          String       @id
-  name        String
-  slug        String
-  logo        String?
-  metadata    String?
-  createdAt   DateTime
-  
+  id        String   @id
+  name      String
+  slug      String
+  logo      String?
+  metadata  String?
+  createdAt DateTime
+
   members     Member[]
   invitations Invitation[]
 
@@ -188,14 +190,14 @@ model Organization {
 }
 
 model Member {
-  id             String       @id
+  id             String   @id
   userId         String
   organizationId String
   role           String
   createdAt      DateTime
 
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([organizationId])
@@ -203,7 +205,7 @@ model Member {
 }
 
 model Invitation {
-  id             String       @id
+  id             String   @id
   email          String
   inviterId      String
   organizationId String
@@ -211,8 +213,8 @@ model Invitation {
   status         String
   expiresAt      DateTime
 
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
   @@index([inviterId])
   @@index([organizationId])
@@ -228,7 +230,7 @@ model Subscription {
   status               String
   periodStart          DateTime?
   periodEnd            DateTime?
-  cancelAtPeriodEnd    Boolean?   @default(false)
+  cancelAtPeriodEnd    Boolean?  @default(false)
   seats                Int?
   trialStart           DateTime?
   trialEnd             DateTime?
@@ -492,31 +494,20 @@ model SubscriptionPayment {
   @@index([isPaid])
 }
 
-model Rsvp {
-  id         String   @id @default(uuid())
-  storeId    String
-  userId     String?
-  orderId    String?
-  tableId    String?
-  numOfAdult Int      @default(2)
-  numOfChild Int      @default(0)
-  rsvpTime   DateTime
-  arriveTime DateTime
-  status     Int      @default(0)
-  message    String?
+model CustomerCredit {
+  id      String  @id @default(uuid())
+  storeId String
+  userId  String
+  credit  Decimal @default(0)
 
-  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Store Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User  User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Order StoreOrder?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  Table StoreTables? @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([storeId, userId])
   @@index([storeId])
   @@index([userId])
-  @@index([orderId])
-  @@index([tableId])
 }
 
 model Store {
@@ -524,23 +515,23 @@ model Store {
   name    String
   ownerId String
 
-  defaultCountry  String  @default("USA")
-  defaultCurrency String  @default("usd")
+  defaultCountry  String  @default("TW")
+  defaultCurrency String  @default("twd")
   isDeleted       Boolean @default(false)
-  defaultLocale   String  @default("en")
-  defaultTimezone Int     @default(-8)
+  defaultLocale   String  @default("tw")
+  defaultTimezone Int     @default(8)
 
   autoAcceptOrder      Boolean @default(true)
   isOpen               Boolean @default(true)
   acceptAnonymousOrder Boolean @default(true)
 
-  acceptReservation Boolean @default(true)
-  rsvpPrepaid       Boolean @default(false) //訂位需付訂金
-
   requireSeating Boolean @default(false) //需要帶位or not
-  requirePrepaid Boolean @default(false) //先付款再出貨 @map("requirePrepaid")
+  requirePrepaid Boolean @default(false) //先付款再出貨
 
   useBusinessHours Boolean @default(true)
+
+  useCustomerCredit  Boolean @default(false) //使用儲值系統
+  creditExchangeRate Decimal @default(0) // 1點 = ??元
 
   payoutSchedule  Int     @default(0)
   bankCode        String?
@@ -569,10 +560,15 @@ model Store {
   StoreNotification          StoreNotification[]
   StoreShippingMethods       StoreShipMethodMapping[]
   StorePaymentMethods        StorePaymentMethodMapping[]
-  StoreTables                StoreTables[]
+  StoreFacilities            StoreFacility[]
   StoreProductOptionTemplate StoreProductOptionTemplate[]
   Rsvp                       Rsvp[]
   StoreSettings              StoreSettings?
+  rsvpSettings               RsvpSettings[]
+  rsvpBlacklists             RsvpBlacklist[]
+  rsvpTags                   RsvpTag[]
+  customerCredits            CustomerCredit[]
+  facilityPricingRules       FacilityPricingRule[]
 
   @@index([ownerId])
   @@index([name])
@@ -623,18 +619,159 @@ model StoreSettings {
   @@index([storeId])
 }
 
-model StoreTables {
-  id        String @id @default(uuid())
-  storeId   String
-  tableName String
-  capacity  Int    @default(2)
+model RsvpSettings {
+  id      String @id @default(uuid())
+  storeId String
 
-  Store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Rsvp  Rsvp[]
+  acceptReservation Boolean  @default(true) // turn on/off the reservation system
+  prepaidRequired   Boolean  @default(false) //預付制：儲值後才可預約 / //訂位需付訂金
+  prepaidAmount     Decimal? //預付金額/點數
 
-  @@unique([tableName])
+  canCancel   Boolean @default(true) //可取消預約
+  cancelHours Int     @default(24) //取消預約時間：小時前可取消
+
+  defaultDuration    Int     @default(60) //預約時間：60分鐘
+  requireSignature   Boolean @default(false) //需要簽名
+  showCostToCustomer Boolean @default(false) //顯示預約金額
+
+  useBusinessHours Boolean @default(true)
+  rsvpHours        String? //營業時間：M-F 09:00-18:00
+
+  //預約提醒與通知
+  reminderHours    Int     @default(24) //預約提醒時間：??小時前發送確認通知
+  useReminderSMS   Boolean @default(false) //使用簡訊通知
+  useReminderLine  Boolean @default(false) //使用Line通知
+  useReminderEmail Boolean @default(false) //使用email通知
+
+  syncWithGoogle Boolean @default(false) //同步Google月曆
+  syncWithApple  Boolean @default(false) //同步Apple日曆
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
   @@index([storeId])
-  @@index([tableName])
+}
+
+model RsvpBlacklist {
+  id        String   @id @default(uuid())
+  storeId   String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([userId])
+}
+
+model RsvpTag {
+  id        String   @id @default(uuid())
+  storeId   String
+  tagName   String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, tagName])
+  @@index([storeId])
+}
+
+model Rsvp {
+  id          String    @id @default(uuid())
+  storeId     String
+  alreadyPaid Boolean   @default(false) //已付款
+  userId      String?
+  orderId     String?
+  facilityId  String?
+  numOfAdult  Int       @default(1)
+  numOfChild  Int       @default(0)
+  rsvpTime    DateTime
+  arriveTime  DateTime?
+  status      Int       @default(0)
+  message     String?
+
+  confirmedByStore    Boolean @default(false) //店家已確認預約
+  confirmedByCustomer Boolean @default(false) //客戶已確認預約
+
+  // Pricing at time of reservation
+  facilityCost   Decimal? // The cost that was charged
+  facilityCredit Decimal? // The credit that was charged
+  pricingRuleId  String? // Reference to the pricing rule used
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store               Store                @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User                User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Order               StoreOrder?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Facility            StoreFacility?       @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  FacilityPricingRule FacilityPricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([userId])
+  @@index([orderId])
+  @@index([facilityId])
+  @@index([pricingRuleId])
+}
+
+model StoreFacility {
+  id              String  @id @default(uuid())
+  storeId         String
+  facilityName    String
+  capacity        Int     @default(4)
+  defaultCost     Decimal @default(0) // default cost for using the facility
+  defaultCredit   Decimal @default(0) // default credit for using the facility
+  defaultDuration Int     @default(60) // default duration for using the facility in minutes
+
+  Store                Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Rsvp                 Rsvp[]
+  FacilityPricingRules FacilityPricingRule[]
+
+  @@unique([storeId, facilityName])
+  @@index([storeId])
+  @@index([facilityName])
+}
+
+model FacilityPricingRule {
+  id         String  @id @default(uuid())
+  storeId    String
+  facilityId String? // null = applies to all facilities in store
+  name       String // e.g., "Weekend Pricing", "Peak Hours"
+  priority   Int     @default(0) // Higher priority = evaluated first
+
+  // Day of week rules
+  // null = applies to all days
+  // Array of day numbers: 0=Sunday, 1=Monday, ..., 6=Saturday
+  // Special values: "weekend" = [0, 6], "weekday" = [1,2,3,4,5]
+  dayOfWeek String? // JSON array: [0,6] or "weekend" or "weekday" or null
+
+  // Time range (in store's timezone)
+  startTime String? // HH:mm format, e.g., "18:00"
+  endTime   String? // HH:mm format, e.g., "22:00"
+  // If both null, applies to all times
+
+  // Pricing
+  cost   Decimal? // Override defaultCost (null = use facility default)
+  credit Decimal? // Override defaultCredit (null = use facility default)
+
+  // Status
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Facility StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  rsvps    Rsvp[]
+
+  @@index([storeId])
+  @@index([facilityId])
+  @@index([storeId, facilityId, isActive])
+  @@index([priority])
 }
 
 model StoreAnnouncement {
@@ -1065,7 +1202,7 @@ model EmailQueue {
 }
 
 model SupportTicket {
-  id       String @id @default(uuid())
+  id       String  @id @default(uuid())
   threadId String?
 
   senderId String

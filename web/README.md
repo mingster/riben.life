@@ -1,5 +1,12 @@
 # Riben.life Web Application
 
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/mingster/riben.life/CI?label=build)
+
+[![Coverage](https://img.shields.io/badge/Coverage-83%25-brightgreen.svg)](https://riben.life/coverage/report.html)
+
+[![Dependencies](https://img.shields.io/librariesio/release/npm/riben.life)](https://libraries.io/npm/riben.life)
+
+
 A modern, multi-tenant restaurant management and ordering platform built with Next.js 15.
 
 ## Overview

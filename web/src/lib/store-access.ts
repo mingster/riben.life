@@ -200,8 +200,8 @@ export async function getStoreWithRelations(
 				},
 			}),
 			...(includeTables && {
-				StoreTables: {
-					orderBy: { tableName: "asc" },
+				StoreFacilities: {
+					orderBy: { facilityName: "asc" },
 				},
 			}),
 			...(includeSupportTickets && {

@@ -5,7 +5,7 @@ import i18next, { type FlatNamespace, type KeyPrefix } from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import resourcesToBackend from "i18next-resources-to-backend";
 import { useCookies } from "next-client-cookies";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
 	type FallbackNs,
@@ -61,27 +61,43 @@ export function useTranslation<
 
 	const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
 
-	//console.log(`useTranslation: ${activeLng}`);
-
+	// Sync activeLng with i18n's resolved language
 	useEffect(() => {
 		if (activeLng === i18n.resolvedLanguage) return;
 		setActiveLng(i18n.resolvedLanguage);
 	}, [activeLng, i18n.resolvedLanguage]);
 
-	useEffect(() => {
-		if (!lng || i18n.resolvedLanguage === lng) return;
-		i18n.changeLanguage(lng);
-	}, [lng, i18n]);
+	// Only change language if lng is explicitly provided and different
+	// Use a ref to track the last lng we processed to avoid conflicts
+	const lastLngRef = useRef<string | undefined>(lng);
 
 	useEffect(() => {
-		if (cookies.get(cookieName) === lng) return;
-
-		if (lng) {
-			console.log("will set cookie", cookieName, lng);
-			//setCookie(cookieName, lng, { path: "/" });
-			cookies.set(cookieName, lng, { path: "/" });
+		if (!lng) {
+			lastLngRef.current = undefined;
+			return; // Only change if lng is explicitly provided
 		}
-	}, [lng, cookies]);
+
+		// Skip if we already processed this lng
+		if (lastLngRef.current === lng) return;
+
+		// Only change if it's different from current resolved language
+		if (i18n.resolvedLanguage !== lng) {
+			i18n.changeLanguage(lng);
+			lastLngRef.current = lng;
+		}
+	}, [lng, i18n.resolvedLanguage]); // Include i18n.resolvedLanguage to check current state
+
+	// Set cookie when lng is provided - only run when lng changes
+	// Don't include cookies in dependencies to avoid infinite loops
+	useEffect(() => {
+		if (!lng) return; // Only set cookie if lng is explicitly provided
+
+		const currentCookie = cookies.get(cookieName);
+		if (currentCookie === lng) return; // Already set to this language
+
+		// Set cookie only if it's different
+		cookies.set(cookieName, lng, { path: "/" });
+	}, [lng]); // Only depend on lng, not cookies object
 
 	return ret;
 }

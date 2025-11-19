@@ -52,7 +52,7 @@ const tableColumns: ColumnDef<TableRow>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={t("StoreTable_Name")}
+        title={t("Facility_Name")}
       />
     ),
   },
@@ -61,7 +61,7 @@ const tableColumns: ColumnDef<TableRow>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={t("StoreTable_Seats")}
+        title={t("Facility_Seats")}
       />
     ),
   },

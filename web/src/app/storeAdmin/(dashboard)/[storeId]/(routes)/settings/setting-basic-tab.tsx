@@ -224,7 +224,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 													{...field}
 												/>
 											</FormControl>
-											<FormDescription>
+											<FormDescription className="text-xs font-mono text-gray-500">
 												{t("StoreSettings_orderNoteToCustomer_desccr")}
 											</FormDescription>
 											<FormMessage />
@@ -298,7 +298,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>{t("StoreSettings_isOpen")}</FormLabel>
-												<FormDescription>
+												<FormDescription className="text-xs font-mono text-gray-500">
 													{t("StoreSettings_isOpen_descr")}
 												</FormDescription>
 											</div>
@@ -322,7 +322,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 												<FormLabel>
 													{t("StoreSettings_useBusinessHours")}
 												</FormLabel>
-												<FormDescription>
+												<FormDescription className="text-xs font-mono text-gray-500">
 													{t("StoreSettings_useBusinessHours_descr")}
 												</FormDescription>
 											</div>
@@ -370,7 +370,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 												<FormLabel>
 													{t("StoreSettings_requireSeating")}
 												</FormLabel>
-												<FormDescription>
+												<FormDescription className="text-xs font-mono text-gray-500">
 													{t("StoreSettings_requireSeating_descr")}
 												</FormDescription>
 											</div>
@@ -393,7 +393,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 												<FormLabel>
 													{t("StoreSettings_requirePrepay")}
 												</FormLabel>
-												<FormDescription>
+												<FormDescription className="text-xs font-mono text-gray-500">
 													{t("StoreSettings_requirePrepay_descr")}
 												</FormDescription>
 											</div>
@@ -418,7 +418,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 												<FormLabel>
 													{t("StoreSettings_autoAcceptOrder")}
 												</FormLabel>
-												<FormDescription>
+												<FormDescription className="text-xs font-mono text-gray-500">
 													{t("StoreSettings_autoAcceptOrder_descr")}
 												</FormDescription>
 											</div>

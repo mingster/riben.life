@@ -1,32 +1,54 @@
 "use client";
 
 import { Store } from "@/types";
-import { RsvpSettingTab } from "./setting-rsvp-tab";
+import { RsvpSettingTab } from "./tab-rsvp-settings";
 
-import { toastError, toastSuccess } from "@/components/toaster";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { IconTrash } from "@tabler/icons-react";
-import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 
-import { Button } from "@/components/ui/button";
-
 import { Loader } from "@/components/loader";
-import { AlertModal } from "@/components/modals/alert-modal";
 import { Heading } from "@/components/ui/heading";
+import { RsvpCreditTab } from "./tab-credit";
+import { RsvpTagTab } from "./tab-tag";
+import { RsvpBlacklistTab } from "./tab-black-list";
+
+export type RsvpSettingsData = {
+	id: string;
+	storeId: string;
+	acceptReservation: boolean;
+	prepaidRequired: boolean;
+	prepaidAmount: number | null;
+	canCancel: boolean;
+	cancelHours: number;
+	defaultDuration: number;
+	requireSignature: boolean;
+	showCostToCustomer: boolean;
+	useBusinessHours: boolean;
+	rsvpHours: string | null;
+	reminderHours: number;
+	useReminderSMS: boolean;
+	useReminderLine: boolean;
+	useReminderEmail: boolean;
+	syncWithGoogle: boolean;
+	syncWithApple: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+};
 
 export interface RsvpSettingsProps {
 	store: Store;
+	rsvpSettings?: RsvpSettingsData | null;
 	onStoreUpdated?: (store: Store) => void;
 }
 
 export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
-	store,
+	store: initialStore,
+	rsvpSettings: initialRsvpSettings,
 	onStoreUpdated,
 }) => {
 	const router = useRouter();
@@ -38,6 +60,25 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
+	// Manage rsvpSettings state in client component
+	const [rsvpSettings, setRsvpSettings] = useState(initialRsvpSettings);
+
+	// Manage store state in client component
+	const [store, setStore] = useState(initialStore);
+
+	// Handle updated rsvpSettings
+	const handleRsvpSettingsUpdated = (
+		updated: NonNullable<typeof rsvpSettings>,
+	) => {
+		setRsvpSettings(updated);
+	};
+
+	// Handle updated store
+	const handleStoreUpdated = (updated: typeof store) => {
+		setStore(updated);
+		onStoreUpdated?.(updated);
+	};
+
 	if (loading) {
 		return <Loader />;
 	}
@@ -46,40 +87,63 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("StoreSettings")}
-					description={t("StoreSettingsDescr")}
+					title={t("RSVP_Settings")}
+					description={t("RSVP_Settings_Descr")}
 				/>
-				<Button
-					disabled={loading}
-					variant="destructive"
-					size="sm"
-					onClick={() => setOpen(true)}
-				>
-					<IconTrash className="size-4" />
-				</Button>
 			</div>
 
-			<Tabs defaultValue="rsvp" className="w-full">
+			<Tabs defaultValue="basic" className="w-full">
 				<TabsList>
-					<TabsTrigger className="px-1 lg:min-w-25" value="rsvp">
-						{t("StoreSettingsTab_RSVP")}
+					<TabsTrigger className="px-1 lg:min-w-25" value="basic">
+						{t("RSVP_Tab_System")}
 					</TabsTrigger>
 					<TabsTrigger className="px-1 lg:min-w-25" value="credit">
-					儲值金/紅利點數
+						{t("RSVP_Tab_Credit")}
 					</TabsTrigger>
 
 					<TabsTrigger className="px-1 lg:min-w-25" value="tag">
-					會員標籤
+						{t("RSVP_Tab_Tag")}
 					</TabsTrigger>
 
 					<TabsTrigger className="px-1 lg:min-w-25" value="blacklist">
-					黑名單
+						{t("RSVP_Tab_Blacklist")}
 					</TabsTrigger>
-
 				</TabsList>
 
-				<TabsContent value="rsvp">
-					<RsvpSettingTab store={store} onStoreUpdated={onStoreUpdated} />
+				<TabsContent value="basic">
+					<RsvpSettingTab
+						store={store}
+						rsvpSettings={rsvpSettings}
+						onStoreUpdated={onStoreUpdated}
+						onRsvpSettingsUpdated={handleRsvpSettingsUpdated}
+					/>
+				</TabsContent>
+
+				<TabsContent value="credit">
+					<RsvpCreditTab
+						store={store}
+						rsvpSettings={rsvpSettings}
+						onStoreUpdated={handleStoreUpdated}
+						onRsvpSettingsUpdated={handleRsvpSettingsUpdated}
+					/>
+				</TabsContent>
+
+				<TabsContent value="tag">
+					<RsvpTagTab
+						store={store}
+						rsvpSettings={rsvpSettings}
+						onStoreUpdated={onStoreUpdated}
+						onRsvpSettingsUpdated={handleRsvpSettingsUpdated}
+					/>
+				</TabsContent>
+
+				<TabsContent value="blacklist">
+					<RsvpBlacklistTab
+						store={store}
+						rsvpSettings={rsvpSettings}
+						onStoreUpdated={onStoreUpdated}
+						onRsvpSettingsUpdated={handleRsvpSettingsUpdated}
+					/>
 				</TabsContent>
 			</Tabs>
 		</>

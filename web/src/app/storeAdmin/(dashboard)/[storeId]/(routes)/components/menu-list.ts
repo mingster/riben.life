@@ -8,6 +8,7 @@ import { StoreLevel, TicketStatus } from "@/types/enum";
 import {
 	IconArrowRight,
 	IconBox,
+	IconBuilding,
 	IconCalendarCheck,
 	IconClock,
 	IconCreditCard,
@@ -233,7 +234,7 @@ export function GetMenuList(
 				},
 				{
 					href: `${nav_prefix}/rsvp-settings`,
-					label: t("StoreSettingsTab_RSVP"),
+					label: t("RSVP_Settings"),
 					active: pathname.includes(`${nav_prefix}/rsvp-settings`),
 					icon: IconCalendarCheck,
 					submenus: [],
@@ -246,10 +247,10 @@ export function GetMenuList(
 					submenus: [],
 				},
 				{
-					href: `${nav_prefix}/tables`,
-					label: t("storeTables"),
-					active: pathname.includes(`${nav_prefix}/tables`),
-					icon: IconTable,
+					href: `${nav_prefix}/facility`,
+					label: t("Facility_Mgmt"),
+					active: pathname.includes(`${nav_prefix}/facility`),
+					icon: IconBuilding,
 					submenus: [],
 				},
 

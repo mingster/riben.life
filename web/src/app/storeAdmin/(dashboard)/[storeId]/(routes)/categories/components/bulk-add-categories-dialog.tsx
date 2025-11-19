@@ -160,7 +160,9 @@ export function BulkAddCategoriesDialog({
 											onChange={field.onChange}
 										/>
 									</FormControl>
-									<FormDescription>{t("Category_names_Descr")}</FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("Category_names_Descr")}
+									</FormDescription>
 									<FormMessage>{fieldState.error?.message}</FormMessage>
 								</FormItem>
 							)}
@@ -173,7 +175,7 @@ export function BulkAddCategoriesDialog({
 								<FormItem className="flex flex-row items-center justify-between rounded-lg p-3 shadow-sm">
 									<div className="space-y-0.5">
 										<FormLabel>{t("Category_isFeatured")}</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("Category_isFeatured_descr")}
 										</FormDescription>
 									</div>

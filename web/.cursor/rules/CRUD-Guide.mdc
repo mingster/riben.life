@@ -39,6 +39,8 @@ This application follows a modern pattern for managing data (CRUD operations - C
 3. **Edit/Create Dialog:**  
    - Uses a modal dialog for editing or creating items.
    - Uses react-hook-form and zod for validation.
+   - **Always imports validation schemas from action folders** - Never defines local schemas in components.
+   - If handling both create and update, conditionally selects the appropriate schema based on `isNew` prop.
    - Calls server actions for create/edit mutations.
    - Notifies the parent component to update local state after mutation.
 
@@ -118,23 +120,61 @@ const handleDeleted = (deletedItem: ItemType) => {
 ### 6. Edit/Create Component Calls Callback After Success
 
 ```tsx
-async function onSubmit(data: ItemType) {
-  const result = await updateItemAction(data);
+// Import validation schemas from action folders
+import {
+  createFacilitySchema,
+  type CreateFacilityInput,
+} from "@/actions/storeAdmin/facility/create-facility.validation";
+import {
+  updateFacilitySchema,
+  type UpdateFacilityInput,
+} from "@/actions/storeAdmin/facility/update-facility.validation";
+
+// For forms that handle both create and update:
+const isEditMode = Boolean(facility) && !isNew;
+
+// Conditionally select schema based on mode
+const schema = useMemo(
+  () => (isEditMode ? updateFacilitySchema : createFacilitySchema),
+  [isEditMode],
+);
+
+// Form type: Omit fields added in submit handler (e.g., storeId)
+type FormInput = Omit<UpdateFacilityInput, "id" | "storeId"> & { 
+  id?: string;
+  storeId?: string;
+};
+
+const form = useForm<FormInput>({
+  resolver: zodResolver(schema) as Resolver<FormInput>,
+  defaultValues,
+});
+
+async function onSubmit(data: FormInput) {
+  const result = await updateItemAction({ 
+    ...data, 
+    storeId: String(params.storeId) 
+  });
   if (result?.serverError) {
     toastError({ description: result.serverError });
     return;
   }
   // For create, ensure all required fields are present
-  if (data.id === 'new') {
-    data.id = result.data.id;
-    data.createdOn = result.data.createdOn;
-    onCreated?.(data);
+  if (data.id === 'new' || isNew) {
+    const newItem = { ...data, id: result.data.id, createdOn: result.data.createdOn };
+    onCreated?.(newItem);
   } else {
-    onUpdated?.(data);
+    onUpdated?.(data as ItemType);
   }
   setIsOpen(false);
 }
 ```
+
+**Key Points:**
+- Always import schemas from `@/actions/[domain]/[feature]/[action-name].validation.ts`
+- Use `.omit()` to exclude fields added in submit handler (e.g., `storeId`)
+- For conditional schemas, use `useMemo` to select the appropriate schema
+- Never define local schemas in component files
 
 ### 6. Filter Implementation
 
@@ -233,12 +273,91 @@ const filteredData = useMemo(() => {
 }, [data, selectedStatuses, titleFilter]);
 ```
 
+### 7. Settings/Configuration Forms (Single Object Update)
+
+For settings or configuration forms that update a single object (not a list):
+
+```tsx
+// Parent component (tabs.tsx or similar)
+export const SettingsTabs: React.FC<SettingsProps> = ({
+  store,
+  settings: initialSettings,
+}) => {
+  // Manage settings state in client component
+  const [settings, setSettings] = useState(initialSettings);
+
+  // Handle updated settings
+  const handleSettingsUpdated = (updated: NonNullable<typeof settings>) => {
+    setSettings(updated);
+  };
+
+  return (
+    <SettingsTab
+      settings={settings}
+      onSettingsUpdated={handleSettingsUpdated}
+    />
+  );
+};
+
+// Form component (tab-settings.tsx)
+export const SettingsTab: React.FC<SettingsTabProps> = ({
+  settings,
+  onSettingsUpdated,
+}) => {
+  const form = useForm<FormValues>({
+    resolver: zodResolver(settingsSchema.omit({ storeId: true })),
+    defaultValues: useMemo(() => settings ? { ...settings } : defaults, [settings]),
+  });
+
+  // Reset form when settings changes (after update)
+  useEffect(() => {
+    form.reset(settings ? { ...settings } : defaults);
+  }, [settings, form]);
+
+  const onSubmit = async (data: FormValues) => {
+    const result = await updateSettingsAction({ 
+      storeId: params.storeId, 
+      ...data 
+    });
+    
+    if (result?.serverError) {
+      toastError({ description: result.serverError });
+      return;
+    }
+    
+    // Update local state instead of refreshing router
+    const updatedSettings = result.data.settings as SettingsData;
+    onSettingsUpdated?.(updatedSettings);
+    
+    toastSuccess({ description: "Settings updated!" });
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        {/* Form fields */}
+      </form>
+    </Form>
+  );
+};
+```
+
+**Key Points for Settings Forms:**
+- Parent component manages the settings state with `useState`
+- Form component receives `onSettingsUpdated` callback
+- After successful mutation, transform server response and call callback
+- Use `useMemo` for `defaultValues` to recalculate when settings change
+- Use `useEffect` to reset form when settings prop changes
+- **Never use `router.refresh()`** - update state directly via callback
+
 ## Summary
 
 - Use local state for table data in client components.
+- Use local state for settings/configuration objects in client components.
 - Pass mutation callbacks to edit/create/delete components.
-- Update the state array directly after mutations.
+- Update the state directly after mutations (arrays or single objects).
 - Ensure all required fields are present when adding to state.
 - Do not rely on `router.refresh()` for client state updates.
+- Only use `router.refresh()` if you need to re-fetch server components.
 
 This pattern ensures a fast, reactive UI and avoids common pitfalls with stale or unsynced data.

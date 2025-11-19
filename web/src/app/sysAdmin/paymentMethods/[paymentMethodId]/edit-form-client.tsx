@@ -242,7 +242,9 @@ export const EditClient = ({ initialData }: editProps) => {
 										<FormItem className="flex flex-row items-center justify-between px-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>isDefault</FormLabel>
-												<FormDescription> </FormDescription>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{" "}
+												</FormDescription>
 											</div>
 											<FormControl>
 												<Switch

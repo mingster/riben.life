@@ -32,6 +32,8 @@ This project uses [Next.js Server Actions](mdc:https:/nextjs.org/docs/app/buildi
 
 - All server actions use Zod schemas for input validation and type safety
 - Only files that export async server actions should include the `"use server"` directive. Validation modules and other helpers should omit it.
+- **Validation schemas must be imported and reused in form components** - Never duplicate schemas in UI components
+- Form components should import schemas from action validation files to ensure consistency between client and server validation
 - Actions are wrapped with `userRequiredActionClient` for general action:
 
 ```ts
@@ -87,10 +89,10 @@ if (guid === undefined || guid === null || guid === "" || guid === "new") {
 
 ## Example Files
 
-- [create-store-table.ts](mdc:web/src/actions/storeAdmin/tables/create-store-table.ts)
-- [update-store-table.ts](mdc:web/src/actions/storeAdmin/tables/update-store-table.ts)
-- [create-store-tables.ts](mdc:web/src/actions/storeAdmin/tables/create-store-tables.ts)
-- [delete-store-table.ts](mdc:web/src/actions/storeAdmin/tables/delete-store-table.ts)
+- [create-facility.ts](mdc:web/src/actions/storeAdmin/tables/create-facility.ts)
+- [update-facility.ts](mdc:web/src/actions/storeAdmin/tables/update-facility.ts)
+- [create-facilitys.ts](mdc:web/src/actions/storeAdmin/tables/create-facilitys.ts)
+- [delete-facility.ts](mdc:web/src/actions/storeAdmin/tables/delete-facility.ts)
 - [update-faq.ts](mdc:web/src/actions/storeAdmin/faq/update-faq.ts)
 - [update-faq.validation.ts](mdc:web/src/actions/storeAdmin/faq/update-faq.validation.ts)
 - [update-faq-category.ts](mdc:web/src/actions/storeAdmin/faqCategory/update-faq-category.ts)
