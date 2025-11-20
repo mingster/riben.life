@@ -1,3 +1,5 @@
+"use client";
+
 import { StoreOrder } from "@/types";
 import { DisplayOrder } from "./display-order";
 
