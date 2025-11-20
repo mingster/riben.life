@@ -43,33 +43,104 @@ export const createStoreAction = userRequiredActionClient
 			},
 		});
 
-		// Create organization BEFORE creating store
-		let organization;
-		try {
-			const headersList = await headers();
+		// if user do not have an organization, create org BEFORE creating store
+		const headersList = await headers();
 
-			organization = await auth.api.createOrganization({
-				headers: headersList,
-				body: {
-					name: name, // Use original name for organization display name
-					slug: name,
-					keepCurrentActiveOrganization: true,
+		// Check if user is already a member of any organization
+		const userOrganizations = await sqlClient.member.findMany({
+			where: {
+				userId: ownerId,
+			},
+			include: {
+				organization: {
+					select: {
+						id: true,
+						name: true,
+						slug: true,
+					},
 				},
-			});
+			},
+		});
+
+		let organization;
+
+		// If user has no organizations, create one
+		if (userOrganizations.length === 0) {
+			try {
+				// Generate slug from store name
+				let storeSlug = name.toLowerCase().replace(/ /g, "-");
+
+				// Check if slug is already taken
+				const slugExists = await sqlClient.organization.findUnique({
+					where: { slug: storeSlug },
+					select: { id: true },
+				});
+
+				// If slug exists, add suffix
+				if (slugExists) {
+					storeSlug =
+						storeSlug + "-" + Math.random().toString(36).substring(2, 15);
+				}
+
+				organization = await auth.api.createOrganization({
+					headers: headersList,
+					body: {
+						name: name, // Use original name for organization display name
+						slug: storeSlug,
+						keepCurrentActiveOrganization: true,
+					},
+				});
+
+				if (!organization || !organization.id) {
+					throw new SafeError("Failed to create organization");
+				}
+
+				logger.info("Created new organization for user", {
+					metadata: {
+						organizationId: organization.id,
+						userId: ownerId,
+						storeName: name,
+					},
+					tags: ["store", "organization", "create"],
+				});
+			} catch (error) {
+				logger.error("Failed to create organization", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+						name,
+						ownerId,
+					},
+					tags: ["store", "organization", "error"],
+				});
+				throw new SafeError("Failed to create organization. Please try again.");
+			}
+		} else {
+			// User already has organizations, reuse the first one (one org per user, multiple stores)
+			organization = userOrganizations[0].organization;
 
 			if (!organization || !organization.id) {
-				throw new SafeError("Failed to create organization");
+				logger.error(
+					"User has organization membership but organization not found",
+					{
+						metadata: {
+							userId: ownerId,
+							memberId: userOrganizations[0].id,
+							organizationId: userOrganizations[0].organizationId,
+						},
+						tags: ["store", "organization", "error"],
+					},
+				);
+				throw new SafeError("Organization not found. Please contact support.");
 			}
-		} catch (error) {
-			logger.error("Failed to create organization", {
+
+			logger.info("Reusing existing organization for new store", {
 				metadata: {
-					error: error instanceof Error ? error.message : String(error),
-					name,
-					ownerId,
+					organizationId: organization.id,
+					userId: ownerId,
+					storeName: name,
 				},
-				tags: ["store", "organization", "error"],
+				tags: ["store", "organization", "reuse"],
 			});
-			throw new SafeError("Failed to create organization. Please try again.");
 		}
 
 		// Create store AFTER organization is successfully created

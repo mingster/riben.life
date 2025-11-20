@@ -1,11 +1,11 @@
 import { auth, Session } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import logger from "@/lib/logger";
 
 // this is the main layout for store admin.
-// if the user has a store, redirect to the store dashboard (dashboard/[storeId])
+// if the user has a store, redirect to the store dashboard (/storeAdmin/[storeId])
 // if the user doesn't have store, show the create store modal (via page.tsx)
 export default async function StoreAdminLayout(props: {
 	children: React.ReactNode;
@@ -26,7 +26,16 @@ export default async function StoreAdminLayout(props: {
 	//const ownerId = session.user?.id;
 	//console.log('userid: ' + userId);
 
-	// Find the user's store
+	const LAST_SELECTED_STORE_KEY = "lastSelectedStoreId";
+	const cookieStore = await cookies();
+	const lastSelectedStoreId = cookieStore.get(LAST_SELECTED_STORE_KEY)?.value;
+
+	// if cookie exists, redirect to the last selected store
+	if (lastSelectedStoreId) {
+		redirect(`/storeAdmin/${lastSelectedStoreId}`);
+	}
+
+	// if no cookie exists, redirect to user's first store
 	const store = await sqlClient.store.findFirst({
 		where: {
 			ownerId: session.user.id,
@@ -34,26 +43,10 @@ export default async function StoreAdminLayout(props: {
 		},
 	});
 
-	const storeId = store?.id;
-
-	//console.log('storeId: ' + storeId);
-	//console.log('ownerId: ' + session.user.id);
-
-	// redirect user to `/storeAdmin/${store.id}` if the user is already a store owner
-	if (storeId) {
-		redirect(`/storeAdmin/${storeId}`);
+	// if user has only one store, redirect to the store dashboard
+	if (store) {
+		redirect(`/storeAdmin/${store.id}`);
 	}
 
-	//console.log('userId: ' + user?.id);
-	/*
-
-  if (session.user.role != 'owner') {
-	logger.info("access denied");
-	redirect('/error/?code=500');
-
-  }
-
-  //console.log('store: ' + JSON.stringify(store));
-*/
 	return <>{children}</>;
 }

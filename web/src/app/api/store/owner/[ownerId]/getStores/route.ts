@@ -25,6 +25,19 @@ export async function GET(
 			ownerId: params.ownerId,
 			isDeleted: false,
 		},
+		select: {
+			id: true,
+			name: true,
+			ownerId: true,
+			organizationId: true,
+			defaultLocale: true,
+			defaultCountry: true,
+			defaultCurrency: true,
+			level: true,
+			isDeleted: true,
+			createdAt: true,
+			updatedAt: true,
+		},
 	});
 
 	transformDecimalsToNumbers(stores);
