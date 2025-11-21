@@ -26,6 +26,7 @@
 			"riben",
 			"waitlist",
 			"waitlists"
-		]
+		],
+		"prisma.pinToPrisma6": true
 	}
 }

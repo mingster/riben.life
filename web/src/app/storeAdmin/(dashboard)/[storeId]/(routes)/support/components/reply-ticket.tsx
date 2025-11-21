@@ -76,21 +76,21 @@ export const ReplyTicket: React.FC<props> = ({
 
 	const defaultValues: UpdateTicketInput =
 		!isNew && item
-			? {
-					// for reply - create a new reply ticket and use previous ticket's info
-					id: "",
-					storeId: item.storeId,
-					department: item.department,
-					subject: item.subject,
+		? {
+				// for reply - create a new reply ticket and use previous ticket's info
+				id: "",
+				storeId: item.storeId,
+				department: item.department,
+				subject: item.subject,
 					message: "",
-					priority: Number(TicketPriority.Medium),
-					senderId: currentUser.id,
+				priority: Number(TicketPriority.Medium),
+				senderId: currentUser.id,
 					creator: currentUser.email || "",
 					modifier: currentUser.email || "",
 					status: Number(TicketStatus.Replied),
-					// if item has threadId, use it. If not, this item will be the main thread - use its id.
-					threadId: item.threadId || item.id,
-				}
+				// if item has threadId, use it. If not, this item will be the main thread - use its id.
+				threadId: item.threadId || item.id,
+			}
 			: {
 					id: "",
 					priority: Number(TicketPriority.Medium),
