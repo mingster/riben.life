@@ -14,7 +14,6 @@ import {
 	type UpdateTicketInput,
 } from "@/actions/store/support-ticket/update-ticket.validation";
 import { useTranslation } from "@/app/i18n/client";
-import logger from "@/lib/logger";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,31 +73,37 @@ export const EditTicket: React.FC<props> = ({
 
 	//console.log("currentUser", currentUser);
 
-	const defaultValues = !isNew
-		? {
-				// for reply - create a new reply ticket and use previous ticket's info
-				id: "",
-				senderId: currentUser.id,
-				creator: currentUser.email,
-				modifier: currentUser.email,
-				department: item.department,
-				subject: item.subject,
-				status: item.status,
-				// if item has threadId, use it. If not, this item will be the main thread - use its id.
-				threadId: item.threadId || item.id,
-				storeId: params.storeId as string,
-			}
-		: {
-				// create a new root ticket
-				id: "",
-				priority: Number(TicketPriority.Medium),
-				senderId: currentUser.id,
-				creator: currentUser.email,
-				modifier: currentUser.email,
-				status: Number(TicketStatus.Open),
-				department: "technical",
-				storeId: params.storeId as string,
-			};
+	const defaultValues: UpdateTicketInput =
+		!isNew && item
+			? {
+					// for reply - create a new reply ticket and use previous ticket's info
+					id: "",
+					priority: item.priority ?? Number(TicketPriority.Medium),
+					senderId: currentUser.id,
+					creator: currentUser.email || "",
+					modifier: currentUser.email || "",
+					department: item.department,
+					subject: item.subject,
+					message: "",
+					status: item.status,
+					// if item has threadId, use it. If not, this item will be the main thread - use its id.
+					threadId:
+						item.threadId && item.threadId !== "" ? item.threadId : item.id,
+					storeId: params.storeId as string,
+				}
+			: {
+					// create a new root ticket
+					id: "",
+					priority: Number(TicketPriority.Medium),
+					senderId: currentUser.id,
+					creator: currentUser.email || "",
+					modifier: currentUser.email || "",
+					status: Number(TicketStatus.Open),
+					department: "technical",
+					subject: "",
+					message: "",
+					storeId: params.storeId as string,
+				};
 
 	//console.log("defaultValues", isNew, defaultValues);
 
@@ -109,9 +114,7 @@ export const EditTicket: React.FC<props> = ({
 	});
 
 	const {
-		register,
 		formState: { errors },
-		handleSubmit,
 		clearErrors,
 	} = form;
 
@@ -121,48 +124,53 @@ export const EditTicket: React.FC<props> = ({
 	async function onSubmit(data: UpdateTicketInput) {
 		setLoading(true);
 
-		//console.log("data", data);
+		try {
+			const result = await updateTicketAction(data);
 
-		const result = (await updateTicketAction(data)) as SupportTicket;
-		if (result?.serverError) {
-			toastError({ description: result.serverError });
-		} else {
+			if (!result) {
+				toastError({ description: t("ticket_update_error") });
+				setLoading(false);
+				return;
+			}
+
+			if (result.serverError) {
+				toastError({ description: result.serverError });
+				setLoading(false);
+				return;
+			}
+
 			// also update data from parent component or caller
 			const updatedData = result.data;
-			//console.log("onSubmit", updatedData);
+
+			if (!updatedData) {
+				toastError({ description: t("ticket_update_error") });
+				setLoading(false);
+				return;
+			}
 
 			onUpdated?.(updatedData); // update the parent component
 
-			if (updatedData) {
-				// send email to store owner
-				try {
-					// add to mail-queue
-					// don't use updatedData, it's for UI display
-					const result = await axios.post(
-						`${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/ticket/send`,
-						updatedData,
-					);
+			// send email to store owner
+			try {
+				// add to mail-queue
+				await axios.post(
+					`${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/ticket/send`,
+					updatedData,
+				);
 
-					/*
-					if (result.status === 200 && result.data.success) {
-						toast("我們已經收到你的訊息，會盡快回覆你。");
-					} else {
-						toast("Ahh, something went wrong. Please try again.");
-
-						logger.info("Operation log");
-					}*/
-
-					toastSuccess({ description: t("ticket_create_success") });
-				} catch (error: unknown) {
-					const err = error as AxiosError;
-					toastError({ description: err.message });
-				} finally {
-					setLoading(false);
-				}
+				toastSuccess({ description: t("ticket_create_success") });
+			} catch (error: unknown) {
+				const err = error as AxiosError;
+				toastError({ description: err.message });
 			}
+
+			setIsEditorOpen(false);
+		} catch (error: unknown) {
+			const err = error as AxiosError;
+			toastError({ description: err.message });
+		} finally {
+			setLoading(false);
 		}
-		setLoading(false);
-		setIsEditorOpen(false);
 	}
 
 	return (

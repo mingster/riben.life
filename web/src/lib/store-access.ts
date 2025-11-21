@@ -131,6 +131,7 @@ export async function getStoreWithRelations(
 		includeAnnouncements?: boolean;
 		includeTables?: boolean;
 		includeSupportTickets?: boolean;
+		includeOrganization?: boolean;
 		productsLimit?: number;
 		ordersLimit?: number;
 	} = {},
@@ -144,6 +145,7 @@ export async function getStoreWithRelations(
 		includeAnnouncements = false,
 		includeTables = false,
 		includeSupportTickets = false,
+		includeOrganization = false,
 		productsLimit = 100,
 		ordersLimit = 50,
 	} = options;
@@ -211,6 +213,9 @@ export async function getStoreWithRelations(
 						Sender: true,
 					},
 				},
+			}),
+			...(includeOrganization && {
+				Organization: true,
 			}),
 		},
 	});

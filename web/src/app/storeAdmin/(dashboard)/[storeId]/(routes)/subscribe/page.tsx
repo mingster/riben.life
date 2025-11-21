@@ -27,13 +27,19 @@ export default async function StoreSubscribePage(props: {
 
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance
-	const [_customerCheck, store, subscription] = await Promise.all([
+	const [_customerCheck, storeResult, subscription] = await Promise.all([
 		ensureStripeCustomer(session.user.id),
 		getStoreWithRelations(params.storeId),
 		sqlClient.storeSubscription.findUnique({
 			where: { storeId: params.storeId },
 		}),
 	]);
+
+	if (!storeResult) {
+		redirect("/storeAdmin");
+	}
+
+	const store = storeResult;
 
 	if (process.env.NODE_ENV === "development") {
 		logger.info("subscription");

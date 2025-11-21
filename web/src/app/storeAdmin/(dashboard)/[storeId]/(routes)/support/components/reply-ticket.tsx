@@ -74,24 +74,34 @@ export const ReplyTicket: React.FC<props> = ({
 	const isMobile = windowSize.width < 768;
 	const { setSupportTicketCount } = useStoreAdminContext();
 
-	const defaultValues = !isNew
-		? {
-				// for reply - create a new reply ticket and use previous ticket's info
-				id: "",
-				storeId: item.storeId,
-				recipientId: item.recipientId,
-				department: item.department,
-				subject: item.subject,
-
-				priority: Number(TicketPriority.Medium),
-				senderId: currentUser.id,
-				creator: currentUser.email,
-				modifier: currentUser.email,
-				status: TicketStatus.Replied,
-				// if item has threadId, use it. If not, this item will be the main thread - use its id.
-				threadId: item.threadId || item.id,
-			}
-		: {};
+	const defaultValues: UpdateTicketInput =
+		!isNew && item
+			? {
+					// for reply - create a new reply ticket and use previous ticket's info
+					id: "",
+					storeId: item.storeId,
+					department: item.department,
+					subject: item.subject,
+					message: "",
+					priority: Number(TicketPriority.Medium),
+					senderId: currentUser.id,
+					creator: currentUser.email || "",
+					modifier: currentUser.email || "",
+					status: Number(TicketStatus.Replied),
+					// if item has threadId, use it. If not, this item will be the main thread - use its id.
+					threadId: item.threadId || item.id,
+				}
+			: {
+					id: "",
+					priority: Number(TicketPriority.Medium),
+					senderId: currentUser.id,
+					creator: currentUser.email || "",
+					modifier: currentUser.email || "",
+					status: Number(TicketStatus.Open),
+					department: "technical",
+					subject: "",
+					message: "",
+				};
 
 	//console.log("defaultValues", isNew, defaultValues);
 
@@ -116,15 +126,17 @@ export const ReplyTicket: React.FC<props> = ({
 
 		//console.log("data", data);
 
-		const result = (await updateTicketAdminAction({
+		const result = await updateTicketAdminAction({
 			...data,
 			recipientId: item?.recipientId || "",
 			storeId: data.storeId || "",
-		})) as SupportTicket;
+		});
 
-		if (result?.serverError) {
+		if (!result) {
+			toastError({ description: "An error occurred" });
+		} else if (result.serverError) {
 			toastError({ description: result.serverError });
-		} else {
+		} else if (result.data) {
 			// also update data from parent component or caller
 			const updatedData = result.data as SupportTicket;
 			//console.log("onSubmit", updatedData);

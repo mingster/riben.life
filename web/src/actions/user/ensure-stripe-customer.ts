@@ -18,9 +18,9 @@ export const ensureStripeCustomer = async (
 
 	//await syncNopCustomerToAuth(user.email);
 
-	const updatedUser = await sqlClient.user.findUnique({
+	const updatedUser = (await sqlClient.user.findUnique({
 		where: { id: userId },
-	});
+	})) as User;
 	if (!updatedUser) throw new SafeError("Unauthorized");
 
 	if (!updatedUser.stripeCustomerId || updatedUser.stripeCustomerId === "") {
@@ -33,10 +33,11 @@ export const ensureStripeCustomer = async (
 async function doCreateStripeCustomer(
 	user: User,
 ): Promise<Stripe.Customer | null> {
+	if (!user.email) throw new SafeError("Email is required");
 	return await stripe.customers
 		.create({
-			email: user.email,
-			name: user.name,
+			email: user.email || "",
+			name: user.name || "",
 			metadata: {
 				userId: user.id,
 			},
@@ -57,6 +58,9 @@ async function doValidateStripeCustomer(
 	user: User,
 ): Promise<Stripe.Customer | null> {
 	try {
+		if (!user.stripeCustomerId)
+			throw new SafeError("Stripe customer ID is required");
+
 		const _stripeCustomer = await stripe.customers.retrieve(
 			user.stripeCustomerId,
 		);

@@ -64,7 +64,7 @@ export default function EditUser({ serverData }: props) {
 
 	const form = useForm<UpdateUserSettingsInput>({
 		resolver: zodResolver(updateUserSettingsSchema),
-		defaultValues,
+		defaultValues: defaultValues as UpdateUserSettingsInput,
 		mode: "onChange",
 	});
 

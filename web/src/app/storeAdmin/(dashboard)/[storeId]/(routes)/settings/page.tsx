@@ -4,7 +4,7 @@ import { isPro } from "@/lib/store-admin-utils";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { type PaymentMethod, type ShippingMethod } from "@prisma/client";
 import { getStoreWithRelations } from "@/lib/store-access";
-import { Store } from "@/types";
+import { redirect } from "next/navigation";
 import { SettingsClient } from "./client-settings";
 
 type Params = Promise<{ storeId: string }>;
@@ -19,7 +19,7 @@ export default async function StoreSettingsPage(props: {
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance
 	const [
-		store,
+		storeResult,
 		storeSettings,
 		allPaymentMethods,
 		allShippingMethods,
@@ -28,7 +28,7 @@ export default async function StoreSettingsPage(props: {
 		getStoreWithRelations(params.storeId, {
 			includePaymentMethods: true,
 			includeShippingMethods: true,
-		}) as Store,
+		}),
 		sqlClient.storeSettings.findFirst({
 			where: { storeId: params.storeId },
 		}),
@@ -41,6 +41,12 @@ export default async function StoreSettingsPage(props: {
 		isPro(params.storeId),
 	]);
 
+	if (!storeResult) {
+		redirect("/storeAdmin");
+	}
+
+	const store = storeResult;
+
 	// Transform decimal fields to numbers
 	transformDecimalsToNumbers(allPaymentMethods);
 	transformDecimalsToNumbers(allShippingMethods);
@@ -48,7 +54,7 @@ export default async function StoreSettingsPage(props: {
 	return (
 		<Container>
 			<SettingsClient
-				serverStore={store as Store}
+				serverStore={store}
 				serverStoreSettings={storeSettings}
 				serverPaymentMethods={allPaymentMethods as PaymentMethod[]}
 				serverShippingMethods={allShippingMethods as ShippingMethod[]}

@@ -90,9 +90,15 @@ export const updateTicketAdminAction = adminActionClient
 			const result = (await sqlClient.supportTicket.findFirst({
 				where: whereClause,
 				include: {
-					Thread: true,
+					Thread: {
+						include: {
+							Sender: true,
+						},
+					},
+					Sender: true,
 				},
 			})) as SupportTicket;
+
 			transformDecimalsToNumbers(result);
 
 			return result;

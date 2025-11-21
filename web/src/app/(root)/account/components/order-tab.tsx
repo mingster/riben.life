@@ -16,7 +16,7 @@ import {
 	CardFooter,
 } from "@/components/ui/card";
 
-type props = { orders: StoreOrder[] };
+type props = { orders: StoreOrder[] | [] };
 export const OrderTab = ({ orders }: props) => {
 	const { data: session } = authClient.useSession();
 	const searchParams = useSearchParams();

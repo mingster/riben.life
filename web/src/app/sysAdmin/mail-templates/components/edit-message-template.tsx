@@ -31,6 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/providers/i18n-provider";
 import type { MessageTemplate } from "@/types";
+import type { MessageTemplateLocalized } from "@prisma/client";
 
 interface props {
 	item: MessageTemplate;
@@ -75,15 +76,20 @@ export const EditMessageTemplate: React.FC<props> = ({ item, onUpdated }) => {
 	async function onSubmit(data: z.infer<typeof updateMessageTemplateSchema>) {
 		//console.log("data", data);
 		setLoading(true);
-		const result = (await updateMessageTemplateAction(data)) as MessageTemplate;
-		if (result?.serverError) {
+		const result = await updateMessageTemplateAction(data);
+		if (!result) {
+			toastError({ description: "An error occurred" });
+		} else if (result.serverError) {
 			toastError({ description: result.serverError });
-		} else {
+		} else if (result.data) {
 			// also update data from parent component or caller
+			const data = result.data as MessageTemplate & {
+				MessageTemplateLocalized?: MessageTemplateLocalized[];
+			};
 			const updatedData = {
-				id: result.data.id,
-				name: result.data.name,
-				MessageTemplateLocalized: result.data.MessageTemplateLocalized,
+				id: data.id,
+				name: data.name,
+				MessageTemplateLocalized: data.MessageTemplateLocalized || [],
 			} as MessageTemplate;
 
 			//console.log("onSubmit", updatedData);

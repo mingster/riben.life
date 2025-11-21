@@ -57,7 +57,17 @@ export default function MailQueueAdminClient({
 	//console.log("selectedMailQueueIds", selectedMailQueueIds.length, selectedMailQueueIds);
 	const handleUpdated = (updatedVal: EmailQueue) => {
 		setMailQueueData((prev) =>
-			prev.map((obj) => (obj.id === updatedVal.id ? updatedVal : obj)),
+			prev.map((obj) =>
+				obj.id === updatedVal.id
+					? ({
+							...updatedVal,
+							cc: updatedVal.cc ?? "",
+							bcc: updatedVal.bcc ?? "",
+							sendTries: updatedVal.sendTries ?? 0,
+							sentOn: updatedVal.sentOn ?? null,
+						} as EmailQueue)
+					: obj,
+			),
 		);
 		logger.info("handleUpdated");
 	};
@@ -145,7 +155,23 @@ export default function MailQueueAdminClient({
 			cell: ({ row }) => (
 				<div className="flex items-center gap-2">
 					{row.getValue("subject")}
-					<EditMailQueue item={row.original} onUpdated={handleUpdated} />
+					<EditMailQueue
+						item={{
+							id: row.original.id,
+							from: row.original.from,
+							fromName: row.original.fromName,
+							to: row.original.to,
+							toName: row.original.toName,
+							subject: row.original.subject,
+							textMessage: row.original.textMessage,
+							htmMessage: row.original.htmMessage,
+							cc: row.original.cc || undefined,
+							bcc: row.original.bcc || undefined,
+							sendTries: row.original.sendTries || undefined,
+							sentOn: row.original.sentOn || undefined,
+						}}
+						onUpdated={handleUpdated}
+					/>
 				</div>
 			),
 		},

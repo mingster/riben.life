@@ -26,7 +26,7 @@ export const mapStoreOrderToColumn = (
 ): TransactionColumn => ({
 	id: order.id,
 	storeId: order.storeId,
-	user: order.User?.username ?? order.User?.name ?? "",
+	user: order.User?.name ?? order.User?.email ?? "",
 	orderStatus: Number(order.orderStatus ?? 0),
 	amount: Number(order.orderTotal ?? 0),
 	refundAmount: Number(order.refundAmount ?? 0),

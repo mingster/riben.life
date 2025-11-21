@@ -1,10 +1,10 @@
 "use client";
 
-import { toastSuccess } from "@/components/toaster";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
-
+import { useRouter } from "next/navigation";
 import { useTranslation } from "@/app/i18n/client";
 import {
 	Form,
@@ -29,61 +29,151 @@ import { CurrencyCombobox } from "@/components/currency-combobox";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { Button } from "@/components/ui/button";
 import { useStoreModal } from "@/hooks/storeAdmin/use-store-modal";
-import { z } from "zod";
-import { createStore } from "./actions";
-
-//NOTE - do not move this to other folder.
-//TODO - import from template
-export const formSchema = z.object({
-	name: z.string().min(1),
-	defaultLocale: z.string().min(1),
-	defaultCountry: z.string().min(1),
-	defaultCurrency: z.string().min(1),
-});
+import { createStoreAction } from "@/actions/storeAdmin/store/create-store";
+import {
+	createStoreSchema,
+	type CreateStoreInput,
+} from "@/actions/storeAdmin/store/create-store.validation";
+import clientLogger from "@/lib/client-logger";
 
 export const StoreModal: React.FC = () => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const router = useRouter();
 	const storeModal = useStoreModal();
 	const [loading, setLoading] = useState(false);
+	const [checkingSlug, setCheckingSlug] = useState(false);
+	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-	const form = useForm<z.infer<typeof formSchema>>({
-		resolver: zodResolver(formSchema),
+	const form = useForm<CreateStoreInput>({
+		resolver: zodResolver(createStoreSchema),
 		defaultValues: {
 			name: "",
 			defaultCountry: "TWN",
 			defaultCurrency: "TWD",
 			defaultLocale: "tw",
 		},
+		mode: "onChange",
+		reValidateMode: "onChange",
 	});
 
-	const onSubmit = async (values: z.infer<typeof formSchema>) => {
-		setLoading(true);
-		//console.log('values: ' + JSON.stringify(values));
+	const storeName = form.watch("name");
 
-		const databaseId = await createStore(values);
+	// Debounced validation to check if store name (slug) is taken
+	useEffect(() => {
+		// Clear previous timer
+		if (debounceTimerRef.current) {
+			clearTimeout(debounceTimerRef.current);
+		}
 
-		toastSuccess({
-			title: t("Store_Created"),
-			description: "",
-		});
+		// Don't check if name is empty or too short
+		if (!storeName || storeName.trim().length < 1) {
+			form.clearErrors("name");
+			return;
+		}
 
-		// close this modal
-		storeModal.onClose();
-		window.location.assign(`/storeAdmin/${databaseId}/settings`);
-		//redirect(`/storeAdmin/${databaseId}/settings`);
+		// Generate slug from store name
+		const slug = storeName.toLowerCase().replace(/ /g, "-");
 
-		/*
-		//try {
-	} catch (error) {
-	  toastError({
-		title: "Something went wrong",
-		description: "",
-	  });
-	} finally {
-	  setLoading(false);
-	}*/
-		setLoading(false);
+		// Debounce the check (wait 500ms after user stops typing)
+		debounceTimerRef.current = setTimeout(async () => {
+			setCheckingSlug(true);
+			try {
+				const response = await fetch(
+					`/api/common/check-organization-slug?slug=${encodeURIComponent(slug)}`,
+				);
+
+				if (!response.ok) {
+					// Server/network error - don't block form, server will validate
+					clientLogger.warn("Error checking slug availability", {
+						metadata: {
+							status: response.status,
+							statusText: response.statusText,
+							slug,
+						},
+						tags: ["store", "validation", "warning"],
+					});
+					form.clearErrors("name");
+					return;
+				}
+
+				const data = await response.json();
+
+				// Handle response:
+				// - API returns { status: true } if slug exists (is taken)
+				// - API returns { status: false } if slug is available
+				if (data.status === true) {
+					// Slug exists (is taken)
+					form.setError("name", {
+						type: "manual",
+						message:
+							t("Store_Name_Taken") ||
+							"Store name is already taken. Please choose a different name.",
+					});
+				} else {
+					// Slug is available
+					form.clearErrors("name");
+				}
+			} catch (error) {
+				// If check fails, don't block form submission
+				// The server will validate on submit
+				clientLogger.error("Error checking store name availability", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+						slug,
+					},
+					tags: ["store", "validation", "error"],
+				});
+				// Don't set error - let server validate
+				form.clearErrors("name");
+			} finally {
+				setCheckingSlug(false);
+			}
+		}, 500); // 500ms debounce
+
+		// Cleanup timer on unmount or when name changes
+		return () => {
+			if (debounceTimerRef.current) {
+				clearTimeout(debounceTimerRef.current);
+			}
+		};
+	}, [storeName, form, t]);
+
+	const onSubmit = async (values: CreateStoreInput) => {
+		try {
+			setLoading(true);
+
+			const result = await createStoreAction(values);
+
+			if (result?.serverError) {
+				toastError({
+					title: t("Error"),
+					description: result.serverError,
+				});
+				return;
+			}
+
+			if (result?.data?.storeId) {
+				toastSuccess({
+					title: t("Store_Created"),
+					description: "",
+				});
+
+				// Close modal
+				storeModal.onClose();
+
+				// Navigate to store settings
+				router.push(`/storeAdmin/${result.data.storeId}/settings`);
+			}
+		} catch (error: unknown) {
+			toastError({
+				title: t("Error"),
+				description:
+					error instanceof Error ? error.message : "Something went wrong.",
+			});
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -97,7 +187,21 @@ export const StoreModal: React.FC = () => {
 				<div className="space-y-4 py-2 pb-4">
 					<div className="space-y-2">
 						<Form {...form}>
-							<form onSubmit={form.handleSubmit(onSubmit)}>
+							<form
+								onSubmit={form.handleSubmit(onSubmit, (errors) => {
+									const firstErrorKey = Object.keys(errors)[0];
+									if (firstErrorKey) {
+										const error = errors[firstErrorKey as keyof typeof errors];
+										const errorMessage = error?.message;
+										if (errorMessage) {
+											toastError({
+												title: t("Error"),
+												description: errorMessage,
+											});
+										}
+									}
+								})}
+							>
 								<FormField
 									control={form.control}
 									name="name"
@@ -109,8 +213,21 @@ export const StoreModal: React.FC = () => {
 													disabled={loading || form.formState.isSubmitting}
 													placeholder={t("StoreSettings_Store_Name_Descr")}
 													{...field}
+													onChange={(e) => {
+														field.onChange(e);
+														// Clear error when user starts typing
+														if (form.formState.errors.name) {
+															form.clearErrors("name");
+														}
+													}}
 												/>
 											</FormControl>
+											{checkingSlug && (
+												<p className="text-sm text-muted-foreground">
+													{t("Checking_Availability") ||
+														"Checking availability..."}
+												</p>
+											)}
 											<FormMessage />
 										</FormItem>
 									)}

@@ -1,0 +1,224 @@
+---
+description: Guidelines for when to run builds during development and code changes
+globs: 
+alwaysApply: true
+---
+# Build Execution Guidelines
+
+This rule defines when builds should and should NOT be run during development and code changes.
+
+## Core Principle
+
+**Only run builds when absolutely necessary.** Avoid running builds for routine code changes, documentation updates, or minor fixes that don't affect the build output.
+
+## When to Run Builds
+
+### ✅ DO Run Builds When:
+
+1. **After TypeScript/Schema Changes**
+   - Modified Prisma schema (`schema.prisma`)
+   - Changed TypeScript types that affect multiple files
+   - Added/removed dependencies in `package.json`
+   - Modified `tsconfig.json` or other build configuration
+
+2. **After Structural Changes**
+   - Renamed files/directories that affect imports
+   - Changed Next.js route structure
+   - Modified build scripts or configuration
+   - Updated environment variable usage
+
+3. **When User Explicitly Requests**
+   - User asks to "check for build errors"
+   - User requests to "verify build works"
+   - User explicitly says "run build"
+
+4. **Before Significant Merges/Commits**
+   - Before merging major feature branches
+   - Before deploying to production
+   - When preparing release candidates
+
+5. **When There Are Obvious Build-Related Errors**
+   - TypeScript compilation errors in IDE
+   - Import/module resolution errors
+   - Dependency resolution issues
+
+### ❌ DO NOT Run Builds When:
+
+1. **Routine Code Changes**
+   - Adding new functions/components
+   - Fixing logic bugs
+   - Updating component props
+   - Modifying styling (CSS/Tailwind)
+   - Updating form validation
+
+2. **Documentation Updates**
+   - Changes to `.md` files in `/doc/`
+   - Changes to `.mdc` files in `.cursor/rules/`
+   - README updates
+   - Code comments
+
+3. **Client-Side Only Changes**
+   - React component updates
+   - Hook implementations
+   - Client-side state management
+   - UI component changes
+   - Event handler updates
+
+4. **Server Action Changes (Simple)**
+   - Adding new server actions following existing patterns
+   - Updating action logic (not structure)
+   - Modifying validation schemas
+   - Error handling improvements
+
+5. **Style/Formatting Changes**
+   - Tailwind class changes
+   - CSS updates
+   - Formatting/linting fixes
+   - Prettier changes
+
+6. **Configuration Updates (Non-Build)**
+   - `.gitignore` changes
+   - `.env` file updates (local only)
+   - Editor configuration
+   - Linter configuration (if it doesn't affect build)
+
+7. **Test Files**
+   - Test file changes
+   - Test data updates
+   - Mock updates
+
+## Build Verification Alternatives
+
+Instead of running full builds, use these lighter alternatives:
+
+### 1. TypeScript Type Checking
+
+```bash
+# Only check types, don't build
+bun run type-check
+# or
+tsc --noEmit
+```
+
+### 2. Linting
+
+```bash
+# Check for lint errors only
+bun run lint
+```
+
+### 3. IDE Type Checking
+
+- Rely on IDE TypeScript error highlighting
+- Check for red squiggly lines in editor
+- Use "Go to Definition" to verify imports work
+
+### 4. Incremental Checks
+
+- Check only modified files
+- Use IDE's "Problems" panel
+- Check for import errors manually
+
+## Common Scenarios
+
+### Scenario 1: Adding a New Component
+
+**Action:** ✅ Don't run build  
+**Reason:** New components are runtime concerns, not build-time  
+**Alternative:** Verify imports work in IDE
+
+### Scenario 2: Updating a Server Action
+
+**Action:** ✅ Don't run build (if following existing patterns)  
+**Reason:** Server actions are runtime, build structure unchanged  
+**Alternative:** Verify types in IDE, test functionality manually
+
+### Scenario 3: Modifying Prisma Schema
+
+**Action:** ❌ **DO run build**  
+**Reason:** Schema changes affect generated types  
+**Steps:**
+```bash
+bunx prisma generate
+bun run build
+```
+
+### Scenario 4: Adding a New Dependency
+
+**Action:** ❌ **DO run build**  
+**Reason:** Dependencies affect build output  
+**Steps:**
+```bash
+bun add <package>
+bun run build  # Verify no conflicts
+```
+
+### Scenario 5: Updating Documentation
+
+**Action:** ✅ Don't run build  
+**Reason:** Documentation doesn't affect build  
+**Alternative:** Verify markdown renders correctly
+
+### Scenario 6: Fixing a TypeScript Error
+
+**Action:** ✅ Don't run build (if IDE shows it's fixed)  
+**Reason:** IDE TypeScript checking is sufficient  
+**Alternative:** Verify error disappears in IDE
+
+### Scenario 7: User Asks "Does this compile?"
+
+**Action:** ❌ **DO run build**  
+**Reason:** User explicitly wants build verification
+
+## Exception: Large Refactorings
+
+For large refactorings that touch many files:
+
+1. **Check types incrementally** as you work
+2. **Run build once** at the end to verify everything works
+3. **Don't run build** after every file change
+
+## User Preferences
+
+- If user skips a build command → **Don't run builds** for that session
+- If user explicitly asks to verify → **Run build**
+- When in doubt → **Ask user** or **don't run build**
+
+## Performance Impact
+
+**Why avoid unnecessary builds:**
+- Builds take 30-60 seconds (slow)
+- Uses CPU/memory resources
+- Interrupts development flow
+- Usually unnecessary if TypeScript/linter pass
+
+**When builds are needed:**
+- Catch integration issues
+- Verify production build works
+- Check for runtime-only errors
+- Ensure all dependencies resolve
+
+## Summary
+
+### Quick Decision Tree
+
+```
+Did you change:
+├─ Prisma schema? → Run build
+├─ package.json? → Run build
+├─ tsconfig.json? → Run build
+├─ Build config? → Run build
+├─ Import structure? → Run build
+├─ User asked explicitly? → Run build
+│
+└─ Everything else? → Don't run build
+   ├─ Use IDE type checking
+   ├─ Use linting
+   └─ Test manually
+```
+
+### Default Behavior
+
+**Default: Don't run builds** unless explicitly needed or requested by user.
+
+This keeps the development workflow fast and responsive, allowing the developer to verify their work through lighter-weight checks (IDE, linting, manual testing) and only running full builds when necessary.

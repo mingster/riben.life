@@ -14,6 +14,10 @@ export const sendCancelSubscription = async (user: User) => {
 		log.error("user is required");
 		return;
 	}
+	if (!user.email) {
+		log.error("user email is required");
+		return;
+	}
 
 	// 1. get the customer's locale
 	const locale = user.locale || "tw";
@@ -45,14 +49,14 @@ export const sendCancelSubscription = async (user: User) => {
 		message_content_template.subject,
 		null,
 		null,
-		user,
+		user as User,
 	);
 
 	const textMessage = await PhaseTags(
 		message_content_template.body,
 		null,
 		null,
-		user,
+		user as User,
 	);
 
 	const template = await loadOuterHtmTemplate();
@@ -79,7 +83,7 @@ export const sendCancelSubscription = async (user: User) => {
 		data: {
 			from: supportEmail?.value || "support@5ik.tv",
 			fromName: supportEmail?.value || "5ik.TV",
-			to: user.email,
+			to: user.email || "",
 			toName: user.name || "",
 			cc: "",
 			bcc: "",

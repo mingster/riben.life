@@ -10,25 +10,25 @@ const getCurrentUser = async (): Promise<User | null> => {
 		headers: await headers(), // you need to pass the headers object.
 	});
 
-	if (!session) {
+	if (!session?.user?.id) {
 		return null;
 	}
 
 	const obj = await sqlClient.user.findUnique({
 		where: {
-			id: session.user?.id ?? "",
+			id: session.user.id,
 		},
 		include: {
 			/*
-	  NotificationTo: {
-		take: 20,
-		include: {
-		  Sender: true,
-		},
-		orderBy: {
-		  updatedAt: "desc",
-		},
-	  },*/
+			NotificationTo: {
+				take: 20,
+				include: {
+					Sender: true,
+				},
+				orderBy: {
+					updatedAt: "desc",
+				},
+			},*/
 			Addresses: true,
 			Orders: {
 				include: {
@@ -42,14 +42,21 @@ const getCurrentUser = async (): Promise<User | null> => {
 			},
 			sessions: true,
 			accounts: true,
+			twofactors: true,
+			passkeys: true,
+			apikeys: true,
+			members: true,
+			invitations: true,
 		},
 	});
 
-	if (obj) {
-		transformDecimalsToNumbers(obj);
+	if (!obj) {
+		return null;
 	}
 
-	return obj;
+	transformDecimalsToNumbers(obj);
+
+	return obj as User;
 };
 
 export default getCurrentUser;

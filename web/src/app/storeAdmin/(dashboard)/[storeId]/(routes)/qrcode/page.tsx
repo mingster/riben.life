@@ -3,6 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 import type { StoreFacility } from "@prisma/client";
 import { QrCodeClient } from "./client";
 import { getStoreWithRelations } from "@/lib/store-access";
+import { redirect } from "next/navigation";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -22,6 +23,10 @@ export default async function QrCodePage(props: {
 			orderBy: { facilityName: "asc" },
 		}),
 	]);
+
+	if (!store) {
+		redirect("/storeAdmin");
+	}
 
 	return (
 		<Container>

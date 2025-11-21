@@ -250,14 +250,15 @@ export const MessageTemplateClient: React.FC<props> = ({
 
 		//console.log("availableLocales", availableLocales);
 
-		const newObj = {
+		const newObj: z.infer<typeof updateMessageTemplateLocalizedSchema> = {
 			id: "new",
 			messageTemplateId: item.id,
 			localeId: availableLocales[0].lng || "",
 			subject: "",
 			body: "",
 			isActive: true,
-		} as MessageTemplateLocalized;
+			bCCEmailAddresses: undefined,
+		};
 
 		return (
 			<EditMessageTemplateLocalized
@@ -372,7 +373,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 	};
 
 	const handleMessageTemplateLocalizedUpdated = (
-		updatedVal: z.infer<typeof updateMessageTemplateLocalizedSchema>,
+		updatedVal: MessageTemplateLocalized,
 	) => {
 		setMessageTemplateLocalizedData((prev) =>
 			prev.map((cat) => (cat.id === updatedVal.id ? updatedVal : cat)),
@@ -420,9 +421,20 @@ export const MessageTemplateClient: React.FC<props> = ({
 					<div>
 						{row.getValue("subject")}
 						<EditMessageTemplateLocalized
-							item={row.original}
+							item={
+								{
+									...row.original,
+									bCCEmailAddresses:
+										row.original.bCCEmailAddresses ?? undefined,
+								} as z.infer<typeof updateMessageTemplateLocalizedSchema>
+							}
 							locales={locales}
-							onUpdated={handleMessageTemplateLocalizedUpdated}
+							onUpdated={(updated) => {
+								handleMessageTemplateLocalizedUpdated({
+									...updated,
+									bCCEmailAddresses: updated.bCCEmailAddresses ?? null,
+								} as MessageTemplateLocalized);
+							}}
 						/>
 					</div>
 				),
@@ -471,7 +483,12 @@ export const MessageTemplateClient: React.FC<props> = ({
 				id: "actions",
 				cell: ({ row }) => (
 					<CellActionMessageTemplateLocalized
-						item={row.original}
+						item={
+							{
+								...row.original,
+								bCCEmailAddresses: row.original.bCCEmailAddresses ?? undefined,
+							} as z.infer<typeof updateMessageTemplateLocalizedSchema>
+						}
 						onUpdated={handleMessageTemplateLocalizedDeleted}
 					/>
 				),

@@ -62,7 +62,7 @@ export async function PhaseTags(
 	if (user) {
 		replacements.push(
 			{ pattern: /%Customer\.Email%/gi, value: user.email || "" },
-			{ pattern: /%Customer\.FullName%/gi, value: user.fullName || "" },
+			{ pattern: /%Customer\.FullName%/gi, value: user.name || "" },
 			{ pattern: /%Customer\.Username%/gi, value: user.email || "" },
 			{
 				pattern: /%Customer\.CustomerId%/gi,
@@ -75,15 +75,15 @@ export async function PhaseTags(
 	if (order) {
 		// Parallel database queries for better performance
 		const [orderCustomer] = await Promise.allSettled([
-			getCachedCustomer(order.CustomerID),
+			getCachedCustomer(order.User?.id || ""),
 		]);
 
 		replacements.push(
-			{ pattern: /%Order\.OrderId%/gi, value: order.OrderID?.toString() || "" },
-			{ pattern: /%Order\.OrderNumber%/gi, value: order.OrderID || "" },
+			{ pattern: /%Order\.OrderId%/gi, value: order.id?.toString() || "" },
+			{ pattern: /%Order\.OrderNumber%/gi, value: order.id || "" },
 			{
 				pattern: /%Order\.CreatedOn%/gi,
-				value: formatDateTime(order.CreatedOn) || "",
+				value: formatDateTime(order.createdAt) || "",
 			},
 			{
 				pattern: /%Order\.CustomerFullName%/gi,

@@ -4,6 +4,7 @@ import { loadOuterHtmTemplate } from "./load-outer-htm-template";
 import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
 import { PhaseTags } from "./phase-tags";
 import { sqlClient } from "@/lib/prismadb";
+import { User } from "@/types";
 
 // send auth validation email to customer
 //
@@ -68,14 +69,14 @@ export const sendAuthEmailValidation = async (
 		message_content_template?.subject || "",
 		null,
 		null,
-		user,
+		user as User,
 	);
 
 	let textMessage = await PhaseTags(
 		message_content_template?.body || "",
 		null,
 		null,
-		user,
+		user as User,
 	);
 
 	// replace %Customer.AccountActivationURL% with regex

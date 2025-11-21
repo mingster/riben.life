@@ -37,6 +37,7 @@ export const deleteStoreAction = storeOwnerActionClient
 			throw new SafeError("Store not found");
 		}
 
+		// if no orders, delete the store completely
 		if (storeToUpdate.StoreOrders.length === 0) {
 			await sqlClient.storePaymentMethodMapping.deleteMany({
 				where: { storeId },
@@ -55,6 +56,7 @@ export const deleteStoreAction = storeOwnerActionClient
 			return { store: deletedStore, deletedCompletely: true };
 		}
 
+		// otherwise mark the store as deleted only
 		const updatedStore = await sqlClient.store.update({
 			where: { id: storeId },
 			data: {

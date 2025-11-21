@@ -27,12 +27,15 @@ import { cn } from "@/utils/utils";
 
 import { useStoreModal } from "@/hooks/storeAdmin/use-store-modal";
 import { authClient } from "@/lib/auth-client";
+import { useCookies } from "next-client-cookies";
+import { toastError, toastSuccess } from "@/components/toaster";
+import clientLogger from "@/lib/client-logger";
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<
 	typeof PopoverTrigger
 >;
 
-//export default function StoreSwitcher({ className, items = [] }: StoreSwitcherProps) {
+//
 export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 	const params = useParams();
 	const router = useRouter();
@@ -41,10 +44,6 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 
 	// load user's store data
 	const { data: session } = authClient.useSession();
-
-	// Note: No need to redirect here - server-side auth (checkStoreStaffAccess)
-	// already handles authentication. Client-side redirect causes issues during
-	// initial hydration when session is still loading.
 
 	// Only construct URL if session exists
 	const url = session?.user.id
@@ -67,6 +66,7 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 	const formattedItems = items.map((item) => ({
 		label: item.name,
 		value: item.id,
+		organizationId: item.organizationId,
 	}));
 
 	const currentStore = formattedItems.find(
@@ -74,10 +74,96 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 	);
 
 	const [open, setOpen] = React.useState(false);
+	const [isSwitching, setIsSwitching] = React.useState(false);
+	const cookies = useCookies();
+	const LAST_SELECTED_STORE_KEY = "lastSelectedStoreId";
 
-	const onStoreSelect = (store: { value: string; label: string }) => {
+	// 1. change active organization to the selected store's organization
+	// 2. remember selection. use the info when user visit next time.
+	// 3. redirect to the selected store's dashboard
+	const onStoreSelect = async (store: {
+		value: string;
+		label: string;
+		organizationId?: string | null;
+	}) => {
+		if (isSwitching) return; // Prevent multiple simultaneous switches
+
 		setOpen(false);
-		router.push(`/storeAdmin/${store.value}`);
+		setIsSwitching(true);
+
+		try {
+			// 1. Change active organization to the selected store's organization
+			if (store.organizationId) {
+				try {
+					// Fetch organization details to get slug
+					const orgResponse = await fetch(
+						`/api/common/get-organization?id=${store.organizationId}`,
+					);
+
+					if (orgResponse.ok) {
+						const organization = await orgResponse.json();
+
+						if (organization?.id && organization?.slug) {
+							// Set active organization using authClient
+							const result = await authClient.organization.setActive({
+								organizationId: organization.id,
+								organizationSlug: organization.slug,
+							});
+
+							if (result?.error) {
+								clientLogger.warn("Failed to set active organization", {
+									metadata: {
+										error: result.error,
+										organizationId: organization.id,
+										storeId: store.value,
+									},
+									tags: ["store", "organization", "warning"],
+								});
+								// Continue anyway - organization switch is not critical
+							}
+						}
+					}
+				} catch (error) {
+					clientLogger.error("Error setting active organization", {
+						metadata: {
+							error: error instanceof Error ? error.message : String(error),
+							storeId: store.value,
+						},
+						tags: ["store", "organization", "error"],
+					});
+					// Continue anyway - organization switch is not critical
+				}
+			}
+
+			// 2. Remember selection - store in cookie for next visit
+			cookies.set(LAST_SELECTED_STORE_KEY, store.value, {
+				path: "/",
+			});
+
+			// 3. Redirect to the selected store's dashboard
+			router.push(`/storeAdmin/${store.value}`);
+
+			// Refresh the page to ensure all data is loaded with the new organization context
+			router.refresh();
+		} catch (error) {
+			clientLogger.error("Error switching store", {
+				metadata: {
+					error: error instanceof Error ? error.message : String(error),
+					storeId: store.value,
+				},
+				tags: ["store", "switcher", "error"],
+			});
+
+			toastError({
+				title: t("Error") || "Error",
+				description:
+					error instanceof Error
+						? error.message
+						: "Failed to switch store. Please try again.",
+			});
+		} finally {
+			setIsSwitching(false);
+		}
 	};
 
 	// open store modal

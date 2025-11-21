@@ -34,7 +34,11 @@ export default async function MailTemplateAdminPage() {
 	return (
 		<Container>
 			<MessageTemplateClient
-				serverData={messageTemplates as MessageTemplate[]}
+				serverData={
+					messageTemplates as (MessageTemplate & {
+						MessageTemplateLocalized: MessageTemplateLocalized[];
+					})[]
+				}
 				messageTemplateLocalized={
 					messageTemplateLocalized as MessageTemplateLocalized[]
 				}

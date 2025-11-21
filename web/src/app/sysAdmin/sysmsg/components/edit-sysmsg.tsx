@@ -90,10 +90,12 @@ export const EditSystemMessage: React.FC<props> = ({ item, onUpdated }) => {
 	async function onSubmit(data: UpdateSystemMessageInput) {
 		//console.log("data", data);
 		setLoading(true);
-		const result = (await updateSystemMessageAction(data)) as SystemMessage;
-		if (result?.serverError) {
+		const result = await updateSystemMessageAction(data);
+		if (!result) {
+			toastError({ description: "An error occurred" });
+		} else if (result.serverError) {
 			toastError({ description: result.serverError });
-		} else {
+		} else if (result.data) {
 			if (data.id === "new") {
 				data.id = result.data.id;
 				toastSuccess({ description: "Category created." });

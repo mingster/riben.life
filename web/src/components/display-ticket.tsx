@@ -91,10 +91,12 @@ export const DisplayTicket: React.FC<DisplayTicketProps> = ({
 	const ticketData = useMemo(
 		() => ({
 			modifier: showCreator ? item.modifier : undefined,
-			creationDate: showDate ? item.creationDate : undefined,
+			creationDate: showDate
+				? item.createdAt || (item as { creationDate?: Date }).creationDate
+				: undefined,
 			message: item.message,
 		}),
-		[item.modifier, item.creationDate, item.message, showCreator, showDate],
+		[item.modifier, item.createdAt, item.message, showCreator, showDate],
 	);
 
 	// Memoized container classes

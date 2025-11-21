@@ -42,7 +42,7 @@ export const QrCodeClient: React.FC<props> = ({ store, tables }) => {
 				<Link
 					title={takeoffUrl}
 					href={takeoffUrl}
-					aria-label={`QR code for takeout ordering at ${store.storeName}`}
+					aria-label={`QR code for takeout ordering at ${store.name}`}
 				>
 					{/* eslint-disable-next-line jsx-a11y/alt-text */}
 					<Image
@@ -68,7 +68,7 @@ export const QrCodeClient: React.FC<props> = ({ store, tables }) => {
 								<Link
 									title={`${takeoffUrl}/${table.id}`}
 									href={`${takeoffUrl}/${table.id}`}
-									aria-label={`QR code for table ${table.facilityName} ordering at ${store.storeName}`}
+									aria-label={`QR code for table ${table.facilityName} ordering at ${store.name}`}
 								>
 									{/* eslint-disable-next-line jsx-a11y/alt-text */}
 									<Image

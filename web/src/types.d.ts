@@ -110,6 +110,7 @@ export type StoreWithProductNCategories = Prisma.StoreGetPayload<
 
 const storeObj = Prisma.validator<Prisma.StoreDefaultArgs>()({
 	include: {
+		Organization: true,
 		Categories: true,
 		StoreAnnouncement: true,
 		Owner: true,
