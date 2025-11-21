@@ -92,7 +92,9 @@ export function ClientSupport({
 					<DisplayTicket item={row.original} />
 					<Separator className="my-2" />
 					<div className="">
-						{row.original.Thread.map((thread: SupportTicket, index: number) => (
+						{(
+							row.original as SupportTicket & { Thread?: SupportTicket[] }
+						).Thread?.map((thread: SupportTicket, index: number) => (
 							<div key={thread.id} className="flex flex-row gap-2">
 								<div className="bg-amber-900 p-2">{index + 1}</div>
 								<DisplayTicket item={thread} compact={true} />

@@ -6,6 +6,7 @@ import {
 	mapStoreOrderToColumn,
 	type TransactionColumn,
 } from "./transaction-column";
+import type { StoreOrder } from "@/types";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -35,7 +36,7 @@ export default async function TransactionMgmtPage(props: {
 	transformDecimalsToNumbers(orders);
 
 	const formattedData: TransactionColumn[] = orders.map((item) =>
-		mapStoreOrderToColumn(item),
+		mapStoreOrderToColumn(item as StoreOrder),
 	);
 
 	return (

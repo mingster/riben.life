@@ -65,7 +65,7 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 
 	const form = useForm<UpdateUserSettingsInput>({
 		resolver: zodResolver(updateUserSettingsSchema),
-		defaultValues,
+		defaultValues: defaultValues as UpdateUserSettingsInput,
 		mode: "onChange",
 	});
 

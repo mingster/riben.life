@@ -216,7 +216,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			revokesUserSessions(id);
 
 			//update data in the table
-			item.banned = 1;
+			item.banned = true;
 			handleUpdated(item);
 
 			toastSuccess({
@@ -230,7 +230,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 				userId: id,
 			});
 
-			item.banned = 0;
+			item.banned = false;
 			handleUpdated(item);
 
 			toastSuccess({
@@ -248,8 +248,24 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 				userId: id,
 			});
 
-			item.session = sessions.data;
-			handleUpdated(item);
+			if (sessions.data?.sessions) {
+				// Map SessionWithImpersonatedBy to Session format
+				item.sessions = sessions.data.sessions.map((s) => ({
+					id: s.id,
+					userId: s.userId,
+					token: s.token,
+					expiresAt: s.expiresAt,
+					ipAddress: s.ipAddress ?? null,
+					userAgent: s.userAgent ?? null,
+					createdAt: s.createdAt,
+					updatedAt: s.updatedAt,
+					impersonatedBy: s.impersonatedBy ?? null,
+					activeOrganizationId:
+						(s as { activeOrganizationId?: string | null })
+							.activeOrganizationId ?? null,
+				}));
+				handleUpdated(item);
+			}
 
 			toastSuccess({
 				title: "User session(s) revoked.",
@@ -283,7 +299,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 						{item.stripeCustomerId && (
 							<DropdownMenuItem
 								className="cursor-pointer"
-								onClick={() => onCopy(item.stripeCustomerId)}
+								onClick={() => onCopy(item.stripeCustomerId || "")}
 							>
 								<IconCopy className="mr-0 size-4" /> Copy Stripe ID
 							</DropdownMenuItem>
@@ -450,7 +466,16 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 		},
 	];
 
-	const newUser = {
+	const newUser: Partial<User> & {
+		id: string;
+		name: string;
+		email: string;
+		password: string;
+		role: string;
+		locale: string;
+		timezone: string;
+		stripeCustomerId: string;
+	} = {
 		id: "",
 		name: "",
 		email: "",
@@ -491,7 +516,11 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 					/>
 					<div className="flex gap-1 content-end">
 						<UserFilter onFilterChange={handleFilterChange} />
-						<EditUser item={newUser} onUpdated={handleCreated} isNew={true} />
+						<EditUser
+							item={newUser as unknown as User}
+							onUpdated={handleCreated}
+							isNew={true}
+						/>
 					</div>
 				</div>
 

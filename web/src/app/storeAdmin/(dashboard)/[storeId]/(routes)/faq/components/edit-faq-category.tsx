@@ -87,10 +87,12 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 	async function onSubmit(data: UpdateFaqCategoryInput) {
 		//console.log("data", data);
 		setLoading(true);
-		const result = (await updateFaqCategoryAction(data)) as FaqCategory;
-		if (result?.serverError) {
+		const result = await updateFaqCategoryAction(data);
+		if (!result) {
+			toastError({ description: "An error occurred" });
+		} else if (result.serverError) {
 			toastError({ description: result.serverError });
-		} else {
+		} else if (result.data) {
 			// also update data from parent component or caller
 			const updatedData = {
 				id: result.data.id,

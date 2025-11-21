@@ -4,6 +4,7 @@ import { Heading } from "@/components/heading";
 import { Loader } from "@/components/loader";
 
 import { DisplayOrders } from "@/components/display-orders";
+import type { StoreOrder } from "@/types";
 
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -179,7 +180,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 
 	return (
 		<div className="space-y-6">
-			<Heading title={user?.email} description="Manage User" />
+			<Heading title={user?.email || ""} description="Manage User" />
 
 			<Tabs
 				value={activeTab}
@@ -199,10 +200,11 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 					<Card>
 						<CardHeader>
 							<div className="text-lg font-semibold">
-								{t("subscription_member_since").replace(
-									"{0}",
-									format(user?.createdAt, datetimeFormat),
-								)}
+								{user?.createdAt &&
+									t("subscription_member_since").replace(
+										"{0}",
+										format(user.createdAt, datetimeFormat),
+									)}
 							</div>
 						</CardHeader>
 						<CardContent className="space-y-4">
@@ -211,9 +213,11 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 									<span className="text-sm text-muted-foreground">
 										{t("subscription_service_expiration").replace("{0}", "")}
 									</span>
-									<span className="font-medium">
-										{format(user?.createdAt, datetimeFormat)}
-									</span>
+									{user?.createdAt && (
+										<span className="font-medium">
+											{format(user.createdAt, datetimeFormat)}
+										</span>
+									)}
 								</div>
 
 								{subscriptions.length > 0 && (
@@ -247,7 +251,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 				</TabsContent>
 
 				<TabsContent value="billing">
-					<DisplayOrders orders={user?.Orders} />
+					<DisplayOrders orders={(user?.Orders as StoreOrder[]) || []} />
 				</TabsContent>
 			</Tabs>
 		</div>

@@ -122,27 +122,31 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 					<Card>
 						<CardHeader>
 							<Heading
-								title={user?.name || user?.email}
+								title={user?.name || user?.email || ""}
 								description="Manage User"
 							/>
 
-							<div className="text-lg font-semibold">
-								{t("subscription_member_since").replace(
-									"{0}",
-									format(user?.createdAt, datetimeFormat),
-								)}
-							</div>
+							{user?.createdAt && (
+								<div className="text-lg font-semibold">
+									{t("subscription_member_since").replace(
+										"{0}",
+										format(user.createdAt, datetimeFormat),
+									)}
+								</div>
+							)}
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<div className="space-y-3">
-								<div className="flex items-center">
-									<span className="text-sm text-muted-foreground">
-										{t("subscription_service_expiration").replace("{0}", "")}
-									</span>
-									<span className="font-medium">
-										{format(user?.createdAt, datetimeFormat)}
-									</span>
-								</div>
+								{user?.createdAt && (
+									<div className="flex items-center">
+										<span className="text-sm text-muted-foreground">
+											{t("subscription_service_expiration").replace("{0}", "")}
+										</span>
+										<span className="font-medium">
+											{format(user.createdAt, datetimeFormat)}
+										</span>
+									</div>
+								)}
 							</div>
 						</CardContent>
 					</Card>

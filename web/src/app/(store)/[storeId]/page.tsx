@@ -7,9 +7,10 @@ import { redirect } from "next/navigation";
 import { StoreHomeContent } from "./components/store-home-content";
 
 import getStoreWithProducts from "@/actions/get-store-with-products";
-import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
 import { isReservedRoute } from "@/lib/reserved-routes";
+import type { StoreWithProductNCategories } from "@/types";
 import type { StoreSettings } from "@prisma/client";
 import { formatDate } from "date-fns";
 
@@ -61,8 +62,8 @@ const { t } = await useTranslation(store?.defaultLocale || "en");
   */
 
 	let closed_descr = "";
-	let isStoreOpen = store.isOpen;
-	if (store.useBusinessHours && storeSettings.businessHours !== null) {
+	let isStoreOpen = store?.isOpen || false;
+	if (store?.useBusinessHours && storeSettings.businessHours !== null) {
 		const bizHour = storeSettings.businessHours;
 		const businessHours = new BusinessHours(bizHour);
 
@@ -89,7 +90,10 @@ const { t } = await useTranslation(store?.defaultLocale || "en");
 				</>
 			) : (
 				<>
-					<StoreHomeContent storeData={store} storeSettings={storeSettings} />
+					<StoreHomeContent
+						storeData={store as StoreWithProductNCategories}
+						storeSettings={storeSettings as StoreSettings}
+					/>
 				</>
 			)}
 		</Container>

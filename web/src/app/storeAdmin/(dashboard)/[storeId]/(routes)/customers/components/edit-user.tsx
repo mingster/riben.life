@@ -65,7 +65,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 	async function onSubmit(data: UpdateUserSettingsInput) {
 		setLoading(true);
 
-		let result: User | null = null;
+		let result;
 		if (isNew) {
 			// create new user from client side
 			const newUser = await authClient.admin.createUser({
@@ -82,7 +82,9 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 			result = await updateUserAction(data);
 		}
 
-		if (result?.serverError) {
+		if (!result) {
+			toastError({ description: "An error occurred" });
+		} else if (result.serverError) {
 			toastError({ description: result.serverError });
 		} else {
 			toastSuccess({ description: "Profile updated." });
@@ -96,7 +98,9 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 			});
 			*/
 
-			onUpdated?.(result?.data as User);
+			if (result.data) {
+				onUpdated?.(result.data as User);
+			}
 		}
 		setLoading(false);
 		setIsOpen(false);

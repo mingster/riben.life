@@ -254,9 +254,9 @@ export const FaqCategoryClient: React.FC<props> = ({
 	/* #endregion */
 
 	/* #region maintain faq data array on client side */
-	const handleFaqUpdated = (updatedVal: z.infer<typeof updateFaqSchema>) => {
+	const handleFaqUpdated = (updatedVal: Faq) => {
 		setFaqData((prev) =>
-			prev.map((cat) => (cat.id === updatedVal.id ? updatedVal : cat)),
+			prev.map((faq) => (faq.id === updatedVal.id ? updatedVal : faq)),
 		);
 		logger.info("handleFaqUpdated");
 	};

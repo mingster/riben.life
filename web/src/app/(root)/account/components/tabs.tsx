@@ -16,7 +16,7 @@ import { OrderTab } from "./order-tab";
 import SettingsTab from "./settings-tab";
 
 export interface iUserTabProps {
-	orders: StoreOrder | null;
+	orders: StoreOrder[] | [];
 	addresses: Address[] | [];
 	user: User;
 }

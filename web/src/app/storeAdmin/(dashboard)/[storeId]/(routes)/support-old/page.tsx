@@ -3,9 +3,11 @@ import { auth, Session } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { getStoreWithRelations } from "@/lib/store-access";
 import { TicketStatus } from "@/types/enum";
+import type { Store } from "@/types";
 import { formatDateTime } from "@/utils/datetime-utils";
 import type { SupportTicket } from "@prisma/client";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import type { TicketColumn } from "./components/columns";
 import { TicketClient } from "./components/ticket-client";
 
@@ -47,7 +49,14 @@ export default async function StoreSupportPage(props: {
 		}),
 	);
 
-	const store = await getStoreWithRelations(params.storeId);
+	const storeResult = await getStoreWithRelations(params.storeId);
+
+	if (!storeResult) {
+		redirect("/storeAdmin");
+	}
+
+	const store = storeResult as Store;
+
 	return (
 		<Container>
 			<TicketClient data={formattedTickets} store={store} />

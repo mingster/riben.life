@@ -24,7 +24,9 @@ const StoreAdminContext = createContext<StoreAdminContextValue | null>(null);
 
 function calculateOpenSupportTickets(store: Store): number {
 	return (
-		store.SupportTicket?.filter(
+		(
+			store as Store & { SupportTicket?: SupportTicket[] }
+		).SupportTicket?.filter(
 			(ticket: SupportTicket) => ticket.status === TicketStatus.Open,
 		).length ?? 0
 	);

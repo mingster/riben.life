@@ -189,7 +189,8 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		//const order: StoreOrder = { /* initialize properties here */ };
 		updatedOrder.paymentMethodId = data.paymentMethodId ?? "";
 		updatedOrder.shippingMethodId = data.shippingMethodId ?? "";
-		updatedOrder.facilityId = data.facilityId ?? null;
+		(updatedOrder as StoreOrder & { facilityId?: string | null }).facilityId =
+			data.facilityId ?? null;
 		updatedOrder.orderTotal = new Decimal(orderTotal);
 		// NOTE: take OrderItemView data in order object instead of fieldArray
 

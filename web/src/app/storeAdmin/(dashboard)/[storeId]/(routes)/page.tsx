@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { getStoreWithRelations } from "@/lib/store-access";
+import { redirect } from "next/navigation";
 import { isPro } from "@/lib/store-admin-utils";
 import { Store } from "@/types";
 import { IconAlertTriangle } from "@tabler/icons-react";
@@ -31,15 +32,22 @@ export default async function StoreAdminHomePage(props: {
 
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance - 3x faster!
-	const [store, hasProLevel, categoryCount, productCount] = await Promise.all([
-		getStoreWithRelations(params.storeId, {
-			includeOrganization: true,
-			includeSupportTickets: true,
-		}) as Store,
-		isPro(params.storeId),
-		sqlClient.category.count({ where: { storeId: params.storeId } }),
-		sqlClient.product.count({ where: { storeId: params.storeId } }),
-	]);
+	const [storeResult, hasProLevel, categoryCount, productCount] =
+		await Promise.all([
+			getStoreWithRelations(params.storeId, {
+				includeOrganization: true,
+				includeSupportTickets: true,
+			}),
+			isPro(params.storeId),
+			sqlClient.category.count({ where: { storeId: params.storeId } }),
+			sqlClient.product.count({ where: { storeId: params.storeId } }),
+		]);
+
+	if (!storeResult) {
+		redirect("/storeAdmin");
+	}
+
+	const store = storeResult;
 
 	// Get headers for authentication (only once)
 	const headersList = await headers();

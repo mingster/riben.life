@@ -101,7 +101,10 @@ export default async function UsersBillingAdminPage(props: {
 	return (
 		<Suspense fallback={<Loader />}>
 			<div className="">
-				<ManageUserClient user={user} stripeSubscription={userSubscription} />
+				<ManageUserClient
+					user={user as unknown as User}
+					stripeSubscription={userSubscription}
+				/>
 			</div>
 		</Suspense>
 	);

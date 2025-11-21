@@ -5,7 +5,7 @@ import logger from "@/lib/logger";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { SubscriptionHistoryClient } from "./client";
 import { getStoreWithRelations } from "@/lib/store-access";
-import { Store } from "@/types";
+import { redirect } from "next/navigation";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -18,8 +18,8 @@ export default async function StoreSubscriptionHistoryPage(props: {
 
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance
-	const [store, subscription, payments] = await Promise.all([
-		getStoreWithRelations(params.storeId) as Store,
+	const [storeResult, subscription, payments] = await Promise.all([
+		getStoreWithRelations(params.storeId),
 		sqlClient.storeSubscription.findUnique({
 			where: { storeId: params.storeId },
 		}),
@@ -27,6 +27,12 @@ export default async function StoreSubscriptionHistoryPage(props: {
 			where: { storeId: params.storeId },
 		}),
 	]);
+
+	if (!storeResult) {
+		redirect("/storeAdmin");
+	}
+
+	const store = storeResult;
 
 	transformDecimalsToNumbers(payments);
 
@@ -66,7 +72,7 @@ export default async function StoreSubscriptionHistoryPage(props: {
 		<section className="relative w-full">
 			<div className="container">
 				<SubscriptionHistoryClient
-					store={store as Store}
+					store={store}
 					subscription={subscription}
 					payments={payments}
 				/>

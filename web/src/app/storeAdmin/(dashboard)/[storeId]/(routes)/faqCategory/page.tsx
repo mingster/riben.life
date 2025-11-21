@@ -26,15 +26,13 @@ export default async function FaqCategoryPage(props: {
 	});
 
 	// Map FAQ Category to UI columns
-	const formattedCategories: FaqCategoryColumn[] = categories.map(
-		(item: FaqCategory & { _count: { FAQ: number } }) => ({
-			faqCategoryId: item.id,
-			storeId: params.storeId,
-			name: item.name,
-			sortOrder: Number(item.sortOrder) || 0,
-			faqCount: item._count.FAQ,
-		}),
-	);
+	const formattedCategories: FaqCategoryColumn[] = categories.map((item) => ({
+		faqCategoryId: item.id,
+		storeId: params.storeId,
+		name: item.name,
+		sortOrder: Number(item.sortOrder) || 0,
+		faqCount: item._count.FAQ,
+	}));
 
 	return (
 		<Container>

@@ -6,6 +6,7 @@ import type { SupportTicket } from "@/types";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
 import { getUtcNow } from "@/utils/datetime-utils";
 import { updateTicketSchema } from "./update-ticket.validation";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 
 export const updateTicketAction = userRequiredActionClient
 	.metadata({ name: "updateTicket" })
@@ -91,11 +92,17 @@ export const updateTicketAction = userRequiredActionClient
 			const result = (await sqlClient.supportTicket.findFirst({
 				where: whereClause,
 				include: {
-					Thread: true,
+					Thread: {
+						include: {
+							Sender: true,
+						},
+					},
+					Sender: true,
 				},
 			})) as SupportTicket;
 
 			//logger.info("updateTicketAction", { result });
+			transformDecimalsToNumbers(result);
 
 			return result;
 		},

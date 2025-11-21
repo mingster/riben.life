@@ -63,7 +63,7 @@ export default async function SupportHomePage(props: {
 		<Suspense fallback={<Loader />}>
 			<ClientSupport
 				user={user as User}
-				serverData={tickets as SupportTicket[]}
+				serverData={tickets as SupportTicket[] | []}
 			/>
 		</Suspense>
 	);

@@ -41,7 +41,7 @@ export default async function SupportAdminPage(props: {
 
 	// get all top level, open tickets for entire system
 	// top level ticket = main ticket = threadId is null
-	const tickets = (await sqlClient.supportTicket.findMany({
+	const tickets = await sqlClient.supportTicket.findMany({
 		where: {
 			/*
 			status: {
@@ -56,8 +56,11 @@ export default async function SupportAdminPage(props: {
 		//distinct: ["threadId"],
 		include: {
 			Thread: true,
+			Sender: true,
 		},
-	})) as SupportTicket[];
+	});
+
+	transformDecimalsToNumbers(tickets);
 
 	//transformDecimalsToNumbers(tickets);
 

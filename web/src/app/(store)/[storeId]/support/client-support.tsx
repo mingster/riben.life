@@ -57,7 +57,7 @@ interface TicketThreadProps {
 
 // Memoized ticket thread component
 const TicketThread = ({ thread, index }: TicketThreadProps) => (
-	<div key={thread.id} className="flex flex-row gap-2">
+	<div className="flex flex-row gap-2">
 		<div className="bg-amber-900 p-2 text-white text-xs font-medium rounded">
 			{index + 1}
 		</div>
@@ -138,11 +138,11 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 
 						<Separator className="my-2" />
 						<div className="w-full space-y-2">
-							{row.original.Thread.map(
-								(thread: SupportTicket, index: number) => (
-									<TicketThread key={thread.id} thread={thread} index={index} />
-								),
-							)}
+							{(
+								row.original as SupportTicket & { Thread?: SupportTicket[] }
+							).Thread?.map((thread: SupportTicket, index: number) => (
+								<TicketThread key={thread.id} thread={thread} index={index} />
+							))}
 						</div>
 					</div>
 				),

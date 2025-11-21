@@ -40,23 +40,27 @@ export default async function UsersBillingAdminPage(props: {
 	}
 
 	try {
-		stripeSubscriptions = await stripe.subscriptions.list({
-			customer: stripeCustomerId,
-		});
-
-		for (const subscription of stripeSubscriptions.data) {
-			userSubscription.push({
-				id: subscription.id,
-				customer: subscription.customer as string,
-				priceId: subscription.items.data[0].price.id as string,
-				productName: "productName" as string,
-				status: subscription.status,
-				// convert stripe timestamp to date
-				start_date: new Date((subscription.start_date as number) * 1000),
-				canceled_at: subscription.cancel_at
-					? new Date((subscription.cancel_at as number) * 1000)
-					: null,
+		if (stripeCustomerId) {
+			stripeSubscriptions = await stripe.subscriptions.list({
+				customer: stripeCustomerId,
 			});
+		}
+
+		if (stripeSubscriptions?.data) {
+			for (const subscription of stripeSubscriptions.data) {
+				userSubscription.push({
+					id: subscription.id,
+					customer: subscription.customer as string,
+					priceId: subscription.items.data[0].price.id as string,
+					productName: "productName" as string,
+					status: subscription.status,
+					// convert stripe timestamp to date
+					start_date: new Date((subscription.start_date as number) * 1000),
+					canceled_at: subscription.cancel_at
+						? new Date((subscription.cancel_at as number) * 1000)
+						: null,
+				});
+			}
 		}
 	} catch (error) {
 		logger.error({ error });

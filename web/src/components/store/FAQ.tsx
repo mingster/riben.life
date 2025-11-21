@@ -71,9 +71,11 @@ const FAQCategory = ({ category }: FAQCategoryProps) => {
 			<Card>
 				<CardContent className="p-6">
 					<div className="space-y-4">
-						{category.FAQ.map((faq: Faq) => (
-							<FAQItem key={faq.id} faq={faq} />
-						))}
+						{(category as FaqCategory & { FAQ?: Faq[] }).FAQ?.map(
+							(faq: Faq) => (
+								<FAQItem key={faq.id} faq={faq} />
+							),
+						)}
 					</div>
 				</CardContent>
 			</Card>

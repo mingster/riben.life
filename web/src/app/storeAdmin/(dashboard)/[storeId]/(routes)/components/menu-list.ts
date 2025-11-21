@@ -63,7 +63,9 @@ export function GetMenuList(
 
 	const openSupportTicketCount =
 		options?.supportTicketCount ??
-		store.SupportTicket?.filter(
+		(
+			store as Store & { SupportTicket?: SupportTicket[] }
+		).SupportTicket?.filter(
 			(ticket: SupportTicket) => ticket.status === TicketStatus.Open,
 		).length ??
 		0;

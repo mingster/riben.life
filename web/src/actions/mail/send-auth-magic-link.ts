@@ -4,6 +4,7 @@ import { PhaseTags } from "./phase-tags";
 import { loadOuterHtmTemplate } from "./load-outer-htm-template";
 import type { StringNVType } from "@/types/enum";
 import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
+import { User } from "@/types";
 
 // send auth magic link email to customer
 //
@@ -60,14 +61,14 @@ export const sendAuthMagicLink = async (
 		message_content_template.subject,
 		null,
 		null,
-		user,
+		user as User,
 	);
 
 	let textMessage = await PhaseTags(
 		message_content_template.body,
 		null,
 		null,
-		user,
+		user as User,
 	);
 
 	// replace %Customer.MagicLinkURL% with regex

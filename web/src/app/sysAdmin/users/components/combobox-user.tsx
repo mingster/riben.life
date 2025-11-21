@@ -39,7 +39,7 @@ export const UserCombobox = ({
 	const [mounted, setMounted] = useState(false);
 	const [open, setOpen] = useState(false);
 	const [selected, setSelected] = useState<User | null>(
-		userData.find((c) => c.id === defaultValue) || null,
+		userData.find((c) => c.id === String(defaultValue)) || null,
 	);
 
 	if (!mounted) {
@@ -73,7 +73,7 @@ export const UserCombobox = ({
 								{userData.map((obj) => (
 									<CommandItem
 										key={obj.id}
-										value={obj.email} //value needs to be the keyword for command search
+										value={obj.email || obj.id} //value needs to be the keyword for command search
 										onSelect={(value) => {
 											//console.log(`onSelect: ${value}`);
 											setSelected(obj);
@@ -82,11 +82,11 @@ export const UserCombobox = ({
 											setOpen(false);
 										}}
 									>
-										{obj.email}
+										{obj.email || obj.id}
 										<IconCheck
 											className={cn(
 												"ml-auto h-4 w-4",
-												selected === obj.id ? "opacity-100" : "opacity-0",
+												selected?.id === obj.id ? "opacity-100" : "opacity-0",
 											)}
 										/>
 									</CommandItem>

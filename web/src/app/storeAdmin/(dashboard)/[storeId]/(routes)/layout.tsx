@@ -45,8 +45,15 @@ export default async function StoreLayout(props: {
 			includeAnnouncements: true,
 			includeTables: true,
 			includeSupportTickets: true,
-		}) as Store,
+		}),
 	]);
+
+	if (!store) {
+		logger.warn("Store not found after access check", {
+			metadata: { storeId: params.storeId },
+		});
+		redirect("/storeAdmin");
+	}
 
 	return (
 		<StoreAdminLayout sqlData={store} storeSettings={null}>

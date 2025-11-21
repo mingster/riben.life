@@ -2,7 +2,7 @@ import getCurrentUser from "@/actions/user/get-current-user";
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
 import logger from "@/lib/logger";
-import type { User } from "@/types";
+import type { StoreOrder, User } from "@/types";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -29,7 +29,7 @@ export default async function SubscriptionPage() {
 			<Suspense fallback={<Loader />}>
 				<GlobalNavbar title={title} />
 				<AccountTabs
-					orders={user.Orders}
+					orders={user.Orders as StoreOrder[] | []}
 					addresses={user.Addresses}
 					user={user}
 				/>

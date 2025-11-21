@@ -1,4 +1,4 @@
-import { StoreOrder } from "@/types";
+import { StoreOrder, User } from "@/types";
 import logger from "@/lib/logger";
 import { PhaseTags } from "./phase-tags";
 import { loadOuterHtmTemplate } from "./load-outer-htm-template";
@@ -14,18 +14,18 @@ export const sendCreditSuccess = async (order: StoreOrder) => {
 	// log.info(`🔔 sending credit success email to customer: ${order.CustomerID}`);
 
 	// 1. get the customer's locale
-	if (!order.Customer) {
-		log.error(`🔔 Customer not found: ${order.CustomerID}`);
+	if (!order.User) {
+		log.error(`🔔 User not found: ${order.User}`);
 		return;
 	}
 
 	const user = await sqlClient.user.findUnique({
 		where: {
-			id: order.Customer.id,
+			id: order.User?.id || "",
 		},
 	});
 	if (!user) {
-		log.error(`🔔 User not found: ${order.Customer.id}`);
+		log.error(`🔔 User not found: ${order.User?.id}`);
 		return;
 	}
 
@@ -60,15 +60,15 @@ export const sendCreditSuccess = async (order: StoreOrder) => {
 	// 3. phase the message template with the data
 	const phased_subject = await PhaseTags(
 		message_content_template.subject,
-		user,
+		user as User,
 		order,
-		user,
+		user as User,
 	);
 	const textMessage = await PhaseTags(
 		message_content_template.body,
-		user,
+		user as User,
 		order,
-		user,
+		user as User,
 	);
 
 	const template = await loadOuterHtmTemplate();
