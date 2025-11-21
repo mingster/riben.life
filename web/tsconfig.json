@@ -1,59 +1,63 @@
 {
-	"compilerOptions": {
-		"target": "ESNext",
-		"lib": [
-			"dom",
-			"dom.iterable",
-			"esnext"
-		],
-		"allowJs": true,
-		"skipLibCheck": true,
-		"strict": true,
-		"strictNullChecks": true,
-		"noEmit": true,
-		"esModuleInterop": true,
-		"module": "esnext",
-		"moduleResolution": "bundler",
-		"resolveJsonModule": true,
-		"isolatedModules": true,
-		"jsx": "preserve",
-		"incremental": true,
-		"plugins": [
-			{
-				"name": "next"
-			}
-		],
-		"paths": {
-			"@/*": [
-				"./src/*"
-			]
-		},
-		// Performance optimizations
-		"assumeChangesOnlyAffectDirectDependencies": true,
-		"disableSourceOfProjectReferenceRedirect": true,
-		"disableSolutionSearching": true,
-		"noEmitOnError": false,
-		"preserveWatchOutput": false,
-		// Additional build optimizations
-		"forceConsistentCasingInFileNames": true,
-		"exactOptionalPropertyTypes": false,
-		"noImplicitReturns": false,
-		"noFallthroughCasesInSwitch": false,
-		"noUncheckedIndexedAccess": false,
-		"noImplicitOverride": false,
-		// Faster compilation
-		"importsNotUsedAsValues": "remove",
-		"verbatimModuleSyntax": false,
-		"allowSyntheticDefaultImports": true,
-		"useDefineForClassFields": true
-	},
-	"include": [
-		"next-env.d.ts",
-		"**/*.ts",
-		"**/*.tsx",
-		".next/types/**/*.ts"
-	],
-	"exclude": [
-		"node_modules", ".next", "out", "dist"
-	]
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    // Performance optimizations
+    "assumeChangesOnlyAffectDirectDependencies": true,
+    "disableSourceOfProjectReferenceRedirect": true,
+    "disableSolutionSearching": true,
+    "noEmitOnError": false,
+    "preserveWatchOutput": false,
+    // Additional build optimizations
+    "forceConsistentCasingInFileNames": true,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": false,
+    // Faster compilation
+    "importsNotUsedAsValues": "remove",
+    "verbatimModuleSyntax": false,
+    "allowSyntheticDefaultImports": true,
+    "useDefineForClassFields": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "out",
+    "dist"
+  ]
 }

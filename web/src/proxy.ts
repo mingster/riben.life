@@ -33,7 +33,7 @@ const badRequest = new NextResponse(null, {
 	headers: { "Content-Type": "text/plain" },
 });
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
 	//#region csp - https://nextjs.org/docs/pages/guides/content-security-policy
 	/*
 	const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
@@ -102,7 +102,7 @@ export function middleware(req: NextRequest) {
 				origin,
 				allowedOrigins,
 			},
-			service: "middleware",
+			service: "proxy",
 			environment: process.env.NODE_ENV,
 			version: process.env.npm_package_version,
 			url: req.url || "",
