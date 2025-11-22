@@ -17,7 +17,7 @@ import { cache } from "react";
  *
  * This function:
  * 1. Validates user authentication
- * 2. Verifies user has owner/admin role
+ * 2. Verifies user has owner, staff, or storeAdmin role
  * 3. Checks store access/ownership
  * 4. Returns minimal store data for access control
  *
@@ -51,10 +51,11 @@ import { cache } from "react";
  */
 export const checkStoreStaffAccess = cache(
 	async (storeId: string): Promise<Store> => {
-		// 1. Require authentication with owner/admin role
+		// 1. Require authentication with owner, staff, or storeAdmin role
 		const session = await requireAuthWithRole([
 			Role.owner,
-			Role.admin,
+			Role.staff,
+			Role.storeAdmin,
 		] as UserRole[]);
 
 		// 2. Require store access/ownership

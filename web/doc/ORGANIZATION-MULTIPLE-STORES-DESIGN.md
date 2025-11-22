@@ -62,7 +62,7 @@ model Member {
 **Key Points:**
 
 - Links users to organizations
-- Supports role-based access with roles: `owner`, `admin`, `staff`, `customer`
+- Supports role-based access with roles: `owner`, `storeAdmin`, `staff`, `customer`
 - Enables team collaboration within organizations
 
 #### Store
@@ -495,7 +495,7 @@ try {
 
 2. **Team Management**
    - Invite users to organizations
-   - Role-based permissions: `owner`, `admin`, `staff`, `customer`
+   - Role-based permissions: `owner`, `storeAdmin`, `staff`, `customer`
    - Organization-level access control
 
 3. **Organization Dashboard**

@@ -8,20 +8,6 @@ export type GeneralNVType = {
 	label: string;
 };
 
-/*
-export enum Role {
-	USER = 0,
-	ADMIN = 1,
-	owner = 2,
-}
-*/
-
-export enum Role {
-	user = "user",
-	admin = "admin",
-	owner = "owner",
-}
-
 export enum TicketPriority {
 	Low = 1,
 	Medium = 2,

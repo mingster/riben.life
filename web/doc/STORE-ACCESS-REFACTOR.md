@@ -331,8 +331,8 @@ Require specific role:
 import { requireAuthWithRole } from "@/lib/auth-utils";
 
 export default async function AdminPage() {
-  const session = await requireAuthWithRole(["admin", "owner"]);
-  // User is admin or owner
+  const session = await requireAuthWithRole(["storeAdmin", "owner", "staff"]);
+  // User is storeAdmin, owner, or staff
 }
 ```
 

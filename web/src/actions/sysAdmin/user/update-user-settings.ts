@@ -1,6 +1,6 @@
 "use server";
 
-import { updateUserSettingsSchema } from "@/actions/admin/user/update-user-settings.validation";
+import { updateUserSettingsSchema } from "@/actions/sysAdmin/user/update-user-settings.validation";
 import { sqlClient } from "@/lib/prismadb";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
 import type { Role } from "@prisma/client";

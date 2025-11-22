@@ -27,6 +27,7 @@ import type { User } from "@/types";
 //import { Role } from "@/types/enum";
 import DialogSignIn from "./dialog-sign-in";
 import SignOutButton from "./sign-out-button";
+import { Role } from "@prisma/client";
 
 interface UserButtonProps {
 	db_user?: User | undefined | null;
@@ -102,8 +103,9 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 								</Link>
 							</DropdownMenuItem>
 
-							{(session?.user?.role === "affiliate" ||
-								session?.user?.role === "admin") && (
+							{(session?.user?.role === Role.storeAdmin ||
+								session?.user?.role === Role.staff ||
+								session?.user?.role === Role.owner) && (
 								<DropdownMenuItem className="cursor-pointer" asChild>
 									<Link href="/storeAdmin/">
 										<IconLock className="mr-0 size-4" />
@@ -112,7 +114,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 								</DropdownMenuItem>
 							)}
 
-							{session?.user?.role === "admin" && (
+							{session?.user?.role === Role.sysAdmin && (
 								<>
 									<DropdownMenuItem className="cursor-pointer" asChild>
 										<Link href="/sysAdmin">

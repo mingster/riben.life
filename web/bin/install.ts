@@ -10,13 +10,13 @@
  * Usage: bun run ./bin/install.ts
  */
 
-import { populateCountryData } from "../src/actions/admin/populate-country-data";
-import { populateCurrencyData } from "../src/actions/admin/populate-currency-data";
+import { populateCountryData } from "../src/actions/sysAdmin/populate-country-data";
+import { populateCurrencyData } from "../src/actions/sysAdmin/populate-currency-data";
 import {
 	create_locales,
 	create_paymentMethods,
 	create_shippingMethods,
-} from "../src/actions/admin/populate-payship_defaults";
+} from "../src/actions/sysAdmin/populate-payship_defaults";
 import { sqlClient } from "../src/lib/prismadb";
 import { stripe } from "../src/lib/stripe/config";
 import logger from "../src/lib/logger";

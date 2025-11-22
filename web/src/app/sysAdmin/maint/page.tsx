@@ -1,6 +1,6 @@
 "use server";
 
-import { wipeoutDefaultData } from "@/actions/admin/populate-payship_defaults";
+import { wipeoutDefaultData } from "@/actions/sysAdmin/populate-payship_defaults";
 import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
@@ -8,10 +8,10 @@ import { IconDiamond, IconSend, IconTrash } from "@tabler/icons-react";
 import { checkAdminAccess } from "../admin-utils";
 
 import fs from "node:fs";
-import { deleteAllLedgers } from "@/actions/admin/maint/delete-all-ledgers";
-import { deleteAllOrders } from "@/actions/admin/maint/delete-all-orders";
-import { deleteAllSupportTickets } from "@/actions/admin/maint/delete-all-support-tickets";
-import { sendTestNoficiation } from "@/actions/admin/maint/send-test-noficiation";
+import { deleteAllLedgers } from "@/actions/sysAdmin/maint/delete-all-ledgers";
+import { deleteAllOrders } from "@/actions/sysAdmin/maint/delete-all-orders";
+import { deleteAllSupportTickets } from "@/actions/sysAdmin/maint/delete-all-support-tickets";
+import { sendTestNoficiation } from "@/actions/sysAdmin/maint/send-test-noficiation";
 import { Heading } from "@/components/ui/heading";
 import { redirect } from "next/navigation";
 import { EditDefaultPrivacy } from "./edit-default-privacy";

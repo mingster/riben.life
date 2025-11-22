@@ -152,7 +152,7 @@ export const auth = betterAuth({
 		*/
 		organization(),
 		admin({
-			adminRoles: ["admin"],
+			adminRoles: ["sysAdmin"],
 			//sysAdminUserIds: ["Nz6WKKKMKvadXXmgZgaHiqIYOuXr31w1"],
 			//impersonationSessionDuration: 60 * 60 * 24, // 1 day
 		}),

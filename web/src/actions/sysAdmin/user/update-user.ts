@@ -5,6 +5,7 @@ import { authClient } from "@/lib/auth-client";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
 import { adminActionClient } from "@/utils/actions/safe-action";
+import { Role } from "@prisma/client";
 
 export const updateUserAction = adminActionClient
 	.metadata({ name: "updateUser" })
@@ -27,10 +28,12 @@ export const updateUserAction = adminActionClient
 				data: { name, locale, timezone, role, stripeCustomerId },
 			});
 
+			/*
 			const updatedUser = await authClient.admin.setRole({
 				userId: id,
-				role: role as "user" | "admin" | ("user" | "admin")[],
+				role: role as string,
 			});
+			*/
 
 			const result = (await sqlClient.user.findUnique({
 				where: { id },

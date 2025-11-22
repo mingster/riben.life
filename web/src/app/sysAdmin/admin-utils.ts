@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { Role } from "@/types/enum";
+import { Role } from "@prisma/client";
 import { headers } from "next/headers";
 
 export async function checkAdminAccess() {
@@ -14,7 +14,7 @@ export async function checkAdminAccess() {
 		return false;
 	}
 
-	if (session.user.role !== Role.admin) {
+	if (session.user.role !== Role.sysAdmin) {
 		// check if email is in ADMINS
 		if (process.env.ADMINS?.includes(session.user.email)) {
 			return true;
