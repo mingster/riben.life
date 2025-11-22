@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/utils/datetime-utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
 
 export const updateStoreBasicAction = storeActionClient
 	.metadata({ name: "updateStoreBasic" })
@@ -71,6 +72,9 @@ export const updateStoreBasicAction = storeActionClient
 				businessHours: businessHours ?? "",
 			},
 		});
+
+		transformDecimalsToNumbers(store);
+		transformDecimalsToNumbers(storeSettings);
 
 		return {
 			store,
