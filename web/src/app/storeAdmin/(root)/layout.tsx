@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { Role } from "@prisma/client";
-import { requireAuthWithRole } from "@/lib/auth-utils";
+import { requireAuth, requireRole } from "@/lib/auth-utils";
 
 // this is the main layout for store admin.
 // Only owner, staff, or storeAdmin roles can access storeAdmin routes
@@ -16,13 +16,29 @@ export default async function StoreAdminLayout(props: {
 
 	const { children } = props;
 
-	// Require authentication with allowed roles (owner, staff, or storeAdmin)
-	// sysAdmin cannot access storeAdmin routes
-	const session = await requireAuthWithRole([
-		Role.owner,
-		Role.staff,
-		Role.storeAdmin,
-	]);
+	// Require authentication
+	const session = await requireAuth();
+
+	// Allow owner, staff, storeAdmin, or sysAdmin (sysAdmin can also be store owners)
+	// If sysAdmin doesn't own stores, redirect to sysAdmin interface
+	if (session.user.role === Role.sysAdmin) {
+		// Check if sysAdmin owns any stores
+		const sysAdminStore = await sqlClient.store.findFirst({
+			where: {
+				ownerId: session.user.id,
+				isDeleted: false,
+			},
+		});
+
+		// If sysAdmin doesn't own stores, redirect to sysAdmin interface
+		if (!sysAdminStore) {
+			redirect("/sysAdmin");
+		}
+		// Otherwise, allow access (sysAdmin can access their stores)
+	} else {
+		// Require allowed roles for non-sysAdmin users (owner, staff, or storeAdmin)
+		requireRole(session, [Role.owner, Role.staff, Role.storeAdmin]);
+	}
 
 	//const ownerId = session.user?.id;
 	//console.log('userid: ' + userId);

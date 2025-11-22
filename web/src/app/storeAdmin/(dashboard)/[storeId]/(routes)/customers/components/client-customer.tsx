@@ -47,7 +47,7 @@ import { formatDateTime } from "@/utils/datetime-utils";
 import clientLogger from "@/lib/client-logger";
 import { EditCustomer } from "./edit-customer";
 import { UserFilter } from "./filter-user";
-import { Role } from "@prisma/client";
+import { Role } from "@/types/enum";
 
 interface CustomersClientProps {
 	serverData: User[];
@@ -306,7 +306,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		name: "",
 		email: "",
 		password: "",
-		role: Role.user,
+		role: Role.user, // Role is defined locally above
 		locale: "tw",
 		timezone: "Asia/Taipei",
 		stripeCustomerId: "",

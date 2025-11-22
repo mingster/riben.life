@@ -56,6 +56,7 @@ export const checkStoreStaffAccess = cache(
 			Role.owner,
 			Role.staff,
 			Role.storeAdmin,
+			Role.sysAdmin,
 		] as UserRole[]);
 
 		// 2. Require store access/ownership

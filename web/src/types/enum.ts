@@ -156,3 +156,13 @@ export enum PageAction {
 	Modify = "Modify",
 	Delete = "Delete",
 }
+
+// Role enum values for client-side use (matches Prisma schema)
+// Server components should use Role from @prisma/client
+export const Role = {
+	user: "user",
+	owner: "owner",
+	staff: "staff",
+	storeAdmin: "storeAdmin",
+	sysAdmin: "sysAdmin",
+} as const;

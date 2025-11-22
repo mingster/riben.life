@@ -13,6 +13,8 @@ import { SafeError } from "@/utils/error";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
 import { createStoreSchema } from "./create-store.validation";
 import fs from "node:fs";
+import { Role } from "@prisma/client";
+import crypto from "crypto";
 
 export const createStoreAction = userRequiredActionClient
 	.metadata({ name: "createStore" })
@@ -178,7 +180,7 @@ export const createStoreAction = userRequiredActionClient
 						id: ownerId,
 					},
 					data: {
-						role: "owner",
+						role: Role.owner as Role,
 					},
 				});
 			}
@@ -186,6 +188,34 @@ export const createStoreAction = userRequiredActionClient
 			logger.info("Operation log", {
 				metadata: {
 					error: error instanceof Error ? error.message : String(error),
+				},
+			});
+		}
+
+		// update user's role in members table
+		// Check if member already exists for this user and organization
+		const existingMember = await sqlClient.member.findFirst({
+			where: {
+				userId: ownerId,
+				organizationId: organization.id,
+			},
+		});
+
+		if (existingMember) {
+			// Update existing member role
+			await sqlClient.member.update({
+				where: { id: existingMember.id },
+				data: { role: Role.owner as Role },
+			});
+		} else {
+			// Create new member
+			await sqlClient.member.create({
+				data: {
+					id: crypto.randomUUID(),
+					userId: ownerId,
+					organizationId: organization.id,
+					role: Role.owner as Role,
+					createdAt: getUtcNow(),
 				},
 			});
 		}
