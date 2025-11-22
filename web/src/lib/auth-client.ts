@@ -10,11 +10,12 @@ import {
 	magicLinkClient,
 	//multiSessionClient,
 	organizationClient,
-	passkeyClient,
+	//passkeyClient,
 	twoFactorClient,
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import type { auth } from "./auth";
+import { passkeyClient } from "@better-auth/passkey/client";
 
 export const authClient = createAuthClient({
 	/** The base URL of the server (optional if you're using the same domain) */
@@ -48,8 +49,8 @@ export const {
 	signUp,
 	signOut,
 	useSession,
-	forgetPassword,
-	resetPassword,
+	//forgetPassword,
+	//resetPassword,
 } = createAuthClient();
 
 export type AuthClient = typeof authClient;

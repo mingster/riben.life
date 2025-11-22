@@ -17,7 +17,7 @@ import {
 	//genericOAuth,
 	captcha,
 } from "better-auth/plugins";
-import { passkey } from "better-auth/plugins/passkey";
+import { passkey } from "@better-auth/passkey";
 import { emailHarmony } from "better-auth-harmony";
 
 import { sendAuthMagicLink } from "@/actions/mail/send-auth-magic-link";
