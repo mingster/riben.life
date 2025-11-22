@@ -2,10 +2,10 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { deleteProductOptionTemplateSchema } from "./delete-product-option-template.validation";
 
-export const deleteProductOptionTemplateAction = storeOwnerActionClient
+export const deleteProductOptionTemplateAction = storeActionClient
 	.metadata({ name: "deleteProductOptionTemplate" })
 	.schema(deleteProductOptionTemplateSchema)
 	.action(async ({ parsedInput }) => {

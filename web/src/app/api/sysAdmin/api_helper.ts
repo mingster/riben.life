@@ -17,8 +17,8 @@ export const CheckAdminApiAccess = async () => {
 		return new NextResponse("Unauthenticated", { status: 401 });
 	}
 
-	// block if not admin
-	if (session.user.role !== "admin") {
+	// block if not sysAdmin
+	if (session.user.role !== "sysAdmin") {
 		return new NextResponse("Unauthenticated", { status: 402 });
 	}
 };

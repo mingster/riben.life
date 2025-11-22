@@ -1,10 +1,10 @@
 "use server";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { deleteProductSchema } from "./delete-product.validation";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 
-export const deleteProductAction = storeOwnerActionClient
+export const deleteProductAction = storeActionClient
 	.metadata({ name: "deleteProduct" })
 	.schema(deleteProductSchema)
 	.action(async ({ parsedInput }) => {

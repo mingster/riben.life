@@ -11,7 +11,7 @@ export const createUserAction = adminActionClient
 			const newUser = await authClient.admin.createUser({
 				email: email as string,
 				name: name,
-				role: role as "user" | "admin" | ("user" | "admin")[],
+				role: role as string,
 				password: password as string,
 			});
 

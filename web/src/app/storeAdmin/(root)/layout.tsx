@@ -1,10 +1,11 @@
-import { auth, Session } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { redirect } from "next/navigation";
-import { cookies, headers } from "next/headers";
-import logger from "@/lib/logger";
+import { cookies } from "next/headers";
+import { Role } from "@prisma/client";
+import { requireAuth, requireRole } from "@/lib/auth-utils";
 
 // this is the main layout for store admin.
+// Only owner, staff, or storeAdmin roles can access storeAdmin routes
 // if the user has a store, redirect to the store dashboard (/storeAdmin/[storeId])
 // if the user doesn't have store, show the create store modal (via page.tsx)
 export default async function StoreAdminLayout(props: {
@@ -15,12 +16,28 @@ export default async function StoreAdminLayout(props: {
 
 	const { children } = props;
 
-	const session = (await auth.api.getSession({
-		headers: await headers(), // you need to pass the headers object.
-	})) as unknown as Session;
+	// Require authentication
+	const session = await requireAuth();
 
-	if (!session) {
-		redirect(`/signin?callbackUrl=/storeAdmin`);
+	// Allow owner, staff, storeAdmin, or sysAdmin (sysAdmin can also be store owners)
+	// If sysAdmin doesn't own stores, redirect to sysAdmin interface
+	if (session.user.role === Role.sysAdmin) {
+		// Check if sysAdmin owns any stores
+		const sysAdminStore = await sqlClient.store.findFirst({
+			where: {
+				ownerId: session.user.id,
+				isDeleted: false,
+			},
+		});
+
+		// If sysAdmin doesn't own stores, redirect to sysAdmin interface
+		if (!sysAdminStore) {
+			redirect("/sysAdmin");
+		}
+		// Otherwise, allow access (sysAdmin can access their stores)
+	} else {
+		// Require allowed roles for non-sysAdmin users (owner, staff, or storeAdmin)
+		requireRole(session, [Role.owner, Role.staff, Role.storeAdmin]);
 	}
 
 	//const ownerId = session.user?.id;
@@ -36,6 +53,8 @@ export default async function StoreAdminLayout(props: {
 	}
 
 	// if no cookie exists, redirect to user's first store
+	// Note: For staff/storeAdmin roles, store access is validated per-store via checkStoreStaffAccess()
+	// This query only finds stores where user is owner for convenience redirect
 	const store = await sqlClient.store.findFirst({
 		where: {
 			ownerId: session.user.id,

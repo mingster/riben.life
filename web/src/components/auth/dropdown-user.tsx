@@ -24,7 +24,6 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
-//import { Role } from "@/types/enum";
 import DialogSignIn from "./dialog-sign-in";
 import SignOutButton from "./sign-out-button";
 
@@ -40,8 +39,6 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 
 	const { data: session } = authClient.useSession();
 
-	//console.log("session", session);
-
 	useEffect(() => {
 		setMounted(true);
 	}, []);
@@ -49,6 +46,9 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 	if (!mounted) return <NotMountSkeleton />;
 
 	//logger.info("session", session);
+
+	if (!session) return null;
+	const user = session.user;
 
 	return (
 		<DropdownMenu>
@@ -59,7 +59,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
           dark:border-strokedark dark:bg-meta-4 dark:text-primary dark:hover:text-meta-1"
 				>
 					<Image
-						src={session?.user?.image || avatarPlaceholder}
+						src={user.image || avatarPlaceholder}
 						alt="User profile picture"
 						width={30}
 						height={30}
@@ -102,8 +102,10 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 								</Link>
 							</DropdownMenuItem>
 
-							{(session?.user?.role === "affiliate" ||
-								session?.user?.role === "admin") && (
+							{(user.role === "sysAdmin" ||
+								user.role === "storeAdmin" ||
+								user.role === "staff" ||
+								user.role === "owner") && (
 								<DropdownMenuItem className="cursor-pointer" asChild>
 									<Link href="/storeAdmin/">
 										<IconLock className="mr-0 size-4" />
@@ -112,7 +114,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 								</DropdownMenuItem>
 							)}
 
-							{session?.user?.role === "admin" && (
+							{user.role === "sysAdmin" && (
 								<>
 									<DropdownMenuItem className="cursor-pointer" asChild>
 										<Link href="/sysAdmin">

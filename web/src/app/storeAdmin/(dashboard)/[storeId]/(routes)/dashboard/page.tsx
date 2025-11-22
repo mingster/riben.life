@@ -9,7 +9,7 @@ import { columns } from "./components/columns";
 import { SectionCards } from "./components/section-cards";
 
 import data from "./data.json";
-import { Role } from "@/types/enum";
+import { Role } from "@prisma/client";
 import Container from "@/components/ui/container";
 
 export default async function Page() {
@@ -22,7 +22,9 @@ export default async function Page() {
 	// if user is admin or affiliate, they can access the page
 	if (
 		session &&
-		(session.user.role === Role.admin || session.user.role === Role.owner)
+		(session.user.role === Role.storeAdmin ||
+			session.user.role === Role.owner ||
+			session.user.role === Role.staff)
 	) {
 		canAccess = true;
 	}

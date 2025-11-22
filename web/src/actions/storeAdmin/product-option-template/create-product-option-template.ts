@@ -3,7 +3,7 @@
 import { mapProductOptionTemplateToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/product-option-template/product-option-template-column";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { Prisma } from "@prisma/client";
 import { createProductOptionTemplateSchema } from "./create-product-option-template.validation";
@@ -39,7 +39,7 @@ const parseSelections = (input: string): SelectionInput[] => {
 		.filter((value): value is SelectionInput => value !== null);
 };
 
-export const createProductOptionTemplateAction = storeOwnerActionClient
+export const createProductOptionTemplateAction = storeActionClient
 	.metadata({ name: "createProductOptionTemplate" })
 	.schema(createProductOptionTemplateSchema)
 	.action(async ({ parsedInput }) => {

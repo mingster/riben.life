@@ -1,7 +1,7 @@
 "use server";
 
 import { updateStoreCreditSchema } from "./update-store-credit.validation";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
@@ -12,7 +12,7 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 import { getStoreWithRelations } from "@/lib/store-access";
 import { Store } from "@/types";
 
-export const updateStoreCreditAction = storeOwnerActionClient
+export const updateStoreCreditAction = storeActionClient
 	.metadata({ name: "updateStoreCredit" })
 	.schema(updateStoreCreditSchema)
 	.action(async ({ parsedInput }) => {

@@ -3,11 +3,11 @@
 import { mapCategoryToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/categories/category-column";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 
 import { updateCategorySchema } from "./update-category.validation";
 
-export const updateStoreCategoryAction = storeOwnerActionClient
+export const updateStoreCategoryAction = storeActionClient
 	.metadata({ name: "updateCategory" })
 	.schema(updateCategorySchema)
 	.action(async ({ parsedInput }) => {

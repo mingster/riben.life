@@ -15,9 +15,9 @@ This project uses [Next.js Server Actions](mdc:https:/nextjs.org/docs/app/buildi
   - `storeAdmin/faqCategory/` - FAQ category maintenance
   - `admin/systemMessage/` - System message actions
   - `admin/user/` - user management actions
-- Each action file typically exports one or more actions using the `adminActionClient` or `storeOwnerActionClient` or `userRequiredActionClient` wrapper.
+- Each action file typically exports one or more actions using the `adminActionClient` or `storeActionClient` or `userRequiredActionClient` wrapper.
 - administration pages within `sysAdmin` URL should use `adminActionClient` wrapper.
-- user related pages within `storeAdmin` URL should use `storeOwnerActionClient` wrapper.
+- store admin actions (pages within `storeAdmin` URL) should use `storeActionClient` wrapper.
 - user related pages within `account` URL should use `userRequiredActionClient` wrapper.
 - other actions can use `baseClient`
 - Validation schemas (using Zod) are colocated in the same directory as `[action-name].validation.ts`
@@ -66,6 +66,35 @@ export const updateOpServerAction = adminActionClient
     // Action implementation
   });
 ```
+
+- Actions are wrapped with `storeActionClient` for store admin actions (requires store membership):
+
+```ts
+// Validation schema MUST include storeId
+const updateProductSchema = z.object({
+  storeId: z.string().min(1, "Store ID is required"),
+  // ... other fields
+});
+
+export const updateProductAction = storeActionClient
+  .metadata({ name: "updateProduct" })
+  .schema(updateProductSchema)
+  .action(async ({ parsedInput }) => {
+    // storeActionClient already validated:
+    // - User is authenticated
+    // - storeId is provided and valid
+    // - Store exists
+    // - User is a member of the store's organization with role: owner, storeAdmin, or staff
+    const { storeId, ... } = parsedInput;
+    // Action implementation
+  });
+```
+
+**Important:** `storeActionClient` requires:
+
+- `storeId` must be included in the validation schema
+- User must be authenticated
+- User must be a member of the store's organization with role `owner`, `storeAdmin`, or `staff`
 
 ## Common Patterns
 

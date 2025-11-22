@@ -3,11 +3,11 @@
 import { mapFacilityToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/facility/table-column";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
 import { updateFacilitySchema } from "./update-facility.validation";
 
-export const updateFacilityAction = storeOwnerActionClient
+export const updateFacilityAction = storeActionClient
 	.metadata({ name: "updateFacility" })
 	.schema(updateFacilitySchema)
 	.action(async ({ parsedInput }) => {

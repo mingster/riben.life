@@ -16,8 +16,8 @@ export async function isAdmin({ email }: { email?: string | null }) {
 		return false;
 	}
 
-	// block if not admin
-	if (session.user.role !== "admin") {
+	// block if not sysAdmin
+	if (session.user.role !== "sysAdmin") {
 		return process.env.ADMINS?.includes(email);
 	}
 }

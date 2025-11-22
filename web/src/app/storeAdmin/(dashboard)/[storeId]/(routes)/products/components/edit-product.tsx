@@ -29,22 +29,21 @@ import { ProductStatus } from "@/types/enum";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
 import { useParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { createStoreProductAction } from "@/actions/storeAdmin/product/create-product";
+import { updateProductAction } from "@/actions/storeAdmin/product/update-product";
+import {
+	createStoreProductSchema,
+	type CreateStoreProductInput,
+} from "@/actions/storeAdmin/product/create-product.validation";
+import {
+	updateProductSchema,
+	type UpdateProductInput,
+} from "@/actions/storeAdmin/product/update-product.validation";
 import type { ProductColumn } from "../product-column";
 import { ProductStatusCombobox } from "../[productId]/product-status-combobox";
-
-const formSchema = z.object({
-	name: z.string().min(1, { message: "Product name is required" }),
-	description: z.string().optional(),
-	price: z.number().min(0),
-	status: z.number(),
-	isFeatured: z.boolean(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
 
 interface EditProductProps {
 	product?: ProductColumn | null;
@@ -68,38 +67,88 @@ export const EditProduct: React.FC<EditProductProps> = ({
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	const defaultValues = useMemo<FormValues>(
-		() => ({
-			name: product?.name ?? "",
-			description: "",
-			price: product?.price ?? 0,
-			status: product?.status ?? Number(ProductStatus.Published),
-			isFeatured: product?.isFeatured ?? false,
-		}),
-		[product],
-	);
+	const isEditMode = Boolean(product) && !isNew;
 
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
+	const defaultValues = product
+		? {
+				...product,
+				id: product.id ?? "",
+			}
+		: {
+				storeId: String(params.storeId),
+				name: "",
+				description: "",
+				price: 0,
+				currency: "twd",
+				status: Number(ProductStatus.Published),
+				isFeatured: false,
+			};
+
+	const schema = useMemo(
+		() => (isEditMode ? updateProductSchema : createStoreProductSchema),
+		[isEditMode],
+	);
+	type FormInput = Omit<UpdateProductInput, "id"> & { id?: string };
+
+	const form = useForm<FormInput>({
+		resolver: zodResolver(schema) as Resolver<FormInput>,
 		defaultValues,
+		mode: "onChange",
+		reValidateMode: "onChange",
 	});
+
+	const {
+		register,
+		formState: { errors },
+		handleSubmit,
+		clearErrors,
+	} = form;
+
+	const resetForm = useCallback(() => {
+		form.reset(defaultValues);
+	}, [defaultValues, form]);
 
 	const handleOpenChange = (value: boolean) => {
 		setOpen(value);
 		if (!value) {
+			resetForm();
+			form.clearErrors();
+		} else {
+			// Reset form and clear errors when opening dialog
 			form.reset(defaultValues);
+			form.clearErrors();
 		}
 	};
 
-	const onSubmit = async (data: FormValues) => {
-		setLoading(true);
+	const handleSuccess = (updatedProduct: ProductColumn) => {
+		if (isEditMode) {
+			onUpdated?.(updatedProduct);
+		} else {
+			onCreated?.(updatedProduct);
+		}
+
+		toastSuccess({
+			title: t("Product_" + (isEditMode ? "updated" : "created")),
+			description: "",
+		});
+
+		resetForm();
+		handleOpenChange(false);
+	};
+
+	const onSubmit = async (data: FormInput) => {
+		// Client-side validation is handled by react-hook-form
+		// This will only be called if validation passes
 		try {
-			if (!product || isNew) {
+			setLoading(true);
+
+			if (!isEditMode) {
 				const result = await createStoreProductAction({
 					storeId: String(params.storeId),
 					name: data.name,
 					description: data.description ?? "",
 					price: data.price,
+					currency: data.currency ?? "usd",
 					status: data.status,
 					isFeatured: data.isFeatured ?? false,
 				});
@@ -109,21 +158,44 @@ export const EditProduct: React.FC<EditProductProps> = ({
 						title: t("Error"),
 						description: result.serverError,
 					});
-				} else if (result?.data?.product) {
-					onCreated?.(result.data.product);
-					toastSuccess({
-						title: t("Product_created"),
-						description: "",
-					});
-					setOpen(false);
-					form.reset(defaultValues);
+					return;
+				}
+
+				if (result?.data?.product) {
+					handleSuccess(result.data.product);
 				}
 			} else {
-				// TODO: wire update safe-action for inline editing
-				toastError({
-					title: t("Error"),
-					description: "Inline product editing is not supported yet.",
+				const productId = product?.id;
+				if (!productId) {
+					toastError({
+						title: t("Error"),
+						description: "Product not found.",
+					});
+					return;
+				}
+
+				const result = await updateProductAction({
+					storeId: String(params.storeId),
+					id: productId,
+					name: data.name,
+					description: data.description ?? "",
+					price: data.price,
+					currency: data.currency ?? "usd",
+					status: data.status,
+					isFeatured: data.isFeatured ?? false,
 				});
+
+				if (result?.serverError) {
+					toastError({
+						title: t("Error"),
+						description: result.serverError,
+					});
+					return;
+				}
+
+				if (result?.data?.product) {
+					handleSuccess(result.data.product);
+				}
 			}
 		} catch (error: unknown) {
 			toastError({
@@ -154,7 +226,23 @@ export const EditProduct: React.FC<EditProductProps> = ({
 				</DialogHeader>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					<form
+						onSubmit={form.handleSubmit(onSubmit, (errors) => {
+							// Show validation errors when form is invalid
+							const firstErrorKey = Object.keys(errors)[0];
+							if (firstErrorKey) {
+								const error = errors[firstErrorKey as keyof typeof errors];
+								const errorMessage = error?.message;
+								if (errorMessage) {
+									toastError({
+										title: t("Error"),
+										description: errorMessage,
+									});
+								}
+							}
+						})}
+						className="space-y-4"
+					>
 						<FormField
 							control={form.control}
 							name="name"
@@ -208,13 +296,13 @@ export const EditProduct: React.FC<EditProductProps> = ({
 												step="0.01"
 												disabled={loading}
 												value={Number.isNaN(field.value) ? "" : field.value}
-												onChange={(event) =>
-													field.onChange(
+												onChange={(event) => {
+													const value =
 														event.target.value === ""
 															? 0
-															: Number(event.target.value),
-													)
-												}
+															: Number(event.target.value);
+													field.onChange(value);
+												}}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -229,11 +317,13 @@ export const EditProduct: React.FC<EditProductProps> = ({
 									<FormItem>
 										<FormLabel>{t("Product_status")}</FormLabel>
 										<FormControl>
-											<ProductStatusCombobox
-												disabled={loading}
-												defaultValue={field.value}
-												onChange={(value) => field.onChange(Number(value))}
-											/>
+											<div>
+												<ProductStatusCombobox
+													disabled={loading}
+													defaultValue={field.value}
+													onChange={(value) => field.onChange(Number(value))}
+												/>
+											</div>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -245,7 +335,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 							control={form.control}
 							name="isFeatured"
 							render={({ field }) => (
-								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+								<FormItem className="flex flex-row items-center justify-between rounded-lg">
 									<div className="space-y-0.5">
 										<FormLabel>{t("Product_featured")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
@@ -265,18 +355,27 @@ export const EditProduct: React.FC<EditProductProps> = ({
 
 						<DialogFooter className="flex flex-row justify-end space-x-2">
 							<Button
+								type="submit"
+								disabled={
+									loading ||
+									!form.formState.isValid ||
+									form.formState.isSubmitting
+								}
+								className="disabled:opacity-25"
+							>
+								{loading || form.formState.isSubmitting
+									? t("Saving...")
+									: isNew
+										? t("Create")
+										: t("Save")}
+							</Button>
+							<Button
 								variant="outline"
 								type="button"
 								disabled={loading}
 								onClick={() => handleOpenChange(false)}
 							>
 								{t("Cancel")}
-							</Button>
-							<Button
-								type="submit"
-								disabled={loading || !form.formState.isValid}
-							>
-								{isNew ? t("Create") : t("Save")}
 							</Button>
 						</DialogFooter>
 					</form>

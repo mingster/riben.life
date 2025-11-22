@@ -1,14 +1,14 @@
 "use server";
 
 import { updateStoreContactInfoSchema } from "./update-store-contact-info.validation";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { sqlClient } from "@/lib/prismadb";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { getUtcNow } from "@/utils/datetime-utils";
 
-export const updateStoreContactInfoAction = storeOwnerActionClient
+export const updateStoreContactInfoAction = storeActionClient
 	.metadata({ name: "updateStoreContactInfo" })
 	.schema(updateStoreContactInfoSchema)
 	.action(async ({ parsedInput }) => {

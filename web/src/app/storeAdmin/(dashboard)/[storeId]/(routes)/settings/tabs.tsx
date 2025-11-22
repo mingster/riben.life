@@ -29,8 +29,9 @@ import { PaidOptionsTab } from "./setting-paid-options";
 import { PrivacyTab } from "./setting-privacy-tab";
 
 //import { TermsTab } from "./setting-terms-tab";
-import { ShippingPaymentMethodTab } from "./setting-shipping-payment-method";
 import { deleteStoreAction } from "@/actions/storeAdmin/store/delete-store";
+import { CreditTab } from "./setting-credit-tab";
+import { ShippingPaymentMethodTab } from "./setting-shipping-payment-method";
 
 export interface SettingsFormProps {
 	store: Store;
@@ -147,10 +148,6 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 						{t("StoreSettingsTab_Basic")}
 					</TabsTrigger>
 
-					<TabsTrigger className="px-1 lg:min-w-25" value="bank">
-						{t("StoreSettingsTab_Bank")}
-					</TabsTrigger>
-
 					<TabsTrigger className="px-1 lg:min-w-25" value="contactInfo">
 						{t("StoreSettingsTab_ContactInfo")}
 					</TabsTrigger>
@@ -161,6 +158,15 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 						{t("StoreSettingsTab_shipping_method")} /{" "}
 						{t("StoreSettingsTab_payment_method")}
 					</TabsTrigger>
+
+					<TabsTrigger className="px-1 lg:min-w-25" value="credit">
+						{t("RSVP_Tab_Credit")}
+					</TabsTrigger>
+
+					<TabsTrigger className="px-1 lg:min-w-25" value="bank">
+						{t("StoreSettingsTab_Bank")}
+					</TabsTrigger>
+
 					<TabsTrigger className="px-1 lg:min-w-25" value="paidOptions">
 						{t("StoreSettingsTab_PaidOptions")}
 					</TabsTrigger>
@@ -172,14 +178,6 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 						storeSettings={storeSettings}
 						onStoreUpdated={onStoreUpdated}
 						onStoreSettingsUpdated={onStoreSettingsUpdated}
-					/>
-				</TabsContent>
-
-				<TabsContent value="bank">
-					<BankSettingTab
-						store={normalizedStore}
-						storeSettings={storeSettings}
-						onStoreUpdated={onStoreUpdated}
 					/>
 				</TabsContent>
 
@@ -205,6 +203,18 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 						allPaymentMethods={paymentMethods}
 						allShippingMethods={shippingMethods}
 						disablePaidOptions={disablePaidOptions}
+						onStoreUpdated={onStoreUpdated}
+					/>
+				</TabsContent>
+
+				<TabsContent value="credit">
+					<CreditTab store={normalizedStore} onStoreUpdated={onStoreUpdated} />
+				</TabsContent>
+
+				<TabsContent value="bank">
+					<BankSettingTab
+						store={normalizedStore}
+						storeSettings={storeSettings}
 						onStoreUpdated={onStoreUpdated}
 					/>
 				</TabsContent>

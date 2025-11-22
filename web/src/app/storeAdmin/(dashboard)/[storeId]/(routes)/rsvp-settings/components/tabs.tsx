@@ -13,7 +13,6 @@ import { useI18n } from "@/providers/i18n-provider";
 
 import { Loader } from "@/components/loader";
 import { Heading } from "@/components/ui/heading";
-import { RsvpCreditTab } from "./tab-credit";
 import { RsvpTagTab } from "./tab-tag";
 import { RsvpBlacklistTab } from "./tab-black-list";
 
@@ -97,9 +96,6 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 					<TabsTrigger className="px-1 lg:min-w-25" value="basic">
 						{t("RSVP_Tab_System")}
 					</TabsTrigger>
-					<TabsTrigger className="px-1 lg:min-w-25" value="credit">
-						{t("RSVP_Tab_Credit")}
-					</TabsTrigger>
 
 					<TabsTrigger className="px-1 lg:min-w-25" value="tag">
 						{t("RSVP_Tab_Tag")}
@@ -115,15 +111,6 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 						store={store}
 						rsvpSettings={rsvpSettings}
 						onStoreUpdated={onStoreUpdated}
-						onRsvpSettingsUpdated={handleRsvpSettingsUpdated}
-					/>
-				</TabsContent>
-
-				<TabsContent value="credit">
-					<RsvpCreditTab
-						store={store}
-						rsvpSettings={rsvpSettings}
-						onStoreUpdated={handleStoreUpdated}
 						onRsvpSettingsUpdated={handleRsvpSettingsUpdated}
 					/>
 				</TabsContent>

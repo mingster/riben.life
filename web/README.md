@@ -34,7 +34,7 @@ Riben.life is a comprehensive platform that enables restaurants to manage their 
 - View analytics and order history
 - Manage multiple stores from one dashboard
 
-**For Platform Administrators:**
+**For Platform Administrators (sysAdmin):**
 
 - Oversee all stores and users
 - Manage system-wide settings
@@ -242,7 +242,12 @@ The application uses Next.js 15 App Router with route groups for logical organiz
   - Magic link (passwordless)
   - OAuth (Google, LINE)
   - Passkeys (WebAuthn)
-- **Role-Based Access**: User, Store Owner, Admin roles
+- **Role-Based Access**: User roles with granular permissions
+  - `user` - Regular customers
+  - `owner` - Store owners
+  - `staff` - Store staff members
+  - `storeAdmin` - Store administrators (can access storeAdmin routes)
+  - `sysAdmin` - System administrators (can access sysAdmin routes)
 - **reCAPTCHA v3**: Bot protection on forms
 - **HTTPS**: Enforced secure connections
 - **Data Privacy**: GDPR-compliant data handling

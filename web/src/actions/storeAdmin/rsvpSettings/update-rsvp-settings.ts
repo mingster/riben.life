@@ -2,12 +2,12 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
 import { updateRsvpSettingsSchema } from "./update-rsvp-settings.validation";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 
-export const updateRsvpSettingsAction = storeOwnerActionClient
+export const updateRsvpSettingsAction = storeActionClient
 	.metadata({ name: "updateRsvpSettings" })
 	.schema(updateRsvpSettingsSchema)
 	.action(async ({ parsedInput }) => {

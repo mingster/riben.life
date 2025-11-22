@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useI18n } from "@/providers/i18n-provider";
 import { deleteImage, uploadImage } from "@/utils/image-utils";
 import { IconX } from "@tabler/icons-react";
@@ -346,7 +347,9 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 								/>
 							</div>
 
-							<FormLabel>{t("StoreSettings_Store_Logo")}</FormLabel>
+							<div className="mb-2">
+								<Label>{t("StoreSettings_Store_Logo")}</Label>
+							</div>
 							<div className="flex flex-row w-full">
 								<div className="flex flex-col space-y-4 w-1/2">
 									<ImageUploadBox
@@ -404,11 +407,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 									<FormField
 										control={form.control}
 										name="logoPublicId"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel />
-											</FormItem>
-										)}
+										render={({ field }) => <FormItem></FormItem>}
 									/>
 								</div>
 							</div>

@@ -3,7 +3,7 @@
 import { mapProductOptionTemplateToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/product-option-template/product-option-template-column";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { updateProductOptionTemplateSchema } from "./update-product-option-template.validation";
 
@@ -38,7 +38,7 @@ const parseSelections = (input: string): SelectionInput[] => {
 		.filter((value): value is SelectionInput => value !== null);
 };
 
-export const updateProductOptionTemplateAction = storeOwnerActionClient
+export const updateProductOptionTemplateAction = storeActionClient
 	.metadata({ name: "updateProductOptionTemplate" })
 	.schema(updateProductOptionTemplateSchema)
 	.action(async ({ parsedInput }) => {

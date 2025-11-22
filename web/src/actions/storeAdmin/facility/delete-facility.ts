@@ -2,11 +2,11 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 
 import { deleteFacilitySchema } from "./delete-facility.validation";
 
-export const deleteFacilityAction = storeOwnerActionClient
+export const deleteFacilityAction = storeActionClient
 	.metadata({ name: "deleteFacility" })
 	.schema(deleteFacilitySchema)
 	.action(async ({ parsedInput }) => {

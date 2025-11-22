@@ -1,31 +1,39 @@
 "use server";
 
 import { storeActionClient } from "@/utils/actions/safe-action";
-import { createStoreProductSchema } from "./create-product.validation";
+import { updateProductSchema } from "./update-product.validation";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { mapProductToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/products/product-column";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 
-export const createStoreProductAction = storeActionClient
-	.metadata({ name: "createStoreProduct" })
-	.schema(createStoreProductSchema)
+export const updateProductAction = storeActionClient
+	.metadata({ name: "updateProduct" })
+	.schema(updateProductSchema)
 	.action(async ({ parsedInput }) => {
-		const { storeId, name, description, price, currency, status, isFeatured } =
-			parsedInput;
+		const {
+			storeId,
+			id,
+			name,
+			description,
+			price,
+			currency,
+			status,
+			isFeatured,
+		} = parsedInput;
 
-		const store = await sqlClient.store.findUnique({
-			where: { id: storeId },
-			select: { id: true },
+		const product = await sqlClient.product.findUnique({
+			where: { id },
+			select: { id: true, storeId: true },
 		});
 
-		if (!store) {
-			throw new SafeError("Store not found");
+		if (!product || product.storeId !== storeId) {
+			throw new SafeError("Product not found");
 		}
 
-		const product = await sqlClient.product.create({
+		const updated = await sqlClient.product.update({
+			where: { id },
 			data: {
-				storeId,
 				name,
 				description,
 				price,
@@ -36,7 +44,7 @@ export const createStoreProductAction = storeActionClient
 		});
 
 		const productWithRelations = await sqlClient.product.findUnique({
-			where: { id: product.id },
+			where: { id: updated.id },
 			include: {
 				ProductAttribute: true,
 				ProductOptions: true,
@@ -44,7 +52,7 @@ export const createStoreProductAction = storeActionClient
 		});
 
 		if (!productWithRelations) {
-			throw new SafeError("Failed to load created product");
+			throw new SafeError("Failed to load updated product");
 		}
 
 		transformDecimalsToNumbers(productWithRelations);

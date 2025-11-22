@@ -15,11 +15,11 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 
-//import { Role } from "@/../.prisma/client";
-import { Role } from "@/types/enum";
 import { getEnumKeys } from "@/utils/utils";
+import { Role } from "@/types/enum";
 
 import { useState } from "react";
+
 type ComboboxProps = {
 	defaultValue: string;
 	onChange?: (newRole: string) => void;

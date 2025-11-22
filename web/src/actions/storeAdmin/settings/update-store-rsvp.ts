@@ -1,14 +1,14 @@
 "use server";
 
 import { updateStoreRsvpSchema } from "./update-store-rsvp.validation";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/utils/datetime-utils";
 
-export const updateStoreRsvpAction = storeOwnerActionClient
+export const updateStoreRsvpAction = storeActionClient
 	.metadata({ name: "updateStoreRsvp" })
 	.schema(updateStoreRsvpSchema)
 	.action(async ({ parsedInput }) => {

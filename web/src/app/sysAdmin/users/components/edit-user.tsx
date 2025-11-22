@@ -72,7 +72,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 			const newUser = await authClient.admin.createUser({
 				email: data.email || "",
 				name: data.name,
-				role: data.role as "user" | "admin" | ("user" | "admin")[],
+				role: data.role as any, // Better Auth accepts any role string
 				password: data.password as string,
 			});
 
@@ -95,7 +95,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 			// set role
 			const updatedUser = await authClient.admin.setRole({
 				userId: data.id,
-				role: data.role as "user" | "admin" | ("user" | "admin")[],
+				role: data.role as string,
 			});
 			*/
 

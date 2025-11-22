@@ -4,12 +4,14 @@ import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
 import { Suspense } from "react";
-import { UsersClient } from "./components/client-user";
+import { CustomersClient } from "./components/client-customer";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function UsersAdminPage(props: {
+// manage customers in this store
+//
+export default async function CustomersPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
@@ -41,7 +43,7 @@ export default async function UsersAdminPage(props: {
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<UsersClient serverData={users} />
+			<CustomersClient serverData={users} />
 		</Suspense>
 	);
 }

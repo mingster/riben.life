@@ -1,20 +1,14 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { IconPencil, IconPlus, IconKey } from "@tabler/icons-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import type { z } from "zod/v4";
-import { createUserAction } from "@/actions/sysAdmin/user/create-user";
-import { updateUserAction } from "@/actions/sysAdmin/user/update-user";
+import { updateCustomerAction } from "@/actions/storeAdmin/customer/update-customer";
 import {
-	type UpdateUserSettingsInput,
-	updateUserSettingsSchema,
-} from "@/actions/sysAdmin/user/user.validation";
+	UpdateCustomerInput,
+	updateCustomerSchema,
+} from "@/actions/storeAdmin/customer/update-customer.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { LocaleSelectItems } from "@/components/locale-select-items";
-import { toastError, toastSuccess } from "@/components/toaster";
 import { TimezoneSelect } from "@/components/timezone-select";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -39,47 +33,56 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { authClient } from "@/lib/auth-client";
+import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { IconPencil, IconPlus } from "@tabler/icons-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import type { z } from "zod/v4";
 import { UserRoleCombobox } from "./user-role-combobox";
-import { ResetPasswordDialog } from "./reset-password-dialog";
 
-type formValues = z.infer<typeof updateUserSettingsSchema>;
+//type formValues = z.infer<typeof updateCustomerSchema>;
 
-interface props {
+interface EditCustomerProps {
 	item: User;
 	onUpdated?: (newValue: User) => void;
 	isNew?: boolean;
 }
 
-export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
-	const isMobile = useIsMobile();
+// edit customer in this store
+// admin can add/review/edit customers in this store
+//
+export const EditCustomer: React.FC<EditCustomerProps> = ({
+	item,
+	onUpdated,
+	isNew,
+}) => {
 	const [loading, setLoading] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 
-	const { i18n } = useTranslation();
-	const [activeLng, setActiveLng] = useState(i18n.language);
-	const { t } = useTranslation(activeLng);
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
 
-	async function onSubmit(data: UpdateUserSettingsInput) {
+	async function onSubmit(data: UpdateCustomerInput) {
 		setLoading(true);
 
 		let result;
 		if (isNew) {
-			// create new user from client side
+			// create a new user and add to this store from client side
 			const newUser = await authClient.admin.createUser({
 				email: data.email || "",
 				name: data.name,
-				role: data.role as "user" | "admin" | ("user" | "admin")[],
+				role: data.role as any, // Better Auth accepts any role string
 				password: data.password as string,
 			});
 
-			data.id = newUser.data?.user.id || "";
+			data.customerId = newUser.data?.user.id || "";
 
-			result = await createUserAction(data);
+			result = await updateCustomerAction(data);
 		} else {
-			result = await updateUserAction(data);
+			result = await updateCustomerAction(data);
 		}
 
 		if (!result) {
@@ -88,13 +91,12 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 			toastError({ description: result.serverError });
 		} else {
 			toastSuccess({ description: "Profile updated." });
-			handleChangeLanguage(data.locale);
 
 			/*
 			// set role
 			const updatedUser = await authClient.admin.setRole({
 				userId: data.id,
-				role: data.role as "user" | "admin" | ("user" | "admin")[],
+				role: data.role as string,
 			});
 			*/
 
@@ -106,16 +108,9 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 		setIsOpen(false);
 	}
 
-	const handleChangeLanguage = (lng: string) => {
-		i18n.changeLanguage(lng);
-		setActiveLng(lng);
-		//cookies.set(cookieName, lng, { path: "/" });
-		console.log("activeLng set to: ", lng);
-	};
-
 	// if timezone is not set, set it to America/New_York
 	if (!item.timezone) {
-		item.timezone = "America/New_York";
+		item.timezone = "Asia/Taipei";
 	}
 
 	const defaultValues = item
@@ -124,8 +119,8 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 			}
 		: {};
 
-	const form = useForm<UpdateUserSettingsInput>({
-		resolver: zodResolver(updateUserSettingsSchema),
+	const form = useForm<UpdateCustomerInput>({
+		resolver: zodResolver(updateCustomerSchema),
 		defaultValues,
 		mode: "onChange",
 	});
@@ -135,7 +130,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 		formState: { errors },
 		handleSubmit,
 		clearErrors,
-	} = useForm<formValues>();
+	} = useForm<UpdateCustomerInput>();
 
 	//console.log('disabled', loading || form.formState.isSubmitting);
 
@@ -328,14 +323,6 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 					</div>
 				</DialogContent>
 			</Dialog>
-
-			{!isNew && (
-				<ResetPasswordDialog user={item}>
-					<Button variant="ghost" size="icon" title="Set Password">
-						<IconKey className="h-4 w-4" />
-					</Button>
-				</ResetPasswordDialog>
-			)}
 		</div>
 	);
 };

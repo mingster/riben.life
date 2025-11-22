@@ -27,20 +27,18 @@ import {
 } from "@/actions/storeAdmin/rsvpSettings/update-store-credit.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import { RsvpSettingsProps } from "./tabs";
 import { Store } from "@/types";
-
-interface RsvpCreditTabProps extends RsvpSettingsProps {
-	onRsvpSettingsUpdated?: (updated: any) => void;
-}
 
 type FormValues = Omit<UpdateStoreCreditInput, "storeId">;
 
-export const RsvpCreditTab: React.FC<RsvpCreditTabProps> = ({
+export interface CreditTabProps {
+	store: Store;
+	onStoreUpdated?: (store: Store) => void;
+}
+
+export const CreditTab: React.FC<CreditTabProps> = ({
 	store,
-	rsvpSettings,
 	onStoreUpdated,
-	onRsvpSettingsUpdated,
 }) => {
 	const params = useParams();
 

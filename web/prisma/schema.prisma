@@ -98,9 +98,10 @@ model Session {
 
 enum Role {
   user
-  admin
   owner
   staff
+  storeAdmin
+  sysAdmin
 }
 
 model Verification {
