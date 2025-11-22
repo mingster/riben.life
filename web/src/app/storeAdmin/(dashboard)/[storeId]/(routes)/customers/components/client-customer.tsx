@@ -61,7 +61,9 @@ interface CellActionProps {
 // manage customers in this store
 // admin can add/review/edit customers in this store
 //
-export const CustomersClient: React.FC<CustomersClientProps> = ({ serverData }) => {
+export const CustomersClient: React.FC<CustomersClientProps> = ({
+	serverData,
+}) => {
 	const [data, setData] = useState<User[]>(serverData);
 	const [searchTerm, setSearchTerm] = useState("");
 
@@ -89,7 +91,6 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({ serverData }) 
 			// Search in stripeCustomerId (case-insensitive)
 			const stripeMatch =
 				user.stripeCustomerId?.toLowerCase().includes(searchLower) ?? false;
-
 
 			// Return true if any field matches (name OR email OR stripeCustomerId)
 			return nameMatch || emailMatch || stripeMatch;
@@ -155,7 +156,6 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({ serverData }) 
 
 		const router = useRouter();
 
-
 		const onCopy = (id: string) => {
 			navigator.clipboard.writeText(id);
 			toastSuccess({
@@ -166,7 +166,6 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({ serverData }) 
 
 		return (
 			<>
-
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button variant="ghost" className="size-8 p-0">
@@ -193,7 +192,9 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({ serverData }) 
 
 						<DropdownMenuItem
 							className="cursor-pointer"
-							onClick={() => router.push(`/storeAdmin/${storeId}/customers/${item.email}`)}
+							onClick={() =>
+								router.push(`/storeAdmin/${storeId}/customers/${item.email}`)
+							}
 						>
 							<IconCreditCard className="mr-0 size-4" />
 							Manage Billing

@@ -84,27 +84,25 @@ export const emailRequiredActionClient = baseClient
 		//});
 	});
 
-export const storeActionClient = baseClient.use(
-	async ({ next, metadata }) => {
-		const session = await auth.api.getSession({
-			headers: await headers(), // you need to pass the headers object.
+export const storeActionClient = baseClient.use(async ({ next, metadata }) => {
+	const session = await auth.api.getSession({
+		headers: await headers(), // you need to pass the headers object.
+	});
+	if (!session?.user) throw new SafeError("Unauthorized");
+
+	if (
+		session.user.role !== "owner" &&
+		session.user.role !== "storeAdmin" &&
+		session.user.role !== "staff"
+	) {
+		logger.error("access denied", {
+			tags: ["action", "error"],
 		});
-		if (!session?.user) throw new SafeError("Unauthorized");
+		throw new SafeError("Unauthorized");
+	}
 
-		if (
-			session.user.role !== "owner" &&
-			session.user.role !== "storeAdmin" &&
-			session.user.role !== "staff"
-		) {
-			logger.error("access denied", {
-				tags: ["action", "error"],
-			});
-			throw new SafeError("Unauthorized");
-		}
-
-		return next({ ctx: {} });
-	},
-);
+	return next({ ctx: {} });
+});
 
 export const adminActionClient = baseClient.use(async ({ next, metadata }) => {
 	const session = await auth.api.getSession({

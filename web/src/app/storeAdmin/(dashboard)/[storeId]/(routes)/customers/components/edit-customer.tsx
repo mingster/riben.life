@@ -1,9 +1,10 @@
 "use client";
 
-
-
 import { updateCustomerAction } from "@/actions/storeAdmin/customer/update-customer";
-import { UpdateCustomerInput, updateCustomerSchema } from "@/actions/storeAdmin/customer/update-customer.validation";
+import {
+	UpdateCustomerInput,
+	updateCustomerSchema,
+} from "@/actions/storeAdmin/customer/update-customer.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { LocaleSelectItems } from "@/components/locale-select-items";
 import { TimezoneSelect } from "@/components/timezone-select";
@@ -53,7 +54,11 @@ interface EditCustomerProps {
 // edit customer in this store
 // admin can add/review/edit customers in this store
 //
-export const EditCustomer: React.FC<EditCustomerProps> = ({ item, onUpdated, isNew }) => {
+export const EditCustomer: React.FC<EditCustomerProps> = ({
+	item,
+	onUpdated,
+	isNew,
+}) => {
 	const [loading, setLoading] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -103,7 +108,6 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({ item, onUpdated, isN
 		setIsOpen(false);
 	}
 
-
 	// if timezone is not set, set it to America/New_York
 	if (!item.timezone) {
 		item.timezone = "Asia/Taipei";
@@ -111,8 +115,8 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({ item, onUpdated, isN
 
 	const defaultValues = item
 		? {
-			...item,
-		}
+				...item,
+			}
 		: {};
 
 	const form = useForm<UpdateCustomerInput>({
@@ -319,7 +323,6 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({ item, onUpdated, isN
 					</div>
 				</DialogContent>
 			</Dialog>
-
 		</div>
 	);
 };
