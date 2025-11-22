@@ -102,15 +102,17 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 								</Link>
 							</DropdownMenuItem>
 
-							{(user.role === "sysAdmin" || user.role === "storeAdmin" ||
-								user.role === "staff" || user.role === "owner") && (
-									<DropdownMenuItem className="cursor-pointer" asChild>
-										<Link href="/storeAdmin/">
-											<IconLock className="mr-0 size-4" />
-											<span>{t("user_profile_linkTo_storeDashboard")}</span>
-										</Link>
-									</DropdownMenuItem>
-								)}
+							{(user.role === "sysAdmin" ||
+								user.role === "storeAdmin" ||
+								user.role === "staff" ||
+								user.role === "owner") && (
+								<DropdownMenuItem className="cursor-pointer" asChild>
+									<Link href="/storeAdmin/">
+										<IconLock className="mr-0 size-4" />
+										<span>{t("user_profile_linkTo_storeDashboard")}</span>
+									</Link>
+								</DropdownMenuItem>
+							)}
 
 							{user.role === "sysAdmin" && (
 								<>

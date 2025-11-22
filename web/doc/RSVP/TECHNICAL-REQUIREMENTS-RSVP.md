@@ -49,7 +49,7 @@ export const [actionName]Action = [actionClient]
 
 **Action Client Types:**
 
-- `storeOwnerActionClient` - For store admin actions (requires store ownership)
+- `storeActionClient` - For store admin actions (requires store membership in the organization)
 - `userRequiredActionClient` - For authenticated user actions
 - `adminActionClient` - For system admin actions
 - `baseClient` - For public/unauthenticated actions
@@ -341,7 +341,7 @@ All server actions return:
 
 ### 5.1 Authentication & Authorization
 
-- **Store Admin Actions:** Must verify store ownership via `storeOwnerActionClient`
+- **Store Admin Actions:** Must verify store membership via `storeActionClient` (requires `storeId` in schema and user must be a member of the store's organization)
 - **Store Staff Actions:** Must verify store access and staff permissions
 - **Customer Actions:** Must verify user authentication for prepaid reservations
 - **Public Actions:** No authentication required for basic reservation creation
