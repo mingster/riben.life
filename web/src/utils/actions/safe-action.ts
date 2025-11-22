@@ -84,7 +84,7 @@ export const emailRequiredActionClient = baseClient
 		//});
 	});
 
-export const storeOwnerActionClient = baseClient.use(
+export const storeActionClient = baseClient.use(
 	async ({ next, metadata }) => {
 		const session = await auth.api.getSession({
 			headers: await headers(), // you need to pass the headers object.

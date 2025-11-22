@@ -1,13 +1,13 @@
 "use server";
 
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { createStoreProductsBulkSchema } from "./create-products-bulk.validation";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import { mapProductToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/products/product-column";
 
-export const createStoreProductsBulkAction = storeOwnerActionClient
+export const createStoreProductsBulkAction = storeActionClient
 	.metadata({ name: "createStoreProductsBulk" })
 	.schema(createStoreProductsBulkSchema)
 	.action(async ({ parsedInput }) => {

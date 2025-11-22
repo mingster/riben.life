@@ -1,13 +1,13 @@
 "use server";
 
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { createStoreProductSchema } from "./create-product.validation";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { mapProductToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/products/product-column";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 
-export const createStoreProductAction = storeOwnerActionClient
+export const createStoreProductAction = storeActionClient
 	.metadata({ name: "createStoreProduct" })
 	.schema(createStoreProductSchema)
 	.action(async ({ parsedInput }) => {

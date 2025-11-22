@@ -1,13 +1,13 @@
 "use server";
 
 import { deleteStoreSchema } from "./delete-store.validation";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 
-export const deleteStoreAction = storeOwnerActionClient
+export const deleteStoreAction = storeActionClient
 	.metadata({ name: "deleteStore" })
 	.schema(deleteStoreSchema)
 	.action(async ({ parsedInput }) => {

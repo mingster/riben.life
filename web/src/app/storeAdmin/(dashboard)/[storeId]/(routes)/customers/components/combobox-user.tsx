@@ -27,7 +27,7 @@ type ComboboxProps = {
 	onValueChange?: (newValue: User) => void;
 };
 
-// create a select component for payment methods
+// select component for customer
 //
 export const UserCombobox = ({
 	userData,
@@ -66,9 +66,9 @@ export const UserCombobox = ({
 				</PopoverTrigger>
 				<PopoverContent className="p-0" side="bottom" align="start">
 					<Command className="rounded-lg border shadow-md">
-						<CommandInput placeholder="Select a user..." className="h-9" />
+						<CommandInput placeholder="Select a customer..." className="h-9" />
 						<CommandList>
-							<CommandEmpty>No user found</CommandEmpty>
+							<CommandEmpty>No customer found</CommandEmpty>
 							<CommandGroup>
 								{userData.map((obj) => (
 									<CommandItem

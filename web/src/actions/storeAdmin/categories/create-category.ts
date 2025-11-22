@@ -3,11 +3,11 @@
 import { mapCategoryToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/categories/category-column";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 
 import { createCategorySchema } from "./create-category.validation";
 
-export const createStoreCategoryAction = storeOwnerActionClient
+export const createStoreCategoryAction = storeActionClient
 	.metadata({ name: "createCategory" })
 	.schema(createCategorySchema)
 	.action(async ({ parsedInput }) => {

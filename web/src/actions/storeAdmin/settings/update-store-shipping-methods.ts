@@ -1,13 +1,13 @@
 "use server";
 
 import { updateStoreShippingMethodsSchema } from "./update-store-shipping-methods.validation";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 
-export const updateStoreShippingMethodsAction = storeOwnerActionClient
+export const updateStoreShippingMethodsAction = storeActionClient
 	.metadata({ name: "updateStoreShippingMethods" })
 	.schema(updateStoreShippingMethodsSchema)
 	.action(async ({ parsedInput }) => {

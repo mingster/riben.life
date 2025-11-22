@@ -1,14 +1,14 @@
 "use server";
 
 import { updateStoreBasicSchema } from "./update-store-basic.validation";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNow } from "@/utils/datetime-utils";
 
-export const updateStoreBasicAction = storeOwnerActionClient
+export const updateStoreBasicAction = storeActionClient
 	.metadata({ name: "updateStoreBasic" })
 	.schema(updateStoreBasicSchema)
 	.action(async ({ parsedInput }) => {

@@ -45,11 +45,11 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
 import { formatDateTime } from "@/utils/datetime-utils";
 import clientLogger from "@/lib/client-logger";
-import { EditUser } from "./edit-user";
+import { EditCustomer } from "./edit-customer";
 import { UserFilter } from "./filter-user";
-import { ResetPasswordDialog } from "./reset-password-dialog";
+import { Role } from "@prisma/client";
 
-interface UsersClientProps {
+interface CustomersClientProps {
 	serverData: User[];
 }
 
@@ -58,7 +58,10 @@ interface CellActionProps {
 	onUpdated?: (newValue: User) => void;
 }
 
-export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
+// manage customers in this store
+// admin can add/review/edit customers in this store
+//
+export const CustomersClient: React.FC<CustomersClientProps> = ({ serverData }) => {
 	const [data, setData] = useState<User[]>(serverData);
 	const [searchTerm, setSearchTerm] = useState("");
 
@@ -86,6 +89,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			// Search in stripeCustomerId (case-insensitive)
 			const stripeMatch =
 				user.stripeCustomerId?.toLowerCase().includes(searchLower) ?? false;
+
 
 			// Return true if any field matches (name OR email OR stripeCustomerId)
 			return nameMatch || emailMatch || stripeMatch;
@@ -151,45 +155,6 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 
 		const router = useRouter();
 
-		const onConfirm = async () => {
-			try {
-				setLoading(true);
-
-				//get user's email from item
-				await axios.delete(
-					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/customers/${item.email}`,
-				);
-
-				//delete user
-				const deletedUser = await authClient.admin.removeUser({
-					userId: item.id,
-				});
-
-				toastSuccess({
-					title: "User deleted.",
-					description: "",
-				});
-				clientLogger.info("User deleted successfully", {
-					metadata: { deletedUser: deletedUser?.data },
-					tags: ["onConfirm"],
-					service: "client-user",
-					environment: process.env.NODE_ENV,
-					version: process.env.npm_package_version,
-				});
-
-				// also update data from parent component or caller
-				handleDeleted(item);
-			} catch (error: unknown) {
-				const err = error as AxiosError;
-				toastError({
-					title: "something wrong.",
-					description: err.message,
-				});
-			} finally {
-				setLoading(false);
-				setOpen(false);
-			}
-		};
 
 		const onCopy = (id: string) => {
 			navigator.clipboard.writeText(id);
@@ -199,88 +164,9 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			});
 		};
 
-		const banUser = async (id: string) => {
-			const bannedUser = await authClient.admin.banUser({
-				userId: id,
-			});
-			clientLogger.info("User banned successfully", {
-				message: "User banned successfully",
-				metadata: { bannedUser: bannedUser?.data },
-				tags: ["banUser"],
-				service: "client-user",
-				environment: process.env.NODE_ENV,
-				version: process.env.npm_package_version,
-			});
-
-			// revoke user sessions
-			revokesUserSessions(id);
-
-			//update data in the table
-			item.banned = true;
-			handleUpdated(item);
-
-			toastSuccess({
-				title: "User banned.",
-				description: "",
-			});
-		};
-
-		const unBanUser = async (id: string) => {
-			const unbannedUser = await authClient.admin.unbanUser({
-				userId: id,
-			});
-
-			item.banned = false;
-			handleUpdated(item);
-
-			toastSuccess({
-				title: "User unbanned.",
-				description: "",
-			});
-		};
-
-		const revokesUserSessions = async (id: string) => {
-			const revokedSessions = await authClient.admin.revokeUserSessions({
-				userId: id,
-			});
-
-			const sessions = await authClient.admin.listUserSessions({
-				userId: id,
-			});
-
-			if (sessions.data?.sessions) {
-				// Map SessionWithImpersonatedBy to Session format
-				item.sessions = sessions.data.sessions.map((s) => ({
-					id: s.id,
-					userId: s.userId,
-					token: s.token,
-					expiresAt: s.expiresAt,
-					ipAddress: s.ipAddress ?? null,
-					userAgent: s.userAgent ?? null,
-					createdAt: s.createdAt,
-					updatedAt: s.updatedAt,
-					impersonatedBy: s.impersonatedBy ?? null,
-					activeOrganizationId:
-						(s as { activeOrganizationId?: string | null })
-							.activeOrganizationId ?? null,
-				}));
-				handleUpdated(item);
-			}
-
-			toastSuccess({
-				title: "User session(s) revoked.",
-				description: "",
-			});
-		};
-
 		return (
 			<>
-				<AlertModal
-					isOpen={open}
-					onClose={() => setOpen(false)}
-					onConfirm={onConfirm}
-					loading={loading}
-				/>
+
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button variant="ghost" className="size-8 p-0">
@@ -307,46 +193,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 
 						<DropdownMenuItem
 							className="cursor-pointer"
-							onClick={() => setOpen(true)}
-						>
-							<IconTrash className="mr-0 size-4" /> Delete User
-						</DropdownMenuItem>
-
-						<DropdownMenuItem
-							className="cursor-pointer"
-							onClick={() => banUser(item.id)}
-						>
-							<IconBan className="mr-0 size-4" /> Ban User
-						</DropdownMenuItem>
-
-						<DropdownMenuItem
-							className="cursor-pointer"
-							onClick={() => unBanUser(item.id)}
-						>
-							<IconCircleDashedCheck className="mr-0 size-4" /> Unban User
-						</DropdownMenuItem>
-
-						<DropdownMenuItem
-							className="cursor-pointer"
-							onClick={() => revokesUserSessions(item.id)}
-						>
-							<IconPillOff className="mr-0 size-4" />
-							Revokes all sessions
-						</DropdownMenuItem>
-
-						<ResetPasswordDialog user={item}>
-							<DropdownMenuItem
-								className="cursor-pointer"
-								onSelect={(e) => e.preventDefault()}
-							>
-								<IconKey className="mr-0 size-4" />
-								Set Password
-							</DropdownMenuItem>
-						</ResetPasswordDialog>
-
-						<DropdownMenuItem
-							className="cursor-pointer"
-							onClick={() => router.push(`/sysAdmin/users/${item.email}`)}
+							onClick={() => router.push(`/storeAdmin/${storeId}/customers/${item.email}`)}
 						>
 							<IconCreditCard className="mr-0 size-4" />
 							Manage Billing
@@ -367,7 +214,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 				return (
 					<div className="flex items-center" title="edit basic info">
 						{row.getValue("name")}
-						<EditUser item={row.original} onUpdated={handleUpdated} />
+						<EditCustomer item={row.original} onUpdated={handleUpdated} />
 					</div>
 				);
 			},
@@ -439,28 +286,6 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			},
 		},
 		{
-			accessorKey: "stripeCustomerId",
-			header: ({ column }) => {
-				return (
-					<DataTableColumnHeader column={column} title="Stripe Customer ID" />
-				);
-			},
-			cell: ({ row }) => {
-				const stripeId = row.original.stripeCustomerId;
-				return (
-					<div className="flex items-center">
-						{stripeId ? (
-							<span className="font-mono text-xs bg-muted px-2 py-1 rounded">
-								{stripeId}
-							</span>
-						) : (
-							<span className="text-muted-foreground text-sm">-</span>
-						)}
-					</div>
-				);
-			},
-		},
-		{
 			id: "actions",
 			cell: ({ row }) => <CellAction item={row.original as User} />,
 		},
@@ -480,7 +305,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 		name: "",
 		email: "",
 		password: "",
-		role: "user",
+		role: Role.user,
 		locale: "tw",
 		timezone: "Asia/Taipei",
 		stripeCustomerId: "",
@@ -516,7 +341,7 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 					/>
 					<div className="flex gap-1 content-end">
 						<UserFilter onFilterChange={handleFilterChange} />
-						<EditUser
+						<EditCustomer
 							item={newUser as unknown as User}
 							onUpdated={handleCreated}
 							isNew={true}

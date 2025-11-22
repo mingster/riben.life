@@ -1,13 +1,13 @@
 "use server";
 
 import { updateStorePaidOptionsSchema } from "./update-store-paid-options.validation";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 
-export const updateStorePaidOptionsAction = storeOwnerActionClient
+export const updateStorePaidOptionsAction = storeActionClient
 	.metadata({ name: "updateStorePaidOptions" })
 	.schema(updateStorePaidOptionsSchema)
 	.action(async ({ parsedInput }) => {

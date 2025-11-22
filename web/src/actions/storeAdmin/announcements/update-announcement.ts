@@ -3,10 +3,10 @@
 import { mapAnnouncementToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/announcements/announcement-column";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { storeOwnerActionClient } from "@/utils/actions/safe-action";
+import { storeActionClient } from "@/utils/actions/safe-action";
 import { updateAnnouncementSchema } from "./update-announcement.validation";
 
-export const updateAnnouncementAction = storeOwnerActionClient
+export const updateAnnouncementAction = storeActionClient
 	.metadata({ name: "updateAnnouncement" })
 	.schema(updateAnnouncementSchema)
 	.action(async ({ parsedInput }) => {
