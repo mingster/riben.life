@@ -40,6 +40,37 @@ const geoCache = new Map<string, { data: GeoLocation; timestamp: number }>();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 /**
+ * Polyfill for AbortSignal.timeout() to support older iOS versions
+ * AbortSignal.timeout() requires iOS 16.4+, this polyfill works on iOS 13+
+ */
+function createAbortSignal(timeoutMs: number): AbortSignal {
+	// Use native AbortSignal.timeout if available (iOS 16.4+)
+	if (
+		typeof AbortSignal !== "undefined" &&
+		"timeout" in AbortSignal &&
+		typeof AbortSignal.timeout === "function"
+	) {
+		return AbortSignal.timeout(timeoutMs);
+	}
+
+	// Polyfill for older iOS versions
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => {
+		controller.abort();
+	}, timeoutMs);
+
+	// Clean up timeout if signal is already aborted
+	if (controller.signal.aborted) {
+		clearTimeout(timeoutId);
+	} else {
+		// Store timeout ID for cleanup (if needed)
+		(controller.signal as any)._timeoutId = timeoutId;
+	}
+
+	return controller.signal;
+}
+
+/**
  * Get client IP address from request headers.
  * NOTE this won't work for server side. Use getClientIPAddress() instead.
  */
@@ -234,7 +265,7 @@ export async function getClientIPForServerAction(): Promise<string> {
 		// Try to make an external request to get our own IP (fallback)
 		try {
 			const response = await fetch("https://api.ipify.org?format=json", {
-				signal: AbortSignal.timeout(3000),
+				signal: createAbortSignal(3000),
 			});
 			if (response.ok) {
 				const data = await response.json();
@@ -336,7 +367,7 @@ async function getGeoFromIPAPI(ip: string): Promise<GeoLocation | null> {
 			headers: {
 				"User-Agent": "PSTV-Web/1.0",
 			},
-			signal: AbortSignal.timeout(5000), // 5 second timeout
+			signal: createAbortSignal(5000), // 5 second timeout
 		});
 
 		if (!response.ok) {
@@ -387,7 +418,7 @@ async function getGeoFromIPAPICom(ip: string): Promise<GeoLocation | null> {
 		const response = await fetch(
 			`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,timezone,lat,lon,isp,org,as,asname,zip,continent,continentCode,query`,
 			{
-				signal: AbortSignal.timeout(5000), // 5 second timeout
+				signal: createAbortSignal(5000), // 5 second timeout
 			},
 		);
 
@@ -442,7 +473,7 @@ export async function getGeoLocation(ip?: string): Promise<GeoIPResult> {
 				// Client-side: use a service to get the client's IP
 				try {
 					const response = await fetch("https://api.ipify.org?format=json", {
-						signal: AbortSignal.timeout(3000),
+						signal: createAbortSignal(3000),
 					});
 					if (response.ok) {
 						const data = await response.json();
