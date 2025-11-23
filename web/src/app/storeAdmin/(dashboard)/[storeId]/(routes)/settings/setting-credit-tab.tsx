@@ -53,6 +53,16 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 			creditExchangeRate: store?.creditExchangeRate
 				? Number(store.creditExchangeRate)
 				: 0,
+			creditServiceExchangeRate: store?.creditServiceExchangeRate
+				? Number(store.creditServiceExchangeRate)
+				: 0,
+			creditMaxPurchase: store?.creditMaxPurchase
+				? Number(store.creditMaxPurchase)
+				: 0,
+			creditMinPurchase: store?.creditMinPurchase
+				? Number(store.creditMinPurchase)
+				: 0,
+			creditExpiration: store?.creditExpiration ?? 365,
 		}),
 		[store],
 	);
@@ -134,9 +144,11 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("RSVP_Use_Customer_Credit")}</FormLabel>
+										<FormLabel>
+											{t("StoreSettings_Use_Customer_Credit")}
+										</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("RSVP_Use_Customer_Credit_Descr")}
+											{t("StoreSettings_Use_Customer_Credit_Descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -152,26 +164,140 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 
 						{useCustomerCredit && (
 							<>
-								<Separator />
+								<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+									<FormField
+										control={form.control}
+										name="creditExchangeRate"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>
+													{t("StoreSettings_Credit_Exchange_Rate")}
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														step="0.01"
+														disabled={loading || form.formState.isSubmitting}
+														value={field.value?.toString() ?? "0"}
+														onChange={(event) =>
+															field.onChange(Number(event.target.value))
+														}
+													/>
+												</FormControl>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("StoreSettings_Credit_Exchange_Rate_Descr")}
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name="creditServiceExchangeRate"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>
+													{t("StoreSettings_Credit_Service_Exchange_Rate")}
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														step="0.01"
+														disabled={loading || form.formState.isSubmitting}
+														value={field.value?.toString() ?? "0"}
+														onChange={(event) =>
+															field.onChange(Number(event.target.value))
+														}
+													/>
+												</FormControl>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t(
+														"StoreSettings_Credit_Service_Exchange_Rate_Descr",
+													)}
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
+								<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+									<FormField
+										control={form.control}
+										name="creditMaxPurchase"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>
+													{t("StoreSettings_Credit_Max_Purchase")}
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														step="0.01"
+														disabled={loading || form.formState.isSubmitting}
+														value={field.value?.toString() ?? "0"}
+														onChange={(event) =>
+															field.onChange(Number(event.target.value))
+														}
+													/>
+												</FormControl>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("StoreSettings_Credit_Max_Purchase_Descr")}
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									<FormField
+										control={form.control}
+										name="creditMinPurchase"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>
+													{t("StoreSettings_Credit_Min_Purchase")}
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="number"
+														step="0.01"
+														disabled={loading || form.formState.isSubmitting}
+														value={field.value?.toString() ?? "0"}
+														onChange={(event) =>
+															field.onChange(Number(event.target.value))
+														}
+													/>
+												</FormControl>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("StoreSettings_Credit_Min_Purchase_Descr")}
+												</FormDescription>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+								</div>
+
 								<FormField
 									control={form.control}
-									name="creditExchangeRate"
+									name="creditExpiration"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("RSVP_Credit_Exchange_Rate")}</FormLabel>
+											<FormLabel>
+												{t("StoreSettings_Credit_Expiration")}
+											</FormLabel>
 											<FormControl>
 												<Input
 													type="number"
-													step="0.01"
+													step="1"
 													disabled={loading || form.formState.isSubmitting}
-													value={field.value?.toString() ?? "0"}
+													value={field.value?.toString() ?? "365"}
 													onChange={(event) =>
 														field.onChange(Number(event.target.value))
 													}
 												/>
 											</FormControl>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Credit_Exchange_Rate_Descr")}
+												{t("StoreSettings_Credit_Expiration_Descr")}
 											</FormDescription>
 											<FormMessage />
 										</FormItem>

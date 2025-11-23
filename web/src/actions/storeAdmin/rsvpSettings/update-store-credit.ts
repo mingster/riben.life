@@ -16,7 +16,15 @@ export const updateStoreCreditAction = storeActionClient
 	.metadata({ name: "updateStoreCredit" })
 	.schema(updateStoreCreditSchema)
 	.action(async ({ parsedInput }) => {
-		const { storeId, useCustomerCredit, creditExchangeRate } = parsedInput;
+		const {
+			storeId,
+			useCustomerCredit,
+			creditExchangeRate,
+			creditServiceExchangeRate,
+			creditMaxPurchase,
+			creditMinPurchase,
+			creditExpiration,
+		} = parsedInput;
 
 		const session = await auth.api.getSession({
 			headers: await headers(),
@@ -42,6 +50,12 @@ export const updateStoreCreditAction = storeActionClient
 			data: {
 				useCustomerCredit,
 				creditExchangeRate: new Prisma.Decimal(creditExchangeRate),
+				creditServiceExchangeRate: new Prisma.Decimal(
+					creditServiceExchangeRate,
+				),
+				creditMaxPurchase: new Prisma.Decimal(creditMaxPurchase),
+				creditMinPurchase: new Prisma.Decimal(creditMinPurchase),
+				creditExpiration,
 				updatedAt: getUtcNow(),
 			},
 		});

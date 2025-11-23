@@ -18,7 +18,7 @@ export const createBalanceColumns = (
 	{
 		accessorKey: "availability",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title={t("availablityDate")} />
+			<DataTableColumnHeader column={column} title={t("availabilityDate")} />
 		),
 	},
 	{

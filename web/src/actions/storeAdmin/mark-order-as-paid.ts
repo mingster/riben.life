@@ -22,10 +22,10 @@ const MarkAsPaid = async (
 	if (store === null) throw Error("store is null");
 	if (order === null) throw Error("order is null");
 	if (order.PaymentMethod === null) throw Error("PaymentMethod is null");
-	const ispro = await isProLevel(order.storeId);
+	const isPro = await isProLevel(order.storeId);
 	let usePlatform = false; //是否代收款
 
-	if (!ispro) {
+	if (!isPro) {
 		usePlatform = true; //for free level, always use platform
 	} else {
 		if (store.LINE_PAY_ID !== null || store.STRIPE_SECRET_KEY !== null) {
@@ -64,9 +64,9 @@ const MarkAsPaid = async (
 
 	// fee charge by riben.life
 	let platform_fee = 0;
-	if (!ispro) {
+	if (!isPro) {
 		//always charge platform fee for free store
-		platform_fee = ispro ? 0 : -Number(Number(order.orderTotal) * 0.01);
+		platform_fee = isPro ? 0 : -Number(Number(order.orderTotal) * 0.01);
 	}
 
 	// mark order as paid
@@ -85,8 +85,8 @@ const MarkAsPaid = async (
 		},
 	});
 
-	// avilablity date = order date + payment methods' clear days
-	const avaiablityDate = new Date(
+	// availabilityDate = order date + payment methods' clear days
+	const availabilityDate = new Date(
 		order.updatedAt.getTime() +
 			order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
 	);
@@ -103,7 +103,7 @@ const MarkAsPaid = async (
 			type: usePlatform ? 0 : 1, // 0: 代收 | 1: store's own payment provider
 			description: `order # ${order.orderNum}`,
 			note: `${order.PaymentMethod.name}, order id: ${order.id}`,
-			availablity: avaiablityDate,
+			availability: availabilityDate,
 			balance:
 				balance +
 				Math.round(Number(order.orderTotal) + (fee + feeTax) + platform_fee),

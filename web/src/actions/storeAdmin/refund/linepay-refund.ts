@@ -75,8 +75,8 @@ const LinePayRefund = async (
 		// fee charge by riben.life
 		const platform_fee = ispro ? 0 : Number(Number(order.orderTotal) * 0.01);
 
-		// avilablity date = order date + payment methods' clear days
-		const avaiablityDate = new Date(
+		// availabilityDate = order date + payment methods' clear days
+		const availabilityDate = new Date(
 			order.updatedAt.getTime() +
 				order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
 		);
@@ -91,7 +91,7 @@ const LinePayRefund = async (
 				currency: order.currency,
 				description: `order # ${order.orderNum}`,
 				note: `order id: ${order.id}`,
-				availablity: avaiablityDate,
+				availability: availabilityDate,
 				balance:
 					balance -
 					Math.round(Number(refundAmount) + (fee + feeTax) + platform_fee),
