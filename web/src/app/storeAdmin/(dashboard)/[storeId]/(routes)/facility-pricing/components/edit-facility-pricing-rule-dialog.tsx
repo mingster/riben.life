@@ -1,5 +1,12 @@
 "use client";
 
+import { createFacilityPricingRuleAction } from "@/actions/storeAdmin/facility-pricing/create-facility-pricing-rule";
+import { createFacilityPricingRuleSchema } from "@/actions/storeAdmin/facility-pricing/create-facility-pricing-rule.validation";
+import { updateFacilityPricingRuleAction } from "@/actions/storeAdmin/facility-pricing/update-facility-pricing-rule";
+import {
+	updateFacilityPricingRuleSchema,
+	type UpdateFacilityPricingRuleInput,
+} from "@/actions/storeAdmin/facility-pricing/update-facility-pricing-rule.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -29,16 +36,6 @@ import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import { createFacilityPricingRuleAction } from "@/actions/storeAdmin/facility-pricing/create-facility-pricing-rule";
-import { updateFacilityPricingRuleAction } from "@/actions/storeAdmin/facility-pricing/update-facility-pricing-rule";
-import {
-	createFacilityPricingRuleSchema,
-	type CreateFacilityPricingRuleInput,
-} from "@/actions/storeAdmin/facility-pricing/create-facility-pricing-rule.validation";
-import {
-	updateFacilityPricingRuleSchema,
-	type UpdateFacilityPricingRuleInput,
-} from "@/actions/storeAdmin/facility-pricing/update-facility-pricing-rule.validation";
 import { FacilityCombobox } from "../../components/facility-combobox";
 import type { FacilityPricingRuleColumn } from "../facility-pricing-rule-column";
 
@@ -67,9 +64,6 @@ export function EditFacilityPricingRuleDialog({
 
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
-	const [selectedFacilityId, setSelectedFacilityId] = useState<string>(
-		rule?.facilityId || "",
-	);
 
 	const isEditMode = Boolean(rule) && !isNew;
 
@@ -123,8 +117,7 @@ export function EditFacilityPricingRuleDialog({
 
 	const resetForm = useCallback(() => {
 		form.reset(defaultValues);
-		setSelectedFacilityId(rule?.facilityId || "");
-	}, [defaultValues, form, rule?.facilityId]);
+	}, [defaultValues, form]);
 
 	const handleOpenChange = (nextOpen: boolean) => {
 		if (!isControlled) {
@@ -158,8 +151,8 @@ export function EditFacilityPricingRuleDialog({
 			setLoading(true);
 
 			const facilityIdValue =
-				selectedFacilityId && selectedFacilityId.trim() !== ""
-					? selectedFacilityId
+				values.facilityId && values.facilityId.trim() !== ""
+					? values.facilityId
 					: null;
 
 			if (!isEditMode) {
@@ -251,12 +244,11 @@ export function EditFacilityPricingRuleDialog({
 			<DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
-						{isEditMode ? t("Edit_Pricing_Rule") : t("Create_Pricing_Rule")}
+						{isEditMode ? t("edit") : t("create") + t("Facility_Pricing_Rules")}
 					</DialogTitle>
 					<DialogDescription>
-						{isEditMode
-							? t("Edit_Pricing_Rule_Description")
-							: t("Create_Pricing_Rule_Description")}
+						{" "}
+						{t("Facility_Pricing_Rules_descr")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -282,7 +274,7 @@ export function EditFacilityPricingRuleDialog({
 							name="name"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Name")}</FormLabel>
+									<FormLabel>{t("pricing_rule_name")}</FormLabel>
 									<FormControl>
 										<Input
 											type="text"
@@ -296,29 +288,34 @@ export function EditFacilityPricingRuleDialog({
 							)}
 						/>
 
-						<FormItem>
-							<FormLabel>{t("Facility")}</FormLabel>
-							<FormControl>
-								<FacilityCombobox
-									storeId={String(params.storeId)}
-									disabled={loading || form.formState.isSubmitting}
-									defaultValue={selectedFacilityId || ""}
-									onValueChange={(newValue) => {
-										setSelectedFacilityId(newValue);
-									}}
-								/>
-							</FormControl>
-							<FormDescription>
-								{t("Leave_empty_to_apply_to_all_facilities")}
-							</FormDescription>
-						</FormItem>
+						<FormField
+							control={form.control}
+							name="facilityId"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("Facility")}</FormLabel>
+									<FormControl>
+										<FacilityCombobox
+											storeId={String(params.storeId)}
+											disabled={loading || form.formState.isSubmitting}
+											defaultValue={field.value || ""}
+											onValueChange={(newValue) => {
+												field.onChange(newValue || null);
+											}}
+										/>
+									</FormControl>
+									<FormDescription></FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
 						<FormField
 							control={form.control}
 							name="priority"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Priority")}</FormLabel>
+									<FormLabel>{t("pricing_rule_priority")}</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -332,7 +329,7 @@ export function EditFacilityPricingRuleDialog({
 										/>
 									</FormControl>
 									<FormDescription>
-										{t("Higher_priority_rules_are_evaluated_first")}
+										{t("pricing_rule_priority_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -344,21 +341,19 @@ export function EditFacilityPricingRuleDialog({
 							name="dayOfWeek"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Day_of_Week")}</FormLabel>
+									<FormLabel>{t("pricing_rule_day_of_week")}</FormLabel>
 									<FormControl>
 										<Input
 											type="text"
 											disabled={loading || form.formState.isSubmitting}
-											placeholder='e.g., "weekend", "weekday", or [0,6]'
+											placeholder='e.g., "weekend", "weekday", or [1,3,5]'
 											value={field.value || ""}
 											onChange={(event) =>
 												field.onChange(event.target.value || null)
 											}
 										/>
 									</FormControl>
-									<FormDescription>
-										{t("Leave_empty_for_all_days")}
-									</FormDescription>
+									<FormDescription></FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
@@ -370,7 +365,7 @@ export function EditFacilityPricingRuleDialog({
 								name="startTime"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("Start_Time")}</FormLabel>
+										<FormLabel>{t("pricing_rule_start_time")}</FormLabel>
 										<FormControl>
 											<Input
 												type="time"
@@ -391,7 +386,7 @@ export function EditFacilityPricingRuleDialog({
 								name="endTime"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("End_Time")}</FormLabel>
+										<FormLabel>{t("pricing_rule_end_time")}</FormLabel>
 										<FormControl>
 											<Input
 												type="time"
@@ -414,7 +409,7 @@ export function EditFacilityPricingRuleDialog({
 								name="cost"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("Cost")}</FormLabel>
+										<FormLabel>{t("pricing_rule_cost")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -432,7 +427,7 @@ export function EditFacilityPricingRuleDialog({
 											/>
 										</FormControl>
 										<FormDescription>
-											{t("Leave_empty_to_use_facility_default")}
+											{t("pricing_rule_cost_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -444,7 +439,7 @@ export function EditFacilityPricingRuleDialog({
 								name="credit"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("Credit")}</FormLabel>
+										<FormLabel>{t("pricing_rule_credit")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -462,7 +457,7 @@ export function EditFacilityPricingRuleDialog({
 											/>
 										</FormControl>
 										<FormDescription>
-											{t("Leave_empty_to_use_facility_default")}
+											{t("pricing_rule_credit_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -476,9 +471,9 @@ export function EditFacilityPricingRuleDialog({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("Active")}</FormLabel>
+										<FormLabel>{t("pricing_rule_status")}</FormLabel>
 										<FormDescription>
-											{t("Enable_or_disable_this_pricing_rule")}
+											{t("pricing_rule_status_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -501,7 +496,7 @@ export function EditFacilityPricingRuleDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("Save") : t("Create")}
+								{isEditMode ? t("edit") : t("create")}
 							</Button>
 							<Button
 								type="button"
@@ -509,7 +504,7 @@ export function EditFacilityPricingRuleDialog({
 								onClick={() => handleOpenChange(false)}
 								disabled={loading || form.formState.isSubmitting}
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</DialogFooter>
 					</form>

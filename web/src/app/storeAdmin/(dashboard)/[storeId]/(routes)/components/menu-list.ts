@@ -9,6 +9,7 @@ import {
 	IconArrowRight,
 	IconBox,
 	IconBuilding,
+	IconBuildingFactory,
 	IconCalendarCheck,
 	IconClock,
 	IconCreditCard,
@@ -251,11 +252,19 @@ export function GetMenuList(
 				{
 					href: `${nav_prefix}/facility`,
 					label: t("Facility_mgmt"),
-					active: pathname.includes(`${nav_prefix}/facility`),
+					active:
+						pathname.includes(`${nav_prefix}/facility`) &&
+						!pathname.includes(`${nav_prefix}/facility-pricing`),
 					icon: IconBuilding,
 					submenus: [],
 				},
-
+				{
+					href: `${nav_prefix}/facility-pricing`,
+					label: t("Facility_Pricing_Rules"),
+					active: pathname.includes(`${nav_prefix}/facility-pricing`),
+					icon: IconBuildingFactory,
+					submenus: [],
+				},
 				{
 					href: `${nav_prefix}/qrcode`,
 					label: "QR Code",

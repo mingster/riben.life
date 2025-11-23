@@ -24,14 +24,17 @@ export const createTableColumns = (
 		{
 			accessorKey: "name",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Name")} />
+				<DataTableColumnHeader column={column} title={t("pricing_rule_name")} />
 			),
 			cell: ({ row }) => <span>{row.getValue("name") as string}</span>,
 		},
 		{
 			accessorKey: "facilityName",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Facility_Name")} />
+				<DataTableColumnHeader
+					column={column}
+					title={t("pricing_rule_facility_name")}
+				/>
 			),
 			cell: ({ row }) => {
 				const facilityName = row.getValue("facilityName") as string | null;
@@ -45,14 +48,20 @@ export const createTableColumns = (
 		{
 			accessorKey: "priority",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Priority")} />
+				<DataTableColumnHeader
+					column={column}
+					title={t("pricing_rule_priority")}
+				/>
 			),
 			cell: ({ row }) => <span>{row.getValue("priority") as number}</span>,
 		},
 		{
 			accessorKey: "dayOfWeek",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Day_of_Week")} />
+				<DataTableColumnHeader
+					column={column}
+					title={t("pricing_rule_day_of_week")}
+				/>
 			),
 			cell: ({ row }) => {
 				const dayOfWeek = row.getValue("dayOfWeek") as string | null;
@@ -79,7 +88,10 @@ export const createTableColumns = (
 		{
 			accessorKey: "startTime",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Time_Range")} />
+				<DataTableColumnHeader
+					column={column}
+					title={t("pricing_rule_time_range")}
+				/>
 			),
 			cell: ({ row }) => {
 				const startTime = row.getValue("startTime") as string | null;
@@ -95,7 +107,7 @@ export const createTableColumns = (
 		{
 			accessorKey: "cost",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Cost")} />
+				<DataTableColumnHeader column={column} title={t("pricing_rule_cost")} />
 			),
 			cell: ({ row }) => {
 				const cost = row.getValue("cost") as number | null;
@@ -105,7 +117,10 @@ export const createTableColumns = (
 		{
 			accessorKey: "credit",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Credit")} />
+				<DataTableColumnHeader
+					column={column}
+					title={t("pricing_rule_credit")}
+				/>
 			),
 			cell: ({ row }) => {
 				const credit = row.getValue("credit") as number | null;
@@ -115,7 +130,10 @@ export const createTableColumns = (
 		{
 			accessorKey: "isActive",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Status")} />
+				<DataTableColumnHeader
+					column={column}
+					title={t("pricing_rule_status")}
+				/>
 			),
 			cell: ({ row }) => {
 				const isActive = row.getValue("isActive") as boolean;

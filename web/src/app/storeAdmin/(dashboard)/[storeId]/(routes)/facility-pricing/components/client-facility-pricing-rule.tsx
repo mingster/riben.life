@@ -85,7 +85,7 @@ export const FacilityPricingRuleClient: React.FC<
 				<Heading
 					title={t("Facility_Pricing_Rules")}
 					badge={data.length}
-					description=""
+					description={t("Facility_Pricing_Rules_descr")}
 				/>
 				<div className="flex gap-2">
 					<EditFacilityPricingRuleDialog
@@ -100,7 +100,6 @@ export const FacilityPricingRuleClient: React.FC<
 					/>
 				</div>
 			</div>
-			<Separator />
 			<DataTable<FacilityPricingRuleColumn, unknown>
 				columns={columns}
 				data={data}
