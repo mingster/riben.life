@@ -1,0 +1,163 @@
+#!/usr/bin/env node
+
+/**
+ * Manual refactoring script for i18n translation keys
+ * This script uses a predefined mapping of old keys to new keys
+ */
+
+const fs = require("fs");
+const path = require("path");
+
+const translationFiles = [
+	"src/app/i18n/locales/en/translation.json",
+	"src/app/i18n/locales/tw/translation.json",
+];
+
+// Manual mapping of old keys to new keys
+// Format: "Old_Key": "new_key"
+const keyMappings = {
+	// Management pages
+	"Announcement_Mgmt": "Announcement_mgmt",
+	"Announcement_Mgmt_descr": "Announcement_mgmt_descr",
+	"Category_Mgmt": "Category_mgmt",
+	"Category_Mgmt_Add": "Category_mgmt_add",
+	"Category_Mgmt_Add_Descr": "Category_mgmt_add_descr",
+	"Category_Mgmt_AddButton": "Category_mgmt_add_button",
+	"Category_Mgmt_descr": "Category_mgmt_descr",
+	"Category_Mgmt_tab_basic": "Category_mgmt_tab_basic",
+	"Category_Mgmt_tab_products": "Category_mgmt_tab_products",
+	"Category_names_Descr": "Category_names_descr",
+	"Category_EditProducts": "Category_EditProducts", // Keep as is - this is a field name
+	"Facility_Mgmt": "Facility_mgmt",
+	"Facility_Mgmt_Add": "Facility_mgmt_add",
+	"Facility_Mgmt_Add_Descr": "Facility_mgmt_add_descr",
+	"Facility_Mgmt_BulkAdd_Descr": "Facility_mgmt_bulk_add_descr",
+	"Facility_Mgmt_BulkAddButton": "Facility_mgmt_bulk_add_button",
+	"Facility_Mgmt_Deleted": "Facility_mgmt_deleted",
+	"Facility_Mgmt_Edit": "Facility_mgmt_edit",
+	"Facility_Mgmt_Prefix": "Facility_mgmt_prefix",
+	"Facility_Mgmt_Prefix_Descr": "Facility_mgmt_prefix_descr",
+	"Facility_Name_Descr": "Facility_Name_descr",
+	"Facility_NumToAdd": "Facility_NumToAdd", // Keep as is - field name
+	"FAQ_Mgmt_descr": "FAQ_mgmt_descr",
+	"FaqCategory_AddFaq": "FaqCategory_add_faq",
+	"FaqCategory_Mgmt": "FaqCategory_mgmt",
+	"FaqCategory_Mgmt_descr": "FaqCategory_mgmt_descr",
+	"Product_Mgmt": "Product_mgmt",
+	"Product_Mgmt_Add": "Product_mgmt_add",
+	"Product_Mgmt_Add_Descr": "Product_mgmt_add_descr",
+	"Product_Mgmt_AddButton": "Product_mgmt_add_button",
+	"Product_Mgmt_descr": "Product_mgmt_descr",
+	"Product_Mgmt_Edit": "Product_mgmt_edit",
+	"Product_names_Descr": "Product_names_descr",
+	"ProductOption_Mgmt": "ProductOption_mgmt",
+	"ProductOption_Mgmt_Add_Descr": "ProductOption_mgmt_add_descr",
+	"ProductOption_template_Mgmt": "ProductOption_template_mgmt",
+	"ProductOption_allowQuantity_Descr": "ProductOption_allowQuantity_descr",
+	"ProductOption_isMultiple_Descr": "ProductOption_isMultiple_descr",
+	"ProductOption_isRequired_Descr": "ProductOption_isRequired_descr",
+	"ProductOption_maxQuantity_Descr": "ProductOption_maxQuantity_descr",
+	"ProductOption_maxSelection_Descr": "ProductOption_maxSelection_descr",
+	"ProductOption_minQuantity_Descr": "ProductOption_minQuantity_descr",
+	"ProductOption_minSelection_Descr": "ProductOption_minSelection_descr",
+	"ProductOption_optionName_Descr": "ProductOption_optionName_descr",
+	"ProductOption_selections_Descr": "ProductOption_selections_descr",
+	"ProductStatus_Deleted": "ProductStatus_deleted",
+	
+	// RSVP settings
+	"RSVP_Can_Cancel_Descr": "RSVP_Can_Cancel_descr",
+	"RSVP_Cancel_Hours_Descr": "RSVP_Cancel_Hours_descr",
+	"RSVP_Default_Duration_Descr": "RSVP_Default_Duration_descr",
+	"RSVP_Display_Settings_Descr": "RSVP_Display_Settings_descr",
+	"RSVP_Hours_Descr": "RSVP_Hours_descr",
+	"RSVP_Prepaid_Amount_Descr": "RSVP_Prepaid_Amount_descr",
+	"RSVP_Prepaid_Required_Descr": "RSVP_Prepaid_Required_descr",
+	"RSVP_Reminder_Hours_Descr": "RSVP_Reminder_Hours_descr",
+	"RSVP_Require_Signature_Descr": "RSVP_Require_Signature_descr",
+	"RSVP_Show_Cost_Descr": "RSVP_Show_Cost_descr",
+	"RSVP_Use_Business_Hours_Descr": "RSVP_Use_Business_Hours_descr",
+	"RSVP_Settings_Descr": "RSVP_Settings_descr",
+	
+	// Store settings
+	"Store_Created": "Store_created",
+	"Store_Updated": "Store_updated",
+	"Store_Create": "Store_create",
+	"StoreSettings_Credit_Exchange_Rate_Descr": "StoreSettings_Credit_Exchange_Rate_descr",
+	"StoreSettings_Credit_Expiration_Descr": "StoreSettings_Credit_Expiration_descr",
+	"StoreSettings_Credit_Max_Purchase_Descr": "StoreSettings_Credit_Max_Purchase_descr",
+	"StoreSettings_Credit_Min_Purchase_Descr": "StoreSettings_Credit_Min_Purchase_descr",
+	"StoreSettings_Credit_Service_Exchange_Rate_Descr": "StoreSettings_Credit_Service_Exchange_Rate_descr",
+	"StoreSettings_PayoutSchedule_Descr": "StoreSettings_PayoutSchedule_descr",
+	"StoreSettings_Store_Country_Descr": "StoreSettings_Store_Country_descr",
+	"StoreSettings_Store_Currency_Descr": "StoreSettings_Store_Currency_descr",
+	"StoreSettings_Store_Locale_Descr": "StoreSettings_Store_Locale_descr",
+	"StoreSettings_Store_Logo_Descr": "StoreSettings_Store_Logo_descr",
+	"StoreSettings_Store_Name_Descr": "StoreSettings_Store_Name_descr",
+	"StoreSettings_Store_Timezone_Descr": "StoreSettings_Store_Timezone_descr",
+	"StoreSettings_Use_Customer_Credit_Descr": "StoreSettings_Use_Customer_Credit_descr",
+};
+
+/**
+ * Process a translation file
+ */
+function processTranslationFile(filePath) {
+	console.log(`\nProcessing: ${filePath}`);
+	
+	const fullPath = path.join(process.cwd(), filePath);
+	const content = fs.readFileSync(fullPath, "utf8");
+	const data = JSON.parse(content);
+	
+	const newData = {};
+	let refactoredCount = 0;
+	
+	// Process each key
+	for (const [key, value] of Object.entries(data)) {
+		if (keyMappings[key]) {
+			newData[keyMappings[key]] = value;
+			refactoredCount++;
+			console.log(`  ${key} -> ${keyMappings[key]}`);
+		} else {
+			newData[key] = value;
+		}
+	}
+	
+	console.log(`\nRefactored ${refactoredCount} keys`);
+	
+	// Write back to file
+	fs.writeFileSync(
+		fullPath,
+		JSON.stringify(newData, null, 2) + "\n",
+		"utf8",
+	);
+	
+	return { refactoredCount };
+}
+
+/**
+ * Main execution
+ */
+function main() {
+	console.log("Starting i18n key refactoring (manual mapping)...");
+	console.log("=".repeat(60));
+	
+	let totalRefactored = 0;
+	
+	for (const file of translationFiles) {
+		const { refactoredCount } = processTranslationFile(file);
+		totalRefactored += refactoredCount;
+	}
+	
+	console.log("\n" + "=".repeat(60));
+	console.log(`\nTotal keys refactored: ${totalRefactored}`);
+	console.log("\nNext steps:");
+	console.log("1. Review the changes in translation files");
+	console.log("2. Find code references using: grep -r 'OLD_KEY' src/");
+	console.log("3. Update code to use new keys");
+}
+
+if (require.main === module) {
+	main();
+}
+
+module.exports = { keyMappings, processTranslationFile };
+

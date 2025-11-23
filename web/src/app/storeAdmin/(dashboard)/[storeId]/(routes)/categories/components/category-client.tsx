@@ -112,9 +112,9 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("Category_Mgmt")}
+					title={t("Category_mgmt")}
 					badge={data.length}
-					description={t("Category_Mgmt_descr")}
+					description={t("Category_mgmt_descr")}
 				/>
 				<div className="flex gap-2">
 					<EditCategoryDialog

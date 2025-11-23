@@ -95,7 +95,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("Facility_Mgmt")}
+					title={t("Facility_mgmt")}
 					badge={data.length}
 					description=""
 				/>

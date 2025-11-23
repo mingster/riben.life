@@ -164,7 +164,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 				);
 
 				toastSuccess({
-					title: t("Store_Updated"),
+					title: t("Store_updated"),
 					description: "",
 				});
 			}
@@ -198,7 +198,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
-												placeholder={t("StoreSettings_Store_Name_Descr")}
+												placeholder={t("StoreSettings_Store_Name_descr")}
 												{...field}
 											/>
 										</FormControl>
@@ -247,7 +247,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 											>
 												<SelectTrigger className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1">
 													<SelectValue
-														placeholder={t("StoreSettings_Store_Locale_Descr")}
+														placeholder={t("StoreSettings_Store_Locale_descr")}
 													/>
 												</SelectTrigger>
 

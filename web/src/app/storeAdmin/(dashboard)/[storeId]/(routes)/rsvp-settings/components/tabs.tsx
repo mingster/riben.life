@@ -87,7 +87,7 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 			<div className="flex items-center justify-between">
 				<Heading
 					title={t("RSVP_Settings")}
-					description={t("RSVP_Settings_Descr")}
+					description={t("RSVP_Settings_descr")}
 				/>
 			</div>
 

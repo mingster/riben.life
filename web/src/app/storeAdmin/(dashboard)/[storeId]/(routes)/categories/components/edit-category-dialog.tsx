@@ -196,7 +196,7 @@ export function EditCategoryDialog({
 							: `${t("Create")} ${t("Category")}`}
 					</DialogTitle>
 					<DialogDescription>
-						{t("Category_Mgmt_descr") ?? ""}
+						{t("Category_mgmt_descr") ?? ""}
 					</DialogDescription>
 				</DialogHeader>
 

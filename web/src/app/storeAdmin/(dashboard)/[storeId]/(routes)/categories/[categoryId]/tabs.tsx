@@ -67,11 +67,11 @@ export const CategoryEditTabs = ({
 			<Tabs defaultValue="basic" className="w-full">
 				<TabsList>
 					<TabsTrigger className="px-5 lg:min-w-40" value="basic">
-						{t("Category_Mgmt_tab_basic")}
+						{t("Category_mgmt_tab_basic")}
 					</TabsTrigger>
 					{params.productId !== "new" && (
 						<TabsTrigger className="px-5 lg:min-w-40" value="products">
-							{t("Category_Mgmt_tab_products")}
+							{t("Category_mgmt_tab_products")}
 						</TabsTrigger>
 					)}
 				</TabsList>

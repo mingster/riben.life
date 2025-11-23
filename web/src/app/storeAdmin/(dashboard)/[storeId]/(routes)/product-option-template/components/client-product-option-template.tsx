@@ -75,7 +75,7 @@ export function ProductOptionTemplateClient({
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("ProductOption_template_Mgmt")}
+					title={t("ProductOption_template_mgmt")}
 					badge={data.length}
 					description=""
 				/>

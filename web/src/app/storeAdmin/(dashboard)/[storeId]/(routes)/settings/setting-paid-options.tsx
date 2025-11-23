@@ -144,7 +144,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 				setLogo(updatedStore.logo ?? null);
 
 				toastSuccess({
-					title: t("Store_Updated"),
+					title: t("Store_updated"),
 					description: "",
 				});
 			}

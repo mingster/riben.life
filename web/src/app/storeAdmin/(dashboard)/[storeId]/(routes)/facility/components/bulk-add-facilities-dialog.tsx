@@ -137,14 +137,14 @@ export function BulkAddFacilitiesDialog({
 			<DialogTrigger asChild>
 				<Button variant="outline" onClick={() => setOpen(true)}>
 					<IconPlus className="mr-0 size-4" />
-					{t("Facility_Mgmt_BulkAddButton")}
+					{t("Facility_mgmt_bulk_add_button")}
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>{t("Facility_Mgmt_BulkAddButton")}</DialogTitle>
+					<DialogTitle>{t("Facility_mgmt_bulk_add_button")}</DialogTitle>
 					<DialogDescription>
-						{t("Facility_Mgmt_BulkAdd_Descr")}
+						{t("Facility_mgmt_bulk_add_descr")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -171,7 +171,7 @@ export function BulkAddFacilitiesDialog({
 							name="prefix"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_Mgmt_Prefix")}</FormLabel>
+									<FormLabel>{t("Facility_mgmt_prefix")}</FormLabel>
 									<FormControl>
 										<Input
 											type="text"
@@ -181,7 +181,7 @@ export function BulkAddFacilitiesDialog({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("Facility_Mgmt_Prefix_Descr")}
+										{t("Facility_mgmt_prefix_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>

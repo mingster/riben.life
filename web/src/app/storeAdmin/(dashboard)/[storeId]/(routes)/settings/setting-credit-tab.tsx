@@ -100,7 +100,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 				onStoreUpdated?.(updatedStore);
 
 				toastSuccess({
-					title: t("Store_Updated"),
+					title: t("Store_updated"),
 					description: "",
 				});
 			}
@@ -148,7 +148,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 											{t("StoreSettings_Use_Customer_Credit")}
 										</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("StoreSettings_Use_Customer_Credit_Descr")}
+											{t("StoreSettings_Use_Customer_Credit_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -185,7 +185,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 													/>
 												</FormControl>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_Credit_Exchange_Rate_Descr")}
+													{t("StoreSettings_Credit_Exchange_Rate_descr")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -213,7 +213,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 												</FormControl>
 												<FormDescription className="text-xs font-mono text-gray-500">
 													{t(
-														"StoreSettings_Credit_Service_Exchange_Rate_Descr",
+														"StoreSettings_Credit_Service_Exchange_Rate_descr",
 													)}
 												</FormDescription>
 												<FormMessage />
@@ -242,7 +242,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 													/>
 												</FormControl>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_Credit_Max_Purchase_Descr")}
+													{t("StoreSettings_Credit_Max_Purchase_descr")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -269,7 +269,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 													/>
 												</FormControl>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_Credit_Min_Purchase_Descr")}
+													{t("StoreSettings_Credit_Min_Purchase_descr")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -297,7 +297,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 												/>
 											</FormControl>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("StoreSettings_Credit_Expiration_Descr")}
+												{t("StoreSettings_Credit_Expiration_descr")}
 											</FormDescription>
 											<FormMessage />
 										</FormItem>

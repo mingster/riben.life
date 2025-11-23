@@ -99,7 +99,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 							)
 						}
 					>
-						<UserRoundPen className="mr-0 size-4" /> {t("FaqCategory_AddFaq")}
+						<UserRoundPen className="mr-0 size-4" /> {t("FaqCategory_add_faq")}
 					</DropdownMenuItem>
 
 					<DropdownMenuItem

@@ -91,7 +91,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 				onStoreUpdated?.(result.data.store as Store);
 
 				toastSuccess({
-					title: t("Store_Updated"),
+					title: t("Store_updated"),
 					description: "",
 				});
 			}
@@ -135,7 +135,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 										</FormControl>
 
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("StoreSettings_PayoutSchedule_Descr")}
+											{t("StoreSettings_PayoutSchedule_descr")}
 										</FormDescription>
 
 										<FormMessage />

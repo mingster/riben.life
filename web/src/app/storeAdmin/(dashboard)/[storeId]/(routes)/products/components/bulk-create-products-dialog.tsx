@@ -141,14 +141,14 @@ export function BulkCreateProductsDialog({
 				{trigger ?? (
 					<Button variant="outline">
 						<IconPlus className="mr-0 size-4" />
-						{t("Product_Mgmt_AddButton")}
+						{t("Product_mgmt_add_button")}
 					</Button>
 				)}
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-lg">
 				<DialogHeader>
-					<DialogTitle>{t("Product_Mgmt_Add")}</DialogTitle>
-					<DialogDescription>{t("Product_Mgmt_Add_Descr")}</DialogDescription>
+					<DialogTitle>{t("Product_mgmt_add")}</DialogTitle>
+					<DialogDescription>{t("Product_mgmt_add_descr")}</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -160,14 +160,14 @@ export function BulkCreateProductsDialog({
 									<FormLabel>{t("Product_names")}</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder={t("Product_names_Descr")}
+											placeholder={t("Product_names_descr")}
 											disabled={loading}
 											className="min-h-[160px]"
 											{...field}
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{`${t("Product_names_Descr")} (name|price|description|category|option)`}
+										{`${t("Product_names_descr")} (name|price|description|category|option)`}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>

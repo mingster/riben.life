@@ -220,9 +220,9 @@ export const EditProduct: React.FC<EditProductProps> = ({
 			<DialogContent className="sm:max-w-lg">
 				<DialogHeader>
 					<DialogTitle>
-						{isNew ? t("Create") : t("Product_Mgmt_Edit")}
+						{isNew ? t("Create") : t("Product_mgmt_edit")}
 					</DialogTitle>
-					<DialogDescription>{t("Product_Mgmt_Add_Descr")}</DialogDescription>
+					<DialogDescription>{t("Product_mgmt_add_descr")}</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>

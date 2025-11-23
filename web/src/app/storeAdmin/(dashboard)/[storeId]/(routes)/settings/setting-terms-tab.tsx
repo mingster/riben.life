@@ -97,7 +97,7 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 						null,
 				);
 				toastSuccess({
-					title: t("Store_Updated"),
+					title: t("Store_updated"),
 					description: "",
 				});
 			}

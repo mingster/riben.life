@@ -212,12 +212,12 @@ export function EditFacilityDialog({
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>
-						{isEditMode ? t("Facility_Mgmt_Edit") : t("Facility_Mgmt_Add")}
+						{isEditMode ? t("Facility_mgmt_edit") : t("Facility_mgmt_add")}
 					</DialogTitle>
 					<DialogDescription>
 						{isEditMode
-							? t("Facility_Name_Descr")
-							: t("Facility_Mgmt_Add_Descr")}
+							? t("Facility_Name_descr")
+							: t("Facility_mgmt_add_descr")}
 					</DialogDescription>
 				</DialogHeader>
 

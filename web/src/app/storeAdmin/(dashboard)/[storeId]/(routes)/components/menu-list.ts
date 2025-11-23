@@ -250,7 +250,7 @@ export function GetMenuList(
 				},
 				{
 					href: `${nav_prefix}/facility`,
-					label: t("Facility_Mgmt"),
+					label: t("Facility_mgmt"),
 					active: pathname.includes(`${nav_prefix}/facility`),
 					icon: IconBuilding,
 					submenus: [],

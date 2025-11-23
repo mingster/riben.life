@@ -185,7 +185,7 @@ export function EditAnnouncementDialog({
 							? t("Announcement") + t("Edit")
 							: t("Announcement") + t("Create")}
 					</DialogTitle>
-					<DialogDescription>{t("Announcement_Mgmt_descr")}</DialogDescription>
+					<DialogDescription>{t("Announcement_mgmt_descr")}</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

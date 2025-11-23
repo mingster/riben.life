@@ -136,13 +136,13 @@ export function BulkAddCategoriesDialog({
 			<DialogTrigger asChild>
 				<Button variant="outline" onClick={() => setOpen(true)}>
 					<IconPlus className="mr-0 size-4" />
-					{t("Category_Mgmt_AddButton")}
+					{t("Category_mgmt_add_button")}
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>{t("Category_Mgmt_Add")}</DialogTitle>
-					<DialogDescription>{t("Category_Mgmt_Add_Descr")}</DialogDescription>
+					<DialogTitle>{t("Category_mgmt_add")}</DialogTitle>
+					<DialogDescription>{t("Category_mgmt_add_descr")}</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>
@@ -161,7 +161,7 @@ export function BulkAddCategoriesDialog({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("Category_names_Descr")}
+										{t("Category_names_descr")}
 									</FormDescription>
 									<FormMessage>{fieldState.error?.message}</FormMessage>
 								</FormItem>

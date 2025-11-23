@@ -156,7 +156,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 				onRsvpSettingsUpdated?.(updatedRsvpSettings);
 
 				toastSuccess({
-					title: t("Store_Updated"),
+					title: t("Store_updated"),
 					description: "",
 				});
 			}
@@ -233,7 +233,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("RSVP_Default_Duration_Descr")}
+										{t("RSVP_Default_Duration_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -248,7 +248,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 									<div className="space-y-0.5">
 										<FormLabel>{t("RSVP_Use_Business_Hours")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("RSVP_Use_Business_Hours_Descr")}
+											{t("RSVP_Use_Business_Hours_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -280,7 +280,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("RSVP_Hours_Descr")}
+											{t("RSVP_Hours_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -305,7 +305,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											<div className="space-y-0.5">
 												<FormLabel>{t("RSVP_Prepaid_Required")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("RSVP_Prepaid_Required_Descr")}
+													{t("RSVP_Prepaid_Required_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>
@@ -345,7 +345,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 													/>
 												</FormControl>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("RSVP_Prepaid_Amount_Descr")}
+													{t("RSVP_Prepaid_Amount_descr")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -372,7 +372,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											<div className="space-y-0.5">
 												<FormLabel>{t("RSVP_Can_Cancel")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("RSVP_Can_Cancel_Descr")}
+													{t("RSVP_Can_Cancel_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>
@@ -404,7 +404,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 													/>
 												</FormControl>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("RSVP_Cancel_Hours_Descr")}
+													{t("RSVP_Cancel_Hours_descr")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -421,7 +421,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 										<div className="space-y-0.5">
 											<FormLabel>{t("RSVP_Require_Signature")}</FormLabel>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Require_Signature_Descr")}
+												{t("RSVP_Require_Signature_descr")}
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -451,7 +451,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 										<div className="space-y-0.5">
 											<FormLabel>{t("RSVP_Show_Cost")}</FormLabel>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Show_Cost_Descr")}
+												{t("RSVP_Show_Cost_descr")}
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -490,7 +490,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("RSVP_Reminder_Hours_Descr")}
+											{t("RSVP_Reminder_Hours_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>

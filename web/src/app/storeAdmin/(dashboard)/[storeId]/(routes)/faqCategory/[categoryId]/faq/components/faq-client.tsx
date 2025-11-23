@@ -32,7 +32,7 @@ export const FaqClient: React.FC<FaqClientProps> = ({ data, category }) => {
 				<Heading
 					title={`${category.name}-${t("FAQ")}`}
 					badge={data.length}
-					description={t("FAQ_Mgmt_descr")}
+					description={t("FAQ_mgmt_descr")}
 				/>
 
 				<Button
