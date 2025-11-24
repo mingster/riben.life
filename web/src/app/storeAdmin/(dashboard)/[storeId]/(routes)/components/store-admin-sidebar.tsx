@@ -61,21 +61,29 @@ export function StoreAdminSidebar() {
 	const [isMounted, setIsMounted] = useState(false);
 
 	// Store collapsible states in localStorage
+	// Start with empty object to ensure server and client render match (all default to open)
 	const [collapsibleStates, setCollapsibleStates] = useState<
 		Record<string, boolean>
-	>(() => {
-		if (typeof window === "undefined") return {};
-		try {
-			const stored = localStorage.getItem("store-admin-sidebar-collapsible");
-			return stored ? JSON.parse(stored) : {};
-		} catch {
-			return {};
+	>({});
+
+	// Load collapsible states from localStorage after mount (to avoid hydration mismatch)
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			try {
+				const stored = localStorage.getItem("store-admin-sidebar-collapsible");
+				if (stored) {
+					const parsed = JSON.parse(stored);
+					setCollapsibleStates(parsed);
+				}
+			} catch {
+				// Ignore localStorage errors
+			}
 		}
-	});
+	}, []);
 
 	// Save collapsible states to localStorage
 	useEffect(() => {
-		if (typeof window !== "undefined") {
+		if (typeof window !== "undefined" && isMounted) {
 			try {
 				localStorage.setItem(
 					"store-admin-sidebar-collapsible",
@@ -85,7 +93,7 @@ export function StoreAdminSidebar() {
 				// Ignore localStorage errors
 			}
 		}
-	}, [collapsibleStates]);
+	}, [collapsibleStates, isMounted]);
 
 	// Get collapsible state for a key, defaulting to true (open)
 	const getCollapsibleState = useCallback(

@@ -19,6 +19,7 @@ export const updateFacilityAction = storeActionClient
 			defaultCost,
 			defaultCredit,
 			defaultDuration,
+			businessHours,
 		} = parsedInput;
 
 		const facility = await sqlClient.storeFacility.findUnique({
@@ -39,6 +40,7 @@ export const updateFacilityAction = storeActionClient
 					defaultCost,
 					defaultCredit,
 					defaultDuration,
+					businessHours: businessHours || null,
 				},
 			});
 

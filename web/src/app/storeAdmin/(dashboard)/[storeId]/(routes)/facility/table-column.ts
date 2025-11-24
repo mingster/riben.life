@@ -8,6 +8,7 @@ export interface TableColumn {
 	defaultCost: number;
 	defaultCredit: number;
 	defaultDuration: number;
+	businessHours: string | null;
 }
 
 export const mapFacilityToColumn = (facility: StoreFacility): TableColumn => ({
@@ -18,4 +19,5 @@ export const mapFacilityToColumn = (facility: StoreFacility): TableColumn => ({
 	defaultCost: facility.defaultCost.toNumber(),
 	defaultCredit: facility.defaultCredit.toNumber(),
 	defaultDuration: facility.defaultDuration,
+	businessHours: facility.businessHours,
 });

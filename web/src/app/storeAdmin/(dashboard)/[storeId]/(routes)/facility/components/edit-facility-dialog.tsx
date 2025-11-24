@@ -21,6 +21,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
@@ -80,6 +81,7 @@ export function EditFacilityDialog({
 				defaultCost: 0,
 				defaultCredit: 0,
 				defaultDuration: 60,
+				businessHours: null,
 			};
 
 	// Use createFacilitySchema when isNew, updateFacilitySchema when editing
@@ -151,6 +153,7 @@ export function EditFacilityDialog({
 					defaultCost: values.defaultCost,
 					defaultCredit: values.defaultCredit,
 					defaultDuration: values.defaultDuration,
+					businessHours: values.businessHours || null,
 				});
 
 				if (result?.serverError) {
@@ -182,6 +185,7 @@ export function EditFacilityDialog({
 					defaultCost: values.defaultCost,
 					defaultCredit: values.defaultCredit,
 					defaultDuration: values.defaultDuration,
+					businessHours: values.businessHours || null,
 				});
 
 				if (result?.serverError) {
@@ -332,6 +336,27 @@ export function EditFacilityDialog({
 												field.value !== undefined ? field.value.toString() : ""
 											}
 											onChange={(event) => field.onChange(event.target.value)}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="businessHours"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("business_hours")}</FormLabel>
+									<FormControl>
+										<Textarea
+											disabled={loading || form.formState.isSubmitting}
+											className="font-mono min-h-[100px]"
+											placeholder=""
+											value={field.value ?? ""}
+											onChange={(event) =>
+												field.onChange(event.target.value || null)
+											}
 										/>
 									</FormControl>
 									<FormMessage />

@@ -24,6 +24,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
@@ -65,6 +66,7 @@ export function BulkAddFacilitiesDialog({
 			defaultCost: 0,
 			defaultCredit: 0,
 			defaultDuration: 60,
+			businessHours: null,
 		},
 		mode: "onChange",
 		reValidateMode: "onChange",
@@ -81,6 +83,7 @@ export function BulkAddFacilitiesDialog({
 				defaultCost: values.defaultCost,
 				defaultCredit: values.defaultCredit,
 				defaultDuration: values.defaultDuration,
+				businessHours: values.businessHours || null,
 			});
 
 			if (result?.serverError) {
@@ -106,6 +109,7 @@ export function BulkAddFacilitiesDialog({
 				defaultCost: 0,
 				defaultCredit: 0,
 				defaultDuration: 60,
+				businessHours: null,
 			});
 			setOpen(false);
 		} catch (error: unknown) {
@@ -128,6 +132,7 @@ export function BulkAddFacilitiesDialog({
 				defaultCost: 0,
 				defaultCredit: 0,
 				defaultDuration: 60,
+				businessHours: null,
 			});
 		}
 	};
@@ -283,6 +288,27 @@ export function BulkAddFacilitiesDialog({
 												field.value !== undefined ? field.value.toString() : ""
 											}
 											onChange={(event) => field.onChange(event.target.value)}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="businessHours"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("business_hours")}</FormLabel>
+									<FormControl>
+										<Textarea
+											disabled={loading || form.formState.isSubmitting}
+											className="font-mono min-h-[100px]"
+											placeholder=""
+											value={field.value ?? ""}
+											onChange={(event) =>
+												field.onChange(event.target.value || null)
+											}
 										/>
 									</FormControl>
 									<FormMessage />

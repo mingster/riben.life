@@ -9,6 +9,7 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 
 import type { TableColumn } from "../table-column";
 import { CellAction } from "./cell-action";
+import { EditFacilityDialog } from "./edit-facility-dialog";
 
 interface QrCodeProps {
 	data: TableColumn;
@@ -37,6 +38,7 @@ export const QRCode: React.FC<QrCodeProps> = ({ data }) => {
 interface CreateTableColumnsOptions {
 	onDeleted?: (tableId: string) => void;
 	onUpdated?: (table: TableColumn) => void;
+	onEdit?: (table: TableColumn) => void;
 }
 
 export const createTableColumns = (
@@ -51,7 +53,22 @@ export const createTableColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("Facility_Name")} />
 			),
-			cell: ({ row }) => <span>{row.getValue("facilityName") as string}</span>,
+			cell: ({ row }) => (
+				<div className="flex items-center gap-2" title="click to edit">
+					<EditFacilityDialog
+						facility={row.original}
+						onUpdated={onUpdated}
+						trigger={
+							<button
+								type="button"
+								className="text-left hover:underline cursor-pointer font-medium"
+							>
+								{row.getValue("facilityName") as string}
+							</button>
+						}
+					/>
+				</div>
+			),
 		},
 		{
 			accessorKey: "capacity",
@@ -92,6 +109,7 @@ export const createTableColumns = (
 				<span>{row.getValue("defaultDuration") as number}</span>
 			),
 		},
+
 		{
 			id: "qrcode",
 			header: () => "",

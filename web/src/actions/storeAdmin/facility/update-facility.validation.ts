@@ -11,5 +11,6 @@ export const updateFacilitySchema = z.object({
 		.number()
 		.int()
 		.min(1, "Default Duration is required"),
+	businessHours: z.string().optional().nullable(),
 });
 export type UpdateFacilityInput = z.infer<typeof updateFacilitySchema>;
