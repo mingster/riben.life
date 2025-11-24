@@ -373,7 +373,7 @@ export function EditFacilityDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("Save") : t("Create")}
+								{isEditMode ? t("save") : t("Create")}
 							</Button>
 							<Button
 								type="button"
@@ -381,7 +381,7 @@ export function EditFacilityDialog({
 								onClick={() => handleOpenChange(false)}
 								disabled={loading || form.formState.isSubmitting}
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</DialogFooter>
 					</form>

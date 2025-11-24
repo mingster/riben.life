@@ -185,7 +185,7 @@ export default function EditUser({ serverData }: props) {
 								form.formState.isSubmitting
 							}
 						>
-							{t("Submit")}
+							{t("submit")}
 						</Button>
 					</form>
 				</Form>

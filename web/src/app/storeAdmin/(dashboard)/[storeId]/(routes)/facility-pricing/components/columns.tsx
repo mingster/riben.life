@@ -5,9 +5,11 @@ import type { TFunction } from "i18next";
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 import type { FacilityPricingRuleColumn } from "../facility-pricing-rule-column";
 import { CellAction } from "./cell-action";
+import { EditFacilityPricingRuleDialog } from "./edit-facility-pricing-rule-dialog";
 
 interface CreateTableColumnsOptions {
 	onDeleted?: (ruleId: string) => void;
@@ -26,7 +28,20 @@ export const createTableColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("pricing_rule_name")} />
 			),
-			cell: ({ row }) => <span>{row.getValue("name") as string}</span>,
+			cell: ({ row }) => (
+				<EditFacilityPricingRuleDialog
+					rule={row.original}
+					onUpdated={onUpdated}
+					trigger={
+						<Button
+							variant="link"
+							className="p-0 underline-offset-4 hover:underline"
+						>
+							{row.getValue("name") as string}
+						</Button>
+					}
+				/>
+			),
 		},
 		{
 			accessorKey: "facilityName",
@@ -38,11 +53,7 @@ export const createTableColumns = (
 			),
 			cell: ({ row }) => {
 				const facilityName = row.getValue("facilityName") as string | null;
-				return (
-					<span className="text-muted-foreground">
-						{facilityName || t("All_Facilities")}
-					</span>
-				);
+				return <span className="text-muted-foreground">{facilityName}</span>;
 			},
 		},
 		{

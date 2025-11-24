@@ -258,7 +258,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 								disabled={loading || form.formState.isSubmitting}
 								className="disabled:opacity-25"
 							>
-								{t("Submit")}
+								{t("submit")}
 							</Button>
 							<Button
 								type="button"
@@ -270,7 +270,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 								}}
 								className="ml-2"
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</form>
 					</Form>

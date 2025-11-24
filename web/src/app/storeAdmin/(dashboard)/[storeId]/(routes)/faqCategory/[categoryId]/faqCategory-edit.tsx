@@ -174,7 +174,7 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
 								className="disabled:opacity-25"
 								type="submit"
 							>
-								{t("Save")}
+								{t("save")}
 							</Button>
 
 							<Button
@@ -187,7 +187,7 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
 								}}
 								className="ml-5"
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</form>
 					</Form>

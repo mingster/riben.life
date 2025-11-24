@@ -86,7 +86,7 @@ export const ShippingPaymentMethodTab: React.FC<
 			setSelectedShippingIds(nextSelection);
 
 			toastSuccess({
-				title: t("Product_category") + t("Updated"),
+				title: t("Product_category") + t("updated"),
 				description: "",
 			});
 		}
@@ -171,7 +171,7 @@ export const ShippingPaymentMethodTab: React.FC<
 			setSelectedPayMethodIds(nextSelection);
 
 			toastSuccess({
-				title: t("Product_category") + t("Updated"),
+				title: t("Product_category") + t("updated"),
 				description: "",
 			});
 		}
@@ -202,7 +202,7 @@ export const ShippingPaymentMethodTab: React.FC<
 						className="disabled:opacity-25"
 						onClick={saveShippingData}
 					>
-						{t("Save")}
+						{t("save")}
 					</Button>
 				</CardContent>
 			</Card>
@@ -229,7 +229,7 @@ export const ShippingPaymentMethodTab: React.FC<
 						className="disabled:opacity-25"
 						onClick={savePaymethodData}
 					>
-						{t("Save")}
+						{t("save")}
 					</Button>
 				</CardContent>
 			</Card>

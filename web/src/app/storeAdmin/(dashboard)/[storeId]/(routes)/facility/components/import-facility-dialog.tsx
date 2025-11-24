@@ -175,7 +175,7 @@ export function ImportFacilityDialog({
 						onClick={() => handleOpenChange(false)}
 						disabled={importing}
 					>
-						{t("Cancel")}
+						{t("cancel")}
 					</Button>
 					<Button
 						onClick={handleImport}

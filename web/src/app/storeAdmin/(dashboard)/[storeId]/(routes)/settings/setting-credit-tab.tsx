@@ -316,7 +316,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 								}
 								className="disabled:opacity-25"
 							>
-								{t("Save")}
+								{t("save")}
 							</Button>
 							<Button
 								type="button"
@@ -324,7 +324,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 								onClick={() => form.reset(defaultValues)}
 								disabled={loading || form.formState.isSubmitting}
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</div>
 					</form>

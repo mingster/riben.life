@@ -322,7 +322,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									disabled={loading || form.formState.isSubmitting}
 									className="disabled:opacity-25"
 								>
-									{t("Submit")}
+									{t("submit")}
 								</Button>
 							</form>
 						</Form>

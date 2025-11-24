@@ -61,7 +61,7 @@ export const ProductPreviewDialog: React.FC<props> = ({ initialData }) => {
 
 					<DialogFooter className="sm:justify-start">
 						<DialogClose asChild>
-							<Button variant="outline">{t("Cancel")}</Button>
+							<Button variant="outline">{t("cancel")}</Button>
 						</DialogClose>
 					</DialogFooter>
 				</DialogContent>

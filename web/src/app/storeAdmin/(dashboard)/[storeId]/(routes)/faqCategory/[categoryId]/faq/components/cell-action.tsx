@@ -97,13 +97,13 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 							)
 						}
 					>
-						<Edit className="mr-0 size-4" /> {t("Update")}
+						<Edit className="mr-0 size-4" /> {t("update")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						className="cursor-pointer"
 						onClick={() => setOpen(true)}
 					>
-						<Trash className="mr-0 size-4" /> {t("Delete")}
+						<Trash className="mr-0 size-4" /> {t("delete")}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

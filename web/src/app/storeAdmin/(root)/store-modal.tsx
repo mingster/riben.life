@@ -298,13 +298,13 @@ export const StoreModal: React.FC = () => {
 										variant="outline"
 										onClick={storeModal.onClose}
 									>
-										{t("Cancel")}
+										{t("cancel")}
 									</Button>
 									<Button
 										disabled={loading || form.formState.isSubmitting}
 										type="submit"
 									>
-										{t("Continue")}
+										{t("continue")}
 									</Button>
 								</div>
 							</form>

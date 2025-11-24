@@ -172,7 +172,7 @@ export function GetMenuList(
 			],
 		},
 		{
-			groupLabel: t("Support"),
+			groupLabel: t("support"),
 			menus: [
 				{
 					href: `${nav_prefix}/support`,

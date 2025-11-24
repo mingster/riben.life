@@ -27,7 +27,7 @@ export function CellAction({ data }: CellActionProps) {
 	const handleCopy = (value: string) => {
 		void navigator.clipboard.writeText(value);
 		toastSuccess({
-			title: t("Copy"),
+			title: t("copy"),
 			description: value,
 		});
 	};
@@ -41,9 +41,9 @@ export function CellAction({ data }: CellActionProps) {
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
-				<DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
+				<DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
 				<DropdownMenuItem onClick={() => handleCopy(data.id)}>
-					<IconCopy className="mr-0 size-4" /> {t("Copy")}
+					<IconCopy className="mr-0 size-4" /> {t("copy")}
 				</DropdownMenuItem>
 				{data.isPaid && (
 					<DropdownMenuItem asChild>
@@ -52,7 +52,7 @@ export function CellAction({ data }: CellActionProps) {
 							href={`/storeAdmin/${data.storeId}/order/${data.id}/refund`}
 						>
 							<IconRefresh className="size-4" />
-							{t("Refund")}
+							{t("refund")}
 						</Link>
 					</DropdownMenuItem>
 				)}
@@ -63,7 +63,7 @@ export function CellAction({ data }: CellActionProps) {
 							href={`/storeAdmin/${data.storeId}/order/${data.id}`}
 						>
 							<IconEdit className="size-4" />
-							{t("Modify")}
+							{t("modify")}
 						</Link>
 					</DropdownMenuItem>
 				)}

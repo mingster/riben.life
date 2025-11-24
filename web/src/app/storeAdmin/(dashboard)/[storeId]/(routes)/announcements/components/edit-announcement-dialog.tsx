@@ -182,7 +182,7 @@ export function EditAnnouncementDialog({
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
-							? t("Announcement") + t("Edit")
+							? t("Announcement") + t("edit")
 							: t("Announcement") + t("Create")}
 					</DialogTitle>
 					<DialogDescription>{t("Announcement_mgmt_descr")}</DialogDescription>
@@ -216,7 +216,7 @@ export function EditAnnouncementDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("Save") : t("Create")}
+								{isEditMode ? t("save") : t("Create")}
 							</Button>
 							<DialogFooter className="sm:justify-start">
 								<Button
@@ -225,7 +225,7 @@ export function EditAnnouncementDialog({
 									onClick={() => handleOpenChange(false)}
 									disabled={loading || form.formState.isSubmitting}
 								>
-									{t("Cancel")}
+									{t("cancel")}
 								</Button>
 							</DialogFooter>
 						</div>

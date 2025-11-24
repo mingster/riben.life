@@ -228,7 +228,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 			return;
 		}
 
-		let message = t("Delete_Confirm");
+		let message = t("delete_Confirm");
 
 		if (updatedOrder.isPaid) {
 			//construct message for refund
@@ -488,7 +488,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 						}}
 					>
 						<IconArrowBack className="mr-0 size-4" />
-						{t("Refund")}
+						{t("refund")}
 					</Button>
 
 					<Button
@@ -501,7 +501,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 						}}
 						className="ml-2 disabled:opacity-25"
 					>
-						{t("Cancel")}
+						{t("cancel")}
 					</Button>
 				</CardContent>
 			</Card>
@@ -526,7 +526,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 						}}
 					>
 						<IconArrowBack className="mr-0 size-4" />
-						{t("Refund")}
+						{t("refund")}
 					</Button>
 
 					<Button
@@ -539,7 +539,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 						}}
 						className="ml-2 disabled:opacity-25"
 					>
-						{t("Cancel")}
+						{t("cancel")}
 					</Button>
 				</CardContent>
 			</Card>
@@ -791,7 +791,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 								className="disabled:opacity-25"
 								type="submit"
 							>
-								{t("Save")}
+								{t("save")}
 							</Button>
 
 							{action === PageAction.Modify && (
@@ -805,7 +805,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 									}}
 									className="ml-2 disabled:opacity-25"
 								>
-									{t("Cancel")}
+									{t("cancel")}
 								</Button>
 							)}
 

@@ -140,7 +140,7 @@ export const ClientSettings = ({
 						disabled={loading || form.formState.isSubmitting}
 						className="disabled:opacity-25"
 					>
-						{t("Submit")}
+						{t("submit")}
 					</Button>
 				</form>
 			</Form>

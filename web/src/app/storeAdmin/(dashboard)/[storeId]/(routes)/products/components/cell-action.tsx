@@ -84,7 +84,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data, onDeleted }) => {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
-					<DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
+					<DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
 					<DropdownMenuItem onClick={() => onCopy(data.id)}>
 						<IconCopy className="mr-0 size-4" /> Copy Id
 					</DropdownMenuItem>
@@ -93,10 +93,10 @@ export const CellAction: React.FC<CellActionProps> = ({ data, onDeleted }) => {
 							router.push(`/storeAdmin/${params.storeId}/products/${data.id}`)
 						}
 					>
-						<IconEdit className="mr-0 size-4" /> {t("Edit")}
+						<IconEdit className="mr-0 size-4" /> {t("edit")}
 					</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => setOpen(true)}>
-						<IconTrash className="mr-0 size-4" /> {t("Delete")}
+						<IconTrash className="mr-0 size-4" /> {t("delete")}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

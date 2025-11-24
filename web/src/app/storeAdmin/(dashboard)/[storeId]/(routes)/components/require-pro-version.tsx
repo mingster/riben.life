@@ -18,7 +18,7 @@ export const RequiredProVersion = () => {
 				href={`/storeAdmin/${params.storeId}/subscribe/`}
 			>
 				<FileWarning className="size-6 text-red-500" />
-				{t("RequiredProVersion")}
+				{t("required_pro_version")}
 			</Link>
 		</div>
 	);

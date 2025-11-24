@@ -192,7 +192,7 @@ export function EditCategoryDialog({
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
-							? `${t("Edit")} ${t("Category")}`
+							? `${t("edit")} ${t("Category")}`
 							: `${t("Create")} ${t("Category")}`}
 					</DialogTitle>
 					<DialogDescription>
@@ -266,7 +266,7 @@ export function EditCategoryDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("Save") : t("Create")}
+								{isEditMode ? t("save") : t("Create")}
 							</Button>
 							<Button
 								type="button"
@@ -274,7 +274,7 @@ export function EditCategoryDialog({
 								onClick={() => handleOpenChange(false)}
 								disabled={loading || form.formState.isSubmitting}
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</DialogFooter>
 					</form>

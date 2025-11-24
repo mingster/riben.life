@@ -115,7 +115,7 @@ export function BulkAddCategoriesDialog({
 			}
 
 			toastSuccess({
-				title: t("Category") + t("Created"),
+				title: t("Category") + t("created"),
 				description: "",
 			});
 
@@ -208,7 +208,7 @@ export function BulkAddCategoriesDialog({
 										disabled={loading || form.formState.isSubmitting}
 										variant="outline"
 									>
-										{t("Cancel")}
+										{t("cancel")}
 									</Button>
 								</DialogClose>
 							</DialogFooter>

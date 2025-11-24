@@ -121,7 +121,7 @@ export const createProductOptionTemplateColumns = (
 						<div key={selection.id} className="pl-0 text-nowrap">
 							{selection.name}
 							{selection.price !== 0 && ` :(${selection.price})`}
-							{selection.isDefault && ` :(${t("Default")})`}
+							{selection.isDefault && ` :(${t("default")})`}
 						</div>
 					))}
 				</div>

@@ -141,7 +141,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 				);
 
 				toastSuccess({
-					title: t("ProductOption") + t("Updated"),
+					title: t("ProductOption") + t("updated"),
 					description: "",
 				});
 			}
@@ -152,7 +152,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 			);
 
 			toastSuccess({
-				title: t("ProductOption") + t("Created"),
+				title: t("ProductOption") + t("created"),
 				description: "",
 			});
 		}
@@ -406,7 +406,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 
 						<div className="flex w-full items-center justify-end space-x-2 pt-6">
 							<Button disabled={form.formState.isSubmitting} type="submit">
-								{action === "Create" ? t("Create") : t("Update")}
+								{action === "Create" ? t("Create") : t("update")}
 							</Button>
 
 							<DialogFooter className="sm:justify-start">
@@ -415,7 +415,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 										disabled={form.formState.isSubmitting}
 										variant="outline"
 									>
-										{t("Cancel")}
+										{t("cancel")}
 									</Button>
 								</DialogClose>
 							</DialogFooter>

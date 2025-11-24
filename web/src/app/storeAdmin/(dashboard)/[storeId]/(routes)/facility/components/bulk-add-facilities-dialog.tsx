@@ -98,7 +98,7 @@ export function BulkAddFacilitiesDialog({
 			onCreatedMany?.(createdFacilities);
 
 			toastSuccess({
-				title: t("Facility") + t("Created"),
+				title: t("Facility") + t("created"),
 				description: "",
 			});
 
@@ -336,7 +336,7 @@ export function BulkAddFacilitiesDialog({
 										variant="outline"
 										type="button"
 									>
-										{t("Cancel")}
+										{t("cancel")}
 									</Button>
 								</DialogClose>
 							</DialogFooter>

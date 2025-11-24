@@ -69,7 +69,7 @@ export function CellAction({ data, onUpdated, onDeleted }: CellActionProps) {
 		try {
 			await navigator.clipboard.writeText(data.id);
 			toastSuccess({
-				title: t("Copy"),
+				title: t("copy"),
 				description: data.id,
 			});
 		} catch (error: unknown) {
@@ -96,9 +96,9 @@ export function CellAction({ data, onUpdated, onDeleted }: CellActionProps) {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
-					<DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
+					<DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
 					<DropdownMenuItem onClick={handleCopy}>
-						<IconCopy className="mr-0 size-4" /> {t("Copy")}
+						<IconCopy className="mr-0 size-4" /> {t("copy")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						onSelect={(event) => {
@@ -106,13 +106,13 @@ export function CellAction({ data, onUpdated, onDeleted }: CellActionProps) {
 							setIsEditOpen(true);
 						}}
 					>
-						<IconEdit className="mr-0 size-4" /> {t("Edit")}
+						<IconEdit className="mr-0 size-4" /> {t("edit")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						onClick={() => setIsConfirmOpen(true)}
 						className="text-red-600 focus:text-red-600"
 					>
-						<IconTrash className="mr-0 size-4" /> {t("Delete")}
+						<IconTrash className="mr-0 size-4" /> {t("delete")}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

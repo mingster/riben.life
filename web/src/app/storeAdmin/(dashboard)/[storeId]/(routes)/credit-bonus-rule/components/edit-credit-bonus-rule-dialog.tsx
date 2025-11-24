@@ -321,7 +321,7 @@ export function EditCreditBonusRuleDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("Save") : t("Create")}
+								{isEditMode ? t("save") : t("Create")}
 							</Button>
 							<Button
 								type="button"
@@ -329,7 +329,7 @@ export function EditCreditBonusRuleDialog({
 								onClick={() => handleOpenChange(false)}
 								disabled={loading || form.formState.isSubmitting}
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</DialogFooter>
 					</form>

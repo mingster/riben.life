@@ -213,7 +213,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 				{trigger ?? (
 					<Button variant="outline">
 						<IconPlus className="mr-0 size-4" />
-						{isNew ? t("Create") : t("Edit")}
+						{isNew ? t("Create") : t("edit")}
 					</Button>
 				)}
 			</DialogTrigger>
@@ -367,7 +367,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 									? t("Saving...")
 									: isNew
 										? t("Create")
-										: t("Save")}
+										: t("save")}
 							</Button>
 							<Button
 								variant="outline"
@@ -375,7 +375,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 								disabled={loading}
 								onClick={() => handleOpenChange(false)}
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</DialogFooter>
 					</form>

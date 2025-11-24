@@ -232,7 +232,7 @@ export function EditProductOptionTemplateDialog({
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
-							? t("ProductOption_template") + t("Edit")
+							? t("ProductOption_template") + t("edit")
 							: t("ProductOption_template") + t("Create")}
 					</DialogTitle>
 					<DialogDescription>
@@ -478,7 +478,7 @@ export function EditProductOptionTemplateDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("Save") : t("Create")}
+								{isEditMode ? t("save") : t("Create")}
 							</Button>
 							<DialogFooter className="sm:justify-start">
 								<Button
@@ -487,7 +487,7 @@ export function EditProductOptionTemplateDialog({
 									onClick={() => handleOpenChange(false)}
 									disabled={loading || form.formState.isSubmitting}
 								>
-									{t("Cancel")}
+									{t("cancel")}
 								</Button>
 							</DialogFooter>
 						</div>

@@ -43,7 +43,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 			);
 
 			toastSuccess({
-				title: t("FaqCategory") + t("Deleted"),
+				title: t("FaqCategory") + t("deleted"),
 				description: "",
 			});
 			router.refresh();
@@ -83,7 +83,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
-					<DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
+					<DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
 					<DropdownMenuItem
 						className="cursor-pointer"
 						onClick={() => onCopy(data.faqCategoryId)}
@@ -110,13 +110,13 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 							)
 						}
 					>
-						<Edit className="mr-0 size-4" /> {t("Edit")}
+						<Edit className="mr-0 size-4" /> {t("edit")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						className="cursor-pointer"
 						onClick={() => setOpen(true)}
 					>
-						<Trash className="mr-0 size-4" /> {t("Delete")}
+						<Trash className="mr-0 size-4" /> {t("delete")}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

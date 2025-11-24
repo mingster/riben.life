@@ -199,7 +199,7 @@ export function BulkCreateProductsDialog({
 								disabled={loading}
 								onClick={() => handleOpenChange(false)}
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 							<Button
 								type="submit"

@@ -158,7 +158,7 @@ export const CategoryEditProductTab = ({
 		});
 
 		toastSuccess({
-			title: t("Category") + t("Added"),
+			title: t("Category") + t("added"),
 			description: "",
 		});
 
@@ -185,7 +185,7 @@ export const CategoryEditProductTab = ({
 						className="disabled:opacity-25"
 						onClick={saveData}
 					>
-						{t("Add")}
+						{t("add")}
 					</Button>
 
 					<Button
@@ -198,7 +198,7 @@ export const CategoryEditProductTab = ({
 						}}
 						className="ml-5"
 					>
-						{t("Cancel")}
+						{t("cancel")}
 					</Button>
 				</CardContent>
 			</Card>

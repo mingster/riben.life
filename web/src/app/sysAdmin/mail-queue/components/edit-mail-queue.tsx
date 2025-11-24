@@ -306,7 +306,7 @@ export const EditMailQueue: React.FC<props> = ({ item, onUpdated, isNew }) => {
 								disabled={loading || form.formState.isSubmitting}
 								className="disabled:opacity-25"
 							>
-								{t("Submit")}
+								{t("submit")}
 							</Button>
 							<Button
 								type="button"
@@ -318,7 +318,7 @@ export const EditMailQueue: React.FC<props> = ({ item, onUpdated, isNew }) => {
 								}}
 								className="ml-2"
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</form>
 					</Form>

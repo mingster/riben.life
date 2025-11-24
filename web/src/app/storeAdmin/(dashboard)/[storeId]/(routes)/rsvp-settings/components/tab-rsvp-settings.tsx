@@ -615,7 +615,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								}
 								className="disabled:opacity-25"
 							>
-								{t("Save")}
+								{t("save")}
 							</Button>
 							<Button
 								type="button"
@@ -623,7 +623,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								onClick={() => form.reset(defaultValues)}
 								disabled={loading || form.formState.isSubmitting}
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</div>
 					</form>

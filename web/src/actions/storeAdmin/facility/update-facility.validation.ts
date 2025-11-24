@@ -10,7 +10,7 @@ export const updateFacilitySchema = z.object({
 	defaultDuration: z.coerce
 		.number()
 		.int()
-		.min(1, "Default Duration is required"),
+		.min(0, "Default Duration must be 0 or greater"),
 	businessHours: z.string().optional().nullable(),
 });
 export type UpdateFacilityInput = z.infer<typeof updateFacilitySchema>;

@@ -157,7 +157,7 @@ export const ProductEditTabs = ({
 				</div>
 				{initialData && (
 					<Button
-						title={t("Delete")}
+						title={t("delete")}
 						disabled={loading}
 						variant="destructive"
 						size="sm"
