@@ -80,6 +80,7 @@ export default async function StoreHomeLayout(props: {
 				orderBy: { sortOrder: "asc" },
 			},
 			StoreAnnouncement: true,
+			rsvpSettings: true,
 		},
 	})) as Store;
 

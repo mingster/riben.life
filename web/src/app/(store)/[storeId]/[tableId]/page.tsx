@@ -7,10 +7,13 @@ import { redirect } from "next/navigation";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import { formatDate } from "date-fns";
 import { StoreHomeContent } from "../components/store-home-content";
+import { getT } from "@/app/i18n";
 
 type Params = Promise<{ storeId: string; tableId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
+// customer scan table QR code, which redirect to this page.
+//
 export default async function TableOrderPage(props: {
 	params: Params;
 	searchParams: SearchParams;
@@ -46,15 +49,15 @@ export default async function TableOrderPage(props: {
 			closed_descr = `${formatDate(nextOpeningDate, "yyyy-MM-dd")} ${nextOpeningHour}`;
 		}
 	}
+	const { t } = await getT("tw", "translation");
 
 	return (
 		<Container>
 			{!isStoreOpen ? (
 				<>
-					<h1>目前店休，無法接受訂單</h1>
+					<h1>{t("store_closed")}</h1>
 					<div>
-						下次開店時間:
-						{closed_descr}
+						{t("store_next_opening_hours")}:{closed_descr}
 					</div>
 				</>
 			) : (

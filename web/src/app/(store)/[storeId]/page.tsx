@@ -11,8 +11,13 @@ import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { isReservedRoute } from "@/lib/reserved-routes";
 import type { StoreWithProductNCategories } from "@/types";
-import type { StoreSettings } from "@prisma/client";
+import type {
+	RsvpSettings,
+	StoreFacility,
+	StoreSettings,
+} from "@prisma/client";
 import { formatDate } from "date-fns";
+import { getT } from "@/app/i18n";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -28,29 +33,62 @@ export default async function StoreHomePage(props: {
 		redirect("/");
 	}
 
-	let store;
+	// Fetch store, storeSettings, and rsvpSettings in parallel for better performance
+	let store: Awaited<ReturnType<typeof getStoreWithProducts>>;
+	let storeSettings: StoreSettings | null;
+	let rsvpSettings: RsvpSettings | null;
+
 	try {
-		store = await getStoreWithProducts(params.storeId);
+		[store, storeSettings, rsvpSettings] = await Promise.all([
+			getStoreWithProducts(params.storeId),
+			sqlClient.storeSettings.findFirst({
+				where: { storeId: params.storeId },
+			}),
+			sqlClient.rsvpSettings.findFirst({
+				where: { storeId: params.storeId },
+			}),
+		]);
+
+		// Store is guaranteed to exist here due to getStoreWithProducts throwing if not found
+		if (!store) {
+			logger.error("Store is null after fetch", {
+				metadata: { storeId: params.storeId },
+				tags: ["store", "page-load", "error"],
+			});
+			redirect("/unv");
+		}
+
+		transformDecimalsToNumbers(store);
+
+		// Transform decimals for settings if they exist
+		if (rsvpSettings) {
+			transformDecimalsToNumbers(rsvpSettings);
+		}
 	} catch (error) {
-		logger.error(`Failed to load store: ${params.storeId}`);
+		logger.error("Failed to load store or settings", {
+			metadata: {
+				storeId: params.storeId,
+				error: error instanceof Error ? error.message : String(error),
+				stack: error instanceof Error ? error.stack : undefined,
+			},
+			tags: ["store", "page-load", "error"],
+		});
 		// Redirect to homepage or a "store not found" page
 		redirect("/unv");
 	}
 
-	const isProduction = process.env.NODE_ENV === "production";
-	if (!isProduction) {
-		// server logging
-		//logger.info(store);
-	}
-
-	// Store is guaranteed to exist here due to try-catch above
-	transformDecimalsToNumbers(store);
-
-	const storeSettings = (await sqlClient.storeSettings.findFirst({
-		where: {
+	// Ensure storeSettings exists (should always exist, but handle gracefully)
+	if (!storeSettings) {
+		logger.warn("Store settings not found", {
+			metadata: { storeId: params.storeId },
+			tags: ["store", "settings", "warning"],
+		});
+		// Create a minimal storeSettings object to prevent errors
+		storeSettings = {
 			storeId: params.storeId,
-		},
-	})) as StoreSettings;
+			businessHours: null,
+		} as StoreSettings;
+	}
 
 	/*
 const { t } = await useTranslation(store?.defaultLocale || "en");
@@ -77,24 +115,22 @@ const { t } = await useTranslation(store?.defaultLocale || "en");
 
 	//console.log(`closed_descr: ${closed_descr}`);
 	//console.log(`isStoreOpen: ${isStoreOpen}`);
+	const { t } = await getT("tw", "translation");
 
 	return (
 		<Container>
 			{!isStoreOpen ? (
 				<>
-					<h1>目前店休，無法接受訂單</h1>
+					<h1>{t("store_closed")}</h1>
 					<div>
-						下次開店時間:
-						{closed_descr}
+						{t("store_next_opening_hours")}: {closed_descr}
 					</div>
 				</>
 			) : (
-				<>
-					<StoreHomeContent
-						storeData={store as StoreWithProductNCategories}
-						storeSettings={storeSettings as StoreSettings}
-					/>
-				</>
+				<StoreHomeContent
+					storeData={store as StoreWithProductNCategories}
+					storeSettings={storeSettings as StoreSettings}
+				/>
 			)}
 		</Container>
 	);

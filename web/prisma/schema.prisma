@@ -605,7 +605,7 @@ model Store {
   StoreProductOptionTemplate StoreProductOptionTemplate[]
   Rsvp                       Rsvp[]
   StoreSettings              StoreSettings?
-  rsvpSettings               RsvpSettings[]
+  rsvpSettings               RsvpSettings?
   rsvpBlacklists             RsvpBlacklist[]
   rsvpTags                   RsvpTag[]
   CustomerCredits            CustomerCredit[]
@@ -665,7 +665,7 @@ model StoreSettings {
 
 model RsvpSettings {
   id      String @id @default(uuid())
-  storeId String
+  storeId String @unique
 
   acceptReservation Boolean  @default(true) // turn on/off the reservation system
   prepaidRequired   Boolean  @default(false) //預付制：儲值後才可預約 / //訂位需付訂金
