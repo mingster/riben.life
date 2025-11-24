@@ -8,23 +8,48 @@ import { sqlClient } from "./prismadb";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// Create Pino logger with conditional configuration
-const pinoLogger = isProduction
-	? pino({
-			level: process.env.LOG_LEVEL || "info",
-		})
-	: pino({
-			transport: {
-				target: "pino-pretty",
-				options: {
-					colorize: true, // Enables colored output
-					colorizeObjects: true, //--colorizeObjects
-					translateTime: true, // Adds timestamps
-					ignore: "pid,hostname", // Removes unnecessary fields
-				},
-			},
-			level: "debug", // Default level for development
-		});
+// Fix MaxListenersExceededWarning for pino-pretty in development
+// pino-pretty writes to stdout/stderr, and hot reloading can add multiple listeners
+// Check if process.stdout/stderr exist (may be undefined in edge runtime or certain contexts)
+if (!isProduction && typeof process !== "undefined") {
+	if (process.stdout && typeof process.stdout.setMaxListeners === "function") {
+		process.stdout.setMaxListeners(20);
+	}
+	if (process.stderr && typeof process.stderr.setMaxListeners === "function") {
+		process.stderr.setMaxListeners(20);
+	}
+}
+
+// Singleton pattern for Pino logger
+// Store instance in global to persist across hot reloads in development
+const globalForPino = globalThis as unknown as {
+	pinoLogger?: ReturnType<typeof pino>;
+};
+
+function getPinoLogger() {
+	if (!globalForPino.pinoLogger) {
+		globalForPino.pinoLogger = isProduction
+			? pino({
+					level: process.env.LOG_LEVEL || "info",
+				})
+			: pino({
+					transport: {
+						target: "pino-pretty",
+						options: {
+							colorize: true, // Enables colored output
+							colorizeObjects: true, //--colorizeObjects
+							translateTime: true, // Adds timestamps
+							ignore: "pid,hostname", // Removes unnecessary fields
+						},
+					},
+					level: "debug", // Default level for development
+				});
+	}
+	return globalForPino.pinoLogger;
+}
+
+// Create Pino logger singleton instance
+const pinoLogger = getPinoLogger();
 
 interface LogEntry {
 	level: "error" | "warn" | "info" | "debug";
@@ -361,11 +386,24 @@ class Logger {
 	}
 }
 
-// Create default logger instance
-const logger = new Logger({
-	service: "web",
-	environment: process.env.NODE_ENV,
-	version: process.env.npm_package_version,
-});
+// Singleton pattern for Logger instance
+// Store instance in global to persist across hot reloads in development
+const globalForLogger = globalThis as unknown as {
+	logger?: Logger;
+};
+
+function getLogger(): Logger {
+	if (!globalForLogger.logger) {
+		globalForLogger.logger = new Logger({
+			service: "web",
+			environment: process.env.NODE_ENV,
+			version: process.env.npm_package_version,
+		});
+	}
+	return globalForLogger.logger;
+}
+
+// Create default logger singleton instance
+const logger = getLogger();
 
 export default logger;
