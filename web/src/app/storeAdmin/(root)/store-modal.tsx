@@ -159,6 +159,9 @@ export const StoreModal: React.FC = () => {
 					description: "",
 				});
 
+				// Reset form
+				form.reset();
+
 				// Close modal
 				storeModal.onClose();
 

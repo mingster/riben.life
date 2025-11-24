@@ -19,7 +19,9 @@ export default async function StoreAdminLayout(props: {
 	// Require authentication
 	const session = await requireAuth();
 
-	// Allow owner, staff, storeAdmin, or sysAdmin (sysAdmin can also be store owners)
+	// Allow owner, staff, storeAdmin, user, or sysAdmin
+	// - user role can access to create stores (will be upgraded to owner after creation)
+	// - sysAdmin can also be store owners
 	// If sysAdmin doesn't own stores, redirect to sysAdmin interface
 	if (session.user.role === Role.sysAdmin) {
 		// Check if sysAdmin owns any stores
@@ -36,8 +38,9 @@ export default async function StoreAdminLayout(props: {
 		}
 		// Otherwise, allow access (sysAdmin can access their stores)
 	} else {
-		// Require allowed roles for non-sysAdmin users (owner, staff, or storeAdmin)
-		requireRole(session, [Role.owner, Role.staff, Role.storeAdmin]);
+		// Require allowed roles for non-sysAdmin users (owner, staff, storeAdmin, or user)
+		// user role is allowed to access /storeAdmin root to create stores
+		requireRole(session, [Role.owner, Role.staff, Role.storeAdmin, Role.user]);
 	}
 
 	//const ownerId = session.user?.id;
