@@ -364,7 +364,7 @@ Development standards and conventions are documented in `.cursor/rules/`:
 
 ### Framework Documentation
 
-- [Next.js 15 Documentation](https://nextjs.org/docs) - App Router, Server Components, Server Actions
+- [Next.js Documentation](https://nextjs.org/docs) - App Router, Server Components, Server Actions
 - [React 19 Documentation](https://react.dev) - Latest React features
 - [Bun Documentation](https://bun.sh/docs) - Runtime and package manager
 - [TypeScript Documentation](https://www.typescriptlang.org/docs) - Type system
