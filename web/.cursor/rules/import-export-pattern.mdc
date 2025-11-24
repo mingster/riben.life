@@ -1,0 +1,617 @@
+---
+description: Standard pattern for implementing import/export functionality for CRUD resources
+globs: 
+alwaysApply: false
+---
+
+# Import/Export Pattern
+
+This rule defines the standard pattern for implementing import/export functionality for CRUD resources in the store admin section.
+
+## Overview
+
+The import/export pattern allows users to:
+
+- **Export**: Download data as a JSON file
+- **Import**: Upload a JSON file to restore/update data
+
+## File Structure
+
+### API Routes
+
+Create API routes in `web/src/app/api/storeAdmin/[storeId]/RESOURCE/`:
+
+```
+api/storeAdmin/[storeId]/RESOURCE/
+├── export/route.ts      # Export endpoint
+└── import/route.ts      # Import endpoint
+```
+
+### Client Components
+
+Add import/export components in the resource's components directory:
+
+``` dtd
+app/storeAdmin/.../RESOURCE/components/
+├── client-resource.tsx           # Main client component (add export/import buttons)
+└── import-resource-dialog.tsx    # Import dialog component
+```
+
+## Export Implementation
+
+### API Route (`export/route.ts`)
+
+```typescript
+import { NextResponse } from "next/server";
+import { sqlClient } from "@/lib/prismadb";
+import logger from "@/lib/logger";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import { getUtcNow } from "@/utils/datetime-utils";
+import { transformDecimalsToNumbers } from "@/utils/utils";
+
+export async function POST(
+ _req: Request,
+ props: { params: Promise<{ storeId: string }> },
+) {
+ const params = await props.params;
+
+ try {
+  CheckStoreAdminApiAccess(params.storeId);
+
+  // Fetch all resources for this store
+  const resources = await sqlClient.resource.findMany({
+   where: {
+    storeId: params.storeId,
+   },
+  });
+
+  // Prepare file name using UTC methods
+  const now = getUtcNow();
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const fileName = `resource-backup-${params.storeId}-${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}-${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}.json`;
+
+  // Transform Decimal fields to numbers for JSON serialization
+  transformDecimalsToNumbers(resources);
+
+  // Convert to JSON string
+  const jsonContent = JSON.stringify(resources, null, 2);
+
+  // Return file as download
+  return new NextResponse(jsonContent, {
+   headers: {
+    "Content-Type": "application/json",
+    "Content-Disposition": `attachment; filename="${fileName}"`,
+   },
+  });
+ } catch (error: unknown) {
+  logger.error("resource export", {
+   metadata: {
+    storeId: params.storeId,
+    error: error instanceof Error ? error.message : String(error),
+   },
+   tags: ["api", "error"],
+  });
+  return NextResponse.json(
+   { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+   { status: 500 },
+  );
+ }
+}
+```
+
+### Client Export Handler
+
+```typescript
+import { IconDownload, IconLoader } from "@tabler/icons-react";
+import { useParams } from "next/navigation";
+import { useState, useCallback } from "react";
+import { toastError, toastSuccess } from "@/components/toaster";
+
+const [exporting, setExporting] = useState(false);
+
+const handleExport = useCallback(async () => {
+ setExporting(true);
+ try {
+  const res = await fetch(
+   `/api/storeAdmin/${params.storeId}/resource/export`,
+   {
+    method: "POST",
+   },
+  );
+
+  // Check if response is an error (JSON error response)
+  const contentType = res.headers.get("content-type");
+  if (contentType?.includes("application/json")) {
+   const text = await (await res.blob()).text();
+   const errorData = JSON.parse(text);
+   toastError({
+    title: t("export_failed") || "Export failed",
+    description: errorData.error || "Unknown error",
+   });
+   return;
+  }
+
+  // Get filename from Content-Disposition header or use default
+  const contentDisposition = res.headers.get("content-disposition");
+  let fileName = `resource-backup-${params.storeId}.json`;
+  if (contentDisposition) {
+   const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+   if (fileNameMatch) {
+    fileName = fileNameMatch[1];
+   }
+  }
+
+  // Create blob and download
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+
+  toastSuccess({
+   title: t("exported") || "Exported",
+   description: fileName,
+  });
+ } catch (err: unknown) {
+  // Handle axios errors
+  if (err instanceof Error) {
+   toastError({
+    title: t("export_failed") || "Export failed",
+    description: err.message,
+   });
+  }
+ } finally {
+  setExporting(false);
+ }
+}, [params.storeId, t]);
+
+// In JSX:
+<Button
+ onClick={handleExport}
+ disabled={exporting}
+ variant="outline"
+>
+ {exporting ? (
+  <>
+   <IconLoader className="mr-2 h-4 w-4 animate-spin" />
+   {t("exporting") || "Exporting..."}
+  </>
+ ) : (
+  <>
+   <IconDownload className="mr-0 size-4" />
+   {t("export") || "Export"}
+  </>
+ )}
+</Button>
+```
+
+## Import Implementation
+
+### API Route (`import/route.ts`)
+
+```typescript
+import { NextResponse } from "next/server";
+import { sqlClient } from "@/lib/prismadb";
+import logger from "@/lib/logger";
+import { CheckStoreAdminApiAccess } from "../../../api_helper";
+import { Prisma } from "@prisma/client";
+
+export async function POST(
+ req: Request,
+ props: { params: Promise<{ storeId: string }> },
+) {
+ const params = await props.params;
+ const log = logger.child({ module: "resource-import" });
+
+ try {
+  // Check access first
+  const accessCheck = await CheckStoreAdminApiAccess(params.storeId);
+  if (accessCheck instanceof NextResponse) {
+   return accessCheck;
+  }
+  if (accessCheck !== true) {
+   return NextResponse.json(
+    { success: false, error: "Unauthorized" },
+    { status: 403 },
+   );
+  }
+
+  // Check Content-Type header
+  const contentType = req.headers.get("content-type") || "";
+  log.info("Import request received", {
+   metadata: {
+    storeId: params.storeId,
+    contentType,
+   },
+   tags: ["resource", "import"],
+  });
+
+  let file: File | null = null;
+
+  // Try to parse as FormData first (multipart/form-data)
+  if (contentType.includes("multipart/form-data")) {
+   try {
+    const formData = await req.formData();
+    file = formData.get("file") as File | null;
+   } catch (formDataError: unknown) {
+    log.error("Failed to parse FormData", {
+     metadata: {
+      storeId: params.storeId,
+      contentType,
+      error: formDataError instanceof Error ? formDataError.message : String(formDataError),
+     },
+     tags: ["resource", "import", "error"],
+    });
+    return NextResponse.json(
+     {
+      success: false,
+      error: `Failed to parse FormData: ${formDataError instanceof Error ? formDataError.message : "Unknown error"}`,
+     },
+     { status: 400 },
+    );
+   }
+  } else if (contentType.includes("application/json")) {
+   // Fallback: Accept JSON with base64 encoded file
+   const body = await req.json();
+   if (body.fileData && body.fileName) {
+    // Remove data URL prefix if present (data:application/json;base64,...)
+    const base64Data = body.fileData.includes(",")
+     ? body.fileData.split(",")[1]
+     : body.fileData;
+
+    // Convert base64 to Buffer (Node.js)
+    const buffer = Buffer.from(base64Data, "base64");
+    // Convert Buffer to File-like object
+    file = new File([buffer], body.fileName, { type: "application/json" });
+   } else {
+    return NextResponse.json(
+     {
+      success: false,
+      error: "File data not found in request. Expected 'fileData' and 'fileName' fields.",
+     },
+     { status: 400 },
+    );
+   }
+  } else {
+   return NextResponse.json(
+    {
+     success: false,
+     error: `Unsupported Content-Type: ${contentType || "none"}. Expected multipart/form-data or application/json.`,
+    },
+    { status: 400 },
+   );
+  }
+
+  if (!file) {
+   return NextResponse.json(
+    { success: false, error: "File is required" },
+    { status: 400 },
+   );
+  }
+
+  // Read file content
+  const fileContent = await file.text();
+  const resources = JSON.parse(fileContent);
+
+  if (!Array.isArray(resources)) {
+   return NextResponse.json(
+    { success: false, error: "Invalid file format" },
+    { status: 400 },
+   );
+  }
+
+  // Process each resource (upsert logic)
+  for (const resource of resources) {
+   // Validate required fields
+   if (!resource.requiredField) {
+    continue;
+   }
+
+   // Upsert logic here
+   // ... (follow CRUD pattern for upsert)
+  }
+
+  return NextResponse.json({ success: true });
+ } catch (error: unknown) {
+  log.error(error instanceof Error ? error : new Error(String(error)), {
+   message: "Failed to import resources",
+   metadata: { storeId: params.storeId },
+   tags: ["resource", "import", "error"],
+   service: "resource-import",
+   environment: process.env.NODE_ENV,
+   version: process.env.npm_package_version,
+  });
+  return NextResponse.json(
+   {
+    success: false,
+    error: error instanceof Error ? error.message : "Unknown error",
+   },
+   { status: 500 },
+  );
+ }
+}
+```
+
+### Import Dialog Component (`import-resource-dialog.tsx`)
+
+```typescript
+"use client";
+
+import { useTranslation } from "@/app/i18n/client";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
+import {
+ Dialog,
+ DialogContent,
+ DialogDescription,
+ DialogFooter,
+ DialogHeader,
+ DialogTitle,
+ DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useI18n } from "@/providers/i18n-provider";
+import { IconLoader, IconUpload } from "@tabler/icons-react";
+import { useParams } from "next/navigation";
+import { useRef, useState } from "react";
+
+interface ImportResourceDialogProps {
+ onImported?: () => void;
+}
+
+export function ImportResourceDialog({
+ onImported,
+}: ImportResourceDialogProps) {
+ const params = useParams<{ storeId: string }>();
+ const { lng } = useI18n();
+ const { t } = useTranslation(lng);
+
+ const [open, setOpen] = useState(false);
+ const [importing, setImporting] = useState(false);
+ const fileInputRef = useRef<HTMLInputElement>(null);
+ const [selectedFileName, setSelectedFileName] = useState<string>("");
+
+ const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (file) {
+   setSelectedFileName(file.name);
+  } else {
+   setSelectedFileName("");
+  }
+ };
+
+ const handleImport = async () => {
+  const file = fileInputRef.current?.files?.[0];
+  if (!file) {
+   toastError({
+    title: t("Error"),
+    description: "Please select a file to import",
+   });
+   return;
+  }
+
+  setImporting(true);
+  try {
+   // Read file as base64 and send as JSON (workaround for Content-Type issues)
+   const fileContent = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+     if (typeof reader.result === "string") {
+      resolve(reader.result);
+     } else {
+      reject(new Error("Failed to read file"));
+     }
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+   });
+
+   const res = await fetch(
+    `/api/storeAdmin/${params.storeId}/resource/import`,
+    {
+     method: "POST",
+     headers: {
+      "Content-Type": "application/json",
+     },
+     body: JSON.stringify({
+      fileData: fileContent,
+      fileName: file.name,
+     }),
+    },
+   );
+
+   if (!res.ok) {
+    const errorData = await res.json().catch(() => ({
+     error: `HTTP ${res.status}: ${res.statusText}`,
+    }));
+    throw new Error(errorData.error || "Import failed");
+   }
+
+   const data = await res.json();
+   if (data?.success) {
+    toastSuccess({
+     title: t("imported") || "Imported",
+     description: file.name,
+    });
+    setOpen(false);
+    setSelectedFileName("");
+    if (fileInputRef.current) {
+     fileInputRef.current.value = "";
+    }
+    onImported?.();
+   } else {
+    toastError({
+     title: t("import_failed") || "Import failed",
+     description: data?.error || "Unknown error",
+    });
+   }
+  } catch (err: unknown) {
+   toastError({
+    title: t("import_failed") || "Import failed",
+    description: err instanceof Error ? err.message : "Unknown error",
+   });
+  } finally {
+   setImporting(false);
+  }
+ };
+
+ const handleOpenChange = (nextOpen: boolean) => {
+  setOpen(nextOpen);
+  if (!nextOpen) {
+   setSelectedFileName("");
+   if (fileInputRef.current) {
+    fileInputRef.current.value = "";
+   }
+  }
+ };
+
+ return (
+  <Dialog open={open} onOpenChange={handleOpenChange}>
+   <DialogTrigger asChild>
+    <Button variant="outline">
+     <IconUpload className="mr-0 size-4" />
+     {t("import") || "Import"}
+    </Button>
+   </DialogTrigger>
+   <DialogContent className="sm:max-w-md">
+    <DialogHeader>
+     <DialogTitle>{t("import") || "Import Resources"}</DialogTitle>
+     <DialogDescription>
+      {t("import_resource_descr") ||
+       "Upload a JSON file to import resources."}
+     </DialogDescription>
+    </DialogHeader>
+
+    <div className="space-y-4 py-4">
+     <div className="space-y-2">
+      <Label htmlFor="file-upload">
+       {t("Select_file") || "Select File"}
+      </Label>
+      <Input
+       id="file-upload"
+       ref={fileInputRef}
+       type="file"
+       accept=".json,application/json"
+       onChange={handleFileChange}
+       disabled={importing}
+       className="cursor-pointer"
+      />
+      {selectedFileName && (
+       <p className="text-sm text-muted-foreground">
+        {selectedFileName}
+       </p>
+      )}
+     </div>
+    </div>
+
+    <DialogFooter>
+     <Button
+      variant="outline"
+      onClick={() => handleOpenChange(false)}
+      disabled={importing}
+     >
+      {t("Cancel")}
+     </Button>
+     <Button
+      onClick={handleImport}
+      disabled={importing || !selectedFileName}
+     >
+      {importing ? (
+       <>
+        <IconLoader className="mr-2 h-4 w-4 animate-spin" />
+        {t("importing") || "Importing..."}
+       </>
+      ) : (
+       t("Import") || "Import"
+      )}
+     </Button>
+    </DialogFooter>
+   </DialogContent>
+  </Dialog>
+ );
+}
+```
+
+## Key Patterns
+
+### 1. Export Pattern
+
+- **File Download**: Returns file directly with `Content-Disposition: attachment` header
+- **Filename**: Use UTC timestamp format: `resource-backup-{storeId}-{YYYYMMDD}-{HHMMSS}.json`
+- **Decimal Handling**: Use `transformDecimalsToNumbers()` to convert Prisma Decimal to number
+- **Error Handling**: Return JSON error response if export fails
+
+### 2. Import Pattern
+
+- **Dual Format Support**: Accept both `multipart/form-data` (FormData) and `application/json` (base64)
+- **File Reading**: Use `file.text()` to read JSON content
+- **Validation**: Validate file format (must be array) before processing
+- **Upsert Logic**: Follow standard CRUD upsert pattern (check by ID, then by unique constraint)
+- **Error Handling**: Log errors and return user-friendly error messages
+
+### 3. Client-Side Patterns
+
+- **Export**: Use `fetch` with blob response, create download link programmatically
+- **Import**: Read file as base64 using `FileReader.readAsDataURL()`, send as JSON
+- **Loading States**: Show spinner during export/import operations
+- **Toast Notifications**: Use `toastSuccess` and `toastError` for user feedback
+- **File Input**: Use controlled file input with ref for reset functionality
+
+## Best Practices
+
+### ✅ DO
+
+1. **Use UTC timestamps** for export filenames using `getUtcNow()` and UTC date methods
+2. **Transform Decimal fields** using `transformDecimalsToNumbers()` before JSON serialization
+3. **Validate file format** before processing (check if array, validate required fields)
+4. **Handle both import formats** (FormData and JSON) for compatibility
+5. **Log operations** with structured logging including storeId and error details
+6. **Show loading states** during export/import operations
+7. **Reset file input** after successful import or dialog close
+8. **Use proper error handling** with try-catch and user-friendly error messages
+
+### ❌ DON'T
+
+1. **Don't manually set Content-Type** when using FormData with fetch (browser handles it)
+2. **Don't forget to transform Decimal** fields before JSON serialization
+3. **Don't skip validation** - always validate file format and required fields
+4. **Don't consume request body** before parsing FormData (check access first, then parse)
+5. **Don't forget error handling** - wrap operations in try-catch blocks
+6. **Don't use `atob` in server code** - use Node.js `Buffer.from()` instead
+
+## Example: Complete Implementation
+
+See the Facility import/export implementation as the canonical example:
+
+- **Export API**: `web/src/app/api/storeAdmin/[storeId]/facility/export/route.ts`
+- **Import API**: `web/src/app/api/storeAdmin/[storeId]/facility/import/route.ts`
+- **Import Dialog**: `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/facility/components/import-facility-dialog.tsx`
+- **Client Component**: `web/src/app/storeAdmin/(dashboard)/[storeId]/(routes)/facility/components/client-facility.tsx`
+
+## Translation Keys
+
+Add these translation keys to `translation.json`:
+
+```json
+{
+  "export": "Export",
+  "exported": "Exported",
+  "exporting": "Exporting...",
+  "export_failed": "Export Failed",
+  "import": "Import",
+  "imported": "Imported",
+  "importing": "Importing...",
+  "import_failed": "Import Failed",
+  "Select_file": "Select File",
+  "import_resource_descr": "Upload a JSON file to import resources."
+}
+```
+
+## Summary
+
+This pattern provides a consistent, reusable approach for implementing import/export functionality across all CRUD resources. It handles edge cases (Content-Type issues, Decimal serialization, error handling) and provides a good user experience with loading states and clear error messages.

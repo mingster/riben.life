@@ -12,18 +12,12 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useI18n } from "@/providers/i18n-provider";
 import { IconLoader, IconUpload } from "@tabler/icons-react";
-import axios from "axios";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 
 interface ImportFacilityDialogProps {
 	onImported?: () => void;
@@ -38,50 +32,85 @@ export function ImportFacilityDialog({
 
 	const [open, setOpen] = useState(false);
 	const [importing, setImporting] = useState(false);
-	const [backupFiles, setBackupFiles] = useState<string[]>([]);
-	const [selectedFile, setSelectedFile] = useState<string>("");
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [selectedFileName, setSelectedFileName] = useState<string>("");
 
-	// Fetch backup file list when dialog opens
-	useEffect(() => {
-		if (open) {
-			axios
-				.get(`/api/storeAdmin/${params.storeId}/facility/list-backups`)
-				.then((res) => {
-					setBackupFiles(res.data.files || []);
-				})
-				.catch(() => setBackupFiles([]));
+	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (file) {
+			setSelectedFileName(file.name);
+		} else {
+			setSelectedFileName("");
 		}
-	}, [open, params.storeId]);
+	};
 
 	const handleImport = async () => {
-		if (!selectedFile) {
+		const file = fileInputRef.current?.files?.[0];
+		if (!file) {
 			toastError({
 				title: t("Error"),
-				description: "Please select a backup file",
+				description: "Please select a file to import",
 			});
 			return;
 		}
 
 		setImporting(true);
 		try {
-			const res = await axios.post(
+			// Read file as base64 and send as JSON (workaround for Content-Type issues)
+			const fileContent = await new Promise<string>((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onload = () => {
+					if (typeof reader.result === "string") {
+						// Remove data:application/json;base64, prefix if present
+						const base64 = reader.result.includes(",")
+							? reader.result.split(",")[1]
+							: reader.result;
+						resolve(base64);
+					} else {
+						reject(new Error("Failed to read file"));
+					}
+				};
+				reader.onerror = reject;
+				reader.readAsDataURL(file);
+			});
+
+			const res = await fetch(
 				`/api/storeAdmin/${params.storeId}/facility/import`,
 				{
-					fileName: selectedFile,
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						fileData: fileContent,
+						fileName: file.name,
+					}),
 				},
 			);
-			if (res.data?.success) {
+
+			if (!res.ok) {
+				const errorData = await res.json().catch(() => ({
+					error: `HTTP ${res.status}: ${res.statusText}`,
+				}));
+				throw new Error(errorData.error || "Import failed");
+			}
+
+			const data = await res.json();
+			if (data?.success) {
 				toastSuccess({
 					title: t("imported") || "Imported",
-					description: selectedFile,
+					description: file.name,
 				});
 				setOpen(false);
-				setSelectedFile("");
+				setSelectedFileName("");
+				if (fileInputRef.current) {
+					fileInputRef.current.value = "";
+				}
 				onImported?.();
 			} else {
 				toastError({
 					title: t("import_failed") || "Import failed",
-					description: res.data?.error || "Unknown error",
+					description: data?.error || "Unknown error",
 				});
 			}
 		} catch (err: unknown) {
@@ -94,8 +123,18 @@ export function ImportFacilityDialog({
 		}
 	};
 
+	const handleOpenChange = (nextOpen: boolean) => {
+		setOpen(nextOpen);
+		if (!nextOpen) {
+			setSelectedFileName("");
+			if (fileInputRef.current) {
+				fileInputRef.current.value = "";
+			}
+		}
+	};
+
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogTrigger asChild>
 				<Button variant="outline">
 					<IconUpload className="mr-0 size-4" />
@@ -105,49 +144,50 @@ export function ImportFacilityDialog({
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>{t("import") || "Import Facilities"}</DialogTitle>
-					<DialogDescription>
-						{t("import_facility_descr") ||
-							"Select a backup file to import facilities."}
-					</DialogDescription>
+					<DialogDescription></DialogDescription>
 				</DialogHeader>
 
 				<div className="space-y-4 py-4">
-					<Select value={selectedFile} onValueChange={setSelectedFile}>
-						<SelectTrigger>
-							<SelectValue placeholder="Select backup file" />
-						</SelectTrigger>
-						<SelectContent>
-							{backupFiles.length === 0 ? (
-								<SelectItem value="" disabled>
-									No backup files found
-								</SelectItem>
-							) : (
-								backupFiles.map((file) => (
-									<SelectItem key={file} value={file}>
-										{file}
-									</SelectItem>
-								))
-							)}
-						</SelectContent>
-					</Select>
+					<div className="space-y-2">
+						<Label htmlFor="file-upload">
+							{t("select_file") || "Select File"}
+						</Label>
+						<Input
+							id="file-upload"
+							ref={fileInputRef}
+							type="file"
+							accept=".json,application/json"
+							onChange={handleFileChange}
+							disabled={importing}
+							className="cursor-pointer"
+						/>
+						{selectedFileName && (
+							<p className="text-sm text-muted-foreground">
+								{selectedFileName}
+							</p>
+						)}
+					</div>
 				</div>
 
 				<DialogFooter>
 					<Button
 						variant="outline"
-						onClick={() => setOpen(false)}
+						onClick={() => handleOpenChange(false)}
 						disabled={importing}
 					>
 						{t("Cancel")}
 					</Button>
-					<Button onClick={handleImport} disabled={importing || !selectedFile}>
+					<Button
+						onClick={handleImport}
+						disabled={importing || !selectedFileName}
+					>
 						{importing ? (
 							<>
 								<IconLoader className="mr-2 h-4 w-4 animate-spin" />
 								{t("importing") || "Importing..."}
 							</>
 						) : (
-							t("Import") || "Import"
+							t("import") || "Import"
 						)}
 					</Button>
 				</DialogFooter>
