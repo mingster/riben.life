@@ -1,0 +1,447 @@
+---
+description: Naming conventions for i18n translation keys in translation.json files
+alwaysApply: true
+---
+
+# i18n Translation Key Naming Convention
+
+This rule defines the standard naming convention for all translation keys in `web/src/app/i18n/locales/*/translation.json` files.
+
+## Core Principles
+
+1. **Use snake_case** for all translation keys (lowercase with underscores)
+2. **ENTITY and DOMAIN use PascalCase** - All other parts (CONTEXT and MODIFIER) use snake_case
+3. **Use descriptive, hierarchical names** that reflect the feature/domain
+4. **Group related keys** using prefixes and suffixes
+5. **Be consistent** with existing patterns in the codebase
+6. **Keep keys concise** but meaningful
+
+## Naming Structure
+
+### General Pattern
+
+``` txt
+[DOMAIN]_[ENTITY]_[CONTEXT]_[MODIFIER]
+```
+
+### Components
+
+1. **DOMAIN** (optional, PascalCase): Feature area or module (e.g., `StoreSettings`, `RSVP`, `Credit`, `Facility`)
+2. **ENTITY** (required, PascalCase): Main entity or feature name (e.g., `Announcement`, `Category`, `Facility`, `Credit_Bonus_Rule`)
+3. **CONTEXT** (optional, snake_case): Specific context or action (e.g., `mgmt`, `created`, `updated`, `tab`)
+4. **MODIFIER** (optional, snake_case): Additional qualifier (e.g., `descr`, `add`, `edit`, `button`)
+
+## Naming Patterns
+
+### 1. Entity Management Pages
+
+**Pattern:** `[ENTITY]_mgmt`
+
+**Examples:**
+
+- `Announcement_mgmt` - "Announcement Management"
+- `Category_mgmt` - "Category Management"
+- `Facility_mgmt` - "Facility Management"
+- `Credit_Bonus_Rules` - "Credit Bonus Rules"
+- `Facility_Pricing_Rules` - "Facility Pricing Rules"
+
+**Description:**
+
+- `[ENTITY]_mgmt_descr` - Description for management page
+- `[ENTITY]_mgmt_add` - "Add" action text
+- `[ENTITY]_mgmt_add_descr` - Description for add action
+
+### 2. CRUD Operations
+
+**Pattern:** `[ENTITY]_[ACTION]`
+
+**Actions (snake_case):**
+
+- `created` - Item was created
+- `updated` - Item was updated
+- `deleted` - Item was deleted
+
+**Examples:**
+
+- `Announcement_created` - "Announcement Created"
+- `Announcement_updated` - "Announcement Updated"
+- `Announcement_deleted` - "Announcement Deleted"
+- `Credit_Bonus_Rule_deleted` - "Credit Bonus Rule Deleted"
+- `Facility_Pricing_Rule_deleted` - "Facility Pricing Rule Deleted"
+
+### 3. Dialog/Form Titles
+
+**Pattern:** `[ACTION]_[ENTITY]` or `[ACTION]_[ENTITY]_[CONTEXT]`
+
+**Examples:**
+
+- `Edit_Pricing_Rule` - "Edit Pricing Rule"
+- `Create_Pricing_Rule` - "Create Pricing Rule"
+- `Edit_Credit_Bonus_Rule` - "Edit Credit Bonus Rule"
+- `Create_Credit_Bonus_Rule` - "Create Credit Bonus Rule"
+- `Facility_mgmt_edit` - "Edit Facility"
+- `Facility_mgmt_add` - "Add Facility"
+
+**Descriptions:**
+
+- `[ACTION]_[ENTITY]_description` - Dialog description
+- `Edit_Pricing_Rule_description` - "Edit pricing rule description"
+- `Create_Pricing_Rule_description` - "Create pricing rule description"
+
+### 4. Form Fields and Labels
+
+**Pattern:** `[ENTITY]_[FIELD]` or `[DOMAIN]_[FIELD]`
+
+**Examples:**
+
+- `Facility_Name` - "Facility Name"
+- `Facility_Seats` - "Facility Seats"
+- `Facility_Default_Cost` - "Facility Default Cost"
+- `StoreSettings_Use_Customer_Credit` - "Use Customer Credit"
+- `StoreSettings_Credit_Exchange_Rate` - "Credit Exchange Rate"
+- `StoreSettings_Credit_Service_Exchange_Rate` - "Credit Service Exchange Rate"
+- `StoreSettings_Credit_Max_Purchase` - "Credit Max Purchase"
+- `StoreSettings_Credit_Min_Purchase` - "Credit Min Purchase"
+- `StoreSettings_Credit_Expiration` - "Credit Expiration"
+
+**Field Descriptions:**
+
+- `[ENTITY]_[FIELD]_descr` - Field description/help text
+- `StoreSettings_Use_Customer_Credit_descr` - Description for "Use Customer Credit" field
+- `StoreSettings_Credit_Exchange_Rate_descr` - Description for exchange rate field
+
+### 5. Tab Navigation
+
+**Pattern:** `[DOMAIN]_tabs_[TAB_NAME]` or `[DOMAIN]_tab_[ACTION]`
+
+**Examples:**
+
+- `account_tabs_account` - "Account Settings"
+- `account_tabs_address` - "Address"
+- `account_tabs_orders` - "Order History"
+- `address_tab_create` - "Add Address"
+- `address_tab_edit` - "Edit"
+- `address_tab_remove` - "Delete"
+
+### 6. Common Actions
+
+**Pattern:** Use simple, reusable keys for common actions
+
+**Note:** Common action keys can be either PascalCase (for standalone buttons/labels) or snake_case (when used as context/modifier)
+
+**Examples:**
+
+- `Create` - "Create" (standalone button/label)
+- `Edit` - "Edit" (standalone button/label)
+- `Delete` - "Delete" (standalone button/label)
+- `Save` - "Save" (standalone button/label)
+- `Cancel` - "Cancel" (standalone button/label)
+- `Add` - "Add" (standalone button/label)
+- `Actions` - "Actions" (standalone label)
+- `actions` - "Manage" (when used as context/modifier)
+
+### 7. Status and State
+
+**Pattern:** `[STATUS]` or `[ENTITY]_[STATUS]`
+
+**Note:** Status values can be PascalCase when standalone, but when used as context/modifier they should be snake_case
+
+**Examples:**
+
+- `Active` - "Active" (standalone label)
+- `Inactive` - "Inactive" (standalone label)
+- `Status` - "Status" (standalone label)
+- `All_Days` - "All Days" (PascalCase for multi-word status)
+- `All_Times` - "All Times" (PascalCase for multi-word status)
+- `All_Facilities` - "All Facilities" (PascalCase for multi-word status)
+- `Weekend` - "Weekend" (standalone label)
+- `Weekday` - "Weekday" (standalone label)
+
+### 8. Domain-Specific Keys
+
+**Pattern:** `[DOMAIN]_[FEATURE]_[DETAIL]`
+
+**Examples:**
+
+- `RSVP_Use_Customer_Credit` - "Use Customer Credit" (RSVP domain)
+- `RSVP_Credit_Exchange_Rate` - "Credit Exchange Rate" (RSVP domain)
+- `StoreSettings_Use_Customer_Credit` - "Use Customer Credit" (Store Settings domain)
+
+**Note:** When moving features between domains, update keys accordingly (e.g., `RSVP_*` → `StoreSettings_*`).
+
+## Case Conventions
+
+### DOMAIN and ENTITY (PascalCase)
+
+- **DOMAIN**: Use PascalCase for domain/feature area names
+  - Examples: `StoreSettings`, `RSVP`, `Credit`, `Facility`
+- **ENTITY**: Use PascalCase for main entity or feature names
+  - Examples: `Announcement`, `Category`, `Facility`, `Credit_Bonus_Rule`, `Pricing_Rule`
+
+### CONTEXT and MODIFIER (snake_case)
+
+- **CONTEXT**: Always use snake_case for context/action words
+  - Examples: `mgmt`, `created`, `updated`, `deleted`, `tab`, `tabs`
+- **MODIFIER**: Always use snake_case for modifiers
+  - Examples: `descr`, `add`, `edit`, `button`, `placeholder`, `instructions`
+
+**Key Rule**: Only DOMAIN and ENTITY use PascalCase. Everything else (CONTEXT and MODIFIER) uses snake_case.
+
+## Special Patterns
+
+### 1. Descriptions
+
+**Pattern:** `[KEY]_descr`
+
+- Always use `_descr` (snake_case) for descriptions
+
+**Examples:**
+
+- `Announcement_mgmt_descr` - "Manage store announcements"
+- `Category_isFeatured_descr` - "If disabled, this category will not be displayed"
+- `Category_mgmt_add_descr` - Description for bulk add
+
+### 2. Buttons
+
+**Pattern:** `[ACTION]_button` or `[ENTITY]_[ACTION]_button`
+
+**Examples:**
+
+- `Category_mgmt_add_button` - "Bulk Add"
+- `checkout_order_button` - "Place Order"
+
+### 3. Placeholders
+
+**Pattern:** `[DOMAIN]_[FIELD]_placeholder`
+
+**Examples:**
+
+- `api_key_name_placeholder` - "New API Key"
+
+### 4. Instructions
+
+**Pattern:** `[DOMAIN]_[FEATURE]_instructions` or `[DOMAIN]_[FEATURE]_description`
+
+**Examples:**
+
+- `api_keys_instructions` - "Generate API keys to access your account programmatically."
+- `api_keys_description` - "Enter a name that you can recognize this key in the future."
+
+## Best Practices
+
+### ✅ DO
+
+1. **Use descriptive prefixes** for domain/feature grouping:
+
+   ```json
+   "StoreSettings_Credit_Exchange_Rate": "Credit Exchange Rate"
+   "Facility_Pricing_Rules": "Facility Pricing Rules"
+   "Credit_Bonus_Rules": "Credit Bonus Rules"
+   ```
+
+2. **Be consistent with existing patterns**:
+
+   ```json
+   "Announcement_mgmt": "Announcement Management"
+   "Category_mgmt": "Category Management"
+   "Facility_mgmt": "Facility Management"
+   ```
+
+3. **Use hierarchical naming** for related keys:
+
+   ```json
+   "StoreSettings_Use_Customer_Credit": "Use Customer Credit"
+   "StoreSettings_Use_Customer_Credit_descr": "Enable customer credit system"
+   "StoreSettings_Credit_Exchange_Rate": "Credit Exchange Rate"
+   "StoreSettings_Credit_Exchange_Rate_descr": "1 point = ?? dollars"
+   ```
+
+4. **Group by feature domain**:
+
+   ```json
+   "Facility_Name": "Facility Name"
+   "Facility_Seats": "Facility Seats"
+   "Facility_Default_Cost": "Facility Default Cost"
+   "Facility_Default_Credit": "Facility Default Credit"
+   ```
+
+5. **Use consistent action suffixes**:
+
+   ```json
+   "Announcement_created": "Announcement Created"
+   "Announcement_updated": "Announcement Updated"
+   "Announcement_deleted": "Announcement Deleted"
+   ```
+
+### ❌ DON'T
+
+1. **Don't use camelCase**:
+
+   ```json
+   // ❌ Bad
+   "announcementManagement": "Announcement Management"
+   
+   // ✅ Good
+   "Announcement_mgmt": "Announcement Management"
+   ```
+
+2. **Don't use inconsistent casing**:
+
+   ```json
+   // ❌ Bad
+   "announcement_mgmt": "Announcement Management"
+   "Category_Mgmt": "Category Management"
+   
+   // ✅ Good
+   "Announcement_mgmt": "Announcement Management"
+   "Category_mgmt": "Category Management"
+   ```
+
+3. **Don't create overly generic keys**:
+
+   ```json
+   // ❌ Bad
+   "name": "Name"  // Too generic, conflicts with other entities
+   
+   // ✅ Good
+   "Facility_Name": "Facility Name"
+   "Category_name": "Category Name"
+   ```
+
+4. **Don't mix naming patterns within the same feature**:
+
+   ```json
+   // ❌ Bad
+   "Facility_Name": "Facility Name"
+   "facility_seats": "Facility Seats"  // Inconsistent casing
+   "Facility_mgmt_Add": "Add Facility"  // Mixed case in context/modifier
+   
+   // ✅ Good
+   "Facility_Name": "Facility Name"
+   "Facility_Seats": "Facility Seats"
+   "Facility_mgmt_add": "Add Facility"  // snake_case for context/modifier
+   ```
+
+5. **Don't use abbreviations without context**:
+
+   ```json
+   // ❌ Bad
+   "CB_Rules": "Credit Bonus Rules"  // Unclear abbreviation
+   
+   // ✅ Good
+   "Credit_Bonus_Rules": "Credit Bonus Rules"
+   ```
+
+## Examples by Feature
+
+### Facility Management
+
+```json
+{
+  "Facility_mgmt": "Facility Management",
+  "Facility_mgmt_add": "Add Facility",
+  "Facility_mgmt_add_descr": "Add a new facility",
+  "Facility_mgmt_edit": "Edit Facility",
+  "Facility_Name": "Facility Name",
+  "Facility_Seats": "Facility Seats",
+  "Facility_Default_Cost": "Facility Default Cost",
+  "Facility_Default_Credit": "Facility Default Credit",
+  "Facility_Default_Duration": "Facility Default Duration"
+}
+```
+
+### Credit Bonus Rules
+
+```json
+{
+  "Credit_Bonus_Rules": "Credit Bonus Rules",
+  "Edit_Credit_Bonus_Rule": "Edit Credit Bonus Rule",
+  "Create_Credit_Bonus_Rule": "Create Credit Bonus Rule",
+  "Edit_Credit_Bonus_Rule_description": "Edit credit bonus rule description",
+  "Create_Credit_Bonus_Rule_description": "Create credit bonus rule description",
+  "Credit_Bonus_Rule_deleted": "Credit Bonus Rule Deleted",
+  "Credit_Bonus_Rule": "Credit Bonus Rule",
+  "Threshold": "Threshold",
+  "Bonus": "Bonus",
+  "Minimum_top_up_amount_to_trigger_bonus": "Minimum top-up amount to trigger bonus",
+  "Bonus_amount_given_when_threshold_is_met": "Bonus amount given when threshold is met"
+}
+```
+
+### Facility Pricing Rules
+
+```json
+{
+  "Facility_Pricing_Rules": "Facility Pricing Rules",
+  "Edit_Pricing_Rule": "Edit Pricing Rule",
+  "Create_Pricing_Rule": "Create Pricing Rule",
+  "Edit_Pricing_Rule_description": "Edit pricing rule description",
+  "Create_Pricing_Rule_description": "Create pricing rule description",
+  "Pricing_Rule_deleted": "Pricing Rule Deleted",
+  "Pricing_Rule": "Pricing Rule",
+  "Day_of_Week": "Day of Week",
+  "Time_Range": "Time Range",
+  "Start_Time": "Start Time",
+  "End_Time": "End Time",
+  "Cost": "Cost",
+  "Credit": "Credit",
+  "Priority": "Priority",
+  "Higher_priority_rules_are_evaluated_first": "Higher priority rules are evaluated first",
+  "Leave_empty_to_apply_to_all_facilities": "Leave empty to apply to all facilities",
+  "Leave_empty_for_all_days": "Leave empty for all days",
+  "Leave_empty_to_use_facility_default": "Leave empty to use facility default"
+}
+```
+
+### Store Settings
+
+```json
+{
+  "StoreSettings_Use_Customer_Credit": "Use Customer Credit",
+  "StoreSettings_Use_Customer_Credit_descr": "Enable customer credit system",
+  "StoreSettings_Credit_Exchange_Rate": "Credit Exchange Rate",
+  "StoreSettings_Credit_Exchange_Rate_descr": "1 point = ?? dollars",
+  "StoreSettings_Credit_Service_Exchange_Rate": "Credit Service Exchange Rate",
+  "StoreSettings_Credit_Service_Exchange_Rate_descr": "1 point = ?? minutes of service",
+  "StoreSettings_Credit_Max_Purchase": "Credit Max Purchase",
+  "StoreSettings_Credit_Max_Purchase_descr": "Maximum credit points per purchase",
+  "StoreSettings_Credit_Min_Purchase": "Credit Min Purchase",
+  "StoreSettings_Credit_Min_Purchase_descr": "Minimum credit points per purchase",
+  "StoreSettings_Credit_Expiration": "Credit Expiration",
+  "StoreSettings_Credit_Expiration_descr": "Credit points expiration period (days)"
+}
+```
+
+## Migration Guidelines
+
+When refactoring or moving features:
+
+1. **Update keys to match new domain**:
+   - Old: `RSVP_Use_Customer_Credit`
+   - New: `StoreSettings_Use_Customer_Credit`
+
+2. **Maintain backward compatibility** (if needed):
+   - Keep old keys temporarily with same values
+   - Update code to use new keys
+   - Remove old keys after migration
+
+3. **Update all locales**:
+   - Ensure all language files (`en/translation.json`, `tw/translation.json`) have matching keys
+   - Keep translations consistent across languages
+
+## Summary
+
+- **Format**: `snake_case` for the overall key structure
+- **Structure**: `[DOMAIN]_[ENTITY]_[CONTEXT]_[MODIFIER]`
+- **Case Rules**:
+  - **DOMAIN**: PascalCase (e.g., `StoreSettings`, `RSVP`)
+  - **ENTITY**: PascalCase (e.g., `Announcement`, `Credit_Bonus_Rule`)
+  - **CONTEXT**: snake_case (e.g., `mgmt`, `created`, `updated`, `tab`)
+  - **MODIFIER**: snake_case (e.g., `descr`, `add`, `edit`, `button`)
+- **Grouping**: Use prefixes to group related keys
+- **Consistency**: Follow existing patterns in the codebase
+- **Descriptiveness**: Use clear, meaningful names that reflect the feature
+
+**Key Principle**: Only DOMAIN and ENTITY use PascalCase. All CONTEXT and MODIFIER parts use snake_case.
+
+Following these conventions ensures translation keys are predictable, maintainable, and easy to discover.

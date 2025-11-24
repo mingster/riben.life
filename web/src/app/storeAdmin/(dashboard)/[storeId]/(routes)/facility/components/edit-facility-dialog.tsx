@@ -21,6 +21,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
@@ -80,6 +81,7 @@ export function EditFacilityDialog({
 				defaultCost: 0,
 				defaultCredit: 0,
 				defaultDuration: 60,
+				businessHours: null,
 			};
 
 	// Use createFacilitySchema when isNew, updateFacilitySchema when editing
@@ -151,6 +153,7 @@ export function EditFacilityDialog({
 					defaultCost: values.defaultCost,
 					defaultCredit: values.defaultCredit,
 					defaultDuration: values.defaultDuration,
+					businessHours: values.businessHours || null,
 				});
 
 				if (result?.serverError) {
@@ -182,6 +185,7 @@ export function EditFacilityDialog({
 					defaultCost: values.defaultCost,
 					defaultCredit: values.defaultCredit,
 					defaultDuration: values.defaultDuration,
+					businessHours: values.businessHours || null,
 				});
 
 				if (result?.serverError) {
@@ -212,12 +216,12 @@ export function EditFacilityDialog({
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>
-						{isEditMode ? t("Facility_Mgmt_Edit") : t("Facility_Mgmt_Add")}
+						{isEditMode ? t("Facility_mgmt_edit") : t("Facility_mgmt_add")}
 					</DialogTitle>
 					<DialogDescription>
 						{isEditMode
-							? t("Facility_Name_Descr")
-							: t("Facility_Mgmt_Add_Descr")}
+							? t("Facility_Name_descr")
+							: t("Facility_mgmt_add_descr")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -338,6 +342,27 @@ export function EditFacilityDialog({
 								</FormItem>
 							)}
 						/>
+						<FormField
+							control={form.control}
+							name="businessHours"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("business_hours")}</FormLabel>
+									<FormControl>
+										<Textarea
+											disabled={loading || form.formState.isSubmitting}
+											className="font-mono min-h-[100px]"
+											placeholder=""
+											value={field.value ?? ""}
+											onChange={(event) =>
+												field.onChange(event.target.value || null)
+											}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
 						<DialogFooter className="flex w-full justify-end space-x-2">
 							<Button
@@ -348,7 +373,7 @@ export function EditFacilityDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("Save") : t("Create")}
+								{isEditMode ? t("save") : t("Create")}
 							</Button>
 							<Button
 								type="button"
@@ -356,7 +381,7 @@ export function EditFacilityDialog({
 								onClick={() => handleOpenChange(false)}
 								disabled={loading || form.formState.isSubmitting}
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</DialogFooter>
 					</form>

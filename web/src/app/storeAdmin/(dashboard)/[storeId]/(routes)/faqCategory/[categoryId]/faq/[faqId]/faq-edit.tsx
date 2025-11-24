@@ -88,7 +88,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 
 			await axios.patch(url, data);
 			toastSuccess({
-				title: t("FAQ") + t("Saved"),
+				title: t("FAQ") + t("saved"),
 				description: "",
 			});
 			router.refresh();
@@ -99,7 +99,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 				data,
 			);
 			toastSuccess({
-				title: t("FAQ") + t("Created"),
+				title: t("FAQ") + t("created"),
 				description: "",
 			});
 
@@ -204,7 +204,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 								className="disabled:opacity-25"
 								type="submit"
 							>
-								{t("Save")}
+								{t("save")}
 							</Button>
 
 							<Button
@@ -218,7 +218,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 								}}
 								className="ml-5"
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</form>
 					</Form>

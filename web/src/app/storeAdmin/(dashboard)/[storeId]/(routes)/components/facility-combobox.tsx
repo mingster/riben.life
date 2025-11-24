@@ -81,7 +81,7 @@ export const FacilityCombobox = ({
 						>
 							{selected
 								? tables.find((table) => table.id === selected)?.facilityName
-								: "Select a table"}
+								: t("select_a_facility")}
 							<CaretSortIcon className="ml-2 size-4 shrink-0 opacity-50" />
 						</Button>
 					</PopoverTrigger>

@@ -222,7 +222,7 @@ export function TransactionClient({ serverData }: TransactionClientProps) {
 				</div>
 				<div className="flex items-center gap-2">
 					<Button variant="outline" size="sm" onClick={handleClearFilters}>
-						{t("Clear_Filter")}
+						{t("clear_Filter")}
 					</Button>
 					<div className="flex gap-1 text-xs font-mono text-muted-foreground">
 						{TimerFilterSelections.find(
@@ -427,7 +427,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 						)}
 
 						<Button type="submit" className="w-full">
-							{t("Apply")}
+							{t("apply")}
 						</Button>
 					</form>
 				</Form>

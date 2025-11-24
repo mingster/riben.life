@@ -41,15 +41,16 @@ model User {
   Orders            StoreOrder[]        @relation("UserOrders")
   Addresses         Address[]
 
-  Rsvp            Rsvp[]
-  sessions        Session[]
-  accounts        Account[]
-  twofactors      TwoFactor[]
-  passkeys        Passkey[]
-  apikeys         Apikey[]
-  members         Member[]
-  invitations     Invitation[]
-  customerCredits CustomerCredit[]
+  Rsvp               Rsvp[]
+  sessions           Session[]
+  accounts           Account[]
+  twofactors         TwoFactor[]
+  passkeys           Passkey[]
+  apikeys            Apikey[]
+  members            Member[]
+  invitations        Invitation[]
+  customerCredits    CustomerCredit[]
+  customerCreditLogs CustomerCreditLedger[]
 
   @@unique([normalizedEmail])
   @@index([email])
@@ -497,11 +498,10 @@ model SubscriptionPayment {
 }
 
 model CustomerCredit {
-  id      String  @id @default(uuid())
-  storeId String
-  userId  String
-  credit  Decimal @default(0)
-
+  id        String   @id @default(uuid())
+  storeId   String
+  userId    String //userId of the customer
+  credit    Decimal  @default(0)
   updatedAt DateTime @updatedAt
 
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
@@ -510,6 +510,40 @@ model CustomerCredit {
   @@unique([storeId, userId])
   @@index([storeId])
   @@index([userId])
+}
+
+model CustomerCreditLedger {
+  id          String   @id @default(uuid())
+  storeId     String
+  userId      String //userId of the customer
+  amount      Decimal
+  balance     Decimal
+  type        String // TOPUP, BONUS, SPEND, REFUND, ADJUSTMENT
+  referenceId String?
+  note        String?
+  creatorId   String? //userId who created this transaction
+  createdAt   DateTime @default(now())
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([userId])
+  @@map("CustomerCreditLedger")
+}
+
+model CreditBonusRule {
+  id        String   @id @default(uuid())
+  storeId   String
+  threshold Decimal
+  bonus     Decimal
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
 }
 
 model Store {
@@ -533,8 +567,12 @@ model Store {
 
   useBusinessHours Boolean @default(true)
 
-  useCustomerCredit  Boolean @default(false) //使用儲值系統
-  creditExchangeRate Decimal @default(0) // 1點 = ??元
+  useCustomerCredit         Boolean @default(false) //使用儲值系統
+  creditExchangeRate        Decimal @default(0) // 1點 = ??元
+  creditServiceExchangeRate Decimal @default(0) // 1點 = ??分鍾的服務
+  creditMaxPurchase         Decimal @default(0) // 最多一次可購買的點數
+  creditMinPurchase         Decimal @default(0) // 一次最少需購買的點數
+  creditExpiration          Int     @default(365) // 儲值點數的有效期限(天)
 
   payoutSchedule  Int     @default(0)
   bankCode        String?
@@ -571,6 +609,8 @@ model Store {
   rsvpBlacklists             RsvpBlacklist[]
   rsvpTags                   RsvpTag[]
   CustomerCredits            CustomerCredit[]
+  CreditBonusRules           CreditBonusRule[]
+  CustomerCreditLogs         CustomerCreditLedger[]
   FacilityPricingRules       FacilityPricingRule[]
 
   @@index([ownerId])
@@ -730,6 +770,7 @@ model StoreFacility {
   defaultCost     Decimal @default(0) // default cost for using the facility
   defaultCredit   Decimal @default(0) // default credit for using the facility
   defaultDuration Int     @default(60) // default duration for using the facility in minutes
+  businessHours   String? //when the facility is available for use
 
   Store                Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Rsvp                 Rsvp[]
@@ -874,7 +915,6 @@ model StoreProductOptionSelectionsTemplate {
 }
 
 //產品選項
-
 model ProductOption {
   id                      String                    @id @default(uuid())
   productId               String
@@ -943,6 +983,7 @@ model Category {
 model ProductAttribute {
   id                       String    @id @default(uuid())
   productId                String    @unique
+  isCreditTopUp            Boolean   @default(false)
   isRecurring              Boolean   @default(false)
   interval                 Int?
   intervalCount            Int?
@@ -984,8 +1025,8 @@ model StoreLedger {
   description String
   note        String?
 
-  createdAt   DateTime @default(now())
-  availablity DateTime
+  createdAt    DateTime @default(now())
+  availability DateTime @default(now())
 
   StoreOrder StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 

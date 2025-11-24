@@ -144,7 +144,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 				setLogo(updatedStore.logo ?? null);
 
 				toastSuccess({
-					title: t("Store_Updated"),
+					title: t("Store_updated"),
 					description: "",
 				});
 			}
@@ -422,7 +422,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 								className="disabled:opacity-25"
 								type="submit"
 							>
-								{t("Save")}
+								{t("save")}
 							</Button>
 
 							<Button
@@ -437,7 +437,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 								}}
 								className="ml-2 disabled:opacity-25"
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</form>
 					</Form>

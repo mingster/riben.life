@@ -19,6 +19,11 @@ export const viewport: Viewport = {
 	initialScale: 1,
 	maximumScale: 1,
 	userScalable: false,
+	// Theme colors for iOS status bar and browser UI
+	themeColor: [
+		{ media: "(prefers-color-scheme: dark)", color: "#1a1a1a" },
+		{ media: "(prefers-color-scheme: light)", color: "#fafafa" },
+	],
 	// Also supported but less commonly used
 	// interactiveWidget: 'resizes-visual',
 };
@@ -62,17 +67,11 @@ export async function generateMetadata() {
 		},
 		manifest: "/favicons/site.webmanifest",
 		applicationName: title,
-		/*
-	  appleWebApp: {
-		title: title,
-		capable: true,
-		statusBarStyle: 'default',
-	  },
-	  themeColor: [
-		{ media: '(prefers-color-scheme: dark)', color: '#38bdf8' },
-		{ media: '(prefers-color-scheme: light)', color: '#f8fafc' },
-	  ],
-	  */
+		appleWebApp: {
+			title: title,
+			capable: true,
+			statusBarStyle: "default",
+		},
 		icons: {
 			icon: "/favicons/favicon-16x16.png",
 			shortcut: "/favicons/favicon-32x32.png",

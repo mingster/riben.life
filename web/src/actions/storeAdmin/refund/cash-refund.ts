@@ -18,7 +18,7 @@ const CashRefund = async (
 		throw new Error("order not found");
 	}
 	const store = (await getStoreById(order.storeId)) as Store;
-	const ispro = await isProLevel(order.storeId);
+	const isPro = await isProLevel(order.storeId);
 
 	if (store === null) throw Error("store is null");
 	if (order.PaymentMethod === null) throw Error("PaymentMethod is null");
@@ -56,10 +56,10 @@ const CashRefund = async (
 	const feeTax = Number(fee * 0.05);
 
 	// fee charge by riben.life
-	const platform_fee = ispro ? 0 : Number(Number(order.orderTotal) * 0.01);
+	const platform_fee = isPro ? 0 : Number(Number(order.orderTotal) * 0.01);
 
-	// avilablity date = order date + payment methods' clear days
-	const avaiablityDate = new Date(
+	// availabilityDate = order date + payment methods' clear days
+	const availabilityDate = new Date(
 		order.updatedAt.getTime() +
 			order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
 	);
@@ -74,7 +74,7 @@ const CashRefund = async (
 			currency: order.currency,
 			description: `order # ${order.orderNum}`,
 			note: `order id: ${order.id}`,
-			availablity: avaiablityDate,
+			availability: availabilityDate,
 			balance:
 				balance -
 				Math.round(Number(refundAmount) + (fee + feeTax) + platform_fee),

@@ -33,7 +33,7 @@ export const mapStoreLedgerToColumn = (
 	description: ledger.description ?? null,
 	note: ledger.note ?? null,
 	createdAt: formatDateTime(ledger.createdAt),
-	availability: formatDateTime(ledger.availablity),
+	availability: formatDateTime(ledger.availability),
 	createdAtIso: ledger.createdAt.toISOString(),
-	availabilityIso: ledger.availablity.toISOString(),
+	availabilityIso: ledger.availability.toISOString(),
 });

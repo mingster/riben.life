@@ -156,7 +156,7 @@ export const DisplayStoreOptionTemplates = ({
 		);
 
 		toastSuccess({
-			title: t("ProductOption") + t("Added"),
+			title: t("ProductOption") + t("added"),
 			description: "",
 		});
 
@@ -184,7 +184,7 @@ export const DisplayStoreOptionTemplates = ({
 				className="disabled:opacity-25"
 				onClick={saveData}
 			>
-				{t("Add")}
+				{t("add")}
 			</Button>
 		</>
 	);
@@ -224,7 +224,7 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
 		);
 
 		toastSuccess({
-			title: `${t("ProductOption")} ${t("Deleted")}`,
+			title: `${t("ProductOption")} ${t("deleted")}`,
 			description: "",
 		});
 		router.refresh();
@@ -257,7 +257,7 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
 				className="text-white bg-red-600 dark:bg-red-900"
 				onClick={() => setOpen(true)}
 			>
-				<IconTrash className="mr-0 size-4" /> {t("Delete")}
+				<IconTrash className="mr-0 size-4" /> {t("delete")}
 			</Button>
 		</>
 	);
@@ -434,7 +434,7 @@ const createStoreOptionColumns = (
 								<div key={item.id} className="pl-0 text-nowrap">
 									{`${item.name}`}{" "}
 									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("Default")})`}
+									{item.isDefault === true && `:(${t("default")})`}
 								</div>
 							),
 						)}
@@ -449,7 +449,7 @@ const createStoreOptionColumns = (
 								<div key={item.id} className="pl-0 text-nowrap">
 									{`${item.name}`}{" "}
 									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("Default")})`}
+									{item.isDefault === true && `:(${t("default")})`}
 								</div>
 							),
 						)}
@@ -558,7 +558,7 @@ const createProductOptionColumns = (
 								<div key={item.id} className="pl-0 text-nowrap">
 									{`${item.name}`}{" "}
 									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("Default")})`}
+									{item.isDefault === true && `:(${t("default")})`}
 								</div>
 							),
 						)}
@@ -573,7 +573,7 @@ const createProductOptionColumns = (
 								<div key={item.id} className="pl-0 text-nowrap">
 									{`${item.name}`}{" "}
 									{Number(item.price) !== 0 && `:(${item.price})`}
-									{item.isDefault === true && `:(${t("Default")})`}
+									{item.isDefault === true && `:(${t("default")})`}
 								</div>
 							),
 						)}

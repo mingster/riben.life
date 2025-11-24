@@ -24,6 +24,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPlus } from "@tabler/icons-react";
@@ -65,6 +66,7 @@ export function BulkAddFacilitiesDialog({
 			defaultCost: 0,
 			defaultCredit: 0,
 			defaultDuration: 60,
+			businessHours: null,
 		},
 		mode: "onChange",
 		reValidateMode: "onChange",
@@ -81,6 +83,7 @@ export function BulkAddFacilitiesDialog({
 				defaultCost: values.defaultCost,
 				defaultCredit: values.defaultCredit,
 				defaultDuration: values.defaultDuration,
+				businessHours: values.businessHours || null,
 			});
 
 			if (result?.serverError) {
@@ -95,7 +98,7 @@ export function BulkAddFacilitiesDialog({
 			onCreatedMany?.(createdFacilities);
 
 			toastSuccess({
-				title: t("Facility") + t("Created"),
+				title: t("Facility") + t("created"),
 				description: "",
 			});
 
@@ -106,6 +109,7 @@ export function BulkAddFacilitiesDialog({
 				defaultCost: 0,
 				defaultCredit: 0,
 				defaultDuration: 60,
+				businessHours: null,
 			});
 			setOpen(false);
 		} catch (error: unknown) {
@@ -128,6 +132,7 @@ export function BulkAddFacilitiesDialog({
 				defaultCost: 0,
 				defaultCredit: 0,
 				defaultDuration: 60,
+				businessHours: null,
 			});
 		}
 	};
@@ -137,14 +142,14 @@ export function BulkAddFacilitiesDialog({
 			<DialogTrigger asChild>
 				<Button variant="outline" onClick={() => setOpen(true)}>
 					<IconPlus className="mr-0 size-4" />
-					{t("Facility_Mgmt_BulkAddButton")}
+					{t("Facility_mgmt_bulk_add_button")}
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>{t("Facility_Mgmt_BulkAddButton")}</DialogTitle>
+					<DialogTitle>{t("Facility_mgmt_bulk_add_button")}</DialogTitle>
 					<DialogDescription>
-						{t("Facility_Mgmt_BulkAdd_Descr")}
+						{t("Facility_mgmt_bulk_add_descr")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -171,7 +176,7 @@ export function BulkAddFacilitiesDialog({
 							name="prefix"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_Mgmt_Prefix")}</FormLabel>
+									<FormLabel>{t("Facility_mgmt_prefix")}</FormLabel>
 									<FormControl>
 										<Input
 											type="text"
@@ -181,7 +186,7 @@ export function BulkAddFacilitiesDialog({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("Facility_Mgmt_Prefix_Descr")}
+										{t("Facility_mgmt_prefix_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -289,6 +294,27 @@ export function BulkAddFacilitiesDialog({
 								</FormItem>
 							)}
 						/>
+						<FormField
+							control={form.control}
+							name="businessHours"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("business_hours")}</FormLabel>
+									<FormControl>
+										<Textarea
+											disabled={loading || form.formState.isSubmitting}
+											className="font-mono min-h-[100px]"
+											placeholder=""
+											value={field.value ?? ""}
+											onChange={(event) =>
+												field.onChange(event.target.value || null)
+											}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
 						<div className="flex w-full items-center justify-end space-x-2 pt-2">
 							<Button
@@ -310,7 +336,7 @@ export function BulkAddFacilitiesDialog({
 										variant="outline"
 										type="button"
 									>
-										{t("Cancel")}
+										{t("cancel")}
 									</Button>
 								</DialogClose>
 							</DialogFooter>

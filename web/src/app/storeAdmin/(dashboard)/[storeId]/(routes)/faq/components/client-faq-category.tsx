@@ -410,9 +410,9 @@ export const FaqCategoryClient: React.FC<props> = ({
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("FaqCategory_Mgmt")}
+					title={t("FaqCategory_mgmt")}
 					badge={data.length}
-					description={t("FaqCategory_Mgmt_descr")}
+					description={t("FaqCategory_mgmt_descr")}
 				/>
 				<div>
 					{/*新增 */}
@@ -433,7 +433,7 @@ export const FaqCategoryClient: React.FC<props> = ({
 				<Heading
 					title={`${t("FAQ")}`}
 					badge={faqData.length}
-					description={t("FAQ_Mgmt_descr")}
+					description={t("FAQ_mgmt_descr")}
 				/>
 			</div>
 			{/* {JSON.stringify(data)} */}

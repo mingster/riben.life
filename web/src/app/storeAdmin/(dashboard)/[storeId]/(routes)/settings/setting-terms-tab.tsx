@@ -97,7 +97,7 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 						null,
 				);
 				toastSuccess({
-					title: t("Store_Updated"),
+					title: t("Store_updated"),
 					description: "",
 				});
 			}
@@ -146,7 +146,7 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 							className="disabled:opacity-25"
 							type="submit"
 						>
-							{t("Save")}
+							{t("save")}
 						</Button>
 
 						<Button
@@ -159,7 +159,7 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 							disabled={loading || form.formState.isSubmitting}
 							className="ml-5 disabled:opacity-25"
 						>
-							{t("Cancel")}
+							{t("cancel")}
 						</Button>
 					</form>
 				</Form>

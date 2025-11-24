@@ -71,7 +71,7 @@ export const OrderUnpaid = ({
 		orders.filter((order) => order.id !== orderId);
 
 		toastSuccess({
-			title: t("Order") + t("Updated"),
+			title: t("Order") + t("updated"),
 			description: "",
 		});
 	};

@@ -232,11 +232,11 @@ export function EditProductOptionTemplateDialog({
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
-							? t("ProductOption_template") + t("Edit")
+							? t("ProductOption_template") + t("edit")
 							: t("ProductOption_template") + t("Create")}
 					</DialogTitle>
 					<DialogDescription>
-						{t("ProductOption_Mgmt_Add_Descr")}
+						{t("ProductOption_mgmt_add_descr")}
 					</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
@@ -255,7 +255,7 @@ export function EditProductOptionTemplateDialog({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("ProductOption_optionName_Descr")}
+										{t("ProductOption_optionName_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -270,7 +270,7 @@ export function EditProductOptionTemplateDialog({
 									<div className="space-y-0.5">
 										<FormLabel>{t("ProductOption_isRequired")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_isRequired_Descr")}
+											{t("ProductOption_isRequired_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -292,7 +292,7 @@ export function EditProductOptionTemplateDialog({
 									<div className="space-y-0.5">
 										<FormLabel>{t("ProductOption_isMultiple")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_isMultiple_Descr")}
+											{t("ProductOption_isMultiple_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -325,7 +325,7 @@ export function EditProductOptionTemplateDialog({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_minSelection_Descr")}
+											{t("ProductOption_minSelection_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -349,7 +349,7 @@ export function EditProductOptionTemplateDialog({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_maxSelection_Descr")}
+											{t("ProductOption_maxSelection_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -365,7 +365,7 @@ export function EditProductOptionTemplateDialog({
 									<div className="space-y-0.5">
 										<FormLabel>{t("ProductOption_allowQuantity")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_allowQuantity_Descr")}
+											{t("ProductOption_allowQuantity_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -398,7 +398,7 @@ export function EditProductOptionTemplateDialog({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_minQuantity_Descr")}
+											{t("ProductOption_minQuantity_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -422,7 +422,7 @@ export function EditProductOptionTemplateDialog({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_maxQuantity_Descr")}
+											{t("ProductOption_maxQuantity_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -444,7 +444,7 @@ export function EditProductOptionTemplateDialog({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("ProductOption_selections_Descr")}
+										{t("ProductOption_selections_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -478,7 +478,7 @@ export function EditProductOptionTemplateDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("Save") : t("Create")}
+								{isEditMode ? t("save") : t("Create")}
 							</Button>
 							<DialogFooter className="sm:justify-start">
 								<Button
@@ -487,7 +487,7 @@ export function EditProductOptionTemplateDialog({
 									onClick={() => handleOpenChange(false)}
 									disabled={loading || form.formState.isSubmitting}
 								>
-									{t("Cancel")}
+									{t("cancel")}
 								</Button>
 							</DialogFooter>
 						</div>

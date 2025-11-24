@@ -138,7 +138,7 @@ export const ProductEditCategoryTab = ({
 		router.refresh();
 
 		toastSuccess({
-			title: t("Product_category") + t("Updated"),
+			title: t("Product_category") + t("updated"),
 			description: "",
 		});
 	};
@@ -164,7 +164,7 @@ export const ProductEditCategoryTab = ({
 					className="disabled:opacity-25"
 					onClick={saveData}
 				>
-					{t("Add")}
+					{t("add")}
 				</Button>
 
 				<Button
@@ -175,7 +175,7 @@ export const ProductEditCategoryTab = ({
 					}}
 					className="ml-5"
 				>
-					{t("Cancel")}
+					{t("cancel")}
 				</Button>
 			</CardContent>
 		</Card>

@@ -39,7 +39,7 @@ import {
 import { useI18n } from "@/providers/i18n-provider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { GetMenuList } from "./menu-list";
 import StoreSwitcher from "./store-switcher";
 import { useStoreAdminContext } from "./store-admin-context";
@@ -59,6 +59,57 @@ export function StoreAdminSidebar() {
 
 	const { setOpen } = useSidebar();
 	const [isMounted, setIsMounted] = useState(false);
+
+	// Store collapsible states in localStorage
+	// Start with empty object to ensure server and client render match (all default to open)
+	const [collapsibleStates, setCollapsibleStates] = useState<
+		Record<string, boolean>
+	>({});
+
+	// Load collapsible states from localStorage after mount (to avoid hydration mismatch)
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			try {
+				const stored = localStorage.getItem("store-admin-sidebar-collapsible");
+				if (stored) {
+					const parsed = JSON.parse(stored);
+					setCollapsibleStates(parsed);
+				}
+			} catch {
+				// Ignore localStorage errors
+			}
+		}
+	}, []);
+
+	// Save collapsible states to localStorage
+	useEffect(() => {
+		if (typeof window !== "undefined" && isMounted) {
+			try {
+				localStorage.setItem(
+					"store-admin-sidebar-collapsible",
+					JSON.stringify(collapsibleStates),
+				);
+			} catch {
+				// Ignore localStorage errors
+			}
+		}
+	}, [collapsibleStates, isMounted]);
+
+	// Get collapsible state for a key, defaulting to true (open)
+	const getCollapsibleState = useCallback(
+		(key: string, defaultValue = true) => {
+			return collapsibleStates[key] ?? defaultValue;
+		},
+		[collapsibleStates],
+	);
+
+	// Toggle collapsible state
+	const toggleCollapsible = useCallback((key: string) => {
+		setCollapsibleStates((prev) => ({
+			...prev,
+			[key]: !prev[key],
+		}));
+	}, []);
 
 	useEffect(() => {
 		setIsMounted(true);
@@ -114,70 +165,95 @@ export function StoreAdminSidebar() {
 			</SidebarHeader>
 
 			<SidebarContent>
-				{menuList.map(({ groupLabel, menus }) => (
-					<Collapsible
-						key={groupLabel}
-						defaultOpen
-						className="group/collapsible"
-					>
-						<SidebarGroup>
-							<SidebarGroupLabel asChild>
-								<CollapsibleTrigger>
-									{groupLabel}
-									<IconChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-								</CollapsibleTrigger>
-							</SidebarGroupLabel>
-							<CollapsibleContent>
-								<SidebarGroupContent>
-									<SidebarMenu>
-										{menus.map(
-											({ href, label, icon: Icon, active, submenus, badge }) =>
-												submenus.length === 0 ? (
-													<SidebarMenuItem key={label} className="font-mono">
-														<SidebarMenuButton asChild isActive={active}>
-															<a href={href}>
-																<Icon />
-																{renderMenuLabel(label, badge)}
-															</a>
-														</SidebarMenuButton>
-													</SidebarMenuItem>
-												) : (
-													<Collapsible
-														key={label}
-														defaultOpen
-														className="group/collapsible"
-													>
-														<SidebarMenuItem>
-															<CollapsibleTrigger asChild>
-																<SidebarMenuButton isActive={active}>
-																	<Icon />
-																	{renderMenuLabel(label, badge)}
+				{menuList.map(({ groupLabel, menus }) => {
+					const groupKey = `group-${groupLabel}`;
+					const isGroupOpen = getCollapsibleState(groupKey, true);
+
+					return (
+						<Collapsible
+							key={groupLabel}
+							open={isGroupOpen}
+							onOpenChange={() => toggleCollapsible(groupKey)}
+							className="group/collapsible"
+						>
+							<SidebarGroup>
+								<SidebarGroupLabel asChild>
+									<CollapsibleTrigger>
+										{groupLabel}
+										<IconChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+									</CollapsibleTrigger>
+								</SidebarGroupLabel>
+								<CollapsibleContent>
+									<SidebarGroupContent>
+										<SidebarMenu>
+											{menus.map(
+												({
+													href,
+													label,
+													icon: Icon,
+													active,
+													submenus,
+													badge,
+												}) => {
+													if (submenus.length === 0) {
+														return (
+															<SidebarMenuItem
+																key={label}
+																className="font-mono"
+															>
+																<SidebarMenuButton asChild isActive={active}>
+																	<a href={href}>
+																		<Icon />
+																		{renderMenuLabel(label, badge)}
+																	</a>
 																</SidebarMenuButton>
-															</CollapsibleTrigger>
-															<CollapsibleContent>
-																<SidebarMenuSub className="pl-5">
-																	{submenus.map(({ href, label, active }) => (
-																		<SidebarMenuItem key={label}>
-																			<SidebarMenuButton
-																				tooltip={label}
-																				isActive={active}
-																			>
-																				<span>{label}</span>
-																			</SidebarMenuButton>
-																		</SidebarMenuItem>
-																	))}
-																</SidebarMenuSub>
-															</CollapsibleContent>
-														</SidebarMenuItem>
-													</Collapsible>
-												),
-										)}
-									</SidebarMenu>
-								</SidebarGroupContent>
-							</CollapsibleContent>
-						</SidebarGroup>
-					</Collapsible>
-				))}
+															</SidebarMenuItem>
+														);
+													}
+
+													const menuKey = `menu-${label}`;
+													const isMenuOpen = getCollapsibleState(menuKey, true);
+
+													return (
+														<Collapsible
+															key={label}
+															open={isMenuOpen}
+															onOpenChange={() => toggleCollapsible(menuKey)}
+															className="group/collapsible"
+														>
+															<SidebarMenuItem>
+																<CollapsibleTrigger asChild>
+																	<SidebarMenuButton isActive={active}>
+																		<Icon />
+																		{renderMenuLabel(label, badge)}
+																	</SidebarMenuButton>
+																</CollapsibleTrigger>
+																<CollapsibleContent>
+																	<SidebarMenuSub className="pl-5">
+																		{submenus.map(({ href, label, active }) => (
+																			<SidebarMenuItem key={label}>
+																				<SidebarMenuButton
+																					tooltip={label}
+																					isActive={active}
+																				>
+																					<span>{label}</span>
+																				</SidebarMenuButton>
+																			</SidebarMenuItem>
+																		))}
+																	</SidebarMenuSub>
+																</CollapsibleContent>
+															</SidebarMenuItem>
+														</Collapsible>
+													);
+												},
+											)}
+										</SidebarMenu>
+									</SidebarGroupContent>
+								</CollapsibleContent>
+							</SidebarGroup>
+						</Collapsible>
+					);
+				})}
 			</SidebarContent>
 
 			<SidebarFooter>

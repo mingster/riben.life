@@ -155,7 +155,7 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 								type="submit"
 								disabled={loading || form.formState.isSubmitting}
 							>
-								{t("Submit")}
+								{t("submit")}
 							</Button>
 						</form>
 					</Form>

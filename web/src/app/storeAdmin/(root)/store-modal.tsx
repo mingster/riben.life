@@ -155,7 +155,7 @@ export const StoreModal: React.FC = () => {
 
 			if (result?.data?.storeId) {
 				toastSuccess({
-					title: t("Store_Created"),
+					title: t("Store_created"),
 					description: "",
 				});
 
@@ -178,7 +178,7 @@ export const StoreModal: React.FC = () => {
 
 	return (
 		<Modal
-			title={t("Store_Create")}
+			title={t("Store_create")}
 			description=""
 			isOpen={storeModal.isOpen}
 			onClose={storeModal.onClose}
@@ -211,7 +211,7 @@ export const StoreModal: React.FC = () => {
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
-													placeholder={t("StoreSettings_Store_Name_Descr")}
+													placeholder={t("StoreSettings_Store_Name_descr")}
 													{...field}
 													onChange={(e) => {
 														field.onChange(e);
@@ -246,7 +246,7 @@ export const StoreModal: React.FC = () => {
 											>
 												<SelectTrigger>
 													<SelectValue
-														placeholder={t("StoreSettings_Store_Locale_Descr")}
+														placeholder={t("StoreSettings_Store_Locale_descr")}
 													/>
 												</SelectTrigger>
 
@@ -298,13 +298,13 @@ export const StoreModal: React.FC = () => {
 										variant="outline"
 										onClick={storeModal.onClose}
 									>
-										{t("Cancel")}
+										{t("cancel")}
 									</Button>
 									<Button
 										disabled={loading || form.formState.isSubmitting}
 										type="submit"
 									>
-										{t("Continue")}
+										{t("continue")}
 									</Button>
 								</div>
 							</form>

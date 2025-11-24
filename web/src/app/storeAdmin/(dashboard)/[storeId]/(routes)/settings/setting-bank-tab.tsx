@@ -91,7 +91,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 				onStoreUpdated?.(result.data.store as Store);
 
 				toastSuccess({
-					title: t("Store_Updated"),
+					title: t("Store_updated"),
 					description: "",
 				});
 			}
@@ -135,7 +135,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 										</FormControl>
 
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("StoreSettings_PayoutSchedule_Descr")}
+											{t("StoreSettings_PayoutSchedule_descr")}
 										</FormDescription>
 
 										<FormMessage />
@@ -211,7 +211,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 								className="disabled:opacity-25"
 								type="submit"
 							>
-								{t("Save")}
+								{t("save")}
 							</Button>
 
 							<Button
@@ -224,7 +224,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 								disabled={loading || form.formState.isSubmitting}
 								className="ml-2 disabled:opacity-25"
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</form>
 					</Form>

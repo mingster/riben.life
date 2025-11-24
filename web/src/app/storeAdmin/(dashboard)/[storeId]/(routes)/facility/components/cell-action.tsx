@@ -56,7 +56,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 			}
 
 			toastSuccess({
-				title: t("Facility_Mgmt_Deleted"),
+				title: t("Facility_mgmt_deleted"),
 				description: "",
 			});
 			onDeleted?.(data.id);
@@ -95,7 +95,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
-					<DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
+					<DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
 					<DropdownMenuItem
 						className="cursor-pointer"
 						onClick={() => onCopy(data.id)}
@@ -110,13 +110,13 @@ export const CellAction: React.FC<CellActionProps> = ({
 							setIsEditOpen(true);
 						}}
 					>
-						<IconEdit className="mr-0 size-4" /> {t("Edit")}
+						<IconEdit className="mr-0 size-4" /> {t("edit")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						className="cursor-pointer"
 						onClick={() => setOpen(true)}
 					>
-						<IconTrash className="mr-0 size-4" /> {t("Delete")}
+						<IconTrash className="mr-0 size-4" /> {t("delete")}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>

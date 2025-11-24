@@ -261,7 +261,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 									type="submit"
 								>
 									<IconArrowBack className="mr-0 size-4" />
-									{t("RefundAll")}
+									{t("refund_all")}
 								</Button>
 							</div>
 							<div>
@@ -274,7 +274,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 										//router.push(`/${params.storeId}/support`);
 									}}
 								>
-									{t("Cancel")}
+									{t("cancel")}
 								</Button>
 							</div>
 						</div>
@@ -364,7 +364,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 									type="submit"
 								>
 									<IconArrowBack className="mr-0 size-4" />
-									{t("Refund")}
+									{t("refund")}
 								</Button>
 							</div>
 						</div>

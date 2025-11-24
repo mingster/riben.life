@@ -88,7 +88,7 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 					data,
 				);
 				toastSuccess({
-					title: t("Category") + t("Updated"),
+					title: t("Category") + t("updated"),
 					description: "",
 				});
 			} else {
@@ -98,7 +98,7 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 					data,
 				);
 				toastSuccess({
-					title: t("Category") + t("Created"),
+					title: t("Category") + t("created"),
 					description: "",
 				});
 			}
@@ -196,7 +196,7 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 								className="disabled:opacity-25"
 								type="submit"
 							>
-								{t("Save")}
+								{t("save")}
 							</Button>
 
 							<Button
@@ -208,7 +208,7 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 								}}
 								className="ml-5"
 							>
-								{t("Cancel")}
+								{t("cancel")}
 							</Button>
 						</form>
 					</Form>

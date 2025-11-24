@@ -132,9 +132,9 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("Product_Mgmt")}
+					title={t("Product_mgmt")}
 					badge={data.length}
-					description={t("Product_Mgmt_descr")}
+					description={t("Product_mgmt_descr")}
 				/>
 				<div className="flex items-center gap-2">
 					<EditProduct
@@ -152,7 +152,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 						trigger={
 							<Button variant="outline">
 								<IconPlus className="mr-0 size-4" />
-								{t("Product_Mgmt_AddButton")}
+								{t("Product_mgmt_add_button")}
 							</Button>
 						}
 					/>
