@@ -48,7 +48,7 @@ export function ImportFacilityDialog({
 		const file = fileInputRef.current?.files?.[0];
 		if (!file) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: "Please select a file to import",
 			});
 			return;

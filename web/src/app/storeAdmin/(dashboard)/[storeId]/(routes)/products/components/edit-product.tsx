@@ -155,7 +155,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -168,7 +168,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 				const productId = product?.id;
 				if (!productId) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: "Product not found.",
 					});
 					return;
@@ -187,7 +187,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -199,7 +199,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
@@ -235,7 +235,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 								const errorMessage = error?.message;
 								if (errorMessage) {
 									toastError({
-										title: t("Error"),
+										title: t("error_title"),
 										description: errorMessage,
 									});
 								}

@@ -135,7 +135,7 @@ export function EditCategoryDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -148,7 +148,7 @@ export function EditCategoryDialog({
 				const categoryId = category?.id;
 				if (!categoryId) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: "Category not found.",
 					});
 					return;
@@ -164,7 +164,7 @@ export function EditCategoryDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -176,7 +176,7 @@ export function EditCategoryDialog({
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {

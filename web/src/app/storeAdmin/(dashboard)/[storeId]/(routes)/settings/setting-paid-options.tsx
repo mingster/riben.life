@@ -137,7 +137,10 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 			const result = await updateStorePaidOptionsAction(payload);
 
 			if (result?.serverError) {
-				toastError({ title: t("Error"), description: result.serverError });
+				toastError({
+					title: t("error_title"),
+					description: result.serverError,
+				});
 			} else if (result?.data) {
 				const updatedStore = result.data.store as Store;
 				onStoreUpdated?.(updatedStore);

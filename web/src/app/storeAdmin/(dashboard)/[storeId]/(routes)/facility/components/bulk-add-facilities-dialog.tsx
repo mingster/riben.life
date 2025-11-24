@@ -88,7 +88,7 @@ export function BulkAddFacilitiesDialog({
 
 			if (result?.serverError) {
 				toastError({
-					title: t("Error"),
+					title: t("error_title"),
 					description: result.serverError,
 				});
 				return;
@@ -114,7 +114,7 @@ export function BulkAddFacilitiesDialog({
 			setOpen(false);
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
@@ -163,7 +163,7 @@ export function BulkAddFacilitiesDialog({
 								const errorMessage = error?.message;
 								if (errorMessage) {
 									toastError({
-										title: t("Error"),
+										title: t("error_title"),
 										description: errorMessage,
 									});
 								}

@@ -49,20 +49,20 @@ export const CellAction: React.FC<CellActionProps> = ({
 
 			if (result?.serverError) {
 				toastError({
-					title: t("Error"),
+					title: t("error_title"),
 					description: result.serverError,
 				});
 				return;
 			}
 
 			toastSuccess({
-				title: t("Credit_Bonus_Rule_Deleted"),
+				title: t("Credit_Bonus_Rules") + t("deleted"),
 				description: "",
 			});
 			onDeleted?.(data.id);
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {

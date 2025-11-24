@@ -154,7 +154,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 			const result = await updateStoreBasicAction(payload);
 
 			if (result?.serverError) {
-				toastError({ title: t("Error"), description: result.serverError });
+				toastError({
+					title: t("error_title"),
+					description: result.serverError,
+				});
 			} else if (result?.data) {
 				const { store: updatedStore, storeSettings: updatedSettings } =
 					result.data;

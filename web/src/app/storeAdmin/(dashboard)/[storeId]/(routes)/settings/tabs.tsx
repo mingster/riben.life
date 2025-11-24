@@ -92,7 +92,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 
 			if (result?.serverError) {
 				toastError({
-					title: t("Error"),
+					title: t("error_title"),
 					description: result.serverError,
 				});
 			} else {
@@ -105,7 +105,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 		} catch (error: unknown) {
 			const err = error as AxiosError;
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: err.message,
 			});
 		} finally {

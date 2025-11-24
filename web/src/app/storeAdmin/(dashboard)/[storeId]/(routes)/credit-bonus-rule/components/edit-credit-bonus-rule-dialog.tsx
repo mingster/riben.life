@@ -153,7 +153,7 @@ export function EditCreditBonusRuleDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -166,7 +166,7 @@ export function EditCreditBonusRuleDialog({
 				const ruleId = rule?.id;
 				if (!ruleId) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: "Credit bonus rule not found.",
 					});
 					return;
@@ -182,7 +182,7 @@ export function EditCreditBonusRuleDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -194,7 +194,7 @@ export function EditCreditBonusRuleDialog({
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
@@ -224,7 +224,7 @@ export function EditCreditBonusRuleDialog({
 								const errorMessage = error?.message;
 								if (errorMessage) {
 									toastError({
-										title: t("Error"),
+										title: t("error_title"),
 										description: errorMessage,
 									});
 								}

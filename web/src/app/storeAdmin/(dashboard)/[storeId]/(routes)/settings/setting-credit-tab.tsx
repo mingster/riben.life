@@ -93,7 +93,10 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 			const result = await updateStoreCreditAction(payload);
 
 			if (result?.serverError) {
-				toastError({ title: t("Error"), description: result.serverError });
+				toastError({
+					title: t("error_title"),
+					description: result.serverError,
+				});
 			} else if (result?.data) {
 				// Update local state instead of refreshing router
 				const updatedStore = result.data.store as Store;
@@ -106,7 +109,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description:
 					error instanceof Error ? error.message : "Something went wrong.",
 			});
@@ -129,7 +132,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 								const errorMessage = error?.message;
 								if (errorMessage) {
 									toastError({
-										title: t("Error"),
+										title: t("error_title"),
 										description: errorMessage,
 									});
 								}

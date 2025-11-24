@@ -101,7 +101,10 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({
 			const result = await updateStorePrivacyAction(payload);
 
 			if (result?.serverError) {
-				toastError({ title: t("Error"), description: result.serverError });
+				toastError({
+					title: t("error_title"),
+					description: result.serverError,
+				});
 			} else if (result?.data) {
 				onStoreSettingsUpdated?.(
 					(result.data.storeSettings as StoreSettings | null | undefined) ??

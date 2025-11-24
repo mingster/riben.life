@@ -155,7 +155,7 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 			});
 
 			toastError({
-				title: t("Error") || "Error",
+				title: t("error_title") || "Error",
 				description:
 					error instanceof Error
 						? error.message

@@ -147,7 +147,7 @@ export const StoreModal: React.FC = () => {
 
 			if (result?.serverError) {
 				toastError({
-					title: t("Error"),
+					title: t("error_title"),
 					description: result.serverError,
 				});
 				return;
@@ -167,7 +167,7 @@ export const StoreModal: React.FC = () => {
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description:
 					error instanceof Error ? error.message : "Something went wrong.",
 			});
@@ -195,7 +195,7 @@ export const StoreModal: React.FC = () => {
 										const errorMessage = error?.message;
 										if (errorMessage) {
 											toastError({
-												title: t("Error"),
+												title: t("error_title"),
 												description: errorMessage,
 											});
 										}

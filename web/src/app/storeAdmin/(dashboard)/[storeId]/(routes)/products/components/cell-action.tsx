@@ -41,7 +41,10 @@ export const CellAction: React.FC<CellActionProps> = ({ data, onDeleted }) => {
 			});
 
 			if (result?.serverError) {
-				toastError({ title: t("Error"), description: result.serverError });
+				toastError({
+					title: t("error_title"),
+					description: result.serverError,
+				});
 			} else {
 				toastSuccess({
 					title: t("Product_deleted"),
@@ -51,7 +54,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data, onDeleted }) => {
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
