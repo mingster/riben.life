@@ -24,7 +24,10 @@ export const createTableColumns = (
 		{
 			accessorKey: "threshold",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Threshold")} />
+				<DataTableColumnHeader
+					column={column}
+					title={t("credit_bonus_rule_threshold")}
+				/>
 			),
 			cell: ({ row }) => {
 				const threshold = row.getValue("threshold") as number;
@@ -34,7 +37,10 @@ export const createTableColumns = (
 		{
 			accessorKey: "bonus",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Bonus")} />
+				<DataTableColumnHeader
+					column={column}
+					title={t("credit_bonus_rule_bonus")}
+				/>
 			),
 			cell: ({ row }) => {
 				const bonus = row.getValue("bonus") as number;
@@ -44,13 +50,13 @@ export const createTableColumns = (
 		{
 			accessorKey: "isActive",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Status")} />
+				<DataTableColumnHeader column={column} title={t("status")} />
 			),
 			cell: ({ row }) => {
 				const isActive = row.getValue("isActive") as boolean;
 				return (
 					<Badge variant={isActive ? "default" : "secondary"}>
-						{isActive ? t("Active") : t("Inactive")}
+						{isActive ? t("active") : t("inactive")}
 					</Badge>
 				);
 			},
