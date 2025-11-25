@@ -124,7 +124,7 @@ export const CategoryClient: React.FC<CategoryClientProps> = ({
 						trigger={
 							<Button variant="outline">
 								<IconPlus className="mr-0 size-4" />
-								{t("Create")}
+								{t("create")}
 							</Button>
 						}
 					/>

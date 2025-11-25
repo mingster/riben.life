@@ -205,7 +205,7 @@ export function BulkCreateProductsDialog({
 								type="submit"
 								disabled={loading || !form.formState.isValid}
 							>
-								{t("Create")}
+								{t("create")}
 							</Button>
 						</DialogFooter>
 					</form>

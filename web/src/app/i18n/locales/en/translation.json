@@ -705,6 +705,7 @@
   "TimerFilterSelections_f3": "Between",
   "TimerFilterSelections_f4": "After this date",
   "TimerFilterSelections_f5": "Before this date",
+  "today": "Today",
   "timezone": "Timezone",
   "Transactions": "Transactions",
   "two_factor": "Two-factor authentication (2FA)",

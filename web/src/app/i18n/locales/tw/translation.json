@@ -710,6 +710,7 @@
   "TimerFilterSelections_f3": "介於",
   "TimerFilterSelections_f4": "在此日期之後",
   "TimerFilterSelections_f5": "在此日期之前",
+  "today": "今天",
   "timezone": "時區",
   "Transactions": "訂單紀錄",
   "two_factor": "雙重驗證 (2FA)",

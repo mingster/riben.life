@@ -131,7 +131,7 @@ export function EditCreditBonusRuleDialog({
 		}
 
 		toastSuccess({
-			title: t("Credit_Bonus_Rule") + t(isEditMode ? "Updated" : "Created"),
+			title: t("Credit_Bonus_Rules") + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 

@@ -183,7 +183,7 @@ export function EditAnnouncementDialog({
 					<DialogTitle>
 						{isEditMode
 							? t("Announcement") + t("edit")
-							: t("Announcement") + t("Create")}
+							: t("Announcement") + t("create")}
 					</DialogTitle>
 					<DialogDescription>{t("Announcement_mgmt_descr")}</DialogDescription>
 				</DialogHeader>
@@ -216,7 +216,7 @@ export function EditAnnouncementDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("save") : t("Create")}
+								{isEditMode ? t("save") : t("create")}
 							</Button>
 							<DialogFooter className="sm:justify-start">
 								<Button

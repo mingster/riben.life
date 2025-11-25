@@ -113,7 +113,7 @@ export function EditCategoryDialog({
 		}
 
 		toastSuccess({
-			title: t("Category") + t(isEditMode ? "Updated" : "Created"),
+			title: t("Category") + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 
@@ -193,7 +193,7 @@ export function EditCategoryDialog({
 					<DialogTitle>
 						{isEditMode
 							? `${t("edit")} ${t("Category")}`
-							: `${t("Create")} ${t("Category")}`}
+							: `${t("create")} ${t("Category")}`}
 					</DialogTitle>
 					<DialogDescription>
 						{t("Category_mgmt_descr") ?? ""}
@@ -266,7 +266,7 @@ export function EditCategoryDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("save") : t("Create")}
+								{isEditMode ? t("save") : t("create")}
 							</Button>
 							<Button
 								type="button"

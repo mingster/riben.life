@@ -159,7 +159,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 						trigger={
 							<Button variant="outline">
 								<IconPlus className="mr-0 size-4" />
-								{t("Create")}
+								{t("create")}
 							</Button>
 						}
 					/>

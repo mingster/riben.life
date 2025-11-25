@@ -138,7 +138,7 @@ export function EditFacilityPricingRuleDialog({
 		}
 
 		toastSuccess({
-			title: t("Pricing_Rule") + t(isEditMode ? "Updated" : "Created"),
+			title: t("Pricing_Rule") + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 

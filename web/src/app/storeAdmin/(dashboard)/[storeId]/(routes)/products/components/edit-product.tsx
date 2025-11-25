@@ -213,14 +213,14 @@ export const EditProduct: React.FC<EditProductProps> = ({
 				{trigger ?? (
 					<Button variant="outline">
 						<IconPlus className="mr-0 size-4" />
-						{isNew ? t("Create") : t("edit")}
+						{isNew ? t("create") : t("edit")}
 					</Button>
 				)}
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-lg">
 				<DialogHeader>
 					<DialogTitle>
-						{isNew ? t("Create") : t("Product_mgmt_edit")}
+						{isNew ? t("create") : t("Product_mgmt_edit")}
 					</DialogTitle>
 					<DialogDescription>{t("Product_mgmt_add_descr")}</DialogDescription>
 				</DialogHeader>
@@ -366,7 +366,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 								{loading || form.formState.isSubmitting
 									? t("Saving...")
 									: isNew
-										? t("Create")
+										? t("create")
 										: t("save")}
 							</Button>
 							<Button

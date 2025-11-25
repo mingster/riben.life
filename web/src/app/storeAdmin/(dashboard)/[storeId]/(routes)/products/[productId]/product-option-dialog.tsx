@@ -406,7 +406,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 
 						<div className="flex w-full items-center justify-end space-x-2 pt-6">
 							<Button disabled={form.formState.isSubmitting} type="submit">
-								{action === "Create" ? t("Create") : t("update")}
+								{action === "Create" ? t("create") : t("update")}
 							</Button>
 
 							<DialogFooter className="sm:justify-start">

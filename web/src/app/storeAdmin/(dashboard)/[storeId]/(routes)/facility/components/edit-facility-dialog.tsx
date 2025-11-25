@@ -133,7 +133,7 @@ export function EditFacilityDialog({
 		}
 
 		toastSuccess({
-			title: t("Facility") + t(isEditMode ? "Updated" : "Created"),
+			title: t("Facility") + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 
@@ -373,7 +373,7 @@ export function EditFacilityDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("save") : t("Create")}
+								{isEditMode ? t("save") : t("create")}
 							</Button>
 							<Button
 								type="button"

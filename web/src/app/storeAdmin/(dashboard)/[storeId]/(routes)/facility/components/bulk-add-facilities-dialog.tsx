@@ -326,7 +326,7 @@ export function BulkAddFacilitiesDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{t("Create")}
+								{t("create")}
 							</Button>
 
 							<DialogFooter className="sm:justify-start">

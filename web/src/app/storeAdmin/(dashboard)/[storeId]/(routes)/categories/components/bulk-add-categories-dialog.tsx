@@ -199,7 +199,7 @@ export function BulkAddCategoriesDialog({
 									!form.formState.isValid
 								}
 							>
-								{t("Create")}
+								{t("create")}
 							</Button>
 
 							<DialogFooter className="sm:justify-start">
