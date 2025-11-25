@@ -9,7 +9,7 @@ import { formatDate } from "date-fns";
 import { StoreHomeContent } from "../components/store-home-content";
 import { getT } from "@/app/i18n";
 
-type Params = Promise<{ storeId: string; tableId: string }>;
+type Params = Promise<{ storeId: string; facilityId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 // customer scan table QR code, which redirect to this page.
@@ -24,7 +24,7 @@ export default async function TableOrderPage(props: {
 	const [store, table, storeSettings] = await Promise.all([
 		getStoreWithProducts(params.storeId),
 		sqlClient.storeFacility.findFirst({
-			where: { id: params.tableId },
+			where: { id: params.facilityId },
 		}),
 		sqlClient.storeSettings.findFirst({
 			where: { storeId: params.storeId },

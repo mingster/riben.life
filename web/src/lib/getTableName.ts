@@ -1,5 +1,5 @@
 import type { StoreFacility } from "@prisma/client";
 
-export function getTableName(tables: StoreFacility[], tableId: string) {
-	return tables.find((table) => table.id === tableId)?.facilityName || "";
+export function getTableName(tables: StoreFacility[], facilityId: string) {
+	return tables.find((table) => table.id === facilityId)?.facilityName || "";
 }

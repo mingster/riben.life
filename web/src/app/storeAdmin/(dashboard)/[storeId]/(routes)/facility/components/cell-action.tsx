@@ -23,7 +23,7 @@ import { EditFacilityDialog } from "./edit-facility-dialog";
 
 interface CellActionProps {
 	data: TableColumn;
-	onDeleted?: (tableId: string) => void;
+	onDeleted?: (facilityId: string) => void;
 	onUpdated?: (table: TableColumn) => void;
 }
 

@@ -21,7 +21,7 @@ import { useState } from "react";
 import { NotMountSkeleton } from "@/components/not-mount-skeleton";
 
 type ComboboxProps = {
-	userData: User[];
+	storeMembers: User[];
 	disabled: boolean;
 	defaultValue?: number;
 	onValueChange?: (newValue: User) => void;
@@ -29,8 +29,8 @@ type ComboboxProps = {
 
 // select component for customer
 //
-export const UserCombobox = ({
-	userData,
+export const StoreMembersCombobox = ({
+	storeMembers,
 	disabled,
 	defaultValue,
 	onValueChange,
@@ -39,7 +39,7 @@ export const UserCombobox = ({
 	const [mounted, setMounted] = useState(false);
 	const [open, setOpen] = useState(false);
 	const [selected, setSelected] = useState<User | null>(
-		userData.find((c) => c.id === String(defaultValue)) || null,
+		storeMembers.find((c) => c.id === String(defaultValue)) || null,
 	);
 
 	if (!mounted) {
@@ -61,16 +61,23 @@ export const UserCombobox = ({
 						disabled={disabled}
 						{...props}
 					>
-						{selected ? <>{selected.name}</> : <>+ Select a existing user</>}
+						{selected ? (
+							<>{selected.name}</>
+						) : (
+							<>+ Select a existing store member</>
+						)}
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="p-0" side="bottom" align="start">
 					<Command className="rounded-lg border shadow-md">
-						<CommandInput placeholder="Select a customer..." className="h-9" />
+						<CommandInput
+							placeholder="Select a store member..."
+							className="h-9"
+						/>
 						<CommandList>
-							<CommandEmpty>No customer found</CommandEmpty>
+							<CommandEmpty>No store member found</CommandEmpty>
 							<CommandGroup>
-								{userData.map((obj) => (
+								{storeMembers.map((obj) => (
 									<CommandItem
 										key={obj.id}
 										value={obj.email || obj.id} //value needs to be the keyword for command search

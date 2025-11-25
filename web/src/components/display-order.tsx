@@ -62,7 +62,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 		(order.orderStatus === OrderStatus.Pending ||
 			order.orderStatus === OrderStatus.Processing);
 
-	//{order.tableId && order.tableId !== null && order.tableId !== 'null' && `桌號：${getTableName(tables, order.tableId)}`}
+	//{order.facilityId && order.facilityId !== null && order.facilityId !== 'null' && `桌號：${getTableName(tables, order.facilityId)}`}
 	return (
 		<Card key={order.id} className="py-1">
 			<CardContent>

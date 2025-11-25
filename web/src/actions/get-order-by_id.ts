@@ -34,20 +34,20 @@ const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
 
 	/*
   if (
-    obj?.tableId &&
-    obj?.tableId !== null &&
-    obj?.tableId !== undefined &&
-    obj?.tableId !== ""
+    obj?.facilityId &&
+    obj?.facilityId !== null &&
+    obj?.facilityId !== undefined &&
+    obj?.facilityId !== ""
   ) {
-    // mock tableId to its display name
+    // mock facilityId to its display name
     const table = (await sqlClient.storeFacility.findUnique({
       where: {
-        id: obj?.tableId,
+        id: obj?.facilityId,
       },
     })) as StoreFacility;
 
-    if (table) obj.tableId = table.facilityName;
-    //console.log(obj.tableId);
+    if (table) obj.facilityId = table.facilityName;
+    //console.log(obj.facilityId);
   }
   */
 

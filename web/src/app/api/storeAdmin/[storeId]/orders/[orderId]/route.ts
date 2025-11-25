@@ -101,7 +101,7 @@ export async function PATCH(
 			data: {
 				paymentMethodId: updatedOrder.paymentMethodId,
 				shippingMethodId: updatedOrder.shippingMethodId,
-				tableId: updatedOrder.tableId,
+				facilityId: updatedOrder.facilityId,
 				orderTotal: updatedOrder.orderTotal,
 
 				// store time in store's local timezone

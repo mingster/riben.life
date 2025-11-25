@@ -47,6 +47,7 @@ import { formatDateTime } from "@/utils/datetime-utils";
 import clientLogger from "@/lib/client-logger";
 import { EditCustomer } from "./edit-customer";
 import { UserFilter } from "./filter-user";
+import { RechargeCreditDialog } from "./recharge-credit-dialog";
 import { Role } from "@/types/enum";
 
 interface CustomersClientProps {
@@ -153,6 +154,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 	const CellAction: React.FC<CellActionProps> = ({ item }) => {
 		const [loading, setLoading] = useState(false);
 		const [open, setOpen] = useState(false);
+		const [rechargeDialogOpen, setRechargeDialogOpen] = useState(false);
 
 		const router = useRouter();
 
@@ -199,8 +201,23 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 							<IconCreditCard className="mr-0 size-4" />
 							Manage Billing
 						</DropdownMenuItem>
+						<DropdownMenuItem
+							className="cursor-pointer"
+							onSelect={(event) => {
+								event.preventDefault();
+								setRechargeDialogOpen(true);
+							}}
+						>
+							<IconCreditCard className="mr-0 size-4" />
+							{t("Recharge_Credit") || "Recharge Credit"}
+						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
+				<RechargeCreditDialog
+					user={item}
+					open={rechargeDialogOpen}
+					onOpenChange={setRechargeDialogOpen}
+				/>
 			</>
 		);
 	};

@@ -34,22 +34,51 @@ export async function calculateBonus(
 
 /**
  * Process a credit top-up, calculate bonus, update balance, and log transactions.
- * @param storeId
- * @param userId
- * @param amount Top-up amount
- * @param referenceId Order ID or Payment ID
+ *
+ * This function handles both:
+ * - Customer recharges (via payment): referenceId should be StoreOrder.id, creatorId should be null
+ * - Store operator recharges (manual): referenceId should be null, creatorId should be operator's userId
+ *
+ * @param storeId - Store ID
+ * @param userId - Customer user ID
+ * @param amount - Top-up amount (must be positive)
+ * @param referenceId - Order ID for customer recharge, or null for manual recharge
+ * @param creatorId - User ID of operator who created this recharge (null for customer-initiated)
+ * @param note - Optional note/description for the transaction
+ * @returns Object with amount, bonus, and totalCredit
  */
 export async function processCreditTopUp(
 	storeId: string,
 	userId: string,
 	amount: number,
-	referenceId?: string,
-) {
+	referenceId?: string | null,
+	creatorId?: string | null,
+	note?: string | null,
+): Promise<{ amount: number; bonus: number; totalCredit: number }> {
+	if (amount <= 0) {
+		throw new Error("Top-up amount must be positive");
+	}
+
+	// Calculate bonus based on top-up amount
 	const bonus = await calculateBonus(storeId, amount);
 	const totalCredit = amount + bonus;
 
 	await sqlClient.$transaction(async (tx) => {
-		// 1. Update CustomerCredit
+		// 1. Get current balance (before update)
+		const existingCredit = await tx.customerCredit.findUnique({
+			where: {
+				storeId_userId: {
+					storeId,
+					userId,
+				},
+			},
+		});
+
+		const currentBalance = existingCredit ? Number(existingCredit.credit) : 0;
+		const balanceAfterTopUp = currentBalance + amount;
+		const finalBalance = balanceAfterTopUp + bonus;
+
+		// 2. Update CustomerCredit
 		const customerCredit = await tx.customerCredit.upsert({
 			where: {
 				storeId_userId: {
@@ -69,10 +98,15 @@ export async function processCreditTopUp(
 			},
 		});
 
-		const finalBalance = Number(customerCredit.credit);
-		const balanceAfterTopUp = finalBalance - bonus;
+		// Verify the balance matches our calculation
+		const actualBalance = Number(customerCredit.credit);
+		if (Math.abs(actualBalance - finalBalance) > 0.01) {
+			throw new Error(
+				`Balance mismatch: expected ${finalBalance}, got ${actualBalance}`,
+			);
+		}
 
-		// 2. Create Log for Top-up
+		// 3. Create Ledger Entry for Top-up
 		await tx.customerCreditLedger.create({
 			data: {
 				storeId,
@@ -80,12 +114,13 @@ export async function processCreditTopUp(
 				amount: new Prisma.Decimal(amount),
 				balance: new Prisma.Decimal(balanceAfterTopUp),
 				type: "TOPUP",
-				referenceId,
-				note: `Top-up ${amount}`,
+				referenceId: referenceId || null,
+				note: note || `Top-up ${amount}`,
+				creatorId: creatorId || null,
 			},
 		});
 
-		// 3. Create Log for Bonus if any
+		// 4. Create Ledger Entry for Bonus if applicable
 		if (bonus > 0) {
 			await tx.customerCreditLedger.create({
 				data: {
@@ -94,8 +129,9 @@ export async function processCreditTopUp(
 					amount: new Prisma.Decimal(bonus),
 					balance: new Prisma.Decimal(finalBalance),
 					type: "BONUS",
-					referenceId,
+					referenceId: referenceId || null,
 					note: `Bonus for top-up ${amount}`,
+					creatorId: null, // Bonus is always system-generated
 				},
 			});
 		}

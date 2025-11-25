@@ -126,8 +126,8 @@ export const OrderUnpaid = ({
 								<TableRow key={order.id}>
 									<TableCell className="text-2xl font-extrabold">
 										{order.orderNum}
-										{order.tableId &&
-											` / ${getTableName(tables, order.tableId)}`}
+										{order.facilityId &&
+											` / ${getTableName(tables, order.facilityId)}`}
 									</TableCell>
 
 									<TableCell>

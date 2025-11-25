@@ -73,7 +73,7 @@ export const StoreHomeContent: React.FC<props> = ({
 
 	const cart = useCart();
 
-	const params = useParams<{ storeId: string; tableId: string }>();
+	const params = useParams<{ storeId: string; facilityId: string }>();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -184,7 +184,7 @@ export const StoreHomeContent: React.FC<props> = ({
 						price: Number(product.price),
 						quantity: 1,
 						storeId: params.storeId,
-						tableId: params.tableId,
+						facilityId: params.facilityId,
 						//...product,
 						//cartStatus: CartProductStatus.InProgress,
 						//userData: "",

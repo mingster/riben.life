@@ -158,7 +158,7 @@ These pages work well but have minor optimization opportunity:
 16. **FAQ Category Detail** (`/faqCategory/[categoryId]/page.tsx`)
 17. **FAQ Detail** (`/faqCategory/[categoryId]/faq/[faqId]/page.tsx`)
 18. **Announcement Detail** (`/announcements/[messageId]/page.tsx`)
-19. **Table Detail** (`/tables/[tableId]/page.tsx`)
+19. **Table Detail** (`/tables/[facilityId]/page.tsx`)
 20. **Order Detail** (`/order/[orderId]/page.tsx`)
 21. **Order Refund** (`/order/[orderId]/refund/page.tsx`)
 22. **Support Ticket** (`/support/[ticketId]/page.tsx`)

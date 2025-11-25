@@ -36,7 +36,7 @@ export const QRCode: React.FC<QrCodeProps> = ({ data }) => {
 };
 
 interface CreateTableColumnsOptions {
-	onDeleted?: (tableId: string) => void;
+	onDeleted?: (facilityId: string) => void;
 	onUpdated?: (table: TableColumn) => void;
 	onEdit?: (table: TableColumn) => void;
 }

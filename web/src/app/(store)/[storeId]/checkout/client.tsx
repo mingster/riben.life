@@ -85,9 +85,9 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 	});
 
 	//const searchParams = useSearchParams();
-	// see if there is a tableId in querystring
-	//const tableId = searchParams.get("tableId");
-	//console.log("tableId", tableId);
+	// see if there is a facilityId in querystring
+	//const facilityId = searchParams.get("facilityId");
+	//console.log("facilityId", facilityId);
 
 	const allShipMethods = store.StoreShippingMethods as StoreShipMethodMapping[];
 
@@ -102,9 +102,9 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 	// if there's table id, use 內用 as shipping method
 
 	//console.log("allShipMethods: " + JSON.stringify(allShipMethods));
-	//console.log("params.tableId", params.tableId);
+	//console.log("params.facilityId", params.facilityId);
 
-	if (params.tableId && params.tableId !== "undefined") {
+	if (params.facilityId && params.facilityId !== "undefined") {
 		const instore = allShipMethods.find(
 			(o: StoreShipMethodMapping) => o.ShippingMethod.identifier === "in-store",
 		);
@@ -223,7 +223,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 		const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/create-order`;
 		const body = JSON.stringify({
 			userId: user?.id, //user is optional
-			tableId: cart.items[0].tableId,
+			facilityId: cart.items[0].facilityId,
 			total: cart.cartTotal,
 			currency: store.defaultCurrency,
 			productIds: productIds,
@@ -305,7 +305,7 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 										showSubtotal={true}
 									/>
 								</div>
-								{/* <div className="">table:{item.tableId}</div>*/}
+								{/* <div className="">table:{item.facilityId}</div>*/}
 							</div>
 						))}
 				</CardContent>
