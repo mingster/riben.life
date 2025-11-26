@@ -97,13 +97,11 @@ class Logger {
 	}
 
 	// Static method to get singleton instance
-	static getInstance(
-		options?: {
-			service?: string;
-			environment?: string;
-			version?: string;
-		},
-	): Logger {
+	static getInstance(options?: {
+		service?: string;
+		environment?: string;
+		version?: string;
+	}): Logger {
 		if (!Logger.instance) {
 			Logger.instance = new Logger(options);
 		}

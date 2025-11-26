@@ -1,14 +1,14 @@
-import { Suspense } from "react";
 import { Loader } from "@/components/loader";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import type { User } from "@/types";
 import type { SubscriptionForUI } from "@/types/enum";
-import logger from "@/lib/logger";
 import { transformDecimalsToNumbers } from "@/utils/utils";
+import { Suspense } from "react";
 import { ManageUserClient } from "./client-manage-user";
 
-type Params = Promise<{ email: string }>;
+type Params = Promise<{ email: string; storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function UsersBillingAdminPage(props: {
@@ -25,8 +25,54 @@ export default async function UsersBillingAdminPage(props: {
 		where: {
 			email: email,
 		},
+		include: {
+			Orders: {
+				where: {
+					storeId: params.storeId,
+				},
+				include: {
+					OrderItemView: {
+						include: {
+							Product: true,
+						},
+					},
+					ShippingMethod: true,
+					PaymentMethod: true,
+				},
+				orderBy: {
+					updatedAt: "desc",
+				},
+			},
+			Rsvp: {
+				where: {
+					storeId: params.storeId,
+				},
+				orderBy: {
+					rsvpTime: "desc",
+				},
+			},
+			CustomerCredits: {
+				where: {
+					storeId: params.storeId,
+				},
+			},
+			CustomerCreditLedger: {
+				where: {
+					storeId: params.storeId,
+				},
+				include: {
+					Creator: true,
+					StoreOrder: true,
+				},
+				orderBy: {
+					createdAt: "desc",
+				},
+			},
+		},
 	})) as User;
+	transformDecimalsToNumbers(user);
 
+	//console.log(`user: ${JSON.stringify(user)}`);
 	let stripeSubscriptions = null;
 	const userSubscription: SubscriptionForUI[] = [];
 

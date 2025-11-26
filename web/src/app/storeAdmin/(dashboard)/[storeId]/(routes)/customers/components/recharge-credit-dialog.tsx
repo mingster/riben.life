@@ -140,7 +140,7 @@ export function RechargeCreditDialog({
 					: t("customer_credit_promotional_payment") || "Promotional";
 				toastSuccess({
 					title: t("success_title"),
-					description: t("customer_credit_recharged") || "Credit Recharged"
+					description: t("customer_credit_recharged") || "Credit Recharged",
 				});
 			}
 			resetForm();
@@ -156,17 +156,18 @@ export function RechargeCreditDialog({
 		}
 	};
 
-
-	let dialogDescription = t("customer_credit_recharge_description") || "Add credit to {0}'s account";
+	let dialogDescription =
+		t("customer_credit_recharge_description") || "Add credit to {0}'s account";
 	dialogDescription = dialogDescription.replace("{0}", user.name || user.email);
-
 
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>{t("customer_credit_recharge") || "Recharge Credit"}</DialogTitle>
+					<DialogTitle>
+						{t("customer_credit_recharge") || "Recharge Credit"}
+					</DialogTitle>
 					<DialogDescription className="text-xs font-mono text-muted-foreground">
 						{dialogDescription}
 					</DialogDescription>
@@ -194,7 +195,9 @@ export function RechargeCreditDialog({
 							name="creditAmount"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("customer_credit_amount") || "Credit Amount"}</FormLabel>
+									<FormLabel>
+										{t("customer_credit_amount") || "Credit Amount"}
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -249,7 +252,9 @@ export function RechargeCreditDialog({
 								name="cashAmount"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("customer_credit_cash_amount") || "Cash Amount"} *</FormLabel>
+										<FormLabel>
+											{t("customer_credit_cash_amount") || "Cash Amount"} *
+										</FormLabel>
 										<FormControl>
 											<Input
 												type="number"

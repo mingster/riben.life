@@ -3,10 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { passkey } from "@better-auth/passkey";
-import {
-	betterAuth,
-	type BetterAuthOptions
-} from "better-auth";
+import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { emailHarmony } from "better-auth-harmony";
 import {
 	admin,
@@ -14,7 +11,7 @@ import {
 	bearer,
 	magicLink,
 	organization,
-	twoFactor
+	twoFactor,
 } from "better-auth/plugins";
 
 import { sendAuthMagicLink } from "@/actions/mail/send-auth-magic-link";

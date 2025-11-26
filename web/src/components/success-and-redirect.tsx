@@ -65,7 +65,7 @@ function MyTimer({
 	return (
 		<div className="pt-10">
 			<h1>{t("success_title")}</h1>
-			{t("success_descr")}
+			{t("order_sucess_descr")}
 		</div>
 	);
 }

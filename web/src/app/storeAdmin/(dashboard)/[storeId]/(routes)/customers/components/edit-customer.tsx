@@ -172,7 +172,9 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 				<DialogContent>
 					<DialogHeader className="gap-1">
 						<DialogTitle>{item.name}</DialogTitle>
-						<DialogDescription>Edit User</DialogDescription>
+						<DialogDescription>
+							{isNew ? t("create") : t("edit")} {t("user")}
+						</DialogDescription>
 					</DialogHeader>
 
 					<div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">

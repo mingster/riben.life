@@ -19,6 +19,8 @@ import { cn } from "@/utils/utils";
 import { IconCheck } from "@tabler/icons-react";
 import { useState } from "react";
 import { NotMountSkeleton } from "@/components/not-mount-skeleton";
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
 
 type ComboboxProps = {
 	storeMembers: User[];
@@ -36,6 +38,8 @@ export const StoreMembersCombobox = ({
 	onValueChange,
 	...props
 }: ComboboxProps) => {
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
 	const [mounted, setMounted] = useState(false);
 	const [open, setOpen] = useState(false);
 	const [selected, setSelected] = useState<User | null>(
@@ -64,18 +68,18 @@ export const StoreMembersCombobox = ({
 						{selected ? (
 							<>{selected.name}</>
 						) : (
-							<>+ Select a existing store member</>
+							<>+ {t("select_store_member")}</>
 						)}
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="p-0" side="bottom" align="start">
 					<Command className="rounded-lg border shadow-md">
 						<CommandInput
-							placeholder="Select a store member..."
+							placeholder={t("select_store_member")}
 							className="h-9"
 						/>
 						<CommandList>
-							<CommandEmpty>No store member found</CommandEmpty>
+							<CommandEmpty>{t("no_store_member_found")}</CommandEmpty>
 							<CommandGroup>
 								{storeMembers.map((obj) => (
 									<CommandItem
