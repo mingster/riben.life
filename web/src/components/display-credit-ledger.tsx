@@ -3,6 +3,7 @@
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { CustomerCreditLedger } from "@/types";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useMemo } from "react";
 
@@ -17,17 +18,17 @@ export const DisplayCreditLedger = ({
 	const { t } = useTranslation(lng);
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 
-	console.log(`ledger: ${JSON.stringify(ledger)}`);
+	//console.log(`ledger: ${JSON.stringify(ledger)}`);
 	return (
-		<div className="space-y-2">
+		<div className="space-y-2 font-mono text-xs">
 			{ledger.map((item) => (
 				<table key={item.id} className="w-full">
 					<thead>
 						<tr>
 							<th className="text-left">{t("created_at")}</th>
+							<th className="text-left">{t("customer_credit_type")}</th>
 							<th className="text-left">{t("customer_credit_amount")}</th>
 							<th className="text-left">{t("balance")}</th>
-							<th className="text-left">{t("customer_credit_type")}</th>
 							<th className="text-left">{t("note")}</th>
 							<th className="text-left">{t("customer_credit_creator")}</th>
 						</tr>
@@ -35,9 +36,25 @@ export const DisplayCreditLedger = ({
 					<tbody>
 						<tr>
 							<td>{format(item.createdAt, datetimeFormat)}</td>
-							<td>{item.amount}</td>
-							<td>{item.balance}</td>
 							<td>{t(`customer_credit_type_${item.type}`)}</td>
+							<td
+								className={cn(
+									Number(item.amount) >= 0
+										? "text-green-700 dark:text-green-400"
+										: "text-red-700 dark:text-red-400",
+								)}
+							>
+								{item.amount.toString()}
+							</td>
+							<td
+								className={cn(
+									Number(item.balance) >= 0
+										? "text-green-700 dark:text-green-400"
+										: "text-red-700 dark:text-red-400",
+								)}
+							>
+								{item.balance.toString()}
+							</td>
 							<td>{item.note}</td>
 							<td>{item.Creator?.name}</td>
 						</tr>

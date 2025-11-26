@@ -10,25 +10,29 @@ import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import { useRouter } from "next/navigation";
 
-import type { RsvpColumn } from "../history/rsvp-column";
+import type { Rsvp } from "@/types";
 import { WeekViewCalendar } from "./week-view-calendar";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 interface RsvpCalendarClientProps {
-	serverData: RsvpColumn[];
+	serverData: Rsvp[];
+	rsvpSettings: { useBusinessHours: boolean; rsvpHours: string | null } | null;
+	storeSettings: { businessHours: string | null } | null;
 }
 
 export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 	serverData,
+	rsvpSettings,
+	storeSettings,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const router = useRouter();
 
-	const [data, setData] = useState<RsvpColumn[]>(serverData);
+	const [data, setData] = useState<Rsvp[]>(serverData);
 
 	const handleCreated = useCallback(
-		(newRsvp: RsvpColumn) => {
+		(newRsvp: Rsvp) => {
 			if (!newRsvp) return;
 			setData((prev) => {
 				const exists = prev.some((item) => item.id === newRsvp.id);
@@ -41,7 +45,7 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 	);
 
 	const handleUpdated = useCallback(
-		(updated: RsvpColumn) => {
+		(updated: Rsvp) => {
 			if (!updated) return;
 			setData((prev) =>
 				prev.map((item) => (item.id === updated.id ? updated : item)),
@@ -77,6 +81,8 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 				rsvps={data}
 				onRsvpCreated={handleCreated}
 				onRsvpUpdated={handleUpdated}
+				rsvpSettings={rsvpSettings}
+				storeSettings={storeSettings}
 			/>
 		</>
 	);

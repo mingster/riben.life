@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import type { Rsvp } from "@prisma/client";
-import { mapRsvpToColumn, RsvpColumn } from "./rsvp-column";
+import { transformDecimalsToNumbers } from "@/utils/utils";
+import type { Rsvp } from "@/types";
 import { RsvpHistoryClient } from "../components/client-rsvp";
 
 type Params = Promise<{ storeId: string }>;
@@ -16,11 +16,22 @@ export default async function RsvpPage(props: {
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	const rsvps = await sqlClient.rsvp.findMany({
 		where: { storeId: params.storeId },
+		include: {
+			Store: true,
+			User: true,
+			Order: true,
+			Facility: true,
+			FacilityPricingRule: true,
+		},
 		orderBy: { rsvpTime: "desc" },
 	});
 
-	// Map rsvps to UI columns
-	const formattedData: RsvpColumn[] = (rsvps as Rsvp[]).map(mapRsvpToColumn);
+	// Transform Decimal objects to numbers for client components
+	const formattedData: Rsvp[] = (rsvps as Rsvp[]).map((rsvp) => {
+		const transformed = { ...rsvp };
+		transformDecimalsToNumbers(transformed);
+		return transformed as Rsvp;
+	});
 
 	return (
 		<Container>

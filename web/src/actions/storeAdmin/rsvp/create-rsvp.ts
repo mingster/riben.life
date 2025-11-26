@@ -1,10 +1,11 @@
 "use server";
 
-import { mapRsvpToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/rsvp/history/rsvp-column";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
+import { transformDecimalsToNumbers } from "@/utils/utils";
+import type { Rsvp } from "@/types";
 
 import { createRsvpSchema } from "./create-rsvp.validation";
 
@@ -64,10 +65,20 @@ export const createRsvpAction = storeActionClient
 							: null,
 					pricingRuleId: pricingRuleId || null,
 				},
+				include: {
+					Store: true,
+					User: true,
+					Order: true,
+					Facility: true,
+					FacilityPricingRule: true,
+				},
 			});
 
+			const transformedRsvp = { ...rsvp } as Rsvp;
+			transformDecimalsToNumbers(transformedRsvp);
+
 			return {
-				rsvp: mapRsvpToColumn(rsvp),
+				rsvp: transformedRsvp,
 			};
 		} catch (error: unknown) {
 			if (

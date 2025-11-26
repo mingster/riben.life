@@ -18,13 +18,13 @@ import {
 import { useI18n } from "@/providers/i18n-provider";
 
 import { deleteRsvpAction } from "@/actions/storeAdmin/rsvp/delete-rsvp";
-import type { RsvpColumn } from "../history/rsvp-column";
+import type { Rsvp } from "@/types";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 interface CellActionProps {
-	data: RsvpColumn;
+	data: Rsvp;
 	onDeleted?: (rsvpId: string) => void;
-	onUpdated?: (rsvp: RsvpColumn) => void;
+	onUpdated?: (rsvp: Rsvp) => void;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({

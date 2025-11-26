@@ -1,6 +1,10 @@
 "use client";
 
-import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import {
+	IconChevronLeft,
+	IconChevronRight,
+	IconCalendar,
+} from "@tabler/icons-react";
 import {
 	format,
 	startOfWeek,
@@ -9,20 +13,30 @@ import {
 	subWeeks,
 	isSameDay,
 	parseISO,
+	Locale,
 } from "date-fns";
-import { useCallback, useMemo, useState } from "react";
+import { enUS } from "date-fns/locale/en-US";
+import { zhTW } from "date-fns/locale/zh-TW";
+import { ja } from "date-fns/locale/ja";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import type { RsvpColumn } from "../history/rsvp-column";
+import type { Rsvp } from "@/types";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 // Component for creating RSVP at specific time slot
 interface CreateRsvpButtonProps {
 	day: Date;
 	timeSlot: string;
-	onCreated?: (rsvp: RsvpColumn) => void;
+	onCreated?: (rsvp: Rsvp) => void;
 }
 
 const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
@@ -55,18 +69,103 @@ const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 };
 
 interface WeekViewCalendarProps {
-	rsvps: RsvpColumn[];
-	onRsvpCreated?: (rsvp: RsvpColumn) => void;
-	onRsvpUpdated?: (rsvp: RsvpColumn) => void;
+	rsvps: Rsvp[];
+	onRsvpCreated?: (rsvp: Rsvp) => void;
+	onRsvpUpdated?: (rsvp: Rsvp) => void;
+	rsvpSettings: { useBusinessHours: boolean; rsvpHours: string | null } | null;
+	storeSettings: { businessHours: string | null } | null;
 }
 
-// Generate time slots (e.g., 8:00 AM to 10:00 PM)
-const generateTimeSlots = (): string[] => {
-	const slots: string[] = [];
-	for (let hour = 8; hour < 22; hour++) {
-		slots.push(`${hour.toString().padStart(2, "0")}:00`);
+interface TimeRange {
+	from: string;
+	to: string;
+}
+
+interface WeeklySchedule {
+	Monday: TimeRange[] | "closed";
+	Tuesday: TimeRange[] | "closed";
+	Wednesday: TimeRange[] | "closed";
+	Thursday: TimeRange[] | "closed";
+	Friday: TimeRange[] | "closed";
+	Saturday: TimeRange[] | "closed";
+	Sunday: TimeRange[] | "closed";
+	holidays?: string[];
+	timeZone?: string;
+}
+
+// Extract all unique hours from businessHours or rsvpHours JSON format
+const extractHoursFromSchedule = (hoursJson: string | null): number[] => {
+	if (!hoursJson) {
+		// Default to 8-22 if no hours specified
+		return Array.from({ length: 14 }, (_, i) => i + 8);
 	}
-	return slots;
+
+	try {
+		const schedule = JSON.parse(hoursJson) as WeeklySchedule;
+		const hours = new Set<number>();
+
+		const days = [
+			"Monday",
+			"Tuesday",
+			"Wednesday",
+			"Thursday",
+			"Friday",
+			"Saturday",
+			"Sunday",
+		] as const;
+
+		days.forEach((day) => {
+			const dayHours = schedule[day];
+			if (dayHours !== "closed" && Array.isArray(dayHours)) {
+				dayHours.forEach((range: TimeRange) => {
+					// Parse from time (e.g., "10:00" -> 10)
+					let fromHour = parseInt(range.from.split(":")[0], 10);
+					let toHour = parseInt(range.to.split(":")[0], 10);
+					const toMinutes = parseInt(range.to.split(":")[1] || "0", 10);
+
+					// Handle 24:00 as 23:00 (since hour 24 doesn't exist)
+					if (toHour === 24) {
+						toHour = 23;
+					}
+					if (fromHour === 24) {
+						fromHour = 23;
+					}
+
+					// Include all hours from start (inclusive) to end
+					// If end time has minutes (e.g., "13:30"), include the end hour
+					// If end time is exact hour (e.g., "13:00"), don't include it (open until but not including)
+					const endHour = toMinutes > 0 ? toHour : toHour - 1;
+
+					for (let hour = fromHour; hour <= endHour && hour < 24; hour++) {
+						hours.add(hour);
+					}
+				});
+			}
+		});
+
+		// If no hours found, default to 8-22
+		if (hours.size === 0) {
+			return Array.from({ length: 14 }, (_, i) => i + 8);
+		}
+
+		return Array.from(hours).sort((a, b) => a - b);
+	} catch (error) {
+		// If parsing fails, default to 8-22
+		console.error("Failed to parse hours JSON:", error);
+		return Array.from({ length: 14 }, (_, i) => i + 8);
+	}
+};
+
+// Generate time slots based on rsvpSettings and storeSettings
+const generateTimeSlots = (
+	useBusinessHours: boolean,
+	rsvpHours: string | null,
+	businessHours: string | null,
+): string[] => {
+	const hoursJson = useBusinessHours ? businessHours : rsvpHours;
+	const hours = extractHoursFromSchedule(hoursJson);
+
+	return hours.map((hour) => `${hour.toString().padStart(2, "0")}:00`);
 };
 
 // Get day name abbreviation using i18n
@@ -97,11 +196,11 @@ const isToday = (date: Date): boolean => {
 // Group RSVPs by day and time slot
 // RSVPs are placed in the time slot that matches their hour (rounded to nearest hour)
 const groupRsvpsByDayAndTime = (
-	rsvps: RsvpColumn[],
+	rsvps: Rsvp[],
 	weekStart: Date,
 	weekEnd: Date,
 ) => {
-	const grouped: Record<string, RsvpColumn[]> = {};
+	const grouped: Record<string, Rsvp[]> = {};
 
 	rsvps.forEach((rsvp) => {
 		const rsvpDate =
@@ -132,14 +231,64 @@ const groupRsvpsByDayAndTime = (
 };
 
 export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
-	rsvps,
+	rsvps: initialRsvps,
 	onRsvpCreated,
 	onRsvpUpdated,
+	rsvpSettings,
+	storeSettings,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [currentWeek, setCurrentWeek] = useState(new Date());
-	const timeSlots = useMemo(() => generateTimeSlots(), []);
+	const [rsvps, setRsvps] = useState<Rsvp[]>(initialRsvps);
+
+	// Sync with prop changes (e.g., when server data is refreshed)
+	useEffect(() => {
+		setRsvps(initialRsvps);
+	}, [initialRsvps]);
+
+	// Handle RSVP updates locally
+	const handleRsvpUpdated = useCallback(
+		(updated: Rsvp) => {
+			setRsvps((prev) =>
+				prev.map((item) => (item.id === updated.id ? updated : item)),
+			);
+			onRsvpUpdated?.(updated);
+		},
+		[onRsvpUpdated],
+	);
+
+	// Handle RSVP creation locally
+	const handleRsvpCreated = useCallback(
+		(newRsvp: Rsvp) => {
+			setRsvps((prev) => {
+				const exists = prev.some((item) => item.id === newRsvp.id);
+				if (exists) return prev;
+				return [newRsvp, ...prev];
+			});
+			onRsvpCreated?.(newRsvp);
+		},
+		[onRsvpCreated],
+	);
+
+	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
+	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
+	const businessHours = storeSettings?.businessHours ?? null;
+
+	const timeSlots = useMemo(
+		() => generateTimeSlots(useBusinessHours, rsvpHours, businessHours),
+		[useBusinessHours, rsvpHours, businessHours],
+	);
+
+	// Map i18n language codes to date-fns locales
+	const calendarLocale = useMemo((): Locale => {
+		const localeMap: Record<string, Locale> = {
+			tw: zhTW,
+			en: enUS,
+			jp: ja,
+		};
+		return localeMap[lng || "tw"] || zhTW;
+	}, [lng]);
 
 	const weekStart = useMemo(
 		() => startOfWeek(currentWeek, { weekStartsOn: 0 }), // Sunday
@@ -161,6 +310,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		return days;
 	}, [weekStart]);
 
+	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
+
 	// Group RSVPs by day and time
 	const groupedRsvps = useMemo(
 		() => groupRsvpsByDayAndTime(rsvps, weekStart, weekEnd),
@@ -179,17 +330,50 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		setCurrentWeek(new Date());
 	}, []);
 
-	const getRsvpsForSlot = (day: Date, timeSlot: string): RsvpColumn[] => {
+	const handleDateSelect = useCallback((date: Date | undefined) => {
+		if (date) {
+			setCurrentWeek(date);
+		}
+	}, []);
+
+	const getRsvpsForSlot = (day: Date, timeSlot: string): Rsvp[] => {
 		const dayKey = format(day, "yyyy-MM-dd");
 		const key = `${dayKey}-${timeSlot}`;
 		return groupedRsvps[key] || [];
 	};
-
+	const [dropdown, setDropdown] =
+		useState<React.ComponentProps<typeof Calendar>["captionLayout"]>(
+			"dropdown",
+		);
 	return (
 		<div className="flex flex-col gap-4">
 			{/* Week Navigation */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2 font-mono text-sm">
+					<Popover>
+						<PopoverTrigger asChild>
+							<Button
+								variant="outline"
+								className={cn(
+									"pl-3 text-left font-normal",
+									!currentWeek && "text-muted-foreground",
+								)}
+							>
+								<IconCalendar className="mr-2 h-4 w-4 opacity-50" />
+							</Button>
+						</PopoverTrigger>
+						<PopoverContent className="w-auto min-w-[250px] p-2" align="start">
+							<Calendar
+								mode="single"
+								selected={currentWeek}
+								onSelect={handleDateSelect}
+								captionLayout={dropdown}
+								locale={calendarLocale}
+								className="w-full rounded-lg shadow-sm"
+							/>
+						</PopoverContent>
+					</Popover>
+
 					<Button variant="outline" size="icon" onClick={handlePreviousWeek}>
 						<IconChevronLeft className="h-4 w-4" />
 					</Button>
@@ -200,7 +384,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						<IconChevronRight className="h-4 w-4" />
 					</Button>
 					<span className="ml-4 text-lg font-semibold">
-						{format(weekStart, "MMM d")} - {format(weekEnd, "MMM d, yyyy")}
+						{format(weekStart, "MMMd", { locale: calendarLocale })} -{" "}
+						{format(weekEnd, datetimeFormat, { locale: calendarLocale })}
 					</span>
 				</div>
 			</div>
@@ -263,7 +448,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 															<AdminEditRsvpDialog
 																key={rsvp.id}
 																rsvp={rsvp}
-																onUpdated={onRsvpUpdated}
+																onUpdated={handleRsvpUpdated}
 																trigger={
 																	<button
 																		type="button"
@@ -276,11 +461,23 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																		)}
 																	>
 																		<div className="font-medium truncate">
-																			{rsvp.numOfAdult + rsvp.numOfChild}{" "}
-																			{rsvp.numOfAdult + rsvp.numOfChild === 1
-																				? "guest"
-																				: "guests"}
+																			{rsvp.User?.name
+																				? rsvp.User.name
+																				: rsvp.User?.email
+																					? rsvp.User.email
+																					: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																							rsvp.numOfAdult +
+																								rsvp.numOfChild ===
+																							1
+																								? "guest"
+																								: "guests"
+																						}`}
 																		</div>
+																		{rsvp.Facility?.facilityName && (
+																			<div className="text-muted-foreground truncate text-[10px]">
+																				{rsvp.Facility.facilityName}
+																			</div>
+																		)}
 																		{rsvp.message && (
 																			<div className="text-muted-foreground truncate text-[10px]">
 																				{rsvp.message}
@@ -294,7 +491,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 														<CreateRsvpButton
 															day={day}
 															timeSlot={timeSlot}
-															onCreated={onRsvpCreated}
+															onCreated={handleRsvpCreated}
 														/>
 													)}
 												</div>
