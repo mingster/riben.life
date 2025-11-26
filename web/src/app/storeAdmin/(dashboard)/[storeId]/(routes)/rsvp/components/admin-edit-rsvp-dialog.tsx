@@ -625,7 +625,7 @@ export function AdminEditRsvpDialog({
 												checked={field.value}
 												onChange={field.onChange}
 												disabled={loading || form.formState.isSubmitting}
-												className="h-4 w-4"
+												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
 											/>
 										</FormControl>
 										<FormLabel>{t("rsvp_already_paid")}</FormLabel>
@@ -651,7 +651,7 @@ export function AdminEditRsvpDialog({
 											checked={field.value}
 											onChange={field.onChange}
 											disabled={loading || form.formState.isSubmitting}
-											className="h-4 w-4"
+											className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
 										/>
 									</FormControl>
 									<FormLabel>{t("rsvp_confirmed_by_store")}</FormLabel>
@@ -722,7 +722,7 @@ export function AdminEditRsvpDialog({
 											checked={field.value}
 											onChange={field.onChange}
 											disabled={loading || form.formState.isSubmitting}
-											className="h-4 w-4"
+											className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
 										/>
 									</FormControl>
 									<FormLabel>{t("rsvp_confirmed_by_customer")}</FormLabel>

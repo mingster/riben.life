@@ -59,7 +59,7 @@ const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 			trigger={
 				<button
 					type="button"
-					className="w-full h-full min-h-[60px] text-left p-2 rounded hover:bg-muted/50 transition-colors text-xs text-muted-foreground"
+					className="w-full h-full min-h-[44px] sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground touch-manipulation flex items-center justify-center"
 				>
 					+
 				</button>
@@ -346,23 +346,27 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 			"dropdown",
 		);
 	return (
-		<div className="flex flex-col gap-4">
+		<div className="flex flex-col gap-3 sm:gap-4">
 			{/* Week Navigation */}
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-2 font-mono text-sm">
+			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+				<div className="flex items-center gap-1.5 sm:gap-2 font-mono text-sm flex-wrap">
 					<Popover>
 						<PopoverTrigger asChild>
 							<Button
 								variant="outline"
+								size="icon"
 								className={cn(
-									"pl-3 text-left font-normal",
+									"h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0",
 									!currentWeek && "text-muted-foreground",
 								)}
 							>
-								<IconCalendar className="mr-2 h-4 w-4 opacity-50" />
+								<IconCalendar className="h-4 w-4 sm:h-5 sm:w-5" />
 							</Button>
 						</PopoverTrigger>
-						<PopoverContent className="w-auto min-w-[250px] p-2" align="start">
+						<PopoverContent
+							className="w-auto min-w-[280px] sm:min-w-[320px] p-3"
+							align="start"
+						>
 							<Calendar
 								mode="single"
 								selected={currentWeek}
@@ -374,47 +378,67 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						</PopoverContent>
 					</Popover>
 
-					<Button variant="outline" size="icon" onClick={handlePreviousWeek}>
-						<IconChevronLeft className="h-4 w-4" />
+					<Button
+						variant="outline"
+						size="icon"
+						onClick={handlePreviousWeek}
+						className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+					>
+						<IconChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
 					</Button>
-					<Button variant="outline" onClick={handleToday}>
+					<Button
+						variant="outline"
+						onClick={handleToday}
+						className="h-10 min-h-[44px] px-3 text-sm sm:h-9 sm:min-h-0"
+					>
 						{t("today")}
 					</Button>
-					<Button variant="outline" size="icon" onClick={handleNextWeek}>
-						<IconChevronRight className="h-4 w-4" />
+					<Button
+						variant="outline"
+						size="icon"
+						onClick={handleNextWeek}
+						className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+					>
+						<IconChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
 					</Button>
-					<span className="ml-4 text-lg font-semibold">
-						{format(weekStart, "MMMd", { locale: calendarLocale })} -{" "}
-						{format(weekEnd, datetimeFormat, { locale: calendarLocale })}
+					<span className="ml-2 text-base font-semibold sm:ml-4 sm:text-lg">
+						<span className="hidden sm:inline">
+							{format(weekStart, "MMMd", { locale: calendarLocale })} -{" "}
+							{format(weekEnd, datetimeFormat, { locale: calendarLocale })}
+						</span>
+						<span className="sm:hidden">
+							{format(weekStart, "MMM d", { locale: calendarLocale })} -{" "}
+							{format(weekEnd, "MMM d", { locale: calendarLocale })}
+						</span>
 					</span>
 				</div>
 			</div>
 
 			{/* Calendar Grid */}
 			<div className="border rounded-lg overflow-hidden">
-				<div className="overflow-x-auto">
-					<table className="w-full border-collapse">
+				<div className="overflow-x-auto -mx-3 sm:mx-0">
+					<table className="w-full border-collapse min-w-[640px] sm:min-w-full">
 						<thead>
 							<tr>
-								<th className="w-20 border-b border-r p-2 text-left text-sm font-medium text-muted-foreground">
+								<th className="w-16 sm:w-20 border-b border-r p-2 text-left text-xs sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
 									Time
 								</th>
 								{weekDays.map((day) => (
 									<th
 										key={day.toISOString()}
 										className={cn(
-											"border-b border-r p-2 text-center text-sm font-medium",
+											"border-b border-r p-1.5 sm:p-2 text-center text-xs sm:text-sm font-medium min-w-[90px] sm:min-w-[110px]",
 											isToday(day) && "bg-primary/10",
 											"last:border-r-0",
 										)}
 									>
 										<div className="flex flex-col">
-											<span className="text-xs text-muted-foreground">
+											<span className="text-[10px] sm:text-xs text-muted-foreground">
 												{getDayName(day, t)}
 											</span>
 											<span
 												className={cn(
-													"text-lg font-semibold",
+													"text-sm sm:text-lg font-semibold",
 													isToday(day) && "text-primary",
 												)}
 											>
@@ -428,7 +452,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						<tbody>
 							{timeSlots.map((timeSlot) => (
 								<tr key={timeSlot}>
-									<td className="border-b border-r p-2 text-sm text-muted-foreground">
+									<td className="border-b border-r p-1.5 sm:p-2 text-xs sm:text-sm text-muted-foreground sticky left-0 bg-background z-10">
 										{timeSlot}
 									</td>
 									{weekDays.map((day) => {
@@ -437,12 +461,12 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 											<td
 												key={`${day.toISOString()}-${timeSlot}`}
 												className={cn(
-													"border-b border-r p-1 min-w-[120px] align-top",
+													"border-b border-r p-0.5 sm:p-1 min-w-[90px] sm:min-w-[120px] align-top",
 													isToday(day) && "bg-primary/5",
 													"last:border-r-0",
 												)}
 											>
-												<div className="flex flex-col gap-1 min-h-[60px]">
+												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
 													{slotRsvps.length > 0 ? (
 														slotRsvps.map((rsvp) => (
 															<AdminEditRsvpDialog
@@ -453,14 +477,14 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																	<button
 																		type="button"
 																		className={cn(
-																			"text-left p-2 rounded text-xs bg-primary/10 hover:bg-primary/20 transition-colors",
+																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors min-h-[44px] touch-manipulation",
 																			rsvp.confirmedByStore &&
 																				"border-l-2 border-l-green-500",
 																			rsvp.alreadyPaid &&
 																				"border-l-2 border-l-blue-500",
 																		)}
 																	>
-																		<div className="font-medium truncate">
+																		<div className="font-medium truncate leading-tight">
 																			{rsvp.User?.name
 																				? rsvp.User.name
 																				: rsvp.User?.email
@@ -474,12 +498,12 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																						}`}
 																		</div>
 																		{rsvp.Facility?.facilityName && (
-																			<div className="text-muted-foreground truncate text-[10px]">
+																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
 																				{rsvp.Facility.facilityName}
 																			</div>
 																		)}
 																		{rsvp.message && (
-																			<div className="text-muted-foreground truncate text-[10px]">
+																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
 																				{rsvp.message}
 																			</div>
 																		)}

@@ -65,8 +65,8 @@ const StoreAdminLayout: React.FC<props> = ({
 						<StoreAdminHeader />
 						<div className="flex flex-1 flex-col">
 							<div className="@container/main flex flex-1 flex-col">
-								<div className="flex flex-col gap-0 py-0 md:gap-6 md:py-6">
-									<div className="px-4 lg:px-6 pb-1">{children}</div>
+								<div className="flex flex-col gap-0 py-2 sm:py-4 md:gap-6 md:py-6">
+									<div className="px-3 sm:px-4 lg:px-6 pb-1">{children}</div>
 								</div>
 							</div>
 						</div>
@@ -90,37 +90,44 @@ function StoreAdminHeader() {
 			{/* background image */}
 			<BackgroundImage />
 
-			<div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-				<SidebarTrigger className="-ml-1" />
+			<div className="flex w-full items-center gap-1.5 px-3 sm:gap-2 sm:px-4 lg:gap-2 lg:px-6">
+				<SidebarTrigger className="-ml-1 h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0" />
 				<Separator
 					orientation="vertical"
-					className="mx-2 data-[orientation=vertical]:h-4"
+					className="mx-1.5 hidden sm:block data-[orientation=vertical]:h-4 sm:mx-2"
 				/>
-				<div className="flex items-center gap-2">
-					<h1 className="text-base font-medium">{title}</h1>
+				<div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+					<h1 className="text-sm font-medium truncate sm:text-base">{title}</h1>
 					<Button
 						variant="outline"
 						size="sm"
 						onClick={() => router.push(`/${store.id}`)}
-						className="flex items-center gap-1 text-xs"
+						className="hidden items-center gap-1 text-xs h-9 min-h-[36px] sm:flex"
 						title={t("back_to_store")}
 					>
 						<IconHome />
-						{t("back_to_store")}
+						<span className="hidden lg:inline">{t("back_to_store")}</span>
 					</Button>
 				</div>
 
-				<div className="ml-auto flex items-center gap-2">
-					<Button variant="outline" size="sm">
+				<div className="ml-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
+					<Button
+						variant="outline"
+						size="sm"
+						className="hidden h-9 min-h-[36px] text-xs sm:inline-flex"
+					>
 						<Link
 							href={`/storeAdmin/${store.id}/subscribe`}
 							className="text-xs"
 						>
-							{store.level === StoreLevel.Free
-								? t("storeAdmin_switchLevel_free")
-								: store.level === StoreLevel.Pro
-									? t("storeAdmin_switchLevel_pro")
-									: t("storeAdmin_switchLevel_multi")}
+							<span className="hidden lg:inline">
+								{store.level === StoreLevel.Free
+									? t("storeAdmin_switchLevel_free")
+									: store.level === StoreLevel.Pro
+										? t("storeAdmin_switchLevel_pro")
+										: t("storeAdmin_switchLevel_multi")}
+							</span>
+							<span className="lg:hidden">Level</span>
 						</Link>
 					</Button>
 

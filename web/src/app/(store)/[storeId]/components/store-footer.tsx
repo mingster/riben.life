@@ -65,26 +65,26 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
 	//w-full shadow backdrop-blur dark:shadow-secondary mx-4 flex h-14 items-center justify-center
 	//hidden sm:block
 	return (
-		<footer className="sticky bottom-0 w-full shadow backdrop-blur dark:shadow-secondary p-5 bg-body opacity-90">
+		<footer className="sticky bottom-0 w-full shadow backdrop-blur dark:shadow-secondary p-3 sm:p-4 lg:p-5 bg-body opacity-90">
 			<div className="rounded xl:container xl:mx-auto">
 				<div className="flex w-full justify-center">
-					<strong className="relative w-1/2 inline-flex items-center rounded">
+					<strong className="relative w-full sm:w-1/2 inline-flex items-center rounded">
 						{numInCart > 0 && (
-							<span className="absolute -top-1 -right-2 size-5 rounded-full bg-red-800 text-slate-100 flex justify-center items-center text-xs pb-1">
+							<span className="absolute -top-1 -right-1 sm:-right-2 size-5 sm:size-6 rounded-full bg-red-800 text-slate-100 flex justify-center items-center text-xs sm:text-sm pb-0.5 sm:pb-1 z-10">
 								<span>{numInCart}</span>
 							</span>
 						)}
 						<Button
 							onClick={onCheckout}
 							disabled={cart.items.length === 0}
-							className="w-full hover:opacity-50"
+							className="w-full h-12 min-h-[48px] sm:h-11 sm:min-h-[44px] hover:opacity-50 active:opacity-70 touch-manipulation"
 						>
-							<div className="flex w-full items-center justify-between">
-								<div className="grow font-bold text-xl">
+							<div className="flex w-full items-center justify-between gap-2">
+								<div className="grow font-bold text-base sm:text-lg lg:text-xl truncate">
 									{t("cart_dropDown_confirm")}
 								</div>
 
-								<div className="self-end">
+								<div className="self-end shrink-0 text-sm sm:text-base lg:text-lg">
 									<Currency value={cart.cartTotal} />
 								</div>
 							</div>

@@ -45,39 +45,51 @@ export function SheetMenu({ store }: props) {
 		<Sheet open={isOpen} onOpenChange={setIsOpen}>
 			<SheetTrigger asChild>
 				<Button
-					className="h-8 border-gray/20 bg-stroke/20 hover:text-meta-1"
+					className="h-10 w-10 min-h-[44px] min-w-[44px] border-gray/20 bg-stroke/20 hover:text-meta-1 active:bg-stroke/30 sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0 touch-manipulation"
 					variant="outline"
 					size="icon"
 				>
-					<IconMenu2 size={20} />
+					<IconMenu2 className="h-5 w-5 sm:h-4 sm:w-4" />
 				</Button>
 			</SheetTrigger>
 			<SheetContent
-				className="flex h-full flex-col px-3 sm:w-72 backdrop-opacity-10 backdrop-invert"
+				className="flex h-full flex-col px-3 sm:px-4 sm:w-72 backdrop-opacity-10 backdrop-invert"
 				side="left"
 			>
 				<SheetHeader>
-					<Button className="flex pb-2 pt-1" variant="link" asChild>
-						<Link href="/" className="flex gap-2">
-							<IconHome className="mr-1 size-6" />
+					<Button
+						className="flex pb-2 pt-1 h-10 min-h-[44px] sm:h-auto sm:min-h-0"
+						variant="link"
+						asChild
+					>
+						<Link
+							href="/"
+							className="flex gap-2 items-center touch-manipulation"
+						>
+							<IconHome className="mr-1 h-6 w-6 sm:size-6" />
 						</Link>
 					</Button>
 				</SheetHeader>
 				<SheetTitle />
 				<SheetDescription />
 				<StoreMenu store={store} isOpen title="" setIsOpen={setIsOpen} />
-				<div className="flex flex-1 items-center justify-center space-x-1">
+				<div className="flex flex-1 items-center justify-center gap-1.5 sm:gap-2">
 					<ThemeToggler />
 					<DropdownMessage messages={store.StoreAnnouncement} />
 					<DropdownNotification />
 					<DropdownUser />
 					<DropdownCart />
-				</div>{" "}
+				</div>
 				{/*<!-- Hidden by default, but visible if screen is small --> */}
 				<div className="hidden md:block" />
-				<div className="pt-1 flex flex-1 items-center justify-center space-x-1 w-full font-mono text-sm">
-					<Link href="/unv">
-						<Button variant="default">{t("system_provider")}</Button>
+				<div className="pt-1 flex flex-1 items-center justify-center w-full font-mono text-sm">
+					<Link href="/unv" className="w-full sm:w-auto">
+						<Button
+							variant="default"
+							className="w-full h-10 min-h-[44px] sm:w-auto sm:h-9 sm:min-h-0 touch-manipulation"
+						>
+							{t("system_provider")}
+						</Button>
 					</Link>
 				</div>
 			</SheetContent>

@@ -96,7 +96,7 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 																	? "default"
 																	: "ghost"
 															}
-															className="mb-1 h-10 w-full justify-start"
+															className="mb-1 h-11 min-h-[44px] w-full justify-start sm:h-10 sm:min-h-0 touch-manipulation"
 															asChild
 														>
 															<Button
@@ -104,7 +104,7 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 																	active || activeSpot === href
 																		? "text-link"
 																		: "",
-																	"font-semibold hover:opacity-50",
+																	"font-semibold hover:opacity-50 active:opacity-70",
 																)}
 																variant="link"
 																onClick={() => menuClick(href)}

@@ -152,8 +152,8 @@ const CartItemInfo: React.FC<cartItemProps> = ({
 
 							{showQuantity && (
 								<div className="pl-2">
-									<div className="flex">
-										<div className="flex flex-nowrap content-center w-[20px]">
+									<div className="flex items-center gap-1.5 sm:gap-1">
+										<div className="flex flex-nowrap content-center">
 											{currentItem.quantity && currentItem.quantity > 0 && (
 												//{currentItem.quantity > 0 && (
 												<IconButton
@@ -170,13 +170,13 @@ const CartItemInfo: React.FC<cartItemProps> = ({
 										<div className="flex flex-nowrap content-center item">
 											<input
 												type="number"
-												className="w-10 text-center border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+												className="w-10 sm:w-10 h-10 min-h-[44px] text-center border text-base sm:text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none touch-manipulation"
 												placeholder="0"
 												value={currentItem.quantity}
 												onChange={handleQuantityInputChange}
 											/>
 										</div>
-										<div className="flex flex-nowrap content-center w-[20px]">
+										<div className="flex flex-nowrap content-center">
 											<IconButton
 												onClick={handleIncraseQuality}
 												icon={
