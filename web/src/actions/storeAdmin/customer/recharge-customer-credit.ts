@@ -46,9 +46,13 @@ export const rechargeCustomerCreditAction = storeActionClient
 				defaultCurrency: true,
 				defaultTimezone: true,
 				StoreShippingMethods: {
-					take: 1,
-					select: {
-						methodId: true,
+					include: {
+						ShippingMethod: {
+							select: {
+								id: true,
+								identifier: true,
+							},
+						},
 					},
 				},
 			},
@@ -58,19 +62,37 @@ export const rechargeCustomerCreditAction = storeActionClient
 			throw new SafeError("Store not found");
 		}
 
-		// Get a shipping method for the order (required field)
+		// Get shipping method with identifier "takeout" for the order (required field)
 		let shippingMethodId: string;
-		if (store.StoreShippingMethods.length > 0) {
-			shippingMethodId = store.StoreShippingMethods[0].methodId;
+		
+		// First, try to find "takeout" in store's shipping methods
+		const takeoutMethod = store.StoreShippingMethods.find(
+			(mapping) => mapping.ShippingMethod.identifier === "takeout",
+		);
+		
+		if (takeoutMethod) {
+			shippingMethodId = takeoutMethod.ShippingMethod.id;
 		} else {
-			// Get default shipping method
-			const defaultShippingMethod = await sqlClient.shippingMethod.findFirst({
-				where: { isDefault: true },
+			// If not found in store's methods, try to find it directly
+			const takeoutShippingMethod = await sqlClient.shippingMethod.findFirst({
+				where: {
+					identifier: "takeout",
+					isDeleted: false,
+				},
 			});
-			if (!defaultShippingMethod) {
-				throw new SafeError("No shipping method available");
+			
+			if (takeoutShippingMethod) {
+				shippingMethodId = takeoutShippingMethod.id;
+			} else {
+				// Fall back to default shipping method
+				const defaultShippingMethod = await sqlClient.shippingMethod.findFirst({
+					where: { isDefault: true, isDeleted: false },
+				});
+				if (!defaultShippingMethod) {
+					throw new SafeError("No shipping method available");
+				}
+				shippingMethodId = defaultShippingMethod.id;
 			}
-			shippingMethodId = defaultShippingMethod.id;
 		}
 
 		let orderId: string | null = null;
