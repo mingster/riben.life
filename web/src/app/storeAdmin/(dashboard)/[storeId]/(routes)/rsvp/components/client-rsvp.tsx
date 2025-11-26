@@ -10,12 +10,12 @@ import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 
-import type { RsvpColumn } from "../history/rsvp-column";
+import type { Rsvp } from "@/types";
 import { createRsvpColumns } from "./columns";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 interface RsvpHistoryClientProps {
-	serverData: RsvpColumn[];
+	serverData: Rsvp[];
 }
 
 export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
@@ -24,9 +24,9 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const [data, setData] = useState<RsvpColumn[]>(serverData);
+	const [data, setData] = useState<Rsvp[]>(serverData);
 
-	const handleCreated = useCallback((newRsvp: RsvpColumn) => {
+	const handleCreated = useCallback((newRsvp: Rsvp) => {
 		if (!newRsvp) return;
 		setData((prev) => {
 			const exists = prev.some((item) => item.id === newRsvp.id);
@@ -39,7 +39,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 		setData((prev) => prev.filter((item) => item.id !== rsvpId));
 	}, []);
 
-	const handleUpdated = useCallback((updated: RsvpColumn) => {
+	const handleUpdated = useCallback((updated: Rsvp) => {
 		if (!updated) return;
 		setData((prev) =>
 			prev.map((item) => (item.id === updated.id ? updated : item)),
@@ -77,7 +77,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 				</div>
 			</div>
 			<Separator />
-			<DataTable<RsvpColumn, unknown>
+			<DataTable<Rsvp, unknown>
 				columns={columns}
 				data={data}
 				searchKey="message"

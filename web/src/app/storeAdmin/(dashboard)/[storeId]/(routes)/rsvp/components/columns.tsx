@@ -6,19 +6,19 @@ import { format } from "date-fns";
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 
-import type { RsvpColumn } from "../history/rsvp-column";
+import type { Rsvp } from "@/types";
 import { CellAction } from "./cell-action";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 interface CreateRsvpColumnsOptions {
 	onDeleted?: (rsvpId: string) => void;
-	onUpdated?: (rsvp: RsvpColumn) => void;
+	onUpdated?: (rsvp: Rsvp) => void;
 }
 
 export const createRsvpColumns = (
 	t: TFunction,
 	options: CreateRsvpColumnsOptions = {},
-): ColumnDef<RsvpColumn>[] => {
+): ColumnDef<Rsvp>[] => {
 	const { onDeleted, onUpdated } = options;
 
 	return [

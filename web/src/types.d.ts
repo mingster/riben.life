@@ -310,6 +310,28 @@ export type CustomerCreditLedger = Prisma.CustomerCreditLedgerGetPayload<
 	typeof customerCreditLedgerObj
 >;
 
+const storeFacilityObj = Prisma.validator<Prisma.StoreFacilityDefaultArgs>()({
+	include: {
+		Store: true,
+		Rsvp: true,
+		FacilityPricingRules: true,
+	},
+});
+export type StoreFacility = Prisma.StoreFacilityGetPayload<
+	typeof storeFacilityObj
+>;
+
+const rsvpObj = Prisma.validator<Prisma.RsvpDefaultArgs>()({
+	include: {
+		Store: true,
+		User: true,
+		Order: true,
+		Facility: true,
+		FacilityPricingRule: true,
+	},
+});
+export type Rsvp = Prisma.RsvpGetPayload<typeof rsvpObj>;
+
 /* endregion */
 
 /*

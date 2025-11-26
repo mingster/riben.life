@@ -14,25 +14,24 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import type { User } from "@/types";
 import { cn } from "@/utils/utils";
 import { IconCheck } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NotMountSkeleton } from "@/components/not-mount-skeleton";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import type { StoreFacility } from "@/types";
 
+// a combo box to select a store facility
 type ComboboxProps = {
-	storeMembers: User[];
+	storeFacilities: StoreFacility[];
 	disabled: boolean;
-	defaultValue?: string | number;
-	onValueChange?: (newValue: User) => void;
+	defaultValue: StoreFacility | null;
+	onValueChange?: (newValue: StoreFacility) => void;
 };
 
-// select component for customer
-//
-export const StoreMembersCombobox = ({
-	storeMembers,
+export const FacilityCombobox = ({
+	storeFacilities,
 	disabled,
 	defaultValue,
 	onValueChange,
@@ -40,11 +39,17 @@ export const StoreMembersCombobox = ({
 }: ComboboxProps) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+
 	const [mounted, setMounted] = useState(false);
 	const [open, setOpen] = useState(false);
-	const [selected, setSelected] = useState<User | null>(
-		storeMembers.find((c) => c.id === String(defaultValue)) || null,
+	const [selected, setSelected] = useState<StoreFacility | null>(
+		defaultValue || null,
 	);
+
+	// Sync selected state when defaultValue changes
+	useEffect(() => {
+		setSelected(defaultValue || null);
+	}, [defaultValue]);
 
 	if (!mounted) {
 		setMounted(true);
@@ -66,34 +71,34 @@ export const StoreMembersCombobox = ({
 						{...props}
 					>
 						{selected ? (
-							<>{selected.name}</>
+							<>{selected.facilityName}</>
 						) : (
-							<>+ {t("select_store_member")}</>
+							<>+ {t("select_store_facility")}</>
 						)}
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="p-0" side="bottom" align="start">
 					<Command className="rounded-lg border shadow-md">
 						<CommandInput
-							placeholder={t("select_store_member")}
+							placeholder={t("select_store_facility")}
 							className="h-9"
 						/>
 						<CommandList>
-							<CommandEmpty>{t("no_store_member_found")}</CommandEmpty>
+							<CommandEmpty>{t("no_store_facility_found")}</CommandEmpty>
 							<CommandGroup>
-								{storeMembers.map((obj) => (
+								{storeFacilities.map((obj) => (
 									<CommandItem
 										key={obj.id}
-										value={obj.email || obj.id} //value needs to be the keyword for command search
+										value={obj.facilityName || obj.id} //value needs to be the keyword for command search
 										onSelect={(value) => {
 											//console.log(`onSelect: ${value}`);
-											setSelected(obj);
+											setSelected(obj as StoreFacility);
 											//return value to parent component
-											onValueChange?.(obj);
+											onValueChange?.(obj as StoreFacility);
 											setOpen(false);
 										}}
 									>
-										{obj.email || obj.id}
+										{obj.facilityName || obj.id}
 										<IconCheck
 											className={cn(
 												"ml-auto h-4 w-4",
