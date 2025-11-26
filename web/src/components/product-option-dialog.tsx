@@ -63,9 +63,9 @@ export const ProductOptionDialog: React.FC<props> = ({
 	const { t } = useTranslation(lng);
 
 	//const params = useParams();
-	//const {storeId, tableId} = params;
-	const params = useParams<{ storeId: string; tableId: string }>();
-	//  console.log("storeId", params.storeId, "tableId", params.tableId);
+	//const {storeId, facilityId} = params;
+	const params = useParams<{ storeId: string; facilityId: string }>();
+	//  console.log("storeId", params.storeId, "facilityId", params.facilityId);
 
 	const productOptions = product.ProductOptions as ProductOption[];
 
@@ -373,7 +373,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 			quantity: quantity,
 			itemOptions: itemOptions,
 			storeId: params.storeId,
-			tableId: params.tableId,
+			facilityId: params.facilityId,
 			variants: variants,
 			variantCosts: variantCosts,
 		} as Item;
@@ -443,7 +443,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 				quantity: quantity,
 				itemOptions: itemOptions,
 				storeId: params.storeId,
-				tableId: params.tableId,
+				facilityId: params.facilityId,
 				variants: variants,
 				variantCosts: variantCosts,
 			} as Item;

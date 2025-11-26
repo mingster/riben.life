@@ -22,7 +22,8 @@ export default async function Page() {
 	// if user is admin or affiliate, they can access the page
 	if (
 		session &&
-		(session.user.role === Role.storeAdmin ||
+		(session.user.role === Role.sysAdmin ||
+			session.user.role === Role.storeAdmin ||
 			session.user.role === Role.owner ||
 			session.user.role === Role.staff)
 	) {

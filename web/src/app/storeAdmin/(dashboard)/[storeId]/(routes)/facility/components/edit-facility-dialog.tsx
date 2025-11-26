@@ -133,7 +133,7 @@ export function EditFacilityDialog({
 		}
 
 		toastSuccess({
-			title: t("Facility") + t(isEditMode ? "Updated" : "Created"),
+			title: t("Facility") + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 
@@ -158,7 +158,7 @@ export function EditFacilityDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -171,7 +171,7 @@ export function EditFacilityDialog({
 				const facilityId = facility?.id;
 				if (!facilityId) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: "Facility not found.",
 					});
 					return;
@@ -190,7 +190,7 @@ export function EditFacilityDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -202,7 +202,7 @@ export function EditFacilityDialog({
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
@@ -235,7 +235,7 @@ export function EditFacilityDialog({
 								const errorMessage = error?.message;
 								if (errorMessage) {
 									toastError({
-										title: t("Error"),
+										title: t("error_title"),
 										description: errorMessage,
 									});
 								}
@@ -373,7 +373,7 @@ export function EditFacilityDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("save") : t("Create")}
+								{isEditMode ? t("save") : t("create")}
 							</Button>
 							<Button
 								type="button"

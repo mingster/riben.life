@@ -120,7 +120,10 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 			const result = await updateRsvpSettingsAction(payload);
 
 			if (result?.serverError) {
-				toastError({ title: t("Error"), description: result.serverError });
+				toastError({
+					title: t("error_title"),
+					description: result.serverError,
+				});
 			} else if (result?.data) {
 				// Update local state instead of refreshing router
 				const updatedRsvpSettings = result.data
@@ -162,7 +165,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description:
 					error instanceof Error ? error.message : "Something went wrong.",
 			});
@@ -183,7 +186,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								const errorMessage = error?.message;
 								if (errorMessage) {
 									toastError({
-										title: t("Error"),
+										title: t("error_title"),
 										description: errorMessage,
 									});
 								}

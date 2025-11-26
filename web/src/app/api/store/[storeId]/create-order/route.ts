@@ -25,7 +25,7 @@ export async function POST(
 	// orderNote is array of string.
 	const {
 		userId,
-		tableId, //can be null
+		facilityId, //can be null
 		total,
 		currency,
 		productIds,
@@ -158,7 +158,7 @@ export async function POST(
 		data: {
 			storeId: params.storeId,
 			userId: userId || null, //user is optional
-			tableId: tableId || null,
+			facilityId: facilityId || null,
 			isPaid: false,
 			orderTotal: new Prisma.Decimal(total),
 			currency: currency,

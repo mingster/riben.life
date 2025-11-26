@@ -155,7 +155,7 @@ export function EditProductOptionTemplateDialog({
 
 			toastSuccess({
 				title: `${t("ProductOption_template")} ${t(
-					isEditMode ? "Updated" : "Created",
+					isEditMode ? "updated" : "created",
 				)}`,
 				description: "",
 			});
@@ -187,7 +187,7 @@ export function EditProductOptionTemplateDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -204,7 +204,7 @@ export function EditProductOptionTemplateDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -216,7 +216,7 @@ export function EditProductOptionTemplateDialog({
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
@@ -233,7 +233,7 @@ export function EditProductOptionTemplateDialog({
 					<DialogTitle>
 						{isEditMode
 							? t("ProductOption_template") + t("edit")
-							: t("ProductOption_template") + t("Create")}
+							: t("ProductOption_template") + t("create")}
 					</DialogTitle>
 					<DialogDescription>
 						{t("ProductOption_mgmt_add_descr")}
@@ -478,7 +478,7 @@ export function EditProductOptionTemplateDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("save") : t("Create")}
+								{isEditMode ? t("save") : t("create")}
 							</Button>
 							<DialogFooter className="sm:justify-start">
 								<Button

@@ -90,7 +90,10 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 			const result = await updateStoreTermsAction(payload);
 
 			if (result?.serverError) {
-				toastError({ title: t("Error"), description: result.serverError });
+				toastError({
+					title: t("error_title"),
+					description: result.serverError,
+				});
 			} else if (result?.data) {
 				onStoreSettingsUpdated?.(
 					(result.data.storeSettings as StoreSettings | null | undefined) ??

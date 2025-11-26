@@ -1,0 +1,330 @@
+"use client";
+
+import { rechargeCustomerCreditAction } from "@/actions/storeAdmin/customer/recharge-customer-credit";
+import {
+	rechargeCustomerCreditSchema,
+	type RechargeCustomerCreditInput,
+} from "@/actions/storeAdmin/customer/recharge-customer-credit.validation";
+import { useTranslation } from "@/app/i18n/client";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useI18n } from "@/providers/i18n-provider";
+import type { User } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
+
+interface RechargeCreditDialogProps {
+	user: User;
+	trigger?: React.ReactNode;
+	onRecharged?: () => void;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+}
+
+/**
+ * This dialog is used to recharge credit for a user as described in section 3.2 of
+ * the [CUSTOMER-CREDIT-DESIGN.md](../../../../../doc/CUSTOMER-CREDIT-DESIGN.md) file.
+ */
+export function RechargeCreditDialog({
+	user,
+	trigger,
+	onRecharged,
+	open,
+	onOpenChange,
+}: RechargeCreditDialogProps) {
+	const params = useParams<{ storeId: string }>();
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
+
+	const [internalOpen, setInternalOpen] = useState(false);
+	const [loading, setLoading] = useState(false);
+
+	const defaultValues: RechargeCustomerCreditInput = {
+		storeId: String(params.storeId),
+		userId: user.id,
+		creditAmount: 0,
+		cashAmount: 0,
+		isPaid: true,
+		note: null,
+	};
+
+	const form = useForm<RechargeCustomerCreditInput>({
+		resolver: zodResolver(
+			rechargeCustomerCreditSchema,
+		) as Resolver<RechargeCustomerCreditInput>,
+		defaultValues,
+		mode: "onChange",
+		reValidateMode: "onChange",
+	});
+
+	const isControlled = typeof open === "boolean";
+	const dialogOpen = isControlled ? open : internalOpen;
+
+	const resetForm = useCallback(() => {
+		form.reset(defaultValues);
+	}, [defaultValues, form]);
+
+	// Reset cashAmount when isPaid changes
+	const isPaid = form.watch("isPaid");
+	useEffect(() => {
+		if (!isPaid) {
+			form.setValue("cashAmount", 0, { shouldValidate: true });
+		} else {
+			// When isPaid is checked, ensure cashAmount is set if it's 0
+			const currentCashAmount = form.getValues("cashAmount");
+			if (!currentCashAmount || currentCashAmount === 0) {
+				form.setValue("cashAmount", 0, { shouldValidate: true });
+			}
+		}
+	}, [isPaid, form]);
+
+	const handleOpenChange = (nextOpen: boolean) => {
+		if (!isControlled) {
+			setInternalOpen(nextOpen);
+		}
+		onOpenChange?.(nextOpen);
+		if (!nextOpen) {
+			resetForm();
+		}
+	};
+
+	const onSubmit = async (values: RechargeCustomerCreditInput) => {
+		try {
+			setLoading(true);
+
+			const result = await rechargeCustomerCreditAction({
+				storeId: String(params.storeId),
+				userId: user.id,
+				creditAmount: values.creditAmount,
+				cashAmount: values.cashAmount,
+				isPaid: values.isPaid,
+				note: values.note || null,
+			});
+
+			if (result?.serverError) {
+				toastError({
+					title: t("error_title"),
+					description: result.serverError,
+				});
+				return;
+			}
+
+			if (result?.data) {
+				const { bonus, totalCredit } = result.data;
+				const rechargeType = values.isPaid
+					? t("In_Person_Payment") || "In-Person Payment"
+					: t("Promotional") || "Promotional";
+				toastSuccess({
+					title: t("Credit_recharged") || "Credit Recharged",
+					description: bonus
+						? `${rechargeType}: ${t("amount")}: ${values.creditAmount}, ${t("bonus")}: ${bonus}, ${t("total")}: ${totalCredit}`
+						: `${rechargeType}: ${t("amount")}: ${values.creditAmount}, ${t("total")}: ${totalCredit}`,
+				});
+			}
+
+			resetForm();
+			handleOpenChange(false);
+			onRecharged?.();
+		} catch (error: unknown) {
+			toastError({
+				title: t("error_title"),
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	return (
+		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
+			<DialogContent className="sm:max-w-md">
+				<DialogHeader>
+					<DialogTitle>{t("Recharge_Credit") || "Recharge Credit"}</DialogTitle>
+					<DialogDescription>
+						{t("Recharge_Credit_description") ||
+							`Add credit to ${user.name || user.email}'s account`}
+					</DialogDescription>
+				</DialogHeader>
+
+				<Form {...form}>
+					<form
+						onSubmit={form.handleSubmit(onSubmit, (errors) => {
+							const firstErrorKey = Object.keys(errors)[0];
+							if (firstErrorKey) {
+								const error = errors[firstErrorKey as keyof typeof errors];
+								const errorMessage = error?.message;
+								if (errorMessage) {
+									toastError({
+										title: t("error_title"),
+										description: errorMessage,
+									});
+								}
+							}
+						})}
+						className="space-y-4"
+					>
+						<FormField
+							control={form.control}
+							name="creditAmount"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("Credit_Amount") || "Credit Amount"}</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											min="1"
+											disabled={loading || form.formState.isSubmitting}
+											value={
+												field.value !== undefined && field.value !== null
+													? field.value.toString()
+													: ""
+											}
+											onChange={(event) => {
+												const value = event.target.value;
+												field.onChange(value ? Number.parseInt(value, 10) : 0);
+											}}
+											placeholder="0"
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="isPaid"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+									<FormControl>
+										<Checkbox
+											checked={field.value}
+											onCheckedChange={field.onChange}
+											disabled={loading || form.formState.isSubmitting}
+										/>
+									</FormControl>
+									<div className="space-y-1 leading-none">
+										<FormLabel>
+											{t("Customer_Paid_In_Person") ||
+												"Customer Paid In Person"}
+										</FormLabel>
+										<p className="text-sm text-muted-foreground">
+											{t("Customer_Paid_In_Person_description") ||
+												"Check if customer paid cash in person. Leave unchecked for promotional credit."}
+										</p>
+									</div>
+								</FormItem>
+							)}
+						/>
+
+						{form.watch("isPaid") && (
+							<FormField
+								control={form.control}
+								name="cashAmount"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("Cash_Amount") || "Cash Amount"} *</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												step="0.01"
+												min="0.01"
+												disabled={loading || form.formState.isSubmitting}
+												value={
+													field.value !== undefined && field.value !== null
+														? field.value.toString()
+														: "0"
+												}
+												onChange={(event) => {
+													const value = event.target.value;
+													field.onChange(value ? Number.parseFloat(value) : 0);
+												}}
+												placeholder="0.00"
+											/>
+										</FormControl>
+										<FormMessage />
+										<p className="text-sm text-muted-foreground">
+											{t("Cash_Amount_required_when_paid") ||
+												"Cash amount is required when customer paid in person"}
+										</p>
+									</FormItem>
+								)}
+							/>
+						)}
+
+						<FormField
+							control={form.control}
+							name="note"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>
+										{t("note") || "Note"} ({t("optional") || "Optional"})
+									</FormLabel>
+									<FormControl>
+										<Textarea
+											disabled={loading || form.formState.isSubmitting}
+											value={field.value ?? ""}
+											onChange={(event) =>
+												field.onChange(event.target.value || null)
+											}
+											placeholder={
+												t("Recharge_note_placeholder") ||
+												"Optional note for this recharge"
+											}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<DialogFooter className="flex w-full justify-end space-x-2">
+							<Button
+								type="submit"
+								disabled={
+									loading ||
+									!form.formState.isValid ||
+									form.formState.isSubmitting
+								}
+							>
+								{t("recharge") || "Recharge"}
+							</Button>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => handleOpenChange(false)}
+								disabled={loading || form.formState.isSubmitting}
+							>
+								{t("cancel")}
+							</Button>
+						</DialogFooter>
+					</form>
+				</Form>
+			</DialogContent>
+		</Dialog>
+	);
+}

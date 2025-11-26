@@ -51,6 +51,7 @@ model User {
   invitations        Invitation[]
   customerCredits    CustomerCredit[]
   customerCreditLogs CustomerCreditLedger[]
+  storeLedgersCreated StoreLedger[]
 
   @@unique([normalizedEmail])
   @@index([email])
@@ -605,7 +606,7 @@ model Store {
   StoreProductOptionTemplate StoreProductOptionTemplate[]
   Rsvp                       Rsvp[]
   StoreSettings              StoreSettings?
-  rsvpSettings               RsvpSettings[]
+  rsvpSettings               RsvpSettings?
   rsvpBlacklists             RsvpBlacklist[]
   rsvpTags                   RsvpTag[]
   CustomerCredits            CustomerCredit[]
@@ -665,7 +666,7 @@ model StoreSettings {
 
 model RsvpSettings {
   id      String @id @default(uuid())
-  storeId String
+  storeId String @unique
 
   acceptReservation Boolean  @default(true) // turn on/off the reservation system
   prepaidRequired   Boolean  @default(false) //預付制：儲值後才可預約 / //訂位需付訂金
@@ -1024,22 +1025,25 @@ model StoreLedger {
   balance     Decimal
   description String
   note        String?
+  createdBy   String? // userId who created this ledger entry
 
   createdAt    DateTime @default(now())
   availability DateTime @default(now())
 
   StoreOrder StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  CreatedBy  User?     @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@index([storeId])
   @@index([orderId])
   @@index([createdAt])
+  @@index([createdBy])
 }
 
 model StoreOrder {
   id                 String    @id @default(uuid())
   storeId            String
   userId             String?
-  tableId            String?
+  facilityId         String?
   orderNum           Int?      @default(autoincrement())
   pickupCode         String?
   isPaid             Boolean   @default(false)
@@ -1084,6 +1088,7 @@ model StoreOrder {
   StoreLedger   StoreLedger[]
 
   @@index([userId])
+  @@index([facilityId])
   @@index([paymentMethodId])
   @@index([paymentStatus])
   @@index([returnStatus])

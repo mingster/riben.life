@@ -227,7 +227,7 @@ export const ProductEditImageTab = ({ initialData, action }: props) => {
 							className="disabled:opacity-25"
 							onClick={handleNewImageSubmit}
 						>
-							{t("Create")}
+							{t("create")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

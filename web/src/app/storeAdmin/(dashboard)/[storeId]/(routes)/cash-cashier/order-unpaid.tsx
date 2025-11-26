@@ -93,7 +93,7 @@ export const OrderUnpaid = ({
 					onClick={() => router.push(`/storeAdmin/${params.storeId}/order/add`)}
 				>
 					<Plus className="mr-0 size-4" />
-					{t("Create")}
+					{t("create")}
 				</Button>
 			</div>
 
@@ -126,8 +126,8 @@ export const OrderUnpaid = ({
 								<TableRow key={order.id}>
 									<TableCell className="text-2xl font-extrabold">
 										{order.orderNum}
-										{order.tableId &&
-											` / ${getTableName(tables, order.tableId)}`}
+										{order.facilityId &&
+											` / ${getTableName(tables, order.facilityId)}`}
 									</TableCell>
 
 									<TableCell>

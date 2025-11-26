@@ -23,8 +23,8 @@ import Currency from "./currency";
 export const DropdownCart = () => {
 	const router = useRouter();
 
-	const params = useParams<{ storeId: string; tableId: string }>();
-	//console.log("storeId", params.storeId, "tableId", params.tableId);
+	const params = useParams<{ storeId: string; facilityId: string }>();
+	//console.log("storeId", params.storeId, "facilityId", params.facilityId);
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -42,8 +42,10 @@ export const DropdownCart = () => {
 		//close();
 		setIsOpen(false);
 
-		if (params.tableId !== null) {
-			router.push(`/${params.storeId}/checkout/?tableId=${params.tableId}`);
+		if (params.facilityId !== null) {
+			router.push(
+				`/${params.storeId}/checkout/?facilityId=${params.facilityId}`,
+			);
 		} else {
 			router.push(`/${params.storeId}/checkout`);
 		}

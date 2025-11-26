@@ -131,7 +131,7 @@ export function EditCreditBonusRuleDialog({
 		}
 
 		toastSuccess({
-			title: t("Credit_Bonus_Rule") + t(isEditMode ? "Updated" : "Created"),
+			title: t("Credit_Bonus_Rules") + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 
@@ -153,7 +153,7 @@ export function EditCreditBonusRuleDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -166,7 +166,7 @@ export function EditCreditBonusRuleDialog({
 				const ruleId = rule?.id;
 				if (!ruleId) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: "Credit bonus rule not found.",
 					});
 					return;
@@ -182,7 +182,7 @@ export function EditCreditBonusRuleDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -194,7 +194,7 @@ export function EditCreditBonusRuleDialog({
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
@@ -209,14 +209,10 @@ export function EditCreditBonusRuleDialog({
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
-							? t("Edit_Credit_Bonus_Rule")
-							: t("Create_Credit_Bonus_Rule")}
+							? t("edit") + t("Credit_Bonus_Rules")
+							: t("create") + t("Credit_Bonus_Rules")}
 					</DialogTitle>
-					<DialogDescription>
-						{isEditMode
-							? t("Edit_Credit_Bonus_Rule_Description")
-							: t("Create_Credit_Bonus_Rule_Description")}
-					</DialogDescription>
+					<DialogDescription></DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>
@@ -228,7 +224,7 @@ export function EditCreditBonusRuleDialog({
 								const errorMessage = error?.message;
 								if (errorMessage) {
 									toastError({
-										title: t("Error"),
+										title: t("error_title"),
 										description: errorMessage,
 									});
 								}
@@ -241,7 +237,7 @@ export function EditCreditBonusRuleDialog({
 							name="threshold"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Threshold")}</FormLabel>
+									<FormLabel>{t("credit_bonus_rule_threshold")}</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -256,7 +252,9 @@ export function EditCreditBonusRuleDialog({
 										/>
 									</FormControl>
 									<FormDescription>
-										{t("Minimum_top_up_amount_to_trigger_bonus")}
+										{t(
+											"credit_bonus_rule_minimum_top_up_amount_to_trigger_bonus",
+										)}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -268,7 +266,7 @@ export function EditCreditBonusRuleDialog({
 							name="bonus"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Bonus")}</FormLabel>
+									<FormLabel>{t("credit_bonus_rule_bonus")}</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -283,7 +281,9 @@ export function EditCreditBonusRuleDialog({
 										/>
 									</FormControl>
 									<FormDescription>
-										{t("Bonus_amount_given_when_threshold_is_met")}
+										{t(
+											"credit_bonus_rule_bonus_amount_given_when_threshold_is_met",
+										)}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -296,9 +296,9 @@ export function EditCreditBonusRuleDialog({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("Active")}</FormLabel>
+										<FormLabel>{t("active")}</FormLabel>
 										<FormDescription>
-											{t("Enable_or_disable_this_bonus_rule")}
+											{t("credit_bonus_rule_enable_or_disable_this_bonus_rule")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -321,7 +321,7 @@ export function EditCreditBonusRuleDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("save") : t("Create")}
+								{isEditMode ? t("save") : t("create")}
 							</Button>
 							<Button
 								type="button"

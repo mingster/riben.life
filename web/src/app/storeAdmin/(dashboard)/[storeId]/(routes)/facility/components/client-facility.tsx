@@ -74,8 +74,8 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 		[sortTables],
 	);
 
-	const handleDeleted = useCallback((tableId: string) => {
-		setData((prev) => prev.filter((item) => item.id !== tableId));
+	const handleDeleted = useCallback((facilityId: string) => {
+		setData((prev) => prev.filter((item) => item.id !== facilityId));
 	}, []);
 
 	const handleUpdated = useCallback(
@@ -159,7 +159,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 						trigger={
 							<Button variant="outline">
 								<IconPlus className="mr-0 size-4" />
-								{t("Create")}
+								{t("create")}
 							</Button>
 						}
 					/>

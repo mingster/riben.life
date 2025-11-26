@@ -113,7 +113,7 @@ export function BulkCreateProductsDialog({
 
 			if (result?.serverError) {
 				toastError({
-					title: t("Error"),
+					title: t("error_title"),
 					description: result.serverError,
 				});
 			} else if (result?.data?.products) {
@@ -127,7 +127,7 @@ export function BulkCreateProductsDialog({
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
@@ -205,7 +205,7 @@ export function BulkCreateProductsDialog({
 								type="submit"
 								disabled={loading || !form.formState.isValid}
 							>
-								{t("Create")}
+								{t("create")}
 							</Button>
 						</DialogFooter>
 					</form>

@@ -86,7 +86,10 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 			const result = await updateStoreBankAction(payload);
 
 			if (result?.serverError) {
-				toastError({ title: t("Error"), description: result.serverError });
+				toastError({
+					title: t("error_title"),
+					description: result.serverError,
+				});
 			} else if (result?.data) {
 				onStoreUpdated?.(result.data.store as Store);
 

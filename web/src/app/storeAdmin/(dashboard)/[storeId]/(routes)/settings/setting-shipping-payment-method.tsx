@@ -76,7 +76,7 @@ export const ShippingPaymentMethodTab: React.FC<
 		});
 
 		if (result?.serverError) {
-			toastError({ title: t("Error"), description: result.serverError });
+			toastError({ title: t("error_title"), description: result.serverError });
 		} else if (result?.data) {
 			onStoreUpdated?.(result.data.store as Store);
 			const nextSelection: RowSelectionState = {};
@@ -161,7 +161,7 @@ export const ShippingPaymentMethodTab: React.FC<
 		});
 
 		if (result?.serverError) {
-			toastError({ title: t("Error"), description: result.serverError });
+			toastError({ title: t("error_title"), description: result.serverError });
 		} else if (result?.data) {
 			onStoreUpdated?.(result.data.store as Store);
 			const nextSelection: RowSelectionState = {};

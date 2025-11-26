@@ -370,7 +370,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${store.id}/create-empty-order`;
 		const body = JSON.stringify({
 			userId: null, //user is optional
-			tableId: "",
+			facilityId: "",
 			total: 0,
 			currency: store.defaultCurrency,
 			shippingMethodId: store.StoreShippingMethods[0].methodId,

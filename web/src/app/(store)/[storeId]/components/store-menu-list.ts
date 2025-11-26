@@ -2,6 +2,12 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import {
+	IconCalendarCheck,
+	IconClock,
+	IconCoin,
+	IconShoppingCart,
+} from "@tabler/icons-react";
+import {
 	HandHelping,
 	Handshake,
 	MessageCircleQuestion,
@@ -28,7 +34,7 @@ type Group = {
 };
 
 export function GetMenuList(
-	_store: Store,
+	store: Store,
 	storeId: string,
 	pathname: string,
 ): Group[] {
@@ -39,6 +45,42 @@ export function GetMenuList(
 	const { t } = useTranslation(lng);
 
 	const storeFixedMenu = [
+		...(store.useCustomerCredit
+			? [
+					{
+						href: `${nav_prefix}/credit_recharge`,
+						label: t("credit_recharge"),
+						active: pathname.includes(`${nav_prefix}/credit_recharge`),
+						icon: IconCoin,
+						submenus: [],
+					},
+				]
+			: []),
+		...(store.rsvpSettings?.acceptReservation === true
+			? [
+					{
+						href: `${nav_prefix}/rsvp`,
+						label: t("rsvp"),
+						active: pathname.includes(`${nav_prefix}/rsvp`),
+						icon: IconCalendarCheck,
+						submenus: [],
+					},
+				]
+			: []),
+		{
+			href: `${nav_prefix}/waiting-list`,
+			label: t("Waiting_List"),
+			active: pathname.includes(`${nav_prefix}/waiting-list`),
+			icon: IconClock,
+			submenus: [],
+		},
+		{
+			href: `/order/?storeId=${storeId}`,
+			label: t("store_linkToOrder"),
+			active: pathname.includes(`/order/?storeId=${storeId}`),
+			icon: IconShoppingCart,
+			submenus: [],
+		},
 		{
 			href: `${nav_prefix}/faq`,
 			label: t("FAQ"),
@@ -72,18 +114,18 @@ export function GetMenuList(
 	const result = [
 		/*
   const categoryMenu = store.Categories.map((category) => ({
-    href: `${nav_prefix}#${category.id}`,
-    label: category.name,
-    active: pathname.includes(`${category.id}`),
-    icon: Briefcase,
-    submenus: [],
+	href: `${nav_prefix}#${category.id}`,
+	label: category.name,
+	active: pathname.includes(`${category.id}`),
+	icon: Briefcase,
+	submenus: [],
   }));
 
 
-    {
-      groupLabel: t("categories"),
-      menus: categoryMenu,
-    },
+	{
+	  groupLabel: t("categories"),
+	  menus: categoryMenu,
+	},
 */
 
 		{

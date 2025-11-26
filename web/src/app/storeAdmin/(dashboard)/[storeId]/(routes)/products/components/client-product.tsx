@@ -143,7 +143,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 						trigger={
 							<Button variant="outline">
 								<IconPlus className="mr-0 size-4" />
-								{t("Create")}
+								{t("create")}
 							</Button>
 						}
 					/>

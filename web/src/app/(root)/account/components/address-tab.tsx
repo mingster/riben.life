@@ -24,7 +24,7 @@ export const AddressesTab = ({ addresses }: tabProps) => {
 					{/*新增 */}
 					<Button variant={"outline"} onClick={() => <></>}>
 						<IconPlus className="mr-0 size-4" />
-						{t("Create")}
+						{t("create")}
 					</Button>
 				</div>
 			</div>

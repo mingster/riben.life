@@ -44,7 +44,7 @@ export const FaqClient: React.FC<FaqClientProps> = ({ data, category }) => {
 					}
 				>
 					<Plus className="mr-0 size-4" />
-					{t("Create")}
+					{t("create")}
 				</Button>
 			</div>
 			<Separator />

@@ -138,7 +138,7 @@ export function EditAnnouncementDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -155,7 +155,7 @@ export function EditAnnouncementDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -167,7 +167,7 @@ export function EditAnnouncementDialog({
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
@@ -183,7 +183,7 @@ export function EditAnnouncementDialog({
 					<DialogTitle>
 						{isEditMode
 							? t("Announcement") + t("edit")
-							: t("Announcement") + t("Create")}
+							: t("Announcement") + t("create")}
 					</DialogTitle>
 					<DialogDescription>{t("Announcement_mgmt_descr")}</DialogDescription>
 				</DialogHeader>
@@ -216,7 +216,7 @@ export function EditAnnouncementDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("save") : t("Create")}
+								{isEditMode ? t("save") : t("create")}
 							</Button>
 							<DialogFooter className="sm:justify-start">
 								<Button

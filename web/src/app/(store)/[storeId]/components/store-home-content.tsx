@@ -16,7 +16,11 @@ import type {
 import { ProductStatus } from "@/types/enum";
 import { getAbsoluteUrl } from "@/utils/utils";
 
-import type { StoreSettings, StoreFacility } from "@prisma/client";
+import type {
+	StoreSettings,
+	StoreFacility,
+	RsvpSettings,
+} from "@prisma/client";
 import { formatDate } from "date-fns";
 import { ArrowUpToLine } from "lucide-react";
 import Link from "next/link";
@@ -65,9 +69,11 @@ export const StoreHomeContent: React.FC<props> = ({
   logger.info("now");
   */
 
+	//console.log(JSON.stringify(rsvpSettings));
+
 	const cart = useCart();
 
-	const params = useParams<{ storeId: string; tableId: string }>();
+	const params = useParams<{ storeId: string; facilityId: string }>();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -178,7 +184,7 @@ export const StoreHomeContent: React.FC<props> = ({
 						price: Number(product.price),
 						quantity: 1,
 						storeId: params.storeId,
-						tableId: params.tableId,
+						facilityId: params.facilityId,
 						//...product,
 						//cartStatus: CartProductStatus.InProgress,
 						//userData: "",
@@ -204,31 +210,6 @@ export const StoreHomeContent: React.FC<props> = ({
 						{t("store_closed")}
 					</h2>
 				)}
-
-				<div className="px-2 flex items-center gap-5">
-					<div className="">
-						{tableData ? (
-							<div className="">
-								<div className="flex gap-2">{t("store_orderTotal")}</div>
-								<div className="text-xl font-extrabold">
-									{t("storeTables")}: {tableData.facilityName}
-								</div>
-								<div>{t("store_seatingTime")}</div>
-								<div>2大人 0小孩</div>
-							</div>
-						) : (
-							<div className="text-xl font-extrabold">
-								{/*外帶點餐*/}
-								{t("store_orderType_takeoff")}
-							</div>
-						)}
-					</div>
-					<div className="text-sm">
-						<Link href={`/order/?storeId=${storeData.id}`}>
-							{t("store_linkToOrder")}
-						</Link>
-					</div>
-				</div>
 
 				{storeSettings?.orderNoteToCustomer && (
 					<div className="pl-5 pb-5">

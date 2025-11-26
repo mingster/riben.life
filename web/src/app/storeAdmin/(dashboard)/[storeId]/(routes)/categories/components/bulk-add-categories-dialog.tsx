@@ -103,7 +103,7 @@ export function BulkAddCategoriesDialog({
 
 			if (result?.serverError) {
 				toastError({
-					title: t("Error"),
+					title: t("error_title"),
 					description: result.serverError,
 				});
 				return;
@@ -123,7 +123,7 @@ export function BulkAddCategoriesDialog({
 			setOpen(false);
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
@@ -199,7 +199,7 @@ export function BulkAddCategoriesDialog({
 									!form.formState.isValid
 								}
 							>
-								{t("Create")}
+								{t("create")}
 							</Button>
 
 							<DialogFooter className="sm:justify-start">

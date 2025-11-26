@@ -113,7 +113,7 @@ export function EditCategoryDialog({
 		}
 
 		toastSuccess({
-			title: t("Category") + t(isEditMode ? "Updated" : "Created"),
+			title: t("Category") + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 
@@ -135,7 +135,7 @@ export function EditCategoryDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -148,7 +148,7 @@ export function EditCategoryDialog({
 				const categoryId = category?.id;
 				if (!categoryId) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: "Category not found.",
 					});
 					return;
@@ -164,7 +164,7 @@ export function EditCategoryDialog({
 
 				if (result?.serverError) {
 					toastError({
-						title: t("Error"),
+						title: t("error_title"),
 						description: result.serverError,
 					});
 					return;
@@ -176,7 +176,7 @@ export function EditCategoryDialog({
 			}
 		} catch (error: unknown) {
 			toastError({
-				title: t("Error"),
+				title: t("error_title"),
 				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
@@ -193,7 +193,7 @@ export function EditCategoryDialog({
 					<DialogTitle>
 						{isEditMode
 							? `${t("edit")} ${t("Category")}`
-							: `${t("Create")} ${t("Category")}`}
+							: `${t("create")} ${t("Category")}`}
 					</DialogTitle>
 					<DialogDescription>
 						{t("Category_mgmt_descr") ?? ""}
@@ -266,7 +266,7 @@ export function EditCategoryDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{isEditMode ? t("save") : t("Create")}
+								{isEditMode ? t("save") : t("create")}
 							</Button>
 							<Button
 								type="button"

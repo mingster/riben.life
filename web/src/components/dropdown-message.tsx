@@ -1,3 +1,5 @@
+"use client";
+
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreAnnouncement } from "@prisma/client";
@@ -17,8 +19,14 @@ export default function DropdownMessage({ messages }: props) {
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [notifying, setNotifying] = useState(true);
 	const [hasMessage, setHasMessage] = useState(true);
+	const [mounted, setMounted] = useState(false);
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+
+	// Prevent hydration mismatch by only rendering translations after mount
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
 	const _cookieName = "messageRead";
 	//const [cookies, setCookies] = useCookies([cookieName]); //https://github.com/bendotcodes/cookies/tree/main/packages/react-cookie
@@ -132,7 +140,7 @@ export default function DropdownMessage({ messages }: props) {
 			>
 				<div className="px-4.5 py-3">
 					<h5 className="text-sm font-medium text-bodydark2">
-						{t("StoreAnnouncement_title")}
+						{mounted ? t("StoreAnnouncement_title") : "Announcement"}
 					</h5>
 				</div>
 

@@ -10,8 +10,8 @@ import { getNumOfDaysInTheMonth, getUtcNow } from "./datetime-utils";
 export const highlight_css = "border-dashed border-green-500 border-2";
 
 /*
-export function getTableName(tables: StoreFacility[], tableId: string) {
-  return tables.find((table) => table.id === tableId)?.facilityName || "";
+export function getTableName(tables: StoreFacility[], facilityId: string) {
+  return tables.find((table) => table.id === facilityId)?.facilityName || "";
 }
 */
 
