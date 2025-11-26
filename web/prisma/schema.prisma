@@ -41,16 +41,16 @@ model User {
   Orders            StoreOrder[]        @relation("UserOrders")
   Addresses         Address[]
 
-  Rsvp               Rsvp[]
-  sessions           Session[]
-  accounts           Account[]
-  twofactors         TwoFactor[]
-  passkeys           Passkey[]
-  apikeys            Apikey[]
-  members            Member[]
-  invitations        Invitation[]
-  customerCredits    CustomerCredit[]
-  customerCreditLogs CustomerCreditLedger[]
+  Rsvp                Rsvp[]
+  sessions            Session[]
+  accounts            Account[]
+  twofactors          TwoFactor[]
+  passkeys            Passkey[]
+  apikeys             Apikey[]
+  members             Member[]
+  invitations         Invitation[]
+  customerCredits     CustomerCredit[]
+  customerCreditLogs  CustomerCreditLedger[]
   storeLedgersCreated StoreLedger[]
 
   @@unique([normalizedEmail])
@@ -76,6 +76,7 @@ model Account {
   user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
+  @@map("account")
 }
 
 model Session {
@@ -114,6 +115,7 @@ model Verification {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
 
+  @@index([identifier])
   @@map("verification")
 }
 
@@ -127,6 +129,7 @@ model TwoFactor {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([secret])
   @@map("twoFactor")
 }
 
@@ -146,6 +149,7 @@ model Passkey {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([credentialID])
   @@map("passkey")
 }
 
@@ -174,6 +178,7 @@ model Apikey {
   metadata            String?
 
   @@index([userId])
+  @@index([key])
   @@map("apikey")
 }
 
@@ -220,8 +225,11 @@ model Invitation {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now())
+
   @@index([inviterId])
   @@index([organizationId])
+  @@index([email])
   @@map("invitation")
 }
 
@@ -916,6 +924,7 @@ model StoreProductOptionSelectionsTemplate {
 }
 
 //產品選項
+
 model ProductOption {
   id                      String                    @id @default(uuid())
   productId               String
@@ -1031,7 +1040,7 @@ model StoreLedger {
   availability DateTime @default(now())
 
   StoreOrder StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  CreatedBy  User?     @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  CreatedBy  User?      @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@index([storeId])
   @@index([orderId])

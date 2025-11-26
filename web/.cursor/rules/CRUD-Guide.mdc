@@ -171,6 +171,7 @@ async function onSubmit(data: FormInput) {
 ```
 
 **Key Points:**
+
 - Always import schemas from `@/actions/[domain]/[feature]/[action-name].validation.ts`
 - Use `.omit()` to exclude fields added in submit handler (e.g., `storeId`)
 - For conditional schemas, use `useMemo` to select the appropriate schema
@@ -343,6 +344,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 ```
 
 **Key Points for Settings Forms:**
+
 - Parent component manages the settings state with `useState`
 - Form component receives `onSettingsUpdated` callback
 - After successful mutation, transform server response and call callback

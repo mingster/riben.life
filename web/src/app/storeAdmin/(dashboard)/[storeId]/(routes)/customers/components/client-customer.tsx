@@ -209,7 +209,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 							}}
 						>
 							<IconCreditCard className="mr-0 size-4" />
-							{t("Recharge_Credit") || "Recharge Credit"}
+							{t("credit_recharge") || "Recharge Credit"}
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>

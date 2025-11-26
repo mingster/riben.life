@@ -21,6 +21,7 @@ import {
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -133,18 +134,15 @@ export function RechargeCreditDialog({
 			}
 
 			if (result?.data) {
-				const { bonus, totalCredit } = result.data;
+				//const { bonus, totalCredit } = result.data;
 				const rechargeType = values.isPaid
-					? t("In_Person_Payment") || "In-Person Payment"
-					: t("Promotional") || "Promotional";
+					? t("customer_credit_in_person_payment") || "In-Person Payment"
+					: t("customer_credit_promotional_payment") || "Promotional";
 				toastSuccess({
-					title: t("Credit_recharged") || "Credit Recharged",
-					description: bonus
-						? `${rechargeType}: ${t("amount")}: ${values.creditAmount}, ${t("bonus")}: ${bonus}, ${t("total")}: ${totalCredit}`
-						: `${rechargeType}: ${t("amount")}: ${values.creditAmount}, ${t("total")}: ${totalCredit}`,
+					title: t("success_title"),
+					description: t("customer_credit_recharged") || "Credit Recharged"
 				});
 			}
-
 			resetForm();
 			handleOpenChange(false);
 			onRecharged?.();
@@ -158,15 +156,19 @@ export function RechargeCreditDialog({
 		}
 	};
 
+
+	let dialogDescription = t("customer_credit_recharge_description") || "Add credit to {0}'s account";
+	dialogDescription = dialogDescription.replace("{0}", user.name || user.email);
+
+
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>{t("Recharge_Credit") || "Recharge Credit"}</DialogTitle>
-					<DialogDescription>
-						{t("Recharge_Credit_description") ||
-							`Add credit to ${user.name || user.email}'s account`}
+					<DialogTitle>{t("customer_credit_recharge") || "Recharge Credit"}</DialogTitle>
+					<DialogDescription className="text-xs font-mono text-muted-foreground">
+						{dialogDescription}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -192,7 +194,7 @@ export function RechargeCreditDialog({
 							name="creditAmount"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Credit_Amount") || "Credit Amount"}</FormLabel>
+									<FormLabel>{t("customer_credit_amount") || "Credit Amount"}</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -229,13 +231,13 @@ export function RechargeCreditDialog({
 									</FormControl>
 									<div className="space-y-1 leading-none">
 										<FormLabel>
-											{t("Customer_Paid_In_Person") ||
+											{t("customer_credit_paid_in_person") ||
 												"Customer Paid In Person"}
 										</FormLabel>
-										<p className="text-sm text-muted-foreground">
-											{t("Customer_Paid_In_Person_description") ||
+										<FormDescription className="text-xs font-mono text-muted-foreground">
+											{t("customer_credit_paid_in_person_description") ||
 												"Check if customer paid cash in person. Leave unchecked for promotional credit."}
-										</p>
+										</FormDescription>
 									</div>
 								</FormItem>
 							)}
@@ -247,7 +249,7 @@ export function RechargeCreditDialog({
 								name="cashAmount"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("Cash_Amount") || "Cash Amount"} *</FormLabel>
+										<FormLabel>{t("customer_credit_cash_amount") || "Cash Amount"} *</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -267,10 +269,10 @@ export function RechargeCreditDialog({
 											/>
 										</FormControl>
 										<FormMessage />
-										<p className="text-sm text-muted-foreground">
-											{t("Cash_Amount_required_when_paid") ||
+										<FormDescription className="text-xs font-mono text-muted-foreground">
+											{t("customer_credit_cash_amount_required_when_paid") ||
 												"Cash amount is required when customer paid in person"}
-										</p>
+										</FormDescription>
 									</FormItem>
 								)}
 							/>
@@ -292,7 +294,7 @@ export function RechargeCreditDialog({
 												field.onChange(event.target.value || null)
 											}
 											placeholder={
-												t("Recharge_note_placeholder") ||
+												t("customer_credit_recharge_note_placeholder") ||
 												"Optional note for this recharge"
 											}
 										/>
@@ -311,7 +313,7 @@ export function RechargeCreditDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{t("recharge") || "Recharge"}
+								{t("customer_credit_recharge") || "Recharge"}
 							</Button>
 							<Button
 								type="button"

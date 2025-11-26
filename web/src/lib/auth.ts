@@ -1,28 +1,24 @@
 import { stripe } from "@better-auth/stripe";
-import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
+import { prismaAdapter } from "better-auth/adapters/prisma";
 
+import { passkey } from "@better-auth/passkey";
 import {
 	betterAuth,
-	type BetterAuthOptions,
-	type OAuth2Tokens,
+	type BetterAuthOptions
 } from "better-auth";
+import { emailHarmony } from "better-auth-harmony";
 import {
 	admin,
 	apiKey,
 	bearer,
 	magicLink,
 	organization,
-	twoFactor,
-	//genericOAuth,
-	captcha,
+	twoFactor
 } from "better-auth/plugins";
-import { passkey } from "@better-auth/passkey";
-import { emailHarmony } from "better-auth-harmony";
 
 import { sendAuthMagicLink } from "@/actions/mail/send-auth-magic-link";
 import { sendAuthPasswordReset } from "@/actions/mail/send-auth-password-reset";
-import { sendAuthEmailValidation } from "@/actions/mail/send-auth-email-validation";
 import { stripe as stripeClient } from "@/lib/stripe/config";
 import { customSession } from "better-auth/plugins";
 import { sqlClient } from "./prismadb";

@@ -107,7 +107,7 @@ export default function EditUser({ serverData }: props) {
 			</CardHeader>
 			<CardContent className="space-y-2">
 				<div className="flex items-center gap-1">
-					{t("account_tab_currentAcct")} {dbUser.email}
+					{t("account_tab_current_acct")} {dbUser.email}
 					{/* if user doesn't have email, show its userid */}
 					{!dbUser.email && dbUser.id}
 					<SignOutButton disabled={loading || form.formState.isSubmitting} />

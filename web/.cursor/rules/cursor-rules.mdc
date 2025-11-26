@@ -9,7 +9,7 @@ How to add new cursor rules to the project
 
 1. Always place rule files in PROJECT_ROOT/.cursor/rules/:
 
-    ```
+    ``` dtd
     .cursor/rules/
     ├── your-rule-name.mdc
     ├── another-rule.mdc
@@ -23,7 +23,7 @@ How to add new cursor rules to the project
 
 3. Directory structure:
 
-    ```
+    ``` dtd
     PROJECT_ROOT/
     ├── .cursor/
     │   └── rules/
@@ -39,7 +39,7 @@ How to add new cursor rules to the project
 
 5. Cursor rules have the following structure:
 
-````
+```` text
 ---
 description: Short description of the rule's purpose
 globs: optional/path/pattern/**/* 
@@ -54,7 +54,7 @@ Main content explaining the rule with markdown formatting.
 3. Guidelines
 
 Example:
-```typescript
+``` typescript
 // Good example
 function goodExample() {
   // Implementation following guidelines
