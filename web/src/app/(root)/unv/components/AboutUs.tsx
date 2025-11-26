@@ -76,7 +76,7 @@ const SocialLink = ({ url, children, className = "" }: SocialLinkProps) => (
 		href={url}
 		target="_blank"
 		rel="noreferrer"
-		className={`hover:text-slate transition-colors duration-200 ${className}`}
+		className={`hover:text-slate active:text-slate/80 transition-colors duration-200 min-h-[44px] sm:min-h-0 flex items-center justify-center touch-manipulation ${className}`}
 		aria-label={`Open ${children} in new tab`}
 	>
 		{children}
@@ -133,9 +133,9 @@ export function AboutUs({ className, ...props }: AboutUsProps) {
 			aria-label="About Us and Contact Information"
 			{...props}
 		>
-			<div className="px-2 mx-auto max-w-8xl sm:px-6 md:px-8">
-				<h1 className="text-2xl sm:text-xl lg:text-2xl font-extrabold pb-2">
-					{t("pstv_contact_form_title")}
+			<div className="px-3 sm:px-4 mx-auto max-w-8xl sm:px-6 md:px-8">
+				<h1 className="text-xl sm:text-2xl lg:text-2xl font-extrabold pb-3 sm:pb-4">
+					{t("contact_form_title")}
 				</h1>
 
 				<ContactForm />
@@ -182,7 +182,7 @@ const ContactFormInner = () => {
 					const token = await executeRecaptcha("contact_form");
 					if (!token) {
 						setCaptchaError("reCAPTCHA verification failed. Please try again.");
-						toast.error(t("pstv_contact_form_captcha_error"));
+						toast.error(t("contact_form_captcha_error"));
 						return;
 					}
 					captchaToken = token;
@@ -210,11 +210,11 @@ const ContactFormInner = () => {
 				);
 
 				if (result.status === 200 && result.data.success) {
-					toast.success(t("pstv_contact_form_success"));
+					toast.success(t("contact_form_success"));
 					form.reset();
 					setCaptchaError("");
 				} else {
-					toast.error(t("pstv_contact_form_error"));
+					toast.error(t("contact_form_error"));
 					clientLogger.error(
 						`Contact form submission failed: ${result.status}`,
 						{
@@ -238,7 +238,7 @@ const ContactFormInner = () => {
 					environment: process.env.NODE_ENV,
 					version: process.env.npm_package_version,
 				});
-				toast.error(t("pstv_contact_form_error"));
+				toast.error(t("contact_form_error"));
 			} finally {
 				setLoading(false);
 			}
@@ -258,13 +258,13 @@ const ContactFormInner = () => {
 				control={form.control}
 				name={name}
 				render={({ field }) => (
-					<FormItem className="p-3">
+					<FormItem className="p-2 sm:p-3">
 						<FormControl>
 							<Component
 								disabled={loading}
 								className="placeholder:text-gray-700 rounded-lg 
-								outline-none font-mono 
-								transition-opacity"
+								outline-none font-mono h-10 min-h-[44px] text-base sm:text-sm
+								transition-opacity touch-manipulation"
 								placeholder={placeholder}
 								{...field}
 								{...props}
@@ -311,12 +311,12 @@ const ContactFormInner = () => {
 			className="px-1 w-full mx-auto relative z-0"
 			aria-label="Contact form and social media links"
 		>
-			<div className="flex xl:flex-row flex-col-reverse gap-1 overflow-hidden h-screen">
+			<div className="flex xl:flex-row flex-col-reverse gap-3 sm:gap-4 overflow-hidden min-h-screen">
 				<motion.div className="flex-1 rounded-2xl">
 					{/* Social Media Section 
 					{SOCIAL_LINKS.discord && (
 						<div className="flex gap-1 py-10 hover:text-slate transition-colors duration-200">
-							{t("pstv_contact_form_social")}
+							{t("contact_form_social")}
 						</div>
 					)}
 
@@ -341,29 +341,24 @@ const ContactFormInner = () => {
 					</nav>
 */}
 
-					<div className="flex gap-1 py-1 hover:text-slate transition-colors duration-200">
-						{t("pstv_contact_form_description")}
+					<div className="flex gap-1 py-2 sm:py-3 hover:text-slate transition-colors duration-200 text-sm sm:text-base">
+						{t("contact_form_description")}
 					</div>
 					{/* Contact Form */}
 					<Form {...form}>
 						<form
 							onSubmit={form.handleSubmit(onSubmit)}
-							className="w-full space-y-1"
+							className="w-full space-y-2 sm:space-y-3"
 							aria-label="Contact form"
 						>
-							{renderFormField("name", t("pstv_contact_form_name"), Input)}
-							{renderFormField("email", t("pstv_contact_form_email"), Input, {
+							{renderFormField("name", t("contact_form_name"), Input)}
+							{renderFormField("email", t("contact_form_email"), Input, {
 								type: "email",
 							})}
-							{renderFormField(
-								"message",
-								t("pstv_contact_form_message"),
-								Textarea,
-								{
-									rows: 7,
-									className: "min-h-50",
-								},
-							)}
+							{renderFormField("message", t("contact_form_message"), Textarea, {
+								rows: 7,
+								className: "min-h-50",
+							})}
 
 							<div className="flex flex-col pl-3">
 								<div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
@@ -388,18 +383,18 @@ const ContactFormInner = () => {
 
 							<Button
 								disabled={!isFormValid || !isRecaptchaReady}
-								className="w-full 
+								className="w-full h-12 min-h-[48px]
 								disabled:bg-gray-100 disabled:text-gray-100 
 								dark:disabled:bg-gray-900 dark:disabled:text-gray-500
-								transition-opacity"
+								transition-opacity touch-manipulation sm:h-10 sm:min-h-[44px]"
 								type="submit"
 								aria-label="Send message"
 							>
 								{loading
-									? t("pstv_contact_form_sending")
+									? t("contact_form_sending")
 									: !isRecaptchaReady
 										? "Loading security verification..."
-										: t("pstv_contact_form_send")}
+										: t("contact_form_send")}
 							</Button>
 						</form>
 					</Form>

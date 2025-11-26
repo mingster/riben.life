@@ -280,6 +280,19 @@
 
 .ss-item {
 	margin: 10px;
+	min-height: 44px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 8px 12px;
+	cursor: pointer;
+	touch-action: manipulation;
+}
+
+@media (min-width: 640px) {
+	.ss-item {
+		min-height: auto;
+	}
 }
 
 a,

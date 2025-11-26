@@ -204,23 +204,25 @@ export const StoreHomeContent: React.FC<props> = ({
 	// http://localhost:3000/4574496e-9759-4d9c-9258-818501418747/dfc853b4-47f5-400c-a2fb-f70f045d65a0
 	return (
 		<section className="relative w-full place-content-center items-center">
-			<div className="px-1">
+			<div className="px-3 sm:px-4 lg:px-6">
 				{!storeData.isOpen && (
-					<h2 className="text-2xl xs:text-xl font-extrabold">
+					<h2 className="text-xl sm:text-2xl font-extrabold mb-4">
 						{t("store_closed")}
 					</h2>
 				)}
 
 				{storeSettings?.orderNoteToCustomer && (
-					<div className="pl-5 pb-5">
-						<pre>{storeSettings.orderNoteToCustomer}</pre>
+					<div className="pl-3 sm:pl-5 pb-4 sm:pb-5 text-sm sm:text-base">
+						<pre className="whitespace-pre-wrap break-words">
+							{storeSettings.orderNoteToCustomer}
+						</pre>
 					</div>
 				)}
 
 				{/* side menu */}
-				<div className="grid grid-cols-[20%_80%] gap-2 px-1">
-					<div className="self-start sticky top-24">
-						{/* 20% sidebar */}
+				<div className="grid grid-cols-1 sm:grid-cols-[20%_80%] gap-2 sm:gap-3 px-1 sm:px-2">
+					<div className="self-start sticky top-20 sm:top-24 hidden sm:block">
+						{/* 20% sidebar - Hidden on mobile, shown on desktop */}
 						<ScrollArea className="w-full max-h-fit whitespace-nowrap">
 							<div className="items-center space-x-1">
 								{storeData.Categories.map((category: Category) => (
@@ -231,7 +233,7 @@ export const StoreHomeContent: React.FC<props> = ({
 									>
 										<div
 											data-to-scrollspy-id={category.id}
-											className="ss-item lg:text-xl"
+											className="ss-item lg:text-xl min-h-[44px] touch-manipulation"
 										>
 											{category.name}
 										</div>
@@ -245,10 +247,12 @@ export const StoreHomeContent: React.FC<props> = ({
 					<ScrollSpy scrollThrottle={100} useBoxMethod={false}>
 						{storeData.Categories?.map((category: Category) => (
 							<div key={category.id} id={category.id} className="">
-								<div className="text-center w-full">
-									<div className="lg:text-xl">{category.name}</div>
+								<div className="text-center w-full py-4 sm:py-6">
+									<div className="text-lg sm:text-xl lg:text-2xl font-semibold">
+										{category.name}
+									</div>
 								</div>
-								<div className="pb-10">
+								<div className="pb-6 sm:pb-8 lg:pb-10">
 									{(category.ProductCategories as ProductCategories[])?.map(
 										(pc) =>
 											pc.Product.status === ProductStatus.Published && (
@@ -274,9 +278,9 @@ export const StoreHomeContent: React.FC<props> = ({
 				</div>
 
 				{/* scroll up to top */}
-				<div className="relative flex w-full justify-center align-top">
+				<div className="relative flex w-full justify-center align-top py-2">
 					<button
-						className="pt-0 pl-2"
+						className="h-12 w-12 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-background border shadow-sm hover:bg-muted active:bg-muted/70 transition-colors touch-manipulation sm:h-10 sm:w-10 sm:min-h-0 sm:min-w-0"
 						type="button"
 						title="scroll up to top"
 						onClick={(e) => {
@@ -287,7 +291,7 @@ export const StoreHomeContent: React.FC<props> = ({
 							}
 						}}
 					>
-						<ArrowUpToLine className="size-[20px]" />
+						<ArrowUpToLine className="h-5 w-5 sm:size-[20px]" />
 					</button>
 				</div>
 			</div>

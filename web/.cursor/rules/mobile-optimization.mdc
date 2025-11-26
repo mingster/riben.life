@@ -1,0 +1,473 @@
+---
+description: Mobile optimization guidelines for iPhone 16 and later devices
+globs: **/*.{tsx,ts,css}
+alwaysApply: true
+---
+
+# Mobile Optimization for iPhone 16+
+
+This rule defines mobile optimization guidelines for iPhone 16 and later devices, ensuring touch-friendly interfaces, proper responsive design, and optimal user experience on mobile screens.
+
+## Core Principles
+
+1. **Touch Targets**: All interactive elements must be minimum 44x44px on mobile (Apple's recommendation)
+2. **Responsive Breakpoints**: Use `sm:` (640px) and `lg:` (1024px) breakpoints consistently
+3. **Touch Optimization**: Use `touch-manipulation` CSS to reduce 300ms tap delay
+4. **Progressive Enhancement**: Mobile-first approach with desktop enhancements
+5. **Readable Typography**: Ensure font sizes are readable on mobile screens
+
+## Touch Targets
+
+### Minimum Sizes
+
+- **Mobile**: Minimum 44x44px for all interactive elements
+- **Desktop**: Can be smaller (typically 32-36px)
+
+### Implementation Pattern
+
+```tsx
+// Button example
+<Button
+  className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+  // Mobile: 40px height with 44px minimum
+  // Desktop: 36px height, no minimum
+/>
+
+// Icon button example
+<Button
+  size="icon"
+  className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+/>
+```
+
+### Components Requiring Touch Targets
+
+- Buttons (all variants)
+- Icon buttons
+- Checkboxes and radio buttons
+- Select/dropdown triggers
+- Input fields
+- Links (if acting as buttons)
+- Close buttons in dialogs
+- Navigation elements
+- Table row actions
+
+## Responsive Spacing
+
+### Padding and Margins
+
+Use progressive spacing that increases with screen size:
+
+```tsx
+// Container padding
+<div className="px-3 sm:px-4 lg:px-6">
+  {/* Mobile: 12px, Tablet: 16px, Desktop: 24px */}
+</div>
+
+// Gaps between elements
+<div className="gap-1.5 sm:gap-2 lg:gap-3">
+  {/* Progressive spacing */}
+</div>
+
+// Vertical spacing
+<div className="py-2 sm:py-4 md:py-6">
+  {/* Responsive vertical padding */}
+</div>
+```
+
+### Common Patterns
+
+- **Header padding**: `px-3 sm:px-4 lg:px-6`
+- **Content padding**: `px-3 sm:px-4 lg:px-6`
+- **Element gaps**: `gap-1.5 sm:gap-2`
+- **Vertical spacing**: `py-2 sm:py-4`
+
+## Typography
+
+### Responsive Font Sizes
+
+```tsx
+// Headings
+<h1 className="text-sm font-medium sm:text-base lg:text-lg">
+  Title
+</h1>
+
+// Body text
+<p className="text-xs sm:text-sm">
+  Content
+</p>
+
+// Small text
+<span className="text-[10px] sm:text-xs">
+  Helper text
+</span>
+```
+
+### Best Practices
+
+- **Mobile**: Use `text-sm` or `text-base` for body text (16px+ prevents zoom on iOS)
+- **Desktop**: Can use smaller sizes like `text-sm` or `text-xs`
+- **Headings**: Scale from `text-sm` (mobile) to `text-lg` (desktop)
+- **Line heights**: Use `leading-tight` or `leading-normal` for better mobile readability
+
+## Buttons
+
+### Standard Button
+
+```tsx
+<Button
+  variant="outline"
+  size="sm"
+  className="h-10 min-h-[44px] sm:h-8 sm:min-h-0 touch-manipulation"
+>
+  Action
+</Button>
+```
+
+### Icon Button
+
+```tsx
+<Button
+  size="icon"
+  className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 touch-manipulation"
+>
+  <Icon />
+</Button>
+```
+
+### Button Variants
+
+All button variants should include:
+
+- `touch-manipulation` for better touch response
+- `active:` states for visual feedback
+- Minimum 44px height on mobile
+
+## Forms
+
+### Input Fields
+
+```tsx
+<Input
+  className="h-10 min-h-[44px] text-base sm:text-sm touch-manipulation"
+  // Mobile: 16px font size prevents iOS zoom
+  // Desktop: 14px font size
+/>
+```
+
+### Checkboxes and Radio Buttons
+
+```tsx
+<input
+  type="checkbox"
+  className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+/>
+```
+
+### Select/Dropdown
+
+```tsx
+<SelectTrigger className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation">
+  {/* Ensure touch targets */}
+</SelectTrigger>
+```
+
+### Textarea
+
+```tsx
+<Textarea
+  className="min-h-[44px] text-base sm:text-sm"
+  // Touch targets apply to initial height
+/>
+```
+
+## Tables
+
+### Horizontal Scrolling
+
+```tsx
+<div className="rounded-md border overflow-hidden">
+  <div className="overflow-x-auto -mx-3 sm:mx-0">
+    <Table className="min-w-full">
+      {/* Full width on mobile, constrained on desktop */}
+    </Table>
+  </div>
+</div>
+```
+
+### Table Cells
+
+```tsx
+<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
+  {/* Responsive padding */}
+</TableCell>
+```
+
+### Sticky Columns
+
+```tsx
+<th className="sticky left-0 bg-background z-10">
+  {/* First column stays visible while scrolling */}
+</th>
+```
+
+## Dialogs and Modals
+
+### Dialog Content
+
+```tsx
+<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 max-h-[calc(100vh-2rem)] overflow-y-auto">
+  {/* 
+    - Mobile: Nearly full width with small margin
+    - Desktop: Constrained width (sm:max-w-lg)
+    - Scrollable content
+  */}
+</DialogContent>
+```
+
+### Close Button
+
+```tsx
+<DialogPrimitive.Close
+  className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-auto sm:w-auto sm:min-h-0 sm:min-w-0 flex items-center justify-center touch-manipulation"
+>
+  <XIcon />
+</DialogPrimitive.Close>
+```
+
+## Navigation
+
+### Header Elements
+
+```tsx
+<header>
+  <div className="flex items-center gap-1.5 px-3 sm:gap-2 sm:px-4 lg:gap-2 lg:px-6">
+    {/* Responsive spacing and padding */}
+  </div>
+</header>
+```
+
+### Conditional Display
+
+```tsx
+{/* Hide on mobile, show on desktop */}
+<Button className="hidden sm:inline-flex">
+  Desktop Only
+</Button>
+
+{/* Show on mobile, hide on desktop */}
+<Button className="sm:hidden">
+  Mobile Only
+</Button>
+
+{/* Abbreviated text on mobile */}
+<span>
+  <span className="hidden lg:inline">Full Text</span>
+  <span className="lg:hidden">Short</span>
+</span>
+```
+
+## Calendar Components
+
+### Week View Calendar
+
+```tsx
+{/* Navigation controls */}
+<div className="flex items-center gap-1.5 sm:gap-2">
+  <Button
+    size="icon"
+    className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+  >
+    <Icon />
+  </Button>
+</div>
+
+{/* Calendar grid with horizontal scroll */}
+<div className="overflow-x-auto -mx-3 sm:mx-0">
+  <table className="min-w-[640px] sm:min-w-full">
+    {/* Minimum width ensures proper display */}
+  </table>
+</div>
+```
+
+## Common Patterns
+
+### Responsive Container
+
+```tsx
+<div className="px-3 sm:px-4 lg:px-6">
+  {/* Content */}
+</div>
+```
+
+### Responsive Grid
+
+```tsx
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+  {/* Responsive columns */}
+</div>
+```
+
+### Responsive Text
+
+```tsx
+<span className="text-sm sm:text-base lg:text-lg">
+  {/* Scales with screen size */}
+</span>
+```
+
+### Responsive Flex
+
+```tsx
+<div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+  {/* Stacks on mobile, horizontal on desktop */}
+</div>
+```
+
+## CSS Classes Reference
+
+### Touch Targets
+
+- `min-h-[44px]` - Minimum height for mobile
+- `min-w-[44px]` - Minimum width for mobile
+- `sm:min-h-0` - Remove minimum on desktop
+- `sm:min-w-0` - Remove minimum on desktop
+- `touch-manipulation` - Reduces tap delay
+
+### Responsive Sizing
+
+- `h-10 sm:h-9` - Height: 40px mobile, 36px desktop
+- `w-10 sm:w-9` - Width: 40px mobile, 36px desktop
+- `text-base sm:text-sm` - Font: 16px mobile, 14px desktop
+
+### Responsive Spacing
+
+- `px-3 sm:px-4 lg:px-6` - Horizontal padding
+- `py-2 sm:py-4` - Vertical padding
+- `gap-1.5 sm:gap-2` - Element gaps
+
+### Conditional Display
+
+- `hidden sm:block` - Hidden on mobile, visible on desktop
+- `block sm:hidden` - Visible on mobile, hidden on desktop
+- `hidden lg:inline` - Hidden below large, inline on large+
+
+## Testing Checklist
+
+When implementing mobile optimizations:
+
+- [ ] All buttons are at least 44x44px on mobile
+- [ ] Touch targets have proper spacing (minimum 8px between)
+- [ ] Text is readable without zooming (16px+ recommended)
+- [ ] Tables scroll horizontally on mobile
+- [ ] Dialogs are properly sized for mobile screens
+- [ ] Forms are easy to fill on mobile
+- [ ] Navigation is accessible and touch-friendly
+- [ ] Active/pressed states provide visual feedback
+- [ ] No horizontal scroll issues on mobile viewport
+- [ ] Content is properly spaced on mobile screens
+
+## Browser Considerations
+
+### iOS Safari Specific
+
+- 16px+ font size prevents automatic zoom on input focus
+- `-webkit-tap-highlight-color: transparent` can be used to remove tap highlight
+- `touch-action: manipulation` reduces 300ms tap delay
+
+### Android Chrome
+
+- Similar touch target requirements
+- Supports `touch-manipulation` well
+
+## Performance
+
+- Use `touch-manipulation` to reduce tap delay
+- Minimize layout shifts during responsive changes
+- Optimize images for mobile screens
+- Use progressive enhancement (mobile-first)
+
+## Examples
+
+### Complete Button Component
+
+```tsx
+<Button
+  variant="outline"
+  size="sm"
+  onClick={handleClick}
+  className="h-10 min-h-[44px] px-3 sm:h-8 sm:min-h-0 sm:px-3 touch-manipulation"
+>
+  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+  <span className="text-sm sm:text-xs">Action</span>
+</Button>
+```
+
+### Complete Form Input
+
+```tsx
+<FormField
+  control={form.control}
+  name="email"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel className="text-sm font-medium">Email</FormLabel>
+      <FormControl>
+        <Input
+          type="email"
+          className="h-10 min-h-[44px] text-base sm:text-sm touch-manipulation"
+          placeholder="Enter email"
+          {...field}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+### Complete Dialog
+
+```tsx
+<Dialog open={isOpen} onOpenChange={setIsOpen}>
+  <DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
+    <DialogHeader>
+      <DialogTitle className="text-lg sm:text-xl">Title</DialogTitle>
+      <DialogDescription className="text-sm">
+        Description
+      </DialogDescription>
+    </DialogHeader>
+    <div className="space-y-4">
+      {/* Content */}
+    </div>
+    <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <Button
+        variant="outline"
+        className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0"
+      >
+        Cancel
+      </Button>
+      <Button className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0">
+        Save
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+```
+
+## Summary
+
+**Key Rules:**
+
+1. ✅ 44x44px minimum touch targets on mobile
+2. ✅ Use `touch-manipulation` for all interactive elements
+3. ✅ Progressive spacing: `px-3 sm:px-4 lg:px-6`
+4. ✅ Responsive typography: `text-sm sm:text-base`
+5. ✅ Mobile-first approach with desktop enhancements
+6. ✅ Horizontal scrolling for tables on mobile
+7. ✅ Full-width dialogs on mobile with proper margins
+8. ✅ Conditional display for mobile vs desktop elements
+9. ✅ Proper active states for touch feedback
+10. ✅ 16px+ font size for inputs to prevent iOS zoom
+
+Following these guidelines ensures a consistent, touch-friendly mobile experience optimized for iPhone 16 and later devices.

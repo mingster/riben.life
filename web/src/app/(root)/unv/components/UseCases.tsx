@@ -4,8 +4,8 @@ import { BigText, Caption, IconContainer, Paragraph } from "./common";
 export function UseCases({ className, ...props }: { className?: string }) {
 	return (
 		<section id="useCases" className="relative min-h-screen">
-			<div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
-				<div className="flex gap-2">
+			<div className="px-3 sm:px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
+				<div className="flex gap-2 mb-4 sm:mb-6">
 					<IconContainer
 						className="dark:bg-sky-500 dark:highlight-white/20"
 						light="/img/icons/home/editor-tools.png"
@@ -14,7 +14,7 @@ export function UseCases({ className, ...props }: { className?: string }) {
 					<Caption className="text-sky-500">使用情境</Caption>
 				</div>
 
-				<div className="grid grid-cols-2 md:grid-cols-4 md:gap-4 gap-1">
+				<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 md:gap-4 gap-3 sm:gap-2">
 					<div>
 						<BigText>客戶預約座位</BigText>
 						<Caption>適用場景：高需求的特定時段（如周末、假日）</Caption>

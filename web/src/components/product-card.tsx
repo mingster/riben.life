@@ -48,17 +48,17 @@ export function ProductCard({
 		<Card className={`${className} object-cover hover:opacity-50`} {...props}>
 			<CardHeader>
 				<CardTitle>
-					<div className="flex gap-1 items-center lg:text-xl">
+					<div className="flex gap-1 items-center text-base sm:text-lg lg:text-xl">
 						{product.name}
 						{
 							// display recurring icon if recurring
 							product.ProductAttribute?.isRecurring && (
-								<CalendarPlus2 className="size-4" />
+								<CalendarPlus2 className="h-4 w-4 sm:size-4" />
 							)
 						}
 					</div>
 				</CardTitle>
-				<CardDescription className="lg:text-xl text-muted-foreground">
+				<CardDescription className="text-sm sm:text-base lg:text-xl text-muted-foreground">
 					{product.description}
 				</CardDescription>
 			</CardHeader>
@@ -80,7 +80,7 @@ export function ProductCard({
 							product.ProductAttribute?.isRecurring ? t("subscribe") : t("buy")
 						}
 						variant={"default"}
-						className="w-full"
+						className="w-full h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
 						onClick={onPurchase}
 						//onClick={() => handleAddToCart(product)}
 					>

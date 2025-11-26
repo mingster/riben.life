@@ -23,7 +23,7 @@ export const UniversalHomeContent = () => {
 		<>
 			<NavBar />
 
-			<div className="mb-20 overflow-hidden sm:mb-32 md:mb-40 p">
+			<div className="mb-16 sm:mb-20 overflow-hidden sm:mb-32 md:mb-40">
 				<Header />
 				{/*
         <section className="px-8 mt-20 text-center sm:mt-32 md:mt-40">
@@ -67,7 +67,7 @@ export const UniversalHomeContent = () => {
         </section>
          */}
 			</div>
-			<div className="flex flex-col pt-20 mb-20 overflow-hidden gap-y-20 sm:pt-32 sm:mb-32 sm:gap-y-32 md:pt-40 md:mb-40 md:gap-y-40">
+			<div className="flex flex-col pt-12 sm:pt-20 mb-16 sm:mb-20 overflow-hidden gap-y-12 sm:gap-y-20 sm:pt-32 sm:mb-32 sm:gap-y-32 md:pt-40 md:mb-40 md:gap-y-40">
 				<ScrollSpy scrollThrottle={100} useBoxMethod={false}>
 					<UseCases />
 					<Features />

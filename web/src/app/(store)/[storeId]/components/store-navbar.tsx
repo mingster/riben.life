@@ -75,18 +75,18 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 			<header
 				className={`sticky ${scrollDirection === "down" ? "-top-24" : "top-0"} z-10 w-full shadow backdrop-blur dark:shadow-secondary`}
 			>
-				<div className="mx-4 flex h-14 items-center sm:mx-1">
-					<div className="flex items-center space-x-4 lg:space-x-0 pl-2">
+				<div className="mx-3 flex h-14 items-center gap-1.5 px-1 sm:mx-1 sm:gap-2 sm:px-4 lg:px-6">
+					<div className="flex items-center shrink-0">
 						<SheetMenu store={store} />
 					</div>
 
-					<h1 className="grow text-center text-xl font-bold leading-tight tracking-tighter lg:leading-[1.1]">
+					<h1 className="grow text-center text-base font-bold leading-tight tracking-tighter truncate px-2 sm:text-lg lg:text-xl lg:leading-[1.1]">
 						{store.name}
 					</h1>
 
 					{/*<!--  Hidden by default, but visible if screen is larger than 1024px --> */}
-					<div className="hidden md:block">
-						<div className="flex flex-1 items-center justify-end space-x-1">
+					<div className="hidden md:block shrink-0">
+						<div className="flex flex-1 items-center justify-end gap-1.5 lg:gap-2">
 							<ThemeToggler />
 							<DropdownMessage messages={store.StoreAnnouncement} />
 							<DropdownNotification />

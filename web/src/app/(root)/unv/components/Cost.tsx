@@ -31,8 +31,8 @@ export function Cost({ className, ...props }: { className?: string }) {
 			</div>
 
 			{/* content */}
-			<div className="pt-10 px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
-				<div className="flex gap-2">
+			<div className="pt-8 sm:pt-10 px-3 sm:px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
+				<div className="flex gap-2 mb-4 sm:mb-6">
 					{/*
 					<IconContainer
 						className="dark:bg-sky-500 dark:highlight-white/20"
@@ -42,9 +42,9 @@ export function Cost({ className, ...props }: { className?: string }) {
 					<Caption className="text-sky-500">價格</Caption>
 				</div>
 
-				<div className="flex items-start w-full mx-auto max-w-7xl sm:px-6 md:px-8">
+				<div className="flex flex-col sm:flex-row items-start w-full mx-auto max-w-7xl sm:px-6 md:px-8 gap-3 sm:gap-2">
 					<div
-						className="items-start p-5 w-1/3 rounded h-[300px] dark:bg-slate-900
+						className="items-start p-4 sm:p-5 w-full sm:w-1/3 rounded h-auto min-h-[200px] sm:h-[300px] dark:bg-slate-900
           hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50
           "
 					>
@@ -55,7 +55,7 @@ export function Cost({ className, ...props }: { className?: string }) {
 						</Paragraph>
 					</div>
 					<div
-						className="items-start p-5 w-1/3 h-[300px] bg-green-100 dark:bg-transparent
+						className="items-start p-4 sm:p-5 w-full sm:w-1/3 h-auto min-h-[200px] sm:h-[300px] bg-green-100 dark:bg-transparent
           hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50
           "
 					>
@@ -65,7 +65,7 @@ export function Cost({ className, ...props }: { className?: string }) {
 					</div>
 
 					<div
-						className="items-start p-5 h-[300px] bg-red-100 rounded-lg dark:bg-red-950
+						className="items-start p-4 sm:p-5 w-full sm:w-1/3 h-auto min-h-[200px] sm:h-[300px] bg-red-100 rounded-lg dark:bg-red-950
           hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
 					>
 						<BigText>多店版</BigText>
@@ -78,11 +78,11 @@ export function Cost({ className, ...props }: { className?: string }) {
 
 				<Link
 					href="/storeAdmin/"
-					className="flex w-full m-5 p-5 items-center justify-center
-          mx-auto max-w-7xl sm:px-6 md:px-8 h-12
+					className="flex w-full m-3 sm:m-5 p-4 sm:p-5 items-center justify-center
+          mx-auto max-w-7xl sm:px-6 md:px-8 h-12 min-h-[48px]
           font-semibold text-white rounded-lg bg-slate-900
-          hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50
-          dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400"
+          hover:bg-slate-700 active:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50
+          dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400 dark:active:bg-sky-600 touch-manipulation sm:min-h-[44px]"
 				>
 					不用洽詢，立即使用
 				</Link>

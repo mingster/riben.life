@@ -54,11 +54,15 @@ export function NavPopover({
 				<SheetTrigger asChild>
 					<button
 						type="button"
-						className="flex items-center justify-center size-8 text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300"
+						className="flex items-center justify-center h-10 w-10 min-h-[44px] min-w-[44px] text-slate-500 hover:text-slate-600 active:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 dark:active:text-slate-200 touch-manipulation sm:size-8 sm:min-h-0 sm:min-w-0"
 						onClick={() => setIsOpen(true)}
 					>
 						<span className="sr-only">Navigation</span>
-						<svg width="24" height="24" fill="none" aria-hidden="true">
+						<svg
+							className="h-6 w-6 sm:h-6 sm:w-6"
+							fill="none"
+							aria-hidden="true"
+						>
 							<path
 								d="M12 6v.01M12 12v.01M12 18v.01M12 7a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"
 								stroke="currentColor"
@@ -70,7 +74,7 @@ export function NavPopover({
 					</button>
 				</SheetTrigger>
 				<SheetContent
-					className="flex h-full flex-col px-3 w-64 backdrop-opacity-10 opacity-80 backdrop-invert rounded-lg shadow-lg text-slate-900
+					className="flex h-full flex-col px-3 sm:px-4 w-64 sm:w-72 backdrop-opacity-10 opacity-80 backdrop-invert rounded-lg shadow-lg text-slate-900
           dark:text-slate-400 dark:highlight-white/5 bg-white  dark:bg-slate-800"
 					side="right"
 				>
@@ -78,14 +82,16 @@ export function NavPopover({
 					<SheetTitle />
 					<SheetDescription />
 
-					<div className="max-w-xs p-6 text-base font-semibold top-4 right-4">
-						<ul className="space-y-6">
+					<div className="max-w-xs p-4 sm:p-6 text-base font-semibold top-4 right-4">
+						<ul className="space-y-3 sm:space-y-6">
 							<NavItems />
 						</ul>
-						<div className="pt-6 mt-6 border-t border-slate-200 dark:border-slate-200/10">
-							<ThemeToggler />
-							{session !== null ? <DropdownUser /> : <DialogSignIn />}
-							<LanguageToggler />
+						<div className="pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-slate-200 dark:border-slate-200/10">
+							<div className="flex flex-col gap-3 sm:gap-2">
+								<ThemeToggler />
+								{session !== null ? <DropdownUser /> : <DialogSignIn />}
+								<LanguageToggler />
+							</div>
 						</div>
 					</div>
 				</SheetContent>
@@ -115,7 +121,7 @@ export function NavItems() {
 					data-to-scrollspy-id="useCases"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#useCases"
-					className="hover:text-sky-500 dark:hover:text-sky-400 capitalize"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
 				>
 					{t("nav_useCases")}
 				</Link>
@@ -126,7 +132,7 @@ export function NavItems() {
 					data-to-scrollspy-id="features"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#features"
-					className="hover:text-sky-500 dark:hover:text-sky-400 capitalize"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
 				>
 					{t("nav_features")}
 				</Link>
@@ -137,7 +143,7 @@ export function NavItems() {
 					data-to-scrollspy-id="cost"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#cost"
-					className="hover:text-sky-500 dark:hover:text-sky-400 capitalize"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
 				>
 					{t("nav_price")}
 				</Link>
@@ -159,7 +165,7 @@ export function NavItems() {
 					data-to-scrollspy-id="aboutUs"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#aboutUs"
-					className="hover:text-sky-500 dark:hover:text-sky-400 capitalize"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
 				>
 					{t("nav_about")}
 				</Link>
@@ -167,7 +173,7 @@ export function NavItems() {
 			<li>
 				<Link
 					href="/storeAdmin/"
-					className="hover:text-sky-500 dark:hover:text-sky-400 capitalize"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
 				>
 					{t("nav_storeAdmin")}
 				</Link>
@@ -218,13 +224,13 @@ export function NavBar() {
 				<div className="mx-auto max-w-8xl">
 					<div
 						className={clsx(
-							"py-4 border-b border-slate-900/10 lg:px-8 lg:border-0 dark:border-slate-300/10 mx-4 lg:mx-0",
+							"py-3 sm:py-4 border-b border-slate-900/10 lg:px-8 lg:border-0 dark:border-slate-300/10 mx-3 sm:mx-4 lg:mx-0",
 						)}
 					>
-						<div className="relative flex items-center justify-between">
+						<div className="relative flex items-center justify-between gap-2">
 							<Link
 								href="#top"
-								className="mr-3 flex-none w-[2.0625rem] overflow-hidden md:w-auto"
+								className="mr-2 sm:mr-3 flex-none w-[2.0625rem] overflow-hidden md:w-auto min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
 								onContextMenu={(e) => {
 									e.preventDefault();
 									//router.push("/");
@@ -235,9 +241,9 @@ export function NavBar() {
 							</Link>
 							<div className="relative items-center hidden ml-auto lg:flex">
 								<nav className="text-sm font-semibold leading-6 text-slate-400 dark:text-slate-200">
-									<ul className="flex space-x-8 items-center">
+									<ul className="flex space-x-6 lg:space-x-8 items-center">
 										<NavItems />
-										<li className="flex pl-6 ml-6 items-center border-slate-200 dark:border-slate-800">
+										<li className="flex pl-4 lg:pl-6 ml-4 lg:ml-6 items-center gap-2 border-l border-slate-200 dark:border-slate-800">
 											<ThemeToggler />
 											{session !== null ? <DropdownUser /> : <DialogSignIn />}
 											<LanguageToggler />
@@ -246,7 +252,7 @@ export function NavBar() {
 								</nav>
 							</div>
 							{/* display popover on mobile */}
-							<NavPopover className="ml-2 -my-1" display="lg:hidden" />
+							<NavPopover className="ml-1 sm:ml-2 -my-1" display="lg:hidden" />
 						</div>
 					</div>
 				</div>
@@ -261,7 +267,7 @@ export function Header() {
 			<span className="hash-span" id="top">
 				&nbsp;
 			</span>
-			<div className="px-4 sm:px-6 md:px-8">
+			<div className="px-3 sm:px-4 md:px-6 lg:px-8">
 				<div
 					className={clsx(
 						"absolute inset-0 bottom-10 bg-bottom bg-no-repeat bg-slate-50 dark:bg-[#0B1120]",
@@ -276,8 +282,8 @@ export function Header() {
 					/>
 				</div>
 
-				<div className="relative max-w-5xl pt-20 mx-auto sm:pt-24 lg:pt-32">
-					<h1 className="text-3xl font-extrabold tracking-tight text-center text-slate-900 sm:text-5xl lg:text-5xl dark:text-white">
+				<div className="relative max-w-5xl pt-16 sm:pt-20 lg:pt-24 xl:pt-32 mx-auto">
+					<h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold tracking-tight text-center text-slate-900 dark:text-white px-2">
 						<TypewriterComponent
 							options={{
 								strings: [
@@ -289,7 +295,7 @@ export function Header() {
 							}}
 						/>
 					</h1>
-					<p className="max-w-3xl mx-auto mt-6 text-lg text-center text-slate-600 dark:text-slate-400">
+					<p className="max-w-3xl mx-auto mt-4 sm:mt-6 text-base sm:text-lg text-center text-slate-600 dark:text-slate-400 px-3 sm:px-0">
 						<code className="font-mono font-medium text-sky-500 dark:text-sky-400">
 							沒有前置費用
 						</code>
@@ -303,10 +309,10 @@ export function Header() {
 						</code>
 						、 只需手機或平版電腦，您就可以開始使用系統。
 					</p>
-					<div className="flex justify-center mt-6 space-x-6 text-sm sm:mt-10">
+					<div className="flex justify-center mt-6 space-x-6 text-sm sm:mt-10 px-3 sm:px-0">
 						<Link
 							href="/storeAdmin/"
-							className="flex items-center justify-center w-full h-12 px-6 font-semibold text-white rounded-lg bg-slate-900 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 sm:w-auto dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400"
+							className="flex items-center justify-center w-full h-12 min-h-[48px] px-6 font-semibold text-white rounded-lg bg-slate-900 hover:bg-slate-700 active:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 sm:w-auto sm:min-h-[44px] dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400 dark:active:bg-sky-600 touch-manipulation"
 						>
 							不用洽詢，立即使用
 						</Link>

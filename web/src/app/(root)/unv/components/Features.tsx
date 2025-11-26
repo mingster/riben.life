@@ -173,8 +173,8 @@ export function Features({ className, ...props }: { className?: string }) {
 				/>
 			</div>
 
-			<div className="relative px-4 pt-5 mx-auto max-w-7xl sm:px-6 md:px-8">
-				<div className="flex gap-2">
+			<div className="relative px-3 sm:px-4 pt-4 sm:pt-5 mx-auto max-w-7xl sm:px-6 md:px-8">
+				<div className="flex gap-2 mb-4 sm:mb-6">
 					<IconContainer
 						className="dark:bg-sky-500 dark:highlight-white/20"
 						light="/img/icons/home/editor-tools.png"
@@ -185,110 +185,146 @@ export function Features({ className, ...props }: { className?: string }) {
 
 				<BigText>預約/排隊系統</BigText>
 				<Paragraph>預約候位/預先點餐，客人不用現場等候．降減客服壓力</Paragraph>
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>&nbsp;</TableHead>
-							<TableHead className="w-[60px]">基礎版</TableHead>
-							<TableHead className="w-[60px]">進階版</TableHead>
-							<TableHead className="w-[60px]">多店版</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{features_rsvp.map((feature, index) => (
-							<TableRow
-								key={feature.description}
-								className={
-									index % 2 === 0
-										? "bg-slate-50 dark:bg-slate-800"
-										: "bg-white dark:bg-slate-900"
-								}
-							>
-								<TableCell className="">{feature.description}</TableCell>
-								<TableCell>
-									{feature.basic ? <IconCheck /> : <IconX />}
-								</TableCell>
-								<TableCell>
-									{feature.advanced ? <IconCheck /> : <IconX />}
-								</TableCell>
-								<TableCell>
-									{feature.multi ? <IconCheck /> : <IconX />}
-								</TableCell>
+				<div className="overflow-x-auto -mx-3 sm:mx-0">
+					<Table className="min-w-full">
+						<TableHeader>
+							<TableRow>
+								<TableHead className="sticky left-0 bg-background z-10 min-w-[200px]">
+									&nbsp;
+								</TableHead>
+								<TableHead className="w-[60px] text-xs sm:text-sm">
+									基礎版
+								</TableHead>
+								<TableHead className="w-[60px] text-xs sm:text-sm">
+									進階版
+								</TableHead>
+								<TableHead className="w-[60px] text-xs sm:text-sm">
+									多店版
+								</TableHead>
 							</TableRow>
-						))}
-					</TableBody>
-				</Table>
+						</TableHeader>
+						<TableBody>
+							{features_rsvp.map((feature, index) => (
+								<TableRow
+									key={feature.description}
+									className={
+										index % 2 === 0
+											? "bg-slate-50 dark:bg-slate-800"
+											: "bg-white dark:bg-slate-900"
+									}
+								>
+									<TableCell className="sticky left-0 bg-inherit z-10 pl-2 sm:pl-3 py-2 sm:py-3 min-w-[200px]">
+										{feature.description}
+									</TableCell>
+									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
+										{feature.basic ? <IconCheck /> : <IconX />}
+									</TableCell>
+									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
+										{feature.advanced ? <IconCheck /> : <IconX />}
+									</TableCell>
+									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
+										{feature.multi ? <IconCheck /> : <IconX />}
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</div>
 
 				<BigText>掃碼點餐</BigText>
 				<Paragraph>提升點餐效率、減少服務人力</Paragraph>
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>&nbsp;</TableHead>
-							<TableHead className="w-[60px]">基礎版</TableHead>
-							<TableHead className="w-[60px]">進階版</TableHead>
-							<TableHead className="w-[60px]">多店版</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{features_qrcode.map((feature, index) => (
-							<TableRow
-								key={feature.description}
-								className={
-									index % 2 === 0
-										? "bg-slate-50 dark:bg-slate-800"
-										: "bg-white dark:bg-slate-900"
-								}
-							>
-								<TableCell className="">{feature.description}</TableCell>
-								<TableCell>
-									{feature.basic ? <IconCheck /> : <IconX />}
-								</TableCell>
-								<TableCell>
-									{feature.advanced ? <IconCheck /> : <IconX />}
-								</TableCell>
-								<TableCell>
-									{feature.multi ? <IconCheck /> : <IconX />}
-								</TableCell>
+				<div className="overflow-x-auto -mx-3 sm:mx-0">
+					<Table className="min-w-full">
+						<TableHeader>
+							<TableRow>
+								<TableHead className="sticky left-0 bg-background z-10 min-w-[200px]">
+									&nbsp;
+								</TableHead>
+								<TableHead className="w-[60px] text-xs sm:text-sm">
+									基礎版
+								</TableHead>
+								<TableHead className="w-[60px] text-xs sm:text-sm">
+									進階版
+								</TableHead>
+								<TableHead className="w-[60px] text-xs sm:text-sm">
+									多店版
+								</TableHead>
 							</TableRow>
-						))}
-					</TableBody>
-				</Table>
+						</TableHeader>
+						<TableBody>
+							{features_qrcode.map((feature, index) => (
+								<TableRow
+									key={feature.description}
+									className={
+										index % 2 === 0
+											? "bg-slate-50 dark:bg-slate-800"
+											: "bg-white dark:bg-slate-900"
+									}
+								>
+									<TableCell className="sticky left-0 bg-inherit z-10 pl-2 sm:pl-3 py-2 sm:py-3 min-w-[200px]">
+										{feature.description}
+									</TableCell>
+									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
+										{feature.basic ? <IconCheck /> : <IconX />}
+									</TableCell>
+									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
+										{feature.advanced ? <IconCheck /> : <IconX />}
+									</TableCell>
+									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
+										{feature.multi ? <IconCheck /> : <IconX />}
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</div>
 
 				<BigText>商店管理</BigText>
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>&nbsp;</TableHead>
-							<TableHead className="w-[60px]">基礎版</TableHead>
-							<TableHead className="w-[60px]">進階版</TableHead>
-							<TableHead className="w-[60px]">多店版</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{features_pos.map((feature, index) => (
-							<TableRow
-								key={feature.description}
-								className={
-									index % 2 === 0
-										? "bg-slate-50 dark:bg-slate-800"
-										: "bg-white dark:bg-slate-900"
-								}
-							>
-								<TableCell className="">{feature.description}</TableCell>
-								<TableCell>
-									{feature.basic ? <IconCheck /> : <IconX />}
-								</TableCell>
-								<TableCell>
-									{feature.advanced ? <IconCheck /> : <IconX />}
-								</TableCell>
-								<TableCell>
-									{feature.multi ? <IconCheck /> : <IconX />}
-								</TableCell>
+				<div className="overflow-x-auto -mx-3 sm:mx-0">
+					<Table className="min-w-full">
+						<TableHeader>
+							<TableRow>
+								<TableHead className="sticky left-0 bg-background z-10 min-w-[200px]">
+									&nbsp;
+								</TableHead>
+								<TableHead className="w-[60px] text-xs sm:text-sm">
+									基礎版
+								</TableHead>
+								<TableHead className="w-[60px] text-xs sm:text-sm">
+									進階版
+								</TableHead>
+								<TableHead className="w-[60px] text-xs sm:text-sm">
+									多店版
+								</TableHead>
 							</TableRow>
-						))}
-					</TableBody>
-				</Table>
+						</TableHeader>
+						<TableBody>
+							{features_pos.map((feature, index) => (
+								<TableRow
+									key={feature.description}
+									className={
+										index % 2 === 0
+											? "bg-slate-50 dark:bg-slate-800"
+											: "bg-white dark:bg-slate-900"
+									}
+								>
+									<TableCell className="sticky left-0 bg-inherit z-10 pl-2 sm:pl-3 py-2 sm:py-3 min-w-[200px]">
+										{feature.description}
+									</TableCell>
+									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
+										{feature.basic ? <IconCheck /> : <IconX />}
+									</TableCell>
+									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
+										{feature.advanced ? <IconCheck /> : <IconX />}
+									</TableCell>
+									<TableCell className="pl-2 sm:pl-3 py-2 sm:py-3">
+										{feature.multi ? <IconCheck /> : <IconX />}
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</div>
 			</div>
 		</section>
 	);
