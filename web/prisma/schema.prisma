@@ -33,25 +33,26 @@ model User {
 
   normalizedEmail String?
 
-  SupportTicketFrom SupportTicket[]     @relation("SupportTicketFrom")
-  SupportTicketTo   SupportTicket[]     @relation("SupportTicketTo")
-  NotificationFrom  StoreNotification[] @relation("NotificationFrom")
-  NotificationTo    StoreNotification[] @relation("NotificationTo")
-  Store             Store[]
-  Orders            StoreOrder[]        @relation("UserOrders")
-  Addresses         Address[]
+  Addresses                 Address[]
+  SupportTicketFrom         SupportTicket[]        @relation("SupportTicketFrom")
+  SupportTicketTo           SupportTicket[]        @relation("SupportTicketTo")
+  NotificationFrom          StoreNotification[]    @relation("NotificationFrom")
+  NotificationTo            StoreNotification[]    @relation("NotificationTo")
+  Store                     Store[]
+  Orders                    StoreOrder[]           @relation("UserOrders")
+  Rsvp                      Rsvp[]
+  CustomerCredits           CustomerCredit[]
+  CustomerCreditLedger        CustomerCreditLedger[] @relation("UserCustomerCreditLogs")
+  CustomerCreditLogsCreator CustomerCreditLedger[] @relation("UserCustomerCreditLogsCreator")
+  StoreLedgerCreated        StoreLedger[]
 
-  Rsvp               Rsvp[]
-  sessions           Session[]
-  accounts           Account[]
-  twofactors         TwoFactor[]
-  passkeys           Passkey[]
-  apikeys            Apikey[]
-  members            Member[]
-  invitations        Invitation[]
-  customerCredits    CustomerCredit[]
-  customerCreditLogs CustomerCreditLedger[]
-  storeLedgersCreated StoreLedger[]
+  sessions    Session[]
+  accounts    Account[]
+  twofactors  TwoFactor[]
+  passkeys    Passkey[]
+  apikeys     Apikey[]
+  members     Member[]
+  invitations Invitation[]
 
   @@unique([normalizedEmail])
   @@index([email])
@@ -76,6 +77,7 @@ model Account {
   user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
+  @@map("account")
 }
 
 model Session {
@@ -114,6 +116,7 @@ model Verification {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
 
+  @@index([identifier])
   @@map("verification")
 }
 
@@ -127,6 +130,7 @@ model TwoFactor {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([secret])
   @@map("twoFactor")
 }
 
@@ -146,6 +150,7 @@ model Passkey {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([credentialID])
   @@map("passkey")
 }
 
@@ -174,6 +179,7 @@ model Apikey {
   metadata            String?
 
   @@index([userId])
+  @@index([key])
   @@map("apikey")
 }
 
@@ -220,8 +226,11 @@ model Invitation {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now())
+
   @@index([inviterId])
   @@index([organizationId])
+  @@index([email])
   @@map("invitation")
 }
 
@@ -525,11 +534,15 @@ model CustomerCreditLedger {
   creatorId   String? //userId who created this transaction
   createdAt   DateTime @default(now())
 
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Store   Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User    User  @relation("UserCustomerCreditLogs", fields: [userId], references: [id], onDelete: Cascade)
+  Creator User? @relation("UserCustomerCreditLogsCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  StoreOrder StoreOrder? @relation(fields: [referenceId], references: [id], onDelete: SetNull)
 
   @@index([storeId])
   @@index([userId])
+  @@index([creatorId])
+  @@index([referenceId])
   @@map("CustomerCreditLedger")
 }
 
@@ -812,7 +825,7 @@ model FacilityPricingRule {
 
   Store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Facility StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  rsvps    Rsvp[]
+  Rsvp     Rsvp[]
 
   @@index([storeId])
   @@index([facilityId])
@@ -916,6 +929,7 @@ model StoreProductOptionSelectionsTemplate {
 }
 
 //產品選項
+
 model ProductOption {
   id                      String                    @id @default(uuid())
   productId               String
@@ -1031,7 +1045,7 @@ model StoreLedger {
   availability DateTime @default(now())
 
   StoreOrder StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  CreatedBy  User?     @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  CreatedBy  User?      @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@index([storeId])
   @@index([orderId])
@@ -1083,9 +1097,10 @@ model StoreOrder {
   ShippingMethod ShippingMethod  @relation(fields: [shippingMethodId], references: [id])
   Shipment       Shipment[]
 
-  PaymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
-  Rsvp          Rsvp[]
-  StoreLedger   StoreLedger[]
+  PaymentMethod         PaymentMethod?         @relation(fields: [paymentMethodId], references: [id])
+  Rsvp                  Rsvp[]
+  StoreLedger           StoreLedger[]
+  customerCreditLedgers CustomerCreditLedger[]
 
   @@index([userId])
   @@index([facilityId])

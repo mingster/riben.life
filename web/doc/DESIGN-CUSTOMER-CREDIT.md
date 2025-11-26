@@ -1540,18 +1540,18 @@ await tx.customerCredit.upsert({
 ### 9.1 Customer Recharge Flow
 
 - [ ] Create `rechargeCreditAction` (public action)
-- [ ] Create `processCreditTopUpAction` (called after payment)
-- [ ] Create recharge order creation logic
+- [x] Create `processCreditTopUpAction` (called after payment) - Implemented as `processCreditTopUp` function in `@/lib/credit-bonus.ts`
+- [x] Create recharge order creation logic - Implemented in `rechargeCustomerCreditAction` (creates StoreOrder when isPaid)
 - [ ] Integrate with payment gateway webhooks
 - [ ] Create customer-facing recharge UI
 - [ ] Add validation for min/max purchase amounts
 
 ### 9.2 Store Operator Recharge
 
-- [ ] Create `rechargeCustomerCreditAction`
-- [ ] Create store admin UI for manual recharge
-- [ ] Add operator authentication/authorization
-- [ ] Add note field for manual recharges
+- [x] Create `rechargeCustomerCreditAction`
+- [x] Create store admin UI for manual recharge
+- [x] Add operator authentication/authorization
+- [x] Add note field for manual recharges
 
 ### 9.3 Credit Usage
 
@@ -1565,14 +1565,14 @@ await tx.customerCredit.upsert({
 - [ ] Create `getCustomerCreditAction`
 - [ ] Create `getCreditLedgerAction`
 - [ ] Create `adjustCustomerCreditAction`
-- [ ] Create credit history UI
-- [ ] Add credit balance display
+- [x] Create credit history UI
+- [x] Add credit balance display
 
 ### 9.5 Bonus System
 
-- [ ] Ensure `calculateBonus` function exists
-- [ ] Integrate bonus calculation in top-up flow
-- [ ] Create separate ledger entries for bonus
+- [x] Ensure `calculateBonus` function exists
+- [x] Integrate bonus calculation in top-up flow
+- [x] Create separate ledger entries for bonus
 - [ ] Display bonus information in UI
 
 ### 9.6 Customer Credit Ledger Review
@@ -1588,27 +1588,16 @@ await tx.customerCredit.upsert({
 
 ### 9.7 StoreLedger Integration
 
-- [ ] Update `StoreLedger` schema to support credit transactions (add `type = 2` and `type = 3`)
-- [ ] Create StoreLedger entry when customer recharges credit (after payment confirmation) with positive amount
+- [x] Update `StoreLedger` schema to support credit transactions (add `type = 2` and `type = 3`)
+- [x] Create StoreLedger entry when customer recharges credit (after payment confirmation) with positive amount - Implemented in `rechargeCustomerCreditAction` for paid recharges
 - [ ] Create StoreLedger entry when credit is used for purchase (revenue recognition) with positive amount
 - [ ] Create StoreLedger entry when credit is refunded (revenue reversal) with negative amount
-- [ ] **Create StoreLedger entry for manual operator recharges with `amount = 0`** (audit trail, no revenue impact)
-- [ ] **Include bonus credit in manual recharge StoreLedger entry** (no separate entry needed)
+- [x] **Create StoreLedger entry for manual operator recharges with `amount = 0`** (audit trail, no revenue impact)
+- [x] **Include bonus credit in manual recharge StoreLedger entry** (no separate entry needed)
 - [ ] Update revenue reporting queries to include credit transactions
 - [ ] Test accounting accuracy (unearned revenue vs. recognized revenue)
 - [ ] Verify StoreLedger balance calculations include credit transactions
 - [ ] Ensure StoreLedger entries with `amount = 0` do not affect balance calculations
-
-### 9.8 Testing
-
-- [ ] Test customer recharge flow
-- [ ] Test store operator recharge
-- [ ] Test credit usage
-- [ ] Test bonus calculation
-- [ ] Test concurrent transactions
-- [ ] Test credit ledger review (customer account page)
-- [ ] Test authorization (users can only see their own credit)
-- [ ] Test edge cases (negative balance, missing records, etc.)
 
 ---
 

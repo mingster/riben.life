@@ -239,8 +239,12 @@ const userObj = Prisma.validator<Prisma.UserDefaultArgs>()({
 		sessions: true,
 		members: true,
 		invitations: true,
-		Orders: true,
 		Addresses: true,
+		Orders: true,
+		Rsvp: true,
+		CustomerCredits: true,
+		CustomerCreditLedger: true,
+		StoreLedgerCreated: true,
 		//NotificationTo: true,
 	},
 });
@@ -282,6 +286,30 @@ const notificationObj = Prisma.validator<Prisma.StoreNotificationDefaultArgs>()(
 export type StoreNotification = Prisma.StoreNotificationGetPayload<
 	typeof notificationObj
 >;
+
+const customerCreditObj = Prisma.validator<Prisma.CustomerCreditDefaultArgs>()({
+	include: {
+		Store: true,
+		User: true,
+	},
+});
+export type CustomerCredit = Prisma.CustomerCreditGetPayload<
+	typeof customerCreditObj
+>;
+
+const customerCreditLedgerObj =
+	Prisma.validator<Prisma.CustomerCreditLedgerDefaultArgs>()({
+		include: {
+			Store: true,
+			User: true,
+			Creator: true,
+			StoreOrder: true,
+		},
+	});
+export type CustomerCreditLedger = Prisma.CustomerCreditLedgerGetPayload<
+	typeof customerCreditLedgerObj
+>;
+
 /* endregion */
 
 /*

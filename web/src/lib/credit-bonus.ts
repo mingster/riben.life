@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { Prisma } from "@prisma/client";
+import { CustomerCreditLedgerType } from "@/types/enum";
 
 /**
  * Calculate bonus points based on top-up amount and store rules.
@@ -113,7 +114,7 @@ export async function processCreditTopUp(
 				userId,
 				amount: new Prisma.Decimal(amount),
 				balance: new Prisma.Decimal(balanceAfterTopUp),
-				type: "TOPUP",
+				type: CustomerCreditLedgerType.Topup,
 				referenceId: referenceId || null,
 				note: note || `Top-up ${amount}`,
 				creatorId: creatorId || null,
@@ -128,7 +129,7 @@ export async function processCreditTopUp(
 					userId,
 					amount: new Prisma.Decimal(bonus),
 					balance: new Prisma.Decimal(finalBalance),
-					type: "BONUS",
+					type: CustomerCreditLedgerType.Bonus,
 					referenceId: referenceId || null,
 					note: `Bonus for top-up ${amount}`,
 					creatorId: null, // Bonus is always system-generated

@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { processCreditTopUp } from "@/lib/credit-bonus";
 import { rechargeCustomerCreditSchema } from "./recharge-customer-credit.validation";
-import { OrderStatus, PaymentStatus } from "@/types/enum";
+import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
 import { Prisma } from "@prisma/client";
 import { getUtcNow } from "@/utils/datetime-utils";
 
@@ -64,12 +64,12 @@ export const rechargeCustomerCreditAction = storeActionClient
 
 		// Get shipping method with identifier "takeout" for the order (required field)
 		let shippingMethodId: string;
-		
+
 		// First, try to find "takeout" in store's shipping methods
 		const takeoutMethod = store.StoreShippingMethods.find(
 			(mapping) => mapping.ShippingMethod.identifier === "takeout",
 		);
-		
+
 		if (takeoutMethod) {
 			shippingMethodId = takeoutMethod.ShippingMethod.id;
 		} else {
@@ -80,7 +80,7 @@ export const rechargeCustomerCreditAction = storeActionClient
 					isDeleted: false,
 				},
 			});
-			
+
 			if (takeoutShippingMethod) {
 				shippingMethodId = takeoutShippingMethod.id;
 			} else {
@@ -162,7 +162,7 @@ export const rechargeCustomerCreditAction = storeActionClient
 					fee: new Prisma.Decimal(0), // No payment processing fee for cash
 					platformFee: new Prisma.Decimal(0), // No platform fee for cash
 					currency: store.defaultCurrency,
-					type: 2, // Credit recharge type
+					type: StoreLedgerType.CreditRecharge,
 					balance: new Prisma.Decimal(balance + Number(cashAmount)), // Balance increases
 					description: `In-Person Credit Recharge - ${result.totalCredit} points`,
 					note: `Cash payment: ${cashAmount} ${store.defaultCurrency}. Credit given: ${result.amount} + bonus ${result.bonus} = ${result.totalCredit} points. Operator: ${creatorId}. ${note || ""}`,
@@ -202,7 +202,7 @@ export const rechargeCustomerCreditAction = storeActionClient
 					fee: new Prisma.Decimal(0),
 					platformFee: new Prisma.Decimal(0),
 					currency: store.defaultCurrency,
-					type: 2, // Credit-related transaction type
+					type: StoreLedgerType.CreditRecharge,
 					balance: new Prisma.Decimal(balance), // Balance unchanged
 					description: `Promotional Credit Recharge - ${result.totalCredit} points`,
 					note: `Promotional credit: ${result.amount} + bonus ${result.bonus} = ${result.totalCredit} points. Operator: ${creatorId}. ${note || ""}`,

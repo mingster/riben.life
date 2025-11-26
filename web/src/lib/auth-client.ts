@@ -36,7 +36,6 @@ export const authClient = createAuthClient({
 
 		/*
 		emailOTPClient(),
-		
 		*/
 	],
 });

@@ -171,24 +171,24 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button variant="ghost" className="size-8 p-0">
-							<span className="sr-only">Open menu</span>
+							<span className="sr-only">{t("open_menu")}</span>
 							<IconDots className="size-4" />
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
-						<DropdownMenuLabel>Actions</DropdownMenuLabel>
+						<DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
 						<DropdownMenuItem
 							className="cursor-pointer"
 							onClick={() => onCopy(item.id)}
 						>
-							<IconCopy className="mr-0 size-4" /> Copy User Id
+							<IconCopy className="mr-0 size-4" /> {t("copy_user_id")}
 						</DropdownMenuItem>
 						{item.stripeCustomerId && (
 							<DropdownMenuItem
 								className="cursor-pointer"
 								onClick={() => onCopy(item.stripeCustomerId || "")}
 							>
-								<IconCopy className="mr-0 size-4" /> Copy Stripe ID
+								<IconCopy className="mr-0 size-4" /> {t("copy_stripe_id")}
 							</DropdownMenuItem>
 						)}
 
@@ -199,7 +199,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 							}
 						>
 							<IconCreditCard className="mr-0 size-4" />
-							Manage Billing
+							{t("manage_billing")}
 						</DropdownMenuItem>
 						<DropdownMenuItem
 							className="cursor-pointer"
@@ -209,7 +209,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 							}}
 						>
 							<IconCreditCard className="mr-0 size-4" />
-							{t("Recharge_Credit") || "Recharge Credit"}
+							{t("credit_recharge") || "Recharge Credit"}
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
@@ -226,11 +226,11 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		{
 			accessorKey: "name",
 			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="name" />;
+				return <DataTableColumnHeader column={column} title={t("name")} />;
 			},
 			cell: ({ row }) => {
 				return (
-					<div className="flex items-center" title="edit basic info">
+					<div className="flex items-center" title={t("user_edit_basic_info")}>
 						{row.getValue("name")}
 						<EditCustomer item={row.original} onUpdated={handleUpdated} />
 					</div>
@@ -241,7 +241,9 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		{
 			accessorKey: "email",
 			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="e-mail" />;
+				return (
+					<DataTableColumnHeader column={column} title={t("user_email")} />
+				);
 			},
 			cell: ({ row }) => {
 				return (
@@ -264,13 +266,18 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		{
 			accessorKey: "role",
 			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="role" />;
+				return <DataTableColumnHeader column={column} title={t("user_role")} />;
 			},
 		},
 		{
 			accessorKey: "createdAt",
 			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title="member since" />;
+				return (
+					<DataTableColumnHeader
+						column={column}
+						title={t("user_member_since")}
+					/>
+				);
 			},
 			cell: ({ row }) => {
 				return (
@@ -282,7 +289,10 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 			accessorKey: "currentlySignedIn",
 			header: ({ column }) => {
 				return (
-					<DataTableColumnHeader column={column} title="signed-in/banned?" />
+					<DataTableColumnHeader
+						column={column}
+						title={t("user_signed_in_banned")}
+					/>
 				);
 			},
 			cell: ({ row }) => {
@@ -353,9 +363,9 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 
 				<div className="flex items-center justify-between">
 					<Heading
-						title="Organization members"
+						title={t("Customers") || "Customer Management"}
 						badge={filteredData.length}
-						description={`Manage members in your organization.${isFiltered ? ` Showing ${filteredData.length} of ${data.length} users` : ""}`}
+						description={`${t("customers_descr")}${isFiltered ? ` ${filteredData.length} of ${data.length}` : ""}`}
 					/>
 					<div className="flex gap-1 content-end">
 						<UserFilter onFilterChange={handleFilterChange} />

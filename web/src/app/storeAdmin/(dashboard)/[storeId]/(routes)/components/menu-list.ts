@@ -172,7 +172,7 @@ export function GetMenuList(
 			menus: [
 				{
 					href: `${nav_prefix}/customers`,
-					label: t("Customer_mgmt"),
+					label: t("Customers"),
 					active: pathname.includes(`${nav_prefix}/customers`),
 					icon: IconUsers,
 					submenus: [],

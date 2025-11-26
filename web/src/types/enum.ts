@@ -123,6 +123,21 @@ export enum PaymentStatus {
 	Voided = 60,
 }
 
+export enum StoreLedgerType {
+	PlatformPayment = 0, // 代收 - Platform payment processing
+	StorePaymentProvider = 1, // Store's own payment provider
+	CreditRecharge = 2, // Customer credit recharge (unearned revenue - liability)
+	CreditUsage = 3, // Credit usage (revenue recognition)
+}
+
+export enum CustomerCreditLedgerType {
+	Topup = "TOPUP", // Customer or store operator adds credit (via payment)
+	Bonus = "BONUS", // Bonus credit awarded based on bonus rules
+	Spend = "SPEND", // Credit used for purchase/order
+	Refund = "REFUND", // Credit refunded (e.g., order cancellation)
+	Adjustment = "ADJUSTMENT", // Manual adjustment by store operator
+}
+
 /*
 export enum ShippingMethod {
   Digital = 10,

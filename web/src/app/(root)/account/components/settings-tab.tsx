@@ -98,7 +98,7 @@ export default function SettingsTab({ user }: SettingsPageProps) {
 					<CardDescription> </CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-2">
-					{t("account_tab_currentAcct")} {user.email}
+					{t("account_tab_current_acct")} {user.email}
 					{/* if user doesn't have email, show its userid */}
 					{!user.email && user.id}
 					&nbsp;&nbsp;

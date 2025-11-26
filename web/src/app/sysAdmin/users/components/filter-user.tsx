@@ -59,7 +59,7 @@ export const UserFilter: React.FC<UserFilterProps> = ({ onFilterChange }) => {
 		<div className="relative flex-1 max-w-sm">
 			<IconSearch className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
 			<Input
-				placeholder={t("search_users")}
+				placeholder={t("users_search")}
 				value={searchTerm}
 				onChange={handleSearchChange}
 				className="pl-8 pr-8"

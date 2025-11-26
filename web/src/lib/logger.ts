@@ -81,8 +81,9 @@ class Logger {
 	private service: string;
 	private environment: string;
 	private version?: string;
+	private static instance: Logger | null = null;
 
-	constructor(
+	private constructor(
 		options: {
 			service?: string;
 			environment?: string;
@@ -93,6 +94,18 @@ class Logger {
 		this.environment =
 			options.environment || process.env.NODE_ENV || "development";
 		this.version = options.version || process.env.npm_package_version;
+	}
+
+	// Static method to get singleton instance
+	static getInstance(options?: {
+		service?: string;
+		environment?: string;
+		version?: string;
+	}): Logger {
+		if (!Logger.instance) {
+			Logger.instance = new Logger(options);
+		}
+		return Logger.instance;
 	}
 
 	private async logToDatabase(entry: LogEntry): Promise<void> {
@@ -308,12 +321,14 @@ class Logger {
 	}
 
 	// Create a child logger with additional context
+	// Note: Child loggers are not singletons - they're lightweight wrappers
 	child(context: Partial<LogEntry> & Record<string, any>): Logger {
-		const childLogger = new Logger({
-			service: this.service,
-			environment: this.environment,
-			version: this.version,
-		});
+		// Create a new instance for child logger (not singleton)
+		// This allows multiple child loggers with different contexts
+		const childLogger = Object.create(Logger.prototype) as Logger;
+		childLogger.service = this.service;
+		childLogger.environment = this.environment;
+		childLogger.version = this.version;
 
 		// Override the logToDatabase method to include context
 		const originalLogToDatabase = childLogger.logToDatabase.bind(childLogger);
@@ -394,7 +409,7 @@ const globalForLogger = globalThis as unknown as {
 
 function getLogger(): Logger {
 	if (!globalForLogger.logger) {
-		globalForLogger.logger = new Logger({
+		globalForLogger.logger = Logger.getInstance({
 			service: "web",
 			environment: process.env.NODE_ENV,
 			version: process.env.npm_package_version,

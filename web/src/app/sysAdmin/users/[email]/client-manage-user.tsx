@@ -201,7 +201,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 						<CardHeader>
 							<div className="text-lg font-semibold">
 								{user?.createdAt &&
-									t("subscription_member_since").replace(
+									t("customer_mgmt_member_since").replace(
 										"{0}",
 										format(user.createdAt, datetimeFormat),
 									)}

@@ -3,7 +3,8 @@ import { useTranslation } from "@/app/i18n/client";
 import { Heading } from "@/components/heading";
 import { Loader } from "@/components/loader";
 
-import { toastError, toastSuccess } from "@/components/toaster";
+import { DisplayCreditLedger } from "@/components/display-credit-ledger";
+import { DisplayOrders } from "@/components/display-orders";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -12,16 +13,16 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/providers/i18n-provider";
-import type { User } from "@/types";
+import type { StoreOrder, User } from "@/types";
 import { type SubscriptionForUI } from "@/types/enum";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { EditCustomer } from "../components/edit-customer";
 
 export interface iUserTabProps {
 	user: User | null;
@@ -103,57 +104,86 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 				onValueChange={handleTabChange}
 				className="w-full"
 			>
-				<TabsList className="grid w-full grid-cols-4">
+				<TabsList className="grid w-full grid-cols-5">
 					<TabsTrigger value="info" className="px-5 lg:min-w-40">
-						{t("subscription_tabs_info")}
+						{t("customer_mgmt_tabs_info")}
 					</TabsTrigger>
 					<TabsTrigger value="billing" className="px-5 lg:min-w-40">
-						{t("subscription_tabs_billing")}
+						{t("customer_mgmt_tabs_billing")}
 					</TabsTrigger>
-					<TabsTrigger value="devices" className="px-5 lg:min-w-40">
-						{t("subscription_tabs_devices")}
+					<TabsTrigger value="credits" className="px-5 lg:min-w-40">
+						{t("customer_mgmt_tabs_credits")}
+					</TabsTrigger>
+					<TabsTrigger value="rsvp" className="px-5 lg:min-w-40">
+						{t("customer_mgmt_tabs_rsvp")}
 					</TabsTrigger>
 					<TabsTrigger value="stats" className="px-5 lg:min-w-40">
-						Stats
+						{t("customer_mgmt_tabs_stats")}
 					</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="info" className="space-y-4">
 					<Card>
 						<CardHeader>
-							<Heading
-								title={user?.name || user?.email || ""}
-								description="Manage User"
-							/>
-
-							{user?.createdAt && (
-								<div className="text-lg font-semibold">
-									{t("subscription_member_since").replace(
-										"{0}",
-										format(user.createdAt, datetimeFormat),
-									)}
-								</div>
-							)}
+							<div className="flex items-center">
+								<Heading
+									title={user?.name || user?.email || ""}
+									description={t("user_mgmt_descr")}
+								/>
+								<EditCustomer item={user} />
+							</div>
 						</CardHeader>
 						<CardContent className="space-y-4">
-							<div className="space-y-3">
-								{user?.createdAt && (
-									<div className="flex items-center">
-										<span className="text-sm text-muted-foreground">
-											{t("subscription_service_expiration").replace("{0}", "")}
-										</span>
-										<span className="font-medium">
-											{format(user.createdAt, datetimeFormat)}
-										</span>
-									</div>
+							<div className="flex flex-col gap-1">
+								{user.createdAt && (
+									<span className="text-sm text-muted-foreground">
+										{t("customer_mgmt_member_since").replace(
+											"{0}",
+											format(user.createdAt, datetimeFormat),
+										)}
+									</span>
+								)}
+
+								{user.createdAt && (
+									<span className="text-sm text-muted-foreground">
+										{t("subscription_service_expiration").replace("{0}", "")}
+										{format(user.createdAt, datetimeFormat)}
+									</span>
 								)}
 							</div>
 						</CardContent>
 					</Card>
 				</TabsContent>
 
-				<TabsContent value="billing"></TabsContent>
+				<TabsContent value="billing">
+					<Card>
+						<CardHeader>
+							<div className="flex items-center"></div>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<DisplayOrders orders={(user.Orders as StoreOrder[]) || []} />
+						</CardContent>
+					</Card>
+				</TabsContent>
 
+				<TabsContent value="credits">
+					<Card>
+						<CardHeader></CardHeader>
+						<CardContent className="space-y-4">
+							<div className="flex flex-col gap-1">
+								{user.CustomerCredits && (
+									<div className="flex items-center gap-1">
+										{t("customer_credit_balance")}:{" "}
+										<span className="font-semibold">
+											{user.CustomerCredits[0].credit}
+										</span>
+									</div>
+								)}
+								<DisplayCreditLedger ledger={user.CustomerCreditLedger} />
+							</div>
+						</CardContent>
+					</Card>
+				</TabsContent>
 				<TabsContent value="stats">
 					<div className="grid grid-cols-2 text-xs gap-1 pb-4"></div>
 				</TabsContent>
