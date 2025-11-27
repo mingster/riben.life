@@ -175,7 +175,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 									<div className="flex items-center gap-1">
 										{t("customer_credit_balance")}:{" "}
 										<span className="font-semibold">
-											{user.CustomerCredits[0].credit}
+											{user.CustomerCredits[0].point}
 										</span>
 									</div>
 								)}

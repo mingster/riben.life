@@ -511,7 +511,7 @@ model CustomerCredit {
   id        String   @id @default(uuid())
   storeId   String
   userId    String //userId of the customer
-  credit    Decimal  @default(0)
+  point     Decimal  @default(0)
   updatedAt DateTime @updatedAt
 
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
@@ -703,6 +703,17 @@ model RsvpSettings {
 
   syncWithGoogle Boolean @default(false) //同步Google月曆
   syncWithApple  Boolean @default(false) //同步Apple日曆
+
+  // Reserve with Google integration fields
+  reserveWithGoogleEnabled     Boolean  @default(false)
+  googleBusinessProfileId      String?  // Google Business Profile ID
+  googleBusinessProfileName    String?  // Store name in Google Business Profile
+  reserveWithGoogleAccessToken String?  // Encrypted OAuth access token
+  reserveWithGoogleRefreshToken String? // Encrypted OAuth refresh token
+  reserveWithGoogleTokenExpiry DateTime? // Token expiry timestamp
+  reserveWithGoogleLastSync    DateTime? // Last successful sync timestamp
+  reserveWithGoogleSyncStatus  String?  // "connected", "error", "disconnected"
+  reserveWithGoogleError       String?  // Last error message
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -75,7 +75,7 @@ export async function processCreditTopUp(
 			},
 		});
 
-		const currentBalance = existingCredit ? Number(existingCredit.credit) : 0;
+		const currentBalance = existingCredit ? Number(existingCredit.point) : 0;
 		const balanceAfterTopUp = currentBalance + amount;
 		const finalBalance = balanceAfterTopUp + bonus;
 
@@ -88,19 +88,19 @@ export async function processCreditTopUp(
 				},
 			},
 			update: {
-				credit: {
+				point: {
 					increment: totalCredit,
 				},
 			},
 			create: {
 				storeId,
 				userId,
-				credit: totalCredit,
+				point: totalCredit,
 			},
 		});
 
 		// Verify the balance matches our calculation
-		const actualBalance = Number(customerCredit.credit);
+		const actualBalance = Number(customerCredit.point);
 		if (Math.abs(actualBalance - finalBalance) > 0.01) {
 			throw new Error(
 				`Balance mismatch: expected ${finalBalance}, got ${actualBalance}`,
