@@ -32,7 +32,7 @@ model CustomerCredit {
   id        String   @id @default(uuid())
   storeId   String
   userId    String   // userId of the customer
-  credit    Decimal  @default(0)
+  point     Decimal  @default(0)
   updatedAt DateTime @updatedAt
 
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
@@ -49,7 +49,7 @@ model CustomerCredit {
 **Key Points**:
 
 - One record per customer per store
-- `credit` field stores the current balance
+- `point` field stores the current balance
 - Automatically updated when transactions occur
 
 ### 2.2 CustomerCreditLedger Model

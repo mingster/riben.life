@@ -1,9 +1,11 @@
 # Functional Requirements: RSVP System
 
 **Date:** 2025-01-27
-**Status:** Active  
-**Version:** 1.4  
-**Related Documents:** 
+**Status:** Active
+**Version:** 1.5
+
+**Related Documents:**
+
 - [PRD-restaurant-reservation.md](./PRD-restaurant-reservation.md)
 - [TECHNICAL-REQUIREMENTS-RSVP.md](./TECHNICAL-REQUIREMENTS-RSVP.md)
 - [GITHUB-ISSUES-CHECKLIST.md](./GITHUB-ISSUES-CHECKLIST.md)
@@ -12,7 +14,7 @@
 
 ## 1. Overview
 
-The RSVP (Reservation/Appointment) system enables any business to accept, manage, and track customer reservations and appointments. The system is designed to be flexible and can be used by various business types including restaurants, salons, clinics, service providers, and any other business that requires appointment scheduling. The system supports online reservations, LINE reservations, waitlists, notifications, and integration with external platforms like Google Maps and LINE.
+The RSVP (Reservation/Appointment) system enables any business to accept, manage, and track customer reservations and appointments. The system is designed to be flexible and can be used by various business types including restaurants, salons, clinics, service providers, and any other business that requires appointment scheduling. The system supports online reservations, LINE reservations, waitlists, notifications, and integration with external platforms including Reserve with Google (Google's reservation service), Google Maps, and LINE.
 
 **Note:** Throughout this document, terms like "facility" and "seated" are used generically. For restaurants, "facility" refers to dining tables. For other businesses, "facility" may represent service stations, treatment rooms, consultation rooms, or other bookable resources. "Seated" may mean "arrived" or "service started" depending on the business context.
 
@@ -318,13 +320,15 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.4.7 Google Maps Integration Settings
 
-**FR-RSVP-033:** Store admins must be able to configure Google Maps integration:
+**FR-RSVP-033:** Store admins must be able to configure Reserve with Google integration:
 
-- Enable/disable Google Maps Reserve integration
-- Configure Google Maps API credentials (API key, service account)
-- Set up store location information for Google Maps
-- Map store facilities to Google Maps reservation slots
-- View Google Maps integration status and sync health
+- Enable/disable Reserve with Google integration
+- Connect store's Google Business Profile to the reservation system
+- Configure Reserve with Google API credentials (API key, service account, OAuth tokens)
+- Set up store location and business information for Reserve with Google
+- Map store facilities to Reserve with Google reservation slots
+- View Reserve with Google integration status and sync health
+- Test and verify connection to Reserve with Google service
 
 #### 3.4.8 Signature Settings
 
@@ -471,16 +475,24 @@ Store Admins have all Store Staff permissions, plus:
 
 ### 3.9 Integration Requirements
 
-#### 3.9.1 Google Maps Integration
+#### 3.9.1 Reserve with Google Integration
 
-**FR-RSVP-051:** The system must support Google Maps Reserve integration:
+**FR-RSVP-051:** The system must connect to and integrate with "Reserve with Google" service:
 
-- Sync reservation availability to Google Maps
-- Accept reservations initiated from Google Maps
-- Handle reservation modifications from Google Maps
-- Handle cancellations from Google Maps
-- Two-way synchronization of reservation data between the system and Google Maps
-- Real-time availability updates sent to Google Maps
+- Establish connection to Reserve with Google API
+- Authenticate and authorize the store's Google Business Profile
+- Link store's reservation system to Reserve with Google platform
+- Enable customers to make reservations directly through Google Search and Google Maps
+- Ensure reservations created via Reserve with Google appear in the system's reservation management interface
+
+**FR-RSVP-051a:** The system must support Reserve with Google integration features:
+
+- Sync reservation availability to Reserve with Google
+- Accept reservations initiated from Reserve with Google
+- Handle reservation modifications from Reserve with Google
+- Handle cancellations from Reserve with Google
+- Two-way synchronization of reservation data between the system and Reserve with Google
+- Real-time availability updates sent to Reserve with Google
 
 **FR-RSVP-052:** The system must support deep linking from Google Maps:
 
@@ -489,27 +501,32 @@ Store Admins have all Store Staff permissions, plus:
 - Preserve customer information when redirected from Google Maps
 - Support direct reservation creation from Google Maps deep links
 
-**FR-RSVP-052a:** The system must support Google Maps Reserve API configuration:
+**FR-RSVP-052a:** The system must support Reserve with Google API configuration:
 
-- Store admins can enable/disable Google Maps integration
-- Configure Google Maps API credentials
-- Set up store location and business information for Google Maps
-- Map store facilities to Google Maps reservation slots
+- Store admins can enable/disable Reserve with Google integration
+- Connect store's Google Business Profile to the reservation system
+- Configure Reserve with Google API credentials and authentication
+- Set up store location and business information for Reserve with Google
+- Map store facilities to Reserve with Google reservation slots
+- Verify connection status and integration health
 
-**FR-RSVP-052b:** The system must handle Google Maps reservation webhooks:
+**FR-RSVP-052b:** The system must handle Reserve with Google reservation webhooks:
 
-- Receive reservation creation notifications from Google Maps
-- Receive reservation update notifications from Google Maps
-- Receive reservation cancellation notifications from Google Maps
-- Process and validate webhook payloads from Google Maps
-- Update local reservation records based on Google Maps events
+- Receive reservation creation notifications from Reserve with Google
+- Receive reservation update notifications from Reserve with Google
+- Receive reservation cancellation notifications from Reserve with Google
+- Process and validate webhook payloads from Reserve with Google
+- Update local reservation records based on Reserve with Google events
+- Handle webhook authentication and security
 
-**FR-RSVP-052c:** The system must display Google Maps integration status:
+**FR-RSVP-052c:** The system must display Reserve with Google integration status:
 
-- Show whether Google Maps integration is enabled
+- Show whether Reserve with Google integration is enabled
+- Display connection status with Google Business Profile
 - Display sync status (active, error, disconnected)
 - Show last successful sync timestamp
 - Provide error messages if sync fails
+- Display integration health metrics
 
 #### 3.9.2 LINE Integration
 
@@ -599,7 +616,7 @@ Store Admins have all Store Staff permissions, plus:
 - Business hours configuration
 - Reminder settings (hours, channels)
 - Calendar sync preferences
-- Google Maps integration settings (enabled/disabled, API credentials, sync status)
+- Reserve with Google integration settings (enabled/disabled, API credentials, Google Business Profile connection, sync status)
 - Signature requirements (enabled, required before confirmation, required at check-in)
 
 ### 4.3 Resource Data Model (Facilities/Appointment Slots)
@@ -688,17 +705,21 @@ Store Admins have all Store Staff permissions, plus:
 
 **BR-RSVP-021:** Store staff and Store admins can view customer signatures for verification purposes.
 
-### 5.5 Google Maps Integration Rules
+### 5.5 Reserve with Google Integration Rules
 
-**BR-RSVP-022:** Reservations created from Google Maps must be tracked with source identifier.
+**BR-RSVP-022:** The system must establish and maintain an active connection to Reserve with Google service.
 
-**BR-RSVP-023:** When Google Maps integration is enabled, reservation availability must be synced in real-time.
+**BR-RSVP-023:** Reservations created from Reserve with Google must be tracked with source identifier.
 
-**BR-RSVP-024:** Reservations modified in Google Maps must be reflected in the system within the configured sync interval.
+**BR-RSVP-024:** When Reserve with Google integration is enabled, reservation availability must be synced in real-time.
 
-**BR-RSVP-025:** If Google Maps sync fails, the system must continue to accept reservations through other channels.
+**BR-RSVP-025:** Reservations modified in Reserve with Google must be reflected in the system within the configured sync interval.
 
-**BR-RSVP-026:** Google Maps reservations must follow the same business rules as regular reservations (prepaid requirements, cancellation policy, etc.).
+**BR-RSVP-026:** If Reserve with Google sync fails, the system must continue to accept reservations through other channels.
+
+**BR-RSVP-027:** Reserve with Google reservations must follow the same business rules as regular reservations (prepaid requirements, cancellation policy, etc.).
+
+**BR-RSVP-028:** The system must handle Reserve with Google connection failures gracefully and provide clear error messages to store admins.
 
 ---
 
@@ -761,12 +782,14 @@ Store Admins have all Store Staff permissions, plus:
 
 **UI-RSVP-012:** Blacklist and tag management pages must be clearly marked as Store Admin only (optimized for tablets and phones).
 
-**UI-RSVP-014:** Google Maps integration settings page must allow Store Admins to:
+**UI-RSVP-014:** Reserve with Google integration settings page must allow Store Admins to:
 
-- Enable/disable Google Maps integration
+- Enable/disable Reserve with Google integration
+- Connect store's Google Business Profile
 - Configure API credentials securely
+- Test connection to Reserve with Google service
 - View integration status and sync health
-- Map facilities to Google Maps reservation slots
+- Map facilities to Reserve with Google reservation slots
 - View error logs and sync history (optimized for tablets and phones).
 
 ---
@@ -856,7 +879,7 @@ Store Admins have all Store Staff permissions, plus:
 - Email service provider (for email notifications)
 - SMS service provider (for SMS notifications)
 - LINE Messaging API (for LINE notifications)
-- Google Maps Reserve API (for Google integration)
+- Reserve with Google API (for Google integration)
 - Payment processing (for prepaid reservations)
 
 ### 11.2 Internal Systems
@@ -883,7 +906,8 @@ Store Admins have all Store Staff permissions, plus:
 
 ### 12.2 Integration
 
-- ✅ Google Maps integration works (if enabled)
+- ✅ Reserve with Google integration works (if enabled)
+- ✅ Connection to Reserve with Google service is established and maintained
 - ✅ LINE integration works (if enabled)
 - ✅ Calendar sync works (if enabled)
 
@@ -912,6 +936,7 @@ Store Admins have all Store Staff permissions, plus:
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.5 | 2025-01-27 | System | Added explicit requirement for Reserve with Google service connection. Updated all references from "Google Maps Reserve" to "Reserve with Google" for clarity. Enhanced integration requirements to emphasize connection establishment and Google Business Profile linking. |
 | 1.4 | 2025-01-27 | System | Added comprehensive Google Maps integration requirements including Reserve API integration, webhook handling, configuration settings, status monitoring, and business rules. Added new section 3.4.7 for Google Maps Integration Settings. |
 | 1.3 | 2025-01-27 | System | Separated Store Admin and Store Staff into distinct roles with different access levels. Added access control summary section. Updated all requirements to specify which role has access to which features. |
 | 1.2 | 2025-01-27 | System | Changed terminology from "table" to "facility" throughout document to better reflect generic bookable resources |

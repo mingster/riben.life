@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27  
 **Status:** Active  
-**Version:** 1.0  
+**Version:** 1.2  
 **Related Documents:**
 
 - [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -95,6 +95,18 @@ model RsvpSettings {
   useReminderEmail   Boolean  @default(false)
   syncWithGoogle     Boolean  @default(false)
   syncWithApple      Boolean  @default(false)
+  
+  // Reserve with Google integration fields
+  reserveWithGoogleEnabled     Boolean  @default(false)
+  googleBusinessProfileId      String?  // Google Business Profile ID
+  googleBusinessProfileName    String?  // Store name in Google Business Profile
+  reserveWithGoogleAccessToken String?  // Encrypted OAuth access token
+  reserveWithGoogleRefreshToken String? // Encrypted OAuth refresh token
+  reserveWithGoogleTokenExpiry DateTime? // Token expiry timestamp
+  reserveWithGoogleLastSync    DateTime? // Last successful sync timestamp
+  reserveWithGoogleSyncStatus  String?  // "connected", "error", "disconnected"
+  reserveWithGoogleError       String?  // Last error message
+  
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   
@@ -124,7 +136,7 @@ model Rsvp {
   confirmedByCustomer Boolean @default(false)
   signature         String?   // Base64 encoded signature image/data
   signatureTimestamp DateTime?
-  source            String?   // e.g., "google_maps", "line", "phone", "walk-in", "online"
+  source            String?   // e.g., "reserve_with_google", "line", "phone", "walk-in", "online"
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   
@@ -262,7 +274,19 @@ model RsvpTag {
 - `update-rsvp-cancellation.ts` - Update cancellation policy
 - `update-rsvp-reminders.ts` - Update reminder settings
 - `update-rsvp-signature.ts` - Update signature requirements
-- `update-rsvp-google-maps.ts` - Update Google Maps integration
+- `update-rsvp-reserve-with-google.ts` - Update Reserve with Google integration
+- `connect-reserve-with-google.ts` - Connect store's Google Business Profile to Reserve with Google
+- `disconnect-reserve-with-google.ts` - Disconnect Reserve with Google integration
+- `test-reserve-with-google-connection.ts` - Test Reserve with Google connection
+
+#### 4.1.2a Google Integration Actions (Feed-based)
+
+**Location:** `src/actions/storeAdmin/reserveWithGoogle/`
+
+- `generate-google-feed.ts` - Generate appointment/service feed for Google Actions Center
+- `submit-google-feed.ts` - Submit feed to Google (sandbox/production)
+- `validate-google-feed.ts` - Validate feed before submission
+- `track-google-conversion.ts` - Track and report conversions to Google
 
 #### 4.1.3 Facility Management Actions
 
@@ -315,11 +339,19 @@ model RsvpTag {
 - `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/completed` - Mark as completed
 - `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/no-show` - Mark as no-show
 
-#### 4.2.3 Google Maps Webhook
+#### 4.2.3 Reserve with Google Webhook
 
-**Location:** `src/app/api/webhooks/google-maps/`
+**Location:** `src/app/api/webhooks/reserve-with-google/`
 
-- `POST /api/webhooks/google-maps/reservations` - Receive Google Maps webhooks
+- `POST /api/webhooks/reserve-with-google/reservations` - Receive Reserve with Google webhooks
+- `POST /api/webhooks/reserve-with-google/availability` - Receive availability sync requests from Reserve with Google
+
+#### 4.2.4 Reserve with Google OAuth Callback
+
+**Location:** `src/app/api/storeAdmin/[storeId]/rsvp/reserve-with-google/`
+
+- `GET /api/storeAdmin/[storeId]/rsvp/reserve-with-google/oauth/callback` - Handle OAuth callback from Google Business Profile
+- `GET /api/storeAdmin/[storeId]/rsvp/reserve-with-google/oauth/connect` - Initiate OAuth connection flow
 
 ### 4.3 Response Format
 
@@ -364,8 +396,10 @@ All server actions return:
 
 - **Signature Storage:** Base64 encoded, stored securely
 - **API Credentials:** Encrypted in database, never exposed to client
+- **OAuth Tokens:** Reserve with Google OAuth access tokens and refresh tokens encrypted in database
 - **Payment Information:** Handled by payment providers (Stripe, LINE Pay)
 - **Customer Credit:** Protected by authentication and store isolation
+- **Webhook Secrets:** Store webhook verification secrets securely (environment variables)
 
 ---
 
@@ -395,13 +429,175 @@ All server actions return:
 
 ## 7. Integration Requirements
 
-### 7.1 Google Maps Reserve API
+### 7.1 Reserve with Google / Google Actions Center Integration
 
-- **Authentication:** OAuth 2.0 or API key
-- **Webhook Endpoint:** Secure webhook receiver with signature validation
-- **Sync Strategy:** Real-time for availability, batch for historical data
-- **Error Handling:** Retry mechanism with exponential backoff
-- **Status Monitoring:** Track sync health and last successful sync
+The system must establish and maintain connections to Google's reservation services for multiple stores, enabling customers to make reservations directly through Google Search and Google Maps for each store's location.
+
+**Integration Approaches:**
+
+Google provides multiple integration methods for appointments/reservations:
+
+1. **Reserve with Google API** - Direct API integration with OAuth, webhooks, and real-time sync
+2. **Google Actions Center Appointments Redirect** - Feed-based integration using data feeds and conversion tracking
+
+The system should support the most appropriate integration method based on Google's requirements and platform capabilities.
+
+**Eligibility Requirements (per [Google Actions Center documentation](https://developers.google.com/actions-center/verticals/appointments/redirect/integration-steps/overview)):**
+
+- Each store must have a physical location with an address that Google can match to Google Maps database
+- Any `action_link` provided must point to merchant-specific pages where users perform actions (booking appointments)
+- Store addresses must be verifiable in Google Maps
+
+**Multi-Store Architecture:**
+
+- This is a multi-tenant platform serving many stores
+- Each store has its own location and Google Business Profile
+- Platform-level OAuth credentials (CLIENT_ID, CLIENT_SECRET) are shared across all stores (for API-based integration)
+- Store-specific Google Business Profile connections and tokens are stored per store in `RsvpSettings`
+- Each store independently connects and manages its own Google integration
+- Each store must meet eligibility requirements (physical location, Google Maps verifiable address)
+
+#### 7.1.1 Onboarding and Launch Process
+
+Based on [Google Actions Center integration requirements](https://developers.google.com/actions-center/verticals/appointments/redirect/integration-steps/overview), the system must support the following onboarding workflow:
+
+1. **Setup**
+   - Configure platform-level integration settings
+   - Set up Partner Portal access
+   - Configure merchant matching
+
+2. **Sandbox Environment**
+   - Feeds in Sandbox: Submit test data feeds for review
+   - Conversion Tracking in Sandbox: Implement and test conversion tracking
+   - Sandbox Review: Google reviews integration in sandbox
+
+3. **Production Environment**
+   - Feeds in Production: Submit production data feeds
+   - Conversion Tracking in Production: Deploy production conversion tracking
+   - Production Review: Google reviews production integration
+
+4. **Launch**
+   - Go live after successful production review
+   - Monitor integration health post-launch
+
+**Store Eligibility Verification:**
+
+- Verify each store has a physical location with Google Maps-verifiable address before onboarding
+- Match store addresses to Google Maps database
+- Validate action links point to store-specific reservation pages
+
+#### 7.1.2 Connection & Authentication (API-based Integration)
+
+For Reserve with Google API integration:
+
+- **OAuth 2.0 Flow:** Implement OAuth 2.0 authorization flow for Google Business Profile
+- **Platform OAuth Application:** Single OAuth application registered with Google (using platform CLIENT_ID/CLIENT_SECRET) used by all stores
+- **Per-Store Google Business Profile Connection:**
+  - Each store connects its own Google Business Profile through the platform OAuth application
+  - Store's Google Business Profile ID and connection details stored in `RsvpSettings`
+  - Each store's OAuth tokens stored per store (encrypted in database)
+- **Token Management:**
+  - Store OAuth access tokens securely (encrypted in database) per store
+  - Implement token refresh mechanism using refresh tokens per store
+  - Handle token expiration and automatic renewal per store
+  - Track token expiry timestamps per store
+- **Connection Verification:** Implement connection test endpoint to verify API connectivity per store
+- **Store Isolation:** Ensure each store's Google integration connection is isolated and independent
+
+#### 7.1.3 Data Feeds (Feed-based Integration)
+
+For Google Actions Center Appointments Redirect integration:
+
+- **Feed Format:** Generate and submit appointment/service feeds in required format (XML/JSON)
+- **Feed Structure:** Include entity, action, and services data per [Google Actions Center feed specifications](https://developers.google.com/actions-center/verticals/appointments/redirect/integration-steps/feeds)
+- **Feed Generation:**
+  - Generate feeds per store with store-specific data
+  - Include availability, services, pricing, and facility information
+  - Update feeds when reservation availability changes
+- **Feed Submission:**
+  - Submit feeds via SFTP or HTTPS to Google's servers
+  - Support both sandbox and production feed endpoints
+  - Implement feed validation before submission
+- **Feed Updates:**
+  - Real-time feed updates when reservations are created/modified
+  - Periodic full feed refreshes
+  - Incremental updates for efficiency
+
+#### 7.1.4 Conversion Tracking
+
+- **Conversion Tracking Implementation:**
+  - Implement conversion tracking per [Google Actions Center requirements](https://developers.google.com/actions-center/verticals/appointments/redirect/integration-steps/conversion-tracking)
+  - Track reservation completions from Google Search/Maps referrals
+  - Support both sandbox and production tracking environments
+- **Action Links:**
+  - Each store's action links must point to store-specific reservation pages
+  - Action links must include proper tracking parameters
+  - Support deep linking to pre-fill reservation context
+- **Conversion Events:**
+  - Track reservation creation events
+  - Track reservation confirmation events
+  - Report conversions back to Google
+
+#### 7.1.5 API Integration (API-based Integration)
+
+- **Reserve with Google API Client:**
+  - Create service client using Google API libraries
+  - Use authenticated requests with OAuth tokens
+  - Implement request rate limiting and retry logic
+- **Availability Sync:**
+  - Real-time sync of reservation availability to Google
+  - Send availability updates when reservations are created, modified, or cancelled
+  - Handle availability conflicts (double-booking prevention)
+- **Reservation Sync:**
+  - Accept reservations created via Google (routed to correct store by location/Profile ID)
+  - Sync reservation status changes bidirectionally per store
+  - Handle reservation modifications from Google per store
+  - Process cancellations from Google per store
+  - Ensure reservations are correctly associated with the right store based on location/Google Business Profile
+
+#### 7.1.6 Webhook Handling (API-based Integration)
+
+- **Webhook Endpoint:** Secure webhook receiver at `/api/webhooks/reserve-with-google/reservations` (for API-based integration)
+- **Signature Validation:** Validate webhook signatures using Google's signature verification
+- **Event Processing:**
+  - Handle reservation creation events (route to correct store based on Google Business Profile ID/location)
+  - Handle reservation update events (route to correct store)
+  - Handle reservation cancellation events (route to correct store)
+  - Handle availability sync requests (route to correct store)
+  - Determine target store from webhook payload (Google Business Profile ID or location)
+- **Store Routing:** Webhook events must be correctly routed to the appropriate store based on Google Business Profile ID or location identifier
+- **Idempotency:** Ensure webhook events are processed idempotently (prevent duplicate processing) per store
+- **Error Handling:** Queue failed webhook events for retry with store context
+
+#### 7.1.7 Sync Strategy
+
+- **Real-time Sync:**
+  - Availability updates sent immediately upon reservation changes
+  - Reservation creation/updates processed immediately from webhooks
+- **Batch Sync (if needed):**
+  - Periodic full sync for historical data reconciliation
+  - Daily sync of reservation calendar to Google (or feed refresh)
+- **Sync Health Monitoring:**
+  - Track last successful sync timestamp per store
+  - Monitor sync status (connected, error, disconnected) per store
+  - Store error messages for debugging per store
+  - Alert on sync failures per store
+
+#### 7.1.8 Error Handling
+
+- **Retry Mechanism:** Exponential backoff for failed API requests or feed submissions
+- **Error Logging:** Log all integration errors with context (storeId, reservationId, error details)
+- **Graceful Degradation:** System continues to accept reservations through other channels if Google integration sync fails
+- **Connection Recovery:** Automatic reconnection attempts for lost connections
+- **Feed Validation Errors:** Validate feeds before submission and handle Google's validation errors
+
+#### 7.1.9 Facility Mapping
+
+- **Map Facilities:** Map each store's facilities to Google reservation slots/services (per store)
+- **Capacity Mapping:** Ensure facility capacity aligns with Google slot/service configuration per store
+- **Dynamic Mapping:** Support adding/removing facilities without breaking Google integration connection per store
+- **Store-Specific Mapping:** Each store maintains its own facility-to-slot/service mapping independent of other stores
+- **Feed Mapping:** For feed-based integration, map facilities to feed service entities
 
 ### 7.2 LINE Integration
 
@@ -471,9 +667,18 @@ All server actions return:
 
 ### 10.1 Environment Variables
 
+**Platform-Level Variables (shared across all stores):**
+
 - `POSTGRES_PRISMA_URL` - Database connection string
 - `NEXT_PUBLIC_API_URL` - API base URL
-- `GOOGLE_MAPS_API_KEY` - Google Maps API key
+- `GOOGLE_MAPS_API_KEY` - Google Maps API key (for maps display)
+- `RESERVE_WITH_GOOGLE_CLIENT_ID` - Reserve with Google OAuth client ID (platform-level, shared by all stores)
+- `RESERVE_WITH_GOOGLE_CLIENT_SECRET` - Reserve with Google OAuth client secret (platform-level, shared by all stores)
+- `RESERVE_WITH_GOOGLE_REDIRECT_URI` - OAuth callback redirect URI (platform-level, routes to correct store)
+- `RESERVE_WITH_GOOGLE_ENCRYPTION_KEY` - Key for encrypting OAuth tokens in database
+
+**Note:** OAuth credentials (CLIENT_ID, CLIENT_SECRET) are platform-level and shared by all stores. Each store connects its own Google Business Profile using these platform credentials. Store-specific connection details (tokens, profile IDs) are stored per store in the `RsvpSettings` table in the database.
+
 - `LINE_CHANNEL_ID` - LINE channel ID
 - `LINE_CHANNEL_SECRET` - LINE channel secret
 - `STRIPE_SECRET_KEY` - Stripe secret key
@@ -498,7 +703,7 @@ All server actions return:
 
 ### 11.1 Directory Structure
 
-```
+```plaintext
 src/
 ├── actions/
 │   └── storeAdmin/
@@ -506,7 +711,8 @@ src/
 │       ├── rsvpSettings/      # Settings actions
 │       ├── facilities/        # Facility management
 │       ├── rsvpBlacklist/     # Blacklist actions
-│       └── rsvpTag/           # Tag actions
+│       ├── rsvpTag/           # Tag actions
+│       └── reserveWithGoogle/ # Reserve with Google integration actions
 ├── app/
 │   ├── (store)/[storeId]/rsvp/     # Public RSVP page
 │   ├── storeAdmin/[storeId]/(routes)/
@@ -515,9 +721,14 @@ src/
 │   │   └── facilities/              # Facility management
 │   └── api/
 │       ├── store/[storeId]/rsvp/    # Public API
-│       └── storeAdmin/[storeId]/rsvp/ # Admin API
+│       ├── storeAdmin/[storeId]/rsvp/ # Admin API
+│       │   └── reserve-with-google/    # Reserve with Google OAuth
+│       └── webhooks/
+│           └── reserve-with-google/    # Reserve with Google webhooks
 └── components/
     └── rsvp/                  # RSVP-specific components
+├── lib/
+│   └── reserve-with-google/   # Reserve with Google API client library
 ```
 
 ### 11.2 Naming Conventions
@@ -562,7 +773,9 @@ src/
 ### 13.3 Alerts
 
 - **Critical Errors:** Alert on reservation creation failures
-- **Sync Failures:** Alert on Google Maps sync failures
+- **Sync Failures:** Alert on Reserve with Google sync failures
+- **Connection Failures:** Alert on Reserve with Google connection failures
+- **Token Expiry:** Alert on OAuth token expiration
 - **Payment Failures:** Alert on payment processing errors
 
 ---
@@ -587,6 +800,8 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.2 | 2025-01-27 | System | Updated integration requirements based on Google Actions Center Appointments Redirect documentation. Added onboarding/launch process (sandbox/production workflow), eligibility requirements (physical location, Google Maps address verification), feed-based integration support, conversion tracking requirements, and action links specifications. Clarified multiple integration approaches (API-based vs Feed-based). Added feed generation, validation, and submission actions. |
+| 1.1 | 2025-01-27 | System | Added comprehensive Reserve with Google integration technical requirements including OAuth 2.0 flow, API client implementation, webhook handling, token management, sync strategy, and security considerations. Updated database schema requirements, API routes, and environment variables. |
 | 1.0 | 2025-01-27 | System | Initial technical requirements document |
 
 ---
