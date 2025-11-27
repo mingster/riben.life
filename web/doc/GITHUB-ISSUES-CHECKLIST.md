@@ -1,7 +1,8 @@
 # GitHub Issues Checklist: RSVP System
 
-**Date:** 2025-01-27  
-**Status:** Planning  
+**Date:** 2025-01-27
+**Status:** Planning
+**Version:** 1.1  
 **Related Documents:**
 
 - [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -44,6 +45,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
   - [x] Create `CustomerCredit` model
   - [x] Create `RsvpBlacklist` model
   - [x] Create `RsvpTag` model
+  - [ ] Add Reserve with Google integration fields to `RsvpSettings` model (reserveWithGoogleEnabled, googleBusinessProfileId, OAuth tokens, sync status, etc.)
   - [x] Add indexes and constraints
   - [x] Create migration script
   - **Labels:** `database`, `rsvp`, `backend`
@@ -396,54 +398,180 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - Details included
     - All channels work
 
-### Google Maps Integration
+### Reserve with Google / Google Actions Center Integration
 
-- [ ] **Issue #31:** Implement Google Maps Reserve API integration
-  - [ ] Set up Google Maps API client
-  - [ ] Implement availability sync
-  - [ ] Handle reservation creation from Google Maps
-  - [ ] Implement two-way synchronization
+- [ ] **Issue #31:** Implement Reserve with Google onboarding and eligibility verification
+  - [ ] Create store eligibility verification (physical location, Google Maps address matching)
+  - [ ] Implement platform-level OAuth application setup
+  - [ ] Create Partner Portal access configuration
+  - [ ] Implement merchant matching system
+  - [ ] Validate action links point to store-specific reservation pages
   - **Labels:** `feature`, `rsvp`, `backend`, `integration`
   - **Acceptance Criteria:**
-    - API integration works
-    - Sync works correctly
-    - Reservations created from Google Maps
+    - Store eligibility can be verified before onboarding
+    - Platform OAuth application configured
+    - Merchant matching works correctly
+    - Action links validated
 
-- [ ] **Issue #32:** Implement Google Maps webhook handler
-  - [ ] Create webhook endpoint
-  - [ ] Validate webhook signatures
-  - [ ] Handle reservation events
-  - [ ] Update local records
+- [ ] **Issue #32:** Implement Reserve with Google OAuth 2.0 connection (API-based integration)
+  - [ ] Create OAuth 2.0 authorization flow for Google Business Profile
+  - [ ] Implement platform-level OAuth application (shared CLIENT_ID/CLIENT_SECRET)
+  - [ ] Create per-store Google Business Profile connection
+  - [ ] Implement OAuth callback handler (`/api/storeAdmin/[storeId]/rsvp/reserve-with-google/oauth/callback`)
+  - [ ] Store encrypted OAuth tokens per store in database
+  - [ ] Implement token refresh mechanism
+  - [ ] Create connection test endpoint
   - **Labels:** `feature`, `rsvp`, `backend`, `integration`, `security`
   - **Acceptance Criteria:**
-    - Webhooks received correctly
-    - Signatures validated
-    - Records updated
+    - OAuth flow works for each store
+    - Tokens stored securely (encrypted)
+    - Token refresh works automatically
+    - Connection can be tested per store
 
-- [ ] **Issue #33:** Implement Google Maps configuration UI
-  - [ ] Create settings page
-  - [ ] Add API credential configuration
-  - [ ] Display sync status
-  - [ ] Show error logs
+- [ ] **Issue #33:** Implement Reserve with Google API integration (availability and reservation sync)
+  - [ ] Create Reserve with Google API client library
+  - [ ] Implement real-time availability sync to Reserve with Google
+  - [ ] Send availability updates when reservations created/modified/cancelled
+  - [ ] Handle reservation creation from Reserve with Google (route to correct store)
+  - [ ] Implement bidirectional reservation status sync
+  - [ ] Handle reservation modifications from Reserve with Google
+  - [ ] Process cancellations from Reserve with Google
+  - [ ] Implement request rate limiting and retry logic
+  - **Labels:** `feature`, `rsvp`, `backend`, `integration`
+  - **Acceptance Criteria:**
+    - Availability synced in real-time
+    - Reservations from Google routed to correct store
+    - Bidirectional sync works
+    - Rate limiting prevents API abuse
+
+- [ ] **Issue #34:** Implement Reserve with Google webhook handler
+  - [ ] Create webhook endpoint (`/api/webhooks/reserve-with-google/reservations`)
+  - [ ] Create availability sync webhook endpoint (`/api/webhooks/reserve-with-google/availability`)
+  - [ ] Validate webhook signatures using Google's verification
+  - [ ] Handle reservation creation events (route to correct store by Profile ID/location)
+  - [ ] Handle reservation update events
+  - [ ] Handle reservation cancellation events
+  - [ ] Handle availability sync requests
+  - [ ] Implement idempotency for webhook processing
+  - [ ] Queue failed webhook events for retry
+  - **Labels:** `feature`, `rsvp`, `backend`, `integration`, `security`
+  - **Acceptance Criteria:**
+    - Webhooks received and validated correctly
+    - Events routed to correct store
+    - Idempotency prevents duplicate processing
+    - Failed events queued for retry
+
+- [ ] **Issue #35:** Implement Reserve with Google configuration UI
+  - [ ] Create settings page for Reserve with Google integration
+  - [ ] Add enable/disable toggle
+  - [ ] Implement Google Business Profile connection UI
+  - [ ] Add OAuth connection flow UI
+  - [ ] Display connection status and sync health
+  - [ ] Show Google Business Profile information
+  - [ ] Display last successful sync timestamp
+  - [ ] Show error messages and logs
+  - [ ] Add connection test button
+  - [ ] Implement disconnect functionality
   - **Labels:** `feature`, `rsvp`, `frontend`
   - **Acceptance Criteria:**
-    - Configuration works
-    - Status displayed
-    - Errors visible
+    - Store admins can configure integration
+    - Connection status displayed correctly
+    - Error messages visible and actionable
+    - UI optimized for tablets/phones
 
-- [ ] **Issue #34:** Implement Google Maps deep linking
-  - [ ] Handle deep link parameters
-  - [ ] Pre-fill store context
-  - [ ] Track reservation source
+- [ ] **Issue #36:** Implement Reserve with Google facility mapping
+  - [ ] Create facility-to-slot mapping UI (per store)
+  - [ ] Map store facilities to Reserve with Google reservation slots
+  - [ ] Ensure capacity alignment between facilities and slots
+  - [ ] Support dynamic facility addition/removal without breaking connection
+  - [ ] Store mapping per store independently
   - **Labels:** `feature`, `rsvp`, `frontend`, `backend`
   - **Acceptance Criteria:**
-    - Deep links work
-    - Context pre-filled
-    - Source tracked
+    - Facilities can be mapped to Google slots
+    - Mapping stored per store
+    - Dynamic updates don't break integration
+
+- [ ] **Issue #37:** Implement Reserve with Google deep linking
+  - [ ] Handle deep link parameters from Google Search/Maps
+  - [ ] Pre-fill store context when arriving from Google
+  - [ ] Track reservation source as "reserve_with_google"
+  - [ ] Preserve customer information when redirected from Google
+  - [ ] Support direct reservation creation from Google deep links
+  - **Labels:** `feature`, `rsvp`, `frontend`, `backend`
+  - **Acceptance Criteria:**
+    - Deep links work correctly
+    - Store context pre-filled
+    - Source tracking accurate
+    - Customer info preserved
+
+- [ ] **Issue #38:** Implement Google Actions Center feed-based integration (Appointments Redirect)
+  - [ ] Implement store eligibility verification (physical location, Google Maps address)
+  - [ ] Create feed generation service (`generate-google-feed.ts`)
+  - [ ] Generate appointment/service feeds per store (XML/JSON format)
+  - [ ] Include entity, action, and services data per Google specifications
+  - [ ] Include availability, services, pricing, and facility information
+  - [ ] Implement feed validation (`validate-google-feed.ts`)
+  - [ ] Create feed submission service (`submit-google-feed.ts`)
+  - [ ] Support SFTP and HTTPS feed submission
+  - [ ] Support both sandbox and production feed endpoints
+  - [ ] Implement real-time feed updates when reservations change
+  - [ ] Implement periodic full feed refreshes
+  - **Labels:** `feature`, `rsvp`, `backend`, `integration`
+  - **Acceptance Criteria:**
+    - Feeds generated correctly per store
+    - Feeds validated before submission
+    - Sandbox and production feeds work
+    - Real-time updates trigger feed refresh
+
+- [ ] **Issue #39:** Implement Google Actions Center conversion tracking
+  - [ ] Implement conversion tracking per Google Actions Center requirements
+  - [ ] Track reservation completions from Google Search/Maps referrals
+  - [ ] Support sandbox and production tracking environments
+  - [ ] Create action links that point to store-specific reservation pages
+  - [ ] Include proper tracking parameters in action links
+  - [ ] Support deep linking with pre-filled reservation context
+  - [ ] Track reservation creation events
+  - [ ] Track reservation confirmation events
+  - [ ] Report conversions back to Google
+  - [ ] Create conversion tracking service (`track-google-conversion.ts`)
+  - **Labels:** `feature`, `rsvp`, `backend`, `integration`
+  - **Acceptance Criteria:**
+    - Conversions tracked correctly
+    - Action links work and include tracking
+    - Reports sent to Google
+    - Sandbox and production tracking work
+
+- [ ] **Issue #40:** Implement Google Actions Center onboarding workflow
+  - [ ] Implement Setup phase (platform configuration, Partner Portal access, merchant matching)
+  - [ ] Implement Sandbox Environment phase (feeds in sandbox, conversion tracking in sandbox, sandbox review)
+  - [ ] Implement Production Environment phase (feeds in production, conversion tracking in production, production review)
+  - [ ] Implement Launch phase (go live, post-launch monitoring)
+  - [ ] Create onboarding workflow UI for store admins
+  - [ ] Track onboarding progress per store
+  - **Labels:** `feature`, `rsvp`, `backend`, `frontend`, `integration`
+  - **Acceptance Criteria:**
+    - Onboarding workflow can be completed
+    - Progress tracked per store
+    - Each phase validated before proceeding
+
+- [ ] **Issue #41:** Implement Reserve with Google sync health monitoring
+  - [ ] Track last successful sync timestamp per store
+  - [ ] Monitor sync status (connected, error, disconnected) per store
+  - [ ] Store error messages for debugging per store
+  - [ ] Alert on sync failures per store
+  - [ ] Display integration health metrics in UI
+  - [ ] Implement connection recovery mechanism
+  - [ ] Log all sync operations with context
+  - **Labels:** `feature`, `rsvp`, `backend`, `frontend`, `integration`
+  - **Acceptance Criteria:**
+    - Sync health tracked per store
+    - Alerts trigger on failures
+    - Error messages stored and displayed
+    - Connection recovery works automatically
 
 ### LINE Integration
 
-- [ ] **Issue #35:** Implement LINE Login integration
+- [ ] **Issue #42:** Implement LINE Login integration
   - [ ] Set up LINE OAuth flow
   - [ ] Link LINE account to user
   - [ ] Share contact information
@@ -453,7 +581,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - Account linked
     - Contact info shared
 
-- [ ] **Issue #36:** Implement LINE notification sending
+- [ ] **Issue #43:** Implement LINE notification sending
   - [ ] Integrate LINE Messaging API
   - [ ] Send confirmations via LINE
   - [ ] Send reminders via LINE
@@ -462,7 +590,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - LINE notifications sent
     - All notification types work
 
-- [ ] **Issue #37:** Implement LINE broadcast messaging
+- [ ] **Issue #44:** Implement LINE broadcast messaging
   - [ ] Create broadcast interface
   - [ ] Send to waitlisted customers
   - [ ] Send day-of updates
@@ -476,7 +604,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
 
 ## Phase 5: Reporting & Analytics
 
-- [ ] **Issue #38:** Implement reservation statistics
+- [ ] **Issue #45:** Implement reservation statistics
   - [ ] Create statistics dashboard
   - [ ] Display reservations by date range
   - [ ] Show utilization rates
@@ -487,7 +615,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - Dashboard displays correctly
     - Access control enforced (Store Admin only)
 
-- [ ] **Issue #39:** Implement customer analytics
+- [ ] **Issue #46:** Implement customer analytics
   - [ ] Display customer history
   - [ ] Calculate visit frequency
   - [ ] Show average party size
@@ -498,7 +626,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - Display works
     - Access control enforced
 
-- [ ] **Issue #40:** Implement resource utilization analytics
+- [ ] **Issue #47:** Implement resource utilization analytics
   - [ ] Calculate occupancy rates
   - [ ] Identify most/least used facilities
   - [ ] Show peak time analysis
@@ -512,7 +640,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
 
 ## Phase 6: Testing & Quality Assurance
 
-- [ ] **Issue #41:** Write unit tests for server actions
+- [ ] **Issue #48:** Write unit tests for server actions
   - [ ] Test validation logic
   - [ ] Test business logic
   - [ ] Test error handling
@@ -522,7 +650,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - Coverage > 80%
     - Tests pass
 
-- [ ] **Issue #42:** Write integration tests
+- [ ] **Issue #49:** Write integration tests
   - [ ] Test database operations
   - [ ] Test authentication/authorization
   - [ ] Test API routes
@@ -531,7 +659,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - Integration tests pass
     - All critical paths tested
 
-- [ ] **Issue #43:** Write E2E tests
+- [ ] **Issue #50:** Write E2E tests
   - [ ] Test reservation creation flow
   - [ ] Test payment flow
   - [ ] Test staff interface
@@ -540,7 +668,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - E2E tests pass
     - All user flows tested
 
-- [ ] **Issue #44:** Performance testing
+- [ ] **Issue #51:** Performance testing
   - [ ] Test response times
   - [ ] Test concurrent operations
   - [ ] Optimize slow queries
@@ -554,7 +682,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
 
 ## Phase 7: Documentation & Deployment
 
-- [ ] **Issue #45:** Create API documentation
+- [ ] **Issue #52:** Create API documentation
   - [ ] Document all server actions
   - [ ] Document API routes
   - [ ] Add code examples
@@ -564,7 +692,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - Examples provided
     - Documentation up to date
 
-- [ ] **Issue #46:** Create user documentation
+- [ ] **Issue #53:** Create user documentation
   - [ ] Document customer features
   - [ ] Document staff features
   - [ ] Document admin features
@@ -574,7 +702,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - Screenshots included
     - Clear instructions
 
-- [ ] **Issue #47:** Set up monitoring and logging
+- [ ] **Issue #54:** Set up monitoring and logging
   - [ ] Configure structured logging
   - [ ] Set up error tracking
   - [ ] Create dashboards
@@ -584,7 +712,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - Errors tracked
     - Dashboards created
 
-- [ ] **Issue #48:** Database migration to production
+- [ ] **Issue #55:** Database migration to production
   - [ ] Test migration on staging
   - [ ] Create rollback plan
   - [ ] Execute production migration
@@ -638,6 +766,15 @@ When creating issues, use this template:
 - **P1 (High):** Essential features (settings, basic management)
 - **P2 (Medium):** Important features (notifications, integrations)
 - **P3 (Low):** Nice-to-have features (advanced analytics, optimizations)
+
+---
+
+## Revision History
+
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.1 | 2025-01-27 | System | Updated Reserve with Google integration section with comprehensive issues covering both API-based and feed-based integration approaches. Added onboarding workflow, eligibility verification, OAuth connection, feed generation, conversion tracking, and sync health monitoring issues. Replaced "Google Maps Integration" with "Reserve with Google / Google Actions Center Integration". Renumbered all issues to avoid conflicts: #31-41 Reserve with Google, #42-44 LINE, #45-47 Reporting, #48-51 Testing, #52-55 Documentation. Added Reserve with Google schema fields to Issue #1. |
+| 1.0 | 2025-01-27 | System | Initial GitHub issues checklist document |
 
 ---
 

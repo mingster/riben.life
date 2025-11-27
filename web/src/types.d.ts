@@ -332,6 +332,18 @@ const rsvpObj = Prisma.validator<Prisma.RsvpDefaultArgs>()({
 });
 export type Rsvp = Prisma.RsvpGetPayload<typeof rsvpObj>;
 
+const rsvpSettingsObj = Prisma.validator<Prisma.RsvpSettingsDefaultArgs>()({});
+export type RsvpSettings = Prisma.RsvpSettingsGetPayload<
+	typeof rsvpSettingsObj
+>;
+
+const storeSettingsObj = Prisma.validator<Prisma.StoreSettingsDefaultArgs>()(
+	{},
+);
+export type StoreSettings = Prisma.StoreSettingsGetPayload<
+	typeof storeSettingsObj
+>;
+
 /* endregion */
 
 /*

@@ -14,11 +14,13 @@ import {
 	isSameDay,
 	parseISO,
 	Locale,
+	isBefore,
+	startOfDay,
 } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { zhTW } from "date-fns/locale/zh-TW";
 import { ja } from "date-fns/locale/ja";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -29,51 +31,23 @@ import {
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Rsvp } from "@/types";
-import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
+import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
+import { ReservationDialog } from "./reservation-dialog";
 
-// Component for creating RSVP at specific time slot
-interface CreateRsvpButtonProps {
-	day: Date;
-	timeSlot: string;
-	onCreated?: (rsvp: Rsvp) => void;
-}
-
-const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
-	day,
-	timeSlot,
-	onCreated,
-}) => {
-	const [defaultRsvpTime] = useState(() => {
-		const [hours, minutes] = timeSlot.split(":").map(Number);
-		const rsvpTime = new Date(day);
-		rsvpTime.setHours(hours, minutes, 0, 0);
-		return rsvpTime;
-	});
-
-	return (
-		<AdminEditRsvpDialog
-			isNew
-			defaultRsvpTime={defaultRsvpTime}
-			onCreated={onCreated}
-			trigger={
-				<button
-					type="button"
-					className="w-full h-full min-h-[44px] sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground touch-manipulation flex items-center justify-center"
-				>
-					+
-				</button>
-			}
-		/>
-	);
-};
-
-interface WeekViewCalendarProps {
+interface CustomerWeekViewCalendarProps {
 	rsvps: Rsvp[];
-	onRsvpCreated?: (rsvp: Rsvp) => void;
-	onRsvpUpdated?: (rsvp: Rsvp) => void;
-	rsvpSettings: { useBusinessHours: boolean; rsvpHours: string | null } | null;
-	storeSettings: { businessHours: string | null } | null;
+	rsvpSettings: RsvpSettings | null;
+	storeSettings: StoreSettings | null;
+	onTimeSlotClick?: (day: Date, timeSlot: string) => void;
+	// Props for dialog
+	storeId?: string;
+	facilities?: Array<{
+		id: string;
+		facilityName: string;
+		defaultCost: number | null;
+	}>;
+	user?: { id: string; email: string | null } | null;
+	onReservationCreated?: (newRsvp: Rsvp) => void;
 }
 
 interface TimeRange {
@@ -194,7 +168,6 @@ const isToday = (date: Date): boolean => {
 };
 
 // Group RSVPs by day and time slot
-// RSVPs are placed in the time slot that matches their hour (rounded to nearest hour)
 const groupRsvpsByDayAndTime = (
 	rsvps: Rsvp[],
 	weekStart: Date,
@@ -230,46 +203,26 @@ const groupRsvpsByDayAndTime = (
 	return grouped;
 };
 
-export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
+export const CustomerWeekViewCalendar: React.FC<
+	CustomerWeekViewCalendarProps
+> = ({
 	rsvps: initialRsvps,
-	onRsvpCreated,
-	onRsvpUpdated,
 	rsvpSettings,
 	storeSettings,
+	onTimeSlotClick,
+	storeId,
+	facilities = [],
+	user,
+	onReservationCreated,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-	const [currentWeek, setCurrentWeek] = useState(new Date());
+	const today = useMemo(() => startOfDay(new Date()), []);
 	const [rsvps, setRsvps] = useState<Rsvp[]>(initialRsvps);
-
-	// Sync with prop changes (e.g., when server data is refreshed)
-	useEffect(() => {
-		setRsvps(initialRsvps);
-	}, [initialRsvps]);
-
-	// Handle RSVP updates locally
-	const handleRsvpUpdated = useCallback(
-		(updated: Rsvp) => {
-			setRsvps((prev) =>
-				prev.map((item) => (item.id === updated.id ? updated : item)),
-			);
-			onRsvpUpdated?.(updated);
-		},
-		[onRsvpUpdated],
-	);
-
-	// Handle RSVP creation locally
-	const handleRsvpCreated = useCallback(
-		(newRsvp: Rsvp) => {
-			setRsvps((prev) => {
-				const exists = prev.some((item) => item.id === newRsvp.id);
-				if (exists) return prev;
-				return [newRsvp, ...prev];
-			});
-			onRsvpCreated?.(newRsvp);
-		},
-		[onRsvpCreated],
-	);
+	const [currentWeek, setCurrentWeek] = useState(() => {
+		// Always start with today to ensure we don't start on a past week
+		return new Date();
+	});
 
 	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
@@ -299,6 +252,12 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		[currentWeek],
 	);
 
+	// Check if week start is before today
+	const isWeekInPast = useMemo(
+		() => isBefore(startOfDay(weekStart), today),
+		[weekStart, today],
+	);
+
 	// Generate days of the week
 	const weekDays = useMemo(() => {
 		const days: Date[] = [];
@@ -312,15 +271,39 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 
+	// Filter RSVPs to only show those owned by the current user
+	const userRsvps = useMemo(() => {
+		if (!user) return [];
+		return rsvps.filter((rsvp) => {
+			// Match by userId if user is logged in
+			if (user.id && rsvp.userId) {
+				return rsvp.userId === user.id;
+			}
+			// For logged-in users, also match by email if userId doesn't match but email does
+			if (user.email && rsvp.User?.email) {
+				return rsvp.User.email === user.email;
+			}
+			return false;
+		});
+	}, [rsvps, user]);
+
 	// Group RSVPs by day and time
 	const groupedRsvps = useMemo(
-		() => groupRsvpsByDayAndTime(rsvps, weekStart, weekEnd),
-		[rsvps, weekStart, weekEnd],
+		() => groupRsvpsByDayAndTime(userRsvps, weekStart, weekEnd),
+		[userRsvps, weekStart, weekEnd],
 	);
 
 	const handlePreviousWeek = useCallback(() => {
-		setCurrentWeek((prev) => subWeeks(prev, 1));
-	}, []);
+		setCurrentWeek((prev) => {
+			const newWeek = subWeeks(prev, 1);
+			const newWeekStart = startOfWeek(newWeek, { weekStartsOn: 0 });
+			// Don't allow navigation to past weeks
+			if (isBefore(startOfDay(newWeekStart), today)) {
+				return prev; // Stay on current week
+			}
+			return newWeek;
+		});
+	}, [today]);
 
 	const handleNextWeek = useCallback(() => {
 		setCurrentWeek((prev) => addWeeks(prev, 1));
@@ -330,21 +313,50 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		setCurrentWeek(new Date());
 	}, []);
 
-	const handleDateSelect = useCallback((date: Date | undefined) => {
-		if (date) {
-			setCurrentWeek(date);
-		}
-	}, []);
+	const handleDateSelect = useCallback(
+		(date: Date | undefined) => {
+			if (date) {
+				const selectedWeekStart = startOfWeek(date, { weekStartsOn: 0 });
+				// Don't allow selection of past weeks
+				if (!isBefore(startOfDay(selectedWeekStart), today)) {
+					setCurrentWeek(date);
+				}
+			}
+		},
+		[today],
+	);
 
 	const getRsvpsForSlot = (day: Date, timeSlot: string): Rsvp[] => {
 		const dayKey = format(day, "yyyy-MM-dd");
 		const key = `${dayKey}-${timeSlot}`;
 		return groupedRsvps[key] || [];
 	};
-	const [dropdown, setDropdown] =
+
+	const handleTimeSlotClick = useCallback(
+		(day: Date, timeSlot: string) => {
+			onTimeSlotClick?.(day, timeSlot);
+		},
+		[onTimeSlotClick],
+	);
+
+	const handleReservationCreated = useCallback(
+		(newRsvp: Rsvp) => {
+			if (!newRsvp) return;
+			setRsvps((prev) => {
+				const exists = prev.some((item) => item.id === newRsvp.id);
+				if (exists) return prev;
+				return [newRsvp, ...prev];
+			});
+			onReservationCreated?.(newRsvp);
+		},
+		[onReservationCreated],
+	);
+
+	const [dropdown] =
 		useState<React.ComponentProps<typeof Calendar>["captionLayout"]>(
 			"dropdown",
 		);
+
 	return (
 		<div className="flex flex-col gap-3 sm:gap-4">
 			{/* Week Navigation */}
@@ -374,6 +386,10 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 								captionLayout={dropdown}
 								locale={calendarLocale}
 								className="w-full rounded-lg shadow-sm"
+								disabled={(date) => {
+									const dateWeekStart = startOfWeek(date, { weekStartsOn: 0 });
+									return isBefore(startOfDay(dateWeekStart), today);
+								}}
 							/>
 						</PopoverContent>
 					</Popover>
@@ -382,6 +398,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						variant="outline"
 						size="icon"
 						onClick={handlePreviousWeek}
+						disabled={isWeekInPast}
 						className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
 					>
 						<IconChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -457,6 +474,13 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 									</td>
 									{weekDays.map((day) => {
 										const slotRsvps = getRsvpsForSlot(day, timeSlot);
+										const isAvailable = slotRsvps.length === 0;
+										// Check if this day/time slot is in the past
+										const [hours, minutes] = timeSlot.split(":").map(Number);
+										const slotDateTime = new Date(day);
+										slotDateTime.setHours(hours, minutes, 0, 0);
+										const isPast = isBefore(slotDateTime, new Date());
+										const canSelect = isAvailable && !isPast;
 										return (
 											<td
 												key={`${day.toISOString()}-${timeSlot}`}
@@ -469,55 +493,85 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
 													{slotRsvps.length > 0 ? (
 														slotRsvps.map((rsvp) => (
-															<AdminEditRsvpDialog
+															<div
 																key={rsvp.id}
-																rsvp={rsvp}
-																onUpdated={handleRsvpUpdated}
+																className={cn(
+																	"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs bg-primary/10 min-h-[44px] touch-manipulation",
+																	rsvp.confirmedByStore &&
+																		"border-l-2 border-l-green-500",
+																	rsvp.alreadyPaid &&
+																		"border-l-2 border-l-blue-500",
+																)}
+															>
+																<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																	{rsvp.User?.name
+																		? rsvp.User.name
+																		: rsvp.User?.email
+																			? rsvp.User.email
+																			: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																					rsvp.numOfAdult + rsvp.numOfChild ===
+																					1
+																						? "guest"
+																						: "guests"
+																				}`}
+																</div>
+																{rsvp.Facility?.facilityName && (
+																	<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																		{rsvp.Facility.facilityName}
+																	</div>
+																)}
+																{rsvp.message && (
+																	<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																		{rsvp.message}
+																	</div>
+																)}
+															</div>
+														))
+													) : isAvailable ? (
+														storeId ? (
+															<ReservationDialog
+																storeId={storeId}
+																rsvpSettings={rsvpSettings}
+																facilities={facilities}
+																user={user}
+																defaultRsvpTime={(() => {
+																	const [hours, minutes] = timeSlot
+																		.split(":")
+																		.map(Number);
+																	const date = new Date(day);
+																	date.setHours(hours, minutes, 0, 0);
+																	return date;
+																})()}
+																onReservationCreated={handleReservationCreated}
 																trigger={
 																	<button
 																		type="button"
+																		disabled={isPast}
 																		className={cn(
-																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors min-h-[44px] touch-manipulation",
-																			rsvp.confirmedByStore &&
-																				"border-l-2 border-l-green-500",
-																			rsvp.alreadyPaid &&
-																				"border-l-2 border-l-blue-500",
+																			"w-full h-full min-h-[44px] sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground touch-manipulation flex items-center justify-center",
+																			isPast && "cursor-not-allowed opacity-50",
 																		)}
 																	>
-																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																			{rsvp.User?.name
-																				? rsvp.User.name
-																				: rsvp.User?.email
-																					? rsvp.User.email
-																					: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																							rsvp.numOfAdult +
-																								rsvp.numOfChild ===
-																							1
-																								? "guest"
-																								: "guests"
-																						}`}
-																		</div>
-																		{rsvp.Facility?.facilityName && (
-																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																				{rsvp.Facility.facilityName}
-																			</div>
-																		)}
-																		{rsvp.message && (
-																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																				{rsvp.message}
-																			</div>
-																		)}
+																		{!isPast && "+"}
 																	</button>
 																}
 															/>
-														))
-													) : (
-														<CreateRsvpButton
-															day={day}
-															timeSlot={timeSlot}
-															onCreated={handleRsvpCreated}
-														/>
-													)}
+														) : (
+															<button
+																type="button"
+																onClick={() =>
+																	handleTimeSlotClick(day, timeSlot)
+																}
+																disabled={isPast}
+																className={cn(
+																	"w-full h-full min-h-[44px] sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground touch-manipulation flex items-center justify-center",
+																	isPast && "cursor-not-allowed opacity-50",
+																)}
+															>
+																{!isPast && "+"}
+															</button>
+														)
+													) : null}
 												</div>
 											</td>
 										);

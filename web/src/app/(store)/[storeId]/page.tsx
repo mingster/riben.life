@@ -64,6 +64,9 @@ export default async function StoreHomePage(props: {
 		if (rsvpSettings) {
 			transformDecimalsToNumbers(rsvpSettings);
 		}
+		if (storeSettings) {
+			transformDecimalsToNumbers(storeSettings);
+		}
 	} catch (error) {
 		logger.error("Failed to load store or settings", {
 			metadata: {

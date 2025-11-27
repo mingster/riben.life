@@ -21,7 +21,7 @@ export default async function TableOrderPage(props: {
 	const params = await props.params;
 
 	// Parallel queries for optimal performance - 3x faster!
-	const [store, table, storeSettings] = await Promise.all([
+	const [store, facility, storeSettings] = await Promise.all([
 		getStoreWithProducts(params.storeId),
 		sqlClient.storeFacility.findFirst({
 			where: { id: params.facilityId },
@@ -36,6 +36,13 @@ export default async function TableOrderPage(props: {
 	}
 
 	transformDecimalsToNumbers(store);
+	if (storeSettings) {
+		transformDecimalsToNumbers(storeSettings);
+	}
+
+	if (facility) {
+		transformDecimalsToNumbers(facility);
+	}
 
 	let closed_descr = "";
 	let isStoreOpen = store.isOpen;
@@ -64,7 +71,7 @@ export default async function TableOrderPage(props: {
 				<StoreHomeContent
 					storeData={store}
 					storeSettings={storeSettings as StoreSettings}
-					tableData={table as StoreFacility}
+					tableData={facility as StoreFacility}
 				/>
 			)}
 		</Container>
