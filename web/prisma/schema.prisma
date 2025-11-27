@@ -526,11 +526,11 @@ model CustomerCreditLedger {
   id          String   @id @default(uuid())
   storeId     String
   userId      String //userId of the customer
-  amount      Decimal
-  balance     Decimal
+  amount      Decimal //point amount of this transaction
+  balance     Decimal //point after this transaction
   type        String // TOPUP, BONUS, SPEND, REFUND, ADJUSTMENT
-  referenceId String?
-  note        String?
+  referenceId String? //store order id
+  note        String? //optional note for this transaction
   creatorId   String? //userId who created this transaction
   createdAt   DateTime @default(now())
 

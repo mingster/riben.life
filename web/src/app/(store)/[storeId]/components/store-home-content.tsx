@@ -226,10 +226,10 @@ export const StoreHomeContent: React.FC<props> = ({
 						<ScrollArea className="w-full max-h-fit whitespace-nowrap">
 							<div className="items-center space-x-1">
 								{storeData.Categories.map((category: Category) => (
-									<a
+									<Link
 										key={category.id}
 										onClick={(e) => onNavlinkClick(e)}
-										href={`${getAbsoluteUrl()}/${storeData.id}#${category.id}`}
+										href={`#${category.id}`}
 									>
 										<div
 											data-to-scrollspy-id={category.id}
@@ -237,7 +237,7 @@ export const StoreHomeContent: React.FC<props> = ({
 										>
 											{category.name}
 										</div>
-									</a>
+									</Link>
 								))}
 							</div>
 							<ScrollBar orientation="vertical" />

@@ -59,9 +59,9 @@ export function GetMenuList(
 		...(store.rsvpSettings?.acceptReservation === true
 			? [
 					{
-						href: `${nav_prefix}/rsvp`,
-						label: t("rsvp"),
-						active: pathname.includes(`${nav_prefix}/rsvp`),
+						href: `${nav_prefix}/reservation`,
+						label: t("reservation"),
+						active: pathname.includes(`${nav_prefix}/reservation`),
 						icon: IconCalendarCheck,
 						submenus: [],
 					},
