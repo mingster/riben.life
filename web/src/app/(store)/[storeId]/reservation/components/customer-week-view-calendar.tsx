@@ -3,7 +3,6 @@
 import {
 	IconChevronLeft,
 	IconChevronRight,
-	IconCalendar,
 } from "@tabler/icons-react";
 import {
 	format,
@@ -22,12 +21,6 @@ import { zhTW } from "date-fns/locale/zh-TW";
 import { ja } from "date-fns/locale/ja";
 import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -180,10 +173,10 @@ const groupRsvpsByDayAndTime = (
 			rsvp.rsvpTime instanceof Date
 				? rsvp.rsvpTime
 				: parseISO(
-						typeof rsvp.rsvpTime === "string"
-							? rsvp.rsvpTime
-							: String(rsvp.rsvpTime),
-					);
+					typeof rsvp.rsvpTime === "string"
+						? rsvp.rsvpTime
+						: String(rsvp.rsvpTime),
+				);
 
 		// Check if RSVP is within the week
 		if (rsvpDate >= weekStart && rsvpDate <= weekEnd) {
@@ -215,373 +208,325 @@ export const CustomerWeekViewCalendar: React.FC<
 	user,
 	onReservationCreated,
 }) => {
-	const { lng } = useI18n();
-	const { t } = useTranslation(lng);
-	const today = useMemo(() => startOfDay(new Date()), []);
-	const [rsvps, setRsvps] = useState<Rsvp[]>(initialRsvps);
-	const [currentWeek, setCurrentWeek] = useState(() => {
-		// Always start with today to ensure we don't start on a past week
-		return new Date();
-	});
-
-	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
-	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
-	const businessHours = storeSettings?.businessHours ?? null;
-
-	const timeSlots = useMemo(
-		() => generateTimeSlots(useBusinessHours, rsvpHours, businessHours),
-		[useBusinessHours, rsvpHours, businessHours],
-	);
-
-	// Map i18n language codes to date-fns locales
-	const calendarLocale = useMemo((): Locale => {
-		const localeMap: Record<string, Locale> = {
-			tw: zhTW,
-			en: enUS,
-			jp: ja,
-		};
-		return localeMap[lng || "tw"] || zhTW;
-	}, [lng]);
-
-	const weekStart = useMemo(
-		() => startOfWeek(currentWeek, { weekStartsOn: 0 }), // Sunday
-		[currentWeek],
-	);
-	const weekEnd = useMemo(
-		() => endOfWeek(currentWeek, { weekStartsOn: 0 }), // Saturday
-		[currentWeek],
-	);
-
-	// Check if week start is before today
-	const isWeekInPast = useMemo(
-		() => isBefore(startOfDay(weekStart), today),
-		[weekStart, today],
-	);
-
-	// Generate days of the week
-	const weekDays = useMemo(() => {
-		const days: Date[] = [];
-		for (let i = 0; i < 7; i++) {
-			const date = new Date(weekStart);
-			date.setDate(weekStart.getDate() + i);
-			days.push(date);
-		}
-		return days;
-	}, [weekStart]);
-
-	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
-
-	// Filter RSVPs to only show those owned by the current user
-	const userRsvps = useMemo(() => {
-		if (!user) return [];
-		return rsvps.filter((rsvp) => {
-			// Match by userId if user is logged in
-			if (user.id && rsvp.userId) {
-				return rsvp.userId === user.id;
-			}
-			// For logged-in users, also match by email if userId doesn't match but email does
-			if (user.email && rsvp.User?.email) {
-				return rsvp.User.email === user.email;
-			}
-			return false;
+		const { lng } = useI18n();
+		const { t } = useTranslation(lng);
+		const today = useMemo(() => startOfDay(new Date()), []);
+		const [rsvps, setRsvps] = useState<Rsvp[]>(initialRsvps);
+		const [currentWeek, setCurrentWeek] = useState(() => {
+			// Always start with today to ensure we don't start on a past week
+			return new Date();
 		});
-	}, [rsvps, user]);
 
-	// Group RSVPs by day and time
-	const groupedRsvps = useMemo(
-		() => groupRsvpsByDayAndTime(userRsvps, weekStart, weekEnd),
-		[userRsvps, weekStart, weekEnd],
-	);
+		const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
+		const rsvpHours = rsvpSettings?.rsvpHours ?? null;
+		const businessHours = storeSettings?.businessHours ?? null;
 
-	const handlePreviousWeek = useCallback(() => {
-		setCurrentWeek((prev) => {
-			const newWeek = subWeeks(prev, 1);
-			const newWeekStart = startOfWeek(newWeek, { weekStartsOn: 0 });
-			// Don't allow navigation to past weeks
-			if (isBefore(startOfDay(newWeekStart), today)) {
-				return prev; // Stay on current week
-			}
-			return newWeek;
-		});
-	}, [today]);
-
-	const handleNextWeek = useCallback(() => {
-		setCurrentWeek((prev) => addWeeks(prev, 1));
-	}, []);
-
-	const handleToday = useCallback(() => {
-		setCurrentWeek(new Date());
-	}, []);
-
-	const handleDateSelect = useCallback(
-		(date: Date | undefined) => {
-			if (date) {
-				const selectedWeekStart = startOfWeek(date, { weekStartsOn: 0 });
-				// Don't allow selection of past weeks
-				if (!isBefore(startOfDay(selectedWeekStart), today)) {
-					setCurrentWeek(date);
-				}
-			}
-		},
-		[today],
-	);
-
-	const getRsvpsForSlot = (day: Date, timeSlot: string): Rsvp[] => {
-		const dayKey = format(day, "yyyy-MM-dd");
-		const key = `${dayKey}-${timeSlot}`;
-		return groupedRsvps[key] || [];
-	};
-
-	const handleTimeSlotClick = useCallback(
-		(day: Date, timeSlot: string) => {
-			onTimeSlotClick?.(day, timeSlot);
-		},
-		[onTimeSlotClick],
-	);
-
-	const handleReservationCreated = useCallback(
-		(newRsvp: Rsvp) => {
-			if (!newRsvp) return;
-			setRsvps((prev) => {
-				const exists = prev.some((item) => item.id === newRsvp.id);
-				if (exists) return prev;
-				return [newRsvp, ...prev];
-			});
-			onReservationCreated?.(newRsvp);
-		},
-		[onReservationCreated],
-	);
-
-	const [dropdown] =
-		useState<React.ComponentProps<typeof Calendar>["captionLayout"]>(
-			"dropdown",
+		const timeSlots = useMemo(
+			() => generateTimeSlots(useBusinessHours, rsvpHours, businessHours),
+			[useBusinessHours, rsvpHours, businessHours],
 		);
 
-	return (
-		<div className="flex flex-col gap-3 sm:gap-4">
-			{/* Week Navigation */}
-			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+		// Map i18n language codes to date-fns locales
+		const calendarLocale = useMemo((): Locale => {
+			const localeMap: Record<string, Locale> = {
+				tw: zhTW,
+				en: enUS,
+				jp: ja,
+			};
+			return localeMap[lng || "tw"] || zhTW;
+		}, [lng]);
+
+		const weekStart = useMemo(
+			() => startOfWeek(currentWeek, { weekStartsOn: 0 }), // Sunday
+			[currentWeek],
+		);
+		const weekEnd = useMemo(
+			() => endOfWeek(currentWeek, { weekStartsOn: 0 }), // Saturday
+			[currentWeek],
+		);
+
+		// Check if week start is before today
+		const isWeekInPast = useMemo(
+			() => isBefore(startOfDay(weekStart), today),
+			[weekStart, today],
+		);
+
+		// Generate days of the week
+		const weekDays = useMemo(() => {
+			const days: Date[] = [];
+			for (let i = 0; i < 7; i++) {
+				const date = new Date(weekStart);
+				date.setDate(weekStart.getDate() + i);
+				days.push(date);
+			}
+			return days;
+		}, [weekStart]);
+
+		const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
+
+		// Filter RSVPs to only show those owned by the current user
+		const userRsvps = useMemo(() => {
+			if (!user) return [];
+			return rsvps.filter((rsvp) => {
+				// Match by userId if user is logged in
+				if (user.id && rsvp.userId) {
+					return rsvp.userId === user.id;
+				}
+				// For logged-in users, also match by email if userId doesn't match but email does
+				if (user.email && rsvp.User?.email) {
+					return rsvp.User.email === user.email;
+				}
+				return false;
+			});
+		}, [rsvps, user]);
+
+		// Group RSVPs by day and time
+		const groupedRsvps = useMemo(
+			() => groupRsvpsByDayAndTime(userRsvps, weekStart, weekEnd),
+			[userRsvps, weekStart, weekEnd],
+		);
+
+		const handlePreviousWeek = useCallback(() => {
+			setCurrentWeek((prev) => {
+				const newWeek = subWeeks(prev, 1);
+				const newWeekStart = startOfWeek(newWeek, { weekStartsOn: 0 });
+				// Don't allow navigation to past weeks
+				if (isBefore(startOfDay(newWeekStart), today)) {
+					return prev; // Stay on current week
+				}
+				return newWeek;
+			});
+		}, [today]);
+
+		const handleNextWeek = useCallback(() => {
+			setCurrentWeek((prev) => addWeeks(prev, 1));
+		}, []);
+
+		const handleToday = useCallback(() => {
+			setCurrentWeek(new Date());
+		}, []);
+
+
+		const getRsvpsForSlot = (day: Date, timeSlot: string): Rsvp[] => {
+			const dayKey = format(day, "yyyy-MM-dd");
+			const key = `${dayKey}-${timeSlot}`;
+			return groupedRsvps[key] || [];
+		};
+
+		const handleTimeSlotClick = useCallback(
+			(day: Date, timeSlot: string) => {
+				onTimeSlotClick?.(day, timeSlot);
+			},
+			[onTimeSlotClick],
+		);
+
+		const handleReservationCreated = useCallback(
+			(newRsvp: Rsvp) => {
+				if (!newRsvp) return;
+				setRsvps((prev) => {
+					const exists = prev.some((item) => item.id === newRsvp.id);
+					if (exists) return prev;
+					return [newRsvp, ...prev];
+				});
+				onReservationCreated?.(newRsvp);
+			},
+			[onReservationCreated],
+		);
+
+
+		return (
+			<div className="flex flex-col gap-3 sm:gap-4">
+				{/* Week Navigation */}
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-center gap-1.5 sm:gap-2 font-mono text-sm flex-wrap">
-					<Popover>
-						<PopoverTrigger asChild>
-							<Button
-								variant="outline"
-								size="icon"
-								className={cn(
-									"h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0",
-									!currentWeek && "text-muted-foreground",
-								)}
-							>
-								<IconCalendar className="h-4 w-4 sm:h-5 sm:w-5" />
-							</Button>
-						</PopoverTrigger>
-						<PopoverContent
-							className="w-auto min-w-[280px] sm:min-w-[320px] p-3"
-							align="start"
+					<Button
+							variant="outline"
+							size="icon"
+							onClick={handlePreviousWeek}
+							disabled={isWeekInPast}
+							className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
 						>
-							<Calendar
-								mode="single"
-								selected={currentWeek}
-								onSelect={handleDateSelect}
-								captionLayout={dropdown}
-								locale={calendarLocale}
-								className="w-full rounded-lg shadow-sm"
-								disabled={(date) => {
-									const dateWeekStart = startOfWeek(date, { weekStartsOn: 0 });
-									return isBefore(startOfDay(dateWeekStart), today);
-								}}
-							/>
-						</PopoverContent>
-					</Popover>
-
-					<Button
-						variant="outline"
-						size="icon"
-						onClick={handlePreviousWeek}
-						disabled={isWeekInPast}
-						className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
-					>
-						<IconChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-					</Button>
-					<Button
-						variant="outline"
-						onClick={handleToday}
-						className="h-10 min-h-[44px] px-3 text-sm sm:h-9 sm:min-h-0"
-					>
-						{t("today")}
-					</Button>
-					<Button
-						variant="outline"
-						size="icon"
-						onClick={handleNextWeek}
-						className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
-					>
-						<IconChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
-					</Button>
-					<span className="ml-2 text-base font-semibold sm:ml-4 sm:text-lg">
-						<span className="hidden sm:inline">
-							{format(weekStart, "MMMd", { locale: calendarLocale })} -{" "}
-							{format(weekEnd, datetimeFormat, { locale: calendarLocale })}
+							<IconChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+						</Button>
+						<Button
+							variant="outline"
+							onClick={handleToday}
+							className="h-10 min-h-[44px] px-3 text-sm sm:h-9 sm:min-h-0"
+						>
+							{t("today")}
+						</Button>
+						<Button
+							variant="outline"
+							size="icon"
+							onClick={handleNextWeek}
+							className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+						>
+							<IconChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+						</Button>
+						<span className="ml-2 text-base font-semibold sm:ml-4 sm:text-lg">
+							<span className="hidden sm:inline">
+								{format(weekStart, "MMMd", { locale: calendarLocale })} -{" "}
+								{format(weekEnd, datetimeFormat, { locale: calendarLocale })}
+							</span>
+							<span className="sm:hidden">
+								{format(weekStart, "MMM d", { locale: calendarLocale })} -{" "}
+								{format(weekEnd, "MMM d", { locale: calendarLocale })}
+							</span>
 						</span>
-						<span className="sm:hidden">
-							{format(weekStart, "MMM d", { locale: calendarLocale })} -{" "}
-							{format(weekEnd, "MMM d", { locale: calendarLocale })}
-						</span>
-					</span>
+					</div>
 				</div>
-			</div>
 
-			{/* Calendar Grid */}
-			<div className="border rounded-lg overflow-hidden">
-				<div className="overflow-x-auto -mx-3 sm:mx-0">
-					<table className="w-full border-collapse min-w-[390px] sm:min-w-full">
-						<thead>
-							<tr>
-								<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-left text-[10px] sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
-									{t("time")}
-								</th>
-								{weekDays.map((day) => (
-									<th
-										key={day.toISOString()}
-										className={cn(
-											"border-b border-r p-0.5 sm:p-2 text-center text-[10px] sm:text-sm font-medium w-[48px] sm:min-w-[110px]",
-											isToday(day) && "bg-primary/10",
-											"last:border-r-0",
-										)}
-									>
-										<div className="flex flex-col">
-											<span className="text-[9px] sm:text-xs text-muted-foreground">
-												{getDayName(day, t)}
-											</span>
-											<span
-												className={cn(
-													"text-xs sm:text-lg font-semibold",
-													isToday(day) && "text-primary",
-												)}
-											>
-												{getDayNumber(day)}
-											</span>
-										</div>
+				{/* Calendar Grid */}
+				<div className="border rounded-lg overflow-hidden">
+					<div className="overflow-x-auto -mx-3 sm:mx-0">
+						<table className="w-full border-collapse min-w-[390px] sm:min-w-full">
+							<thead>
+								<tr>
+									<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-right text-[10px] sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
+										{t("time")}
 									</th>
-								))}
-							</tr>
-						</thead>
-						<tbody>
-							{timeSlots.map((timeSlot) => (
-								<tr key={timeSlot}>
-									<td className="border-b border-r p-1 sm:p-2 text-[10px] sm:text-sm text-muted-foreground sticky left-0 bg-background z-10">
-										{timeSlot}
-									</td>
-									{weekDays.map((day) => {
-										const slotRsvps = getRsvpsForSlot(day, timeSlot);
-										const isAvailable = slotRsvps.length === 0;
-										// Check if this day/time slot is in the past
-										const [hours, minutes] = timeSlot.split(":").map(Number);
-										const slotDateTime = new Date(day);
-										slotDateTime.setHours(hours, minutes, 0, 0);
-										const isPast = isBefore(slotDateTime, new Date());
-										const canSelect = isAvailable && !isPast;
-										return (
-											<td
-												key={`${day.toISOString()}-${timeSlot}`}
-												className={cn(
-													"border-b border-r p-0.5 sm:p-1 w-[48px] sm:min-w-[120px] align-top",
-													isToday(day) && "bg-primary/5",
-													"last:border-r-0",
-												)}
-											>
-												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
-													{slotRsvps.length > 0 ? (
-														slotRsvps.map((rsvp) => (
-															<div
-																key={rsvp.id}
-																className={cn(
-																	"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs bg-primary/10 min-h-[44px] touch-manipulation",
-																	rsvp.confirmedByStore &&
-																		"border-l-2 border-l-green-500",
-																	rsvp.alreadyPaid &&
-																		"border-l-2 border-l-blue-500",
-																)}
-															>
-																<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																	{rsvp.User?.name
-																		? rsvp.User.name
-																		: rsvp.User?.email
-																			? rsvp.User.email
-																			: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																					rsvp.numOfAdult + rsvp.numOfChild ===
-																					1
-																						? "guest"
-																						: "guests"
-																				}`}
-																</div>
-																{rsvp.Facility?.facilityName && (
-																	<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																		{rsvp.Facility.facilityName}
-																	</div>
-																)}
-																{rsvp.message && (
-																	<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																		{rsvp.message}
-																	</div>
-																)}
-															</div>
-														))
-													) : isAvailable ? (
-														storeId ? (
-															<ReservationDialog
-																storeId={storeId}
-																rsvpSettings={rsvpSettings}
-																facilities={facilities}
-																user={user}
-																defaultRsvpTime={(() => {
-																	const [hours, minutes] = timeSlot
-																		.split(":")
-																		.map(Number);
-																	const date = new Date(day);
-																	date.setHours(hours, minutes, 0, 0);
-																	return date;
-																})()}
-																onReservationCreated={handleReservationCreated}
-																trigger={
-																	<button
-																		type="button"
-																		disabled={isPast}
-																		className={cn(
-																			"w-full h-full min-h-[44px] sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground touch-manipulation flex items-center justify-center",
-																			isPast && "cursor-not-allowed opacity-50",
-																		)}
-																	>
-																		{!isPast && "+"}
-																	</button>
-																}
-															/>
-														) : (
-															<button
-																type="button"
-																onClick={() =>
-																	handleTimeSlotClick(day, timeSlot)
-																}
-																disabled={isPast}
-																className={cn(
-																	"w-full h-full min-h-[44px] sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground touch-manipulation flex items-center justify-center",
-																	isPast && "cursor-not-allowed opacity-50",
-																)}
-															>
-																{!isPast && "+"}
-															</button>
-														)
-													) : null}
-												</div>
-											</td>
-										);
-									})}
+									{weekDays.map((day) => (
+										<th
+											key={day.toISOString()}
+											className={cn(
+												"border-b border-r p-0.5 sm:p-2 text-center text-[10px] sm:text-sm font-medium w-[48px] sm:min-w-[110px]",
+												isToday(day) && "bg-primary/10",
+												"last:border-r-0",
+											)}
+										>
+											<div className="flex flex-col">
+												<span className="text-[9px] sm:text-xs text-muted-foreground">
+													{getDayName(day, t)}
+												</span>
+												<span
+													className={cn(
+														"text-xs sm:text-lg font-semibold",
+														isToday(day) && "text-primary",
+													)}
+												>
+													{getDayNumber(day)}
+												</span>
+											</div>
+										</th>
+									))}
 								</tr>
-							))}
-						</tbody>
-					</table>
+							</thead>
+							<tbody>
+								{timeSlots.map((timeSlot) => (
+									<tr key={timeSlot}>
+										<td className="border-b border-r p-1 sm:p-2 text-right text-[10px] sm:text-sm text-muted-foreground sticky left-0 bg-background z-10 whitespace-nowrap">
+											{timeSlot}
+										</td>
+										{weekDays.map((day) => {
+											const slotRsvps = getRsvpsForSlot(day, timeSlot);
+											const isAvailable = slotRsvps.length === 0;
+											// Check if this day/time slot is in the past
+											const [hours, minutes] = timeSlot.split(":").map(Number);
+											const slotDateTime = new Date(day);
+											slotDateTime.setHours(hours, minutes, 0, 0);
+											const isPast = isBefore(slotDateTime, new Date());
+											const canSelect = isAvailable && !isPast;
+											return (
+												<td
+													key={`${day.toISOString()}-${timeSlot}`}
+													className={cn(
+														"border-b border-r p-0.5 sm:p-1 w-[48px] sm:min-w-[120px] align-top",
+														isToday(day) && "bg-primary/5",
+														"last:border-r-0",
+													)}
+												>
+													<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
+														{slotRsvps.length > 0 ? (
+															slotRsvps.map((rsvp) => (
+																<div
+																	key={rsvp.id}
+																	className={cn(
+																		"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs min-h-[44px] touch-manipulation border-l-2",
+																		rsvp.confirmedByStore
+																			? "bg-green-50 dark:bg-green-950/20 border-l-green-500"
+																			: "bg-yellow-50 dark:bg-yellow-950/20 border-l-yellow-500",
+																		rsvp.alreadyPaid &&
+																		"border-l-blue-500",
+																	)}
+																>
+																	<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																		{rsvp.User?.name
+																			? rsvp.User.name
+																			: rsvp.User?.email
+																				? rsvp.User.email
+																				: `${rsvp.numOfAdult + rsvp.numOfChild} ${rsvp.numOfAdult + rsvp.numOfChild ===
+																					1
+																					? "guest"
+																					: "guests"
+																				}`}
+																	</div>
+																	{rsvp.Facility?.facilityName && (
+																		<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																			{rsvp.Facility.facilityName}
+																		</div>
+																	)}
+																	{rsvp.message && (
+																		<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																			{rsvp.message}
+																		</div>
+																	)}
+																</div>
+															))
+														) : isAvailable ? (
+															storeId ? (
+																<ReservationDialog
+																	storeId={storeId}
+																	rsvpSettings={rsvpSettings}
+																	facilities={facilities}
+																	user={user}
+																	defaultRsvpTime={(() => {
+																		const [hours, minutes] = timeSlot
+																			.split(":")
+																			.map(Number);
+																		const date = new Date(day);
+																		date.setHours(hours, minutes, 0, 0);
+																		return date;
+																	})()}
+																	onReservationCreated={handleReservationCreated}
+																	trigger={
+																		<button
+																			type="button"
+																			disabled={isPast}
+																			className={cn(
+																				"w-full h-full min-h-[44px] sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground touch-manipulation flex items-center justify-center",
+																				isPast && "cursor-not-allowed opacity-50",
+																			)}
+																		>
+																			{!isPast && "+"}
+																		</button>
+																	}
+																/>
+															) : (
+																<button
+																	type="button"
+																	onClick={() =>
+																		handleTimeSlotClick(day, timeSlot)
+																	}
+																	disabled={isPast}
+																	className={cn(
+																		"w-full h-full min-h-[44px] sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground touch-manipulation flex items-center justify-center",
+																		isPast && "cursor-not-allowed opacity-50",
+																	)}
+																>
+																	{!isPast && "+"}
+																</button>
+															)
+														) : null}
+													</div>
+												</td>
+											);
+										})}
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
-		</div>
-	);
-};
+		);
+	};

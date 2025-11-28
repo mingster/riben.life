@@ -63,13 +63,7 @@ export function ReservationClient({
 		: undefined;
 
 	return (
-		<div className="flex flex-col gap-6">
-			<Heading
-				title={t("reservation") || "Reservation"}
-				description={t("Create_Reservation_description")}
-			/>
-			<Separator />
-
+		<div className="flex flex-col gap-1">
 			{/* Week View Calendar */}
 			<CustomerWeekViewCalendar
 				rsvps={initialRsvps}
