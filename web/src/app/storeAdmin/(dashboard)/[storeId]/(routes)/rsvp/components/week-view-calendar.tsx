@@ -364,7 +364,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 							</Button>
 						</PopoverTrigger>
 						<PopoverContent
-							className="w-auto min-w-[280px] sm:min-w-[320px] p-3"
+							className="w-[280px] sm:w-[320px] p-3"
 							align="start"
 						>
 							<Calendar
@@ -420,7 +420,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 					<table className="w-full border-collapse min-w-[390px] sm:min-w-full">
 						<thead>
 							<tr>
-								<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-left text-[10px] sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
+								<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-right text-[10px] sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
 									{t("time")}
 								</th>
 								{weekDays.map((day) => (
@@ -452,7 +452,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						<tbody>
 							{timeSlots.map((timeSlot) => (
 								<tr key={timeSlot}>
-									<td className="border-b border-r p-1 sm:p-2 text-[10px] sm:text-sm text-muted-foreground sticky left-0 bg-background z-10">
+									<td className="border-b border-r p-1 sm:p-2 text-right text-[10px] sm:text-sm text-muted-foreground sticky left-0 bg-background z-10 whitespace-nowrap">
 										{timeSlot}
 									</td>
 									{weekDays.map((day) => {
