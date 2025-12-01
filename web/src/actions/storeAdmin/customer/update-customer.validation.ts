@@ -10,6 +10,7 @@ export const updateCustomerSchema = z.object({
 	storeId: z.string(),
 	timezone: z.string().min(1, "Timezone is required"),
 	stripeCustomerId: z.string().optional(),
+	phone: z.string().optional(),
 });
 
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;

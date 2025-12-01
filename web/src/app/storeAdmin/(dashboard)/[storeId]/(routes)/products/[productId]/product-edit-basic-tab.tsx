@@ -28,30 +28,26 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import type { Product } from "@/types";
 import { Prisma } from "@prisma/client";
-import axios, { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
+import type { Resolver } from "react-hook-form";
 import { ProductStatusCombobox } from "./product-status-combobox";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { ProductStatus } from "@/types/enum";
-
-const formSchema = z.object({
-	//storeId: z.string().optional().default(""),
-	name: z.string().min(1, { message: "product name is required" }),
-	description: z.string().optional().default(""),
-	price: z.number().min(1),
-	currency: z.string().optional().default("usd"),
-	isFeatured: z.boolean().default(false).optional(),
-	useOption: z.boolean().default(true).optional(),
-	status: z.number(),
-	//productAttribute: productAttributeModel.optional(),
-});
-
-type formValues = z.infer<typeof formSchema>;
+import { createStoreProductAction } from "@/actions/storeAdmin/product/create-product";
+import { updateProductAction } from "@/actions/storeAdmin/product/update-product";
+import {
+	createStoreProductSchema,
+	type CreateStoreProductInput,
+} from "@/actions/storeAdmin/product/create-product.validation";
+import {
+	updateProductSchema,
+	type UpdateProductInput,
+} from "@/actions/storeAdmin/product/update-product.validation";
+import type { ProductColumn } from "../product-column";
 
 interface editProps {
 	initialData:
@@ -63,45 +59,60 @@ interface editProps {
 		  })
 		| null;
 	action: string;
+	onUpdated?: (product: ProductColumn) => void;
+	onCreated?: (product: ProductColumn) => void;
 }
-export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
-	const params = useParams();
+export const ProductEditBasicTab = ({
+	initialData,
+	action,
+	onUpdated,
+	onCreated,
+}: editProps) => {
+	const params = useParams<{ storeId: string }>();
 	const router = useRouter();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	//const [open, setOpen] = useState(false);
-	//const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
 
-	const defaultValues = initialData
-		? {
-				...initialData,
-				description: initialData.description ?? "",
-				price: Number(initialData.price), // Convert Prisma.Decimal to number
-			}
-		: {
-				name: "",
-				description: "",
-				price: new Prisma.Decimal(0.0).toNumber(), // Convert Prisma.Decimal to number
-				currency: "usd",
-				isFeatured: false,
-				status: Number(ProductStatus.Published),
-			};
+	const isEditMode = Boolean(initialData);
 
-	// Replace null values with empty strings for string fields
-	const sanitizedDefaultValues = Object.fromEntries(
-		Object.entries(defaultValues).map(([key, value]) => [
-			key,
-			value === null ? "" : value,
-		]),
+	const defaultValues = useMemo(
+		() =>
+			initialData
+				? {
+						...initialData,
+						description: initialData.description ?? "",
+						price: Number(initialData.price), // Convert Prisma.Decimal to number
+						currency: initialData.currency ?? "usd",
+						status: initialData.status ?? Number(ProductStatus.Published),
+						isFeatured: initialData.isFeatured ?? false,
+					}
+				: {
+						name: "",
+						description: "",
+						price: 0,
+						currency: "usd",
+						isFeatured: false,
+						status: Number(ProductStatus.Published),
+					},
+		[initialData],
 	);
 
-	//console.log(`product basic: ${JSON.stringify(defaultValues)}`);
-	const form = useForm<formValues>({
-		resolver: zodResolver(formSchema) as any,
-		defaultValues: sanitizedDefaultValues,
+	const schema = useMemo(
+		() => (isEditMode ? updateProductSchema : createStoreProductSchema),
+		[isEditMode],
+	);
+
+	type FormInput = Omit<UpdateProductInput, "id" | "storeId"> & {
+		id?: string;
+		storeId?: string;
+	};
+
+	const form = useForm<FormInput>({
+		resolver: zodResolver(schema) as Resolver<FormInput>,
+		defaultValues,
 		mode: "onChange",
 	});
 
@@ -111,43 +122,76 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
 		handleSubmit,
 		watch,
 		clearErrors,
-	} = useForm<formValues>();
-	const onSubmit = async (data: formValues) => {
+	} = form;
+
+	const onSubmit = async (data: FormInput) => {
 		try {
 			setLoading(true);
-			//console.log(`onSubmit: ${JSON.stringify(data)}`);
-			if (initialData) {
+
+			if (isEditMode && initialData) {
 				// do edit
-				await axios.patch(
-					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product/${initialData.id}`,
-					data,
-				);
-				toastSuccess({
-					title: t("Product_updated"),
-					description: "",
+				const result = await updateProductAction({
+					storeId: String(params.storeId),
+					id: initialData.id,
+					name: data.name,
+					description: data.description ?? "",
+					price: data.price,
+					currency: data.currency ?? "usd",
+					status: data.status,
+					isFeatured: data.isFeatured ?? false,
 				});
-				router.refresh();
+
+				if (result?.serverError) {
+					toastError({
+						title: t("error_title"),
+						description: result.serverError,
+					});
+					return;
+				}
+
+				if (result?.data?.product) {
+					toastSuccess({
+						title: t("Product_updated"),
+						description: "",
+					});
+					onUpdated?.(result.data.product);
+				}
 			} else {
 				// do create
-				const obj = await axios.post(
-					`${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/product`,
-					data,
-				);
-
-				//console.log(`create product: ${JSON.stringify(obj)}`);
-
-				toastSuccess({
-					title: t("Product_created"),
-					description: "",
+				const result = await createStoreProductAction({
+					storeId: String(params.storeId),
+					name: data.name,
+					description: data.description ?? "",
+					price: data.price,
+					currency: data.currency ?? "usd",
+					status: data.status,
+					isFeatured: data.isFeatured ?? false,
 				});
-				router.push(`/storeAdmin/${params.storeId}/products/${obj.data.id}`);
-				router.refresh();
+
+				if (result?.serverError) {
+					toastError({
+						title: t("error_title"),
+						description: result.serverError,
+					});
+					return;
+				}
+
+				if (result?.data?.product) {
+					toastSuccess({
+						title: t("Product_created"),
+						description: "",
+					});
+					// Navigate to the new product page
+					router.push(
+						`/storeAdmin/${params.storeId}/products/${result.data.product.id}`,
+					);
+					onCreated?.(result.data.product);
+				}
 			}
-		} catch (err: unknown) {
-			const error = err as AxiosError;
+		} catch (error: unknown) {
 			toastError({
-				title: "Something went wrong.",
-				description: error.message,
+				title: t("error_title"),
+				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
 			setLoading(false);
@@ -194,13 +238,21 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
 											<FormControl>
 												<Input
 													type="number"
-													//disabled={loading || form.watch("useOption")}
+													min={0}
+													step="0.01"
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed"
 													placeholder={
 														t("input_placeholder1") + t("Product_price")
 													}
-													{...field}
+													value={Number.isNaN(field.value) ? "" : field.value}
+													onChange={(event) => {
+														const value =
+															event.target.value === ""
+																? 0
+																: Number(event.target.value);
+														field.onChange(value);
+													}}
 												/>
 											</FormControl>
 											<FormMessage />
@@ -247,8 +299,8 @@ export const ProductEditBasicTab = ({ initialData, action }: editProps) => {
 												<div>
 													<ProductStatusCombobox
 														disabled={loading || form.formState.isSubmitting}
-														defaultValue={field.value}
-														onChange={field.onChange}
+														defaultValue={field.value ?? Number(ProductStatus.Published)}
+														onChange={(value) => field.onChange(Number(value))}
 													/>
 												</div>
 											</FormControl>

@@ -133,7 +133,15 @@ RSVP（預約/約會）系統使任何企業都能接受、管理和追蹤客戶
 **FR-RSVP-005：** 系統必須分配預約狀態：
 
 - 預設狀態：0（待處理）
-- 狀態值：pending（待處理）、confirmed（已確認）、seated（已就座）、completed（已完成）、cancelled（已取消）、no_show（未到）
+- 狀態值（RsvpStatus 枚舉）：
+  - `0` = Pending（待確認/尚未付款）- 預約建立時的初始狀態
+  - `10` = AlreadyPaid（已付款）- 已收到付款
+  - `20` = StoreConfirmed（店家已確認預約）- 店家已確認預約
+  - `30` = CustomerConfirmed（客戶已確認預約）- 客戶已確認預約
+  - `40` = Seated（已帶位）- 客戶已就座/到達
+  - `50` = Completed（已完成）- 預約/服務已完成
+  - `60` = Cancelled（已取消）- 預約已取消
+  - `70` = NoShow（未到）- 客戶未到
 
 **FR-RSVP-006：** 系統必須支援雙重確認：
 
@@ -191,7 +199,7 @@ RSVP（預約/約會）系統使任何企業都能接受、管理和追蹤客戶
 **FR-RSVP-016：** 店員和店長必須能夠查看所有預約：
 
 - 每日檢視（按日期）
-- 依狀態過濾（pending、confirmed、seated、completed、cancelled、no_show）
+- 依狀態過濾（Pending、AlreadyPaid、StoreConfirmed、CustomerConfirmed、Seated、Completed、Cancelled、NoShow）
 - 依設施過濾
 - 依客戶姓名、電子郵件或電話搜尋
 
@@ -595,7 +603,7 @@ RSVP（預約/約會）系統使任何企業都能接受、管理和追蹤客戶
 - 兒童人數
 - 預約日期/時間（rsvpTime）
 - 到達時間（arriveTime，就座時）
-- 狀態（pending、confirmed、seated、completed、cancelled、no_show）
+- 狀態（Pending、AlreadyPaid、StoreConfirmed、CustomerConfirmed、Seated、Completed、Cancelled、NoShow）
 - 特殊要求/訊息
 - 確認標記（由店面和客戶）
 - 支付狀態（alreadyPaid）

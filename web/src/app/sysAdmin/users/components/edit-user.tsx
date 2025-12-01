@@ -291,7 +291,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 											<FormLabel>Role</FormLabel>
 											<FormControl>
 												<UserRoleCombobox
-													defaultValue={field.value}
+													defaultValue={field.value ?? ""}
 													onChange={field.onChange}
 												/>
 											</FormControl>

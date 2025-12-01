@@ -55,9 +55,9 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 				? {
 						acceptReservation: rsvpSettings.acceptReservation,
 						prepaidRequired: rsvpSettings.prepaidRequired,
-						prepaidAmount:
-							rsvpSettings.prepaidAmount !== null
-								? Number(rsvpSettings.prepaidAmount)
+					minPrepaidAmount:
+						rsvpSettings.minPrepaidAmount !== null
+							? Number(rsvpSettings.minPrepaidAmount)
 								: null,
 						canCancel: rsvpSettings.canCancel,
 						cancelHours: rsvpSettings.cancelHours,
@@ -76,7 +76,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 				: {
 						acceptReservation: true,
 						prepaidRequired: false,
-						prepaidAmount: null,
+					minPrepaidAmount: null,
 						canCancel: true,
 						cancelHours: 24,
 						defaultDuration: 60,
@@ -134,8 +134,8 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 					storeId: result.data.rsvpSettings.storeId,
 					acceptReservation: result.data.rsvpSettings.acceptReservation,
 					prepaidRequired: result.data.rsvpSettings.prepaidRequired,
-					prepaidAmount: result.data.rsvpSettings.prepaidAmount
-						? Number(result.data.rsvpSettings.prepaidAmount)
+					minPrepaidAmount: result.data.rsvpSettings.minPrepaidAmount
+						? Number(result.data.rsvpSettings.minPrepaidAmount)
 						: null,
 					canCancel: result.data.rsvpSettings.canCancel,
 					cancelHours: Number(result.data.rsvpSettings.cancelHours),
@@ -325,7 +325,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								{form.watch("prepaidRequired") && (
 									<FormField
 										control={form.control}
-										name="prepaidAmount"
+										name="minPrepaidAmount"
 										render={({ field }) => (
 											<FormItem>
 												<FormLabel>{t("RSVP_Prepaid_Amount")}</FormLabel>

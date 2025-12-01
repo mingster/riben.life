@@ -271,7 +271,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 											<CurrencyCombobox
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
-												defaultValue={field.value}
+												defaultValue={field.value ?? "twd"}
 											/>
 										</FormItem>
 									)}

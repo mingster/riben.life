@@ -183,7 +183,7 @@ export function BulkCreateProductsDialog({
 									<FormControl>
 										<ProductStatusCombobox
 											disabled={loading}
-											defaultValue={field.value}
+											defaultValue={field.value ?? Number(ProductStatus.Published)}
 											onChange={(value) => field.onChange(Number(value))}
 										/>
 									</FormControl>

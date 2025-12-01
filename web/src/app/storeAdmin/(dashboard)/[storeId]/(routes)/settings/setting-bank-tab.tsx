@@ -28,11 +28,11 @@ import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/app/i18n/client";
 import { TwBankCodeCombobox } from "@/components/tw-bankcode-combobox";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StoreSettings } from "@prisma/client";
 import { PayoutScheduleCombobox } from "./payout-schedule-combobox";
 import type { SettingsFormProps } from "./setting-basic-tab";
 import { updateStoreBankAction } from "@/actions/storeAdmin/settings/update-store-bank";
 import type { UpdateStoreBankInput } from "@/actions/storeAdmin/settings/update-store-bank.validation";
+import { PayoutScheduleNum } from "@/types/enum";
 
 const formSchema = z.object({
 	payoutSchedule: z.number(),
@@ -132,7 +132,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 										<FormControl>
 											<PayoutScheduleCombobox
 												disabled={loading || form.formState.isSubmitting}
-												defaultValue={field.value}
+												defaultValue={field.value ?? Number(PayoutScheduleNum.Manual)}
 												onChange={field.onChange}
 											/>
 										</FormControl>

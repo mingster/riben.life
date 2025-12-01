@@ -4,7 +4,7 @@ export const updateRsvpSettingsSchema = z.object({
 	storeId: z.string().uuid(),
 	acceptReservation: z.boolean().optional(),
 	prepaidRequired: z.boolean().optional(),
-	prepaidAmount: z.number().nonnegative().nullable().optional(),
+	minPrepaidAmount: z.number().nonnegative().nullable().optional(),
 	canCancel: z.boolean().optional(),
 	cancelHours: z.number().int().min(0).optional(),
 	defaultDuration: z.number().int().min(1).optional(),
@@ -18,6 +18,16 @@ export const updateRsvpSettingsSchema = z.object({
 	useReminderEmail: z.boolean().optional(),
 	syncWithGoogle: z.boolean().optional(),
 	syncWithApple: z.boolean().optional(),
+	// Reserve with Google integration fields
+	reserveWithGoogleEnabled: z.boolean().optional(),
+	googleBusinessProfileId: z.string().nullable().optional(),
+	googleBusinessProfileName: z.string().nullable().optional(),
+	reserveWithGoogleAccessToken: z.string().nullable().optional(),
+	reserveWithGoogleRefreshToken: z.string().nullable().optional(),
+	reserveWithGoogleTokenExpiry: z.coerce.date().nullable().optional(),
+	reserveWithGoogleLastSync: z.coerce.date().nullable().optional(),
+	reserveWithGoogleSyncStatus: z.string().nullable().optional(),
+	reserveWithGoogleError: z.string().nullable().optional(),
 });
 
 export type UpdateRsvpSettingsInput = z.infer<typeof updateRsvpSettingsSchema>;

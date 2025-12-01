@@ -137,6 +137,23 @@ export default function EditUser({ serverData }: props) {
 						/>
 						<FormField
 							control={form.control}
+							name="phone"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("phone")}</FormLabel>
+									<FormControl>
+										<Input
+											disabled={loading || form.formState.isSubmitting}
+											placeholder="Enter your phone number"
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
 							name="locale"
 							render={({ field }) => (
 								<FormItem>

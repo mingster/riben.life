@@ -245,7 +245,7 @@ export const StoreModal: React.FC = () => {
 											<Select
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
-												defaultValue={field.value}
+												defaultValue={field.value ?? ""}
 											>
 												<SelectTrigger>
 													<SelectValue
@@ -270,7 +270,7 @@ export const StoreModal: React.FC = () => {
 											<CurrencyCombobox
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
-												defaultValue={field.value}
+												defaultValue={field.value ?? ""}
 											/>
 										</FormItem>
 									)}
@@ -285,7 +285,7 @@ export const StoreModal: React.FC = () => {
 											<CountryCombobox
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
-												defaultValue={field.value}
+												defaultValue={field.value ?? ""}
 											/>
 										</FormItem>
 									)}

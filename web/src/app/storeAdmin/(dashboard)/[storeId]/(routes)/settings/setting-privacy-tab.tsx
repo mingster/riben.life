@@ -145,7 +145,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({
 										<FormLabel>{t("StoreSettings_privacyPolicy")}</FormLabel>
 										<FormControl>
 											<EditorComp
-												markdown={field.value}
+												markdown={field.value ?? ""}
 												onPChange={field.onChange}
 											/>
 										</FormControl>
@@ -161,7 +161,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({
 										<FormLabel>{t("StoreSettings_terms")}</FormLabel>
 										<FormControl>
 											<EditorComp
-												markdown={field.value}
+												markdown={field.value ?? ""}
 												onPChange={field.onChange}
 											/>
 										</FormControl>

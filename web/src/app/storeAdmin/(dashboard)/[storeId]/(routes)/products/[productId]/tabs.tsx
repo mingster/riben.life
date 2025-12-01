@@ -214,7 +214,17 @@ export const ProductEditTabs = ({
 				</TabsList>
 
 				<TabsContent value="basic">
-					<ProductEditBasicTab initialData={initialData} action={action} />
+					<ProductEditBasicTab
+						initialData={initialData}
+						action={action}
+						onUpdated={(product) => {
+							// Product updated - could refresh or update local state
+							// For now, we'll let the component handle navigation
+						}}
+						onCreated={(product) => {
+							// Product created - navigation handled in component
+						}}
+					/>
 				</TabsContent>
 
 				<TabsContent value="categories">

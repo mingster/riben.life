@@ -24,6 +24,7 @@ model User {
   locale           String?
   timezone         String?
   stripeCustomerId String? @unique
+  phone            String? @unique
 
   twoFactorEnabled Boolean? @default(false)
 
@@ -42,7 +43,7 @@ model User {
   Orders                    StoreOrder[]           @relation("UserOrders")
   Rsvp                      Rsvp[]
   CustomerCredits           CustomerCredit[]
-  CustomerCreditLedger        CustomerCreditLedger[] @relation("UserCustomerCreditLogs")
+  CustomerCreditLedger      CustomerCreditLedger[] @relation("UserCustomerCreditLogs")
   CustomerCreditLogsCreator CustomerCreditLedger[] @relation("UserCustomerCreditLogsCreator")
   StoreLedgerCreated        StoreLedger[]
 
@@ -534,9 +535,9 @@ model CustomerCreditLedger {
   creatorId   String? //userId who created this transaction
   createdAt   DateTime @default(now())
 
-  Store   Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User    User  @relation("UserCustomerCreditLogs", fields: [userId], references: [id], onDelete: Cascade)
-  Creator User? @relation("UserCustomerCreditLogsCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  Store      Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User       User        @relation("UserCustomerCreditLogs", fields: [userId], references: [id], onDelete: Cascade)
+  Creator    User?       @relation("UserCustomerCreditLogsCreator", fields: [creatorId], references: [id], onDelete: SetNull)
   StoreOrder StoreOrder? @relation(fields: [referenceId], references: [id], onDelete: SetNull)
 
   @@index([storeId])
@@ -683,7 +684,7 @@ model RsvpSettings {
 
   acceptReservation Boolean  @default(true) // turn on/off the reservation system
   prepaidRequired   Boolean  @default(false) //預付制：儲值後才可預約 / //訂位需付訂金
-  prepaidAmount     Decimal? //預付金額/點數
+  minPrepaidAmount  Decimal? @default(0) //最低預付金額
 
   canCancel   Boolean @default(true) //可取消預約
   cancelHours Int     @default(24) //取消預約時間：小時前可取消
@@ -705,15 +706,15 @@ model RsvpSettings {
   syncWithApple  Boolean @default(false) //同步Apple日曆
 
   // Reserve with Google integration fields
-  reserveWithGoogleEnabled     Boolean  @default(false)
-  googleBusinessProfileId      String?  // Google Business Profile ID
-  googleBusinessProfileName    String?  // Store name in Google Business Profile
-  reserveWithGoogleAccessToken String?  // Encrypted OAuth access token
+  reserveWithGoogleEnabled      Boolean   @default(false)
+  googleBusinessProfileId       String? // Google Business Profile ID
+  googleBusinessProfileName     String? // Store name in Google Business Profile
+  reserveWithGoogleAccessToken  String? // Encrypted OAuth access token
   reserveWithGoogleRefreshToken String? // Encrypted OAuth refresh token
-  reserveWithGoogleTokenExpiry DateTime? // Token expiry timestamp
-  reserveWithGoogleLastSync    DateTime? // Last successful sync timestamp
-  reserveWithGoogleSyncStatus  String?  // "connected", "error", "disconnected"
-  reserveWithGoogleError       String?  // Last error message
+  reserveWithGoogleTokenExpiry  DateTime? // Token expiry timestamp
+  reserveWithGoogleLastSync     DateTime? // Last successful sync timestamp
+  reserveWithGoogleSyncStatus   String? // "connected", "error", "disconnected"
+  reserveWithGoogleError        String? // Last error message
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

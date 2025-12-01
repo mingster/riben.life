@@ -56,7 +56,7 @@ Store Staff can:
 - View all reservations
 - Edit reservations
 - Confirm reservations
-- Mark reservation status (seated, no-show, completed)
+- Mark reservation status (Seated, NoShow, Completed, and other status values)
 - Cancel reservations
 - View and manage waitlist
 - View resource status
@@ -104,7 +104,7 @@ Store Admins have all Store Staff permissions, plus:
 - Customer contact information:
   - User ID (if logged in, optional)
   - Email address (required if not logged in)
-  - Phone number (optional)
+  - Phone number (required)
 - Special requests or notes (message, optional)
 - Facility preference (facilityId, optional)
 
@@ -119,9 +119,13 @@ Store Admins have all Store Staff permissions, plus:
 
 **FR-RSVP-004:** The system must support prepaid reservations when enabled:
 
-- If `prepaidRequired` is true, customer must be signed in (authentication required)
-- Customer must pay `prepaidAmount` before reservation is confirmed
-- `prepaidAmount` can be specified as either:
+- If `prepaidRequired` is true:
+  - Anonymous users must sign in or register before creating a reservation
+  - Customer must be signed in (authentication required)
+  - Customer can create a pending RSVP first, then be prompted to complete recharge of store credit
+  - When a customer creates a pending RSVP, a store order is automatically created with `minPrepaidAmount` from `RsvpSettings`
+  - Customer must pay the prepaid amount (minimum `minPrepaidAmount`) before reservation status transitions to `AlreadyPaid`
+- `minPrepaidAmount` can be specified as either:
   - A dollar amount (currency value, e.g., $50.00)
   - A CustomerCredit amount (points/credits value, e.g., 100 credits)
 - Payment can be made using existing customer credit (`CustomerCredit` database table)
@@ -132,13 +136,136 @@ Store Admins have all Store Staff permissions, plus:
 
 **FR-RSVP-005:** The system must assign a reservation status:
 
-- Default status: 0 (pending)
-- Status values: pending, confirmed, seated, completed, cancelled, no_show
+- Default status: 0 (Pending)
+- Status values (RsvpStatus enum):
+  - `0` = Pending (待確認/尚未付款) - Initial status when reservation is created
+  - `10` = AlreadyPaid (已付款) - Payment has been received
+  - `20` = StoreConfirmed (店家已確認預約) - Store has confirmed the reservation
+  - `30` = CustomerConfirmed (客戶已確認預約) - Customer has confirmed the reservation
+  - `40` = Seated (已帶位) - Customer has been seated/arrived
+  - `50` = Completed (已完成) - Reservation/service has been completed
+  - `60` = Cancelled (已取消) - Reservation has been cancelled
+  - `70` = NoShow (未到) - Customer did not show up for the reservation
 
 **FR-RSVP-006:** The system must support dual confirmation:
 
 - `confirmedByStore`: Store staff or admin has confirmed the reservation
 - `confirmedByCustomer`: Customer has confirmed the reservation
+
+#### 3.1.1a Use Case: Customer-Facing Online Reservation (Prepaid NOT Required)
+
+**UC-RSVP-001:** Customer creates a reservation when prepaid is not required (`prepaidRequired = false`):
+
+**Preconditions:**
+
+- Store has RSVP enabled (`acceptReservation = true`)
+- Prepaid is not required (`prepaidRequired = false`)
+- Customer is on the store's public RSVP page
+
+**Main Flow:**
+
+1. **Customer Access:**
+
+   - Customer navigates to the store's public RSVP page
+   - Customer may be anonymous (not logged in) or logged in
+   - No authentication required for reservation creation
+
+2. **Reservation Form Display:**
+
+   - System displays the reservation form with available time slots
+   - Customer can view available dates/times based on:
+     - Business hours (`useBusinessHours`, `rsvpHours`)
+     - Existing reservations
+     - Facility availability
+
+3. **Customer Fills Form:**
+
+   - Customer selects date and time (rsvpTime)
+   - Customer enters party size:
+     - Number of adults (numOfAdult, default: 1)
+     - Number of children (numOfChild, default: 0)
+   - Customer provides contact information:
+     - If logged in: User ID is automatically captured, phone number required, email optional
+     - If anonymous: Email address is required, phone number required
+   - Customer optionally selects facility preference (facilityId)
+   - Customer optionally adds special requests or notes (message)
+
+4. **Form Validation:**
+
+   - System validates:
+     - Selected time is within business hours
+     - Selected time slot is available
+     - Required fields are filled (email if anonymous, phone number always required)
+     - Party size is valid (at least 1 adult)
+
+5. **Reservation Creation:**
+
+   - Customer submits the form
+   - System creates reservation with:
+     - Status: `Pending (0)`
+     - `alreadyPaid`: `false`
+     - `confirmedByStore`: `false`
+     - `confirmedByCustomer`: `false`
+     - No order is created (no `orderId`)
+   - Reservation is saved to database
+
+6. **Confirmation to Customer:**
+
+   - System displays on-screen confirmation message
+   - System sends confirmation notifications:
+     - Email confirmation (if email provided)
+     - SMS confirmation (if `useReminderSMS` enabled and phone provided)
+     - LINE notification (if `useReminderLine` enabled and LINE account linked)
+   - Customer receives confirmation with reservation details
+
+7. **Store Staff Notification:**
+
+   - **No notification sent to store staff** (since status is `Pending` and `alreadyPaid = false`)
+   - Store staff can view the reservation in the admin interface
+
+8. **Post-Creation:**
+
+   - Customer can view reservation through:
+     - Account dashboard (if logged in)
+     - Reservation confirmation link (if anonymous)
+   - Store staff can view and manage the reservation in admin interface
+   - Reservation remains in `Pending` status until store confirms or customer confirms
+
+**Alternative Flows:**
+
+**A1: Invalid Time Slot Selected:**
+
+- Customer selects unavailable time slot
+- System displays error message
+- Customer selects different time slot
+- Flow continues from step 3
+
+**A2: Missing Required Contact Information:**
+
+- Customer submits form without required contact information (email if anonymous, phone number)
+- System displays validation error
+- Customer provides missing required information
+- Flow continues from step 4
+
+**A3: Business Hours Validation Failure:**
+
+- Customer selects time outside business hours
+- System displays error message
+- Customer selects time within business hours
+- Flow continues from step 4
+
+**Postconditions:**
+
+- Reservation is created with `Pending` status
+- Customer receives confirmation notification
+- Store staff can view reservation in admin interface
+- No payment is required
+- No store order is created
+
+**Related Requirements:**
+
+- FR-RSVP-001, FR-RSVP-002, FR-RSVP-003, FR-RSVP-005, FR-RSVP-006
+- FR-RSVP-039 (Confirmation Notifications)
 
 #### 3.1.2 Staff-Created Reservations
 
@@ -149,6 +276,70 @@ Store Admins have all Store Staff permissions, plus:
 **FR-RSVP-009:** Store staff and Store admins must be able to mark staff-created reservations with a source identifier (e.g., phone call, in-person request, walk-in).
 
 **FR-RSVP-010:** Store staff and Store admins must be able to add multiple reservations for the same customer through the staff interface. The system must support recurring reservation patterns (e.g., every Wednesday at 3pm, repeat 10 times).
+
+#### 3.1.3 Reservation Lifecycle
+
+**FR-RSVP-011:** The system must manage the complete lifecycle of a reservation through defined status transitions:
+
+**Initial State:**
+
+- When a reservation is created (online or by staff), it starts with status `Pending (0)`
+- If `prepaidRequired` is true, a store order is automatically created with `minPrepaidAmount`
+- The reservation remains in `Pending` status until payment and/or confirmation occurs
+
+**Payment Flow (if prepaid required):**
+
+- Customer can create a pending RSVP first, then be prompted to complete recharge of store credit
+- When payment is received (via customer credit or order payment), status transitions to `AlreadyPaid (10)`
+- The `alreadyPaid` flag is set to `true`
+- The reservation is linked to the order via `orderId`
+- Store staff notifications are sent only when status reaches `AlreadyPaid`
+
+**Confirmation Flow:**
+
+- Store staff or admin can confirm the reservation, setting `confirmedByStore = true` and status to `StoreConfirmed (20)`
+- Customer can confirm the reservation (if requested by store), setting `confirmedByCustomer = true` and status to `CustomerConfirmed (30)`
+- Confirmation can occur in any order (store first, customer first, or simultaneously)
+- Both confirmation flags can be true simultaneously
+
+**Service Flow:**
+
+- When the customer arrives and is seated/checked in, store staff marks status as `Seated (40)`
+- The `arriveTime` field is recorded when status changes to `Seated`
+- After service is completed, store staff marks status as `Completed (50)`
+
+**Termination States:**
+
+- If the reservation is cancelled (by customer or store), status changes to `Cancelled (60)`
+- If the customer does not show up for the reservation, store staff can mark status as `NoShow (70)`
+- Once in `Cancelled` or `NoShow` status, the reservation cannot transition to active states
+
+**Status Transition Rules:**
+
+- Status transitions are generally forward-moving (e.g., `Pending` → `AlreadyPaid` → `StoreConfirmed` → `Seated` → `Completed`)
+- However, status can transition to `Cancelled` or `NoShow` from any active state
+- Store staff and store admins can manually set status to any valid state (with appropriate business rule validation)
+- Status transitions should be logged for audit purposes
+
+**Lifecycle Diagram:**
+
+```text
+Pending (0)
+  ↓
+AlreadyPaid (10) [if prepaid required]
+  ↓
+StoreConfirmed (20) or CustomerConfirmed (30) [or both]
+  ↓
+Seated (40) [when customer arrives]
+  ↓
+Completed (50) [when service is finished]
+
+[At any point before Completed:]
+  → Cancelled (60) [if cancelled]
+  → NoShow (70) [if customer doesn't show]
+```
+
+**Note:** The status enum values (0, 10, 20, 30, 40, 50, 60, 70) are spaced to allow for future intermediate states if needed.
 
 ---
 
@@ -191,7 +382,7 @@ Store Admins have all Store Staff permissions, plus:
 **FR-RSVP-016:** Store staff and Store admins must be able to view all reservations:
 
 - Daily view (by date)
-- Filter by status (pending, confirmed, seated, completed, cancelled, no_show)
+- Filter by status (Pending, AlreadyPaid, StoreConfirmed, CustomerConfirmed, Seated, Completed, Cancelled, NoShow)
 - Filter by facility
 - Search by customer name, email, or phone
 
@@ -287,9 +478,10 @@ Store Admins have all Store Staff permissions, plus:
 **FR-RSVP-029:** Store admins must be able to configure prepaid requirements:
 
 - Enable/disable prepaid requirement (`prepaidRequired`)
-- Set prepaid amount (`prepaidAmount`) which can be specified as:
+- Set minimum prepaid amount (`minPrepaidAmount`) which can be specified as:
   - A dollar amount (currency value)
   - A CustomerCredit amount (points/credits value)
+- When `prepaidRequired` is true and a customer creates a pending RSVP, a store order is automatically created with `minPrepaidAmount`
 - Require payment before reservation confirmation
 
 #### 3.4.3 Cancellation Settings
@@ -376,12 +568,17 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.6.1 Confirmation Notifications
 
-**FR-RSVP-039:** The system must send confirmation notifications immediately upon reservation creation:
+**FR-RSVP-039:** The system must send confirmation notifications:
 
+- **To customers:** Immediately upon reservation creation (pending RSVP):
 - On-screen confirmation message
 - Email confirmation (if email provided)
 - SMS confirmation (if `useReminderSMS` enabled and phone provided)
 - LINE notification (if `useReminderLine` enabled and LINE account linked)
+- **To store staff:** Only when reservation status reaches `AlreadyPaid (10)`:
+  - Store staff are notified when payment is received and RSVP status transitions to `AlreadyPaid`
+  - This ensures store staff are only notified of reservations that have been paid for
+  - Notifications are not sent for pending RSVPs that have not yet been paid
 
 **FR-RSVP-040:** Confirmation notifications must include:
 
@@ -595,7 +792,7 @@ Store Admins have all Store Staff permissions, plus:
 - Number of children
 - Reservation date/time (rsvpTime)
 - Arrival time (arriveTime, when seated)
-- Status (pending, confirmed, seated, completed, cancelled, no_show)
+- Status (Pending, AlreadyPaid, StoreConfirmed, CustomerConfirmed, Seated, Completed, Cancelled, NoShow)
 - Special requests/message
 - Confirmation flags (by store and customer)
 - Payment status (alreadyPaid)
@@ -665,11 +862,11 @@ Store Admins have all Store Staff permissions, plus:
 
 ### 5.3 Prepaid Rules
 
-**BR-RSVP-008:** If `prepaidRequired` is true, customers must be signed in (authentication required) to create a reservation.
+**BR-RSVP-008:** If `prepaidRequired` is true, customers must be signed in (authentication required) to create a reservation. Anonymous users must sign in or register before creating a reservation.
 
-**BR-RSVP-009:** If `prepaidRequired` is true, reservation is not confirmed until payment is received.
+**BR-RSVP-009:** If `prepaidRequired` is true, when a customer creates a pending RSVP, a store order is automatically created with `minPrepaidAmount` from `RsvpSettings`. Reservation is not confirmed until payment is received.
 
-**BR-RSVP-010:** Prepaid amount (which can be specified as a dollar amount or CustomerCredit amount) must be paid before reservation time.
+**BR-RSVP-010:** Minimum prepaid amount (`minPrepaidAmount`, which can be specified as a dollar amount or CustomerCredit amount) must be paid before reservation time.
 
 **BR-RSVP-010a:** Customers can pay prepaid amount using existing credit from `CustomerCredit` table.
 

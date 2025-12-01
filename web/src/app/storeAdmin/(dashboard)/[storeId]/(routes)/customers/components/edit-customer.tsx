@@ -40,7 +40,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPencil, IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type { z } from "zod/v4";
 import { UserRoleCombobox } from "./user-role-combobox";
 
 //type formValues = z.infer<typeof updateCustomerSchema>;
@@ -115,8 +114,8 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 
 	const defaultValues = item
 		? {
-				...item,
-			}
+			...item,
+		}
 		: {};
 
 	const form = useForm<UpdateCustomerInput>({
@@ -217,7 +216,23 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 										</FormItem>
 									)}
 								/>
-
+								<FormField
+									control={form.control}
+									name="phone"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("phone")}</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="Enter phone number"
+													{...field}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 								{isNew && (
 									<FormField
 										control={form.control}
@@ -287,7 +302,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 											<FormLabel>Role</FormLabel>
 											<FormControl>
 												<UserRoleCombobox
-													defaultValue={field.value}
+													defaultValue={field.value || ""}
 													onChange={field.onChange}
 												/>
 											</FormControl>

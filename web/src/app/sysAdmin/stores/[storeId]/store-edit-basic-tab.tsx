@@ -223,7 +223,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 										<Select
 											disabled={loading || form.formState.isSubmitting}
 											onValueChange={field.onChange}
-											defaultValue={field.value}
+											defaultValue={field.value ?? ""}
 										>
 											<SelectTrigger
 												className="flex h-9 w-full bg-primary-foreground items-center justify-between whitespace-nowrap rounded-md border border-input
@@ -250,7 +250,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 										<CurrencyCombobox
 											disabled={loading || form.formState.isSubmitting}
 											onValueChange={field.onChange}
-											defaultValue={field.value}
+											defaultValue={field.value ?? ""}
 										/>
 									</FormItem>
 								)}
@@ -265,7 +265,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 										<CountryCombobox
 											disabled={loading || form.formState.isSubmitting}
 											onValueChange={field.onChange}
-											defaultValue={field.value}
+											defaultValue={field.value ?? ""}
 										/>
 									</FormItem>
 								)}

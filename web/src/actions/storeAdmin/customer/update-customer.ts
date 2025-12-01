@@ -21,12 +21,13 @@ export const updateCustomerAction = storeActionClient
 				role,
 				timezone,
 				stripeCustomerId,
+				phone,
 			},
 		}) => {
 			// Update user
 			await sqlClient.user.update({
 				where: { id: customerId },
-				data: { name, locale, timezone, stripeCustomerId },
+				data: { name, locale, timezone, stripeCustomerId, phone },
 			});
 
 			// Get organizationId from store
