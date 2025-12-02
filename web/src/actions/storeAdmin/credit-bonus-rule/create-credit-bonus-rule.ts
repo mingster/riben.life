@@ -11,8 +11,9 @@ import { createCreditBonusRuleSchema } from "./create-credit-bonus-rule.validati
 export const createCreditBonusRuleAction = storeActionClient
 	.metadata({ name: "createCreditBonusRule" })
 	.schema(createCreditBonusRuleSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, threshold, bonus, isActive } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { threshold, bonus, isActive } = parsedInput;
 
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },

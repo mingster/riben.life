@@ -14,9 +14,9 @@ import { getUtcNow } from "@/utils/datetime-utils";
 export const rechargeCustomerCreditAction = storeActionClient
 	.metadata({ name: "rechargeCustomerCredit" })
 	.schema(rechargeCustomerCreditSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, userId, creditAmount, cashAmount, isPaid, note } =
-			parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { userId, creditAmount, cashAmount, isPaid, note } = parsedInput;
 
 		// Get the current user (store operator) who is creating this recharge
 		const session = await auth.api.getSession({

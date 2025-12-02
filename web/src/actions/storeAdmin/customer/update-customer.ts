@@ -3,7 +3,6 @@
 import { updateCustomerSchema } from "./update-customer.validation";
 import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
-import { Role } from "@prisma/client";
 import { getUtcNow } from "@/utils/datetime-utils";
 import crypto from "crypto";
 
@@ -18,18 +17,11 @@ export const updateCustomerAction = storeActionClient
 				customerId,
 				name,
 				locale,
-				role,
+				memberRole,
 				timezone,
-				stripeCustomerId,
 				phone,
 			},
 		}) => {
-			// Update user
-			await sqlClient.user.update({
-				where: { id: customerId },
-				data: { name, locale, timezone, stripeCustomerId, phone },
-			});
-
 			// Get organizationId from store
 			const store = await sqlClient.store.findUnique({
 				where: { id: storeId },
@@ -39,6 +31,12 @@ export const updateCustomerAction = storeActionClient
 			if (!store || !store.organizationId) {
 				throw new Error("Store organization not found");
 			}
+
+			// Update user
+			await sqlClient.user.update({
+				where: { id: customerId },
+				data: { name, locale, timezone, phone },
+			});
 
 			const organizationId = store.organizationId;
 
@@ -54,7 +52,7 @@ export const updateCustomerAction = storeActionClient
 				// Update existing member
 				await sqlClient.member.update({
 					where: { id: existingMember.id },
-					data: { role: role as Role },
+					data: { role: memberRole },
 				});
 			} else {
 				// Create new member
@@ -63,7 +61,7 @@ export const updateCustomerAction = storeActionClient
 						id: crypto.randomUUID(),
 						userId: customerId,
 						organizationId: organizationId,
-						role: role as Role,
+						role: memberRole,
 						createdAt: getUtcNow(),
 					},
 				});

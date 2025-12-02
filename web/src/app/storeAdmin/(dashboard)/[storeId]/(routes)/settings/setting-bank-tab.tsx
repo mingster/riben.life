@@ -75,15 +75,17 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 		try {
 			setLoading(true);
 
-			const payload: UpdateStoreBankInput = {
-				storeId: params.storeId as string,
+			const payload: Omit<UpdateStoreBankInput, "storeId"> = {
 				payoutSchedule: data.payoutSchedule,
 				bankCode: data.bankCode,
 				bankAccount: data.bankAccount,
 				bankAccountName: data.bankAccountName,
 			};
 
-			const result = await updateStoreBankAction(payload);
+			const result = await updateStoreBankAction(
+				params.storeId as string,
+				payload,
+			);
 
 			if (result?.serverError) {
 				toastError({
@@ -132,7 +134,9 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 										<FormControl>
 											<PayoutScheduleCombobox
 												disabled={loading || form.formState.isSubmitting}
-												defaultValue={field.value ?? Number(PayoutScheduleNum.Manual)}
+												defaultValue={
+													field.value ?? Number(PayoutScheduleNum.Manual)
+												}
 												onChange={field.onChange}
 											/>
 										</FormControl>

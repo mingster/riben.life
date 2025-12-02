@@ -55,9 +55,9 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 				? {
 						acceptReservation: rsvpSettings.acceptReservation,
 						prepaidRequired: rsvpSettings.prepaidRequired,
-					minPrepaidAmount:
-						rsvpSettings.minPrepaidAmount !== null
-							? Number(rsvpSettings.minPrepaidAmount)
+						minPrepaidAmount:
+							rsvpSettings.minPrepaidAmount !== null
+								? Number(rsvpSettings.minPrepaidAmount)
 								: null,
 						canCancel: rsvpSettings.canCancel,
 						cancelHours: rsvpSettings.cancelHours,
@@ -76,7 +76,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 				: {
 						acceptReservation: true,
 						prepaidRequired: false,
-					minPrepaidAmount: null,
+						minPrepaidAmount: null,
 						canCancel: true,
 						cancelHours: 24,
 						defaultDuration: 60,
@@ -95,9 +95,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 	);
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(
-			updateRsvpSettingsSchema.omit({ storeId: true }),
-		) as any,
+		resolver: zodResolver(updateRsvpSettingsSchema) as any,
 		defaultValues,
 		mode: "onChange",
 		reValidateMode: "onChange",
@@ -112,12 +110,14 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 		try {
 			setLoading(true);
 
-			const payload: UpdateRsvpSettingsInput = {
-				storeId: params.storeId as string,
+			const payload: Omit<UpdateRsvpSettingsInput, "storeId"> = {
 				...data,
 			};
 
-			const result = await updateRsvpSettingsAction(payload);
+			const result = await updateRsvpSettingsAction(
+				params.storeId as string,
+				payload,
+			);
 
 			if (result?.serverError) {
 				toastError({

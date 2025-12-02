@@ -11,9 +11,9 @@ import { updateRsvpSchema } from "./update-rsvp.validation";
 export const updateRsvpAction = storeActionClient
 	.metadata({ name: "updateRsvp" })
 	.schema(updateRsvpSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			id,
 			userId,
 			facilityId,

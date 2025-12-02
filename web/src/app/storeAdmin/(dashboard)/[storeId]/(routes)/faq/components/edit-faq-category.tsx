@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/drawer";
 import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
+import { useParams } from "next/navigation";
 
 import { useTranslation } from "@/app/i18n/client";
 import { LocaleSelectItems } from "@/components/locale-select-items";
@@ -52,6 +53,7 @@ interface props {
 export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const params = useParams<{ storeId: string }>();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -61,11 +63,16 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 
 	const defaultValues = item
 		? {
-				...item,
+				id: item.id,
+				localeId: item.localeId,
+				name: item.name,
+				sortOrder: item.sortOrder,
 			}
 		: {
 				id: "new",
 				name: "new",
+				localeId: "",
+				sortOrder: 1,
 			};
 
 	const form = useForm<UpdateFaqCategoryInput>({
@@ -87,7 +94,10 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 	async function onSubmit(data: UpdateFaqCategoryInput) {
 		//console.log("data", data);
 		setLoading(true);
-		const result = await updateFaqCategoryAction(data);
+		const result = await updateFaqCategoryAction(
+			String(params.storeId),
+			data,
+		);
 		if (!result) {
 			toastError({ description: "An error occurred" });
 		} else if (result.serverError) {

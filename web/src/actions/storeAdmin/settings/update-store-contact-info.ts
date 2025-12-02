@@ -11,8 +11,9 @@ import { getUtcNow } from "@/utils/datetime-utils";
 export const updateStoreContactInfoAction = storeActionClient
 	.metadata({ name: "updateStoreContactInfo" })
 	.schema(updateStoreContactInfoSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, ...contactInfo } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { ...contactInfo } = parsedInput;
 
 		const session = await auth.api.getSession({
 			headers: await headers(),

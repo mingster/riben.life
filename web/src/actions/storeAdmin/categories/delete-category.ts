@@ -9,8 +9,9 @@ import { deleteCategorySchema } from "./delete-category.validation";
 export const deleteStoreCategoryAction = storeActionClient
 	.metadata({ name: "deleteCategory" })
 	.schema(deleteCategorySchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, id } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { id } = parsedInput;
 
 		const category = await sqlClient.category.findUnique({
 			where: { id },

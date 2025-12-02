@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const updateFacilityPricingRuleSchema = z.object({
 	id: z.string().min(1, "Rule ID is required"),
-	storeId: z.string().min(1, "Store ID is required"),
 	facilityId: z.string().nullable().optional(),
 	name: z.string().trim().min(1, "Name is required"),
 	priority: z.coerce.number().int().default(0),

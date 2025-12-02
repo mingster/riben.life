@@ -42,10 +42,10 @@ export const CellAction: React.FC<CellActionProps> = ({
 	const onConfirm = async () => {
 		try {
 			setLoading(true);
-			const result = await deleteCreditBonusRuleAction({
-				storeId: String(params.storeId),
-				id: data.id,
-			});
+			const result = await deleteCreditBonusRuleAction(
+				String(params.storeId),
+				{ id: data.id },
+			);
 
 			if (result?.serverError) {
 				toastError({

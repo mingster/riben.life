@@ -57,7 +57,8 @@ export default function EditUser({ serverData }: props) {
 	const defaultValues = {
 		...dbUser,
 		//id: user.id,
-		//name: user.name || "",
+		name: dbUser?.name ?? "",
+		phone: dbUser?.phone ?? "",
 		locale: dbUser?.locale || activeLng,
 		timezone: dbUser?.timezone || "America/Los_Angeles",
 	};
@@ -129,6 +130,7 @@ export default function EditUser({ serverData }: props) {
 											disabled={loading || form.formState.isSubmitting}
 											placeholder="Enter your name"
 											{...field}
+											value={field.value ?? ""}
 										/>
 									</FormControl>
 									<FormMessage />
@@ -146,6 +148,7 @@ export default function EditUser({ serverData }: props) {
 											disabled={loading || form.formState.isSubmitting}
 											placeholder="Enter your phone number"
 											{...field}
+											value={field.value ?? ""}
 										/>
 									</FormControl>
 									<FormMessage />

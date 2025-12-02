@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const createRsvpSchema = z.object({
-	storeId: z.string().min(1, "storeId is required"),
 	userId: z.string().nullable().optional(),
 	facilityId: z.string().nullable().optional(),
 	numOfAdult: z.coerce.number().int().min(1).default(1),

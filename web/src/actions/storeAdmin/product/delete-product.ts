@@ -7,8 +7,9 @@ import { SafeError } from "@/utils/error";
 export const deleteProductAction = storeActionClient
 	.metadata({ name: "deleteProduct" })
 	.schema(deleteProductSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, productId } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { productId } = parsedInput;
 
 		const product = await sqlClient.product.findFirst({
 			where: {

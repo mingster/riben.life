@@ -119,8 +119,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 			//console.log('logoPublicId: ' + data.logoPublicId);
 			//console.log('onSubmit: ' + JSON.stringify(data));
 
-			const payload: UpdateStorePaidOptionsInput = {
-				storeId: params.storeId as string,
+			const payload: Omit<UpdateStorePaidOptionsInput, "storeId"> = {
 				customDomain: data.customDomain ?? "",
 				LINE_PAY_ID: data.LINE_PAY_ID ?? "",
 				LINE_PAY_SECRET: data.LINE_PAY_SECRET ?? "",
@@ -134,7 +133,10 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 						: Number(data.defaultTimezone ?? store.defaultTimezone ?? 0),
 			};
 
-			const result = await updateStorePaidOptionsAction(payload);
+			const result = await updateStorePaidOptionsAction(
+				params.storeId as string,
+				payload,
+			);
 
 			if (result?.serverError) {
 				toastError({

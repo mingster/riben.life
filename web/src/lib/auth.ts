@@ -157,6 +157,11 @@ export const auth = betterAuth({
 				required: false,
 				defaultValue: "",
 			},
+			phoneVerified: {
+				type: "boolean",
+				required: false,
+				defaultValue: false,
+			},
 			role: {
 				type: "string",
 				required: false,

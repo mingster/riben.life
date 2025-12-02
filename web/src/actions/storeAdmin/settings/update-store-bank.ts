@@ -11,8 +11,9 @@ import { getUtcNow } from "@/utils/datetime-utils";
 export const updateStoreBankAction = storeActionClient
 	.metadata({ name: "updateStoreBank" })
 	.schema(updateStoreBankSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, payoutSchedule, bankCode, bankAccount, bankAccountName } =
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { payoutSchedule, bankCode, bankAccount, bankAccountName } =
 			parsedInput;
 
 		const session = await auth.api.getSession({

@@ -274,23 +274,25 @@ export function AdminEditRsvpDialog({
 			setLoading(true);
 
 			if (!isEditMode) {
-				const result = await createRsvpAction({
-					storeId: String(params.storeId),
-					userId: values.userId || null,
-					facilityId: values.facilityId || null,
-					numOfAdult: values.numOfAdult,
-					numOfChild: values.numOfChild,
-					rsvpTime: values.rsvpTime,
-					arriveTime: values.arriveTime || null,
-					status: values.status,
-					message: values.message || null,
-					alreadyPaid: values.alreadyPaid,
-					confirmedByStore: values.confirmedByStore,
-					confirmedByCustomer: values.confirmedByCustomer,
-					facilityCost: values.facilityCost || null,
-					facilityCredit: values.facilityCredit || null,
-					pricingRuleId: values.pricingRuleId || null,
-				});
+				const result = await createRsvpAction(
+					String(params.storeId),
+					{
+						userId: values.userId || null,
+						facilityId: values.facilityId || null,
+						numOfAdult: values.numOfAdult,
+						numOfChild: values.numOfChild,
+						rsvpTime: values.rsvpTime,
+						arriveTime: values.arriveTime || null,
+						status: values.status,
+						message: values.message || null,
+						alreadyPaid: values.alreadyPaid,
+						confirmedByStore: values.confirmedByStore,
+						confirmedByCustomer: values.confirmedByCustomer,
+						facilityCost: values.facilityCost || null,
+						facilityCredit: values.facilityCredit || null,
+						pricingRuleId: values.pricingRuleId || null,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({
@@ -313,24 +315,26 @@ export function AdminEditRsvpDialog({
 					return;
 				}
 
-				const result = await updateRsvpAction({
-					storeId: String(params.storeId),
-					id: rsvpId,
-					userId: values.userId || null,
-					facilityId: values.facilityId || null,
-					numOfAdult: values.numOfAdult,
-					numOfChild: values.numOfChild,
-					rsvpTime: values.rsvpTime,
-					arriveTime: values.arriveTime || null,
-					status: values.status,
-					message: values.message || null,
-					alreadyPaid: values.alreadyPaid,
-					confirmedByStore: values.confirmedByStore,
-					confirmedByCustomer: values.confirmedByCustomer,
-					facilityCost: values.facilityCost || null,
-					facilityCredit: values.facilityCredit || null,
-					pricingRuleId: values.pricingRuleId || null,
-				});
+				const result = await updateRsvpAction(
+					String(params.storeId),
+					{
+						id: rsvpId,
+						userId: values.userId || null,
+						facilityId: values.facilityId || null,
+						numOfAdult: values.numOfAdult,
+						numOfChild: values.numOfChild,
+						rsvpTime: values.rsvpTime,
+						arriveTime: values.arriveTime || null,
+						status: values.status,
+						message: values.message || null,
+						alreadyPaid: values.alreadyPaid,
+						confirmedByStore: values.confirmedByStore,
+						confirmedByCustomer: values.confirmedByCustomer,
+						facilityCost: values.facilityCost || null,
+						facilityCredit: values.facilityCredit || null,
+						pricingRuleId: values.pricingRuleId || null,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({

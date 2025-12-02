@@ -156,24 +156,26 @@ export function EditFacilityPricingRuleDialog({
 					: null;
 
 			if (!isEditMode) {
-				const result = await createFacilityPricingRuleAction({
-					storeId: String(params.storeId),
-					facilityId: facilityIdValue,
-					name: values.name,
-					priority: values.priority,
-					dayOfWeek: values.dayOfWeek || null,
-					startTime: values.startTime || null,
-					endTime: values.endTime || null,
-					cost:
-						values.cost !== null && values.cost !== undefined
-							? values.cost
-							: null,
-					credit:
-						values.credit !== null && values.credit !== undefined
-							? values.credit
-							: null,
-					isActive: values.isActive,
-				});
+				const result = await createFacilityPricingRuleAction(
+					String(params.storeId),
+					{
+						facilityId: facilityIdValue,
+						name: values.name,
+						priority: values.priority,
+						dayOfWeek: values.dayOfWeek || null,
+						startTime: values.startTime || null,
+						endTime: values.endTime || null,
+						cost:
+							values.cost !== null && values.cost !== undefined
+								? values.cost
+								: null,
+						credit:
+							values.credit !== null && values.credit !== undefined
+								? values.credit
+								: null,
+						isActive: values.isActive,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({
@@ -196,25 +198,27 @@ export function EditFacilityPricingRuleDialog({
 					return;
 				}
 
-				const result = await updateFacilityPricingRuleAction({
-					storeId: String(params.storeId),
-					id: ruleId,
-					facilityId: facilityIdValue,
-					name: values.name,
-					priority: values.priority,
-					dayOfWeek: values.dayOfWeek || null,
-					startTime: values.startTime || null,
-					endTime: values.endTime || null,
-					cost:
-						values.cost !== null && values.cost !== undefined
-							? values.cost
-							: null,
-					credit:
-						values.credit !== null && values.credit !== undefined
-							? values.credit
-							: null,
-					isActive: values.isActive,
-				});
+				const result = await updateFacilityPricingRuleAction(
+					String(params.storeId),
+					{
+						id: ruleId,
+						facilityId: facilityIdValue,
+						name: values.name,
+						priority: values.priority,
+						dayOfWeek: values.dayOfWeek || null,
+						startTime: values.startTime || null,
+						endTime: values.endTime || null,
+						cost:
+							values.cost !== null && values.cost !== undefined
+								? values.cost
+								: null,
+						credit:
+							values.credit !== null && values.credit !== undefined
+								? values.credit
+								: null,
+						isActive: values.isActive,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({

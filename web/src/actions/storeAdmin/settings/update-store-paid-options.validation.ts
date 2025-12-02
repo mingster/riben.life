@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const updateStorePaidOptionsSchema = z.object({
-	storeId: z.string().min(1),
 	customDomain: z.string().optional().nullable(),
 	LINE_PAY_ID: z.string().optional().nullable(),
 	LINE_PAY_SECRET: z.string().optional().nullable(),

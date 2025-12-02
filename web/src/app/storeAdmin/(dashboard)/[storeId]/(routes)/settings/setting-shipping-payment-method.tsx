@@ -70,10 +70,10 @@ export const ShippingPaymentMethodTab: React.FC<
 			.map((index) => allShippingMethods[index]?.id?.toString())
 			.filter((id): id is string => Boolean(id));
 
-		const result = await updateStoreShippingMethodsAction({
-			storeId: params.storeId as string,
-			methodIds,
-		});
+		const result = await updateStoreShippingMethodsAction(
+			params.storeId as string,
+			{ methodIds },
+		);
 
 		if (result?.serverError) {
 			toastError({ title: t("error_title"), description: result.serverError });
@@ -155,10 +155,10 @@ export const ShippingPaymentMethodTab: React.FC<
 			.map((index) => allPaymentMethods[index]?.id?.toString())
 			.filter((id): id is string => Boolean(id));
 
-		const result = await updateStorePaymentMethodsAction({
-			storeId: params.storeId as string,
-			methodIds,
-		});
+		const result = await updateStorePaymentMethodsAction(
+			params.storeId as string,
+			{ methodIds },
+		);
 
 		if (result?.serverError) {
 			toastError({ title: t("error_title"), description: result.serverError });

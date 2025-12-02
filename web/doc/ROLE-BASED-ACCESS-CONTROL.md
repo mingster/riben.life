@@ -133,9 +133,10 @@ Server action client for store admin actions. Requires user to be a member of th
 
 **Requirements:**
 
-- Action input schema must include `storeId`
+- `storeId` is passed as the **first argument** when calling the action (bound argument pattern)
+- Action input schema must **NOT** include `storeId` (it's a bound argument)
 - User must be authenticated
-- User must be a member of the store's organization with one of these roles: `owner`, `storeAdmin`, or `staff`
+- User must be a member of the store's organization with one of these roles: `owner`, `storeAdmin`, `staff`, or `sysAdmin`
 
 **Implementation:**
 
@@ -143,33 +144,49 @@ Server action client for store admin actions. Requires user to be a member of th
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
 
+// Validation schema MUST NOT include storeId
 const updateProductSchema = z.object({
-  storeId: z.string().min(1, "Store ID is required"),
-  // ... other fields
+  id: z.string().min(1, "Product ID is required"),
+  name: z.string().min(1, "Product name is required"),
+  // ... other fields (NO storeId)
 });
 
 export const updateProductAction = storeActionClient
   .metadata({ name: "updateProduct" })
   .schema(updateProductSchema)
-  .action(async ({ parsedInput }) => {
-    // Action logic here
-    // storeActionClient already validated:
-    // 1. User is authenticated
-    // 2. storeId exists
-    // 3. Store exists
-    // 4. User is a member of the store's organization with allowed role
+  .action(async ({ parsedInput, bindArgsClientInputs }) => {
+    const storeId = bindArgsClientInputs[0] as string;
+    const { id, name, ... } = parsedInput;
+    // Action implementation
   });
+```
+
+**Calling Pattern:**
+
+```typescript
+// In component:
+const result = await updateProductAction(
+  String(params.storeId),  // First argument: storeId (bound)
+  {                        // Second argument: input data
+    id: productId,
+    name: data.name,
+    // ... other fields
+  },
+);
 ```
 
 **Access Logic:**
 
-1. Extracts `storeId` from client input (before schema validation)
+1. Extracts `storeId` from bound arguments (before schema validation)
 2. Validates `storeId` is provided
 3. Finds the store and retrieves its `organizationId`
-4. Checks if user is a member of that specific organization with role `owner`, `storeAdmin`, or `staff`
+4. Checks if user is a `sysAdmin` (bypasses member check) OR is a member of that specific organization with role `owner`, `storeAdmin`, or `staff`
 5. Throws `SafeError("Unauthorized")` if access denied
 
-**Important:** All store actions using `storeActionClient` must include `storeId` in their validation schema.
+**Important:** 
+- All store actions using `storeActionClient` must **NOT** include `storeId` in their validation schema
+- `storeId` is passed as the first argument when calling the action (bound argument pattern)
+- `sysAdmin` users can access any store's actions
 
 ### Authentication & Authorization Utilities
 
@@ -360,24 +377,24 @@ import { Role } from "@prisma/client";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
 
-// Validation schema MUST include storeId
+// Validation schema MUST NOT include storeId (it's a bound argument)
 const createProductSchema = z.object({
-  storeId: z.string().min(1, "Store ID is required"),
   name: z.string().min(1, "Product name is required"),
-  // ... other fields
+  // ... other fields (NO storeId)
 });
 
 export const createProductAction = storeActionClient
   .metadata({ name: "createProduct" })
   .schema(createProductSchema)
-  .action(async ({ parsedInput }) => {
-    const { storeId, name, ... } = parsedInput;
+  .action(async ({ parsedInput, bindArgsClientInputs }) => {
+    const storeId = bindArgsClientInputs[0] as string;
+    const { name, ... } = parsedInput;
     
     // storeActionClient already validated:
     // - User is authenticated
-    // - storeId is provided and valid
+    // - storeId is provided as bound argument
     // - Store exists
-    // - User is a member of the store's organization with allowed role
+    // - User is a sysAdmin OR a member of the store's organization with allowed role
     
     // Action logic here
     const product = await sqlClient.product.create({
@@ -388,12 +405,26 @@ export const createProductAction = storeActionClient
   });
 ```
 
+**Calling Pattern:**
+
+```typescript
+// In component:
+const result = await createProductAction(
+  String(params.storeId),  // First argument: storeId (bound)
+  {                        // Second argument: input data
+    name: data.name,
+    // ... other fields
+  },
+);
+```
+
 **Key Points:**
 
 - `storeActionClient` automatically validates store membership
-- Must include `storeId` in action schema
+- Must **NOT** include `storeId` in action schema (it's a bound argument)
+- `storeId` is passed as the first argument when calling the action
 - Checks membership in the specific store's organization
-- Only allows `owner`, `storeAdmin`, or `staff` roles
+- Allows `owner`, `storeAdmin`, `staff`, or `sysAdmin` roles
 
 ## Role Assignment
 

@@ -130,16 +130,18 @@ export const ProductEditBasicTab = ({
 
 			if (isEditMode && initialData) {
 				// do edit
-				const result = await updateProductAction({
-					storeId: String(params.storeId),
-					id: initialData.id,
-					name: data.name,
-					description: data.description ?? "",
-					price: data.price,
-					currency: data.currency ?? "usd",
-					status: data.status,
-					isFeatured: data.isFeatured ?? false,
-				});
+				const result = await updateProductAction(
+					String(params.storeId),
+					{
+						id: initialData.id,
+						name: data.name,
+						description: data.description ?? "",
+						price: data.price,
+						currency: data.currency ?? "usd",
+						status: data.status,
+						isFeatured: data.isFeatured ?? false,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({
@@ -158,15 +160,17 @@ export const ProductEditBasicTab = ({
 				}
 			} else {
 				// do create
-				const result = await createStoreProductAction({
-					storeId: String(params.storeId),
-					name: data.name,
-					description: data.description ?? "",
-					price: data.price,
-					currency: data.currency ?? "usd",
-					status: data.status,
-					isFeatured: data.isFeatured ?? false,
-				});
+				const result = await createStoreProductAction(
+					String(params.storeId),
+					{
+						name: data.name,
+						description: data.description ?? "",
+						price: data.price,
+						currency: data.currency ?? "usd",
+						status: data.status,
+						isFeatured: data.isFeatured ?? false,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({
@@ -299,7 +303,9 @@ export const ProductEditBasicTab = ({
 												<div>
 													<ProductStatusCombobox
 														disabled={loading || form.formState.isSubmitting}
-														defaultValue={field.value ?? Number(ProductStatus.Published)}
+														defaultValue={
+															field.value ?? Number(ProductStatus.Published)
+														}
 														onChange={(value) => field.onChange(Number(value))}
 													/>
 												</div>

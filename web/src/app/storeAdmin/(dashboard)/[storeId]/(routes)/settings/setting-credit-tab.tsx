@@ -68,9 +68,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 	);
 
 	const form = useForm<FormValues>({
-		resolver: zodResolver(
-			updateStoreCreditSchema.omit({ storeId: true }),
-		) as any,
+		resolver: zodResolver(updateStoreCreditSchema) as any,
 		defaultValues,
 		mode: "onChange",
 		reValidateMode: "onChange",
@@ -85,12 +83,14 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 		try {
 			setLoading(true);
 
-			const payload: UpdateStoreCreditInput = {
-				storeId: params.storeId as string,
+			const payload: Omit<UpdateStoreCreditInput, "storeId"> = {
 				...data,
 			};
 
-			const result = await updateStoreCreditAction(payload);
+			const result = await updateStoreCreditAction(
+				params.storeId as string,
+				payload,
+			);
 
 			if (result?.serverError) {
 				toastError({

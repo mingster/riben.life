@@ -11,8 +11,9 @@ import { getUtcNow } from "@/utils/datetime-utils";
 export const updateStoreRsvpAction = storeActionClient
 	.metadata({ name: "updateStoreRsvp" })
 	.schema(updateStoreRsvpSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, acceptReservation } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { acceptReservation } = parsedInput;
 
 		const session = await auth.api.getSession({
 			headers: await headers(),

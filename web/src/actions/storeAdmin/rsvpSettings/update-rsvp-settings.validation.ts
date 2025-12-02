@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const updateRsvpSettingsSchema = z.object({
-	storeId: z.string().uuid(),
 	acceptReservation: z.boolean().optional(),
 	prepaidRequired: z.boolean().optional(),
 	minPrepaidAmount: z.number().nonnegative().nullable().optional(),

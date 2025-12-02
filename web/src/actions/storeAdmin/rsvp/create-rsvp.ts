@@ -12,9 +12,9 @@ import { createRsvpSchema } from "./create-rsvp.validation";
 export const createRsvpAction = storeActionClient
 	.metadata({ name: "createRsvp" })
 	.schema(createRsvpSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			userId,
 			facilityId,
 			numOfAdult,

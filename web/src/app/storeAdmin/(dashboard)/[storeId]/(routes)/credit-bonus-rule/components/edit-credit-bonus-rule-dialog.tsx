@@ -144,12 +144,14 @@ export function EditCreditBonusRuleDialog({
 			setLoading(true);
 
 			if (!isEditMode) {
-				const result = await createCreditBonusRuleAction({
-					storeId: String(params.storeId),
-					threshold: values.threshold,
-					bonus: values.bonus,
-					isActive: values.isActive,
-				});
+				const result = await createCreditBonusRuleAction(
+					String(params.storeId),
+					{
+						threshold: values.threshold,
+						bonus: values.bonus,
+						isActive: values.isActive,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({
@@ -172,13 +174,15 @@ export function EditCreditBonusRuleDialog({
 					return;
 				}
 
-				const result = await updateCreditBonusRuleAction({
-					storeId: String(params.storeId),
-					id: ruleId,
-					threshold: values.threshold,
-					bonus: values.bonus,
-					isActive: values.isActive,
-				});
+				const result = await updateCreditBonusRuleAction(
+					String(params.storeId),
+					{
+						id: ruleId,
+						threshold: values.threshold,
+						bonus: values.bonus,
+						isActive: values.isActive,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({

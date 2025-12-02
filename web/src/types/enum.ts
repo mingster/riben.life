@@ -183,6 +183,13 @@ export enum PageAction {
 	Delete = "Delete",
 }
 
+export const MemberRole = {
+	customer: "customer",
+	owner: "owner",
+	staff: "staff",
+	storeAdmin: "storeAdmin",
+} as const;
+
 // Role enum values for client-side use (matches Prisma schema)
 // Server components should use Role from @prisma/client
 export const Role = {

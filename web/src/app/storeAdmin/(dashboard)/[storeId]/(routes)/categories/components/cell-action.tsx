@@ -50,10 +50,10 @@ export const CellAction: React.FC<CellActionProps> = ({
 	const onConfirm = async () => {
 		try {
 			setLoading(true);
-			const result = await deleteStoreCategoryAction({
-				storeId: String(params.storeId),
-				id: data.id,
-			});
+			const result = await deleteStoreCategoryAction(
+				String(params.storeId),
+				{ id: data.id },
+			);
 
 			if (result?.serverError) {
 				toastError({

@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const rechargeCustomerCreditSchema = z
 	.object({
-		storeId: z.string().min(1, "storeId is required"),
 		userId: z.string().min(1, "userId is required"),
 		creditAmount: z.coerce
 			.number()

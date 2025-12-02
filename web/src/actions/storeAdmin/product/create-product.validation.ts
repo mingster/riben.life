@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const createStoreProductSchema = z.object({
-	storeId: z.string().min(1),
 	name: z.string().min(1, "Product name is required"),
 	description: z.string().optional().default(""),
 	price: z.coerce.number().min(0).default(0),

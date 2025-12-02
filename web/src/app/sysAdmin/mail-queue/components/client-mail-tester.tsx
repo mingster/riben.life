@@ -65,7 +65,12 @@ export default function ClientMailTester() {
 							<FormItem>
 								<FormLabel>Email</FormLabel>
 								<FormControl>
-									<Input type="text" placeholder="Enter email" {...field} />
+									<Input
+										type="text"
+										placeholder="Enter email"
+										{...field}
+										value={field.value ?? ""}
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>

@@ -10,9 +10,9 @@ import { sqlClient } from "@/lib/prismadb";
 export const updateStorePaidOptionsAction = storeActionClient
 	.metadata({ name: "updateStorePaidOptions" })
 	.schema(updateStorePaidOptionsSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			customDomain,
 			LINE_PAY_ID,
 			LINE_PAY_SECRET,

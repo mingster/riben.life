@@ -10,8 +10,9 @@ import { createCategoriesSchema } from "./create-category-bulk.validation";
 export const createStoreCategoriesAction = storeActionClient
 	.metadata({ name: "createCategoriesBulk" })
 	.schema(createCategoriesSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, names, isFeatured } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { names, isFeatured } = parsedInput;
 
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },

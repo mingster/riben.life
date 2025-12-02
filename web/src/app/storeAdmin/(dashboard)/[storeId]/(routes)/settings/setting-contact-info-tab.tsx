@@ -97,8 +97,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 		try {
 			setLoading(true);
 
-			const payload: UpdateStoreContactInfoInput = {
-				storeId: params.storeId as string,
+			const payload: Omit<UpdateStoreContactInfoInput, "storeId"> = {
 				aboutUs: data.aboutUs ?? "",
 				supportEmail: data.supportEmail ?? "",
 				supportPhoneNumber: data.supportPhoneNumber ?? "",
@@ -111,7 +110,10 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 				wechatId: data.wechatId ?? "",
 			};
 
-			const result = await updateStoreContactInfoAction(payload);
+			const result = await updateStoreContactInfoAction(
+				params.storeId as string,
+				payload,
+			);
 
 			if (result?.serverError) {
 				toastError({ title: "Error", description: result.serverError });

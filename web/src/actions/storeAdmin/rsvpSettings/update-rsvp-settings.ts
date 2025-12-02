@@ -10,9 +10,9 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 export const updateRsvpSettingsAction = storeActionClient
 	.metadata({ name: "updateRsvpSettings" })
 	.schema(updateRsvpSettingsSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			acceptReservation,
 			prepaidRequired,
 			minPrepaidAmount,
@@ -166,9 +166,12 @@ export const updateRsvpSettingsAction = storeActionClient
 							reserveWithGoogleEnabled: reserveWithGoogleEnabled ?? false,
 							googleBusinessProfileId: googleBusinessProfileId ?? null,
 							googleBusinessProfileName: googleBusinessProfileName ?? null,
-							reserveWithGoogleAccessToken: reserveWithGoogleAccessToken ?? null,
-							reserveWithGoogleRefreshToken: reserveWithGoogleRefreshToken ?? null,
-							reserveWithGoogleTokenExpiry: reserveWithGoogleTokenExpiry ?? null,
+							reserveWithGoogleAccessToken:
+								reserveWithGoogleAccessToken ?? null,
+							reserveWithGoogleRefreshToken:
+								reserveWithGoogleRefreshToken ?? null,
+							reserveWithGoogleTokenExpiry:
+								reserveWithGoogleTokenExpiry ?? null,
 							reserveWithGoogleLastSync: reserveWithGoogleLastSync ?? null,
 							reserveWithGoogleSyncStatus: reserveWithGoogleSyncStatus ?? null,
 							reserveWithGoogleError: reserveWithGoogleError ?? null,

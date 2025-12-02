@@ -105,11 +105,13 @@ export function BulkCreateProductsDialog({
 				return;
 			}
 
-			const result = await createStoreProductsBulkAction({
-				storeId: String(params.storeId),
-				status: data.status,
-				entries,
-			});
+			const result = await createStoreProductsBulkAction(
+				String(params.storeId),
+				{
+					status: data.status,
+					entries,
+				},
+			);
 
 			if (result?.serverError) {
 				toastError({
@@ -183,7 +185,9 @@ export function BulkCreateProductsDialog({
 									<FormControl>
 										<ProductStatusCombobox
 											disabled={loading}
-											defaultValue={field.value ?? Number(ProductStatus.Published)}
+											defaultValue={
+												field.value ?? Number(ProductStatus.Published)
+											}
 											onChange={(value) => field.onChange(Number(value))}
 										/>
 									</FormControl>

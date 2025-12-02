@@ -92,13 +92,15 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({
 		try {
 			setLoading(true);
 
-			const payload: UpdateStorePrivacyInput = {
-				storeId: params.storeId as string,
+			const payload: Omit<UpdateStorePrivacyInput, "storeId"> = {
 				privacyPolicy: data.privacyPolicy ?? "",
 				tos: data.tos ?? "",
 			};
 
-			const result = await updateStorePrivacyAction(payload);
+			const result = await updateStorePrivacyAction(
+				params.storeId as string,
+				payload,
+			);
 
 			if (result?.serverError) {
 				toastError({

@@ -179,11 +179,13 @@ export function EditProductOptionTemplateDialog({
 			setLoading(true);
 
 			if (isEditMode && template) {
-				const result = await updateProductOptionTemplateAction({
-					storeId: String(params.storeId),
-					id: template.id,
-					...values,
-				});
+				const result = await updateProductOptionTemplateAction(
+					String(params.storeId),
+					{
+						id: template.id,
+						...values,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({
@@ -197,10 +199,10 @@ export function EditProductOptionTemplateDialog({
 					handleSuccess(result.data.template);
 				}
 			} else {
-				const result = await createProductOptionTemplateAction({
-					storeId: String(params.storeId),
-					...values,
-				});
+				const result = await createProductOptionTemplateAction(
+					String(params.storeId),
+					values,
+				);
 
 				if (result?.serverError) {
 					toastError({

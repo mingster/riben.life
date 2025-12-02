@@ -12,9 +12,9 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 export const updateStoreBasicAction = storeActionClient
 	.metadata({ name: "updateStoreBasic" })
 	.schema(updateStoreBasicSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			name,
 			orderNoteToCustomer,
 			defaultLocale,

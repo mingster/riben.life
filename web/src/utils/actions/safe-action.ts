@@ -85,88 +85,77 @@ export const emailRequiredActionClient = baseClient
 		//});
 	});
 
-// this action allows only store members with owner, storeAdmin, and staff roles to access
+// this action allows only store members with owner, storeAdmin, and staff roles to access.
+// Bypass check for sysAdmin users.
 // Requires storeId in the action input schema
-export const storeActionClient = baseClient.use(
-	async ({ next, metadata, clientInput }) => {
+export const storeActionClient = baseClient
+	.bindArgsSchemas<[storeId: z.ZodString]>([z.string()])
+	.use(async ({ next, metadata, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+
+		const store = await sqlClient.store.findUnique({
+			where: { id: storeId },
+			select: { id: true, organizationId: true, ownerId: true },
+		});
+		if (!store) throw new SafeError("Store not found");
+
 		const session = await auth.api.getSession({
 			headers: await headers(), // you need to pass the headers object.
 		});
 		if (!session?.user) throw new SafeError("Unauthorized");
 
-		const userId = session.user.id;
-		const userRole = session.user.role;
-
-		// Get storeId from client input (before schema validation)
-		const storeId = (clientInput as any)?.storeId;
-		if (!storeId || typeof storeId !== "string") {
-			logger.error("storeId is required in store actions", {
+		// sysAdmin users can access any store
+		if (session.user.role === Role.sysAdmin) {
+			logger.info("access granted - user is a sysAdmin", {
 				metadata: {
-					userId,
-					actionName: metadata?.name,
-				},
-				tags: ["action", "error"],
-			});
-			throw new SafeError("Store ID is required");
-		}
-
-		// Get the store to find its organization
-		const store = await sqlClient.store.findUnique({
-			where: { id: storeId },
-			select: { id: true, organizationId: true, ownerId: true },
-		});
-
-		if (!store) {
-			logger.error("store not found", {
-				metadata: {
-					userId,
+					userId: session.user.id,
+					userRole: session.user.role,
 					storeId,
+					organizationId: store.organizationId,
 					actionName: metadata?.name,
 				},
-				tags: ["action", "error"],
 			});
-			throw new SafeError("Store not found");
+
+			return next({ ctx: {} });
 		}
 
 		// Check if user is a member of this store's organization with one of these roles
-		if (store.organizationId) {
-			const member = await sqlClient.member.findFirst({
-				where: {
-					userId,
-					organizationId: store.organizationId,
-					role: {
-						in: [Role.owner, Role.storeAdmin, Role.staff],
-					},
+		const member = await sqlClient.member.findFirst({
+			where: {
+				userId: session.user.id,
+				organizationId: store.organizationId,
+				role: {
+					in: [Role.owner, Role.storeAdmin, Role.staff],
 				},
-				select: {
-					id: true,
-					role: true,
-					organizationId: true,
-				},
-			});
-
-			if (member) {
-				return next({ ctx: {} });
-			}
-		}
-
-		// Access denied
-		logger.error(
-			"access denied - user is not a member of the store's organization with allowed role",
-			{
-				metadata: {
-					userId,
-					userRole,
-					storeId,
-					organizationId: store.organizationId,
-					actionName: metadata?.name,
-				},
-				tags: ["action", "error"],
 			},
-		);
-		throw new SafeError("Unauthorized");
-	},
-);
+			select: {
+				id: true,
+				role: true,
+				organizationId: true,
+			},
+		});
+
+		if (member) {
+			return next({ ctx: {} });
+		} else {
+			// finally, throw Access denied
+			logger.error(
+				"access denied - user is not a member of the store's organization with allowed role",
+				{
+					metadata: {
+						userId: session.user.id,
+						userRole: session.user.role,
+						storeId,
+						organizationId: store.organizationId,
+						actionName: metadata?.name,
+					},
+					tags: ["action", "error"],
+				},
+			);
+
+			throw new SafeError("Unauthorized");
+		}
+	});
 
 export const adminActionClient = baseClient.use(async ({ next, metadata }) => {
 	const session = await auth.api.getSession({

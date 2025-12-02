@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const createStoreProductsBulkSchema = z.object({
-	storeId: z.string().min(1),
 	status: z.number(),
 	entries: z
 		.array(

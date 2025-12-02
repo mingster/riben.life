@@ -11,9 +11,9 @@ import { createFacilityPricingRuleSchema } from "./create-facility-pricing-rule.
 export const createFacilityPricingRuleAction = storeActionClient
 	.metadata({ name: "createFacilityPricingRule" })
 	.schema(createFacilityPricingRuleSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			facilityId,
 			name,
 			priority,

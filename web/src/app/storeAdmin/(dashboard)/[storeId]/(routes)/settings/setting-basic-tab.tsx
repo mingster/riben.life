@@ -135,8 +135,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 		try {
 			setLoading(true);
 
-			const payload: UpdateStoreBasicInput = {
-				storeId: params.storeId as string,
+			const payload: Omit<UpdateStoreBasicInput, "storeId"> = {
 				name: data.name,
 				orderNoteToCustomer: data.orderNoteToCustomer ?? "",
 				defaultLocale: data.defaultLocale,
@@ -151,7 +150,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 				requirePrepaid: data.requirePrepaid ?? true,
 			};
 
-			const result = await updateStoreBasicAction(payload);
+			const result = await updateStoreBasicAction(
+				params.storeId as string,
+				payload,
+			);
 
 			if (result?.serverError) {
 				toastError({

@@ -10,8 +10,9 @@ import { sqlClient } from "@/lib/prismadb";
 export const updateStoreShippingMethodsAction = storeActionClient
 	.metadata({ name: "updateStoreShippingMethods" })
 	.schema(updateStoreShippingMethodsSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, methodIds } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { methodIds } = parsedInput;
 
 		const session = await auth.api.getSession({
 			headers: await headers(),

@@ -48,7 +48,7 @@ export const updateOpServerAction = userRequiredActionClient
 - Actions are wrapped with `emailRequiredActionClient` for if e-mail is required:
 
 ```ts
-export const updateOpServerAction = actionClient
+export const updateOpServerAction = emailRequiredActionClient
   .metadata({ name: "updateUserBilling" })
   .schema(updateUserBillingSchema)
   .action(async ({ parsedInput }) => {
@@ -70,31 +70,48 @@ export const updateOpServerAction = adminActionClient
 - Actions are wrapped with `storeActionClient` for store admin actions (requires store membership):
 
 ```ts
-// Validation schema MUST include storeId
+// Validation schema MUST NOT include storeId (it's a bound argument)
 const updateProductSchema = z.object({
-  storeId: z.string().min(1, "Store ID is required"),
-  // ... other fields
+  id: z.string().min(1, "Product ID is required"),
+  name: z.string().min(1, "Product name is required"),
+  // ... other fields (NO storeId)
 });
 
 export const updateProductAction = storeActionClient
   .metadata({ name: "updateProduct" })
   .schema(updateProductSchema)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ parsedInput, bindArgsClientInputs }) => {
     // storeActionClient already validated:
     // - User is authenticated
-    // - storeId is provided and valid
+    // - storeId is provided as bound argument
     // - Store exists
-    // - User is a member of the store's organization with role: owner, storeAdmin, or staff
-    const { storeId, ... } = parsedInput;
+    // - User is a member of the store's organization with role: owner, storeAdmin, staff, or sysAdmin
+    const storeId = bindArgsClientInputs[0] as string;
+    const { id, name, ... } = parsedInput;
     // Action implementation
   });
 ```
 
 **Important:** `storeActionClient` requires:
 
-- `storeId` must be included in the validation schema
+- `storeId` is passed as the **first argument** when calling the action (bound argument pattern)
+- `storeId` must **NOT** be included in the validation schema
 - User must be authenticated
-- User must be a member of the store's organization with role `owner`, `storeAdmin`, or `staff`
+- User must be a member of the store's organization with role `owner`, `storeAdmin`, `staff`, or `sysAdmin`
+
+**Calling Pattern:**
+
+```ts
+// In component:
+const result = await updateProductAction(
+  String(params.storeId),  // First argument: storeId (bound)
+  {                        // Second argument: input data (validated by schema)
+    id: productId,
+    name: data.name,
+    // ... other fields
+  },
+);
+```
 
 ## Common Patterns
 

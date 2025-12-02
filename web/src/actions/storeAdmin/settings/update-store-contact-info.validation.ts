@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const updateStoreContactInfoSchema = z.object({
-	storeId: z.string().min(1),
 	aboutUs: z.string().optional().nullable(),
 	supportEmail: z.string().optional().nullable(),
 	supportPhoneNumber: z.string().optional().nullable(),

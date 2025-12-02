@@ -16,19 +16,24 @@ import {
 } from "@/components/ui/popover";
 
 import { getEnumKeys } from "@/utils/utils";
-import { Role } from "@/types/enum";
+import { MemberRole, Role } from "@/types/enum";
 
 import { useState } from "react";
 
-type ComboboxProps = {
+type MemberRoleComboboxProps = {
 	defaultValue: string;
 	onChange?: (newRole: string) => void;
 };
 
-export const UserRoleCombobox = ({ defaultValue, onChange }: ComboboxProps) => {
+// select component for member role
+//
+export const MemberRoleCombobox = ({
+	defaultValue,
+	onChange,
+}: MemberRoleComboboxProps) => {
 	const [openRoleBox, setOpenRoleBox] = useState(false);
 
-	const roleAsArray = getEnumKeys(Role);
+	const roleAsArray = getEnumKeys(MemberRole);
 
 	const [selectedRole, setSelectedRole] = useState<string | null>(
 		roleAsArray.find((o) => o === defaultValue) || null,
@@ -47,7 +52,7 @@ export const UserRoleCombobox = ({ defaultValue, onChange }: ComboboxProps) => {
 					<CommandList>
 						<CommandEmpty>No results found.</CommandEmpty>
 						<CommandGroup>
-							{getEnumKeys(Role).map((key, _index) => (
+							{getEnumKeys(MemberRole).map((key, _index) => (
 								<CommandItem
 									key={key}
 									value={key}

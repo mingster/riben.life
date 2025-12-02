@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const updateStoreBasicSchema = z.object({
-	storeId: z.string().min(1),
 	name: z.string().min(1, "Store name is required"),
 	orderNoteToCustomer: z.string().optional().nullable(),
 	defaultLocale: z.string().min(1),

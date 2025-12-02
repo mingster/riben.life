@@ -10,9 +10,9 @@ import { updateFacilityPricingRuleSchema } from "./update-facility-pricing-rule.
 export const updateFacilityPricingRuleAction = storeActionClient
 	.metadata({ name: "updateFacilityPricingRule" })
 	.schema(updateFacilityPricingRuleSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			id,
 			facilityId,
 			name,

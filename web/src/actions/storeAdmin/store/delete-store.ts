@@ -10,8 +10,8 @@ import { sqlClient } from "@/lib/prismadb";
 export const deleteStoreAction = storeActionClient
 	.metadata({ name: "deleteStore" })
 	.schema(deleteStoreSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 
 		const session = await auth.api.getSession({
 			headers: await headers(),

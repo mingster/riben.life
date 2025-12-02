@@ -24,7 +24,8 @@ model User {
   locale           String?
   timezone         String?
   stripeCustomerId String? @unique
-  phone            String? @unique
+  phone            String?
+  phoneVerified    Boolean? @default(false)
 
   twoFactorEnabled Boolean? @default(false)
 

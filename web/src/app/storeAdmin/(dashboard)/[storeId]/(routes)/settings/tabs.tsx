@@ -86,9 +86,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 	const onDelete = async () => {
 		try {
 			setLoading(true);
-			const result = await deleteStoreAction({
-				storeId: params.storeId as string,
-			});
+			const result = await deleteStoreAction(params.storeId as string, {});
 
 			if (result?.serverError) {
 				toastError({
