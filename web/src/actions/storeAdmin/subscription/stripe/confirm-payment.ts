@@ -14,9 +14,18 @@ function calculateSafeBillingStartDate(
 	currentExpiration: Date,
 	daysToAdd: number,
 ): { billingStartDate: Date; wasCapped: boolean } {
-	const now = new Date();
-	const maxFutureDate = new Date();
-	maxFutureDate.setFullYear(maxFutureDate.getFullYear() + 5); // Stripe limit: 5 years
+	const now = getUtcNow();
+	const maxFutureDate = new Date(
+		Date.UTC(
+			now.getUTCFullYear() + 5,
+			now.getUTCMonth(),
+			now.getUTCDate(),
+			now.getUTCHours(),
+			now.getUTCMinutes(),
+			now.getUTCSeconds(),
+			now.getUTCMilliseconds(),
+		),
+	); // Stripe limit: 5 years
 
 	//if currentExpiration is in the past, set it to now
 	if (currentExpiration < now) {

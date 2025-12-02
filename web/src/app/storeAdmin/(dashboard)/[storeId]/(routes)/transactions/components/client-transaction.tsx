@@ -190,7 +190,7 @@ export function TransactionClient({ serverData }: TransactionClientProps) {
 	return (
 		<>
 			<Heading
-				title={t("Store_orders")}
+				title={t("store_orders")}
 				badge={timeFiltered.length}
 				description=""
 			/>

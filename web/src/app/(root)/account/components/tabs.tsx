@@ -11,9 +11,17 @@ import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
 import type { StoreOrder, User } from "@/types";
 import type { Address } from "@prisma/client";
-import { AddressesTab } from "./address-tab";
-import { OrderTab } from "./order-tab";
-import SettingsTab from "./settings-tab";
+import { AddressesTab } from "./tab-address";
+import { OrderTab } from "./tab-orders";
+import { DisplayCreditLedger } from "@/components/display-credit-ledger";
+import {
+	Card,
+	CardHeader,
+	CardTitle,
+	CardDescription,
+	CardContent,
+} from "@/components/ui/card";
+import { DisplayReservations } from "@/components/display-reservations";
 
 export interface iUserTabProps {
 	orders: StoreOrder[] | [];
@@ -51,6 +59,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 		return <Loader />;
 	}
 
+	console.log(`user: ${JSON.stringify(user.Rsvp)}`);
 	return (
 		<Container className="bg-transparent">
 			<Tabs
@@ -59,10 +68,19 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 				onValueChange={handleTabChange}
 				className=""
 			>
-				<TabsList className="grid w-full grid-cols-2">
+				<TabsList className="grid w-full grid-cols-4">
 					<TabsTrigger className="px-5 lg:min-w-40" value="orders">
 						{t("account_tabs_orders")}
 					</TabsTrigger>
+
+					<TabsTrigger className="px-5 lg:min-w-40" value="reservations">
+						{t("account_tabs_reservations")}
+					</TabsTrigger>
+
+					<TabsTrigger className="px-5 lg:min-w-40" value="credits">
+						{t("account_tabs_credits")}
+					</TabsTrigger>
+
 					<TabsTrigger className="px-5 lg:min-w-40" value="address">
 						{t("account_tabs_address")}
 					</TabsTrigger>
@@ -71,13 +89,35 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 				<TabsContent value="orders">
 					<OrderTab orders={orders} />
 				</TabsContent>
+				<TabsContent value="reservations">
+					<Card>
+						<CardHeader>
+							<CardTitle> </CardTitle>
+							<CardDescription> </CardDescription>
+						</CardHeader>
+
+						<CardContent className="space-y-2">
+							<DisplayReservations reservations={user.Rsvp} />
+						</CardContent>
+					</Card>
+				</TabsContent>
+				<TabsContent value="credits">
+					<Card>
+						<CardHeader>
+							<CardTitle> </CardTitle>
+							<CardDescription> </CardDescription>
+						</CardHeader>
+
+						<CardContent className="space-y-2">
+							<DisplayCreditLedger ledger={user.CustomerCreditLedger} />
+						</CardContent>
+					</Card>
+				</TabsContent>
+
 				<TabsContent value="address">
 					<AddressesTab addresses={addresses} />
 				</TabsContent>
 
-				<TabsContent value="account">
-					<SettingsTab user={user} />
-				</TabsContent>
 				{/*
         <TabsContent value="password">
           <Card>

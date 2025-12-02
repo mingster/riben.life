@@ -96,7 +96,7 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 			} else {
 				router.push("/storeAdmin/");
 				toastSuccess({
-					title: t("Store_Removed"),
+					title: t("store_removed"),
 					description: "",
 				});
 			}

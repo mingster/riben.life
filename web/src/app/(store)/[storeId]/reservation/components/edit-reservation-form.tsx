@@ -2,16 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconCalendarCheck } from "@tabler/icons-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import Link from "next/link";
 
-import { createReservationAction } from "@/actions/store/reservation/create-reservation";
+import { updateReservationAction } from "@/actions/store/reservation/update-reservation";
 import {
-	createReservationSchema,
-	type CreateReservationInput,
-} from "@/actions/store/reservation/create-reservation.validation";
+	updateReservationSchema,
+	type UpdateReservationInput,
+} from "@/actions/store/reservation/update-reservation.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -39,67 +38,62 @@ import type { RsvpSettings } from "@prisma/client";
 import { getDateInTz } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 
-interface ReservationFormProps {
+interface EditReservationFormProps {
 	storeId: string;
 	rsvpSettings: RsvpSettings | null;
 	facilities: StoreFacility[];
 	user: User | null;
-	defaultRsvpTime?: Date;
-	onReservationCreated?: (newRsvp: Rsvp) => void;
+	rsvp: Rsvp;
+	onReservationUpdated?: (updatedRsvp: Rsvp) => void;
 	hideCard?: boolean;
 	storeTimezone?: number;
 }
 
-export function ReservationForm({
+export function EditReservationForm({
 	storeId,
 	rsvpSettings,
 	facilities,
 	user,
-	defaultRsvpTime,
-	onReservationCreated,
+	rsvp,
+	onReservationUpdated,
 	hideCard = false,
 	storeTimezone = 8,
-}: ReservationFormProps) {
+}: EditReservationFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const params = useParams();
-	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	// Default values
-	const defaultValues: CreateReservationInput = useMemo(
+	// Default values from existing RSVP
+	const defaultValues: UpdateReservationInput = useMemo(
 		() => ({
-			storeId,
-			userId: user?.id || null,
-			email: user?.email || "",
-			phone: "",
-			facilityId: null,
-			numOfAdult: 1,
-			numOfChild: 0,
-			rsvpTime: defaultRsvpTime || new Date(),
-			message: "",
+			id: rsvp.id,
+			facilityId: rsvp.facilityId,
+			numOfAdult: rsvp.numOfAdult,
+			numOfChild: rsvp.numOfChild,
+			rsvpTime:
+				rsvp.rsvpTime instanceof Date ? rsvp.rsvpTime : new Date(rsvp.rsvpTime),
+			message: rsvp.message || "",
 		}),
-		[storeId, user, defaultRsvpTime],
+		[rsvp],
 	);
 
-	const form = useForm<CreateReservationInput>({
-		resolver: zodResolver(createReservationSchema) as any,
+	const form = useForm<UpdateReservationInput>({
+		resolver: zodResolver(updateReservationSchema) as any,
 		defaultValues,
 		mode: "onChange",
 	});
 
-	// Update form when defaultRsvpTime changes
+	// Update form when rsvp changes
 	useEffect(() => {
-		if (defaultRsvpTime) {
-			form.setValue("rsvpTime", defaultRsvpTime);
-		}
-	}, [defaultRsvpTime, form]);
+		form.reset(defaultValues);
+	}, [rsvp, form, defaultValues]);
 
-	async function onSubmit(data: CreateReservationInput) {
+	async function onSubmit(data: UpdateReservationInput) {
 		setIsSubmitting(true);
 
 		try {
-			const result = await createReservationAction(data);
+			const result = await updateReservationAction(data);
 
 			if (result?.serverError) {
 				toastError({
@@ -108,13 +102,11 @@ export function ReservationForm({
 				});
 			} else {
 				toastSuccess({
-					description: t("reservation_created"),
+					description: t("reservation_updated"),
 				});
-				// Reset form after successful submission
-				form.reset(defaultValues);
-				// Call callback with the created reservation if provided
+				// Call callback with the updated reservation if provided
 				if (result?.data?.rsvp) {
-					onReservationCreated?.(result.data.rsvp as Rsvp);
+					onReservationUpdated?.(result.data.rsvp as Rsvp);
 				}
 			}
 		} catch (error) {
@@ -127,30 +119,8 @@ export function ReservationForm({
 		}
 	}
 
-	// Check if prepaid is required
-	const prepaidRequired = rsvpSettings?.prepaidRequired ?? false;
-	const requiresLogin = prepaidRequired && !user;
-
 	const formContent = (
 		<>
-			{requiresLogin && (
-				<div className="mb-4 space-y-3 rounded-md bg-yellow-50 p-4 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
-					<p>{t("reservation_prepaid_required")}</p>
-					<Link
-						href={`/signIn/?callbackUrl=/${params.storeId}/reservation`}
-						className="inline-block"
-					>
-						<Button
-							type="button"
-							variant="default"
-							className="w-full sm:w-auto"
-						>
-							{t("signin")} {t("or")} {t("signUp")}
-						</Button>
-					</Link>
-				</div>
-			)}
-
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 					{/* Date and Time */}
@@ -295,49 +265,6 @@ export function ReservationForm({
 						/>
 					)}
 
-					{/* Contact Information */}
-					{!user && (
-						<div className="space-y-4">
-							<FormField
-								control={form.control}
-								name="email"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("email")}</FormLabel>
-										<FormControl>
-											<Input
-												type="email"
-												placeholder={t("Enter_your_email")}
-												disabled={isSubmitting}
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="phone"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("phone")}</FormLabel>
-										<FormControl>
-											<Input
-												type="tel"
-												placeholder={t("Enter_your_phone")}
-												disabled={isSubmitting}
-												{...field}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
-					)}
-
 					{/* Message/Notes */}
 					<FormField
 						control={form.control}
@@ -359,19 +286,9 @@ export function ReservationForm({
 					/>
 
 					{/* Submit Button */}
-					<Button
-						type="submit"
-						disabled={isSubmitting || requiresLogin}
-						className="w-full"
-					>
-						{isSubmitting ? t("Submitting") : t("create_Reservation")}
+					<Button type="submit" disabled={isSubmitting} className="w-full">
+						{isSubmitting ? t("updating") : t("update_reservation")}
 					</Button>
-
-					{requiresLogin && (
-						<p className="text-sm text-muted-foreground text-center">
-							{t("Please_sign_in_to_make_reservation")}
-						</p>
-					)}
 				</form>
 			</Form>
 		</>
@@ -386,9 +303,9 @@ export function ReservationForm({
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<IconCalendarCheck className="h-5 w-5" />
-					{t("create_Reservation")}
+					{t("edit_reservation")}
 				</CardTitle>
-				<CardDescription>{t("create_Reservation_description")}</CardDescription>
+				<CardDescription>{t("edit_reservation_description")}</CardDescription>
 			</CardHeader>
 			<CardContent>{formContent}</CardContent>
 		</Card>

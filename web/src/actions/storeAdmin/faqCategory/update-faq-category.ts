@@ -10,7 +10,10 @@ export const updateFaqCategoryAction = storeActionClient
 	.metadata({ name: "updateFaqCategory" })
 	.schema(updateFaqCategorySchema)
 	.action(
-		async ({ parsedInput: { id, localeId, name, sortOrder }, bindArgsClientInputs }) => {
+		async ({
+			parsedInput: { id, localeId, name, sortOrder },
+			bindArgsClientInputs,
+		}) => {
 			const storeId = bindArgsClientInputs[0] as string;
 			logger.info("id", {
 				tags: ["action"],

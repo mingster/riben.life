@@ -244,3 +244,44 @@ export function addDays(dt: Date, days: number): Date {
 export function addHours(dt: Date, hours: number): Date {
 	return new Date(dt.getTime() + hours * 60 * 60 * 1000);
 }
+
+/**
+ * Helper to format date using UTC components (not browser timezone)
+ * This is needed because we store user's local time as UTC components
+ * @param date - Date object to format
+ * @param formatString - Format string with tokens: yyyy, MM, dd, HH, mm, ss, EEEE, EEE
+ * @returns Formatted date string
+ */
+export const formatDateUTC = (date: Date, formatString: string): string => {
+	// Extract UTC components
+	const year = date.getUTCFullYear();
+	const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+	const day = String(date.getUTCDate()).padStart(2, "0");
+	const hour = String(date.getUTCHours()).padStart(2, "0");
+	const minute = String(date.getUTCMinutes()).padStart(2, "0");
+	const second = String(date.getUTCSeconds()).padStart(2, "0");
+
+	// Get weekday name (0 = Sunday, 6 = Saturday)
+	const weekdayNames = [
+		"Sunday",
+		"Monday",
+		"Tuesday",
+		"Wednesday",
+		"Thursday",
+		"Friday",
+		"Saturday",
+	];
+	const weekday = weekdayNames[date.getUTCDay()];
+	const weekdayShort = weekday.substring(0, 3);
+
+	// Replace format tokens
+	return formatString
+		.replace("yyyy", String(year))
+		.replace("MM", month)
+		.replace("dd", day)
+		.replace("HH", hour)
+		.replace("mm", minute)
+		.replace("ss", second)
+		.replace("EEEE", weekday)
+		.replace("EEE", weekdayShort);
+};

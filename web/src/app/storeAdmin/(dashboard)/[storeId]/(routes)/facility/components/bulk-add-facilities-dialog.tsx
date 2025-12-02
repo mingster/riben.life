@@ -74,18 +74,15 @@ export function BulkAddFacilitiesDialog({
 	const onSubmit = async (values: CreateFacilitiesInput) => {
 		setLoading(true);
 		try {
-			const result = await createFacilitiesAction(
-				String(params.storeId),
-				{
-					prefix: values.prefix?.trim() ?? "",
-					numOfFacilities: values.numOfFacilities,
-					capacity: values.capacity,
-					defaultCost: values.defaultCost,
-					defaultCredit: values.defaultCredit,
-					defaultDuration: values.defaultDuration,
-					businessHours: values.businessHours || null,
-				},
-			);
+			const result = await createFacilitiesAction(String(params.storeId), {
+				prefix: values.prefix?.trim() ?? "",
+				numOfFacilities: values.numOfFacilities,
+				capacity: values.capacity,
+				defaultCost: values.defaultCost,
+				defaultCredit: values.defaultCredit,
+				defaultDuration: values.defaultDuration,
+				businessHours: values.businessHours || null,
+			});
 
 			if (result?.serverError) {
 				toastError({

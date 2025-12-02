@@ -35,10 +35,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data, onDeleted }) => {
 	const onConfirm = async () => {
 		try {
 			setLoading(true);
-			const result = await deleteProductAction(
-				String(params.storeId),
-				{ productId: data.id },
-			);
+			const result = await deleteProductAction(String(params.storeId), {
+				productId: data.id,
+			});
 
 			if (result?.serverError) {
 				toastError({

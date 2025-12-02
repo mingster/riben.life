@@ -123,7 +123,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 						null,
 				);
 				toastSuccess({
-					title: t("Store_updated"),
+					title: t("store_updated"),
 					description: "",
 				});
 			}

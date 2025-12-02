@@ -177,6 +177,84 @@ async function onSubmit(data: FormInput) {
 - For conditional schemas, use `useMemo` to select the appropriate schema
 - Never define local schemas in component files
 
+### Date/Time Handling in CRUD Operations
+
+**CRITICAL: All date/time values MUST be saved in true UTC format.**
+
+When creating or updating records with date/time fields:
+
+1. **In Server Actions:**
+   - Always use `getUtcNow()` from `@/utils/datetime-utils` for timestamps
+   - Convert user input dates to UTC before saving
+   - Never use `new Date()` or `Date.now()` for timestamps
+
+2. **In Client Components:**
+   - Display dates in store/user timezone using `getDateInTz()` from `@/utils/datetime-utils`
+   - Convert UTC dates from server to display timezone before formatting
+
+**Example Pattern:**
+
+```tsx
+// In server action (create/update)
+import { getUtcNow } from "@/utils/datetime-utils";
+
+export const createItemAction = storeActionClient
+  .schema(createItemSchema)
+  .action(async ({ parsedInput }) => {
+    const { name, eventTime } = parsedInput;
+    
+    // Convert user input date to UTC if needed
+    // (If eventTime comes from form, ensure it's converted to UTC)
+    const utcEventTime = eventTime instanceof Date 
+      ? new Date(Date.UTC(
+          eventTime.getUTCFullYear(),
+          eventTime.getUTCMonth(),
+          eventTime.getUTCDate(),
+          eventTime.getUTCHours(),
+          eventTime.getUTCMinutes(),
+        ))
+      : eventTime;
+    
+    const result = await sqlClient.item.create({
+      data: {
+        name,
+        eventTime: utcEventTime, // ✅ Saved as UTC
+        createdAt: getUtcNow(), // ✅ Always UTC
+        updatedAt: getUtcNow(), // ✅ Always UTC
+      },
+    });
+    
+    return { item: result };
+  });
+```
+
+```tsx
+// In client component (display)
+import { getDateInTz } from "@/utils/datetime-utils";
+import { format } from "date-fns";
+
+export function ItemDisplay({ item, storeTimezone }: Props) {
+  // Convert UTC date to store timezone for display
+  const displayDate = getDateInTz(item.eventTime, storeTimezone);
+  
+  return (
+    <div>
+      {format(displayDate, "yyyy-MM-dd HH:mm")}
+    </div>
+  );
+}
+```
+
+**Important Rules:**
+
+- ✅ **DO**: Use `getUtcNow()` for all timestamps
+- ✅ **DO**: Convert user input dates to UTC before saving
+- ✅ **DO**: Display dates in store/user timezone using `getDateInTz()`
+- ❌ **DON'T**: Use `new Date()` for timestamps
+- ❌ **DON'T**: Use `Date.now()` for timestamps
+- ❌ **DON'T**: Save dates in local timezone
+- ❌ **DON'T**: Display UTC dates directly to users
+
 ### 6. Filter Implementation
 
 #### 6.1 Filter Component Structure

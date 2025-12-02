@@ -5,6 +5,7 @@ import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
 import { PhaseTags } from "./phase-tags";
 import { sqlClient } from "@/lib/prismadb";
 import { User } from "@/types";
+import { getUtcNow } from "@/utils/datetime-utils";
 
 // send auth validation email to customer
 //
@@ -117,7 +118,7 @@ export const sendAuthEmailValidation = async (
 			subject: phased_subject,
 			textMessage: textMessage,
 			htmMessage: htmMessage,
-			createdOn: new Date(),
+			createdOn: getUtcNow(),
 			sendTries: 0,
 		},
 	});

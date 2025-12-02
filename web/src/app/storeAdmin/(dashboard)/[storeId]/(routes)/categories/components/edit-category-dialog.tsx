@@ -126,14 +126,11 @@ export function EditCategoryDialog({
 			setLoading(true);
 
 			if (!isEditMode) {
-				const result = await createStoreCategoryAction(
-					String(params.storeId),
-					{
-						name: values.name,
-						sortOrder: values.sortOrder,
-						isFeatured: values.isFeatured,
-					},
-				);
+				const result = await createStoreCategoryAction(String(params.storeId), {
+					name: values.name,
+					sortOrder: values.sortOrder,
+					isFeatured: values.isFeatured,
+				});
 
 				if (result?.serverError) {
 					toastError({
@@ -156,15 +153,12 @@ export function EditCategoryDialog({
 					return;
 				}
 
-				const result = await updateStoreCategoryAction(
-					String(params.storeId),
-					{
-						id: categoryId,
-						name: values.name,
-						sortOrder: values.sortOrder,
-						isFeatured: values.isFeatured,
-					},
-				);
+				const result = await updateStoreCategoryAction(String(params.storeId), {
+					id: categoryId,
+					name: values.name,
+					sortOrder: values.sortOrder,
+					isFeatured: values.isFeatured,
+				});
 
 				if (result?.serverError) {
 					toastError({

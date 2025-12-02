@@ -5,6 +5,7 @@ import type { StoreOrder } from "@prisma/client";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
+import { getUtcNow } from "@/utils/datetime-utils";
 
 type Params = Promise<{ storeId: string }>;
 
@@ -63,12 +64,25 @@ export async function POST(
 		const userId = session?.user.id;
 
 		if (userId) {
+			// Use UTC for date calculations
+			const now = getUtcNow();
+			const todayStart = new Date(
+				Date.UTC(
+					now.getUTCFullYear(),
+					now.getUTCMonth(),
+					now.getUTCDate(),
+					0,
+					0,
+					0,
+					0,
+				),
+			);
 			const orders = (await sqlClient.storeOrder.findMany({
 				where: {
 					userId: userId,
-					//updateAt = today
+					//updateAt = today (UTC)
 					updatedAt: {
-						gte: new Date(new Date().setHours(0, 0, 0, 0)),
+						gte: todayStart,
 					},
 				},
 				include: {

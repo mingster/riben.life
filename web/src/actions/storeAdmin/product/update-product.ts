@@ -12,15 +12,8 @@ export const updateProductAction = storeActionClient
 	.schema(updateProductSchema)
 	.action(async ({ parsedInput, bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
-		const {
-			id,
-			name,
-			description,
-			price,
-			currency,
-			status,
-			isFeatured,
-		} = parsedInput;
+		const { id, name, description, price, currency, status, isFeatured } =
+			parsedInput;
 
 		const product = await sqlClient.product.findUnique({
 			where: { id },

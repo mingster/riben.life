@@ -96,7 +96,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 				onStoreUpdated?.(result.data.store as Store);
 
 				toastSuccess({
-					title: t("Store_updated"),
+					title: t("store_updated"),
 					description: "",
 				});
 			}

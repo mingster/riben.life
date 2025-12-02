@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Loader } from "@/components/loader";
 import { StoreLevel } from "@/types/enum";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, getUtcNow } from "@/utils/datetime-utils";
 import type { StoreFacility } from "@prisma/client";
 import { OrderUnpaid } from "./order-unpaid";
 import logger from "@/lib/logger";
@@ -23,7 +23,7 @@ export const CashCashier: React.FC<props> = ({ store, tables }) => {
 	const [mounted, setMounted] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	const date = new Date();
+	const date = getUtcNow();
 	const [unpaidOrders, setUnpaidOrders] = useState([]);
 
 	const fetchData = useCallback(() => {

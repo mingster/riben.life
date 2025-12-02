@@ -8,7 +8,7 @@ import { Loader } from "@/components/loader";
 import { useI18n } from "@/providers/i18n-provider";
 import { format } from "date-fns-tz";
 
-import { getNowTimeInTz } from "@/utils/datetime-utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 import { formatDateTime } from "@/utils/datetime-utils";
 import { OrderPending } from "../../components/order-pending";
 import logger from "@/lib/logger";
@@ -26,7 +26,7 @@ export const Awaiting4ConfirmationClient: React.FC<props> = ({ store }) => {
 	const [mounted, setMounted] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	const date = getNowTimeInTz(8);
+	const date = getUtcNow();
 	//console.log('date', date);
 
 	const [pendingOrders, setPendingOrders] = useState([]);

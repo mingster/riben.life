@@ -8,20 +8,16 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { getUtcNow } from "@/utils/datetime-utils";
-
-import { createReservationSchema } from "./create-reservation.validation";
 import { RsvpStatus } from "@/types/enum";
 
-export const createReservationAction = baseClient
-	.metadata({ name: "createReservation" })
-	.schema(createReservationSchema)
+import { updateReservationSchema } from "./update-reservation.validation";
+
+export const updateReservationAction = baseClient
+	.metadata({ name: "updateReservation" })
+	.schema(updateReservationSchema)
 	.action(async ({ parsedInput }) => {
 		const {
-			storeId,
-			userId,
-			email,
-			phone,
+			id,
 			facilityId,
 			numOfAdult,
 			numOfChild,
@@ -53,55 +49,49 @@ export const createReservationAction = baseClient
 		});
 
 		const sessionUserId = session?.user?.id;
+		const sessionUserEmail = session?.user?.email;
 
-		// Get store and RSVP settings
-		const [store, rsvpSettings] = await Promise.all([
-			sqlClient.store.findUnique({
-				where: { id: storeId },
-				select: {
-					id: true,
-					name: true,
-					useBusinessHours: true,
-				},
-			}),
-			sqlClient.rsvpSettings.findFirst({
-				where: { storeId },
-			}),
-		]);
+		// Get the existing RSVP
+		const existingRsvp = await sqlClient.rsvp.findUnique({
+			where: { id },
+			include: {
+				User: true,
+				Store: true,
+			},
+		});
 
-		if (!store) {
-			throw new SafeError("Store not found");
+		if (!existingRsvp) {
+			throw new SafeError("Reservation not found");
 		}
 
-		if (!rsvpSettings || !rsvpSettings.acceptReservation) {
-			throw new SafeError("Reservations are not currently accepted");
+		// Only allow editing if status is Pending
+		if (existingRsvp.status !== RsvpStatus.Pending) {
+			throw new SafeError(
+				"Reservation can only be edited when status is Pending",
+			);
 		}
 
-		// Check if prepaid is required
-		if (rsvpSettings.prepaidRequired) {
-			if (!sessionUserId) {
-				throw new SafeError(
-					"Please sign in to make a reservation. Prepaid is required.",
-				);
-			}
-			// TODO: Handle prepaid payment logic here
-			// For now, we'll just create the reservation without payment
+		// Verify ownership: user must be logged in and match userId, or match by email
+		let hasPermission = false;
+
+		if (sessionUserId && existingRsvp.userId) {
+			hasPermission = existingRsvp.userId === sessionUserId;
+		} else if (sessionUserEmail && existingRsvp.User?.email) {
+			hasPermission = existingRsvp.User.email === sessionUserEmail;
 		}
 
-		// Validate email requirement for anonymous users
-		if (!sessionUserId && !email) {
-			throw new SafeError("Email is required for reservations");
+		if (!hasPermission) {
+			throw new SafeError(
+				"You do not have permission to edit this reservation",
+			);
 		}
-
-		// Use session userId if available, otherwise use provided userId
-		const finalUserId = sessionUserId || userId || null;
 
 		// Validate facility if provided
 		if (facilityId) {
 			const facility = await sqlClient.storeFacility.findFirst({
 				where: {
 					id: facilityId,
-					storeId,
+					storeId: existingRsvp.storeId,
 				},
 			});
 
@@ -113,19 +103,14 @@ export const createReservationAction = baseClient
 		// TODO: Add availability validation (check existing reservations, business hours, etc.)
 
 		try {
-			const rsvp = await sqlClient.rsvp.create({
+			const updated = await sqlClient.rsvp.update({
+				where: { id },
 				data: {
-					storeId,
-					userId: finalUserId,
 					facilityId: facilityId || null,
 					numOfAdult,
 					numOfChild,
 					rsvpTime,
 					message: message || null,
-					status: Number(RsvpStatus.Pending), // pending
-					alreadyPaid: false,
-					confirmedByStore: false,
-					confirmedByCustomer: false,
 				},
 				include: {
 					Store: true,
@@ -134,7 +119,7 @@ export const createReservationAction = baseClient
 				},
 			});
 
-			const transformedRsvp = { ...rsvp } as Rsvp;
+			const transformedRsvp = { ...updated } as Rsvp;
 			transformDecimalsToNumbers(transformedRsvp);
 
 			return {
@@ -145,7 +130,7 @@ export const createReservationAction = baseClient
 				error instanceof Prisma.PrismaClientKnownRequestError &&
 				error.code === "P2002"
 			) {
-				throw new SafeError("Reservation already exists.");
+				throw new SafeError("Reservation update failed.");
 			}
 
 			throw error;

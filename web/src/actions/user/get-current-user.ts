@@ -47,6 +47,26 @@ const getCurrentUser = async (): Promise<User | null> => {
 			apikeys: true,
 			members: true,
 			invitations: true,
+			Rsvp: {
+				include: {
+					Store: true,
+					Facility: true,
+					FacilityPricingRule: true,
+					User: true,
+				},
+				orderBy: {
+					rsvpTime: "desc",
+				},
+			},
+			CustomerCredits: true,
+			CustomerCreditLedger: {
+				include: {
+					Creator: true,
+				},
+				orderBy: {
+					createdAt: "desc",
+				},
+			},
 		},
 	});
 

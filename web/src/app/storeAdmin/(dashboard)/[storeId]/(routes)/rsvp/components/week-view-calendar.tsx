@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
+import { getUtcNow } from "@/utils/datetime-utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp } from "@/types";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
@@ -189,8 +190,10 @@ const getDayNumber = (date: Date): string => {
 };
 
 // Check if a date is today
+// Note: This is for display comparison only, not for saving timestamps
 const isToday = (date: Date): boolean => {
-	return isSameDay(date, new Date());
+	// Use getUtcNow() for consistency, though this is just for comparison
+	return isSameDay(date, getUtcNow());
 };
 
 // Group RSVPs by day and time slot
@@ -239,7 +242,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-	const [currentWeek, setCurrentWeek] = useState(new Date());
+	const [currentWeek, setCurrentWeek] = useState(() => getUtcNow());
 	const [rsvps, setRsvps] = useState<Rsvp[]>(initialRsvps);
 
 	// Sync with prop changes (e.g., when server data is refreshed)
@@ -327,7 +330,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 	}, []);
 
 	const handleToday = useCallback(() => {
-		setCurrentWeek(new Date());
+		setCurrentWeek(getUtcNow());
 	}, []);
 
 	const handleDateSelect = useCallback((date: Date | undefined) => {
