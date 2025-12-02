@@ -114,7 +114,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({
 				);
 
 				toastSuccess({
-					title: t("Store_updated"),
+					title: t("store_updated"),
 					description: "",
 				});
 			}

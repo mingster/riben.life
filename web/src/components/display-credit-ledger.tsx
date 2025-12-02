@@ -18,49 +18,171 @@ export const DisplayCreditLedger = ({
 	const { t } = useTranslation(lng);
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 
-	//console.log(`ledger: ${JSON.stringify(ledger)}`);
 	return (
-		<div className="space-y-2 font-mono text-xs">
-			{ledger.map((item) => (
-				<table key={item.id} className="w-full">
-					<thead>
-						<tr>
-							<th className="text-left">{t("created_at")}</th>
-							<th className="text-left">{t("customer_credit_type")}</th>
-							<th className="text-left">{t("customer_credit_amount")}</th>
-							<th className="text-left">{t("balance")}</th>
-							<th className="text-left">{t("note")}</th>
-							<th className="text-left">{t("customer_credit_creator")}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>{format(item.createdAt, datetimeFormat)}</td>
-							<td>{t(`customer_credit_type_${item.type}`)}</td>
-							<td
-								className={cn(
-									Number(item.amount) >= 0
-										? "text-green-700 dark:text-green-400"
-										: "text-red-700 dark:text-red-400",
-								)}
-							>
-								{item.amount.toString()}
-							</td>
-							<td
-								className={cn(
-									Number(item.balance) >= 0
-										? "text-green-700 dark:text-green-400"
-										: "text-red-700 dark:text-red-400",
-								)}
-							>
-								{item.balance.toString()}
-							</td>
-							<td>{item.note}</td>
-							<td>{item.Creator?.name}</td>
-						</tr>
-					</tbody>
-				</table>
-			))}
+		<div className="space-y-3 sm:space-y-4">
+			{/* Mobile: Card view */}
+			<div className="block sm:hidden space-y-3">
+				{ledger.map((item) => (
+					<div
+						key={item.id}
+						className="rounded-lg border bg-card p-3 space-y-2 text-xs"
+					>
+						<div className="flex items-start justify-between gap-2">
+							<div className="flex-1 min-w-0">
+								<div className="font-medium text-sm truncate">
+									{item.Store?.name}
+								</div>
+								<div className="text-muted-foreground text-[10px]">
+									{format(item.createdAt, datetimeFormat)}
+								</div>
+							</div>
+							<div className="shrink-0">
+								<span
+									className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
+										item.type === "TOPUP"
+											? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
+											: item.type === "BONUS"
+												? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
+												: item.type === "SPEND"
+													? "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
+													: item.type === "REFUND"
+														? "bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400"
+														: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
+									}`}
+								>
+									{t(`customer_credit_type_${item.type}`)}
+								</span>
+							</div>
+						</div>
+
+						<div className="flex items-center justify-between pt-2 border-t">
+							<div className="space-y-1">
+								<div className="text-[10px] text-muted-foreground">
+									{t("customer_credit_amount")}
+								</div>
+								<div
+									className={cn(
+										"font-bold text-base font-mono",
+										Number(item.amount) >= 0
+											? "text-green-600 dark:text-green-400"
+											: "text-red-600 dark:text-red-400",
+									)}
+								>
+									{Number(item.amount) > 0 ? "+" : ""}
+									{item.amount.toString()}
+								</div>
+							</div>
+
+							<div className="space-y-1 text-right">
+								<div className="text-[10px] text-muted-foreground">
+									{t("balance")}
+								</div>
+								<div className="font-semibold text-base font-mono">
+									{item.balance.toString()}
+								</div>
+							</div>
+						</div>
+
+						{item.note && (
+							<div className="text-[10px] pt-2 border-t">
+								<span className="font-medium text-muted-foreground">
+									{t("note")}:
+								</span>{" "}
+								<span className="text-foreground">{item.note}</span>
+							</div>
+						)}
+
+						{item.Creator?.name && (
+							<div className="text-[10px] text-muted-foreground">
+								<span className="font-medium">
+									{t("customer_credit_creator")}:
+								</span>{" "}
+								{item.Creator.name}
+							</div>
+						)}
+					</div>
+				))}
+			</div>
+
+			{/* Desktop: Table view */}
+			<div className="hidden sm:block rounded-md border overflow-hidden">
+				<div className="overflow-x-auto">
+					<table className="w-full border-collapse min-w-full">
+						<thead>
+							<tr className="bg-muted/50">
+								<th className="text-left px-3 py-2 text-xs font-medium">
+									{t("created_at")}
+								</th>
+								<th className="text-left px-3 py-2 text-xs font-medium">
+									{t("store_name")}
+								</th>
+								<th className="text-left px-3 py-2 text-xs font-medium">
+									{t("customer_credit_type")}
+								</th>
+								<th className="text-right px-3 py-2 text-xs font-medium">
+									{t("customer_credit_amount")}
+								</th>
+								<th className="text-right px-3 py-2 text-xs font-medium">
+									{t("balance")}
+								</th>
+								<th className="text-left px-3 py-2 text-xs font-medium">
+									{t("note")}
+								</th>
+								<th className="text-left px-3 py-2 text-xs font-medium">
+									{t("customer_credit_creator")}
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							{ledger.map((item) => (
+								<tr key={item.id} className="border-b last:border-b-0">
+									<td className="px-3 py-2 text-xs font-mono">
+										{format(item.createdAt, datetimeFormat)}
+									</td>
+									<td className="px-3 py-2 text-xs">{item.Store?.name}</td>
+									<td className="px-3 py-2 text-xs">
+										<span
+											className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
+												item.type === "TOPUP"
+													? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
+													: item.type === "BONUS"
+														? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
+														: item.type === "SPEND"
+															? "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
+															: item.type === "REFUND"
+																? "bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400"
+																: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
+											}`}
+										>
+											{t(`customer_credit_type_${item.type}`)}
+										</span>
+									</td>
+									<td
+										className={cn(
+											"px-3 py-2 text-xs font-semibold font-mono text-right",
+											Number(item.amount) >= 0
+												? "text-green-600 dark:text-green-400"
+												: "text-red-600 dark:text-red-400",
+										)}
+									>
+										{Number(item.amount) > 0 ? "+" : ""}
+										{item.amount.toString()}
+									</td>
+									<td className="px-3 py-2 text-xs font-semibold font-mono text-right">
+										{item.balance.toString()}
+									</td>
+									<td className="px-3 py-2 text-xs max-w-[200px] truncate">
+										{item.note || "-"}
+									</td>
+									<td className="px-3 py-2 text-xs">
+										{item.Creator?.name || "-"}
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			</div>
 		</div>
 	);
 };

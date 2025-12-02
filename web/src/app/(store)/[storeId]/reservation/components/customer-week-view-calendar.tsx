@@ -22,7 +22,10 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
+import { RsvpStatus } from "@/types/enum";
 import { ReservationDialog } from "./reservation-dialog";
+import { EditReservationDialog } from "./edit-reservation-dialog";
+import { getDateInTz } from "@/utils/datetime-utils";
 
 interface CustomerWeekViewCalendarProps {
 	rsvps: Rsvp[];
@@ -37,6 +40,7 @@ interface CustomerWeekViewCalendarProps {
 		defaultCost: number | null;
 	}>;
 	user?: { id: string; email: string | null } | null;
+	storeTimezone?: number;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
 }
 
@@ -158,24 +162,42 @@ const isToday = (date: Date): boolean => {
 };
 
 // Group RSVPs by day and time slot
+// RSVP dates are in UTC, convert to store timezone for display and grouping
 const groupRsvpsByDayAndTime = (
 	rsvps: Rsvp[],
 	weekStart: Date,
 	weekEnd: Date,
+	storeTimezone: number,
 ) => {
 	const grouped: Record<string, Rsvp[]> = {};
 
 	rsvps.forEach((rsvp) => {
-		const rsvpDate =
-			rsvp.rsvpTime instanceof Date
-				? rsvp.rsvpTime
-				: parseISO(
-						typeof rsvp.rsvpTime === "string"
-							? rsvp.rsvpTime
-							: String(rsvp.rsvpTime),
-					);
+		if (!rsvp.rsvpTime) return;
 
-		// Check if RSVP is within the week
+		let rsvpDateUtc: Date;
+		try {
+			if (rsvp.rsvpTime instanceof Date) {
+				rsvpDateUtc = rsvp.rsvpTime;
+			} else if (typeof rsvp.rsvpTime === "string") {
+				rsvpDateUtc = parseISO(rsvp.rsvpTime);
+			} else {
+				rsvpDateUtc = parseISO(String(rsvp.rsvpTime));
+			}
+
+			// Validate the date
+			if (isNaN(rsvpDateUtc.getTime())) {
+				console.warn("Invalid RSVP date:", rsvp.rsvpTime, rsvp.id);
+				return;
+			}
+		} catch (error) {
+			console.warn("Error parsing RSVP date:", rsvp.rsvpTime, rsvp.id, error);
+			return;
+		}
+
+		// Convert UTC date to store timezone for display and grouping
+		const rsvpDate = getDateInTz(rsvpDateUtc, storeTimezone);
+
+		// Check if RSVP is within the week (inclusive of boundaries)
 		if (rsvpDate >= weekStart && rsvpDate <= weekEnd) {
 			const dayKey = format(rsvpDate, "yyyy-MM-dd");
 			// Round to nearest hour for time slot matching
@@ -203,11 +225,18 @@ export const CustomerWeekViewCalendar: React.FC<
 	storeId,
 	facilities = [],
 	user,
+	storeTimezone = 8,
 	onReservationCreated,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-	const today = useMemo(() => startOfDay(new Date()), []);
+	
+	// Convert UTC today to store timezone for display
+	const todayUtc = useMemo(() => new Date(), []);
+	const today = useMemo(
+		() => startOfDay(getDateInTz(todayUtc, storeTimezone)),
+		[todayUtc, storeTimezone],
+	);
 	const [rsvps, setRsvps] = useState<Rsvp[]>(initialRsvps);
 	const [currentWeek, setCurrentWeek] = useState(() => {
 		// Always start with today to ensure we don't start on a past week
@@ -277,10 +306,10 @@ export const CustomerWeekViewCalendar: React.FC<
 		});
 	}, [rsvps, user]);
 
-	// Group RSVPs by day and time
+	// Group RSVPs by day and time (convert UTC to store timezone)
 	const groupedRsvps = useMemo(
-		() => groupRsvpsByDayAndTime(userRsvps, weekStart, weekEnd),
-		[userRsvps, weekStart, weekEnd],
+		() => groupRsvpsByDayAndTime(userRsvps, weekStart, weekEnd, storeTimezone),
+		[userRsvps, weekStart, weekEnd, storeTimezone],
 	);
 
 	const handlePreviousWeek = useCallback(() => {
@@ -328,6 +357,32 @@ export const CustomerWeekViewCalendar: React.FC<
 		},
 		[onReservationCreated],
 	);
+
+	const handleReservationUpdated = useCallback((updatedRsvp: Rsvp) => {
+		if (!updatedRsvp) return;
+		setRsvps((prev) => {
+			// Ensure rsvpTime is properly formatted as Date if it's a string
+			const normalizedRsvp: Rsvp = {
+				...updatedRsvp,
+				rsvpTime:
+					updatedRsvp.rsvpTime instanceof Date
+						? updatedRsvp.rsvpTime
+						: typeof updatedRsvp.rsvpTime === "string"
+							? parseISO(updatedRsvp.rsvpTime)
+							: new Date(updatedRsvp.rsvpTime),
+			};
+
+			const index = prev.findIndex((item) => item.id === normalizedRsvp.id);
+			if (index === -1) {
+				// If not found, add it (shouldn't happen, but handle gracefully)
+				return [...prev, normalizedRsvp];
+			}
+			// Replace the existing RSVP with the updated one
+			return prev.map((item) =>
+				item.id === normalizedRsvp.id ? normalizedRsvp : item,
+			);
+		});
+	}, []);
 
 	return (
 		<div className="flex flex-col gap-3 sm:gap-4">
@@ -432,41 +487,64 @@ export const CustomerWeekViewCalendar: React.FC<
 											>
 												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
 													{slotRsvps.length > 0 ? (
-														slotRsvps.map((rsvp) => (
-															<div
-																key={rsvp.id}
-																className={cn(
-																	"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs min-h-[44px] touch-manipulation border-l-2",
-																	rsvp.confirmedByStore
-																		? "bg-green-50 dark:bg-green-950/20 border-l-green-500"
-																		: "bg-yellow-50 dark:bg-yellow-950/20 border-l-yellow-500",
-																	rsvp.alreadyPaid && "border-l-blue-500",
-																)}
-															>
-																<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																	{rsvp.User?.name
-																		? rsvp.User.name
-																		: rsvp.User?.email
-																			? rsvp.User.email
-																			: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																					rsvp.numOfAdult + rsvp.numOfChild ===
-																					1
-																						? "guest"
-																						: "guests"
-																				}`}
+														slotRsvps.map((rsvp) => {
+															const isPending =
+																rsvp.status === RsvpStatus.Pending;
+															const rsvpCard = (
+																<div
+																	className={cn(
+																		"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs min-h-[44px] touch-manipulation border-l-2",
+																		rsvp.confirmedByStore
+																			? "bg-green-50 dark:bg-green-950/20 border-l-green-500"
+																			: "bg-yellow-50 dark:bg-yellow-950/20 border-l-yellow-500",
+																		rsvp.alreadyPaid && "border-l-blue-500",
+																		isPending &&
+																			"cursor-pointer hover:opacity-80 active:opacity-70",
+																	)}
+																>
+																	<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																		{rsvp.User?.name
+																			? rsvp.User.name
+																			: rsvp.User?.email
+																				? rsvp.User.email
+																				: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																						rsvp.numOfAdult +
+																							rsvp.numOfChild ===
+																						1
+																							? "guest"
+																							: "guests"
+																					}`}
+																	</div>
+																	{rsvp.Facility?.facilityName && (
+																		<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																			{rsvp.Facility.facilityName}
+																		</div>
+																	)}
+																	{rsvp.message && (
+																		<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																			{rsvp.message}
+																		</div>
+																	)}
 																</div>
-																{rsvp.Facility?.facilityName && (
-																	<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																		{rsvp.Facility.facilityName}
-																	</div>
-																)}
-																{rsvp.message && (
-																	<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																		{rsvp.message}
-																	</div>
-																)}
-															</div>
-														))
+															);
+
+															return isPending && storeId ? (
+																<EditReservationDialog
+																	key={rsvp.id}
+																	storeId={storeId}
+																	rsvpSettings={rsvpSettings}
+																	facilities={facilities}
+																	user={user}
+																	rsvp={rsvp}
+																	onReservationUpdated={
+																		handleReservationUpdated
+																	}
+																	trigger={rsvpCard}
+																/>
+															) : (
+																<div key={rsvp.id}>{rsvpCard}</div>
+															);
+														})
 													) : isAvailable ? (
 														storeId ? (
 															<ReservationDialog

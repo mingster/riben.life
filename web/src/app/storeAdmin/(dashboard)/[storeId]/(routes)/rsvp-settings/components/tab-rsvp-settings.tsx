@@ -159,7 +159,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 				onRsvpSettingsUpdated?.(updatedRsvpSettings);
 
 				toastSuccess({
-					title: t("Store_updated"),
+					title: t("store_updated"),
 					description: "",
 				});
 			}

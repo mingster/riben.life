@@ -57,7 +57,7 @@
   "RSVP_Use_Business_Hours_Descr": "RSVP_Use_Business_Hours_descr",
   "Store_Create": "Store_create",
   "Store_Created": "Store_created",
-  "Store_Updated": "Store_updated",
+  "Store_Updated": "store_updated",
   "StoreSettings_Credit_Exchange_Rate_Descr": "StoreSettings_Credit_Exchange_Rate_descr",
   "StoreSettings_Credit_Expiration_Descr": "StoreSettings_Credit_Expiration_descr",
   "StoreSettings_Credit_Max_Purchase_Descr": "StoreSettings_Credit_Max_Purchase_descr",

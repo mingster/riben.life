@@ -11,6 +11,7 @@ import { headers } from "next/headers";
 import { getUtcNow } from "@/utils/datetime-utils";
 
 import { createReservationSchema } from "./create-reservation.validation";
+import { RsvpStatus } from "@/types/enum";
 
 export const createReservationAction = baseClient
 	.metadata({ name: "createReservation" })
@@ -103,7 +104,7 @@ export const createReservationAction = baseClient
 					numOfChild,
 					rsvpTime,
 					message: message || null,
-					status: 0, // pending
+					status: Number(RsvpStatus.Pending), // pending
 					alreadyPaid: false,
 					confirmedByStore: false,
 					confirmedByCustomer: false,

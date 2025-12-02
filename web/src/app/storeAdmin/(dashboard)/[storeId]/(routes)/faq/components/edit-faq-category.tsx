@@ -94,10 +94,7 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 	async function onSubmit(data: UpdateFaqCategoryInput) {
 		//console.log("data", data);
 		setLoading(true);
-		const result = await updateFaqCategoryAction(
-			String(params.storeId),
-			data,
-		);
+		const result = await updateFaqCategoryAction(String(params.storeId), data);
 		if (!result) {
 			toastError({ description: "An error occurred" });
 		} else if (result.serverError) {

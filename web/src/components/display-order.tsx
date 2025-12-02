@@ -62,75 +62,84 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 		(order.orderStatus === OrderStatus.Pending ||
 			order.orderStatus === OrderStatus.Processing);
 
-	//{order.facilityId && order.facilityId !== null && order.facilityId !== 'null' && `桌號：${getTableName(tables, order.facilityId)}`}
 	return (
-		<Card key={order.id} className="py-1">
-			<CardContent>
-				<div className="grid grid-cols-3 gap-1 justify-items-stretch">
-					<div className="whitespace-nowrap text-nowrap">
-						{order.Store?.name}
-					</div>
-					<div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
-						<div className="flex gap-1">
-							{order.pickupCode && (
-								<>
-									<div>{t("order_pickup_code")}</div>
-									<div>{order.pickupCode}</div>
-								</>
-							)}
-							<div>{t("order_number")}</div>
-							<div>{order.orderNum}</div>
+		<Card key={order.id} className="overflow-hidden">
+			<CardContent className="p-3 sm:p-4">
+				{/* Header section with store name and order info */}
+				<div className="space-y-2 sm:space-y-1 mb-3">
+					<div className="flex items-start justify-between gap-2">
+						<div className="font-semibold text-sm sm:text-base truncate">
+							{order.Store?.name}
+						</div>
+						<div className="text-[10px] sm:text-xs text-muted-foreground font-mono shrink-0">
+							{formatDateTime(order.createdAt)}
 						</div>
 					</div>
-					<div className="justify-self-end whitespace-nowrap text-nowrap text-xs font-mono">
-						{formatDateTime(order.createdAt)}&nbsp;
-						{order.OrderItemView.length}
+
+					<div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs font-mono text-muted-foreground">
+						{order.pickupCode && (
+							<div className="flex items-center gap-1">
+								<span className="font-medium">{t("order_pickup_code")}:</span>
+								<span className="font-semibold text-foreground">
+									{order.pickupCode}
+								</span>
+							</div>
+						)}
+						<div className="flex items-center gap-1">
+							<span className="font-medium">{t("order_number")}:</span>
+							<span className="font-semibold text-foreground">
+								{order.orderNum}
+							</span>
+						</div>
+						<div className="flex items-center gap-1">
+							<span>({order.OrderItemView.length})</span>
+						</div>
 					</div>
 				</div>
 
-				<div className="whitespace-nowrap text-nowrap">
-					{/* order items */}
+				{/* Order items */}
+				<div className="space-y-2 border-t pt-3">
 					{order.OrderItemView.map((item: orderitemview) => (
 						<DisplayOrderItem key={item.id} currentItem={item} />
 					))}
 				</div>
-			</CardContent>
-			<CardFooter className="place-content-end items-end pt-0 pb-1 flex flex-col">
-				<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-					<div className="place-self-end whitespace-nowrap">
+
+				{/* Total */}
+				<div className="flex items-center justify-between mt-3 pt-3 border-t">
+					<span className="font-semibold text-sm sm:text-base">
 						{t("orderTotal_label")}
-					</div>
-
-					<div className="place-self-end whitespace-nowrap">
+					</span>
+					<span className="font-bold text-base sm:text-lg">
 						${Number(order.orderTotal)} {order.currency}
-					</div>
+					</span>
 				</div>
+			</CardContent>
 
-				<div className="flex gap-1 items-center">
-					{canPay ? (
+			<CardFooter className="flex-col gap-2 p-3 sm:p-4 pt-0 sm:pt-0 bg-muted/30">
+				{/* Action buttons */}
+				<div className="flex flex-col sm:flex-row gap-2 w-full">
+					{canPay && (
 						<Button
-							className="mr-2 bg-green-900 hover:bg-green-700"
+							className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 bg-green-600 hover:bg-green-700 touch-manipulation"
 							size="sm"
 							onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
 						>
-							{order.PaymentMethod?.name + t("order_tab_pay")}
+							{order.PaymentMethod?.name} {t("order_tab_pay")}
 						</Button>
-					) : (
-						order.isPaid !== true &&
-						order.PaymentMethod?.name === "cash" && (
-							<div className="whitespace-nowrap">
-								<Button
-									variant={"outline"}
-									className="mr-2 cursor-default bg-green-200 hover:bg-green-300"
-									size="sm"
-								>
-									{`現金${t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}`}
-								</Button>
-							</div>
-						)
 					)}
 
-					<div className="whitespace-nowrap">
+					{!order.isPaid && order.PaymentMethod?.name === "cash" && (
+						<Button
+							variant="outline"
+							className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 cursor-default bg-green-50 hover:bg-green-100 dark:bg-green-950/20 touch-manipulation"
+							size="sm"
+							disabled
+						>
+							現金{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
+						</Button>
+					)}
+
+					<div className="flex-1 w-full sm:w-auto">
 						<DisplayOrderStatus
 							status={order.orderStatus}
 							displayBuyAgain={true}
@@ -139,7 +148,9 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 					</div>
 
 					<Button
+						variant="outline"
 						size="sm"
+						className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
 						onClick={() => contactSeller(order.storeId, order.id)}
 					>
 						{t("order_tab_contact_seller")}
@@ -156,25 +167,25 @@ type itemViewOrops = {
 
 export const DisplayOrderItem: React.FC<itemViewOrops> = ({ currentItem }) => {
 	return (
-		<div className="relative ml-4 flex flex-1 flex-col justify-between sm:ml-6">
-			<div className="relative pr-0 w-full">
-				<div className="flex justify-between content-center">
-					<div className="flex-none w-1/2 pr-2">
-						{currentItem.name}
+		<div className="flex items-start justify-between gap-2 text-xs sm:text-sm">
+			<div className="flex-1 min-w-0">
+				<div className="font-medium truncate">{currentItem.name}</div>
 
-						{currentItem.variants && currentItem.variants.length > 0 && (
-							<ul className="pl-2 text-sm">
-								{currentItem.variants.split(",").map((itemOption) => (
-									<li key={itemOption}>{itemOption}</li>
-								))}
-							</ul>
-						)}
+				{currentItem.variants && currentItem.variants.length > 0 && (
+					<div className="mt-1 space-y-0.5 text-[10px] sm:text-xs text-muted-foreground">
+						{currentItem.variants.split(",").map((itemOption) => (
+							<div key={itemOption} className="truncate">
+								• {itemOption}
+							</div>
+						))}
 					</div>
+				)}
+			</div>
 
-					<div className="pr-2">{currentItem.quantity ?? 0}</div>
-					<div className="pr-2">
-						<Currency value={Number(currentItem.unitPrice)} />
-					</div>
+			<div className="flex items-center gap-2 sm:gap-3 shrink-0 text-xs sm:text-sm">
+				<div className="font-medium">×{currentItem.quantity ?? 0}</div>
+				<div className="font-semibold min-w-[60px] text-right">
+					<Currency value={Number(currentItem.unitPrice)} />
 				</div>
 			</div>
 		</div>

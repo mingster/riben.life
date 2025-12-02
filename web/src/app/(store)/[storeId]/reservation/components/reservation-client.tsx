@@ -17,6 +17,7 @@ interface ReservationClientProps {
 	facilities: StoreFacility[];
 	user: User | null;
 	storeId: string;
+	storeTimezone: number;
 }
 
 export function ReservationClient({
@@ -26,6 +27,7 @@ export function ReservationClient({
 	facilities,
 	user,
 	storeId,
+	storeTimezone,
 }: ReservationClientProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -72,6 +74,7 @@ export function ReservationClient({
 				storeId={storeId}
 				facilities={facilities}
 				user={user}
+				storeTimezone={storeTimezone}
 				onReservationCreated={handleReservationCreated}
 			/>
 		</div>

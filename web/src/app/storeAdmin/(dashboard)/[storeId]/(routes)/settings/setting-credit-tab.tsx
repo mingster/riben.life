@@ -103,7 +103,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 				onStoreUpdated?.(updatedStore);
 
 				toastSuccess({
-					title: t("Store_updated"),
+					title: t("store_updated"),
 					description: "",
 				});
 			}

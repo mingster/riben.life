@@ -143,17 +143,14 @@ export const EditProduct: React.FC<EditProductProps> = ({
 			setLoading(true);
 
 			if (!isEditMode) {
-				const result = await createStoreProductAction(
-					String(params.storeId),
-					{
-						name: data.name,
-						description: data.description ?? "",
-						price: data.price,
-						currency: data.currency ?? "usd",
-						status: data.status,
-						isFeatured: data.isFeatured ?? false,
-					},
-				);
+				const result = await createStoreProductAction(String(params.storeId), {
+					name: data.name,
+					description: data.description ?? "",
+					price: data.price,
+					currency: data.currency ?? "usd",
+					status: data.status,
+					isFeatured: data.isFeatured ?? false,
+				});
 
 				if (result?.serverError) {
 					toastError({
@@ -176,18 +173,15 @@ export const EditProduct: React.FC<EditProductProps> = ({
 					return;
 				}
 
-				const result = await updateProductAction(
-					String(params.storeId),
-					{
-						id: productId,
-						name: data.name,
-						description: data.description ?? "",
-						price: data.price,
-						currency: data.currency ?? "usd",
-						status: data.status,
-						isFeatured: data.isFeatured ?? false,
-					},
-				);
+				const result = await updateProductAction(String(params.storeId), {
+					id: productId,
+					name: data.name,
+					description: data.description ?? "",
+					price: data.price,
+					currency: data.currency ?? "usd",
+					status: data.status,
+					isFeatured: data.isFeatured ?? false,
+				});
 
 				if (result?.serverError) {
 					toastError({

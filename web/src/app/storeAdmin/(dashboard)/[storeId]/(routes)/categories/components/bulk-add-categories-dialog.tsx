@@ -95,13 +95,10 @@ export function BulkAddCategoriesDialog({
 
 		setLoading(true);
 		try {
-			const result = await createStoreCategoriesAction(
-				String(params.storeId),
-				{
-					names: parsedNames,
-					isFeatured: values.isFeatured,
-				},
-			);
+			const result = await createStoreCategoriesAction(String(params.storeId), {
+				names: parsedNames,
+				isFeatured: values.isFeatured,
+			});
 
 			if (result?.serverError) {
 				toastError({

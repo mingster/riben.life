@@ -80,7 +80,7 @@ const keyMappings = {
 	
 	// Store settings
 	"Store_Created": "Store_created",
-	"Store_Updated": "Store_updated",
+	"Store_Updated": "store_updated",
 	"Store_Create": "Store_create",
 	"StoreSettings_Credit_Exchange_Rate_Descr": "StoreSettings_Credit_Exchange_Rate_descr",
 	"StoreSettings_Credit_Expiration_Descr": "StoreSettings_Credit_Expiration_descr",

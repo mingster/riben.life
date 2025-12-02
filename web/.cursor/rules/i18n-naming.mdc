@@ -9,12 +9,14 @@ This rule defines the standard naming convention for all translation keys in `we
 
 ## Core Principles
 
-1. **Use snake_case** for all translation keys (lowercase with underscores)
-2. **ENTITY and DOMAIN use PascalCase** - All other parts (CONTEXT and MODIFIER) use snake_case
+1. **Use snake_case for ALL translation keys** (lowercase with underscores) - This is the primary rule
+2. **All parts of the key use snake_case** - No PascalCase in translation keys
 3. **Use descriptive, hierarchical names** that reflect the feature/domain
 4. **Group related keys** using prefixes and suffixes
 5. **Be consistent** with existing patterns in the codebase
 6. **Keep keys concise** but meaningful
+
+**Important**: While some legacy keys may use PascalCase for DOMAIN/ENTITY (e.g., `create_Reservation`, `Announcement_created`), all NEW translation keys must use snake_case throughout (e.g., `edit_reservation`, `reservation_updated`).
 
 ## Naming Structure
 
@@ -26,10 +28,12 @@ This rule defines the standard naming convention for all translation keys in `we
 
 ### Components
 
-1. **DOMAIN** (optional, PascalCase): Feature area or module (e.g., `StoreSettings`, `RSVP`, `Credit`, `Facility`)
-2. **ENTITY** (required, PascalCase): Main entity or feature name (e.g., `Announcement`, `Category`, `Facility`, `Credit_Bonus_Rule`)
+1. **DOMAIN** (optional, snake_case): Feature area or module (e.g., `store_settings`, `rsvp`, `credit`, `facility`)
+2. **ENTITY** (required, snake_case): Main entity or feature name (e.g., `announcement`, `category`, `facility`, `credit_bonus_rule`)
 3. **CONTEXT** (optional, snake_case): Specific context or action (e.g., `mgmt`, `created`, `updated`, `tab`)
 4. **MODIFIER** (optional, snake_case): Additional qualifier (e.g., `descr`, `add`, `edit`, `button`)
+
+**Note**: All components use snake_case. Legacy keys with PascalCase should be migrated to snake_case when updated.
 
 ## Naming Patterns
 
@@ -53,7 +57,7 @@ This rule defines the standard naming convention for all translation keys in `we
 
 ### 2. CRUD Operations
 
-**Pattern:** `[ENTITY]_[ACTION]`
+**Pattern:** `[entity]_[action]`
 
 **Actions (snake_case):**
 
@@ -61,32 +65,45 @@ This rule defines the standard naming convention for all translation keys in `we
 - `updated` - Item was updated
 - `deleted` - Item was deleted
 
-**Examples:**
+**Examples (snake_case - preferred):**
 
-- `Announcement_created` - "Announcement Created"
-- `Announcement_updated` - "Announcement Updated"
-- `Announcement_deleted` - "Announcement Deleted"
-- `Credit_Bonus_Rule_deleted` - "Credit Bonus Rule Deleted"
-- `Facility_Pricing_Rule_deleted` - "Facility Pricing Rule Deleted"
+- `announcement_created` - "Announcement Created"
+- `announcement_updated` - "Announcement Updated"
+- `announcement_deleted` - "Announcement Deleted"
+- `credit_bonus_rule_deleted` - "Credit Bonus Rule Deleted"
+- `facility_pricing_rule_deleted` - "Facility Pricing Rule Deleted"
+- `reservation_updated` - "Reservation Updated"
+
+**Legacy examples (PascalCase - should be migrated):**
+
+- `Announcement_created` - Legacy, use `announcement_created` instead
+- `Reservation_created` - Legacy, use `reservation_created` instead
 
 ### 3. Dialog/Form Titles
 
-**Pattern:** `[ACTION]_[ENTITY]` or `[ACTION]_[ENTITY]_[CONTEXT]`
+**Pattern:** `[action]_[entity]` or `[action]_[entity]_[context]`
 
-**Examples:**
+**Examples (snake_case - preferred):**
 
-- `Edit_Pricing_Rule` - "Edit Pricing Rule"
-- `Create_Pricing_Rule` - "Create Pricing Rule"
-- `Edit_Credit_Bonus_Rule` - "Edit Credit Bonus Rule"
-- `Create_Credit_Bonus_Rule` - "Create Credit Bonus Rule"
-- `Facility_mgmt_edit` - "Edit Facility"
-- `Facility_mgmt_add` - "Add Facility"
+- `edit_pricing_rule` - "Edit Pricing Rule"
+- `create_pricing_rule` - "Create Pricing Rule"
+- `edit_credit_bonus_rule` - "Edit Credit Bonus Rule"
+- `create_credit_bonus_rule` - "Create Credit Bonus Rule"
+- `facility_mgmt_edit` - "Edit Facility"
+- `facility_mgmt_add` - "Add Facility"
+- `edit_reservation` - "Edit Reservation"
+- `update_reservation` - "Update Reservation"
+
+**Legacy examples (PascalCase - should be migrated):**
+
+- `Edit_Pricing_Rule` - Legacy, use `edit_pricing_rule` instead
+- `Create_Pricing_Rule` - Legacy, use `create_pricing_rule` instead
 
 **Descriptions:**
 
-- `[ACTION]_[ENTITY]_description` - Dialog description
-- `Edit_Pricing_Rule_description` - "Edit pricing rule description"
-- `Create_Pricing_Rule_description` - "Create pricing rule description"
+- `[action]_[entity]_description` - Dialog description
+- `edit_pricing_rule_description` - "Edit pricing rule description"
+- `create_pricing_rule_description` - "Create pricing rule description"
 
 ### 4. Form Fields and Labels
 
@@ -171,21 +188,20 @@ This rule defines the standard naming convention for all translation keys in `we
 
 ## Case Conventions
 
-### DOMAIN and ENTITY (PascalCase)
+### ALL Components Use snake_case
 
-- **DOMAIN**: Use PascalCase for domain/feature area names
-  - Examples: `StoreSettings`, `RSVP`, `Credit`, `Facility`
-- **ENTITY**: Use PascalCase for main entity or feature names
-  - Examples: `Announcement`, `Category`, `Facility`, `Credit_Bonus_Rule`, `Pricing_Rule`
-
-### CONTEXT and MODIFIER (snake_case)
-
+- **DOMAIN**: Use snake_case for domain/feature area names
+  - Examples: `store_settings`, `rsvp`, `credit`, `facility`
+  - Legacy: `StoreSettings`, `RSVP` (should be migrated)
+- **ENTITY**: Use snake_case for main entity or feature names
+  - Examples: `announcement`, `category`, `facility`, `credit_bonus_rule`, `pricing_rule`
+  - Legacy: `Announcement`, `Category` (should be migrated)
 - **CONTEXT**: Always use snake_case for context/action words
   - Examples: `mgmt`, `created`, `updated`, `deleted`, `tab`, `tabs`
 - **MODIFIER**: Always use snake_case for modifiers
   - Examples: `descr`, `add`, `edit`, `button`, `placeholder`, `instructions`
 
-**Key Rule**: Only DOMAIN and ENTITY use PascalCase. Everything else (CONTEXT and MODIFIER) uses snake_case.
+**Key Rule**: ALL parts of translation keys use snake_case. Legacy keys with PascalCase should be migrated when updated.
 
 ## Special Patterns
 
@@ -431,17 +447,15 @@ When refactoring or moving features:
 
 ## Summary
 
-- **Format**: `snake_case` for the overall key structure
-- **Structure**: `[DOMAIN]_[ENTITY]_[CONTEXT]_[MODIFIER]`
+- **Format**: `snake_case` for ALL translation keys (lowercase with underscores)
+- **Structure**: `[domain]_[entity]_[context]_[modifier]`
 - **Case Rules**:
-  - **DOMAIN**: PascalCase (e.g., `StoreSettings`, `RSVP`)
-  - **ENTITY**: PascalCase (e.g., `Announcement`, `Credit_Bonus_Rule`)
-  - **CONTEXT**: snake_case (e.g., `mgmt`, `created`, `updated`, `tab`)
-  - **MODIFIER**: snake_case (e.g., `descr`, `add`, `edit`, `button`)
+  - **ALL components**: snake_case (e.g., `edit_reservation`, `reservation_updated`, `announcement_mgmt`)
+  - **Legacy keys**: Some may use PascalCase (e.g., `create_Reservation`, `Announcement_created`) - migrate to snake_case when updating
 - **Grouping**: Use prefixes to group related keys
-- **Consistency**: Follow existing patterns in the codebase
+- **Consistency**: Follow existing patterns in the codebase, but prefer snake_case for new keys
 - **Descriptiveness**: Use clear, meaningful names that reflect the feature
 
-**Key Principle**: Only DOMAIN and ENTITY use PascalCase. All CONTEXT and MODIFIER parts use snake_case.
+**Key Principle**: ALL translation keys use snake_case. No PascalCase in new keys.
 
 Following these conventions ensures translation keys are predictable, maintainable, and easy to discover.
