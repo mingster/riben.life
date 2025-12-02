@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const updateStoreBankSchema = z.object({
-	storeId: z.string().min(1),
 	payoutSchedule: z.number(),
 	bankCode: z.string().min(1),
 	bankAccount: z.string().min(1),

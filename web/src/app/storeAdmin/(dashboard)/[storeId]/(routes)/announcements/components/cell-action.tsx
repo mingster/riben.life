@@ -37,10 +37,10 @@ export function CellAction({ data, onUpdated, onDeleted }: CellActionProps) {
 	const handleDelete = async () => {
 		try {
 			setLoading(true);
-			const result = await deleteAnnouncementAction({
-				storeId: String(params.storeId),
-				id: data.id,
-			});
+			const result = await deleteAnnouncementAction(
+				String(params.storeId),
+				{ id: data.id },
+			);
 
 			if (result?.serverError) {
 				toastError({

@@ -8,8 +8,9 @@ import { deleteProductOptionTemplateSchema } from "./delete-product-option-templ
 export const deleteProductOptionTemplateAction = storeActionClient
 	.metadata({ name: "deleteProductOptionTemplate" })
 	.schema(deleteProductOptionTemplateSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, id } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { id } = parsedInput;
 
 		const existing = await sqlClient.storeProductOptionTemplate.findFirst({
 			where: {

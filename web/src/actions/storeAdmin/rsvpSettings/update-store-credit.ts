@@ -15,9 +15,9 @@ import { Store } from "@/types";
 export const updateStoreCreditAction = storeActionClient
 	.metadata({ name: "updateStoreCredit" })
 	.schema(updateStoreCreditSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			useCustomerCredit,
 			creditExchangeRate,
 			creditServiceExchangeRate,

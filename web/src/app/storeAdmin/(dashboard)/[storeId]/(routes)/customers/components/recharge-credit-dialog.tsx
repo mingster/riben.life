@@ -64,7 +64,6 @@ export function RechargeCreditDialog({
 	const [loading, setLoading] = useState(false);
 
 	const defaultValues: RechargeCustomerCreditInput = {
-		storeId: String(params.storeId),
 		userId: user.id,
 		creditAmount: 0,
 		cashAmount: 0,
@@ -116,14 +115,16 @@ export function RechargeCreditDialog({
 		try {
 			setLoading(true);
 
-			const result = await rechargeCustomerCreditAction({
-				storeId: String(params.storeId),
-				userId: user.id,
-				creditAmount: values.creditAmount,
-				cashAmount: values.cashAmount,
-				isPaid: values.isPaid,
-				note: values.note || null,
-			});
+			const result = await rechargeCustomerCreditAction(
+				String(params.storeId),
+				{
+					userId: user.id,
+					creditAmount: values.creditAmount,
+					cashAmount: values.cashAmount,
+					isPaid: values.isPaid,
+					note: values.note || null,
+				},
+			);
 
 			if (result?.serverError) {
 				toastError({

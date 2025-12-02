@@ -9,8 +9,9 @@ import { deleteFacilitySchema } from "./delete-facility.validation";
 export const deleteFacilityAction = storeActionClient
 	.metadata({ name: "deleteFacility" })
 	.schema(deleteFacilitySchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, id } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { id } = parsedInput;
 
 		const facility = await sqlClient.storeFacility.findUnique({
 			where: { id },

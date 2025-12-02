@@ -9,8 +9,9 @@ import { createAnnouncementSchema } from "./create-announcement.validation";
 export const createAnnouncementAction = storeActionClient
 	.metadata({ name: "createAnnouncement" })
 	.schema(createAnnouncementSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, message } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { message } = parsedInput;
 
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },

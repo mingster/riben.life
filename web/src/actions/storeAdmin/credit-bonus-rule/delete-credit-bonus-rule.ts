@@ -9,8 +9,9 @@ import { deleteCreditBonusRuleSchema } from "./delete-credit-bonus-rule.validati
 export const deleteCreditBonusRuleAction = storeActionClient
 	.metadata({ name: "deleteCreditBonusRule" })
 	.schema(deleteCreditBonusRuleSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, id } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { id } = parsedInput;
 
 		const rule = await sqlClient.creditBonusRule.findUnique({
 			where: { id },

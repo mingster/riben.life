@@ -15,7 +15,7 @@ export default async function CustomersPage(props: {
 	const params = await props.params;
 	const storeId = params.storeId;
 
-	const result = await getCustomersAction({ storeId });
+	const result = await getCustomersAction(storeId, {});
 
 	if (result?.serverError) {
 		throw new Error(result.serverError);

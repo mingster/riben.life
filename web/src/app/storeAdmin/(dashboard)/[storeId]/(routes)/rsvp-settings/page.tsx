@@ -41,8 +41,8 @@ export default async function RsvpSettingsPage(props: {
 			storeId: rsvpSettings.storeId,
 			acceptReservation: rsvpSettings.acceptReservation,
 			prepaidRequired: rsvpSettings.prepaidRequired,
-			prepaidAmount: rsvpSettings.prepaidAmount
-				? Number(rsvpSettings.prepaidAmount)
+			minPrepaidAmount: rsvpSettings.minPrepaidAmount
+				? Number(rsvpSettings.minPrepaidAmount)
 				: null,
 			canCancel: rsvpSettings.canCancel,
 			cancelHours: rsvpSettings.cancelHours,

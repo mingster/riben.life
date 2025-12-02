@@ -10,8 +10,9 @@ import { updateCreditBonusRuleSchema } from "./update-credit-bonus-rule.validati
 export const updateCreditBonusRuleAction = storeActionClient
 	.metadata({ name: "updateCreditBonusRule" })
 	.schema(updateCreditBonusRuleSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, id, threshold, bonus, isActive } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { id, threshold, bonus, isActive } = parsedInput;
 
 		const rule = await sqlClient.creditBonusRule.findUnique({
 			where: { id },

@@ -82,12 +82,14 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 		try {
 			setLoading(true);
 
-			const payload: UpdateStoreTermsInput = {
-				storeId: params.storeId as string,
+			const payload: Omit<UpdateStoreTermsInput, "storeId"> = {
 				tos: data.tos ?? "",
 			};
 
-			const result = await updateStoreTermsAction(payload);
+			const result = await updateStoreTermsAction(
+				params.storeId as string,
+				payload,
+			);
 
 			if (result?.serverError) {
 				toastError({
@@ -132,7 +134,7 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 									<FormLabel>{t("StoreSettings_terms")}</FormLabel>
 									<FormControl>
 										<EditorComp
-											markdown={field.value}
+											markdown={field.value ?? ""}
 											onPChange={field.onChange}
 										/>
 									</FormControl>

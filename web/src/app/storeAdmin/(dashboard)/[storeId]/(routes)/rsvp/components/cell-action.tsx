@@ -42,10 +42,10 @@ export const CellAction: React.FC<CellActionProps> = ({
 	const onConfirm = async () => {
 		try {
 			setLoading(true);
-			const result = await deleteRsvpAction({
-				storeId: String(params.storeId),
-				id: data.id,
-			});
+			const result = await deleteRsvpAction(
+				String(params.storeId),
+				{ id: data.id },
+			);
 
 			if (result?.serverError) {
 				toastError({

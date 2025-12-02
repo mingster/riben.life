@@ -38,10 +38,10 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPencil, IconPlus } from "@tabler/icons-react";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type { z } from "zod/v4";
-import { UserRoleCombobox } from "./user-role-combobox";
+import { MemberRoleCombobox } from "./member-role-combobox";
 
 //type formValues = z.infer<typeof updateCustomerSchema>;
 
@@ -59,6 +59,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 	onUpdated,
 	isNew,
 }) => {
+	const params = useParams<{ storeId: string }>();
 	const [loading, setLoading] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -74,15 +75,25 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 			const newUser = await authClient.admin.createUser({
 				email: data.email || "",
 				name: data.name,
-				role: data.role as any, // Better Auth accepts any role string
+				//role: data.role as any, // Better Auth accepts any role string
 				password: data.password as string,
 			});
 
-			data.customerId = newUser.data?.user.id || "";
+			const submitData: UpdateCustomerInput = {
+				...data,
+				customerId: newUser.data?.user.id || "",
+				storeId: String(params.storeId),
+			};
 
-			result = await updateCustomerAction(data);
+			result = await updateCustomerAction(String(params.storeId), submitData);
 		} else {
-			result = await updateCustomerAction(data);
+			const submitData: UpdateCustomerInput = {
+				...data,
+				customerId: item.id,
+				storeId: String(params.storeId),
+			};
+
+			result = await updateCustomerAction(String(params.storeId), submitData);
 		}
 
 		if (!result) {
@@ -90,7 +101,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 		} else if (result.serverError) {
 			toastError({ description: result.serverError });
 		} else {
-			toastSuccess({ description: "Profile updated." });
+			toastSuccess({ description: t("member_data") + t("updated") });
 
 			/*
 			// set role
@@ -113,11 +124,17 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 		item.timezone = "Asia/Taipei";
 	}
 
-	const defaultValues = item
-		? {
-				...item,
-			}
-		: {};
+	const defaultValues: UpdateCustomerInput = {
+		customerId: item.id,
+		storeId: String(params.storeId),
+		email: item.email || "",
+		name: item.name || "",
+		phone: item.phone ?? "",
+		locale: item.locale || lng,
+		timezone: item.timezone || "Asia/Taipei",
+		memberRole: (item as any).memberRole || "customer", // Default to "customer" if role not found
+		password: undefined,
+	};
 
 	const form = useForm<UpdateCustomerInput>({
 		resolver: zodResolver(updateCustomerSchema),
@@ -173,7 +190,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 					<DialogHeader className="gap-1">
 						<DialogTitle>{item.name}</DialogTitle>
 						<DialogDescription>
-							{isNew ? t("create") : t("edit")} {t("user")}
+							{isNew ? t("create") : t("edit")} {t("member_data")}
 						</DialogDescription>
 					</DialogHeader>
 
@@ -183,6 +200,17 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 								onSubmit={form.handleSubmit(onSubmit)}
 								className="max-w-sm space-y-2.5"
 							>
+								{/* Hidden fields for customerId and storeId */}
+								<FormField
+									control={form.control}
+									name="customerId"
+									render={({ field }) => <input type="hidden" {...field} />}
+								/>
+								<FormField
+									control={form.control}
+									name="storeId"
+									render={({ field }) => <input type="hidden" {...field} />}
+								/>
 								<FormField
 									control={form.control}
 									name="name"
@@ -217,7 +245,24 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 										</FormItem>
 									)}
 								/>
-
+								<FormField
+									control={form.control}
+									name="phone"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("phone")}</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="Enter phone number"
+													{...field}
+													value={field.value ?? ""}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 								{isNew && (
 									<FormField
 										control={form.control}
@@ -279,34 +324,20 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 										</FormItem>
 									)}
 								/>
+
 								<FormField
 									control={form.control}
-									name="role"
+									name="memberRole"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>Role</FormLabel>
+											<FormLabel>{t("user_role")}</FormLabel>
 											<FormControl>
-												<UserRoleCombobox
-													defaultValue={field.value}
-													onChange={field.onChange}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="stripeCustomerId"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>stripeCustomerId</FormLabel>
-											<FormControl>
-												<Input
-													disabled={loading || form.formState.isSubmitting}
-													placeholder="Enter stripeCustomerId"
-													{...field}
-												/>
+												<div>
+													<MemberRoleCombobox
+														defaultValue={field.value || ""}
+														onChange={field.onChange}
+													/>
+												</div>
 											</FormControl>
 											<FormMessage />
 										</FormItem>

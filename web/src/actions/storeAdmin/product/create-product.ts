@@ -10,8 +10,9 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 export const createStoreProductAction = storeActionClient
 	.metadata({ name: "createStoreProduct" })
 	.schema(createStoreProductSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, name, description, price, currency, status, isFeatured } =
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { name, description, price, currency, status, isFeatured } =
 			parsedInput;
 
 		const store = await sqlClient.store.findUnique({

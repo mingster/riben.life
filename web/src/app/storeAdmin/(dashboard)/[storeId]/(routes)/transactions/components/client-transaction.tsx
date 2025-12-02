@@ -336,7 +336,12 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 								render={({ field }) => (
 									<FormItem>
 										<FormControl>
-											<Input type="number" className="font-mono" {...field} />
+											<Input
+												type="number"
+												className="font-mono"
+												{...field}
+												value={field.value ?? ""}
+											/>
 										</FormControl>
 										<FormMessage />
 									</FormItem>

@@ -10,9 +10,9 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 export const updateProductAction = storeActionClient
 	.metadata({ name: "updateProduct" })
 	.schema(updateProductSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			id,
 			name,
 			description,

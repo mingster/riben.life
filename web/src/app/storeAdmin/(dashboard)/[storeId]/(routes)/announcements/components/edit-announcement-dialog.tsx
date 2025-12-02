@@ -130,11 +130,13 @@ export function EditAnnouncementDialog({
 			setLoading(true);
 
 			if (isEditMode && announcement) {
-				const result = await updateAnnouncementAction({
-					storeId: String(params.storeId),
-					id: announcement.id,
-					message: values.message,
-				});
+				const result = await updateAnnouncementAction(
+					String(params.storeId),
+					{
+						id: announcement.id,
+						message: values.message,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({
@@ -148,10 +150,10 @@ export function EditAnnouncementDialog({
 					handleSuccess(result.data.announcement);
 				}
 			} else {
-				const result = await createAnnouncementAction({
-					storeId: String(params.storeId),
-					message: values.message,
-				});
+				const result = await createAnnouncementAction(
+					String(params.storeId),
+					{ message: values.message },
+				);
 
 				if (result?.serverError) {
 					toastError({

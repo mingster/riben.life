@@ -10,12 +10,12 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 export const updateRsvpSettingsAction = storeActionClient
 	.metadata({ name: "updateRsvpSettings" })
 	.schema(updateRsvpSettingsSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			acceptReservation,
 			prepaidRequired,
-			prepaidAmount,
+			minPrepaidAmount,
 			canCancel,
 			cancelHours,
 			defaultDuration,
@@ -29,6 +29,15 @@ export const updateRsvpSettingsAction = storeActionClient
 			useReminderEmail,
 			syncWithGoogle,
 			syncWithApple,
+			reserveWithGoogleEnabled,
+			googleBusinessProfileId,
+			googleBusinessProfileName,
+			reserveWithGoogleAccessToken,
+			reserveWithGoogleRefreshToken,
+			reserveWithGoogleTokenExpiry,
+			reserveWithGoogleLastSync,
+			reserveWithGoogleSyncStatus,
+			reserveWithGoogleError,
 		} = parsedInput;
 
 		// Verify store exists and user has access
@@ -55,9 +64,9 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (prepaidRequired !== undefined) {
 			updateData.prepaidRequired = prepaidRequired;
 		}
-		if (prepaidAmount !== undefined) {
-			updateData.prepaidAmount =
-				prepaidAmount !== null ? new Prisma.Decimal(prepaidAmount) : null;
+		if (minPrepaidAmount !== undefined) {
+			updateData.minPrepaidAmount =
+				minPrepaidAmount !== null ? new Prisma.Decimal(minPrepaidAmount) : null;
 		}
 		if (canCancel !== undefined) {
 			updateData.canCancel = canCancel;
@@ -98,6 +107,33 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (syncWithApple !== undefined) {
 			updateData.syncWithApple = syncWithApple;
 		}
+		if (reserveWithGoogleEnabled !== undefined) {
+			updateData.reserveWithGoogleEnabled = reserveWithGoogleEnabled;
+		}
+		if (googleBusinessProfileId !== undefined) {
+			updateData.googleBusinessProfileId = googleBusinessProfileId;
+		}
+		if (googleBusinessProfileName !== undefined) {
+			updateData.googleBusinessProfileName = googleBusinessProfileName;
+		}
+		if (reserveWithGoogleAccessToken !== undefined) {
+			updateData.reserveWithGoogleAccessToken = reserveWithGoogleAccessToken;
+		}
+		if (reserveWithGoogleRefreshToken !== undefined) {
+			updateData.reserveWithGoogleRefreshToken = reserveWithGoogleRefreshToken;
+		}
+		if (reserveWithGoogleTokenExpiry !== undefined) {
+			updateData.reserveWithGoogleTokenExpiry = reserveWithGoogleTokenExpiry;
+		}
+		if (reserveWithGoogleLastSync !== undefined) {
+			updateData.reserveWithGoogleLastSync = reserveWithGoogleLastSync;
+		}
+		if (reserveWithGoogleSyncStatus !== undefined) {
+			updateData.reserveWithGoogleSyncStatus = reserveWithGoogleSyncStatus;
+		}
+		if (reserveWithGoogleError !== undefined) {
+			updateData.reserveWithGoogleError = reserveWithGoogleError;
+		}
 
 		try {
 			const rsvpSettings = existing
@@ -110,10 +146,10 @@ export const updateRsvpSettingsAction = storeActionClient
 							storeId,
 							acceptReservation: acceptReservation ?? true,
 							prepaidRequired: prepaidRequired ?? false,
-							prepaidAmount:
-								prepaidAmount !== undefined && prepaidAmount !== null
-									? new Prisma.Decimal(prepaidAmount)
-									: null,
+							minPrepaidAmount:
+								minPrepaidAmount !== undefined && minPrepaidAmount !== null
+									? new Prisma.Decimal(minPrepaidAmount)
+									: new Prisma.Decimal(0),
 							canCancel: canCancel ?? true,
 							cancelHours: cancelHours ?? 24,
 							defaultDuration: defaultDuration ?? 60,
@@ -127,6 +163,18 @@ export const updateRsvpSettingsAction = storeActionClient
 							useReminderEmail: useReminderEmail ?? false,
 							syncWithGoogle: syncWithGoogle ?? false,
 							syncWithApple: syncWithApple ?? false,
+							reserveWithGoogleEnabled: reserveWithGoogleEnabled ?? false,
+							googleBusinessProfileId: googleBusinessProfileId ?? null,
+							googleBusinessProfileName: googleBusinessProfileName ?? null,
+							reserveWithGoogleAccessToken:
+								reserveWithGoogleAccessToken ?? null,
+							reserveWithGoogleRefreshToken:
+								reserveWithGoogleRefreshToken ?? null,
+							reserveWithGoogleTokenExpiry:
+								reserveWithGoogleTokenExpiry ?? null,
+							reserveWithGoogleLastSync: reserveWithGoogleLastSync ?? null,
+							reserveWithGoogleSyncStatus: reserveWithGoogleSyncStatus ?? null,
+							reserveWithGoogleError: reserveWithGoogleError ?? null,
 						},
 					});
 

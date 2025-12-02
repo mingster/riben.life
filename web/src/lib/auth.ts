@@ -152,6 +152,16 @@ export const auth = betterAuth({
 	],
 	user: {
 		additionalFields: {
+			phone: {
+				type: "string",
+				required: false,
+				defaultValue: "",
+			},
+			phoneVerified: {
+				type: "boolean",
+				required: false,
+				defaultValue: false,
+			},
 			role: {
 				type: "string",
 				required: false,
@@ -172,6 +182,7 @@ export const auth = betterAuth({
 				type: "string",
 				required: false,
 				defaultValue: "",
+				input: false, // don't allow user to set role
 			},
 		},
 	},

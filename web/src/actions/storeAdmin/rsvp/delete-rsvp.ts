@@ -9,8 +9,9 @@ import { deleteRsvpSchema } from "./delete-rsvp.validation";
 export const deleteRsvpAction = storeActionClient
 	.metadata({ name: "deleteRsvp" })
 	.schema(deleteRsvpSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, id } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { id } = parsedInput;
 
 		const rsvp = await sqlClient.rsvp.findUnique({
 			where: { id },

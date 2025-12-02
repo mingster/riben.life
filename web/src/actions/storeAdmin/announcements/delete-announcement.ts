@@ -8,8 +8,9 @@ import { deleteAnnouncementSchema } from "./delete-announcement.validation";
 export const deleteAnnouncementAction = storeActionClient
 	.metadata({ name: "deleteAnnouncement" })
 	.schema(deleteAnnouncementSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, id } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { id } = parsedInput;
 
 		const existing = await sqlClient.storeAnnouncement.findFirst({
 			where: {

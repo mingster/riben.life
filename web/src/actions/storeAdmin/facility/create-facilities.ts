@@ -11,9 +11,9 @@ import { createFacilitiesSchema } from "./create-facilities.validation";
 export const createFacilitiesAction = storeActionClient
 	.metadata({ name: "createFacilities" })
 	.schema(createFacilitiesSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			prefix,
 			numOfFacilities,
 			capacity,

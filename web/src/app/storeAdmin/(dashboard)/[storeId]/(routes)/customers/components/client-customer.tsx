@@ -264,9 +264,12 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		},
 
 		{
-			accessorKey: "role",
+			accessorKey: "memberRole",
 			header: ({ column }) => {
 				return <DataTableColumnHeader column={column} title={t("user_role")} />;
+			},
+			cell: ({ row }) => {
+				return <div className="">{row.original.memberRole}</div>;
 			},
 		},
 		{

@@ -166,11 +166,29 @@ export enum ReturnStatus {
 	Cancelled = 70,
 }
 
+export enum RsvpStatus {
+	Pending = 0, //待確認/尚未付款
+	AlreadyPaid = 10, //已付款
+	StoreConfirmed = 20, //店家已確認預約
+	CustomerConfirmed = 30, //客戶已確認預約
+	Seated = 40, //已帶位
+	Completed = 50, //已完成
+	Cancelled = 60, //已取消
+	NoShow = 70, //未到
+}
+
 export enum PageAction {
 	Create = "Create",
 	Modify = "Modify",
 	Delete = "Delete",
 }
+
+export const MemberRole = {
+	customer: "customer",
+	owner: "owner",
+	staff: "staff",
+	storeAdmin: "storeAdmin",
+} as const;
 
 // Role enum values for client-side use (matches Prisma schema)
 // Server components should use Role from @prisma/client

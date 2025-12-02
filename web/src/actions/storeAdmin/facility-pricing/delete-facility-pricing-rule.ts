@@ -9,8 +9,9 @@ import { deleteFacilityPricingRuleSchema } from "./delete-facility-pricing-rule.
 export const deleteFacilityPricingRuleAction = storeActionClient
 	.metadata({ name: "deleteFacilityPricingRule" })
 	.schema(deleteFacilityPricingRuleSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, id } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { id } = parsedInput;
 
 		const rule = await sqlClient.facilityPricingRule.findUnique({
 			where: { id },

@@ -9,10 +9,13 @@ export const updateUserSettingsAction = userRequiredActionClient
 	.metadata({ name: "updateUserSettings" })
 	.schema(updateUserSettingsSchema)
 	.action(
-		async ({ ctx: { userId }, parsedInput: { name, locale, timezone } }) => {
+		async ({
+			ctx: { userId },
+			parsedInput: { name, locale, timezone, phone },
+		}) => {
 			const updatedUser = await sqlClient.user.update({
 				where: { id: userId },
-				data: { name, locale, timezone, updatedAt: getUtcNow() },
+				data: { name, locale, timezone, phone, updatedAt: getUtcNow() },
 			});
 
 			return updatedUser;

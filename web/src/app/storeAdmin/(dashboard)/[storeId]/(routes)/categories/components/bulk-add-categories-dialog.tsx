@@ -95,11 +95,13 @@ export function BulkAddCategoriesDialog({
 
 		setLoading(true);
 		try {
-			const result = await createStoreCategoriesAction({
-				storeId: String(params.storeId),
-				names: parsedNames,
-				isFeatured: values.isFeatured,
-			});
+			const result = await createStoreCategoriesAction(
+				String(params.storeId),
+				{
+					names: parsedNames,
+					isFeatured: values.isFeatured,
+				},
+			);
 
 			if (result?.serverError) {
 				toastError({
@@ -156,7 +158,7 @@ export function BulkAddCategoriesDialog({
 									<FormControl>
 										<Textarea
 											disabled={loading || form.formState.isSubmitting}
-											value={field.value}
+											value={field.value ?? ""}
 											onChange={field.onChange}
 										/>
 									</FormControl>

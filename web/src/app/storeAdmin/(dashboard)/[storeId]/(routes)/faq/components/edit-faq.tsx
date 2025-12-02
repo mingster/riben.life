@@ -28,6 +28,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useWindowSize } from "usehooks-ts";
+import { useParams } from "next/navigation";
 import type { z } from "zod";
 
 const EditorComp = dynamic(
@@ -57,6 +58,7 @@ interface props {
 export const EditFaq: React.FC<props> = ({ item, onUpdated, isNew }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const params = useParams<{ storeId: string }>();
 
 	//const router = useRouter();
 
@@ -93,7 +95,7 @@ export const EditFaq: React.FC<props> = ({ item, onUpdated, isNew }) => {
 	async function onSubmit(data: UpdateFaqInput) {
 		//console.log("data", data);
 		setLoading(true);
-		const result = await updateFaqAction(data);
+		const result = await updateFaqAction(String(params.storeId), data);
 		if (!result) {
 			toastError({ description: "An error occurred" });
 		} else if (result.serverError) {

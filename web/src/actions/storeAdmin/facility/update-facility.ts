@@ -10,9 +10,9 @@ import { updateFacilitySchema } from "./update-facility.validation";
 export const updateFacilityAction = storeActionClient
 	.metadata({ name: "updateFacility" })
 	.schema(updateFacilitySchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			id,
 			facilityName,
 			capacity,

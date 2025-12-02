@@ -9,8 +9,9 @@ import { updateAnnouncementSchema } from "./update-announcement.validation";
 export const updateAnnouncementAction = storeActionClient
 	.metadata({ name: "updateAnnouncement" })
 	.schema(updateAnnouncementSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, id, message } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { id, message } = parsedInput;
 
 		const existing = await sqlClient.storeAnnouncement.findFirst({
 			where: {

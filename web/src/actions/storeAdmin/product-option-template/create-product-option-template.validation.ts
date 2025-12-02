@@ -2,7 +2,6 @@ import { z } from "zod";
 
 // 規格 | 甜度/冰 | 配料
 export const createProductOptionTemplateSchema = z.object({
-	storeId: z.string().min(1),
 	optionName: z.string().min(1),
 	isRequired: z.boolean(), //必選
 	isMultiple: z.boolean(), // 0:radiobox|1:checkboxes

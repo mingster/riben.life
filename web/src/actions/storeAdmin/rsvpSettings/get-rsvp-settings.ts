@@ -6,15 +6,13 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 
-const getRsvpSettingsSchema = z.object({
-	storeId: z.string().uuid(),
-});
+const getRsvpSettingsSchema = z.object({});
 
 export const getRsvpSettingsAction = storeActionClient
 	.metadata({ name: "getRsvpSettings" })
 	.schema(getRsvpSettingsSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 
 		// Verify store exists and user has access
 		const store = await sqlClient.store.findUnique({

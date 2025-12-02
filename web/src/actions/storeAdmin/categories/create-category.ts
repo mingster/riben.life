@@ -10,8 +10,9 @@ import { createCategorySchema } from "./create-category.validation";
 export const createStoreCategoryAction = storeActionClient
 	.metadata({ name: "createCategory" })
 	.schema(createCategorySchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, name, sortOrder, isFeatured } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { name, sortOrder, isFeatured } = parsedInput;
 
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },

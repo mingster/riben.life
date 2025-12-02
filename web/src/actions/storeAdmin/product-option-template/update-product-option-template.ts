@@ -41,9 +41,9 @@ const parseSelections = (input: string): SelectionInput[] => {
 export const updateProductOptionTemplateAction = storeActionClient
 	.metadata({ name: "updateProductOptionTemplate" })
 	.schema(updateProductOptionTemplateSchema)
-	.action(async ({ parsedInput }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			storeId,
 			id,
 			optionName,
 			isRequired,

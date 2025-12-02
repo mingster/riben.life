@@ -146,15 +146,17 @@ export function EditFacilityDialog({
 			setLoading(true);
 
 			if (!isEditMode) {
-				const result = await createFacilityAction({
-					storeId: String(params.storeId),
-					facilityName: values.facilityName,
-					capacity: values.capacity,
-					defaultCost: values.defaultCost,
-					defaultCredit: values.defaultCredit,
-					defaultDuration: values.defaultDuration,
-					businessHours: values.businessHours || null,
-				});
+				const result = await createFacilityAction(
+					String(params.storeId),
+					{
+						facilityName: values.facilityName,
+						capacity: values.capacity,
+						defaultCost: values.defaultCost,
+						defaultCredit: values.defaultCredit,
+						defaultDuration: values.defaultDuration,
+						businessHours: values.businessHours || null,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({
@@ -177,16 +179,18 @@ export function EditFacilityDialog({
 					return;
 				}
 
-				const result = await updateFacilityAction({
-					storeId: String(params.storeId),
-					id: facilityId,
-					facilityName: values.facilityName,
-					capacity: values.capacity,
-					defaultCost: values.defaultCost,
-					defaultCredit: values.defaultCredit,
-					defaultDuration: values.defaultDuration,
-					businessHours: values.businessHours || null,
-				});
+				const result = await updateFacilityAction(
+					String(params.storeId),
+					{
+						id: facilityId,
+						facilityName: values.facilityName,
+						capacity: values.capacity,
+						defaultCost: values.defaultCost,
+						defaultCredit: values.defaultCredit,
+						defaultDuration: values.defaultDuration,
+						businessHours: values.businessHours || null,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({

@@ -401,11 +401,11 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
 																		onCheckedChange={(checked) => {
 																			return checked
 																				? field.onChange(
-																						[...field.value, item.id],
+																						[...(field.value ?? []), item.id],
 																						handleCheckbox(item.price),
 																					)
 																				: field.onChange(
-																						field.value?.filter(
+																						(field.value ?? []).filter(
 																							(value) => value !== item.id,
 																						),
 																						handleCheckbox(-item.price),

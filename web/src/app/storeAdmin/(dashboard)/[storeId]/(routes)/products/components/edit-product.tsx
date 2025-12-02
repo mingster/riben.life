@@ -143,15 +143,17 @@ export const EditProduct: React.FC<EditProductProps> = ({
 			setLoading(true);
 
 			if (!isEditMode) {
-				const result = await createStoreProductAction({
-					storeId: String(params.storeId),
-					name: data.name,
-					description: data.description ?? "",
-					price: data.price,
-					currency: data.currency ?? "usd",
-					status: data.status,
-					isFeatured: data.isFeatured ?? false,
-				});
+				const result = await createStoreProductAction(
+					String(params.storeId),
+					{
+						name: data.name,
+						description: data.description ?? "",
+						price: data.price,
+						currency: data.currency ?? "usd",
+						status: data.status,
+						isFeatured: data.isFeatured ?? false,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({
@@ -174,16 +176,18 @@ export const EditProduct: React.FC<EditProductProps> = ({
 					return;
 				}
 
-				const result = await updateProductAction({
-					storeId: String(params.storeId),
-					id: productId,
-					name: data.name,
-					description: data.description ?? "",
-					price: data.price,
-					currency: data.currency ?? "usd",
-					status: data.status,
-					isFeatured: data.isFeatured ?? false,
-				});
+				const result = await updateProductAction(
+					String(params.storeId),
+					{
+						id: productId,
+						name: data.name,
+						description: data.description ?? "",
+						price: data.price,
+						currency: data.currency ?? "usd",
+						status: data.status,
+						isFeatured: data.isFeatured ?? false,
+					},
+				);
 
 				if (result?.serverError) {
 					toastError({
@@ -320,7 +324,9 @@ export const EditProduct: React.FC<EditProductProps> = ({
 											<div>
 												<ProductStatusCombobox
 													disabled={loading}
-													defaultValue={field.value}
+													defaultValue={
+														field.value ?? Number(ProductStatus.Published)
+													}
 													onChange={(value) => field.onChange(Number(value))}
 												/>
 											</div>

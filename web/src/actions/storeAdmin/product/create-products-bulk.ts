@@ -10,8 +10,9 @@ import { mapProductToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(rout
 export const createStoreProductsBulkAction = storeActionClient
 	.metadata({ name: "createStoreProductsBulk" })
 	.schema(createStoreProductsBulkSchema)
-	.action(async ({ parsedInput }) => {
-		const { storeId, status, entries } = parsedInput;
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
+		const storeId = bindArgsClientInputs[0] as string;
+		const { status, entries } = parsedInput;
 
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
