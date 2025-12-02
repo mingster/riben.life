@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { transformDecimalsToNumbers } from "@/utils/utils";
-import { getNowTimeInTz, getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 import { Prisma, StoreShipMethodMapping } from "@prisma/client";
 import { NextResponse } from "next/server";
 
@@ -91,8 +91,8 @@ export async function POST(
 		);
 	}
 
-	// store time in store's local timezone
-	const storeTimeNow = getNowTimeInTz(store.defaultTimezone);
+	// Use UTC for timestamps
+	const now = getUtcNow();
 
 	const orderStatus = store?.autoAcceptOrder
 		? OrderStatus.Processing
@@ -108,8 +108,8 @@ export async function POST(
 			currency: currency,
 			paymentMethodId: paymentMethodId,
 			shippingMethodId: shippingMethodId,
-			createdAt: storeTimeNow,
-			updatedAt: storeTimeNow,
+			createdAt: now,
+			updatedAt: now,
 			paymentStatus: PaymentStatus.Pending,
 			orderStatus: orderStatus,
 			OrderItems: {

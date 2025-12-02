@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder } from "@prisma/client";
 import { format } from "date-fns";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-
+import { getUtcNow } from "@/utils/datetime-utils";
 import { type NextRequest, NextResponse } from "next/server";
 import logger from "@/lib/logger";
 export const dynamic = "force-dynamic"; // defaults to force-static
@@ -22,14 +22,34 @@ export async function GET(
 
 		if (!dateVal) return NextResponse.json({});
 
-		// set time to 23:59:59
-		const todayStr = `${new Date().getFullYear()}/${new Date().getMonth() + 1}/${new Date().getDate()} 23:59:59`;
-		const today = Date.parse(todayStr);
+		// Use UTC for date calculations
+		const now = getUtcNow();
+		// set time to 23:59:59 UTC
+		const today = new Date(
+			Date.UTC(
+				now.getUTCFullYear(),
+				now.getUTCMonth(),
+				now.getUTCDate(),
+				23,
+				59,
+				59,
+				999,
+			),
+		);
 
 		const tmp = new Date(Number.parseInt(dateVal));
-		// set time to 00:00:00
-		const dateStr = `${tmp.getFullYear()}/${tmp.getMonth() + 1}/${tmp.getDate()} 00:00:00`;
-		const date = Date.parse(dateStr);
+		// set time to 00:00:00 UTC
+		const date = new Date(
+			Date.UTC(
+				tmp.getUTCFullYear(),
+				tmp.getUTCMonth(),
+				tmp.getUTCDate(),
+				0,
+				0,
+				0,
+				0,
+			),
+		);
 
 		console.log(
 			`${format(date, "yyyy-MM-dd HH:mm:ss")}至${format(today, "yyyy-MM-dd HH:mm:ss")}`,
@@ -39,8 +59,8 @@ export async function GET(
 			where: {
 				storeId: storeId,
 				updatedAt: {
-					gte: new Date(date),
-					lte: new Date(today),
+					gte: date,
+					lte: today,
 				},
 			},
 			include: {

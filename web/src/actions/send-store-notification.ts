@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { toDateTime } from "@/utils/datetime-utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import nodemailer from "nodemailer";
 
@@ -91,7 +91,7 @@ export async function sendStoreNotification(mailtoSend: StoreNotification) {
 				id: mailtoSend.id,
 			},
 			data: {
-				sentOn: toDateTime(Date.now() / 1000),
+				sentOn: getUtcNow(),
 				sendTries: mailtoSend.sendTries + 1,
 			},
 		});

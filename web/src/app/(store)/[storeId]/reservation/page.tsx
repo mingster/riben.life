@@ -29,7 +29,7 @@ export default async function ReservationPage(props: {
 	// Get RSVPs for a wider range (current week ± 2 weeks) to support navigation
 	// Use UTC to ensure server-independent time calculations
 	const now = getUtcNow();
-	
+
 	// Get start of week (Sunday) using UTC
 	const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
 	const daysToSunday = dayOfWeek === 0 ? 0 : dayOfWeek; // Days to subtract to get to Sunday
@@ -44,7 +44,7 @@ export default async function ReservationPage(props: {
 			0,
 		),
 	);
-	
+
 	// Get end of week (Saturday) using UTC - 6 days after Sunday at 23:59:59.999
 	const weekEnd = new Date(
 		Date.UTC(
@@ -198,15 +198,15 @@ export default async function ReservationPage(props: {
 		<Container>
 			<Suspense fallback={<Loader />}>
 				<div className="mx-auto max-w-7xl py-6">
-				<ReservationClient
-					rsvps={formattedRsvps}
-					rsvpSettings={rsvpSettings}
-					storeSettings={storeSettings}
-					facilities={facilities}
-					user={user}
-					storeId={params.storeId}
-					storeTimezone={store?.defaultTimezone ?? 8}
-				/>
+					<ReservationClient
+						rsvps={formattedRsvps}
+						rsvpSettings={rsvpSettings}
+						storeSettings={storeSettings}
+						facilities={facilities}
+						user={user}
+						storeId={params.storeId}
+						storeTimezone={store?.defaultTimezone ?? 8}
+					/>
 				</div>
 			</Suspense>
 		</Container>

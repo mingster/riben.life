@@ -19,7 +19,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { EmailQueue } from "@/types";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, getUtcNow } from "@/utils/datetime-utils";
 import { EditMailQueue } from "./edit-mail-queue";
 import { Loader } from "@/components/loader";
 import { format } from "date-fns";
@@ -43,7 +43,7 @@ export default function MailQueueAdminClient({
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [currentTime, setCurrentTime] = useState(new Date());
+	const [currentTime, setCurrentTime] = useState(() => getUtcNow());
 
 	const [openDeleteSelectedMails, setOpenDeleteSelectedMails] = useState(false);
 
@@ -409,7 +409,7 @@ export default function MailQueueAdminClient({
 
 		// Update current time every 10 second
 		const timerId = setInterval(() => {
-			setCurrentTime(new Date());
+			setCurrentTime(getUtcNow());
 		}, 10000);
 
 		return () => {

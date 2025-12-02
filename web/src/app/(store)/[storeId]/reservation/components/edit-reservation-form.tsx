@@ -35,6 +35,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreFacility, User, Rsvp } from "@/types";
 import type { RsvpSettings } from "@prisma/client";
+import { getDateInTz } from "@/utils/datetime-utils";
+import { format } from "date-fns";
 
 interface EditReservationFormProps {
 	storeId: string;
@@ -44,6 +46,7 @@ interface EditReservationFormProps {
 	rsvp: Rsvp;
 	onReservationUpdated?: (updatedRsvp: Rsvp) => void;
 	hideCard?: boolean;
+	storeTimezone?: number;
 }
 
 export function EditReservationForm({
@@ -54,6 +57,7 @@ export function EditReservationForm({
 	rsvp,
 	onReservationUpdated,
 	hideCard = false,
+	storeTimezone = 8,
 }: EditReservationFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const params = useParams();
@@ -133,7 +137,18 @@ export function EditReservationForm({
 											disabled={isSubmitting}
 											value={
 												field.value
-													? new Date(field.value).toISOString().slice(0, 16)
+													? (() => {
+															// Convert UTC date to store timezone for display
+															const utcDate =
+																field.value instanceof Date
+																	? field.value
+																	: new Date(field.value);
+															const storeTzDate = getDateInTz(
+																utcDate,
+																storeTimezone,
+															);
+															return format(storeTzDate, "yyyy-MM-dd'T'HH:mm");
+														})()
 													: ""
 											}
 											onChange={(e) => {

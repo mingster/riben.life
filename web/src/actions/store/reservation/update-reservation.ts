@@ -16,8 +16,32 @@ export const updateReservationAction = baseClient
 	.metadata({ name: "updateReservation" })
 	.schema(updateReservationSchema)
 	.action(async ({ parsedInput }) => {
-		const { id, facilityId, numOfAdult, numOfChild, rsvpTime, message } =
-			parsedInput;
+		const {
+			id,
+			facilityId,
+			numOfAdult,
+			numOfChild,
+			rsvpTime: rsvpTimeInput,
+			message,
+		} = parsedInput;
+
+		// Convert rsvpTime to UTC if it's a Date object
+		// datetime-local inputs create Date objects in user's local timezone
+		// We need to ensure it's stored as UTC in the database
+		const rsvpTime =
+			rsvpTimeInput instanceof Date
+				? new Date(
+						Date.UTC(
+							rsvpTimeInput.getFullYear(),
+							rsvpTimeInput.getMonth(),
+							rsvpTimeInput.getDate(),
+							rsvpTimeInput.getHours(),
+							rsvpTimeInput.getMinutes(),
+							rsvpTimeInput.getSeconds(),
+							rsvpTimeInput.getMilliseconds(),
+						),
+					)
+				: rsvpTimeInput;
 
 		// Get session to check if user is logged in
 		const session = await auth.api.getSession({

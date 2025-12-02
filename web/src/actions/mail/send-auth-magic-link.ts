@@ -5,6 +5,7 @@ import { loadOuterHtmTemplate } from "./load-outer-htm-template";
 import type { StringNVType } from "@/types/enum";
 import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
 import { User } from "@/types";
+import { getUtcNow } from "@/utils/datetime-utils";
 
 // send auth magic link email to customer
 //
@@ -106,7 +107,7 @@ export const sendAuthMagicLink = async (
 			subject: phased_subject,
 			textMessage: textMessage,
 			htmMessage: htmMessage,
-			createdOn: new Date(),
+			createdOn: getUtcNow(),
 			sendTries: 0,
 		},
 	});

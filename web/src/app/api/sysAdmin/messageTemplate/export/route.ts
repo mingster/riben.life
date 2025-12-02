@@ -3,6 +3,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
+import { getUtcNow } from "@/utils/datetime-utils";
 
 export async function POST() {
 	try {
@@ -18,7 +19,7 @@ export async function POST() {
 		await fs.mkdir(backupDir, { recursive: true });
 
 		// Prepare file name
-		const now = new Date();
+		const now = getUtcNow();
 		const pad = (n: number) => n.toString().padStart(2, "0");
 		const fileName = `message-template-backup-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.json`;
 		const filePath = path.join(backupDir, fileName);

@@ -57,17 +57,22 @@ export const DisplayStoreOrdersToday: React.FC<props> = ({ store }) => {
 	};
 
 	const removeOutedLocalOrders = () => {
-		// filter orders by date
+		// filter orders by date (using UTC for consistency)
 		const today = getUtcNow();
 		const orderArray = JSON.parse("[]");
 
 		orders.map((order: StoreOrder) => {
 			//orders is from fetchData()
-			const orderDate = new Date(order.updatedAt);
+			// order.updatedAt is already a Date object from the database (UTC)
+			const orderDate =
+				order.updatedAt instanceof Date
+					? order.updatedAt
+					: new Date(order.updatedAt);
+			// Use UTC methods for comparison since both dates are in UTC
 			if (
-				orderDate.getFullYear() === today.getFullYear() &&
-				orderDate.getMonth() === today.getMonth() &&
-				orderDate.getDate() === today.getDate()
+				orderDate.getUTCFullYear() === today.getUTCFullYear() &&
+				orderDate.getUTCMonth() === today.getUTCMonth() &&
+				orderDate.getUTCDate() === today.getUTCDate()
 				//&& order.storeId === storeId
 			) {
 				orderArray.push(order.id);

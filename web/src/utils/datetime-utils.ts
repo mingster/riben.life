@@ -245,7 +245,6 @@ export function addHours(dt: Date, hours: number): Date {
 	return new Date(dt.getTime() + hours * 60 * 60 * 1000);
 }
 
-
 /**
  * Helper to format date using UTC components (not browser timezone)
  * This is needed because we store user's local time as UTC components

@@ -1,7 +1,7 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
-import { getNowTimeInTz, getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
 
@@ -47,7 +47,7 @@ export async function POST(
 			},
 			data: {
 				orderStatus: OrderStatus.Processing,
-				updatedAt: getNowTimeInTz(store.defaultTimezone),
+				updatedAt: getUtcNow(),
 			},
 		});
 

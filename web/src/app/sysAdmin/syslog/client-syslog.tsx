@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 import { Loader } from "@/components/loader";
 import { Separator } from "@/components/ui/separator";
 import type { SystemLog } from "@/types";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, getUtcNow } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 import logger from "@/lib/logger";
 
@@ -20,7 +20,7 @@ export const SystemLogClient: React.FC = () => {
 	const [data, setData] = useState<SystemLog[]>();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [currentTime, setCurrentTime] = useState(new Date());
+	const [currentTime, setCurrentTime] = useState(() => getUtcNow());
 	const [openDeleteAll, setOpenDeleteAll] = useState(false);
 	//const { lng } = useI18n();
 	//const { t } = useTranslation(lng);
@@ -128,7 +128,7 @@ export const SystemLogClient: React.FC = () => {
 
 		// Update current time every 10 second
 		const timerId = setInterval(() => {
-			setCurrentTime(new Date());
+			setCurrentTime(getUtcNow());
 		}, 10000);
 
 		return () => {

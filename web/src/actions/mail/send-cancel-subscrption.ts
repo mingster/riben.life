@@ -5,6 +5,7 @@ import { PhaseTags } from "./phase-tags";
 import { StringNVType } from "@/types/enum";
 import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
 import { sqlClient } from "@/lib/prismadb";
+import { getUtcNow } from "@/utils/datetime-utils";
 
 // send email to customer when subscription is cancelled
 //
@@ -90,7 +91,7 @@ export const sendCancelSubscription = async (user: User) => {
 			subject: phased_subject,
 			textMessage: textMessage,
 			htmMessage: htmMessage,
-			createdOn: new Date(),
+			createdOn: getUtcNow(),
 			sendTries: 0,
 		},
 	});

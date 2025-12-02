@@ -25,7 +25,7 @@ import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { ReservationDialog } from "./reservation-dialog";
 import { EditReservationDialog } from "./edit-reservation-dialog";
-import { getDateInTz } from "@/utils/datetime-utils";
+import { getDateInTz, getUtcNow } from "@/utils/datetime-utils";
 
 interface CustomerWeekViewCalendarProps {
 	rsvps: Rsvp[];
@@ -230,9 +230,9 @@ export const CustomerWeekViewCalendar: React.FC<
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-	
+
 	// Convert UTC today to store timezone for display
-	const todayUtc = useMemo(() => new Date(), []);
+	const todayUtc = useMemo(() => getUtcNow(), []);
 	const today = useMemo(
 		() => startOfDay(getDateInTz(todayUtc, storeTimezone)),
 		[todayUtc, storeTimezone],
@@ -240,7 +240,8 @@ export const CustomerWeekViewCalendar: React.FC<
 	const [rsvps, setRsvps] = useState<Rsvp[]>(initialRsvps);
 	const [currentWeek, setCurrentWeek] = useState(() => {
 		// Always start with today to ensure we don't start on a past week
-		return new Date();
+		// Use UTC for consistency, then convert to store timezone for display
+		return getUtcNow();
 	});
 
 	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
@@ -262,13 +263,19 @@ export const CustomerWeekViewCalendar: React.FC<
 		return localeMap[lng || "tw"] || zhTW;
 	}, [lng]);
 
+	// Convert currentWeek (which is in local time) to store timezone for week calculations
+	const currentWeekInStoreTz = useMemo(
+		() => getDateInTz(currentWeek, storeTimezone),
+		[currentWeek, storeTimezone],
+	);
+
 	const weekStart = useMemo(
-		() => startOfWeek(currentWeek, { weekStartsOn: 0 }), // Sunday
-		[currentWeek],
+		() => startOfWeek(currentWeekInStoreTz, { weekStartsOn: 0 }), // Sunday
+		[currentWeekInStoreTz],
 	);
 	const weekEnd = useMemo(
-		() => endOfWeek(currentWeek, { weekStartsOn: 0 }), // Saturday
-		[currentWeek],
+		() => endOfWeek(currentWeekInStoreTz, { weekStartsOn: 0 }), // Saturday
+		[currentWeekInStoreTz],
 	);
 
 	// Check if week start is before today
@@ -329,7 +336,7 @@ export const CustomerWeekViewCalendar: React.FC<
 	}, []);
 
 	const handleToday = useCallback(() => {
-		setCurrentWeek(new Date());
+		setCurrentWeek(getUtcNow());
 	}, []);
 
 	const getRsvpsForSlot = (day: Date, timeSlot: string): Rsvp[] => {
@@ -471,10 +478,11 @@ export const CustomerWeekViewCalendar: React.FC<
 										const slotRsvps = getRsvpsForSlot(day, timeSlot);
 										const isAvailable = slotRsvps.length === 0;
 										// Check if this day/time slot is in the past
+										// day is already in store timezone, compare with today in store timezone
 										const [hours, minutes] = timeSlot.split(":").map(Number);
 										const slotDateTime = new Date(day);
 										slotDateTime.setHours(hours, minutes, 0, 0);
-										const isPast = isBefore(slotDateTime, new Date());
+										const isPast = isBefore(slotDateTime, today);
 										const canSelect = isAvailable && !isPast;
 										return (
 											<td

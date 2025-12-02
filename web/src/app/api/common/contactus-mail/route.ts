@@ -6,6 +6,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { verifyRecaptcha } from "@/lib/recaptcha-verify";
 import type { StringNVType } from "@/types/enum";
 import { NextResponse } from "next/server";
+import { getUtcNow } from "@/utils/datetime-utils";
 
 export async function POST(request: Request) {
 	const log = logger.child({ module: "contact-us-mail" });
@@ -133,7 +134,7 @@ export async function POST(request: Request) {
 					subject: "contact us from",
 					textMessage: textMessage,
 					htmMessage: htmMessage,
-					createdOn: new Date(),
+					createdOn: getUtcNow(),
 					sendTries: 0,
 				},
 			});

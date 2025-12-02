@@ -47,6 +47,7 @@ import { StoreMembersCombobox } from "../../customers/components/combobox-store-
 import { FacilityCombobox } from "../../facility/components/combobox-facility";
 import useSWR from "swr";
 import type { User } from "@/types";
+import { getUtcNow } from "@/utils/datetime-utils";
 import type { StoreFacility } from "@/types";
 import { useEffect } from "react";
 
@@ -142,7 +143,7 @@ export function AdminEditRsvpDialog({
 				facilityId: null,
 				numOfAdult: 1,
 				numOfChild: 0,
-				rsvpTime: defaultRsvpTime || new Date(),
+				rsvpTime: defaultRsvpTime || getUtcNow(),
 				arriveTime: null,
 				status: 0,
 				message: null,

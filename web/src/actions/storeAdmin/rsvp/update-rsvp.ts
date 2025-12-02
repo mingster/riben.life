@@ -6,6 +6,7 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Rsvp } from "@/types";
+import { getUtcNow } from "@/utils/datetime-utils";
 import { updateRsvpSchema } from "./update-rsvp.validation";
 
 export const updateRsvpAction = storeActionClient
@@ -19,8 +20,8 @@ export const updateRsvpAction = storeActionClient
 			facilityId,
 			numOfAdult,
 			numOfChild,
-			rsvpTime,
-			arriveTime,
+			rsvpTime: rsvpTimeInput,
+			arriveTime: arriveTimeInput,
 			status,
 			message,
 			alreadyPaid,
@@ -30,6 +31,40 @@ export const updateRsvpAction = storeActionClient
 			facilityCredit,
 			pricingRuleId,
 		} = parsedInput;
+
+		// Convert rsvpTime to UTC if it's a Date object
+		// datetime-local inputs create Date objects in user's local timezone
+		// We need to ensure it's stored as UTC in the database
+		const rsvpTime =
+			rsvpTimeInput instanceof Date
+				? new Date(
+						Date.UTC(
+							rsvpTimeInput.getFullYear(),
+							rsvpTimeInput.getMonth(),
+							rsvpTimeInput.getDate(),
+							rsvpTimeInput.getHours(),
+							rsvpTimeInput.getMinutes(),
+							rsvpTimeInput.getSeconds(),
+							rsvpTimeInput.getMilliseconds(),
+						),
+					)
+				: rsvpTimeInput;
+
+		// Convert arriveTime to UTC if it's a Date object
+		const arriveTime =
+			arriveTimeInput instanceof Date
+				? new Date(
+						Date.UTC(
+							arriveTimeInput.getFullYear(),
+							arriveTimeInput.getMonth(),
+							arriveTimeInput.getDate(),
+							arriveTimeInput.getHours(),
+							arriveTimeInput.getMinutes(),
+							arriveTimeInput.getSeconds(),
+							arriveTimeInput.getMilliseconds(),
+						),
+					)
+				: arriveTimeInput;
 
 		const rsvp = await sqlClient.rsvp.findUnique({
 			where: { id },

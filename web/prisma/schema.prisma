@@ -1,3 +1,5 @@
+// all datetime saved should be in UTC
+// all datetime displayed should be in the user's or store's timezone
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["views", "relationJoins"]

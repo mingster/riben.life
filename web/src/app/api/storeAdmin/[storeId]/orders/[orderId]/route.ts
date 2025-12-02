@@ -3,7 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder } from "@/types";
 import { OrderStatus } from "@/types/enum";
 import logger from "@/lib/logger";
-import { getNowTimeInTz } from "@/utils/datetime-utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 import type { orderitemview } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
@@ -40,8 +40,8 @@ export async function DELETE(
 		},
 		data: {
 			orderStatus: OrderStatus.Voided,
-			// store time in store's local timezone
-			updatedAt: getNowTimeInTz(store.defaultTimezone),
+			// Use UTC for timestamps
+			updatedAt: getUtcNow(),
 		},
 	});
 
@@ -104,8 +104,8 @@ export async function PATCH(
 				facilityId: updatedOrder.facilityId,
 				orderTotal: updatedOrder.orderTotal,
 
-				// store time in store's local timezone
-				updatedAt: getNowTimeInTz(store.defaultTimezone),
+				// Use UTC for timestamps
+				updatedAt: getUtcNow(),
 			},
 		});
 

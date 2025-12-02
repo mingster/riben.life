@@ -5,6 +5,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { useRouter } from "next/navigation";
 import { useTimer } from "react-timer-hook";
 import logger from "@/lib/logger";
+import { getUtcNow } from "@/utils/datetime-utils";
 
 type paymentProps = {
 	orderId: string;
@@ -13,7 +14,8 @@ type paymentProps = {
 // show order success prompt and then redirect the customer to view order page (購物明細)
 export const CancelAndRedirect: React.FC<paymentProps> = ({ orderId }) => {
 	const seconds = 3;
-	const timeStamp = new Date(Date.now() + seconds * 1000);
+	// Use UTC for timer consistency
+	const timeStamp = new Date(getUtcNow().getTime() + seconds * 1000);
 
 	return <MyTimer expiryTimestamp={timeStamp} orderId={orderId} />;
 };

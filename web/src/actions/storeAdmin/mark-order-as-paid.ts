@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
-import { getNowTimeInTz, getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 import getOrderById from "../get-order-by_id";
 import isProLevel from "./is-pro-level";
 
@@ -76,12 +76,12 @@ const MarkAsPaid = async (
 		},
 		data: {
 			isPaid: true,
-			paidDate: getNowTimeInTz(store.defaultTimezone),
+			paidDate: getUtcNow(),
 			orderStatus: Number(OrderStatus.Processing),
 			paymentStatus: Number(PaymentStatus.Paid),
 			paymentCost: fee + feeTax + platform_fee,
 			checkoutAttributes: checkoutAttributes || "",
-			updatedAt: getNowTimeInTz(store.defaultTimezone),
+			updatedAt: getUtcNow(),
 		},
 	});
 

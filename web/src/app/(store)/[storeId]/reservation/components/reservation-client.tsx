@@ -77,6 +77,17 @@ export function ReservationClient({
 				storeTimezone={storeTimezone}
 				onReservationCreated={handleReservationCreated}
 			/>
+			{/* Reservation Form */}
+			<div id="reservation-form">
+				<ReservationForm
+					storeId={storeId}
+					rsvpSettings={rsvpSettings}
+					facilities={facilities}
+					user={user}
+					storeTimezone={storeTimezone}
+					onReservationCreated={handleReservationCreated}
+				/>
+			</div>
 		</div>
 	);
 }
