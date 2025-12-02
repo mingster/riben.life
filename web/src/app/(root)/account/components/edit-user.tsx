@@ -124,7 +124,9 @@ export default function EditUser({ serverData }: props) {
 							name="name"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("name")}</FormLabel>
+									<FormLabel>
+										{t("name")} <span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											disabled={loading || form.formState.isSubmitting}
@@ -160,7 +162,10 @@ export default function EditUser({ serverData }: props) {
 							name="locale"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("account_tabs_language")}</FormLabel>
+									<FormLabel>
+										{t("account_tabs_language")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Select
 											disabled={loading || form.formState.isSubmitting}
@@ -184,7 +189,9 @@ export default function EditUser({ serverData }: props) {
 							name="timezone"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("timezone")}</FormLabel>
+									<FormLabel>
+										{t("timezone")} <span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<TimezoneSelect
 											value={field.value}

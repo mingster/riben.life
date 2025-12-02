@@ -205,7 +205,10 @@ export function EditCategoryDialog({
 							name="name"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Category_name")}</FormLabel>
+									<FormLabel>
+										{t("Category_name")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											disabled={loading || form.formState.isSubmitting}
@@ -222,7 +225,10 @@ export function EditCategoryDialog({
 							name="sortOrder"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Category_sortOrder")}</FormLabel>
+									<FormLabel>
+										{t("Category_sortOrder")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"

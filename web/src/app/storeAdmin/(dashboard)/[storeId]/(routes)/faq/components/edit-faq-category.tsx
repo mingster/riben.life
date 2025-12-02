@@ -172,7 +172,9 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 								name="localeId"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Locale</FormLabel>
+										<FormLabel>
+											Locale <span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Select
 												disabled={loading || form.formState.isSubmitting}
@@ -196,7 +198,10 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 								name="name"
 								render={({ field }) => (
 									<FormItem className="w-full">
-										<FormLabel>{t("FaqCategory_name")}</FormLabel>
+										<FormLabel>
+											{t("FaqCategory_name")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
@@ -216,7 +221,10 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 								name="sortOrder"
 								render={({ field }) => (
 									<FormItem className="w-full">
-										<FormLabel>{t("FaqCategory_sortOrder")}</FormLabel>
+										<FormLabel>
+											{t("FaqCategory_sortOrder")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Input
 												type="number"

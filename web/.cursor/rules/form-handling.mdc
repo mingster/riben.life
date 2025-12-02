@@ -122,3 +122,59 @@ const form = useForm<FormInput>({
   defaultValues,
 });
 ```
+
+## Required Field Indicators
+
+**Always add an asterisk (*) to FormLabels for required fields** to clearly indicate which fields are mandatory.
+
+### Pattern
+
+```tsx
+<FormField
+  control={form.control}
+  name="facilityName"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>
+        {t("Facility_Name")} <span className="text-destructive">*</span>
+      </FormLabel>
+      <FormControl>
+        <Input {...field} />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+### Determining Required Fields
+
+A field is required if:
+- It's defined in the Zod schema **without** `.optional()` or `.nullable()`
+- It has `.min(1)` validation (for strings)
+- It has `.min(0)` or `.min(1)` validation (for numbers) without `.optional()`
+
+### Example
+
+```tsx
+// Schema
+const schema = z.object({
+  facilityName: z.string().min(1), // ✅ Required
+  capacity: z.coerce.number().int().min(1), // ✅ Required
+  description: z.string().optional().nullable(), // ❌ Optional
+});
+
+// Form
+<FormLabel>
+  {t("Facility_Name")} <span className="text-destructive">*</span>
+</FormLabel>
+<FormLabel>
+  {t("Facility_Seats")} <span className="text-destructive">*</span>
+</FormLabel>
+<FormLabel>{t("facility_description")}</FormLabel> {/* No asterisk */}
+```
+
+### Styling
+
+- Use `text-destructive` class for the asterisk to match error styling
+- Place the asterisk immediately after the label text with a space

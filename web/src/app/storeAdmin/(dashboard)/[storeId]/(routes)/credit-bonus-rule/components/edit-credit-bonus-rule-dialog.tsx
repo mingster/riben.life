@@ -241,7 +241,10 @@ export function EditCreditBonusRuleDialog({
 							name="threshold"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("credit_bonus_rule_threshold")}</FormLabel>
+									<FormLabel>
+										{t("credit_bonus_rule_threshold")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -270,7 +273,10 @@ export function EditCreditBonusRuleDialog({
 							name="bonus"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("credit_bonus_rule_bonus")}</FormLabel>
+									<FormLabel>
+										{t("credit_bonus_rule_bonus")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"

@@ -199,7 +199,10 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 								name="name"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("Store_Name")}</FormLabel>
+										<FormLabel>
+											{t("Store_Name")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
@@ -218,7 +221,10 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 								name="defaultLocale"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("Store_Locale")}</FormLabel>
+										<FormLabel>
+											{t("Store_Locale")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 
 										<Select
 											disabled={loading || form.formState.isSubmitting}
@@ -246,7 +252,10 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 								name="defaultCurrency"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("Store_Currency")}</FormLabel>
+										<FormLabel>
+											{t("Store_Currency")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 										<CurrencyCombobox
 											disabled={loading || form.formState.isSubmitting}
 											onValueChange={field.onChange}
@@ -261,7 +270,10 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 								name="defaultCountry"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("Store_Country")}</FormLabel>
+										<FormLabel>
+											{t("Store_Country")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 										<CountryCombobox
 											disabled={loading || form.formState.isSubmitting}
 											onValueChange={field.onChange}

@@ -2,6 +2,7 @@ import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
+import { getFacilitiesAction } from "@/actions/storeAdmin/facility/get-facilities";
 
 ///!SECTION create new store facility.
 export async function POST(
@@ -43,16 +44,25 @@ export async function GET(
 	props: { params: Promise<{ storeId: string }> },
 ) {
 	const params = await props.params;
-	CheckStoreAdminApiAccess(params.storeId);
+	try {
+		// Use server action which handles access control via storeActionClient
+		const result = await getFacilitiesAction(params.storeId, {});
 
-	const facilities = await sqlClient.storeFacility.findMany({
-		where: {
-			storeId: params.storeId,
-		},
-		orderBy: {
-			facilityName: "asc",
-		},
-	});
+		if (result?.serverError) {
+			return NextResponse.json({ error: result.serverError }, { status: 403 });
+		}
 
-	return NextResponse.json(facilities);
+		const facilities = result?.data?.facilities ?? [];
+		return NextResponse.json(facilities);
+	} catch (error) {
+		logger.error("get facilities", {
+			metadata: {
+				storeId: params.storeId,
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["api", "error"],
+		});
+
+		return NextResponse.json({ error: "Internal error" }, { status: 500 });
+	}
 }

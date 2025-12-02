@@ -149,7 +149,9 @@ export const EditFaq: React.FC<props> = ({ item, onUpdated, isNew }) => {
 								name="question"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Question</FormLabel>
+										<FormLabel>
+											Question <span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
@@ -167,7 +169,9 @@ export const EditFaq: React.FC<props> = ({ item, onUpdated, isNew }) => {
 								name="answer"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Answer</FormLabel>
+										<FormLabel>
+											Answer <span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<EditorComp
 												markdown={field.value || ""}
@@ -183,7 +187,9 @@ export const EditFaq: React.FC<props> = ({ item, onUpdated, isNew }) => {
 								name="sortOrder"
 								render={({ field }) => (
 									<FormItem className="w-full">
-										<FormLabel>Sort Order</FormLabel>
+										<FormLabel>
+											Sort Order <span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Input
 												type="number"

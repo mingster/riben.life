@@ -32,6 +32,15 @@ export const updateRsvpAction = storeActionClient
 			pricingRuleId,
 		} = parsedInput;
 
+		const rsvp = await sqlClient.rsvp.findUnique({
+			where: { id },
+			select: { id: true, storeId: true },
+		});
+
+		if (!rsvp || rsvp.storeId !== storeId) {
+			throw new SafeError("Rsvp not found");
+		}
+
 		// Convert rsvpTime to UTC if it's a Date object
 		// datetime-local inputs create Date objects in user's local timezone
 		// We need to ensure it's stored as UTC in the database
@@ -65,15 +74,6 @@ export const updateRsvpAction = storeActionClient
 						),
 					)
 				: arriveTimeInput;
-
-		const rsvp = await sqlClient.rsvp.findUnique({
-			where: { id },
-			select: { id: true, storeId: true },
-		});
-
-		if (!rsvp || rsvp.storeId !== storeId) {
-			throw new SafeError("Rsvp not found");
-		}
 
 		try {
 			const updated = await sqlClient.rsvp.update({

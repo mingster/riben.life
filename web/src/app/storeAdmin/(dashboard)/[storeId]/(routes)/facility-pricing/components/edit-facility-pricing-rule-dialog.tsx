@@ -278,7 +278,10 @@ export function EditFacilityPricingRuleDialog({
 							name="name"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("pricing_rule_name")}</FormLabel>
+									<FormLabel>
+										{t("pricing_rule_name")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="text"

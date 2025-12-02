@@ -25,7 +25,7 @@ import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { ReservationDialog } from "./reservation-dialog";
 import { EditReservationDialog } from "./edit-reservation-dialog";
-import { getDateInTz, getUtcNow } from "@/utils/datetime-utils";
+import { getDateInTz, getUtcNow, getOffsetHours } from "@/utils/datetime-utils";
 
 interface CustomerWeekViewCalendarProps {
 	rsvps: Rsvp[];
@@ -40,7 +40,7 @@ interface CustomerWeekViewCalendarProps {
 		defaultCost: number | null;
 	}>;
 	user?: { id: string; email: string | null } | null;
-	storeTimezone?: number;
+	storeTimezone?: string;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
 }
 
@@ -156,9 +156,13 @@ const getDayNumber = (date: Date): string => {
 	return format(date, "d");
 };
 
-// Check if a date is today
-const isToday = (date: Date): boolean => {
-	return isSameDay(date, new Date());
+// Check if a date is today (in store timezone)
+const isToday = (date: Date, storeTimezone: string): boolean => {
+	const todayInStoreTz = getDateInTz(
+		getUtcNow(),
+		getOffsetHours(storeTimezone),
+	);
+	return isSameDay(date, todayInStoreTz);
 };
 
 // Group RSVPs by day and time slot
@@ -167,9 +171,11 @@ const groupRsvpsByDayAndTime = (
 	rsvps: Rsvp[],
 	weekStart: Date,
 	weekEnd: Date,
-	storeTimezone: number,
+	storeTimezone: string,
 ) => {
 	const grouped: Record<string, Rsvp[]> = {};
+	// Convert IANA timezone string to offset hours
+	const offsetHours = getOffsetHours(storeTimezone);
 
 	rsvps.forEach((rsvp) => {
 		if (!rsvp.rsvpTime) return;
@@ -195,7 +201,7 @@ const groupRsvpsByDayAndTime = (
 		}
 
 		// Convert UTC date to store timezone for display and grouping
-		const rsvpDate = getDateInTz(rsvpDateUtc, storeTimezone);
+		const rsvpDate = getDateInTz(rsvpDateUtc, offsetHours);
 
 		// Check if RSVP is within the week (inclusive of boundaries)
 		if (rsvpDate >= weekStart && rsvpDate <= weekEnd) {
@@ -225,7 +231,7 @@ export const CustomerWeekViewCalendar: React.FC<
 	storeId,
 	facilities = [],
 	user,
-	storeTimezone = 8,
+	storeTimezone = "Asia/Taipei",
 	onReservationCreated,
 }) => {
 	const { lng } = useI18n();
@@ -234,7 +240,7 @@ export const CustomerWeekViewCalendar: React.FC<
 	// Convert UTC today to store timezone for display
 	const todayUtc = useMemo(() => getUtcNow(), []);
 	const today = useMemo(
-		() => startOfDay(getDateInTz(todayUtc, storeTimezone)),
+		() => startOfDay(getDateInTz(todayUtc, getOffsetHours(storeTimezone))),
 		[todayUtc, storeTimezone],
 	);
 	const [rsvps, setRsvps] = useState<Rsvp[]>(initialRsvps);
@@ -265,7 +271,7 @@ export const CustomerWeekViewCalendar: React.FC<
 
 	// Convert currentWeek (which is in local time) to store timezone for week calculations
 	const currentWeekInStoreTz = useMemo(
-		() => getDateInTz(currentWeek, storeTimezone),
+		() => getDateInTz(currentWeek, getOffsetHours(storeTimezone)),
 		[currentWeek, storeTimezone],
 	);
 
@@ -297,26 +303,29 @@ export const CustomerWeekViewCalendar: React.FC<
 
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 
-	// Filter RSVPs to only show those owned by the current user
-	const userRsvps = useMemo(() => {
-		if (!user) return [];
-		return rsvps.filter((rsvp) => {
-			// Match by userId if user is logged in
+	// Show all RSVPs so users can see availability
+	// User's own reservations will be editable via EditReservationDialog
+	// Group RSVPs by day and time (convert UTC to store timezone)
+	const groupedRsvps = useMemo(
+		() => groupRsvpsByDayAndTime(rsvps, weekStart, weekEnd, storeTimezone),
+		[rsvps, weekStart, weekEnd, storeTimezone],
+	);
+
+	// Helper to check if a reservation belongs to the current user
+	const isUserReservation = useCallback(
+		(rsvp: Rsvp): boolean => {
+			if (!user) return false;
+			// Match by userId if both exist
 			if (user.id && rsvp.userId) {
 				return rsvp.userId === user.id;
 			}
-			// For logged-in users, also match by email if userId doesn't match but email does
+			// Match by email if userId doesn't match or is missing
 			if (user.email && rsvp.User?.email) {
-				return rsvp.User.email === user.email;
+				return rsvp.User.email.toLowerCase() === user.email.toLowerCase();
 			}
 			return false;
-		});
-	}, [rsvps, user]);
-
-	// Group RSVPs by day and time (convert UTC to store timezone)
-	const groupedRsvps = useMemo(
-		() => groupRsvpsByDayAndTime(userRsvps, weekStart, weekEnd, storeTimezone),
-		[userRsvps, weekStart, weekEnd, storeTimezone],
+		},
+		[user],
 	);
 
 	const handlePreviousWeek = useCallback(() => {
@@ -447,7 +456,7 @@ export const CustomerWeekViewCalendar: React.FC<
 										key={day.toISOString()}
 										className={cn(
 											"border-b border-r p-0.5 sm:p-2 text-center text-[10px] sm:text-sm font-medium w-[48px] sm:min-w-[110px]",
-											isToday(day) && "bg-primary/10",
+											isToday(day, storeTimezone) && "bg-primary/10",
 											"last:border-r-0",
 										)}
 									>
@@ -458,7 +467,7 @@ export const CustomerWeekViewCalendar: React.FC<
 											<span
 												className={cn(
 													"text-xs sm:text-lg font-semibold",
-													isToday(day) && "text-primary",
+													isToday(day, storeTimezone) && "text-primary",
 												)}
 											>
 												{getDayNumber(day)}
@@ -489,7 +498,7 @@ export const CustomerWeekViewCalendar: React.FC<
 												key={`${day.toISOString()}-${timeSlot}`}
 												className={cn(
 													"border-b border-r p-0.5 sm:p-1 w-[48px] sm:min-w-[120px] align-top",
-													isToday(day) && "bg-primary/5",
+													isToday(day, storeTimezone) && "bg-primary/5",
 													"last:border-r-0",
 												)}
 											>
@@ -498,6 +507,10 @@ export const CustomerWeekViewCalendar: React.FC<
 														slotRsvps.map((rsvp) => {
 															const isPending =
 																rsvp.status === RsvpStatus.Pending;
+															const isUserOwnReservation =
+																isUserReservation(rsvp);
+															const canEdit =
+																isPending && isUserOwnReservation && storeId;
 															const rsvpCard = (
 																<div
 																	className={cn(
@@ -506,7 +519,9 @@ export const CustomerWeekViewCalendar: React.FC<
 																			? "bg-green-50 dark:bg-green-950/20 border-l-green-500"
 																			: "bg-yellow-50 dark:bg-yellow-950/20 border-l-yellow-500",
 																		rsvp.alreadyPaid && "border-l-blue-500",
-																		isPending &&
+																		isUserOwnReservation &&
+																			"ring-2 ring-primary/20",
+																		canEdit &&
 																			"cursor-pointer hover:opacity-80 active:opacity-70",
 																	)}
 																>
@@ -536,7 +551,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																</div>
 															);
 
-															return isPending && storeId ? (
+															return canEdit ? (
 																<EditReservationDialog
 																	key={rsvp.id}
 																	storeId={storeId}

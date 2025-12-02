@@ -128,7 +128,8 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel className="pr-2">
-											{t("StoreSettings_PayoutSchedule")}
+											{t("StoreSettings_PayoutSchedule")}{" "}
+											<span className="text-destructive">*</span>
 										</FormLabel>
 
 										<FormControl>
@@ -155,7 +156,10 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 								name="bankCode"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("StoreSettings_BankCode")}</FormLabel>
+										<FormLabel>
+											{t("StoreSettings_BankCode")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 										<TwBankCodeCombobox
 											disabled={loading || form.formState.isSubmitting}
 											onValueChange={field.onChange}
@@ -170,7 +174,10 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 								name="bankAccountName"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("StoreSettings_BankAccountName")}</FormLabel>
+										<FormLabel>
+											{t("StoreSettings_BankAccountName")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Input
 												type="text"
@@ -192,7 +199,10 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 									name="bankAccount"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_BankAccount")}</FormLabel>
+											<FormLabel>
+												{t("StoreSettings_BankAccount")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
 												<Input
 													type="text"

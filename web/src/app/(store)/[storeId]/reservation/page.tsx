@@ -4,7 +4,7 @@ import { transformDecimalsToNumbers } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Loader } from "@/components/loader";
-import { ReservationClient } from "./components/reservation-client";
+import { ReservationClient } from "./components/client-reservation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import type { StoreFacility, User, Rsvp } from "@/types";
@@ -205,7 +205,7 @@ export default async function ReservationPage(props: {
 						facilities={facilities}
 						user={user}
 						storeId={params.storeId}
-						storeTimezone={store?.defaultTimezone ?? 8}
+						storeTimezone={store?.defaultTimezone ?? "Asia/Taipei"}
 					/>
 				</div>
 			</Suspense>

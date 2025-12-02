@@ -35,7 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreFacility, User, Rsvp } from "@/types";
 import type { RsvpSettings } from "@prisma/client";
-import { getDateInTz } from "@/utils/datetime-utils";
+import { getDateInTz, getOffsetHours } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 
 interface EditReservationFormProps {
@@ -46,7 +46,7 @@ interface EditReservationFormProps {
 	rsvp: Rsvp;
 	onReservationUpdated?: (updatedRsvp: Rsvp) => void;
 	hideCard?: boolean;
-	storeTimezone?: number;
+	storeTimezone?: string;
 }
 
 export function EditReservationForm({
@@ -57,7 +57,7 @@ export function EditReservationForm({
 	rsvp,
 	onReservationUpdated,
 	hideCard = false,
-	storeTimezone = 8,
+	storeTimezone = "Asia/Taipei",
 }: EditReservationFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const params = useParams();
@@ -130,7 +130,9 @@ export function EditReservationForm({
 							name="rsvpTime"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("rsvp_time")}</FormLabel>
+									<FormLabel>
+										{t("rsvp_time")} <span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="datetime-local"
@@ -145,7 +147,7 @@ export function EditReservationForm({
 																	: new Date(field.value);
 															const storeTzDate = getDateInTz(
 																utcDate,
-																storeTimezone,
+																getOffsetHours(storeTimezone),
 															);
 															return format(storeTzDate, "yyyy-MM-dd'T'HH:mm");
 														})()
@@ -169,7 +171,10 @@ export function EditReservationForm({
 							name="numOfAdult"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("rsvp_num_of_adult")}</FormLabel>
+									<FormLabel>
+										{t("rsvp_num_of_adult")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"

@@ -4,8 +4,8 @@
  * Migration script to fix i18n naming convention violations
  * 
  * Fixes:
- * 1. AlertDescr -> Alert_descr
- * 2. AlertTitle -> Alert_title
+ * 1. AlertDescr -> alert_descr
+ * 2. AlertTitle -> alert_title
  * 3. createdAt -> created_at
  * 4. lastUsed -> last_used
  * 5. account_tab_currentAcct -> account_tab_current_acct
@@ -21,8 +21,8 @@ const { execSync } = require("child_process");
 // Key mappings: oldKey -> newKey
 const KEY_MAPPINGS = {
 	// Alert dialog keys
-	AlertDescr: "Alert_descr",
-	AlertTitle: "Alert_title",
+	AlertDescr: "alert_descr",
+	AlertTitle: "alert_title",
 	
 	// camelCase keys
 	createdAt: "created_at",

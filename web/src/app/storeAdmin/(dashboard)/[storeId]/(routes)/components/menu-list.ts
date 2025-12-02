@@ -259,7 +259,7 @@ export function GetMenuList(
 				},
 				{
 					href: `${nav_prefix}/facility`,
-					label: t("Facility_mgmt"),
+					label: t("facility_mgmt"),
 					active:
 						pathname.includes(`${nav_prefix}/facility`) &&
 						!pathname.includes(`${nav_prefix}/facility-pricing`),

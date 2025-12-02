@@ -59,7 +59,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 		return <Loader />;
 	}
 
-	console.log(`user: ${JSON.stringify(user.Rsvp)}`);
+	//console.log(`user: ${JSON.stringify(user.Rsvp)}`);
 	return (
 		<Container className="bg-transparent">
 			<Tabs

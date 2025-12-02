@@ -418,7 +418,10 @@ export function AdminEditRsvpDialog({
 								name="numOfAdult"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("rsvp_num_of_adult")}</FormLabel>
+										<FormLabel>
+											{t("rsvp_num_of_adult")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -473,7 +476,9 @@ export function AdminEditRsvpDialog({
 							name="rsvpTime"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("rsvp_time")}</FormLabel>
+									<FormLabel>
+										{t("rsvp_time")} <span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="datetime-local"

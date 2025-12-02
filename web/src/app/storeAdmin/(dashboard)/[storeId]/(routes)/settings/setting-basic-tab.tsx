@@ -42,12 +42,14 @@ import useOrigin from "@/hooks/use-origin";
 import { useI18n } from "@/providers/i18n-provider";
 import { updateStoreBasicAction } from "@/actions/storeAdmin/settings/update-store-basic";
 import type { UpdateStoreBasicInput } from "@/actions/storeAdmin/settings/update-store-basic.validation";
+import { TimezoneSelect } from "@/components/timezone-select";
 
 const formSchema = z.object({
 	name: z.string().min(1, { message: "store name is required" }),
 	defaultLocale: z.string().min(1),
 	defaultCountry: z.string().min(1),
 	defaultCurrency: z.string().min(1),
+	defaultTimezone: z.string().optional().default("Asia/Taipei"),
 	businessHours: z.string().min(1),
 	orderNoteToCustomer: z.string().optional(),
 
@@ -141,6 +143,8 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 				defaultLocale: data.defaultLocale,
 				defaultCountry: data.defaultCountry,
 				defaultCurrency: data.defaultCurrency,
+				defaultTimezone:
+					data.defaultTimezone ?? store.defaultTimezone ?? "Asia/Taipei",
 				autoAcceptOrder: data.autoAcceptOrder ?? false,
 				isOpen: data.isOpen ?? false,
 				acceptAnonymousOrder: store.acceptAnonymousOrder,
@@ -198,7 +202,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 								name="name"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("StoreSettings_Store_Name")}</FormLabel>
+										<FormLabel>
+											{t("StoreSettings_Store_Name")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
@@ -238,13 +245,16 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 								/>
 							</div>
 
-							<div className="grid grid-flow-row-dense grid-cols-3 gap-1">
+							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
 								<FormField
 									control={form.control}
 									name="defaultLocale"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_Store_Locale")}</FormLabel>
+											<FormLabel>
+												{t("StoreSettings_Store_Locale")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
 											<Select
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
@@ -269,7 +279,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 									name="defaultCurrency"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_Store_Currency")}</FormLabel>
+											<FormLabel>
+												{t("StoreSettings_Store_Currency")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
 											<CurrencyCombobox
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
@@ -278,18 +291,43 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 										</FormItem>
 									)}
 								/>
-
+							</div>
+							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
 								<FormField
 									control={form.control}
 									name="defaultCountry"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_Store_Country")}</FormLabel>
+											<FormLabel>
+												{t("StoreSettings_Store_Country")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
 											<CountryCombobox
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
 												defaultValue={field.value}
 											/>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="defaultTimezone"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("StoreSettings_Store_Timezone")}</FormLabel>
+											<FormControl>
+												<TimezoneSelect
+													value={field.value ?? "Asia/Taipei"}
+													onValueChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("StoreSettings_Store_Timezone_descr")}
+											</FormDescription>
+											<FormMessage />
 										</FormItem>
 									)}
 								/>

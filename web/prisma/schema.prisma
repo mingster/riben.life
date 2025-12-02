@@ -22,10 +22,10 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  role             String? @default("user")
+  role             String?  @default("user")
   locale           String?
   timezone         String?
-  stripeCustomerId String? @unique
+  stripeCustomerId String?  @unique
   phone            String?
   phoneVerified    Boolean? @default(false)
 
@@ -574,7 +574,7 @@ model Store {
   defaultCurrency String  @default("twd")
   isDeleted       Boolean @default(false)
   defaultLocale   String  @default("tw")
-  defaultTimezone Int     @default(8)
+  defaultTimezone String  @default("Asia/Taipei")
 
   autoAcceptOrder      Boolean @default(true)
   isOpen               Boolean @default(true)
@@ -800,6 +800,10 @@ model StoreFacility {
   defaultCredit   Decimal @default(0) // default credit for using the facility
   defaultDuration Int     @default(60) // default duration for using the facility in minutes
   businessHours   String? //when the facility is available for use
+
+  description String? // description of the facility
+  location    String? // location of the facility
+  travelInfo  String? // travel information of the facility
 
   Store                Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Rsvp                 Rsvp[]

@@ -6,6 +6,8 @@ import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { format } from "date-fns";
 import { useMemo } from "react";
+import Link from "next/link";
+import { getDateInTz, getOffsetHours } from "@/utils/datetime-utils";
 
 export const DisplayReservations = ({
 	reservations,
@@ -30,10 +32,27 @@ export const DisplayReservations = ({
 						<div className="flex items-start justify-between gap-2">
 							<div className="flex-1 min-w-0">
 								<div className="font-medium text-sm truncate">
-									{item.Store?.name}
+									{item.Store?.id ? (
+										<Link
+											href={`/${item.Store.id}/reservation`}
+											className="hover:underline text-primary"
+										>
+											{item.Store.name}
+										</Link>
+									) : (
+										item.Store?.name
+									)}
 								</div>
 								<div className="text-muted-foreground text-[10px]">
-									{format(item.rsvpTime, datetimeFormat)}
+									{format(
+										getDateInTz(
+											item.rsvpTime,
+											getOffsetHours(
+												item.Store?.defaultTimezone ?? "Asia/Taipei",
+											),
+										),
+										`${datetimeFormat} HH:mm`,
+									)}
 								</div>
 							</div>
 							<div className="shrink-0">
@@ -81,7 +100,13 @@ export const DisplayReservations = ({
 						)}
 
 						<div className="text-[10px] text-muted-foreground pt-1 border-t">
-							{format(item.createdAt, datetimeFormat)}
+							{format(
+								getDateInTz(
+									item.createdAt,
+									getOffsetHours(item.Store?.defaultTimezone ?? "Asia/Taipei"),
+								),
+								datetimeFormat,
+							)}
 						</div>
 					</div>
 				))}
@@ -120,10 +145,26 @@ export const DisplayReservations = ({
 							{reservations.map((item) => (
 								<tr key={item.id} className="border-b last:border-b-0">
 									<td className="px-3 py-2 text-xs font-mono">
-										{format(item.createdAt, datetimeFormat)}
+										{format(
+											getDateInTz(
+												item.createdAt,
+												getOffsetHours(
+													item.Store?.defaultTimezone ?? "Asia/Taipei",
+												),
+											),
+											datetimeFormat,
+										)}
 									</td>
 									<td className="px-3 py-2 text-xs font-mono">
-										{format(item.rsvpTime, datetimeFormat)}
+										{format(
+											getDateInTz(
+												item.rsvpTime,
+												getOffsetHours(
+													item.Store?.defaultTimezone ?? "Asia/Taipei",
+												),
+											),
+											`${datetimeFormat} HH:mm`,
+										)}
 									</td>
 									<td className="px-3 py-2 text-xs">
 										<span
@@ -150,7 +191,18 @@ export const DisplayReservations = ({
 									<td className="px-3 py-2 text-xs">
 										{item.User?.name || "-"}
 									</td>
-									<td className="px-3 py-2 text-xs">{item.Store?.name}</td>
+									<td className="px-3 py-2 text-xs">
+										{item.Store?.id ? (
+											<Link
+												href={`/${item.Store.id}/reservation`}
+												className="hover:underline text-primary"
+											>
+												{item.Store.name}
+											</Link>
+										) : (
+											item.Store?.name
+										)}
+									</td>
 									<td className="px-3 py-2 text-xs">
 										{item.Facility?.facilityName || "-"}
 									</td>
