@@ -115,7 +115,7 @@ Ticket URL: ${ticketUrl}
 			subject: subject,
 			textMessage: textMessage,
 			htmMessage: htmMessage,
-			createdOn: getUtcNow(),
+			createdOn: getUtcNowEpoch(),
 			sendTries: 0,
 		},
 	});

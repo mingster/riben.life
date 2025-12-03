@@ -18,7 +18,12 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
-import { getDateInTz, getUtcNow, getOffsetHours, convertStoreTimezoneToUtc } from "@/utils/datetime-utils";
+import {
+	getDateInTz,
+	getUtcNow,
+	getOffsetHours,
+	convertStoreTimezoneToUtc,
+} from "@/utils/datetime-utils";
 
 interface TimeRange {
 	from: string;
@@ -125,6 +130,12 @@ const groupRsvpsByDayAndTime = (
 		try {
 			if (rsvp.rsvpTime instanceof Date) {
 				rsvpDateUtc = rsvp.rsvpTime;
+			} else if (typeof rsvp.rsvpTime === "bigint") {
+				// BigInt epoch (milliseconds)
+				rsvpDateUtc = new Date(Number(rsvp.rsvpTime));
+			} else if (typeof rsvp.rsvpTime === "number") {
+				// Number epoch (milliseconds) - after transformPrismaDataForJson
+				rsvpDateUtc = new Date(rsvp.rsvpTime);
 			} else if (typeof rsvp.rsvpTime === "string") {
 				rsvpDateUtc = new Date(rsvp.rsvpTime);
 			} else {
@@ -249,7 +260,14 @@ export function SlotPicker({
 	}, [weekStart]);
 
 	const groupedRsvps = useMemo(
-		() => groupRsvpsByDayAndTime(rsvps, weekStart, weekEnd, storeTimezone, currentRsvpId),
+		() =>
+			groupRsvpsByDayAndTime(
+				rsvps,
+				weekStart,
+				weekEnd,
+				storeTimezone,
+				currentRsvpId,
+			),
 		[rsvps, weekStart, weekEnd, storeTimezone, currentRsvpId],
 	);
 
@@ -300,8 +318,15 @@ export function SlotPicker({
 			// Format as datetime-local string (interpreted as store timezone)
 			//const datetimeLocalString = `${year}-${month}-${date}T${hourStr}:${minuteStr}`;
 
-			const dateInStoreTz = new Date(year, parseInt(month) - 1, parseInt(date),
-				hours, minutes, 0, 0);
+			const dateInStoreTz = new Date(
+				year,
+				parseInt(month) - 1,
+				parseInt(date),
+				hours,
+				minutes,
+				0,
+				0,
+			);
 			/*
 		console.log("dateInStoreTz", dateInStoreTz);
 		console.log("datetimeLocalString", datetimeLocalString);
@@ -410,16 +435,16 @@ export function SlotPicker({
 										// Check if this slot is selected
 										const isSelected = selectedDateTime
 											? (() => {
-												const selectedInStoreTz = getDateInTz(
-													selectedDateTime,
-													getOffsetHours(storeTimezone),
-												);
-												return (
-													isSameDay(selectedInStoreTz, day) &&
-													selectedInStoreTz.getHours() === hours &&
-													selectedInStoreTz.getMinutes() === minutes
-												);
-											})()
+													const selectedInStoreTz = getDateInTz(
+														selectedDateTime,
+														getOffsetHours(storeTimezone),
+													);
+													return (
+														isSameDay(selectedInStoreTz, day) &&
+														selectedInStoreTz.getHours() === hours &&
+														selectedInStoreTz.getMinutes() === minutes
+													);
+												})()
 											: false;
 
 										return (
@@ -437,7 +462,8 @@ export function SlotPicker({
 														onClick={() => handleSlotClick(day, timeSlot)}
 														className={cn(
 															"w-full h-full min-h-[32px] sm:min-h-[36px] rounded hover:bg-primary/10 active:bg-primary/20 transition-colors text-[10px] sm:text-xs touch-manipulation flex items-center justify-center",
-															isSelected && "bg-primary text-primary-foreground ring-1 ring-primary",
+															isSelected &&
+																"bg-primary text-primary-foreground ring-1 ring-primary",
 														)}
 													>
 														{isSelected ? "✓" : "+"}
@@ -459,4 +485,3 @@ export function SlotPicker({
 		</div>
 	);
 }
-

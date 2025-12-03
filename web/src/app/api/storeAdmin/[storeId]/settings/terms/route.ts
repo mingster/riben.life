@@ -21,7 +21,7 @@ export async function PATCH(
 			where: {
 				storeId: params.storeId,
 			},
-			update: { tos, updatedAt: getUtcNow() },
+			update: { tos, updatedAt: getUtcNowEpoch() },
 			create: {
 				tos,
 				storeId: params.storeId,

@@ -19,7 +19,7 @@ export async function PATCH(
 			where: {
 				storeId: params.storeId,
 			},
-			update: { ...body, updatedAt: getUtcNow() },
+			update: { ...body, updatedAt: getUtcNowEpoch() },
 			create: {
 				storeId: params.storeId,
 				...body,
@@ -33,7 +33,7 @@ export async function PATCH(
 				where: {
 					storeSettingsId: storeSettings.id,
 				},
-				update: { ...body, updatedAt: getUtcNow() },
+				update: { ...body, updatedAt: getUtcNowEpoch() },
 				create: {
 					storeSettingsId: storeSettings.id,
 					...body,

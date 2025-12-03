@@ -108,7 +108,7 @@ export async function POST(
 							subscriptionId: null,
 							status: SubscriptionStatus.Cancelled,
 							note: `Unsubscribed by ${userId}`,
-							updatedAt: getUtcNow(),
+							updatedAt: getUtcNowEpoch(),
 						},
 					});
 

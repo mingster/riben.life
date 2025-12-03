@@ -2,7 +2,7 @@ import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { User } from "@/types";
 
 export async function GET(
@@ -52,7 +52,7 @@ export async function GET(
 			},
 		})) as User[];
 
-		transformDecimalsToNumbers(users);
+		transformPrismaDataForJson(users);
 
 		return NextResponse.json(users);
 	} catch (error) {

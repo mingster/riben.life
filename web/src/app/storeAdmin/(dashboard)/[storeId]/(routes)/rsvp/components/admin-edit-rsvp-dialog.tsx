@@ -47,7 +47,7 @@ import { StoreMembersCombobox } from "../../customers/components/combobox-store-
 import { FacilityCombobox } from "../../facility/components/combobox-facility";
 import useSWR from "swr";
 import type { User } from "@/types";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNow, epochToDate } from "@/utils/datetime-utils";
 import type { StoreFacility } from "@/types";
 import { useEffect } from "react";
 
@@ -119,8 +119,28 @@ export function AdminEditRsvpDialog({
 				facilityId: rsvp.facilityId,
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
-				rsvpTime: rsvp.rsvpTime,
-				arriveTime: rsvp.arriveTime,
+				rsvpTime:
+					rsvp.rsvpTime instanceof Date
+						? rsvp.rsvpTime
+						: (epochToDate(
+								typeof rsvp.rsvpTime === "number"
+									? BigInt(rsvp.rsvpTime)
+									: typeof rsvp.rsvpTime === "bigint"
+										? rsvp.rsvpTime
+										: BigInt(rsvp.rsvpTime),
+							) ?? new Date()),
+				arriveTime:
+					rsvp.arriveTime instanceof Date
+						? rsvp.arriveTime
+						: rsvp.arriveTime
+							? epochToDate(
+									typeof rsvp.arriveTime === "number"
+										? BigInt(rsvp.arriveTime)
+										: typeof rsvp.arriveTime === "bigint"
+											? rsvp.arriveTime
+											: BigInt(rsvp.arriveTime),
+								)
+							: null,
 				status: rsvp.status,
 				message: rsvp.message,
 				alreadyPaid: rsvp.alreadyPaid,
@@ -200,7 +220,14 @@ export function AdminEditRsvpDialog({
 			}
 
 			// Skip if rsvpTime is not a valid date
-			const dateTime = rsvpTime instanceof Date ? rsvpTime : new Date(rsvpTime);
+			const dateTime =
+				rsvpTime instanceof Date
+					? rsvpTime
+					: typeof rsvpTime === "bigint"
+						? new Date(Number(rsvpTime))
+						: typeof rsvpTime === "number"
+							? new Date(rsvpTime)
+							: new Date(rsvpTime);
 			if (Number.isNaN(dateTime.getTime())) {
 				return;
 			}

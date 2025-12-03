@@ -64,7 +64,7 @@ export async function PATCH(
 				isOpen,
 				requireSeating,
 				requirePrepaid,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 				/*
 		storeLocales: {
 		  upsert: {
@@ -85,7 +85,7 @@ export async function PATCH(
 			update: {
 				orderNoteToCustomer,
 				businessHours,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 			create: {
 				orderNoteToCustomer,

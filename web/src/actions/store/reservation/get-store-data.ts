@@ -50,4 +50,3 @@ export const getStoreDataAction = baseClient
 			facilities,
 		};
 	});
-

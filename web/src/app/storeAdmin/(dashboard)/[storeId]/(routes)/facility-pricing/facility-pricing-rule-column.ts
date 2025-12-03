@@ -1,4 +1,5 @@
 import type { FacilityPricingRule } from "@prisma/client";
+import { epochToDate } from "@/utils/datetime-utils";
 
 export interface FacilityPricingRuleColumn {
 	id: string;
@@ -32,6 +33,6 @@ export const mapFacilityPricingRuleToColumn = (
 	cost: rule.cost ? rule.cost.toNumber() : null,
 	credit: rule.credit ? rule.credit.toNumber() : null,
 	isActive: rule.isActive,
-	createdAt: rule.createdAt,
-	updatedAt: rule.updatedAt,
+	createdAt: epochToDate(rule.createdAt) ?? new Date(),
+	updatedAt: epochToDate(rule.updatedAt) ?? new Date(),
 });

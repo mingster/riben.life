@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { StoreLevel } from "@/types/enum";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import type { Store } from "@prisma/client";
 
 const isProLevel = async (storeId: string): Promise<boolean> => {
@@ -30,7 +30,7 @@ const isProLevel = async (storeId: string): Promise<boolean> => {
 
 		//console.log("store is pro. exp is: ", subscriptions?.expiration);
 
-		if (subscriptions && subscriptions.expiration > getUtcNow()) {
+		if (subscriptions && subscriptions.expiration > getUtcNowEpoch()) {
 			return true;
 		}
 	}

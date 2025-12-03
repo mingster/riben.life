@@ -23,7 +23,7 @@ export async function GET(
 		if (!dateVal) return NextResponse.json({});
 
 		// Use UTC for date calculations
-		const now = getUtcNow();
+		const now = getUtcNowEpoch();
 		// set time to 23:59:59 UTC
 		const today = new Date(
 			Date.UTC(

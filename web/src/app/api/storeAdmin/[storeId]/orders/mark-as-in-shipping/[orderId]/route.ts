@@ -76,7 +76,7 @@ export async function POST(
 			data: {
 				orderStatus: OrderStatus.InShipping,
 				// Use UTC for timestamps
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 

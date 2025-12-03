@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
 import getOrderById from "../get-order-by_id";
 import isProLevel from "./is-pro-level";
 
@@ -76,18 +76,23 @@ const MarkAsPaid = async (
 		},
 		data: {
 			isPaid: true,
-			paidDate: getUtcNow(),
+			paidDate: getUtcNowEpoch(),
 			orderStatus: Number(OrderStatus.Processing),
 			paymentStatus: Number(PaymentStatus.Paid),
 			paymentCost: fee + feeTax + platform_fee,
 			checkoutAttributes: checkoutAttributes || "",
-			updatedAt: getUtcNow(),
+			updatedAt: getUtcNowEpoch(),
 		},
 	});
 
 	// availabilityDate = order date + payment methods' clear days
+	// Convert BigInt epoch to Date, add clear days, then convert back to BigInt
+	const orderUpdatedDate = epochToDate(order.updatedAt);
+	if (!orderUpdatedDate) {
+		throw Error("Order updatedAt is invalid");
+	}
 	const availabilityDate = new Date(
-		order.updatedAt.getTime() +
+		orderUpdatedDate.getTime() +
 			order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
 	);
 
@@ -103,10 +108,11 @@ const MarkAsPaid = async (
 			type: usePlatform ? 0 : 1, // 0: 代收 | 1: store's own payment provider
 			description: `order # ${order.orderNum}`,
 			note: `${order.PaymentMethod.name}, order id: ${order.id}`,
-			availability: availabilityDate,
+			availability: BigInt(availabilityDate.getTime()),
 			balance:
 				balance +
 				Math.round(Number(order.orderTotal) + (fee + feeTax) + platform_fee),
+			createdAt: getUtcNowEpoch(),
 		},
 	});
 

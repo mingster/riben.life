@@ -1,6 +1,6 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type {
 	StoreProductOptionSelectionsTemplate,
 	StoreProductOptionTemplate,
@@ -117,7 +117,7 @@ export async function POST(
 
 		//console.log("result", JSON.stringify(result));
 
-		transformDecimalsToNumbers(result);
+		transformPrismaDataForJson(result);
 
 		return NextResponse.json(result);
 	} catch (error) {

@@ -1,6 +1,6 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { ProductOptionTemplateClient } from "./components/client-product-option-template";
 import {
 	mapProductOptionTemplateToColumn,
@@ -26,7 +26,7 @@ export default async function ProductOptionTemplatePage(props: {
 			orderBy: { sortOrder: "asc" },
 		});
 
-	transformDecimalsToNumbers(storeOptionTemplates);
+	transformPrismaDataForJson(storeOptionTemplates);
 
 	const formattedTemplates: ProductOptionTemplateColumn[] =
 		storeOptionTemplates.map(mapProductOptionTemplateToColumn);

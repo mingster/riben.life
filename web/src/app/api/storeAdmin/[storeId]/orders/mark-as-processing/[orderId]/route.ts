@@ -47,7 +47,7 @@ export async function POST(
 			},
 			data: {
 				orderStatus: OrderStatus.Processing,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 

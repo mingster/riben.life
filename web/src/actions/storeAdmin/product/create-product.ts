@@ -5,7 +5,8 @@ import { createStoreProductSchema } from "./create-product.validation";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { mapProductToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/products/product-column";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 export const createStoreProductAction = storeActionClient
 	.metadata({ name: "createStoreProduct" })
@@ -33,6 +34,8 @@ export const createStoreProductAction = storeActionClient
 				currency,
 				status,
 				isFeatured,
+				createdAt: getUtcNowEpoch(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 
@@ -48,7 +51,7 @@ export const createStoreProductAction = storeActionClient
 			throw new SafeError("Failed to load created product");
 		}
 
-		transformDecimalsToNumbers(productWithRelations);
+		transformPrismaDataForJson(productWithRelations);
 
 		return {
 			product: mapProductToColumn(productWithRelations),

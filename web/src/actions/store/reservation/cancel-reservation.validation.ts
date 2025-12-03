@@ -5,4 +5,3 @@ export const cancelReservationSchema = z.object({
 });
 
 export type CancelReservationInput = z.infer<typeof cancelReservationSchema>;
-

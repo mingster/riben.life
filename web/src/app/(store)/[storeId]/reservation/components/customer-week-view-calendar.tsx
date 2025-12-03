@@ -25,7 +25,12 @@ import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { ReservationDialog } from "./reservation-dialog";
 import { EditReservationDialog } from "./edit-reservation-dialog";
-import { getDateInTz, getUtcNow, getOffsetHours } from "@/utils/datetime-utils";
+import {
+	getDateInTz,
+	getUtcNow,
+	getOffsetHours,
+	epochToDate,
+} from "@/utils/datetime-utils";
 
 interface CustomerWeekViewCalendarProps {
 	rsvps: Rsvp[];
@@ -184,6 +189,12 @@ const groupRsvpsByDayAndTime = (
 		try {
 			if (rsvp.rsvpTime instanceof Date) {
 				rsvpDateUtc = rsvp.rsvpTime;
+			} else if (typeof rsvp.rsvpTime === "bigint") {
+				// BigInt epoch (milliseconds)
+				rsvpDateUtc = new Date(Number(rsvp.rsvpTime));
+			} else if (typeof rsvp.rsvpTime === "number") {
+				// Number epoch (milliseconds) - after transformPrismaDataForJson
+				rsvpDateUtc = new Date(rsvp.rsvpTime);
 			} else if (typeof rsvp.rsvpTime === "string") {
 				rsvpDateUtc = parseISO(rsvp.rsvpTime);
 			} else {

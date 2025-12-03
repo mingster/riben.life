@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { isPro } from "@/lib/store-admin-utils";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { type PaymentMethod, type ShippingMethod } from "@prisma/client";
 import { getStoreWithRelations } from "@/lib/store-access";
 import { redirect } from "next/navigation";
@@ -47,9 +47,9 @@ export default async function StoreSettingsPage(props: {
 
 	const store = storeResult;
 
-	// Transform decimal fields to numbers
-	transformDecimalsToNumbers(allPaymentMethods);
-	transformDecimalsToNumbers(allShippingMethods);
+	// Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
+	transformPrismaDataForJson(allPaymentMethods);
+	transformPrismaDataForJson(allShippingMethods);
 
 	return (
 		<Container>

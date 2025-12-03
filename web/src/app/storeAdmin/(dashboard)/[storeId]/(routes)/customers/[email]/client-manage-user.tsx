@@ -19,6 +19,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { StoreOrder, User } from "@/types";
 import { type SubscriptionForUI } from "@/types/enum";
 import { format } from "date-fns";
+import { epochToDate } from "@/utils/datetime-utils";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -139,7 +140,14 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 									<span className="text-sm text-muted-foreground">
 										{t("customer_mgmt_member_since").replace(
 											"{0}",
-											format(user.createdAt, datetimeFormat),
+											format(
+												typeof user.createdAt === "number"
+													? (epochToDate(BigInt(user.createdAt)) ?? new Date())
+													: user.createdAt instanceof Date
+														? user.createdAt
+														: new Date(),
+												datetimeFormat,
+											),
 										)}
 									</span>
 								)}
@@ -147,7 +155,14 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 								{user.createdAt && (
 									<span className="text-sm text-muted-foreground">
 										{t("subscription_service_expiration").replace("{0}", "")}
-										{format(user.createdAt, datetimeFormat)}
+										{format(
+											typeof user.createdAt === "number"
+												? (epochToDate(BigInt(user.createdAt)) ?? new Date())
+												: user.createdAt instanceof Date
+													? user.createdAt
+													: new Date(),
+											datetimeFormat,
+										)}
 									</span>
 								)}
 							</div>

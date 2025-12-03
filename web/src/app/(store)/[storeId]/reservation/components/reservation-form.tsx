@@ -175,34 +175,37 @@ export function ReservationForm({
 											value={
 												field.value
 													? (() => {
-														try {
-															// Convert UTC date to store timezone for display
-															const utcDate =
-																field.value instanceof Date
-																	? field.value
-																	: new Date(field.value);
+															try {
+																// Convert UTC date to store timezone for display
+																const utcDate =
+																	field.value instanceof Date
+																		? field.value
+																		: new Date(field.value);
 
-															// Validate date
-															if (Number.isNaN(utcDate.getTime())) {
+																// Validate date
+																if (Number.isNaN(utcDate.getTime())) {
+																	return "";
+																}
+
+																const storeTzDate = getDateInTz(
+																	utcDate,
+																	getOffsetHours(storeTimezone),
+																);
+
+																// Validate converted date
+																if (Number.isNaN(storeTzDate.getTime())) {
+																	return "";
+																}
+
+																return format(
+																	storeTzDate,
+																	"yyyy-MM-dd'T'HH:mm",
+																);
+															} catch (error) {
+																console.error("Error formatting date:", error);
 																return "";
 															}
-
-															const storeTzDate = getDateInTz(
-																utcDate,
-																getOffsetHours(storeTimezone),
-															);
-
-															// Validate converted date
-															if (Number.isNaN(storeTzDate.getTime())) {
-																return "";
-															}
-
-															return format(storeTzDate, "yyyy-MM-dd'T'HH:mm");
-														} catch (error) {
-															console.error("Error formatting date:", error);
-															return "";
-														}
-													})()
+														})()
 													: ""
 											}
 											onChange={(e) => {

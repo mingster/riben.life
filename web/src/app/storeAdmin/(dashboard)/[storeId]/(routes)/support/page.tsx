@@ -3,7 +3,7 @@ import { Loader } from "@/components/loader";
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import type { SupportTicket, User } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -60,9 +60,9 @@ export default async function SupportAdminPage(props: {
 		},
 	});
 
-	transformDecimalsToNumbers(tickets);
+	transformPrismaDataForJson(tickets);
 
-	//transformDecimalsToNumbers(tickets);
+	//transformPrismaDataForJson(tickets);
 
 	return (
 		<Suspense fallback={<Loader />}>

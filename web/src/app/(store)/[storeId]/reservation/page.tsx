@@ -1,6 +1,6 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Loader } from "@/components/loader";
@@ -10,7 +10,7 @@ import { headers } from "next/headers";
 import type { StoreFacility, User, Rsvp } from "@/types";
 import type { RsvpSettings, StoreSettings } from "@prisma/client";
 import logger from "@/lib/logger";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNow, dateToEpoch } from "@/utils/datetime-utils";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -113,8 +113,8 @@ export default async function ReservationPage(props: {
 					where: {
 						storeId: params.storeId,
 						rsvpTime: {
-							gte: rangeStart,
-							lte: rangeEnd,
+							gte: dateToEpoch(rangeStart) ?? BigInt(0),
+							lte: dateToEpoch(rangeEnd) ?? BigInt(0),
 						},
 					},
 					include: {
@@ -159,27 +159,26 @@ export default async function ReservationPage(props: {
 			redirect(`/signIn/?callbackUrl=/${params.storeId}/reservation`);
 		}
 
-		// Transform decimals
-		transformDecimalsToNumbers(store);
+		// Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
+		transformPrismaDataForJson(store);
 		if (facilities) {
-			transformDecimalsToNumbers(facilities);
+			transformPrismaDataForJson(facilities);
 		}
 
 		if (rsvpSettings) {
-			transformDecimalsToNumbers(rsvpSettings);
+			transformPrismaDataForJson(rsvpSettings);
 		}
-		transformDecimalsToNumbers(facilities);
 		if (storeSettings) {
-			transformDecimalsToNumbers(storeSettings);
+			transformPrismaDataForJson(storeSettings);
 		}
 		if (rsvps) {
-			transformDecimalsToNumbers(rsvps);
+			transformPrismaDataForJson(rsvps);
 		}
 
-		// Transform Decimal objects to numbers for client components
+		// Transform BigInt (epoch timestamps) and Decimal to numbers for client components
 		formattedRsvps = (rsvps as Rsvp[]).map((rsvp) => {
 			const transformed = { ...rsvp };
-			transformDecimalsToNumbers(transformed);
+			transformPrismaDataForJson(transformed);
 			return transformed as Rsvp;
 		});
 	} catch (error) {

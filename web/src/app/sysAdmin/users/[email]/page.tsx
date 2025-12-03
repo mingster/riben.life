@@ -4,7 +4,7 @@ import { stripe } from "@/lib/stripe/config";
 import type { User } from "@/types";
 import type { SubscriptionForUI } from "@/types/enum";
 import logger from "@/lib/logger";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { ManageUserClient } from "./client-manage-user";
 import { sqlClient } from "@/lib/prismadb";
 
@@ -60,7 +60,7 @@ export default async function UsersBillingAdminPage(props: {
 		throw new Error("User not found");
 	}
 
-	transformDecimalsToNumbers(user);
+	transformPrismaDataForJson(user);
 
 	let stripeSubscriptions = null;
 	const userSubscription: SubscriptionForUI[] = [];

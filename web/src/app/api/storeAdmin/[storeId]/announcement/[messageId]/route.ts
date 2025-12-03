@@ -1,7 +1,7 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import logger from "@/lib/logger";
@@ -24,7 +24,7 @@ export async function PATCH(
 			where: {
 				id: params.messageId,
 			},
-			data: { ...body, updatedAt: getUtcNow() },
+			data: { ...body, updatedAt: getUtcNowEpoch() },
 		});
 
 		//console.log(`update announcement: ${JSON.stringify(obj)}`);

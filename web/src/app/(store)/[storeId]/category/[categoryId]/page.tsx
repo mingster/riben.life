@@ -2,7 +2,7 @@ import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { Prisma } from "@prisma/client";
 import type { Store } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { Client } from "./client";
 
 const prodCategoryObj = Prisma.validator<Prisma.ProductCategoriesDefaultArgs>()(
@@ -76,7 +76,7 @@ export default async function CategoryPage(props: {
 
 	if (!storeData || !category) return null;
 
-	transformDecimalsToNumbers(category);
+	transformPrismaDataForJson(category);
 
 	return (
 		<Container>

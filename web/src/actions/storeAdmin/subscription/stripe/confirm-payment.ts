@@ -3,7 +3,12 @@ import { stripe } from "@/lib/stripe/config";
 import Stripe from "stripe";
 
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
-import { getUtcNow } from "@/utils/datetime-utils";
+import {
+	getUtcNow,
+	getUtcNowEpoch,
+	epochToDate,
+	dateToEpoch,
+} from "@/utils/datetime-utils";
 import { formatDateTime } from "@/utils/datetime-utils";
 import logger from "@/lib/logger";
 
@@ -138,15 +143,23 @@ const confirmPayment = async (
 		});
 
 		const now = getUtcNow();
-		let current_exp = subscription.expiration;
-		if (current_exp < now) {
+		// Convert BigInt epoch to Date for calculations
+		let current_exp_date = epochToDate(subscription.expiration);
+		if (!current_exp_date) {
+			current_exp_date = now;
+		}
+		if (current_exp_date < now) {
 			//reset to today if expired
-			current_exp = now;
+			current_exp_date = now;
 		}
 
 		// add one month
-		const new_exp = new Date(current_exp);
+		const new_exp = new Date(current_exp_date);
 		new_exp.setMonth(new_exp.getMonth() + 1);
+
+		// Convert back to BigInt for storage
+		const current_exp = dateToEpoch(current_exp_date);
+		const new_exp_epoch = dateToEpoch(new_exp) ?? BigInt(0);
 
 		let stripeSubscription: Stripe.Subscription | null = null;
 
@@ -205,7 +218,7 @@ const confirmPayment = async (
 			],
 		});
 */
-		const note = `extend subscription from ${formatDateTime(current_exp)} to ${formatDateTime(new_exp)}`;
+		const note = `extend subscription from ${formatDateTime(current_exp_date)} to ${formatDateTime(new_exp)}`;
 
 		await sqlClient.storeSubscription.update({
 			where: {
@@ -213,7 +226,7 @@ const confirmPayment = async (
 			},
 			data: {
 				status: SubscriptionStatus.Active,
-				expiration: new_exp,
+				expiration: new_exp_epoch,
 				subscriptionId: stripeSubscription.id,
 				note: note,
 			},
@@ -233,7 +246,7 @@ const confirmPayment = async (
 			},
 			data: {
 				isPaid: true,
-				paidAt: getUtcNow(),
+				paidAt: getUtcNowEpoch(),
 				note: note,
 				checkoutAttributes: checkoutAttributes,
 			},

@@ -8,7 +8,7 @@ import { Heading } from "@/components/ui/heading";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 import { IconMessageCircle } from "@tabler/icons-react";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -91,7 +91,15 @@ const session = await auth.api.getSession({
 									</div>
 									<div>{obj.message}</div>
 
-									<div className="text-xs">{formatDateTime(obj.updatedAt)}</div>
+									<div className="text-xs">
+										{formatDateTime(
+											typeof obj.updatedAt === "number"
+												? epochToDate(BigInt(obj.updatedAt)) ?? new Date()
+												: obj.updatedAt instanceof Date
+													? obj.updatedAt
+													: new Date(),
+										)}
+									</div>
 								</div>
 							</div>
 						))}

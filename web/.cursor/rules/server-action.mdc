@@ -129,25 +129,26 @@ if (guid === undefined || guid === null || guid === "" || guid === "new") {
 
 ### Date/Time Handling
 
-**CRITICAL: All date/time values MUST be saved in true UTC format.**
+**CRITICAL: All date/time values are stored as BigInt epoch time (milliseconds since 1970-01-01 UTC).**
 
-- **Always use `getUtcNow()`** from `@/utils/datetime-utils` for timestamps (not `new Date()`)
-- **Convert user input dates to UTC** before saving to database
-- **Never use `new Date()` or `Date.now()`** for timestamps - always use `getUtcNow()`
-- Set `createdAt` or `creationDate` for new records using `getUtcNow()`
-- Set `updatedAt` or `lastModified` for updates using `getUtcNow()`
+- **Always use `getUtcNowEpoch()`** from `@/utils/datetime-utils` for timestamps (returns BigInt)
+- **Convert Date objects to BigInt** using `dateToEpoch()` before saving to database
+- **Convert BigInt to Date objects** using `epochToDate()` when reading from database
+- **Never use `new Date()` or `Date.now()`** directly for database timestamps
+- Set `createdAt` or `creationDate` for new records using `getUtcNowEpoch()`
+- Set `updatedAt` or `lastModified` for updates using `getUtcNowEpoch()`
 
 **Example:**
 
 ```ts
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch, dateToEpoch, epochToDate } from "@/utils/datetime-utils";
 
-// ✅ CORRECT - Use getUtcNow() for timestamps
+// ✅ CORRECT - Use getUtcNowEpoch() for timestamps
 const result = await sqlClient.model.create({
   data: {
     name: "Example",
-    createdAt: getUtcNow(), // ✅ Always UTC
-    updatedAt: getUtcNow(), // ✅ Always UTC
+    createdAt: getUtcNowEpoch(), // ✅ BigInt epoch milliseconds
+    updatedAt: getUtcNowEpoch(), // ✅ BigInt epoch milliseconds
   },
 });
 
@@ -155,8 +156,8 @@ const result = await sqlClient.model.create({
 const result = await sqlClient.model.create({
   data: {
     name: "Example",
-    createdAt: new Date(), // ❌ Not guaranteed UTC
-    updatedAt: Date.now(), // ❌ Returns number, not Date
+    createdAt: new Date(), // ❌ Wrong type (Date, not BigInt)
+    updatedAt: Date.now(), // ❌ Wrong type (number, not BigInt)
   },
 });
 ```
@@ -164,27 +165,35 @@ const result = await sqlClient.model.create({
 **For user input dates (e.g., from forms):**
 
 ```ts
+import { dateToEpoch, convertStoreTimezoneToUtc } from "@/utils/datetime-utils";
+
 // User selects date/time in their timezone (e.g., datetime-local input)
-// Convert to UTC before saving
-const userInputDate = new Date(formData.dateTime); // User's local time
-// If user input is already in store timezone, convert to UTC:
-const utcDate = new Date(
-  Date.UTC(
-    userInputDate.getFullYear(),
-    userInputDate.getMonth(),
-    userInputDate.getDate(),
-    userInputDate.getHours(),
-    userInputDate.getMinutes(),
-    userInputDate.getSeconds(),
-  )
+// Convert to UTC Date first, then to epoch BigInt
+const userInputDate = convertStoreTimezoneToUtc(
+  formData.dateTime, // "YYYY-MM-DDTHH:mm" format
+  storeTimezone // e.g., "Asia/Taipei"
 );
 
 await sqlClient.model.create({
   data: {
-    eventTime: utcDate, // ✅ Saved as UTC
-    createdAt: getUtcNow(), // ✅ Always UTC
+    eventTime: dateToEpoch(userInputDate), // ✅ BigInt epoch milliseconds
+    createdAt: getUtcNowEpoch(), // ✅ BigInt epoch milliseconds
   },
 });
+```
+
+**When reading from database:**
+
+```ts
+import { epochToDate } from "@/utils/datetime-utils";
+
+const record = await sqlClient.model.findUnique({
+  where: { id: recordId },
+});
+
+// Convert BigInt epoch to Date for display/processing
+const createdAtDate = epochToDate(record.createdAt); // Date | null
+const eventTimeDate = epochToDate(record.eventTime); // Date | null
 ```
 
 ## Example Files

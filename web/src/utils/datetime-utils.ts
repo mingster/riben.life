@@ -108,7 +108,7 @@ export function getTimezoneOffsetForDate(date: Date, timezone: string): number {
 			second: "2-digit",
 			hour12: false,
 		});
-		
+
 		const tzString = formatter.format(date);
 		const parts = tzString.split(/[-T:]/).map(Number);
 		const tzYear = parts[0];
@@ -116,27 +116,28 @@ export function getTimezoneOffsetForDate(date: Date, timezone: string): number {
 		const tzDay = parts[2];
 		const tzHour = parts[3];
 		const tzMinute = parts[4];
-		
+
 		// Get UTC components
 		const utcYear = date.getUTCFullYear();
 		const utcMonth = date.getUTCMonth() + 1;
 		const utcDay = date.getUTCDate();
 		const utcHour = date.getUTCHours();
 		const utcMinute = date.getUTCMinutes();
-		
+
 		// Calculate offset: difference between UTC and timezone time
 		// If UTC is 12:00 and timezone is 20:00, offset is +8 hours
 		const utcMinutes = utcHour * 60 + utcMinute;
 		const tzMinutes = tzHour * 60 + tzMinute;
 		const offsetMinutes = tzMinutes - utcMinutes;
-		
+
 		// Handle day differences
 		if (tzYear !== utcYear || tzMonth !== utcMonth || tzDay !== utcDay) {
 			// Day difference means we need to account for it
-			const dayDiff = (tzYear - utcYear) * 365 + (tzMonth - utcMonth) * 30 + (tzDay - utcDay);
+			const dayDiff =
+				(tzYear - utcYear) * 365 + (tzMonth - utcMonth) * 30 + (tzDay - utcDay);
 			return offsetMinutes / 60 + dayDiff * 24;
 		}
-		
+
 		return offsetMinutes / 60;
 	} catch (error) {
 		logger.warn("Failed to get timezone offset for date", {
@@ -174,11 +175,22 @@ export function convertStoreTimezoneToUtc(
 		const testUtcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
 
 		// Get the store timezone offset for this specific date (accounts for DST)
-		const storeOffsetHours = getTimezoneOffsetForDate(testUtcDate, storeTimezone);
+		const storeOffsetHours = getTimezoneOffsetForDate(
+			testUtcDate,
+			storeTimezone,
+		);
 
 		// Create a Date object representing the store timezone time
 		// This Date will be in browser's local timezone, but represents store timezone time
-		const storeTimezoneDate = new Date(year, month - 1, day, hour, minute, 0, 0);
+		const storeTimezoneDate = new Date(
+			year,
+			month - 1,
+			day,
+			hour,
+			minute,
+			0,
+			0,
+		);
 
 		// Convert store timezone time to UTC by subtracting the offset
 		// If store time is 14:00 and offset is +8, UTC is 06:00 (14 - 8 = 6)
@@ -256,6 +268,44 @@ export function getUtcNow() {
 
 	//console.log('utcDate', utcDate);
 	return utcDate;
+}
+
+/**
+ * Get current UTC time as BigInt (epoch milliseconds)
+ * @returns BigInt representing milliseconds since 1970-01-01 UTC
+ */
+export function getUtcNowEpoch(): bigint {
+	return BigInt(Date.now());
+}
+
+/**
+ * Convert Date to BigInt (epoch milliseconds)
+ * @param date - Date object to convert
+ * @returns BigInt representing milliseconds since 1970-01-01 UTC
+ */
+export function dateToEpoch(date: Date | null | undefined): bigint | null {
+	if (!date) return null;
+	return BigInt(date.getTime());
+}
+
+/**
+ * Convert BigInt (epoch milliseconds) to Date
+ * @param epoch - BigInt representing milliseconds since 1970-01-01 UTC
+ * @returns Date object, or null if epoch is null/undefined
+ */
+export function epochToDate(epoch: bigint | null | undefined): Date | null {
+	if (epoch === null || epoch === undefined) return null;
+	return new Date(Number(epoch));
+}
+
+/**
+ * Convert BigInt (epoch milliseconds) to Date, with fallback to current time
+ * @param epoch - BigInt representing milliseconds since 1970-01-01 UTC
+ * @returns Date object, or current UTC time if epoch is null/undefined
+ */
+export function epochToDateOrNow(epoch: bigint | null | undefined): Date {
+	if (epoch === null || epoch === undefined) return getUtcNow();
+	return new Date(Number(epoch));
 }
 
 /**

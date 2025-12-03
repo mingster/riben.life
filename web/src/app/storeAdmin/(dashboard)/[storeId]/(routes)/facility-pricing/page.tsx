@@ -6,7 +6,7 @@ import {
 	mapFacilityPricingRuleToColumn,
 	type FacilityPricingRuleColumn,
 } from "./facility-pricing-rule-column";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -29,7 +29,7 @@ export default async function FacilityPricingPage(props: {
 		},
 		orderBy: [{ priority: "desc" }, { name: "asc" }],
 	});
-	//transformDecimalsToNumbers(rules);
+	//transformPrismaDataForJson(rules);
 
 	// Map rules to UI columns
 	const formattedData: FacilityPricingRuleColumn[] = (

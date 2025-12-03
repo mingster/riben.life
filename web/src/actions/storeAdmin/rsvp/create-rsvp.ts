@@ -4,9 +4,9 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import { createRsvpSchema } from "./create-rsvp.validation";
 
@@ -32,39 +32,44 @@ export const createRsvpAction = storeActionClient
 			pricingRuleId,
 		} = parsedInput;
 
-		// Convert rsvpTime to UTC if it's a Date object
+		// Convert rsvpTime to UTC Date, then to BigInt epoch
 		// datetime-local inputs create Date objects in user's local timezone
-		// We need to ensure it's stored as UTC in the database
-		const rsvpTime =
-			rsvpTimeInput instanceof Date
-				? new Date(
-						Date.UTC(
-							rsvpTimeInput.getFullYear(),
-							rsvpTimeInput.getMonth(),
-							rsvpTimeInput.getDate(),
-							rsvpTimeInput.getHours(),
-							rsvpTimeInput.getMinutes(),
-							rsvpTimeInput.getSeconds(),
-							rsvpTimeInput.getMilliseconds(),
-						),
-					)
-				: rsvpTimeInput;
+		// We need to ensure it's stored as UTC epoch time in the database
+		let rsvpTimeDate: Date;
+		if (rsvpTimeInput instanceof Date) {
+			rsvpTimeDate = new Date(
+				Date.UTC(
+					rsvpTimeInput.getFullYear(),
+					rsvpTimeInput.getMonth(),
+					rsvpTimeInput.getDate(),
+					rsvpTimeInput.getHours(),
+					rsvpTimeInput.getMinutes(),
+					rsvpTimeInput.getSeconds(),
+					rsvpTimeInput.getMilliseconds(),
+				),
+			);
+		} else {
+			throw new SafeError("rsvpTime must be a Date object");
+		}
+		const rsvpTime = dateToEpoch(rsvpTimeDate) ?? BigInt(0);
 
-		// Convert arriveTime to UTC if it's a Date object
+		// Convert arriveTime to UTC Date, then to BigInt epoch
 		const arriveTime =
 			arriveTimeInput instanceof Date
-				? new Date(
-						Date.UTC(
-							arriveTimeInput.getFullYear(),
-							arriveTimeInput.getMonth(),
-							arriveTimeInput.getDate(),
-							arriveTimeInput.getHours(),
-							arriveTimeInput.getMinutes(),
-							arriveTimeInput.getSeconds(),
-							arriveTimeInput.getMilliseconds(),
+				? dateToEpoch(
+						new Date(
+							Date.UTC(
+								arriveTimeInput.getFullYear(),
+								arriveTimeInput.getMonth(),
+								arriveTimeInput.getDate(),
+								arriveTimeInput.getHours(),
+								arriveTimeInput.getMinutes(),
+								arriveTimeInput.getSeconds(),
+								arriveTimeInput.getMilliseconds(),
+							),
 						),
 					)
-				: arriveTimeInput;
+				: null;
 
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
@@ -99,6 +104,8 @@ export const createRsvpAction = storeActionClient
 							? facilityCredit
 							: null,
 					pricingRuleId: pricingRuleId || null,
+					createdAt: getUtcNowEpoch(),
+					updatedAt: getUtcNowEpoch(),
 				},
 				include: {
 					Store: true,
@@ -110,7 +117,7 @@ export const createRsvpAction = storeActionClient
 			});
 
 			const transformedRsvp = { ...rsvp } as Rsvp;
-			transformDecimalsToNumbers(transformedRsvp);
+			transformPrismaDataForJson(transformedRsvp);
 
 			return {
 				rsvp: transformedRsvp,

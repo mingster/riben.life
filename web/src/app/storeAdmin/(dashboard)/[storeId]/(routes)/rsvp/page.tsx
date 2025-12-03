@@ -2,9 +2,9 @@ import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { RsvpCalendarClient } from "./components/client-rsvp-calendar";
 import { startOfWeek, endOfWeek } from "date-fns";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNow, dateToEpoch } from "@/utils/datetime-utils";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -77,8 +77,8 @@ export default async function RsvpPage(props: {
 			where: {
 				storeId: params.storeId,
 				rsvpTime: {
-					gte: rangeStart,
-					lte: rangeEnd,
+					gte: dateToEpoch(rangeStart),
+					lte: dateToEpoch(rangeEnd),
 				},
 			},
 			include: {
@@ -98,18 +98,18 @@ export default async function RsvpPage(props: {
 		}),
 	]);
 
-	// Transform Decimal objects to numbers for client components
+	// Transform BigInt (epoch timestamps) and Decimal to numbers for client components
 	const formattedData: Rsvp[] = (rsvps as Rsvp[]).map((rsvp) => {
 		const transformed = { ...rsvp };
-		transformDecimalsToNumbers(transformed);
+		transformPrismaDataForJson(transformed);
 		return transformed as Rsvp;
 	});
 
 	if (rsvpSettings) {
-		transformDecimalsToNumbers(rsvpSettings);
+		transformPrismaDataForJson(rsvpSettings);
 	}
 	if (storeSettings) {
-		transformDecimalsToNumbers(storeSettings);
+		transformPrismaDataForJson(storeSettings);
 	}
 
 	return (

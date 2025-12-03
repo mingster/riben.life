@@ -5,6 +5,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { updateAnnouncementSchema } from "./update-announcement.validation";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 export const updateAnnouncementAction = storeActionClient
 	.metadata({ name: "updateAnnouncement" })
@@ -28,6 +29,7 @@ export const updateAnnouncementAction = storeActionClient
 			where: { id },
 			data: {
 				message,
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 

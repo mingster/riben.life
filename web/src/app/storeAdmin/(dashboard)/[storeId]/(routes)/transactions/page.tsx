@@ -1,6 +1,6 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { TransactionClient } from "./components/client-transaction";
 import {
 	mapStoreOrderToColumn,
@@ -33,7 +33,7 @@ export default async function TransactionMgmtPage(props: {
 		},
 	});
 
-	transformDecimalsToNumbers(orders);
+	transformPrismaDataForJson(orders);
 
 	const formattedData: TransactionColumn[] = orders.map((item) =>
 		mapStoreOrderToColumn(item as StoreOrder),

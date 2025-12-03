@@ -5,7 +5,8 @@ import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
 import { updateRsvpSettingsSchema } from "./update-rsvp-settings.validation";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
 
 export const updateRsvpSettingsAction = storeActionClient
 	.metadata({ name: "updateRsvpSettings" })
@@ -123,10 +124,14 @@ export const updateRsvpSettingsAction = storeActionClient
 			updateData.reserveWithGoogleRefreshToken = reserveWithGoogleRefreshToken;
 		}
 		if (reserveWithGoogleTokenExpiry !== undefined) {
-			updateData.reserveWithGoogleTokenExpiry = reserveWithGoogleTokenExpiry;
+			updateData.reserveWithGoogleTokenExpiry = reserveWithGoogleTokenExpiry
+				? dateToEpoch(reserveWithGoogleTokenExpiry)
+				: null;
 		}
 		if (reserveWithGoogleLastSync !== undefined) {
-			updateData.reserveWithGoogleLastSync = reserveWithGoogleLastSync;
+			updateData.reserveWithGoogleLastSync = reserveWithGoogleLastSync
+				? dateToEpoch(reserveWithGoogleLastSync)
+				: null;
 		}
 		if (reserveWithGoogleSyncStatus !== undefined) {
 			updateData.reserveWithGoogleSyncStatus = reserveWithGoogleSyncStatus;
@@ -170,15 +175,20 @@ export const updateRsvpSettingsAction = storeActionClient
 								reserveWithGoogleAccessToken ?? null,
 							reserveWithGoogleRefreshToken:
 								reserveWithGoogleRefreshToken ?? null,
-							reserveWithGoogleTokenExpiry:
-								reserveWithGoogleTokenExpiry ?? null,
-							reserveWithGoogleLastSync: reserveWithGoogleLastSync ?? null,
+							reserveWithGoogleTokenExpiry: reserveWithGoogleTokenExpiry
+								? dateToEpoch(reserveWithGoogleTokenExpiry)
+								: null,
+							reserveWithGoogleLastSync: reserveWithGoogleLastSync
+								? dateToEpoch(reserveWithGoogleLastSync)
+								: null,
 							reserveWithGoogleSyncStatus: reserveWithGoogleSyncStatus ?? null,
 							reserveWithGoogleError: reserveWithGoogleError ?? null,
+							createdAt: getUtcNowEpoch(),
+							updatedAt: getUtcNowEpoch(),
 						},
 					});
 
-			transformDecimalsToNumbers(rsvpSettings);
+			transformPrismaDataForJson(rsvpSettings);
 			return { rsvpSettings };
 		} catch (error: unknown) {
 			if (

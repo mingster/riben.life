@@ -1,5 +1,6 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import sendStoreNotification, {
 	type StoreNotification,
@@ -12,12 +13,14 @@ export const sendTestNoficiation = async () => {
 		data: {
 			subject: "test",
 			message: "test",
+			createdAt: getUtcNowEpoch(),
+			updatedAt: getUtcNowEpoch(),
 			Sender: {
 				connect: {
 					email: "mingster.tsai@gmail.com",
 				},
 			},
-			Recipent: {
+			Recipient: {
 				connect: {
 					email: "mingster.tsai@gmail.com",
 				},
@@ -31,7 +34,7 @@ export const sendTestNoficiation = async () => {
 				id: obj.id,
 			},
 			include: {
-				Recipent: true,
+				Recipient: true,
 				Sender: true,
 			},
 		});

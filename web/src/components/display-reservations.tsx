@@ -9,7 +9,11 @@ import { RsvpStatus } from "@/types/enum";
 import { format } from "date-fns";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { getDateInTz, getOffsetHours } from "@/utils/datetime-utils";
+import {
+	getDateInTz,
+	getOffsetHours,
+	epochToDate,
+} from "@/utils/datetime-utils";
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,9 +47,7 @@ export const DisplayReservations = ({
 	);
 	const [isCancelling, setIsCancelling] = useState(false);
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
-	const [reservationToEdit, setReservationToEdit] = useState<Rsvp | null>(
-		null,
-	);
+	const [reservationToEdit, setReservationToEdit] = useState<Rsvp | null>(null);
 	const [storeData, setStoreData] = useState<{
 		rsvpSettings: RsvpSettings | null;
 		storeSettings: StoreSettings | null;
@@ -189,7 +191,13 @@ export const DisplayReservations = ({
 								<div className="text-muted-foreground text-[10px]">
 									{format(
 										getDateInTz(
-											item.rsvpTime,
+											epochToDate(
+												typeof item.rsvpTime === "number"
+													? BigInt(item.rsvpTime)
+													: item.rsvpTime instanceof Date
+														? BigInt(item.rsvpTime.getTime())
+														: item.rsvpTime,
+											) ?? new Date(),
 											getOffsetHours(
 												item.Store?.defaultTimezone ?? "Asia/Taipei",
 											),
@@ -200,18 +208,19 @@ export const DisplayReservations = ({
 							</div>
 							<div className="shrink-0">
 								<span
-									className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${item.status === 0
-										? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
-										: item.status === 10
-											? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-											: item.status === 20 || item.status === 30
-												? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
-												: item.status === 40 || item.status === 50
-													? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
-													: item.status === 60
-														? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
-														: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
-										}`}
+									className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
+										item.status === 0
+											? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
+											: item.status === 10
+												? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
+												: item.status === 20 || item.status === 30
+													? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
+													: item.status === 40 || item.status === 50
+														? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
+														: item.status === 60
+															? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
+															: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
+									}`}
 								>
 									{t(`rsvp_status_${item.status}`)}
 								</span>
@@ -245,8 +254,16 @@ export const DisplayReservations = ({
 							<div className="text-[10px] text-muted-foreground">
 								{format(
 									getDateInTz(
-										item.createdAt,
-										getOffsetHours(item.Store?.defaultTimezone ?? "Asia/Taipei"),
+										epochToDate(
+											typeof item.createdAt === "number"
+												? BigInt(item.createdAt)
+												: item.createdAt instanceof Date
+													? BigInt(item.createdAt.getTime())
+													: item.createdAt,
+										) ?? new Date(),
+										getOffsetHours(
+											item.Store?.defaultTimezone ?? "Asia/Taipei",
+										),
 									),
 									datetimeFormat,
 								)}
@@ -338,18 +355,19 @@ export const DisplayReservations = ({
 									</td>
 									<td className="px-3 py-2 text-xs">
 										<span
-											className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${item.status === 0
-												? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
-												: item.status === 10
-													? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-													: item.status === 20 || item.status === 30
-														? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
-														: item.status === 40 || item.status === 50
-															? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
-															: item.status === 60
-																? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
-																: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
-												}`}
+											className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
+												item.status === 0
+													? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
+													: item.status === 10
+														? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
+														: item.status === 20 || item.status === 30
+															? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
+															: item.status === 40 || item.status === 50
+																? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
+																: item.status === 60
+																	? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
+																	: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
+											}`}
 										>
 											{t(`rsvp_status_${item.status}`)}
 										</span>
@@ -441,7 +459,9 @@ export const DisplayReservations = ({
 					user={user}
 					rsvp={reservationToEdit}
 					rsvps={reservations}
-					storeTimezone={reservationToEdit.Store.defaultTimezone || "Asia/Taipei"}
+					storeTimezone={
+						reservationToEdit.Store.defaultTimezone || "Asia/Taipei"
+					}
 					open={editDialogOpen}
 					onOpenChange={(open) => {
 						setEditDialogOpen(open);

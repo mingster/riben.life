@@ -4,7 +4,7 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { Suspense } from "react";
 import { DisplayStoreOrdersToday } from "./display-order-today";
 import logger from "@/lib/logger";

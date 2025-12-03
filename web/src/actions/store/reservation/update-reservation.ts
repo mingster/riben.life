@@ -4,11 +4,12 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { baseClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { RsvpStatus } from "@/types/enum";
+import { dateToEpoch } from "@/utils/datetime-utils";
 
 import { updateReservationSchema } from "./update-reservation.validation";
 
@@ -27,10 +28,10 @@ export const updateReservationAction = baseClient
 
 		// rsvpTime is already in UTC (converted on client side from store timezone)
 		// safe-action may serialize Date to string, so handle both
-		let rsvpTime: Date;
+		let rsvpTimeDate: Date;
 		if (rsvpTimeInput instanceof Date) {
 			// Already a Date object, ensure it's properly in UTC
-			rsvpTime = new Date(
+			rsvpTimeDate = new Date(
 				Date.UTC(
 					rsvpTimeInput.getUTCFullYear(),
 					rsvpTimeInput.getUTCMonth(),
@@ -43,10 +44,12 @@ export const updateReservationAction = baseClient
 			);
 		} else if (typeof rsvpTimeInput === "string") {
 			// String from network serialization, parse it
-			rsvpTime = new Date(rsvpTimeInput);
+			rsvpTimeDate = new Date(rsvpTimeInput);
 		} else {
 			throw new SafeError("Invalid rsvpTime format");
 		}
+		// Convert Date to BigInt epoch milliseconds
+		const rsvpTime = dateToEpoch(rsvpTimeDate) ?? BigInt(0);
 
 		// Get session to check if user is logged in
 		const session = await auth.api.getSession({
@@ -125,7 +128,7 @@ export const updateReservationAction = baseClient
 			});
 
 			const transformedRsvp = { ...updated } as Rsvp;
-			transformDecimalsToNumbers(transformedRsvp);
+			transformPrismaDataForJson(transformedRsvp);
 
 			return {
 				rsvp: transformedRsvp,

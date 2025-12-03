@@ -36,7 +36,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { StoreFacility, User, Rsvp } from "@/types";
 import type { RsvpSettings, StoreSettings } from "@prisma/client";
 import { SlotPicker } from "./slot-picker";
-import { getOffsetHours, addHours } from "@/utils/datetime-utils";
+import { getOffsetHours, addHours, epochToDate } from "@/utils/datetime-utils";
 
 interface EditReservationFormProps {
 	storeId: string;
@@ -69,34 +69,38 @@ export function EditReservationForm({
 	const { t } = useTranslation(lng);
 
 	// Default values from existing RSVP
-	const defaultValues: UpdateReservationInput = useMemo(
-		() => {
-			let rsvpTime: Date;
-			if (rsvp.rsvpTime instanceof Date) {
-				rsvpTime = rsvp.rsvpTime;
-			} else if (rsvp.rsvpTime) {
-				rsvpTime = new Date(rsvp.rsvpTime);
-				// Validate date
-				if (Number.isNaN(rsvpTime.getTime())) {
-					// Fallback to current time if invalid
-					rsvpTime = new Date();
-				}
-			} else {
-				// Fallback to current time if missing
+	const defaultValues: UpdateReservationInput = useMemo(() => {
+		let rsvpTime: Date;
+		if (rsvp.rsvpTime instanceof Date) {
+			rsvpTime = rsvp.rsvpTime;
+		} else if (rsvp.rsvpTime) {
+			// Convert BigInt epoch or number epoch to Date
+			const epochValue =
+				typeof rsvp.rsvpTime === "number"
+					? BigInt(rsvp.rsvpTime)
+					: typeof rsvp.rsvpTime === "bigint"
+						? rsvp.rsvpTime
+						: BigInt(rsvp.rsvpTime);
+			rsvpTime = epochToDate(epochValue) ?? new Date();
+			// Validate date
+			if (Number.isNaN(rsvpTime.getTime())) {
+				// Fallback to current time if invalid
 				rsvpTime = new Date();
 			}
+		} else {
+			// Fallback to current time if missing
+			rsvpTime = new Date();
+		}
 
-			return {
-				id: rsvp.id,
-				facilityId: rsvp.facilityId,
-				numOfAdult: rsvp.numOfAdult,
-				numOfChild: rsvp.numOfChild,
-				rsvpTime,
-				message: rsvp.message || "",
-			};
-		},
-		[rsvp],
-	);
+		return {
+			id: rsvp.id,
+			facilityId: rsvp.facilityId,
+			numOfAdult: rsvp.numOfAdult,
+			numOfChild: rsvp.numOfChild,
+			rsvpTime,
+			message: rsvp.message || "",
+		};
+	}, [rsvp]);
 
 	const form = useForm<UpdateReservationInput>({
 		resolver: zodResolver(updateReservationSchema) as any,
@@ -169,14 +173,14 @@ export function EditReservationForm({
 													field.onChange(dateTime);
 													return;
 												}
-												
+
 												// Get the store timezone offset in hours
 												const storeOffsetHours = getOffsetHours(storeTimezone);
-												
+
 												// Convert store timezone time to UTC by subtracting the offset
 												// If store time is 14:00 and offset is +8, UTC is 06:00 (14 - 8 = 6)
 												const utcTime = addHours(dateTime, -storeOffsetHours);
-												
+
 												// Create a proper UTC Date object using UTC components
 												// This ensures the date is stored as UTC in the database
 												const utcDateAsUTC = new Date(
@@ -190,7 +194,7 @@ export function EditReservationForm({
 														0,
 													),
 												);
-												
+
 												// Validate the UTC date
 												if (isNaN(utcDateAsUTC.getTime())) {
 													console.error("Invalid UTC date conversion:", {
@@ -202,7 +206,7 @@ export function EditReservationForm({
 													});
 													return;
 												}
-												
+
 												field.onChange(utcDateAsUTC);
 											}}
 										/>

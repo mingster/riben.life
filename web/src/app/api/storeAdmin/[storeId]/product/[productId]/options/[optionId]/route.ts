@@ -1,6 +1,6 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
 
@@ -164,7 +164,7 @@ export async function PATCH(
 		},
 	});
 
-	transformDecimalsToNumbers(result);
+	transformPrismaDataForJson(result);
 
 	return NextResponse.json(result);
 }

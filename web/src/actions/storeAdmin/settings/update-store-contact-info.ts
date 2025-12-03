@@ -6,7 +6,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 export const updateStoreContactInfoAction = storeActionClient
 	.metadata({ name: "updateStoreContactInfo" })
@@ -36,10 +36,12 @@ export const updateStoreContactInfoAction = storeActionClient
 
 		const storeSettings = await sqlClient.storeSettings.upsert({
 			where: { storeId },
-			update: { ...contactInfo, updatedAt: getUtcNow() },
+			update: { ...contactInfo, updatedAt: getUtcNowEpoch() },
 			create: {
 				storeId,
 				...contactInfo,
+				createdAt: getUtcNowEpoch(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 

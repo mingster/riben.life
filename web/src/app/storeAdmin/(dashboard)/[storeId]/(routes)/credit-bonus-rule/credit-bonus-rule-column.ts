@@ -1,4 +1,5 @@
 import type { CreditBonusRule } from "@prisma/client";
+import { epochToDate } from "@/utils/datetime-utils";
 
 export interface CreditBonusRuleColumn {
 	id: string;
@@ -18,6 +19,6 @@ export const mapCreditBonusRuleToColumn = (
 	threshold: rule.threshold.toNumber(),
 	bonus: rule.bonus.toNumber(),
 	isActive: rule.isActive,
-	createdAt: rule.createdAt,
-	updatedAt: rule.updatedAt,
+	createdAt: epochToDate(rule.createdAt) ?? new Date(),
+	updatedAt: epochToDate(rule.updatedAt) ?? new Date(),
 });

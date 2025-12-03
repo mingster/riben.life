@@ -28,7 +28,7 @@ export async function POST(
 			data: {
 				storeId: params.storeId,
 				...body,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 

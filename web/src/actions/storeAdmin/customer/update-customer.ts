@@ -3,7 +3,7 @@
 import { updateCustomerSchema } from "./update-customer.validation";
 import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import crypto from "crypto";
 
 export const updateCustomerAction = storeActionClient
@@ -62,7 +62,6 @@ export const updateCustomerAction = storeActionClient
 						userId: customerId,
 						organizationId: organizationId,
 						role: memberRole,
-						createdAt: getUtcNow(),
 					},
 				});
 			}

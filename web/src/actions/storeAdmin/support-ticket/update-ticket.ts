@@ -3,10 +3,10 @@
 import type { SupportTicket } from "@/types";
 import { TicketPriority } from "@/types/enum";
 import { adminActionClient } from "@/utils/actions/safe-action";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { updateTicketSchema } from "./update-ticket.validation";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export const updateTicketAdminAction = adminActionClient
 	.metadata({ name: "updateTicket" })
@@ -45,9 +45,9 @@ export const updateTicketAdminAction = adminActionClient
 						message,
 						status,
 						creator,
-						createdAt: getUtcNow(),
+						createdAt: getUtcNowEpoch(),
 						modifier,
-						lastModified: getUtcNow(),
+						lastModified: getUtcNowEpoch(),
 					},
 				});
 				id = result.id as unknown as string;
@@ -78,7 +78,7 @@ export const updateTicketAdminAction = adminActionClient
 						message,
 						status,
 						modifier,
-						lastModified: getUtcNow(),
+						lastModified: getUtcNowEpoch(),
 					},
 				});
 			}
@@ -99,7 +99,7 @@ export const updateTicketAdminAction = adminActionClient
 				},
 			})) as SupportTicket;
 
-			transformDecimalsToNumbers(result);
+			transformPrismaDataForJson(result);
 
 			return result;
 		},

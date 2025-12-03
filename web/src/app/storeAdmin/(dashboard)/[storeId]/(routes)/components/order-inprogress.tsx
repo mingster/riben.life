@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store, StoreOrder } from "@/types";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 import type { OrderNote, orderitemview } from "@prisma/client";
 import axios from "axios";
 import Link from "next/link";
@@ -188,7 +188,13 @@ export const OrderInProgress = ({
 
 										<TableCell className="hidden lg:table-cell text-xs">
 											{/*format(getDateInTz(new Date(order.updatedAt), store.defaultTimezone), "yyyy-MM-dd HH:mm:ss")*/}
-											{formatDateTime(order.updatedAt)}
+											{formatDateTime(
+												typeof order.updatedAt === "number"
+													? (epochToDate(BigInt(order.updatedAt)) ?? new Date())
+													: order.updatedAt instanceof Date
+														? order.updatedAt
+														: new Date(),
+											)}
 										</TableCell>
 
 										<TableCell className="text-right text-2xl font-extrabold">

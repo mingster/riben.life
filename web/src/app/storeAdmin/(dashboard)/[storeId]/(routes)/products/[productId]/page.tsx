@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import type { Product, StoreProductOptionTemplate } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { ProductEditTabs } from "./tabs";
 import { Suspense } from "react";
 import { Loader } from "@/components/loader";
@@ -34,7 +34,7 @@ const ProductEditPage = async (props: {
 		},
 	});
 
-	transformDecimalsToNumbers(product);
+	transformPrismaDataForJson(product);
 	//console.log(`ProductPa//ge: ${JSON.stringify(product)}`);
 
 	const storeOptionTemplates =
@@ -49,7 +49,7 @@ const ProductEditPage = async (props: {
 				sortOrder: "asc",
 			},
 		})) as StoreProductOptionTemplate[];
-	transformDecimalsToNumbers(storeOptionTemplates);
+	transformPrismaDataForJson(storeOptionTemplates);
 
 	let action = "Edit";
 	if (product === null) action = "Create";

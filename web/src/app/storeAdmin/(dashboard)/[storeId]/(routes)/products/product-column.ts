@@ -1,5 +1,5 @@
 import type { Prisma } from "@prisma/client";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 
 export interface ProductColumn {
 	id: string;
@@ -41,7 +41,7 @@ export const mapProductToColumn = (
 		price:
 			typeof priceValue === "number" ? priceValue : Number(priceValue ?? 0),
 		isFeatured: Boolean(product.isFeatured),
-		updatedAt: formatDateTime(product.updatedAt ?? new Date()),
+		updatedAt: formatDateTime(epochToDate(product.updatedAt) ?? new Date()),
 		stock:
 			attribute?.stock === undefined || attribute?.stock === null
 				? undefined

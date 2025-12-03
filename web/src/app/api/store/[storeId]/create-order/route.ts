@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
-import { getRandomNum, transformDecimalsToNumbers } from "@/utils/utils";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getRandomNum, transformPrismaDataForJson } from "@/utils/utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
@@ -146,7 +146,7 @@ export async function POST(
 	}
 
 	// Use UTC for timestamps
-	const now = getUtcNow();
+	const now = getUtcNowEpoch();
 
 	const orderStatus = store?.autoAcceptOrder
 		? OrderStatus.Processing
@@ -193,6 +193,8 @@ export async function POST(
 				create: {
 					note: orderNote,
 					displayToCustomer: true,
+					createdAt: getUtcNowEpoch(),
+					updatedAt: getUtcNowEpoch(),
 				},
 			},
 		},
@@ -211,7 +213,7 @@ export async function POST(
 			PaymentMethod: true,
 		},
 	});
-	transformDecimalsToNumbers(order);
+	transformPrismaDataForJson(order);
 
 	//console.log('order: ' + JSON.stringify(order));
 	return NextResponse.json({ order });

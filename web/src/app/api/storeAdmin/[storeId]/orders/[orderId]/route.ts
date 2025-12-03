@@ -41,7 +41,7 @@ export async function DELETE(
 		data: {
 			orderStatus: OrderStatus.Voided,
 			// Use UTC for timestamps
-			updatedAt: getUtcNow(),
+			updatedAt: getUtcNowEpoch(),
 		},
 	});
 
@@ -105,7 +105,7 @@ export async function PATCH(
 				orderTotal: updatedOrder.orderTotal,
 
 				// Use UTC for timestamps
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 

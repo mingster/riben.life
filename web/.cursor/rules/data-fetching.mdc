@@ -99,3 +99,61 @@ const onSubmit = async (data: FormValues) => {
 ```
 
 **Never use `router.refresh()` for client state updates** - it causes unnecessary server round-trips and slower UX. Only use `router.refresh()` if you need to re-fetch server components.
+
+## JSON Serialization
+
+**CRITICAL: Always use `transformPrismaDataForJson()` before `JSON.stringify()` when serializing Prisma data.**
+
+Prisma returns `BigInt` for epoch time fields and `Decimal` for decimal fields. These types cannot be serialized directly with `JSON.stringify()`.
+
+- **Always call `transformPrismaDataForJson()`** before `JSON.stringify()` on Prisma query results
+- This function converts both `BigInt` (epoch timestamps) and `Decimal` (money amounts) to numbers
+- Required for API routes, export functions, and any JSON serialization
+
+**Example:**
+
+```typescript
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { NextResponse } from "next/server";
+
+// ✅ CORRECT - Transform before JSON.stringify
+export async function GET() {
+  const facilities = await sqlClient.storeFacility.findMany({});
+  
+  // Transform BigInt and Decimal to numbers
+  transformPrismaDataForJson(facilities);
+  
+  // Now safe to stringify
+  return NextResponse.json(facilities);
+}
+
+// ❌ WRONG - Will throw error with BigInt/Decimal
+export async function GET() {
+  const facilities = await sqlClient.storeFacility.findMany({});
+  
+  // This will fail if facilities contain BigInt or Decimal
+  return NextResponse.json(facilities);
+}
+```
+
+**For export/download functions:**
+
+```typescript
+import { transformPrismaDataForJson } from "@/utils/utils";
+
+export async function POST() {
+  const data = await sqlClient.model.findMany({});
+  
+  // Transform before stringifying
+  transformPrismaDataForJson(data);
+  
+  const jsonContent = JSON.stringify(data, null, 2);
+  
+  return new NextResponse(jsonContent, {
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Disposition": "attachment; filename=data.json",
+    },
+  });
+}
+```

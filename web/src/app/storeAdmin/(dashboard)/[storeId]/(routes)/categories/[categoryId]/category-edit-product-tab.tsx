@@ -20,7 +20,7 @@ import { t } from "i18next";
 import Currency from "@/components/currency";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductStatuses } from "@/types/enum";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 import Link from "next/link";
 import logger from "@/lib/logger";
 
@@ -63,7 +63,13 @@ export const CategoryEditProductTab = ({
 			status: item.status,
 			isFeatured: item.isFeatured,
 			//createdAt: item.createdAt,
-			updatedAt: formatDateTime(item.updatedAt),
+			updatedAt: formatDateTime(
+				typeof item.updatedAt === "number"
+					? (epochToDate(BigInt(item.updatedAt)) ?? new Date())
+					: item.updatedAt instanceof Date
+						? item.updatedAt
+						: new Date(),
+			),
 		}),
 	);
 

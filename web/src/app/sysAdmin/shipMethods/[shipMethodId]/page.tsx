@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { EditClient } from "./edit-form-client";
 
 const StoreEditPage = async (props: {
@@ -13,7 +13,7 @@ const StoreEditPage = async (props: {
 			id: params.shipMethodId,
 		},
 	});
-	transformDecimalsToNumbers(obj);
+	transformPrismaDataForJson(obj);
 	//console.log('paymentMethod', JSON.stringify(obj));
 
 	//await sqlClient.storeShipMethodMapping.deleteMany({ where: {methodId: obj.id } });

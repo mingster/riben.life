@@ -4,12 +4,12 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { baseClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { RsvpStatus } from "@/types/enum";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import { cancelReservationSchema } from "./cancel-reservation.validation";
 
@@ -70,7 +70,7 @@ export const cancelReservationAction = baseClient
 				where: { id },
 				data: {
 					status: RsvpStatus.Cancelled,
-					updatedAt: getUtcNow(),
+					updatedAt: getUtcNowEpoch(),
 				},
 				include: {
 					Store: true,
@@ -80,7 +80,7 @@ export const cancelReservationAction = baseClient
 			});
 
 			const transformedRsvp = { ...updated } as Rsvp;
-			transformDecimalsToNumbers(transformedRsvp);
+			transformPrismaDataForJson(transformedRsvp);
 
 			return {
 				rsvp: transformedRsvp,
@@ -96,4 +96,3 @@ export const cancelReservationAction = baseClient
 			throw error;
 		}
 	});
-

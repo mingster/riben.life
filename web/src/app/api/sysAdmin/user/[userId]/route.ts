@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
-import { getUtcNow } from "@/utils/datetime-utils";
+// import { getUtcNowEpoch } from "@/utils/datetime-utils"; // User model still uses DateTime with defaults
 import { CheckAdminApiAccess } from "../../api_helper";
 import logger from "@/lib/logger";
 
@@ -26,7 +26,7 @@ export async function PATCH(
 			where: {
 				id: params.userId,
 			},
-			data: { ...body, updatedAt: getUtcNow() },
+			data: { ...body }, // User model has @updatedAt directive
 		});
 
 		logger.info("Operation log", {

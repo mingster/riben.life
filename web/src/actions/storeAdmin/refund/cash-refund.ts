@@ -4,6 +4,11 @@ import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import isProLevel from "../is-pro-level";
+import {
+	epochToDate,
+	dateToEpoch,
+	getUtcNowEpoch,
+} from "@/utils/datetime-utils";
 
 const CashRefund = async (
 	orderId: string,
@@ -59,8 +64,18 @@ const CashRefund = async (
 	const platform_fee = isPro ? 0 : Number(Number(order.orderTotal) * 0.01);
 
 	// availabilityDate = order date + payment methods' clear days
+	const updatedAtDate =
+		order.updatedAt instanceof Date
+			? order.updatedAt
+			: (epochToDate(
+					typeof order.updatedAt === "number"
+						? BigInt(order.updatedAt)
+						: typeof order.updatedAt === "bigint"
+							? order.updatedAt
+							: BigInt(order.updatedAt),
+				) ?? new Date());
 	const availabilityDate = new Date(
-		order.updatedAt.getTime() +
+		updatedAtDate.getTime() +
 			order.PaymentMethod?.clearDays * 24 * 60 * 60 * 1000,
 	);
 
@@ -74,10 +89,11 @@ const CashRefund = async (
 			currency: order.currency,
 			description: `order # ${order.orderNum}`,
 			note: `order id: ${order.id}`,
-			availability: availabilityDate,
+			availability: dateToEpoch(availabilityDate) ?? BigInt(0),
 			balance:
 				balance -
 				Math.round(Number(refundAmount) + (fee + feeTax) + platform_fee),
+			createdAt: getUtcNowEpoch(),
 		},
 	});
 

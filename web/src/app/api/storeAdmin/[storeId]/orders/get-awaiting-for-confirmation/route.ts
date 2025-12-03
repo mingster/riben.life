@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { StoreOrder } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
@@ -38,7 +38,7 @@ export async function GET(
 			},
 		})) as StoreOrder[];
 
-		transformDecimalsToNumbers(awaitingOrders);
+		transformPrismaDataForJson(awaitingOrders);
 
 		//console.log("awaitingOrders", JSON.stringify(awaitingOrders));
 

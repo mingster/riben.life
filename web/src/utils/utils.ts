@@ -58,6 +58,34 @@ export const transformDecimalsToNumbers = (obj: any) => {
 	}
 };
 
+// recursive function looping deeply through an object to find BigInt values and convert to numbers
+// This is needed because JSON.stringify() doesn't support BigInt natively
+export const transformBigIntToNumbers = (obj: any) => {
+	if (!obj) {
+		return;
+	}
+
+	for (const key of Object.keys(obj)) {
+		if (typeof obj[key] === "bigint") {
+			obj[key] = Number(obj[key]);
+		} else if (Array.isArray(obj[key])) {
+			obj[key].forEach((item: any) => transformBigIntToNumbers(item));
+		} else if (typeof obj[key] === "object" && obj[key] !== null) {
+			transformBigIntToNumbers(obj[key]);
+		}
+	}
+};
+
+// Transform both Decimals and BigInts to numbers (useful for API responses)
+export const transformPrismaDataForJson = (obj: any) => {
+	if (!obj) {
+		return;
+	}
+
+	transformDecimalsToNumbers(obj);
+	transformBigIntToNumbers(obj);
+};
+
 function nullable<TSchema extends z.ZodObject<any>>(schema: TSchema) {
 	const entries = Object.entries(schema.shape) as [
 		keyof TSchema["shape"],

@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 
 // Called by StoreSwitcher to obtain user's store(s)
@@ -40,7 +40,7 @@ export async function GET(
 		},
 	});
 
-	transformDecimalsToNumbers(stores);
+	transformPrismaDataForJson(stores);
 
 	//console.log('stores: ' + JSON.stringify(stores));
 

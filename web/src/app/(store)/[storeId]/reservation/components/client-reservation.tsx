@@ -84,13 +84,13 @@ export function ReservationClient({
 	// Calculate default rsvp time from selected date/time
 	const defaultRsvpTime = selectedDateTime
 		? (() => {
-			const [hours, minutes] = selectedDateTime.timeSlot
-				.split(":")
-				.map(Number);
-			const date = new Date(selectedDateTime.day);
-			date.setHours(hours, minutes, 0, 0);
-			return date;
-		})()
+				const [hours, minutes] = selectedDateTime.timeSlot
+					.split(":")
+					.map(Number);
+				const date = new Date(selectedDateTime.day);
+				date.setHours(hours, minutes, 0, 0);
+				return date;
+			})()
 		: undefined;
 
 	return (

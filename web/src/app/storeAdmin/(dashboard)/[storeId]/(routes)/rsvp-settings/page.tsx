@@ -4,7 +4,7 @@ import { getStoreWithRelations } from "@/lib/store-access";
 import { Store } from "@/types";
 import { RsvpSettingTabs, type RsvpSettingsData } from "./components/tabs";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { redirect } from "next/navigation";
 
 type Params = Promise<{ storeId: string }>;
@@ -35,7 +35,7 @@ export default async function RsvpSettingsPage(props: {
 
 	let transformedRsvpSettings: RsvpSettingsData | null = null;
 	if (rsvpSettings) {
-		transformDecimalsToNumbers(rsvpSettings);
+		transformPrismaDataForJson(rsvpSettings);
 		transformedRsvpSettings = {
 			id: rsvpSettings.id,
 			storeId: rsvpSettings.storeId,

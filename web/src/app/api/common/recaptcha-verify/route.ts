@@ -2,7 +2,7 @@ import { verifyRecaptcha } from "@/lib/recaptcha-verify";
 import { RecaptchaEnterpriseServiceClient } from "@google-cloud/recaptcha-enterprise";
 import logger from "@/lib/logger";
 import { NextResponse } from "next/server";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
 
 /**
  * Endpoint for verifying reCAPTCHA tokens
@@ -222,7 +222,7 @@ export async function POST(request: Request) {
 				userIpAddress,
 				userAgent,
 			},
-			timestamp: getUtcNow().toISOString(),
+			timestamp: epochToDate(getUtcNowEpoch())?.toISOString() || new Date().toISOString(),
 		});
 	} catch (error) {
 		log.error("reCAPTCHA verification test failed", {

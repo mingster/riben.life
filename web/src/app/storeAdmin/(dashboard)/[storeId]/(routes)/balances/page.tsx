@@ -1,6 +1,6 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { BalanceClient } from "./components/client-balance";
 import { mapStoreLedgerToColumn, type BalanceColumn } from "./balance-column";
 
@@ -23,7 +23,7 @@ export default async function BalanceMgmtPage(props: {
 		},
 	});
 
-	transformDecimalsToNumbers(ledgers);
+	transformPrismaDataForJson(ledgers);
 
 	const formattedData: BalanceColumn[] = ledgers.map((ledger) =>
 		mapStoreLedgerToColumn(ledger, params.storeId),

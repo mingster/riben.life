@@ -32,7 +32,7 @@ export async function PATCH(
 			},
 			data: {
 				...body,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 

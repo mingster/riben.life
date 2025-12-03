@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
-import { getUtcNow } from "@/utils/datetime-utils";
+// import { getUtcNowEpoch } from "@/utils/datetime-utils"; // User model still uses DateTime with defaults
 import { headers } from "next/headers";
 import logger from "@/lib/logger";
 
@@ -28,7 +28,7 @@ export async function PATCH(req: Request) {
 			where: {
 				id: userId,
 			},
-			data: { ...body, updatedAt: getUtcNow() },
+			data: { ...body }, // User model has @updatedAt directive
 		});
 		revalidatePath("/");
 		//console.log(`updated user: ${JSON.stringify(obj)}`);

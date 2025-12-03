@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { StoreSettings } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -28,7 +28,7 @@ export default async function StorePrivacyPage(props: {
 	if (!store) {
 		redirect("/unv");
 	}
-	transformDecimalsToNumbers(store);
+	transformPrismaDataForJson(store);
 
 	const storeSettings = (await sqlClient.storeSettings.findFirst({
 		where: {

@@ -4,7 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import type { EmailQueue } from "@/types";
 import { adminActionClient } from "@/utils/actions/safe-action";
 import { updateEmailQueueSchema } from "./update-emailQueue.validation";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 export const updateEmailQueueAction = adminActionClient
 	.metadata({ name: "updateEmailQueue" })
@@ -41,7 +41,7 @@ export const updateEmailQueueAction = adminActionClient
 						textMessage,
 						htmMessage,
 						sendTries: 0,
-						createdOn: getUtcNow(),
+						createdOn: getUtcNowEpoch(),
 						sentOn: null,
 					},
 				});

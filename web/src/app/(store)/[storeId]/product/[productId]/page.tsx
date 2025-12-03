@@ -1,7 +1,7 @@
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import { sqlClient } from "@/lib/prismadb";
 import type { Product, StoreWithProducts } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import { Client } from "./client";
 
@@ -36,8 +36,8 @@ export default async function StoreProductPage(props: {
 		redirect("/unv");
 	}
 
-	transformDecimalsToNumbers(store);
-	transformDecimalsToNumbers(product);
+	transformPrismaDataForJson(store);
+	transformPrismaDataForJson(product);
 
 	return (
 		<div className="flex-col">

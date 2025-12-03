@@ -23,7 +23,7 @@ export async function POST(
 			data: {
 				storeId: params.storeId,
 				...body,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 
@@ -73,7 +73,7 @@ export async function PATCH(
 					name: name_array[i],
 					isFeatured,
 					sortOrder: i + sort + 1,
-					updatedAt: getUtcNow(),
+					updatedAt: getUtcNowEpoch(),
 				},
 			});
 		}

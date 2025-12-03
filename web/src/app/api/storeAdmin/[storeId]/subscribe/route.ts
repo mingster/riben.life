@@ -70,7 +70,7 @@ export async function POST(
 
 		// 2. make sure we have valid subscription record for confirmation process
 		//
-		const new_expiration = getUtcNow(); // default to now
+		const new_expiration = getUtcNowEpoch(); // default to now
 
 		// make sure we have the subscription record only.
 		// activate the subscription only when payment is confirmed.

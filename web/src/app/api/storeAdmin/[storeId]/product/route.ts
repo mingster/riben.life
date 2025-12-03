@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
 import { create } from "zustand";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
@@ -39,14 +39,14 @@ export async function POST(
 				currency,
 				isFeatured,
 				status,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 				ProductAttribute: {
 					create: { ...ProductAttribute },
 				},
 			},
 		});
 
-		transformDecimalsToNumbers(product);
+		transformPrismaDataForJson(product);
 
 		//console.log(`create product: ${JSON.stringify(product)}`);
 
@@ -96,7 +96,7 @@ export async function GET(
 				createdAt: "desc",
 			},
 		});
-		transformDecimalsToNumbers(products);
+		transformPrismaDataForJson(products);
 
 		return NextResponse.json(products);
 	} catch (error) {
