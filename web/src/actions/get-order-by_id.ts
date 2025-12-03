@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { StoreFacility } from "@prisma/client";
 
 const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
@@ -30,7 +30,7 @@ const getOrderById = async (orderId: string): Promise<StoreOrder | null> => {
 		},
 	});
 
-	transformDecimalsToNumbers(obj);
+	transformPrismaDataForJson(obj);
 
 	/*
   if (

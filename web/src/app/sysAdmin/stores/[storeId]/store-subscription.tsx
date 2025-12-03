@@ -1,7 +1,7 @@
 "use client";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { cn } from "@/utils/utils";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -158,7 +158,16 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 							<div>status:</div>
 							<div>{SubscriptionStatus[subscription.status]}</div>
 							<div>updatedAt:</div>
-							<div>{formatDateTime(subscription.updatedAt)}</div>
+							<div>
+								{formatDateTime(
+									typeof subscription.updatedAt === "bigint"
+										? (epochToDate(subscription.updatedAt) ?? new Date())
+										: typeof subscription.updatedAt === "number"
+											? (epochToDate(BigInt(subscription.updatedAt)) ??
+												new Date())
+											: new Date(),
+								)}
+							</div>
 							<Button
 								size="sm"
 								disabled={subscription.status !== SubscriptionStatus.Active}

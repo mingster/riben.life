@@ -1,5 +1,6 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import { sqlClient } from "@/lib/prismadb";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import logger from "@/lib/logger";
@@ -29,6 +30,7 @@ export async function PATCH(
 			tags: ["api"],
 		});
 
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj);
 	} catch (error) {
 		logger.info("category patch", {
@@ -65,6 +67,7 @@ export async function DELETE(
 		tags: ["api"],
 	});
 
+	transformPrismaDataForJson(obj);
 	return NextResponse.json(obj);
 	/*} catch (error) {
     logger.info("category delete", {

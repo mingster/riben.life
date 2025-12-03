@@ -90,8 +90,26 @@ Schema Design
   - Utilize @relation for explicit relationship definitions.
 - Keep schemas normalized and DRY.
 - Use meaningful field names and types.
-- Implement soft delete with deletedAt timestamp.
+- **All datetime fields use `BigInt` type** - stored as epoch time (milliseconds since 1970-01-01 UTC)
+- Implement soft delete with deletedAt timestamp (as BigInt).
 - Use Prisma's native type decorators.
+
+**DateTime Fields:**
+
+All datetime fields in the schema are stored as `BigInt` representing epoch time in milliseconds:
+
+```prisma
+model User {
+  id        String   @id @default(cuid())
+  createdAt BigInt   // Epoch milliseconds, not DateTime
+  updatedAt BigInt   // Epoch milliseconds, not DateTime
+  banExpires BigInt? // Optional epoch milliseconds
+}
+```
+
+- No `@default(now())` or `@updatedAt` directives (not supported with BigInt)
+- Timestamps must be set manually in application code using `getUtcNowEpoch()`
+- Use helper functions from `@/utils/datetime-utils` to convert between Date and BigInt
 
 Prisma Client Usage
 

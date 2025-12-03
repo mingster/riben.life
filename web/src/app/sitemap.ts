@@ -16,7 +16,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 	const staticRoutes: MetadataRoute.Sitemap = stores.map((store) => ({
 		url: `${baseUrl}/${store.id}`,
-		lastModified: store.createdAt,
+		lastModified:
+			typeof store.createdAt === "bigint"
+				? new Date(Number(store.createdAt))
+				: typeof store.createdAt === "number"
+					? new Date(store.createdAt)
+					: new Date(),
 		changeFrequency: "monthly",
 		priority: 0.8,
 	}));

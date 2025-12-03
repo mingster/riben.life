@@ -1,6 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
 import type { SupportTicket } from "@prisma/client";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import logger from "@/lib/logger";
@@ -21,6 +22,7 @@ export async function GET(
 			},
 		})) as SupportTicket[];
 
+		transformPrismaDataForJson(pendingTickets);
 		return NextResponse.json(pendingTickets);
 	} catch (error) {
 		logger.error("get pending orders", {

@@ -1,6 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { Prisma } from "@prisma/client";
 import { CustomerCreditLedgerType } from "@/types/enum";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 /**
  * Calculate bonus points based on top-up amount and store rules.
@@ -96,6 +97,7 @@ export async function processCreditTopUp(
 				storeId,
 				userId,
 				point: totalCredit,
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 
@@ -113,6 +115,7 @@ export async function processCreditTopUp(
 				storeId,
 				userId,
 				amount: new Prisma.Decimal(amount),
+				createdAt: getUtcNowEpoch(),
 				balance: new Prisma.Decimal(balanceAfterTopUp),
 				type: CustomerCreditLedgerType.Topup,
 				referenceId: referenceId || null,
@@ -133,6 +136,7 @@ export async function processCreditTopUp(
 					referenceId: referenceId || null,
 					note: `Bonus for top-up ${amount}`,
 					creatorId: null, // Bonus is always system-generated
+					createdAt: getUtcNowEpoch(),
 				},
 			});
 		}

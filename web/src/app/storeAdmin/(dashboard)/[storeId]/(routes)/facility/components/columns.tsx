@@ -10,9 +10,10 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { TableColumn } from "../table-column";
 import { CellAction } from "./cell-action";
 import { EditFacilityDialog } from "./edit-facility-dialog";
+import type { StoreFacility } from "@/types";
 
 interface QrCodeProps {
-	data: TableColumn;
+	data: StoreFacility;
 }
 
 export const QRCode: React.FC<QrCodeProps> = ({ data }) => {
@@ -37,21 +38,21 @@ export const QRCode: React.FC<QrCodeProps> = ({ data }) => {
 
 interface CreateTableColumnsOptions {
 	onDeleted?: (facilityId: string) => void;
-	onUpdated?: (table: TableColumn) => void;
-	onEdit?: (table: TableColumn) => void;
+	onUpdated?: (facility: StoreFacility) => void;
+	onEdit?: (facility: StoreFacility) => void;
 }
 
 export const createTableColumns = (
 	t: TFunction,
 	options: CreateTableColumnsOptions = {},
-): ColumnDef<TableColumn>[] => {
+): ColumnDef<StoreFacility>[] => {
 	const { onDeleted, onUpdated } = options;
 
 	return [
 		{
 			accessorKey: "facilityName",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Facility_Name")} />
+				<DataTableColumnHeader column={column} title={t("facility_name")} />
 			),
 			cell: ({ row }) => (
 				<div className="flex items-center gap-2" title="click to edit">
@@ -73,7 +74,7 @@ export const createTableColumns = (
 		{
 			accessorKey: "capacity",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Facility_Seats")} />
+				<DataTableColumnHeader column={column} title={t("facility_seats")} />
 			),
 			cell: ({ row }) => <span>{row.getValue("capacity") as number}</span>,
 		},
@@ -82,7 +83,7 @@ export const createTableColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("Facility_Default_Cost")}
+					title={t("facility_default_cost")}
 				/>
 			),
 			cell: ({ row }) => <span>{row.getValue("defaultCost") as number}</span>,
@@ -92,7 +93,7 @@ export const createTableColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("Facility_Default_Credit")}
+					title={t("facility_default_credit")}
 				/>
 			),
 			cell: ({ row }) => <span>{row.getValue("defaultCredit") as number}</span>,
@@ -102,7 +103,7 @@ export const createTableColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("Facility_Default_Duration")}
+					title={t("facility_default_duration")}
 				/>
 			),
 			cell: ({ row }) => (

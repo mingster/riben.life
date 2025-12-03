@@ -20,6 +20,9 @@ export const createFacilityAction = storeActionClient
 			defaultCredit,
 			defaultDuration,
 			businessHours,
+			description,
+			location,
+			travelInfo,
 		} = parsedInput;
 
 		const store = await sqlClient.store.findUnique({
@@ -41,6 +44,9 @@ export const createFacilityAction = storeActionClient
 					defaultCredit,
 					defaultDuration,
 					businessHours: businessHours || null,
+					description: description || null,
+					location: location || null,
+					travelInfo: travelInfo || null,
 				},
 			});
 

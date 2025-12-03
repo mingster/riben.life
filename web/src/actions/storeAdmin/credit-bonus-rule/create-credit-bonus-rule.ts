@@ -5,6 +5,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import { createCreditBonusRuleSchema } from "./create-credit-bonus-rule.validation";
 
@@ -31,6 +32,8 @@ export const createCreditBonusRuleAction = storeActionClient
 					threshold: new Prisma.Decimal(threshold),
 					bonus: new Prisma.Decimal(bonus),
 					isActive,
+					createdAt: getUtcNowEpoch(),
+					updatedAt: getUtcNowEpoch(),
 				},
 			});
 

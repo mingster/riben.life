@@ -20,6 +20,9 @@ export const updateFacilityAction = storeActionClient
 			defaultCredit,
 			defaultDuration,
 			businessHours,
+			description,
+			location,
+			travelInfo,
 		} = parsedInput;
 
 		const facility = await sqlClient.storeFacility.findUnique({
@@ -41,6 +44,9 @@ export const updateFacilityAction = storeActionClient
 					defaultCredit,
 					defaultDuration,
 					businessHours: businessHours || null,
+					description: description || null,
+					location: location || null,
+					travelInfo: travelInfo || null,
 				},
 			});
 

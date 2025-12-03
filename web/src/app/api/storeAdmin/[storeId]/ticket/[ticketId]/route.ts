@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
@@ -63,7 +64,8 @@ export async function PATCH(
 				department: orig_ticket.department,
 				subject: orig_ticket.subject,
 				message,
-				lastModified: getUtcNow(),
+				createdAt: getUtcNowEpoch(),
+				lastModified: getUtcNowEpoch(),
 			},
 		});
 
@@ -76,10 +78,11 @@ export async function PATCH(
 			},
 			data: {
 				status: TicketStatus.Replied,
-				lastModified: getUtcNow(),
+				lastModified: getUtcNowEpoch(),
 			},
 		});
 
+		transformPrismaDataForJson(reply);
 		return NextResponse.json(reply);
 	} catch (error) {
 		logger.info("ticket patch", {
@@ -139,7 +142,7 @@ export async function DELETE(
 			},
 			data: {
 				status: TicketStatus.Archived,
-				lastModified: getUtcNow(),
+				lastModified: getUtcNowEpoch(),
 			},
 		});
 

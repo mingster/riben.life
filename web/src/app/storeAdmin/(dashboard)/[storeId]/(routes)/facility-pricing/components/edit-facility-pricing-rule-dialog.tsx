@@ -248,11 +248,11 @@ export function EditFacilityPricingRuleDialog({
 			<DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
-						{isEditMode ? t("edit") : t("create") + t("Facility_Pricing_Rules")}
+						{isEditMode ? t("edit") : t("create") + t("facility_pricing_rules")}
 					</DialogTitle>
 					<DialogDescription>
 						{" "}
-						{t("Facility_Pricing_Rules_descr")}
+						{t("facility_pricing_rules_descr")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -278,7 +278,10 @@ export function EditFacilityPricingRuleDialog({
 							name="name"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("pricing_rule_name")}</FormLabel>
+									<FormLabel>
+										{t("pricing_rule_name")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="text"

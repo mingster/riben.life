@@ -72,6 +72,8 @@ This application follows a modern pattern for managing data (CRUD operations - C
 ### 3. Create a Server page (page.tsx) to host an unique URL entry
 
 ```tsx
+import { transformPrismaDataForJson } from "@/utils/utils";
+
 export default async function [object_name]AdminPage(props: {
  params: Params;
  searchParams: SearchParams;
@@ -80,7 +82,9 @@ export default async function [object_name]AdminPage(props: {
  const obj = (await sqlClient.[object_name].findMany(
   {},
  )) as object_name[];
- transformBigIntToNumbers(obj);
+ 
+ // Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
+ transformPrismaDataForJson(obj);
 
  return (
   <Suspense fallback={<Loader />}>
@@ -179,48 +183,44 @@ async function onSubmit(data: FormInput) {
 
 ### Date/Time Handling in CRUD Operations
 
-**CRITICAL: All date/time values MUST be saved in true UTC format.**
+**CRITICAL: All date/time values are stored as BigInt epoch time (milliseconds since 1970-01-01 UTC).**
 
 When creating or updating records with date/time fields:
 
 1. **In Server Actions:**
-   - Always use `getUtcNow()` from `@/utils/datetime-utils` for timestamps
-   - Convert user input dates to UTC before saving
-   - Never use `new Date()` or `Date.now()` for timestamps
+   - Always use `getUtcNowEpoch()` from `@/utils/datetime-utils` for timestamps (returns BigInt)
+   - Convert Date objects to BigInt using `dateToEpoch()` before saving
+   - Convert user input dates to UTC Date first, then to BigInt epoch
+   - Never use `new Date()` or `Date.now()` directly for database timestamps
 
 2. **In Client Components:**
+   - Convert BigInt epoch to Date using `epochToDate()` from `@/utils/datetime-utils`
    - Display dates in store/user timezone using `getDateInTz()` from `@/utils/datetime-utils`
-   - Convert UTC dates from server to display timezone before formatting
+   - Convert epoch timestamps from server to Date objects before formatting
 
 **Example Pattern:**
 
 ```tsx
 // In server action (create/update)
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch, dateToEpoch, convertStoreTimezoneToUtc } from "@/utils/datetime-utils";
 
 export const createItemAction = storeActionClient
   .schema(createItemSchema)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ parsedInput, bindArgsClientInputs }) => {
+    const storeId = bindArgsClientInputs[0] as string;
     const { name, eventTime } = parsedInput;
     
-    // Convert user input date to UTC if needed
-    // (If eventTime comes from form, ensure it's converted to UTC)
-    const utcEventTime = eventTime instanceof Date 
-      ? new Date(Date.UTC(
-          eventTime.getUTCFullYear(),
-          eventTime.getUTCMonth(),
-          eventTime.getUTCDate(),
-          eventTime.getUTCHours(),
-          eventTime.getUTCMinutes(),
-        ))
-      : eventTime;
+    // Convert user input date string to UTC Date, then to BigInt epoch
+    // eventTime is a string from datetime-local input (e.g., "2024-01-15T14:30")
+    const store = await sqlClient.store.findUnique({ where: { id: storeId } });
+    const utcDate = convertStoreTimezoneToUtc(eventTime, store.defaultTimezone);
     
     const result = await sqlClient.item.create({
       data: {
         name,
-        eventTime: utcEventTime, // ✅ Saved as UTC
-        createdAt: getUtcNow(), // ✅ Always UTC
-        updatedAt: getUtcNow(), // ✅ Always UTC
+        eventTime: dateToEpoch(utcDate), // ✅ BigInt epoch milliseconds
+        createdAt: getUtcNowEpoch(), // ✅ BigInt epoch milliseconds
+        updatedAt: getUtcNowEpoch(), // ✅ BigInt epoch milliseconds
       },
     });
     
@@ -230,16 +230,17 @@ export const createItemAction = storeActionClient
 
 ```tsx
 // In client component (display)
-import { getDateInTz } from "@/utils/datetime-utils";
+import { epochToDate, getDateInTz } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 
 export function ItemDisplay({ item, storeTimezone }: Props) {
-  // Convert UTC date to store timezone for display
-  const displayDate = getDateInTz(item.eventTime, storeTimezone);
+  // Convert BigInt epoch to Date, then to store timezone for display
+  const epochDate = epochToDate(item.eventTime); // Date | null
+  const displayDate = epochDate ? getDateInTz(epochDate, storeTimezone) : null;
   
   return (
     <div>
-      {format(displayDate, "yyyy-MM-dd HH:mm")}
+      {displayDate ? format(displayDate, "yyyy-MM-dd HH:mm") : "N/A"}
     </div>
   );
 }
@@ -247,13 +248,14 @@ export function ItemDisplay({ item, storeTimezone }: Props) {
 
 **Important Rules:**
 
-- ✅ **DO**: Use `getUtcNow()` for all timestamps
-- ✅ **DO**: Convert user input dates to UTC before saving
+- ✅ **DO**: Use `getUtcNowEpoch()` for all timestamps (returns BigInt)
+- ✅ **DO**: Convert Date objects to BigInt using `dateToEpoch()` before saving
+- ✅ **DO**: Convert BigInt epoch to Date using `epochToDate()` when reading
 - ✅ **DO**: Display dates in store/user timezone using `getDateInTz()`
-- ❌ **DON'T**: Use `new Date()` for timestamps
-- ❌ **DON'T**: Use `Date.now()` for timestamps
-- ❌ **DON'T**: Save dates in local timezone
-- ❌ **DON'T**: Display UTC dates directly to users
+- ❌ **DON'T**: Use `new Date()` directly for database timestamps
+- ❌ **DON'T**: Use `Date.now()` directly for database timestamps
+- ❌ **DON'T**: Save Date objects directly (must convert to BigInt)
+- ❌ **DON'T**: Display BigInt epoch values directly to users
 
 ### 6. Filter Implementation
 

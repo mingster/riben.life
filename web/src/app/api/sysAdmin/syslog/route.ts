@@ -3,6 +3,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../api_helper";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 // get all email queue
 export async function GET(_request: Request) {
@@ -15,6 +16,7 @@ export async function GET(_request: Request) {
 		},
 	});
 
+	transformPrismaDataForJson(systemLogs);
 	return NextResponse.json(systemLogs);
 }
 

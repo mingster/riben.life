@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export async function GET(
 	req: Request,
@@ -18,6 +20,7 @@ export async function GET(
 		},
 	});
 
+	transformPrismaDataForJson(rules);
 	return NextResponse.json(rules);
 }
 
@@ -55,9 +58,12 @@ export async function POST(
 			threshold: new Prisma.Decimal(threshold),
 			bonus: new Prisma.Decimal(bonus),
 			isActive: isActive ?? true,
+			createdAt: getUtcNowEpoch(),
+			updatedAt: getUtcNowEpoch(),
 		},
 	});
 
+	transformPrismaDataForJson(rule);
 	return NextResponse.json(rule);
 }
 

@@ -25,9 +25,6 @@ export async function populateCountryData() {
 				unCode: c.unCode,
 			},
 		});
-		logger.info("Operation log", {
-			tags: ["action"],
-		});
 	}
 
 	return true;

@@ -2,7 +2,8 @@ import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder } from "@prisma/client";
 import { format } from "date-fns";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNow, dateToEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { type NextRequest, NextResponse } from "next/server";
 import logger from "@/lib/logger";
 export const dynamic = "force-dynamic"; // defaults to force-static
@@ -55,12 +56,17 @@ export async function GET(
 			`${format(date, "yyyy-MM-dd HH:mm:ss")}至${format(today, "yyyy-MM-dd HH:mm:ss")}`,
 		);
 
+		const dateEpoch = dateToEpoch(date);
+		const todayEpoch = dateToEpoch(today);
+		if (!dateEpoch || !todayEpoch) {
+			return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+		}
 		const result = (await sqlClient.storeOrder.findMany({
 			where: {
 				storeId: storeId,
 				updatedAt: {
-					gte: date,
-					lte: today,
+					gte: dateEpoch,
+					lte: todayEpoch,
 				},
 			},
 			include: {
@@ -79,6 +85,7 @@ export async function GET(
 			},
 		})) as StoreOrder[];
 
+		transformPrismaDataForJson(result);
 		return NextResponse.json(result);
 	} catch (error) {
 		logger.error("search orders", {

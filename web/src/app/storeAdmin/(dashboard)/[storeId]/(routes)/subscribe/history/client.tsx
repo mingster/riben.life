@@ -3,7 +3,7 @@
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 import { useParams, useRouter } from "next/navigation";
 
 import { useEffect, useState } from "react";
@@ -68,7 +68,10 @@ export function SubscriptionHistoryClient({
 							<div className="">
 								{t("storeAdmin_switchLevel_subscription_expiry").replace(
 									"{0}",
-									formatDate(subscription.expiration, "yyyy-MM-dd"),
+									formatDate(
+										epochToDate(subscription.expiration) ?? new Date(),
+										"yyyy-MM-dd",
+									),
 								)}
 							</div>
 						)}
@@ -92,7 +95,9 @@ export function SubscriptionHistoryClient({
 							{payments.map((payment: SubscriptionPayment) => (
 								<TableRow key={payment.id}>
 									<TableCell className="hidden lg:table-cell">
-										{formatDateTime(payment.createdAt)}
+										{formatDateTime(
+											epochToDate(payment.createdAt) ?? new Date(),
+										)}
 									</TableCell>
 
 									<TableCell className="flex gap-1">

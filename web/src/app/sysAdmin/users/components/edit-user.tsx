@@ -192,7 +192,9 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									name="name"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("name")}</FormLabel>
+											<FormLabel>
+												{t("name")} <span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
@@ -209,7 +211,9 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									name="email"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("email")}</FormLabel>
+											<FormLabel>
+												{t("email")} <span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
@@ -228,7 +232,10 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 										name="password"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>{t("password")}</FormLabel>
+												<FormLabel>
+													{t("password")}{" "}
+													<span className="text-destructive">*</span>
+												</FormLabel>
 												<FormControl>
 													<Input
 														disabled={loading || form.formState.isSubmitting}
@@ -247,7 +254,10 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									name="locale"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("account_tabs_language")}</FormLabel>
+											<FormLabel>
+												{t("account_tabs_language")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
 												<Select
 													disabled={loading || form.formState.isSubmitting}
@@ -271,7 +281,10 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									name="timezone"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("timezone")}</FormLabel>
+											<FormLabel>
+												{t("timezone")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
 												<TimezoneSelect
 													value={field.value}
@@ -288,7 +301,9 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									name="role"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>Role</FormLabel>
+											<FormLabel>
+												Role <span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
 												<UserRoleCombobox
 													defaultValue={field.value ?? ""}

@@ -192,7 +192,10 @@ export function EditAnnouncementDialog({
 							name="message"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("announcement_body")}</FormLabel>
+									<FormLabel>
+										{t("announcement_body")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Textarea
 											disabled={loading || form.formState.isSubmitting}

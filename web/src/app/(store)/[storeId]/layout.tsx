@@ -6,7 +6,7 @@ import { StoreFooter } from "./components/store-footer";
 import { StoreNavbar } from "./components/store-navbar";
 
 import BusinessHours from "@/lib/businessHours";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { StoreSettings } from "@prisma/client";
 import type { Metadata, ResolvingMetadata } from "next";
 import { redirect } from "next/navigation";
@@ -90,7 +90,7 @@ export default async function StoreHomeLayout(props: {
 		//throw new Error("store not found");
 	}
 
-	transformDecimalsToNumbers(store);
+	transformPrismaDataForJson(store);
 
 	const storeSettings = (await sqlClient.storeSettings.findFirst({
 		where: {

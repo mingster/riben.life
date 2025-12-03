@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { auth } from "@/lib/auth";
@@ -32,10 +33,11 @@ export async function PATCH(
 			},
 			data: {
 				...body,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 
+		transformPrismaDataForJson(store);
 		return NextResponse.json(store);
 	} catch (error) {
 		logger.info("store patch", {

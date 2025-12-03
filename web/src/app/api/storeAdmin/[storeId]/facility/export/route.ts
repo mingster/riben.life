@@ -3,7 +3,7 @@ import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { getUtcNow } from "@/utils/datetime-utils";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export async function POST(
 	_req: Request,
@@ -26,8 +26,8 @@ export async function POST(
 		const pad = (n: number) => n.toString().padStart(2, "0");
 		const fileName = `facility-backup-${params.storeId}-${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}-${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}.json`;
 
-		// Convert Decimal to number for JSON serialization
-		transformDecimalsToNumbers(facilities);
+		// Convert BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
+		transformPrismaDataForJson(facilities);
 
 		// Convert to JSON string
 		const jsonContent = JSON.stringify(facilities, null, 2);

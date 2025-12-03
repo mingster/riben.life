@@ -9,7 +9,7 @@ import type { StringNVType } from "@/types/enum";
 import { TicketStatus } from "@/types/enum";
 import logger from "@/lib/logger";
 import { getServerUrl } from "@/actions/server-util";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 // send message to store owner when someone creates a new ticket
 //
@@ -88,7 +88,7 @@ Ticket URL: ${ticketUrl}
 				subject: subject,
 				textMessage: textMessage,
 				htmMessage: htmMessage,
-				createdOn: getUtcNow(),
+				createdOn: getUtcNowEpoch(),
 				sendTries: 0,
 			},
 		});

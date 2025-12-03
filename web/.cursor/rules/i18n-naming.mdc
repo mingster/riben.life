@@ -47,7 +47,7 @@ This rule defines the standard naming convention for all translation keys in `we
 - `Category_mgmt` - "Category Management"
 - `Facility_mgmt` - "Facility Management"
 - `Credit_Bonus_Rules` - "Credit Bonus Rules"
-- `Facility_Pricing_Rules` - "Facility Pricing Rules"
+- `facility_pricing_rules` - "Facility Pricing Rules"
 
 **Description:**
 
@@ -251,7 +251,7 @@ This rule defines the standard naming convention for all translation keys in `we
 
    ```json
    "StoreSettings_Credit_Exchange_Rate": "Credit Exchange Rate"
-   "Facility_Pricing_Rules": "Facility Pricing Rules"
+   "facility_pricing_rules": "Facility Pricing Rules"
    "Credit_Bonus_Rules": "Credit Bonus Rules"
    ```
 
@@ -388,7 +388,7 @@ This rule defines the standard naming convention for all translation keys in `we
 
 ```json
 {
-  "Facility_Pricing_Rules": "Facility Pricing Rules",
+  "facility_pricing_rules": "Facility Pricing Rules",
   "Edit_Pricing_Rule": "Edit Pricing Rule",
   "Create_Pricing_Rule": "Create Pricing Rule",
   "Edit_Pricing_Rule_description": "Edit pricing rule description",

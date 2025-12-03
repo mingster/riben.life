@@ -1,4 +1,4 @@
-// all datetime saved should be in UTC
+// all datetime saved as Epoch time (milliseconds since 1970-01-01 UTC)
 // all datetime displayed should be in the user's or store's timezone
 generator client {
   provider        = "prisma-client-js"
@@ -13,6 +13,14 @@ datasource db {
   relationMode = "prisma"
 }
 
+enum Role {
+  user
+  owner
+  staff
+  storeAdmin
+  sysAdmin
+}
+
 model User {
   id            String   @id @default(cuid())
   name          String?
@@ -22,10 +30,10 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  role             String? @default("user")
+  role             String?  @default("user")
   locale           String?
   timezone         String?
-  stripeCustomerId String? @unique
+  stripeCustomerId String?  @unique
   phone            String?
   phoneVerified    Boolean? @default(false)
 
@@ -36,6 +44,14 @@ model User {
   banExpires DateTime?
 
   normalizedEmail String?
+
+  sessions    Session[]
+  accounts    Account[]
+  twofactors  TwoFactor[]
+  passkeys    Passkey[]
+  apikeys     Apikey[]
+  members     Member[]
+  invitations Invitation[]
 
   Addresses                 Address[]
   SupportTicketFrom         SupportTicket[]        @relation("SupportTicketFrom")
@@ -50,16 +66,10 @@ model User {
   CustomerCreditLogsCreator CustomerCreditLedger[] @relation("UserCustomerCreditLogsCreator")
   StoreLedgerCreated        StoreLedger[]
 
-  sessions    Session[]
-  accounts    Account[]
-  twofactors  TwoFactor[]
-  passkeys    Passkey[]
-  apikeys     Apikey[]
-  members     Member[]
-  invitations Invitation[]
-
   @@unique([normalizedEmail])
   @@index([email])
+  @@index([createdAt])
+  @@index([updatedAt])
   @@map("user")
 }
 
@@ -81,7 +91,6 @@ model Account {
   user      User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
-  @@map("account")
 }
 
 model Session {
@@ -104,14 +113,6 @@ model Session {
   @@map("session")
 }
 
-enum Role {
-  user
-  owner
-  staff
-  storeAdmin
-  sysAdmin
-}
-
 model Verification {
   id         String   @id
   identifier String
@@ -120,7 +121,6 @@ model Verification {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
 
-  @@index([identifier])
   @@map("verification")
 }
 
@@ -134,7 +134,6 @@ model TwoFactor {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([secret])
   @@map("twoFactor")
 }
 
@@ -154,7 +153,6 @@ model Passkey {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([credentialID])
   @@map("passkey")
 }
 
@@ -183,7 +181,6 @@ model Apikey {
   metadata            String?
 
   @@index([userId])
-  @@index([key])
   @@map("apikey")
 }
 
@@ -215,6 +212,8 @@ model Member {
 
   @@index([userId])
   @@index([organizationId])
+  // Composite indexes for common query patterns
+  @@index([organizationId, role]) // For role-based access checks
   @@map("member")
 }
 
@@ -230,11 +229,8 @@ model Invitation {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-
   @@index([inviterId])
   @@index([organizationId])
-  @@index([email])
   @@map("invitation")
 }
 
@@ -256,30 +252,30 @@ model Subscription {
 /// Next.js application logs for log drain functionality
 
 model system_logs {
-  id          String   @id @default(cuid())
-  timestamp   DateTime @default(now())
-  level       String   @db.VarChar(10) // error, warn, info, debug
+  id          String  @id @default(cuid())
+  timestamp   BigInt
+  level       String  @db.VarChar(10) // error, warn, info, debug
   message     String
-  service     String   @db.VarChar(100) // service name (e.g., "web", "api")
-  environment String   @db.VarChar(20) // production, development, staging
-  version     String?  @db.VarChar(50) // app version
-  requestId   String?  @db.VarChar(100) // request correlation ID
-  userId      String?  @db.VarChar(100) // user ID if available
-  sessionId   String?  @db.VarChar(100) // session ID if available
-  ip          String?  @db.VarChar(45) // IPv4 or IPv6
-  userAgent   String?  @db.VarChar(500)
-  url         String?  @db.VarChar(1000) // request URL
-  method      String?  @db.VarChar(10) // HTTP method
+  service     String  @db.VarChar(100) // service name (e.g., "web", "api")
+  environment String  @db.VarChar(20) // production, development, staging
+  version     String? @db.VarChar(50) // app version
+  requestId   String? @db.VarChar(100) // request correlation ID
+  userId      String? @db.VarChar(100) // user ID if available
+  sessionId   String? @db.VarChar(100) // session ID if available
+  ip          String? @db.VarChar(45) // IPv4 or IPv6
+  userAgent   String? @db.VarChar(500)
+  url         String? @db.VarChar(1000) // request URL
+  method      String? @db.VarChar(10) // HTTP method
   statusCode  Int? // HTTP status code
   duration    Int? // request duration in ms
-  errorCode   String?  @db.VarChar(100) // error code if applicable
+  errorCode   String? @db.VarChar(100) // error code if applicable
   stackTrace  String?
   metadata    String?
   tags        String?
-  source      String?  @db.VarChar(100) // source file/component
+  source      String? @db.VarChar(100) // source file/component
   line        Int? // line number
   column      Int? // column number
-  createdAt   DateTime @default(now())
+  createdAt   BigInt
 
   @@index([timestamp])
   @@index([level])
@@ -287,6 +283,7 @@ model system_logs {
   @@index([environment])
   @@index([requestId])
   @@index([userId])
+  @@index([createdAt])
 }
 
 model PlatformSettings {
@@ -345,7 +342,7 @@ model Locale {
 }
 
 model Address {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   userId      String
   firstName   String
   lastName    String
@@ -358,9 +355,9 @@ model Address {
   province    String?
   postalCode  String?
   phoneNumber String
-  isDefault   Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isDefault   Boolean @default(true)
+  createdAt   BigInt
+  updatedAt   BigInt
   reference   String?
   type        String?
 
@@ -369,23 +366,32 @@ model Address {
 
   @@index([userId])
   @@index([countryId])
+  @@index([createdAt])
+  @@index([isDefault])
+  @@index([updatedAt])
 }
 
 model PaymentMethod {
-  id            String   @id @default(uuid())
-  name          String   @unique
-  payUrl        String   @default("")
-  priceDescr    String   @default("")
-  fee           Decimal  @default("0.029")
-  feeAdditional Decimal  @default("0")
-  clearDays     Int      @default(3)
-  isDeleted     Boolean  @default(false)
-  isDefault     Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
+  id                        String                      @id @default(uuid())
+  name                      String                      @unique
+  payUrl                    String                      @default("")
+  priceDescr                String                      @default("")
+  fee                       Decimal                     @default("0.029")
+  feeAdditional             Decimal                     @default("0")
+  clearDays                 Int                         @default(3)
+  isDeleted                 Boolean                     @default(false)
+  isDefault                 Boolean                     @default(false)
+  createdAt                 BigInt
+  updatedAt                 BigInt
   StorePaymentMethodMapping StorePaymentMethodMapping[]
   StoreOrder                StoreOrder[]
+
+  @@index([isDefault])
+  @@index([name])
+  @@index([payUrl])
+  @@index([isDeleted])
+  @@index([updatedAt])
+  @@index([createdAt])
 }
 
 model StorePaymentMethodMapping {
@@ -403,21 +409,20 @@ model StorePaymentMethodMapping {
 }
 
 model ShippingMethod {
-  id           String   @id @default(uuid())
-  identifier   String   @default("") //used in the code to identify default methods
-  name         String   @unique
+  id           String                   @id @default(uuid())
+  identifier   String                   @default("") //used in the code to identify default methods
+  name         String                   @unique
   description  String?
-  basic_price  Decimal  @default(0)
-  currencyId   String   @default("twd")
-  isDeleted    Boolean  @default(false)
-  isDefault    Boolean  @default(false)
-  shipRequried Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  currency Currency                 @relation(fields: [currencyId], references: [id])
-  stores   StoreShipMethodMapping[] @relation("ShipMethodStoreMapping")
-  prices   ShippingMethodPrice[]    @relation("ShipMethodPrices")
+  basic_price  Decimal                  @default(0)
+  currencyId   String                   @default("twd")
+  isDeleted    Boolean                  @default(false)
+  isDefault    Boolean                  @default(false)
+  shipRequired Boolean                  @default(true)
+  createdAt    BigInt
+  updatedAt    BigInt
+  currency     Currency                 @relation(fields: [currencyId], references: [id])
+  stores       StoreShipMethodMapping[] @relation("ShipMethodStoreMapping")
+  prices       ShippingMethodPrice[]    @relation("ShipMethodPrices")
 
   Shipment   Shipment[]   @relation("ShipmentToShipMethod")
   StoreOrder StoreOrder[]
@@ -425,6 +430,10 @@ model ShippingMethod {
   @@index([name])
   @@index([identifier])
   @@index([currencyId])
+  @@index([isDefault])
+  @@index([isDeleted])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model ShippingMethodPrice {
@@ -455,79 +464,84 @@ model StoreShipMethodMapping {
 }
 
 model Shipment {
-  id                 String    @id @default(uuid())
+  id                 String         @id @default(uuid())
   orderId            String
   shippingMethodId   String
   trackingNumber     String?
   trackingUrl        String?
   shippingCost       Decimal
-  shippingStatus     Int       @default(10) //should be value in @/lib/enum/ShippingStatus
+  shippingStatus     Int            @default(10) //should be value in @/lib/enum/ShippingStatus
   totalWeight        Decimal?
-  shippedDate        DateTime?
-  deliveryDate       DateTime?
-  readyForPickupDate DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  Order          StoreOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  ShippingMethod ShippingMethod @relation("ShipmentToShipMethod", fields: [shippingMethodId], references: [id])
+  shippedDate        BigInt?
+  deliveryDate       BigInt?
+  readyForPickupDate BigInt?
+  createdAt          BigInt
+  updatedAt          BigInt
+  Order              StoreOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ShippingMethod     ShippingMethod @relation("ShipmentToShipMethod", fields: [shippingMethodId], references: [id])
 
   @@index([orderId])
   @@index([shippingMethodId])
+  @@index([shippingStatus])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model StoreSubscription {
-  id              String   @id @default(cuid())
-  storeId         String   @unique
+  id              String  @id @default(cuid())
+  storeId         String  @unique
   userId          String
-  expiration      DateTime
+  expiration      BigInt
   status          Int
   invoiceNumber   String?
   billingProvider String
   subscriptionId  String?
   note            String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt BigInt
+  updatedAt BigInt
 
   @@index([userId])
   @@index([storeId])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model SubscriptionPayment {
-  id                 String    @id @default(cuid())
+  id                 String  @id @default(cuid())
   userId             String
   storeId            String
   isPaid             Boolean
   amount             Decimal
-  currency           String    @default("twd")
-  checkoutAttributes String    @default("")
-  paidAt             DateTime?
-  createdAt          DateTime  @default(now())
+  currency           String  @default("twd")
+  checkoutAttributes String  @default("")
+  paidAt             BigInt?
+  createdAt          BigInt
   note               String?
 
   @@index([userId])
   @@index([storeId])
   @@index([isPaid])
+  @@index([createdAt])
 }
 
 model CustomerCredit {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   storeId   String
   userId    String //userId of the customer
-  point     Decimal  @default(0)
-  updatedAt DateTime @updatedAt
-
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  point     Decimal @default(0)
+  updatedAt BigInt
+  Store     Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([storeId, userId])
   @@index([storeId])
   @@index([userId])
+  @@index([updatedAt])
 }
 
 model CustomerCreditLedger {
-  id          String   @id @default(uuid())
+  id          String      @id @default(uuid())
   storeId     String
   userId      String //userId of the customer
   amount      Decimal //point amount of this transaction
@@ -536,32 +550,33 @@ model CustomerCreditLedger {
   referenceId String? //store order id
   note        String? //optional note for this transaction
   creatorId   String? //userId who created this transaction
-  createdAt   DateTime @default(now())
-
-  Store      Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User       User        @relation("UserCustomerCreditLogs", fields: [userId], references: [id], onDelete: Cascade)
-  Creator    User?       @relation("UserCustomerCreditLogsCreator", fields: [creatorId], references: [id], onDelete: SetNull)
-  StoreOrder StoreOrder? @relation(fields: [referenceId], references: [id], onDelete: SetNull)
+  createdAt   BigInt
+  Store       Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User        User        @relation("UserCustomerCreditLogs", fields: [userId], references: [id], onDelete: Cascade)
+  Creator     User?       @relation("UserCustomerCreditLogsCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  StoreOrder  StoreOrder? @relation(fields: [referenceId], references: [id], onDelete: SetNull)
 
   @@index([storeId])
   @@index([userId])
   @@index([creatorId])
   @@index([referenceId])
+  @@index([createdAt])
   @@map("CustomerCreditLedger")
 }
 
 model CreditBonusRule {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   storeId   String
   threshold Decimal
   bonus     Decimal
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  isActive  Boolean @default(true)
+  createdAt BigInt
+  updatedAt BigInt
+  Store     Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model Store {
@@ -574,7 +589,7 @@ model Store {
   defaultCurrency String  @default("twd")
   isDeleted       Boolean @default(false)
   defaultLocale   String  @default("tw")
-  defaultTimezone Int     @default(8)
+  defaultTimezone String  @default("Asia/Taipei")
 
   autoAcceptOrder      Boolean @default(true)
   isOpen               Boolean @default(true)
@@ -603,11 +618,10 @@ model Store {
   LINE_PAY_SECRET   String?
   STRIPE_SECRET_KEY String?
 
-  logo         String?
-  logoPublicId String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
+  logo                       String?
+  logoPublicId               String?
+  createdAt                  BigInt
+  updatedAt                  BigInt
   Owner                      User                         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   Organization               Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   Products                   Product[]                    @relation("StoreToProduct")
@@ -638,6 +652,10 @@ model Store {
   @@index([defaultCurrency])
   @@index([level])
   @@index([customDomain])
+  @@index([createdAt])
+  @@index([updatedAt])
+  // Composite indexes for common query patterns
+  @@index([ownerId, isDeleted]) // For owner store listings
 }
 
 model StoreSettings {
@@ -673,10 +691,9 @@ model StoreSettings {
 
   businessHours String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt BigInt
+  updatedAt BigInt
+  Store     Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
 }
@@ -709,62 +726,66 @@ model RsvpSettings {
   syncWithApple  Boolean @default(false) //同步Apple日曆
 
   // Reserve with Google integration fields
-  reserveWithGoogleEnabled      Boolean   @default(false)
+  reserveWithGoogleEnabled      Boolean @default(false)
   googleBusinessProfileId       String? // Google Business Profile ID
   googleBusinessProfileName     String? // Store name in Google Business Profile
   reserveWithGoogleAccessToken  String? // Encrypted OAuth access token
   reserveWithGoogleRefreshToken String? // Encrypted OAuth refresh token
-  reserveWithGoogleTokenExpiry  DateTime? // Token expiry timestamp
-  reserveWithGoogleLastSync     DateTime? // Last successful sync timestamp
+  reserveWithGoogleTokenExpiry  BigInt? // Token expiry timestamp
+  reserveWithGoogleLastSync     BigInt? // Last successful sync timestamp
   reserveWithGoogleSyncStatus   String? // "connected", "error", "disconnected"
   reserveWithGoogleError        String? // Last error message
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt BigInt
+  updatedAt BigInt
+  Store     Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model RsvpBlacklist {
-  id        String   @id @default(uuid())
+  id        String @id @default(uuid())
   storeId   String
   userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt BigInt
+  updatedAt BigInt
+  Store     Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
   @@index([userId])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model RsvpTag {
-  id        String   @id @default(uuid())
+  id        String @id @default(uuid())
   storeId   String
-  tagName   String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  tagName   String @unique
+  createdAt BigInt
+  updatedAt BigInt
+  Store     Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@unique([storeId, tagName])
   @@index([storeId])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([tagName])
 }
 
 model Rsvp {
-  id          String    @id @default(uuid())
+  id          String  @id @default(uuid())
   storeId     String
-  alreadyPaid Boolean   @default(false) //已付款
+  alreadyPaid Boolean @default(false) //已付款
   userId      String?
   orderId     String?
   facilityId  String?
-  numOfAdult  Int       @default(1)
-  numOfChild  Int       @default(0)
-  rsvpTime    DateTime
-  arriveTime  DateTime?
-  status      Int       @default(0)
+  numOfAdult  Int     @default(1)
+  numOfChild  Int     @default(0)
+  rsvpTime    BigInt
+  arriveTime  BigInt?
+  status      Int     @default(0)
   message     String?
 
   confirmedByStore    Boolean @default(false) //店家已確認預約
@@ -775,9 +796,8 @@ model Rsvp {
   facilityCredit Decimal? // The credit that was charged
   pricingRuleId  String? // Reference to the pricing rule used
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  createdAt           BigInt
+  updatedAt           BigInt
   Store               Store                @relation(fields: [storeId], references: [id], onDelete: Cascade)
   User                User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
   Order               StoreOrder?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -789,6 +809,12 @@ model Rsvp {
   @@index([orderId])
   @@index([facilityId])
   @@index([pricingRuleId])
+  @@index([rsvpTime])
+  @@index([arriveTime])
+  @@index([createdAt])
+  @@index([updatedAt])
+  // Composite indexes for common query patterns
+  @@index([storeId, rsvpTime, status]) // For date range queries with status
 }
 
 model StoreFacility {
@@ -800,6 +826,10 @@ model StoreFacility {
   defaultCredit   Decimal @default(0) // default credit for using the facility
   defaultDuration Int     @default(60) // default duration for using the facility in minutes
   businessHours   String? //when the facility is available for use
+
+  description String? // description of the facility
+  location    String? // location of the facility
+  travelInfo  String? // travel information of the facility
 
   Store                Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
   Rsvp                 Rsvp[]
@@ -835,12 +865,11 @@ model FacilityPricingRule {
   // Status
   isActive Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  Store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Facility StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  Rsvp     Rsvp[]
+  createdAt BigInt
+  updatedAt BigInt
+  Store     Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Facility  StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  Rsvp      Rsvp[]
 
   @@index([storeId])
   @@index([facilityId])
@@ -849,15 +878,15 @@ model FacilityPricingRule {
 }
 
 model StoreAnnouncement {
-  id        String   @id @default(uuid())
+  id        String @id @default(uuid())
   storeId   String
   message   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt BigInt
+  updatedAt BigInt
+  Store     Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
+  @@index([createdAt])
   @@index([updatedAt])
   @@map("StoreAnnouncement")
 }
@@ -875,18 +904,17 @@ model ProductImages {
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  storeId     String
-  name        String
-  description String?
-  isFeatured  Boolean  @default(false)
-  status      Int      @default(1) //ProductStatus, 1 = Published, 0 = Draft
-  currency    String   @default("twd")
-  price       Decimal  @default(0)
-  useOption   Boolean  @default(true) // when true, price is calculated based on product option
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id                String              @id @default(uuid())
+  storeId           String
+  name              String
+  description       String?
+  isFeatured        Boolean             @default(false)
+  status            Int                 @default(1) //ProductStatus, 1 = Published, 0 = Draft
+  currency          String              @default("twd")
+  price             Decimal             @default(0)
+  useOption         Boolean             @default(true) // when true, price is calculated based on product option
+  createdAt         BigInt
+  updatedAt         BigInt
   Store             Store               @relation("StoreToProduct", fields: [storeId], references: [id], onDelete: Cascade)
   ProductImages     ProductImages[]
   ProductCategories ProductCategories[]
@@ -900,6 +928,11 @@ model Product {
   @@index([storeId])
   @@index([isFeatured])
   @@index([status])
+  @@index([createdAt])
+  @@index([updatedAt])
+  // Composite indexes for common query patterns
+  @@index([storeId, status, isFeatured]) // For filtered product listings
+  @@index([storeId, updatedAt]) // For pagination
 }
 
 //產品選項規格 across this store. it's used as template so that we don't need to re-enter option for each product.
@@ -923,6 +956,9 @@ model StoreProductOptionTemplate {
   @@unique([storeId, optionName])
   @@index([storeId])
   @@index([optionName])
+  @@index([isRequired])
+  @@index([isMultiple])
+  @@index([sortOrder])
 }
 
 //產品選項 across this store. it's used as template so that we don't need to re-enter option for each product.
@@ -941,6 +977,7 @@ model StoreProductOptionSelectionsTemplate {
   @@unique([optionId, name])
   @@index([optionId])
   @@index([name])
+  @@index([isDefault])
 }
 
 //產品選項
@@ -963,6 +1000,9 @@ model ProductOption {
   @@unique([productId, optionName])
   @@index([productId])
   @@index([optionName])
+  @@index([isRequired])
+  @@index([isMultiple])
+  @@index([sortOrder])
 }
 
 model ProductOptionSelections {
@@ -978,6 +1018,7 @@ model ProductOptionSelections {
   @@unique([optionId, name])
   @@index([optionId])
   @@index([name])
+  @@index([isDefault])
 }
 
 model ProductCategories {
@@ -992,49 +1033,58 @@ model ProductCategories {
   @@unique([categoryId, productId])
   @@index([categoryId])
   @@index([productId])
+  @@index([sortOrder])
+  // Composite indexes for common query patterns
+  @@index([categoryId, sortOrder]) // For sorted product listings in category
 }
 
 model Category {
-  id         String   @id @default(uuid())
-  storeId    String
-  name       String
-  isFeatured Boolean  @default(false)
-  sortOrder  Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
+  id                String              @id @default(uuid())
+  storeId           String
+  name              String
+  isFeatured        Boolean             @default(false)
+  sortOrder         Int
+  createdAt         BigInt
+  updatedAt         BigInt
   Store             Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
   ProductCategories ProductCategories[]
 
   @@index([storeId])
   @@index([name])
+  @@index([isFeatured])
+  @@index([sortOrder])
+  @@index([createdAt])
+  @@index([updatedAt])
+  // Composite indexes for common query patterns
+  @@index([storeId, isFeatured, sortOrder]) // For filtered and sorted category listings
+  @@index([storeId, updatedAt]) // For pagination
 }
 
 model ProductAttribute {
-  id                       String    @id @default(uuid())
-  productId                String    @unique
-  isCreditTopUp            Boolean   @default(false)
-  isRecurring              Boolean   @default(false)
+  id                       String  @id @default(uuid())
+  productId                String  @unique
+  isCreditTopUp            Boolean @default(false)
+  isRecurring              Boolean @default(false)
   interval                 Int?
   intervalCount            Int?
   trialPeriodDays          Int?
   stripePriceId            String?
-  isBrandNew               Boolean   @default(true)
-  isShipRequired           Boolean   @default(false)
-  isFreeShipping           Boolean   @default(false)
-  additionalShipCost       Decimal   @default(0)
-  stock                    Int       @default(0)
-  displayStockAvailability Boolean   @default(false)
-  displayStockQuantity     Boolean   @default(false)
-  allowBackOrder           Boolean   @default(false)
-  orderMinQuantity         Int       @default(1)
-  orderMaxQuantity         Int       @default(0)
-  disableBuyButton         Boolean   @default(false)
-  weight                   Decimal   @default(0)
-  height                   Decimal   @default(0)
-  width                    Decimal   @default(0)
-  availableStartDate       DateTime?
-  availableEndDate         DateTime?
+  isBrandNew               Boolean @default(true)
+  isShipRequired           Boolean @default(false)
+  isFreeShipping           Boolean @default(false)
+  additionalShipCost       Decimal @default(0)
+  stock                    Int     @default(0)
+  displayStockAvailability Boolean @default(false)
+  displayStockQuantity     Boolean @default(false)
+  allowBackOrder           Boolean @default(false)
+  orderMinQuantity         Int     @default(1)
+  orderMaxQuantity         Int     @default(0)
+  disableBuyButton         Boolean @default(false)
+  weight                   Decimal @default(0)
+  height                   Decimal @default(0)
+  width                    Decimal @default(0)
+  availableStartDate       BigInt?
+  availableEndDate         BigInt?
   mfgPartNumber            String?
 
   Product Product @relation("prodAttrToProduct", fields: [productId], references: [id], onDelete: Cascade)
@@ -1056,31 +1106,31 @@ model StoreLedger {
   note        String?
   createdBy   String? // userId who created this ledger entry
 
-  createdAt    DateTime @default(now())
-  availability DateTime @default(now())
-
-  StoreOrder StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  CreatedBy  User?      @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  createdAt    BigInt
+  availability BigInt
+  StoreOrder   StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  CreatedBy    User?      @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@index([storeId])
   @@index([orderId])
+  @@index([type])
   @@index([createdAt])
   @@index([createdBy])
 }
 
 model StoreOrder {
-  id                 String    @id @default(uuid())
+  id                 String  @id @default(uuid())
   storeId            String
   userId             String?
   facilityId         String?
-  orderNum           Int?      @default(autoincrement())
+  orderNum           Int?    @default(autoincrement())
   pickupCode         String?
-  isPaid             Boolean   @default(false)
-  paidDate           DateTime?
-  checkoutAttributes String    @default("")
-  checkoutRef        String    @default("")
-  currency           String    @default("twd")
-  currencyRate       Decimal   @default(1)
+  isPaid             Boolean @default(false)
+  paidDate           BigInt?
+  checkoutAttributes String  @default("")
+  checkoutRef        String  @default("")
+  currency           String  @default("twd")
+  currencyRate       Decimal @default(1)
 
   discount Decimal @default(0)
 
@@ -1101,9 +1151,8 @@ model StoreOrder {
   orderTax    Decimal @default(0)
   orderTotal  Decimal @default(0)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  createdAt      BigInt
+  updatedAt      BigInt
   Store          Store           @relation("StoreToOrder", fields: [storeId], references: [id], onDelete: Cascade)
   User           User?           @relation("UserOrders", fields: [userId], references: [id])
   OrderNotes     OrderNote[]     @relation("orderNoteToStoreOrder")
@@ -1130,6 +1179,14 @@ model StoreOrder {
   @@index([paidDate])
   @@index([currency])
   @@index([updatedAt])
+  @@index([createdAt])
+  @@index([orderNum])
+  @@index([orderStatus])
+  // Composite indexes for common query patterns
+  @@index([storeId, orderStatus, isPaid]) // For filtered order listings
+  @@index([storeId, updatedAt]) // For date range queries with store
+  @@index([userId, updatedAt]) // For user order queries
+  @@index([storeId, orderStatus, updatedAt]) // For status-filtered pagination
 }
 
 model OrderItem {
@@ -1157,12 +1214,13 @@ model OrderNote {
   orderId           String
   note              String
   displayToCustomer Boolean    @default(false)
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt         BigInt
+  updatedAt         BigInt
   Order             StoreOrder @relation("orderNoteToStoreOrder", fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([updatedAt])
+  @@index([createdAt])
 }
 
 model FaqCategory {
@@ -1193,46 +1251,50 @@ model Faq {
 
   @@index([categoryId])
   @@index([sortOrder])
+  @@index([published])
+  // Composite indexes for common query patterns
+  @@index([categoryId, published, sortOrder]) // For filtered and sorted FAQ listings
 }
 
 model SystemMessage {
-  id        String   @id @default(uuid())
-  localeId  String   @unique
-  published Boolean  @default(false)
+  id        String  @id @default(uuid())
+  localeId  String  @unique
+  published Boolean @default(false)
   message   String
-  createdOn DateTime @default(now())
-
-  Locale Locale @relation(fields: [localeId], references: [id])
+  createdOn BigInt
+  Locale    Locale  @relation(fields: [localeId], references: [id])
 
   @@index([localeId])
   @@index([createdOn])
+  @@index([published])
 }
 
 model StoreNotification {
-  id         String   @id @default(uuid())
-  senderId   String
-  recipentId String
-  storeId    String?
-  subject    String
-  message    String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  sendTries Int       @default(0)
-  sentOn    DateTime?
+  id          String  @id @default(uuid())
+  senderId    String
+  recipientId String
+  storeId     String?
+  subject     String
+  message     String
+  createdAt   BigInt
+  updatedAt   BigInt
+  sendTries   Int     @default(0)
+  sentOn      BigInt?
 
   isRead               Boolean @default(false)
   isDeletedByAuthor    Boolean @default(false)
   isDeletedByRecipient Boolean @default(false)
 
-  Sender   User @relation("NotificationFrom", fields: [senderId], references: [id])
-  Recipent User @relation("NotificationTo", fields: [recipentId], references: [id])
+  Sender    User @relation("NotificationFrom", fields: [senderId], references: [id])
+  Recipient User @relation("NotificationTo", fields: [recipientId], references: [id])
 
   Store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
   @@index([senderId])
-  @@index([recipentId])
+  @@index([recipientId])
+  @@index([sendTries])
+  @@index([createdAt])
   @@index([updatedAt])
 }
 
@@ -1261,22 +1323,23 @@ model MessageTemplateLocalized {
 }
 
 model EmailQueue {
-  id          String    @id @default(uuid())
+  id          String  @id @default(uuid())
   from        String
-  fromName    String    @default("")
+  fromName    String  @default("")
   to          String
-  toName      String    @default("")
-  cc          String    @default("")
-  bcc         String    @default("")
+  toName      String  @default("")
+  cc          String  @default("")
+  bcc         String  @default("")
   subject     String
   textMessage String
   htmMessage  String
-  createdOn   DateTime  @default(now())
-  sendTries   Int       @default(0)
-  sentOn      DateTime?
+  createdOn   BigInt
+  sendTries   Int     @default(0)
+  sentOn      BigInt?
 
   @@index([sendTries])
   @@index([createdOn])
+  @@index([sentOn])
   @@index([from])
   @@index([to])
 }
@@ -1298,28 +1361,31 @@ model SupportTicket {
   status     Int    @default(0)
 
   creator      String
-  createdAt    DateTime @default(now())
+  createdAt    BigInt
   modifier     String
-  lastModified DateTime @updatedAt
-
-  Store     Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Sender    User  @relation("SupportTicketFrom", fields: [senderId], references: [id])
-  Recipient User  @relation("SupportTicketTo", fields: [recipientId], references: [id])
+  lastModified BigInt
+  Store        Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Sender       User   @relation("SupportTicketFrom", fields: [senderId], references: [id])
+  Recipient    User   @relation("SupportTicketTo", fields: [recipientId], references: [id])
 
   parent SupportTicket?  @relation("TicketThread", fields: [threadId], references: [id], onUpdate: Restrict, onDelete: Restrict)
   Thread SupportTicket[] @relation("TicketThread")
 
   @@index([threadId])
-  @@index([lastModified])
   @@index([status])
   @@index([senderId])
   @@index([recipientId])
   @@index([storeId])
+  @@index([createdAt])
+  @@index([lastModified])
+  // Composite indexes for common query patterns
+  @@index([storeId, status]) // For filtered ticket listings
+  @@index([storeId, lastModified]) // For sorted ticket listings
 }
 
 model ContactUs {
-  id           String   @id @default(uuid())
-  ipaddr       String   @db.Char(12)
+  id           String  @id @default(uuid())
+  ipaddr       String  @db.Char(12)
   name         String?
   gender       String?
   phone        String?
@@ -1327,10 +1393,12 @@ model ContactUs {
   inquireType  String?
   subject      String?
   questionBody String?
-  status       Int      @default(0)
-  lastModified DateTime @default(now())
+  status       Int     @default(0)
+  lastModified BigInt
 
   @@index([status])
+  @@index([ipaddr])
+  @@index([lastModified])
 }
 
 /// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.

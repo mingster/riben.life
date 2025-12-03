@@ -3,7 +3,8 @@ import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder } from "@/types";
 import { OrderStatus } from "@/types/enum";
 import logger from "@/lib/logger";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { orderitemview } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
@@ -41,7 +42,7 @@ export async function DELETE(
 		data: {
 			orderStatus: OrderStatus.Voided,
 			// Use UTC for timestamps
-			updatedAt: getUtcNow(),
+			updatedAt: getUtcNowEpoch(),
 		},
 	});
 
@@ -54,6 +55,7 @@ export async function DELETE(
 		logger.info("order deleted", { metadata: { order } });
 	}
 
+	transformPrismaDataForJson(order);
 	return NextResponse.json(order);
 	/*} catch (error) {
     logger.info("product delete", {
@@ -105,7 +107,7 @@ export async function PATCH(
 				orderTotal: updatedOrder.orderTotal,
 
 				// Use UTC for timestamps
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 
@@ -132,6 +134,7 @@ export async function PATCH(
 
 		const result = await getOrderById(params.orderId);
 
+		transformPrismaDataForJson(result);
 		return NextResponse.json(result);
 	} catch (error) {
 		logger.error("order updated", { metadata: { error } });

@@ -32,7 +32,7 @@ const formSchema = z.object({
 	basic_price: z.number(),
 	isDeleted: z.boolean(),
 	isDefault: z.boolean(),
-	shipRequried: z.boolean(),
+	shipRequired: z.boolean(),
 
 	//currencyId   String   @default("twd")
 });
@@ -230,7 +230,7 @@ export const EditClient = ({ initialData }: editProps) => {
 								/>
 								<FormField
 									control={form.control}
-									name="shipRequried"
+									name="shipRequired"
 									render={({ field }) => (
 										<FormItem className="flex flex-row items-center justify-between px-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">

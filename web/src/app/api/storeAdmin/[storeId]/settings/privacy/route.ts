@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import logger from "@/lib/logger";
@@ -21,7 +22,7 @@ export async function PATCH(
 			where: {
 				storeId: params.storeId,
 			},
-			update: { ...body, updatedAt: getUtcNow() },
+			update: { ...body, updatedAt: getUtcNowEpoch() },
 			create: {
 				...body,
 				storeId: params.storeId,
@@ -30,6 +31,7 @@ export async function PATCH(
 
 		//console.log(`storeSettings: ${JSON.stringify(storeSettings)}`);
 
+		transformPrismaDataForJson(storeSettings);
 		return NextResponse.json(storeSettings);
 	} catch (error) {
 		logger.info("store patch", {

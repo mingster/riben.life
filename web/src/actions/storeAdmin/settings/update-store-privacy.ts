@@ -6,7 +6,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 export const updateStorePrivacyAction = storeActionClient
 	.metadata({ name: "updateStorePrivacy" })
@@ -39,12 +39,14 @@ export const updateStorePrivacyAction = storeActionClient
 			update: {
 				privacyPolicy: privacyPolicy ?? "",
 				tos: tos ?? "",
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 			create: {
 				storeId,
 				privacyPolicy: privacyPolicy ?? "",
 				tos: tos ?? "",
+				createdAt: getUtcNowEpoch(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 

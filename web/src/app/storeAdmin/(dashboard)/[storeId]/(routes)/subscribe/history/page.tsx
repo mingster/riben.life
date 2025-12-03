@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { SubscriptionStatus } from "@/types/enum";
 import logger from "@/lib/logger";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { SubscriptionHistoryClient } from "./client";
 import { getStoreWithRelations } from "@/lib/store-access";
 import { redirect } from "next/navigation";
@@ -34,7 +34,7 @@ export default async function StoreSubscriptionHistoryPage(props: {
 
 	const store = storeResult;
 
-	transformDecimalsToNumbers(payments);
+	transformPrismaDataForJson(payments);
 
 	// Get Stripe subscription schedule if exists
 	let subscriptionSchedule = null;

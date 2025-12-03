@@ -25,7 +25,7 @@ import { ClipLoader } from "react-spinners";
 import Currency from "@/components/currency";
 import { DisplayOrderStatus } from "@/components/display-order-status";
 import { Button } from "@/components/ui/button";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -177,7 +177,13 @@ export const OrderUnpaid = ({
 
 									<TableCell className="hidden lg:table-cell text-xs">
 										{/*format(getDateInTz(new Date(order.updatedAt), store.defaultTimezone), "yyyy-MM-dd HH:mm:ss")*/}
-										{formatDateTime(order.updatedAt)}
+										{formatDateTime(
+											typeof order.updatedAt === "number"
+												? (epochToDate(BigInt(order.updatedAt)) ?? new Date())
+												: order.updatedAt instanceof Date
+													? order.updatedAt
+													: new Date(),
+										)}
 									</TableCell>
 
 									<TableCell className="text-right text-2xl font-extrabold">

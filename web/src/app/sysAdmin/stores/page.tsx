@@ -1,6 +1,6 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 import { redirect } from "next/navigation";
 import type { StoreColumn } from "./components/columns";
 import { StoresClient } from "./components/stores-client";
@@ -48,7 +48,7 @@ export default async function StoreAdminPage(props: {
 		name: item.name || "",
 		customDomain: item.customDomain || "",
 		owner: item.Owner.email || item.Owner.name || "",
-		createdAt: formatDateTime(item.updatedAt),
+		createdAt: formatDateTime(epochToDate(item.updatedAt) ?? new Date()),
 		products: item._count.Products,
 		storeOrders: item._count.StoreOrders,
 	}));

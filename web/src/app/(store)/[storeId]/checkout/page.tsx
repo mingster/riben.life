@@ -2,7 +2,7 @@ import getStoreWithCategories from "@/actions/get-store";
 import getCurrentUser from "@/actions/user/get-current-user";
 import Container from "@/components/ui/container";
 import type { Store } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import { Checkout } from "./client";
 
@@ -25,7 +25,7 @@ export default async function StoreCheckoutPage(props: {
 		redirect("/unv");
 	}
 
-	transformDecimalsToNumbers(user);
+	transformPrismaDataForJson(user);
 
 	return (
 		<Container>

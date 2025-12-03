@@ -1,5 +1,5 @@
 import type { StoreAnnouncement } from "@prisma/client";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 
 export interface AnnouncementColumn {
 	id: string;
@@ -18,8 +18,12 @@ export const mapAnnouncementToColumn = (
 	id: announcement.id,
 	storeId,
 	message: announcement.message ?? "",
-	updatedAt: formatDateTime(announcement.updatedAt),
-	createdAt: formatDateTime(announcement.createdAt),
-	updatedAtIso: announcement.updatedAt.toISOString(),
-	createdAtIso: announcement.createdAt.toISOString(),
+	updatedAt: formatDateTime(epochToDate(announcement.updatedAt) ?? new Date()),
+	createdAt: formatDateTime(epochToDate(announcement.createdAt) ?? new Date()),
+	updatedAtIso:
+		epochToDate(announcement.updatedAt)?.toISOString() ??
+		new Date().toISOString(),
+	createdAtIso:
+		epochToDate(announcement.createdAt)?.toISOString() ??
+		new Date().toISOString(),
 });

@@ -8,7 +8,7 @@ export const updateStorePaidOptionsSchema = z.object({
 	logo: z.string().optional().nullable(),
 	logoPublicId: z.string().optional().nullable(),
 	acceptAnonymousOrder: z.boolean().optional(),
-	defaultTimezone: z.number().optional(),
+	defaultTimezone: z.string().optional(),
 });
 
 export type UpdateStorePaidOptionsInput = z.infer<

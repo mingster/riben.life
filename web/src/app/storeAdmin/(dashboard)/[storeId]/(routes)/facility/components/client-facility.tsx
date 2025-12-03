@@ -12,27 +12,27 @@ import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import axios from "axios";
 import { useParams } from "next/navigation";
-import { useRouter } from "next/navigation";
 
-import type { TableColumn } from "../table-column";
+import type { StoreFacility } from "@/types";
+
+import { mapFacilityToColumn } from "../table-column";
 import { BulkAddFacilitiesDialog } from "./bulk-add-facilities-dialog";
 import { createTableColumns } from "./columns";
 import { EditFacilityDialog } from "./edit-facility-dialog";
 import { ImportFacilityDialog } from "./import-facility-dialog";
 
 interface TableClientProps {
-	serverData: TableColumn[];
+	serverData: StoreFacility[];
 }
 
 export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 	const params = useParams<{ storeId: string }>();
-	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
 	const [exporting, setExporting] = useState(false);
 
-	const sortTables = useCallback((tables: TableColumn[]) => {
+	const sortTables = useCallback((tables: StoreFacility[]) => {
 		return [...tables].sort((a, b) =>
 			a.facilityName.localeCompare(b.facilityName, undefined, {
 				numeric: true,
@@ -41,14 +41,16 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 		);
 	}, []);
 
-	const [data, setData] = useState<TableColumn[]>(() => sortTables(serverData));
+	const [data, setData] = useState<StoreFacility[]>(() =>
+		sortTables(serverData.map(mapFacilityToColumn)),
+	);
 
 	useEffect(() => {
-		setData(sortTables(serverData));
+		setData(sortTables(serverData.map(mapFacilityToColumn)));
 	}, [serverData, sortTables]);
 
 	const handleCreated = useCallback(
-		(newTable: TableColumn) => {
+		(newTable: StoreFacility) => {
 			if (!newTable) return;
 			setData((prev) => {
 				const exists = prev.some((item) => item.id === newTable.id);
@@ -60,7 +62,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 	);
 
 	const handleBulkCreated = useCallback(
-		(newTables: TableColumn[]) => {
+		(newTables: StoreFacility[]) => {
 			if (!newTables?.length) return;
 			setData((prev) => {
 				const existingIds = new Set(prev.map((item) => item.id));
@@ -79,7 +81,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 	}, []);
 
 	const handleUpdated = useCallback(
-		(updated: TableColumn) => {
+		(updated: StoreFacility) => {
 			if (!updated) return;
 			setData((prev) => {
 				const next = prev.map((item) =>
@@ -131,9 +133,37 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 		setExporting(false);
 	}, [params.storeId, t]);
 
-	const handleImported = useCallback(() => {
-		router.refresh();
-	}, [router]);
+	const handleImported = useCallback(async () => {
+		try {
+			// Fetch updated facilities from server using GET API endpoint
+			const response = await fetch(
+				`/api/storeAdmin/${params.storeId}/facilities`,
+				{
+					method: "GET",
+				},
+			);
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({
+					error: `HTTP ${response.status}: ${response.statusText}`,
+				}));
+				throw new Error(errorData.error || "Failed to fetch facilities");
+			}
+
+			const facilities: StoreFacility[] = await response.json();
+
+			// Update client-side data with fetched facilities
+			setData(sortTables(facilities));
+		} catch (error) {
+			toastError({
+				title: t("error_title"),
+				description:
+					error instanceof Error
+						? error.message
+						: "Failed to refresh facilities after import",
+			});
+		}
+	}, [params.storeId, sortTables, t]);
 
 	const columns = useMemo(
 		() =>
@@ -148,7 +178,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("Facility_mgmt")}
+					title={t("facility_mgmt")}
 					badge={data.length}
 					description=""
 				/>
@@ -181,7 +211,7 @@ export const FacilityClient: React.FC<TableClientProps> = ({ serverData }) => {
 				</div>
 			</div>
 			<Separator />
-			<DataTable<TableColumn, unknown>
+			<DataTable<StoreFacility, unknown>
 				columns={columns}
 				data={data}
 				searchKey="facilityName"

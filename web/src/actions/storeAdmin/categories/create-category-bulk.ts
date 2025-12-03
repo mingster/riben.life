@@ -4,6 +4,7 @@ import { mapCategoryToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(rou
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import { createCategoriesSchema } from "./create-category-bulk.validation";
 
@@ -39,6 +40,8 @@ export const createStoreCategoriesAction = storeActionClient
 					name,
 					isFeatured: isFeatured ?? true,
 					sortOrder: currentSortOrder,
+					createdAt: getUtcNowEpoch(),
+					updatedAt: getUtcNowEpoch(),
 				},
 				include: {
 					ProductCategories: true,

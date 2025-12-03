@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 import { checkAdminAccess } from "../admin-utils";
 import type { DataColumn } from "./components/columns";
 import { DataClient } from "./components/data-client";
@@ -31,7 +31,7 @@ export default async function PayMethodAdminPage(props: {
 		},
 	});
 
-	transformDecimalsToNumbers(methods);
+	transformPrismaDataForJson(methods);
 
 	// Map methods to UI format
 	const formattedData: DataColumn[] = methods.map((item) => ({
@@ -44,7 +44,9 @@ export default async function PayMethodAdminPage(props: {
 		clearDays: Number(item.clearDays),
 		isDefault: item.isDefault,
 		isDeleted: item.isDeleted,
-		updatedAt: formatDateTime(item.updatedAt),
+		updatedAt: formatDateTime(
+			epochToDate(BigInt(item.updatedAt)) ?? new Date(),
+		),
 		StorePaymentMethodMapping: item._count.StorePaymentMethodMapping,
 		StoreOrder: item._count.StoreOrder,
 	}));

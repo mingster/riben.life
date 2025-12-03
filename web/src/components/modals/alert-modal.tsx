@@ -34,8 +34,8 @@ export const AlertModal: React.FC<AlertModalProps> = ({
 
 	return (
 		<Modal
-			title={t("Alert_title")}
-			description={t("Alert_descr")}
+			title={t("alert_title")}
+			description={t("alert_descr")}
 			isOpen={isOpen}
 			onClose={onClose}
 		>

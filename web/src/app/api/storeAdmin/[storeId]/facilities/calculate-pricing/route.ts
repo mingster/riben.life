@@ -2,7 +2,7 @@ import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { format } from "date-fns";
 
 export async function POST(

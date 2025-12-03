@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import BusinessHours from "@/lib/businessHours";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { StoreSettings, StoreFacility } from "@prisma/client";
 import { redirect } from "next/navigation";
 import getStoreWithProducts from "@/actions/get-store-with-products";
@@ -35,13 +35,13 @@ export default async function TableOrderPage(props: {
 		redirect("/unv");
 	}
 
-	transformDecimalsToNumbers(store);
+	transformPrismaDataForJson(store);
 	if (storeSettings) {
-		transformDecimalsToNumbers(storeSettings);
+		transformPrismaDataForJson(storeSettings);
 	}
 
 	if (facility) {
-		transformDecimalsToNumbers(facility);
+		transformPrismaDataForJson(facility);
 	}
 
 	let closed_descr = "";

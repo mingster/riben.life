@@ -216,7 +216,9 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 									name="name"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("name")}</FormLabel>
+											<FormLabel>
+												{t("name")} <span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
@@ -233,7 +235,9 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 									name="email"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("email")}</FormLabel>
+											<FormLabel>
+												{t("email")} <span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
@@ -288,7 +292,10 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 									name="locale"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("account_tabs_language")}</FormLabel>
+											<FormLabel>
+												{t("account_tabs_language")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
 												<Select
 													disabled={loading || form.formState.isSubmitting}
@@ -312,7 +319,10 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 									name="timezone"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("timezone")}</FormLabel>
+											<FormLabel>
+												{t("timezone")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
 												<TimezoneSelect
 													value={field.value}
@@ -330,7 +340,10 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 									name="memberRole"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("user_role")}</FormLabel>
+											<FormLabel>
+												{t("user_role")}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
 											<FormControl>
 												<div>
 													<MemberRoleCombobox

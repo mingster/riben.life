@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import logger from "@/lib/logger";
 import { z } from "zod";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
 
 // Validation schema for incoming logs
 const LogEntrySchema = z.object({
@@ -121,6 +121,7 @@ export async function GET(request: NextRequest) {
 	return NextResponse.json({
 		status: "healthy",
 		service: "log-drain",
-		timestamp: getUtcNow().toISOString(),
+		timestamp:
+			epochToDate(getUtcNowEpoch())?.toISOString() || new Date().toISOString(),
 	});
 }

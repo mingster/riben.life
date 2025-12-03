@@ -29,19 +29,14 @@ export async function populateLocaleData() {
 					defaultCurrencyId: locale.defaultCurrencyId,
 				},
 			});
-
-			logger.info("locale", {
-				tags: ["action"],
-			});
 		} catch (err) {
-			logger.info("Operation log", {
-				tags: ["action"],
-			});
-			logger.error("Operation log", {
-				tags: ["action", "error"],
+			logger.error("Error creating locale", {
+				tags: ["action", "error", "locale"],
+				metadata: {
+					error: err instanceof Error ? err.message : String(err),
+				},
 			});
 		}
 	}
-
 	return true;
 }

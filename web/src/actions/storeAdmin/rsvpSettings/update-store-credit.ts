@@ -6,9 +6,9 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { getStoreWithRelations } from "@/lib/store-access";
 import { Store } from "@/types";
 
@@ -56,12 +56,12 @@ export const updateStoreCreditAction = storeActionClient
 				creditMaxPurchase: new Prisma.Decimal(creditMaxPurchase),
 				creditMinPurchase: new Prisma.Decimal(creditMinPurchase),
 				creditExpiration,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 
 		const store = await getStoreWithRelations(updated.id, {});
-		transformDecimalsToNumbers(store as Store);
+		transformPrismaDataForJson(store as Store);
 
 		return { store: store as Store };
 	});

@@ -9,7 +9,7 @@ import { processCreditTopUp } from "@/lib/credit-bonus";
 import { rechargeCustomerCreditSchema } from "./recharge-customer-credit.validation";
 import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
 import { Prisma } from "@prisma/client";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 export const rechargeCustomerCreditAction = storeActionClient
 	.metadata({ name: "rechargeCustomerCredit" })
@@ -122,9 +122,9 @@ export const rechargeCustomerCreditAction = storeActionClient
 					orderStatus: OrderStatus.Confirmed,
 					paymentStatus: PaymentStatus.Paid,
 					isPaid: true,
-					paidDate: getUtcNow(),
-					createdAt: getUtcNow(),
-					updatedAt: getUtcNow(),
+					paidDate: getUtcNowEpoch(),
+					createdAt: getUtcNowEpoch(),
+					updatedAt: getUtcNowEpoch(),
 				},
 			});
 			orderId = order.id;
@@ -167,8 +167,8 @@ export const rechargeCustomerCreditAction = storeActionClient
 					description: `In-Person Credit Recharge - ${result.totalCredit} points`,
 					note: `Cash payment: ${cashAmount} ${store.defaultCurrency}. Credit given: ${result.amount} + bonus ${result.bonus} = ${result.totalCredit} points. Operator: ${creatorId}. ${note || ""}`,
 					createdBy: creatorId, // Store operator who created this ledger entry
-					availability: getUtcNow(), // Immediate for cash
-					createdAt: getUtcNow(),
+					availability: getUtcNowEpoch(), // Immediate for cash
+					createdAt: getUtcNowEpoch(),
 				},
 			});
 		} else {
@@ -187,9 +187,9 @@ export const rechargeCustomerCreditAction = storeActionClient
 					orderStatus: OrderStatus.Confirmed,
 					paymentStatus: PaymentStatus.Paid,
 					isPaid: true,
-					paidDate: getUtcNow(),
-					createdAt: getUtcNow(),
-					updatedAt: getUtcNow(),
+					paidDate: getUtcNowEpoch(),
+					createdAt: getUtcNowEpoch(),
+					updatedAt: getUtcNowEpoch(),
 				},
 			});
 
@@ -207,8 +207,8 @@ export const rechargeCustomerCreditAction = storeActionClient
 					description: `Promotional Credit Recharge - ${result.totalCredit} points`,
 					note: `Promotional credit: ${result.amount} + bonus ${result.bonus} = ${result.totalCredit} points. Operator: ${creatorId}. ${note || ""}`,
 					createdBy: creatorId, // Store operator who created this ledger entry
-					availability: getUtcNow(),
-					createdAt: getUtcNow(),
+					availability: getUtcNowEpoch(),
+					createdAt: getUtcNowEpoch(),
 				},
 			});
 		}

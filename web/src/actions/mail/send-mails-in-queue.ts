@@ -1,5 +1,5 @@
 import { sendMail } from "./send-mail";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 
@@ -68,7 +68,7 @@ export const sendMailsInQueue = async (
 						// Update as sent
 						await sqlClient.emailQueue.update({
 							where: { id: email.id },
-							data: { sentOn: getUtcNow() },
+							data: { sentOn: getUtcNowEpoch() },
 						});
 
 						return {

@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../api_helper";
 import logger from "@/lib/logger";
@@ -20,10 +21,11 @@ export async function PATCH(
 			},
 			data: {
 				...body,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj);
 	} catch (error) {
 		logger.info("patch", {

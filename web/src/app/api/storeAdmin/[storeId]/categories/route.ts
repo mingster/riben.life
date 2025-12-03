@@ -1,6 +1,7 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
 import logger from "@/lib/logger";
@@ -23,12 +24,14 @@ export async function POST(
 			data: {
 				storeId: params.storeId,
 				...body,
-				updatedAt: getUtcNow(),
+				createdAt: getUtcNowEpoch(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 
 		//console.log(`create category: ${JSON.stringify(obj)}`);
 
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj);
 	} catch (error) {
 		logger.info("category post", {
@@ -73,7 +76,8 @@ export async function PATCH(
 					name: name_array[i],
 					isFeatured,
 					sortOrder: i + sort + 1,
-					updatedAt: getUtcNow(),
+					createdAt: getUtcNowEpoch(),
+					updatedAt: getUtcNowEpoch(),
 				},
 			});
 		}

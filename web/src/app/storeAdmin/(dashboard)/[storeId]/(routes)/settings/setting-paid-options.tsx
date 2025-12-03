@@ -34,6 +34,7 @@ import { StoreSettings } from "@prisma/client";
 import { Store } from "@/types";
 import { updateStorePaidOptionsAction } from "@/actions/storeAdmin/settings/update-store-paid-options";
 import type { UpdateStorePaidOptionsInput } from "@/actions/storeAdmin/settings/update-store-paid-options.validation";
+import { TimezoneSelect } from "@/components/timezone-select";
 
 const formSchema = z.object({
 	customDomain: z.string().optional().default(""),
@@ -43,7 +44,7 @@ const formSchema = z.object({
 	logo: z.string().optional().default(""),
 	logoPublicId: z.string().default("").optional().default(""),
 	acceptAnonymousOrder: z.boolean().optional().default(true),
-	defaultTimezone: z.number().optional().default(8),
+	defaultTimezone: z.string().optional().default("Asia/Taipei"),
 });
 
 type formValues = z.infer<typeof formSchema>;
@@ -128,9 +129,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 				logoPublicId: data.logoPublicId ?? "",
 				acceptAnonymousOrder: data.acceptAnonymousOrder ?? true,
 				defaultTimezone:
-					typeof data.defaultTimezone === "number"
-						? data.defaultTimezone
-						: Number(data.defaultTimezone ?? store.defaultTimezone ?? 0),
+					data.defaultTimezone ?? store.defaultTimezone ?? "Asia/Taipei",
 			};
 
 			const result = await updateStorePaidOptionsAction(
@@ -280,16 +279,14 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 										<FormItem>
 											<FormLabel className="">Timezone</FormLabel>
 											<FormControl>
-												<Input
-													type="number"
+												<TimezoneSelect
+													value={field.value ?? "Asia/Taipei"}
+													onValueChange={field.onChange}
 													disabled={
 														loading ||
 														form.formState.isSubmitting ||
 														disablePaidOptions
 													}
-													className="font-mono"
-													placeholder=""
-													{...field}
 												/>
 											</FormControl>
 											<FormMessage />

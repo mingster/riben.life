@@ -151,7 +151,10 @@ export function BulkAddCategoriesDialog({
 							name="names"
 							render={({ field, fieldState }) => (
 								<FormItem>
-									<FormLabel>{t("Category_names")}</FormLabel>
+									<FormLabel>
+										{t("Category_names")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Textarea
 											disabled={loading || form.formState.isSubmitting}

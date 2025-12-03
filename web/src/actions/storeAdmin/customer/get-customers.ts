@@ -4,6 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import type { User } from "@/types";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { getCustomersSchema } from "./get-customers.validation";
 
 // consume storeActionClient to ensure user is a member of the store
@@ -68,6 +69,8 @@ export const getCustomersAction = storeActionClient
 				memberRole: member?.role || "",
 			} as User & { memberRole: string };
 		});
+
+		transformPrismaDataForJson(usersWithRole);
 
 		return {
 			users: usersWithRole,

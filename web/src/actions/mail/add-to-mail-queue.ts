@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { EmailQueue } from "@/types";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { loadOuterHtmTemplate } from "./load-outer-htm-template";
 
 // add a new email to the mail queue
@@ -39,7 +39,7 @@ export const addToMailQueue = async (
 			htmMessage: htmMessage,
 			cc: cc || "",
 			bcc: bcc || "",
-			createdOn: getUtcNow(),
+			createdOn: getUtcNowEpoch(),
 			sendTries: 0,
 		},
 	})) as EmailQueue;

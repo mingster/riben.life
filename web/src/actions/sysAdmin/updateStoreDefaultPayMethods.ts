@@ -1,7 +1,6 @@
 "use server";
-import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
+import { sqlClient } from "@/lib/prismadb";
 
 export const updateStoreDefaultPayMethods = async () => {
 	// add default payment methods to all store that does not have the payment methods yet
@@ -32,7 +31,11 @@ export const updateStoreDefaultPayMethods = async () => {
 			});
 		}
 	}
-	logger.info("default payment method updated.", {
-		tags: ["action"],
+	logger.info("Default payment method updated.", {
+		tags: ["action", "success", "updateStoreDefaultPayMethods"],
+		metadata: {
+			stores: stores.length,
+			defaultPaymentMethods: defaultPaymentMethods.length,
+		},
 	});
 };

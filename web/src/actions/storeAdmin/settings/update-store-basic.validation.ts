@@ -6,6 +6,7 @@ export const updateStoreBasicSchema = z.object({
 	defaultLocale: z.string().min(1),
 	defaultCountry: z.string().min(1),
 	defaultCurrency: z.string().min(1),
+	defaultTimezone: z.string().optional().default("Asia/Taipei"),
 	autoAcceptOrder: z.boolean().optional().default(false),
 	isOpen: z.boolean().optional().default(false),
 	acceptAnonymousOrder: z.boolean().optional().default(true),

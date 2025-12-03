@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import type { FaqCategory } from "@/types";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
 
@@ -16,7 +17,7 @@ export async function GET(req: Request) {
 			},
 		})) as FaqCategory[];
 
-		//transformBigIntToNumbers(messages);
+		transformPrismaDataForJson(messages);
 
 		return NextResponse.json(messages);
 	} catch (error) {

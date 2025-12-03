@@ -36,7 +36,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreFacility, User, Rsvp } from "@/types";
 import type { RsvpSettings } from "@prisma/client";
-import { getDateInTz } from "@/utils/datetime-utils";
+import {
+	getDateInTz,
+	getOffsetHours,
+	convertStoreTimezoneToUtc,
+} from "@/utils/datetime-utils";
 import { format } from "date-fns";
 
 interface ReservationFormProps {
@@ -47,7 +51,7 @@ interface ReservationFormProps {
 	defaultRsvpTime?: Date;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
 	hideCard?: boolean;
-	storeTimezone?: number;
+	storeTimezone?: string;
 }
 
 export function ReservationForm({
@@ -58,7 +62,7 @@ export function ReservationForm({
 	defaultRsvpTime,
 	onReservationCreated,
 	hideCard = false,
-	storeTimezone = 8,
+	storeTimezone = "Asia/Taipei",
 }: ReservationFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const params = useParams();
@@ -99,6 +103,7 @@ export function ReservationForm({
 		setIsSubmitting(true);
 
 		try {
+			// Pass Date object directly - safe-action will handle serialization
 			const result = await createReservationAction(data);
 
 			if (result?.serverError) {
@@ -160,7 +165,9 @@ export function ReservationForm({
 							name="rsvpTime"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("rsvp_time")}</FormLabel>
+									<FormLabel>
+										{t("rsvp_time")} <span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="datetime-local"
@@ -168,21 +175,46 @@ export function ReservationForm({
 											value={
 												field.value
 													? (() => {
-															// Convert UTC date to store timezone for display
-															const utcDate =
-																field.value instanceof Date
-																	? field.value
-																	: new Date(field.value);
-															const storeTzDate = getDateInTz(
-																utcDate,
-																storeTimezone,
-															);
-															return format(storeTzDate, "yyyy-MM-dd'T'HH:mm");
+															try {
+																// Convert UTC date to store timezone for display
+																const utcDate =
+																	field.value instanceof Date
+																		? field.value
+																		: new Date(field.value);
+
+																// Validate date
+																if (Number.isNaN(utcDate.getTime())) {
+																	return "";
+																}
+
+																const storeTzDate = getDateInTz(
+																	utcDate,
+																	getOffsetHours(storeTimezone),
+																);
+
+																// Validate converted date
+																if (Number.isNaN(storeTzDate.getTime())) {
+																	return "";
+																}
+
+																return format(
+																	storeTzDate,
+																	"yyyy-MM-dd'T'HH:mm",
+																);
+															} catch (error) {
+																console.error("Error formatting date:", error);
+																return "";
+															}
 														})()
 													: ""
 											}
 											onChange={(e) => {
-												field.onChange(new Date(e.target.value));
+												// Convert datetime-local string (interpreted as store timezone) to UTC
+												const utcDate = convertStoreTimezoneToUtc(
+													e.target.value,
+													storeTimezone,
+												);
+												field.onChange(utcDate);
 											}}
 										/>
 									</FormControl>
@@ -199,7 +231,10 @@ export function ReservationForm({
 							name="numOfAdult"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("rsvp_num_of_adult")}</FormLabel>
+									<FormLabel>
+										{t("rsvp_num_of_adult")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"

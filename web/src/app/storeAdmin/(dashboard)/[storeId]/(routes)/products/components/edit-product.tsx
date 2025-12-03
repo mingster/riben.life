@@ -246,7 +246,10 @@ export const EditProduct: React.FC<EditProductProps> = ({
 							name="name"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Product_name")}</FormLabel>
+									<FormLabel>
+										{t("Product_name")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											placeholder={t("input_placeholder1") + t("Product_name")}
@@ -286,7 +289,10 @@ export const EditProduct: React.FC<EditProductProps> = ({
 								name="price"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("Product_price")}</FormLabel>
+										<FormLabel>
+											{t("Product_price")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Input
 												type="number"

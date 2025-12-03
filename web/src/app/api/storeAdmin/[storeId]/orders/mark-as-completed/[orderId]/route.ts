@@ -1,7 +1,7 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
 import { OrderStatus } from "@/types/enum";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
 
@@ -76,7 +76,7 @@ export async function POST(
 			data: {
 				orderStatus: OrderStatus.Completed,
 				// Use UTC for timestamps
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 

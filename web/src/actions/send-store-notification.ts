@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import nodemailer from "nodemailer";
 
@@ -7,7 +7,7 @@ const notificationObj = Prisma.validator<Prisma.StoreNotificationDefaultArgs>()(
 	{
 		include: {
 			Sender: true,
-			Recipent: true,
+			Recipient: true,
 		},
 	},
 );
@@ -75,11 +75,11 @@ export async function sendStoreNotification(mailtoSend: StoreNotification) {
 	if (mailtoSend.id === null) return;
 	if (mailtoSend === null) return;
 	if (mailtoSend.Sender.email === null) return;
-	if (mailtoSend.Recipent.email === null) return;
+	if (mailtoSend.Recipient.email === null) return;
 
 	const result = await sendMail(
 		"support@riben.life",
-		mailtoSend.Recipent.email,
+		mailtoSend.Recipient.email,
 		mailtoSend.subject,
 		mailtoSend.message,
 	);
@@ -91,7 +91,7 @@ export async function sendStoreNotification(mailtoSend: StoreNotification) {
 				id: mailtoSend.id,
 			},
 			data: {
-				sentOn: getUtcNow(),
+				sentOn: getUtcNowEpoch(),
 				sendTries: mailtoSend.sendTries + 1,
 			},
 		});

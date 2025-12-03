@@ -823,7 +823,7 @@ Completed (50) [when service is finished]
 - Unique resource ID
 - Store ID
 - Resource name (unique, stored as facilityName in database)
-- Capacity (number of people/seats or service capacity)
+- capacity (number of people/seats or service capacity)
 
 ### 4.4 Customer Credit Data Model
 

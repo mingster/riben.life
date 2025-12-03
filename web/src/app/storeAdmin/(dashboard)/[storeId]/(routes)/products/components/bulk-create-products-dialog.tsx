@@ -159,7 +159,10 @@ export function BulkCreateProductsDialog({
 							name="rawEntries"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Product_names")}</FormLabel>
+									<FormLabel>
+										{t("Product_names")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Textarea
 											placeholder={t("Product_names_descr")}
@@ -181,7 +184,10 @@ export function BulkCreateProductsDialog({
 							name="status"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Product_status")}</FormLabel>
+									<FormLabel>
+										{t("Product_status")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<ProductStatusCombobox
 											disabled={loading}

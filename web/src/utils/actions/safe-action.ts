@@ -93,6 +93,26 @@ export const storeActionClient = baseClient
 	.use(async ({ next, metadata, bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
 
+		// Validate storeId is not "error" or other invalid values
+		if (
+			!storeId ||
+			typeof storeId !== "string" ||
+			storeId.trim() === "" ||
+			storeId.toLowerCase() === "error" ||
+			storeId.toLowerCase() === "undefined" ||
+			storeId.toLowerCase() === "null"
+		) {
+			logger.error("Invalid storeId provided", {
+				metadata: {
+					storeId: String(storeId),
+					actionName: metadata?.name,
+					bindArgsClientInputs,
+				},
+				tags: ["action", "validation", "error"],
+			});
+			throw new SafeError("Invalid storeId provided");
+		}
+
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
 			select: { id: true, organizationId: true, ownerId: true },

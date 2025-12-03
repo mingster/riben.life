@@ -1,7 +1,7 @@
 import Container from "@/components/ui/container";
 import BusinessHours from "@/lib/businessHours";
 
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 import { redirect } from "next/navigation";
 import { StoreHomeContent } from "./components/store-home-content";
@@ -58,14 +58,14 @@ export default async function StoreHomePage(props: {
 			redirect("/unv");
 		}
 
-		transformDecimalsToNumbers(store);
+		transformPrismaDataForJson(store);
 
-		// Transform decimals for settings if they exist
+		// Transform BigInt (epoch timestamps) and Decimal for settings if they exist
 		if (rsvpSettings) {
-			transformDecimalsToNumbers(rsvpSettings);
+			transformPrismaDataForJson(rsvpSettings);
 		}
 		if (storeSettings) {
-			transformDecimalsToNumbers(storeSettings);
+			transformPrismaDataForJson(storeSettings);
 		}
 	} catch (error) {
 		logger.error("Failed to load store or settings", {

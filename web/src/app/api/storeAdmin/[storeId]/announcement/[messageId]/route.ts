@@ -1,7 +1,8 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import logger from "@/lib/logger";
@@ -24,11 +25,12 @@ export async function PATCH(
 			where: {
 				id: params.messageId,
 			},
-			data: { ...body, updatedAt: getUtcNow() },
+			data: { ...body, updatedAt: getUtcNowEpoch() },
 		});
 
 		//console.log(`update announcement: ${JSON.stringify(obj)}`);
 
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj);
 	} catch (error) {
 		logger.info("storeannouncement patch", {
@@ -65,6 +67,7 @@ export async function DELETE(
 
 	//console.log(`delete announcement: ${JSON.stringify(obj)}`);
 
+	transformPrismaDataForJson(obj);
 	return NextResponse.json(obj);
 	/*
   } catch (error) {

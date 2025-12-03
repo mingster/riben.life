@@ -1,11 +1,15 @@
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { StoreOrder } from "@prisma/client";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
-import { getUtcNow } from "@/utils/datetime-utils";
+import {
+	getUtcNowEpoch,
+	epochToDate,
+	dateToEpoch,
+} from "@/utils/datetime-utils";
 
 type Params = Promise<{ storeId: string }>;
 
@@ -49,7 +53,7 @@ export async function POST(
 			})) as StoreOrder[];
 
 			if (orders.length > 0) {
-				transformDecimalsToNumbers(orders);
+				transformPrismaDataForJson(orders);
 				//revalidatePath("/order");
 
 				return NextResponse.json(orders);
@@ -65,7 +69,8 @@ export async function POST(
 
 		if (userId) {
 			// Use UTC for date calculations
-			const now = getUtcNow();
+			const nowEpoch = getUtcNowEpoch();
+			const now = epochToDate(nowEpoch)!;
 			const todayStart = new Date(
 				Date.UTC(
 					now.getUTCFullYear(),
@@ -82,7 +87,7 @@ export async function POST(
 					userId: userId,
 					//updateAt = today (UTC)
 					updatedAt: {
-						gte: todayStart,
+						gte: dateToEpoch(todayStart) ?? BigInt(0),
 					},
 				},
 				include: {
@@ -100,7 +105,7 @@ export async function POST(
 					updatedAt: "desc",
 				},
 			})) as StoreOrder[];
-			transformDecimalsToNumbers(orders);
+			transformPrismaDataForJson(orders);
 
 			return NextResponse.json(orders);
 		}

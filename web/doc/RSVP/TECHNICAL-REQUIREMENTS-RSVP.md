@@ -594,7 +594,7 @@ For Google Actions Center Appointments Redirect integration:
 #### 7.1.9 Facility Mapping
 
 - **Map Facilities:** Map each store's facilities to Google reservation slots/services (per store)
-- **Capacity Mapping:** Ensure facility capacity aligns with Google slot/service configuration per store
+- **capacity Mapping:** Ensure facility capacity aligns with Google slot/service configuration per store
 - **Dynamic Mapping:** Support adding/removing facilities without breaking Google integration connection per store
 - **Store-Specific Mapping:** Each store maintains its own facility-to-slot/service mapping independent of other stores
 - **Feed Mapping:** For feed-based integration, map facilities to feed service entities

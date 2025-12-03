@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
 
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 			where: { customDomain: customDomain },
 		});
 
-		transformDecimalsToNumbers(store);
+		transformPrismaDataForJson(store);
 
 		return NextResponse.json(store);
 	} catch (error) {

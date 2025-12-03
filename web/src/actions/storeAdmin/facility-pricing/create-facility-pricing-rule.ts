@@ -5,6 +5,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import { createFacilityPricingRuleSchema } from "./create-facility-pricing-rule.validation";
 
@@ -65,6 +66,8 @@ export const createFacilityPricingRuleAction = storeActionClient
 							? new Prisma.Decimal(credit)
 							: null,
 					isActive,
+					createdAt: getUtcNowEpoch(),
+					updatedAt: getUtcNowEpoch(),
 				},
 			});
 

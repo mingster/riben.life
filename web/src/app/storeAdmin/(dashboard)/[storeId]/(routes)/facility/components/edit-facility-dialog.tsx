@@ -1,5 +1,12 @@
 "use client";
 
+import { createFacilityAction } from "@/actions/storeAdmin/facility/create-facility";
+import { createFacilitySchema } from "@/actions/storeAdmin/facility/create-facility.validation";
+import { updateFacilityAction } from "@/actions/storeAdmin/facility/update-facility";
+import {
+	updateFacilitySchema,
+	type UpdateFacilityInput,
+} from "@/actions/storeAdmin/facility/update-facility.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -23,30 +30,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
+import type { StoreFacility } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
-import type { TableColumn } from "../table-column";
-import { createFacilityAction } from "@/actions/storeAdmin/facility/create-facility";
-import { updateFacilityAction } from "@/actions/storeAdmin/facility/update-facility";
-import {
-	createFacilitySchema,
-	type CreateFacilityInput,
-} from "@/actions/storeAdmin/facility/create-facility.validation";
-import {
-	updateFacilitySchema,
-	type UpdateFacilityInput,
-} from "@/actions/storeAdmin/facility/update-facility.validation";
 
 interface EditFacilityDialogProps {
-	facility?: TableColumn | null;
+	facility?: StoreFacility | null;
 	isNew?: boolean;
 	trigger?: React.ReactNode;
-	onCreated?: (facility: TableColumn) => void;
-	onUpdated?: (facility: TableColumn) => void;
+	onCreated?: (facility: StoreFacility) => void;
+	onUpdated?: (facility: StoreFacility) => void;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 }
@@ -82,6 +78,9 @@ export function EditFacilityDialog({
 				defaultCredit: 0,
 				defaultDuration: 60,
 				businessHours: null,
+				description: null,
+				location: null,
+				travelInfo: null,
 			};
 
 	// Use createFacilitySchema when isNew, updateFacilitySchema when editing
@@ -125,7 +124,7 @@ export function EditFacilityDialog({
 		}
 	};
 
-	const handleSuccess = (updatedFacility: TableColumn) => {
+	const handleSuccess = (updatedFacility: StoreFacility) => {
 		if (isEditMode) {
 			onUpdated?.(updatedFacility);
 		} else {
@@ -153,6 +152,9 @@ export function EditFacilityDialog({
 					defaultCredit: values.defaultCredit,
 					defaultDuration: values.defaultDuration,
 					businessHours: values.businessHours || null,
+					description: values.description || null,
+					location: values.location || null,
+					travelInfo: values.travelInfo || null,
 				});
 
 				if (result?.serverError) {
@@ -184,6 +186,9 @@ export function EditFacilityDialog({
 					defaultCredit: values.defaultCredit,
 					defaultDuration: values.defaultDuration,
 					businessHours: values.businessHours || null,
+					description: values.description || null,
+					location: values.location || null,
+					travelInfo: values.travelInfo || null,
 				});
 
 				if (result?.serverError) {
@@ -214,12 +219,12 @@ export function EditFacilityDialog({
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>
-						{isEditMode ? t("Facility_mgmt_edit") : t("Facility_mgmt_add")}
+						{isEditMode ? t("facility_mgmt_edit") : t("facility_mgmt_add")}
 					</DialogTitle>
 					<DialogDescription>
 						{isEditMode
-							? t("Facility_Name_descr")
-							: t("Facility_mgmt_add_descr")}
+							? t("facility_name_descr")
+							: t("facility_mgmt_add_descr")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -246,7 +251,10 @@ export function EditFacilityDialog({
 							name="facilityName"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_Name")}</FormLabel>
+									<FormLabel>
+										{t("facility_name")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="text"
@@ -264,7 +272,10 @@ export function EditFacilityDialog({
 							name="capacity"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_Seats")}</FormLabel>
+									<FormLabel>
+										{t("facility_seats")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -284,7 +295,10 @@ export function EditFacilityDialog({
 							name="defaultCredit"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_Default_Credit")}</FormLabel>
+									<FormLabel>
+										{t("facility_default_credit")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -305,7 +319,10 @@ export function EditFacilityDialog({
 							name="defaultCost"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_Default_Cost")}</FormLabel>
+									<FormLabel>
+										{t("facility_default_cost")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -325,7 +342,10 @@ export function EditFacilityDialog({
 							name="defaultDuration"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_Default_Duration")}</FormLabel>
+									<FormLabel>
+										{t("facility_default_duration")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -346,6 +366,69 @@ export function EditFacilityDialog({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>{t("business_hours")}</FormLabel>
+									<FormControl>
+										<Textarea
+											disabled={loading || form.formState.isSubmitting}
+											className="font-mono min-h-[100px]"
+											placeholder=""
+											value={field.value ?? ""}
+											onChange={(event) =>
+												field.onChange(event.target.value || null)
+											}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="description"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("facility_description")}</FormLabel>
+									<FormControl>
+										<Textarea
+											disabled={loading || form.formState.isSubmitting}
+											className="font-mono min-h-[100px]"
+											placeholder=""
+											value={field.value ?? ""}
+											onChange={(event) =>
+												field.onChange(event.target.value || null)
+											}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="location"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("facility_location")}</FormLabel>
+									<FormControl>
+										<Textarea
+											disabled={loading || form.formState.isSubmitting}
+											className="font-mono min-h-[100px]"
+											placeholder=""
+											value={field.value ?? ""}
+											onChange={(event) =>
+												field.onChange(event.target.value || null)
+											}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="travelInfo"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("facility_travel_info")}</FormLabel>
 									<FormControl>
 										<Textarea
 											disabled={loading || form.formState.isSubmitting}

@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { CategoryEditTabs } from "./tabs";
 
 type Params = Promise<{ storeId: string; categoryId: string }>;
@@ -29,7 +29,7 @@ export default async function CategoryEditPage(props: {
 		},
 	});
 
-	transformDecimalsToNumbers(allProducts);
+	transformPrismaDataForJson(allProducts);
 
 	let action = "Edit";
 	if (obj === null) action = "Create";

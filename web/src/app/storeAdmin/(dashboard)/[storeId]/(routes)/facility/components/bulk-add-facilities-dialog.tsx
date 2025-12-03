@@ -140,14 +140,14 @@ export function BulkAddFacilitiesDialog({
 			<DialogTrigger asChild>
 				<Button variant="outline" onClick={() => setOpen(true)}>
 					<IconPlus className="mr-0 size-4" />
-					{t("Facility_mgmt_bulk_add_button")}
+					{t("facility_mgmt_bulk_add_button")}
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>{t("Facility_mgmt_bulk_add_button")}</DialogTitle>
+					<DialogTitle>{t("facility_mgmt_bulk_add_button")}</DialogTitle>
 					<DialogDescription>
-						{t("Facility_mgmt_bulk_add_descr")}
+						{t("facility_mgmt_bulk_add_descr")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -174,7 +174,7 @@ export function BulkAddFacilitiesDialog({
 							name="prefix"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_mgmt_prefix")}</FormLabel>
+									<FormLabel>{t("facility_mgmt_prefix")}</FormLabel>
 									<FormControl>
 										<Input
 											type="text"
@@ -184,7 +184,7 @@ export function BulkAddFacilitiesDialog({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("Facility_mgmt_prefix_descr")}
+										{t("facility_mgmt_prefix_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -195,7 +195,10 @@ export function BulkAddFacilitiesDialog({
 							name="numOfFacilities"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_NumToAdd")}</FormLabel>
+									<FormLabel>
+										{t("facility_num_to_add")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -215,7 +218,10 @@ export function BulkAddFacilitiesDialog({
 							name="capacity"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_Seats")}</FormLabel>
+									<FormLabel>
+										{t("facility_seats")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -236,7 +242,10 @@ export function BulkAddFacilitiesDialog({
 							name="defaultCost"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_Default_Cost")}</FormLabel>
+									<FormLabel>
+										{t("facility_default_cost")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -257,7 +266,10 @@ export function BulkAddFacilitiesDialog({
 							name="defaultCredit"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_Default_Credit")}</FormLabel>
+									<FormLabel>
+										{t("facility_default_credit")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -277,7 +289,10 @@ export function BulkAddFacilitiesDialog({
 							name="defaultDuration"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility_Default_Duration")}</FormLabel>
+									<FormLabel>
+										{t("facility_default_duration")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"

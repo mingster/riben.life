@@ -3,7 +3,8 @@ import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { SubscriptionStatus } from "@/types/enum";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
@@ -70,7 +71,7 @@ export async function POST(
 
 		// 2. make sure we have valid subscription record for confirmation process
 		//
-		const new_expiration = getUtcNow(); // default to now
+		const new_expiration = getUtcNowEpoch(); // default to now
 
 		// make sure we have the subscription record only.
 		// activate the subscription only when payment is confirmed.
@@ -96,6 +97,8 @@ export async function POST(
 				billingProvider: "stripe",
 				//subscriptionId: subscriptionSchedule.id,
 				note: "subscribe",
+				createdAt: getUtcNowEpoch(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 
@@ -114,11 +117,13 @@ export async function POST(
 				isPaid: false,
 				amount: (price.unit_amount as number) / 100,
 				currency: price.currency as string,
+				createdAt: getUtcNowEpoch(),
 			},
 		});
 
 		// 4. return the subscription payment object
 		//
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj, { status: 200 });
 	} catch (error) {
 		logger.info("subscriptionpayment post", {

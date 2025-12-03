@@ -1,7 +1,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import logger from "@/lib/logger";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { StoreSubscription } from "@prisma/client";
 import { StoreEditTabs } from "./tabs";
 
@@ -21,7 +21,7 @@ const StoreEditPage = async (props: {
 			StoreOrders: true,
 		},
 	});
-	transformDecimalsToNumbers(store);
+	transformPrismaDataForJson(store);
 
 	//console.log(`store: ${JSON.stringify(store)}`);
 

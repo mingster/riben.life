@@ -1,6 +1,6 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { RsvpHistoryClient } from "../components/client-rsvp";
 
@@ -29,7 +29,7 @@ export default async function RsvpPage(props: {
 	// Transform Decimal objects to numbers for client components
 	const formattedData: Rsvp[] = (rsvps as Rsvp[]).map((rsvp) => {
 		const transformed = { ...rsvp };
-		transformDecimalsToNumbers(transformed);
+		transformPrismaDataForJson(transformed);
 		return transformed as Rsvp;
 	});
 

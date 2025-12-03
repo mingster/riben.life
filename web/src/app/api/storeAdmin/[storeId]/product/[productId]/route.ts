@@ -1,6 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { transformDecimalsToNumbers } from "@/utils/utils";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import logger from "@/lib/logger";
@@ -37,7 +37,7 @@ export async function DELETE(
 		},
 	});
 
-	transformDecimalsToNumbers(product);
+	transformPrismaDataForJson(product);
 
 	logger.info("product deleted", {
 		tags: ["api"],
@@ -91,7 +91,7 @@ export async function PATCH(
 			},
 			data: {
 				...body,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 				/*
         ProductAttribute: {
           update: { ...ProductAttribute },
@@ -99,7 +99,7 @@ export async function PATCH(
 			},
 		});
 
-		transformDecimalsToNumbers(product);
+		transformPrismaDataForJson(product);
 
 		//console.log(`updated product: ${JSON.stringify(product)}`);
 

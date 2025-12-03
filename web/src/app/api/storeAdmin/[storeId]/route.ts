@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import getStoreWithCategories from "@/actions/get-store";
 import type { Store } from "@/types";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { CheckStoreAdminApiAccess } from "../api_helper";
 import logger from "@/lib/logger";
 
@@ -21,6 +22,7 @@ export async function GET(
 		}
 
 		//console.log("getStore", JSON.stringify(store));
+		transformPrismaDataForJson(store);
 		return NextResponse.json(store);
 	} catch (error) {
 		logger.error("get store", {

@@ -1,4 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
 
@@ -37,6 +38,7 @@ export async function GET(req: Request) {
 			);
 		}
 
+		transformPrismaDataForJson(organization);
 		return NextResponse.json(organization);
 	} catch (error) {
 		logger.error("Failed to get organization", {

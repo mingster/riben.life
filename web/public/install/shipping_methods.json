@@ -5,7 +5,7 @@
 		"description": "0-60cm",
 		"basic_price": 70,
 		"currencyId": "TWD",
-		"shipRequried": true,
+		"shipRequired": true,
 		"isDeleted": false,
 		"isDefault": false
 	},
@@ -15,7 +15,7 @@
 		"description": "0-60cm",
 		"basic_price": 60,
 		"currencyId": "TWD",
-		"shipRequried": true,
+		"shipRequired": true,
 		"isDeleted": false,
 		"isDefault": false
 	},
@@ -25,7 +25,7 @@
 		"description": "0-60cm",
 		"basic_price": 60,
 		"currencyId": "TWD",
-		"shipRequried": true,
+		"shipRequired": true,
 		"isDeleted": false,
 		"isDefault": false
 	},
@@ -35,7 +35,7 @@
 		"description": "0-60cm",
 		"basic_price": 90,
 		"currencyId": "TWD",
-		"shipRequried": true,
+		"shipRequired": true,
 		"isDeleted": false,
 		"isDefault": false
 	},
@@ -45,7 +45,7 @@
 		"description": "",
 		"basic_price": 0,
 		"currencyId": "TWD",
-		"shipRequried": false,
+		"shipRequired": false,
 		"isDeleted": false,
 		"isDefault": true
 	},
@@ -55,7 +55,7 @@
 		"description": "",
 		"basic_price": 0,
 		"currencyId": "TWD",
-		"shipRequried": false,
+		"shipRequired": false,
 		"isDeleted": false,
 		"isDefault": true
 	},
@@ -65,7 +65,7 @@
 		"description": "",
 		"basic_price": 0,
 		"currencyId": "TWD",
-		"shipRequried": false,
+		"shipRequired": false,
 		"isDeleted": false,
 		"isDefault": false
 	}

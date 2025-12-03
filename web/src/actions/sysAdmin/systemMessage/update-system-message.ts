@@ -2,7 +2,7 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { adminActionClient } from "@/utils/actions/safe-action";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import { updateSystemMessageSchema } from "./update-system-message.validation";
 
@@ -14,13 +14,13 @@ export const updateSystemMessageAction = adminActionClient
 		//
 		if (id === undefined || id === null || id === "" || id === "new") {
 			const result = await sqlClient.systemMessage.create({
-				data: { localeId, message, published, createdOn: getUtcNow() },
+				data: { localeId, message, published, createdOn: getUtcNowEpoch() },
 			});
 			return result;
 		} else {
 			const result = await sqlClient.systemMessage.update({
 				where: { id },
-				data: { localeId, message, published, createdOn: getUtcNow() },
+				data: { localeId, message, published, createdOn: getUtcNowEpoch() },
 			});
 			return result;
 		}

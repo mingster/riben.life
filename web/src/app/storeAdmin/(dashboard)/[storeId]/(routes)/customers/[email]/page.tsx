@@ -4,7 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import type { User } from "@/types";
 import type { SubscriptionForUI } from "@/types/enum";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { Suspense } from "react";
 import { ManageUserClient } from "./client-manage-user";
 
@@ -70,7 +70,7 @@ export default async function UsersBillingAdminPage(props: {
 			},
 		},
 	})) as User;
-	transformDecimalsToNumbers(user);
+	transformPrismaDataForJson(user);
 
 	//console.log(`user: ${JSON.stringify(user)}`);
 	let stripeSubscriptions = null;

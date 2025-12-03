@@ -5,7 +5,7 @@ import { loadOuterHtmTemplate } from "./load-outer-htm-template";
 import { StringNVType } from "@/types/enum";
 import { phasePlaintextToHtm } from "./phase-plaintext-to-htm";
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 // send credit success email to customer
 //
@@ -103,7 +103,7 @@ export const sendCreditSuccess = async (order: StoreOrder) => {
 			subject: phased_subject,
 			textMessage: textMessage,
 			htmMessage: htmMessage,
-			createdOn: getUtcNow(),
+			createdOn: getUtcNowEpoch(),
 			sendTries: 0,
 		},
 	});

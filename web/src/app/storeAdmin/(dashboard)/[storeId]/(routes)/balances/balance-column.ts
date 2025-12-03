@@ -1,5 +1,5 @@
 import type { StoreLedger } from "@prisma/client";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 
 export interface BalanceColumn {
 	id: string;
@@ -32,8 +32,10 @@ export const mapStoreLedgerToColumn = (
 	balance: Number(ledger.balance ?? 0),
 	description: ledger.description ?? null,
 	note: ledger.note ?? null,
-	createdAt: formatDateTime(ledger.createdAt),
-	availability: formatDateTime(ledger.availability),
-	createdAtIso: ledger.createdAt.toISOString(),
-	availabilityIso: ledger.availability.toISOString(),
+	createdAt: formatDateTime(epochToDate(ledger.createdAt) ?? new Date()),
+	availability: formatDateTime(epochToDate(ledger.availability) ?? new Date()),
+	createdAtIso:
+		epochToDate(ledger.createdAt)?.toISOString() ?? new Date().toISOString(),
+	availabilityIso:
+		epochToDate(ledger.availability)?.toISOString() ?? new Date().toISOString(),
 });

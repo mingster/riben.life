@@ -209,11 +209,15 @@ const groupRsvpsByDayAndTime = (
 		const rsvpDate =
 			rsvp.rsvpTime instanceof Date
 				? rsvp.rsvpTime
-				: parseISO(
-						typeof rsvp.rsvpTime === "string"
-							? rsvp.rsvpTime
-							: String(rsvp.rsvpTime),
-					);
+				: typeof rsvp.rsvpTime === "bigint"
+					? new Date(Number(rsvp.rsvpTime))
+					: typeof rsvp.rsvpTime === "number"
+						? new Date(rsvp.rsvpTime)
+						: parseISO(
+								typeof rsvp.rsvpTime === "string"
+									? rsvp.rsvpTime
+									: String(rsvp.rsvpTime),
+							);
 
 		// Check if RSVP is within the week
 		if (rsvpDate >= weekStart && rsvpDate <= weekEnd) {

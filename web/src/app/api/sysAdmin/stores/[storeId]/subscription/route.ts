@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { StoreSubscription } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../../api_helper";
@@ -28,7 +29,7 @@ export async function PATCH(
 			},
 			data: {
 				level: level,
-				updatedAt: getUtcNow(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 		if (store === null) {
@@ -54,6 +55,7 @@ export async function PATCH(
 			});
 		}
 
+		transformPrismaDataForJson(store);
 		return NextResponse.json(store);
 	} catch (error) {
 		logger.info("store patch", {

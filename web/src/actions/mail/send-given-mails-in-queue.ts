@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { EmailQueue } from "@/types";
 import logger from "@/lib/logger";
 import { sendMail } from "./send-mail";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 // send the given mailId(s) fromm the mail queue.
 //
@@ -49,7 +49,7 @@ export const sendGivenMailsInQueue = async (mailQueueIds: string[]) => {
 			// Update as sent
 			await sqlClient.emailQueue.update({
 				where: { id: email.id },
-				data: { sentOn: getUtcNow() },
+				data: { sentOn: getUtcNowEpoch() },
 			});
 
 			// Update the success count
