@@ -5,7 +5,7 @@ import { Role } from "@prisma/client";
 import { requireAuth, requireRole } from "@/lib/auth-utils";
 
 // this is the main layout for store admin.
-// Only owner, staff, or storeAdmin roles can access storeAdmin routes
+// Only sign-in user can access storeAdmin routes
 // if the user has a store, redirect to the store dashboard (/storeAdmin/[storeId])
 // if the user doesn't have store, show the create store modal (via page.tsx)
 export default async function StoreAdminLayout(props: {
@@ -19,40 +19,30 @@ export default async function StoreAdminLayout(props: {
 	// Require authentication
 	const session = await requireAuth();
 
-	// Allow owner, staff, storeAdmin, user, or sysAdmin
-	// - user role can access to create stores (will be upgraded to owner after creation)
-	// - sysAdmin can also be store owners
-	// If sysAdmin doesn't own stores, redirect to sysAdmin interface
-	if (session.user.role === Role.sysAdmin) {
-		// Check if sysAdmin owns any stores
-		const sysAdminStore = await sqlClient.store.findFirst({
-			where: {
-				ownerId: session.user.id,
-				isDeleted: false,
-			},
-		});
-
-		// If sysAdmin doesn't own stores, redirect to sysAdmin interface
-		if (!sysAdminStore) {
-			redirect("/sysAdmin");
-		}
-		// Otherwise, allow access (sysAdmin can access their stores)
-	} else {
-		// Require allowed roles for non-sysAdmin users (owner, staff, storeAdmin, or user)
-		// user role is allowed to access /storeAdmin root to create stores
-		requireRole(session, [Role.owner, Role.staff, Role.storeAdmin, Role.user]);
-	}
-
-	//const ownerId = session.user?.id;
-	//console.log('userid: ' + userId);
-
 	const LAST_SELECTED_STORE_KEY = "lastSelectedStoreId";
 	const cookieStore = await cookies();
 	const lastSelectedStoreId = cookieStore.get(LAST_SELECTED_STORE_KEY)?.value;
 
-	// if cookie exists, redirect to the last selected store
+	// if cookie exists, verify store exists AND user has access before redirecting
+	// This prevents redirect loops when store is deleted or access is denied
 	if (lastSelectedStoreId) {
-		redirect(`/storeAdmin/${lastSelectedStoreId}`);
+		// Check both store existence and user access
+		// This prevents loops when store exists but user doesn't have access
+		const { checkStoreOwnership } = await import("@/lib/store-access");
+		const hasAccess = await checkStoreOwnership(
+			lastSelectedStoreId,
+			session.user.id,
+			session.user.role ?? undefined,
+		);
+
+		// Only redirect if user has access to the store
+		// If no access, don't redirect - show store selection page
+		// This breaks the redirect loop: access check redirects here,
+		// but if no access, we don't redirect again
+		if (hasAccess) {
+			redirect(`/storeAdmin/${lastSelectedStoreId}`);
+		}
+		// If no access, don't redirect - show store selection page
 	}
 
 	// if no cookie exists, redirect to user's first store

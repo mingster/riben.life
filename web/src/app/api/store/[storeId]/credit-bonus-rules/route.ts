@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export async function GET(
 	req: Request,
@@ -19,6 +20,7 @@ export async function GET(
 		},
 	});
 
+	transformPrismaDataForJson(rules);
 	return NextResponse.json(rules);
 }
 
@@ -61,6 +63,7 @@ export async function POST(
 		},
 	});
 
+	transformPrismaDataForJson(rule);
 	return NextResponse.json(rule);
 }
 

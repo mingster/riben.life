@@ -3,6 +3,7 @@ import type { StoreOrder } from "@prisma/client";
 import { format } from "date-fns";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { getUtcNow, dateToEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { type NextRequest, NextResponse } from "next/server";
 import logger from "@/lib/logger";
 export const dynamic = "force-dynamic"; // defaults to force-static
@@ -84,6 +85,7 @@ export async function GET(
 			},
 		})) as StoreOrder[];
 
+		transformPrismaDataForJson(result);
 		return NextResponse.json(result);
 	} catch (error) {
 		logger.error("search orders", {

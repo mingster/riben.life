@@ -10,6 +10,8 @@ import logger from "@/lib/logger";
 import { transformDecimalsToNumbers } from "@/utils/utils";
 import type { Store } from "@/types";
 import { redirect } from "next/navigation";
+import { Role } from "@prisma/client";
+import { cookies } from "next/headers";
 
 // Route constants
 const ROUTES = {
@@ -32,7 +34,7 @@ const ROUTES = {
 export async function checkStoreOwnership(
 	storeId: string,
 	userId: string,
-	userRole?: string,
+	userRole?: string | Role,
 ): Promise<Store | null> {
 	if (!storeId || !userId) {
 		logger.error("Missing storeId or userId for access check", {
@@ -44,14 +46,13 @@ export async function checkStoreOwnership(
 	// sysAdmin users can access any store
 	// storeAdmin users can access their own store
 	// staff users can access their own store
-	const where =
-		userRole === "sysAdmin"
-			? { id: storeId }
-			: userRole === "storeAdmin"
-				? { id: storeId, ownerId: userId }
-				: userRole === "staff"
-					? { id: storeId, ownerId: userId }
-					: { id: storeId, ownerId: userId };
+	// Check both string and enum values for compatibility
+	const isSysAdmin =
+		userRole === Role.sysAdmin ||
+		userRole === "sysAdmin" ||
+		String(userRole) === "sysAdmin";
+
+	const where = isSysAdmin ? { id: storeId } : { id: storeId, ownerId: userId };
 
 	const store = await sqlClient.store.findFirst({
 		where,
@@ -102,7 +103,7 @@ export async function checkStoreOwnership(
 export async function requireStoreAccess(
 	storeId: string,
 	userId: string,
-	userRole?: string,
+	userRole?: string | Role,
 ): Promise<Store> {
 	const store = await checkStoreOwnership(storeId, userId, userRole);
 
@@ -114,6 +115,9 @@ export async function requireStoreAccess(
 				userRole,
 			},
 		});
+		// Redirect to store admin root
+		// The root layout will check if the store exists before redirecting,
+		// which prevents infinite loops
 		redirect(ROUTES.STORE_ADMIN);
 	}
 

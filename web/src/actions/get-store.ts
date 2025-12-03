@@ -5,7 +5,7 @@ import type {
 	StorePaymentMethodMapping,
 	StoreShipMethodMapping,
 } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 
 const getStoreWithCategories = async (storeId: string): Promise<Store> => {
@@ -93,7 +93,7 @@ const getStoreWithCategories = async (storeId: string): Promise<Store> => {
 		});
 	}
 
-	transformDecimalsToNumbers(store);
+	transformPrismaDataForJson(store);
 
 	return store;
 };

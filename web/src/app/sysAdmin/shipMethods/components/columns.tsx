@@ -15,7 +15,7 @@ export type DataColumn = {
 
 	isDefault: boolean;
 	isDeleted: boolean;
-	shipRequried: boolean;
+	shipRequired: boolean;
 
 	updatedAt?: string;
 
@@ -85,13 +85,13 @@ export const columns: ColumnDef<DataColumn>[] = [
 		},
 	},
 	{
-		accessorKey: "shipRequried",
+		accessorKey: "shipRequired",
 		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title="shipRequried" />;
+			return <DataTableColumnHeader column={column} title="shipRequired" />;
 		},
 		cell: ({ row }) => {
 			const val =
-				row.getValue("shipRequried") === true ? (
+				row.getValue("shipRequired") === true ? (
 					<IconCheck className="text-green-400  size-4" />
 				) : (
 					<IconX className="text-red-400 size-4" />

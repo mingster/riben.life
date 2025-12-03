@@ -4,6 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { SubscriptionStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
@@ -122,6 +123,7 @@ export async function POST(
 
 		// 4. return the subscription payment object
 		//
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj, { status: 200 });
 	} catch (error) {
 		logger.info("subscriptionpayment post", {

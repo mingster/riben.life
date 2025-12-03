@@ -41,7 +41,6 @@ SELECT item.id,
     item."variants",
     item."variantCosts"
 FROM "OrderItem" item;
-
 ```
 
 ``` sql

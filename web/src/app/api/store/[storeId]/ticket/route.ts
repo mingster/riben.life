@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 import { TicketStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
@@ -70,6 +71,7 @@ export async function POST(
     });
     */
 
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj);
 	} catch (error) {
 		logger.error("Failed to create support ticket", {

@@ -1,6 +1,8 @@
 import { sqlClient } from "@/lib/prismadb";
+import { Role } from "@prisma/client";
 import type { Metadata, ResolvingMetadata } from "next";
 import { redirect } from "next/navigation";
+import { requireAuth, requireRole } from "@/lib/auth-utils";
 
 type Props = {
 	params: Promise<{ storeId: string }>;
@@ -42,8 +44,7 @@ export default async function StoreAdminLayout(props: {
 		redirect("/storeAdmin/");
 	}
 
-	// Note: Authentication and store access check is handled by child route layout
-	// using checkStoreStaffAccess() which is cached per request
+	// Note: Authentication and store access check is handled by (dashboard/[storeId]/(routes)/layout.tsx)
 	// No need to duplicate checks here
 
 	return <>{children}</>;

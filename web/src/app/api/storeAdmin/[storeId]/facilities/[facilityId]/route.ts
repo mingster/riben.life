@@ -1,5 +1,6 @@
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 
@@ -28,6 +29,7 @@ export async function DELETE(
 		tags: ["api"],
 	});
 
+	transformPrismaDataForJson(obj);
 	return NextResponse.json(obj);
 	/*} catch (error) {
 	logger.info("delete store facility", {
@@ -70,6 +72,7 @@ export async function PATCH(
 			},
 		});
 
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj);
 	} catch (error) {
 		logger.info("update store facility", {

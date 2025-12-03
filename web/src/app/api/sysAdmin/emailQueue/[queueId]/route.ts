@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../api_helper";
 import logger from "@/lib/logger";
@@ -25,6 +26,7 @@ export async function DELETE(
 
 		//console.log(`delete: ${JSON.stringify(obj)}`);
 
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj, { status: 200 });
 	} catch (error) {
 		if (

@@ -42,7 +42,7 @@ export default async function ShipMethodAdminPage(props: {
 		basic_price: Number(item.basic_price) || 0,
 		isDefault: item.isDefault,
 		isDeleted: item.isDeleted,
-		shipRequried: item.shipRequried,
+		shipRequired: item.shipRequired,
 		updatedAt: formatDateTime(
 			epochToDate(BigInt(item.updatedAt)) ?? new Date(),
 		),

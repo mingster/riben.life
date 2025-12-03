@@ -8,7 +8,7 @@ import { StoreLevel } from "@/types/enum";
 import logger from "@/lib/logger";
 import { auth, Session } from "@/lib/auth";
 import { headers } from "next/headers";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { getUtcNowEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
 import { createStoreSchema } from "./create-store.validation";
@@ -217,6 +217,7 @@ export const createStoreAction = userRequiredActionClient
 					userId: ownerId,
 					organizationId: organization.id,
 					role: Role.owner as Role,
+					createdAt: getUtcNow(),
 				},
 			});
 		}

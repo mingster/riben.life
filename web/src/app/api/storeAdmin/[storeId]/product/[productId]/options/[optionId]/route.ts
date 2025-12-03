@@ -53,6 +53,7 @@ export async function DELETE(
 		});
 	}
 
+	transformPrismaDataForJson(obj);
 	return NextResponse.json(obj);
 	/*} catch (error) {
     logger.info("product delete", {

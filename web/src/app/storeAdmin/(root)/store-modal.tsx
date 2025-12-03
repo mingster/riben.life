@@ -162,11 +162,16 @@ export const StoreModal: React.FC = () => {
 				// Reset form
 				form.reset();
 
-				// Close modal
+				// Close modal first
 				storeModal.onClose();
 
-				// Navigate to store settings
-				router.push(`/storeAdmin/${result.data.storeId}/settings`);
+				// Use setTimeout to ensure modal state update propagates before navigation
+				setTimeout(() => {
+					// Navigate to store settings
+					if (result.data) {
+						router.push(`/storeAdmin/${result.data.storeId}/settings`);
+					}
+				}, 100);
 			}
 		} catch (error: unknown) {
 			toastError({

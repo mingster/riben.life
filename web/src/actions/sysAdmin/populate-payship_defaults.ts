@@ -3,6 +3,7 @@
 import { promises as fs } from "fs";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 // create default locales
 //
@@ -39,9 +40,7 @@ export async function create_locales() {
         */
 			},
 		});
-		logger.info("Operation log", {
-			tags: ["action"],
-		});
+
 		/*} catch (err) {
       logger.error("Operation log", {
       	tags: ["action", "error"],
@@ -66,7 +65,8 @@ export async function create_paymentMethods() {
 			const paymentMethod = await sqlClient.paymentMethod.create({
 				data: {
 					...c,
-
+					createdAt: getUtcNowEpoch(),
+					updatedAt: getUtcNowEpoch(),
 					/*
           name: c.name,
           payUrl: c.payurl,
@@ -82,12 +82,12 @@ export async function create_paymentMethods() {
           */
 				},
 			});
-			logger.info("Operation log", {
-				tags: ["action"],
-			});
 		} catch (err) {
-			logger.error("Operation log", {
-				tags: ["action", "error"],
+			logger.error("Error creating payment method", {
+				tags: ["action", "error", "paymentMethod"],
+				metadata: {
+					error: err instanceof Error ? err.message : String(err),
+				},
 			});
 		}
 	}
@@ -111,8 +111,11 @@ export async function create_shippingMethods() {
 			});
 
 			if (!currency) {
-				logger.error("Operation log", {
-					tags: ["action", "error"],
+				logger.error("Currency not found", {
+					tags: ["action", "error", "currency"],
+					metadata: {
+						currencyId: c.currencyId,
+					},
 				});
 				continue;
 			}
@@ -120,6 +123,8 @@ export async function create_shippingMethods() {
 			const shippingMethod = await sqlClient.shippingMethod.create({
 				data: {
 					...c,
+					createdAt: getUtcNowEpoch(),
+					updatedAt: getUtcNowEpoch(),
 					/*
           name: c.name,
           description: c.description,
@@ -146,13 +151,12 @@ export async function create_shippingMethods() {
           */
 				},
 			});
-
-			logger.info("Operation log", {
-				tags: ["action"],
-			});
 		} catch (err) {
-			logger.error("Operation log", {
-				tags: ["action", "error"],
+			logger.error("Error creating shipping method", {
+				tags: ["action", "error", "shippingMethod"],
+				metadata: {
+					error: err instanceof Error ? err.message : String(err),
+				},
 			});
 		}
 	}

@@ -4,7 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { baseClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 const getStoreDataSchema = z.object({
 	storeId: z.string().min(1, "Store ID is required"),
@@ -40,9 +40,9 @@ export const getStoreDataAction = baseClient
 			}),
 		]);
 
-		transformDecimalsToNumbers(rsvpSettings);
-		transformDecimalsToNumbers(storeSettings);
-		transformDecimalsToNumbers(facilities);
+		transformPrismaDataForJson(rsvpSettings);
+		transformPrismaDataForJson(storeSettings);
+		transformPrismaDataForJson(facilities);
 
 		return {
 			rsvpSettings,

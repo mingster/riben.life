@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
 //import { User } from 'prisma/prisma-client';
 import type { User } from "@/types";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { headers } from "next/headers";
 
 const getCurrentUser = async (): Promise<User | null> => {
@@ -74,7 +74,7 @@ const getCurrentUser = async (): Promise<User | null> => {
 		return null;
 	}
 
-	transformDecimalsToNumbers(obj);
+	transformPrismaDataForJson(obj);
 
 	console.log(obj.Rsvp.map((r) => r.rsvpTime));
 	return obj as User;

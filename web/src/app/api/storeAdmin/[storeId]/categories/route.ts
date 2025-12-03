@@ -1,6 +1,7 @@
 import checkStoreAdminAccess from "@/actions/storeAdmin/check-store-access";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
 import logger from "@/lib/logger";
@@ -30,6 +31,7 @@ export async function POST(
 
 		//console.log(`create category: ${JSON.stringify(obj)}`);
 
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj);
 	} catch (error) {
 		logger.info("category post", {

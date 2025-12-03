@@ -19,9 +19,9 @@ export default async function StoreLayout(props: {
 
 	// Use checkStoreAccess to consolidate session check and store query
 	// This prevents duplicate database connections
-	const checkStoreAccess = await checkStoreStaffAccess(params.storeId);
+	const accessibleStore = await checkStoreStaffAccess(params.storeId);
 
-	if (!checkStoreAccess) {
+	if (!accessibleStore) {
 		logger.info("store not found...redirect to store creation page.");
 		redirect("/storeAdmin");
 	}

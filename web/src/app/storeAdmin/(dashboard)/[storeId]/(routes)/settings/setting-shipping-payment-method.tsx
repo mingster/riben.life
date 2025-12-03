@@ -102,7 +102,7 @@ export const ShippingPaymentMethodTab: React.FC<
 				basic_price: Number(item.basic_price),
 				currencyId: item.currencyId.toString(),
 				isDefault: item.isDefault,
-				shipRequried: item.shipRequried,
+				shipRequired: item.shipRequired,
 				disabled: disablePaidOptions,
 			})),
 		[allShippingMethods, disablePaidOptions],
@@ -325,7 +325,7 @@ type ShippingMethodColumn = {
 	basic_price: number;
 	currencyId: string;
 	isDefault: boolean;
-	shipRequried: boolean;
+	shipRequired: boolean;
 	disabled: boolean;
 	//createdAt: Date;
 	//updatedAt: Date;
@@ -391,7 +391,7 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
 		},
 	},
 	{
-		accessorKey: "shipRequried",
+		accessorKey: "shipRequired",
 		header: ({ column }) => {
 			return (
 				<DataTableColumnHeader
@@ -401,14 +401,14 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
 			);
 		},
 		cell: ({ row }) => {
-			const shipRequried =
-				row.getValue("shipRequried") === true ? (
+			const shipRequired =
+				row.getValue("shipRequired") === true ? (
 					<IconCheck className="text-green-400  size-4" />
 				) : (
 					<IconX className="text-red-400 size-4" />
 				);
 
-			return <div className="pl-3">{shipRequried}</div>;
+			return <div className="pl-3">{shipRequired}</div>;
 		},
 	},
 	{

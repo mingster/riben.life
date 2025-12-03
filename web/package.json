@@ -157,7 +157,6 @@
     "@typescript-eslint/eslint-plugin": "^8.48.1",
     "@typescript-eslint/parser": "^8.48.1",
     "autoprefixer": "^10.4.22",
-    "baseline-browser-mapping": "^2.8.32",
     "dotenv": "^16.6.1",
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.3",

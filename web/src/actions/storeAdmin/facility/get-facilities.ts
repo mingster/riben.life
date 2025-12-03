@@ -4,7 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 const getFacilitiesSchema = z.object({});
 
@@ -30,7 +30,7 @@ export const getFacilitiesAction = storeActionClient
 			orderBy: { facilityName: "asc" },
 		});
 
-		transformDecimalsToNumbers(facilities);
+		transformPrismaDataForJson(facilities);
 
 		return { facilities };
 	});

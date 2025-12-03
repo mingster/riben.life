@@ -33,15 +33,12 @@ export async function populateCurrencyData() {
 					numToBasic: c.numToBasic,
 				},
 			});
-			logger.info("Operation log", {
-				tags: ["action"],
-			});
 		} catch (err) {
-			logger.info("Operation log", {
-				tags: ["action"],
-			});
-			logger.error("Operation log", {
-				tags: ["action", "error"],
+			logger.error("Error creating currency", {
+				tags: ["action", "error", "currency"],
+				metadata: {
+					error: err instanceof Error ? err.message : String(err),
+				},
 			});
 		}
 	}

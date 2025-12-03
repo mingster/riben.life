@@ -1,5 +1,6 @@
 import { CheckStoreAdminApiAccess } from "@/app/api/storeAdmin/api_helper";
 import { sqlClient } from "@/lib/prismadb";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
 
@@ -25,6 +26,7 @@ export async function PATCH(
 			tags: ["api"],
 		});
 
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj);
 	} catch (error) {
 		logger.info("product image patch", {
@@ -66,6 +68,7 @@ export async function DELETE(
 			},
 		});
 
+		transformPrismaDataForJson(obj);
 		return NextResponse.json(obj);
 	} catch (error) {
 		logger.info("product image delete", {

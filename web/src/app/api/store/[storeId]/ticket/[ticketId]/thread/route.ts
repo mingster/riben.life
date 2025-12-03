@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { sqlClient } from "@/lib/prismadb";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { headers } from "next/headers";
 
 import { NextResponse } from "next/server";
@@ -46,6 +47,7 @@ export async function POST(
 			},
 		});
 
+		transformPrismaDataForJson(thread);
 		return NextResponse.json(thread);
 	} catch (error) {
 		logger.info("ticket post", {
