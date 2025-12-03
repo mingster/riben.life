@@ -3,7 +3,7 @@ import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe/config";
 import { SubscriptionStatus } from "@/types/enum";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../api_helper";
@@ -96,6 +96,8 @@ export async function POST(
 				billingProvider: "stripe",
 				//subscriptionId: subscriptionSchedule.id,
 				note: "subscribe",
+				createdAt: getUtcNowEpoch(),
+				updatedAt: getUtcNowEpoch(),
 			},
 		});
 
@@ -114,6 +116,7 @@ export async function POST(
 				isPaid: false,
 				amount: (price.unit_amount as number) / 100,
 				currency: price.currency as string,
+				createdAt: getUtcNowEpoch(),
 			},
 		});
 

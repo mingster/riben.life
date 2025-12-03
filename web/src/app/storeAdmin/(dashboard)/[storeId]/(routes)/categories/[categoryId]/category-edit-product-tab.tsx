@@ -64,10 +64,10 @@ export const CategoryEditProductTab = ({
 			isFeatured: item.isFeatured,
 			//createdAt: item.createdAt,
 			updatedAt: formatDateTime(
-				typeof item.updatedAt === "number"
-					? (epochToDate(BigInt(item.updatedAt)) ?? new Date())
-					: item.updatedAt instanceof Date
-						? item.updatedAt
+				typeof item.updatedAt === "bigint"
+					? (epochToDate(item.updatedAt) ?? new Date())
+					: typeof item.updatedAt === "number"
+						? (epochToDate(BigInt(item.updatedAt)) ?? new Date())
 						: new Date(),
 			),
 		}),

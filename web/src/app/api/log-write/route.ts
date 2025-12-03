@@ -121,6 +121,7 @@ export async function GET(request: NextRequest) {
 	return NextResponse.json({
 		status: "healthy",
 		service: "log-drain",
-		timestamp: epochToDate(getUtcNowEpoch())?.toISOString() || new Date().toISOString(),
+		timestamp:
+			epochToDate(getUtcNowEpoch())?.toISOString() || new Date().toISOString(),
 	});
 }

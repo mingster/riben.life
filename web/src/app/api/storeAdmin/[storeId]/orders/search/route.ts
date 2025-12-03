@@ -2,7 +2,7 @@ import { sqlClient } from "@/lib/prismadb";
 import type { StoreOrder } from "@prisma/client";
 import { format } from "date-fns";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNow, dateToEpoch } from "@/utils/datetime-utils";
 import { type NextRequest, NextResponse } from "next/server";
 import logger from "@/lib/logger";
 export const dynamic = "force-dynamic"; // defaults to force-static
@@ -23,7 +23,7 @@ export async function GET(
 		if (!dateVal) return NextResponse.json({});
 
 		// Use UTC for date calculations
-		const now = getUtcNowEpoch();
+		const now = getUtcNow();
 		// set time to 23:59:59 UTC
 		const today = new Date(
 			Date.UTC(
@@ -55,12 +55,17 @@ export async function GET(
 			`${format(date, "yyyy-MM-dd HH:mm:ss")}至${format(today, "yyyy-MM-dd HH:mm:ss")}`,
 		);
 
+		const dateEpoch = dateToEpoch(date);
+		const todayEpoch = dateToEpoch(today);
+		if (!dateEpoch || !todayEpoch) {
+			return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+		}
 		const result = (await sqlClient.storeOrder.findMany({
 			where: {
 				storeId: storeId,
 				updatedAt: {
-					gte: date,
-					lte: today,
+					gte: dateEpoch,
+					lte: todayEpoch,
 				},
 			},
 			include: {

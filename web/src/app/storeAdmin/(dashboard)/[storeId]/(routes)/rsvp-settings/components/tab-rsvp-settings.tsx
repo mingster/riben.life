@@ -29,6 +29,7 @@ import {
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { RsvpSettingsProps, type RsvpSettingsData } from "./tabs";
+import { epochToDate } from "@/utils/datetime-utils";
 
 type FormValues = Omit<UpdateRsvpSettingsInput, "storeId">;
 
@@ -126,8 +127,15 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 				});
 			} else if (result?.data) {
 				// Update local state instead of refreshing router
-				const updatedRsvpSettings = result.data
-					.rsvpSettings as RsvpSettingsData;
+				const rsvpSettings = result.data.rsvpSettings;
+				const updatedRsvpSettings: RsvpSettingsData = {
+					...rsvpSettings,
+					minPrepaidAmount: rsvpSettings.minPrepaidAmount
+						? Number(rsvpSettings.minPrepaidAmount)
+						: null,
+					createdAt: epochToDate(rsvpSettings.createdAt) ?? new Date(),
+					updatedAt: epochToDate(rsvpSettings.updatedAt) ?? new Date(),
+				};
 				/*
 				const updatedRsvpSettings: RsvpSettingsData = {
 					id: result.data.rsvpSettings.id,

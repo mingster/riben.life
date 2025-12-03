@@ -43,7 +43,7 @@ export default async function ProductsPage(props: {
 			status: item.status,
 			price: Number(item.price),
 			isFeatured: item.isFeatured,
-			updatedAt: formatDateTime(epochToDate(item.updatedAt)),
+			updatedAt: formatDateTime(epochToDate(item.updatedAt) ?? new Date()),
 			stock: item.ProductAttribute?.stock || 0,
 			isRecurring: item.ProductAttribute?.isRecurring,
 			hasOptions: item.ProductOptions?.length > 0,

@@ -72,13 +72,18 @@ export default async function RsvpPage(props: {
 		),
 	);
 
+	const rangeStartEpoch = dateToEpoch(rangeStart);
+	const rangeEndEpoch = dateToEpoch(rangeEnd);
+	if (!rangeStartEpoch || !rangeEndEpoch) {
+		throw new Error("Invalid date range");
+	}
 	const [rsvps, rsvpSettings, storeSettings] = await Promise.all([
 		sqlClient.rsvp.findMany({
 			where: {
 				storeId: params.storeId,
 				rsvpTime: {
-					gte: dateToEpoch(rangeStart),
-					lte: dateToEpoch(rangeEnd),
+					gte: rangeStartEpoch,
+					lte: rangeEndEpoch,
 				},
 			},
 			include: {

@@ -3,6 +3,7 @@
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreAnnouncement } from "@prisma/client";
+import { epochToDate } from "@/utils/datetime-utils";
 import { IconBell } from "@tabler/icons-react";
 //import { CookiesProvider, useCookies } from "react-cookie";
 import { useCookies } from "next-client-cookies";
@@ -156,7 +157,11 @@ export default function DropdownMessage({ messages }: props) {
 										{message.message}
 									</span>
 								</p>
-								<p className="text-xs">{message.updatedAt.toDateString()}</p>
+								<p className="text-xs">
+									{(
+										epochToDate(message.updatedAt) ?? new Date()
+									).toDateString()}
+								</p>
 							</Link>
 						</li>
 					))}

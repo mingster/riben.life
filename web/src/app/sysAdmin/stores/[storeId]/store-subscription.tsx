@@ -160,11 +160,11 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 							<div>updatedAt:</div>
 							<div>
 								{formatDateTime(
-									typeof subscription.updatedAt === "number"
-										? (epochToDate(BigInt(subscription.updatedAt)) ??
+									typeof subscription.updatedAt === "bigint"
+										? (epochToDate(subscription.updatedAt) ?? new Date())
+										: typeof subscription.updatedAt === "number"
+											? (epochToDate(BigInt(subscription.updatedAt)) ??
 												new Date())
-										: subscription.updatedAt instanceof Date
-											? subscription.updatedAt
 											: new Date(),
 								)}
 							</div>

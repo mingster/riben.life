@@ -19,7 +19,7 @@ export async function POST() {
 		await fs.mkdir(backupDir, { recursive: true });
 
 		// Prepare file name
-		const now = getUtcNowEpoch();
+		const now = getUtcNow();
 		const pad = (n: number) => n.toString().padStart(2, "0");
 		const fileName = `message-template-backup-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.json`;
 		const filePath = path.join(backupDir, fileName);

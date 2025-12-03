@@ -21,8 +21,8 @@ export async function POST(
 			},
 		});
 
-		// Prepare file name using UTC methods since getUtcNowEpoch() returns UTC Date
-		const now = getUtcNowEpoch();
+		// Prepare file name using UTC methods since getUtcNow() returns UTC Date
+		const now = getUtcNow();
 		const pad = (n: number) => n.toString().padStart(2, "0");
 		const fileName = `facility-backup-${params.storeId}-${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}-${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}.json`;
 

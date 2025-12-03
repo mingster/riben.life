@@ -5,6 +5,7 @@ import {
 import pino from "pino";
 import { analytics } from "./analytics";
 import { sqlClient } from "./prismadb";
+import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -112,7 +113,10 @@ class Logger {
 		try {
 			await sqlClient.system_logs.create({
 				data: {
-					timestamp: entry.timestamp ? new Date(entry.timestamp) : new Date(),
+					timestamp: entry.timestamp
+						? (dateToEpoch(new Date(entry.timestamp)) ?? getUtcNowEpoch())
+						: getUtcNowEpoch(),
+					createdAt: getUtcNowEpoch(),
 					level: entry.level,
 					message: entry.message,
 					service: entry.service || this.service,

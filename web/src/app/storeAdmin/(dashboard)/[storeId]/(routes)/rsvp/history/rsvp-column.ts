@@ -1,4 +1,5 @@
 import type { Rsvp } from "@prisma/client";
+import { epochToDate } from "@/utils/datetime-utils";
 
 export interface RsvpColumn {
 	id: string;
@@ -28,8 +29,8 @@ export const mapRsvpToColumn = (rsvp: Rsvp): RsvpColumn => ({
 	facilityId: rsvp.facilityId,
 	numOfAdult: rsvp.numOfAdult,
 	numOfChild: rsvp.numOfChild,
-	rsvpTime: rsvp.rsvpTime,
-	arriveTime: rsvp.arriveTime,
+	rsvpTime: epochToDate(rsvp.rsvpTime) ?? new Date(),
+	arriveTime: rsvp.arriveTime ? epochToDate(rsvp.arriveTime) : null,
 	status: rsvp.status,
 	message: rsvp.message,
 	alreadyPaid: rsvp.alreadyPaid,
@@ -38,6 +39,6 @@ export const mapRsvpToColumn = (rsvp: Rsvp): RsvpColumn => ({
 	facilityCost: rsvp.facilityCost?.toNumber() ?? null,
 	facilityCredit: rsvp.facilityCredit?.toNumber() ?? null,
 	pricingRuleId: rsvp.pricingRuleId,
-	createdAt: rsvp.createdAt,
-	updatedAt: rsvp.updatedAt,
+	createdAt: epochToDate(rsvp.createdAt) ?? new Date(),
+	updatedAt: epochToDate(rsvp.updatedAt) ?? new Date(),
 });

@@ -9,7 +9,7 @@ import { getServerUrl } from "@/actions/server-util";
 import { getT } from "@/app/i18n";
 import { loadOuterHtmTemplate } from "@/actions/mail/load-outer-htm-template";
 import { sqlClient } from "@/lib/prismadb";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 // send message back to customer when admin replies support ticket
 //

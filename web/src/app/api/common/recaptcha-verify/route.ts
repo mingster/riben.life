@@ -222,7 +222,9 @@ export async function POST(request: Request) {
 				userIpAddress,
 				userAgent,
 			},
-			timestamp: epochToDate(getUtcNowEpoch())?.toISOString() || new Date().toISOString(),
+			timestamp:
+				epochToDate(getUtcNowEpoch())?.toISOString() ||
+				new Date().toISOString(),
 		});
 	} catch (error) {
 		log.error("reCAPTCHA verification test failed", {

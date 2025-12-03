@@ -5,8 +5,12 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Store } from "@/types";
 import { cn, getAbsoluteUrl } from "@/utils/utils";
-import { getUtcNow } from "@/utils/datetime-utils";
-import { formatDateTime } from "@/utils/datetime-utils";
+import {
+	getUtcNow,
+	formatDateTime,
+	epochToDate,
+	getUtcNowEpoch,
+} from "@/utils/datetime-utils";
 import { useParams, useRouter } from "next/navigation";
 
 import { ConfirmModal } from "@/components/modals/cofirm-modal";
@@ -115,7 +119,10 @@ const DisplayPkg: React.FC<props> = ({
 			const message = t("storeAdmin_switchLevel_cancel_result").replace(
 				"{0}",
 				subscription?.expiration
-					? formatDate(subscription.expiration, "yyyy-MM-dd")
+					? formatDate(
+							epochToDate(subscription.expiration) ?? new Date(),
+							"yyyy-MM-dd",
+						)
 					: "",
 			);
 			alert(message);
@@ -164,20 +171,24 @@ const DisplayPkg: React.FC<props> = ({
 							subscription === null ||
 							subscription.status === SubscriptionStatus.Inactive ||
 							subscription.status === SubscriptionStatus.Cancelled ||
-							subscription.expiration <= getUtcNow()
+							subscription.expiration <= getUtcNowEpoch()
 								? t("storeAdmin_switchLevel_pageDescr")
 								: t("storeAdmin_switchLevel_pageDescr_subscribed")
 						}
 					</div>
 					<div>
-						{subscription !== null && subscription.expiration > getUtcNow() && (
-							<div className="max-w-2xl m-auto mt-5 text-xl text-center">
-								{t("storeAdmin_switchLevel_subscription_expiry").replace(
-									"{0}",
-									formatDate(subscription.expiration, "yyyy-MM-dd"),
-								)}
-							</div>
-						)}
+						{subscription !== null &&
+							subscription.expiration > getUtcNowEpoch() && (
+								<div className="max-w-2xl m-auto mt-5 text-xl text-center">
+									{t("storeAdmin_switchLevel_subscription_expiry").replace(
+										"{0}",
+										formatDate(
+											epochToDate(subscription.expiration) ?? new Date(),
+											"yyyy-MM-dd",
+										),
+									)}
+								</div>
+							)}
 					</div>
 				</div>
 

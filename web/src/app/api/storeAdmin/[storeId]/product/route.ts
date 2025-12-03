@@ -39,6 +39,7 @@ export async function POST(
 				currency,
 				isFeatured,
 				status,
+				createdAt: getUtcNowEpoch(),
 				updatedAt: getUtcNowEpoch(),
 				ProductAttribute: {
 					create: { ...ProductAttribute },
@@ -149,6 +150,8 @@ export async function PATCH(
 						price: price,
 						description: description,
 						status,
+						createdAt: getUtcNowEpoch(),
+						updatedAt: getUtcNowEpoch(),
 					},
 				});
 
