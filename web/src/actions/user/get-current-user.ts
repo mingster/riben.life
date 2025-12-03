@@ -76,6 +76,7 @@ const getCurrentUser = async (): Promise<User | null> => {
 
 	transformDecimalsToNumbers(obj);
 
+	console.log(obj.Rsvp.map((r) => r.rsvpTime));
 	return obj as User;
 };
 

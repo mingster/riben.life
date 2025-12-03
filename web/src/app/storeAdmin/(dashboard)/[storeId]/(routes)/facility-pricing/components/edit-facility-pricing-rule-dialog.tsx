@@ -248,11 +248,11 @@ export function EditFacilityPricingRuleDialog({
 			<DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
-						{isEditMode ? t("edit") : t("create") + t("Facility_Pricing_Rules")}
+						{isEditMode ? t("edit") : t("create") + t("facility_pricing_rules")}
 					</DialogTitle>
 					<DialogDescription>
 						{" "}
-						{t("Facility_Pricing_Rules_descr")}
+						{t("facility_pricing_rules_descr")}
 					</DialogDescription>
 				</DialogHeader>
 

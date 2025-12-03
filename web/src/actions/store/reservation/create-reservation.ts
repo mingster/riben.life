@@ -29,23 +29,28 @@ export const createReservationAction = baseClient
 			message,
 		} = parsedInput;
 
-		// Convert rsvpTime to UTC if it's a Date object
-		// datetime-local inputs create Date objects in user's local timezone
-		// We need to ensure it's stored as UTC in the database
-		const rsvpTime =
-			rsvpTimeInput instanceof Date
-				? new Date(
-						Date.UTC(
-							rsvpTimeInput.getFullYear(),
-							rsvpTimeInput.getMonth(),
-							rsvpTimeInput.getDate(),
-							rsvpTimeInput.getHours(),
-							rsvpTimeInput.getMinutes(),
-							rsvpTimeInput.getSeconds(),
-							rsvpTimeInput.getMilliseconds(),
-						),
-					)
-				: rsvpTimeInput;
+		// rsvpTime is already in UTC (converted on client side from store timezone)
+		// safe-action may serialize Date to string, so handle both
+		let rsvpTime: Date;
+		if (rsvpTimeInput instanceof Date) {
+			// Already a Date object, ensure it's properly in UTC
+			rsvpTime = new Date(
+				Date.UTC(
+					rsvpTimeInput.getUTCFullYear(),
+					rsvpTimeInput.getUTCMonth(),
+					rsvpTimeInput.getUTCDate(),
+					rsvpTimeInput.getUTCHours(),
+					rsvpTimeInput.getUTCMinutes(),
+					rsvpTimeInput.getUTCSeconds(),
+					rsvpTimeInput.getUTCMilliseconds(),
+				),
+			);
+		} else if (typeof rsvpTimeInput === "string") {
+			// String from network serialization, parse it
+			rsvpTime = new Date(rsvpTimeInput);
+		} else {
+			throw new SafeError("Invalid rsvpTime format");
+		}
 
 		// Get session to check if user is logged in
 		const session = await auth.api.getSession({

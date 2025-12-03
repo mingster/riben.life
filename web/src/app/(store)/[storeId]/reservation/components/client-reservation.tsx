@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
 import { ReservationForm } from "./reservation-form";
+import { EditReservationDialog } from "./edit-reservation-dialog";
 import type { Rsvp, StoreFacility, User } from "@/types";
 import type { RsvpSettings, StoreSettings } from "@prisma/client";
 import { Separator } from "@/components/ui/separator";
@@ -31,10 +33,25 @@ export function ReservationClient({
 }: ReservationClientProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const searchParams = useSearchParams();
 	const [selectedDateTime, setSelectedDateTime] = useState<{
 		day: Date;
 		timeSlot: string;
 	} | null>(null);
+	const [editRsvpId, setEditRsvpId] = useState<string | null>(null);
+	const [editRsvp, setEditRsvp] = useState<Rsvp | null>(null);
+
+	// Handle edit query parameter
+	useEffect(() => {
+		const editId = searchParams.get("edit");
+		if (editId) {
+			const rsvp = initialRsvps.find((r) => r.id === editId);
+			if (rsvp) {
+				setEditRsvp(rsvp);
+				setEditRsvpId(editId);
+			}
+		}
+	}, [searchParams, initialRsvps]);
 
 	const handleTimeSlotClick = useCallback((day: Date, timeSlot: string) => {
 		setSelectedDateTime({ day, timeSlot });
@@ -52,16 +69,28 @@ export function ReservationClient({
 		// This callback is just for any additional cleanup if needed
 	}, []);
 
+	const handleReservationUpdated = useCallback((updatedRsvp: Rsvp) => {
+		// Close edit dialog and refresh
+		setEditRsvp(null);
+		setEditRsvpId(null);
+		// Update URL to remove edit parameter
+		if (typeof window !== "undefined") {
+			const url = new URL(window.location.href);
+			url.searchParams.delete("edit");
+			window.history.replaceState({}, "", url.toString());
+		}
+	}, []);
+
 	// Calculate default rsvp time from selected date/time
 	const defaultRsvpTime = selectedDateTime
 		? (() => {
-				const [hours, minutes] = selectedDateTime.timeSlot
-					.split(":")
-					.map(Number);
-				const date = new Date(selectedDateTime.day);
-				date.setHours(hours, minutes, 0, 0);
-				return date;
-			})()
+			const [hours, minutes] = selectedDateTime.timeSlot
+				.split(":")
+				.map(Number);
+			const date = new Date(selectedDateTime.day);
+			date.setHours(hours, minutes, 0, 0);
+			return date;
+		})()
 		: undefined;
 
 	return (
@@ -77,6 +106,34 @@ export function ReservationClient({
 				storeTimezone={storeTimezone}
 				onReservationCreated={handleReservationCreated}
 			/>
+
+			{/* Edit Reservation Dialog */}
+			{editRsvp && (
+				<EditReservationDialog
+					storeId={storeId}
+					rsvpSettings={rsvpSettings}
+					storeSettings={storeSettings}
+					facilities={facilities}
+					user={user}
+					rsvp={editRsvp}
+					rsvps={initialRsvps}
+					storeTimezone={storeTimezone}
+					open={Boolean(editRsvpId)}
+					onOpenChange={(open) => {
+						if (!open) {
+							setEditRsvp(null);
+							setEditRsvpId(null);
+							// Update URL to remove edit parameter
+							if (typeof window !== "undefined") {
+								const url = new URL(window.location.href);
+								url.searchParams.delete("edit");
+								window.history.replaceState({}, "", url.toString());
+							}
+						}
+					}}
+					onReservationUpdated={handleReservationUpdated}
+				/>
+			)}
 		</div>
 	);
 }

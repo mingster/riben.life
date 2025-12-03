@@ -29,8 +29,15 @@ export function getDateInTz(dt: Date, offsetHours: number): Date {
 		throw new Error("offsetHours must be a number");
 	}
 
-	// if dt is not Date object, return empty string
-	if (typeof dt !== "object") return dt;
+	// if dt is not Date object, return it as-is (caller should handle validation)
+	if (typeof dt !== "object" || !(dt instanceof Date)) {
+		return dt;
+	}
+
+	// Validate date is not invalid
+	if (Number.isNaN(dt.getTime())) {
+		return dt; // Return invalid date as-is, caller should handle
+	}
 
 	// Use UTC getters since we store dates as UTC components
 	const result = new Date(
@@ -79,6 +86,133 @@ export function getOffsetHours(timezone: string): number {
 			tags: ["timezone", "warn"],
 		});
 		return 0; // Return UTC offset as fallback
+	}
+}
+
+/**
+ * Get timezone offset in hours for a specific date/time in a given timezone
+ * @param date - Date object (will be used to get UTC components)
+ * @param timezone - Timezone string (e.g., "Asia/Taipei")
+ * @returns Offset in hours (positive means timezone is ahead of UTC)
+ */
+export function getTimezoneOffsetForDate(date: Date, timezone: string): number {
+	try {
+		// Format the UTC date in the target timezone
+		const formatter = new Intl.DateTimeFormat("en-CA", {
+			timeZone: timezone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		});
+		
+		const tzString = formatter.format(date);
+		const parts = tzString.split(/[-T:]/).map(Number);
+		const tzYear = parts[0];
+		const tzMonth = parts[1];
+		const tzDay = parts[2];
+		const tzHour = parts[3];
+		const tzMinute = parts[4];
+		
+		// Get UTC components
+		const utcYear = date.getUTCFullYear();
+		const utcMonth = date.getUTCMonth() + 1;
+		const utcDay = date.getUTCDate();
+		const utcHour = date.getUTCHours();
+		const utcMinute = date.getUTCMinutes();
+		
+		// Calculate offset: difference between UTC and timezone time
+		// If UTC is 12:00 and timezone is 20:00, offset is +8 hours
+		const utcMinutes = utcHour * 60 + utcMinute;
+		const tzMinutes = tzHour * 60 + tzMinute;
+		const offsetMinutes = tzMinutes - utcMinutes;
+		
+		// Handle day differences
+		if (tzYear !== utcYear || tzMonth !== utcMonth || tzDay !== utcDay) {
+			// Day difference means we need to account for it
+			const dayDiff = (tzYear - utcYear) * 365 + (tzMonth - utcMonth) * 30 + (tzDay - utcDay);
+			return offsetMinutes / 60 + dayDiff * 24;
+		}
+		
+		return offsetMinutes / 60;
+	} catch (error) {
+		logger.warn("Failed to get timezone offset for date", {
+			metadata: {
+				timezone,
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["datetime", "timezone", "warn"],
+		});
+		return getOffsetHours(timezone); // Fallback to general offset
+	}
+}
+
+/**
+ * Convert a datetime-local string (interpreted as store timezone) to UTC Date
+ * @param datetimeLocalString - String in format "YYYY-MM-DDTHH:mm" from datetime-local input
+ * @param storeTimezone - Store's timezone (e.g., "Asia/Taipei")
+ * @returns Date object in UTC
+ */
+export function convertStoreTimezoneToUtc(
+	datetimeLocalString: string,
+	storeTimezone: string,
+): Date {
+	try {
+		// Parse the datetime-local string (format: "YYYY-MM-DDTHH:mm")
+		const [datePart, timePart] = datetimeLocalString.split("T");
+		if (!datePart) {
+			throw new Error("Invalid datetime format");
+		}
+		const [year, month, day] = datePart.split("-").map(Number);
+		const [hour, minute] = (timePart || "00:00").split(":").map(Number);
+
+		// Create a UTC date representing noon on the selected day
+		// This will be used to calculate the timezone offset for this specific date
+		const testUtcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+
+		// Get the store timezone offset for this specific date (accounts for DST)
+		const storeOffsetHours = getTimezoneOffsetForDate(testUtcDate, storeTimezone);
+
+		// Create a Date object representing the store timezone time
+		// This Date will be in browser's local timezone, but represents store timezone time
+		const storeTimezoneDate = new Date(year, month - 1, day, hour, minute, 0, 0);
+
+		// Convert store timezone time to UTC by subtracting the offset
+		// If store time is 14:00 and offset is +8, UTC is 06:00 (14 - 8 = 6)
+		const utcTime = addHours(storeTimezoneDate, -storeOffsetHours);
+
+		// Create a proper UTC Date object using UTC components
+		// This ensures the date is stored as UTC in the database
+		const utcDateAsUTC = new Date(
+			Date.UTC(
+				utcTime.getUTCFullYear(),
+				utcTime.getUTCMonth(),
+				utcTime.getUTCDate(),
+				utcTime.getUTCHours(),
+				utcTime.getUTCMinutes(),
+				0,
+				0,
+			),
+		);
+
+		return utcDateAsUTC;
+	} catch (error) {
+		logger.warn("Failed to convert store timezone to UTC", {
+			metadata: {
+				datetimeLocalString,
+				storeTimezone,
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["datetime", "timezone", "warn"],
+		});
+		// Fallback: treat as UTC
+		const [datePart, timePart] = datetimeLocalString.split("T");
+		const [year, month, day] = datePart.split("-").map(Number);
+		const [hour, minute] = (timePart || "00:00").split(":").map(Number);
+		return new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0));
 	}
 }
 

@@ -554,11 +554,14 @@ export const CustomerWeekViewCalendar: React.FC<
 															return canEdit ? (
 																<EditReservationDialog
 																	key={rsvp.id}
-																	storeId={storeId}
+																	storeId={storeId || ""}
 																	rsvpSettings={rsvpSettings}
-																	facilities={facilities}
-																	user={user}
+																	storeSettings={storeSettings}
+																	facilities={facilities as any}
+																	user={user as any}
 																	rsvp={rsvp}
+																	rsvps={rsvps}
+																	storeTimezone={storeTimezone}
 																	onReservationUpdated={
 																		handleReservationUpdated
 																	}

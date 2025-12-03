@@ -97,7 +97,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 						</CardHeader>
 
 						<CardContent className="space-y-2">
-							<DisplayReservations reservations={user.Rsvp} />
+							<DisplayReservations reservations={user.Rsvp} user={user} />
 						</CardContent>
 					</Card>
 				</TabsContent>

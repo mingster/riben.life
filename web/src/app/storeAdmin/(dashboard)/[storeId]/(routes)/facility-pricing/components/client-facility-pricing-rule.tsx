@@ -83,9 +83,9 @@ export const FacilityPricingRuleClient: React.FC<
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("Facility_Pricing_Rules")}
+					title={t("facility_pricing_rules")}
 					badge={data.length}
-					description={t("Facility_Pricing_Rules_descr")}
+					description={t("facility_pricing_rules_descr")}
 				/>
 				<div className="flex gap-2">
 					<EditFacilityPricingRuleDialog

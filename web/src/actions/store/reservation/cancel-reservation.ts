@@ -1,0 +1,99 @@
+"use server";
+
+import { sqlClient } from "@/lib/prismadb";
+import { SafeError } from "@/utils/error";
+import { baseClient } from "@/utils/actions/safe-action";
+import { Prisma } from "@prisma/client";
+import { transformDecimalsToNumbers } from "@/utils/utils";
+import type { Rsvp } from "@/types";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { RsvpStatus } from "@/types/enum";
+import { getUtcNow } from "@/utils/datetime-utils";
+
+import { cancelReservationSchema } from "./cancel-reservation.validation";
+
+export const cancelReservationAction = baseClient
+	.metadata({ name: "cancelReservation" })
+	.schema(cancelReservationSchema)
+	.action(async ({ parsedInput }) => {
+		const { id } = parsedInput;
+
+		// Get session to check if user is logged in
+		const session = await auth.api.getSession({
+			headers: await headers(),
+		});
+
+		const sessionUserId = session?.user?.id;
+		const sessionUserEmail = session?.user?.email;
+
+		// Get the existing RSVP
+		const existingRsvp = await sqlClient.rsvp.findUnique({
+			where: { id },
+			include: {
+				User: true,
+				Store: true,
+			},
+		});
+
+		if (!existingRsvp) {
+			throw new SafeError("Reservation not found");
+		}
+
+		// Only allow canceling if status is Pending or AlreadyPaid
+		if (
+			existingRsvp.status !== RsvpStatus.Pending &&
+			existingRsvp.status !== RsvpStatus.AlreadyPaid
+		) {
+			throw new SafeError(
+				"Reservation can only be cancelled when status is Pending or AlreadyPaid",
+			);
+		}
+
+		// Verify ownership: user must be logged in and match userId, or match by email
+		let hasPermission = false;
+
+		if (sessionUserId && existingRsvp.userId) {
+			hasPermission = existingRsvp.userId === sessionUserId;
+		} else if (sessionUserEmail && existingRsvp.User?.email) {
+			hasPermission = existingRsvp.User.email === sessionUserEmail;
+		}
+
+		if (!hasPermission) {
+			throw new SafeError(
+				"You do not have permission to cancel this reservation",
+			);
+		}
+
+		try {
+			const updated = await sqlClient.rsvp.update({
+				where: { id },
+				data: {
+					status: RsvpStatus.Cancelled,
+					updatedAt: getUtcNow(),
+				},
+				include: {
+					Store: true,
+					User: true,
+					Facility: true,
+				},
+			});
+
+			const transformedRsvp = { ...updated } as Rsvp;
+			transformDecimalsToNumbers(transformedRsvp);
+
+			return {
+				rsvp: transformedRsvp,
+			};
+		} catch (error: unknown) {
+			if (
+				error instanceof Prisma.PrismaClientKnownRequestError &&
+				error.code === "P2002"
+			) {
+				throw new SafeError("Reservation cancellation failed.");
+			}
+
+			throw error;
+		}
+	});
+

@@ -34,16 +34,18 @@ import { FacilityCombobox } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreFacility, User, Rsvp } from "@/types";
-import type { RsvpSettings } from "@prisma/client";
-import { getDateInTz, getOffsetHours } from "@/utils/datetime-utils";
-import { format } from "date-fns";
+import type { RsvpSettings, StoreSettings } from "@prisma/client";
+import { SlotPicker } from "./slot-picker";
+import { getOffsetHours, addHours } from "@/utils/datetime-utils";
 
 interface EditReservationFormProps {
 	storeId: string;
 	rsvpSettings: RsvpSettings | null;
+	storeSettings: StoreSettings | null;
 	facilities: StoreFacility[];
 	user: User | null;
 	rsvp: Rsvp;
+	rsvps: Rsvp[];
 	onReservationUpdated?: (updatedRsvp: Rsvp) => void;
 	hideCard?: boolean;
 	storeTimezone?: string;
@@ -52,9 +54,11 @@ interface EditReservationFormProps {
 export function EditReservationForm({
 	storeId,
 	rsvpSettings,
+	storeSettings,
 	facilities,
 	user,
 	rsvp,
+	rsvps,
 	onReservationUpdated,
 	hideCard = false,
 	storeTimezone = "Asia/Taipei",
@@ -66,22 +70,38 @@ export function EditReservationForm({
 
 	// Default values from existing RSVP
 	const defaultValues: UpdateReservationInput = useMemo(
-		() => ({
-			id: rsvp.id,
-			facilityId: rsvp.facilityId,
-			numOfAdult: rsvp.numOfAdult,
-			numOfChild: rsvp.numOfChild,
-			rsvpTime:
-				rsvp.rsvpTime instanceof Date ? rsvp.rsvpTime : new Date(rsvp.rsvpTime),
-			message: rsvp.message || "",
-		}),
+		() => {
+			let rsvpTime: Date;
+			if (rsvp.rsvpTime instanceof Date) {
+				rsvpTime = rsvp.rsvpTime;
+			} else if (rsvp.rsvpTime) {
+				rsvpTime = new Date(rsvp.rsvpTime);
+				// Validate date
+				if (Number.isNaN(rsvpTime.getTime())) {
+					// Fallback to current time if invalid
+					rsvpTime = new Date();
+				}
+			} else {
+				// Fallback to current time if missing
+				rsvpTime = new Date();
+			}
+
+			return {
+				id: rsvp.id,
+				facilityId: rsvp.facilityId,
+				numOfAdult: rsvp.numOfAdult,
+				numOfChild: rsvp.numOfChild,
+				rsvpTime,
+				message: rsvp.message || "",
+			};
+		},
 		[rsvp],
 	);
 
 	const form = useForm<UpdateReservationInput>({
 		resolver: zodResolver(updateReservationSchema) as any,
 		defaultValues,
-		mode: "onChange",
+		mode: "onBlur", // Change to onBlur to avoid validation errors during typing
 	});
 
 	// Update form when rsvp changes
@@ -93,6 +113,7 @@ export function EditReservationForm({
 		setIsSubmitting(true);
 
 		try {
+			// Pass Date object directly - safe-action will handle serialization
 			const result = await updateReservationAction(data);
 
 			if (result?.serverError) {
@@ -123,46 +144,74 @@ export function EditReservationForm({
 		<>
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-					{/* Date and Time */}
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<FormField
-							control={form.control}
-							name="rsvpTime"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("rsvp_time")} <span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="datetime-local"
-											disabled={isSubmitting}
-											value={
-												field.value
-													? (() => {
-															// Convert UTC date to store timezone for display
-															const utcDate =
-																field.value instanceof Date
-																	? field.value
-																	: new Date(field.value);
-															const storeTzDate = getDateInTz(
-																utcDate,
-																getOffsetHours(storeTimezone),
-															);
-															return format(storeTzDate, "yyyy-MM-dd'T'HH:mm");
-														})()
-													: ""
-											}
-											onChange={(e) => {
-												field.onChange(new Date(e.target.value));
+					{/* Date and Time - Slot Picker */}
+					<FormField
+						control={form.control}
+						name="rsvpTime"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>
+									{t("rsvp_time")} <span className="text-destructive">*</span>
+								</FormLabel>
+								<FormControl>
+									<div className="border rounded-lg p-4">
+										<SlotPicker
+											rsvps={rsvps}
+											rsvpSettings={rsvpSettings}
+											storeSettings={storeSettings}
+											storeTimezone={storeTimezone}
+											currentRsvpId={rsvp.id}
+											selectedDateTime={field.value || null}
+											onSlotSelect={(dateTime) => {
+												// dateTime is a Date object created with store timezone components
+												// Convert store timezone to UTC by subtracting the offset
+												if (!dateTime || !storeTimezone) {
+													field.onChange(dateTime);
+													return;
+												}
+												
+												// Get the store timezone offset in hours
+												const storeOffsetHours = getOffsetHours(storeTimezone);
+												
+												// Convert store timezone time to UTC by subtracting the offset
+												// If store time is 14:00 and offset is +8, UTC is 06:00 (14 - 8 = 6)
+												const utcTime = addHours(dateTime, -storeOffsetHours);
+												
+												// Create a proper UTC Date object using UTC components
+												// This ensures the date is stored as UTC in the database
+												const utcDateAsUTC = new Date(
+													Date.UTC(
+														utcTime.getUTCFullYear(),
+														utcTime.getUTCMonth(),
+														utcTime.getUTCDate(),
+														utcTime.getUTCHours(),
+														utcTime.getUTCMinutes(),
+														0,
+														0,
+													),
+												);
+												
+												// Validate the UTC date
+												if (isNaN(utcDateAsUTC.getTime())) {
+													console.error("Invalid UTC date conversion:", {
+														dateTime,
+														storeTimezone,
+														storeOffsetHours,
+														utcTime,
+														utcDateAsUTC,
+													});
+													return;
+												}
+												
+												field.onChange(utcDateAsUTC);
 											}}
 										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					</div>
+									</div>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 
 					{/* Number of Adults and Children */}
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

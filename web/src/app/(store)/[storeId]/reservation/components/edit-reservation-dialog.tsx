@@ -13,14 +13,17 @@ import { EditReservationForm } from "./edit-reservation-form";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreFacility, User, Rsvp } from "@/types";
-import type { RsvpSettings } from "@prisma/client";
+import type { RsvpSettings, StoreSettings } from "@prisma/client";
 
 interface EditReservationDialogProps {
 	storeId: string;
 	rsvpSettings: RsvpSettings | null;
+	storeSettings: StoreSettings | null;
 	facilities: StoreFacility[];
 	user: User | null;
 	rsvp: Rsvp;
+	rsvps: Rsvp[];
+	storeTimezone?: string;
 	trigger?: React.ReactNode;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
@@ -30,9 +33,12 @@ interface EditReservationDialogProps {
 export function EditReservationDialog({
 	storeId,
 	rsvpSettings,
+	storeSettings,
 	facilities,
 	user,
 	rsvp,
+	rsvps,
+	storeTimezone = "Asia/Taipei",
 	trigger,
 	open,
 	onOpenChange,
@@ -55,7 +61,7 @@ export function EditReservationDialog({
 	return (
 		<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 			{trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-			<DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
+			<DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[95vw] lg:max-w-[90vw] max-h-[calc(100vh-2rem)] overflow-y-auto w-full">
 				<DialogHeader>
 					<DialogTitle>{t("edit_reservation")}</DialogTitle>
 					<DialogDescription>
@@ -66,9 +72,12 @@ export function EditReservationDialog({
 					<EditReservationForm
 						storeId={storeId}
 						rsvpSettings={rsvpSettings}
+						storeSettings={storeSettings}
 						facilities={facilities}
 						user={user}
 						rsvp={rsvp}
+						rsvps={rsvps}
+						storeTimezone={storeTimezone}
 						onReservationUpdated={handleReservationUpdated}
 						hideCard={true}
 					/>

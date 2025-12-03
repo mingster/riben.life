@@ -36,7 +36,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreFacility, User, Rsvp } from "@/types";
 import type { RsvpSettings } from "@prisma/client";
-import { getDateInTz, getOffsetHours } from "@/utils/datetime-utils";
+import {
+	getDateInTz,
+	getOffsetHours,
+	convertStoreTimezoneToUtc,
+} from "@/utils/datetime-utils";
 import { format } from "date-fns";
 
 interface ReservationFormProps {
@@ -99,6 +103,7 @@ export function ReservationForm({
 		setIsSubmitting(true);
 
 		try {
+			// Pass Date object directly - safe-action will handle serialization
 			const result = await createReservationAction(data);
 
 			if (result?.serverError) {
@@ -170,21 +175,43 @@ export function ReservationForm({
 											value={
 												field.value
 													? (() => {
+														try {
 															// Convert UTC date to store timezone for display
 															const utcDate =
 																field.value instanceof Date
 																	? field.value
 																	: new Date(field.value);
+
+															// Validate date
+															if (Number.isNaN(utcDate.getTime())) {
+																return "";
+															}
+
 															const storeTzDate = getDateInTz(
 																utcDate,
 																getOffsetHours(storeTimezone),
 															);
+
+															// Validate converted date
+															if (Number.isNaN(storeTzDate.getTime())) {
+																return "";
+															}
+
 															return format(storeTzDate, "yyyy-MM-dd'T'HH:mm");
-														})()
+														} catch (error) {
+															console.error("Error formatting date:", error);
+															return "";
+														}
+													})()
 													: ""
 											}
 											onChange={(e) => {
-												field.onChange(new Date(e.target.value));
+												// Convert datetime-local string (interpreted as store timezone) to UTC
+												const utcDate = convertStoreTimezoneToUtc(
+													e.target.value,
+													storeTimezone,
+												);
+												field.onChange(utcDate);
 											}}
 										/>
 									</FormControl>

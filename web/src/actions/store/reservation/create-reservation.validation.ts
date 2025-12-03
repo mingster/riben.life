@@ -8,7 +8,9 @@ export const createReservationSchema = z.object({
 	facilityId: z.string().nullable().optional(),
 	numOfAdult: z.coerce.number().int().min(1).default(1),
 	numOfChild: z.coerce.number().int().min(0).default(0),
-	rsvpTime: z.coerce.date(),
+	// Use z.date() for form validation (form uses Date objects)
+	// Server action will receive Date objects (safe-action handles serialization)
+	rsvpTime: z.date(),
 	message: z.string().nullable().optional(),
 });
 

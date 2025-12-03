@@ -1,24 +1,167 @@
 // display given reservations in a table
 
+"use client";
+
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Rsvp } from "@/types";
+import type { Rsvp, User } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { format } from "date-fns";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { getDateInTz, getOffsetHours } from "@/utils/datetime-utils";
+import { IconEdit, IconTrash } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
+import { getStoreDataAction } from "@/actions/store/reservation/get-store-data";
+import { toastError, toastSuccess } from "@/components/toaster";
+import { EditReservationDialog } from "@/app/(store)/[storeId]/reservation/components/edit-reservation-dialog";
+import type { StoreFacility, RsvpSettings, StoreSettings } from "@/types";
 
 export const DisplayReservations = ({
 	reservations,
+	user,
 }: {
 	reservations: Rsvp[];
+	user?: User | null;
 }) => {
 	if (!reservations || reservations.length === 0) return null;
+
+	const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+	const [reservationToCancel, setReservationToCancel] = useState<Rsvp | null>(
+		null,
+	);
+	const [isCancelling, setIsCancelling] = useState(false);
+	const [editDialogOpen, setEditDialogOpen] = useState(false);
+	const [reservationToEdit, setReservationToEdit] = useState<Rsvp | null>(
+		null,
+	);
+	const [storeData, setStoreData] = useState<{
+		rsvpSettings: RsvpSettings | null;
+		storeSettings: StoreSettings | null;
+		facilities: StoreFacility[];
+	} | null>(null);
+	const [isLoadingStoreData, setIsLoadingStoreData] = useState(false);
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
+
+	// Check if reservation belongs to current user
+	const isUserReservation = (rsvp: Rsvp): boolean => {
+		if (!user) return false;
+		if (user.id && rsvp.userId) {
+			return user.id === rsvp.userId;
+		}
+		if (user.email && rsvp.User?.email) {
+			return user.email === rsvp.User.email;
+		}
+		return false;
+	};
+
+	// Check if reservation can be edited/cancelled
+	const canEditReservation = (rsvp: Rsvp): boolean => {
+		return (
+			(rsvp.status === RsvpStatus.Pending ||
+				rsvp.status === RsvpStatus.AlreadyPaid) &&
+			isUserReservation(rsvp)
+		);
+	};
+
+	const handleCancelClick = (rsvp: Rsvp) => {
+		setReservationToCancel(rsvp);
+		setCancelDialogOpen(true);
+	};
+
+	const handleCancelConfirm = async () => {
+		if (!reservationToCancel) return;
+
+		setIsCancelling(true);
+		try {
+			const result = await cancelReservationAction({
+				id: reservationToCancel.id,
+			});
+
+			if (result?.serverError) {
+				toastError({
+					title: t("Error"),
+					description: result.serverError,
+				});
+			} else {
+				toastSuccess({
+					description: t("reservation_cancelled"),
+				});
+				// Refresh the page to show updated data
+				if (typeof window !== "undefined") {
+					window.location.reload();
+				}
+			}
+		} catch (error) {
+			toastError({
+				title: t("Error"),
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setIsCancelling(false);
+			setCancelDialogOpen(false);
+			setReservationToCancel(null);
+		}
+	};
+
+	const handleEditClick = async (rsvp: Rsvp) => {
+		if (!rsvp.Store?.id) return;
+
+		setIsLoadingStoreData(true);
+		try {
+			const result = await getStoreDataAction({ storeId: rsvp.Store.id });
+			if (result?.serverError) {
+				toastError({
+					title: t("Error"),
+					description: result.serverError,
+				});
+				return;
+			}
+
+			if (result?.data) {
+				setStoreData({
+					rsvpSettings: result.data.rsvpSettings,
+					storeSettings: result.data.storeSettings,
+					facilities: result.data.facilities,
+				});
+				setReservationToEdit(rsvp);
+				setEditDialogOpen(true);
+			}
+		} catch (error) {
+			toastError({
+				title: t("Error"),
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setIsLoadingStoreData(false);
+		}
+	};
+
+	const handleReservationUpdated = (updatedRsvp: Rsvp) => {
+		setEditDialogOpen(false);
+		setReservationToEdit(null);
+		setStoreData(null);
+		// Refresh the page to show updated data
+		if (typeof window !== "undefined") {
+			window.location.reload();
+		}
+	};
+
+	//console.log("reservations", reservations.map((r) => r.rsvpTime));
 
 	return (
 		<div className="space-y-3 sm:space-y-4">
@@ -57,19 +200,18 @@ export const DisplayReservations = ({
 							</div>
 							<div className="shrink-0">
 								<span
-									className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
-										item.status === 0
-											? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
-											: item.status === 10
-												? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-												: item.status === 20 || item.status === 30
-													? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
-													: item.status === 40 || item.status === 50
-														? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
-														: item.status === 60
-															? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
-															: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
-									}`}
+									className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${item.status === 0
+										? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
+										: item.status === 10
+											? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
+											: item.status === 20 || item.status === 30
+												? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
+												: item.status === 40 || item.status === 50
+													? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
+													: item.status === 60
+														? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
+														: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
+										}`}
 								>
 									{t(`rsvp_status_${item.status}`)}
 								</span>
@@ -99,13 +241,38 @@ export const DisplayReservations = ({
 							</div>
 						)}
 
-						<div className="text-[10px] text-muted-foreground pt-1 border-t">
-							{format(
-								getDateInTz(
-									item.createdAt,
-									getOffsetHours(item.Store?.defaultTimezone ?? "Asia/Taipei"),
-								),
-								datetimeFormat,
+						<div className="flex items-center justify-between pt-1 border-t">
+							<div className="text-[10px] text-muted-foreground">
+								{format(
+									getDateInTz(
+										item.createdAt,
+										getOffsetHours(item.Store?.defaultTimezone ?? "Asia/Taipei"),
+									),
+									datetimeFormat,
+								)}
+							</div>
+							{canEditReservation(item) && (
+								<div className="flex items-center gap-1">
+									<Button
+										variant="ghost"
+										size="icon"
+										className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0"
+										onClick={() => handleEditClick(item)}
+										title={t("edit_reservation")}
+										disabled={isLoadingStoreData}
+									>
+										<IconEdit className="h-4 w-4" />
+									</Button>
+									<Button
+										variant="ghost"
+										size="icon"
+										className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0 text-destructive hover:text-destructive"
+										onClick={() => handleCancelClick(item)}
+										title={t("cancel_reservation")}
+									>
+										<IconTrash className="h-4 w-4" />
+									</Button>
+								</div>
 							)}
 						</div>
 					</div>
@@ -139,6 +306,9 @@ export const DisplayReservations = ({
 								<th className="text-left px-3 py-2 text-xs font-medium">
 									{t("rsvp_facility")}
 								</th>
+								<th className="text-left px-3 py-2 text-xs font-medium">
+									{t("actions")}
+								</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -168,19 +338,18 @@ export const DisplayReservations = ({
 									</td>
 									<td className="px-3 py-2 text-xs">
 										<span
-											className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
-												item.status === 0
-													? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
-													: item.status === 10
-														? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-														: item.status === 20 || item.status === 30
-															? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
-															: item.status === 40 || item.status === 50
-																? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
-																: item.status === 60
-																	? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
-																	: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
-											}`}
+											className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${item.status === 0
+												? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
+												: item.status === 10
+													? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
+													: item.status === 20 || item.status === 30
+														? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
+														: item.status === 40 || item.status === 50
+															? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
+															: item.status === 60
+																? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
+																: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
+												}`}
 										>
 											{t(`rsvp_status_${item.status}`)}
 										</span>
@@ -206,12 +375,84 @@ export const DisplayReservations = ({
 									<td className="px-3 py-2 text-xs">
 										{item.Facility?.facilityName || "-"}
 									</td>
+									<td className="px-3 py-2 text-xs">
+										{canEditReservation(item) && (
+											<div className="flex items-center gap-1">
+												<Button
+													variant="ghost"
+													size="icon"
+													className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0"
+													onClick={() => handleEditClick(item)}
+													title={t("edit_reservation")}
+													disabled={isLoadingStoreData}
+												>
+													<IconEdit className="h-4 w-4" />
+												</Button>
+												<Button
+													variant="ghost"
+													size="icon"
+													className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0 text-destructive hover:text-destructive"
+													onClick={() => handleCancelClick(item)}
+													title={t("cancel_reservation")}
+												>
+													<IconTrash className="h-4 w-4" />
+												</Button>
+											</div>
+										)}
+									</td>
 								</tr>
 							))}
 						</tbody>
 					</table>
 				</div>
 			</div>
+
+			{/* Cancel Confirmation Dialog */}
+			<AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>{t("cancel_reservation")}</AlertDialogTitle>
+						<AlertDialogDescription>
+							{t("cancel_reservation_confirmation")}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={isCancelling}>
+							{t("Cancel")}
+						</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleCancelConfirm}
+							disabled={isCancelling}
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+						>
+							{isCancelling ? t("cancelling") : t("confirm_cancel")}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			{/* Edit Reservation Dialog */}
+			{reservationToEdit && storeData && reservationToEdit.Store?.id && (
+				<EditReservationDialog
+					storeId={reservationToEdit.Store.id}
+					rsvpSettings={storeData.rsvpSettings}
+					storeSettings={storeData.storeSettings}
+					facilities={storeData.facilities}
+					user={user}
+					rsvp={reservationToEdit}
+					rsvps={reservations}
+					storeTimezone={reservationToEdit.Store.defaultTimezone || "Asia/Taipei"}
+					open={editDialogOpen}
+					onOpenChange={(open) => {
+						setEditDialogOpen(open);
+						if (!open) {
+							setReservationToEdit(null);
+							setStoreData(null);
+						}
+					}}
+					onReservationUpdated={handleReservationUpdated}
+				/>
+			)}
 		</div>
 	);
 };
