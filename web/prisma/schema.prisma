@@ -212,6 +212,8 @@ model Member {
 
   @@index([userId])
   @@index([organizationId])
+  // Composite indexes for common query patterns
+  @@index([organizationId, role]) // For role-based access checks
   @@map("member")
 }
 
@@ -652,6 +654,8 @@ model Store {
   @@index([customDomain])
   @@index([createdAt])
   @@index([updatedAt])
+  // Composite indexes for common query patterns
+  @@index([ownerId, isDeleted]) // For owner store listings
 }
 
 model StoreSettings {
@@ -809,6 +813,8 @@ model Rsvp {
   @@index([arriveTime])
   @@index([createdAt])
   @@index([updatedAt])
+  // Composite indexes for common query patterns
+  @@index([storeId, rsvpTime, status]) // For date range queries with status
 }
 
 model StoreFacility {
@@ -924,6 +930,9 @@ model Product {
   @@index([status])
   @@index([createdAt])
   @@index([updatedAt])
+  // Composite indexes for common query patterns
+  @@index([storeId, status, isFeatured]) // For filtered product listings
+  @@index([storeId, updatedAt]) // For pagination
 }
 
 //產品選項規格 across this store. it's used as template so that we don't need to re-enter option for each product.
@@ -1025,6 +1034,8 @@ model ProductCategories {
   @@index([categoryId])
   @@index([productId])
   @@index([sortOrder])
+  // Composite indexes for common query patterns
+  @@index([categoryId, sortOrder]) // For sorted product listings in category
 }
 
 model Category {
@@ -1044,6 +1055,9 @@ model Category {
   @@index([sortOrder])
   @@index([createdAt])
   @@index([updatedAt])
+  // Composite indexes for common query patterns
+  @@index([storeId, isFeatured, sortOrder]) // For filtered and sorted category listings
+  @@index([storeId, updatedAt]) // For pagination
 }
 
 model ProductAttribute {
@@ -1168,6 +1182,11 @@ model StoreOrder {
   @@index([createdAt])
   @@index([orderNum])
   @@index([orderStatus])
+  // Composite indexes for common query patterns
+  @@index([storeId, orderStatus, isPaid]) // For filtered order listings
+  @@index([storeId, updatedAt]) // For date range queries with store
+  @@index([userId, updatedAt]) // For user order queries
+  @@index([storeId, orderStatus, updatedAt]) // For status-filtered pagination
 }
 
 model OrderItem {
@@ -1233,6 +1252,8 @@ model Faq {
   @@index([categoryId])
   @@index([sortOrder])
   @@index([published])
+  // Composite indexes for common query patterns
+  @@index([categoryId, published, sortOrder]) // For filtered and sorted FAQ listings
 }
 
 model SystemMessage {
@@ -1357,6 +1378,9 @@ model SupportTicket {
   @@index([storeId])
   @@index([createdAt])
   @@index([lastModified])
+  // Composite indexes for common query patterns
+  @@index([storeId, status]) // For filtered ticket listings
+  @@index([storeId, lastModified]) // For sorted ticket listings
 }
 
 model ContactUs {
