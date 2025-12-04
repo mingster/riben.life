@@ -30,6 +30,7 @@ import {
 	getUtcNow,
 	getOffsetHours,
 	epochToDate,
+	dayAndTimeSlotToUtc,
 } from "@/utils/datetime-utils";
 
 interface CustomerWeekViewCalendarProps {
@@ -498,11 +499,13 @@ export const CustomerWeekViewCalendar: React.FC<
 										const slotRsvps = getRsvpsForSlot(day, timeSlot);
 										const isAvailable = slotRsvps.length === 0;
 										// Check if this day/time slot is in the past
-										// day is already in store timezone, compare with today in store timezone
-										const [hours, minutes] = timeSlot.split(":").map(Number);
-										const slotDateTime = new Date(day);
-										slotDateTime.setHours(hours, minutes, 0, 0);
-										const isPast = isBefore(slotDateTime, today);
+										// day is already in store timezone, convert to UTC for comparison
+										const slotDateTimeUtc = dayAndTimeSlotToUtc(
+											day,
+											timeSlot,
+											storeTimezone || "Asia/Taipei",
+										);
+										const isPast = isBefore(slotDateTimeUtc, today);
 										const canSelect = isAvailable && !isPast;
 										return (
 											<td
@@ -589,14 +592,11 @@ export const CustomerWeekViewCalendar: React.FC<
 																rsvpSettings={rsvpSettings}
 																facilities={facilities}
 																user={user}
-																defaultRsvpTime={(() => {
-																	const [hours, minutes] = timeSlot
-																		.split(":")
-																		.map(Number);
-																	const date = new Date(day);
-																	date.setHours(hours, minutes, 0, 0);
-																	return date;
-																})()}
+																defaultRsvpTime={dayAndTimeSlotToUtc(
+																	day,
+																	timeSlot,
+																	storeTimezone || "Asia/Taipei",
+																)}
 																onReservationCreated={handleReservationCreated}
 																trigger={
 																	<button

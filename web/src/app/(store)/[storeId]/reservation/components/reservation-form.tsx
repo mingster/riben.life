@@ -41,7 +41,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, StoreFacility, User } from "@/types";
 import {
-	convertStoreTimezoneToUtc,
+	convertToUtc,
 	getDateInTz,
 	getOffsetHours,
 	addHours,
@@ -255,47 +255,23 @@ export function ReservationForm({
 												currentRsvpId={rsvp?.id}
 												selectedDateTime={field.value || null}
 												onSlotSelect={(dateTime) => {
-													// dateTime is a Date object created with store timezone components
-													// Convert store timezone to UTC by subtracting the offset
-													if (!dateTime || !storeTimezone) {
-														field.onChange(dateTime);
+													// dateTime is already a UTC Date object from convertStoreTimezoneToUtc
+													// No need for additional conversion
+													if (!dateTime) {
+														field.onChange(null);
 														return;
 													}
 
-													// Get the store timezone offset in hours
-													const storeOffsetHours = getOffsetHours(storeTimezone);
-
-													// Convert store timezone time to UTC by subtracting the offset
-													// If store time is 14:00 and offset is +8, UTC is 06:00 (14 - 8 = 6)
-													const utcTime = addHours(dateTime, -storeOffsetHours);
-
-													// Create a proper UTC Date object using UTC components
-													// This ensures the date is stored as UTC in the database
-													const utcDateAsUTC = new Date(
-														Date.UTC(
-															utcTime.getUTCFullYear(),
-															utcTime.getUTCMonth(),
-															utcTime.getUTCDate(),
-															utcTime.getUTCHours(),
-															utcTime.getUTCMinutes(),
-															0,
-															0,
-														),
-													);
-
-													// Validate the UTC date
-													if (isNaN(utcDateAsUTC.getTime())) {
-														console.error("Invalid UTC date conversion:", {
+													// Validate the date
+													if (isNaN(dateTime.getTime())) {
+														console.error(
+															"Invalid date from slot picker:",
 															dateTime,
-															storeTimezone,
-															storeOffsetHours,
-															utcTime,
-															utcDateAsUTC,
-														});
+														);
 														return;
 													}
 
-													field.onChange(utcDateAsUTC);
+													field.onChange(dateTime);
 												}}
 											/>
 										</div>
@@ -307,42 +283,42 @@ export function ReservationForm({
 											value={
 												field.value
 													? (() => {
-														try {
-															// Convert UTC date to store timezone for display
-															const utcDate =
-																field.value instanceof Date
-																	? field.value
-																	: new Date(field.value);
+															try {
+																// Convert UTC date to store timezone for display
+																const utcDate =
+																	field.value instanceof Date
+																		? field.value
+																		: new Date(field.value);
 
-															// Validate date
-															if (Number.isNaN(utcDate.getTime())) {
+																// Validate date
+																if (Number.isNaN(utcDate.getTime())) {
+																	return "";
+																}
+
+																const storeTzDate = getDateInTz(
+																	utcDate,
+																	getOffsetHours(storeTimezone),
+																);
+
+																// Validate converted date
+																if (Number.isNaN(storeTzDate.getTime())) {
+																	return "";
+																}
+
+																return format(
+																	storeTzDate,
+																	"yyyy-MM-dd'T'HH:mm",
+																);
+															} catch (error) {
+																console.error("Error formatting date:", error);
 																return "";
 															}
-
-															const storeTzDate = getDateInTz(
-																utcDate,
-																getOffsetHours(storeTimezone),
-															);
-
-															// Validate converted date
-															if (Number.isNaN(storeTzDate.getTime())) {
-																return "";
-															}
-
-															return format(
-																storeTzDate,
-																"yyyy-MM-dd'T'HH:mm",
-															);
-														} catch (error) {
-															console.error("Error formatting date:", error);
-															return "";
-														}
-													})()
+														})()
 													: ""
 											}
 											onChange={(e) => {
 												// Convert datetime-local string (interpreted as store timezone) to UTC
-												const utcDate = convertStoreTimezoneToUtc(
+												const utcDate = convertToUtc(
 													e.target.value,
 													storeTimezone,
 												);

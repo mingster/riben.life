@@ -18,12 +18,14 @@ interface RsvpCalendarClientProps {
 	serverData: Rsvp[];
 	rsvpSettings: { useBusinessHours: boolean; rsvpHours: string | null } | null;
 	storeSettings: { businessHours: string | null } | null;
+	storeTimezone: string;
 }
 
 export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 	serverData,
 	rsvpSettings,
 	storeSettings,
+	storeTimezone,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -67,6 +69,7 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 					<AdminEditRsvpDialog
 						isNew
 						onCreated={handleCreated}
+						storeTimezone={storeTimezone}
 						trigger={
 							<Button variant="outline">
 								<IconPlus className="mr-0 size-4" />
@@ -78,11 +81,12 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 			</div>
 			<Separator />
 			<WeekViewCalendar
-				rsvps={data}
+				reservations={data}
 				onRsvpCreated={handleCreated}
 				onRsvpUpdated={handleUpdated}
 				rsvpSettings={rsvpSettings}
 				storeSettings={storeSettings}
+				storeTimezone={storeTimezone}
 			/>
 		</>
 	);

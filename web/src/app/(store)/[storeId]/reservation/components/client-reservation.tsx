@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
 import { EditReservationDialog } from "./edit-reservation-dialog";
+import { dayAndTimeSlotToUtc } from "@/utils/datetime-utils";
 
 interface ReservationClientProps {
 	rsvps: Rsvp[];
@@ -80,14 +81,11 @@ export function ReservationClient({
 
 	// Calculate default rsvp time from selected date/time
 	const defaultRsvpTime = selectedDateTime
-		? (() => {
-			const [hours, minutes] = selectedDateTime.timeSlot
-				.split(":")
-				.map(Number);
-			const date = new Date(selectedDateTime.day);
-			date.setHours(hours, minutes, 0, 0);
-			return date;
-		})()
+		? dayAndTimeSlotToUtc(
+				selectedDateTime.day,
+				selectedDateTime.timeSlot,
+				storeTimezone,
+			)
 		: undefined;
 
 	return (

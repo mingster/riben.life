@@ -22,7 +22,7 @@ import {
 	getDateInTz,
 	getUtcNow,
 	getOffsetHours,
-	convertStoreTimezoneToUtc,
+	dayAndTimeSlotToUtc,
 } from "@/utils/datetime-utils";
 
 interface TimeRange {
@@ -301,42 +301,8 @@ export function SlotPicker({
 
 	const handleSlotClick = useCallback(
 		(day: Date, timeSlot: string) => {
-			const [hours, minutes] = timeSlot.split(":").map(Number);
-
-			// Convert day (which is in store timezone) to get correct date components
-			// day is a Date object that represents a date in store timezone
-			// We need to extract the date components as they appear in store timezone
-			const dayInStoreTz = getDateInTz(day, getOffsetHours(storeTimezone));
-
-			// Extract date components from the store timezone date
-			const year = dayInStoreTz.getFullYear();
-			const month = String(dayInStoreTz.getMonth() + 1).padStart(2, "0");
-			const date = String(dayInStoreTz.getDate()).padStart(2, "0");
-			const hourStr = String(hours).padStart(2, "0");
-			const minuteStr = String(minutes).padStart(2, "0");
-
-			// Format as datetime-local string (interpreted as store timezone)
-			//const datetimeLocalString = `${year}-${month}-${date}T${hourStr}:${minuteStr}`;
-
-			const dateInStoreTz = new Date(
-				year,
-				parseInt(month) - 1,
-				parseInt(date),
-				hours,
-				minutes,
-				0,
-				0,
-			);
-			/*
-		console.log("dateInStoreTz", dateInStoreTz);
-		console.log("datetimeLocalString", datetimeLocalString);
-		console.log("storeTimezone", getOffsetHours(storeTimezone));
-
-		// dateInStoreTz is in store's timezone (e.g., 16:00 +8 on Oct 25)
-		// Convert to UTC components for internal state
-		const utcDate = addHours(dateInStoreTz, -getOffsetHours(storeTimezone));
-		console.log("utcDate", utcDate);
-*/
+			// Convert day + timeSlot to UTC Date using store timezone
+			const dateInStoreTz = dayAndTimeSlotToUtc(day, timeSlot, storeTimezone);
 			onSlotSelect(dateInStoreTz);
 		},
 		[onSlotSelect, storeTimezone],
@@ -426,10 +392,15 @@ export function SlotPicker({
 									{weekDays.map((day) => {
 										const slotRsvps = getRsvpsForSlot(day, timeSlot);
 										const isAvailable = slotRsvps.length === 0;
+										// Extract hours and minutes from timeSlot for comparison
 										const [hours, minutes] = timeSlot.split(":").map(Number);
-										const slotDateTime = new Date(day);
-										slotDateTime.setHours(hours, minutes, 0, 0);
-										const isPast = isBefore(slotDateTime, today);
+										// Convert day + timeSlot to UTC for comparison
+										const slotDateTimeUtc = dayAndTimeSlotToUtc(
+											day,
+											timeSlot,
+											storeTimezone,
+										);
+										const isPast = isBefore(slotDateTimeUtc, today);
 										const canSelect = isAvailable && !isPast;
 
 										// Check if this slot is selected

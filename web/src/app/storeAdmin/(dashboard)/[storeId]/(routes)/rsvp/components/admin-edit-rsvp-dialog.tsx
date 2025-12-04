@@ -44,10 +44,15 @@ import {
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { StoreMembersCombobox } from "../../customers/components/combobox-store-members";
-import { FacilityCombobox } from "../../../../../../../components/combobox-facility";
+import { FacilityCombobox } from "@/components/combobox-facility";
 import useSWR from "swr";
 import type { User } from "@/types";
-import { getUtcNow, epochToDate } from "@/utils/datetime-utils";
+import {
+	getUtcNow,
+	epochToDate,
+	formatUtcDateToDateTimeLocal,
+	convertToUtc,
+} from "@/utils/datetime-utils";
 import type { StoreFacility } from "@/types";
 import { useEffect } from "react";
 
@@ -60,18 +65,13 @@ interface EditRsvpDialogProps {
 	onUpdated?: (rsvp: Rsvp) => void;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
+	storeTimezone?: string;
 }
 
-// Helper to format Date to datetime-local string
-const formatDateTimeLocal = (date: Date): string => {
-	return format(date, "yyyy-MM-dd'T'HH:mm");
-};
-
-// Helper to parse datetime-local string to Date
-const parseDateTimeLocal = (value: string): Date => {
-	return new Date(value);
-};
-
+// dialog to edit or create an rsvp by admin user.
+//
+// all datetime (rsvpTime, arriveTime, etc) is stored in UTC epoch milliseconds.
+// all datetime is displayed using store's defaultTimeZone.
 export function AdminEditRsvpDialog({
 	rsvp,
 	isNew = false,
@@ -81,10 +81,67 @@ export function AdminEditRsvpDialog({
 	onUpdated,
 	open,
 	onOpenChange,
+	storeTimezone = "Asia/Taipei",
 }: EditRsvpDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+
+	// Helper to format UTC Date to datetime-local string in store timezone
+	const formatDateTimeLocal = useCallback(
+		(date: Date | string | number): string => {
+			// Ensure we have a proper Date object
+			let dateObj: Date;
+			if (date instanceof Date) {
+				dateObj = date;
+			} else if (typeof date === "string" || typeof date === "number") {
+				// If it's a string or number, create Date from it
+				// The timestamp/ISO string should represent UTC time
+				dateObj = new Date(date);
+			} else {
+				return "";
+			}
+
+			// Validate the date
+			if (isNaN(dateObj.getTime())) {
+				return "";
+			}
+			// Use Intl.DateTimeFormat to correctly format UTC date in store timezone
+			const result = formatUtcDateToDateTimeLocal(dateObj, storeTimezone);
+
+			// Debug logging
+			/*
+			if (process.env.NODE_ENV === "development") {
+				console.log("formatDateTimeLocal input:", {
+					date,
+					dateObj: dateObj.toISOString(),
+					dateObjUTC: dateObj.toUTCString(),
+					dateObjLocal: dateObj.toString(),
+					storeTimezone,
+				});
+			}
+				
+
+
+			// Debug logging
+			if (process.env.NODE_ENV === "development") {
+				console.log("formatDateTimeLocal result:", result);
+			}
+*/
+			return result;
+		},
+		[storeTimezone],
+	);
+
+	// Helper to parse datetime-local string (interpreted as store timezone) to UTC Date
+	const parseDateTimeLocal = useCallback(
+		(value: string): Date => {
+			// Use convertStoreTimezoneToUtc to interpret the string as store timezone
+			// and convert to UTC Date
+			return convertToUtc(value, storeTimezone);
+		},
+		[storeTimezone],
+	);
 
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -298,6 +355,8 @@ export function AdminEditRsvpDialog({
 	};
 
 	const onSubmit = async (values: FormInput) => {
+		console.log("onSubmit values", values.rsvpTime);
+
 		try {
 			setLoading(true);
 
@@ -307,7 +366,7 @@ export function AdminEditRsvpDialog({
 					facilityId: values.facilityId || null,
 					numOfAdult: values.numOfAdult,
 					numOfChild: values.numOfChild,
-					rsvpTime: values.rsvpTime,
+					rsvpTime: values.rsvpTime, //should be still in store timezone. server action will convert to UTC.
 					arriveTime: values.arriveTime || null,
 					status: values.status,
 					message: values.message || null,
@@ -511,13 +570,7 @@ export function AdminEditRsvpDialog({
 											type="datetime-local"
 											disabled={loading || form.formState.isSubmitting}
 											value={
-												field.value
-													? formatDateTimeLocal(
-															field.value instanceof Date
-																? field.value
-																: new Date(field.value),
-														)
-													: ""
+												field.value ? formatDateTimeLocal(field.value) : ""
 											}
 											onChange={(event) => {
 												const value = event.target.value;
@@ -718,13 +771,7 @@ export function AdminEditRsvpDialog({
 												type="datetime-local"
 												disabled={loading || form.formState.isSubmitting}
 												value={
-													field.value
-														? formatDateTimeLocal(
-																field.value instanceof Date
-																	? field.value
-																	: new Date(field.value),
-															)
-														: ""
+													field.value ? formatDateTimeLocal(field.value) : ""
 												}
 												onChange={(event) => {
 													const value = event.target.value;

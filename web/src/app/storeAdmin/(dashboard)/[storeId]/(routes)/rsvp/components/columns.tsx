@@ -13,13 +13,14 @@ import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 interface CreateRsvpColumnsOptions {
 	onDeleted?: (rsvpId: string) => void;
 	onUpdated?: (rsvp: Rsvp) => void;
+	storeTimezone?: string;
 }
 
 export const createRsvpColumns = (
 	t: TFunction,
 	options: CreateRsvpColumnsOptions = {},
 ): ColumnDef<Rsvp>[] => {
-	const { onDeleted, onUpdated } = options;
+	const { onDeleted, onUpdated, storeTimezone = "Asia/Taipei" } = options;
 
 	return [
 		{
@@ -81,6 +82,7 @@ export const createRsvpColumns = (
 					data={row.original}
 					onDeleted={onDeleted}
 					onUpdated={onUpdated}
+					storeTimezone={storeTimezone}
 				/>
 			),
 		},

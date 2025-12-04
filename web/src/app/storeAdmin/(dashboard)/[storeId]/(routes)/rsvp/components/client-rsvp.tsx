@@ -16,10 +16,12 @@ import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 interface RsvpHistoryClientProps {
 	serverData: Rsvp[];
+	storeTimezone: string;
 }
 
 export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 	serverData,
+	storeTimezone,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -51,8 +53,9 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 			createRsvpColumns(t, {
 				onDeleted: handleDeleted,
 				onUpdated: handleUpdated,
+				storeTimezone,
 			}),
-		[t, handleDeleted, handleUpdated],
+		[t, handleDeleted, handleUpdated, storeTimezone],
 	);
 
 	return (
@@ -67,6 +70,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 					<AdminEditRsvpDialog
 						isNew
 						onCreated={handleCreated}
+						storeTimezone={storeTimezone}
 						trigger={
 							<Button variant="outline">
 								<IconPlus className="mr-0 size-4" />

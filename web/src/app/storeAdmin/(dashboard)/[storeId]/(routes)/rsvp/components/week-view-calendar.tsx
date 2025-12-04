@@ -28,7 +28,13 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
-import { getUtcNow } from "@/utils/datetime-utils";
+import {
+	getUtcNow,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+	dayAndTimeSlotToUtc,
+} from "@/utils/datetime-utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp } from "@/types";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
@@ -38,25 +44,27 @@ interface CreateRsvpButtonProps {
 	day: Date;
 	timeSlot: string;
 	onCreated?: (rsvp: Rsvp) => void;
+	storeTimezone: string;
 }
 
 const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 	day,
 	timeSlot,
 	onCreated,
+	storeTimezone,
 }) => {
-	const [defaultRsvpTime] = useState(() => {
-		const [hours, minutes] = timeSlot.split(":").map(Number);
-		const rsvpTime = new Date(day);
-		rsvpTime.setHours(hours, minutes, 0, 0);
-		return rsvpTime;
+	const [slotTime] = useState(() => {
+		// day is already in store timezone (from getDateInTz)
+		// Convert day + timeSlot to UTC Date using store timezone
+		return dayAndTimeSlotToUtc(day, timeSlot, storeTimezone);
 	});
 
 	return (
 		<AdminEditRsvpDialog
 			isNew
-			defaultRsvpTime={defaultRsvpTime}
+			defaultRsvpTime={slotTime}
 			onCreated={onCreated}
+			storeTimezone={storeTimezone}
 			trigger={
 				<button
 					type="button"
@@ -70,11 +78,12 @@ const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 };
 
 interface WeekViewCalendarProps {
-	rsvps: Rsvp[];
+	reservations: Rsvp[];
 	onRsvpCreated?: (rsvp: Rsvp) => void;
 	onRsvpUpdated?: (rsvp: Rsvp) => void;
 	rsvpSettings: { useBusinessHours: boolean; rsvpHours: string | null } | null;
 	storeSettings: { businessHours: string | null } | null;
+	storeTimezone: string;
 }
 
 interface TimeRange {
@@ -197,40 +206,133 @@ const isToday = (date: Date): boolean => {
 };
 
 // Group RSVPs by day and time slot
-// RSVPs are placed in the time slot that matches their hour (rounded to nearest hour)
+// RSVP times are in UTC epoch, convert to store timezone for display and grouping
 const groupRsvpsByDayAndTime = (
 	rsvps: Rsvp[],
 	weekStart: Date,
 	weekEnd: Date,
+	storeTimezone: string,
 ) => {
 	const grouped: Record<string, Rsvp[]> = {};
+	// Convert IANA timezone string to offset hours
+	const offsetHours = getOffsetHours(storeTimezone);
 
 	rsvps.forEach((rsvp) => {
-		const rsvpDate =
-			rsvp.rsvpTime instanceof Date
-				? rsvp.rsvpTime
-				: typeof rsvp.rsvpTime === "bigint"
-					? new Date(Number(rsvp.rsvpTime))
-					: typeof rsvp.rsvpTime === "number"
-						? new Date(rsvp.rsvpTime)
-						: parseISO(
-								typeof rsvp.rsvpTime === "string"
-									? rsvp.rsvpTime
-									: String(rsvp.rsvpTime),
-							);
+		if (!rsvp.rsvpTime) return;
 
-		// Check if RSVP is within the week
+		// Debug: Log raw rsvpTime
+		const rawRsvpTimeDate = epochToDate(
+			typeof rsvp.rsvpTime === "number"
+				? BigInt(rsvp.rsvpTime)
+				: rsvp.rsvpTime instanceof Date
+					? BigInt(rsvp.rsvpTime.getTime())
+					: rsvp.rsvpTime,
+		);
+		const rawRsvpTimeLocal = getDateInTz(
+			epochToDate(
+				typeof rsvp.rsvpTime === "number"
+					? BigInt(rsvp.rsvpTime)
+					: rsvp.rsvpTime instanceof Date
+						? BigInt(rsvp.rsvpTime.getTime())
+						: rsvp.rsvpTime,
+			) ?? new Date(),
+			getOffsetHours(storeTimezone),
+		);
+
+		if (rsvp.status === 0) {
+			console.log("RSVP Debug:", {
+				rsvpId: rsvp.id,
+				rawRsvpTime: rsvp.rsvpTime,
+				rawRsvpTimeUTC: rawRsvpTimeDate?.toUTCString(),
+				rawRsvpTimeLocal: rawRsvpTimeLocal.toString(),
+				rsvpTimeType: typeof rsvp.rsvpTime,
+				rsvpTimeIsDate: rsvp.rsvpTime instanceof Date,
+				storeTimezone,
+				offsetHours,
+			});
+		}
+
+		let rsvpDateUtc: Date;
+		try {
+			if (rsvp.rsvpTime instanceof Date) {
+				rsvpDateUtc = rsvp.rsvpTime;
+			} else if (typeof rsvp.rsvpTime === "bigint") {
+				// BigInt epoch (milliseconds)
+				rsvpDateUtc = epochToDate(rsvp.rsvpTime) ?? new Date();
+			} else if (typeof rsvp.rsvpTime === "number") {
+				// Number epoch (milliseconds) - after transformPrismaDataForJson
+				rsvpDateUtc = new Date(rsvp.rsvpTime);
+			} else if (typeof rsvp.rsvpTime === "string") {
+				rsvpDateUtc = parseISO(rsvp.rsvpTime);
+			} else {
+				rsvpDateUtc = parseISO(String(rsvp.rsvpTime));
+			}
+
+			/*
+			// Debug: Log UTC date
+			console.log("RSVP UTC Date:", {
+				rsvpId: rsvp.id,
+				utcDate: rsvpDateUtc.toISOString(),
+				utcTimestamp: rsvpDateUtc.getTime(),
+			});
+			*/
+
+			// Validate the date
+			if (isNaN(rsvpDateUtc.getTime())) {
+				console.warn("Invalid RSVP date:", rsvp.rsvpTime, rsvp.id);
+				return;
+			}
+		} catch (error) {
+			console.warn("Error parsing RSVP date:", rsvp.rsvpTime, rsvp.id, error);
+			return;
+		}
+
+		// Convert UTC date to store timezone for display and grouping
+		const rsvpDate = getDateInTz(rsvpDateUtc, offsetHours);
+
+		/*
+		// Debug: Log store timezone date
+		console.log("RSVP Store Timezone Date:", {
+			rsvpId: rsvp.id,
+			storeTimezoneDate: rsvpDate.toISOString(),
+			storeTimezoneHour: rsvpDate.getHours(),
+			storeTimezoneDay: format(rsvpDate, "yyyy-MM-dd"),
+		});
+		*/
+
+		// Check if RSVP is within the week (inclusive of boundaries)
 		if (rsvpDate >= weekStart && rsvpDate <= weekEnd) {
 			const dayKey = format(rsvpDate, "yyyy-MM-dd");
-			// Round to nearest hour for time slot matching
+			// Round to nearest hour for time slot matching (using store timezone hour)
 			const hour = rsvpDate.getHours();
 			const timeKey = `${hour.toString().padStart(2, "0")}:00`;
 			const key = `${dayKey}-${timeKey}`;
+
+			// Debug: Log final grouping key
+			/*
+			console.log("RSVP Grouping Key:", {
+				rsvpId: rsvp.id,
+				groupingKey: key,
+				dayKey,
+				timeKey,
+				hour,
+			});
+			*/
 
 			if (!grouped[key]) {
 				grouped[key] = [];
 			}
 			grouped[key].push(rsvp);
+		} else {
+			// Debug: Log if RSVP is outside week range
+			/*
+				console.log("RSVP Outside Week Range:", {
+				rsvpId: rsvp.id,
+				rsvpDate: rsvpDate.toISOString(),
+				weekStart: weekStart.toISOString(),
+				weekEnd: weekEnd.toISOString(),
+			});
+			*/
 		}
 	});
 
@@ -238,21 +340,22 @@ const groupRsvpsByDayAndTime = (
 };
 
 export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
-	rsvps: initialRsvps,
+	reservations,
 	onRsvpCreated,
 	onRsvpUpdated,
 	rsvpSettings,
 	storeSettings,
+	storeTimezone,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [currentWeek, setCurrentWeek] = useState(() => getUtcNow());
-	const [rsvps, setRsvps] = useState<Rsvp[]>(initialRsvps);
+	const [rsvps, setRsvps] = useState<Rsvp[]>(reservations);
 
 	// Sync with prop changes (e.g., when server data is refreshed)
 	useEffect(() => {
-		setRsvps(initialRsvps);
-	}, [initialRsvps]);
+		setRsvps(reservations);
+	}, [reservations]);
 
 	// Handle RSVP updates locally
 	const handleRsvpUpdated = useCallback(
@@ -321,8 +424,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
 	// Group RSVPs by day and time
 	const groupedRsvps = useMemo(
-		() => groupRsvpsByDayAndTime(rsvps, weekStart, weekEnd),
-		[rsvps, weekStart, weekEnd],
+		() => groupRsvpsByDayAndTime(rsvps, weekStart, weekEnd, storeTimezone),
+		[rsvps, weekStart, weekEnd, storeTimezone],
 	);
 
 	const handlePreviousWeek = useCallback(() => {
@@ -381,6 +484,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 								captionLayout={dropdown}
 								locale={calendarLocale}
 								className="w-full rounded-lg shadow-sm"
+								weekStartsOn={0}
 							/>
 						</PopoverContent>
 					</Popover>
@@ -480,6 +584,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																key={rsvp.id}
 																rsvp={rsvp}
 																onUpdated={handleRsvpUpdated}
+																storeTimezone={storeTimezone}
 																trigger={
 																	<button
 																		type="button"
@@ -523,6 +628,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 															day={day}
 															timeSlot={timeSlot}
 															onCreated={handleRsvpCreated}
+															storeTimezone={storeTimezone}
 														/>
 													)}
 												</div>

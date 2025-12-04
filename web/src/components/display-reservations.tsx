@@ -345,7 +345,13 @@ export const DisplayReservations = ({
 									<td className="px-3 py-2 text-xs font-mono">
 										{format(
 											getDateInTz(
-												item.rsvpTime,
+												epochToDate(
+													typeof item.rsvpTime === "number"
+														? BigInt(item.rsvpTime)
+														: item.rsvpTime instanceof Date
+															? BigInt(item.rsvpTime.getTime())
+															: item.rsvpTime,
+												) ?? new Date(),
 												getOffsetHours(
 													item.Store?.defaultTimezone ?? "Asia/Taipei",
 												),
