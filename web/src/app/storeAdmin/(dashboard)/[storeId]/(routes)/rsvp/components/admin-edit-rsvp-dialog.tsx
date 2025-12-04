@@ -44,7 +44,7 @@ import {
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { StoreMembersCombobox } from "../../customers/components/combobox-store-members";
-import { FacilityCombobox } from "../../facility/components/combobox-facility";
+import { FacilityCombobox } from "../../../../../../../components/combobox-facility";
 import useSWR from "swr";
 import type { User } from "@/types";
 import { getUtcNow, epochToDate } from "@/utils/datetime-utils";

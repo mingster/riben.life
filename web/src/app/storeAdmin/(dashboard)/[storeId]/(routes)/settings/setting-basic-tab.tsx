@@ -7,7 +7,7 @@ import type { StoreSettings } from "@prisma/client";
 
 import { type AxiosError } from "axios";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 
 import * as z from "zod";
@@ -90,6 +90,8 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
 	const origin = useOrigin();
 	const [loading, setLoading] = useState(false);
+	const [checkingSlug, setCheckingSlug] = useState(false);
+	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 	//const [openAddNew, setOpenAddNew] = useState(false);
 
 	const defaultValues = store
@@ -130,6 +132,80 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+
+	const storeName = form.watch("name");
+	const originalStoreName = store?.name || "";
+
+	// Debounced validation to check if store name (slug) is taken
+	// Only check if the name has changed from the original
+	useEffect(() => {
+		// Clear previous timer
+		if (debounceTimerRef.current) {
+			clearTimeout(debounceTimerRef.current);
+		}
+
+		// Don't check if name is empty or too short
+		if (!storeName || storeName.trim().length < 1) {
+			form.clearErrors("name");
+			return;
+		}
+
+		// Don't check if name hasn't changed from original (edit mode)
+		if (storeName.trim() === originalStoreName.trim()) {
+			form.clearErrors("name");
+			return;
+		}
+
+		// Generate slug from store name
+		const slug = storeName.toLowerCase().replace(/ /g, "-");
+
+		// Debounce the check (wait 500ms after user stops typing)
+		debounceTimerRef.current = setTimeout(async () => {
+			setCheckingSlug(true);
+			try {
+				const response = await fetch(
+					`/api/common/check-organization-slug?slug=${encodeURIComponent(slug)}`,
+				);
+
+				if (!response.ok) {
+					// Server/network error - don't block form, server will validate
+					form.clearErrors("name");
+					return;
+				}
+
+				const data = await response.json();
+
+				// Handle response:
+				// - API returns { status: true } if slug exists (is taken)
+				// - API returns { status: false } if slug is available
+				if (data.status === true) {
+					// Slug exists (is taken)
+					form.setError("name", {
+						type: "manual",
+						message:
+							t("Store_Name_Taken") ||
+							"Store name is already taken. Please choose a different name.",
+					});
+				} else {
+					// Slug is available
+					form.clearErrors("name");
+				}
+			} catch (error) {
+				// If check fails, don't block form submission
+				// The server will validate on submit
+				form.clearErrors("name");
+			} finally {
+				setCheckingSlug(false);
+			}
+		}, 500); // 500ms debounce
+
+		// Cleanup timer on unmount or when name changes
+		return () => {
+			if (debounceTimerRef.current) {
+				clearTimeout(debounceTimerRef.current);
+			}
+		};
+	}, [storeName, originalStoreName, form, t]);
 
 	//console.log(`form error: ${JSON.stringify(form.formState.errors)}`);
 
@@ -212,8 +288,21 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 												className="font-mono"
 												placeholder={t("StoreSettings_Store_Name_descr")}
 												{...field}
+												onChange={(e) => {
+													field.onChange(e);
+													// Clear error when user starts typing
+													if (form.formState.errors.name) {
+														form.clearErrors("name");
+													}
+												}}
 											/>
 										</FormControl>
+										{checkingSlug && (
+											<p className="text-sm text-muted-foreground">
+												{t("Checking_Availability") ||
+													"Checking availability..."}
+											</p>
+										)}
 										<FormMessage />
 									</FormItem>
 								)}

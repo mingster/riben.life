@@ -2,17 +2,23 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconCalendarCheck } from "@tabler/icons-react";
-import { useParams, useRouter } from "next/navigation";
-import { useState, useMemo, useEffect } from "react";
-import { useForm } from "react-hook-form";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 
 import { createReservationAction } from "@/actions/store/reservation/create-reservation";
 import {
 	createReservationSchema,
 	type CreateReservationInput,
 } from "@/actions/store/reservation/create-reservation.validation";
+import { updateReservationAction } from "@/actions/store/reservation/update-reservation";
+import {
+	updateReservationSchema,
+	type UpdateReservationInput,
+} from "@/actions/store/reservation/update-reservation.validation";
 import { useTranslation } from "@/app/i18n/client";
+import { FacilityCombobox } from "@/components/combobox-facility";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,25 +37,34 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { FacilityCombobox } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/facility/components/combobox-facility";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StoreFacility, User, Rsvp } from "@/types";
-import type { RsvpSettings } from "@prisma/client";
+import type { Rsvp, StoreFacility, User } from "@/types";
 import {
+	convertStoreTimezoneToUtc,
 	getDateInTz,
 	getOffsetHours,
-	convertStoreTimezoneToUtc,
+	addHours,
+	epochToDate,
 } from "@/utils/datetime-utils";
+import type { RsvpSettings, StoreSettings } from "@prisma/client";
 import { format } from "date-fns";
+import { SlotPicker } from "./slot-picker";
 
 interface ReservationFormProps {
 	storeId: string;
 	rsvpSettings: RsvpSettings | null;
+	storeSettings?: StoreSettings | null;
 	facilities: StoreFacility[];
 	user: User | null;
+	// Create mode props
 	defaultRsvpTime?: Date;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
+	// Edit mode props
+	rsvp?: Rsvp;
+	rsvps?: Rsvp[];
+	onReservationUpdated?: (updatedRsvp: Rsvp) => void;
+	// Common props
 	hideCard?: boolean;
 	storeTimezone?: string;
 }
@@ -57,10 +72,14 @@ interface ReservationFormProps {
 export function ReservationForm({
 	storeId,
 	rsvpSettings,
+	storeSettings,
 	facilities,
 	user,
 	defaultRsvpTime,
 	onReservationCreated,
+	rsvp,
+	rsvps = [],
+	onReservationUpdated,
 	hideCard = false,
 	storeTimezone = "Asia/Taipei",
 }: ReservationFormProps) {
@@ -70,41 +89,90 @@ export function ReservationForm({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	// Default values
-	const defaultValues: CreateReservationInput = useMemo(
-		() => ({
-			storeId,
-			userId: user?.id || null,
-			email: user?.email || "",
-			phone: "",
-			facilityId: null,
-			numOfAdult: 1,
-			numOfChild: 0,
-			rsvpTime: defaultRsvpTime || new Date(),
-			message: "",
-		}),
-		[storeId, user, defaultRsvpTime],
-	);
+	// Determine if we're in edit mode
+	const isEditMode = Boolean(rsvp);
 
-	const form = useForm<CreateReservationInput>({
-		resolver: zodResolver(createReservationSchema) as any,
+	// Default values - different for create vs edit
+	const defaultValues = useMemo(() => {
+		if (isEditMode && rsvp) {
+			// Edit mode: use existing RSVP data
+			let rsvpTime: Date;
+			if (rsvp.rsvpTime instanceof Date) {
+				rsvpTime = rsvp.rsvpTime;
+			} else if (rsvp.rsvpTime) {
+				// Convert BigInt epoch or number epoch to Date
+				const epochValue =
+					typeof rsvp.rsvpTime === "number"
+						? BigInt(rsvp.rsvpTime)
+						: typeof rsvp.rsvpTime === "bigint"
+							? rsvp.rsvpTime
+							: BigInt(rsvp.rsvpTime);
+				rsvpTime = epochToDate(epochValue) ?? new Date();
+				// Validate date
+				if (Number.isNaN(rsvpTime.getTime())) {
+					rsvpTime = new Date();
+				}
+			} else {
+				rsvpTime = new Date();
+			}
+
+			return {
+				id: rsvp.id,
+				facilityId: rsvp.facilityId,
+				numOfAdult: rsvp.numOfAdult,
+				numOfChild: rsvp.numOfChild,
+				rsvpTime,
+				message: rsvp.message || "",
+			} as UpdateReservationInput;
+		} else {
+			// Create mode: use default values
+			return {
+				storeId,
+				userId: user?.id || null,
+				email: user?.email || "",
+				phone: "",
+				facilityId: null,
+				numOfAdult: 1,
+				numOfChild: 0,
+				rsvpTime: defaultRsvpTime || new Date(),
+				message: "",
+			} as CreateReservationInput;
+		}
+	}, [isEditMode, rsvp, storeId, user, defaultRsvpTime]);
+
+	// Use appropriate schema based on mode
+	const schema = isEditMode ? updateReservationSchema : createReservationSchema;
+
+	// Form type: union of both input types
+	type FormInput = CreateReservationInput | UpdateReservationInput;
+
+	const form = useForm<FormInput>({
+		resolver: zodResolver(schema) as any,
 		defaultValues,
-		mode: "onChange",
+		mode: isEditMode ? "onBlur" : "onChange",
 	});
 
-	// Update form when defaultRsvpTime changes
+	// Update form when defaultRsvpTime changes (create mode) or rsvp changes (edit mode)
 	useEffect(() => {
-		if (defaultRsvpTime) {
+		if (isEditMode) {
+			form.reset(defaultValues);
+		} else if (defaultRsvpTime) {
 			form.setValue("rsvpTime", defaultRsvpTime);
 		}
-	}, [defaultRsvpTime, form]);
+	}, [defaultRsvpTime, rsvp, form, isEditMode, defaultValues]);
 
-	async function onSubmit(data: CreateReservationInput) {
+	async function onSubmit(data: FormInput) {
 		setIsSubmitting(true);
 
 		try {
-			// Pass Date object directly - safe-action will handle serialization
-			const result = await createReservationAction(data);
+			let result;
+			if (isEditMode) {
+				// Update mode
+				result = await updateReservationAction(data as UpdateReservationInput);
+			} else {
+				// Create mode
+				result = await createReservationAction(data as CreateReservationInput);
+			}
 
 			if (result?.serverError) {
 				toastError({
@@ -112,14 +180,22 @@ export function ReservationForm({
 					description: result.serverError,
 				});
 			} else {
-				toastSuccess({
-					description: t("reservation_created"),
-				});
-				// Reset form after successful submission
-				form.reset(defaultValues);
-				// Call callback with the created reservation if provided
-				if (result?.data?.rsvp) {
-					onReservationCreated?.(result.data.rsvp as Rsvp);
+				if (isEditMode) {
+					toastSuccess({
+						description: t("reservation_updated"),
+					});
+					if (result?.data?.rsvp) {
+						onReservationUpdated?.(result.data.rsvp as Rsvp);
+					}
+				} else {
+					toastSuccess({
+						description: t("reservation_created"),
+					});
+					// Reset form after successful submission (create mode only)
+					form.reset(defaultValues as CreateReservationInput);
+					if (result?.data?.rsvp) {
+						onReservationCreated?.(result.data.rsvp as Rsvp);
+					}
 				}
 			}
 		} catch (error) {
@@ -132,9 +208,9 @@ export function ReservationForm({
 		}
 	}
 
-	// Check if prepaid is required
+	// Check if prepaid is required (create mode only)
 	const prepaidRequired = rsvpSettings?.prepaidRequired ?? false;
-	const requiresLogin = prepaidRequired && !user;
+	const requiresLogin = !isEditMode && prepaidRequired && !user;
 
 	const formContent = (
 		<>
@@ -159,53 +235,109 @@ export function ReservationForm({
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 					{/* Date and Time */}
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-						<FormField
-							control={form.control}
-							name="rsvpTime"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("rsvp_time")} <span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
+					<FormField
+						control={form.control}
+						name="rsvpTime"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>
+									{t("rsvp_time")} <span className="text-destructive">*</span>
+								</FormLabel>
+								<FormControl>
+									{isEditMode ? (
+										// Edit mode: Use SlotPicker
+										<div className="border rounded-lg p-4">
+											<SlotPicker
+												rsvps={rsvps}
+												rsvpSettings={rsvpSettings}
+												storeSettings={storeSettings || null}
+												storeTimezone={storeTimezone}
+												currentRsvpId={rsvp?.id}
+												selectedDateTime={field.value || null}
+												onSlotSelect={(dateTime) => {
+													// dateTime is a Date object created with store timezone components
+													// Convert store timezone to UTC by subtracting the offset
+													if (!dateTime || !storeTimezone) {
+														field.onChange(dateTime);
+														return;
+													}
+
+													// Get the store timezone offset in hours
+													const storeOffsetHours = getOffsetHours(storeTimezone);
+
+													// Convert store timezone time to UTC by subtracting the offset
+													// If store time is 14:00 and offset is +8, UTC is 06:00 (14 - 8 = 6)
+													const utcTime = addHours(dateTime, -storeOffsetHours);
+
+													// Create a proper UTC Date object using UTC components
+													// This ensures the date is stored as UTC in the database
+													const utcDateAsUTC = new Date(
+														Date.UTC(
+															utcTime.getUTCFullYear(),
+															utcTime.getUTCMonth(),
+															utcTime.getUTCDate(),
+															utcTime.getUTCHours(),
+															utcTime.getUTCMinutes(),
+															0,
+															0,
+														),
+													);
+
+													// Validate the UTC date
+													if (isNaN(utcDateAsUTC.getTime())) {
+														console.error("Invalid UTC date conversion:", {
+															dateTime,
+															storeTimezone,
+															storeOffsetHours,
+															utcTime,
+															utcDateAsUTC,
+														});
+														return;
+													}
+
+													field.onChange(utcDateAsUTC);
+												}}
+											/>
+										</div>
+									) : (
+										// Create mode: Use datetime-local input
 										<Input
 											type="datetime-local"
 											disabled={isSubmitting}
 											value={
 												field.value
 													? (() => {
-															try {
-																// Convert UTC date to store timezone for display
-																const utcDate =
-																	field.value instanceof Date
-																		? field.value
-																		: new Date(field.value);
+														try {
+															// Convert UTC date to store timezone for display
+															const utcDate =
+																field.value instanceof Date
+																	? field.value
+																	: new Date(field.value);
 
-																// Validate date
-																if (Number.isNaN(utcDate.getTime())) {
-																	return "";
-																}
-
-																const storeTzDate = getDateInTz(
-																	utcDate,
-																	getOffsetHours(storeTimezone),
-																);
-
-																// Validate converted date
-																if (Number.isNaN(storeTzDate.getTime())) {
-																	return "";
-																}
-
-																return format(
-																	storeTzDate,
-																	"yyyy-MM-dd'T'HH:mm",
-																);
-															} catch (error) {
-																console.error("Error formatting date:", error);
+															// Validate date
+															if (Number.isNaN(utcDate.getTime())) {
 																return "";
 															}
-														})()
+
+															const storeTzDate = getDateInTz(
+																utcDate,
+																getOffsetHours(storeTimezone),
+															);
+
+															// Validate converted date
+															if (Number.isNaN(storeTzDate.getTime())) {
+																return "";
+															}
+
+															return format(
+																storeTzDate,
+																"yyyy-MM-dd'T'HH:mm",
+															);
+														} catch (error) {
+															console.error("Error formatting date:", error);
+															return "";
+														}
+													})()
 													: ""
 											}
 											onChange={(e) => {
@@ -217,12 +349,12 @@ export function ReservationForm({
 												field.onChange(utcDate);
 											}}
 										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					</div>
+									)}
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 
 					{/* Number of Adults and Children */}
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -330,8 +462,8 @@ export function ReservationForm({
 						/>
 					)}
 
-					{/* Contact Information */}
-					{!user && (
+					{/* Contact Information - Only in create mode when user is not logged in */}
+					{!isEditMode && !user && (
 						<div className="space-y-4">
 							<FormField
 								control={form.control}
@@ -399,7 +531,13 @@ export function ReservationForm({
 						disabled={isSubmitting || requiresLogin}
 						className="w-full"
 					>
-						{isSubmitting ? t("Submitting") : t("create_Reservation")}
+						{isSubmitting
+							? isEditMode
+								? t("updating")
+								: t("Submitting")
+							: isEditMode
+								? t("update_reservation")
+								: t("create_Reservation")}
 					</Button>
 
 					{requiresLogin && (
@@ -421,9 +559,13 @@ export function ReservationForm({
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<IconCalendarCheck className="h-5 w-5" />
-					{t("create_Reservation")}
+					{isEditMode ? t("edit_reservation") : t("create_Reservation")}
 				</CardTitle>
-				<CardDescription>{t("create_Reservation_description")}</CardDescription>
+				<CardDescription>
+					{isEditMode
+						? t("edit_reservation_description")
+						: t("create_Reservation_description")}
+				</CardDescription>
 			</CardHeader>
 			<CardContent>{formContent}</CardContent>
 		</Card>

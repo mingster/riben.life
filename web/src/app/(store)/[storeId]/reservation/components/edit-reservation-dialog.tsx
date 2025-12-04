@@ -9,7 +9,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { EditReservationForm } from "./edit-reservation-form";
+import { ReservationForm } from "./reservation-form";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { StoreFacility, User, Rsvp } from "@/types";
@@ -69,7 +69,7 @@ export function EditReservationDialog({
 					</DialogDescription>
 				</DialogHeader>
 				<div className="mt-4">
-					<EditReservationForm
+					<ReservationForm
 						storeId={storeId}
 						rsvpSettings={rsvpSettings}
 						storeSettings={storeSettings}

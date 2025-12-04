@@ -1,16 +1,13 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
-import { ReservationForm } from "./reservation-form";
-import { EditReservationDialog } from "./edit-reservation-dialog";
-import type { Rsvp, StoreFacility, User } from "@/types";
-import type { RsvpSettings, StoreSettings } from "@prisma/client";
-import { Separator } from "@/components/ui/separator";
-import { Heading } from "@/components/ui/heading";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import type { Rsvp, StoreFacility, User } from "@/types";
+import type { RsvpSettings, StoreSettings } from "@prisma/client";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
+import { EditReservationDialog } from "./edit-reservation-dialog";
 
 interface ReservationClientProps {
 	rsvps: Rsvp[];
@@ -84,13 +81,13 @@ export function ReservationClient({
 	// Calculate default rsvp time from selected date/time
 	const defaultRsvpTime = selectedDateTime
 		? (() => {
-				const [hours, minutes] = selectedDateTime.timeSlot
-					.split(":")
-					.map(Number);
-				const date = new Date(selectedDateTime.day);
-				date.setHours(hours, minutes, 0, 0);
-				return date;
-			})()
+			const [hours, minutes] = selectedDateTime.timeSlot
+				.split(":")
+				.map(Number);
+			const date = new Date(selectedDateTime.day);
+			date.setHours(hours, minutes, 0, 0);
+			return date;
+		})()
 		: undefined;
 
 	return (
