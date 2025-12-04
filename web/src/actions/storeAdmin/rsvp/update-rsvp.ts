@@ -57,6 +57,22 @@ export const updateRsvpAction = storeActionClient
 
 		const storeTimezone = store.defaultTimezone || "Asia/Taipei";
 
+		// Validate facility (required)
+		if (!facilityId) {
+			throw new SafeError("Facility is required");
+		}
+
+		const facility = await sqlClient.storeFacility.findFirst({
+			where: {
+				id: facilityId,
+				storeId,
+			},
+		});
+
+		if (!facility) {
+			throw new SafeError("Facility not found");
+		}
+
 		// Convert rsvpTime to UTC Date, then to BigInt epoch
 		// The Date object from datetime-local input represents a time in the browser's local timezone
 		// We need to interpret it as store timezone time and convert to UTC
@@ -96,7 +112,7 @@ export const updateRsvpAction = storeActionClient
 				where: { id },
 				data: {
 					userId: userId || null,
-					facilityId: facilityId || null,
+					facilityId,
 					numOfAdult,
 					numOfChild,
 					rsvpTime,

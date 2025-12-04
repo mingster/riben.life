@@ -3,9 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconCalendarCheck } from "@tabler/icons-react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm, type Resolver } from "react-hook-form";
 
 import { createReservationAction } from "@/actions/store/reservation/create-reservation";
 import {
@@ -42,13 +42,12 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, StoreFacility, User } from "@/types";
 import {
 	convertToUtc,
+	epochToDate,
+	formatUtcDateToDateTimeLocal,
 	getDateInTz,
 	getOffsetHours,
-	addHours,
-	epochToDate,
 } from "@/utils/datetime-utils";
 import type { RsvpSettings, StoreSettings } from "@prisma/client";
-import { format } from "date-fns";
 import { SlotPicker } from "./slot-picker";
 
 interface ReservationFormProps {
@@ -85,12 +84,100 @@ export function ReservationForm({
 }: ReservationFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const params = useParams();
-	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
 	// Determine if we're in edit mode
 	const isEditMode = Boolean(rsvp);
+
+	// Helper function to check if a facility is available at a given time
+	const isFacilityAvailableAtTime = useCallback(
+		(
+			facility: StoreFacility,
+			checkTime: Date | null | undefined,
+			timezone: string,
+		): boolean => {
+			// If no time selected, show all facilities
+			if (!checkTime || isNaN(checkTime.getTime())) {
+				return true;
+			}
+
+			// If facility has no business hours, assume it's always available
+			if (!facility.businessHours) {
+				return true;
+			}
+
+			try {
+				// Parse business hours JSON
+				const schedule = JSON.parse(facility.businessHours) as {
+					Monday?: Array<{ from: string; to: string }> | "closed";
+					Tuesday?: Array<{ from: string; to: string }> | "closed";
+					Wednesday?: Array<{ from: string; to: string }> | "closed";
+					Thursday?: Array<{ from: string; to: string }> | "closed";
+					Friday?: Array<{ from: string; to: string }> | "closed";
+					Saturday?: Array<{ from: string; to: string }> | "closed";
+					Sunday?: Array<{ from: string; to: string }> | "closed";
+				};
+
+				// Convert UTC time to store timezone for checking
+				const offsetHours = getOffsetHours(timezone);
+				const timeInStoreTz = getDateInTz(checkTime, offsetHours);
+
+				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+				const dayOfWeek = timeInStoreTz.getDay();
+				const dayNames = [
+					"Sunday",
+					"Monday",
+					"Tuesday",
+					"Wednesday",
+					"Thursday",
+					"Friday",
+					"Saturday",
+				] as const;
+				const dayName = dayNames[dayOfWeek];
+
+				// Get hours for this day
+				const dayHours = schedule[dayName];
+				if (!dayHours || dayHours === "closed") {
+					return false;
+				}
+
+				// Check if time falls within any time range
+				const checkHour = timeInStoreTz.getHours();
+				const checkMinute = timeInStoreTz.getMinutes();
+				const checkTimeMinutes = checkHour * 60 + checkMinute;
+
+				for (const range of dayHours) {
+					const [fromHour, fromMinute] = range.from.split(":").map(Number);
+					const [toHour, toMinute] = range.to.split(":").map(Number);
+
+					const fromMinutes = fromHour * 60 + fromMinute;
+					const toMinutes = toHour * 60 + toMinute;
+
+					// Check if time falls within range
+					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
+						return true;
+					}
+
+					// Handle range spanning midnight (e.g., 22:00 to 02:00)
+					if (fromMinutes > toMinutes) {
+						if (
+							checkTimeMinutes >= fromMinutes ||
+							checkTimeMinutes < toMinutes
+						) {
+							return true;
+						}
+					}
+				}
+
+				return false;
+			} catch {
+				// If parsing fails, assume facility is available
+				return true;
+			}
+		},
+		[storeTimezone],
+	);
 
 	// Default values - different for create vs edit
 	const defaultValues = useMemo(() => {
@@ -118,7 +205,8 @@ export function ReservationForm({
 
 			return {
 				id: rsvp.id,
-				facilityId: rsvp.facilityId,
+				facilityId:
+					rsvp.facilityId || (facilities.length > 0 ? facilities[0].id : ""),
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				rsvpTime,
@@ -131,14 +219,14 @@ export function ReservationForm({
 				userId: user?.id || null,
 				email: user?.email || "",
 				phone: "",
-				facilityId: null,
+				facilityId: facilities.length > 0 ? facilities[0].id : "",
 				numOfAdult: 1,
 				numOfChild: 0,
 				rsvpTime: defaultRsvpTime || new Date(),
 				message: "",
 			} as CreateReservationInput;
 		}
-	}, [isEditMode, rsvp, storeId, user, defaultRsvpTime]);
+	}, [isEditMode, rsvp, storeId, user, defaultRsvpTime, facilities]);
 
 	// Use appropriate schema based on mode
 	const schema = isEditMode ? updateReservationSchema : createReservationSchema;
@@ -147,10 +235,23 @@ export function ReservationForm({
 	type FormInput = CreateReservationInput | UpdateReservationInput;
 
 	const form = useForm<FormInput>({
-		resolver: zodResolver(schema) as any,
+		resolver: zodResolver(schema) as Resolver<FormInput>,
 		defaultValues,
 		mode: isEditMode ? "onBlur" : "onChange",
 	});
+
+	// Watch rsvpTime to filter facilities
+	const rsvpTime = form.watch("rsvpTime");
+
+	// Filter facilities based on rsvpTime
+	const availableFacilities = useMemo(() => {
+		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
+			return facilities;
+		}
+		return facilities.filter((facility) =>
+			isFacilityAvailableAtTime(facility, rsvpTime, storeTimezone),
+		);
+	}, [facilities, rsvpTime, storeTimezone, isFacilityAvailableAtTime]);
 
 	// Update form when defaultRsvpTime changes (create mode) or rsvp changes (edit mode)
 	useEffect(() => {
@@ -159,9 +260,32 @@ export function ReservationForm({
 		} else if (defaultRsvpTime) {
 			form.setValue("rsvpTime", defaultRsvpTime);
 		}
-	}, [defaultRsvpTime, rsvp, form, isEditMode, defaultValues]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [defaultRsvpTime, rsvp?.id, isEditMode]);
+
+	// Clear facility selection if it's no longer available
+	useEffect(() => {
+		const currentFacilityId = form.getValues("facilityId");
+		if (
+			currentFacilityId &&
+			!availableFacilities.find((f) => f.id === currentFacilityId)
+		) {
+			form.setValue(
+				"facilityId",
+				availableFacilities.length > 0 ? availableFacilities[0].id : "",
+			);
+		}
+	}, [availableFacilities, form]);
 
 	async function onSubmit(data: FormInput) {
+		// Check if reservations are accepted (only for create mode)
+		if (!isEditMode && rsvpSettings && !rsvpSettings.acceptReservation) {
+			toastError({
+				title: t("Error"),
+				description: t("Reservations are not currently accepted"),
+			});
+			return;
+		}
 		setIsSubmitting(true);
 
 		try {
@@ -211,6 +335,10 @@ export function ReservationForm({
 	// Check if prepaid is required (create mode only)
 	const prepaidRequired = rsvpSettings?.prepaidRequired ?? false;
 	const requiresLogin = !isEditMode && prepaidRequired && !user;
+	const acceptReservation = rsvpSettings?.acceptReservation ?? true; // Default to true
+	// Note: isBlacklisted is not passed to ReservationForm, so we rely on server-side validation
+	// The form will show an error message if the server rejects due to blacklist
+	const canCreateReservation = isEditMode || acceptReservation; // Allow edit, but check acceptReservation for create
 
 	const formContent = (
 		<>
@@ -248,7 +376,7 @@ export function ReservationForm({
 										// Edit mode: Use SlotPicker
 										<div className="border rounded-lg p-4">
 											<SlotPicker
-												rsvps={rsvps}
+												existingReservations={rsvps}
 												rsvpSettings={rsvpSettings}
 												storeSettings={storeSettings || null}
 												storeTimezone={storeTimezone}
@@ -264,10 +392,7 @@ export function ReservationForm({
 
 													// Validate the date
 													if (isNaN(dateTime.getTime())) {
-														console.error(
-															"Invalid date from slot picker:",
-															dateTime,
-														);
+														// Silently ignore invalid dates
 														return;
 													}
 
@@ -284,7 +409,7 @@ export function ReservationForm({
 												field.value
 													? (() => {
 															try {
-																// Convert UTC date to store timezone for display
+																// Ensure we have a proper Date object
 																const utcDate =
 																	field.value instanceof Date
 																		? field.value
@@ -295,22 +420,13 @@ export function ReservationForm({
 																	return "";
 																}
 
-																const storeTzDate = getDateInTz(
+																// Use formatUtcDateToDateTimeLocal to correctly format UTC date in store timezone
+																return formatUtcDateToDateTimeLocal(
 																	utcDate,
-																	getOffsetHours(storeTimezone),
+																	storeTimezone,
 																);
-
-																// Validate converted date
-																if (Number.isNaN(storeTzDate.getTime())) {
-																	return "";
-																}
-
-																return format(
-																	storeTzDate,
-																	"yyyy-MM-dd'T'HH:mm",
-																);
-															} catch (error) {
-																console.error("Error formatting date:", error);
+															} catch {
+																// Silently handle formatting errors
 																return "";
 															}
 														})()
@@ -318,11 +434,11 @@ export function ReservationForm({
 											}
 											onChange={(e) => {
 												// Convert datetime-local string (interpreted as store timezone) to UTC
-												const utcDate = convertToUtc(
-													e.target.value,
-													storeTimezone,
-												);
-												field.onChange(utcDate);
+												const value = e.target.value;
+												if (value) {
+													const utcDate = convertToUtc(value, storeTimezone);
+													field.onChange(utcDate);
+												}
 											}}
 										/>
 									)}
@@ -382,61 +498,58 @@ export function ReservationForm({
 						/>
 					</div>
 
-					{/* Facility Selection (if available) */}
-					{facilities.length > 0 && (
-						<FormField
-							control={form.control}
-							name="facilityId"
-							render={({ field }) => {
-								const selectedFacility = field.value
-									? facilities.find((f) => f.id === field.value) || null
-									: null;
+					{/* Facility Selection */}
+					<FormField
+						control={form.control}
+						name="facilityId"
+						render={({ field }) => {
+							const selectedFacility = field.value
+								? availableFacilities.find((f) => f.id === field.value) || null
+								: null;
 
-								return (
-									<FormItem>
-										<FormLabel>{t("rsvp_facility")}</FormLabel>
-										<FormControl>
-											<div className="space-y-2">
-												<div className="flex items-center gap-2">
+							return (
+								<FormItem>
+									<FormLabel>
+										{t("rsvp_facility")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										<div className="space-y-2">
+											{availableFacilities.length > 0 ? (
+												<>
 													<FacilityCombobox
-														storeFacilities={facilities}
+														storeFacilities={availableFacilities}
 														disabled={isSubmitting}
 														defaultValue={selectedFacility}
 														onValueChange={(facility) => {
-															field.onChange(facility?.id || null);
+															field.onChange(facility?.id || "");
 														}}
 													/>
-													{selectedFacility && (
-														<Button
-															type="button"
-															variant="ghost"
-															size="sm"
-															onClick={() => {
-																field.onChange(null);
-															}}
-															disabled={isSubmitting}
-															className="h-9 text-xs"
-														>
-															{t("No_preference")}
-														</Button>
+													{selectedFacility && selectedFacility.defaultCost && (
+														<div className="text-sm text-muted-foreground">
+															{t("rsvp_facility_cost")}:{" "}
+															{typeof selectedFacility.defaultCost === "number"
+																? selectedFacility.defaultCost.toFixed(2)
+																: Number(selectedFacility.defaultCost).toFixed(
+																		2,
+																	)}
+														</div>
 													)}
+												</>
+											) : (
+												<div className="text-sm text-destructive">
+													{rsvpTime
+														? t("No facilities available at selected time")
+														: t("No facilities available")}
 												</div>
-												{selectedFacility && selectedFacility.defaultCost && (
-													<div className="text-sm text-muted-foreground">
-														{t("rsvp_facility_cost")}:{" "}
-														{typeof selectedFacility.defaultCost === "number"
-															? selectedFacility.defaultCost.toFixed(2)
-															: Number(selectedFacility.defaultCost).toFixed(2)}
-													</div>
-												)}
-											</div>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								);
-							}}
-						/>
-					)}
+											)}
+										</div>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							);
+						}}
+					/>
 
 					{/* Contact Information - Only in create mode when user is not logged in */}
 					{!isEditMode && !user && (
@@ -504,7 +617,12 @@ export function ReservationForm({
 					{/* Submit Button */}
 					<Button
 						type="submit"
-						disabled={isSubmitting || requiresLogin}
+						disabled={
+							isSubmitting ||
+							requiresLogin ||
+							availableFacilities.length === 0 ||
+							!canCreateReservation
+						}
 						className="w-full"
 					>
 						{isSubmitting
@@ -519,6 +637,11 @@ export function ReservationForm({
 					{requiresLogin && (
 						<p className="text-sm text-muted-foreground text-center">
 							{t("Please_sign_in_to_make_reservation")}
+						</p>
+					)}
+					{!isEditMode && !acceptReservation && (
+						<p className="text-sm text-destructive text-center">
+							{t("Reservations are not currently accepted")}
 						</p>
 					)}
 				</form>

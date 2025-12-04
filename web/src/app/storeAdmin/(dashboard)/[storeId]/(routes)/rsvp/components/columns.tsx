@@ -9,6 +9,11 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { Rsvp } from "@/types";
 import { CellAction } from "./cell-action";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
+import {
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+} from "@/utils/datetime-utils";
 
 interface CreateRsvpColumnsOptions {
 	onDeleted?: (rsvpId: string) => void;
@@ -29,8 +34,32 @@ export const createRsvpColumns = (
 				<DataTableColumnHeader column={column} title="Reservation Time" />
 			),
 			cell: ({ row }) => {
-				const date = row.getValue("rsvpTime") as Date;
-				return <span>{format(date, "PPP p")}</span>;
+				const rsvp = row.original;
+				const rsvpTime = rsvp.rsvpTime;
+
+				// Convert rsvpTime to Date object
+				const rsvpTimeEpoch =
+					typeof rsvpTime === "bigint"
+						? rsvpTime
+						: typeof rsvpTime === "number"
+							? BigInt(rsvpTime)
+							: rsvpTime instanceof Date
+								? BigInt(rsvpTime.getTime())
+								: null;
+
+				if (!rsvpTimeEpoch) {
+					return <span>-</span>;
+				}
+
+				const utcDate = epochToDate(rsvpTimeEpoch);
+				if (!utcDate) {
+					return <span>-</span>;
+				}
+
+				// Convert to store timezone for display
+				const storeDate = getDateInTz(utcDate, getOffsetHours(storeTimezone));
+
+				return <span>{format(storeDate, "PPP p")}</span>;
 			},
 		},
 		{

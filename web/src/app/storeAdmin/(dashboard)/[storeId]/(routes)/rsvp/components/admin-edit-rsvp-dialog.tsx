@@ -52,6 +52,8 @@ import {
 	epochToDate,
 	formatUtcDateToDateTimeLocal,
 	convertToUtc,
+	getDateInTz,
+	getOffsetHours,
 } from "@/utils/datetime-utils";
 import type { StoreFacility } from "@/types";
 import { useEffect } from "react";
@@ -168,12 +170,102 @@ export function AdminEditRsvpDialog({
 
 	const isEditMode = Boolean(rsvp) && !isNew;
 
+	// Helper function to check if a facility is available at a given time
+	const isFacilityAvailableAtTime = useCallback(
+		(
+			facility: StoreFacility,
+			checkTime: Date | null | undefined,
+			timezone: string,
+		): boolean => {
+			// If no time selected, show all facilities
+			if (!checkTime || isNaN(checkTime.getTime())) {
+				return true;
+			}
+
+			// If facility has no business hours, assume it's always available
+			if (!facility.businessHours) {
+				return true;
+			}
+
+			try {
+				// Parse business hours JSON
+				const schedule = JSON.parse(facility.businessHours) as {
+					Monday?: Array<{ from: string; to: string }> | "closed";
+					Tuesday?: Array<{ from: string; to: string }> | "closed";
+					Wednesday?: Array<{ from: string; to: string }> | "closed";
+					Thursday?: Array<{ from: string; to: string }> | "closed";
+					Friday?: Array<{ from: string; to: string }> | "closed";
+					Saturday?: Array<{ from: string; to: string }> | "closed";
+					Sunday?: Array<{ from: string; to: string }> | "closed";
+				};
+
+				// Convert UTC time to store timezone for checking
+				const offsetHours = getOffsetHours(timezone);
+				const timeInStoreTz = getDateInTz(checkTime, offsetHours);
+
+				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+				const dayOfWeek = timeInStoreTz.getDay();
+				const dayNames = [
+					"Sunday",
+					"Monday",
+					"Tuesday",
+					"Wednesday",
+					"Thursday",
+					"Friday",
+					"Saturday",
+				] as const;
+				const dayName = dayNames[dayOfWeek];
+
+				// Get hours for this day
+				const dayHours = schedule[dayName];
+				if (!dayHours || dayHours === "closed") {
+					return false;
+				}
+
+				// Check if time falls within any time range
+				const checkHour = timeInStoreTz.getHours();
+				const checkMinute = timeInStoreTz.getMinutes();
+				const checkTimeMinutes = checkHour * 60 + checkMinute;
+
+				for (const range of dayHours) {
+					const [fromHour, fromMinute] = range.from.split(":").map(Number);
+					const [toHour, toMinute] = range.to.split(":").map(Number);
+
+					const fromMinutes = fromHour * 60 + fromMinute;
+					const toMinutes = toHour * 60 + toMinute;
+
+					// Check if time falls within range
+					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
+						return true;
+					}
+
+					// Handle range spanning midnight (e.g., 22:00 to 02:00)
+					if (fromMinutes > toMinutes) {
+						if (
+							checkTimeMinutes >= fromMinutes ||
+							checkTimeMinutes < toMinutes
+						) {
+							return true;
+						}
+					}
+				}
+
+				return false;
+			} catch (error) {
+				// If parsing fails, assume facility is available
+				console.error("Failed to parse facility business hours:", error);
+				return true;
+			}
+		},
+		[],
+	);
+
 	const defaultValues = rsvp
 		? {
 				storeId: rsvp.storeId,
 				id: rsvp.id,
 				userId: rsvp.userId,
-				facilityId: rsvp.facilityId,
+				facilityId: rsvp.facilityId || "",
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				rsvpTime:
@@ -217,7 +309,10 @@ export function AdminEditRsvpDialog({
 				storeId: String(params.storeId),
 				id: "",
 				userId: null,
-				facilityId: null,
+				facilityId:
+					storeFacilities && storeFacilities.length > 0
+						? storeFacilities[0].id
+						: "",
 				numOfAdult: 1,
 				numOfChild: 0,
 				rsvpTime: defaultRsvpTime || getUtcNow(),
@@ -268,6 +363,33 @@ export function AdminEditRsvpDialog({
 	// Watch for facilityId and rsvpTime changes to auto-calculate facilityCost
 	const facilityId = form.watch("facilityId");
 	const rsvpTime = form.watch("rsvpTime");
+
+	// Filter facilities based on rsvpTime
+	const availableFacilities = useMemo(() => {
+		if (!storeFacilities) {
+			return [];
+		}
+		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
+			return storeFacilities;
+		}
+		return storeFacilities.filter((facility) =>
+			isFacilityAvailableAtTime(facility, rsvpTime, storeTimezone),
+		);
+	}, [storeFacilities, rsvpTime, storeTimezone, isFacilityAvailableAtTime]);
+
+	// Clear facility selection if it's no longer available
+	useEffect(() => {
+		const currentFacilityId = form.getValues("facilityId");
+		if (
+			currentFacilityId &&
+			!availableFacilities.find((f) => f.id === currentFacilityId)
+		) {
+			form.setValue(
+				"facilityId",
+				availableFacilities.length > 0 ? availableFacilities[0].id : "",
+			);
+		}
+	}, [availableFacilities, form]);
 
 	// Auto-calculate facilityCost when facility or time changes
 	useEffect(() => {
@@ -363,7 +485,7 @@ export function AdminEditRsvpDialog({
 			if (!isEditMode) {
 				const result = await createRsvpAction(String(params.storeId), {
 					userId: values.userId || null,
-					facilityId: values.facilityId || null,
+					facilityId: values.facilityId,
 					numOfAdult: values.numOfAdult,
 					numOfChild: values.numOfChild,
 					rsvpTime: values.rsvpTime, //should be still in store timezone. server action will convert to UTC.
@@ -402,7 +524,7 @@ export function AdminEditRsvpDialog({
 				const result = await updateRsvpAction(String(params.storeId), {
 					id: rsvpId,
 					userId: values.userId || null,
-					facilityId: values.facilityId || null,
+					facilityId: values.facilityId,
 					numOfAdult: values.numOfAdult,
 					numOfChild: values.numOfChild,
 					rsvpTime: values.rsvpTime,
@@ -613,25 +735,37 @@ export function AdminEditRsvpDialog({
 							name="facilityId"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("rsvp_facility")}</FormLabel>
+									<FormLabel>
+										{t("rsvp_facility")}{" "}
+										<span className="text-destructive">*</span>
+									</FormLabel>
 									<FormControl>
-										<FacilityCombobox
-											storeFacilities={storeFacilities || []}
-											disabled={
-												loading ||
-												form.formState.isSubmitting ||
-												isLoadingStoreFacilities
-											}
-											defaultValue={
-												field.value && storeFacilities
-													? storeFacilities.find((f) => f.id === field.value) ||
-														null
-													: null
-											}
-											onValueChange={(facility) => {
-												field.onChange(facility?.id || null);
-											}}
-										/>
+										{availableFacilities.length > 0 ? (
+											<FacilityCombobox
+												storeFacilities={availableFacilities}
+												disabled={
+													loading ||
+													form.formState.isSubmitting ||
+													isLoadingStoreFacilities
+												}
+												defaultValue={
+													field.value
+														? availableFacilities.find(
+																(f) => f.id === field.value,
+															) || null
+														: null
+												}
+												onValueChange={(facility) => {
+													field.onChange(facility?.id || "");
+												}}
+											/>
+										) : (
+											<div className="text-sm text-destructive">
+												{rsvpTime
+													? t("No facilities available at selected time")
+													: t("No facilities available")}
+											</div>
+										)}
 									</FormControl>
 									<FormMessage />
 								</FormItem>

@@ -8,7 +8,11 @@ import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
+import {
+	dateToEpoch,
+	getUtcNowEpoch,
+	convertDateToUtc,
+} from "@/utils/datetime-utils";
 
 import { createReservationSchema } from "./create-reservation.validation";
 import { RsvpStatus } from "@/types/enum";
@@ -29,32 +33,6 @@ export const createReservationAction = baseClient
 			message,
 		} = parsedInput;
 
-		// rsvpTime is already in UTC (converted on client side from store timezone)
-		// safe-action may serialize Date to string, so handle both
-		let rsvpTimeDate: Date;
-		if (rsvpTimeInput instanceof Date) {
-			// Already a Date object, ensure it's properly in UTC
-			rsvpTimeDate = new Date(
-				Date.UTC(
-					rsvpTimeInput.getUTCFullYear(),
-					rsvpTimeInput.getUTCMonth(),
-					rsvpTimeInput.getUTCDate(),
-					rsvpTimeInput.getUTCHours(),
-					rsvpTimeInput.getUTCMinutes(),
-					rsvpTimeInput.getUTCSeconds(),
-					rsvpTimeInput.getUTCMilliseconds(),
-				),
-			);
-		} else if (typeof rsvpTimeInput === "string") {
-			// String from network serialization, parse it
-			rsvpTimeDate = new Date(rsvpTimeInput);
-		} else {
-			throw new SafeError("Invalid rsvpTime format");
-		}
-
-		// Convert Date to BigInt epoch milliseconds
-		const rsvpTime = dateToEpoch(rsvpTimeDate) ?? BigInt(0);
-
 		// Get session to check if user is logged in
 		const session = await auth.api.getSession({
 			headers: await headers(),
@@ -70,6 +48,7 @@ export const createReservationAction = baseClient
 					id: true,
 					name: true,
 					useBusinessHours: true,
+					defaultTimezone: true,
 				},
 			}),
 			sqlClient.rsvpSettings.findFirst({
@@ -81,8 +60,29 @@ export const createReservationAction = baseClient
 			throw new SafeError("Store not found");
 		}
 
+		const storeTimezone = store.defaultTimezone || "Asia/Taipei";
+
 		if (!rsvpSettings || !rsvpSettings.acceptReservation) {
 			throw new SafeError("Reservations are not currently accepted");
+		}
+
+		// Convert rsvpTime to UTC Date, then to BigInt epoch
+		// The Date object from datetime-local input represents a time in the browser's local timezone
+		// We need to interpret it as store timezone time and convert to UTC
+		let rsvpTimeUtc: Date;
+		try {
+			rsvpTimeUtc = convertDateToUtc(rsvpTimeInput, storeTimezone);
+		} catch (error) {
+			throw new SafeError(
+				error instanceof Error
+					? error.message
+					: "Failed to convert rsvpTime to UTC",
+			);
+		}
+
+		const rsvpTime = dateToEpoch(rsvpTimeUtc);
+		if (!rsvpTime) {
+			throw new SafeError("Failed to convert rsvpTime to epoch");
 		}
 
 		// Check if prepaid is required
@@ -104,18 +104,34 @@ export const createReservationAction = baseClient
 		// Use session userId if available, otherwise use provided userId
 		const finalUserId = sessionUserId || userId || null;
 
-		// Validate facility if provided
-		if (facilityId) {
-			const facility = await sqlClient.storeFacility.findFirst({
+		// Check if user is blacklisted (only for logged-in users)
+		if (finalUserId) {
+			const isBlacklisted = await sqlClient.rsvpBlacklist.findFirst({
 				where: {
-					id: facilityId,
 					storeId,
+					userId: finalUserId,
 				},
 			});
 
-			if (!facility) {
-				throw new SafeError("Facility not found");
+			if (isBlacklisted) {
+				throw new SafeError("You are not allowed to create reservations");
 			}
+		}
+
+		// Validate facility (required)
+		if (!facilityId) {
+			throw new SafeError("Facility is required");
+		}
+
+		const facility = await sqlClient.storeFacility.findFirst({
+			where: {
+				id: facilityId,
+				storeId,
+			},
+		});
+
+		if (!facility) {
+			throw new SafeError("Facility not found");
 		}
 
 		// TODO: Add availability validation (check existing reservations, business hours, etc.)
@@ -125,7 +141,7 @@ export const createReservationAction = baseClient
 				data: {
 					storeId,
 					userId: finalUserId,
-					facilityId: facilityId || null,
+					facilityId,
 					numOfAdult,
 					numOfChild,
 					rsvpTime,

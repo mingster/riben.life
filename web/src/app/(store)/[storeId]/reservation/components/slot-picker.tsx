@@ -23,6 +23,7 @@ import {
 	getUtcNow,
 	getOffsetHours,
 	dayAndTimeSlotToUtc,
+	epochToDate,
 } from "@/utils/datetime-utils";
 
 interface TimeRange {
@@ -91,8 +92,8 @@ const extractHoursFromSchedule = (hoursJson: string | null): number[] => {
 		}
 
 		return Array.from(hours).sort((a, b) => a - b);
-	} catch (error) {
-		console.error("Failed to parse hours JSON:", error);
+	} catch {
+		// If parsing fails, default to 8-22
 		return Array.from({ length: 14 }, (_, i) => i + 8);
 	}
 };
@@ -131,17 +132,18 @@ const groupRsvpsByDayAndTime = (
 			if (rsvp.rsvpTime instanceof Date) {
 				rsvpDateUtc = rsvp.rsvpTime;
 			} else if (typeof rsvp.rsvpTime === "bigint") {
-				// BigInt epoch (milliseconds)
-				rsvpDateUtc = new Date(Number(rsvp.rsvpTime));
+				// BigInt epoch (milliseconds) - use epochToDate for proper UTC conversion
+				rsvpDateUtc = epochToDate(rsvp.rsvpTime) ?? new Date();
 			} else if (typeof rsvp.rsvpTime === "number") {
 				// Number epoch (milliseconds) - after transformPrismaDataForJson
-				rsvpDateUtc = new Date(rsvp.rsvpTime);
+				rsvpDateUtc = epochToDate(BigInt(rsvp.rsvpTime)) ?? new Date();
 			} else if (typeof rsvp.rsvpTime === "string") {
 				rsvpDateUtc = new Date(rsvp.rsvpTime);
 			} else {
 				rsvpDateUtc = new Date(String(rsvp.rsvpTime));
 			}
 
+			// Validate the date
 			if (isNaN(rsvpDateUtc.getTime())) {
 				return;
 			}
@@ -168,11 +170,11 @@ const groupRsvpsByDayAndTime = (
 };
 
 // Check if a date is today (in store timezone)
+// Note: This is for display comparison only, not for saving timestamps
 const isToday = (date: Date, storeTimezone: string): boolean => {
-	const todayInStoreTz = getDateInTz(
-		getUtcNow(),
-		getOffsetHours(storeTimezone),
-	);
+	// Use getUtcNow() for consistency, then convert to store timezone for comparison
+	const todayUtc = getUtcNow();
+	const todayInStoreTz = getDateInTz(todayUtc, getOffsetHours(storeTimezone));
 	return isSameDay(date, todayInStoreTz);
 };
 
@@ -192,7 +194,7 @@ const getDayName = (date: Date, t: (key: string) => string): string => {
 };
 
 interface SlotPickerProps {
-	rsvps: Rsvp[];
+	existingReservations: Rsvp[];
 	rsvpSettings: RsvpSettings | null;
 	storeSettings: StoreSettings | null;
 	storeTimezone: string;
@@ -202,7 +204,7 @@ interface SlotPickerProps {
 }
 
 export function SlotPicker({
-	rsvps,
+	existingReservations,
 	rsvpSettings,
 	storeSettings,
 	storeTimezone,
@@ -244,10 +246,10 @@ export function SlotPicker({
 		[currentWeekInStoreTz],
 	);
 
-	const isWeekInPast = useMemo(
-		() => isBefore(startOfDay(weekStart), today),
-		[weekStart, today],
-	);
+	const isWeekInPast = useMemo(() => {
+		// Compare weekStart (in store timezone) with today (in store timezone)
+		return isBefore(startOfDay(weekStart), today);
+	}, [weekStart, today]);
 
 	const weekDays = useMemo(() => {
 		const days: Date[] = [];
@@ -262,13 +264,13 @@ export function SlotPicker({
 	const groupedRsvps = useMemo(
 		() =>
 			groupRsvpsByDayAndTime(
-				rsvps,
+				existingReservations,
 				weekStart,
 				weekEnd,
 				storeTimezone,
 				currentRsvpId,
 			),
-		[rsvps, weekStart, weekEnd, storeTimezone, currentRsvpId],
+		[existingReservations, weekStart, weekEnd, storeTimezone, currentRsvpId],
 	);
 
 	const getRsvpsForSlot = useCallback(
@@ -400,7 +402,8 @@ export function SlotPicker({
 											timeSlot,
 											storeTimezone,
 										);
-										const isPast = isBefore(slotDateTimeUtc, today);
+										// Compare UTC times for accurate past/future check
+										const isPast = isBefore(slotDateTimeUtc, todayUtc);
 										const canSelect = isAvailable && !isPast;
 
 										// Check if this slot is selected

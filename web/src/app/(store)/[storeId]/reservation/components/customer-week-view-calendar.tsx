@@ -1,6 +1,10 @@
 "use client";
 
-import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import {
+	IconChevronLeft,
+	IconChevronRight,
+	IconTrash,
+} from "@tabler/icons-react";
 import {
 	format,
 	startOfWeek,
@@ -32,6 +36,19 @@ import {
 	epochToDate,
 	dayAndTimeSlotToUtc,
 } from "@/utils/datetime-utils";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
+import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
+import { toastError, toastSuccess } from "@/components/toaster";
 
 interface CustomerWeekViewCalendarProps {
 	rsvps: Rsvp[];
@@ -48,6 +65,7 @@ interface CustomerWeekViewCalendarProps {
 	user?: { id: string; email: string | null } | null;
 	storeTimezone?: string;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
+	isBlacklisted?: boolean;
 }
 
 interface TimeRange {
@@ -123,23 +141,68 @@ const extractHoursFromSchedule = (hoursJson: string | null): number[] => {
 		}
 
 		return Array.from(hours).sort((a, b) => a - b);
-	} catch (error) {
+	} catch {
 		// If parsing fails, default to 8-22
-		console.error("Failed to parse hours JSON:", error);
 		return Array.from({ length: 14 }, (_, i) => i + 8);
 	}
 };
 
 // Generate time slots based on rsvpSettings and storeSettings
+// Slots are generated at intervals based on defaultDuration (in minutes)
 const generateTimeSlots = (
 	useBusinessHours: boolean,
 	rsvpHours: string | null,
 	businessHours: string | null,
+	defaultDuration: number = 60, // Default to 60 minutes (1 hour)
 ): string[] => {
 	const hoursJson = useBusinessHours ? businessHours : rsvpHours;
 	const hours = extractHoursFromSchedule(hoursJson);
 
-	return hours.map((hour) => `${hour.toString().padStart(2, "0")}:00`);
+	if (hours.length === 0) {
+		return [];
+	}
+
+	const slots: string[] = [];
+	const slotIntervalMinutes = defaultDuration;
+
+	// Get the range of hours (from first to last hour)
+	const minHour = Math.min(...hours);
+	const maxHour = Math.max(...hours);
+
+	// Generate slots starting from minHour:00, incrementing by defaultDuration
+	// Continue until we've covered all hours in the range
+	let currentMinutes = minHour * 60; // Start at minHour:00
+	const maxMinutes = (maxHour + 1) * 60; // Go up to maxHour:59
+
+	while (currentMinutes < maxMinutes) {
+		const slotHour = Math.floor(currentMinutes / 60);
+		const slotMin = currentMinutes % 60;
+
+		// Only add slot if the hour is in our hours list
+		// For slots that span multiple hours, check if any hour in the range is in our list
+		const slotEndMinutes = currentMinutes + slotIntervalMinutes;
+		const slotEndHour = Math.floor(slotEndMinutes / 60);
+
+		// Check if this slot overlaps with any hour in our hours list
+		const slotOverlaps = hours.some((h) => h >= slotHour && h <= slotEndHour);
+
+		if (slotOverlaps && slotHour < 24) {
+			slots.push(
+				`${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`,
+			);
+		}
+
+		// Move to next slot
+		currentMinutes += slotIntervalMinutes;
+	}
+
+	// Remove duplicates and sort
+	return Array.from(new Set(slots)).sort((a, b) => {
+		const [aHour, aMin] = a.split(":").map(Number);
+		const [bHour, bMin] = b.split(":").map(Number);
+		if (aHour !== bHour) return aHour - bHour;
+		return aMin - bMin;
+	});
 };
 
 // Get day name abbreviation using i18n
@@ -173,11 +236,13 @@ const isToday = (date: Date, storeTimezone: string): boolean => {
 
 // Group RSVPs by day and time slot
 // RSVP dates are in UTC, convert to store timezone for display and grouping
+// Match RSVPs to slots based on defaultDuration
 const groupRsvpsByDayAndTime = (
 	rsvps: Rsvp[],
 	weekStart: Date,
 	weekEnd: Date,
 	storeTimezone: string,
+	defaultDuration: number = 60, // Default to 60 minutes
 ) => {
 	const grouped: Record<string, Rsvp[]> = {};
 	// Convert IANA timezone string to offset hours
@@ -192,10 +257,10 @@ const groupRsvpsByDayAndTime = (
 				rsvpDateUtc = rsvp.rsvpTime;
 			} else if (typeof rsvp.rsvpTime === "bigint") {
 				// BigInt epoch (milliseconds)
-				rsvpDateUtc = new Date(Number(rsvp.rsvpTime));
+				rsvpDateUtc = epochToDate(rsvp.rsvpTime) ?? new Date();
 			} else if (typeof rsvp.rsvpTime === "number") {
 				// Number epoch (milliseconds) - after transformPrismaDataForJson
-				rsvpDateUtc = new Date(rsvp.rsvpTime);
+				rsvpDateUtc = epochToDate(BigInt(rsvp.rsvpTime)) ?? new Date();
 			} else if (typeof rsvp.rsvpTime === "string") {
 				rsvpDateUtc = parseISO(rsvp.rsvpTime);
 			} else {
@@ -204,11 +269,9 @@ const groupRsvpsByDayAndTime = (
 
 			// Validate the date
 			if (isNaN(rsvpDateUtc.getTime())) {
-				console.warn("Invalid RSVP date:", rsvp.rsvpTime, rsvp.id);
 				return;
 			}
-		} catch (error) {
-			console.warn("Error parsing RSVP date:", rsvp.rsvpTime, rsvp.id, error);
+		} catch {
 			return;
 		}
 
@@ -218,9 +281,13 @@ const groupRsvpsByDayAndTime = (
 		// Check if RSVP is within the week (inclusive of boundaries)
 		if (rsvpDate >= weekStart && rsvpDate <= weekEnd) {
 			const dayKey = format(rsvpDate, "yyyy-MM-dd");
-			// Round to nearest hour for time slot matching
-			const hour = rsvpDate.getHours();
-			const timeKey = `${hour.toString().padStart(2, "0")}:00`;
+			// Round to nearest slot based on defaultDuration
+			const totalMinutes = rsvpDate.getHours() * 60 + rsvpDate.getMinutes();
+			const slotMinutes =
+				Math.floor(totalMinutes / defaultDuration) * defaultDuration;
+			const slotHour = Math.floor(slotMinutes / 60);
+			const slotMin = slotMinutes % 60;
+			const timeKey = `${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`;
 			const key = `${dayKey}-${timeKey}`;
 
 			if (!grouped[key]) {
@@ -245,6 +312,7 @@ export const CustomerWeekViewCalendar: React.FC<
 	user,
 	storeTimezone = "Asia/Taipei",
 	onReservationCreated,
+	isBlacklisted = false,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -261,14 +329,32 @@ export const CustomerWeekViewCalendar: React.FC<
 		// Use UTC for consistency, then convert to store timezone for display
 		return getUtcNow();
 	});
+	const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+	const [reservationToCancel, setReservationToCancel] = useState<Rsvp | null>(
+		null,
+	);
+	const [isCancelling, setIsCancelling] = useState(false);
 
 	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
 	const businessHours = storeSettings?.businessHours ?? null;
+	const defaultDuration = rsvpSettings?.defaultDuration ?? 60; // Default to 60 minutes
+	const acceptReservation = rsvpSettings?.acceptReservation ?? true; // Default to true
+	const canCreateReservation = acceptReservation && !isBlacklisted;
 
+	//Time slots are generated at intervals matching defaultDuration
+	//RSVPs are grouped into the correct slots based on defaultDuration
+	//Works with any defaultDuration value (30, 60, 90, 120 minutes, etc.)
+	//Maintains backward compatibility (defaults to 60 minutes if defaultDuration is not set)
 	const timeSlots = useMemo(
-		() => generateTimeSlots(useBusinessHours, rsvpHours, businessHours),
-		[useBusinessHours, rsvpHours, businessHours],
+		() =>
+			generateTimeSlots(
+				useBusinessHours,
+				rsvpHours,
+				businessHours,
+				defaultDuration,
+			),
+		[useBusinessHours, rsvpHours, businessHours, defaultDuration],
 	);
 
 	// Map i18n language codes to date-fns locales
@@ -319,8 +405,15 @@ export const CustomerWeekViewCalendar: React.FC<
 	// User's own reservations will be editable via EditReservationDialog
 	// Group RSVPs by day and time (convert UTC to store timezone)
 	const groupedRsvps = useMemo(
-		() => groupRsvpsByDayAndTime(rsvps, weekStart, weekEnd, storeTimezone),
-		[rsvps, weekStart, weekEnd, storeTimezone],
+		() =>
+			groupRsvpsByDayAndTime(
+				rsvps,
+				weekStart,
+				weekEnd,
+				storeTimezone,
+				defaultDuration,
+			),
+		[rsvps, weekStart, weekEnd, storeTimezone, defaultDuration],
 	);
 
 	// Helper to check if a reservation belongs to the current user
@@ -338,6 +431,114 @@ export const CustomerWeekViewCalendar: React.FC<
 			return false;
 		},
 		[user],
+	);
+
+	// Check if reservation can be edited based on rsvpSettings
+	// Edit button only appears if:
+	// Reservation belongs to the current user
+	// Reservation status is Pending or AlreadyPaid
+	// canCancel is enabled in rsvpSettings
+	// Reservation is more than cancelHours away from now
+	const canEditReservation = useCallback(
+		(rsvp: Rsvp): boolean => {
+			if (!isUserReservation(rsvp)) {
+				return false;
+			}
+
+			// Only allow edit for Pending or AlreadyPaid status
+			if (
+				rsvp.status !== RsvpStatus.Pending &&
+				rsvp.status !== RsvpStatus.AlreadyPaid
+			) {
+				return false;
+			}
+
+			// If rsvpSettings is not available, assume editing is not allowed
+			if (!rsvpSettings) {
+				return false;
+			}
+
+			// Check if canCancel is enabled - if cancellation is disabled, editing is also disabled
+			if (!rsvpSettings.canCancel) {
+				return false;
+			}
+
+			// Check cancelHours window - don't allow editing if within the cancellation window
+			const cancelHours = rsvpSettings.cancelHours ?? 24;
+			const now = getUtcNow();
+			const rsvpTimeDate = epochToDate(
+				typeof rsvp.rsvpTime === "number"
+					? BigInt(rsvp.rsvpTime)
+					: rsvp.rsvpTime instanceof Date
+						? BigInt(rsvp.rsvpTime.getTime())
+						: rsvp.rsvpTime,
+			);
+
+			if (!rsvpTimeDate) {
+				return false;
+			}
+
+			// Calculate hours until reservation
+			const hoursUntilReservation =
+				(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+			// Can edit if reservation is more than cancelHours away
+			return hoursUntilReservation >= cancelHours;
+		},
+		[isUserReservation, rsvpSettings],
+	);
+
+	// Check if reservation can be cancelled/deleted based on rsvpSettings
+	// Cancel/Delete button only appears if:
+	// All the same conditions as edit, plus: canCancel is enabled in rsvpSettings
+	// Both buttons are hidden if the reservation is within the cancelHours window, preventing last-minute changes.
+	const canCancelReservation = useCallback(
+		(rsvp: Rsvp): boolean => {
+			if (!isUserReservation(rsvp)) {
+				return false;
+			}
+
+			// Only allow cancel/delete for Pending or AlreadyPaid status
+			if (
+				rsvp.status !== RsvpStatus.Pending &&
+				rsvp.status !== RsvpStatus.AlreadyPaid
+			) {
+				return false;
+			}
+
+			// If rsvpSettings is not available, assume cancellation is not allowed
+			if (!rsvpSettings) {
+				return false;
+			}
+
+			// Check if canCancel is enabled
+			if (!rsvpSettings.canCancel) {
+				return false;
+			}
+
+			// Check cancelHours window
+			const cancelHours = rsvpSettings.cancelHours ?? 24;
+			const now = getUtcNow();
+			const rsvpTimeDate = epochToDate(
+				typeof rsvp.rsvpTime === "number"
+					? BigInt(rsvp.rsvpTime)
+					: rsvp.rsvpTime instanceof Date
+						? BigInt(rsvp.rsvpTime.getTime())
+						: rsvp.rsvpTime,
+			);
+
+			if (!rsvpTimeDate) {
+				return false;
+			}
+
+			// Calculate hours until reservation
+			const hoursUntilReservation =
+				(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+			// Can cancel if reservation is more than cancelHours away
+			return hoursUntilReservation >= cancelHours;
+		},
+		[isUserReservation, rsvpSettings],
 	);
 
 	const handlePreviousWeek = useCallback(() => {
@@ -411,6 +612,75 @@ export const CustomerWeekViewCalendar: React.FC<
 			);
 		});
 	}, []);
+
+	const handleCancelClick = useCallback((e: React.MouseEvent, rsvp: Rsvp) => {
+		e.stopPropagation(); // Prevent triggering edit dialog
+		setReservationToCancel(rsvp);
+		setCancelDialogOpen(true);
+	}, []);
+
+	const handleCancelConfirm = useCallback(async () => {
+		if (!reservationToCancel) return;
+
+		setIsCancelling(true);
+		try {
+			// If status is Pending, delete it (hard delete)
+			// Otherwise, cancel it (change status to Cancelled)
+			if (reservationToCancel.status === RsvpStatus.Pending) {
+				const result = await deleteReservationAction({
+					id: reservationToCancel.id,
+				});
+
+				if (result?.serverError) {
+					toastError({
+						title: t("Error"),
+						description: result.serverError,
+					});
+				} else {
+					toastSuccess({
+						description: t("reservation_deleted"),
+					});
+					// Remove from local state
+					setRsvps((prev) =>
+						prev.filter((r) => r.id !== reservationToCancel.id),
+					);
+				}
+			} else {
+				const result = await cancelReservationAction({
+					id: reservationToCancel.id,
+				});
+
+				if (result?.serverError) {
+					toastError({
+						title: t("Error"),
+						description: result.serverError,
+					});
+				} else {
+					toastSuccess({
+						description: t("reservation_cancelled"),
+					});
+					// Update local state with cancelled reservation
+					if (result?.data?.rsvp) {
+						handleReservationUpdated(result.data.rsvp);
+					} else {
+						// If no data returned, remove from list
+						setRsvps((prev) =>
+							prev.filter((r) => r.id !== reservationToCancel.id),
+						);
+					}
+				}
+			}
+		} catch (error) {
+			toastError({
+				title: t("Error"),
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setIsCancelling(false);
+			setCancelDialogOpen(false);
+			setReservationToCancel(null);
+		}
+	}, [reservationToCancel, t, handleReservationUpdated]);
 
 	return (
 		<div className="flex flex-col gap-3 sm:gap-4">
@@ -519,27 +789,41 @@ export const CustomerWeekViewCalendar: React.FC<
 												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
 													{slotRsvps.length > 0 ? (
 														slotRsvps.map((rsvp) => {
-															const isPending =
-																rsvp.status === RsvpStatus.Pending;
-															const isUserOwnReservation =
-																isUserReservation(rsvp);
 															const canEdit =
-																isPending && isUserOwnReservation && storeId;
+																canEditReservation(rsvp) && storeId;
+															const canCancel = canCancelReservation(rsvp);
 															const rsvpCard = (
 																<div
 																	className={cn(
-																		"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs min-h-[44px] touch-manipulation border-l-2",
+																		"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs min-h-[44px] touch-manipulation border-l-2 relative",
 																		rsvp.confirmedByStore
 																			? "bg-green-50 dark:bg-green-950/20 border-l-green-500"
 																			: "bg-yellow-50 dark:bg-yellow-950/20 border-l-yellow-500",
 																		rsvp.alreadyPaid && "border-l-blue-500",
-																		isUserOwnReservation &&
+																		isUserReservation(rsvp) &&
 																			"ring-2 ring-primary/20",
 																		canEdit &&
 																			"cursor-pointer hover:opacity-80 active:opacity-70",
 																	)}
 																>
-																	<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																	{canCancel && (
+																		<Button
+																			variant="ghost"
+																			size="icon"
+																			className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 sm:min-h-0 sm:min-w-0 text-destructive hover:text-destructive p-0"
+																			onClick={(e) =>
+																				handleCancelClick(e, rsvp)
+																			}
+																			title={
+																				rsvp.status === RsvpStatus.Pending
+																					? t("rsvp_delete_reservation")
+																					: t("rsvp_cancel_reservation")
+																			}
+																		>
+																			<IconTrash className="h-3 w-3 sm:h-4 sm:w-4" />
+																		</Button>
+																	)}
+																	<div className="font-medium truncate leading-tight text-[9px] sm:text-xs pr-6">
 																		{rsvp.User?.name
 																			? rsvp.User.name
 																			: rsvp.User?.email
@@ -571,8 +855,8 @@ export const CustomerWeekViewCalendar: React.FC<
 																	storeId={storeId || ""}
 																	rsvpSettings={rsvpSettings}
 																	storeSettings={storeSettings}
-																	facilities={facilities as any}
-																	user={user as any}
+																	facilities={facilities}
+																	user={user}
 																	rsvp={rsvp}
 																	rsvps={rsvps}
 																	storeTimezone={storeTimezone}
@@ -586,7 +870,7 @@ export const CustomerWeekViewCalendar: React.FC<
 															);
 														})
 													) : isAvailable ? (
-														storeId ? (
+														canCreateReservation && storeId ? (
 															<ReservationDialog
 																storeId={storeId}
 																rsvpSettings={rsvpSettings}
@@ -611,7 +895,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																	</button>
 																}
 															/>
-														) : (
+														) : canCreateReservation ? (
 															<button
 																type="button"
 																onClick={() =>
@@ -625,7 +909,7 @@ export const CustomerWeekViewCalendar: React.FC<
 															>
 																{!isPast && "+"}
 															</button>
-														)
+														) : null
 													) : null}
 												</div>
 											</td>
@@ -637,6 +921,42 @@ export const CustomerWeekViewCalendar: React.FC<
 					</table>
 				</div>
 			</div>
+
+			{/* Cancel/Delete Confirmation Dialog */}
+			<AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							{reservationToCancel?.status === RsvpStatus.Pending
+								? t("rsvp_delete_reservation")
+								: t("rsvp_cancel_reservation")}
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							{reservationToCancel?.status === RsvpStatus.Pending
+								? t("rsvp_delete_reservation_confirmation")
+								: t("rsvp_cancel_reservation_confirmation")}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={isCancelling}>
+							{t("cancel")}
+						</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleCancelConfirm}
+							disabled={isCancelling}
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+						>
+							{isCancelling
+								? reservationToCancel?.status === RsvpStatus.Pending
+									? t("deleting")
+									: t("cancelling")
+								: reservationToCancel?.status === RsvpStatus.Pending
+									? t("confirm")
+									: t("confirm")}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 };

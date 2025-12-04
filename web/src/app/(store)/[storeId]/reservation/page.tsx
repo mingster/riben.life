@@ -29,10 +29,10 @@ export default async function ReservationPage(props: {
 	// Get RSVPs for a wider range (current week ± 2 weeks) to support navigation
 	// Use UTC to ensure server-independent time calculations
 	const now = getUtcNow();
-
-	// Get start of week (Sunday) using UTC
 	const dayOfWeek = now.getUTCDay(); // 0 = Sunday, 6 = Saturday
-	const daysToSunday = dayOfWeek === 0 ? 0 : dayOfWeek; // Days to subtract to get to Sunday
+	const daysToSunday = dayOfWeek === 0 ? 0 : dayOfWeek;
+
+	// Calculate week boundaries (Sunday to Saturday) in UTC
 	const weekStart = new Date(
 		Date.UTC(
 			now.getUTCFullYear(),
@@ -44,13 +44,11 @@ export default async function ReservationPage(props: {
 			0,
 		),
 	);
-
-	// Get end of week (Saturday) using UTC - 6 days after Sunday at 23:59:59.999
 	const weekEnd = new Date(
 		Date.UTC(
 			weekStart.getUTCFullYear(),
 			weekStart.getUTCMonth(),
-			weekStart.getUTCDate() + 6, // Saturday is 6 days after Sunday
+			weekStart.getUTCDate() + 6, // Saturday
 			23,
 			59,
 			59,
@@ -58,7 +56,7 @@ export default async function ReservationPage(props: {
 		),
 	);
 
-	// Extend range by 2 weeks before and after using UTC
+	// Extend range by 2 weeks before and after
 	const rangeStart = new Date(
 		Date.UTC(
 			weekStart.getUTCFullYear(),
@@ -82,7 +80,18 @@ export default async function ReservationPage(props: {
 		),
 	);
 
-	// Fetch store, RSVP settings, facilities, reservations, store settings, and user in parallel
+	// Convert to epoch for database query (validate conversion)
+	const rangeStartEpoch = dateToEpoch(rangeStart);
+	const rangeEndEpoch = dateToEpoch(rangeEnd);
+	if (!rangeStartEpoch || !rangeEndEpoch) {
+		logger.error("Invalid date range for RSVP query", {
+			metadata: { rangeStart, rangeEnd },
+			tags: ["reservation", "error"],
+		});
+		redirect("/unv");
+	}
+
+	// Fetch all data in parallel for better performance
 	let store;
 	let rsvpSettings: RsvpSettings | null;
 	let facilities: StoreFacility[];
@@ -90,59 +99,84 @@ export default async function ReservationPage(props: {
 	let storeSettings: StoreSettings | null;
 	let user: User | null = null;
 	let formattedRsvps: Rsvp[] = [];
+	let isBlacklisted = false;
 
 	try {
-		[store, rsvpSettings, facilities, rsvps, storeSettings] = await Promise.all(
-			[
-				sqlClient.store.findFirst({
-					where: { id: params.storeId },
-					select: {
-						id: true,
-						name: true,
-						defaultTimezone: true,
+		// Fetch store, settings, facilities, and RSVPs in parallel
+		const [
+			storeResult,
+			rsvpSettingsResult,
+			facilitiesResult,
+			rsvpsResult,
+			storeSettingsResult,
+		] = await Promise.all([
+			sqlClient.store.findFirst({
+				where: { id: params.storeId },
+				select: {
+					id: true,
+					name: true,
+					defaultTimezone: true,
+				},
+			}),
+			sqlClient.rsvpSettings.findFirst({
+				where: { storeId: params.storeId },
+			}),
+			sqlClient.storeFacility.findMany({
+				where: { storeId: params.storeId },
+				orderBy: { facilityName: "asc" },
+			}),
+			sqlClient.rsvp.findMany({
+				where: {
+					storeId: params.storeId,
+					rsvpTime: {
+						gte: rangeStartEpoch,
+						lte: rangeEndEpoch,
 					},
-				}),
-				sqlClient.rsvpSettings.findFirst({
-					where: { storeId: params.storeId },
-				}),
-				sqlClient.storeFacility.findMany({
-					where: { storeId: params.storeId },
-					orderBy: { facilityName: "asc" },
-				}),
-				sqlClient.rsvp.findMany({
-					where: {
-						storeId: params.storeId,
-						rsvpTime: {
-							gte: dateToEpoch(rangeStart) ?? BigInt(0),
-							lte: dateToEpoch(rangeEnd) ?? BigInt(0),
-						},
-					},
-					include: {
-						Store: true,
-						User: true,
-						Facility: true,
-					},
-					orderBy: { rsvpTime: "asc" },
-				}),
-				sqlClient.storeSettings.findFirst({
-					where: { storeId: params.storeId },
-				}),
-			],
-		);
+				},
+				include: {
+					Store: true,
+					User: true,
+					Facility: true,
+				},
+				orderBy: { rsvpTime: "asc" },
+			}),
+			sqlClient.storeSettings.findFirst({
+				where: { storeId: params.storeId },
+			}),
+		]);
 
-		// Get user if logged in
-		if (session?.user?.id) {
-			user = (await sqlClient.user.findUnique({
-				where: { id: session.user.id },
-			})) as User | null;
-		}
+		store = storeResult;
+		rsvpSettings = rsvpSettingsResult;
+		facilities = facilitiesResult;
+		rsvps = rsvpsResult;
+		storeSettings = storeSettingsResult;
 
+		// Early return if store not found
 		if (!store) {
 			logger.error("Store not found", {
 				metadata: { storeId: params.storeId },
 				tags: ["reservation", "error"],
 			});
 			redirect("/unv");
+		}
+
+		// Fetch user and check blacklist in parallel (only if logged in)
+		if (session?.user?.id) {
+			const [userResult, blacklistEntry] = await Promise.all([
+				sqlClient.user.findUnique({
+					where: { id: session.user.id },
+				}),
+				sqlClient.rsvpBlacklist.findFirst({
+					where: {
+						storeId: params.storeId,
+						userId: session.user.id,
+					},
+					select: { id: true }, // Only need to check existence
+				}),
+			]);
+
+			user = userResult as User | null;
+			isBlacklisted = Boolean(blacklistEntry);
 		}
 
 		// Check if reservations are accepted
@@ -160,23 +194,20 @@ export default async function ReservationPage(props: {
 		}
 
 		// Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
+		// Transform all data once before passing to client
 		transformPrismaDataForJson(store);
-		if (facilities) {
+		if (facilities.length > 0) {
 			transformPrismaDataForJson(facilities);
 		}
-
 		if (rsvpSettings) {
 			transformPrismaDataForJson(rsvpSettings);
 		}
 		if (storeSettings) {
 			transformPrismaDataForJson(storeSettings);
 		}
-		if (rsvps) {
-			transformPrismaDataForJson(rsvps);
-		}
 
-		// Transform BigInt (epoch timestamps) and Decimal to numbers for client components
-		formattedRsvps = (rsvps as Rsvp[]).map((rsvp) => {
+		// Transform RSVPs once (no need for double transformation)
+		formattedRsvps = rsvps.map((rsvp) => {
 			const transformed = { ...rsvp };
 			transformPrismaDataForJson(transformed);
 			return transformed as Rsvp;
@@ -204,7 +235,8 @@ export default async function ReservationPage(props: {
 						facilities={facilities}
 						user={user}
 						storeId={params.storeId}
-						storeTimezone={store?.defaultTimezone ?? "Asia/Taipei"}
+						storeTimezone={store.defaultTimezone || "Asia/Taipei"}
+						isBlacklisted={isBlacklisted}
 					/>
 				</div>
 			</Suspense>

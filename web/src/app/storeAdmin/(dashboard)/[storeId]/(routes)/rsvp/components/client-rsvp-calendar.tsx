@@ -16,7 +16,11 @@ import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 interface RsvpCalendarClientProps {
 	serverData: Rsvp[];
-	rsvpSettings: { useBusinessHours: boolean; rsvpHours: string | null } | null;
+	rsvpSettings: {
+		useBusinessHours: boolean;
+		rsvpHours: string | null;
+		defaultDuration?: number | null;
+	} | null;
 	storeSettings: { businessHours: string | null } | null;
 	storeTimezone: string;
 }

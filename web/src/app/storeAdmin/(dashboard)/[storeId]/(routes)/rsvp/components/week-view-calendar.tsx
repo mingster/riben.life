@@ -81,7 +81,11 @@ interface WeekViewCalendarProps {
 	reservations: Rsvp[];
 	onRsvpCreated?: (rsvp: Rsvp) => void;
 	onRsvpUpdated?: (rsvp: Rsvp) => void;
-	rsvpSettings: { useBusinessHours: boolean; rsvpHours: string | null } | null;
+	rsvpSettings: {
+		useBusinessHours: boolean;
+		rsvpHours: string | null;
+		defaultDuration?: number | null;
+	} | null;
 	storeSettings: { businessHours: string | null } | null;
 	storeTimezone: string;
 }
@@ -167,15 +171,61 @@ const extractHoursFromSchedule = (hoursJson: string | null): number[] => {
 };
 
 // Generate time slots based on rsvpSettings and storeSettings
+// Slots are generated at intervals based on defaultDuration (in minutes)
 const generateTimeSlots = (
 	useBusinessHours: boolean,
 	rsvpHours: string | null,
 	businessHours: string | null,
+	defaultDuration: number = 60, // Default to 60 minutes (1 hour)
 ): string[] => {
 	const hoursJson = useBusinessHours ? businessHours : rsvpHours;
 	const hours = extractHoursFromSchedule(hoursJson);
 
-	return hours.map((hour) => `${hour.toString().padStart(2, "0")}:00`);
+	if (hours.length === 0) {
+		return [];
+	}
+
+	const slots: string[] = [];
+	const slotIntervalMinutes = defaultDuration;
+
+	// Get the range of hours (from first to last hour)
+	const minHour = Math.min(...hours);
+	const maxHour = Math.max(...hours);
+
+	// Generate slots starting from minHour:00, incrementing by defaultDuration
+	// Continue until we've covered all hours in the range
+	let currentMinutes = minHour * 60; // Start at minHour:00
+	const maxMinutes = (maxHour + 1) * 60; // Go up to maxHour:59
+
+	while (currentMinutes < maxMinutes) {
+		const slotHour = Math.floor(currentMinutes / 60);
+		const slotMin = currentMinutes % 60;
+
+		// Only add slot if the hour is in our hours list
+		// For slots that span multiple hours, check if any hour in the range is in our list
+		const slotEndMinutes = currentMinutes + slotIntervalMinutes;
+		const slotEndHour = Math.floor(slotEndMinutes / 60);
+
+		// Check if this slot overlaps with any hour in our hours list
+		const slotOverlaps = hours.some((h) => h >= slotHour && h <= slotEndHour);
+
+		if (slotOverlaps && slotHour < 24) {
+			slots.push(
+				`${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`,
+			);
+		}
+
+		// Move to next slot
+		currentMinutes += slotIntervalMinutes;
+	}
+
+	// Remove duplicates and sort
+	return Array.from(new Set(slots)).sort((a, b) => {
+		const [aHour, aMin] = a.split(":").map(Number);
+		const [bHour, bMin] = b.split(":").map(Number);
+		if (aHour !== bHour) return aHour - bHour;
+		return aMin - bMin;
+	});
 };
 
 // Get day name abbreviation using i18n
@@ -207,11 +257,13 @@ const isToday = (date: Date): boolean => {
 
 // Group RSVPs by day and time slot
 // RSVP times are in UTC epoch, convert to store timezone for display and grouping
+// Match RSVPs to slots based on defaultDuration
 const groupRsvpsByDayAndTime = (
 	rsvps: Rsvp[],
 	weekStart: Date,
 	weekEnd: Date,
 	storeTimezone: string,
+	defaultDuration: number = 60, // Default to 60 minutes
 ) => {
 	const grouped: Record<string, Rsvp[]> = {};
 	// Convert IANA timezone string to offset hours
@@ -219,38 +271,6 @@ const groupRsvpsByDayAndTime = (
 
 	rsvps.forEach((rsvp) => {
 		if (!rsvp.rsvpTime) return;
-
-		// Debug: Log raw rsvpTime
-		const rawRsvpTimeDate = epochToDate(
-			typeof rsvp.rsvpTime === "number"
-				? BigInt(rsvp.rsvpTime)
-				: rsvp.rsvpTime instanceof Date
-					? BigInt(rsvp.rsvpTime.getTime())
-					: rsvp.rsvpTime,
-		);
-		const rawRsvpTimeLocal = getDateInTz(
-			epochToDate(
-				typeof rsvp.rsvpTime === "number"
-					? BigInt(rsvp.rsvpTime)
-					: rsvp.rsvpTime instanceof Date
-						? BigInt(rsvp.rsvpTime.getTime())
-						: rsvp.rsvpTime,
-			) ?? new Date(),
-			getOffsetHours(storeTimezone),
-		);
-
-		if (rsvp.status === 0) {
-			console.log("RSVP Debug:", {
-				rsvpId: rsvp.id,
-				rawRsvpTime: rsvp.rsvpTime,
-				rawRsvpTimeUTC: rawRsvpTimeDate?.toUTCString(),
-				rawRsvpTimeLocal: rawRsvpTimeLocal.toString(),
-				rsvpTimeType: typeof rsvp.rsvpTime,
-				rsvpTimeIsDate: rsvp.rsvpTime instanceof Date,
-				storeTimezone,
-				offsetHours,
-			});
-		}
 
 		let rsvpDateUtc: Date;
 		try {
@@ -261,21 +281,12 @@ const groupRsvpsByDayAndTime = (
 				rsvpDateUtc = epochToDate(rsvp.rsvpTime) ?? new Date();
 			} else if (typeof rsvp.rsvpTime === "number") {
 				// Number epoch (milliseconds) - after transformPrismaDataForJson
-				rsvpDateUtc = new Date(rsvp.rsvpTime);
+				rsvpDateUtc = epochToDate(BigInt(rsvp.rsvpTime)) ?? new Date();
 			} else if (typeof rsvp.rsvpTime === "string") {
 				rsvpDateUtc = parseISO(rsvp.rsvpTime);
 			} else {
 				rsvpDateUtc = parseISO(String(rsvp.rsvpTime));
 			}
-
-			/*
-			// Debug: Log UTC date
-			console.log("RSVP UTC Date:", {
-				rsvpId: rsvp.id,
-				utcDate: rsvpDateUtc.toISOString(),
-				utcTimestamp: rsvpDateUtc.getTime(),
-			});
-			*/
 
 			// Validate the date
 			if (isNaN(rsvpDateUtc.getTime())) {
@@ -290,49 +301,22 @@ const groupRsvpsByDayAndTime = (
 		// Convert UTC date to store timezone for display and grouping
 		const rsvpDate = getDateInTz(rsvpDateUtc, offsetHours);
 
-		/*
-		// Debug: Log store timezone date
-		console.log("RSVP Store Timezone Date:", {
-			rsvpId: rsvp.id,
-			storeTimezoneDate: rsvpDate.toISOString(),
-			storeTimezoneHour: rsvpDate.getHours(),
-			storeTimezoneDay: format(rsvpDate, "yyyy-MM-dd"),
-		});
-		*/
-
 		// Check if RSVP is within the week (inclusive of boundaries)
 		if (rsvpDate >= weekStart && rsvpDate <= weekEnd) {
 			const dayKey = format(rsvpDate, "yyyy-MM-dd");
-			// Round to nearest hour for time slot matching (using store timezone hour)
-			const hour = rsvpDate.getHours();
-			const timeKey = `${hour.toString().padStart(2, "0")}:00`;
+			// Round to nearest slot based on defaultDuration
+			const totalMinutes = rsvpDate.getHours() * 60 + rsvpDate.getMinutes();
+			const slotMinutes =
+				Math.floor(totalMinutes / defaultDuration) * defaultDuration;
+			const slotHour = Math.floor(slotMinutes / 60);
+			const slotMin = slotMinutes % 60;
+			const timeKey = `${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`;
 			const key = `${dayKey}-${timeKey}`;
-
-			// Debug: Log final grouping key
-			/*
-			console.log("RSVP Grouping Key:", {
-				rsvpId: rsvp.id,
-				groupingKey: key,
-				dayKey,
-				timeKey,
-				hour,
-			});
-			*/
 
 			if (!grouped[key]) {
 				grouped[key] = [];
 			}
 			grouped[key].push(rsvp);
-		} else {
-			// Debug: Log if RSVP is outside week range
-			/*
-				console.log("RSVP Outside Week Range:", {
-				rsvpId: rsvp.id,
-				rsvpDate: rsvpDate.toISOString(),
-				weekStart: weekStart.toISOString(),
-				weekEnd: weekEnd.toISOString(),
-			});
-			*/
 		}
 	});
 
@@ -384,10 +368,17 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
 	const businessHours = storeSettings?.businessHours ?? null;
+	const defaultDuration = rsvpSettings?.defaultDuration ?? 60; // Default to 60 minutes
 
 	const timeSlots = useMemo(
-		() => generateTimeSlots(useBusinessHours, rsvpHours, businessHours),
-		[useBusinessHours, rsvpHours, businessHours],
+		() =>
+			generateTimeSlots(
+				useBusinessHours,
+				rsvpHours,
+				businessHours,
+				defaultDuration,
+			),
+		[useBusinessHours, rsvpHours, businessHours, defaultDuration],
 	);
 
 	// Map i18n language codes to date-fns locales
@@ -424,8 +415,15 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
 	// Group RSVPs by day and time
 	const groupedRsvps = useMemo(
-		() => groupRsvpsByDayAndTime(rsvps, weekStart, weekEnd, storeTimezone),
-		[rsvps, weekStart, weekEnd, storeTimezone],
+		() =>
+			groupRsvpsByDayAndTime(
+				rsvps,
+				weekStart,
+				weekEnd,
+				storeTimezone,
+				defaultDuration,
+			),
+		[rsvps, weekStart, weekEnd, storeTimezone, defaultDuration],
 	);
 
 	const handlePreviousWeek = useCallback(() => {
