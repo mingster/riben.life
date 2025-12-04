@@ -6,7 +6,11 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
-import { getUtcNowEpoch, dateToEpoch } from "@/utils/datetime-utils";
+import {
+	getUtcNowEpoch,
+	dateToEpoch,
+	convertDateToUtc,
+} from "@/utils/datetime-utils";
 import { updateRsvpSchema } from "./update-rsvp.validation";
 
 export const updateRsvpAction = storeActionClient
@@ -41,51 +45,74 @@ export const updateRsvpAction = storeActionClient
 			throw new SafeError("Rsvp not found");
 		}
 
-		// Convert rsvpTime to UTC Date, then to BigInt epoch
-		let rsvpTimeDate: Date;
-		if (rsvpTimeInput instanceof Date) {
-			rsvpTimeDate = new Date(
-				Date.UTC(
-					rsvpTimeInput.getFullYear(),
-					rsvpTimeInput.getMonth(),
-					rsvpTimeInput.getDate(),
-					rsvpTimeInput.getHours(),
-					rsvpTimeInput.getMinutes(),
-					rsvpTimeInput.getSeconds(),
-					rsvpTimeInput.getMilliseconds(),
-				),
-			);
-		} else {
-			rsvpTimeDate = new Date(rsvpTimeInput);
+		// Fetch store to get timezone before converting dates
+		const store = await sqlClient.store.findUnique({
+			where: { id: storeId },
+			select: { id: true, defaultTimezone: true },
+		});
+
+		if (!store) {
+			throw new SafeError("Store not found");
 		}
-		const rsvpTime = dateToEpoch(rsvpTimeDate) ?? BigInt(0);
+
+		const storeTimezone = store.defaultTimezone || "Asia/Taipei";
+
+		// Validate facility (required)
+		if (!facilityId) {
+			throw new SafeError("Facility is required");
+		}
+
+		const facility = await sqlClient.storeFacility.findFirst({
+			where: {
+				id: facilityId,
+				storeId,
+			},
+		});
+
+		if (!facility) {
+			throw new SafeError("Facility not found");
+		}
+
+		// Convert rsvpTime to UTC Date, then to BigInt epoch
+		// The Date object from datetime-local input represents a time in the browser's local timezone
+		// We need to interpret it as store timezone time and convert to UTC
+		let rsvpTimeUtc: Date;
+		try {
+			rsvpTimeUtc = convertDateToUtc(rsvpTimeInput, storeTimezone);
+		} catch (error) {
+			throw new SafeError(
+				error instanceof Error
+					? error.message
+					: "Failed to convert rsvpTime to UTC",
+			);
+		}
+
+		const rsvpTime = dateToEpoch(rsvpTimeUtc);
+		if (!rsvpTime) {
+			throw new SafeError("Failed to convert rsvpTime to epoch");
+		}
 
 		// Convert arriveTime to UTC Date, then to BigInt epoch (or null)
+		// Same conversion as rsvpTime - interpret as store timezone and convert to UTC
 		const arriveTime =
 			arriveTimeInput instanceof Date
-				? dateToEpoch(
-						new Date(
-							Date.UTC(
-								arriveTimeInput.getFullYear(),
-								arriveTimeInput.getMonth(),
-								arriveTimeInput.getDate(),
-								arriveTimeInput.getHours(),
-								arriveTimeInput.getMinutes(),
-								arriveTimeInput.getSeconds(),
-								arriveTimeInput.getMilliseconds(),
-							),
-						),
-					)
-				: arriveTimeInput
-					? dateToEpoch(new Date(arriveTimeInput))
-					: null;
+				? (() => {
+						try {
+							const utcDate = convertDateToUtc(arriveTimeInput, storeTimezone);
+							return dateToEpoch(utcDate);
+						} catch {
+							// Return null if conversion fails (invalid date)
+							return null;
+						}
+					})()
+				: null;
 
 		try {
 			const updated = await sqlClient.rsvp.update({
 				where: { id },
 				data: {
 					userId: userId || null,
-					facilityId: facilityId || null,
+					facilityId,
 					numOfAdult,
 					numOfChild,
 					rsvpTime,

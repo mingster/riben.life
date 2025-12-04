@@ -28,7 +28,13 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
-import { getUtcNow } from "@/utils/datetime-utils";
+import {
+	getUtcNow,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+	dayAndTimeSlotToUtc,
+} from "@/utils/datetime-utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp } from "@/types";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
@@ -38,25 +44,27 @@ interface CreateRsvpButtonProps {
 	day: Date;
 	timeSlot: string;
 	onCreated?: (rsvp: Rsvp) => void;
+	storeTimezone: string;
 }
 
 const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 	day,
 	timeSlot,
 	onCreated,
+	storeTimezone,
 }) => {
-	const [defaultRsvpTime] = useState(() => {
-		const [hours, minutes] = timeSlot.split(":").map(Number);
-		const rsvpTime = new Date(day);
-		rsvpTime.setHours(hours, minutes, 0, 0);
-		return rsvpTime;
+	const [slotTime] = useState(() => {
+		// day is already in store timezone (from getDateInTz)
+		// Convert day + timeSlot to UTC Date using store timezone
+		return dayAndTimeSlotToUtc(day, timeSlot, storeTimezone);
 	});
 
 	return (
 		<AdminEditRsvpDialog
 			isNew
-			defaultRsvpTime={defaultRsvpTime}
+			defaultRsvpTime={slotTime}
 			onCreated={onCreated}
+			storeTimezone={storeTimezone}
 			trigger={
 				<button
 					type="button"
@@ -70,11 +78,16 @@ const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 };
 
 interface WeekViewCalendarProps {
-	rsvps: Rsvp[];
+	reservations: Rsvp[];
 	onRsvpCreated?: (rsvp: Rsvp) => void;
 	onRsvpUpdated?: (rsvp: Rsvp) => void;
-	rsvpSettings: { useBusinessHours: boolean; rsvpHours: string | null } | null;
+	rsvpSettings: {
+		useBusinessHours: boolean;
+		rsvpHours: string | null;
+		defaultDuration?: number | null;
+	} | null;
 	storeSettings: { businessHours: string | null } | null;
+	storeTimezone: string;
 }
 
 interface TimeRange {
@@ -158,15 +171,61 @@ const extractHoursFromSchedule = (hoursJson: string | null): number[] => {
 };
 
 // Generate time slots based on rsvpSettings and storeSettings
+// Slots are generated at intervals based on defaultDuration (in minutes)
 const generateTimeSlots = (
 	useBusinessHours: boolean,
 	rsvpHours: string | null,
 	businessHours: string | null,
+	defaultDuration: number = 60, // Default to 60 minutes (1 hour)
 ): string[] => {
 	const hoursJson = useBusinessHours ? businessHours : rsvpHours;
 	const hours = extractHoursFromSchedule(hoursJson);
 
-	return hours.map((hour) => `${hour.toString().padStart(2, "0")}:00`);
+	if (hours.length === 0) {
+		return [];
+	}
+
+	const slots: string[] = [];
+	const slotIntervalMinutes = defaultDuration;
+
+	// Get the range of hours (from first to last hour)
+	const minHour = Math.min(...hours);
+	const maxHour = Math.max(...hours);
+
+	// Generate slots starting from minHour:00, incrementing by defaultDuration
+	// Continue until we've covered all hours in the range
+	let currentMinutes = minHour * 60; // Start at minHour:00
+	const maxMinutes = (maxHour + 1) * 60; // Go up to maxHour:59
+
+	while (currentMinutes < maxMinutes) {
+		const slotHour = Math.floor(currentMinutes / 60);
+		const slotMin = currentMinutes % 60;
+
+		// Only add slot if the hour is in our hours list
+		// For slots that span multiple hours, check if any hour in the range is in our list
+		const slotEndMinutes = currentMinutes + slotIntervalMinutes;
+		const slotEndHour = Math.floor(slotEndMinutes / 60);
+
+		// Check if this slot overlaps with any hour in our hours list
+		const slotOverlaps = hours.some((h) => h >= slotHour && h <= slotEndHour);
+
+		if (slotOverlaps && slotHour < 24) {
+			slots.push(
+				`${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`,
+			);
+		}
+
+		// Move to next slot
+		currentMinutes += slotIntervalMinutes;
+	}
+
+	// Remove duplicates and sort
+	return Array.from(new Set(slots)).sort((a, b) => {
+		const [aHour, aMin] = a.split(":").map(Number);
+		const [bHour, bMin] = b.split(":").map(Number);
+		if (aHour !== bHour) return aHour - bHour;
+		return aMin - bMin;
+	});
 };
 
 // Get day name abbreviation using i18n
@@ -197,34 +256,61 @@ const isToday = (date: Date): boolean => {
 };
 
 // Group RSVPs by day and time slot
-// RSVPs are placed in the time slot that matches their hour (rounded to nearest hour)
+// RSVP times are in UTC epoch, convert to store timezone for display and grouping
+// Match RSVPs to slots based on defaultDuration
 const groupRsvpsByDayAndTime = (
 	rsvps: Rsvp[],
 	weekStart: Date,
 	weekEnd: Date,
+	storeTimezone: string,
+	defaultDuration: number = 60, // Default to 60 minutes
 ) => {
 	const grouped: Record<string, Rsvp[]> = {};
+	// Convert IANA timezone string to offset hours
+	const offsetHours = getOffsetHours(storeTimezone);
 
 	rsvps.forEach((rsvp) => {
-		const rsvpDate =
-			rsvp.rsvpTime instanceof Date
-				? rsvp.rsvpTime
-				: typeof rsvp.rsvpTime === "bigint"
-					? new Date(Number(rsvp.rsvpTime))
-					: typeof rsvp.rsvpTime === "number"
-						? new Date(rsvp.rsvpTime)
-						: parseISO(
-								typeof rsvp.rsvpTime === "string"
-									? rsvp.rsvpTime
-									: String(rsvp.rsvpTime),
-							);
+		if (!rsvp.rsvpTime) return;
 
-		// Check if RSVP is within the week
+		let rsvpDateUtc: Date;
+		try {
+			if (rsvp.rsvpTime instanceof Date) {
+				rsvpDateUtc = rsvp.rsvpTime;
+			} else if (typeof rsvp.rsvpTime === "bigint") {
+				// BigInt epoch (milliseconds)
+				rsvpDateUtc = epochToDate(rsvp.rsvpTime) ?? new Date();
+			} else if (typeof rsvp.rsvpTime === "number") {
+				// Number epoch (milliseconds) - after transformPrismaDataForJson
+				rsvpDateUtc = epochToDate(BigInt(rsvp.rsvpTime)) ?? new Date();
+			} else if (typeof rsvp.rsvpTime === "string") {
+				rsvpDateUtc = parseISO(rsvp.rsvpTime);
+			} else {
+				rsvpDateUtc = parseISO(String(rsvp.rsvpTime));
+			}
+
+			// Validate the date
+			if (isNaN(rsvpDateUtc.getTime())) {
+				console.warn("Invalid RSVP date:", rsvp.rsvpTime, rsvp.id);
+				return;
+			}
+		} catch (error) {
+			console.warn("Error parsing RSVP date:", rsvp.rsvpTime, rsvp.id, error);
+			return;
+		}
+
+		// Convert UTC date to store timezone for display and grouping
+		const rsvpDate = getDateInTz(rsvpDateUtc, offsetHours);
+
+		// Check if RSVP is within the week (inclusive of boundaries)
 		if (rsvpDate >= weekStart && rsvpDate <= weekEnd) {
 			const dayKey = format(rsvpDate, "yyyy-MM-dd");
-			// Round to nearest hour for time slot matching
-			const hour = rsvpDate.getHours();
-			const timeKey = `${hour.toString().padStart(2, "0")}:00`;
+			// Round to nearest slot based on defaultDuration
+			const totalMinutes = rsvpDate.getHours() * 60 + rsvpDate.getMinutes();
+			const slotMinutes =
+				Math.floor(totalMinutes / defaultDuration) * defaultDuration;
+			const slotHour = Math.floor(slotMinutes / 60);
+			const slotMin = slotMinutes % 60;
+			const timeKey = `${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`;
 			const key = `${dayKey}-${timeKey}`;
 
 			if (!grouped[key]) {
@@ -238,21 +324,22 @@ const groupRsvpsByDayAndTime = (
 };
 
 export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
-	rsvps: initialRsvps,
+	reservations,
 	onRsvpCreated,
 	onRsvpUpdated,
 	rsvpSettings,
 	storeSettings,
+	storeTimezone,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [currentWeek, setCurrentWeek] = useState(() => getUtcNow());
-	const [rsvps, setRsvps] = useState<Rsvp[]>(initialRsvps);
+	const [rsvps, setRsvps] = useState<Rsvp[]>(reservations);
 
 	// Sync with prop changes (e.g., when server data is refreshed)
 	useEffect(() => {
-		setRsvps(initialRsvps);
-	}, [initialRsvps]);
+		setRsvps(reservations);
+	}, [reservations]);
 
 	// Handle RSVP updates locally
 	const handleRsvpUpdated = useCallback(
@@ -281,10 +368,17 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
 	const businessHours = storeSettings?.businessHours ?? null;
+	const defaultDuration = rsvpSettings?.defaultDuration ?? 60; // Default to 60 minutes
 
 	const timeSlots = useMemo(
-		() => generateTimeSlots(useBusinessHours, rsvpHours, businessHours),
-		[useBusinessHours, rsvpHours, businessHours],
+		() =>
+			generateTimeSlots(
+				useBusinessHours,
+				rsvpHours,
+				businessHours,
+				defaultDuration,
+			),
+		[useBusinessHours, rsvpHours, businessHours, defaultDuration],
 	);
 
 	// Map i18n language codes to date-fns locales
@@ -321,8 +415,15 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 
 	// Group RSVPs by day and time
 	const groupedRsvps = useMemo(
-		() => groupRsvpsByDayAndTime(rsvps, weekStart, weekEnd),
-		[rsvps, weekStart, weekEnd],
+		() =>
+			groupRsvpsByDayAndTime(
+				rsvps,
+				weekStart,
+				weekEnd,
+				storeTimezone,
+				defaultDuration,
+			),
+		[rsvps, weekStart, weekEnd, storeTimezone, defaultDuration],
 	);
 
 	const handlePreviousWeek = useCallback(() => {
@@ -381,6 +482,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 								captionLayout={dropdown}
 								locale={calendarLocale}
 								className="w-full rounded-lg shadow-sm"
+								weekStartsOn={0}
 							/>
 						</PopoverContent>
 					</Popover>
@@ -480,6 +582,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																key={rsvp.id}
 																rsvp={rsvp}
 																onUpdated={handleRsvpUpdated}
+																storeTimezone={storeTimezone}
 																trigger={
 																	<button
 																		type="button"
@@ -523,6 +626,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 															day={day}
 															timeSlot={timeSlot}
 															onCreated={handleRsvpCreated}
+															storeTimezone={storeTimezone}
 														/>
 													)}
 												</div>

@@ -7,7 +7,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, User } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { format } from "date-fns";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import {
 	getDateInTz,
@@ -27,10 +27,13 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
+import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
 import { getStoreDataAction } from "@/actions/store/reservation/get-store-data";
+import { getRsvpSettingsAction } from "@/actions/store/reservation/get-rsvp-settings";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { EditReservationDialog } from "@/app/(store)/[storeId]/reservation/components/edit-reservation-dialog";
 import type { StoreFacility, RsvpSettings, StoreSettings } from "@/types";
+import { getUtcNow } from "@/utils/datetime-utils";
 
 export const DisplayReservations = ({
 	reservations,
@@ -54,10 +57,36 @@ export const DisplayReservations = ({
 		facilities: StoreFacility[];
 	} | null>(null);
 	const [isLoadingStoreData, setIsLoadingStoreData] = useState(false);
+	const [rsvpSettingsCache, setRsvpSettingsCache] = useState<
+		Map<string, RsvpSettings | null>
+	>(new Map());
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
+
+	// Sort reservations by rsvpTime (ascending - earliest first)
+	const sortedReservations = useMemo(() => {
+		return [...reservations].sort((a, b) => {
+			// Helper to convert rsvpTime to number (epoch milliseconds)
+			const getRsvpTimeValue = (rsvp: Rsvp): number => {
+				if (typeof rsvp.rsvpTime === "bigint") {
+					return Number(rsvp.rsvpTime);
+				}
+				if (typeof rsvp.rsvpTime === "number") {
+					return rsvp.rsvpTime;
+				}
+				if (rsvp.rsvpTime instanceof Date) {
+					return rsvp.rsvpTime.getTime();
+				}
+				return 0;
+			};
+
+			const timeA = getRsvpTimeValue(a);
+			const timeB = getRsvpTimeValue(b);
+			return timeA - timeB;
+		});
+	}, [reservations]);
 
 	// Check if reservation belongs to current user
 	const isUserReservation = (rsvp: Rsvp): boolean => {
@@ -72,12 +101,179 @@ export const DisplayReservations = ({
 	};
 
 	// Check if reservation can be edited/cancelled
+	//Edit button only appears if:
+	//Reservation belongs to the current user
+	//Reservation status is Pending or AlreadyPaid
+	//canCancel is enabled in rsvpSettings
+	//Reservation is more than cancelHours away from now
 	const canEditReservation = (rsvp: Rsvp): boolean => {
-		return (
-			(rsvp.status === RsvpStatus.Pending ||
-				rsvp.status === RsvpStatus.AlreadyPaid) &&
-			isUserReservation(rsvp)
+		if (!isUserReservation(rsvp)) {
+			return false;
+		}
+
+		// Only allow edit for Pending or AlreadyPaid status
+		if (
+			rsvp.status !== RsvpStatus.Pending &&
+			rsvp.status !== RsvpStatus.AlreadyPaid
+		) {
+			return false;
+		}
+
+		if (!rsvp.Store?.id) {
+			return false;
+		}
+
+		// Get RsvpSettings from cache
+		const rsvpSettings = rsvpSettingsCache.get(rsvp.Store.id);
+
+		// If not cached yet, assume editing is not allowed (will be updated when cache is populated)
+		if (rsvpSettings === undefined) {
+			return false;
+		}
+
+		// Check if canCancel is enabled - if cancellation is disabled, editing is also disabled
+		if (!rsvpSettings.canCancel) {
+			return false;
+		}
+
+		// Check cancelHours window - don't allow editing if within the cancellation window
+		const cancelHours = rsvpSettings.cancelHours ?? 24;
+		const now = getUtcNow();
+		const rsvpTimeDate = epochToDate(
+			typeof rsvp.rsvpTime === "number"
+				? BigInt(rsvp.rsvpTime)
+				: rsvp.rsvpTime instanceof Date
+					? BigInt(rsvp.rsvpTime.getTime())
+					: rsvp.rsvpTime,
 		);
+
+		if (!rsvpTimeDate) {
+			return false;
+		}
+
+		// Calculate hours until reservation
+		const hoursUntilReservation =
+			(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+		// Can edit if reservation is more than cancelHours away
+		return hoursUntilReservation >= cancelHours;
+	};
+
+	// Pre-fetch RsvpSettings for all unique stores
+	useEffect(() => {
+		const uniqueStoreIds = [
+			...new Set(
+				reservations
+					.map((r) => r.Store?.id)
+					.filter((id): id is string => Boolean(id)),
+			),
+		];
+
+		const fetchAllRsvpSettings = async () => {
+			const promises = uniqueStoreIds.map(async (storeId) => {
+				// Check cache using functional update to avoid stale closure
+				let shouldFetch = false;
+				setRsvpSettingsCache((prev) => {
+					if (prev.has(storeId)) {
+						return prev; // Already cached
+					}
+					shouldFetch = true;
+					return prev;
+				});
+
+				if (!shouldFetch) {
+					return;
+				}
+
+				try {
+					const result = await getRsvpSettingsAction({ storeId });
+					if (
+						!result?.serverError &&
+						result?.data?.rsvpSettings !== undefined
+					) {
+						setRsvpSettingsCache((prev) => {
+							// Check again in case another request already cached it
+							if (prev.has(storeId)) {
+								return prev;
+							}
+							const newMap = new Map(prev);
+							newMap.set(storeId, result.data!.rsvpSettings);
+							return newMap;
+						});
+					}
+				} catch (error) {
+					// Silently fail - will default to not allowing cancellation
+					console.error(
+						`Failed to fetch RsvpSettings for store ${storeId}:`,
+						error,
+					);
+				}
+			});
+
+			await Promise.all(promises);
+		};
+
+		if (uniqueStoreIds.length > 0) {
+			fetchAllRsvpSettings();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [reservations]);
+
+	// Check if reservation can be cancelled/deleted based on rsvpSettings
+	//Cancel/Delete button only appears if:
+	//All the same conditions as edit, plus: canCancel is enabled in rsvpSettings
+	//Both buttons are hidden if the reservation is within the cancelHours window, preventing last-minute changes.
+	const canCancelReservation = (rsvp: Rsvp): boolean => {
+		if (!isUserReservation(rsvp)) {
+			return false;
+		}
+
+		// Only allow cancel/delete for Pending or AlreadyPaid status
+		if (
+			rsvp.status !== RsvpStatus.Pending &&
+			rsvp.status !== RsvpStatus.AlreadyPaid
+		) {
+			return false;
+		}
+
+		if (!rsvp.Store?.id) {
+			return false;
+		}
+
+		// Get RsvpSettings from cache
+		const rsvpSettings = rsvpSettingsCache.get(rsvp.Store.id);
+
+		// If not cached yet, assume cancellation is not allowed (will be updated when cache is populated)
+		if (rsvpSettings === undefined) {
+			return false;
+		}
+
+		// Check if canCancel is enabled
+		if (!rsvpSettings?.canCancel) {
+			return false;
+		}
+
+		// Check cancelHours window
+		const cancelHours = rsvpSettings.cancelHours ?? 24;
+		const now = getUtcNow();
+		const rsvpTimeDate = epochToDate(
+			typeof rsvp.rsvpTime === "number"
+				? BigInt(rsvp.rsvpTime)
+				: rsvp.rsvpTime instanceof Date
+					? BigInt(rsvp.rsvpTime.getTime())
+					: rsvp.rsvpTime,
+		);
+
+		if (!rsvpTimeDate) {
+			return false;
+		}
+
+		// Calculate hours until reservation
+		const hoursUntilReservation =
+			(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+		// Can cancel if reservation is more than cancelHours away
+		return hoursUntilReservation >= cancelHours;
 	};
 
 	const handleCancelClick = (rsvp: Rsvp) => {
@@ -90,22 +286,45 @@ export const DisplayReservations = ({
 
 		setIsCancelling(true);
 		try {
-			const result = await cancelReservationAction({
-				id: reservationToCancel.id,
-			});
+			// If status is Pending, delete it (hard delete)
+			// Otherwise, cancel it (change status to Cancelled)
+			if (reservationToCancel.status === RsvpStatus.Pending) {
+				const result = await deleteReservationAction({
+					id: reservationToCancel.id,
+				});
 
-			if (result?.serverError) {
-				toastError({
-					title: t("Error"),
-					description: result.serverError,
-				});
+				if (result?.serverError) {
+					toastError({
+						title: t("Error"),
+						description: result.serverError,
+					});
+				} else {
+					toastSuccess({
+						description: t("reservation_deleted"),
+					});
+					// Refresh the page to show updated data
+					if (typeof window !== "undefined") {
+						window.location.reload();
+					}
+				}
 			} else {
-				toastSuccess({
-					description: t("reservation_cancelled"),
+				const result = await cancelReservationAction({
+					id: reservationToCancel.id,
 				});
-				// Refresh the page to show updated data
-				if (typeof window !== "undefined") {
-					window.location.reload();
+
+				if (result?.serverError) {
+					toastError({
+						title: t("Error"),
+						description: result.serverError,
+					});
+				} else {
+					toastSuccess({
+						description: t("reservation_cancelled"),
+					});
+					// Refresh the page to show updated data
+					if (typeof window !== "undefined") {
+						window.location.reload();
+					}
 				}
 			}
 		} catch (error) {
@@ -169,7 +388,7 @@ export const DisplayReservations = ({
 		<div className="space-y-3 sm:space-y-4">
 			{/* Mobile: Card view */}
 			<div className="block sm:hidden space-y-3">
-				{reservations.map((item) => (
+				{sortedReservations.map((item) => (
 					<div
 						key={item.id}
 						className="rounded-lg border bg-card p-3 space-y-2 text-xs"
@@ -280,15 +499,21 @@ export const DisplayReservations = ({
 									>
 										<IconEdit className="h-4 w-4" />
 									</Button>
-									<Button
-										variant="ghost"
-										size="icon"
-										className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0 text-destructive hover:text-destructive"
-										onClick={() => handleCancelClick(item)}
-										title={t("cancel_reservation")}
-									>
-										<IconTrash className="h-4 w-4" />
-									</Button>
+									{canCancelReservation(item) && (
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0 text-destructive hover:text-destructive"
+											onClick={() => handleCancelClick(item)}
+											title={
+												item.status === RsvpStatus.Pending
+													? t("rsvp_delete_reservation")
+													: t("rsvp_cancel_reservation")
+											}
+										>
+											<IconTrash className="h-4 w-4" />
+										</Button>
+									)}
 								</div>
 							)}
 						</div>
@@ -303,19 +528,10 @@ export const DisplayReservations = ({
 						<thead>
 							<tr className="bg-muted/50">
 								<th className="text-left px-3 py-2 text-xs font-medium">
-									{t("created_at")}
-								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
 									{t("rsvp_time")}
 								</th>
 								<th className="text-left px-3 py-2 text-xs font-medium">
 									{t("rsvp_status")}
-								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
-									{t("rsvp_message")}
-								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
-									{t("rsvp_creator")}
 								</th>
 								<th className="text-left px-3 py-2 text-xs font-medium">
 									{t("store_name")}
@@ -324,28 +540,32 @@ export const DisplayReservations = ({
 									{t("rsvp_facility")}
 								</th>
 								<th className="text-left px-3 py-2 text-xs font-medium">
+									{t("rsvp_message")}
+								</th>
+								<th className="text-left px-3 py-2 text-xs font-medium">
+									{t("rsvp_creator")}
+								</th>
+								<th className="text-left px-3 py-2 text-xs font-medium">
+									{t("created_at")}
+								</th>
+								<th className="text-left px-3 py-2 text-xs font-medium">
 									{t("actions")}
 								</th>
 							</tr>
 						</thead>
 						<tbody>
-							{reservations.map((item) => (
+							{sortedReservations.map((item) => (
 								<tr key={item.id} className="border-b last:border-b-0">
 									<td className="px-3 py-2 text-xs font-mono">
 										{format(
 											getDateInTz(
-												item.createdAt,
-												getOffsetHours(
-													item.Store?.defaultTimezone ?? "Asia/Taipei",
-												),
-											),
-											datetimeFormat,
-										)}
-									</td>
-									<td className="px-3 py-2 text-xs font-mono">
-										{format(
-											getDateInTz(
-												item.rsvpTime,
+												epochToDate(
+													typeof item.rsvpTime === "number"
+														? BigInt(item.rsvpTime)
+														: item.rsvpTime instanceof Date
+															? BigInt(item.rsvpTime.getTime())
+															: item.rsvpTime,
+												) ?? new Date(),
 												getOffsetHours(
 													item.Store?.defaultTimezone ?? "Asia/Taipei",
 												),
@@ -372,12 +592,6 @@ export const DisplayReservations = ({
 											{t(`rsvp_status_${item.status}`)}
 										</span>
 									</td>
-									<td className="px-3 py-2 text-xs max-w-[200px] truncate">
-										{item.note || "-"}
-									</td>
-									<td className="px-3 py-2 text-xs">
-										{item.User?.name || "-"}
-									</td>
 									<td className="px-3 py-2 text-xs">
 										{item.Store?.id ? (
 											<Link
@@ -393,6 +607,24 @@ export const DisplayReservations = ({
 									<td className="px-3 py-2 text-xs">
 										{item.Facility?.facilityName || "-"}
 									</td>
+									<td className="px-3 py-2 text-xs max-w-[200px] truncate">
+										{item.note || "-"}
+									</td>
+									<td className="px-3 py-2 text-xs">
+										{item.User?.name || "-"}
+									</td>
+									{/*created at*/}
+									<td className="px-3 py-2 text-xs font-mono">
+										{format(
+											getDateInTz(
+												item.createdAt,
+												getOffsetHours(
+													item.Store?.defaultTimezone ?? "Asia/Taipei",
+												),
+											),
+											datetimeFormat,
+										)}
+									</td>
 									<td className="px-3 py-2 text-xs">
 										{canEditReservation(item) && (
 											<div className="flex items-center gap-1">
@@ -406,15 +638,21 @@ export const DisplayReservations = ({
 												>
 													<IconEdit className="h-4 w-4" />
 												</Button>
-												<Button
-													variant="ghost"
-													size="icon"
-													className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0 text-destructive hover:text-destructive"
-													onClick={() => handleCancelClick(item)}
-													title={t("cancel_reservation")}
-												>
-													<IconTrash className="h-4 w-4" />
-												</Button>
+												{canCancelReservation(item) && (
+													<Button
+														variant="ghost"
+														size="icon"
+														className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0 text-destructive hover:text-destructive"
+														onClick={() => handleCancelClick(item)}
+														title={
+															item.status === RsvpStatus.Pending
+																? t("rsvp_delete_reservation")
+																: t("rsvp_cancel_reservation")
+														}
+													>
+														<IconTrash className="h-4 w-4" />
+													</Button>
+												)}
 											</div>
 										)}
 									</td>
@@ -425,13 +663,19 @@ export const DisplayReservations = ({
 				</div>
 			</div>
 
-			{/* Cancel Confirmation Dialog */}
+			{/* Cancel/Delete Confirmation Dialog */}
 			<AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>{t("cancel_reservation")}</AlertDialogTitle>
+						<AlertDialogTitle>
+							{reservationToCancel?.status === RsvpStatus.Pending
+								? t("rsvp_delete_reservation")
+								: t("rsvp_cancel_reservation")}
+						</AlertDialogTitle>
 						<AlertDialogDescription>
-							{t("cancel_reservation_confirmation")}
+							{reservationToCancel?.status === RsvpStatus.Pending
+								? t("rsvp_delete_reservation_confirmation")
+								: t("rsvp_cancel_reservation_confirmation")}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
@@ -443,7 +687,13 @@ export const DisplayReservations = ({
 							disabled={isCancelling}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
-							{isCancelling ? t("cancelling") : t("confirm_cancel")}
+							{isCancelling
+								? reservationToCancel?.status === RsvpStatus.Pending
+									? t("deleting")
+									: t("cancelling")
+								: reservationToCancel?.status === RsvpStatus.Pending
+									? t("confirm_delete")
+									: t("confirm_cancel")}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>
@@ -458,7 +708,7 @@ export const DisplayReservations = ({
 					facilities={storeData.facilities}
 					user={user}
 					rsvp={reservationToEdit}
-					rsvps={reservations}
+					rsvps={sortedReservations}
 					storeTimezone={
 						reservationToEdit.Store.defaultTimezone || "Asia/Taipei"
 					}

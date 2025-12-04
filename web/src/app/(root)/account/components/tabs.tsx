@@ -1,6 +1,6 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -38,21 +38,53 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 	const { t } = useTranslation(lng);
 
 	const searchParams = useSearchParams();
-	const initialTab = searchParams.get("tab");
-	const [activeTab, setActiveTab] = useState(initialTab || "orders"); //show order tab by default
+	const router = useRouter();
+	const pathname = usePathname();
+	const STORAGE_KEY = "account-tab-selection";
+
+	// Get initial tab: URL param > localStorage > default
+	const getInitialTab = (): string => {
+		const urlTab = searchParams.get("tab");
+		if (urlTab) return urlTab;
+
+		// Try to get from localStorage (client-side only)
+		if (typeof window !== "undefined") {
+			const storedTab = localStorage.getItem(STORAGE_KEY);
+			if (storedTab) return storedTab;
+		}
+
+		return "orders"; // default
+	};
+
+	const [activeTab, setActiveTab] = useState<string>(() => getInitialTab());
 	const [loading, _setLoading] = useState(false);
 
 	const handleTabChange = (value: string) => {
-		//update the state
+		// Update the state
 		setActiveTab(value);
-		// update the URL query parameter
-		//router.push({ query: { tab: value } });
+
+		// Save to localStorage
+		if (typeof window !== "undefined") {
+			localStorage.setItem(STORAGE_KEY, value);
+		}
+
+		// Update the URL query parameter
+		const params = new URLSearchParams(searchParams.toString());
+		params.set("tab", value);
+		router.push(`${pathname}?${params.toString()}`, { scroll: false });
 	};
 
-	// if the query parameter changes, update the state
+	// If the query parameter changes, update the state
 	useEffect(() => {
-		if (initialTab) setActiveTab(initialTab);
-	}, [initialTab]);
+		const urlTab = searchParams.get("tab");
+		if (urlTab && urlTab !== activeTab) {
+			setActiveTab(urlTab);
+			// Also update localStorage to match URL
+			if (typeof window !== "undefined") {
+				localStorage.setItem(STORAGE_KEY, urlTab);
+			}
+		}
+	}, [searchParams, activeTab]);
 	//console.log('selectedTab: ' + activeTab);
 
 	if (loading) {

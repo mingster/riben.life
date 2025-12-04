@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
-import { ReservationForm } from "./reservation-form";
-import { EditReservationDialog } from "./edit-reservation-dialog";
-import type { Rsvp, StoreFacility, User } from "@/types";
-import type { RsvpSettings, StoreSettings } from "@prisma/client";
-import { Separator } from "@/components/ui/separator";
-import { Heading } from "@/components/ui/heading";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import type { Rsvp, StoreFacility, User } from "@/types";
+import type { RsvpSettings, StoreSettings } from "@prisma/client";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
+import { EditReservationDialog } from "./edit-reservation-dialog";
+import { dayAndTimeSlotToUtc } from "@/utils/datetime-utils";
 
 interface ReservationClientProps {
 	rsvps: Rsvp[];
@@ -20,6 +18,7 @@ interface ReservationClientProps {
 	user: User | null;
 	storeId: string;
 	storeTimezone: string;
+	isBlacklisted?: boolean;
 }
 
 export function ReservationClient({
@@ -30,9 +29,11 @@ export function ReservationClient({
 	user,
 	storeId,
 	storeTimezone,
+	isBlacklisted = false,
 }: ReservationClientProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [selectedDateTime, setSelectedDateTime] = useState<{
 		day: Date;
@@ -69,29 +70,39 @@ export function ReservationClient({
 		// This callback is just for any additional cleanup if needed
 	}, []);
 
-	const handleReservationUpdated = useCallback((updatedRsvp: Rsvp) => {
-		// Close edit dialog and refresh
-		setEditRsvp(null);
-		setEditRsvpId(null);
-		// Update URL to remove edit parameter
-		if (typeof window !== "undefined") {
-			const url = new URL(window.location.href);
-			url.searchParams.delete("edit");
-			window.history.replaceState({}, "", url.toString());
-		}
-	}, []);
+	// Helper to remove edit parameter from URL
+	const removeEditParam = useCallback(() => {
+		const params = new URLSearchParams(searchParams.toString());
+		params.delete("edit");
+		const newUrl = params.toString()
+			? `${window.location.pathname}?${params.toString()}`
+			: window.location.pathname;
+		router.replace(newUrl, { scroll: false });
+	}, [router, searchParams]);
 
-	// Calculate default rsvp time from selected date/time
-	const defaultRsvpTime = selectedDateTime
-		? (() => {
-				const [hours, minutes] = selectedDateTime.timeSlot
-					.split(":")
-					.map(Number);
-				const date = new Date(selectedDateTime.day);
-				date.setHours(hours, minutes, 0, 0);
-				return date;
-			})()
-		: undefined;
+	const handleReservationUpdated = useCallback(
+		(updatedRsvp: Rsvp) => {
+			// Close edit dialog
+			setEditRsvp(null);
+			setEditRsvpId(null);
+			// Update URL to remove edit parameter
+			removeEditParam();
+		},
+		[removeEditParam],
+	);
+
+	// Calculate default rsvp time from selected date/time (memoized)
+	const defaultRsvpTime = useMemo(
+		() =>
+			selectedDateTime
+				? dayAndTimeSlotToUtc(
+						selectedDateTime.day,
+						selectedDateTime.timeSlot,
+						storeTimezone,
+					)
+				: undefined,
+		[selectedDateTime, storeTimezone],
+	);
 
 	return (
 		<div className="flex flex-col gap-1">
@@ -105,6 +116,7 @@ export function ReservationClient({
 				user={user}
 				storeTimezone={storeTimezone}
 				onReservationCreated={handleReservationCreated}
+				isBlacklisted={isBlacklisted}
 			/>
 
 			{/* Edit Reservation Dialog */}
@@ -123,12 +135,7 @@ export function ReservationClient({
 						if (!open) {
 							setEditRsvp(null);
 							setEditRsvpId(null);
-							// Update URL to remove edit parameter
-							if (typeof window !== "undefined") {
-								const url = new URL(window.location.href);
-								url.searchParams.delete("edit");
-								window.history.replaceState({}, "", url.toString());
-							}
+							removeEditParam();
 						}
 					}}
 					onReservationUpdated={handleReservationUpdated}

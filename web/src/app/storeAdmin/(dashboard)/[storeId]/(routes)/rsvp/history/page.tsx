@@ -14,17 +14,23 @@ export default async function RsvpPage(props: {
 	const params = await props.params;
 
 	// Note: checkStoreStaffAccess already called in layout (cached)
-	const rsvps = await sqlClient.rsvp.findMany({
-		where: { storeId: params.storeId },
-		include: {
-			Store: true,
-			User: true,
-			Order: true,
-			Facility: true,
-			FacilityPricingRule: true,
-		},
-		orderBy: { rsvpTime: "desc" },
-	});
+	const [rsvps, store] = await Promise.all([
+		sqlClient.rsvp.findMany({
+			where: { storeId: params.storeId },
+			include: {
+				Store: true,
+				User: true,
+				Order: true,
+				Facility: true,
+				FacilityPricingRule: true,
+			},
+			orderBy: { rsvpTime: "desc" },
+		}),
+		sqlClient.store.findUnique({
+			where: { id: params.storeId },
+			select: { defaultTimezone: true },
+		}),
+	]);
 
 	// Transform Decimal objects to numbers for client components
 	const formattedData: Rsvp[] = (rsvps as Rsvp[]).map((rsvp) => {
@@ -35,7 +41,10 @@ export default async function RsvpPage(props: {
 
 	return (
 		<Container>
-			<RsvpHistoryClient serverData={formattedData} />
+			<RsvpHistoryClient
+				serverData={formattedData}
+				storeTimezone={store?.defaultTimezone || "Asia/Taipei"}
+			/>
 		</Container>
 	);
 }

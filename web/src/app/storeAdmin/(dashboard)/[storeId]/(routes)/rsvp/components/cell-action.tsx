@@ -25,12 +25,14 @@ interface CellActionProps {
 	data: Rsvp;
 	onDeleted?: (rsvpId: string) => void;
 	onUpdated?: (rsvp: Rsvp) => void;
+	storeTimezone?: string;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({
 	data,
 	onDeleted,
 	onUpdated,
+	storeTimezone = "Asia/Taipei",
 }) => {
 	const [loading, setLoading] = useState(false);
 	const [open, setOpen] = useState(false);
@@ -125,6 +127,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 				onUpdated={onUpdated}
 				open={isEditOpen}
 				onOpenChange={setIsEditOpen}
+				storeTimezone={storeTimezone}
 			/>
 		</>
 	);

@@ -77,7 +77,7 @@ export default async function RsvpPage(props: {
 	if (!rangeStartEpoch || !rangeEndEpoch) {
 		throw new Error("Invalid date range");
 	}
-	const [rsvps, rsvpSettings, storeSettings] = await Promise.all([
+	const [rsvps, rsvpSettings, storeSettings, store] = await Promise.all([
 		sqlClient.rsvp.findMany({
 			where: {
 				storeId: params.storeId,
@@ -101,6 +101,10 @@ export default async function RsvpPage(props: {
 		sqlClient.storeSettings.findFirst({
 			where: { storeId: params.storeId },
 		}),
+		sqlClient.store.findUnique({
+			where: { id: params.storeId },
+			select: { defaultTimezone: true },
+		}),
 	]);
 
 	// Transform BigInt (epoch timestamps) and Decimal to numbers for client components
@@ -123,6 +127,7 @@ export default async function RsvpPage(props: {
 				serverData={formattedData}
 				rsvpSettings={rsvpSettings}
 				storeSettings={storeSettings}
+				storeTimezone={store?.defaultTimezone || "Asia/Taipei"}
 			/>
 		</Container>
 	);
