@@ -31,7 +31,7 @@ export const cancelReservationAction = baseClient
 		const existingRsvp = await sqlClient.rsvp.findUnique({
 			where: { id },
 			include: {
-				User: true,
+				Customer: true,
 				Store: true,
 			},
 		});
@@ -50,13 +50,13 @@ export const cancelReservationAction = baseClient
 			);
 		}
 
-		// Verify ownership: user must be logged in and match userId, or match by email
+		// Verify ownership: user must be logged in and match customerId, or match by email
 		let hasPermission = false;
 
-		if (sessionUserId && existingRsvp.userId) {
-			hasPermission = existingRsvp.userId === sessionUserId;
-		} else if (sessionUserEmail && existingRsvp.User?.email) {
-			hasPermission = existingRsvp.User.email === sessionUserEmail;
+		if (sessionUserId && existingRsvp.customerId) {
+			hasPermission = existingRsvp.customerId === sessionUserId;
+		} else if (sessionUserEmail && existingRsvp.Customer?.email) {
+			hasPermission = existingRsvp.Customer.email === sessionUserEmail;
 		}
 
 		if (!hasPermission) {
@@ -74,7 +74,7 @@ export const cancelReservationAction = baseClient
 				},
 				include: {
 					Store: true,
-					User: true,
+					Customer: true,
 					Facility: true,
 				},
 			});

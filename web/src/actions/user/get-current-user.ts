@@ -47,12 +47,12 @@ const getCurrentUser = async (): Promise<User | null> => {
 			apikeys: true,
 			members: true,
 			invitations: true,
-			Rsvp: {
+			Reservations: {
 				include: {
 					Store: true,
 					Facility: true,
 					FacilityPricingRule: true,
-					User: true,
+					Customer: true,
 				},
 				orderBy: {
 					rsvpTime: "desc",

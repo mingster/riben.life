@@ -91,11 +91,11 @@ export const DisplayReservations = ({
 	// Check if reservation belongs to current user
 	const isUserReservation = (rsvp: Rsvp): boolean => {
 		if (!user) return false;
-		if (user.id && rsvp.userId) {
-			return user.id === rsvp.userId;
+		if (user.id && rsvp.customerId) {
+			return user.id === rsvp.customerId;
 		}
-		if (user.email && rsvp.User?.email) {
-			return user.email === rsvp.User.email;
+		if (user.email && rsvp.Customer?.email) {
+			return user.email === rsvp.Customer.email;
 		}
 		return false;
 	};

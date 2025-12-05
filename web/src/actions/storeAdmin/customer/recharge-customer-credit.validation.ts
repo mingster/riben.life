@@ -26,8 +26,7 @@ export const rechargeCustomerCreditSchema = z
 			return true;
 		},
 		{
-			message:
-				"Cash amount is required and must be greater than 0 when customer paid in person",
+			message: "customer_credit_cash_amount_required_when_paid",
 			path: ["cashAmount"],
 		},
 	);

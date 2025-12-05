@@ -14,12 +14,12 @@ export default async function RsvpPage(props: {
 	const params = await props.params;
 
 	// Note: checkStoreStaffAccess already called in layout (cached)
-	const [rsvps, store] = await Promise.all([
+	const [rsvps, store, rsvpSettings] = await Promise.all([
 		sqlClient.rsvp.findMany({
 			where: { storeId: params.storeId },
 			include: {
 				Store: true,
-				User: true,
+				Customer: true,
 				Order: true,
 				Facility: true,
 				FacilityPricingRule: true,
@@ -30,6 +30,9 @@ export default async function RsvpPage(props: {
 			where: { id: params.storeId },
 			select: { defaultTimezone: true },
 		}),
+		sqlClient.rsvpSettings.findFirst({
+			where: { storeId: params.storeId },
+		}),
 	]);
 
 	// Transform Decimal objects to numbers for client components
@@ -39,11 +42,16 @@ export default async function RsvpPage(props: {
 		return transformed as Rsvp;
 	});
 
+	if (rsvpSettings) {
+		transformPrismaDataForJson(rsvpSettings);
+	}
+
 	return (
 		<Container>
 			<RsvpHistoryClient
 				serverData={formattedData}
 				storeTimezone={store?.defaultTimezone || "Asia/Taipei"}
+				rsvpSettings={rsvpSettings}
 			/>
 		</Container>
 	);

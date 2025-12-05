@@ -45,6 +45,9 @@ interface CreateRsvpButtonProps {
 	timeSlot: string;
 	onCreated?: (rsvp: Rsvp) => void;
 	storeTimezone: string;
+	rsvpSettings?: {
+		prepaidRequired?: boolean | null;
+	} | null;
 }
 
 const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
@@ -52,6 +55,7 @@ const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 	timeSlot,
 	onCreated,
 	storeTimezone,
+	rsvpSettings,
 }) => {
 	const [slotTime] = useState(() => {
 		// day is already in store timezone (from getDateInTz)
@@ -65,6 +69,7 @@ const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 			defaultRsvpTime={slotTime}
 			onCreated={onCreated}
 			storeTimezone={storeTimezone}
+			rsvpSettings={rsvpSettings}
 			trigger={
 				<button
 					type="button"
@@ -85,6 +90,7 @@ interface WeekViewCalendarProps {
 		useBusinessHours: boolean;
 		rsvpHours: string | null;
 		defaultDuration?: number | null;
+		prepaidRequired?: boolean | null;
 	} | null;
 	storeSettings: { businessHours: string | null } | null;
 	storeTimezone: string;
@@ -583,6 +589,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																rsvp={rsvp}
 																onUpdated={handleRsvpUpdated}
 																storeTimezone={storeTimezone}
+																rsvpSettings={rsvpSettings}
 																trigger={
 																	<button
 																		type="button"
@@ -595,10 +602,10 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																		)}
 																	>
 																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																			{rsvp.User?.name
-																				? rsvp.User.name
-																				: rsvp.User?.email
-																					? rsvp.User.email
+																			{rsvp.Customer?.name
+																				? rsvp.Customer.name
+																				: rsvp.Customer?.email
+																					? rsvp.Customer.email
 																					: `${rsvp.numOfAdult + rsvp.numOfChild} ${
 																							rsvp.numOfAdult +
 																								rsvp.numOfChild ===
@@ -627,6 +634,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 															timeSlot={timeSlot}
 															onCreated={handleRsvpCreated}
 															storeTimezone={storeTimezone}
+															rsvpSettings={rsvpSettings}
 														/>
 													)}
 												</div>

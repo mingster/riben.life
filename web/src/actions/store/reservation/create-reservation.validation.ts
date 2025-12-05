@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const createReservationSchema = z.object({
 	storeId: z.string().min(1, "Store ID is required"),
-	userId: z.string().nullable().optional(),
+	customerId: z.string().nullable().optional(),
 	email: z.string().email("Invalid email address").optional(),
 	phone: z.string().optional(),
 	facilityId: z.string().min(1, "Facility is required"),

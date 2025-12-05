@@ -26,6 +26,9 @@ interface CellActionProps {
 	onDeleted?: (rsvpId: string) => void;
 	onUpdated?: (rsvp: Rsvp) => void;
 	storeTimezone?: string;
+	rsvpSettings?: {
+		prepaidRequired?: boolean | null;
+	} | null;
 }
 
 export const CellAction: React.FC<CellActionProps> = ({
@@ -33,6 +36,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 	onDeleted,
 	onUpdated,
 	storeTimezone = "Asia/Taipei",
+	rsvpSettings,
 }) => {
 	const [loading, setLoading] = useState(false);
 	const [open, setOpen] = useState(false);
@@ -128,6 +132,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 				open={isEditOpen}
 				onOpenChange={setIsEditOpen}
 				storeTimezone={storeTimezone}
+				rsvpSettings={rsvpSettings}
 			/>
 		</>
 	);

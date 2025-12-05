@@ -4,7 +4,7 @@ import { epochToDate } from "@/utils/datetime-utils";
 export interface RsvpColumn {
 	id: string;
 	storeId: string;
-	userId: string | null;
+	customerId: string | null;
 	facilityId: string | null;
 	numOfAdult: number;
 	numOfChild: number;
@@ -25,7 +25,7 @@ export interface RsvpColumn {
 export const mapRsvpToColumn = (rsvp: Rsvp): RsvpColumn => ({
 	id: rsvp.id,
 	storeId: rsvp.storeId,
-	userId: rsvp.userId,
+	customerId: rsvp.customerId,
 	facilityId: rsvp.facilityId,
 	numOfAdult: rsvp.numOfAdult,
 	numOfChild: rsvp.numOfChild,

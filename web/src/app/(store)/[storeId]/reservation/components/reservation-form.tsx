@@ -216,7 +216,7 @@ export function ReservationForm({
 			// Create mode: use default values
 			return {
 				storeId,
-				userId: user?.id || null,
+				customerId: user?.id || null,
 				email: user?.email || "",
 				phone: "",
 				facilityId: facilities.length > 0 ? facilities[0].id : "",

@@ -20,6 +20,7 @@ interface RsvpCalendarClientProps {
 		useBusinessHours: boolean;
 		rsvpHours: string | null;
 		defaultDuration?: number | null;
+		prepaidRequired?: boolean | null;
 	} | null;
 	storeSettings: { businessHours: string | null } | null;
 	storeTimezone: string;
@@ -74,6 +75,7 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 						isNew
 						onCreated={handleCreated}
 						storeTimezone={storeTimezone}
+						rsvpSettings={rsvpSettings}
 						trigger={
 							<Button variant="outline">
 								<IconPlus className="mr-0 size-4" />

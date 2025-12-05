@@ -35,19 +35,12 @@ export default async function StoreHomePage(props: {
 
 	// Fetch store, storeSettings, and rsvpSettings in parallel for better performance
 	let store: Awaited<ReturnType<typeof getStoreWithProducts>>;
-	let storeSettings: StoreSettings | null;
-	let rsvpSettings: RsvpSettings | null;
+	let storeSettings: StoreSettings | null = null;
+	let rsvpSettings: RsvpSettings | null = null;
 
 	try {
-		[store, storeSettings, rsvpSettings] = await Promise.all([
-			getStoreWithProducts(params.storeId),
-			sqlClient.storeSettings.findFirst({
-				where: { storeId: params.storeId },
-			}),
-			sqlClient.rsvpSettings.findFirst({
-				where: { storeId: params.storeId },
-			}),
-		]);
+		// Fetch store first (supports both ID and name)
+		store = await getStoreWithProducts(params.storeId);
 
 		// Store is guaranteed to exist here due to getStoreWithProducts throwing if not found
 		if (!store) {
@@ -57,6 +50,19 @@ export default async function StoreHomePage(props: {
 			});
 			redirect("/unv");
 		}
+
+		// Use the actual store ID for subsequent queries (in case we found by name)
+		const actualStoreId = store.id;
+
+		// Fetch settings in parallel
+		const [storeSettings, rsvpSettings] = await Promise.all([
+			sqlClient.storeSettings.findFirst({
+				where: { storeId: actualStoreId },
+			}),
+			sqlClient.rsvpSettings.findFirst({
+				where: { storeId: actualStoreId },
+			}),
+		]);
 
 		transformPrismaDataForJson(store);
 

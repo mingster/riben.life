@@ -68,6 +68,9 @@ interface EditRsvpDialogProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	storeTimezone?: string;
+	rsvpSettings?: {
+		prepaidRequired?: boolean | null;
+	} | null;
 }
 
 // dialog to edit or create an rsvp by admin user.
@@ -84,6 +87,7 @@ export function AdminEditRsvpDialog({
 	open,
 	onOpenChange,
 	storeTimezone = "Asia/Taipei",
+	rsvpSettings,
 }: EditRsvpDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
@@ -264,7 +268,7 @@ export function AdminEditRsvpDialog({
 		? {
 				storeId: rsvp.storeId,
 				id: rsvp.id,
-				userId: rsvp.userId,
+				customerId: rsvp.customerId,
 				facilityId: rsvp.facilityId || "",
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
@@ -299,16 +303,12 @@ export function AdminEditRsvpDialog({
 					rsvp.facilityCost !== null && rsvp.facilityCost !== undefined
 						? Number(rsvp.facilityCost)
 						: null,
-				facilityCredit:
-					rsvp.facilityCredit !== null && rsvp.facilityCredit !== undefined
-						? Number(rsvp.facilityCredit)
-						: null,
 				pricingRuleId: rsvp.pricingRuleId,
 			}
 		: {
 				storeId: String(params.storeId),
 				id: "",
-				userId: null,
+				customerId: null,
 				facilityId:
 					storeFacilities && storeFacilities.length > 0
 						? storeFacilities[0].id
@@ -323,7 +323,6 @@ export function AdminEditRsvpDialog({
 				confirmedByStore: false,
 				confirmedByCustomer: false,
 				facilityCost: null,
-				facilityCredit: null,
 				pricingRuleId: null,
 			};
 
@@ -372,7 +371,7 @@ export function AdminEditRsvpDialog({
 		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
 			return storeFacilities;
 		}
-		return storeFacilities.filter((facility) =>
+		return storeFacilities.filter((facility: StoreFacility) =>
 			isFacilityAvailableAtTime(facility, rsvpTime, storeTimezone),
 		);
 	}, [storeFacilities, rsvpTime, storeTimezone, isFacilityAvailableAtTime]);
@@ -382,7 +381,9 @@ export function AdminEditRsvpDialog({
 		const currentFacilityId = form.getValues("facilityId");
 		if (
 			currentFacilityId &&
-			!availableFacilities.find((f) => f.id === currentFacilityId)
+			!availableFacilities.find(
+				(f: StoreFacility) => f.id === currentFacilityId,
+			)
 		) {
 			form.setValue(
 				"facilityId",
@@ -436,11 +437,6 @@ export function AdminEditRsvpDialog({
 						shouldValidate: false,
 					});
 				}
-				if (pricing.credit !== null && pricing.credit !== undefined) {
-					form.setValue("facilityCredit", pricing.credit, {
-						shouldValidate: false,
-					});
-				}
 				if (pricing.pricingRuleId) {
 					form.setValue("pricingRuleId", pricing.pricingRuleId, {
 						shouldValidate: false,
@@ -484,7 +480,7 @@ export function AdminEditRsvpDialog({
 
 			if (!isEditMode) {
 				const result = await createRsvpAction(String(params.storeId), {
-					userId: values.userId || null,
+					customerId: values.customerId || null,
 					facilityId: values.facilityId,
 					numOfAdult: values.numOfAdult,
 					numOfChild: values.numOfChild,
@@ -496,7 +492,6 @@ export function AdminEditRsvpDialog({
 					confirmedByStore: values.confirmedByStore,
 					confirmedByCustomer: values.confirmedByCustomer,
 					facilityCost: values.facilityCost || null,
-					facilityCredit: values.facilityCredit || null,
 					pricingRuleId: values.pricingRuleId || null,
 				});
 
@@ -523,7 +518,7 @@ export function AdminEditRsvpDialog({
 
 				const result = await updateRsvpAction(String(params.storeId), {
 					id: rsvpId,
-					userId: values.userId || null,
+					customerId: values.customerId || null,
 					facilityId: values.facilityId,
 					numOfAdult: values.numOfAdult,
 					numOfChild: values.numOfChild,
@@ -535,7 +530,6 @@ export function AdminEditRsvpDialog({
 					confirmedByStore: values.confirmedByStore,
 					confirmedByCustomer: values.confirmedByCustomer,
 					facilityCost: values.facilityCost || null,
-					facilityCredit: values.facilityCredit || null,
 					pricingRuleId: values.pricingRuleId || null,
 				});
 
@@ -595,7 +589,7 @@ export function AdminEditRsvpDialog({
 					>
 						<FormField
 							control={form.control}
-							name="userId"
+							name="customerId"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>{t("customer")}</FormLabel>
@@ -751,7 +745,7 @@ export function AdminEditRsvpDialog({
 												defaultValue={
 													field.value
 														? availableFacilities.find(
-																(f) => f.id === field.value,
+																(f: StoreFacility) => f.id === field.value,
 															) || null
 														: null
 												}
@@ -771,64 +765,32 @@ export function AdminEditRsvpDialog({
 								</FormItem>
 							)}
 						/>
-						<div className="grid grid-cols-2 gap-4">
-							<FormField
-								control={form.control}
-								name="facilityCost"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("rsvp_facility_cost")}</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												step="0.01"
-												disabled={loading || form.formState.isSubmitting}
-												value={
-													field.value !== null && field.value !== undefined
-														? field.value.toString()
-														: ""
-												}
-												onChange={(event) => {
-													const value = event.target.value;
-													field.onChange(
-														value ? Number.parseFloat(value) : null,
-													);
-												}}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="facilityCredit"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{t("rsvp_facility_credit")}</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												step="0.01"
-												disabled={loading || form.formState.isSubmitting}
-												value={
-													field.value !== null && field.value !== undefined
-														? field.value.toString()
-														: ""
-												}
-												onChange={(event) => {
-													const value = event.target.value;
-													field.onChange(
-														value ? Number.parseFloat(value) : null,
-													);
-												}}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
+						<FormField
+							control={form.control}
+							name="facilityCost"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{t("rsvp_facility_cost")}</FormLabel>
+									<FormControl>
+										<Input
+											type="number"
+											step="0.01"
+											disabled={loading || form.formState.isSubmitting}
+											value={
+												field.value !== null && field.value !== undefined
+													? field.value.toString()
+													: ""
+											}
+											onChange={(event) => {
+												const value = event.target.value;
+												field.onChange(value ? Number.parseFloat(value) : null);
+											}}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
 						{/** Already Paid */}
 						<div className="grid grid-cols-2 gap-4">

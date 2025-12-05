@@ -43,7 +43,7 @@ export default async function UsersBillingAdminPage(props: {
 					updatedAt: "desc",
 				},
 			},
-			Rsvp: {
+			Reservations: {
 				where: {
 					storeId: params.storeId,
 				},

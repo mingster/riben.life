@@ -5,8 +5,13 @@ import { RsvpSettingTab } from "./tab-rsvp-settings";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import {
+	useParams,
+	usePathname,
+	useRouter,
+	useSearchParams,
+} from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -62,6 +67,27 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 	// Manage rsvpSettings state in client component
 	const [rsvpSettings, setRsvpSettings] = useState(initialRsvpSettings);
 
+	const searchParams = useSearchParams();
+	const pathname = usePathname();
+
+	const STORAGE_KEY = "rsvp-settings-tab-selection";
+
+	// Get initial tab: URL param > localStorage > default
+	const getInitialTab = (): string => {
+		const urlTab = searchParams.get("tab");
+		if (urlTab) return urlTab;
+
+		// Try to get from localStorage (client-side only)
+		if (typeof window !== "undefined") {
+			const storedTab = localStorage.getItem(STORAGE_KEY);
+			if (storedTab) return storedTab;
+		}
+
+		return "basic"; // default
+	};
+
+	const [activeTab, setActiveTab] = useState<string>(() => getInitialTab());
+
 	// Manage store state in client component
 	const [store, setStore] = useState(initialStore);
 
@@ -78,6 +104,34 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 		onStoreUpdated?.(updated);
 	};
 
+	const handleTabChange = (value: string) => {
+		// Update the state
+		setActiveTab(value);
+
+		// Save to localStorage
+		if (typeof window !== "undefined") {
+			localStorage.setItem(STORAGE_KEY, value);
+		}
+
+		// Update the URL query parameter
+		const params = new URLSearchParams(searchParams.toString());
+		params.set("tab", value);
+		router.push(`${pathname}?${params.toString()}`, { scroll: false });
+	};
+
+	// If the query parameter changes, update the state
+	useEffect(() => {
+		const urlTab = searchParams.get("tab");
+		if (urlTab && urlTab !== activeTab) {
+			setActiveTab(urlTab);
+			// Also update localStorage to match URL
+			if (typeof window !== "undefined") {
+				localStorage.setItem(STORAGE_KEY, urlTab);
+			}
+		}
+	}, [searchParams, activeTab]);
+	//console.log('selectedTab: ' + activeTab);
+
 	if (loading) {
 		return <Loader />;
 	}
@@ -91,18 +145,21 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 				/>
 			</div>
 
-			<Tabs defaultValue="basic" className="w-full">
+			<Tabs
+				value={activeTab}
+				defaultValue="basic"
+				onValueChange={handleTabChange}
+				className="w-full"
+			>
 				<TabsList>
 					<TabsTrigger className="px-1 lg:min-w-25" value="basic">
 						{t("RSVP_Tab_System")}
 					</TabsTrigger>
-
-					<TabsTrigger className="px-1 lg:min-w-25" value="tag">
-						{t("RSVP_Tab_Tag")}
-					</TabsTrigger>
-
 					<TabsTrigger className="px-1 lg:min-w-25" value="blacklist">
 						{t("RSVP_Tab_Blacklist")}
+					</TabsTrigger>
+					<TabsTrigger className="px-1 lg:min-w-25" value="tag">
+						{t("RSVP_Tab_Tag")}
 					</TabsTrigger>
 				</TabsList>
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const updateRsvpSchema = z.object({
 	id: z.string().min(1, "rsvpId is required"),
-	userId: z.string().nullable().optional(),
+	customerId: z.string().nullable().optional(),
 	facilityId: z.string().min(1, "Facility is required"),
 	numOfAdult: z.coerce.number().int().min(1).default(1),
 	numOfChild: z.coerce.number().int().min(0).default(0),
@@ -14,7 +14,6 @@ export const updateRsvpSchema = z.object({
 	confirmedByStore: z.boolean().default(false),
 	confirmedByCustomer: z.boolean().default(false),
 	facilityCost: z.coerce.number().min(0).nullable().optional(),
-	facilityCredit: z.coerce.number().min(0).nullable().optional(),
 	pricingRuleId: z.string().nullable().optional(),
 });
 

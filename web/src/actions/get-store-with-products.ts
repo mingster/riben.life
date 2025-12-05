@@ -7,6 +7,7 @@ import type {
 	StoreWithProducts,
 } from "@/types";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { isValidGuid } from "@/utils/guid-utils";
 import type { PaymentMethod, ShippingMethod } from "@prisma/client";
 
 const getStoreWithProducts = async (
@@ -21,10 +22,13 @@ const getStoreWithProducts = async (
 		return null;
 	}
 
+	// Find store by ID (UUID) or name
+	// Try ID first if it looks like a UUID, otherwise try name
+	const isUuid = isValidGuid(storeId);
 	const store = await sqlClient.store.findFirst({
-		where: {
-			id: storeId,
-		},
+		where: isUuid
+			? { id: storeId }
+			: { name: { equals: storeId, mode: "insensitive" } },
 		include: {
 			StoreFacilities: true,
 			StoreShippingMethods: {
