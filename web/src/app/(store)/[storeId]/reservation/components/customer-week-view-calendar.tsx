@@ -27,7 +27,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
 import { RsvpStatus } from "@/types/enum";
-import { ReservationDialog } from "./reservation-dialog";
+import { CreateReservationDialog } from "./create-reservation-dialog";
 import { EditReservationDialog } from "./edit-reservation-dialog";
 import {
 	getDateInTz,
@@ -871,7 +871,7 @@ export const CustomerWeekViewCalendar: React.FC<
 														})
 													) : isAvailable ? (
 														canCreateReservation && storeId ? (
-															<ReservationDialog
+															<CreateReservationDialog
 																storeId={storeId}
 																rsvpSettings={rsvpSettings}
 																facilities={facilities}

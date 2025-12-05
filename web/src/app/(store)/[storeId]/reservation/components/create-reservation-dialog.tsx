@@ -15,7 +15,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { StoreFacility, User, Rsvp } from "@/types";
 import type { RsvpSettings } from "@prisma/client";
 
-interface ReservationDialogProps {
+interface CreateReservationDialogProps {
 	storeId: string;
 	rsvpSettings: RsvpSettings | null;
 	facilities: StoreFacility[];
@@ -27,7 +27,7 @@ interface ReservationDialogProps {
 	onReservationCreated?: (newRsvp: Rsvp) => void;
 }
 
-export function ReservationDialog({
+export function CreateReservationDialog({
 	storeId,
 	rsvpSettings,
 	facilities,
@@ -37,7 +37,7 @@ export function ReservationDialog({
 	open,
 	onOpenChange,
 	onReservationCreated,
-}: ReservationDialogProps) {
+}: CreateReservationDialogProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [internalOpen, setInternalOpen] = useState(false);

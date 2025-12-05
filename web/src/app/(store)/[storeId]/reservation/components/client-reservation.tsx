@@ -5,10 +5,9 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, StoreFacility, User } from "@/types";
 import type { RsvpSettings, StoreSettings } from "@prisma/client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
 import { EditReservationDialog } from "./edit-reservation-dialog";
-import { dayAndTimeSlotToUtc } from "@/utils/datetime-utils";
 
 interface ReservationClientProps {
 	rsvps: Rsvp[];
@@ -35,7 +34,7 @@ export function ReservationClient({
 	const { t } = useTranslation(lng);
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const [selectedDateTime, setSelectedDateTime] = useState<{
+	const [_selectedDateTime, setSelectedDateTime] = useState<{
 		day: Date;
 		timeSlot: string;
 	} | null>(null);
@@ -53,15 +52,6 @@ export function ReservationClient({
 			}
 		}
 	}, [searchParams, initialRsvps]);
-
-	const handleTimeSlotClick = useCallback((day: Date, timeSlot: string) => {
-		setSelectedDateTime({ day, timeSlot });
-		// Scroll to form
-		setTimeout(() => {
-			const formElement = document.getElementById("reservation-form");
-			formElement?.scrollIntoView({ behavior: "smooth", block: "start" });
-		}, 100);
-	}, []);
 
 	const handleReservationCreated = useCallback((newRsvp: Rsvp) => {
 		// Reset selected date/time after successful creation
@@ -89,19 +79,6 @@ export function ReservationClient({
 			removeEditParam();
 		},
 		[removeEditParam],
-	);
-
-	// Calculate default rsvp time from selected date/time (memoized)
-	const defaultRsvpTime = useMemo(
-		() =>
-			selectedDateTime
-				? dayAndTimeSlotToUtc(
-						selectedDateTime.day,
-						selectedDateTime.timeSlot,
-						storeTimezone,
-					)
-				: undefined,
-		[selectedDateTime, storeTimezone],
 	);
 
 	return (

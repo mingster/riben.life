@@ -38,10 +38,19 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 
 	const STORAGE_KEY = "account-tab-selection";
 
-	// Get initial tab: localStorage > default
+	// Get initial tab: URL param > localStorage > default
 	const getInitialTab = (): string => {
-		// Try to get from localStorage (client-side only)
+		// Try to get from URL params first (client-side only)
 		if (typeof window !== "undefined") {
+			const urlParams = new URLSearchParams(window.location.search);
+			const urlTab = urlParams.get("tab");
+			if (urlTab) {
+				// Save to localStorage for consistency
+				localStorage.setItem(STORAGE_KEY, urlTab);
+				return urlTab;
+			}
+
+			// Try to get from localStorage
 			const storedTab = localStorage.getItem(STORAGE_KEY);
 			if (storedTab) return storedTab;
 		}
