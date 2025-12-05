@@ -1,6 +1,6 @@
-# Google Analytics Complete Guide for 5ik.TV
+# Google Analytics Complete Guide for riben.life
 
-This comprehensive guide covers Google Analytics setup, configuration, and usage for the 5ik.TV platform, including web app, Android TV, and Roku analytics.
+This comprehensive guide covers Google Analytics setup, configuration, and usage for the riben.life platform, including web app, Android TV, and Roku analytics.
 
 ## 📋 Table of Contents
 
@@ -17,7 +17,7 @@ This comprehensive guide covers Google Analytics setup, configuration, and usage
 
 ## 🎯 Overview
 
-The 5ik.TV platform uses a dual analytics approach:
+The riben.life platform uses a dual analytics approach:
 
 - **Web App**: Google Analytics 4 via Next.js third-parties
 - **Roku App**: Server-side analytics via Google Analytics Measurement Protocol
@@ -1090,7 +1090,7 @@ This comprehensive Google Analytics setup provides:
 - ✅ **Real-time tracking** with Google Analytics 4
 - ✅ **Server-side analytics** for TV platforms
 - ✅ **Type-safe implementation** with Next.js third-parties
-- ✅ **Comprehensive event tracking** for 5ik.TV specific actions
+- ✅ **Comprehensive event tracking** for riben.life specific actions
 - ✅ **Privacy compliance** with GDPR considerations
 - ✅ **Easy testing and debugging** with built-in tools
 

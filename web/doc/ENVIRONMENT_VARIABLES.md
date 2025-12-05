@@ -1,6 +1,6 @@
-# Environment Variables for 5ik.TV
+# Environment Variables for riben.life
 
-This document lists all environment variables used in the 5ik.TV project.
+This document lists all environment variables used in the riben.life project.
 
 ## Google Analytics
 

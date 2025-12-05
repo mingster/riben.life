@@ -53,8 +53,8 @@ export async function PhaseTags(
 
 	/*
 	replacements.push(
-		{ pattern: /%Support\.Email%/gi, value: "support@5ik.tv" },
-		{ pattern: /%App\.Name%/gi, value: "5ik.TV" },
+		{ pattern: /%Support\.Email%/gi, value: "support@riben.life" },
+		{ pattern: /%App\.Name%/gi, value: "riben.life" },
 	);
 	*/
 

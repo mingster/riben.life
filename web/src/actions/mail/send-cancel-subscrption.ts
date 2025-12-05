@@ -82,8 +82,8 @@ export const sendCancelSubscription = async (user: User) => {
 
 	const email_queue = await sqlClient.emailQueue.create({
 		data: {
-			from: supportEmail?.value || "support@5ik.tv",
-			fromName: supportEmail?.value || "5ik.TV",
+			from: supportEmail?.value || "support@riben.life",
+			fromName: supportEmail?.value || "riben.life",
 			to: user.email || "",
 			toName: user.name || "",
 			cc: "",
