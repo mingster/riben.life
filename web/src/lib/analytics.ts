@@ -7,7 +7,7 @@ const sendGAEventSafe = (params: Parameters<typeof sendGAEvent>[0]) => {
 	}
 };
 
-// Enhanced analytics utilities for the 5ik.TV platform
+// Enhanced analytics utilities for the riben.life platform
 export const analytics = {
 	// User authentication events
 	trackLogin: (method: "email" | "google" | "line" | "passkey" = "email") => {

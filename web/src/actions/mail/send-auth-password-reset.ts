@@ -99,8 +99,8 @@ export const sendAuthPasswordReset = async (
 
 	const email_queue = await sqlClient.emailQueue.create({
 		data: {
-			from: supportEmail?.value || "support@5ik.tv",
-			fromName: supportEmail?.value || "5ik.TV",
+			from: supportEmail?.value || "support@riben.life",
+			fromName: supportEmail?.value || "riben.life",
 			to: email,
 			toName: user?.name || email,
 			cc: "",

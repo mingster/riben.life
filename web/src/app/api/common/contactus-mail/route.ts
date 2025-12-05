@@ -123,11 +123,11 @@ export async function POST(request: Request) {
 
 			const email_queue = await sqlClient.emailQueue.create({
 				data: {
-					from: supportEmail?.value || "support@5ik.tv",
-					fromName: supportEmail?.value || "5ik.TV",
+					from: supportEmail?.value || "support@riben.life",
+					fromName: supportEmail?.value || "riben.life",
 
-					to: supportEmail?.value || "support@5ik.tv",
-					toName: supportEmail?.value || "5ik.TV",
+					to: supportEmail?.value || "support@riben.life",
+					toName: supportEmail?.value || "riben.life",
 
 					cc: "",
 					bcc: "",

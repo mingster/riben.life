@@ -49,7 +49,7 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 3. Configure the key:
    - Display name: `Contact Form`
    - Platform: `Website`
-   - Domains: Add your domains (e.g., `5ik.tv`, `localhost`)
+   - Domains: Add your domains (e.g., `riben.life`, `localhost`)
    - reCAPTCHA type: **Score-based**
    - Enable **Use checkbox challenge** (optional)
 4. Click **Create**

@@ -73,7 +73,7 @@ const nextConfig: NextConfig = {
 			{
 				// google user avatar
 				protocol: "https",
-				hostname: "5ik.tv",
+				hostname: "riben.life",
 			},
 		],
 	},
