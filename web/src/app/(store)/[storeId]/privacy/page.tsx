@@ -2,6 +2,7 @@ import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { isValidGuid } from "@/utils/guid-utils";
 import type { StoreSettings } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -19,10 +20,13 @@ export default async function StorePrivacyPage(props: {
 }) {
 	const params = await props.params;
 
+	// Find store by ID (UUID) or name
+	// Try ID first if it looks like a UUID, otherwise try name
+	const isUuid = isValidGuid(params.storeId);
 	const store = await sqlClient.store.findFirst({
-		where: {
-			id: params.storeId,
-		},
+		where: isUuid
+			? { id: params.storeId }
+			: { name: { equals: params.storeId, mode: "insensitive" } },
 	});
 
 	if (!store) {
@@ -30,9 +34,11 @@ export default async function StorePrivacyPage(props: {
 	}
 	transformPrismaDataForJson(store);
 
+	// Use the actual store ID for subsequent queries (in case we found by name)
+	const actualStoreId = store.id;
 	const storeSettings = (await sqlClient.storeSettings.findFirst({
 		where: {
-			storeId: params.storeId,
+			storeId: actualStoreId,
 		},
 	})) as StoreSettings;
 

@@ -11,6 +11,7 @@ import type { StoreFacility, User, Rsvp } from "@/types";
 import type { RsvpSettings, StoreSettings } from "@prisma/client";
 import logger from "@/lib/logger";
 import { getUtcNow, dateToEpoch } from "@/utils/datetime-utils";
+import { isValidGuid } from "@/utils/guid-utils";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -102,54 +103,21 @@ export default async function ReservationPage(props: {
 	let isBlacklisted = false;
 
 	try {
-		// Fetch store, settings, facilities, and RSVPs in parallel
-		const [
-			storeResult,
-			rsvpSettingsResult,
-			facilitiesResult,
-			rsvpsResult,
-			storeSettingsResult,
-		] = await Promise.all([
-			sqlClient.store.findFirst({
-				where: { id: params.storeId },
-				select: {
-					id: true,
-					name: true,
-					defaultTimezone: true,
-				},
-			}),
-			sqlClient.rsvpSettings.findFirst({
-				where: { storeId: params.storeId },
-			}),
-			sqlClient.storeFacility.findMany({
-				where: { storeId: params.storeId },
-				orderBy: { facilityName: "asc" },
-			}),
-			sqlClient.rsvp.findMany({
-				where: {
-					storeId: params.storeId,
-					rsvpTime: {
-						gte: rangeStartEpoch,
-						lte: rangeEndEpoch,
-					},
-				},
-				include: {
-					Store: true,
-					User: true,
-					Facility: true,
-				},
-				orderBy: { rsvpTime: "asc" },
-			}),
-			sqlClient.storeSettings.findFirst({
-				where: { storeId: params.storeId },
-			}),
-		]);
+		// Find store by ID (UUID) or name
+		// Try ID first if it looks like a UUID, otherwise try name
+		const isUuid = isValidGuid(params.storeId);
+		const storeResult = await sqlClient.store.findFirst({
+			where: isUuid
+				? { id: params.storeId }
+				: { name: { equals: params.storeId, mode: "insensitive" } },
+			select: {
+				id: true,
+				name: true,
+				defaultTimezone: true,
+			},
+		});
 
 		store = storeResult;
-		rsvpSettings = rsvpSettingsResult;
-		facilities = facilitiesResult;
-		rsvps = rsvpsResult;
-		storeSettings = storeSettingsResult;
 
 		// Early return if store not found
 		if (!store) {
@@ -160,6 +128,48 @@ export default async function ReservationPage(props: {
 			redirect("/unv");
 		}
 
+		// Use the actual store ID for subsequent queries (in case we found by name)
+		const actualStoreId = store.id;
+
+		// Fetch settings, facilities, and RSVPs in parallel
+		const [
+			rsvpSettingsResult,
+			facilitiesResult,
+			rsvpsResult,
+			storeSettingsResult,
+		] = await Promise.all([
+			sqlClient.rsvpSettings.findFirst({
+				where: { storeId: actualStoreId },
+			}),
+			sqlClient.storeFacility.findMany({
+				where: { storeId: actualStoreId },
+				orderBy: { facilityName: "asc" },
+			}),
+			sqlClient.rsvp.findMany({
+				where: {
+					storeId: actualStoreId,
+					rsvpTime: {
+						gte: rangeStartEpoch,
+						lte: rangeEndEpoch,
+					},
+				},
+				include: {
+					Store: true,
+					Customer: true,
+					Facility: true,
+				},
+				orderBy: { rsvpTime: "asc" },
+			}),
+			sqlClient.storeSettings.findFirst({
+				where: { storeId: actualStoreId },
+			}),
+		]);
+
+		rsvpSettings = rsvpSettingsResult;
+		facilities = facilitiesResult;
+		rsvps = rsvpsResult;
+		storeSettings = storeSettingsResult;
+
 		// Fetch user and check blacklist in parallel (only if logged in)
 		if (session?.user?.id) {
 			const [userResult, blacklistEntry] = await Promise.all([
@@ -168,7 +178,7 @@ export default async function ReservationPage(props: {
 				}),
 				sqlClient.rsvpBlacklist.findFirst({
 					where: {
-						storeId: params.storeId,
+						storeId: actualStoreId,
 						userId: session.user.id,
 					},
 					select: { id: true }, // Only need to check existence

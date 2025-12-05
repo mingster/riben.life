@@ -420,13 +420,13 @@ export const CustomerWeekViewCalendar: React.FC<
 	const isUserReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
 			if (!user) return false;
-			// Match by userId if both exist
-			if (user.id && rsvp.userId) {
-				return rsvp.userId === user.id;
+			// Match by customerId if both exist
+			if (user.id && rsvp.customerId) {
+				return rsvp.customerId === user.id;
 			}
-			// Match by email if userId doesn't match or is missing
-			if (user.email && rsvp.User?.email) {
-				return rsvp.User.email.toLowerCase() === user.email.toLowerCase();
+			// Match by email if customerId doesn't match or is missing
+			if (user.email && rsvp.Customer?.email) {
+				return rsvp.Customer.email.toLowerCase() === user.email.toLowerCase();
 			}
 			return false;
 		},
@@ -824,10 +824,10 @@ export const CustomerWeekViewCalendar: React.FC<
 																		</Button>
 																	)}
 																	<div className="font-medium truncate leading-tight text-[9px] sm:text-xs pr-6">
-																		{rsvp.User?.name
-																			? rsvp.User.name
-																			: rsvp.User?.email
-																				? rsvp.User.email
+																		{rsvp.Customer?.name
+																			? rsvp.Customer.name
+																			: rsvp.Customer?.email
+																				? rsvp.Customer.email
 																				: `${rsvp.numOfAdult + rsvp.numOfChild} ${
 																						rsvp.numOfAdult +
 																							rsvp.numOfChild ===

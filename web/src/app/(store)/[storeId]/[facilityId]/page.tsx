@@ -20,20 +20,25 @@ export default async function TableOrderPage(props: {
 }) {
 	const params = await props.params;
 
-	// Parallel queries for optimal performance - 3x faster!
-	const [store, facility, storeSettings] = await Promise.all([
-		getStoreWithProducts(params.storeId),
-		sqlClient.storeFacility.findFirst({
-			where: { id: params.facilityId },
-		}),
-		sqlClient.storeSettings.findFirst({
-			where: { storeId: params.storeId },
-		}),
-	]);
+	// Fetch store first (supports both ID and name)
+	const store = await getStoreWithProducts(params.storeId);
 
 	if (!store) {
 		redirect("/unv");
 	}
+
+	// Use the actual store ID for subsequent queries (in case we found by name)
+	const actualStoreId = store.id;
+
+	// Fetch facility and settings in parallel
+	const [facility, storeSettings] = await Promise.all([
+		sqlClient.storeFacility.findFirst({
+			where: { id: params.facilityId },
+		}),
+		sqlClient.storeSettings.findFirst({
+			where: { storeId: actualStoreId },
+		}),
+	]);
 
 	transformPrismaDataForJson(store);
 	if (storeSettings) {
