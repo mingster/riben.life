@@ -241,7 +241,7 @@ const userObj = Prisma.validator<Prisma.UserDefaultArgs>()({
 		invitations: true,
 		Addresses: true,
 		Orders: true,
-		Rsvp: true,
+		Reservations: true,
 		CustomerCredits: true,
 		CustomerCreditLedger: true,
 		StoreLedgerCreated: true,
@@ -324,10 +324,11 @@ export type StoreFacility = Prisma.StoreFacilityGetPayload<
 const rsvpObj = Prisma.validator<Prisma.RsvpDefaultArgs>()({
 	include: {
 		Store: true,
-		User: true,
+		Customer: true,
 		Order: true,
 		Facility: true,
 		FacilityPricingRule: true,
+		CreatedBy: true,
 	},
 });
 export type Rsvp = Prisma.RsvpGetPayload<typeof rsvpObj>;

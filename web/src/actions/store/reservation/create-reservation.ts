@@ -23,7 +23,7 @@ export const createReservationAction = baseClient
 	.action(async ({ parsedInput }) => {
 		const {
 			storeId,
-			userId,
+			customerId,
 			email,
 			phone,
 			facilityId,
@@ -101,15 +101,15 @@ export const createReservationAction = baseClient
 			throw new SafeError("Email is required for reservations");
 		}
 
-		// Use session userId if available, otherwise use provided userId
-		const finalUserId = sessionUserId || userId || null;
+		// Use session userId if available, otherwise use provided customerId
+		const finalCustomerId = sessionUserId || customerId || null;
 
 		// Check if user is blacklisted (only for logged-in users)
-		if (finalUserId) {
+		if (finalCustomerId) {
 			const isBlacklisted = await sqlClient.rsvpBlacklist.findFirst({
 				where: {
 					storeId,
-					userId: finalUserId,
+					userId: finalCustomerId,
 				},
 			});
 
@@ -140,7 +140,7 @@ export const createReservationAction = baseClient
 			const rsvp = await sqlClient.rsvp.create({
 				data: {
 					storeId,
-					userId: finalUserId,
+					customerId: finalCustomerId,
 					facilityId,
 					numOfAdult,
 					numOfChild,
@@ -155,7 +155,7 @@ export const createReservationAction = baseClient
 				},
 				include: {
 					Store: true,
-					User: true,
+					Customer: true,
 					Facility: true,
 				},
 			});

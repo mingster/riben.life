@@ -88,7 +88,7 @@ export default async function RsvpPage(props: {
 			},
 			include: {
 				Store: true,
-				User: true,
+				Customer: true,
 				Order: true,
 				Facility: true,
 				FacilityPricingRule: true,

@@ -19,13 +19,21 @@ interface CreateRsvpColumnsOptions {
 	onDeleted?: (rsvpId: string) => void;
 	onUpdated?: (rsvp: Rsvp) => void;
 	storeTimezone?: string;
+	rsvpSettings?: {
+		prepaidRequired?: boolean | null;
+	} | null;
 }
 
 export const createRsvpColumns = (
 	t: TFunction,
 	options: CreateRsvpColumnsOptions = {},
 ): ColumnDef<Rsvp>[] => {
-	const { onDeleted, onUpdated, storeTimezone = "Asia/Taipei" } = options;
+	const {
+		onDeleted,
+		onUpdated,
+		storeTimezone = "Asia/Taipei",
+		rsvpSettings,
+	} = options;
 
 	return [
 		{
@@ -112,6 +120,7 @@ export const createRsvpColumns = (
 					onDeleted={onDeleted}
 					onUpdated={onUpdated}
 					storeTimezone={storeTimezone}
+					rsvpSettings={rsvpSettings}
 				/>
 			),
 		},

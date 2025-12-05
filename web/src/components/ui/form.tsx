@@ -14,6 +14,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
+import { useI18n } from "@/providers/i18n-provider";
+import { useTranslation } from "@/app/i18n/client";
 
 const Form = FormProvider;
 
@@ -153,11 +155,22 @@ const FormMessage = React.forwardRef<
 	React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
 	const { error, formMessageId } = useFormField();
-	const body = error ? String(error?.message ?? "") : children;
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng);
+
+	const errorMessage = error ? String(error?.message ?? "") : "";
+	const body = errorMessage || children;
 
 	if (!body) {
 		return null;
 	}
+
+	// Try to translate if the message looks like a translation key
+	// Translation keys typically don't contain spaces and use snake_case
+	const translatedMessage =
+		errorMessage && !errorMessage.includes(" ") && errorMessage.includes("_")
+			? t(errorMessage) || errorMessage
+			: errorMessage || children;
 
 	return (
 		<p
@@ -169,7 +182,7 @@ const FormMessage = React.forwardRef<
 			)}
 			{...props}
 		>
-			{body}
+			{translatedMessage}
 		</p>
 	);
 });

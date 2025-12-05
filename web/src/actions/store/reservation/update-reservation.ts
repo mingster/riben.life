@@ -38,7 +38,7 @@ export const updateReservationAction = baseClient
 		const existingRsvp = await sqlClient.rsvp.findUnique({
 			where: { id },
 			include: {
-				User: true,
+				Customer: true,
 				Store: {
 					select: {
 						id: true,
@@ -81,13 +81,13 @@ export const updateReservationAction = baseClient
 			throw new SafeError("Failed to convert rsvpTime to epoch");
 		}
 
-		// Verify ownership: user must be logged in and match userId, or match by email
+		// Verify ownership: user must be logged in and match customerId, or match by email
 		let hasPermission = false;
 
-		if (sessionUserId && existingRsvp.userId) {
-			hasPermission = existingRsvp.userId === sessionUserId;
-		} else if (sessionUserEmail && existingRsvp.User?.email) {
-			hasPermission = existingRsvp.User.email === sessionUserEmail;
+		if (sessionUserId && existingRsvp.customerId) {
+			hasPermission = existingRsvp.customerId === sessionUserId;
+		} else if (sessionUserEmail && existingRsvp.Customer?.email) {
+			hasPermission = existingRsvp.Customer.email === sessionUserEmail;
 		}
 
 		if (!hasPermission) {
@@ -126,7 +126,7 @@ export const updateReservationAction = baseClient
 				},
 				include: {
 					Store: true,
-					User: true,
+					Customer: true,
 					Facility: true,
 				},
 			});

@@ -20,7 +20,7 @@ export const createRsvpAction = storeActionClient
 	.action(async ({ parsedInput, bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
 		const {
-			userId,
+			customerId,
 			facilityId,
 			numOfAdult,
 			numOfChild,
@@ -32,7 +32,6 @@ export const createRsvpAction = storeActionClient
 			confirmedByStore,
 			confirmedByCustomer,
 			facilityCost,
-			facilityCredit,
 			pricingRuleId,
 		} = parsedInput;
 
@@ -102,7 +101,7 @@ export const createRsvpAction = storeActionClient
 			const rsvp = await sqlClient.rsvp.create({
 				data: {
 					storeId,
-					userId: userId || null,
+					customerId: customerId || null,
 					facilityId,
 					numOfAdult,
 					numOfChild,
@@ -117,17 +116,13 @@ export const createRsvpAction = storeActionClient
 						facilityCost !== null && facilityCost !== undefined
 							? facilityCost
 							: null,
-					facilityCredit:
-						facilityCredit !== null && facilityCredit !== undefined
-							? facilityCredit
-							: null,
 					pricingRuleId: pricingRuleId || null,
 					createdAt: getUtcNowEpoch(),
 					updatedAt: getUtcNowEpoch(),
 				},
 				include: {
 					Store: true,
-					User: true,
+					Customer: true,
 					Order: true,
 					Facility: true,
 					FacilityPricingRule: true,

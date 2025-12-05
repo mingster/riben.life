@@ -20,7 +20,7 @@ export const updateRsvpAction = storeActionClient
 		const storeId = bindArgsClientInputs[0] as string;
 		const {
 			id,
-			userId,
+			customerId,
 			facilityId,
 			numOfAdult,
 			numOfChild,
@@ -32,7 +32,6 @@ export const updateRsvpAction = storeActionClient
 			confirmedByStore,
 			confirmedByCustomer,
 			facilityCost,
-			facilityCredit,
 			pricingRuleId,
 		} = parsedInput;
 
@@ -111,7 +110,7 @@ export const updateRsvpAction = storeActionClient
 			const updated = await sqlClient.rsvp.update({
 				where: { id },
 				data: {
-					userId: userId || null,
+					customerId: customerId || null,
 					facilityId,
 					numOfAdult,
 					numOfChild,
@@ -126,15 +125,11 @@ export const updateRsvpAction = storeActionClient
 						facilityCost !== null && facilityCost !== undefined
 							? facilityCost
 							: null,
-					facilityCredit:
-						facilityCredit !== null && facilityCredit !== undefined
-							? facilityCredit
-							: null,
 					pricingRuleId: pricingRuleId || null,
 				},
 				include: {
 					Store: true,
-					User: true,
+					Customer: true,
 					Order: true,
 					Facility: true,
 					FacilityPricingRule: true,
