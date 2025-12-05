@@ -53,6 +53,7 @@ const getCurrentUser = async (): Promise<User | null> => {
 					Facility: true,
 					FacilityPricingRule: true,
 					Customer: true,
+					CreatedBy: true,
 				},
 				orderBy: {
 					rsvpTime: "desc",

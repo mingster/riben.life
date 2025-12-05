@@ -11,6 +11,8 @@ import {
 	getUtcNowEpoch,
 	convertDateToUtc,
 } from "@/utils/datetime-utils";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 import { createRsvpSchema } from "./create-rsvp.validation";
 
@@ -97,6 +99,12 @@ export const createRsvpAction = storeActionClient
 					})()
 				: null;
 
+		// Get current user ID for createdBy field
+		const session = await auth.api.getSession({
+			headers: await headers(),
+		});
+		const createdBy = session?.user?.id || null;
+
 		try {
 			const rsvp = await sqlClient.rsvp.create({
 				data: {
@@ -117,12 +125,14 @@ export const createRsvpAction = storeActionClient
 							? facilityCost
 							: null,
 					pricingRuleId: pricingRuleId || null,
+					createdBy,
 					createdAt: getUtcNowEpoch(),
 					updatedAt: getUtcNowEpoch(),
 				},
 				include: {
 					Store: true,
 					Customer: true,
+					CreatedBy: true,
 					Order: true,
 					Facility: true,
 					FacilityPricingRule: true,

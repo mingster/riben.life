@@ -96,6 +96,9 @@ export const updateReservationAction = baseClient
 			);
 		}
 
+		// Set createdBy if it's currently null (for old records)
+		const createdBy = sessionUserId || existingRsvp.createdBy || null;
+
 		// Validate facility (required)
 		if (!facilityId) {
 			throw new SafeError("Facility is required");
@@ -123,10 +126,12 @@ export const updateReservationAction = baseClient
 					numOfChild,
 					rsvpTime,
 					message: message || null,
+					createdBy: createdBy || undefined, // Only update if we have a value
 				},
 				include: {
 					Store: true,
 					Customer: true,
+					CreatedBy: true,
 					Facility: true,
 				},
 			});

@@ -89,6 +89,7 @@ export default async function RsvpPage(props: {
 			include: {
 				Store: true,
 				Customer: true,
+				CreatedBy: true,
 				Order: true,
 				Facility: true,
 				FacilityPricingRule: true,
@@ -107,6 +108,8 @@ export default async function RsvpPage(props: {
 		}),
 	]);
 
+	//console.log(rsvps.map((r) => r.Customer?.name).join(", "));
+	
 	// Transform BigInt (epoch timestamps) and Decimal to numbers for client components
 	const formattedData: Rsvp[] = (rsvps as Rsvp[]).map((rsvp) => {
 		const transformed = { ...rsvp };

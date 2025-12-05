@@ -1,7 +1,6 @@
 "use client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -37,16 +36,10 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const searchParams = useSearchParams();
-	const router = useRouter();
-	const pathname = usePathname();
 	const STORAGE_KEY = "account-tab-selection";
 
-	// Get initial tab: URL param > localStorage > default
+	// Get initial tab: localStorage > default
 	const getInitialTab = (): string => {
-		const urlTab = searchParams.get("tab");
-		if (urlTab) return urlTab;
-
 		// Try to get from localStorage (client-side only)
 		if (typeof window !== "undefined") {
 			const storedTab = localStorage.getItem(STORAGE_KEY);
@@ -67,24 +60,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 		if (typeof window !== "undefined") {
 			localStorage.setItem(STORAGE_KEY, value);
 		}
-
-		// Update the URL query parameter
-		const params = new URLSearchParams(searchParams.toString());
-		params.set("tab", value);
-		router.push(`${pathname}?${params.toString()}`, { scroll: false });
 	};
-
-	// If the query parameter changes, update the state
-	useEffect(() => {
-		const urlTab = searchParams.get("tab");
-		if (urlTab && urlTab !== activeTab) {
-			setActiveTab(urlTab);
-			// Also update localStorage to match URL
-			if (typeof window !== "undefined") {
-				localStorage.setItem(STORAGE_KEY, urlTab);
-			}
-		}
-	}, [searchParams, activeTab]);
 	//console.log('selectedTab: ' + activeTab);
 
 	if (loading) {
@@ -129,7 +105,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 						</CardHeader>
 
 						<CardContent className="space-y-2">
-							<DisplayReservations reservations={user.Rsvp} user={user} />
+							<DisplayReservations reservations={user.Reservations} user={user} />
 						</CardContent>
 					</Card>
 				</TabsContent>

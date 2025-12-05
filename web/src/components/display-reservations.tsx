@@ -453,19 +453,19 @@ export const DisplayReservations = ({
 							</div>
 						)}
 
-						{item.note && (
+						{item.message && (
 							<div className="text-[10px]">
 								<span className="font-medium text-muted-foreground">
 									{t("rsvp_message")}:
 								</span>
-								<span className="text-foreground">{item.note}</span>
+								<span className="text-foreground">{item.message}</span>
 							</div>
 						)}
 
-						{item.User?.name && (
+						{item.CreatedBy?.name && (
 							<div className="text-[10px] text-muted-foreground">
 								<span className="font-medium">{t("rsvp_creator")}:</span>
-								{item.User?.name}
+								{item.CreatedBy?.name}
 							</div>
 						)}
 
@@ -608,10 +608,10 @@ export const DisplayReservations = ({
 										{item.Facility?.facilityName || "-"}
 									</td>
 									<td className="px-3 py-2 text-xs max-w-[200px] truncate">
-										{item.note || "-"}
+										{item.message || "-"}
 									</td>
 									<td className="px-3 py-2 text-xs">
-										{item.User?.name || "-"}
+										{item.CreatedBy?.name || "-"}
 									</td>
 									{/*created at*/}
 									<td className="px-3 py-2 text-xs font-mono">
