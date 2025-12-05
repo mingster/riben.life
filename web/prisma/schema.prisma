@@ -60,7 +60,8 @@ model User {
   NotificationTo            StoreNotification[]    @relation("NotificationTo")
   Store                     Store[]
   Orders                    StoreOrder[]           @relation("UserOrders")
-  Rsvp                      Rsvp[]
+  Reservations              Rsvp[]
+  RsvpCreator               Rsvp[]                 @relation("RsvpCreatedBy")
   CustomerCredits           CustomerCredit[]
   CustomerCreditLedger      CustomerCreditLedger[] @relation("UserCustomerCreditLogs")
   CustomerCreditLogsCreator CustomerCreditLedger[] @relation("UserCustomerCreditLogsCreator")
@@ -778,7 +779,7 @@ model Rsvp {
   id          String  @id @default(uuid())
   storeId     String
   alreadyPaid Boolean @default(false) //已付款
-  userId      String?
+  customerId  String?
   orderId     String?
   facilityId  String?
   numOfAdult  Int     @default(1)
@@ -798,14 +799,17 @@ model Rsvp {
 
   createdAt           BigInt
   updatedAt           BigInt
+  createdBy           String? // userId who created this reservation
   Store               Store                @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User                User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Customer            User?                @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  CreatedBy           User?                @relation("RsvpCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   Order               StoreOrder?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   Facility            StoreFacility?       @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   FacilityPricingRule FacilityPricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
-  @@index([userId])
+  @@index([customerId])
+  @@index([createdBy])
   @@index([orderId])
   @@index([facilityId])
   @@index([pricingRuleId])
