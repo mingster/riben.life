@@ -38,6 +38,7 @@ export default async function RechargePage(props: { params: Params }) {
 			useCustomerCredit: true,
 			creditMinPurchase: true,
 			creditMaxPurchase: true,
+			creditExchangeRate: true,
 			defaultCurrency: true,
 		},
 	});

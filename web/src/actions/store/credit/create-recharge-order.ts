@@ -20,7 +20,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 	.metadata({ name: "createRechargeOrder" })
 	.schema(createRechargeOrderSchema)
 	.action(async ({ parsedInput }) => {
-		const { storeId, amount } = parsedInput;
+		const { storeId, creditAmount } = parsedInput;
 
 		const session = await auth.api.getSession({
 			headers: await headers(),
@@ -40,6 +40,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 				useCustomerCredit: true,
 				creditMinPurchase: true,
 				creditMaxPurchase: true,
+				creditExchangeRate: true,
 				defaultCurrency: true,
 			},
 		});
@@ -49,24 +50,30 @@ export const createRechargeOrderAction = userRequiredActionClient
 		}
 
 		if (!store.useCustomerCredit) {
-			throw new SafeError("Customer credit system is not enabled for this store");
+			throw new SafeError(
+				"Customer credit system is not enabled for this store",
+			);
 		}
 
-		// Validate amount against min/max limits
+		// Validate credit amount against min/max limits (in credit points)
 		const minPurchase = Number(store.creditMinPurchase);
 		const maxPurchase = Number(store.creditMaxPurchase);
 
-		if (minPurchase > 0 && amount < minPurchase) {
-			throw new SafeError(
-				`Minimum purchase amount is ${minPurchase} ${store.defaultCurrency.toUpperCase()}`,
-			);
+		if (minPurchase > 0 && creditAmount < minPurchase) {
+			throw new SafeError(`Minimum credit purchase is ${minPurchase} points`);
 		}
 
-		if (maxPurchase > 0 && amount > maxPurchase) {
-			throw new SafeError(
-				`Maximum purchase amount is ${maxPurchase} ${store.defaultCurrency.toUpperCase()}`,
-			);
+		if (maxPurchase > 0 && creditAmount > maxPurchase) {
+			throw new SafeError(`Maximum credit purchase is ${maxPurchase} points`);
 		}
+
+		// Calculate dollar amount from credit amount
+		const creditExchangeRate = Number(store.creditExchangeRate);
+		if (creditExchangeRate <= 0) {
+			throw new SafeError("Credit exchange rate is not configured");
+		}
+
+		const dollarAmount = creditAmount * creditExchangeRate;
 
 		// Get default shipping method (required for StoreOrder)
 		const defaultShippingMethod = await sqlClient.shippingMethod.findFirst({
@@ -86,7 +93,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 				userId,
 				facilityId: undefined, // Optional field - use undefined instead of null
 				isPaid: false,
-				orderTotal: new Prisma.Decimal(amount),
+				orderTotal: new Prisma.Decimal(dollarAmount),
 				currency: store.defaultCurrency,
 				paymentMethodId: "stripe", // Default to stripe for credit recharge
 				shippingMethodId: defaultShippingMethod.id,
@@ -97,7 +104,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 				orderStatus: OrderStatus.Pending,
 				OrderNotes: {
 					create: {
-						note: `Credit recharge: ${amount} ${store.defaultCurrency.toUpperCase()}`,
+						note: `Credit recharge: ${creditAmount} points (${dollarAmount} ${store.defaultCurrency.toUpperCase()})`,
 						displayToCustomer: true,
 						createdAt: now,
 						updatedAt: now,
@@ -115,4 +122,3 @@ export const createRechargeOrderAction = userRequiredActionClient
 
 		return { order };
 	});
-

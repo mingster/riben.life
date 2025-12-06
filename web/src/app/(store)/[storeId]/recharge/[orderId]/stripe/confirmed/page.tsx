@@ -74,7 +74,9 @@ export default async function RechargeConfirmedPage(props: {
 				}
 
 				// Redirect to success page
-				redirect(`${getAbsoluteUrl()}/${params.storeId}/recharge/${params.orderId}/success`);
+				redirect(
+					`${getAbsoluteUrl()}/${params.storeId}/recharge/${params.orderId}/success`,
+				);
 			}
 		} catch (error) {
 			logger.error("Payment confirmation error", {
@@ -96,4 +98,3 @@ export default async function RechargeConfirmedPage(props: {
 		</Suspense>
 	);
 }
-

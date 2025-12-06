@@ -599,9 +599,9 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																		className={cn(
 																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors min-h-[44px] touch-manipulation",
 																			rsvp.confirmedByStore &&
-																			"border-l-2 border-l-green-500",
+																				"border-l-2 border-l-green-500",
 																			rsvp.alreadyPaid &&
-																			"border-l-2 border-l-blue-500",
+																				"border-l-2 border-l-blue-500",
 																		)}
 																	>
 																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
@@ -609,12 +609,13 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																				? rsvp.Customer.name
 																				: rsvp.Customer?.email
 																					? rsvp.Customer.email
-																					: `${rsvp.numOfAdult + rsvp.numOfChild} ${rsvp.numOfAdult +
-																						rsvp.numOfChild ===
-																						1
-																						? "guest"
-																						: "guests"
-																					}`}
+																					: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																							rsvp.numOfAdult +
+																								rsvp.numOfChild ===
+																							1
+																								? "guest"
+																								: "guests"
+																						}`}
 																		</div>
 																		{rsvp.Facility?.facilityName && (
 																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">

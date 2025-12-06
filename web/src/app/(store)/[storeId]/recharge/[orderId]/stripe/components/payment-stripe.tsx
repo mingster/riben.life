@@ -104,7 +104,8 @@ export function PaymentStripe({ order, storeId }: PaymentStripeProps) {
 		<div className="space-y-6">
 			<h1 className="text-2xl font-bold">Complete Payment</h1>
 			<p className="text-muted-foreground">
-				Pay {Number(order.orderTotal)} {order.currency.toUpperCase()} to recharge your credit
+				Pay {Number(order.orderTotal)} {order.currency.toUpperCase()} to
+				recharge your credit
 			</p>
 			{stripePromise && (
 				<Elements key={clientSecret} stripe={stripePromise} options={options}>
@@ -186,9 +187,10 @@ const StripePayButton: React.FC<{ orderId: string; storeId: string }> = ({
 				disabled={isProcessingPayment}
 				className="w-full h-10 min-h-[44px] sm:h-9 sm:min-h-0"
 			>
-				{isProcessingPayment ? t("processing") : t("payment_stripeForm_payButton")}
+				{isProcessingPayment
+					? t("processing")
+					: t("payment_stripeForm_payButton")}
 			</Button>
 		</div>
 	);
 };
-

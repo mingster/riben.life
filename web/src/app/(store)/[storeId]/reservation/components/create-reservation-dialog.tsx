@@ -25,6 +25,9 @@ interface CreateReservationDialogProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
+	creditServiceExchangeRate?: number | null;
 }
 
 export function CreateReservationDialog({
@@ -37,6 +40,9 @@ export function CreateReservationDialog({
 	open,
 	onOpenChange,
 	onReservationCreated,
+	useCustomerCredit = false,
+	creditExchangeRate = null,
+	creditServiceExchangeRate = null,
 }: CreateReservationDialogProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -71,6 +77,9 @@ export function CreateReservationDialog({
 						defaultRsvpTime={defaultRsvpTime}
 						onReservationCreated={handleReservationCreated}
 						hideCard={true}
+						useCustomerCredit={useCustomerCredit}
+						creditExchangeRate={creditExchangeRate}
+						creditServiceExchangeRate={creditServiceExchangeRate}
 					/>
 				</div>
 			</DialogContent>

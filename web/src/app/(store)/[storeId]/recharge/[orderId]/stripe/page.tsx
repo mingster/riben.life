@@ -59,4 +59,3 @@ export default async function RechargeStripePage(props: { params: Params }) {
 		</Container>
 	);
 }
-

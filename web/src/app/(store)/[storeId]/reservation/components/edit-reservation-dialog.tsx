@@ -28,6 +28,9 @@ interface EditReservationDialogProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	onReservationUpdated?: (updatedRsvp: Rsvp) => void;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
+	creditServiceExchangeRate?: number | null;
 }
 
 export function EditReservationDialog({
@@ -43,6 +46,9 @@ export function EditReservationDialog({
 	open,
 	onOpenChange,
 	onReservationUpdated,
+	useCustomerCredit = false,
+	creditExchangeRate = null,
+	creditServiceExchangeRate = null,
 }: EditReservationDialogProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -80,6 +86,9 @@ export function EditReservationDialog({
 						storeTimezone={storeTimezone}
 						onReservationUpdated={handleReservationUpdated}
 						hideCard={true}
+						useCustomerCredit={useCustomerCredit}
+						creditExchangeRate={creditExchangeRate}
+						creditServiceExchangeRate={creditServiceExchangeRate}
 					/>
 				</div>
 			</DialogContent>

@@ -7,4 +7,3 @@ export const processCreditTopUpAfterPaymentSchema = z.object({
 export type ProcessCreditTopUpAfterPaymentInput = z.infer<
 	typeof processCreditTopUpAfterPaymentSchema
 >;
-

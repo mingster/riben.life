@@ -32,6 +32,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 						id: true,
 						defaultCurrency: true,
 						level: true,
+						creditExchangeRate: true, // Need exchange rate to calculate credit amount
 					},
 				},
 				User: {
@@ -80,26 +81,35 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 			};
 		}
 
-		const rechargeAmount = Number(order.orderTotal);
+		const dollarAmount = Number(order.orderTotal);
+
+		// Calculate credit amount from dollar amount using exchange rate
+		const creditExchangeRate = Number(order.Store.creditExchangeRate);
+		if (creditExchangeRate <= 0) {
+			throw new SafeError("Credit exchange rate is not configured");
+		}
+
+		const creditAmount = dollarAmount / creditExchangeRate;
 
 		// Process credit top-up first (this creates CustomerCreditLedger entries)
+		// Note: processCreditTopUp expects credit amount (points), not dollar amount
 		const result = await processCreditTopUp(
 			order.storeId,
 			order.userId,
-			rechargeAmount,
+			creditAmount,
 			orderId, // referenceId
 			null, // creatorId (null for customer-initiated)
-			`Credit recharge: ${rechargeAmount} ${order.Store.defaultCurrency.toUpperCase()}`,
+			`Credit recharge: ${creditAmount} points (${dollarAmount} ${order.Store.defaultCurrency.toUpperCase()})`,
 		);
 
-		// Calculate fees
+		// Calculate fees (based on dollar amount, not credit amount)
 		let fee = 0;
 		let feeTax = 0;
 		let platformFee = 0;
 
 		if (order.PaymentMethod) {
 			fee = -Number(
-				Number(rechargeAmount) * Number(order.PaymentMethod.fee) +
+				Number(dollarAmount) * Number(order.PaymentMethod.fee) +
 					Number(order.PaymentMethod.feeAdditional),
 			);
 			feeTax = Number(fee * 0.05);
@@ -108,7 +118,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 		// Check if store is pro level
 		const isPro = (order.Store.level ?? 0) > 0;
 		if (!isPro) {
-			platformFee = -Number(Number(rechargeAmount) * 0.01);
+			platformFee = -Number(Number(dollarAmount) * 0.01);
 		}
 
 		// Get last ledger balance
@@ -152,16 +162,16 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 				data: {
 					storeId: order.storeId,
 					orderId: order.id,
-					amount: new Prisma.Decimal(rechargeAmount),
+					amount: new Prisma.Decimal(dollarAmount),
 					fee: new Prisma.Decimal(fee + feeTax),
 					platformFee: new Prisma.Decimal(platformFee),
 					currency: order.Store.defaultCurrency,
 					type: 2, // Credit recharge type
 					balance: new Prisma.Decimal(
-						balance + Number(rechargeAmount) + (fee + feeTax) + platformFee,
+						balance + dollarAmount + (fee + feeTax) + platformFee,
 					),
 					description: `Credit Recharge - Order #${order.orderNum || order.id}`,
-					note: `Customer credit top-up: ${rechargeAmount} ${order.Store.defaultCurrency.toUpperCase()}. Credit given: ${result.amount} + bonus ${result.bonus} = ${result.totalCredit} points.`,
+					note: `Customer credit top-up: ${creditAmount} points (${dollarAmount} ${order.Store.defaultCurrency.toUpperCase()}). Credit given: ${result.amount} + bonus ${result.bonus} = ${result.totalCredit} points.`,
 					availability: BigInt(availabilityDate.getTime()),
 					createdAt: getUtcNowEpoch(),
 				},

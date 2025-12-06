@@ -19,7 +19,13 @@ import {
 } from "@/components/ui/form";
 import { toastError } from "@/components/toaster";
 import { createRechargeOrderAction } from "@/actions/store/credit/create-recharge-order";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import type { Store } from "@/types";
 
 const rechargeFormSchema = z.object({
@@ -42,8 +48,12 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 	const router = useRouter();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const minPurchase = store.creditMinPurchase ? Number(store.creditMinPurchase) : 0;
-	const maxPurchase = store.creditMaxPurchase ? Number(store.creditMaxPurchase) : 0;
+	const minPurchase = store.creditMinPurchase
+		? Number(store.creditMinPurchase)
+		: 0;
+	const maxPurchase = store.creditMaxPurchase
+		? Number(store.creditMaxPurchase)
+		: 0;
 	const currency = store.defaultCurrency.toUpperCase();
 
 	const form = useForm<RechargeFormValues>({
@@ -93,7 +103,9 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 			} catch (error) {
 				toastError({
 					description:
-						error instanceof Error ? error.message : "Failed to create recharge order",
+						error instanceof Error
+							? error.message
+							: "Failed to create recharge order",
 				});
 			} finally {
 				setIsSubmitting(false);
@@ -155,7 +167,8 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("credit_recharge_amount")} <span className="text-destructive">*</span>
+										{t("credit_recharge_amount")}{" "}
+										<span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
 										<Input
@@ -179,7 +192,9 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 							disabled={isSubmitting}
 							className="w-full h-10 min-h-[44px] sm:h-9 sm:min-h-0"
 						>
-							{isSubmitting ? t("credit_processing") : t("credit_continue_to_payment")}
+							{isSubmitting
+								? t("credit_processing")
+								: t("credit_continue_to_payment")}
 						</Button>
 					</form>
 				</Form>
@@ -187,4 +202,3 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 		</Card>
 	);
 }
-

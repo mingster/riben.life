@@ -66,6 +66,9 @@ interface CustomerWeekViewCalendarProps {
 	storeTimezone?: string;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
 	isBlacklisted?: boolean;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
+	creditServiceExchangeRate?: number | null;
 }
 
 interface TimeRange {
@@ -313,6 +316,9 @@ export const CustomerWeekViewCalendar: React.FC<
 	storeTimezone = "Asia/Taipei",
 	onReservationCreated,
 	isBlacklisted = false,
+	useCustomerCredit = false,
+	creditExchangeRate = null,
+	creditServiceExchangeRate = null,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -882,6 +888,11 @@ export const CustomerWeekViewCalendar: React.FC<
 																	storeTimezone || "Asia/Taipei",
 																)}
 																onReservationCreated={handleReservationCreated}
+																useCustomerCredit={useCustomerCredit}
+																creditExchangeRate={creditExchangeRate}
+																creditServiceExchangeRate={
+																	creditServiceExchangeRate
+																}
 																trigger={
 																	<button
 																		type="button"

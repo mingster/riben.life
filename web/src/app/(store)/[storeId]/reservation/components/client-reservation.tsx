@@ -18,6 +18,9 @@ interface ReservationClientProps {
 	storeId: string;
 	storeTimezone: string;
 	isBlacklisted?: boolean;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
+	creditServiceExchangeRate?: number | null;
 }
 
 export function ReservationClient({
@@ -29,6 +32,9 @@ export function ReservationClient({
 	storeId,
 	storeTimezone,
 	isBlacklisted = false,
+	useCustomerCredit = false,
+	creditExchangeRate = null,
+	creditServiceExchangeRate = null,
 }: ReservationClientProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -94,6 +100,9 @@ export function ReservationClient({
 				storeTimezone={storeTimezone}
 				onReservationCreated={handleReservationCreated}
 				isBlacklisted={isBlacklisted}
+				useCustomerCredit={useCustomerCredit}
+				creditExchangeRate={creditExchangeRate}
+				creditServiceExchangeRate={creditServiceExchangeRate}
 			/>
 
 			{/* Edit Reservation Dialog */}
@@ -116,6 +125,9 @@ export function ReservationClient({
 						}
 					}}
 					onReservationUpdated={handleReservationUpdated}
+					useCustomerCredit={useCustomerCredit}
+					creditExchangeRate={creditExchangeRate}
+					creditServiceExchangeRate={creditServiceExchangeRate}
 				/>
 			)}
 		</div>

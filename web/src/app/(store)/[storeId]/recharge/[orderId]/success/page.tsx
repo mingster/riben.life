@@ -1,7 +1,13 @@
 import { redirect } from "next/navigation";
 import { sqlClient } from "@/lib/prismadb";
 import Container from "@/components/ui/container";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { transformPrismaDataForJson } from "@/utils/utils";
@@ -57,7 +63,10 @@ export default async function RechargeSuccessPage(props: { params: Params }) {
 						</p>
 					</div>
 					<div className="flex flex-col sm:flex-row gap-2 pt-4">
-						<Button asChild className="flex-1 h-10 min-h-[44px] sm:h-9 sm:min-h-0">
+						<Button
+							asChild
+							className="flex-1 h-10 min-h-[44px] sm:h-9 sm:min-h-0"
+						>
 							<Link href={`/${params.storeId}`}>Back to Store</Link>
 						</Button>
 						<Button
@@ -65,7 +74,9 @@ export default async function RechargeSuccessPage(props: { params: Params }) {
 							variant="outline"
 							className="flex-1 h-10 min-h-[44px] sm:h-9 sm:min-h-0"
 						>
-							<Link href="/account/subscription?tab=credits">View Credit Balance</Link>
+							<Link href="/account/subscription?tab=credits">
+								View Credit Balance
+							</Link>
 						</Button>
 					</div>
 				</CardContent>
@@ -73,4 +84,3 @@ export default async function RechargeSuccessPage(props: { params: Params }) {
 		</Container>
 	);
 }
-
