@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "bun --bun next dev -p 3001",
     "debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev -p 3001",
     "build:perf": "node ../bin/build-performance.js",
     "build:analyze": "ANALYZE=true bun run build",
@@ -13,7 +13,7 @@
     "build:production": "node scripts/build-optimize.js production",
     "build:fast-optimized": "node scripts/build-optimize.js fast",
     "build": "bun run postinstall && bun run next build",
-    "start": "next start -p 3000",
+    "start": "bun --bun next start -p 3001",
     "install:platform": "bun run ./bin/install.ts",
     "bio_lint": "npx biome check --fix ./src",
     "format": "npx biome format --write ./src",

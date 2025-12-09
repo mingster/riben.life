@@ -1,4 +1,4 @@
-# Depolyment - Postgres on Ubuntu
+~~# Depolyment - Postgres on Ubuntu
 
 ## Installation
 
@@ -21,7 +21,7 @@
 
     ```bash
     sudo apt update -y && sudo apt upgrade
-    sudo apt install wget ca-certificates
+    sudo apt install wget ca-certificates certbot
     ```
 
 1. Install PostgreSQL:
@@ -197,7 +197,7 @@
     hostssl    all     all     64.186.50.230/32       scram-sha-256
     ```
 
-    This setting allows PostgreSQL to accept connections from the specifed IP address.
+    This setting allows PostgreSQL to accept connections from the specified IP address.
 
 1. Restart PostgreSQL Service
 
@@ -206,13 +206,8 @@
     ``` bash
     sudo systemctl restart postgresql
     sudo systemctl status postgresql
-    ```
 
-    For RHEL systems:
-
-    ``` bash
-    sudo systemctl restart postgresql-18
-    sudo systemctl status postgresql-18
+    tail -f /var/log/postgresql/postgresql-18-main.log
     ```
 
 1. firewall
@@ -518,3 +513,4 @@ if you fuc'ed up the installation, you might [try this](https://neon.tech/postgr
 - [How to Install PostgreSQL on Ubuntu](https://docs.vultr.com/how-to-install-postgresql-on-ubuntu-24-04)
 - [Use SSL Encryption with PostgreSQL on Ubuntu](https://docs.vultr.com/use-ssl-encryption-with-postgresql-on-ubuntu-20-04)
 - [How To Set Up Continuous Archiving and Perform Point-In-Time-Recovery with PostgreSQL](https://www.digitalocean.com/community/tutorials/how-to-set-up-continuous-archiving-and-perform-point-in-time-recovery-with-postgresql-12-on-ubuntu-20-04)
+~~
