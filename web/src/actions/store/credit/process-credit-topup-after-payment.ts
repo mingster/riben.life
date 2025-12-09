@@ -143,13 +143,13 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 
 		// Mark order as paid and create StoreLedger entry in a transaction
 		await sqlClient.$transaction(async (tx) => {
-			// Mark order as paid
+			// Mark order as paid and completed
 			await tx.storeOrder.update({
 				where: { id: orderId },
 				data: {
 					isPaid: true,
 					paidDate: getUtcNowEpoch(),
-					orderStatus: OrderStatus.Processing,
+					orderStatus: OrderStatus.Completed,
 					paymentStatus: PaymentStatus.Paid,
 					paymentCost: fee + feeTax + platformFee,
 					checkoutAttributes: JSON.stringify({ creditRecharge: true }),

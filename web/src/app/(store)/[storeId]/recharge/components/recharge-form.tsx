@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,10 +29,10 @@ import {
 import type { Store } from "@/types";
 
 const rechargeFormSchema = z.object({
-	amount: z.coerce
+	creditAmount: z.coerce
 		.number()
-		.positive("Amount must be positive")
-		.min(1, "Amount must be at least 1"),
+		.positive("Credit amount must be positive")
+		.min(1, "Credit amount must be at least 1 point"),
 });
 
 type RechargeFormValues = z.infer<typeof rechargeFormSchema>;
@@ -54,31 +54,45 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 	const maxPurchase = store.creditMaxPurchase
 		? Number(store.creditMaxPurchase)
 		: 0;
+	const creditExchangeRate = store.creditExchangeRate
+		? Number(store.creditExchangeRate)
+		: 0;
 	const currency = store.defaultCurrency.toUpperCase();
 
 	const form = useForm<RechargeFormValues>({
 		resolver: zodResolver(rechargeFormSchema) as any,
 		defaultValues: {
-			amount: minPurchase > 0 ? minPurchase : 100,
+			creditAmount: minPurchase > 0 ? minPurchase : 100,
 		},
 	});
+
+	// Calculate dollar amount from credit amount
+	const creditAmount = form.watch("creditAmount");
+	const dollarAmount = useMemo(() => {
+		if (!creditAmount || creditAmount <= 0 || creditExchangeRate <= 0) return 0;
+		return creditAmount * creditExchangeRate;
+	}, [creditAmount, creditExchangeRate]);
 
 	const onSubmit = useCallback(
 		async (data: RechargeFormValues) => {
 			try {
 				setIsSubmitting(true);
 
-				// Validate against store limits
-				if (minPurchase > 0 && data.amount < minPurchase) {
+				// Validate against store limits (in credit points)
+				if (minPurchase > 0 && data.creditAmount < minPurchase) {
 					toastError({
-						description: `Minimum purchase amount is ${minPurchase} ${currency}`,
+						description: t("credit_min_purchase_error", {
+							points: minPurchase,
+						}),
 					});
 					return;
 				}
 
-				if (maxPurchase > 0 && data.amount > maxPurchase) {
+				if (maxPurchase > 0 && data.creditAmount > maxPurchase) {
 					toastError({
-						description: `Maximum purchase amount is ${maxPurchase} ${currency}`,
+						description: t("credit_max_purchase_error", {
+							points: maxPurchase,
+						}),
 					});
 					return;
 				}
@@ -86,7 +100,7 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 				// Create recharge order
 				const result = await createRechargeOrderAction({
 					storeId,
-					amount: data.amount,
+					creditAmount: data.creditAmount,
 				});
 
 				if (result?.serverError) {
@@ -114,56 +128,70 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 		[storeId, minPurchase, maxPurchase, currency, router],
 	);
 
-	// Preset amounts (common values)
-	const presetAmounts = [100, 500, 1000, 2000, 5000].filter((amount) => {
-		if (minPurchase > 0 && amount < minPurchase) return false;
-		if (maxPurchase > 0 && amount > maxPurchase) return false;
-		return true;
-	});
+	// Preset amounts: start with minPurchase, then 3 multiples
+	const presetAmounts = useMemo(() => {
+		if (minPurchase > 0) {
+			// Generate: minPurchase, minPurchase * 2, minPurchase * 3, minPurchase * 4
+			const amounts = [minPurchase, minPurchase * 2, minPurchase * 3].filter(
+				(amount) => {
+					// Filter out amounts that exceed maxPurchase if set
+					if (maxPurchase > 0 && amount > maxPurchase) return false;
+					return true;
+				},
+			);
+			return amounts;
+		}
+		// Fallback if no minPurchase: use default values
+		return [20, 40, 60, 80].filter((amount) => {
+			if (maxPurchase > 0 && amount > maxPurchase) return false;
+			return true;
+		});
+	}, [minPurchase, maxPurchase]);
 
 	return (
 		<Card>
 			<CardHeader>
 				<CardTitle>{t("credit_recharge")}</CardTitle>
-				<CardDescription>
-					{t("credit_recharge_description")}
-					{minPurchase > 0 && (
-						<span className="block mt-1">
-							{t("credit_min_purchase")}: {minPurchase} {currency}
-						</span>
-					)}
-					{maxPurchase > 0 && (
-						<span className="block">
-							{t("credit_max_purchase")}: {maxPurchase} {currency}
-						</span>
-					)}
-				</CardDescription>
+				<CardDescription></CardDescription>
 			</CardHeader>
 			<CardContent>
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 						{presetAmounts.length > 0 && (
 							<div className="space-y-2">
-								<FormLabel>{t("credit_quick_select")}</FormLabel>
+								<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+									{t("credit_quick_select")}
+								</label>
 								<div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-									{presetAmounts.map((amount) => (
-										<Button
-											key={amount}
-											type="button"
-											variant="outline"
-											onClick={() => form.setValue("amount", amount)}
-											className="h-10 min-h-[44px] sm:h-9 sm:min-h-0"
-										>
-											{amount} {currency}
-										</Button>
-									))}
+									{presetAmounts.map((amount) => {
+										const dollarAmount =
+											creditExchangeRate > 0 ? amount * creditExchangeRate : 0;
+										return (
+											<Button
+												key={amount}
+												type="button"
+												variant="outline"
+												onClick={() => form.setValue("creditAmount", amount)}
+												className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 flex flex-row"
+											>
+												<span className="font-semibold">
+													{amount} {t("points")}
+												</span>
+												{creditExchangeRate > 0 && (
+													<span className="text-xs text-muted-foreground">
+														{dollarAmount.toLocaleString()} {currency}
+													</span>
+												)}
+											</Button>
+										);
+									})}
 								</div>
 							</div>
 						)}
 
 						<FormField
 							control={form.control}
-							name="amount"
+							name="creditAmount"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
@@ -173,7 +201,7 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 									<FormControl>
 										<Input
 											type="number"
-											placeholder={`Enter amount (${currency})`}
+											placeholder={t("credit_enter_points")}
 											className="h-10 min-h-[44px] text-base sm:text-sm"
 											{...field}
 											onChange={(e) => {
@@ -182,6 +210,12 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 											}}
 										/>
 									</FormControl>
+									{dollarAmount > 0 && (
+										<p className="text-sm text-muted-foreground">
+											{t("credit_total_amount")}:{" "}
+											{dollarAmount.toLocaleString()} {currency}
+										</p>
+									)}
 									<FormMessage />
 								</FormItem>
 							)}

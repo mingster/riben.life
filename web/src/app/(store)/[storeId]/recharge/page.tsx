@@ -56,10 +56,6 @@ export default async function RechargePage(props: { params: Params }) {
 	return (
 		<Container className="bg-transparent">
 			<div className="space-y-6">
-				<Heading
-					title="Credit Recharge"
-					description="Top up your credit balance to use for future purchases"
-				/>
 				<Suspense fallback={<Loader />}>
 					<RechargeForm storeId={params.storeId} store={store as Store} />
 				</Suspense>
