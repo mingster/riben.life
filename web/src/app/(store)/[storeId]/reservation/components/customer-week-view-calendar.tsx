@@ -27,7 +27,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
 import { RsvpStatus } from "@/types/enum";
-import { ReservationDialog } from "./reservation-dialog";
+import { CreateReservationDialog } from "./create-reservation-dialog";
 import { EditReservationDialog } from "./edit-reservation-dialog";
 import {
 	getDateInTz,
@@ -66,6 +66,9 @@ interface CustomerWeekViewCalendarProps {
 	storeTimezone?: string;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
 	isBlacklisted?: boolean;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
+	creditServiceExchangeRate?: number | null;
 }
 
 interface TimeRange {
@@ -313,6 +316,9 @@ export const CustomerWeekViewCalendar: React.FC<
 	storeTimezone = "Asia/Taipei",
 	onReservationCreated,
 	isBlacklisted = false,
+	useCustomerCredit = false,
+	creditExchangeRate = null,
+	creditServiceExchangeRate = null,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -871,7 +877,7 @@ export const CustomerWeekViewCalendar: React.FC<
 														})
 													) : isAvailable ? (
 														canCreateReservation && storeId ? (
-															<ReservationDialog
+															<CreateReservationDialog
 																storeId={storeId}
 																rsvpSettings={rsvpSettings}
 																facilities={facilities}
@@ -882,6 +888,11 @@ export const CustomerWeekViewCalendar: React.FC<
 																	storeTimezone || "Asia/Taipei",
 																)}
 																onReservationCreated={handleReservationCreated}
+																useCustomerCredit={useCustomerCredit}
+																creditExchangeRate={creditExchangeRate}
+																creditServiceExchangeRate={
+																	creditServiceExchangeRate
+																}
 																trigger={
 																	<button
 																		type="button"

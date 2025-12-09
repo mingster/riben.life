@@ -92,7 +92,7 @@ export enum OrderStatus {
 	Pending = 10,
 	Processing = 20,
 	InShipping = 30,
-	Completed = 40, //store completed its process. Awaiting customer to comfirmed
+	Completed = 40, //store completed its process. Awaiting customer to confirmed
 	Confirmed = 50, //customer confirmed the order
 	Refunded = 60,
 	Voided = 90,
@@ -167,12 +167,12 @@ export enum ReturnStatus {
 }
 
 export enum RsvpStatus {
-	Pending = 0, //待確認/尚未付款
+	Pending = 0, //尚未付款
 	AlreadyPaid = 10, //已付款
 	StoreConfirmed = 20, //店家已確認預約
 	CustomerConfirmed = 30, //客戶已確認預約
-	Seated = 40, //已帶位
-	Completed = 50, //已完成
+	Seated = 40, //已帶位 checked-in
+	Completed = 50, //已完成 checkout
 	Cancelled = 60, //已取消
 	NoShow = 70, //未到
 }

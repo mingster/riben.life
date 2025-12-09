@@ -494,6 +494,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 					</Popover>
 
 					<Button
+						type="button"
 						variant="outline"
 						size="icon"
 						onClick={handlePreviousWeek}
@@ -502,6 +503,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						<IconChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
 					</Button>
 					<Button
+						type="button"
 						variant="outline"
 						onClick={handleToday}
 						className="h-10 min-h-[44px] px-3 text-sm sm:h-9 sm:min-h-0"
@@ -509,6 +511,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						{t("today")}
 					</Button>
 					<Button
+						type="button"
 						variant="outline"
 						size="icon"
 						onClick={handleNextWeek}

@@ -104,6 +104,9 @@ export const createReservationAction = baseClient
 		// Use session userId if available, otherwise use provided customerId
 		const finalCustomerId = sessionUserId || customerId || null;
 
+		// Get current user ID for createdBy field (if logged in)
+		const createdBy = sessionUserId || null;
+
 		// Check if user is blacklisted (only for logged-in users)
 		if (finalCustomerId) {
 			const isBlacklisted = await sqlClient.rsvpBlacklist.findFirst({
@@ -150,12 +153,14 @@ export const createReservationAction = baseClient
 					alreadyPaid: false,
 					confirmedByStore: false,
 					confirmedByCustomer: false,
+					createdBy,
 					createdAt: getUtcNowEpoch(),
 					updatedAt: getUtcNowEpoch(),
 				},
 				include: {
 					Store: true,
 					Customer: true,
+					CreatedBy: true,
 					Facility: true,
 				},
 			});

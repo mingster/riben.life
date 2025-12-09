@@ -49,6 +49,7 @@ import {
 } from "@/utils/datetime-utils";
 import type { RsvpSettings, StoreSettings } from "@prisma/client";
 import { SlotPicker } from "./slot-picker";
+import { Separator } from "@/components/ui/separator";
 
 interface ReservationFormProps {
 	storeId: string;
@@ -66,6 +67,10 @@ interface ReservationFormProps {
 	// Common props
 	hideCard?: boolean;
 	storeTimezone?: string;
+	// Store credit info
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
+	creditServiceExchangeRate?: number | null;
 }
 
 export function ReservationForm({
@@ -81,6 +86,9 @@ export function ReservationForm({
 	onReservationUpdated,
 	hideCard = false,
 	storeTimezone = "Asia/Taipei",
+	useCustomerCredit = false,
+	creditExchangeRate = null,
+	creditServiceExchangeRate = null,
 }: ReservationFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const params = useParams();
@@ -282,7 +290,7 @@ export function ReservationForm({
 		if (!isEditMode && rsvpSettings && !rsvpSettings.acceptReservation) {
 			toastError({
 				title: t("Error"),
-				description: t("Reservations are not currently accepted"),
+				description: t("rsvp_not_currently_accepted"),
 			});
 			return;
 		}
@@ -614,6 +622,60 @@ export function ReservationForm({
 						)}
 					/>
 
+					<Separator />
+					<div className="space-y-2">
+						<p className="text-sm font-medium">
+							{t("rsvp_rules_and_restrictions")}
+						</p>
+						<ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+							{rsvpSettings?.prepaidRequired &&
+								rsvpSettings?.minPrepaidAmount && (
+									<li>
+										{(() => {
+											const minPrepaidAmount = Number(
+												rsvpSettings.minPrepaidAmount,
+											);
+											let creditPoints: number | null = null;
+
+											// Calculate credit points based on reservation duration
+											if (
+												useCustomerCredit &&
+												creditServiceExchangeRate &&
+												creditServiceExchangeRate > 0
+											) {
+												// Calculate from duration: creditPoints = duration (minutes) / creditServiceExchangeRate
+												const duration = rsvpSettings?.defaultDuration || 60; // Default to 60 minutes
+												creditPoints = duration / creditServiceExchangeRate;
+											} else if (
+												useCustomerCredit &&
+												creditExchangeRate &&
+												creditExchangeRate > 0
+											) {
+												// Fallback: minPrepaidAmount is in dollars, convert to credit points
+												creditPoints = minPrepaidAmount / creditExchangeRate;
+											} else {
+												// minPrepaidAmount is already in credit points
+												creditPoints = minPrepaidAmount;
+											}
+
+											const points = creditPoints
+												? Math.ceil(creditPoints)
+												: minPrepaidAmount;
+											return t("rsvp_prepaid_required", { points });
+										})()}
+									</li>
+								)}
+
+							{rsvpSettings?.canCancel && (
+								<li>
+									{t("rsvp_cancellation_policy", {
+										hours: rsvpSettings?.cancelHours ?? 24,
+									})}
+								</li>
+							)}
+						</ol>
+					</div>
+
 					{/* Submit Button */}
 					<Button
 						type="submit"
@@ -636,12 +698,12 @@ export function ReservationForm({
 
 					{requiresLogin && (
 						<p className="text-sm text-muted-foreground text-center">
-							{t("Please_sign_in_to_make_reservation")}
+							{t("rsvp_please_sign_in")}
 						</p>
 					)}
 					{!isEditMode && !acceptReservation && (
 						<p className="text-sm text-destructive text-center">
-							{t("Reservations are not currently accepted")}
+							{t("rsvp_not_currently_accepted")}
 						</p>
 					)}
 				</form>

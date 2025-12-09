@@ -11,6 +11,8 @@ import {
 	dateToEpoch,
 	convertDateToUtc,
 } from "@/utils/datetime-utils";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { updateRsvpSchema } from "./update-rsvp.validation";
 
 export const updateRsvpAction = storeActionClient
@@ -37,12 +39,18 @@ export const updateRsvpAction = storeActionClient
 
 		const rsvp = await sqlClient.rsvp.findUnique({
 			where: { id },
-			select: { id: true, storeId: true },
+			select: { id: true, storeId: true, createdBy: true },
 		});
 
 		if (!rsvp || rsvp.storeId !== storeId) {
 			throw new SafeError("Rsvp not found");
 		}
+
+		// Get current user ID for createdBy field (only set if currently null)
+		const session = await auth.api.getSession({
+			headers: await headers(),
+		});
+		const createdBy = session?.user?.id || rsvp.createdBy || null;
 
 		// Fetch store to get timezone before converting dates
 		const store = await sqlClient.store.findUnique({
@@ -126,10 +134,12 @@ export const updateRsvpAction = storeActionClient
 							? facilityCost
 							: null,
 					pricingRuleId: pricingRuleId || null,
+					createdBy: createdBy || undefined, // Only update if we have a value
 				},
 				include: {
 					Store: true,
 					Customer: true,
+					CreatedBy: true,
 					Order: true,
 					Facility: true,
 					FacilityPricingRule: true,

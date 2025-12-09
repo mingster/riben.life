@@ -15,7 +15,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { StoreFacility, User, Rsvp } from "@/types";
 import type { RsvpSettings } from "@prisma/client";
 
-interface ReservationDialogProps {
+interface CreateReservationDialogProps {
 	storeId: string;
 	rsvpSettings: RsvpSettings | null;
 	facilities: StoreFacility[];
@@ -25,9 +25,12 @@ interface ReservationDialogProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
+	creditServiceExchangeRate?: number | null;
 }
 
-export function ReservationDialog({
+export function CreateReservationDialog({
 	storeId,
 	rsvpSettings,
 	facilities,
@@ -37,7 +40,10 @@ export function ReservationDialog({
 	open,
 	onOpenChange,
 	onReservationCreated,
-}: ReservationDialogProps) {
+	useCustomerCredit = false,
+	creditExchangeRate = null,
+	creditServiceExchangeRate = null,
+}: CreateReservationDialogProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const [internalOpen, setInternalOpen] = useState(false);
@@ -71,6 +77,9 @@ export function ReservationDialog({
 						defaultRsvpTime={defaultRsvpTime}
 						onReservationCreated={handleReservationCreated}
 						hideCard={true}
+						useCustomerCredit={useCustomerCredit}
+						creditExchangeRate={creditExchangeRate}
+						creditServiceExchangeRate={creditServiceExchangeRate}
 					/>
 				</div>
 			</DialogContent>
