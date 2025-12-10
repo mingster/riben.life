@@ -197,5 +197,5 @@ export const Role = {
 	owner: "owner",
 	staff: "staff",
 	storeAdmin: "storeAdmin",
-	sysAdmin: "sysAdmin",
+	admin: "admin",
 } as const;

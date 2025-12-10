@@ -18,7 +18,7 @@ enum Role {
   owner
   staff
   storeAdmin
-  sysAdmin
+  admin
 }
 
 model User {

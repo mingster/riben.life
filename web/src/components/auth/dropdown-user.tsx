@@ -102,7 +102,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 								</Link>
 							</DropdownMenuItem>
 
-							{(user.role === "sysAdmin" ||
+							{(user.role === "admin" ||
 								user.role === "storeAdmin" ||
 								user.role === "staff" ||
 								user.role === "owner") && (
@@ -114,7 +114,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 								</DropdownMenuItem>
 							)}
 
-							{user.role === "sysAdmin" && (
+							{user.role === "admin" && (
 								<>
 									<DropdownMenuItem className="cursor-pointer" asChild>
 										<Link href="/sysAdmin">

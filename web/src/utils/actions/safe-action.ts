@@ -86,7 +86,7 @@ export const emailRequiredActionClient = baseClient
 	});
 
 // this action allows only store members with owner, storeAdmin, and staff roles to access.
-// Bypass check for sysAdmin users.
+// Bypass check for admin users.
 // Requires storeId in the action input schema
 export const storeActionClient = baseClient
 	.bindArgsSchemas<[storeId: z.ZodString]>([z.string()])
@@ -124,9 +124,9 @@ export const storeActionClient = baseClient
 		});
 		if (!session?.user) throw new SafeError("Unauthorized");
 
-		// sysAdmin users can access any store
-		if (session.user.role === Role.sysAdmin) {
-			logger.info("access granted - user is a sysAdmin", {
+		// admin users can access any store
+		if (session.user.role === Role.admin) {
+			logger.info("access granted - user is an admin", {
 				metadata: {
 					userId: session.user.id,
 					userRole: session.user.role,
