@@ -59,6 +59,11 @@ export const StoreModal: React.FC = () => {
 
 	const storeName = form.watch("name");
 
+	const handleCancel = () => {
+		storeModal.onClose();
+		router.push("/");
+	};
+
 	// Debounced validation to check if store name (slug) is taken
 	useEffect(() => {
 		// Clear previous timer
@@ -298,13 +303,9 @@ export const StoreModal: React.FC = () => {
 
 								<div className="flex w-full items-center justify-end space-x-2 pt-6">
 									<Button
-										disabled={
-											loading ||
-											!form.formState.isValid ||
-											form.formState.isSubmitting
-										}
+										disabled={loading || form.formState.isSubmitting}
 										variant="outline"
-										onClick={storeModal.onClose}
+										onClick={handleCancel}
 									>
 										{t("cancel")}
 									</Button>
