@@ -364,6 +364,7 @@ export function AdminEditRsvpDialog({
 	const rsvpTime = form.watch("rsvpTime");
 
 	// Filter facilities based on rsvpTime
+	// When editing, always include the current facility even if it's not available at the selected time
 	const availableFacilities = useMemo(() => {
 		if (!storeFacilities) {
 			return [];
@@ -371,13 +372,41 @@ export function AdminEditRsvpDialog({
 		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
 			return storeFacilities;
 		}
-		return storeFacilities.filter((facility: StoreFacility) =>
+		const filtered = storeFacilities.filter((facility: StoreFacility) =>
 			isFacilityAvailableAtTime(facility, rsvpTime, storeTimezone),
 		);
-	}, [storeFacilities, rsvpTime, storeTimezone, isFacilityAvailableAtTime]);
+
+		// When editing, ensure the current facility is included even if filtered out
+		if (isEditMode && rsvp?.facilityId) {
+			const currentFacility = storeFacilities.find(
+				(f: StoreFacility) => f.id === rsvp.facilityId,
+			);
+			if (
+				currentFacility &&
+				!filtered.find((f: StoreFacility) => f.id === currentFacility.id)
+			) {
+				filtered.push(currentFacility);
+			}
+		}
+
+		return filtered;
+	}, [
+		storeFacilities,
+		rsvpTime,
+		storeTimezone,
+		isFacilityAvailableAtTime,
+		isEditMode,
+		rsvp?.facilityId,
+	]);
 
 	// Clear facility selection if it's no longer available
+	// Skip this when editing to preserve the original facility selection
 	useEffect(() => {
+		// Don't clear facility when editing - allow user to keep original selection
+		if (isEditMode) {
+			return;
+		}
+
 		const currentFacilityId = form.getValues("facilityId");
 		if (
 			currentFacilityId &&
@@ -390,7 +419,7 @@ export function AdminEditRsvpDialog({
 				availableFacilities.length > 0 ? availableFacilities[0].id : "",
 			);
 		}
-	}, [availableFacilities, form]);
+	}, [availableFacilities, form, isEditMode]);
 
 	// Auto-calculate facilityCost when facility or time changes
 	useEffect(() => {
