@@ -181,7 +181,6 @@ export const auth = betterAuth({
 			stripeCustomerId: {
 				type: "string",
 				required: false,
-				defaultValue: "",
 				input: false, // don't allow user to set role
 			},
 		},
