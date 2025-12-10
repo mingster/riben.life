@@ -46,6 +46,66 @@ bun run install.ts
 - Stripe products are only created if they don't exist or are invalid
 - The script will exit with code 0 on success, 1 on failure
 
+## Deployment Scripts
+
+### deploy-ubuntu.sh
+
+Deployment script for Ubuntu platform. Run this script directly on the Ubuntu server.
+
+**Usage:**
+```bash
+# Deploy production (default branch: main)
+sudo ./bin/deploy-ubuntu.sh production
+
+# Deploy staging with specific branch
+sudo ./bin/deploy-ubuntu.sh staging develop
+
+# Deploy with custom branch
+sudo ./bin/deploy-ubuntu.sh production feature-branch
+```
+
+**What it does:**
+1. Creates backup of current deployment
+2. Updates code from git (pulls latest changes)
+3. Installs dependencies with bun
+4. Generates Prisma client
+5. Builds the Next.js application
+6. Restarts PM2 process
+7. Performs health check
+8. Rolls back on failure
+
+**Prerequisites:**
+- Must be run as root or with sudo
+- Requires: bun, pm2, git
+- App must be cloned to `/var/www/riben.life`
+
+### deploy-ubuntu-remote.sh
+
+Remote deployment script. Run this from your local machine to deploy to a remote Ubuntu server.
+
+**Usage:**
+```bash
+# Deploy to production (default: root@mx2.mingster.com)
+./bin/deploy-ubuntu-remote.sh production
+
+# Deploy to staging with specific branch
+./bin/deploy-ubuntu-remote.sh staging develop
+
+# Deploy to custom server
+./bin/deploy-ubuntu-remote.sh production main user@example.com
+```
+
+**What it does:**
+1. Checks SSH connection to remote server
+2. Uploads deployment script to server
+3. Executes deployment on remote server
+4. Shows deployment progress and logs
+
+**Prerequisites:**
+- SSH access to remote server (key-based authentication)
+- Remote server must have: bun, pm2, git installed
+- App must be cloned to `/var/www/riben.life` on remote server
+
 ## Other Scripts
 
 - `pg_backup*.sh` - PostgreSQL backup scripts
