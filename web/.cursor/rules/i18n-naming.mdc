@@ -10,13 +10,19 @@ This rule defines the standard naming convention for all translation keys in `we
 ## Core Principles
 
 1. **Use snake_case for ALL translation keys** (lowercase with underscores) - This is the primary rule
-2. **All parts of the key use snake_case** - No PascalCase in translation keys
+2. **All parts of the key use snake_case** - No PascalCase or camelCase in translation keys
 3. **Use descriptive, hierarchical names** that reflect the feature/domain
 4. **Group related keys** using prefixes and suffixes
 5. **Be consistent** with existing patterns in the codebase
 6. **Keep keys concise** but meaningful
 
-**Important**: While some legacy keys may use PascalCase for DOMAIN/ENTITY (e.g., `create_Reservation`, `Announcement_created`), all NEW translation keys must use snake_case throughout (e.g., `edit_reservation`, `reservation_updated`).
+**CRITICAL RULE**: ALL new translation keys MUST use snake_case throughout. This means:
+- ✅ `store_settings_use_order_system` - CORRECT
+- ❌ `StoreSettings_UseOrderSystem` - WRONG (PascalCase)
+- ❌ `storeSettings_useOrderSystem` - WRONG (camelCase)
+- ❌ `StoreSettings_useOrderSystem` - WRONG (mixed case)
+
+**Important**: While some legacy keys may use PascalCase or camelCase (e.g., `StoreSettings_Use_Customer_Credit`, `StoreSettings_acceptAnonymousOrder`), all NEW translation keys must use snake_case throughout (e.g., `store_settings_use_order_system`, `store_settings_accept_anonymous_order`).
 
 ## Naming Structure
 
@@ -107,25 +113,30 @@ This rule defines the standard naming convention for all translation keys in `we
 
 ### 4. Form Fields and Labels
 
-**Pattern:** `[ENTITY]_[FIELD]` or `[DOMAIN]_[FIELD]`
+**Pattern:** `[DOMAIN]_[FIELD]` (ALL in snake_case)
 
-**Examples:**
+**CRITICAL**: All field names must use snake_case, even if they represent multi-word concepts.
 
-- `Facility_Name` - "Facility Name"
-- `Facility_Seats` - "Facility Seats"
-- `Facility_Default_Cost` - "Facility Default Cost"
-- `StoreSettings_Use_Customer_Credit` - "Use Customer Credit"
-- `StoreSettings_Credit_Exchange_Rate` - "Credit Exchange Rate"
-- `StoreSettings_Credit_Service_Exchange_Rate` - "Credit Service Exchange Rate"
-- `StoreSettings_Credit_Max_Purchase` - "Credit Max Purchase"
-- `StoreSettings_Credit_Min_Purchase` - "Credit Min Purchase"
-- `StoreSettings_Credit_Expiration` - "Credit Expiration"
+**Examples (snake_case - REQUIRED for new keys):**
+
+- `store_settings_use_order_system` - "Use Order System" ✅ CORRECT
+- `store_settings_use_business_hours` - "Use Business Hours" ✅ CORRECT
+- `store_settings_accept_anonymous_order` - "Accept Anonymous Order" ✅ CORRECT
+- `facility_name` - "Facility Name" ✅ CORRECT
+- `facility_seats` - "Facility Seats" ✅ CORRECT
+- `facility_default_cost` - "Facility Default Cost" ✅ CORRECT
+
+**Legacy examples (PascalCase/camelCase - should be migrated to snake_case):**
+
+- `StoreSettings_Use_Customer_Credit` - Legacy, use `store_settings_use_customer_credit` instead
+- `StoreSettings_useBusinessHours` - Legacy, use `store_settings_use_business_hours` instead
+- `Facility_Name` - Legacy, use `facility_name` instead
 
 **Field Descriptions:**
 
-- `[ENTITY]_[FIELD]_descr` - Field description/help text
-- `StoreSettings_Use_Customer_Credit_descr` - Description for "Use Customer Credit" field
-- `StoreSettings_Credit_Exchange_Rate_descr` - Description for exchange rate field
+- `[DOMAIN]_[FIELD]_descr` - Field description/help text (ALL snake_case)
+- `store_settings_use_order_system_descr` - Description for "Use Order System" field ✅ CORRECT
+- `store_settings_use_customer_credit_descr` - Description for "Use Customer Credit" field ✅ CORRECT
 
 ### 5. Tab Navigation
 
@@ -447,15 +458,25 @@ When refactoring or moving features:
 
 ## Summary
 
-- **Format**: `snake_case` for ALL translation keys (lowercase with underscores)
-- **Structure**: `[domain]_[entity]_[context]_[modifier]`
+- **Format**: `snake_case` for ALL translation keys (lowercase with underscores) - **MANDATORY**
+- **Structure**: `[domain]_[entity]_[context]_[modifier]` (ALL parts in snake_case)
 - **Case Rules**:
-  - **ALL components**: snake_case (e.g., `edit_reservation`, `reservation_updated`, `announcement_mgmt`)
-  - **Legacy keys**: Some may use PascalCase (e.g., `create_Reservation`, `Announcement_created`) - migrate to snake_case when updating
-- **Grouping**: Use prefixes to group related keys
-- **Consistency**: Follow existing patterns in the codebase, but prefer snake_case for new keys
+  - **ALL components MUST use snake_case**: `store_settings_use_order_system` ✅
+  - **NO PascalCase**: `StoreSettings_UseOrderSystem` ❌
+  - **NO camelCase**: `storeSettings_useOrderSystem` ❌
+  - **NO mixed case**: `StoreSettings_use_order_system` ❌
+  - **Legacy keys**: Some may use PascalCase/camelCase (e.g., `StoreSettings_Use_Customer_Credit`, `StoreSettings_useBusinessHours`) - migrate to snake_case when updating
+- **Grouping**: Use prefixes to group related keys (prefixes also in snake_case)
+- **Consistency**: ALL new keys must use snake_case throughout
 - **Descriptiveness**: Use clear, meaningful names that reflect the feature
 
-**Key Principle**: ALL translation keys use snake_case. No PascalCase in new keys.
+**CRITICAL RULE**: ALL new translation keys MUST use snake_case throughout. This is not optional.
+
+**Examples:**
+- ✅ `store_settings_use_order_system` - CORRECT
+- ✅ `store_settings_use_order_system_descr` - CORRECT
+- ❌ `StoreSettings_useOrderSystem` - WRONG (mixed case)
+- ❌ `storeSettings_useOrderSystem` - WRONG (camelCase)
+- ❌ `StoreSettings_Use_Order_System` - WRONG (PascalCase)
 
 Following these conventions ensures translation keys are predictable, maintainable, and easy to discover.

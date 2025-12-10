@@ -601,6 +601,8 @@ model Store {
 
   useBusinessHours Boolean @default(true)
 
+  useOrderSystem         Boolean @default(false) //使用訂單系統
+
   useCustomerCredit         Boolean @default(false) //使用儲值系統
   creditExchangeRate        Decimal @default(0) // 1點 = ??元
   creditServiceExchangeRate Decimal @default(0) // 1點 = ??分鍾的服務

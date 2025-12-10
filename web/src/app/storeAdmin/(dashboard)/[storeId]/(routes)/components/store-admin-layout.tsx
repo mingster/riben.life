@@ -97,7 +97,9 @@ function StoreAdminHeader() {
 					className="mx-1.5 hidden sm:block data-[orientation=vertical]:h-4 sm:mx-2"
 				/>
 				<div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-					<h1 className="text-sm font-medium truncate sm:text-base">{title}</h1>
+					<h1 className="text-sm font-medium truncate sm:text-base">
+						<Link href={`/storeAdmin/${store.id}`}>{title}</Link>
+					</h1>
 					<Button
 						variant="outline"
 						size="sm"

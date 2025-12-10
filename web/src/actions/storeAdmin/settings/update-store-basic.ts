@@ -28,6 +28,7 @@ export const updateStoreBasicAction = storeActionClient
 			businessHours = "",
 			requireSeating = false,
 			requirePrepaid = true,
+			useOrderSystem = false,
 		} = parsedInput;
 
 		const session = await auth.api.getSession({
@@ -57,6 +58,7 @@ export const updateStoreBasicAction = storeActionClient
 				useBusinessHours,
 				requireSeating,
 				requirePrepaid,
+				useOrderSystem,
 				updatedAt: getUtcNowEpoch(),
 			},
 		});

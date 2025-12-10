@@ -14,6 +14,7 @@ export const updateStoreBasicSchema = z.object({
 	businessHours: z.string().optional().nullable().default(""),
 	requireSeating: z.boolean().optional().default(false),
 	requirePrepaid: z.boolean().optional().default(true),
+	useOrderSystem: z.boolean().optional().default(false),
 });
 
 export type UpdateStoreBasicInput = z.infer<typeof updateStoreBasicSchema>;
