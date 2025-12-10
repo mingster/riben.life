@@ -31,6 +31,13 @@ export const auth = betterAuth({
 	database: prismaAdapter(prisma, {
 		provider: "postgresql", // or "mysql", "postgresql", ...etc
 	}),
+	roles: [
+		{ name: "user" },
+		{ name: "owner" },
+		{ name: "staff" },
+		{ name: "storeAdmin" },
+		{ name: "admin" },
+	],
 	session: {
 		expiresIn: 60 * 60 * 24 * 365, // 365 days
 		updateAge: 60 * 60 * 24, // 1 day (every 1 day the session expiration is updated)
@@ -145,8 +152,8 @@ export const auth = betterAuth({
 		*/
 		organization(),
 		admin({
-			adminRoles: ["sysAdmin"],
-			//sysAdminUserIds: ["Nz6WKKKMKvadXXmgZgaHiqIYOuXr31w1"],
+			adminRoles: ["admin"],
+			//adminUserIds: ["Nz6WKKKMKvadXXmgZgaHiqIYOuXr31w1"],
 			//impersonationSessionDuration: 60 * 60 * 24, // 1 day
 		}),
 	],
@@ -181,7 +188,6 @@ export const auth = betterAuth({
 			stripeCustomerId: {
 				type: "string",
 				required: false,
-				defaultValue: "",
 				input: false, // don't allow user to set role
 			},
 		},

@@ -110,6 +110,35 @@ export default async function RootLayout({
 
 	return (
 		<html lang={htmlLang} suppressHydrationWarning>
+			<head>
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `
+							(function() {
+								try {
+									var theme = localStorage.getItem('theme');
+									var isDark = false;
+									
+									if (theme === 'dark') {
+										isDark = true;
+									} else if (theme === 'light') {
+										isDark = false;
+									} else if (theme === 'system' || !theme) {
+										// Use system preference or default to dark
+										isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+									}
+									
+									if (isDark) {
+										document.documentElement.classList.add('dark');
+									} else {
+										document.documentElement.classList.remove('dark');
+									}
+								} catch (e) {}
+							})();
+						`,
+					}}
+				/>
+			</head>
 			<body className={"antialiased"}>
 				<NextThemeProvider
 					attribute="class"

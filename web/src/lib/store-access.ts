@@ -43,16 +43,16 @@ export async function checkStoreOwnership(
 		return null;
 	}
 
-	// sysAdmin users can access any store
+	// admin users can access any store
 	// storeAdmin users can access their own store
 	// staff users can access their own store
 	// Check both string and enum values for compatibility
-	const isSysAdmin =
-		userRole === Role.sysAdmin ||
-		userRole === "sysAdmin" ||
-		String(userRole) === "sysAdmin";
+	const isAdmin =
+		userRole === Role.admin ||
+		userRole === "admin" ||
+		String(userRole) === "admin";
 
-	const where = isSysAdmin ? { id: storeId } : { id: storeId, ownerId: userId };
+	const where = isAdmin ? { id: storeId } : { id: storeId, ownerId: userId };
 
 	const store = await sqlClient.store.findFirst({
 		where,

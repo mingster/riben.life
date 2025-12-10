@@ -59,6 +59,7 @@ const formSchema = z.object({
 	useBusinessHours: z.boolean().optional().default(true),
 	autoAcceptOrder: z.boolean().optional().default(false),
 	isOpen: z.boolean().optional().default(false),
+	useOrderSystem: z.boolean().optional().default(false),
 });
 
 type formValues = z.infer<typeof formSchema>;
@@ -228,6 +229,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 				businessHours: data.businessHours ?? "",
 				requireSeating: data.requireSeating ?? false,
 				requirePrepaid: data.requirePrepaid ?? true,
+				useOrderSystem: data.useOrderSystem ?? false,
 			};
 
 			const result = await updateStoreBasicAction(
@@ -552,6 +554,29 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 												</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
 													{t("StoreSettings_autoAcceptOrder_descr")}
+												</FormDescription>
+											</div>
+											<FormControl>
+												<Switch
+													disabled={loading || form.formState.isSubmitting}
+													checked={field.value}
+													onCheckedChange={field.onChange}
+												/>
+											</FormControl>
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="useOrderSystem"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+											<div className="space-y-0.5">
+												<FormLabel>
+													{t("StoreSettings_use_order_system")}
+												</FormLabel>
+												<FormDescription className="text-xs font-mono text-gray-500">
+													{t("StoreSettings_use_order_system_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>

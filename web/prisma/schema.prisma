@@ -18,7 +18,7 @@ enum Role {
   owner
   staff
   storeAdmin
-  sysAdmin
+  admin
 }
 
 model User {
@@ -600,6 +600,8 @@ model Store {
   requirePrepaid Boolean @default(false) //先付款再出貨
 
   useBusinessHours Boolean @default(true)
+
+  useOrderSystem         Boolean @default(false) //使用訂單系統
 
   useCustomerCredit         Boolean @default(false) //使用儲值系統
   creditExchangeRate        Decimal @default(0) // 1點 = ??元

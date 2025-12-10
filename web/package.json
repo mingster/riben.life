@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "bun --bun next dev -p 3001",
     "debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' next dev -p 3001",
     "build:perf": "node ../bin/build-performance.js",
     "build:analyze": "ANALYZE=true bun run build",
@@ -13,7 +13,7 @@
     "build:production": "node scripts/build-optimize.js production",
     "build:fast-optimized": "node scripts/build-optimize.js fast",
     "build": "bun run postinstall && bun run next build",
-    "start": "next start -p 3000",
+    "start": "bun --bun next start -p 3001",
     "install:platform": "bun run ./bin/install.ts",
     "bio_lint": "npx biome check --fix ./src",
     "format": "npx biome format --write ./src",
@@ -29,8 +29,8 @@
     "optimize:cache": "node scripts/cache-optimize.js"
   },
   "dependencies": {
-    "@better-auth/passkey": "^1.4.5",
-    "@better-auth/stripe": "^1.4.5",
+    "@better-auth/passkey": "^1.4.6",
+    "@better-auth/stripe": "^1.4.6",
     "@daveyplate/better-auth-ui": "^3.2.13",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
@@ -78,7 +78,7 @@
     "ai": "5.0.93",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
-    "better-auth": "^1.4.5",
+    "better-auth": "^1.4.6",
     "better-auth-harmony": "^1.2.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -168,7 +168,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
     "prisma": "^6.19.0",
-    "shadcn": "^3.5.1",
+    "shadcn": "^3.5.2",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.49.0"
