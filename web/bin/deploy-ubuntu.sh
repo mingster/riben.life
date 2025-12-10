@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Deployment script for Ubuntu platform
 # Usage: ./bin/deploy-ubuntu.sh [production|staging] [branch]
@@ -39,36 +39,6 @@ check_permissions() {
         error "This script must be run as root or with sudo"
         exit 1
     fi
-}
-
-# Check if required commands exist
-check_dependencies() {
-    log "Checking dependencies..."
-    
-    local missing_deps=()
-    
-    if ! command -v bun &> /dev/null; then
-        missing_deps+=("bun")
-    fi
-    
-    if ! command -v pm2 &> /dev/null; then
-        missing_deps+=("pm2")
-    fi
-    
-    if ! command -v git &> /dev/null; then
-        missing_deps+=("git")
-    fi
-    
-    if [ ${#missing_deps[@]} -ne 0 ]; then
-        error "Missing dependencies: ${missing_deps[*]}"
-        error "Please install them first:"
-        error "  - bun: curl -fsSL https://bun.sh/install | bash"
-        error "  - pm2: bun install -g pm2"
-        error "  - git: sudo apt install git"
-        exit 1
-    fi
-    
-    log "All dependencies are installed"
 }
 
 # Create backup of current deployment
@@ -238,7 +208,6 @@ main() {
     
     # Pre-deployment checks
     check_permissions
-    check_dependencies
     
     # Verify app directory exists
     if [ ! -d "${APP_DIR}" ]; then

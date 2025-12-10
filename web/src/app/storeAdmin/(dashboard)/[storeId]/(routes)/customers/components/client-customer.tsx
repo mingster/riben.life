@@ -7,7 +7,9 @@ import {
 	IconCopy,
 	IconCreditCard,
 	IconDots,
+	IconDownload,
 	IconKey,
+	IconLoader,
 	IconPillOff,
 	IconTrash,
 	IconX,
@@ -48,6 +50,7 @@ import clientLogger from "@/lib/client-logger";
 import { EditCustomer } from "./edit-customer";
 import { UserFilter } from "./filter-user";
 import { RechargeCreditDialog } from "./recharge-credit-dialog";
+import { ImportCustomerDialog } from "./import-customer-dialog";
 import { Role } from "@/types/enum";
 
 interface CustomersClientProps {
@@ -67,6 +70,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 }) => {
 	const [data, setData] = useState<User[]>(serverData);
 	const [searchTerm, setSearchTerm] = useState("");
+	const [exporting, setExporting] = useState(false);
 
 	const params = useParams();
 	const storeId = params.storeId as string;
@@ -149,6 +153,70 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 			version: process.env.npm_package_version,
 		});
 	}, []);
+
+	const handleImported = useCallback(() => {
+		// Refresh data after import
+		window.location.reload();
+	}, []);
+
+	const handleExport = useCallback(async () => {
+		setExporting(true);
+		try {
+			const res = await fetch(
+				`/api/storeAdmin/${params.storeId}/customers/export`,
+				{
+					method: "POST",
+				},
+			);
+
+			// Check if response is an error (JSON error response)
+			const contentType = res.headers.get("content-type");
+			if (contentType?.includes("application/json")) {
+				const text = await (await res.blob()).text();
+				const errorData = JSON.parse(text);
+				toastError({
+					title: t("export_failed") || "Export failed",
+					description: errorData.error || "Unknown error",
+				});
+				return;
+			}
+
+			// Get filename from Content-Disposition header or use default
+			const contentDisposition = res.headers.get("content-disposition");
+			let fileName = `customers-export-${params.storeId}.csv`;
+			if (contentDisposition) {
+				const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+				if (fileNameMatch) {
+					fileName = fileNameMatch[1];
+				}
+			}
+
+			// Create blob and download
+			const blob = await res.blob();
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = fileName;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(url);
+
+			toastSuccess({
+				title: t("exported") || "Exported",
+				description: fileName,
+			});
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				toastError({
+					title: t("export_failed") || "Export failed",
+					description: err.message,
+				});
+			}
+		} finally {
+			setExporting(false);
+		}
+	}, [params.storeId, t]);
 	/* #endregion */
 
 	const CellAction: React.FC<CellActionProps> = ({ item }) => {
@@ -372,6 +440,24 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 					/>
 					<div className="flex gap-1 content-end">
 						<UserFilter onFilterChange={handleFilterChange} />
+						<Button
+							onClick={handleExport}
+							disabled={exporting}
+							variant="outline"
+						>
+							{exporting ? (
+								<>
+									<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+									{t("exporting") || "Exporting..."}
+								</>
+							) : (
+								<>
+									<IconDownload className="mr-0 size-4" />
+									{t("export") || "Export"}
+								</>
+							)}
+						</Button>
+						<ImportCustomerDialog onImported={handleImported} />
 						<EditCustomer
 							item={newUser as unknown as User}
 							onUpdated={handleCreated}

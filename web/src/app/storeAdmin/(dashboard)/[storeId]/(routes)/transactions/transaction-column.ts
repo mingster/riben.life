@@ -1,6 +1,6 @@
 import type { StoreOrder } from "@/types";
 import type { orderitemview } from "@prisma/client";
-import { formatDateTime } from "@/utils/datetime-utils";
+import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 
 export interface TransactionColumn {
 	id: string;
@@ -39,5 +39,5 @@ export const mapStoreOrderToColumn = (
 	orderNum: Number(order.orderNum ?? 0),
 	paymentCost: Number(order.paymentCost ?? 0),
 	note: order.OrderNotes?.[0]?.note ?? "",
-	updatedAtIso: order.updatedAt.toISOString(),
+	updatedAtIso: epochToDate(order.updatedAt)?.toISOString() ?? "",
 });
