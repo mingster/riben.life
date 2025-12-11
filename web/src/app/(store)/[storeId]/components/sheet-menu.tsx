@@ -4,8 +4,6 @@ import { IconHome, IconMenu2 } from "@tabler/icons-react";
 import Link from "next/link";
 
 import DropdownCart from "@/components/dropdown-cart";
-import DropdownMessage from "@/components/dropdown-message";
-import DropdownNotification from "@/components/dropdown-notification";
 import { ThemeToggler } from "@/components/theme-toggler";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +20,7 @@ import { StoreMenu } from "./store-menu";
 
 import { useTranslation } from "@/app/i18n/client";
 import DropdownUser from "@/components/auth/dropdown-user";
+import { LanguageToggler } from "@/components/language-toggler";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
 
@@ -56,9 +55,9 @@ export function SheetMenu({ store }: props) {
 				className="flex h-full flex-col px-3 sm:px-4 sm:w-72 backdrop-opacity-10 backdrop-invert"
 				side="left"
 			>
-				<SheetHeader>
+				<SheetHeader className="shrink-0 pb-2">
 					<Button
-						className="flex pb-2 pt-1 h-10 min-h-[44px] sm:h-auto sm:min-h-0"
+						className="flex pb-2 pt-1 h-10 min-h-[44px] sm:h-auto sm:min-h-0 touch-manipulation"
 						variant="link"
 						asChild
 					>
@@ -72,21 +71,20 @@ export function SheetMenu({ store }: props) {
 				</SheetHeader>
 				<SheetTitle />
 				<SheetDescription />
-				<StoreMenu store={store} isOpen title="" setIsOpen={setIsOpen} />
-				<div className="flex flex-1 items-center justify-center gap-1.5 sm:gap-2">
-					<ThemeToggler />
-					<DropdownMessage messages={store.StoreAnnouncement} />
-					<DropdownNotification />
-					<DropdownUser />
-					<DropdownCart />
+				<div className="flex-1 min-h-0 overflow-hidden">
+					<StoreMenu store={store} isOpen title="" setIsOpen={setIsOpen} />
 				</div>
-				{/*<!-- Hidden by default, but visible if screen is small --> */}
-				<div className="hidden md:block" />
-				<div className="pt-1 flex flex-1 items-center justify-center w-full font-mono text-sm">
+				<div className="shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2 min-h-[44px] flex-wrap">
+					<ThemeToggler />
+					<DropdownUser />
+					<LanguageToggler />
+					{store.useOrderSystem && <DropdownCart />}
+				</div>
+				<div className="shrink-0 pt-1 pb-2 sm:pb-0 flex items-center justify-center w-full font-mono text-sm">
 					<Link href="/unv" className="w-full sm:w-auto">
 						<Button
-							variant="default"
-							className="w-full h-10 min-h-[44px] sm:w-auto sm:h-9 sm:min-h-0 touch-manipulation"
+							variant="link"
+							className="w-full text-xs font-mono dark:text-white h-10 min-h-[44px] sm:w-auto sm:h-9 sm:min-h-0 touch-manipulation"
 						>
 							{t("system_provider")}
 						</Button>
