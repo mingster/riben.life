@@ -47,7 +47,7 @@ import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { getUtcNow } from "@/utils/datetime-utils";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export async function POST(
  _req: Request,
@@ -70,8 +70,8 @@ export async function POST(
   const pad = (n: number) => n.toString().padStart(2, "0");
   const fileName = `resource-backup-${params.storeId}-${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}-${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}.json`;
 
-  // Transform Decimal fields to numbers for JSON serialization
-  transformDecimalsToNumbers(resources);
+  // Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
+  transformPrismaDataForJson(resources);
 
   // Convert to JSON string
   const jsonContent = JSON.stringify(resources, null, 2);
@@ -562,12 +562,56 @@ export function ImportResourceDialog({
 - **Toast Notifications**: Use `toastSuccess` and `toastError` for user feedback
 - **File Input**: Use controlled file input with ref for reset functionality
 
+### 4. Datetime Handling
+
+**CRITICAL: All datetime fields in Prisma are stored as `BigInt` (epoch milliseconds).**
+
+**Export:**
+- Use `transformPrismaDataForJson()` before `JSON.stringify()` to convert BigInt to numbers
+- Exported JSON will have datetime fields as numbers (epoch milliseconds)
+- Filenames can use `getUtcNow()` (returns Date) for formatting - this is fine for display purposes
+
+**Import:**
+- Imported JSON will have datetime fields as numbers (epoch milliseconds)
+- When creating/updating records, ensure datetime fields are converted to BigInt:
+  ```typescript
+  import { getUtcNowEpoch, dateToEpoch } from "@/utils/datetime-utils";
+  
+  // For current timestamp
+  createdAt: getUtcNowEpoch(), // ✅ BigInt
+  
+  // For imported datetime (if it's a number)
+  createdAt: BigInt(importedData.createdAt), // ✅ Convert number to BigInt
+  
+  // For imported datetime (if it's a Date string, convert first)
+  createdAt: dateToEpoch(new Date(importedData.createdAt)), // ✅ Date → BigInt
+  ```
+
+**Example:**
+```typescript
+// Export: Transform BigInt to numbers
+transformPrismaDataForJson(resources); // Converts BigInt → number
+const jsonContent = JSON.stringify(resources, null, 2);
+
+// Import: Convert numbers back to BigInt
+const imported = JSON.parse(fileContent);
+await sqlClient.resource.create({
+  data: {
+    ...imported,
+    createdAt: BigInt(imported.createdAt), // number → BigInt
+    updatedAt: getUtcNowEpoch(), // Use current time for updates
+  },
+});
+```
+
 ## Best Practices
 
 ### ✅ DO
 
-1. **Use UTC timestamps** for export filenames using `getUtcNow()` and UTC date methods
-2. **Transform Decimal fields** using `transformDecimalsToNumbers()` before JSON serialization
+1. **Use UTC timestamps** for export filenames using `getUtcNow()` and UTC date methods (Date objects are fine for filenames)
+2. **Transform BigInt and Decimal fields** using `transformPrismaDataForJson()` before JSON serialization
+   - This converts both BigInt (epoch timestamps) and Decimal (money amounts) to numbers
+   - **CRITICAL**: Always use `transformPrismaDataForJson()` before `JSON.stringify()` on Prisma query results
 3. **Validate file format** before processing (check if array, validate required fields)
 4. **Handle both import formats** (FormData and JSON) for compatibility
 5. **Log operations** with structured logging including storeId and error details

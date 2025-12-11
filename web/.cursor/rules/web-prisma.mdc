@@ -105,7 +105,17 @@ model User {
   updatedAt BigInt   // Epoch milliseconds, not DateTime
   banExpires BigInt? // Optional epoch milliseconds
 }
+
+model Member {
+  id             String   @id
+  userId         String
+  organizationId String
+  role           String
+  createdAt      BigInt   // Epoch milliseconds, not DateTime
+}
 ```
+
+**Note:** This applies to ALL models - every datetime field must use `BigInt`, not `DateTime`.
 
 - No `@default(now())` or `@updatedAt` directives (not supported with BigInt)
 - Timestamps must be set manually in application code using `getUtcNowEpoch()`
