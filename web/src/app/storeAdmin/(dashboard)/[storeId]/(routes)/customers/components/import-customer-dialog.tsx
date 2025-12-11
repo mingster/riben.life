@@ -159,7 +159,7 @@ export function ImportCustomerDialog({
 					<DialogTitle>{t("import") || "Import Customers"}</DialogTitle>
 					<DialogDescription>
 						{t("import_customer_descr") ||
-							"Upload a CSV file to import customers. The CSV should have columns: id, name, email, memberRole, createdAt, banned, stripeCustomerId"}
+							"Upload a CSV file to import customers. Required column: name. Optional columns: id, email, phone, memberRole, createdAt, banned. Users can be found by email or name."}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -211,4 +211,3 @@ export function ImportCustomerDialog({
 		</Dialog>
 	);
 }
-

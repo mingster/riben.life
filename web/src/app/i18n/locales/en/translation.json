@@ -282,7 +282,7 @@
   "imported": "Imported",
   "importing": "Importing...",
   "import_failed": "Import Failed",
-  "import_customer_descr": "Upload a CSV file to import customers. The CSV should have columns: id, name, email, memberRole, createdAt, banned, stripeCustomerId",
+  "import_customer_descr": "Upload a CSV file to import customers. Required column: name. Optional columns: id, email, phone, memberRole, createdAt, banned. Users can be found by email or name.",
   "inactive": "Inactive",
   "input_placeholder1": "Please enter",
   "isNotPaid": "Unpaid",

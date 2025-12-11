@@ -283,7 +283,7 @@
   "imported": "已匯入",
   "importing": "匯入中...",
   "import_failed": "匯入失敗",
-  "import_customer_descr": "上傳 CSV 檔案以匯入客戶。CSV 應包含以下欄位：id, name, email, memberRole, createdAt, banned, stripeCustomerId",
+  "import_customer_descr": "上傳 CSV 檔案以匯入客戶。必填欄位：name。選填欄位：id, email, phone, memberRole, createdAt, banned。可透過 email 或 name 尋找現有用戶。",
   "inactive": "停用",
   "input_placeholder1": "請輸入",
   "isNotPaid": "未付",
