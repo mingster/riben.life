@@ -24,9 +24,6 @@ export default async function StoreOrderStatusPage(props: {
 	const searchParams = await props.searchParams;
 	const storeId = searchParams.storeId as string;
 
-	logger.info("searchParams");
-	logger.info("storeId");
-
 	const store = (await getStoreById(storeId)) as Store;
 
 	return (

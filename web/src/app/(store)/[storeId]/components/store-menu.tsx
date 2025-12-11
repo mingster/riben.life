@@ -106,7 +106,6 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 																		: "",
 																	"font-semibold hover:opacity-50 active:opacity-70",
 																)}
-																variant="link"
 																onClick={() => menuClick(href)}
 															>
 																<span

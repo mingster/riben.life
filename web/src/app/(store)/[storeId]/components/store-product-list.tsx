@@ -43,12 +43,9 @@ export interface props {
 	tableData?: StoreFacility;
 }
 
-// store home page.
-// if store is opened (according to business hours), display menu (categorized products),
-// and seating status (take off/in store).
-// If store is closed, display the closing time.
+// display product list and allow user to add to cart.
 //
-export const StoreHomeContent: React.FC<props> = ({
+export const StoreProductList: React.FC<props> = ({
 	storeData,
 	storeSettings,
 	tableData,

@@ -157,7 +157,12 @@ export function RsvpStats({ rsvpSettings }: RsvpStatsProps) {
 					<Link key={stat.title} href={stat.href} className="block">
 						<Card className="@container/card hover:shadow-md transition-shadow cursor-pointer">
 							<CardHeader>
-								<CardDescription>{stat.title}</CardDescription>
+								<CardDescription className="flex items-center gap-2">
+									<Badge variant="outline">
+										<Icon className={`h-4 w-4 ${stat.color}`} />
+									</Badge>
+									{stat.title}
+								</CardDescription>
 								<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
 									{stat.value}
 								</CardTitle>
@@ -166,14 +171,8 @@ export function RsvpStats({ rsvpSettings }: RsvpStatsProps) {
 										{stat.subValueLabel}: {stat.subValue.toLocaleString()}
 									</div>
 								)}
-								<Badge variant="outline">
-									<Icon className={`h-4 w-4 ${stat.color}`} />
-								</Badge>
 							</CardHeader>
 							<CardFooter className="flex-col items-start gap-1.5 text-sm">
-								<div className="line-clamp-1 flex gap-2 font-medium">
-									{stat.title} <Icon className="size-4" />
-								</div>
 								<div className="text-muted-foreground">
 									{t("rsvp_stats_click_to_view")}
 								</div>

@@ -55,6 +55,8 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
 		pathName.includes("privacy") ||
 		pathName.includes("support") ||
 		pathName.includes("terms") ||
+		pathName.includes("recharge") ||
+		pathName.includes("my-orders") ||
 		pathName.includes("reservation") ||
 		pathName.includes("waiting-list")
 	) {

@@ -7,7 +7,8 @@ import { SafeError } from "@/utils/error";
 import { processCreditTopUp } from "@/lib/credit-bonus";
 import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
-import { OrderStatus, PaymentStatus } from "@/types/enum";
+import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
+import logger from "@/lib/logger";
 
 /**
  * Process credit top-up after payment is confirmed.
@@ -15,7 +16,7 @@ import { OrderStatus, PaymentStatus } from "@/types/enum";
  * It will:
  * 1. Process credit top-up (including bonus calculation)
  * 2. Mark the order as paid
- * 3. Create StoreLedger entry for unearned revenue (type = 2)
+ * 3. Create StoreLedger entry for unearned revenue (type = CreditRecharge)
  */
 export const processCreditTopUpAfterPaymentAction = baseClient
 	.metadata({ name: "processCreditTopUpAfterPayment" })
@@ -74,6 +75,15 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 					},
 				});
 			}
+
+			logger.info("Credit already processed", {
+				metadata: {
+					orderId,
+					message: "Credit already processed",
+				},
+				tags: ["info", "credit", "topup"],
+			});
+
 			return {
 				success: true,
 				message: "Credit already processed",
@@ -86,14 +96,27 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 		// Calculate credit amount from dollar amount using exchange rate
 		const creditExchangeRate = Number(order.Store.creditExchangeRate);
 		if (creditExchangeRate <= 0) {
-			throw new SafeError("Credit exchange rate is not configured");
+			logger.error("Credit exchange rate is not configured", {
+				metadata: {
+					orderId,
+					error: "Credit exchange rate is not configured",
+				},
+				tags: ["error", "credit", "topup"],
+			});
+
+			return {
+				success: false,
+				orderId,
+				serverError: "Credit exchange rate is not configured",
+				message: "Credit exchange rate is not configured",
+			};
 		}
 
 		const creditAmount = dollarAmount / creditExchangeRate;
 
 		// Process credit top-up first (this creates CustomerCreditLedger entries)
 		// Note: processCreditTopUp expects credit amount (points), not dollar amount
-		const result = await processCreditTopUp(
+		const processCreditTopUpResult = await processCreditTopUp(
 			order.storeId,
 			order.userId,
 			creditAmount,
@@ -101,6 +124,23 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 			null, // creatorId (null for customer-initiated)
 			`Credit recharge: ${creditAmount} points (${dollarAmount} ${order.Store.defaultCurrency.toUpperCase()})`,
 		);
+
+		// If credit top-up failed, return early without further processing
+		if (!processCreditTopUpResult.success) {
+			logger.error("Credit top-up processing failed", {
+				metadata: {
+					orderId,
+					error: "Credit top-up processing failed",
+				},
+				tags: ["error", "credit", "topup"],
+			});
+			return {
+				success: false,
+				orderId,
+				serverError: "Credit top-up processing failed",
+				message: "Credit top-up processing failed",
+			};
+		}
 
 		// Calculate fees (based on dollar amount, not credit amount)
 		let fee = 0;
@@ -141,7 +181,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 			orderUpdatedDate.getTime() + clearDays * 24 * 60 * 60 * 1000,
 		);
 
-		// Mark order as paid and create StoreLedger entry in a transaction
+		// Mark order as paid and completed. Also create StoreLedger entry in a transaction
 		await sqlClient.$transaction(async (tx) => {
 			// Mark order as paid and completed
 			await tx.storeOrder.update({
@@ -157,7 +197,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 				},
 			});
 
-			// Create StoreLedger entry for credit recharge (unearned revenue, type = 2)
+			// Create StoreLedger entry for credit recharge (unearned revenue, type = CreditRecharge)
 			await tx.storeLedger.create({
 				data: {
 					storeId: order.storeId,
@@ -166,12 +206,12 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 					fee: new Prisma.Decimal(fee + feeTax),
 					platformFee: new Prisma.Decimal(platformFee),
 					currency: order.Store.defaultCurrency,
-					type: 2, // Credit recharge type
+					type: StoreLedgerType.CreditRecharge,
 					balance: new Prisma.Decimal(
 						balance + dollarAmount + (fee + feeTax) + platformFee,
 					),
 					description: `Credit Recharge - Order #${order.orderNum || order.id}`,
-					note: `Customer credit top-up: ${creditAmount} points (${dollarAmount} ${order.Store.defaultCurrency.toUpperCase()}). Credit given: ${result.amount} + bonus ${result.bonus} = ${result.totalCredit} points.`,
+					note: `Customer credit top-up: ${creditAmount} points (${dollarAmount} ${order.Store.defaultCurrency.toUpperCase()}). Credit given: ${processCreditTopUpResult.amount} + bonus ${processCreditTopUpResult.bonus} = ${processCreditTopUpResult.totalCredit} points.`,
 					availability: BigInt(availabilityDate.getTime()),
 					createdAt: getUtcNowEpoch(),
 				},
@@ -181,8 +221,8 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 		return {
 			success: true,
 			orderId,
-			amount: result.amount,
-			bonus: result.bonus,
-			totalCredit: result.totalCredit,
+			amount: processCreditTopUpResult.amount,
+			bonus: processCreditTopUpResult.bonus,
+			totalCredit: processCreditTopUpResult.totalCredit,
 		};
 	});

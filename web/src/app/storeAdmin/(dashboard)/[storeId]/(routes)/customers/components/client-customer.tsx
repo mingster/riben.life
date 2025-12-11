@@ -169,15 +169,23 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 				},
 			);
 
-			// Check if response is an error (JSON error response)
-			const contentType = res.headers.get("content-type");
-			if (contentType?.includes("application/json")) {
-				const text = await (await res.blob()).text();
-				const errorData = JSON.parse(text);
-				toastError({
-					title: t("export_failed") || "Export failed",
-					description: errorData.error || "Unknown error",
-				});
+			// Check if response is an error by status code
+			if (!res.ok) {
+				// Only parse as JSON if status indicates error
+				const contentType = res.headers.get("content-type");
+				if (contentType?.includes("application/json")) {
+					const errorData = await res.json();
+					toastError({
+						title: t("export_failed") || "Export failed",
+						description: errorData.error || "Unknown error",
+					});
+				} else {
+					const text = await res.text();
+					toastError({
+						title: t("export_failed") || "Export failed",
+						description: text || `HTTP ${res.status}`,
+					});
+				}
 				return;
 			}
 

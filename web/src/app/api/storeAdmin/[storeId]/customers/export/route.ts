@@ -8,55 +8,56 @@ import { epochToDate } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 
 // Helper function to escape CSV fields
+// Always wrap fields in double quotes and escape any existing quotes
 function escapeCsvField(field: string | null | undefined): string {
 	if (field === null || field === undefined) {
-		return "";
+		return '""';
 	}
 	const str = String(field);
-	// If field contains comma, quote, or newline, wrap in quotes and escape quotes
-	if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-		return `"${str.replace(/"/g, '""')}"`;
-	}
-	return str;
+	// Escape any existing double quotes by doubling them, then wrap in quotes
+	return `"${str.replace(/"/g, '""')}"`;
 }
+
+// Define CSV columns (shared across the function)
+const CSV_COLUMNS = [
+	"id",
+	"name",
+	"email",
+	"phone",
+	"memberRole",
+	"createdAt",
+	"banned",
+	"creditPoints",
+];
 
 // Convert array of objects to CSV string
 function arrayToCsv(data: Array<Record<string, unknown>>): string {
+	// Always create header row, even for empty data
+	const header = CSV_COLUMNS.map(escapeCsvField).join(",");
+
 	if (data.length === 0) {
-		return "";
+		return header;
 	}
-
-	// Define CSV columns
-	const columns = [
-		"id",
-		"name",
-		"email",
-		"phone",
-		"memberRole",
-		"createdAt",
-		"banned",
-	];
-
-	// Create header row
-	const header = columns.map(escapeCsvField).join(",");
 
 	// Create data rows
 	const rows = data.map((row) => {
-		return columns
-			.map((col) => {
-				let value = row[col];
-				// Format createdAt as ISO string if it's a BigInt
-				if (col === "createdAt" && value) {
-					const date = epochToDate(value as bigint);
-					value = date ? format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") : "";
-				}
-				// Convert boolean to string
-				if (typeof value === "boolean") {
-					value = value ? "true" : "false";
-				}
-				return escapeCsvField(value as string);
-			})
-			.join(",");
+		return CSV_COLUMNS.map((col) => {
+			let value = row[col];
+			// Format createdAt as ISO string if it's a BigInt
+			if (col === "createdAt" && value) {
+				const date = epochToDate(value as bigint);
+				value = date ? format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") : "";
+			}
+			// Convert boolean to string
+			if (typeof value === "boolean") {
+				value = value ? "true" : "false";
+			}
+			// Convert number to string
+			if (typeof value === "number") {
+				value = String(value);
+			}
+			return escapeCsvField(value as string);
+		}).join(",");
 	});
 
 	return [header, ...rows].join("\n");
@@ -106,6 +107,7 @@ export async function POST(
 			const fileName = `customers-export-${params.storeId}-${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}-${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}.csv`;
 
 			return new NextResponse(emptyCsv, {
+				status: 200,
 				headers: {
 					"Content-Type": "text/csv; charset=utf-8",
 					"Content-Disposition": `attachment; filename="${fileName}"`,
@@ -123,15 +125,24 @@ export async function POST(
 			include: {
 				sessions: true,
 				members: true,
+				CustomerCredits: {
+					where: {
+						storeId: params.storeId,
+					},
+				},
 			},
 		});
 
-		// Map users to include the member role for this organization
+		// Map users to include the member role for this organization and credit points
 		const usersWithRole = users.map((user) => {
 			const member = user.members.find(
 				(m: { organizationId: string; role: string }) =>
 					m.organizationId === store.organizationId,
 			);
+			// Get CustomerCredit for this store (should be at most one due to unique constraint)
+			const customerCredit = user.CustomerCredits[0];
+			const creditPoints = customerCredit ? Number(customerCredit.point) : 0;
+
 			return {
 				id: user.id,
 				name: user.name || "",
@@ -140,6 +151,7 @@ export async function POST(
 				memberRole: member?.role || "",
 				createdAt: user.createdAt,
 				banned: user.banned || false,
+				creditPoints,
 			};
 		});
 
@@ -156,6 +168,7 @@ export async function POST(
 
 		// Return file as download
 		return new NextResponse(csvContent, {
+			status: 200,
 			headers: {
 				"Content-Type": "text/csv; charset=utf-8",
 				"Content-Disposition": `attachment; filename="${fileName}"`,

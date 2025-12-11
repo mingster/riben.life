@@ -6,7 +6,7 @@ import type { StoreSettings, StoreFacility } from "@prisma/client";
 import { redirect } from "next/navigation";
 import getStoreWithProducts from "@/actions/get-store-with-products";
 import { formatDate } from "date-fns";
-import { StoreHomeContent } from "../components/store-home-content";
+import { StoreProductList } from "../components/store-product-list";
 import { getT } from "@/app/i18n";
 
 type Params = Promise<{ storeId: string; facilityId: string }>;
@@ -73,7 +73,7 @@ export default async function TableOrderPage(props: {
 					</div>
 				</>
 			) : (
-				<StoreHomeContent
+				<StoreProductList
 					storeData={store}
 					storeSettings={storeSettings as StoreSettings}
 					tableData={facility as StoreFacility}

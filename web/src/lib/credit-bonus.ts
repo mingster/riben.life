@@ -56,9 +56,15 @@ export async function processCreditTopUp(
 	referenceId?: string | null,
 	creatorId?: string | null,
 	note?: string | null,
-): Promise<{ amount: number; bonus: number; totalCredit: number }> {
+): Promise<{
+	success: boolean;
+	amount: number;
+	bonus: number;
+	totalCredit: number;
+}> {
 	if (amount <= 0) {
-		throw new Error("Top-up amount must be positive");
+		//		throw new Error("Top-up amount must be positive");
+		return { success: false, amount: 0, bonus: 0, totalCredit: 0 };
 	}
 
 	// Calculate bonus based on top-up amount
@@ -142,5 +148,5 @@ export async function processCreditTopUp(
 		}
 	});
 
-	return { amount, bonus, totalCredit };
+	return { success: true, amount, bonus, totalCredit };
 }

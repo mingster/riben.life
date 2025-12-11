@@ -21,6 +21,13 @@ export function RecaptchaV3({
 	const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA as string;
 	const [token, setToken] = useState("");
 
+	// Check if site key is configured
+	if (!siteKey) {
+		// If no site key, render children without reCAPTCHA
+		console.warn("reCAPTCHA disabled: site key not configured");
+		return <>{children}</>;
+	}
+
 	return (
 		<GoogleReCaptchaProvider
 			reCaptchaKey={siteKey}
@@ -45,7 +52,15 @@ export function RecaptchaV3({
 			)}
 			<RecaptchaV3Style />
 			{children}
-			<GoogleReCaptcha onVerify={setToken} />
+			<GoogleReCaptcha
+				onVerify={(token) => {
+					if (token) {
+						setToken(token);
+					} else {
+						console.warn("reCAPTCHA returned empty token");
+					}
+				}}
+			/>
 		</GoogleReCaptchaProvider>
 	);
 }
@@ -56,6 +71,34 @@ function RecaptchaV3Style() {
 	const { lang } = useLang();
 
 	useEffect(() => {
+		// Log script loading status for debugging
+		if (typeof window === "undefined") return;
+
+		// Check if script is loading
+		const scriptTag = document.querySelector('script[src*="recaptcha"]');
+		if (!scriptTag) {
+			console.warn(
+				"reCAPTCHA script tag not found. The provider should load it automatically.",
+			);
+		}
+
+		// Monitor script loading with timeout
+		const timeout = setTimeout(() => {
+			if (!executeRecaptcha && !(window as any).grecaptcha) {
+				console.error(
+					"reCAPTCHA script failed to load after 15 seconds. Possible causes:\n" +
+						"1. Network connectivity issues\n" +
+						"2. Ad blocker blocking reCAPTCHA\n" +
+						"3. Invalid or missing site key (NEXT_PUBLIC_RECAPTCHA)\n" +
+						"4. CORS or CSP restrictions",
+				);
+			}
+		}, 15000);
+
+		return () => clearTimeout(timeout);
+	}, [executeRecaptcha]);
+
+	useEffect(() => {
 		if (!executeRecaptcha) return;
 
 		const updateRecaptcha = async () => {
@@ -64,10 +107,14 @@ function RecaptchaV3Style() {
 				"iframe[title='reCAPTCHA']",
 			) as HTMLIFrameElement;
 			if (iframe) {
-				const iframeSrcUrl = new URL(iframe.src);
-				iframeSrcUrl.searchParams.set("theme", theme);
-				if (lang) iframeSrcUrl.searchParams.set("hl", lang);
-				iframe.src = iframeSrcUrl.toString();
+				try {
+					const iframeSrcUrl = new URL(iframe.src);
+					iframeSrcUrl.searchParams.set("theme", theme);
+					if (lang) iframeSrcUrl.searchParams.set("hl", lang);
+					iframe.src = iframeSrcUrl.toString();
+				} catch (error) {
+					console.warn("Failed to update reCAPTCHA iframe:", error);
+				}
 			}
 		};
 

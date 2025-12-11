@@ -66,8 +66,24 @@ function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 				return;
 			}
 
-			// Get reCAPTCHA token
-			const recaptchaToken = await executeRecaptcha("magic_link_signin");
+			// Get reCAPTCHA token with timeout to prevent infinite loading
+			let recaptchaToken: string | null = null;
+			try {
+				const tokenPromise = executeRecaptcha("magic_link_signin");
+				const timeoutPromise = new Promise<never>((_, reject) =>
+					setTimeout(() => reject(new Error("reCAPTCHA timeout")), 10000),
+				);
+				recaptchaToken = await Promise.race([tokenPromise, timeoutPromise]);
+			} catch (error) {
+				console.error("reCAPTCHA execution error:", error);
+				toastError({
+					description:
+						error instanceof Error && error.message === "reCAPTCHA timeout"
+							? "reCAPTCHA is taking too long to load. Please check your network connection or disable ad blockers."
+							: "reCAPTCHA verification failed. Please try again.",
+				});
+				return;
+			}
 
 			if (!recaptchaToken) {
 				toastError({

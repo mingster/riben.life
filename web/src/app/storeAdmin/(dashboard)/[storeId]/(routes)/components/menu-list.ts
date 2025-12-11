@@ -97,13 +97,20 @@ export function GetMenuList(
 				// otherwise display orderCofirmation
 				...(store.level !== StoreLevel.Free ? [cash] : []),
 
-				{
-					href: `${nav_prefix}/order/awaiting_to_ship`,
-					label: t("Order_ready_to_ship"),
-					active: pathname.includes(`${nav_prefix}/order/awaiting_to_ship`),
-					icon: IconCreditCard,
-					submenus: [],
-				},
+				// show order ready to ship menu only when useOrderSystem is true
+				...(store.useOrderSystem
+					? [
+							{
+								href: `${nav_prefix}/order/awaiting_to_ship`,
+								label: t("Order_ready_to_ship"),
+								active: pathname.includes(
+									`${nav_prefix}/order/awaiting_to_ship`,
+								),
+								icon: IconCreditCard,
+								submenus: [],
+							},
+						]
+					: []),
 				{
 					href: `${nav_prefix}/transactions`,
 					label: t("Transactions"),
@@ -140,13 +147,20 @@ export function GetMenuList(
 				// for not pro stores, if autoAcceptOrder is true, show orderConfirmation menu
 				...(!store.autoAcceptOrder ? [orderConfirmation] : []),
 
-				{
-					href: `${nav_prefix}/order/awaiting4Process`,
-					label: t("Order_inProgress"),
-					active: pathname.includes(`${nav_prefix}/order/awaiting4Process`),
-					icon: IconArrowRight,
-					submenus: [],
-				},
+				// show order in progress menu only when useOrderSystem is true
+				...(store.useOrderSystem
+					? [
+							{
+								href: `${nav_prefix}/order/awaiting4Process`,
+								label: t("Order_inProgress"),
+								active: pathname.includes(
+									`${nav_prefix}/order/awaiting4Process`,
+								),
+								icon: IconArrowRight,
+								submenus: [],
+							},
+						]
+					: []),
 				{
 					href: `${nav_prefix}/rsvp`,
 					label: t("Rsvp_List"),
@@ -199,31 +213,43 @@ export function GetMenuList(
 				},
 			],
 		},
+		// show product group only when useOrderSystem is true
+		...(store.useOrderSystem
+			? [
+					{
+						//groupLabel: t("Marketing"),
+						groupLabel: t("product"),
+						menus: [
+							{
+								href: `${nav_prefix}/categories`,
+								label: t("Category"),
+								active: pathname.includes(`${nav_prefix}/categories`),
+								icon: IconMenu,
+								submenus: [],
+							},
+							{
+								href: `${nav_prefix}/products`,
+								label: t("Products"),
+								active: pathname.includes(`${nav_prefix}/products`),
+								icon: IconBox,
+								submenus: [],
+							},
+							{
+								href: `${nav_prefix}/product-option-template`,
+								label: t("ProductOption_template"),
+								active: pathname.includes(
+									`${nav_prefix}/product-option-template`,
+								),
+								icon: IconLockOpen,
+								submenus: [],
+							},
+						],
+					},
+				]
+			: []),
 		{
-			//groupLabel: t("Marketing"),
-			groupLabel: t("product"),
+			groupLabel: t("StoreSettings"),
 			menus: [
-				{
-					href: `${nav_prefix}/categories`,
-					label: t("Category"),
-					active: pathname.includes(`${nav_prefix}/categories`),
-					icon: IconMenu,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/products`,
-					label: t("Products"),
-					active: pathname.includes(`${nav_prefix}/products`),
-					icon: IconBox,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/product-option-template`,
-					label: t("ProductOption_template"),
-					active: pathname.includes(`${nav_prefix}/product-option-template`),
-					icon: IconLockOpen,
-					submenus: [],
-				},
 				{
 					href: `${nav_prefix}/faq`,
 					label: t("FAQ"),
@@ -231,11 +257,7 @@ export function GetMenuList(
 					icon: IconHelp,
 					submenus: [],
 				},
-			],
-		},
-		{
-			groupLabel: t("StoreSettings"),
-			menus: [
+
 				{
 					href: `${nav_prefix}/settings`,
 					label: t("Settings"),
