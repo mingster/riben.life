@@ -55,39 +55,61 @@ export default async function StoreFaqHomePage(props: {
 	if (!faqCategories || faqCategories.length === 0) {
 		return (
 			<Container>
-				<Heading title="常見問題" description="" />
-				<p>No FAQ available yet.</p>
+				<section className="py-4 px-3 sm:py-8 sm:px-4 md:py-12">
+					<Heading title="常見問題" description="" />
+					<p className="text-sm sm:text-base">No FAQ available yet.</p>
+				</section>
 			</Container>
 		);
 	}
 
 	return (
 		<Container>
-			<Heading title="常見問題" description="" />
+			<section className="py-4 px-3 sm:py-8 sm:px-4 md:py-12">
+				<Heading title="常見問題" description="" />
 
-			<Tabs defaultValue={faqCategories[0]?.id} className="">
-				<TabsList className="">
+				<Tabs defaultValue={faqCategories[0]?.id} className="w-full">
+					<div className="overflow-x-auto -mx-3 sm:mx-0">
+						<TabsList className="w-full min-w-fit sm:w-auto inline-flex h-10 min-h-[44px] sm:h-9 sm:min-h-0 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground gap-1 sm:gap-2">
+							{faqCategories.map((category) => (
+								<TabsTrigger
+									key={category.id}
+									value={category.id}
+									className="h-9 min-h-[44px] sm:min-h-0 px-3 sm:px-4 text-xs sm:text-sm touch-manipulation whitespace-nowrap"
+								>
+									{category.name}
+								</TabsTrigger>
+							))}
+						</TabsList>
+					</div>
 					{faqCategories.map((category) => (
-						<TabsTrigger key={category.id} value={category.id} className="w-30">
-							{category.name}
-						</TabsTrigger>
+						<TabsContent
+							key={category.id}
+							value={category.id}
+							className="mt-4 sm:mt-6"
+						>
+							<div className="space-y-2 sm:space-y-3">
+								{category.FAQ.map((faq) => (
+									<Accordion key={faq.id} type="single" collapsible>
+										<AccordionItem value={faq.id}>
+											<AccordionTrigger className="text-left min-h-[44px] sm:min-h-0 py-3 sm:py-4 px-3 sm:px-4 touch-manipulation">
+												<h2 className="text-sm sm:text-base lg:text-xl text-link font-semibold pr-4">
+													{faq.question}
+												</h2>
+											</AccordionTrigger>
+											<AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4">
+												<div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none prose-p:text-sm sm:prose-p:text-base prose-p:leading-relaxed prose-ul:text-sm sm:prose-ul:text-base prose-ol:text-sm sm:prose-ol:text-base prose-li:text-sm sm:prose-li:text-base">
+													{faq.answer}
+												</div>
+											</AccordionContent>
+										</AccordionItem>
+									</Accordion>
+								))}
+							</div>
+						</TabsContent>
 					))}
-				</TabsList>
-				{faqCategories.map((category) => (
-					<TabsContent key={category.id} value={category.id}>
-						{category.FAQ.map((faq) => (
-							<Accordion key={faq.id} type="single" collapsible>
-								<AccordionItem value={faq.id}>
-									<AccordionTrigger className="w-30">
-										<h1 className="lg:text-2xl text-link">{faq.question}</h1>
-									</AccordionTrigger>
-									<AccordionContent>{faq.answer}</AccordionContent>
-								</AccordionItem>
-							</Accordion>
-						))}
-					</TabsContent>
-				))}
-			</Tabs>
+				</Tabs>
+			</section>
 		</Container>
 	);
 }

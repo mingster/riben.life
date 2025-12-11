@@ -1,8 +1,8 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
-import { toastError, toastSuccess } from "@/components/toaster";
 import { ProductCard } from "@/components/product-card";
+import { toastSuccess } from "@/components/toaster";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { type Item, useCart } from "@/hooks/use-cart";
 import BusinessHours from "@/lib/businessHours";
@@ -14,19 +14,13 @@ import type {
 	StoreWithProductNCategories,
 } from "@/types";
 import { ProductStatus } from "@/types/enum";
-import { getAbsoluteUrl } from "@/utils/utils";
 
-import type {
-	StoreSettings,
-	StoreFacility,
-	RsvpSettings,
-} from "@prisma/client";
+import type { StoreFacility, StoreSettings } from "@prisma/client";
 import { formatDate } from "date-fns";
 import { ArrowUpToLine } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import ScrollSpy from "react-ui-scrollspy";
-import logger from "@/lib/logger";
 
 /*
   <Image
@@ -96,13 +90,13 @@ export const StoreProductList: React.FC<props> = ({
 </section>
 
   const onPress = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-    e.preventDefault();
-    const target = window.document.getElementById(
-      e.currentTarget.href.split("#")[1],
-    );
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth" });
-    }
+	e.preventDefault();
+	const target = window.document.getElementById(
+	  e.currentTarget.href.split("#")[1],
+	);
+	if (target) {
+	  target.scrollIntoView({ behavior: "smooth" });
+	}
   };
   */
 

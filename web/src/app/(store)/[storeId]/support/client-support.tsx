@@ -57,8 +57,8 @@ interface TicketThreadProps {
 
 // Memoized ticket thread component
 const TicketThread = ({ thread, index }: TicketThreadProps) => (
-	<div className="flex flex-row gap-2">
-		<div className="bg-amber-900 p-2 text-white text-xs font-medium rounded">
+	<div className="flex flex-row gap-1.5 sm:gap-2">
+		<div className="bg-amber-900 p-1.5 sm:p-2 text-white text-[10px] sm:text-xs font-medium rounded min-w-[24px] sm:min-w-[28px] flex items-center justify-center">
 			{index + 1}
 		</div>
 		<DisplayTicket item={thread} />
@@ -130,14 +130,14 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 					<DataTableColumnHeader column={column} title={t("ticket_message")} />
 				),
 				cell: ({ row }) => (
-					<div className="text-xs">
-						<div className="text-sm font-bold text-gray-900 dark:text-gray-100">
+					<div className="text-xs sm:text-sm">
+						<div className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100 mb-1 sm:mb-2">
 							{row.original.subject}
 						</div>
 						<DisplayTicket item={row.original} />
 
-						<Separator className="my-2" />
-						<div className="w-full space-y-2">
+						<Separator className="my-2 sm:my-3" />
+						<div className="w-full space-y-2 sm:space-y-3">
 							{(
 								row.original as SupportTicket & { Thread?: SupportTicket[] }
 							).Thread?.map((thread: SupportTicket, index: number) => (
@@ -149,9 +149,13 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 			},
 			{
 				accessorKey: "status",
-				header: () => <div className="pl-4">{t("ticket_status")}</div>,
+				header: () => (
+					<div className="pl-2 sm:pl-4 text-xs sm:text-sm">
+						{t("ticket_status")}
+					</div>
+				),
 				cell: ({ row }) => (
-					<div className="flex items-center justify-center">
+					<div className="flex items-center justify-center px-1 sm:px-2">
 						<DisplayTicketStatus
 							status={row.original.status}
 							variant="badge"
@@ -163,9 +167,13 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 			},
 			{
 				id: "actions",
-				header: () => <div className="text-right pr-2">{t("actions")}</div>,
+				header: () => (
+					<div className="text-right pr-2 text-xs sm:text-sm">
+						{t("actions")}
+					</div>
+				),
 				cell: ({ row }) => (
-					<div className="flex gap-2 justify-end">
+					<div className="flex gap-1.5 sm:gap-2 justify-end">
 						<EditTicket
 							item={row.original}
 							onUpdated={handleUpdated}
@@ -241,7 +249,7 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 					variant="ghost"
 					size="sm"
 					onClick={handleButtonClick}
-					className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
+					className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors touch-manipulation"
 					aria-label={t("ticket_close")}
 				>
 					<IconInputX size={16} />
@@ -253,7 +261,7 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 	// Memoized header content
 	const headerContent = useMemo(
 		() => (
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
 					title={t("ticket_title")}
 					badge={tickets.length}
@@ -265,12 +273,16 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 						onValueChange={setTicketStatusFilter}
 						aria-label={t("filter_by_status")}
 					>
-						<SelectTrigger className="w-48">
+						<SelectTrigger className="w-full sm:w-48 h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation">
 							<SelectValue placeholder={t("TicketStatus_all")} />
 						</SelectTrigger>
 						<SelectContent>
 							{statusOptions.map((option) => (
-								<SelectItem key={option.value} value={option.value}>
+								<SelectItem
+									key={option.value}
+									value={option.value}
+									className="min-h-[44px] sm:min-h-0 touch-manipulation"
+								>
 									{option.label}
 								</SelectItem>
 							))}
@@ -285,12 +297,12 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 	return (
 		<section
 			id="support"
-			className="w-full content-start relative h-screen"
+			className="w-full content-start relative h-screen py-4 px-3 sm:py-6 sm:px-4"
 			aria-label="Support tickets and FAQ"
 		>
-			<ResizablePanelGroup direction="horizontal">
-				<ResizablePanel className="flex-3/4 pl-2">
-					<div className="space-y-4">
+			<ResizablePanelGroup direction="horizontal" className="h-full">
+				<ResizablePanel className="flex-3/4 pl-0 sm:pl-2 min-w-0">
+					<div className="space-y-3 sm:space-y-4">
 						{headerContent}
 
 						<DataTable
@@ -310,12 +322,12 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 
 				<ResizableHandle
 					withHandle
-					className="dark:bg-gray-800 dark:text-gray-800"
+					className="dark:bg-gray-800 dark:text-gray-800 hidden lg:flex"
 					aria-label="Resize panels"
 				/>
 
 				<ResizablePanel
-					className="pl-4 hidden lg:block"
+					className="pl-0 sm:pl-4 hidden lg:block"
 					defaultSize={DEFAULT_PANEL_SIZE}
 					aria-label="FAQ section"
 				>

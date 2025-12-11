@@ -20,7 +20,7 @@ import {
 import { enUS } from "date-fns/locale/en-US";
 import { zhTW } from "date-fns/locale/zh-TW";
 import { ja } from "date-fns/locale/ja";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
@@ -422,6 +422,35 @@ export const CustomerWeekViewCalendar: React.FC<
 		[rsvps, weekStart, weekEnd, storeTimezone, defaultDuration],
 	);
 
+	// Pre-compute which slots are in the past to avoid repeated date calculations
+	const pastSlots = useMemo(() => {
+		const past = new Set<string>();
+		weekDays.forEach((day) => {
+			timeSlots.forEach((timeSlot) => {
+				const slotDateTimeUtc = dayAndTimeSlotToUtc(
+					day,
+					timeSlot,
+					storeTimezone || "Asia/Taipei",
+				);
+				if (isBefore(slotDateTimeUtc, today)) {
+					past.add(`${day.toISOString()}-${timeSlot}`);
+				}
+			});
+		});
+		return past;
+	}, [weekDays, timeSlots, storeTimezone, today]);
+
+	// Pre-compute which days are today to avoid repeated date calculations
+	const todayDays = useMemo(() => {
+		const todaySet = new Set<string>();
+		weekDays.forEach((day) => {
+			if (isToday(day, storeTimezone)) {
+				todaySet.add(day.toISOString());
+			}
+		});
+		return todaySet;
+	}, [weekDays, storeTimezone]);
+
 	// Helper to check if a reservation belongs to the current user
 	const isUserReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
@@ -567,11 +596,14 @@ export const CustomerWeekViewCalendar: React.FC<
 		setCurrentWeek(getUtcNow());
 	}, []);
 
-	const getRsvpsForSlot = (day: Date, timeSlot: string): Rsvp[] => {
-		const dayKey = format(day, "yyyy-MM-dd");
-		const key = `${dayKey}-${timeSlot}`;
-		return groupedRsvps[key] || [];
-	};
+	const getRsvpsForSlot = useCallback(
+		(day: Date, timeSlot: string): Rsvp[] => {
+			const dayKey = format(day, "yyyy-MM-dd");
+			const key = `${dayKey}-${timeSlot}`;
+			return groupedRsvps[key] || [];
+		},
+		[groupedRsvps],
+	);
 
 	const handleTimeSlotClick = useCallback(
 		(day: Date, timeSlot: string) => {
@@ -739,30 +771,33 @@ export const CustomerWeekViewCalendar: React.FC<
 								<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-right text-[10px] sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
 									{t("time")}
 								</th>
-								{weekDays.map((day) => (
-									<th
-										key={day.toISOString()}
-										className={cn(
-											"border-b border-r p-0.5 sm:p-2 text-center text-[10px] sm:text-sm font-medium w-[48px] sm:min-w-[110px]",
-											isToday(day, storeTimezone) && "bg-primary/10",
-											"last:border-r-0",
-										)}
-									>
-										<div className="flex flex-col">
-											<span className="text-[9px] sm:text-xs text-muted-foreground">
-												{getDayName(day, t)}
-											</span>
-											<span
-												className={cn(
-													"text-xs sm:text-lg font-semibold",
-													isToday(day, storeTimezone) && "text-primary",
-												)}
-											>
-												{getDayNumber(day)}
-											</span>
-										</div>
-									</th>
-								))}
+								{weekDays.map((day) => {
+									const isDayToday = todayDays.has(day.toISOString());
+									return (
+										<th
+											key={day.toISOString()}
+											className={cn(
+												"border-b border-r p-0.5 sm:p-2 text-center text-[10px] sm:text-sm font-medium w-[48px] sm:min-w-[110px]",
+												isDayToday && "bg-primary/10",
+												"last:border-r-0",
+											)}
+										>
+											<div className="flex flex-col">
+												<span className="text-[9px] sm:text-xs text-muted-foreground">
+													{getDayName(day, t)}
+												</span>
+												<span
+													className={cn(
+														"text-xs sm:text-lg font-semibold",
+														isDayToday && "text-primary",
+													)}
+												>
+													{getDayNumber(day)}
+												</span>
+											</div>
+										</th>
+									);
+								})}
 							</tr>
 						</thead>
 						<tbody>
@@ -774,21 +809,17 @@ export const CustomerWeekViewCalendar: React.FC<
 									{weekDays.map((day) => {
 										const slotRsvps = getRsvpsForSlot(day, timeSlot);
 										const isAvailable = slotRsvps.length === 0;
-										// Check if this day/time slot is in the past
-										// day is already in store timezone, convert to UTC for comparison
-										const slotDateTimeUtc = dayAndTimeSlotToUtc(
-											day,
-											timeSlot,
-											storeTimezone || "Asia/Taipei",
-										);
-										const isPast = isBefore(slotDateTimeUtc, today);
+										// Check if this day/time slot is in the past using pre-computed map
+										const slotKey = `${day.toISOString()}-${timeSlot}`;
+										const isPast = pastSlots.has(slotKey);
 										const canSelect = isAvailable && !isPast;
+										const isDayToday = todayDays.has(day.toISOString());
 										return (
 											<td
 												key={`${day.toISOString()}-${timeSlot}`}
 												className={cn(
 													"border-b border-r p-0.5 sm:p-1 w-[48px] sm:min-w-[120px] align-top",
-													isToday(day, storeTimezone) && "bg-primary/5",
+													isDayToday && "bg-primary/5",
 													"last:border-r-0",
 												)}
 											>

@@ -48,11 +48,13 @@ export default async function StorePrivacyPage(props: {
 	return (
 		<Suspense fallback={<Loader />}>
 			<Container>
-				<section className="mx-auto flex flex-col items-center gap-2 py-8 md:py-12 md:pb-8 lg:py-24 lg:pb-6">
-					<div className="max-w-[750px]">
-						<ReactMarkdown remarkPlugins={[remarkGfm, remarkHtml]}>
-							{storeSettings.privacyPolicy}
-						</ReactMarkdown>
+				<section className="mx-auto flex flex-col items-center gap-2 py-4 px-3 sm:py-8 sm:px-4 md:py-12 md:pb-8 lg:py-24 lg:pb-6">
+					<div className="w-full max-w-[750px]">
+						<div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none prose-headings:font-semibold prose-p:text-sm sm:prose-p:text-base prose-p:leading-relaxed prose-a:text-primary prose-a:underline hover:prose-a:no-underline prose-ul:text-sm sm:prose-ul:text-base prose-ol:text-sm sm:prose-ol:text-base prose-li:text-sm sm:prose-li:text-base">
+							<ReactMarkdown remarkPlugins={[remarkGfm, remarkHtml]}>
+								{storeSettings.privacyPolicy}
+							</ReactMarkdown>
+						</div>
 					</div>
 				</section>
 			</Container>

@@ -17,6 +17,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Store } from "@/types";
 import { useState } from "react";
 import { GetMenuList } from "./store-menu-list";
+import { ThemeToggler } from "@/components/theme-toggler";
+import DropdownUser from "@/components/auth/dropdown-user";
+import { LanguageToggler } from "@/components/language-toggler";
 
 interface MenuProps {
 	store: Store;
