@@ -45,6 +45,32 @@ export function GetMenuList(
 	const { t } = useTranslation(lng);
 
 	const storeFixedMenu = [
+		...(store.useOrderSystem
+			? [
+					{
+						href: `${nav_prefix}/online-order`,
+						label: t("online_order"),
+						active: pathname.includes(`${nav_prefix}/online-order`),
+						icon: IconShoppingCart,
+						submenus: [],
+					},
+					{
+						href: `${nav_prefix}/my-orders`,
+						label: t("store_linkToOrder"),
+						active: pathname.includes(`${nav_prefix}/my-orders`),
+						icon: IconShoppingCart,
+						submenus: [],
+					},
+					{
+						href: `${nav_prefix}/waiting-list`,
+						label: t("Waiting_List"),
+						active: pathname.includes(`${nav_prefix}/waiting-list`),
+						icon: IconClock,
+						submenus: [],
+					},
+				]
+			: []),
+
 		...(store.useCustomerCredit
 			? [
 					{
@@ -56,6 +82,7 @@ export function GetMenuList(
 					},
 				]
 			: []),
+
 		...(store.rsvpSettings?.acceptReservation === true
 			? [
 					{
@@ -67,20 +94,6 @@ export function GetMenuList(
 					},
 				]
 			: []),
-		{
-			href: `${nav_prefix}/waiting-list`,
-			label: t("Waiting_List"),
-			active: pathname.includes(`${nav_prefix}/waiting-list`),
-			icon: IconClock,
-			submenus: [],
-		},
-		{
-			href: `/order/?storeId=${storeId}`,
-			label: t("store_linkToOrder"),
-			active: pathname.includes(`/order/?storeId=${storeId}`),
-			icon: IconShoppingCart,
-			submenus: [],
-		},
 		{
 			href: `${nav_prefix}/faq`,
 			label: t("FAQ"),

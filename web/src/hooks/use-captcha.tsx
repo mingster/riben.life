@@ -57,9 +57,33 @@ export function useCaptcha() {
 		switch (captcha.provider) {
 			case "google-recaptcha-v3": {
 				const sanitizedAction = sanitizeActionName(action);
-				logger.info("Sanitized action:");
-				response = await executeRecaptcha?.(sanitizedAction);
-				logger.info("reCAPTCHA response:");
+				logger.info("Sanitized action", {
+					metadata: { action: sanitizedAction },
+					tags: ["captcha", "recaptcha"],
+				});
+
+				if (!executeRecaptcha) {
+					throw new Error("reCAPTCHA not ready");
+				}
+
+				// Add timeout to prevent infinite loading
+				try {
+					const tokenPromise = executeRecaptcha(sanitizedAction);
+					const timeoutPromise = new Promise<never>((_, reject) =>
+						setTimeout(() => reject(new Error("reCAPTCHA timeout")), 10000),
+					);
+					response = await Promise.race([tokenPromise, timeoutPromise]);
+					logger.info("reCAPTCHA response received");
+				} catch (error) {
+					logger.error("reCAPTCHA execution failed", {
+						metadata: {
+							error: error instanceof Error ? error.message : String(error),
+							action: sanitizedAction,
+						},
+						tags: ["captcha", "error"],
+					});
+					throw error;
+				}
 				break;
 			}
 			/*
