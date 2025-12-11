@@ -31,10 +31,10 @@ function arrayToCsv(data: Array<Record<string, unknown>>): string {
 		"id",
 		"name",
 		"email",
+		"phone",
 		"memberRole",
 		"createdAt",
 		"banned",
-		"stripeCustomerId",
 	];
 
 	// Create header row
@@ -136,10 +136,10 @@ export async function POST(
 				id: user.id,
 				name: user.name || "",
 				email: user.email || "",
+				phone: user.phone || "",
 				memberRole: member?.role || "",
 				createdAt: user.createdAt,
 				banned: user.banned || false,
-				stripeCustomerId: user.stripeCustomerId || "",
 			};
 		});
 
@@ -178,4 +178,3 @@ export async function POST(
 		);
 	}
 }
-

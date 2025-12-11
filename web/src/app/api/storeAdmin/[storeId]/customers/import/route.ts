@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { dateToEpoch } from "@/utils/datetime-utils";
+import { getUtcNow } from "@/utils/datetime-utils";
+import crypto from "crypto";
 
 // Parse CSV string to array of objects
 function parseCsv(csvContent: string): Array<Record<string, string>> {
@@ -12,7 +13,9 @@ function parseCsv(csvContent: string): Array<Record<string, string>> {
 	}
 
 	// Parse header
-	const header = lines[0].split(",").map((col) => col.trim().replace(/^"|"$/g, ""));
+	const header = lines[0]
+		.split(",")
+		.map((col) => col.trim().replace(/^"|"$/g, ""));
 
 	// Parse data rows
 	const data: Array<Record<string, string>> = [];
@@ -191,47 +194,71 @@ export async function POST(
 
 			try {
 				// Validate required fields
-				if (!customer.email || !customer.email.trim()) {
-					errors.push(`Row ${rowNum}: Email is required`);
+				if (!customer.name || !customer.name.trim()) {
+					errors.push(`Row ${rowNum}: Name is required`);
 					errorCount++;
 					continue;
 				}
 
-				const email = customer.email.trim().toLowerCase();
+				const name = customer.name.trim();
 
-				// Find existing user by email
-				const existingUser = await sqlClient.user.findUnique({
-					where: {
-						email: email,
-					},
-					include: {
-						members: {
-							where: {
-								organizationId: store.organizationId,
+				// Find existing user by email if provided, otherwise by name
+				let existingUser = null;
+				if (customer.email && customer.email.trim()) {
+					const email = customer.email.trim().toLowerCase();
+					existingUser = await sqlClient.user.findUnique({
+						where: {
+							email: email,
+						},
+						include: {
+							members: {
+								where: {
+									organizationId: store.organizationId,
+								},
 							},
 						},
-					},
-				});
+					});
+				} else {
+					// Find by name - note: names are not unique, so we take the first match
+					// and check if they're already a member of this organization
+					const usersByName = await sqlClient.user.findMany({
+						where: {
+							name: name,
+						},
+						include: {
+							members: {
+								where: {
+									organizationId: store.organizationId,
+								},
+							},
+						},
+					});
+
+					// Find user who is already a member of this organization
+					existingUser =
+						usersByName.find((u) => u.members.length > 0) ||
+						usersByName[0] ||
+						null;
+				}
 
 				if (existingUser) {
 					// Update existing user
 					const updateData: {
 						name?: string;
+						phone?: string | null;
 						banned?: boolean;
-						stripeCustomerId?: string | null;
 					} = {};
 
 					if (customer.name !== undefined && customer.name !== "") {
 						updateData.name = customer.name.trim();
 					}
 
-					if (customer.banned !== undefined) {
-						updateData.banned = customer.banned.toLowerCase() === "true";
+					if (customer.phone !== undefined) {
+						updateData.phone = customer.phone.trim() || null;
 					}
 
-					if (customer.stripeCustomerId !== undefined) {
-						updateData.stripeCustomerId =
-							customer.stripeCustomerId.trim() || null;
+					if (customer.banned !== undefined) {
+						updateData.banned = customer.banned.toLowerCase() === "true";
 					}
 
 					await sqlClient.user.update({
@@ -256,26 +283,31 @@ export async function POST(
 						// Create member relationship
 						await sqlClient.member.create({
 							data: {
+								id: crypto.randomUUID(),
 								userId: existingUser.id,
 								organizationId: store.organizationId,
 								role: customer.memberRole?.trim() || "user",
+								createdAt: getUtcNow(),
 							},
 						});
 					}
 
 					successCount++;
 				} else {
-					// Create new user
-					// Note: We can't create users without proper authentication setup
-					// This would require password, etc. For now, we'll skip creation
-					errors.push(
-						`Row ${rowNum}: User with email ${email} does not exist. Cannot create new users via CSV import.`,
-					);
+					// Cannot find user
+					if (customer.email && customer.email.trim()) {
+						errors.push(
+							`Row ${rowNum}: User with email ${customer.email.trim()} does not exist. Cannot create new users via CSV import.`,
+						);
+					} else {
+						errors.push(
+							`Row ${rowNum}: User with name "${name}" does not exist. Cannot create new users via CSV import.`,
+						);
+					}
 					errorCount++;
 				}
 			} catch (err: unknown) {
-				const errorMsg =
-					err instanceof Error ? err.message : String(err);
+				const errorMsg = err instanceof Error ? err.message : String(err);
 				errors.push(`Row ${rowNum}: ${errorMsg}`);
 				errorCount++;
 				log.error("Failed to process customer row", {
@@ -324,4 +356,3 @@ export async function POST(
 		);
 	}
 }
-

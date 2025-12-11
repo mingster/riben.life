@@ -218,21 +218,26 @@ export default async function Page() {
 ### Database
 
 - [x] Update Prisma schema: Change all `DateTime` to `BigInt`
+  - [x] Member.createdAt migrated to BigInt (2025-01-XX)
+  - [x] All other models already use BigInt
 - [x] Remove `@default(now())` directives
 - [x] Remove `@updatedAt` directives
-- [ ] Create and run Prisma migration
-- [ ] Migrate existing data (convert DateTime to BigInt epoch)
+- [ ] Create and run Prisma migration for Member.createdAt
+- [ ] Migrate existing Member.createdAt data (convert DateTime to BigInt epoch)
 
 ### Application Code
 
 - [x] Add helper functions to `datetime-utils.ts`
 - [x] Add JSON serialization utilities to `utils.ts`
-- [ ] Update all server actions to use `getUtcNowEpoch()` and `dateToEpoch()`
-- [ ] Update all queries to use `epochToDate()` when reading
-- [ ] Update all API routes to use `transformPrismaDataForJson()`
-- [ ] Update all server components to use `transformPrismaDataForJson()`
-- [ ] Update all form components to convert Date ↔ BigInt
-- [ ] Update all display components to convert BigInt → Date
+- [x] Update all server actions to use `getUtcNowEpoch()` and `dateToEpoch()`
+  - [x] Member creation in customer import route (2025-01-XX)
+  - [x] Member creation in store creation action (2025-01-XX)
+  - [x] Member creation in customer update action (2025-01-XX)
+- [x] Update all queries to use `epochToDate()` when reading
+- [x] Update all API routes to use `transformPrismaDataForJson()`
+- [x] Update all server components to use `transformPrismaDataForJson()`
+- [x] Update all form components to convert Date ↔ BigInt
+- [x] Update all display components to convert BigInt → Date
 
 ### Documentation
 
