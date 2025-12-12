@@ -37,6 +37,7 @@ import {
 } from "@/utils/datetime-utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp } from "@/types";
+import { RsvpStatus } from "@/types/enum";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 // Component for creating RSVP at specific time slot
@@ -455,6 +456,93 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		const key = `${dayKey}-${timeSlot}`;
 		return groupedRsvps[key] || [];
 	};
+
+	// Get color classes based on RSVP status
+	// Normalize status to ensure it's always a valid number to prevent hydration mismatches
+	// includeInteractions: if true, includes hover and active states (for buttons), if false, returns base classes only (for legend)
+	const getStatusColorClasses = useCallback(
+		(
+			status: number | null | undefined,
+			includeInteractions: boolean = true,
+		): string => {
+			// Normalize status to always be a number (default to Pending)
+			const normalizedStatus =
+				status != null ? Number(status) : RsvpStatus.Pending;
+
+			// Ensure it's a valid number
+			if (isNaN(normalizedStatus)) {
+				return includeInteractions
+					? "bg-gray-100 hover:bg-gray-200 active:bg-gray-300 border-l-2 border-l-gray-400"
+					: "bg-gray-100 border-l-2 border-l-gray-400";
+			}
+
+			// Base color classes for each status
+			let baseClasses: string;
+			let hoverClasses: string = "";
+			let activeClasses: string = "";
+
+			switch (normalizedStatus) {
+				case RsvpStatus.Pending:
+					baseClasses =
+						"bg-gray-300 text-gray-700 border-l-2 border-l-gray-500";
+					hoverClasses = "hover:bg-gray-200";
+					activeClasses = "active:bg-gray-300";
+					break;
+				case RsvpStatus.AlreadyPaid:
+					baseClasses =
+						"bg-blue-100 text-gray-700 border-l-2 border-l-blue-500";
+					hoverClasses = "hover:bg-blue-200";
+					activeClasses = "active:bg-blue-300";
+					break;
+				case RsvpStatus.StoreConfirmed:
+					baseClasses =
+						"bg-amber-100 text-gray-700 border-l-2 border-l-amber-500";
+					hoverClasses = "hover:bg-amber-200";
+					activeClasses = "active:bg-amber-300";
+					break;
+				case RsvpStatus.CustomerConfirmed:
+					baseClasses =
+						"bg-green-100 text-gray-700 border-l-2 border-l-green-500";
+					hoverClasses = "hover:bg-green-200";
+					activeClasses = "active:bg-green-300";
+					break;
+				case RsvpStatus.Seated:
+					baseClasses =
+						"bg-indigo-100 text-gray-700 border-l-2 border-l-indigo-500";
+					hoverClasses = "hover:bg-indigo-200";
+					activeClasses = "active:bg-indigo-300";
+					break;
+				case RsvpStatus.Completed:
+					baseClasses =
+						"bg-emerald-100 text-gray-700 border-l-2 border-l-emerald-600";
+					hoverClasses = "hover:bg-emerald-200";
+					activeClasses = "active:bg-emerald-300";
+					break;
+				case RsvpStatus.Cancelled:
+					baseClasses = "bg-red-100 text-gray-700 border-l-2 border-l-red-500";
+					hoverClasses = "hover:bg-red-200";
+					activeClasses = "active:bg-red-300";
+					break;
+				case RsvpStatus.NoShow:
+					baseClasses =
+						"bg-rose-500 text-gray-700 border-l-2 border-l-rose-600";
+					hoverClasses = "hover:bg-rose-200";
+					activeClasses = "active:bg-rose-300";
+					break;
+				default:
+					baseClasses =
+						"bg-gray-100 text-gray-700 border-l-2 border-l-gray-400";
+					hoverClasses = "hover:bg-gray-200";
+					activeClasses = "active:bg-gray-300";
+					break;
+			}
+
+			return includeInteractions
+				? `${baseClasses} ${hoverClasses} ${activeClasses}`
+				: baseClasses;
+		},
+		[],
+	);
 	const [dropdown, setDropdown] =
 		useState<React.ComponentProps<typeof Calendar>["captionLayout"]>(
 			"dropdown",
@@ -597,11 +685,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																	<button
 																		type="button"
 																		className={cn(
-																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs bg-primary/10 hover:bg-primary/20 active:bg-primary/30 transition-colors min-h-[44px] touch-manipulation",
-																			rsvp.confirmedByStore &&
-																				"border-l-2 border-l-green-500",
-																			rsvp.alreadyPaid &&
-																				"border-l-2 border-l-blue-500",
+																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors min-h-[44px] touch-manipulation",
+																			getStatusColorClasses(rsvp.status),
 																		)}
 																	>
 																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
@@ -648,6 +733,33 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 							))}
 						</tbody>
 					</table>
+				</div>
+			</div>
+
+			{/* Status Legend */}
+			<div className="mt-2 p-2 sm:p-4 border rounded-lg bg-muted/30">
+				<div className="text-xs mb-2 sm:mb-3">{t("rsvp_status")}</div>
+				<div className="flex flex-wrap gap-1">
+					{[
+						RsvpStatus.Pending,
+						RsvpStatus.AlreadyPaid,
+						RsvpStatus.StoreConfirmed,
+						RsvpStatus.CustomerConfirmed,
+						RsvpStatus.Seated,
+						RsvpStatus.Completed,
+						RsvpStatus.Cancelled,
+						RsvpStatus.NoShow,
+					].map((status) => (
+						<div
+							key={status}
+							className={cn(
+								"flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs font-mono",
+								getStatusColorClasses(status, false),
+							)}
+						>
+							<span className="font-medium">{t(`rsvp_status_${status}`)}</span>
+						</div>
+					))}
 				</div>
 			</div>
 		</div>

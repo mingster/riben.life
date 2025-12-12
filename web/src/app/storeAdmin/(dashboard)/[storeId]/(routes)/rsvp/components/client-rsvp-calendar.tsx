@@ -38,6 +38,8 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 
 	const [data, setData] = useState<Rsvp[]>(serverData);
 
+	console.log("data", data);
+
 	const handleCreated = useCallback(
 		(newRsvp: Rsvp) => {
 			if (!newRsvp) return;

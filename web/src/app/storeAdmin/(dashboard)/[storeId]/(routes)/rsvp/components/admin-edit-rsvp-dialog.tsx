@@ -57,6 +57,7 @@ import {
 } from "@/utils/datetime-utils";
 import type { StoreFacility } from "@/types";
 import { useEffect } from "react";
+import { RsvpStatus } from "@/types/enum";
 
 interface EditRsvpDialogProps {
 	rsvp?: Rsvp | null;
@@ -306,6 +307,7 @@ export function AdminEditRsvpDialog({
 				pricingRuleId: rsvp.pricingRuleId,
 			}
 		: {
+				//default value when create new
 				storeId: String(params.storeId),
 				id: "",
 				customerId: null,
@@ -317,7 +319,7 @@ export function AdminEditRsvpDialog({
 				numOfChild: 0,
 				rsvpTime: defaultRsvpTime || getUtcNow(),
 				arriveTime: null,
-				status: 0,
+				status: RsvpStatus.Pending,
 				message: null,
 				alreadyPaid: false,
 				confirmedByStore: false,
@@ -506,6 +508,21 @@ export function AdminEditRsvpDialog({
 
 		try {
 			setLoading(true);
+
+			// Check if cancelled or no-show first (highest priority)
+			if (values.status === RsvpStatus.Cancelled) {
+				// Status already set to Cancelled, keep it
+			} else if (values.status === RsvpStatus.NoShow) {
+				// Status already set to NoShow, keep it
+			} else if (values.alreadyPaid) {
+				values.status = RsvpStatus.AlreadyPaid;
+			} else if (values.confirmedByStore) {
+				values.status = RsvpStatus.StoreConfirmed;
+			} else if (values.confirmedByCustomer) {
+				values.status = RsvpStatus.Completed;
+			} else {
+				values.status = RsvpStatus.Pending;
+			}
 
 			if (!isEditMode) {
 				const result = await createRsvpAction(String(params.storeId), {
@@ -826,24 +843,38 @@ export function AdminEditRsvpDialog({
 							<FormField
 								control={form.control}
 								name="alreadyPaid"
-								render={({ field }) => (
-									<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-										<FormControl>
-											<input
-												type="checkbox"
-												checked={field.value}
-												onChange={field.onChange}
-												disabled={loading || form.formState.isSubmitting}
-												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
-											/>
-										</FormControl>
-										<FormLabel>{t("rsvp_already_paid")}</FormLabel>
-										<FormMessage />
-										<FormDescription className="text-xs text-muted-foreground font-mono">
-											{t("rsvp_already_paid_descr")}
-										</FormDescription>
-									</FormItem>
-								)}
+								render={({ field }) => {
+									const isCancelled =
+										form.watch("status") === RsvpStatus.Cancelled;
+									const isNoShow = form.watch("status") === RsvpStatus.NoShow;
+									const isDisabled = isCancelled || isNoShow;
+									return (
+										<FormItem className="flex flex-row items-center space-x-3 space-y-0">
+											<FormControl>
+												<input
+													type="checkbox"
+													checked={field.value}
+													onChange={(e) => {
+														field.onChange(e.target.checked);
+														// Uncheck cancelled/no-show when other status is set
+														if (e.target.checked && (isCancelled || isNoShow)) {
+															form.setValue("status", RsvpStatus.Pending);
+														}
+													}}
+													disabled={
+														loading || form.formState.isSubmitting || isDisabled
+													}
+													className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+												/>
+											</FormControl>
+											<FormLabel>{t("rsvp_already_paid")}</FormLabel>
+											<FormMessage />
+											<FormDescription className="text-xs text-muted-foreground font-mono">
+												{t("rsvp_already_paid_descr")}
+											</FormDescription>
+										</FormItem>
+									);
+								}}
 							/>
 						</div>
 
@@ -852,24 +883,38 @@ export function AdminEditRsvpDialog({
 						<FormField
 							control={form.control}
 							name="confirmedByStore"
-							render={({ field }) => (
-								<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-									<FormControl>
-										<input
-											type="checkbox"
-											checked={field.value}
-											onChange={field.onChange}
-											disabled={loading || form.formState.isSubmitting}
-											className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
-										/>
-									</FormControl>
-									<FormLabel>{t("rsvp_confirmed_by_store")}</FormLabel>
-									<FormMessage />
-									<FormDescription className="text-xs text-muted-foreground font-mono">
-										{t("rsvp_confirmed_by_store_descr")}
-									</FormDescription>
-								</FormItem>
-							)}
+							render={({ field }) => {
+								const isCancelled =
+									form.watch("status") === RsvpStatus.Cancelled;
+								const isNoShow = form.watch("status") === RsvpStatus.NoShow;
+								const isDisabled = isCancelled || isNoShow;
+								return (
+									<FormItem className="flex flex-row items-center space-x-3 space-y-0">
+										<FormControl>
+											<input
+												type="checkbox"
+												checked={field.value}
+												onChange={(e) => {
+													field.onChange(e.target.checked);
+													// Uncheck cancelled/no-show when other status is set
+													if (e.target.checked && (isCancelled || isNoShow)) {
+														form.setValue("status", RsvpStatus.Pending);
+													}
+												}}
+												disabled={
+													loading || form.formState.isSubmitting || isDisabled
+												}
+												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+											/>
+										</FormControl>
+										<FormLabel>{t("rsvp_confirmed_by_store")}</FormLabel>
+										<FormMessage />
+										<FormDescription className="text-xs text-muted-foreground font-mono">
+											{t("rsvp_confirmed_by_store_descr")}
+										</FormDescription>
+									</FormItem>
+								);
+							}}
 						/>
 
 						{form.watch("confirmedByStore") && (
@@ -917,25 +962,124 @@ export function AdminEditRsvpDialog({
 						<FormField
 							control={form.control}
 							name="confirmedByCustomer"
-							render={({ field }) => (
-								<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-									<FormControl>
-										<input
-											type="checkbox"
-											checked={field.value}
-											onChange={field.onChange}
-											disabled={loading || form.formState.isSubmitting}
-											className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
-										/>
-									</FormControl>
-									<FormLabel>{t("rsvp_confirmed_by_customer")}</FormLabel>
-									<FormMessage />
-									<FormDescription className="text-xs text-muted-foreground font-mono">
-										{t("rsvp_confirmed_by_customer_descr")}
-									</FormDescription>
-								</FormItem>
-							)}
+							render={({ field }) => {
+								const isCancelled =
+									form.watch("status") === RsvpStatus.Cancelled;
+								const isNoShow = form.watch("status") === RsvpStatus.NoShow;
+								const isDisabled = isCancelled || isNoShow;
+								return (
+									<FormItem className="flex flex-row items-center space-x-3 space-y-0">
+										<FormControl>
+											<input
+												type="checkbox"
+												checked={field.value}
+												onChange={(e) => {
+													field.onChange(e.target.checked);
+													// Uncheck cancelled/no-show when other status is set
+													if (e.target.checked && (isCancelled || isNoShow)) {
+														form.setValue("status", RsvpStatus.Pending);
+													}
+												}}
+												disabled={
+													loading || form.formState.isSubmitting || isDisabled
+												}
+												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+											/>
+										</FormControl>
+										<FormLabel>{t("rsvp_confirmed_by_customer")}</FormLabel>
+										<FormMessage />
+										<FormDescription className="text-xs text-muted-foreground font-mono">
+											{t("rsvp_confirmed_by_customer_descr")}
+										</FormDescription>
+									</FormItem>
+								);
+							}}
 						/>
+
+						<Separator />
+
+						<div className="grid grid-cols-2 gap-4">
+							<FormField
+								control={form.control}
+								name="status"
+								render={({ field }) => {
+									const isCancelled = field.value === RsvpStatus.Cancelled;
+									const isNoShow = field.value === RsvpStatus.NoShow;
+									return (
+										<FormItem className="flex flex-row items-center space-x-3 space-y-0">
+											<FormControl>
+												<input
+													type="checkbox"
+													checked={isCancelled}
+													onChange={(e) => {
+														if (e.target.checked) {
+															// Set status to Cancelled and uncheck other status checkboxes
+															field.onChange(RsvpStatus.Cancelled);
+															form.setValue("alreadyPaid", false);
+															form.setValue("confirmedByStore", false);
+															form.setValue("confirmedByCustomer", false);
+														} else {
+															// Uncheck cancelled, reset to Pending
+															field.onChange(RsvpStatus.Pending);
+														}
+													}}
+													disabled={
+														loading || form.formState.isSubmitting || isNoShow
+													}
+													className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+												/>
+											</FormControl>
+											<FormLabel>{t("rsvp_cancelled")}</FormLabel>
+											<FormMessage />
+											<FormDescription className="text-xs text-muted-foreground font-mono">
+												{t("rsvp_cancelled_descr")}
+											</FormDescription>
+										</FormItem>
+									);
+								}}
+							/>
+							<FormField
+								control={form.control}
+								name="status"
+								render={({ field }) => {
+									const isCancelled = field.value === RsvpStatus.Cancelled;
+									const isNoShow = field.value === RsvpStatus.NoShow;
+									return (
+										<FormItem className="flex flex-row items-center space-x-3 space-y-0">
+											<FormControl>
+												<input
+													type="checkbox"
+													checked={isNoShow}
+													onChange={(e) => {
+														if (e.target.checked) {
+															// Set status to NoShow and uncheck other status checkboxes
+															field.onChange(RsvpStatus.NoShow);
+															form.setValue("alreadyPaid", false);
+															form.setValue("confirmedByStore", false);
+															form.setValue("confirmedByCustomer", false);
+														} else {
+															// Uncheck no-show, reset to Pending
+															field.onChange(RsvpStatus.Pending);
+														}
+													}}
+													disabled={
+														loading ||
+														form.formState.isSubmitting ||
+														isCancelled
+													}
+													className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+												/>
+											</FormControl>
+											<FormLabel>{t("rsvp_no_show")}</FormLabel>
+											<FormMessage />
+											<FormDescription className="text-xs text-muted-foreground font-mono">
+												{t("rsvp_no_show_descr")}
+											</FormDescription>
+										</FormItem>
+									);
+								}}
+							/>
+						</div>
 
 						<DialogFooter className="flex w-full justify-end space-x-2">
 							<Button
