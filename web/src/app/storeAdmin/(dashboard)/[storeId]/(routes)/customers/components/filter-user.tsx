@@ -56,23 +56,23 @@ export const UserFilter: React.FC<UserFilterProps> = ({ onFilterChange }) => {
 	}, [onFilterChange]);
 
 	return (
-		<div className="relative flex-1 max-w-sm">
-			<IconSearch className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+		<div className="relative w-full sm:flex-1 sm:max-w-sm">
+			<IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-4 sm:w-4 text-muted-foreground" />
 			<Input
 				placeholder={t("users_search")}
 				value={searchTerm}
 				onChange={handleSearchChange}
-				className="pl-8 pr-8"
+				className="pl-9 sm:pl-8 pr-10 sm:pr-8 h-10 min-h-[44px] sm:h-9 sm:min-h-0 text-base sm:text-sm touch-manipulation"
 				aria-label="Search users by name, email, or Stripe customer ID"
 			/>
 			{searchTerm && (
 				<button
 					onClick={handleClearSearch}
-					className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
+					className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 min-h-[44px] min-w-[44px] sm:h-6 sm:w-6 sm:min-h-0 sm:min-w-0 flex items-center justify-center text-muted-foreground hover:text-foreground active:text-foreground transition-colors touch-manipulation"
 					aria-label="Clear search"
 					title="Clear search"
 				>
-					<IconX className="h-4 w-4" />
+					<IconX className="h-4 w-4 sm:h-4 sm:w-4" />
 				</button>
 			)}
 		</div>

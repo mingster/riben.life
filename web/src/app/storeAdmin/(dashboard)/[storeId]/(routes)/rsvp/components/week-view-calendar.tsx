@@ -514,7 +514,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 					break;
 				case RsvpStatus.Completed:
 					baseClasses =
-						"bg-emerald-100 text-gray-700 border-l-2 border-l-emerald-600";
+						"bg-emerald-800 text-gray-300 border-l-2 border-l-emerald-600";
 					hoverClasses = "hover:bg-emerald-200";
 					activeClasses = "active:bg-emerald-300";
 					break;
@@ -525,7 +525,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 					break;
 				case RsvpStatus.NoShow:
 					baseClasses =
-						"bg-rose-500 text-gray-700 border-l-2 border-l-rose-600";
+						"bg-rose-500 text-gray-300 border-l-2 border-l-rose-600";
 					hoverClasses = "hover:bg-rose-200";
 					activeClasses = "active:bg-rose-300";
 					break;
@@ -674,19 +674,20 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 											>
 												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
 													{slotRsvps.length > 0 ? (
-														slotRsvps.map((rsvp) => (
-															<AdminEditRsvpDialog
-																key={rsvp.id}
-																rsvp={rsvp}
-																onUpdated={handleRsvpUpdated}
-																storeTimezone={storeTimezone}
-																rsvpSettings={rsvpSettings}
-																trigger={
+														slotRsvps.map((rsvp) => {
+															const isCompleted =
+																rsvp.status === RsvpStatus.Completed;
+
+															if (isCompleted) {
+																// Render as non-clickable button for completed RSVPs
+																return (
 																	<button
+																		key={rsvp.id}
 																		type="button"
+																		disabled
 																		className={cn(
-																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors min-h-[44px] touch-manipulation",
-																			getStatusColorClasses(rsvp.status),
+																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors min-h-[44px] touch-manipulation w-full cursor-default",
+																			getStatusColorClasses(rsvp.status, false),
 																		)}
 																	>
 																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
@@ -713,9 +714,53 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																			</div>
 																		)}
 																	</button>
-																}
-															/>
-														))
+																);
+															}
+
+															// Render dialog for non-completed RSVPs
+															return (
+																<AdminEditRsvpDialog
+																	key={rsvp.id}
+																	rsvp={rsvp}
+																	onUpdated={handleRsvpUpdated}
+																	storeTimezone={storeTimezone}
+																	rsvpSettings={rsvpSettings}
+																	trigger={
+																		<button
+																			type="button"
+																			className={cn(
+																				"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors min-h-[44px] touch-manipulation",
+																				getStatusColorClasses(rsvp.status),
+																			)}
+																		>
+																			<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																				{rsvp.Customer?.name
+																					? rsvp.Customer.name
+																					: rsvp.Customer?.email
+																						? rsvp.Customer.email
+																						: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																								rsvp.numOfAdult +
+																									rsvp.numOfChild ===
+																								1
+																									? "guest"
+																									: "guests"
+																							}`}
+																			</div>
+																			{rsvp.Facility?.facilityName && (
+																				<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																					{rsvp.Facility.facilityName}
+																				</div>
+																			)}
+																			{rsvp.message && (
+																				<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																					{rsvp.message}
+																				</div>
+																			)}
+																		</button>
+																	}
+																/>
+															);
+														})
 													) : (
 														<CreateRsvpButton
 															day={day}

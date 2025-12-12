@@ -364,6 +364,8 @@ export function AdminEditRsvpDialog({
 	// Watch for facilityId and rsvpTime changes to auto-calculate facilityCost
 	const facilityId = form.watch("facilityId");
 	const rsvpTime = form.watch("rsvpTime");
+	const status = form.watch("status");
+	const isCompleted = status === RsvpStatus.Completed;
 
 	// Filter facilities based on rsvpTime
 	// When editing, always include the current facility even if it's not available at the selected time
@@ -379,9 +381,11 @@ export function AdminEditRsvpDialog({
 		);
 
 		// When editing, ensure the current facility is included even if filtered out
-		if (isEditMode && rsvp?.facilityId) {
+		// Use form's facilityId first, then fall back to rsvp.facilityId
+		const currentFacilityId = form.getValues("facilityId") || rsvp?.facilityId;
+		if (isEditMode && currentFacilityId) {
 			const currentFacility = storeFacilities.find(
-				(f: StoreFacility) => f.id === rsvp.facilityId,
+				(f: StoreFacility) => f.id === currentFacilityId,
 			);
 			if (
 				currentFacility &&
@@ -398,6 +402,7 @@ export function AdminEditRsvpDialog({
 		storeTimezone,
 		isFacilityAvailableAtTime,
 		isEditMode,
+		form,
 		rsvp?.facilityId,
 	]);
 
@@ -423,8 +428,12 @@ export function AdminEditRsvpDialog({
 		}
 	}, [availableFacilities, form, isEditMode]);
 
-	// Auto-calculate facilityCost when facility or time changes
+	// Calculate pricing only when dialog is opened
 	useEffect(() => {
+		if (!dialogOpen) {
+			return;
+		}
+
 		const calculatePricing = async () => {
 			if (!facilityId || !rsvpTime) {
 				return;
@@ -452,7 +461,7 @@ export function AdminEditRsvpDialog({
 							"Content-Type": "application/json",
 						},
 						body: JSON.stringify({
-							facilityId,
+							facilityId: facilityId,
 							rsvpTime: dateTime.toISOString(),
 						}),
 					},
@@ -462,14 +471,14 @@ export function AdminEditRsvpDialog({
 					return;
 				}
 
-				const pricing = await response.json();
-				if (pricing.cost !== null && pricing.cost !== undefined) {
-					form.setValue("facilityCost", pricing.cost, {
+				const result = await response.json();
+				if (result.cost !== null && result.cost !== undefined) {
+					form.setValue("facilityCost", result.cost, {
 						shouldValidate: false,
 					});
 				}
-				if (pricing.pricingRuleId) {
-					form.setValue("pricingRuleId", pricing.pricingRuleId, {
+				if (result.pricingRuleId) {
+					form.setValue("pricingRuleId", result.pricingRuleId, {
 						shouldValidate: false,
 					});
 				}
@@ -479,13 +488,8 @@ export function AdminEditRsvpDialog({
 			}
 		};
 
-		// Add a small delay to avoid too many API calls when user is typing
-		const timeoutId = setTimeout(() => {
-			calculatePricing();
-		}, 300);
-
-		return () => clearTimeout(timeoutId);
-	}, [facilityId, rsvpTime, params.storeId, form]);
+		calculatePricing();
+	}, [dialogOpen, facilityId, rsvpTime, params.storeId, form]);
 
 	const handleSuccess = (updatedRsvp: Rsvp) => {
 		if (isEditMode) {
@@ -504,8 +508,6 @@ export function AdminEditRsvpDialog({
 	};
 
 	const onSubmit = async (values: FormInput) => {
-		console.log("onSubmit values", values.rsvpTime);
-
 		try {
 			setLoading(true);
 
@@ -612,7 +614,10 @@ export function AdminEditRsvpDialog({
 							: t("create") + " " + t("rsvp")}
 					</DialogTitle>
 					<DialogDescription className="text-xs text-muted-foreground">
-						{t("rsvp_edit_descr")}
+						{isCompleted
+							? t("rsvp_completed_readonly") ||
+								"This reservation is completed and cannot be edited."
+							: t("rsvp_edit_descr")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -643,6 +648,7 @@ export function AdminEditRsvpDialog({
 										<StoreMembersCombobox
 											storeMembers={storeMembers || []}
 											disabled={
+												isCompleted ||
 												loading ||
 												form.formState.isSubmitting ||
 												isLoadingStoreMembers
@@ -673,7 +679,9 @@ export function AdminEditRsvpDialog({
 										<FormControl>
 											<Input
 												type="number"
-												disabled={loading || form.formState.isSubmitting}
+												disabled={
+													isCompleted || loading || form.formState.isSubmitting
+												}
 												value={
 													field.value !== undefined
 														? field.value.toString()
@@ -699,7 +707,9 @@ export function AdminEditRsvpDialog({
 										<FormControl>
 											<Input
 												type="number"
-												disabled={loading || form.formState.isSubmitting}
+												disabled={
+													isCompleted || loading || form.formState.isSubmitting
+												}
 												value={
 													field.value !== undefined
 														? field.value.toString()
@@ -730,7 +740,9 @@ export function AdminEditRsvpDialog({
 									<FormControl>
 										<Input
 											type="datetime-local"
-											disabled={loading || form.formState.isSubmitting}
+											disabled={
+												isCompleted || loading || form.formState.isSubmitting
+											}
 											value={
 												field.value ? formatDateTimeLocal(field.value) : ""
 											}
@@ -754,7 +766,9 @@ export function AdminEditRsvpDialog({
 									<FormLabel>{t("rsvp_message")}</FormLabel>
 									<FormControl>
 										<Textarea
-											disabled={loading || form.formState.isSubmitting}
+											disabled={
+												isCompleted || loading || form.formState.isSubmitting
+											}
 											value={field.value ?? ""}
 											onChange={(event) =>
 												field.onChange(event.target.value || null)
@@ -784,6 +798,7 @@ export function AdminEditRsvpDialog({
 											<FacilityCombobox
 												storeFacilities={availableFacilities}
 												disabled={
+													isCompleted ||
 													loading ||
 													form.formState.isSubmitting ||
 													isLoadingStoreFacilities
@@ -800,10 +815,23 @@ export function AdminEditRsvpDialog({
 												}}
 											/>
 										) : (
-											<div className="text-sm text-destructive">
-												{rsvpTime
-													? t("No facilities available at selected time")
-													: t("No facilities available")}
+											<div className="text-sm text-muted-foreground">
+												{isEditMode && field.value
+													? (() => {
+															const selectedFacility = storeFacilities?.find(
+																(f: StoreFacility) => f.id === field.value,
+															);
+															return selectedFacility
+																? selectedFacility.name
+																: rsvpTime
+																	? t(
+																			"No facilities available at selected time",
+																		)
+																	: t("No facilities available");
+														})()
+													: rsvpTime
+														? t("No facilities available at selected time")
+														: t("No facilities available")}
 											</div>
 										)}
 									</FormControl>
@@ -821,7 +849,9 @@ export function AdminEditRsvpDialog({
 										<Input
 											type="number"
 											step="0.01"
-											disabled={loading || form.formState.isSubmitting}
+											disabled={
+												isCompleted || loading || form.formState.isSubmitting
+											}
 											value={
 												field.value !== null && field.value !== undefined
 													? field.value.toString()
@@ -862,7 +892,10 @@ export function AdminEditRsvpDialog({
 														}
 													}}
 													disabled={
-														loading || form.formState.isSubmitting || isDisabled
+														isCompleted ||
+														loading ||
+														form.formState.isSubmitting ||
+														isDisabled
 													}
 													className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
 												/>
@@ -902,7 +935,10 @@ export function AdminEditRsvpDialog({
 													}
 												}}
 												disabled={
-													loading || form.formState.isSubmitting || isDisabled
+													isCompleted ||
+													loading ||
+													form.formState.isSubmitting ||
+													isDisabled
 												}
 												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
 											/>
@@ -939,7 +975,9 @@ export function AdminEditRsvpDialog({
 										<FormControl>
 											<Input
 												type="datetime-local"
-												disabled={loading || form.formState.isSubmitting}
+												disabled={
+													isCompleted || loading || form.formState.isSubmitting
+												}
 												value={
 													field.value ? formatDateTimeLocal(field.value) : ""
 												}
@@ -974,14 +1012,25 @@ export function AdminEditRsvpDialog({
 												type="checkbox"
 												checked={field.value}
 												onChange={(e) => {
-													field.onChange(e.target.checked);
-													// Uncheck cancelled/no-show when other status is set
-													if (e.target.checked && (isCancelled || isNoShow)) {
-														form.setValue("status", RsvpStatus.Pending);
+													const checked = e.target.checked;
+													field.onChange(checked);
+
+													if (checked) {
+														// When confirmed by customer:
+														// 1. Set arriveTime to now
+														form.setValue("arriveTime", getUtcNow());
+														// 2. Set status to Completed
+														form.setValue("status", RsvpStatus.Completed);
+													} else {
+														// When unchecked, clear arriveTime
+														form.setValue("arriveTime", null);
 													}
 												}}
 												disabled={
-													loading || form.formState.isSubmitting || isDisabled
+													isCompleted ||
+													loading ||
+													form.formState.isSubmitting ||
+													isDisabled
 												}
 												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
 											/>
@@ -998,88 +1047,91 @@ export function AdminEditRsvpDialog({
 
 						<Separator />
 
-						<div className="grid grid-cols-2 gap-4">
-							<FormField
-								control={form.control}
-								name="status"
-								render={({ field }) => {
-									const isCancelled = field.value === RsvpStatus.Cancelled;
-									const isNoShow = field.value === RsvpStatus.NoShow;
-									return (
-										<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-											<FormControl>
-												<input
-													type="checkbox"
-													checked={isCancelled}
-													onChange={(e) => {
-														if (e.target.checked) {
-															// Set status to Cancelled and uncheck other status checkboxes
-															field.onChange(RsvpStatus.Cancelled);
-															form.setValue("alreadyPaid", false);
-															form.setValue("confirmedByStore", false);
-															form.setValue("confirmedByCustomer", false);
-														} else {
-															// Uncheck cancelled, reset to Pending
-															field.onChange(RsvpStatus.Pending);
-														}
-													}}
-													disabled={
-														loading || form.formState.isSubmitting || isNoShow
+						<FormField
+							control={form.control}
+							name="status"
+							render={({ field }) => {
+								const isCancelled = field.value === RsvpStatus.Cancelled;
+								const isNoShow = field.value === RsvpStatus.NoShow;
+								return (
+									<FormItem className="flex flex-row items-center space-x-3 space-y-0">
+										<FormControl>
+											<input
+												type="checkbox"
+												checked={isCancelled}
+												onChange={(e) => {
+													if (e.target.checked) {
+														// Set status to Cancelled and uncheck other status checkboxes
+														field.onChange(RsvpStatus.Cancelled);
+														form.setValue("alreadyPaid", false);
+														form.setValue("confirmedByStore", false);
+														form.setValue("confirmedByCustomer", false);
+													} else {
+														// Uncheck cancelled, reset to Pending
+														field.onChange(RsvpStatus.Pending);
 													}
-													className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
-												/>
-											</FormControl>
-											<FormLabel>{t("rsvp_cancelled")}</FormLabel>
-											<FormMessage />
-											<FormDescription className="text-xs text-muted-foreground font-mono">
-												{t("rsvp_cancelled_descr")}
-											</FormDescription>
-										</FormItem>
-									);
-								}}
-							/>
-							<FormField
-								control={form.control}
-								name="status"
-								render={({ field }) => {
-									const isCancelled = field.value === RsvpStatus.Cancelled;
-									const isNoShow = field.value === RsvpStatus.NoShow;
-									return (
-										<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-											<FormControl>
-												<input
-													type="checkbox"
-													checked={isNoShow}
-													onChange={(e) => {
-														if (e.target.checked) {
-															// Set status to NoShow and uncheck other status checkboxes
-															field.onChange(RsvpStatus.NoShow);
-															form.setValue("alreadyPaid", false);
-															form.setValue("confirmedByStore", false);
-															form.setValue("confirmedByCustomer", false);
-														} else {
-															// Uncheck no-show, reset to Pending
-															field.onChange(RsvpStatus.Pending);
-														}
-													}}
-													disabled={
-														loading ||
-														form.formState.isSubmitting ||
-														isCancelled
+												}}
+												disabled={
+													isCompleted ||
+													loading ||
+													form.formState.isSubmitting ||
+													isNoShow
+												}
+												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+											/>
+										</FormControl>
+										<FormLabel>{t("rsvp_cancelled")}</FormLabel>
+										<FormMessage />
+										<FormDescription className="text-xs text-muted-foreground font-mono">
+											{t("rsvp_cancelled_descr")}
+										</FormDescription>
+									</FormItem>
+								);
+							}}
+						/>
+
+						<FormField
+							control={form.control}
+							name="status"
+							render={({ field }) => {
+								const isCancelled = field.value === RsvpStatus.Cancelled;
+								const isNoShow = field.value === RsvpStatus.NoShow;
+								return (
+									<FormItem className="flex flex-row items-center space-x-3 space-y-0">
+										<FormControl>
+											<input
+												type="checkbox"
+												checked={isNoShow}
+												onChange={(e) => {
+													if (e.target.checked) {
+														// Set status to NoShow and uncheck other status checkboxes
+														field.onChange(RsvpStatus.NoShow);
+														form.setValue("alreadyPaid", false);
+														form.setValue("confirmedByStore", false);
+														form.setValue("confirmedByCustomer", false);
+													} else {
+														// Uncheck no-show, reset to Pending
+														field.onChange(RsvpStatus.Pending);
 													}
-													className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
-												/>
-											</FormControl>
-											<FormLabel>{t("rsvp_no_show")}</FormLabel>
-											<FormMessage />
-											<FormDescription className="text-xs text-muted-foreground font-mono">
-												{t("rsvp_no_show_descr")}
-											</FormDescription>
-										</FormItem>
-									);
-								}}
-							/>
-						</div>
+												}}
+												disabled={
+													isCompleted ||
+													loading ||
+													form.formState.isSubmitting ||
+													isCancelled
+												}
+												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+											/>
+										</FormControl>
+										<FormLabel>{t("rsvp_no_show")}</FormLabel>
+										<FormMessage />
+										<FormDescription className="text-xs text-muted-foreground font-mono">
+											{t("rsvp_no_show_descr")}
+										</FormDescription>
+									</FormItem>
+								);
+							}}
+						/>
 
 						<DialogFooter className="flex w-full justify-end space-x-2">
 							<Button
