@@ -5,6 +5,123 @@ import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { format } from "date-fns";
 
+interface PricingRequest {
+	facilityId: string;
+	rsvpTime: string;
+}
+
+interface PricingResult {
+	cost: number | null;
+	credit: number | null;
+	pricingRuleId: string | null;
+}
+
+// Helper function to check if a rule applies to a given day and time
+function isRuleApplicable(
+	rule: {
+		dayOfWeek: string | null;
+		startTime: string | null;
+		endTime: string | null;
+	},
+	dayOfWeek: number,
+	timeStr: string,
+): boolean {
+	// Check day of week
+	if (rule.dayOfWeek) {
+		let dayMatch = false;
+		if (rule.dayOfWeek === "weekend") {
+			dayMatch = dayOfWeek === 0 || dayOfWeek === 6;
+		} else if (rule.dayOfWeek === "weekday") {
+			dayMatch = dayOfWeek >= 1 && dayOfWeek <= 5;
+		} else {
+			try {
+				const days = JSON.parse(rule.dayOfWeek) as number[];
+				dayMatch = days.includes(dayOfWeek);
+			} catch {
+				// Invalid JSON, skip this rule
+				return false;
+			}
+		}
+		if (!dayMatch) {
+			return false;
+		}
+	}
+
+	// Check time range
+	if (rule.startTime && rule.endTime) {
+		const startTime = rule.startTime;
+		const endTime = rule.endTime;
+		// Handle time ranges that span midnight
+		if (startTime > endTime) {
+			// Time range spans midnight (e.g., 22:00 - 02:00)
+			if (timeStr >= startTime || timeStr <= endTime) {
+				return true;
+			}
+		} else {
+			// Normal time range
+			if (timeStr >= startTime && timeStr <= endTime) {
+				return true;
+			}
+		}
+		return false;
+	} else if (rule.startTime || rule.endTime) {
+		// Only one time specified, skip this rule (invalid)
+		return false;
+	}
+
+	return true;
+}
+
+// Calculate pricing for a single facility/time combination
+function calculatePricingForRequest(
+	facility: {
+		id: string;
+		defaultCost: unknown;
+		defaultCredit: unknown;
+	},
+	rules: Array<{
+		id: string;
+		facilityId: string | null;
+		cost: unknown;
+		credit: unknown;
+		dayOfWeek: string | null;
+		startTime: string | null;
+		endTime: string | null;
+		priority: number;
+	}>,
+	dayOfWeek: number,
+	timeStr: string,
+): PricingResult {
+	// Filter rules applicable to this facility
+	const facilityRules = rules.filter((rule) => {
+		// Rule applies if it's facility-specific or store-wide
+		if (rule.facilityId && rule.facilityId !== facility.id) {
+			return false;
+		}
+		// Check day and time
+		return isRuleApplicable(rule, dayOfWeek, timeStr);
+	});
+
+	// Use the first matching rule (highest priority, already sorted)
+	const rule = facilityRules[0];
+
+	let cost = facility.defaultCost;
+	let credit = facility.defaultCredit;
+	let pricingRuleId: string | null = null;
+
+	if (rule) {
+		cost = rule.cost ?? facility.defaultCost;
+		credit = rule.credit ?? facility.defaultCredit;
+		pricingRuleId = rule.id;
+	}
+
+	return {
+		cost: cost ? Number(cost) : null,
+		credit: credit ? Number(credit) : null,
+		pricingRuleId,
+	};
+}
+
 export async function POST(
 	req: Request,
 	props: { params: Promise<{ storeId: string }> },
@@ -14,9 +131,16 @@ export async function POST(
 		CheckStoreAdminApiAccess(params.storeId);
 
 		const body = await req.json();
-		const { facilityId, rsvpTime } = body;
 
-		if (!facilityId || !rsvpTime) {
+		// Support both single object (backward compatibility) and array (batch)
+		const requests: PricingRequest[] = Array.isArray(body)
+			? body
+			: body.facilityId && body.rsvpTime
+				? [body]
+				: [];
+
+		if (requests.length === 0) {
+			// Return empty result for backward compatibility
 			return NextResponse.json({
 				cost: null,
 				credit: null,
@@ -24,111 +148,72 @@ export async function POST(
 			});
 		}
 
-		// Get facility
-		const facility = await sqlClient.storeFacility.findUnique({
+		// Extract unique facility IDs
+		const facilityIds = [...new Set(requests.map((r) => r.facilityId))];
+
+		// Fetch all facilities in one query
+		const facilities = await sqlClient.storeFacility.findMany({
 			where: {
-				id: facilityId,
+				id: { in: facilityIds },
+				storeId: params.storeId,
 			},
 		});
 
-		if (!facility) {
-			return new NextResponse("Facility not found", { status: 404 });
-		}
+		// Create a map for quick lookup
+		const facilityMap = new Map(facilities.map((f) => [f.id, f]));
 
-		// Parse rsvpTime
-		const dateTime = new Date(rsvpTime);
-		const dayOfWeek = dateTime.getDay(); // 0 = Sunday, 6 = Saturday
-		const timeStr = format(dateTime, "HH:mm"); // "HH:mm" format
-
-		// Get all applicable pricing rules
-		const rules = await sqlClient.facilityPricingRule.findMany({
+		// Fetch all pricing rules for this store in one query
+		// Include both facility-specific and store-wide rules
+		const allRules = await sqlClient.facilityPricingRule.findMany({
 			where: {
 				storeId: params.storeId,
 				isActive: true,
 				OR: [
-					{ facilityId: facilityId },
+					{ facilityId: { in: facilityIds } },
 					{ facilityId: null }, // Store-wide rules
 				],
 			},
 			orderBy: { priority: "desc" },
 		});
 
-		// Filter rules by day of week and time range
-		const applicableRules = rules.filter((rule) => {
-			// Check day of week
-			if (rule.dayOfWeek) {
-				let dayMatch = false;
-				if (rule.dayOfWeek === "weekend") {
-					dayMatch = dayOfWeek === 0 || dayOfWeek === 6;
-				} else if (rule.dayOfWeek === "weekday") {
-					dayMatch = dayOfWeek >= 1 && dayOfWeek <= 5;
-				} else {
-					try {
-						const days = JSON.parse(rule.dayOfWeek) as number[];
-						dayMatch = days.includes(dayOfWeek);
-					} catch {
-						// Invalid JSON, skip this rule
-						return false;
-					}
-				}
-				if (!dayMatch) {
-					return false;
-				}
+		// Process all requests
+		const results: PricingResult[] = requests.map((request) => {
+			const facility = facilityMap.get(request.facilityId);
+
+			if (!facility) {
+				return {
+					cost: null,
+					credit: null,
+					pricingRuleId: null,
+				};
 			}
 
-			// Check time range
-			if (rule.startTime && rule.endTime) {
-				const startTime = rule.startTime;
-				const endTime = rule.endTime;
-				// Simple time comparison (HH:mm format)
-				// Handle time ranges that span midnight
-				if (startTime > endTime) {
-					// Time range spans midnight (e.g., 22:00 - 02:00)
-					if (timeStr >= startTime || timeStr <= endTime) {
-						return true;
-					}
-				} else {
-					// Normal time range
-					if (timeStr >= startTime && timeStr <= endTime) {
-						return true;
-					}
-				}
-				return false;
-			} else if (rule.startTime || rule.endTime) {
-				// Only one time specified, skip this rule (invalid)
-				return false;
+			// Parse rsvpTime
+			const dateTime = new Date(request.rsvpTime);
+			if (isNaN(dateTime.getTime())) {
+				return {
+					cost: null,
+					credit: null,
+					pricingRuleId: null,
+				};
 			}
 
-			return true;
+			const dayOfWeek = dateTime.getDay(); // 0 = Sunday, 6 = Saturday
+			const timeStr = format(dateTime, "HH:mm"); // "HH:mm" format
+
+			return calculatePricingForRequest(facility, allRules, dayOfWeek, timeStr);
 		});
 
-		// Use the first matching rule (highest priority)
-		const rule = applicableRules[0];
-
-		let cost = facility.defaultCost;
-		let credit = facility.defaultCredit;
-		let pricingRuleId: string | null = null;
-
-		if (rule) {
-			cost = rule.cost ?? facility.defaultCost;
-			credit = rule.credit ?? facility.defaultCredit;
-			pricingRuleId = rule.id;
-		}
-
-		// Transform Decimal to numbers
-		const result = {
-			cost: cost ? Number(cost) : null,
-			credit: credit ? Number(credit) : null,
-			pricingRuleId,
-		};
-
-		return NextResponse.json(result);
+		// Return single result for backward compatibility, or array for batch
+		return NextResponse.json(Array.isArray(body) ? results : results[0]);
 	} catch (error) {
 		logger.error("Failed to calculate facility pricing", {
 			metadata: {
 				error: error instanceof Error ? error.message : String(error),
 				storeId: params.storeId,
-				facilityId: (req as any).body?.facilityId,
+				requestCount: Array.isArray((req as any).body)
+					? (req as any).body.length
+					: 1,
 			},
 			tags: ["api", "facility-pricing", "error"],
 		});

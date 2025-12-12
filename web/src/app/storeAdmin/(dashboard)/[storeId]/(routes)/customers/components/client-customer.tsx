@@ -440,28 +440,32 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 					</BreadcrumbList>
 				</Breadcrumb>
 
-				<div className="flex items-center justify-between">
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<Heading
 						title={t("Customers") || "Customer Management"}
 						badge={filteredData.length}
 						description={`${t("customers_descr")}${isFiltered ? ` ${filteredData.length} of ${data.length}` : ""}`}
 					/>
-					<div className="flex gap-1 content-end">
-						<UserFilter onFilterChange={handleFilterChange} />
+					<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
 						<Button
 							onClick={handleExport}
 							disabled={exporting}
 							variant="outline"
+							className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
 						>
 							{exporting ? (
 								<>
 									<IconLoader className="mr-2 h-4 w-4 animate-spin" />
-									{t("exporting") || "Exporting..."}
+									<span className="text-sm sm:text-xs">
+										{t("exporting") || "Exporting..."}
+									</span>
 								</>
 							) : (
 								<>
-									<IconDownload className="mr-0 size-4" />
-									{t("export") || "Export"}
+									<IconDownload className="mr-2 h-4 w-4" />
+									<span className="text-sm sm:text-xs">
+										{t("export") || "Export"}
+									</span>
 								</>
 							)}
 						</Button>
@@ -473,6 +477,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 						/>
 					</div>
 				</div>
+				<UserFilter onFilterChange={handleFilterChange} />
 
 				{/* Filter status indicator */}
 				{isFiltered && (

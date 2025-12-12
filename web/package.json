@@ -69,7 +69,7 @@
     "@stripe/react-stripe-js": "5.4.1",
     "@stripe/stripe-js": "8.5.3",
     "@tabler/icons-react": "^3.35.0",
-    "@tailwindcss/postcss": "^4.1.17",
+    "@tailwindcss/postcss": "^4.1.18",
     "@tanstack/react-table": "^8.21.3",
     "@uiw/react-md-editor": "^4.0.11",
     "@vercel/analytics": "^1.6.1",
@@ -169,7 +169,7 @@
     "lint-staged": "^15.5.2",
     "prisma": "^6.19.1",
     "shadcn": "^3.5.2",
-    "tailwindcss": "^4.1.17",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.49.0"
   },

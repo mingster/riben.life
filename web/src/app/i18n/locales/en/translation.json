@@ -552,6 +552,7 @@
   "rsvp_cancellation_policy": "If you cannot come at the reserved time, please cancel at least {{hours}} hours before the reservation.",
   "RSVP_Cancellation_Settings": "Cancellation",
   "rsvp_completed_this_month": "Completed This Month",
+  "rsvp_credit_deduction_note": "RSVP completed: {{points}} points",
   "rsvp_confirmed_by_customer": "Confirmed by Customer",
   "rsvp_confirmed_by_store": "Confirmed by Store",
   "RSVP_Default_Duration": "Default Duration",

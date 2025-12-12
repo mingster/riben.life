@@ -6,6 +6,8 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
+import { RsvpStatus } from "@/types/enum";
+import { CustomerCreditLedgerType } from "@/types/enum";
 import {
 	getUtcNowEpoch,
 	dateToEpoch,
@@ -14,6 +16,8 @@ import {
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { updateRsvpSchema } from "./update-rsvp.validation";
+import logger from "@/lib/logger";
+import { getT } from "@/app/i18n";
 
 export const updateRsvpAction = storeActionClient
 	.metadata({ name: "updateRsvp" })
@@ -39,12 +43,21 @@ export const updateRsvpAction = storeActionClient
 
 		const rsvp = await sqlClient.rsvp.findUnique({
 			where: { id },
-			select: { id: true, storeId: true, createdBy: true },
+			select: {
+				id: true,
+				storeId: true,
+				createdBy: true,
+				status: true,
+				alreadyPaid: true,
+				customerId: true,
+			},
 		});
 
 		if (!rsvp || rsvp.storeId !== storeId) {
 			throw new SafeError("Rsvp not found");
 		}
+
+		const wasCompleted = rsvp.status === RsvpStatus.Completed;
 
 		// Get current user ID for createdBy field (only set if currently null)
 		const session = await auth.api.getSession({
@@ -52,10 +65,14 @@ export const updateRsvpAction = storeActionClient
 		});
 		const createdBy = session?.user?.id || rsvp.createdBy || null;
 
-		// Fetch store to get timezone before converting dates
+		// Fetch store to get timezone and creditServiceExchangeRate
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
-			select: { id: true, defaultTimezone: true },
+			select: {
+				id: true,
+				defaultTimezone: true,
+				creditServiceExchangeRate: true,
+			},
 		});
 
 		if (!store) {
@@ -73,6 +90,10 @@ export const updateRsvpAction = storeActionClient
 			where: {
 				id: facilityId,
 				storeId,
+			},
+			select: {
+				id: true,
+				defaultDuration: true,
 			},
 		});
 
@@ -115,35 +136,153 @@ export const updateRsvpAction = storeActionClient
 				: null;
 
 		try {
-			const updated = await sqlClient.rsvp.update({
-				where: { id },
-				data: {
-					customerId: customerId || null,
-					facilityId,
-					numOfAdult,
-					numOfChild,
-					rsvpTime,
-					arriveTime: arriveTime || null,
-					status,
-					message: message || null,
-					alreadyPaid,
-					confirmedByStore,
-					confirmedByCustomer,
-					facilityCost:
-						facilityCost !== null && facilityCost !== undefined
-							? facilityCost
-							: null,
-					pricingRuleId: pricingRuleId || null,
-					createdBy: createdBy || undefined, // Only update if we have a value
-				},
-				include: {
-					Store: true,
-					Customer: true,
-					CreatedBy: true,
-					Order: true,
-					Facility: true,
-					FacilityPricingRule: true,
-				},
+			const updated = await sqlClient.$transaction(async (tx) => {
+				const updatedRsvp = await tx.rsvp.update({
+					where: { id },
+					data: {
+						customerId: customerId || null,
+						facilityId,
+						numOfAdult,
+						numOfChild,
+						rsvpTime,
+						arriveTime: arriveTime || null,
+						status,
+						message: message || null,
+						alreadyPaid,
+						confirmedByStore,
+						confirmedByCustomer,
+						facilityCost:
+							facilityCost !== null && facilityCost !== undefined
+								? facilityCost
+								: null,
+						pricingRuleId: pricingRuleId || null,
+						createdBy: createdBy || undefined, // Only update if we have a value
+						updatedAt: getUtcNowEpoch(),
+					},
+					include: {
+						Store: true,
+						Customer: true,
+						CreatedBy: true,
+						Order: true,
+						Facility: true,
+						FacilityPricingRule: true,
+					},
+				});
+
+				// If status is Completed, not alreadyPaid, and wasn't previously Completed, deduct customer's credit
+				if (
+					status === RsvpStatus.Completed &&
+					!alreadyPaid &&
+					!wasCompleted &&
+					customerId &&
+					store.creditServiceExchangeRate &&
+					Number(store.creditServiceExchangeRate) > 0
+				) {
+					// Calculate credit to deduct based on duration and creditServiceExchangeRate
+					// creditPoints = duration (minutes) / creditServiceExchangeRate (minutes per point)
+					// Example: duration = 60 minutes, creditServiceExchangeRate = 30 minutes/point
+					// creditToDeduct = 60 / 30 = 2 points
+					const duration = facility.defaultDuration || 60; // Default to 60 minutes if not set
+					const creditServiceExchangeRate = Number(
+						store.creditServiceExchangeRate,
+					);
+					const creditToDeduct = duration / creditServiceExchangeRate;
+
+					// Update the RSVP's facilityCredit field to store the calculated credit amount
+					await tx.rsvp.update({
+						where: { id },
+						data: {
+							facilityCredit: new Prisma.Decimal(creditToDeduct),
+						},
+					});
+
+					if (creditToDeduct > 0) {
+						// Get current credit balance
+						const existingCredit = await tx.customerCredit.findUnique({
+							where: {
+								storeId_userId: {
+									storeId,
+									userId: customerId,
+								},
+							},
+						});
+
+						const currentBalance = existingCredit
+							? Number(existingCredit.point)
+							: 0;
+
+						if (currentBalance >= creditToDeduct) {
+							const newBalance = currentBalance - creditToDeduct;
+
+							// Update CustomerCredit
+							await tx.customerCredit.upsert({
+								where: {
+									storeId_userId: {
+										storeId,
+										userId: customerId,
+									},
+								},
+								update: {
+									point: {
+										decrement: creditToDeduct,
+									},
+									updatedAt: getUtcNowEpoch(),
+								},
+								create: {
+									storeId,
+									userId: customerId,
+									point: -creditToDeduct, // Negative balance if deducting from zero
+									updatedAt: getUtcNowEpoch(),
+								},
+							});
+
+							// Get translation function for ledger note
+							const { t } = await getT();
+
+							// Create ledger entry for credit deduction
+							await tx.customerCreditLedger.create({
+								data: {
+									storeId,
+									userId: customerId,
+									amount: new Prisma.Decimal(-creditToDeduct),
+									balance: new Prisma.Decimal(newBalance),
+									type: CustomerCreditLedgerType.Spend,
+									referenceId: id, // Reference to RSVP
+									note: t("rsvp_credit_deduction_note", {
+										points: creditToDeduct,
+									}),
+									creatorId: createdBy || null,
+									createdAt: getUtcNowEpoch(),
+								},
+							});
+
+							logger.info("Customer credit deducted for completed RSVP", {
+								metadata: {
+									rsvpId: id,
+									customerId,
+									duration,
+									creditServiceExchangeRate,
+									creditAmount: creditToDeduct,
+									balanceBefore: currentBalance,
+									balanceAfter: newBalance,
+								},
+								tags: ["rsvp", "credit", "deduction"],
+							});
+						} else {
+							logger.warn("Insufficient credit balance for RSVP completion", {
+								metadata: {
+									rsvpId: id,
+									customerId,
+									requiredCredit: creditToDeduct,
+									currentBalance,
+								},
+								tags: ["rsvp", "credit", "warning"],
+							});
+						}
+					}
+				}
+
+				return updatedRsvp;
 			});
 
 			const transformedRsvp = { ...updated } as Rsvp;
