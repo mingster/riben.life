@@ -89,7 +89,7 @@ export async function POST(request: Request) {
 			hasEnterpriseConfig
 		) {
 			try {
-				const projectID = process.env.GOOGLE_CLOUD_PROJECT_ID || "pstv-web";
+				const projectID = process.env.GOOGLE_CLOUD_PROJECT_ID || "riben-web";
 				const recaptchaKey = process.env.NEXT_PUBLIC_RECAPTCHA as string;
 
 				// Create the reCAPTCHA client
