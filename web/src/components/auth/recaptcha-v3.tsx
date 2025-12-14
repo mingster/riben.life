@@ -13,9 +13,11 @@ import { useLang } from "@/hooks/use-lang";
 
 export function RecaptchaV3({
 	children,
+	useEnterprise = false,
 }: {
 	children: ReactNode;
 	actionName?: string;
+	useEnterprise?: boolean;
 }) {
 	const isHydrated = useIsHydrated();
 	const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA as string;
@@ -31,7 +33,7 @@ export function RecaptchaV3({
 	return (
 		<GoogleReCaptchaProvider
 			reCaptchaKey={siteKey}
-			useEnterprise={false}
+			useEnterprise={useEnterprise}
 			useRecaptchaNet={false}
 		>
 			{isHydrated && (
@@ -74,8 +76,10 @@ function RecaptchaV3Style() {
 		// Log script loading status for debugging
 		if (typeof window === "undefined") return;
 
-		// Check if script is loading
-		const scriptTag = document.querySelector('script[src*="recaptcha"]');
+		// Check if script is loading (supports both regular and Enterprise)
+		const scriptTag = document.querySelector(
+			'script[src*="recaptcha"][src*="enterprise"], script[src*="recaptcha"][src*="api"]',
+		);
 		if (!scriptTag) {
 			console.warn(
 				"reCAPTCHA script tag not found. The provider should load it automatically.",
@@ -84,13 +88,19 @@ function RecaptchaV3Style() {
 
 		// Monitor script loading with timeout
 		const timeout = setTimeout(() => {
-			if (!executeRecaptcha && !(window as any).grecaptcha) {
+			const grecaptcha = (window as any).grecaptcha;
+			if (!executeRecaptcha && !grecaptcha) {
 				console.error(
 					"reCAPTCHA script failed to load after 15 seconds. Possible causes:\n" +
 						"1. Network connectivity issues\n" +
 						"2. Ad blocker blocking reCAPTCHA\n" +
 						"3. Invalid or missing site key (NEXT_PUBLIC_RECAPTCHA)\n" +
-						"4. CORS or CSP restrictions",
+						"4. CORS or CSP restrictions\n" +
+						"5. Site key needs verification in Google Console",
+				);
+			} else if (grecaptcha && !grecaptcha.enterprise && !grecaptcha.execute) {
+				console.warn(
+					"reCAPTCHA loaded but execute method not available. Check if Enterprise mode is correctly configured.",
 				);
 			}
 		}, 15000);

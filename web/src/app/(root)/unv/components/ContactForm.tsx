@@ -217,7 +217,34 @@ const ContactFormInner = () => {
 					form.reset();
 					setCaptchaError("");
 				} else {
-					toast.error(t("contact_form_error"));
+					const errorMessage = result.data?.error || t("contact_form_error");
+					const isVerificationRequired =
+						errorMessage.includes("verification") ||
+						errorMessage.includes("驗證") ||
+						errorMessage.includes("必須先完成") ||
+						errorMessage.includes("Google Console");
+
+					if (isVerificationRequired) {
+						setCaptchaError(
+							"reCAPTCHA site key needs verification. Please contact the administrator.",
+						);
+						clientLogger.error(
+							"reCAPTCHA verification required in Google Console",
+							{
+								metadata: {
+									status: result.status,
+									error: errorMessage,
+									help: result.data?.help,
+								},
+								tags: ["recaptcha", "verification", "required"],
+								service: "ContactForm",
+							},
+						);
+					} else {
+						setCaptchaError(errorMessage);
+					}
+
+					toast.error(errorMessage);
 					clientLogger.error(
 						`Contact form submission failed: ${result.status}`,
 						{
@@ -298,116 +325,73 @@ const ContactFormInner = () => {
 
 	const isFormValid = form.formState.isValid && !loading;
 
-	// Debug logging (uncomment to debug form validation)
-	// console.log("Form validation:", {
-	// 	isValid: form.formState.isValid,
-	// 	executeRecaptcha: !!executeRecaptcha,
-	// 	isRecaptchaReady,
-	// 	loading,
-	// 	isFormValid
-	// });
 	return (
-		<motion.section
-			initial="hidden"
-			whileInView="show"
-			viewport={{ once: true, amount: 0.25 }}
-			className="px-1 w-full mx-auto relative z-0"
-			aria-label="Contact form and social media links"
-		>
-			<div className="flex xl:flex-row flex-col-reverse gap-3 sm:gap-4 overflow-hidden min-h-screen">
-				<motion.div className="flex-1 rounded-2xl">
-					{/* Social Media Section 
-					{SOCIAL_LINKS.discord && (
-						<div className="flex gap-1 py-10 hover:text-slate transition-colors duration-200">
-							{t("contact_form_social")}
-						</div>
-					)}
-
-					<nav
-						className="font-semibold mb-4 flex gap-5 justify-between"
-						aria-label="Social media links"
+		<div className="flex xl:flex-row flex-col-reverse gap-3 sm:gap-4 overflow-hidden min-h-screen">
+			<motion.div className="flex-1 rounded-2xl">
+				<div className="flex gap-1 py-2 sm:py-3 hover:text-slate transition-colors duration-200 text-sm sm:text-base">
+					{t("contact_form_description")}
+				</div>
+				{/* Contact Form */}
+				<Form {...form}>
+					<form
+						onSubmit={form.handleSubmit(onSubmit)}
+						className="w-full space-y-2 sm:space-y-3"
+						aria-label="Contact form"
 					>
-						{
-						
-						socialLinks.map(
-							({ key, url, Component }) =>
-								url && (
-									<div
-										key={key}
-										className="hover:text-slate transition-colors duration-200"
-									>
-										<Component url={url} />
-									</div>
-								),
-						)
-						}
-					</nav>
-*/}
+						{renderFormField("name", t("contact_form_name"), Input)}
+						{renderFormField("email", t("contact_form_email"), Input, {
+							type: "email",
+						})}
+						{renderFormField("message", t("contact_form_message"), Textarea, {
+							rows: 7,
+							className: "min-h-50",
+						})}
 
-					<div className="flex gap-1 py-2 sm:py-3 hover:text-slate transition-colors duration-200 text-sm sm:text-base">
-						{t("contact_form_description")}
-					</div>
-					{/* Contact Form */}
-					<Form {...form}>
-						<form
-							onSubmit={form.handleSubmit(onSubmit)}
-							className="w-full space-y-2 sm:space-y-3"
-							aria-label="Contact form"
-						>
-							{renderFormField("name", t("contact_form_name"), Input)}
-							{renderFormField("email", t("contact_form_email"), Input, {
-								type: "email",
-							})}
-							{renderFormField("message", t("contact_form_message"), Textarea, {
-								rows: 7,
-								className: "min-h-50",
-							})}
-
-							<div className="flex flex-col pl-3">
-								<div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
-									{isRecaptchaReady ? (
-										<>
-											<span className="text-green-500">✓</span>
-											Security verification ready
-										</>
-									) : (
-										<>
-											<span className="animate-spin">⟳</span>
-											Loading security verification...
-										</>
-									)}
-								</div>
-								{captchaError && (
-									<span className="text-sm text-red-500 mt-2" role="alert">
-										{captchaError}
-									</span>
+						<div className="flex flex-col pl-3">
+							<div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
+								{isRecaptchaReady ? (
+									<>
+										<span className="text-green-500">✓</span>
+										Security verification ready
+									</>
+								) : (
+									<>
+										<span className="animate-spin">⟳</span>
+										Loading security verification...
+									</>
 								)}
 							</div>
+							{captchaError && (
+								<span className="text-sm text-red-500 mt-2" role="alert">
+									{captchaError}
+								</span>
+							)}
+						</div>
 
-							<Button
-								disabled={!isFormValid || !isRecaptchaReady}
-								className="w-full h-12 min-h-[48px]
+						<Button
+							disabled={!isFormValid || !isRecaptchaReady}
+							className="w-full
 								disabled:bg-gray-100 disabled:text-gray-100 
-								dark:disabled:bg-gray-900 dark:disabled:text-gray-500
-								transition-opacity touch-manipulation sm:h-10 sm:min-h-[44px]"
-								type="submit"
-								aria-label="Send message"
-							>
-								{loading
-									? t("contact_form_sending")
-									: !isRecaptchaReady
-										? "Loading security verification..."
-										: t("contact_form_send")}
-							</Button>
-						</form>
-					</Form>
-				</motion.div>
-			</div>
-		</motion.section>
+								dark:disabled:bg-gray-900 dark:disabled:text-gray-500"
+							type="submit"
+							aria-label="Send message"
+						>
+							{loading
+								? t("contact_form_sending")
+								: !isRecaptchaReady
+									? "Loading security verification..."
+									: t("contact_form_send")}
+						</Button>
+					</form>
+				</Form>
+			</motion.div>
+		</div>
 	);
 };
 
-// Main ContactForm component with ReCAPTCHA v3 provider
+// Main ContactForm component with ReCAPTCHA Enterprise provider
+// Following Google Cloud documentation: https://docs.cloud.google.com/recaptcha/docs/instrument-web-pages
+// Enterprise mode uses grecaptcha.enterprise.execute() and loads enterprise.js script
 export const ContactForm = () => {
 	const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA as string;
 
@@ -425,7 +409,7 @@ export const ContactForm = () => {
 	return (
 		<GoogleReCaptchaProvider
 			reCaptchaKey={siteKey}
-			useEnterprise={false}
+			useEnterprise={true}
 			useRecaptchaNet={false}
 		>
 			<ContactFormInner />

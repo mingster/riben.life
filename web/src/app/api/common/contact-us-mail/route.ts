@@ -61,20 +61,35 @@ export async function POST(request: Request) {
 		});
 
 		if (!recaptchaResult.success) {
+			const isVerificationRequired =
+				recaptchaResult.error?.includes("verification") ||
+				recaptchaResult.error?.includes("驗證") ||
+				recaptchaResult.error?.includes("必須先完成");
+
 			log.error("reCAPTCHA verification failed", {
 				metadata: {
 					error: recaptchaResult.error,
 					score: recaptchaResult.score,
 					reasons: recaptchaResult.reasons,
+					isVerificationRequired,
 				},
+				tags: ["recaptcha", "verification", "failed"],
 			});
+
+			// Provide helpful error message if verification is required in Google Console
+			const errorMessage = isVerificationRequired
+				? "reCAPTCHA site key needs verification in Google Console. Please complete the verification step in Google reCAPTCHA Admin Console."
+				: recaptchaResult.error || "reCAPTCHA verification failed";
 
 			return NextResponse.json(
 				{
 					success: false,
-					error: "reCAPTCHA verification failed",
+					error: errorMessage,
 					score: recaptchaResult.score,
 					reasons: recaptchaResult.reasons,
+					help: isVerificationRequired
+						? "Go to https://www.google.com/recaptcha/admin and complete the verification for your site key"
+						: undefined,
 				},
 				{ status: 400 },
 			);
