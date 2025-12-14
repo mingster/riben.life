@@ -99,7 +99,7 @@ export function DataTable<TData, TValue>({
 						onChange={(event) =>
 							table.getColumn(searchKey)?.setFilterValue(event.target.value)
 						}
-						className="max-w-full sm:max-w-sm h-10 text-base sm:text-sm"
+						className="max-w-full sm:max-w-sm h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
 					/>
 				</div>
 			)}
@@ -159,7 +159,7 @@ export function DataTable<TData, TValue>({
 				</div>
 			</div>
 			{!noPagination && (
-				<div className="flex items-center justify-end space-x-2 py-3 sm:py-4">
+				<div className="flex items-center justify-end gap-1.5 sm:gap-2 py-3 sm:py-4">
 					<Button
 						variant="outline"
 						size="sm"
@@ -167,7 +167,7 @@ export function DataTable<TData, TValue>({
 						disabled={!table.getCanPreviousPage()}
 						className="h-10 min-h-[44px] sm:h-8 sm:min-h-0 touch-manipulation"
 					>
-						{t("previous")}
+						<span className="text-sm sm:text-xs">{t("previous")}</span>
 					</Button>
 					<Button
 						variant="outline"
@@ -176,7 +176,7 @@ export function DataTable<TData, TValue>({
 						disabled={!table.getCanNextPage()}
 						className="h-10 min-h-[44px] sm:h-8 sm:min-h-0 touch-manipulation"
 					>
-						{t("next")}
+						<span className="text-sm sm:text-xs">{t("next")}</span>
 					</Button>
 				</div>
 			)}

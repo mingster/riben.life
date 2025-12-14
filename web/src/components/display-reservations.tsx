@@ -103,7 +103,7 @@ export const DisplayReservations = ({
 	// Check if reservation can be edited/cancelled
 	//Edit button only appears if:
 	//Reservation belongs to the current user
-	//Reservation status is Pending or AlreadyPaid
+	//Reservation status is Pending or alreadyPaid is true
 	//canCancel is enabled in rsvpSettings
 	//Reservation is more than cancelHours away from now
 	const canEditReservation = (rsvp: Rsvp): boolean => {
@@ -111,11 +111,8 @@ export const DisplayReservations = ({
 			return false;
 		}
 
-		// Only allow edit for Pending or AlreadyPaid status
-		if (
-			rsvp.status !== RsvpStatus.Pending &&
-			rsvp.status !== RsvpStatus.AlreadyPaid
-		) {
+		// Only allow edit for Pending status or if alreadyPaid
+		if (rsvp.status !== RsvpStatus.Pending && !rsvp.alreadyPaid) {
 			return false;
 		}
 
@@ -228,11 +225,8 @@ export const DisplayReservations = ({
 			return false;
 		}
 
-		// Only allow cancel/delete for Pending or AlreadyPaid status
-		if (
-			rsvp.status !== RsvpStatus.Pending &&
-			rsvp.status !== RsvpStatus.AlreadyPaid
-		) {
+		// Only allow cancel/delete for Pending status or if alreadyPaid
+		if (rsvp.status !== RsvpStatus.Pending && !rsvp.alreadyPaid) {
 			return false;
 		}
 
@@ -430,9 +424,9 @@ export const DisplayReservations = ({
 									className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
 										item.status === 0
 											? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
-											: item.status === 10
+											: item.alreadyPaid
 												? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-												: item.status === 20 || item.status === 30
+												: item.confirmedByStore || item.confirmedByCustomer
 													? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
 													: item.status === 40 || item.status === 50
 														? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
@@ -578,9 +572,9 @@ export const DisplayReservations = ({
 											className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
 												item.status === 0
 													? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
-													: item.status === 10
+													: item.alreadyPaid
 														? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-														: item.status === 20 || item.status === 30
+														: item.confirmedByStore || item.confirmedByCustomer
 															? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
 															: item.status === 40 || item.status === 50
 																? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"

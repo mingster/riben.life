@@ -133,7 +133,7 @@ export const EditFaq: React.FC<props> = ({ item, onUpdated, isNew }) => {
 					</Button>
 				</DialogTrigger>
 
-				<DialogContent className="p-2 space-y-2 sm:max-w-[90%]">
+				<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-[90%] max-h-[calc(100vh-2rem)] overflow-y-auto space-y-2">
 					<DialogHeader className="">
 						<DialogTitle>FAQ</DialogTitle>
 						<DialogDescription></DialogDescription>

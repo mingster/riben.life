@@ -164,7 +164,7 @@ export function RechargeCreditDialog({
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-			<DialogContent className="sm:max-w-md">
+			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
 						{t("customer_credit_recharge") || "Recharge Credit"}

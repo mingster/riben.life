@@ -55,21 +55,42 @@ export const getRsvpStatsAction = storeActionClient
 		// Fetch stats in parallel
 		const [upcomingCount, completedThisMonthCount, unusedCreditResult] =
 			await Promise.all([
-				// Upcoming reservations: active statuses (Pending, AlreadyPaid, StoreConfirmed, CustomerConfirmed, Seated) and rsvpTime >= now
+				// Upcoming reservations: active statuses (Pending, Seated) or (alreadyPaid, confirmedByStore, or confirmedByCustomer) and rsvpTime >= now
 				sqlClient.rsvp.count({
 					where: {
 						storeId,
 						rsvpTime: {
 							gte: now,
 						},
-						status: {
-							in: [
-								RsvpStatus.Pending,
-								RsvpStatus.AlreadyPaid,
-								RsvpStatus.StoreConfirmed,
-								RsvpStatus.CustomerConfirmed,
-							],
-						},
+						AND: [
+							{
+								OR: [
+									{
+										status: {
+											in: [RsvpStatus.Pending, RsvpStatus.Seated],
+										},
+									},
+									{
+										alreadyPaid: true,
+									},
+									{
+										confirmedByStore: true,
+									},
+									{
+										confirmedByCustomer: true,
+									},
+								],
+							},
+							{
+								status: {
+									notIn: [
+										RsvpStatus.Completed,
+										RsvpStatus.Cancelled,
+										RsvpStatus.NoShow,
+									],
+								},
+							},
+						],
 					},
 				}),
 

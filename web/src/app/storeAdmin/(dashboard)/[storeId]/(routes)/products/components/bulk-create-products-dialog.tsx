@@ -147,7 +147,7 @@ export function BulkCreateProductsDialog({
 					</Button>
 				)}
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-lg">
+			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>{t("Product_mgmt_add")}</DialogTitle>
 					<DialogDescription>{t("Product_mgmt_add_descr")}</DialogDescription>

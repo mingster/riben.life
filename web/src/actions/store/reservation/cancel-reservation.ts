@@ -40,13 +40,13 @@ export const cancelReservationAction = baseClient
 			throw new SafeError("Reservation not found");
 		}
 
-		// Only allow canceling if status is Pending or AlreadyPaid
+		// Only allow canceling if status is Pending or if alreadyPaid
 		if (
 			existingRsvp.status !== RsvpStatus.Pending &&
-			existingRsvp.status !== RsvpStatus.AlreadyPaid
+			!existingRsvp.alreadyPaid
 		) {
 			throw new SafeError(
-				"Reservation can only be cancelled when status is Pending or AlreadyPaid",
+				"Reservation can only be cancelled when status is Pending or if already paid",
 			);
 		}
 

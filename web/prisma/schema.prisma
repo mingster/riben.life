@@ -780,15 +780,18 @@ model RsvpTag {
 model Rsvp {
   id          String  @id @default(uuid())
   storeId     String
-  alreadyPaid Boolean @default(false) //已付款
   customerId  String?
   orderId     String?
   facilityId  String?
   numOfAdult  Int     @default(1)
   numOfChild  Int     @default(0)
   rsvpTime    BigInt
-  arriveTime  BigInt?
+  arriveTime  BigInt? //the time should be set when status is set to Seated
   status      Int     @default(0)
+  alreadyPaid Boolean @default(false) //已付款
+  referenceId String? //reference to the StoreOrder id or CustomerCreditLedger id
+  paidAt      BigInt? //the time when the reservation was paid
+
   message     String?
 
   confirmedByStore    Boolean @default(false) //店家已確認預約

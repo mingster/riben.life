@@ -26,7 +26,7 @@ export const FaqCategoryClient: React.FC<FaqCategoryClientProps> = ({
 
 	return (
 		<>
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
 					title={t("FaqCategory_mgmt")}
 					badge={data.length}
@@ -38,9 +38,10 @@ export const FaqCategoryClient: React.FC<FaqCategoryClientProps> = ({
 					onClick={() =>
 						router.push(`/storeAdmin/${params.storeId}/faqCategory/new`)
 					}
+					className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
 				>
-					<Plus className="mr-0 size-4" />
-					{t("create")}
+					<Plus className="mr-2 size-4" />
+					<span className="text-sm sm:text-xs">{t("create")}</span>
 				</Button>
 			</div>
 			<Separator />

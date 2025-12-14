@@ -516,10 +516,6 @@ export function AdminEditRsvpDialog({
 				// Status already set to Cancelled, keep it
 			} else if (values.status === RsvpStatus.NoShow) {
 				// Status already set to NoShow, keep it
-			} else if (values.alreadyPaid) {
-				values.status = RsvpStatus.AlreadyPaid;
-			} else if (values.confirmedByStore) {
-				values.status = RsvpStatus.StoreConfirmed;
 			} else if (values.confirmedByCustomer) {
 				values.status = RsvpStatus.Completed;
 			} else {
@@ -606,7 +602,7 @@ export function AdminEditRsvpDialog({
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-			<DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode

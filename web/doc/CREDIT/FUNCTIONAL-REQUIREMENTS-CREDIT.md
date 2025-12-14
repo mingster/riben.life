@@ -280,7 +280,7 @@ Store Admins have all Store Staff permissions, plus:
 
 - When `prepaidRequired` is true in RSVP settings
 - Customer can use credit to pay `minPrepaidAmount`
-- Credit is deducted when reservation status transitions to `AlreadyPaid`
+- Credit is deducted when the `alreadyPaid` flag is set to `true` on the reservation
 - Reservation is linked to order via `orderId`
 - Credit usage follows same flow as regular purchase
 

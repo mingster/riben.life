@@ -471,7 +471,7 @@ export const CustomerWeekViewCalendar: React.FC<
 	// Check if reservation can be edited based on rsvpSettings
 	// Edit button only appears if:
 	// Reservation belongs to the current user
-	// Reservation status is Pending or AlreadyPaid
+	// Reservation status is Pending or alreadyPaid is true
 	// canCancel is enabled in rsvpSettings
 	// Reservation is more than cancelHours away from now
 	const canEditReservation = useCallback(
@@ -480,11 +480,8 @@ export const CustomerWeekViewCalendar: React.FC<
 				return false;
 			}
 
-			// Only allow edit for Pending or AlreadyPaid status
-			if (
-				rsvp.status !== RsvpStatus.Pending &&
-				rsvp.status !== RsvpStatus.AlreadyPaid
-			) {
+			// Only allow edit for Pending status or if alreadyPaid
+			if (rsvp.status !== RsvpStatus.Pending && !rsvp.alreadyPaid) {
 				return false;
 			}
 
@@ -533,11 +530,8 @@ export const CustomerWeekViewCalendar: React.FC<
 				return false;
 			}
 
-			// Only allow cancel/delete for Pending or AlreadyPaid status
-			if (
-				rsvp.status !== RsvpStatus.Pending &&
-				rsvp.status !== RsvpStatus.AlreadyPaid
-			) {
+			// Only allow cancel/delete for Pending status or if alreadyPaid
+			if (rsvp.status !== RsvpStatus.Pending && !rsvp.alreadyPaid) {
 				return false;
 			}
 

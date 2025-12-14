@@ -133,12 +133,18 @@ export function BulkAddCategoriesDialog({
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogTrigger asChild>
-				<Button variant="outline" onClick={() => setOpen(true)}>
-					<IconPlus className="mr-0 size-4" />
-					{t("Category_mgmt_add_button")}
+				<Button
+					variant="outline"
+					onClick={() => setOpen(true)}
+					className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+				>
+					<IconPlus className="mr-2 size-4" />
+					<span className="text-sm sm:text-xs">
+						{t("Category_mgmt_add_button")}
+					</span>
 				</Button>
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-md">
+			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>{t("Category_mgmt_add")}</DialogTitle>
 					<DialogDescription>{t("Category_mgmt_add_descr")}</DialogDescription>
@@ -160,6 +166,7 @@ export function BulkAddCategoriesDialog({
 											disabled={loading || form.formState.isSubmitting}
 											value={field.value ?? ""}
 											onChange={field.onChange}
+											className="min-h-[44px] text-base sm:text-sm touch-manipulation"
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
@@ -192,7 +199,16 @@ export function BulkAddCategoriesDialog({
 							)}
 						/>
 
-						<div className="flex w-full items-center justify-end space-x-2 pt-2">
+						<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end pt-2">
+							<DialogClose asChild>
+								<Button
+									disabled={loading || form.formState.isSubmitting}
+									variant="outline"
+									className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+								>
+									<span className="text-sm sm:text-xs">{t("cancel")}</span>
+								</Button>
+							</DialogClose>
 							<Button
 								type="submit"
 								disabled={
@@ -200,21 +216,11 @@ export function BulkAddCategoriesDialog({
 									form.formState.isSubmitting ||
 									!form.formState.isValid
 								}
+								className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
 							>
-								{t("create")}
+								<span className="text-sm sm:text-xs">{t("create")}</span>
 							</Button>
-
-							<DialogFooter className="sm:justify-start">
-								<DialogClose asChild>
-									<Button
-										disabled={loading || form.formState.isSubmitting}
-										variant="outline"
-									>
-										{t("cancel")}
-									</Button>
-								</DialogClose>
-							</DialogFooter>
-						</div>
+						</DialogFooter>
 					</form>
 				</Form>
 			</DialogContent>

@@ -195,34 +195,47 @@ export function TransactionClient({ serverData }: TransactionClientProps) {
 				description=""
 			/>
 
-			<div className="flex flex-wrap gap-2 pb-2">
+			<div className="flex flex-wrap gap-1.5 sm:gap-2 pb-2">
 				<Button
-					className={cn("h-9", statusFilter === 0 && highlight_css)}
+					className={cn(
+						"h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation",
+						statusFilter === 0 && highlight_css,
+					)}
 					variant="outline"
 					onClick={() => setStatusFilter(0)}
 				>
-					{t("All")}
+					<span className="text-sm sm:text-xs">{t("All")}</span>
 				</Button>
 				{statusKeys.map((key) => (
 					<Button
 						key={key}
-						className={cn("h-9", statusFilter === key && highlight_css)}
+						className={cn(
+							"h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation",
+							statusFilter === key && highlight_css,
+						)}
 						variant="outline"
 						onClick={() => setStatusFilter(key)}
 					>
-						{t(`OrderStatus_${OrderStatus[key]}`)}
+						<span className="text-sm sm:text-xs">
+							{t(`OrderStatus_${OrderStatus[key]}`)}
+						</span>
 					</Button>
 				))}
 			</div>
 
-			<div className="flex flex-wrap items-center justify-between gap-2 pb-2">
-				<div className="flex items-center gap-2">
+			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-2">
+				<div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
 					<FilterDateTime value={timeFilter} onChange={setTimeFilter} />
 					<Currency value={total} />
 				</div>
-				<div className="flex items-center gap-2">
-					<Button variant="outline" size="sm" onClick={handleClearFilters}>
-						{t("clear_Filter")}
+				<div className="flex items-center gap-1.5 sm:gap-2">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={handleClearFilters}
+						className="h-10 min-h-[44px] sm:h-8 sm:min-h-0 touch-manipulation"
+					>
+						<span className="text-sm sm:text-xs">{t("clear_Filter")}</span>
 					</Button>
 					<div className="flex gap-1 text-xs font-mono text-muted-foreground">
 						{TimerFilterSelections.find(
@@ -296,7 +309,10 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 					<span>{t("Date_and_Time")}</span>
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent align="start" className="w-auto space-y-3 p-3">
+			<PopoverContent
+				align="start"
+				className="w-auto space-y-3 p-3 sm:p-4 max-w-[calc(100vw-2rem)]"
+			>
 				<div className="text-sm text-muted-foreground">
 					{t("DateTime_Filter_descr")}
 				</div>
@@ -312,7 +328,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 											value={field.value ?? "f0"}
 											onValueChange={(newValue) => field.onChange(newValue)}
 										>
-											<SelectTrigger>
+											<SelectTrigger className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation text-base sm:text-sm">
 												<SelectValue placeholder="" />
 											</SelectTrigger>
 											<SelectContent position="popper">
@@ -338,7 +354,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 										<FormControl>
 											<Input
 												type="number"
-												className="font-mono"
+												className="font-mono h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
 												{...field}
 												value={field.value ?? ""}
 											/>
@@ -361,7 +377,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 													<Button
 														variant="outline"
 														className={cn(
-															"justify-start text-left font-normal",
+															"justify-start text-left font-normal h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation text-base sm:text-sm",
 															!field.value && "text-muted-foreground",
 														)}
 													>
@@ -402,7 +418,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 													<Button
 														variant="outline"
 														className={cn(
-															"justify-start text-left font-normal",
+															"justify-start text-left font-normal h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation text-base sm:text-sm",
 															!field.value && "text-muted-foreground",
 														)}
 													>
@@ -431,8 +447,11 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 							/>
 						)}
 
-						<Button type="submit" className="w-full">
-							{t("apply")}
+						<Button
+							type="submit"
+							className="w-full h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+						>
+							<span className="text-sm sm:text-xs">{t("apply")}</span>
 						</Button>
 					</form>
 				</Form>

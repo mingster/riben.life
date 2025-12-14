@@ -130,7 +130,7 @@ model Rsvp {
   numOfChild        Int       @default(0)
   rsvpTime          DateTime
   arriveTime        DateTime?
-  status            Int       @default(0) // RsvpStatus enum: 0=Pending, 10=AlreadyPaid, 20=StoreConfirmed, 30=CustomerConfirmed, 40=Seated, 50=Completed, 60=Cancelled, 70=NoShow
+  status            Int       @default(0) // RsvpStatus enum: 0=Pending, 40=Seated, 50=Completed, 60=Cancelled, 70=NoShow
   message           String?
   confirmedByStore  Boolean   @default(false)
   confirmedByCustomer Boolean @default(false)
