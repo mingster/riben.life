@@ -422,15 +422,16 @@ export const DisplayReservations = ({
 							<div className="shrink-0">
 								<span
 									className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
-										item.status === 0
+										item.status === RsvpStatus.Pending
 											? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
 											: item.alreadyPaid
 												? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
 												: item.confirmedByStore || item.confirmedByCustomer
 													? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
-													: item.status === 40 || item.status === 50
+													: item.status === RsvpStatus.Seated ||
+															item.status === RsvpStatus.Completed
 														? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
-														: item.status === 60
+														: item.status === RsvpStatus.Cancelled
 															? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
 															: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
 									}`}
@@ -570,15 +571,16 @@ export const DisplayReservations = ({
 									<td className="px-3 py-2 text-xs">
 										<span
 											className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
-												item.status === 0
+												item.status === RsvpStatus.Pending
 													? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
 													: item.alreadyPaid
 														? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
 														: item.confirmedByStore || item.confirmedByCustomer
 															? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
-															: item.status === 40 || item.status === 50
+															: item.status === RsvpStatus.Seated ||
+																	item.status === RsvpStatus.Completed
 																? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
-																: item.status === 60
+																: item.status === RsvpStatus.Cancelled
 																	? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
 																	: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
 											}`}

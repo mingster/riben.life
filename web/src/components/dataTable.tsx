@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import {
 	Table,
 	TableBody,
@@ -110,8 +111,14 @@ export function DataTable<TData, TValue>({
 							{table.getHeaderGroups().map((headerGroup) => (
 								<TableRow key={headerGroup.id}>
 									{headerGroup.headers.map((header) => {
+										const columnMeta = header.column.columnDef.meta as
+											| { className?: string }
+											| undefined;
 										return (
-											<TableHead key={header.id} className="p-0">
+											<TableHead
+												key={header.id}
+												className={cn("p-0", columnMeta?.className)}
+											>
 												{header.isPlaceholder
 													? null
 													: flexRender(
@@ -131,17 +138,25 @@ export function DataTable<TData, TValue>({
 										key={row.id}
 										data-state={row.getIsSelected() && "selected"}
 									>
-										{row.getVisibleCells().map((cell) => (
-											<TableCell
-												key={cell.id}
-												className="pl-2 sm:pl-3 py-2 sm:py-3"
-											>
-												{flexRender(
-													cell.column.columnDef.cell,
-													cell.getContext(),
-												)}
-											</TableCell>
-										))}
+										{row.getVisibleCells().map((cell) => {
+											const columnMeta = cell.column.columnDef.meta as
+												| { className?: string }
+												| undefined;
+											return (
+												<TableCell
+													key={cell.id}
+													className={cn(
+														"pl-2 sm:pl-3 py-2 sm:py-3",
+														columnMeta?.className,
+													)}
+												>
+													{flexRender(
+														cell.column.columnDef.cell,
+														cell.getContext(),
+													)}
+												</TableCell>
+											);
+										})}
 									</TableRow>
 								))
 							) : (

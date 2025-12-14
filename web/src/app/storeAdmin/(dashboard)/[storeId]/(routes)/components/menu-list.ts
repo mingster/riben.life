@@ -16,6 +16,7 @@ import {
 	IconCreditCard,
 	IconCurrencyDollar,
 	IconHelp,
+	IconHistory,
 	IconHttpOptions,
 	IconLockOpen,
 	IconMenu,
@@ -168,6 +169,13 @@ export function GetMenuList(
 						pathname.includes(`${nav_prefix}/rsvp`) &&
 						!pathname.includes(`${nav_prefix}/rsvp-settings`),
 					icon: IconCalendarCheck,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/rsvp/history`,
+					label: t("rsvp_history"),
+					active: pathname.includes(`${nav_prefix}/rsvp/history`),
+					icon: IconHistory,
 					submenus: [],
 				},
 				{

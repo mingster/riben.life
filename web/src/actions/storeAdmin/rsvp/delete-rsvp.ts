@@ -23,16 +23,7 @@ export const deleteRsvpAction = storeActionClient
 			throw new SafeError("Rsvp not found");
 		}
 
-		// Only allow deletion of pending or cancelled RSVPs
-		if (
-			rsvp.status !== RsvpStatus.Pending &&
-			rsvp.status !== RsvpStatus.Cancelled
-		) {
-			throw new SafeError(
-				"Only pending or cancelled reservations can be deleted.",
-			);
-		}
-
+		// Store admins can delete any RSVP regardless of status
 		// Actually delete from database (hard delete)
 		await sqlClient.rsvp.delete({
 			where: { id },

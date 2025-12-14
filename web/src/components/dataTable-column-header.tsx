@@ -22,7 +22,7 @@ export function DataTableColumnHeader<TData, TValue>({
 	}
 
 	return (
-		<div className="flex items-center gap-1">
+		<div className={cn("flex items-center gap-1", className)}>
 			<Button
 				variant="ghost"
 				size="sm"
