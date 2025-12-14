@@ -16,7 +16,7 @@ NEXT_PUBLIC_RECAPTCHA=6Lf94eArAAAAAOL74I82SUUNAXxPSrMcKYBAfeMf
 RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key_here
 
 # Optional: Google Cloud Project ID for reCAPTCHA Enterprise
-GOOGLE_CLOUD_PROJECT_ID=pstv-web
+GOOGLE_CLOUD_PROJECT_ID=riben-web
 
 # Optional: Google Cloud Service Account Key (for Enterprise)
 GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
@@ -26,10 +26,14 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 
 ### Option 1: Basic reCAPTCHA (Minimum Setup)
 
+**Note:** The contact form uses Enterprise reCAPTCHA on the frontend, but the backend will fall back to basic verification if Enterprise is not configured.
+
 1. Go to [reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin)
 2. Create a new site with reCAPTCHA v3
 3. Set `NEXT_PUBLIC_RECAPTCHA` to your site key
 4. Set `RECAPTCHA_SECRET_KEY` to your secret key
+
+**Important:** Even with a basic site key, the frontend will attempt to use Enterprise API. If your site key is not an Enterprise key, you may see verification errors. For best results, use an Enterprise key (see Option 2).
 
 ### Option 2: reCAPTCHA Enterprise (Recommended for Production)
 
@@ -42,7 +46,7 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
    - Search for "reCAPTCHA Enterprise API"
    - Click Enable
 
-#### Step 2: Create reCAPTCHA Key
+#### Step 2: Create reCAPTCHA Enterprise Key
 
 1. Go to [reCAPTCHA Enterprise](https://console.cloud.google.com/security/recaptcha)
 2. Click **Create Key**
@@ -50,10 +54,15 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
    - Display name: `Contact Form`
    - Platform: `Website`
    - Domains: Add your domains (e.g., `riben.life`, `localhost`)
-   - reCAPTCHA type: **Score-based**
-   - Enable **Use checkbox challenge** (optional)
+   - reCAPTCHA type: **Score-based** (no challenge)
 4. Click **Create**
-5. Copy the **Site Key** - this is your `NEXT_PUBLIC_RECAPTCHA`
+5. **Important:** Complete any verification steps required by Google Console
+   - You may see a message: "您必須先完成 reCAPTCHA 驗證，才能繼續操作"
+   - Follow the verification steps in the Google Console
+   - This is required before the key can be used
+6. Copy the **Site Key** - this is your `NEXT_PUBLIC_RECAPTCHA`
+
+**Note:** The frontend implementation uses Enterprise reCAPTCHA API (`grecaptcha.enterprise.execute()`), so you **must** use an Enterprise key for the contact form to work properly.
 
 #### Step 3: Create Service Account
 
@@ -80,9 +89,11 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/downloaded-key.json
 
 #### Important Notes
 
+- ⚠️ **The contact form requires an Enterprise key** - it uses `grecaptcha.enterprise.execute()` on the frontend
 - ⚠️ The site key from reCAPTCHA Enterprise is different from standard reCAPTCHA
-- ⚠️ You must use the Enterprise site key if using Enterprise API
+- ⚠️ You must complete verification in Google Console before the key can be used
 - ⚠️ The service account needs proper permissions to create assessments
+- ⚠️ If verification is not completed, you'll see: "您必須先完成 reCAPTCHA 驗證，才能繼續操作"
 
 ## How It Works
 
@@ -91,7 +102,8 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/downloaded-key.json
 ```
 1. User fills out contact form
    ↓
-2. Frontend: executeRecaptcha("contact_form") → generates token
+2. Frontend: grecaptcha.enterprise.execute("contact_form") → generates token
+   (Uses Enterprise API: https://www.google.com/recaptcha/enterprise.js)
    ↓
 3. Form submitted with token to API endpoint
    ↓
@@ -109,6 +121,20 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/downloaded-key.json
 6. If verified: Send email
    If failed: Return error to user
 ```
+
+### Frontend Implementation
+
+The contact form uses **reCAPTCHA Enterprise** on the frontend, following the [official Google Cloud documentation](https://docs.cloud.google.com/recaptcha/docs/instrument-web-pages):
+
+- **Script Loading**: Automatically loads `https://www.google.com/recaptcha/enterprise.js?render=SITE_KEY`
+- **Token Generation**: Uses `grecaptcha.enterprise.execute(SITE_KEY, {action: 'contact_form'})`
+- **Provider**: `GoogleReCaptchaProvider` with `useEnterprise={true}`
+- **Action Name**: `"contact_form"` (validated on backend)
+
+**Key Files:**
+
+- `src/app/(root)/unv/components/ContactForm.tsx` - Main contact form with Enterprise reCAPTCHA
+- `src/components/auth/recaptcha-v3.tsx` - Reusable reCAPTCHA component (supports Enterprise via prop)
 
 ### Assessment Creation (Enterprise)
 
@@ -131,7 +157,34 @@ When using reCAPTCHA Enterprise, the system:
 
 4. **Returns Result**: With score, reasons, and success status
 
-### Code Implementation
+### Frontend Implementation
+
+The contact form uses Enterprise reCAPTCHA on the frontend, following the [official Google Cloud documentation](https://docs.cloud.google.com/recaptcha/docs/instrument-web-pages):
+
+```typescript
+// In ContactForm.tsx
+<GoogleReCaptchaProvider
+  reCaptchaKey={siteKey}
+  useEnterprise={true}  // ✅ Uses Enterprise API
+  useRecaptchaNet={false}
+>
+  <ContactFormInner />
+</GoogleReCaptchaProvider>
+
+// When form is submitted:
+const token = await executeRecaptcha("contact_form");
+// This calls: grecaptcha.enterprise.execute(SITE_KEY, {action: 'contact_form'})
+```
+
+**What happens:**
+
+1. Provider loads: `https://www.google.com/recaptcha/enterprise.js?render=SITE_KEY`
+2. On submit: Calls `grecaptcha.enterprise.execute()` (not `grecaptcha.execute()`)
+3. Token is sent to backend for verification
+
+**Important:** The frontend **requires** an Enterprise site key. Using a basic reCAPTCHA key will cause errors.
+
+### Backend Implementation
 
 The assessment creation is handled in `src/lib/recaptcha-verify.ts`, following the [official Google Cloud documentation](https://cloud.google.com/recaptcha/docs/create-assessment-website):
 
@@ -321,10 +374,12 @@ Use this checklist to verify your reCAPTCHA setup:
 
 ### ✅ Frontend Setup
 
-- [ ] `NEXT_PUBLIC_RECAPTCHA` environment variable is set
-- [ ] reCAPTCHA loads without errors (check browser console)
+- [ ] `NEXT_PUBLIC_RECAPTCHA` environment variable is set (must be Enterprise key)
+- [ ] reCAPTCHA Enterprise script loads: `enterprise.js` (check browser console)
+- [ ] `grecaptcha.enterprise.execute` is available (check browser console)
 - [ ] Security verification status shows "ready" in forms
 - [ ] Token generation works (check test page)
+- [ ] No verification errors from Google Console
 
 ### ✅ Backend Setup  
 
@@ -333,13 +388,23 @@ Use this checklist to verify your reCAPTCHA setup:
 - [ ] Logs show correct verification method
 - [ ] User context (IP, user agent) is captured
 
-### ✅ Optional Enterprise Setup
+### ✅ Enterprise Setup (Required for Contact Form)
+
+**Frontend (Required):**
+
+- [ ] Site key is an Enterprise key (created in Google Cloud Console)
+- [ ] Site key verification completed in Google Console
+- [ ] `GoogleReCaptchaProvider` uses `useEnterprise={true}`
+- [ ] Enterprise script loads: `enterprise.js` (not `api.js`)
+
+**Backend (Optional but Recommended):**
 
 - [ ] `GOOGLE_CLOUD_PROJECT_ID` is set
 - [ ] Service account credentials are configured
 - [ ] reCAPTCHA Enterprise API is enabled
 - [ ] IAM permissions are correct
 - [ ] Logs show "Enterprise reCAPTCHA verification successful"
+- [ ] If not configured, system falls back to basic verification
 
 ### 🧪 Testing Steps
 
@@ -367,12 +432,14 @@ Use this checklist to verify your reCAPTCHA setup:
 
 ## Verification Features
 
-- ✅ **Enterprise Integration**: Uses Google Cloud reCAPTCHA Enterprise
+- ✅ **Enterprise Frontend**: Uses `grecaptcha.enterprise.execute()` following Google Cloud documentation
+- ✅ **Enterprise Backend**: Uses Google Cloud reCAPTCHA Enterprise API for verification
 - ✅ **Fallback Support**: Falls back to basic verification if Enterprise unavailable
 - ✅ **Action Verification**: Ensures tokens are for the correct action (`contact_form`)
 - ✅ **Score Threshold**: Rejects submissions with scores below 0.5
-- ✅ **Detailed Logging**: Comprehensive error logging and debugging
-- ✅ **Error Handling**: Graceful handling of network and API errors
+- ✅ **Verification Detection**: Automatically detects when site key needs Google Console verification
+- ✅ **Detailed Logging**: Comprehensive error logging and debugging (client and server)
+- ✅ **Error Handling**: Graceful handling of network and API errors with helpful messages
 - ✅ **Test Tools**: Built-in test page and API endpoint for verification
 
 ## Files in This Implementation
@@ -382,7 +449,8 @@ Use this checklist to verify your reCAPTCHA setup:
 - `src/lib/recaptcha-verify.ts` - Verification utility with Enterprise support
 - `src/app/api/common/contact-us-mail/route.ts` - Contact form API endpoint
 - `src/app/api/common/recaptcha-verify/route.ts` - Test/verification API endpoint
-- `src/app/(store)/[storeId]/components/AboutUs.tsx` - Contact form component
+- `src/app/(root)/unv/components/ContactForm.tsx` - Contact form component (uses Enterprise reCAPTCHA)
+- `src/components/auth/recaptcha-v3.tsx` - Reusable reCAPTCHA component (supports Enterprise via `useEnterprise` prop)
 
 ### Installation & Testing
 
@@ -396,6 +464,24 @@ Use this checklist to verify your reCAPTCHA setup:
 - `bin/google-recaptcha-verify.js` - Reference implementation
 
 ## Troubleshooting
+
+### Error: "您必須先完成 reCAPTCHA 驗證，才能繼續操作" (Verification Required)
+
+This error means your reCAPTCHA site key needs to be verified in Google Console before it can be used.
+
+**Solution:**
+
+1. Go to [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin) or [reCAPTCHA Enterprise Console](https://console.cloud.google.com/security/recaptcha)
+2. Find your site key
+3. Complete any required verification steps
+4. Wait a few minutes for changes to propagate
+5. Try submitting the form again
+
+**The system will automatically detect this error and provide helpful messages:**
+
+- Frontend: Shows "reCAPTCHA site key needs verification. Please contact the administrator."
+- Backend logs: Include verification requirement status
+- API response: Includes help link to Google Console
 
 ### Error: "Could not load the default credentials"
 
@@ -418,12 +504,17 @@ This error appears when Enterprise verification is attempted without proper Goog
 
 ### Current Setup (Based on Your Configuration)
 
-Your system is currently configured for **Basic Verification** with automatic fallback:
+Your system is currently configured for **Enterprise reCAPTCHA** on the frontend with automatic backend fallback:
 
 ```
-✓ Frontend: ReCAPTCHA v3 (invisible)
-✓ Backend: Basic verification via Google API
-✓ Fallback: Automatic if Enterprise not configured
+✓ Frontend: Enterprise reCAPTCHA (grecaptcha.enterprise.execute)
+  - Uses: https://www.google.com/recaptcha/enterprise.js
+  - Provider: GoogleReCaptchaProvider with useEnterprise={true}
+  - Action: "contact_form"
+✓ Backend: Enterprise verification (if configured) with Basic fallback
+  - Tries Enterprise first (if credentials configured)
+  - Falls back to Basic verification if Enterprise unavailable
+  - Validates action, score, and token validity
 ```
 
 ### Verification Methods
@@ -482,7 +573,7 @@ The `createAssessment` call is the core of Enterprise verification:
 Based on your configuration file (`bin/google-recaptcha-verify.js`):
 
 - ✓ You have the Enterprise code structure ready
-- ✓ Project ID: `pstv-web`
+- ✓ Project ID: `riben-web`
 - ✓ Site Key: `6Lf94eArAAAAAOL74I82SUUNAXxPSrMcKYBAfeMf`
 - ⚠️ Need to verify: Is this an Enterprise key or standard key?
 - ⚠️ Need to add: Service account credentials
@@ -524,7 +615,8 @@ Your service account needs one of these roles:
 
 ### Official Resources
 
-- [Create assessments for websites](https://cloud.google.com/recaptcha/docs/create-assessment-website) - Main guide
+- [Install score-based keys on websites](https://docs.cloud.google.com/recaptcha/docs/instrument-web-pages) - Frontend implementation guide (what we follow)
+- [Create assessments for websites](https://cloud.google.com/recaptcha/docs/create-assessment-website) - Backend verification guide
 - [Interpret assessments](https://cloud.google.com/recaptcha/docs/interpret-assessment-website) - Understanding scores
 - [Action names guide](https://cloud.google.com/recaptcha/docs/action-name) - Best practices for actions
 - [Authentication setup](https://cloud.google.com/docs/authentication/getting-started) - Credentials guide
