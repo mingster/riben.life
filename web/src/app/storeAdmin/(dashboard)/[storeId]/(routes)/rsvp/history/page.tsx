@@ -2,7 +2,7 @@ import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
-import { RsvpHistoryClient } from "../components/client-rsvp";
+import { RsvpHistoryClient } from "../components/client-rsvp-history";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;

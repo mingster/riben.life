@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 
 import type { Rsvp } from "@/types";
+import { RsvpStatus } from "@/types/enum";
 import { CellAction } from "./cell-action";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 import {
@@ -39,72 +40,115 @@ export const createRsvpColumns = (
 		{
 			accessorKey: "rsvpTime",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Reservation Time" />
+				<DataTableColumnHeader column={column} title={t("rsvp_time")} />
 			),
 			cell: ({ row }) => {
 				const rsvp = row.original;
 				const rsvpTime = rsvp.rsvpTime;
+				const datetimeFormat = t("datetime_format");
 
 				// Convert rsvpTime to Date object
 				const rsvpTimeEpoch =
-					typeof rsvpTime === "bigint"
-						? rsvpTime
-						: typeof rsvpTime === "number"
-							? BigInt(rsvpTime)
-							: rsvpTime instanceof Date
-								? BigInt(rsvpTime.getTime())
-								: null;
+					typeof rsvpTime === "number"
+						? BigInt(rsvpTime)
+						: rsvpTime instanceof Date
+							? BigInt(rsvpTime.getTime())
+							: rsvpTime;
 
-				if (!rsvpTimeEpoch) {
-					return <span>-</span>;
-				}
+				const utcDate = epochToDate(rsvpTimeEpoch) ?? new Date();
 
-				const utcDate = epochToDate(rsvpTimeEpoch);
-				if (!utcDate) {
-					return <span>-</span>;
-				}
+				// Convert to store timezone for display (use store's timezone if available, otherwise fall back to provided storeTimezone)
+				const storeDate = getDateInTz(
+					utcDate,
+					getOffsetHours(
+						rsvp.Store?.defaultTimezone ?? storeTimezone ?? "Asia/Taipei",
+					),
+				);
 
-				// Convert to store timezone for display
-				const storeDate = getDateInTz(utcDate, getOffsetHours(storeTimezone));
-
-				return <span>{format(storeDate, "PPP p")}</span>;
+				return (
+					<span className="font-mono">
+						{format(storeDate, `${datetimeFormat} HH:mm`)}
+					</span>
+				);
+			},
+		},
+		{
+			id: "customerName",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("customer")} />
+			),
+			cell: ({ row }) => {
+				const rsvp = row.original;
+				return <span>{rsvp.Customer?.name || "-"}</span>;
 			},
 		},
 		{
 			accessorKey: "numOfAdult",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Adults" />
+				<DataTableColumnHeader column={column} title={t("rsvp_num_of_adult")} />
 			),
 			cell: ({ row }) => <span>{row.getValue("numOfAdult") as number}</span>,
+			meta: {
+				className: "hidden sm:table-cell",
+			},
 		},
 		{
 			accessorKey: "numOfChild",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Children" />
+				<DataTableColumnHeader column={column} title={t("rsvp_num_of_child")} />
 			),
 			cell: ({ row }) => <span>{row.getValue("numOfChild") as number}</span>,
+			meta: {
+				className: "hidden sm:table-cell",
+			},
 		},
 		{
 			accessorKey: "status",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Status" />
+				<DataTableColumnHeader column={column} title={t("rsvp_status")} />
 			),
-			cell: ({ row }) => <span>{row.getValue("status") as number}</span>,
+			cell: ({ row }) => {
+				const rsvp = row.original;
+				const status = rsvp.status;
+				return (
+					<span
+						className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
+							status === RsvpStatus.Pending
+								? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
+								: rsvp.alreadyPaid
+									? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
+									: rsvp.confirmedByStore || rsvp.confirmedByCustomer
+										? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
+										: status === RsvpStatus.Seated ||
+												status === RsvpStatus.Completed
+											? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
+											: status === RsvpStatus.Cancelled
+												? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
+												: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
+						}`}
+					>
+						{t(`rsvp_status_${status}`)}
+					</span>
+				);
+			},
 		},
 		{
 			accessorKey: "message",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Message" />
+				<DataTableColumnHeader column={column} title={t("rsvp_message")} />
 			),
 			cell: ({ row }) => {
 				const message = row.getValue("message") as string | null;
 				return <span className="max-w-[200px] truncate">{message || "-"}</span>;
 			},
+			meta: {
+				className: "hidden sm:table-cell",
+			},
 		},
 		{
 			accessorKey: "alreadyPaid",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title="Paid" />
+				<DataTableColumnHeader column={column} title={t("rsvp_already_paid")} />
 			),
 			cell: ({ row }) => {
 				const paid = row.getValue("alreadyPaid") as boolean;

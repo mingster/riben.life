@@ -216,7 +216,7 @@ export function EditFacilityDialog({
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-			<DialogContent className="sm:max-w-md">
+			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode ? t("facility_mgmt_edit") : t("facility_mgmt_add")}
@@ -261,6 +261,7 @@ export function EditFacilityDialog({
 											disabled={loading || form.formState.isSubmitting}
 											value={field.value ?? ""}
 											onChange={(event) => field.onChange(event.target.value)}
+											className="h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
 										/>
 									</FormControl>
 									<FormMessage />
@@ -284,6 +285,7 @@ export function EditFacilityDialog({
 												field.value !== undefined ? field.value.toString() : ""
 											}
 											onChange={(event) => field.onChange(event.target.value)}
+											className="h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
 										/>
 									</FormControl>
 									<FormMessage />
@@ -307,6 +309,7 @@ export function EditFacilityDialog({
 												field.value !== undefined ? field.value.toString() : ""
 											}
 											onChange={(event) => field.onChange(event.target.value)}
+											className="h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
 										/>
 									</FormControl>
 									<FormMessage />
@@ -331,6 +334,7 @@ export function EditFacilityDialog({
 												field.value !== undefined ? field.value.toString() : ""
 											}
 											onChange={(event) => field.onChange(event.target.value)}
+											className="h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
 										/>
 									</FormControl>
 									<FormMessage />
@@ -354,6 +358,7 @@ export function EditFacilityDialog({
 												field.value !== undefined ? field.value.toString() : ""
 											}
 											onChange={(event) => field.onChange(event.target.value)}
+											className="h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
 										/>
 									</FormControl>
 									<FormMessage />
@@ -445,7 +450,16 @@ export function EditFacilityDialog({
 							)}
 						/>
 
-						<DialogFooter className="flex w-full justify-end space-x-2">
+						<DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => handleOpenChange(false)}
+								disabled={loading || form.formState.isSubmitting}
+								className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+							>
+								<span className="text-sm sm:text-xs">{t("cancel")}</span>
+							</Button>
 							<Button
 								type="submit"
 								disabled={
@@ -453,16 +467,11 @@ export function EditFacilityDialog({
 									!form.formState.isValid ||
 									form.formState.isSubmitting
 								}
+								className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
 							>
-								{isEditMode ? t("save") : t("create")}
-							</Button>
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => handleOpenChange(false)}
-								disabled={loading || form.formState.isSubmitting}
-							>
-								{t("cancel")}
+								<span className="text-sm sm:text-xs">
+									{isEditMode ? t("save") : t("create")}
+								</span>
 							</Button>
 						</DialogFooter>
 					</form>

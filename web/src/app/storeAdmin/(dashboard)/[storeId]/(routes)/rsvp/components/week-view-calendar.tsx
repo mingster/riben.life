@@ -488,24 +488,6 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 					hoverClasses = "hover:bg-gray-200";
 					activeClasses = "active:bg-gray-300";
 					break;
-				case RsvpStatus.AlreadyPaid:
-					baseClasses =
-						"bg-blue-100 text-gray-700 border-l-2 border-l-blue-500";
-					hoverClasses = "hover:bg-blue-200";
-					activeClasses = "active:bg-blue-300";
-					break;
-				case RsvpStatus.StoreConfirmed:
-					baseClasses =
-						"bg-amber-100 text-gray-700 border-l-2 border-l-amber-500";
-					hoverClasses = "hover:bg-amber-200";
-					activeClasses = "active:bg-amber-300";
-					break;
-				case RsvpStatus.CustomerConfirmed:
-					baseClasses =
-						"bg-green-100 text-gray-700 border-l-2 border-l-green-500";
-					hoverClasses = "hover:bg-green-200";
-					activeClasses = "active:bg-green-300";
-					break;
 				case RsvpStatus.Seated:
 					baseClasses =
 						"bg-indigo-100 text-gray-700 border-l-2 border-l-indigo-500";
@@ -787,9 +769,6 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 				<div className="flex flex-wrap gap-1">
 					{[
 						RsvpStatus.Pending,
-						RsvpStatus.AlreadyPaid,
-						RsvpStatus.StoreConfirmed,
-						RsvpStatus.CustomerConfirmed,
 						RsvpStatus.Seated,
 						RsvpStatus.Completed,
 						RsvpStatus.Cancelled,

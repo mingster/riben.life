@@ -124,7 +124,7 @@ Store Admins have all Store Staff permissions, plus:
   - Customer must be signed in (authentication required)
   - Customer can create a pending RSVP first, then be prompted to complete recharge of store credit
   - When a customer creates a pending RSVP, a store order is automatically created with `minPrepaidAmount` from `RsvpSettings`
-  - Customer must pay the prepaid amount (minimum `minPrepaidAmount`) before reservation status transitions to `AlreadyPaid`
+  - Customer must pay the prepaid amount (minimum `minPrepaidAmount`) before the `alreadyPaid` flag is set to `true`
 - `minPrepaidAmount` can be specified as either:
   - A dollar amount (currency value, e.g., $50.00)
   - A CustomerCredit amount (points/credits value, e.g., 100 credits)
@@ -139,13 +139,15 @@ Store Admins have all Store Staff permissions, plus:
 - Default status: 0 (Pending)
 - Status values (RsvpStatus enum):
   - `0` = Pending (待確認/尚未付款) - Initial status when reservation is created
-  - `10` = AlreadyPaid (已付款) - Payment has been received
-  - `20` = StoreConfirmed (店家已確認預約) - Store has confirmed the reservation
-  - `30` = CustomerConfirmed (客戶已確認預約) - Customer has confirmed the reservation
   - `40` = Seated (已帶位) - Customer has been seated/arrived
   - `50` = Completed (已完成) - Reservation/service has been completed
   - `60` = Cancelled (已取消) - Reservation has been cancelled
   - `70` = NoShow (未到) - Customer did not show up for the reservation
+
+- Additional fields track payment and confirmation status separately:
+  - `alreadyPaid` (Boolean) - Payment has been received
+  - `confirmedByStore` (Boolean) - Store has confirmed the reservation
+  - `confirmedByCustomer` (Boolean) - Customer has confirmed the reservation
 
 **FR-RSVP-006:** The system must support dual confirmation:
 
@@ -290,17 +292,18 @@ Store Admins have all Store Staff permissions, plus:
 **Payment Flow (if prepaid required):**
 
 - Customer can create a pending RSVP first, then be prompted to complete recharge of store credit
-- When payment is received (via customer credit or order payment), status transitions to `AlreadyPaid (10)`
-- The `alreadyPaid` flag is set to `true`
+- When payment is received (via customer credit or order payment), the `alreadyPaid` flag is set to `true`
+- The reservation status remains `Pending (0)` until the service lifecycle begins
 - The reservation is linked to the order via `orderId`
-- Store staff notifications are sent only when status reaches `AlreadyPaid`
+- Store staff notifications are sent only when `alreadyPaid = true`
 
 **Confirmation Flow:**
 
-- Store staff or admin can confirm the reservation, setting `confirmedByStore = true` and status to `StoreConfirmed (20)`
-- Customer can confirm the reservation (if requested by store), setting `confirmedByCustomer = true` and status to `CustomerConfirmed (30)`
+- Store staff or admin can confirm the reservation by setting `confirmedByStore = true`
+- Customer can confirm the reservation (if requested by store) by setting `confirmedByCustomer = true`
 - Confirmation can occur in any order (store first, customer first, or simultaneously)
 - Both confirmation flags can be true simultaneously
+- The reservation status remains `Pending (0)` until the service lifecycle begins (e.g., when customer arrives and status changes to `Seated`)
 
 **Service Flow:**
 
@@ -316,8 +319,9 @@ Store Admins have all Store Staff permissions, plus:
 
 **Status Transition Rules:**
 
-- Status transitions are generally forward-moving (e.g., `Pending` → `AlreadyPaid` → `StoreConfirmed` → `Seated` → `Completed`)
-- However, status can transition to `Cancelled` or `NoShow` from any active state
+- Status transitions are generally forward-moving (e.g., `Pending` → `Seated` → `Completed`)
+- Payment status (`alreadyPaid`) and confirmation flags (`confirmedByStore`, `confirmedByCustomer`) are tracked separately from the status enum
+- Status can transition to `Cancelled` or `NoShow` from any active state
 - Store staff and store admins can manually set status to any valid state (with appropriate business rule validation)
 - Status transitions should be logged for audit purposes
 
@@ -325,10 +329,8 @@ Store Admins have all Store Staff permissions, plus:
 
 ```text
 Pending (0)
-  ↓
-AlreadyPaid (10) [if prepaid required]
-  ↓
-StoreConfirmed (20) or CustomerConfirmed (30) [or both]
+  [Payment: alreadyPaid flag can be set to true if prepaid required]
+  [Confirmation: confirmedByStore and/or confirmedByCustomer can be set to true]
   ↓
 Seated (40) [when customer arrives]
   ↓
@@ -339,7 +341,7 @@ Completed (50) [when service is finished]
   → NoShow (70) [if customer doesn't show]
 ```
 
-**Note:** The status enum values (0, 10, 20, 30, 40, 50, 60, 70) are spaced to allow for future intermediate states if needed.
+**Note:** The status enum values (0, 40, 50, 60, 70) are spaced to allow for future intermediate states if needed. Payment and confirmation status are tracked separately via boolean fields (`alreadyPaid`, `confirmedByStore`, `confirmedByCustomer`).
 
 ---
 
@@ -382,7 +384,9 @@ Completed (50) [when service is finished]
 **FR-RSVP-016:** Store staff and Store admins must be able to view all reservations:
 
 - Daily view (by date)
-- Filter by status (Pending, AlreadyPaid, StoreConfirmed, CustomerConfirmed, Seated, Completed, Cancelled, NoShow)
+- Filter by status (Pending, Seated, Completed, Cancelled, NoShow)
+- Filter by payment status (alreadyPaid = true/false)
+- Filter by confirmation status (confirmedByStore = true/false, confirmedByCustomer = true/false)
 - Filter by facility
 - Search by customer name, email, or phone
 
@@ -575,8 +579,8 @@ Completed (50) [when service is finished]
 - Email confirmation (if email provided)
 - SMS confirmation (if `useReminderSMS` enabled and phone provided)
 - LINE notification (if `useReminderLine` enabled and LINE account linked)
-- **To store staff:** Only when reservation status reaches `AlreadyPaid (10)`:
-  - Store staff are notified when payment is received and RSVP status transitions to `AlreadyPaid`
+- **To store staff:** Only when `alreadyPaid = true`:
+  - Store staff are notified when payment is received and the `alreadyPaid` flag is set to `true`
   - This ensures store staff are only notified of reservations that have been paid for
   - Notifications are not sent for pending RSVPs that have not yet been paid
 
@@ -792,10 +796,10 @@ Completed (50) [when service is finished]
 - Number of children
 - Reservation date/time (rsvpTime)
 - Arrival time (arriveTime, when seated)
-- Status (Pending, AlreadyPaid, StoreConfirmed, CustomerConfirmed, Seated, Completed, Cancelled, NoShow)
+- Status (Pending, Seated, Completed, Cancelled, NoShow)
+- Payment status (alreadyPaid - Boolean flag)
+- Confirmation flags (confirmedByStore, confirmedByCustomer - Boolean flags)
 - Special requests/message
-- Confirmation flags (by store and customer)
-- Payment status (alreadyPaid)
 - Payment method (credit, alternative payment)
 - Customer signature (if provided, stored as image/data)
 - Signature timestamp (when signature was captured)

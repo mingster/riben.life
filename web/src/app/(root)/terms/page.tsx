@@ -1,11 +1,10 @@
-import { Suspense } from "react";
 import { GetContentTos } from "@/actions/store/get-content-tos";
 import { getT } from "@/app/i18n";
 import DisplayMarkDown from "@/components/display-mark-down";
 import { GlobalNavbar } from "@/components/global-navbar";
 import { Loader } from "@/components/loader";
-import { Card, CardContent } from "@/components/ui/card";
 import Container from "@/components/ui/container";
+import { Suspense } from "react";
 
 // display terms of service
 //
@@ -17,16 +16,20 @@ export default async function TermsPage() {
 
 	return (
 		<Suspense fallback={<Loader />}>
-			<GlobalNavbar title={title} />
-
-			<Container>
-				<Card>
-					<CardContent>
-						{/*display markdown content */}
-						<DisplayMarkDown content={TermsOfService} />
-					</CardContent>
-				</Card>
-			</Container>
+			<div className="min-h-screen">
+				<GlobalNavbar title={title} />
+				<Container className="font-minimal pt-0 bg-[url('/img/noise.147fc0e.gif')] bg-repeat dark:bg-none">
+					<div className="min-h-screen flex flex-col font-minimal">
+						{/* Main Content */}
+						<main className="flex-1 flex flex-col justify-center items-center px-4 py-16 md:py-24 font-minimal">
+							<div className="w-full max-w-4xl">
+								{/*display markdown content */}
+								<DisplayMarkDown content={TermsOfService} />
+							</div>
+						</main>
+					</div>
+				</Container>
+			</div>
 		</Suspense>
 	);
 }

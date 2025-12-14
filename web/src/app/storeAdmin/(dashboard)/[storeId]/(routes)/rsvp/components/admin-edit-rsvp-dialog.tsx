@@ -47,6 +47,8 @@ import { StoreMembersCombobox } from "../../customers/components/combobox-store-
 import { FacilityCombobox } from "@/components/combobox-facility";
 import useSWR from "swr";
 import type { User } from "@/types";
+import { authClient } from "@/lib/auth-client";
+import { Role } from "@/types/enum";
 import {
 	getUtcNow,
 	epochToDate,
@@ -367,6 +369,13 @@ export function AdminEditRsvpDialog({
 	const status = form.watch("status");
 	const isCompleted = status === RsvpStatus.Completed;
 
+	// Get current user session to check admin role
+	const { data: session } = authClient.useSession();
+	const isAdmin = session?.user?.role === Role.admin;
+
+	// Only allow editing completed RSVPs if user is admin
+	const canEditCompleted = !isCompleted || isAdmin;
+
 	// Filter facilities based on rsvpTime
 	// When editing, always include the current facility even if it's not available at the selected time
 	const availableFacilities = useMemo(() => {
@@ -516,10 +525,6 @@ export function AdminEditRsvpDialog({
 				// Status already set to Cancelled, keep it
 			} else if (values.status === RsvpStatus.NoShow) {
 				// Status already set to NoShow, keep it
-			} else if (values.alreadyPaid) {
-				values.status = RsvpStatus.AlreadyPaid;
-			} else if (values.confirmedByStore) {
-				values.status = RsvpStatus.StoreConfirmed;
 			} else if (values.confirmedByCustomer) {
 				values.status = RsvpStatus.Completed;
 			} else {
@@ -606,7 +611,7 @@ export function AdminEditRsvpDialog({
 	return (
 		<Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-			<DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
@@ -614,7 +619,7 @@ export function AdminEditRsvpDialog({
 							: t("create") + " " + t("rsvp")}
 					</DialogTitle>
 					<DialogDescription className="text-xs text-muted-foreground">
-						{isCompleted
+						{isCompleted && !isAdmin
 							? t("rsvp_completed_readonly") ||
 								"This reservation is completed and cannot be edited."
 							: t("rsvp_edit_descr")}
@@ -648,7 +653,7 @@ export function AdminEditRsvpDialog({
 										<StoreMembersCombobox
 											storeMembers={storeMembers || []}
 											disabled={
-												isCompleted ||
+												!canEditCompleted ||
 												loading ||
 												form.formState.isSubmitting ||
 												isLoadingStoreMembers
@@ -680,7 +685,9 @@ export function AdminEditRsvpDialog({
 											<Input
 												type="number"
 												disabled={
-													isCompleted || loading || form.formState.isSubmitting
+													!canEditCompleted ||
+													loading ||
+													form.formState.isSubmitting
 												}
 												value={
 													field.value !== undefined
@@ -708,7 +715,9 @@ export function AdminEditRsvpDialog({
 											<Input
 												type="number"
 												disabled={
-													isCompleted || loading || form.formState.isSubmitting
+													!canEditCompleted ||
+													loading ||
+													form.formState.isSubmitting
 												}
 												value={
 													field.value !== undefined
@@ -741,7 +750,9 @@ export function AdminEditRsvpDialog({
 										<Input
 											type="datetime-local"
 											disabled={
-												isCompleted || loading || form.formState.isSubmitting
+												!canEditCompleted ||
+												loading ||
+												form.formState.isSubmitting
 											}
 											value={
 												field.value ? formatDateTimeLocal(field.value) : ""
@@ -767,7 +778,9 @@ export function AdminEditRsvpDialog({
 									<FormControl>
 										<Textarea
 											disabled={
-												isCompleted || loading || form.formState.isSubmitting
+												!canEditCompleted ||
+												loading ||
+												form.formState.isSubmitting
 											}
 											value={field.value ?? ""}
 											onChange={(event) =>
@@ -798,7 +811,7 @@ export function AdminEditRsvpDialog({
 											<FacilityCombobox
 												storeFacilities={availableFacilities}
 												disabled={
-													isCompleted ||
+													!canEditCompleted ||
 													loading ||
 													form.formState.isSubmitting ||
 													isLoadingStoreFacilities
@@ -850,7 +863,9 @@ export function AdminEditRsvpDialog({
 											type="number"
 											step="0.01"
 											disabled={
-												isCompleted || loading || form.formState.isSubmitting
+												!canEditCompleted ||
+												loading ||
+												form.formState.isSubmitting
 											}
 											value={
 												field.value !== null && field.value !== undefined
@@ -892,7 +907,7 @@ export function AdminEditRsvpDialog({
 														}
 													}}
 													disabled={
-														isCompleted ||
+														!canEditCompleted ||
 														loading ||
 														form.formState.isSubmitting ||
 														isDisabled
@@ -935,7 +950,7 @@ export function AdminEditRsvpDialog({
 													}
 												}}
 												disabled={
-													isCompleted ||
+													!canEditCompleted ||
 													loading ||
 													form.formState.isSubmitting ||
 													isDisabled
@@ -976,7 +991,9 @@ export function AdminEditRsvpDialog({
 											<Input
 												type="datetime-local"
 												disabled={
-													isCompleted || loading || form.formState.isSubmitting
+													!canEditCompleted ||
+													loading ||
+													form.formState.isSubmitting
 												}
 												value={
 													field.value ? formatDateTimeLocal(field.value) : ""
@@ -1027,7 +1044,7 @@ export function AdminEditRsvpDialog({
 													}
 												}}
 												disabled={
-													isCompleted ||
+													!canEditCompleted ||
 													loading ||
 													form.formState.isSubmitting ||
 													isDisabled
@@ -1072,7 +1089,7 @@ export function AdminEditRsvpDialog({
 													}
 												}}
 												disabled={
-													isCompleted ||
+													!canEditCompleted ||
 													loading ||
 													form.formState.isSubmitting ||
 													isNoShow
@@ -1115,7 +1132,7 @@ export function AdminEditRsvpDialog({
 													}
 												}}
 												disabled={
-													isCompleted ||
+													!canEditCompleted ||
 													loading ||
 													form.formState.isSubmitting ||
 													isCancelled

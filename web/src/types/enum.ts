@@ -168,9 +168,6 @@ export enum ReturnStatus {
 
 export enum RsvpStatus {
 	Pending = 0, //尚未付款
-	AlreadyPaid = 10, //已付款
-	StoreConfirmed = 20, //店家已確認預約
-	CustomerConfirmed = 30, //客戶已確認預約
 	Seated = 40, //已帶位 checked-in
 	Completed = 50, //已完成 checkout
 	Cancelled = 60, //已取消

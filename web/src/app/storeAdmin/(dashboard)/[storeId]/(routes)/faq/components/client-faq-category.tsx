@@ -408,7 +408,7 @@ export const FaqCategoryClient: React.FC<props> = ({
 
 	return (
 		<>
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
 					title={t("FaqCategory_mgmt")}
 					badge={data.length}
@@ -429,7 +429,7 @@ export const FaqCategoryClient: React.FC<props> = ({
 
 			<Separator />
 
-			<div className="flex items-center justify-between">
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
 					title={`${t("FAQ")}`}
 					badge={faqData.length}
