@@ -11,12 +11,13 @@ import { Header, NavBar } from "./Header";
 import ScrollSpy from "react-ui-scrollspy";
 
 import Image from "next/image";
-import { AboutUs } from "./AboutUs";
+import { ContactForm, ContactFormComponent } from "./ContactForm";
 import { Cost } from "./Cost";
 import { FAQ } from "./FAQ";
 import { Features } from "./Features";
 import { Footer } from "./Footer";
 import { UseCases } from "./UseCases";
+import { AboutUs } from "./AboutUs";
 
 export const UniversalHomeContent = () => {
 	return (
@@ -67,13 +68,14 @@ export const UniversalHomeContent = () => {
         </section>
          */}
 			</div>
-			<div className="flex flex-col pt-12 sm:pt-20 mb-16 sm:mb-20 overflow-hidden gap-y-12 sm:gap-y-20 sm:pt-32 sm:mb-32 sm:gap-y-32 md:pt-40 md:mb-40 md:gap-y-40">
+			<div className="flex flex-col pt-12 mb-16 overflow-hidden gap-y-12 sm:pt-32 sm:mb-32 sm:gap-y-32 md:pt-40 md:mb-40 md:gap-y-40 font-minimal bg-[url('/img/noise.147fc0e.gif')] bg-repeat dark:bg-none">
 				<ScrollSpy scrollThrottle={100} useBoxMethod={false}>
 					<UseCases />
 					<Features />
 					<Cost />
-
 					<AboutUs />
+					<ContactFormComponent />
+
 					{/*
           <FAQ />
           <Testimonials />
