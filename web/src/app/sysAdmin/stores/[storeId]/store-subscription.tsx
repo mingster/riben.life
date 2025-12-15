@@ -8,13 +8,14 @@ import { useTranslation } from "@/app/i18n/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { useI18n } from "@/providers/i18n-provider";
 import { StoreLevel, SubscriptionStatus } from "@/types/enum";
-import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import type { Store, StoreSubscription } from "@prisma/client";
+import { updateStoreSubscriptionAction } from "@/actions/sysAdmin/store/update-store-subscription";
+import { cancelStoreSubscriptionAction } from "@/actions/sysAdmin/store/cancel-store-subscription";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,13 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import logger from "@/lib/logger";
 
 import { Calendar } from "@/components/ui/calendar";
@@ -38,16 +46,12 @@ import {
 import { format } from "date-fns";
 import { IconCalendar } from "@tabler/icons-react";
 import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
 
 const formSchema = z.object({
-	subscriptionId: z.string().optional(),
-	expiration: z.date().optional(),
-	/*
-		expiration: z.date({
-			required_error: "expiration is required.",
-		  }),
-	*/
-	note: z.string().optional(),
+	subscriptionId: z.string().optional().nullable(),
+	expiration: z.date().optional().nullable(),
+	note: z.string().optional().nullable(),
 	level: z.number(),
 });
 
@@ -58,6 +62,7 @@ export interface SettingsFormProps {
 	subscription: StoreSubscription | null;
 }
 
+// allow admin user to view/cancel store subscription. Also allow admin user to update store level.
 export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 	initialData,
 	subscription,
@@ -74,25 +79,26 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 		//console.log("subscriptionId", subscription.subscriptionId);
 	}
 
-	const defaultValues = initialData
-		? {
-				...initialData,
-				...subscription,
-			}
-		: {};
+	const defaultValues: formValues = {
+		level: initialData?.level ?? StoreLevel.Free,
+		subscriptionId: subscription?.subscriptionId ?? "",
+		note: subscription?.note ?? "",
+		expiration: subscription?.expiration
+			? epochToDate(BigInt(subscription.expiration))
+			: undefined,
+	};
 
-	//console.log('defaultValues: ' + JSON.stringify(defaultValues));
 	const form = useForm<formValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues,
 	});
+	const { clearErrors } = form;
 
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		clearErrors,
-	} = useForm<formValues>();
+	const levelOptions = [
+		{ value: String(StoreLevel.Free), label: "Free" },
+		{ value: String(StoreLevel.Pro), label: "Pro" },
+		{ value: String(StoreLevel.Multi), label: "Multi" },
+	];
 
 	//const isSubmittable = !!form.formState.isDirty && !!form.formState.isValid;
 
@@ -100,38 +106,70 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 	const { t } = useTranslation(lng);
 
 	const onSubmit = async (data: formValues) => {
-		logger.info("Operation log");
+		logger.info("Admin update subscription");
 
 		setLoading(true);
+		try {
+			const result = await updateStoreSubscriptionAction({
+				storeId: String(params.storeId),
+				level: Number(data.level),
+				subscriptionId: data.subscriptionId || null,
+				note: data.note ?? "",
+				expiration: data.expiration ?? undefined,
+			});
 
-		await axios.patch(
-			`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/stores/${params.storeId}/subscription`,
-			data,
-		);
-		router.refresh();
+			if (result?.serverError) {
+				toastError({
+					title: "Error",
+					description: result.serverError,
+				});
+				return;
+			}
 
-		toastSuccess({
-			title: "Subscription updated.",
-			description: "",
-		});
-
-		setLoading(false);
+			toastSuccess({
+				title: "Subscription updated.",
+				description: "",
+			});
+			router.refresh();
+		} catch (error: unknown) {
+			toastError({
+				title: "Error",
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const onUnsubscribe = async () => {
 		setLoading(true);
+		try {
+			const result = await cancelStoreSubscriptionAction({
+				storeId: String(params.storeId),
+				note: "Cancelled by admin",
+			});
 
-		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/unsubscribe`;
-		await axios.post(url);
+			if (result?.serverError) {
+				toastError({
+					title: "Error",
+					description: result.serverError,
+				});
+				return;
+			}
 
-		router.refresh();
-
-		toastSuccess({
-			title: "Subscription cancelled.",
-			description: "",
-		});
-
-		setLoading(false);
+			toastSuccess({
+				title: "Subscription cancelled.",
+				description: "",
+			});
+			router.refresh();
+		} catch (error: unknown) {
+			toastError({
+				title: "Error",
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	if (!initialData) return;
@@ -177,6 +215,7 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 							</Button>
 						</div>
 					)}
+					<Separator />
 					<Form {...form}>
 						<form
 							onSubmit={form.handleSubmit(onSubmit)}
@@ -189,12 +228,26 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 									<FormItem>
 										<FormLabel>store level</FormLabel>
 										<FormControl>
-											<Input
+											<Select
 												disabled={loading || form.formState.isSubmitting}
-												className="font-mono"
-												placeholder=""
-												{...field}
-											/>
+												value={
+													field.value !== undefined && field.value !== null
+														? String(field.value)
+														: ""
+												}
+												onValueChange={(value) => field.onChange(Number(value))}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Select level" />
+												</SelectTrigger>
+												<SelectContent>
+													{levelOptions.map((opt) => (
+														<SelectItem key={opt.value} value={opt.value}>
+															{opt.label}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -211,7 +264,8 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
-												{...field}
+												value={field.value ?? ""}
+												onChange={(e) => field.onChange(e.target.value)}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -247,8 +301,10 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 											<PopoverContent className="w-auto p-0" align="start">
 												<Calendar
 													mode="single"
-													selected={field.value}
-													onSelect={field.onChange}
+													selected={field.value ?? undefined}
+													onSelect={(value) =>
+														field.onChange(value ?? undefined)
+													}
 													disabled={(date) =>
 														date > new Date("3000-12-31") ||
 														date < new Date("1900-01-01")
@@ -273,7 +329,8 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
-												{...field}
+												value={field.value ?? ""}
+												onChange={(e) => field.onChange(e.target.value)}
 											/>
 										</FormControl>
 										<FormMessage />

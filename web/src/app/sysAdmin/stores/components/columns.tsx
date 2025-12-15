@@ -10,6 +10,8 @@ export type StoreColumn = {
 	name: string;
 	customDomain: string;
 	owner: string;
+	level: string;
+	customerCredit: number;
 	createdAt: string;
 	products: number;
 	storeOrders: number;
@@ -28,29 +30,37 @@ export const columns: ColumnDef<StoreColumn>[] = [
 				href={`./stores/${row.original.id}/`}
 			>
 				{row.getValue("name")}
+				{row.original.customDomain ? (
+					<Link
+						target="_blank"
+						className="pl-5"
+						title="view this store domain"
+						href={`https://${row.original.customDomain}`}
+					>
+						{row.original.customDomain}
+					</Link>
+				) : (
+					""
+				)}
 			</Link>
 		),
 	},
 	{
-		accessorKey: "customDomain",
+		accessorKey: "level",
 		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title="Custom domain" />;
+			return <DataTableColumnHeader column={column} title="Level" />;
 		},
-		cell: ({ row }) => (
-			<Link
-				target="_blank"
-				className="pl-5"
-				title="view this store"
-				href={`/${row.original.id}/`}
-			>
-				{row.getValue("customDomain")}
-			</Link>
-		),
 	},
 	{
 		accessorKey: "owner",
 		header: ({ column }) => {
 			return <DataTableColumnHeader column={column} title="owner" />;
+		},
+	},
+	{
+		accessorKey: "customerCredit",
+		header: ({ column }) => {
+			return <DataTableColumnHeader column={column} title="Customer credit" />;
 		},
 	},
 	{
