@@ -105,7 +105,7 @@ export const StoreSubscrptionTab: React.FC<SettingsFormProps> = ({
 		setLoading(true);
 
 		await axios.patch(
-			`${process.env.NEXT_PUBLIC_API_URL}/admin/stores/${params.storeId}/subscription`,
+			`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/stores/${params.storeId}/subscription`,
 			data,
 		);
 		router.refresh();

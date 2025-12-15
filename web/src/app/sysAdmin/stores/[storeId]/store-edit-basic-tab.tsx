@@ -39,6 +39,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import { CountryCombobox } from "@/components/country-combobox";
 import { CurrencyCombobox } from "@/components/currency-combobox";
@@ -304,7 +305,7 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 								)}
 							/>
 
-							<FormLabel>LOGO</FormLabel>
+							<Label>LOGO</Label>
 
 							<div className="flex flex-row w-full">
 								<div className="flex flex-col space-y-4 w-1/2">

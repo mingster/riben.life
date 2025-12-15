@@ -7,7 +7,6 @@ import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
-import { CustomerCreditLedgerType } from "@/types/enum";
 import {
 	getUtcNowEpoch,
 	dateToEpoch,
@@ -16,8 +15,7 @@ import {
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { updateRsvpSchema } from "./update-rsvp.validation";
-import logger from "@/lib/logger";
-import { getT } from "@/app/i18n";
+import { deduceCustomerCredit } from "./deduce-customer-credit";
 
 export const updateRsvpAction = storeActionClient
 	.metadata({ name: "updateRsvp" })
@@ -65,13 +63,15 @@ export const updateRsvpAction = storeActionClient
 		});
 		const createdBy = session?.user?.id || rsvp.createdBy || null;
 
-		// Fetch store to get timezone and creditServiceExchangeRate
+		// Fetch store to get timezone, creditServiceExchangeRate, creditExchangeRate, and defaultCurrency
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
 			select: {
 				id: true,
 				defaultTimezone: true,
 				creditServiceExchangeRate: true,
+				creditExchangeRate: true,
+				defaultCurrency: true,
 			},
 		});
 
@@ -176,110 +176,29 @@ export const updateRsvpAction = storeActionClient
 					!wasCompleted &&
 					customerId &&
 					store.creditServiceExchangeRate &&
-					Number(store.creditServiceExchangeRate) > 0
+					Number(store.creditServiceExchangeRate) > 0 &&
+					store.creditExchangeRate &&
+					Number(store.creditExchangeRate) > 0
 				) {
-					// Calculate credit to deduct based on duration and creditServiceExchangeRate
-					// creditPoints = duration (minutes) / creditServiceExchangeRate (minutes per point)
-					// Example: duration = 60 minutes, creditServiceExchangeRate = 30 minutes/point
-					// creditToDeduct = 60 / 30 = 2 points
 					const duration = facility.defaultDuration || 60; // Default to 60 minutes if not set
 					const creditServiceExchangeRate = Number(
 						store.creditServiceExchangeRate,
 					);
-					const creditToDeduct = duration / creditServiceExchangeRate;
+					const creditExchangeRate = Number(store.creditExchangeRate);
+					const defaultCurrency = store.defaultCurrency || "twd";
 
-					// Update the RSVP's facilityCredit field to store the calculated credit amount
-					await tx.rsvp.update({
-						where: { id },
-						data: {
-							facilityCredit: new Prisma.Decimal(creditToDeduct),
-						},
+					await deduceCustomerCredit({
+						tx,
+						storeId,
+						customerId,
+						rsvpId: id,
+						facilityId: facility.id,
+						duration,
+						creditServiceExchangeRate,
+						creditExchangeRate,
+						defaultCurrency,
+						createdBy: createdBy || null,
 					});
-
-					if (creditToDeduct > 0) {
-						// Get current credit balance
-						const existingCredit = await tx.customerCredit.findUnique({
-							where: {
-								storeId_userId: {
-									storeId,
-									userId: customerId,
-								},
-							},
-						});
-
-						const currentBalance = existingCredit
-							? Number(existingCredit.point)
-							: 0;
-
-						if (currentBalance >= creditToDeduct) {
-							const newBalance = currentBalance - creditToDeduct;
-
-							// Update CustomerCredit
-							await tx.customerCredit.upsert({
-								where: {
-									storeId_userId: {
-										storeId,
-										userId: customerId,
-									},
-								},
-								update: {
-									point: {
-										decrement: creditToDeduct,
-									},
-									updatedAt: getUtcNowEpoch(),
-								},
-								create: {
-									storeId,
-									userId: customerId,
-									point: -creditToDeduct, // Negative balance if deducting from zero
-									updatedAt: getUtcNowEpoch(),
-								},
-							});
-
-							// Get translation function for ledger note
-							const { t } = await getT();
-
-							// Create ledger entry for credit deduction
-							await tx.customerCreditLedger.create({
-								data: {
-									storeId,
-									userId: customerId,
-									amount: new Prisma.Decimal(-creditToDeduct),
-									balance: new Prisma.Decimal(newBalance),
-									type: CustomerCreditLedgerType.Spend,
-									referenceId: id, // Reference to RSVP
-									note: t("rsvp_credit_deduction_note", {
-										points: creditToDeduct,
-									}),
-									creatorId: createdBy || null,
-									createdAt: getUtcNowEpoch(),
-								},
-							});
-
-							logger.info("Customer credit deducted for completed RSVP", {
-								metadata: {
-									rsvpId: id,
-									customerId,
-									duration,
-									creditServiceExchangeRate,
-									creditAmount: creditToDeduct,
-									balanceBefore: currentBalance,
-									balanceAfter: newBalance,
-								},
-								tags: ["rsvp", "credit", "deduction"],
-							});
-						} else {
-							logger.warn("Insufficient credit balance for RSVP completion", {
-								metadata: {
-									rsvpId: id,
-									customerId,
-									requiredCredit: creditToDeduct,
-									currentBalance,
-								},
-								tags: ["rsvp", "credit", "warning"],
-							});
-						}
-					}
 				}
 
 				return updatedRsvp;

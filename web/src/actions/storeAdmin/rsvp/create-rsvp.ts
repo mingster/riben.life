@@ -6,6 +6,7 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
+import { RsvpStatus } from "@/types/enum";
 import {
 	dateToEpoch,
 	getUtcNowEpoch,
@@ -15,6 +16,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
 import { createRsvpSchema } from "./create-rsvp.validation";
+import { deduceCustomerCredit } from "./deduce-customer-credit";
 
 export const createRsvpAction = storeActionClient
 	.metadata({ name: "createRsvp" })
@@ -37,10 +39,16 @@ export const createRsvpAction = storeActionClient
 			pricingRuleId,
 		} = parsedInput;
 
-		// Fetch store to get timezone before converting dates
+		// Fetch store to get timezone, creditServiceExchangeRate, creditExchangeRate, and defaultCurrency
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
-			select: { id: true, defaultTimezone: true },
+			select: {
+				id: true,
+				defaultTimezone: true,
+				creditServiceExchangeRate: true,
+				creditExchangeRate: true,
+				defaultCurrency: true,
+			},
 		});
 
 		if (!store) {
@@ -58,6 +66,10 @@ export const createRsvpAction = storeActionClient
 			where: {
 				id: facilityId,
 				storeId,
+			},
+			select: {
+				id: true,
+				defaultDuration: true,
 			},
 		});
 
@@ -106,37 +118,72 @@ export const createRsvpAction = storeActionClient
 		const createdBy = session?.user?.id || null;
 
 		try {
-			const rsvp = await sqlClient.rsvp.create({
-				data: {
-					storeId,
-					customerId: customerId || null,
-					facilityId,
-					numOfAdult,
-					numOfChild,
-					rsvpTime,
-					arriveTime: arriveTime || null,
-					status,
-					message: message || null,
-					alreadyPaid,
-					confirmedByStore,
-					confirmedByCustomer,
-					facilityCost:
-						facilityCost !== null && facilityCost !== undefined
-							? facilityCost
-							: null,
-					pricingRuleId: pricingRuleId || null,
-					createdBy,
-					createdAt: getUtcNowEpoch(),
-					updatedAt: getUtcNowEpoch(),
-				},
-				include: {
-					Store: true,
-					Customer: true,
-					CreatedBy: true,
-					Order: true,
-					Facility: true,
-					FacilityPricingRule: true,
-				},
+			const rsvp = await sqlClient.$transaction(async (tx) => {
+				const createdRsvp = await tx.rsvp.create({
+					data: {
+						storeId,
+						customerId: customerId || null,
+						facilityId,
+						numOfAdult,
+						numOfChild,
+						rsvpTime,
+						arriveTime: arriveTime || null,
+						status,
+						message: message || null,
+						alreadyPaid,
+						confirmedByStore,
+						confirmedByCustomer,
+						facilityCost:
+							facilityCost !== null && facilityCost !== undefined
+								? facilityCost
+								: null,
+						pricingRuleId: pricingRuleId || null,
+						createdBy,
+						createdAt: getUtcNowEpoch(),
+						updatedAt: getUtcNowEpoch(),
+					},
+					include: {
+						Store: true,
+						Customer: true,
+						CreatedBy: true,
+						Order: true,
+						Facility: true,
+						FacilityPricingRule: true,
+					},
+				});
+
+				// If status is Completed, not alreadyPaid, and has customerId, deduct customer's credit
+				if (
+					status === RsvpStatus.Completed &&
+					!alreadyPaid &&
+					customerId &&
+					store.creditServiceExchangeRate &&
+					Number(store.creditServiceExchangeRate) > 0 &&
+					store.creditExchangeRate &&
+					Number(store.creditExchangeRate) > 0
+				) {
+					const duration = facility.defaultDuration || 60; // Default to 60 minutes if not set
+					const creditServiceExchangeRate = Number(
+						store.creditServiceExchangeRate,
+					);
+					const creditExchangeRate = Number(store.creditExchangeRate);
+					const defaultCurrency = store.defaultCurrency || "twd";
+
+					await deduceCustomerCredit({
+						tx,
+						storeId,
+						customerId,
+						rsvpId: createdRsvp.id,
+						facilityId: facility.id,
+						duration,
+						creditServiceExchangeRate,
+						creditExchangeRate,
+						defaultCurrency,
+						createdBy: createdBy || null,
+					});
+				}
+
+				return createdRsvp;
 			});
 
 			const transformedRsvp = { ...rsvp } as Rsvp;

@@ -3,123 +3,131 @@
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
 import { IconCheck, IconX } from "@tabler/icons-react";
-import Link from "next/link";
+import type { TFunction } from "i18next";
+import type { ShippingMethodColumn } from "../shipping-method-column";
 import { CellAction } from "./cell-action";
 
-export type DataColumn = {
-	id: string;
-	name: string;
-	//description: string;
-	basic_price: number;
-	currencyId: string;
+interface CreateShippingMethodColumnsOptions {
+	onUpdated?: (shippingMethod: ShippingMethodColumn) => void;
+	onDeleted?: (id: string) => void;
+}
 
-	isDefault: boolean;
-	isDeleted: boolean;
-	shipRequired: boolean;
+export const createShippingMethodColumns = (
+	t: TFunction,
+	options: CreateShippingMethodColumnsOptions = {},
+): ColumnDef<ShippingMethodColumn>[] => {
+	const { onUpdated, onDeleted } = options;
 
-	updatedAt?: string;
-
-	stores?: number;
-	StoreOrder?: number;
-	Shipment?: number;
+	return [
+		{
+			accessorKey: "name",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Name" />
+			),
+		},
+		{
+			accessorKey: "basic_price",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Price" />
+			),
+			cell: ({ row }) => {
+				const price = row.getValue("basic_price") as number;
+				const currencyId = row.original.currencyId;
+				return (
+					<span>
+						{price.toFixed(2)} {currencyId.toUpperCase()}
+					</span>
+				);
+			},
+		},
+		{
+			accessorKey: "isDefault",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Is Default" />
+			),
+			cell: ({ row }) => {
+				const val = row.getValue("isDefault") as boolean;
+				return val ? (
+					<IconCheck className="text-green-400 size-4" />
+				) : (
+					<IconX className="text-red-400 size-4" />
+				);
+			},
+			meta: {
+				className: "hidden sm:table-cell",
+			},
+		},
+		{
+			accessorKey: "isDeleted",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Is Deleted" />
+			),
+			cell: ({ row }) => {
+				const val = row.getValue("isDeleted") as boolean;
+				return val ? (
+					<IconCheck className="text-green-400 size-4" />
+				) : (
+					<IconX className="text-red-400 size-4" />
+				);
+			},
+			meta: {
+				className: "hidden sm:table-cell",
+			},
+		},
+		{
+			accessorKey: "shipRequired",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Ship Required" />
+			),
+			cell: ({ row }) => {
+				const val = row.getValue("shipRequired") as boolean;
+				return val ? (
+					<IconCheck className="text-green-400 size-4" />
+				) : (
+					<IconX className="text-red-400 size-4" />
+				);
+			},
+			meta: {
+				className: "hidden sm:table-cell",
+			},
+		},
+		{
+			accessorKey: "stores",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="# of Stores" />
+			),
+			meta: {
+				className: "hidden sm:table-cell",
+			},
+		},
+		{
+			accessorKey: "StoreOrder",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="# of Orders" />
+			),
+			meta: {
+				className: "hidden sm:table-cell",
+			},
+		},
+		{
+			accessorKey: "Shipment",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="# of Shipments" />
+			),
+			meta: {
+				className: "hidden sm:table-cell",
+			},
+		},
+		{
+			id: "actions",
+			header: () => t("actions"),
+			cell: ({ row }) => (
+				<CellAction
+					data={row.original}
+					onUpdated={onUpdated}
+					onDeleted={onDeleted}
+				/>
+			),
+		},
+	];
 };
-
-export const columns: ColumnDef<DataColumn>[] = [
-	{
-		accessorKey: "name",
-		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title="Name" />;
-		},
-		cell: ({ row }) => (
-			<Link
-				className="pl-5"
-				title="edit this shipping method"
-				href={`./shipMethods/${row.original.id}/`}
-			>
-				{row.getValue("name")}
-			</Link>
-		),
-	},
-	{
-		accessorKey: "basic_price",
-		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title="price" />;
-		},
-	} /*
-  {
-    accessorKey: "currencyId",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="currency" />;
-    },
-  }, */,
-	{
-		accessorKey: "isDefault",
-		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title="isDefault" />;
-		},
-		cell: ({ row }) => {
-			const val =
-				row.getValue("isDefault") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "isDeleted",
-		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title="isDeleted" />;
-		},
-		cell: ({ row }) => {
-			const val =
-				row.getValue("isDeleted") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "shipRequired",
-		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title="shipRequired" />;
-		},
-		cell: ({ row }) => {
-			const val =
-				row.getValue("shipRequired") === true ? (
-					<IconCheck className="text-green-400  size-4" />
-				) : (
-					<IconX className="text-red-400 size-4" />
-				);
-
-			return <div className="pl-3">{val}</div>;
-		},
-	},
-	{
-		accessorKey: "stores",
-		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title="# of store" />;
-		},
-	},
-	{
-		accessorKey: "StoreOrder",
-		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title="# of order" />;
-		},
-	},
-	{
-		accessorKey: "Shipment",
-		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title="# of shipment" />;
-		},
-	},
-	{
-		id: "actions",
-		cell: ({ row }) => <CellAction data={row.original} />,
-	},
-];

@@ -6,7 +6,8 @@
 		"fee": 0.029,
 		"feeAdditional": 0.3,
 		"clearDays": 3,
-		"isDefault": true
+		"isDefault": true,
+		"canDelete": false
 	},
 	{
 		"name": "PayPal",
@@ -15,7 +16,8 @@
 		"fee": 0.04,
 		"feeAdditional": 0.3,
 		"clearDays": 5,
-		"isDefault": false
+		"isDefault": false,
+		"canDelete": false
 	},
 	{
 		"name": "LinePay",
@@ -24,7 +26,8 @@
 		"fee": 0.03,
 		"feeAdditional": 0,
 		"clearDays": 2,
-		"isDefault": true
+		"isDefault": true,
+		"canDelete": false
 	},
 	{
 		"name": "ApplePay",
@@ -33,7 +36,8 @@
 		"fee": 0.0275,
 		"feeAdditional": 0,
 		"clearDays": 2,
-		"isDefault": false
+		"isDefault": false,
+		"canDelete": true
 	},
 	{
 		"name": "現金",
@@ -42,6 +46,17 @@
 		"fee": 0,
 		"feeAdditional": 0,
 		"clearDays": 0,
-		"isDefault": false
+		"isDefault": false,
+		"canDelete": false
+	},
+	{
+		"name": "Credit",
+		"payUrl": "credit",
+		"priceDescr": "store credit or customer purchased credit",
+		"fee": 0,
+		"feeAdditional": 0,
+		"clearDays": 0,
+		"isDefault": false,
+		"canDelete": false
 	}
 ]

@@ -13,7 +13,7 @@ export const deleteAllLedgers = async () => {
 	logger.info("Operation log", {
 		tags: ["action"],
 	});
-	redirect("/admin/maint");
+	redirect("/sysAdmin/maint");
 
 	return count;
 };

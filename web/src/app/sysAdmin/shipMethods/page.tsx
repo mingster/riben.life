@@ -1,19 +1,21 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 import { checkAdminAccess } from "../admin-utils";
-import type { DataColumn } from "./components/columns";
-import { DataClient } from "./components/data-client";
+import { ShippingMethodClient } from "./components/client-shipping-method";
+import {
+	mapShippingMethodToColumn,
+	type ShippingMethodColumn,
+} from "./shipping-method-column";
 
-type Params = Promise<{ storeId: string }>;
+type Params = Promise<{ [key: string]: string | string[] | undefined }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function ShipMethodAdminPage(props: {
+export default async function ShippingMethodAdminPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
-	const _params = await props.params;
+	await props.params;
 	checkAdminAccess();
 
 	// Optimized query using _count instead of loading all related data
@@ -35,25 +37,13 @@ export default async function ShipMethodAdminPage(props: {
 	transformPrismaDataForJson(methods);
 
 	// Map methods to UI format
-	const formattedData: DataColumn[] = methods.map((item) => ({
-		id: item.id,
-		name: item.name || "",
-		currencyId: item.currencyId || "",
-		basic_price: Number(item.basic_price) || 0,
-		isDefault: item.isDefault,
-		isDeleted: item.isDeleted,
-		shipRequired: item.shipRequired,
-		updatedAt: formatDateTime(
-			epochToDate(BigInt(item.updatedAt)) ?? new Date(),
-		),
-		stores: item._count.stores,
-		StoreOrder: item._count.StoreOrder,
-		Shipment: item._count.Shipment,
-	}));
+	const formattedData: ShippingMethodColumn[] = methods.map((item) =>
+		mapShippingMethodToColumn(item),
+	);
 
 	return (
 		<Container>
-			<DataClient data={formattedData} />
+			<ShippingMethodClient serverData={formattedData} />
 		</Container>
 	);
 }
