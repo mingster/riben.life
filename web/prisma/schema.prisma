@@ -382,6 +382,7 @@ model PaymentMethod {
   clearDays                 Int                         @default(3)
   isDeleted                 Boolean                     @default(false)
   isDefault                 Boolean                     @default(false)
+  canDelete                 Boolean                     @default(false) //store owner cannot delete this method
   createdAt                 BigInt
   updatedAt                 BigInt
   StorePaymentMethodMapping StorePaymentMethodMapping[]
@@ -418,6 +419,7 @@ model ShippingMethod {
   currencyId   String                   @default("twd")
   isDeleted    Boolean                  @default(false)
   isDefault    Boolean                  @default(false)
+  canDelete    Boolean                  @default(false) //store owner cannot delete this method
   shipRequired Boolean                  @default(true)
   createdAt    BigInt
   updatedAt    BigInt
@@ -601,7 +603,7 @@ model Store {
 
   useBusinessHours Boolean @default(true)
 
-  useOrderSystem         Boolean @default(false) //使用訂單系統
+  useOrderSystem Boolean @default(false) //使用訂單系統
 
   useCustomerCredit         Boolean @default(false) //使用儲值系統
   creditExchangeRate        Decimal @default(0) // 1點 = ??元
@@ -792,7 +794,7 @@ model Rsvp {
   referenceId String? //reference to the StoreOrder id or CustomerCreditLedger id
   paidAt      BigInt? //the time when the reservation was paid
 
-  message     String?
+  message String?
 
   confirmedByStore    Boolean @default(false) //店家已確認預約
   confirmedByCustomer Boolean @default(false) //客戶已確認預約

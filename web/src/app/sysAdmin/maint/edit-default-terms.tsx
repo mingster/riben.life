@@ -70,7 +70,7 @@ export const EditDefaultTerms: React.FC<props> = ({ data }) => {
 		setLoading(true);
 
 		await axios.post(
-			`${process.env.NEXT_PUBLIC_API_URL}/admin/defaults/terms`,
+			`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/defaults/terms`,
 			data,
 		);
 

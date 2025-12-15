@@ -71,7 +71,7 @@ export const EditDefaultPrivacy: React.FC<props> = ({ data }) => {
 		setLoading(true);
 
 		await axios.post(
-			`${process.env.NEXT_PUBLIC_API_URL}/admin/defaults/priacy`,
+			`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/defaults/priacy`,
 			data,
 		);
 

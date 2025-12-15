@@ -31,7 +31,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 	const onConfirm = async () => {
 		try {
 			setLoading(true);
-			//await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/${params.storeId}/stores/${data.id}`);
+			//await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/${params.storeId}/stores/${data.id}`);
 
 			toastError({
 				title: "not yet implement",
@@ -79,7 +79,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 						<IconCopy className="mr-0 size-4" /> Copy Id
 					</DropdownMenuItem>
 					<DropdownMenuItem
-						onClick={() => router.push(`/admin/stores/${data.id}`)}
+						onClick={() => router.push(`/sysAdmin/stores/${data.id}`)}
 					>
 						<IconEdit className="mr-0 size-4" /> Update
 					</DropdownMenuItem>

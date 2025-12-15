@@ -63,7 +63,7 @@ const StoreAdminLayout: React.FC<props> = ({
 					<StoreAdminSidebar />
 					<SidebarInset>
 						<StoreAdminHeader />
-						<div className="flex flex-1 flex-col">
+						<div className="flex flex-1 flex-col font-minimal bg-[url('/img/noise.147fc0e.gif')] bg-repeat dark:bg-none">
 							<div className="@container/main flex flex-1 flex-col">
 								<div className="flex flex-col gap-0 py-2 sm:py-4 md:gap-6 md:py-6">
 									<div className="px-3 sm:px-4 lg:px-6 pb-1">{children}</div>

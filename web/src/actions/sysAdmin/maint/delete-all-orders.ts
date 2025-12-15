@@ -14,7 +14,7 @@ export const deleteAllOrders = async () => {
 		tags: ["action"],
 	});
 
-	redirect("/admin/maint");
+	redirect("/sysAdmin/maint");
 
 	return count;
 };

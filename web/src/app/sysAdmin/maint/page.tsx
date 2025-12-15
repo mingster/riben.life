@@ -46,7 +46,7 @@ export default async function StoreAdminDevMaintPage(props: {
 		});
 		logger.info("Operation log");
 
-		redirect("./admin/maint");
+		redirect("./sysAdmin/maint");
 	};
 
 	const _deleteAllPaymentMethods = async () => {
@@ -58,7 +58,7 @@ export default async function StoreAdminDevMaintPage(props: {
 			},
 		});
 		logger.info("Operation log");
-		redirect("./admin/maint");
+		redirect("./sysAdmin/maint");
 	};
 
 	const storeOrderCount = await sqlClient.storeOrder.count();

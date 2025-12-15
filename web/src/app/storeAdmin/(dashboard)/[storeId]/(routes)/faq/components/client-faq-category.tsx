@@ -193,7 +193,7 @@ export const FaqCategoryClient: React.FC<props> = ({
 			try {
 				setLoading(true);
 				await axios.delete(
-					`${process.env.NEXT_PUBLIC_API_URL}/admin/faqCategory/${item.id}`,
+					`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/faqCategory/${item.id}`,
 				);
 				toastSuccess({
 					title: "faq category deleted",
@@ -346,7 +346,7 @@ export const FaqCategoryClient: React.FC<props> = ({
 			try {
 				setLoading(true);
 				await axios.delete(
-					`${process.env.NEXT_PUBLIC_API_URL}/admin/faq/${item.id}`,
+					`${process.env.NEXT_PUBLIC_API_URL}/sysAdmin/faq/${item.id}`,
 				);
 				toastSuccess({
 					title: "faq deleted",

@@ -15,7 +15,7 @@ export const deleteAllSupportTickets = async () => {
 	logger.info("Operation log", {
 		tags: ["action"],
 	});
-	redirect("/admin/maint");
+	redirect("/sysAdmin/maint");
 
 	return count;
 };

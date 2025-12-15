@@ -1,19 +1,21 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 import { checkAdminAccess } from "../admin-utils";
-import type { DataColumn } from "./components/columns";
-import { DataClient } from "./components/data-client";
+import { PaymentMethodClient } from "./components/client-payment-method";
+import {
+	mapPaymentMethodToColumn,
+	type PaymentMethodColumn,
+} from "./payment-method-column";
 
-type Params = Promise<{ storeId: string }>;
+type Params = Promise<{ [key: string]: string | string[] | undefined }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-export default async function PayMethodAdminPage(props: {
+export default async function PaymentMethodAdminPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
-	const _params = await props.params;
+	await props.params;
 	checkAdminAccess();
 
 	// Optimized query using _count instead of loading all related data
@@ -34,26 +36,13 @@ export default async function PayMethodAdminPage(props: {
 	transformPrismaDataForJson(methods);
 
 	// Map methods to UI format
-	const formattedData: DataColumn[] = methods.map((item) => ({
-		id: item.id,
-		name: item.name || "",
-		payUrl: item.payUrl || "",
-		priceDescr: item.priceDescr || "",
-		fee: Number(item.fee) || 0,
-		feeAdditional: Number(item.feeAdditional) || 0,
-		clearDays: Number(item.clearDays),
-		isDefault: item.isDefault,
-		isDeleted: item.isDeleted,
-		updatedAt: formatDateTime(
-			epochToDate(BigInt(item.updatedAt)) ?? new Date(),
-		),
-		StorePaymentMethodMapping: item._count.StorePaymentMethodMapping,
-		StoreOrder: item._count.StoreOrder,
-	}));
+	const formattedData: PaymentMethodColumn[] = methods.map((item) =>
+		mapPaymentMethodToColumn(item),
+	);
 
 	return (
 		<Container>
-			<DataClient data={formattedData} />
+			<PaymentMethodClient serverData={formattedData} />
 		</Container>
 	);
 }

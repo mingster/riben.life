@@ -1,11 +1,9 @@
 "use client";
 
-import axios, { type AxiosError } from "axios";
-import { IconCopy, IconEdit, IconDots, IconTrash } from "@tabler/icons-react";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-
+import { deleteShippingMethodAction } from "@/actions/sysAdmin/shippingMethod/delete-shipping-method";
+import { useTranslation } from "@/app/i18n/client";
 import { AlertModal } from "@/components/modals/alert-modal";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -14,56 +12,77 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import type { DataColumn } from "./columns";
-import { toastError, toastSuccess } from "@/components/toaster";
+import { useI18n } from "@/providers/i18n-provider";
+import { IconCopy, IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
+import { useState } from "react";
+import type { ShippingMethodColumn } from "../shipping-method-column";
+import { EditShippingMethodDialog } from "./edit-shipping-method-dialog";
 
 interface CellActionProps {
-	data: DataColumn;
+	data: ShippingMethodColumn;
+	onUpdated?: (shippingMethod: ShippingMethodColumn) => void;
+	onDeleted?: (id: string) => void;
 }
 
-export const CellAction: React.FC<CellActionProps> = ({ data }) => {
-	const [loading, setLoading] = useState(false);
-	const [open, setOpen] = useState(false);
-	const router = useRouter();
-	const _params = useParams();
+export function CellAction({ data, onUpdated, onDeleted }: CellActionProps) {
+	const { lng } = useI18n();
+	const { t } = useTranslation(lng, "sysAdmin");
 
-	const onConfirm = async () => {
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [isEditOpen, setIsEditOpen] = useState(false);
+
+	const handleDelete = async () => {
 		try {
 			setLoading(true);
-			//await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/admin/${params.storeId}/stores/${data.id}`);
-
-			toastError({
-				title: "not yet implement",
-				description: "",
+			const result = await deleteShippingMethodAction({
+				id: data.id,
 			});
-			router.refresh();
+
+			if (result?.serverError) {
+				toastError({
+					title: t("error_title"),
+					description: result.serverError,
+				});
+			} else {
+				toastSuccess({
+					title: "Shipping method deleted",
+					description: "",
+				});
+				onDeleted?.(data.id);
+			}
 		} catch (error: unknown) {
-			const err = error as AxiosError;
 			toastError({
-				title: "something wrong.",
-				description: err.message,
+				title: t("error_title"),
+				description: error instanceof Error ? error.message : String(error),
 			});
 		} finally {
 			setLoading(false);
-			setOpen(false);
+			setIsConfirmOpen(false);
 		}
 	};
 
-	const onCopy = (id: string) => {
-		navigator.clipboard.writeText(id);
-		toastSuccess({
-			title: "ID copied to clipboard.",
-			description: "",
-		});
+	const handleCopy = async () => {
+		try {
+			await navigator.clipboard.writeText(data.id);
+			toastSuccess({
+				title: t("copy"),
+				description: data.id,
+			});
+		} catch (error: unknown) {
+			toastError({
+				title: t("error_title"),
+				description: error instanceof Error ? error.message : String(error),
+			});
+		}
 	};
 
 	return (
 		<>
 			<AlertModal
-				isOpen={open}
-				onClose={() => setOpen(false)}
-				onConfirm={onConfirm}
+				isOpen={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={handleDelete}
 				loading={loading}
 			/>
 			<DropdownMenu>
@@ -74,20 +93,34 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
-					<DropdownMenuLabel>Actions</DropdownMenuLabel>
-					<DropdownMenuItem onClick={() => onCopy(data.id)}>
-						<IconCopy className="mr-0 size-4" /> Copy Id
+					<DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
+					<DropdownMenuItem onClick={handleCopy}>
+						<IconCopy className="mr-0 size-4" /> {t("copy")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
-						onClick={() => router.push(`/admin/shipMethods/${data.id}`)}
+						onSelect={(event) => {
+							event.preventDefault();
+							setIsEditOpen(true);
+						}}
 					>
-						<IconEdit className="mr-0 size-4" /> Update
+						<IconEdit className="mr-0 size-4" /> {t("edit")}
 					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => setOpen(true)}>
-						<IconTrash className="mr-0 size-4" /> Delete
-					</DropdownMenuItem>
+					{data.canDelete && (
+						<DropdownMenuItem
+							onClick={() => setIsConfirmOpen(true)}
+							className="text-red-600 focus:text-red-600"
+						>
+							<IconTrash className="mr-0 size-4" /> {t("delete")}
+						</DropdownMenuItem>
+					)}
 				</DropdownMenuContent>
 			</DropdownMenu>
+			<EditShippingMethodDialog
+				shippingMethod={data}
+				onUpdated={onUpdated}
+				open={isEditOpen}
+				onOpenChange={setIsEditOpen}
+			/>
 		</>
 	);
-};
+}
