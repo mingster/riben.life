@@ -22,6 +22,10 @@ export const updateEmailQueueAction = adminActionClient
 				subject,
 				textMessage,
 				htmMessage,
+				storeId,
+				notificationId,
+				templateId,
+				priority,
 				//sendTries,
 				//sentOn,
 			},
@@ -43,6 +47,10 @@ export const updateEmailQueueAction = adminActionClient
 						sendTries: 0,
 						createdOn: getUtcNowEpoch(),
 						sentOn: null,
+						storeId: storeId || null,
+						notificationId: notificationId || null,
+						templateId: templateId || null,
+						priority: priority ?? 0,
 					},
 				});
 				id = result.id;
@@ -59,6 +67,10 @@ export const updateEmailQueueAction = adminActionClient
 						subject,
 						textMessage,
 						htmMessage,
+						storeId: storeId || null,
+						notificationId: notificationId || null,
+						templateId: templateId || null,
+						priority: priority ?? 0,
 					},
 				});
 			}

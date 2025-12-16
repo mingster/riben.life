@@ -27,10 +27,16 @@ export async function POST(req: Request) {
 				where: { id: messageTemplate.id },
 				update: {
 					name: messageTemplate.name,
+					templateType: messageTemplate.templateType || "email",
+					isGlobal: messageTemplate.isGlobal ?? false,
+					storeId: messageTemplate.storeId || null,
 				},
 				create: {
 					id: messageTemplate.id,
 					name: messageTemplate.name,
+					templateType: messageTemplate.templateType || "email",
+					isGlobal: messageTemplate.isGlobal ?? false,
+					storeId: messageTemplate.storeId || null,
 				},
 			});
 

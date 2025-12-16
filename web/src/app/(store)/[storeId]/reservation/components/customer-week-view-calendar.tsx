@@ -27,8 +27,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
 import { RsvpStatus } from "@/types/enum";
-import { CreateReservationDialog } from "./create-reservation-dialog";
-import { EditReservationDialog } from "./edit-reservation-dialog";
+import { ReservationDialog } from "./reservation-dialog";
 import {
 	getDateInTz,
 	getUtcNow,
@@ -408,7 +407,7 @@ export const CustomerWeekViewCalendar: React.FC<
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 
 	// Show all RSVPs so users can see availability
-	// User's own reservations will be editable via EditReservationDialog
+	// User's own reservations will be editable via ReservationDialog
 	// Group RSVPs by day and time (convert UTC to store timezone)
 	const groupedRsvps = useMemo(
 		() =>
@@ -881,7 +880,7 @@ export const CustomerWeekViewCalendar: React.FC<
 															);
 
 															return canEdit ? (
-																<EditReservationDialog
+																<ReservationDialog
 																	key={rsvp.id}
 																	storeId={storeId || ""}
 																	rsvpSettings={rsvpSettings}
@@ -902,9 +901,10 @@ export const CustomerWeekViewCalendar: React.FC<
 														})
 													) : isAvailable ? (
 														canCreateReservation && storeId ? (
-															<CreateReservationDialog
+															<ReservationDialog
 																storeId={storeId}
 																rsvpSettings={rsvpSettings}
+																storeSettings={storeSettings}
 																facilities={facilities}
 																user={user}
 																defaultRsvpTime={dayAndTimeSlotToUtc(
@@ -913,6 +913,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																	storeTimezone || "Asia/Taipei",
 																)}
 																onReservationCreated={handleReservationCreated}
+																storeTimezone={storeTimezone}
 																useCustomerCredit={useCustomerCredit}
 																creditExchangeRate={creditExchangeRate}
 																creditServiceExchangeRate={

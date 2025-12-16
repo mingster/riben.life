@@ -37,19 +37,35 @@ import {
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { useI18n } from "@/providers/i18n-provider";
 import type { EmailQueue } from "@/types";
 import { IconEdit, IconPlus } from "@tabler/icons-react";
 import dynamic from "next/dynamic";
 import logger from "@/lib/logger";
+import type { MessageTemplate, Store } from "@prisma/client";
 
 interface props {
 	item: z.infer<typeof updateEmailQueueSchema>;
 	onUpdated?: (newValue: EmailQueue) => void;
 	isNew?: boolean;
+	stores?: Array<{ id: string; name: string | null }>;
+	messageTemplates?: Array<{ id: string; name: string }>;
 }
 
-export const EditMailQueue: React.FC<props> = ({ item, onUpdated, isNew }) => {
+export const EditMailQueue: React.FC<props> = ({
+	item,
+	onUpdated,
+	isNew,
+	stores = [],
+	messageTemplates = [],
+}) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
@@ -64,14 +80,28 @@ export const EditMailQueue: React.FC<props> = ({ item, onUpdated, isNew }) => {
 	const defaultValues = item
 		? {
 				...item,
+				storeId: item.storeId || null,
+				notificationId: item.notificationId || null,
+				templateId: item.templateId || null,
+				priority: item.priority ?? 0,
 			}
 		: {
 				id: "new",
-				name: "new",
+				from: "",
+				fromName: "",
+				to: "",
+				toName: "",
+				subject: "",
+				textMessage: "",
+				htmMessage: "",
+				storeId: null,
+				notificationId: null,
+				templateId: null,
+				priority: 0,
 			};
 
 	const form = useForm<UpdateEmailQueueInput>({
-		resolver: zodResolver(updateEmailQueueSchema),
+		resolver: zodResolver(updateEmailQueueSchema) as any,
 		defaultValues,
 		mode: "onChange",
 	});
@@ -300,6 +330,122 @@ export const EditMailQueue: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									</FormItem>
 								)}
 							/>
+
+							<div className="grid grid-cols-2 gap-2">
+								<FormField
+									control={form.control}
+									name="storeId"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Store</FormLabel>
+											<FormControl>
+												<Select
+													disabled={loading || form.formState.isSubmitting}
+													value={field.value || ""}
+													onValueChange={(value) =>
+														field.onChange(value || null)
+													}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder="Select a store (optional)" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="">None</SelectItem>
+														{stores.map((store) => (
+															<SelectItem key={store.id} value={store.id}>
+																{store.name || store.id}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="templateId"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Template</FormLabel>
+											<FormControl>
+												<Select
+													disabled={loading || form.formState.isSubmitting}
+													value={field.value || ""}
+													onValueChange={(value) =>
+														field.onChange(value || null)
+													}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder="Select a template (optional)" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="">None</SelectItem>
+														{messageTemplates.map((template) => (
+															<SelectItem key={template.id} value={template.id}>
+																{template.name}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							<div className="grid grid-cols-2 gap-2">
+								<FormField
+									control={form.control}
+									name="notificationId"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Notification ID</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="Notification ID (optional)"
+													{...field}
+													value={field.value || ""}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="priority"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>Priority</FormLabel>
+											<FormControl>
+												<Select
+													disabled={loading || form.formState.isSubmitting}
+													value={String(field.value ?? 0)}
+													onValueChange={(value) =>
+														field.onChange(Number(value))
+													}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder="Select priority" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="0">Normal (0)</SelectItem>
+														<SelectItem value="1">High (1)</SelectItem>
+														<SelectItem value="2">Urgent (2)</SelectItem>
+													</SelectContent>
+												</Select>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
 
 							<Button
 								type="submit"

@@ -7,7 +7,8 @@ import type { RsvpSettings, StoreSettings } from "@prisma/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
-import { EditReservationDialog } from "./edit-reservation-dialog";
+import { ReservationDialog } from "./reservation-dialog";
+import { Heading } from "@/components/ui/heading";
 
 interface ReservationClientProps {
 	rsvps: Rsvp[];
@@ -87,8 +88,21 @@ export function ReservationClient({
 		[removeEditParam],
 	);
 
+	const prepaidRequired = rsvpSettings?.prepaidRequired
+		? t("store_reservation_required")
+		: t("store_reservation_non-required");
+	const hours = rsvpSettings?.cancelHours;
+
 	return (
 		<div className="flex flex-col gap-1">
+			<Heading
+				title={t("store_reservation_title")}
+				description={t("store_reservation_descr", {
+					prepaidRequired,
+					hours: hours ?? 24,
+				})}
+			/>
+
 			{/* Week View Calendar */}
 			<CustomerWeekViewCalendar
 				rsvps={initialRsvps}
@@ -107,7 +121,7 @@ export function ReservationClient({
 
 			{/* Edit Reservation Dialog */}
 			{editRsvp && (
-				<EditReservationDialog
+				<ReservationDialog
 					storeId={storeId}
 					rsvpSettings={rsvpSettings}
 					storeSettings={storeSettings}

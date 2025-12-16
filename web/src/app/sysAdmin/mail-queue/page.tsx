@@ -11,15 +11,38 @@ import ClientMailTester from "./components/client-mail-tester";
 // 4. Delete selected mail in queue
 // 5. Call sendMailsInQueue from a button click
 export default async function MailQueueAdminPage() {
-	const mailQueue = await sqlClient.emailQueue.findMany({
-		orderBy: {
-			createdOn: "desc",
-		},
-	});
+	const [mailQueue, stores, messageTemplates] = await Promise.all([
+		sqlClient.emailQueue.findMany({
+			orderBy: {
+				createdOn: "desc",
+			},
+		}),
+		sqlClient.store.findMany({
+			select: {
+				id: true,
+				name: true,
+			},
+			orderBy: {
+				name: "asc",
+			},
+		}),
+		sqlClient.messageTemplate.findMany({
+			select: {
+				id: true,
+				name: true,
+			},
+			orderBy: {
+				name: "asc",
+			},
+		}),
+	]);
 
 	return (
 		<Container>
-			<MailQueueAdminClient />
+			<MailQueueAdminClient
+				stores={stores}
+				messageTemplates={messageTemplates}
+			/>
 			<ClientMailTester />
 		</Container>
 	);

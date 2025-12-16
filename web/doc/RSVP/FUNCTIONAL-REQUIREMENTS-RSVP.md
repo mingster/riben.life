@@ -188,7 +188,7 @@ Store Admins have all Store Staff permissions, plus:
      - Number of children (numOfChild, default: 0)
    - Customer provides contact information:
      - If logged in: User ID is automatically captured, phone number required, email optional
-     - If anonymous: Email address is required, phone number required
+     - If anonymous: Email address is optional, phone number required
    - Customer optionally selects facility preference (facilityId)
    - Customer optionally adds special requests or notes (message)
 
@@ -205,13 +205,47 @@ Store Admins have all Store Staff permissions, plus:
    - Customer submits the form
    - System creates reservation with:
      - Status: `Pending (0)`
-     - `alreadyPaid`: `false`
+     - `alreadyPaid`: `false` (initially)
      - `confirmedByStore`: `false`
      - `confirmedByCustomer`: `false`
-     - No order is created (no `orderId`)
+     - No order is created (no `orderId`) (initially)
    - Reservation is saved to database
 
-6. **Confirmation to Customer:**
+   **If `rsvpSettings.prepaidRequired = true` and `store.useCustomerCredit = true`:**
+
+   - System checks if customer has sufficient credit balance
+   - **If customer doesn't have enough credit:**
+     - System prompts customer to deposit credit
+     - Customer is redirected to `{store}/recharge` page to add credit
+     - Once credit is added, flow continues to payment processing (see below)
+   - **If customer has enough credit balance:**
+     - System creates `storeOrder` for the prepaid amount
+     - System creates `storeLedger` entry to record the transaction
+     - System deduces credit from customer's balance
+     - System marks reservation as paid (`alreadyPaid = true`)
+     - Reservation `orderId` is set to the created order ID
+     - Reservation `status` is set to ReadyToConfirm
+     - Flow continues to step 6
+
+   **If `rsvpSettings.prepaidRequired = true` and `store.useCustomerCredit = false`:**
+
+   - System redirects customer to payment page for `minPrepaidAmount`
+   - Customer completes payment (Stripe, LINE Pay, etc.)
+   - Once payment is completed:
+     - System creates `storeOrder` for the prepaid amount
+     - System creates `storeLedger` entry to record the transaction
+     - System marks reservation as paid (`alreadyPaid = true`)
+     - Reservation `orderId` is set to the created order ID
+     - Reservation `status` is set to ReadyToConfirm
+     - Flow continues to step 6
+
+6. **Store Staff Notification:**
+
+   - **No notification sent to store staff** unless status is ReadyToConfirm
+   - **Notification sent to store staff** (if `alreadyPaid = true` after prepaid payment)
+   - Store staff can view the reservation in the admin interface
+
+7. **Confirmation to Customer:**
 
    - System displays on-screen confirmation message
    - System sends confirmation notifications:
@@ -220,18 +254,13 @@ Store Admins have all Store Staff permissions, plus:
      - LINE notification (if `useReminderLine` enabled and LINE account linked)
    - Customer receives confirmation with reservation details
 
-7. **Store Staff Notification:**
-
-   - **No notification sent to store staff** (since status is `Pending` and `alreadyPaid = false`)
-   - Store staff can view the reservation in the admin interface
-
 8. **Post-Creation:**
 
    - Customer can view reservation through:
      - Account dashboard (if logged in)
      - Reservation confirmation link (if anonymous)
    - Store staff can view and manage the reservation in admin interface
-   - Reservation remains in `Pending` status until store confirms or customer confirms
+   - Reservation remains in `ReadyToConfirm` status until store confirms or customer confirms
 
 **Alternative Flows:**
 
