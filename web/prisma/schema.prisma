@@ -54,18 +54,19 @@ model User {
   invitations Invitation[]
 
   Addresses                 Address[]
-  SupportTicketFrom         SupportTicket[]        @relation("SupportTicketFrom")
-  SupportTicketTo           SupportTicket[]        @relation("SupportTicketTo")
-  NotificationFrom          StoreNotification[]    @relation("NotificationFrom")
-  NotificationTo            StoreNotification[]    @relation("NotificationTo")
+  SupportTicketFrom         SupportTicket[]           @relation("SupportTicketFrom")
+  SupportTicketTo           SupportTicket[]           @relation("SupportTicketTo")
+  NotificationFrom          StoreNotification[]       @relation("NotificationFrom")
+  NotificationTo            StoreNotification[]       @relation("NotificationTo")
   Store                     Store[]
-  Orders                    StoreOrder[]           @relation("UserOrders")
+  Orders                    StoreOrder[]              @relation("UserOrders")
   Reservations              Rsvp[]
-  RsvpCreator               Rsvp[]                 @relation("RsvpCreatedBy")
+  RsvpCreator               Rsvp[]                    @relation("RsvpCreatedBy")
   CustomerCredits           CustomerCredit[]
-  CustomerCreditLedger      CustomerCreditLedger[] @relation("UserCustomerCreditLogs")
-  CustomerCreditLogsCreator CustomerCreditLedger[] @relation("UserCustomerCreditLogsCreator")
+  CustomerCreditLedger      CustomerCreditLedger[]    @relation("UserCustomerCreditLogs")
+  CustomerCreditLogsCreator CustomerCreditLedger[]    @relation("UserCustomerCreditLogsCreator")
   StoreLedgerCreated        StoreLedger[]
+  NotificationPreferences   NotificationPreferences[]
 
   @@unique([normalizedEmail])
   @@index([email])
@@ -637,6 +638,10 @@ model Store {
   SupportTicket              SupportTicket[]
   StoreNotification          StoreNotification[]
   StoreShippingMethods       StoreShipMethodMapping[]
+  NotificationPreferences    NotificationPreferences[]
+  NotificationChannelConfigs NotificationChannelConfig[]
+  MessageTemplates           MessageTemplate[]
+  EmailQueues                EmailQueue[]
   StorePaymentMethods        StorePaymentMethodMapping[]
   StoreFacilities            StoreFacility[]
   StoreProductOptionTemplate StoreProductOptionTemplate[]
@@ -1292,14 +1297,22 @@ model StoreNotification {
   sendTries   Int     @default(0)
   sentOn      BigInt?
 
+  // Notification metadata
+  notificationType String? // e.g., "order", "reservation", "credit", "system"
+  actionUrl        String? // Deep link URL for action buttons
+  priority         Int     @default(0) // 0=normal, 1=high, 2=urgent
+
+  // Status flags
   isRead               Boolean @default(false)
   isDeletedByAuthor    Boolean @default(false)
   isDeletedByRecipient Boolean @default(false)
 
-  Sender    User @relation("NotificationFrom", fields: [senderId], references: [id])
-  Recipient User @relation("NotificationTo", fields: [recipientId], references: [id])
-
-  Store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  // Relations
+  Sender           User                         @relation("NotificationFrom", fields: [senderId], references: [id])
+  Recipient        User                         @relation("NotificationTo", fields: [recipientId], references: [id])
+  Store            Store?                       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  DeliveryStatuses NotificationDeliveryStatus[]
+  EmailQueues      EmailQueue[]
 
   @@index([storeId])
   @@index([senderId])
@@ -1307,23 +1320,37 @@ model StoreNotification {
   @@index([sendTries])
   @@index([createdAt])
   @@index([updatedAt])
+  @@index([isRead])
+  @@index([notificationType])
+  // Composite indexes for common queries
+  @@index([recipientId, isRead, createdAt]) // For user notification center
+  @@index([storeId, createdAt]) // For store notification history
 }
 
 model MessageTemplate {
   id                       String                     @id @default(uuid())
-  name                     String
+  name                     String // Template identifier (e.g., "order_confirmation")
+  templateType             String // "email", "line", "sms", "whatsapp", "wechat", "telegram", "push", "onsite"
+  isGlobal                 Boolean                    @default(false) // Global template vs store-specific
+  storeId                  String? // null for global templates
   MessageTemplateLocalized MessageTemplateLocalized[]
+  EmailQueues              EmailQueue[]
 
+  Store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([name, storeId]) // Unique template name per store (or global)
   @@index([name])
+  @@index([templateType])
+  @@index([storeId])
 }
 
 model MessageTemplateLocalized {
   id                String          @id @default(uuid())
   messageTemplateId String
   localeId          String
-  bCCEmailAddresses String?
-  subject           String
-  body              String
+  bCCEmailAddresses String? // For email templates
+  subject           String // Subject/title for the notification
+  body              String // Template body with variable placeholders
   isActive          Boolean         @default(true)
   Locale            Locale          @relation(fields: [localeId], references: [id], onDelete: Cascade)
   MessageTemplate   MessageTemplate @relation(fields: [messageTemplateId], references: [id], onDelete: Cascade)
@@ -1331,6 +1358,7 @@ model MessageTemplateLocalized {
   @@unique([localeId, messageTemplateId])
   @@index([localeId])
   @@index([messageTemplateId])
+  @@index([isActive])
 }
 
 model EmailQueue {
@@ -1348,11 +1376,125 @@ model EmailQueue {
   sendTries   Int     @default(0)
   sentOn      BigInt?
 
+  // Email metadata
+  storeId        String?
+  notificationId String? // Link to StoreNotification if applicable
+  templateId     String? // Link to MessageTemplate if applicable
+  priority       Int     @default(0)
+
+  // Relations
+  Store        Store?             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Notification StoreNotification? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  Template     MessageTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
   @@index([sendTries])
   @@index([createdOn])
   @@index([sentOn])
   @@index([from])
   @@index([to])
+  @@index([storeId])
+  @@index([priority])
+  @@index([notificationId])
+  @@index([templateId])
+  // Composite index for queue processing
+  @@index([sendTries, priority, createdOn]) // For queue worker queries
+}
+
+model NotificationPreferences {
+  id      String  @id @default(uuid())
+  userId  String? // null for store-level preferences
+  storeId String? // null for user-level global preferences
+
+  // Channel preferences
+  onSiteEnabled   Boolean @default(true)
+  emailEnabled    Boolean @default(true)
+  lineEnabled     Boolean @default(false)
+  whatsappEnabled Boolean @default(false)
+  wechatEnabled   Boolean @default(false)
+  smsEnabled      Boolean @default(false)
+  telegramEnabled Boolean @default(false)
+  pushEnabled     Boolean @default(false)
+
+  // Notification type preferences
+  orderNotifications       Boolean @default(true)
+  reservationNotifications Boolean @default(true)
+  creditNotifications      Boolean @default(true)
+  paymentNotifications     Boolean @default(true)
+  systemNotifications      Boolean @default(true)
+  marketingNotifications   Boolean @default(false)
+
+  // Frequency preferences
+  frequency String @default("immediate") // "immediate", "daily_digest", "weekly_digest"
+
+  createdAt BigInt // Epoch milliseconds
+  updatedAt BigInt // Epoch milliseconds
+
+  User  User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storeId]) // One preference record per user-store pair
+  @@index([userId])
+  @@index([storeId])
+}
+
+model NotificationChannelConfig {
+  id      String  @id @default(uuid())
+  storeId String
+  channel String // "line", "whatsapp", "wechat", "sms", "telegram", "push"
+  enabled Boolean @default(false)
+
+  // Encrypted credentials (JSON string, encrypted at application level)
+  credentials String? // Encrypted JSON: { apiKey: "...", accessToken: "...", etc. }
+
+  // Channel-specific settings (JSON)
+  settings String? // JSON: { phoneNumberId: "...", webhookUrl: "...", etc. }
+
+  createdAt BigInt // Epoch milliseconds
+  updatedAt BigInt // Epoch milliseconds
+
+  Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, channel])
+  @@index([storeId])
+  @@index([channel])
+  @@index([enabled])
+}
+
+model SystemNotificationSettings {
+  id                   String  @id @default(uuid())
+  notificationsEnabled Boolean @default(true) // Master switch
+  maxRetryAttempts     Int     @default(3)
+  retryBackoffMs       Int     @default(1000) // Initial backoff in milliseconds
+  queueBatchSize       Int     @default(100)
+  rateLimitPerMinute   Int     @default(1000)
+  historyRetentionDays Int     @default(90)
+
+  updatedAt BigInt // Epoch milliseconds
+  updatedBy String // User ID of system admin who last updated
+
+  @@unique([id]) // Singleton pattern - only one record
+}
+
+model NotificationDeliveryStatus {
+  id             String  @id @default(uuid())
+  notificationId String
+  channel        String // "email", "line", "whatsapp", "sms", etc.
+  messageId      String? // External service message ID
+  status         String // "pending", "sent", "delivered", "read", "failed", "bounced"
+  errorMessage   String?
+  deliveredAt    BigInt? // Epoch milliseconds
+  readAt         BigInt? // Epoch milliseconds (if supported by channel)
+  createdAt      BigInt // Epoch milliseconds
+  updatedAt      BigInt // Epoch milliseconds
+
+  Notification StoreNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@index([channel])
+  @@index([status])
+  @@index([createdAt])
+  // Composite index for status queries
+  @@index([channel, status, createdAt])
 }
 
 model SupportTicket {

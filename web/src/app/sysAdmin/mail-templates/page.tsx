@@ -6,11 +6,12 @@ import { MessageTemplateClient } from "./components/client-message-template";
 
 export default async function MailTemplateAdminPage() {
 	// Parallel queries for optimal performance - 3x faster!
-	const [messageTemplates, messageTemplateLocalized, locales] =
+	const [messageTemplates, messageTemplateLocalized, locales, stores] =
 		await Promise.all([
 			sqlClient.messageTemplate.findMany({
 				include: {
 					MessageTemplateLocalized: true,
+					Store: true,
 				},
 				orderBy: {
 					name: "asc",
@@ -29,6 +30,15 @@ export default async function MailTemplateAdminPage() {
 					name: "asc",
 				},
 			}),
+			sqlClient.store.findMany({
+				select: {
+					id: true,
+					name: true,
+				},
+				orderBy: {
+					name: "asc",
+				},
+			}),
 		]);
 
 	return (
@@ -43,6 +53,7 @@ export default async function MailTemplateAdminPage() {
 					messageTemplateLocalized as MessageTemplateLocalized[]
 				}
 				locales={locales}
+				stores={stores}
 			/>
 		</Container>
 	);

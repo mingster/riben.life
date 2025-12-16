@@ -29,16 +29,29 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useI18n } from "@/providers/i18n-provider";
 import type { MessageTemplate } from "@/types";
-import type { MessageTemplateLocalized } from "@prisma/client";
+import type { MessageTemplateLocalized, Store } from "@prisma/client";
 
 interface props {
 	item: MessageTemplate;
 	onUpdated?: (newValue: MessageTemplate) => void;
+	stores?: Array<{ id: string; name: string | null }>;
 }
 
-export const EditMessageTemplate: React.FC<props> = ({ item, onUpdated }) => {
+export const EditMessageTemplate: React.FC<props> = ({
+	item,
+	onUpdated,
+	stores = [],
+}) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
@@ -51,14 +64,20 @@ export const EditMessageTemplate: React.FC<props> = ({ item, onUpdated }) => {
 	const defaultValues = item
 		? {
 				...item,
+				templateType: item.templateType || "email",
+				isGlobal: item.isGlobal ?? false,
+				storeId: item.storeId || null,
 			}
 		: {
 				id: "new",
 				name: "new",
+				templateType: "email" as const,
+				isGlobal: false,
+				storeId: null,
 			};
 
 	const form = useForm<z.infer<typeof updateMessageTemplateSchema>>({
-		resolver: zodResolver(updateMessageTemplateSchema),
+		resolver: zodResolver(updateMessageTemplateSchema) as any,
 		defaultValues,
 		mode: "onChange",
 	});
@@ -167,6 +186,93 @@ export const EditMessageTemplate: React.FC<props> = ({ item, onUpdated }) => {
 									</FormItem>
 								)}
 							/>
+
+							<FormField
+								control={form.control}
+								name="templateType"
+								render={({ field }) => (
+									<FormItem className="w-full">
+										<FormLabel>Template Type</FormLabel>
+										<FormControl>
+											<Select
+												disabled={loading || form.formState.isSubmitting}
+												value={field.value}
+												onValueChange={field.onChange}
+											>
+												<SelectTrigger>
+													<SelectValue placeholder="Select template type" />
+												</SelectTrigger>
+												<SelectContent>
+													<SelectItem value="email">Email</SelectItem>
+													<SelectItem value="line">LINE</SelectItem>
+													<SelectItem value="sms">SMS</SelectItem>
+													<SelectItem value="whatsapp">WhatsApp</SelectItem>
+													<SelectItem value="wechat">WeChat</SelectItem>
+													<SelectItem value="telegram">Telegram</SelectItem>
+													<SelectItem value="push">
+														Push Notification
+													</SelectItem>
+													<SelectItem value="onsite">On-Site</SelectItem>
+												</SelectContent>
+											</Select>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="isGlobal"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+										<FormControl>
+											<Checkbox
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+										<div className="space-y-1 leading-none">
+											<FormLabel>Global Template</FormLabel>
+										</div>
+									</FormItem>
+								)}
+							/>
+
+							{!form.watch("isGlobal") && (
+								<FormField
+									control={form.control}
+									name="storeId"
+									render={({ field }) => (
+										<FormItem className="w-full">
+											<FormLabel>Store</FormLabel>
+											<FormControl>
+												<Select
+													disabled={loading || form.formState.isSubmitting}
+													value={field.value || ""}
+													onValueChange={(value) =>
+														field.onChange(value || null)
+													}
+												>
+													<SelectTrigger>
+														<SelectValue placeholder="Select a store (optional)" />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem value="">None (Global)</SelectItem>
+														{stores.map((store) => (
+															<SelectItem key={store.id} value={store.id}>
+																{store.name || store.id}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							)}
 
 							<Button
 								type="submit"

@@ -13,6 +13,10 @@ export const updateEmailQueueSchema = z.object({
 	htmMessage: z.string().min(1, "htmMessage is required"),
 	sendTries: z.number().min(0).optional(),
 	sentOn: z.date().optional(),
+	storeId: z.string().optional().nullable(),
+	notificationId: z.string().optional().nullable(),
+	templateId: z.string().optional().nullable(),
+	priority: z.coerce.number().int().min(0).max(2).default(0),
 });
 
 export type UpdateEmailQueueInput = z.infer<typeof updateEmailQueueSchema>;

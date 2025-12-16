@@ -31,7 +31,7 @@ import { deleteReservationAction } from "@/actions/store/reservation/delete-rese
 import { getStoreDataAction } from "@/actions/store/reservation/get-store-data";
 import { getRsvpSettingsAction } from "@/actions/store/reservation/get-rsvp-settings";
 import { toastError, toastSuccess } from "@/components/toaster";
-import { EditReservationDialog } from "@/app/(store)/[storeId]/reservation/components/edit-reservation-dialog";
+import { ReservationDialog } from "@/app/(store)/[storeId]/reservation/components/reservation-dialog";
 import type { StoreFacility, RsvpSettings, StoreSettings } from "@/types";
 import { getUtcNow } from "@/utils/datetime-utils";
 
@@ -697,7 +697,7 @@ export const DisplayReservations = ({
 
 			{/* Edit Reservation Dialog */}
 			{reservationToEdit && storeData && reservationToEdit.Store?.id && (
-				<EditReservationDialog
+				<ReservationDialog
 					storeId={reservationToEdit.Store.id}
 					rsvpSettings={storeData.rsvpSettings}
 					storeSettings={storeData.storeSettings}

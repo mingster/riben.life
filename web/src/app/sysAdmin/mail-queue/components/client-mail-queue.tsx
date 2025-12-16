@@ -35,9 +35,11 @@ import logger from "@/lib/logger";
 // it will call /api/sysAdmin/emailQueue to get the mail queue data and refresh every 30 seconds.
 //
 export default function MailQueueAdminClient({
-	//mailQueueServerData,
+	stores = [],
+	messageTemplates = [],
 }: {
-	//mailQueueServerData: EmailQueue[];
+	stores?: Array<{ id: string; name: string | null }>;
+	messageTemplates?: Array<{ id: string; name: string }>;
 }) {
 	const [mailQueueData, setMailQueueData] = useState<EmailQueue[]>([]);
 
@@ -169,8 +171,14 @@ export default function MailQueueAdminClient({
 							bcc: row.original.bcc || undefined,
 							sendTries: row.original.sendTries || undefined,
 							sentOn: row.original.sentOn || undefined,
+							storeId: row.original.storeId || null,
+							notificationId: row.original.notificationId || null,
+							templateId: row.original.templateId || null,
+							priority: row.original.priority ?? 0,
 						}}
 						onUpdated={handleUpdated}
+						stores={stores}
+						messageTemplates={messageTemplates}
 					/>
 				</div>
 			),
@@ -196,6 +204,41 @@ export default function MailQueueAdminClient({
 					{row.getValue("sentOn") ? formatDateTime(row.getValue("sentOn")) : ""}
 				</div>
 			),
+		},
+		{
+			accessorKey: "priority",
+			header: ({ column }) => {
+				return <DataTableColumnHeader column={column} title="Priority" />;
+			},
+			cell: ({ row }) => {
+				const priority = row.getValue("priority") as number;
+				const labels = ["Normal", "High", "Urgent"];
+				return <div>{labels[priority] || priority}</div>;
+			},
+		},
+		{
+			accessorKey: "storeId",
+			header: ({ column }) => {
+				return <DataTableColumnHeader column={column} title="Store" />;
+			},
+			cell: ({ row }) => {
+				const storeId = row.getValue("storeId") as string | null;
+				if (!storeId) return <div>-</div>;
+				const store = stores.find((s) => s.id === storeId);
+				return <div>{store?.name || storeId}</div>;
+			},
+		},
+		{
+			accessorKey: "templateId",
+			header: ({ column }) => {
+				return <DataTableColumnHeader column={column} title="Template" />;
+			},
+			cell: ({ row }) => {
+				const templateId = row.getValue("templateId") as string | null;
+				if (!templateId) return <div>-</div>;
+				const template = messageTemplates.find((t) => t.id === templateId);
+				return <div>{template?.name || templateId}</div>;
+			},
 		},
 
 		{

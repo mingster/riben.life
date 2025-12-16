@@ -56,6 +56,7 @@ interface props {
 	serverData: MessageTemplate[];
 	messageTemplateLocalized: MessageTemplateLocalized[];
 	locales: Locale[];
+	stores?: Array<{ id: string; name: string | null }>;
 }
 
 interface CellActionProps {
@@ -67,6 +68,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 	serverData,
 	messageTemplateLocalized,
 	locales,
+	stores = [],
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -201,12 +203,48 @@ export const MessageTemplateClient: React.FC<props> = ({
 			cell: ({ row }) => (
 				<div>
 					{row.getValue("name")}
-					<EditMessageTemplate item={row.original} onUpdated={handleUpdated} />
+					<EditMessageTemplate
+						item={row.original}
+						onUpdated={handleUpdated}
+						stores={stores}
+					/>
 				</div>
 			),
 			enableHiding: false,
 		},
-
+		{
+			accessorKey: "templateType",
+			header: ({ column }) => {
+				return <DataTableColumnHeader column={column} title="Type" />;
+			},
+		},
+		{
+			accessorKey: "isGlobal",
+			header: ({ column }) => {
+				return <DataTableColumnHeader column={column} title="Global" />;
+			},
+			cell: ({ row }) => {
+				const val =
+					row.getValue("isGlobal") === true ? (
+						<IconCheck className="text-green-400 size-4" />
+					) : (
+						<IconX className="text-red-400 size-4" />
+					);
+				return <div className="pl-3">{val}</div>;
+			},
+		},
+		{
+			accessorKey: "storeId",
+			header: ({ column }) => {
+				return <DataTableColumnHeader column={column} title="Store" />;
+			},
+			cell: ({ row }) => {
+				const storeId = row.getValue("storeId") as string | null;
+				if (!storeId) return <div>Global</div>;
+				const store = stores.find((s) => s.id === storeId);
+				return <div>{store?.name || storeId}</div>;
+			},
+		},
 		{
 			accessorKey: "localizedCount",
 			header: ({ column }) => {
@@ -637,7 +675,11 @@ export const MessageTemplateClient: React.FC<props> = ({
 						</SelectContent>
 					</Select>
 					{/*新增 */}
-					<EditMessageTemplate item={newObj} onUpdated={handleCreated} />
+					<EditMessageTemplate
+						item={newObj}
+						onUpdated={handleCreated}
+						stores={stores}
+					/>
 
 					<Button onClick={handleExport} disabled={exporting} variant="outline">
 						{exporting ? (

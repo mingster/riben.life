@@ -96,11 +96,12 @@ export function GetMenuList(
 				//...(store.autoAcceptOrder ? [] : [orderConfirmation]),
 				// add cash (現金結帳) menu if store level is not free
 				// otherwise display orderCofirmation
-				...(store.level !== StoreLevel.Free ? [cash] : []),
 
 				// show order ready to ship menu only when useOrderSystem is true
 				...(store.useOrderSystem
 					? [
+							...(store.level !== StoreLevel.Free ? [cash] : []),
+
 							{
 								href: `${nav_prefix}/order/awaiting_to_ship`,
 								label: t("Order_ready_to_ship"),
@@ -167,14 +168,16 @@ export function GetMenuList(
 					label: t("Rsvp_List"),
 					active:
 						pathname.includes(`${nav_prefix}/rsvp`) &&
-						!pathname.includes(`${nav_prefix}/rsvp-settings`),
+						!pathname.includes(`${nav_prefix}/rsvp-settings`) &&
+						!pathname.includes(`${nav_prefix}/rsvp/history`),
+
 					icon: IconCalendarCheck,
 					submenus: [],
 				},
 				{
 					href: `${nav_prefix}/rsvp/history`,
 					label: t("rsvp_history"),
-					active: pathname.includes(`${nav_prefix}/rsvp/history`),
+					active: pathname.startsWith(`${nav_prefix}/rsvp/history`),
 					icon: IconHistory,
 					submenus: [],
 				},
