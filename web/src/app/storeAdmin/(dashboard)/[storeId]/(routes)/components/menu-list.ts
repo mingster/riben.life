@@ -337,6 +337,11 @@ export function GetMenuList(
 							label: t("send_notification"),
 							active: pathname === `${nav_prefix}/notifications/send`,
 						},
+						{
+							href: `${nav_prefix}/notifications/preferences`,
+							label: t("notification_preferences"),
+							active: pathname === `${nav_prefix}/notifications/preferences`,
+						},
 					],
 				},
 			],
