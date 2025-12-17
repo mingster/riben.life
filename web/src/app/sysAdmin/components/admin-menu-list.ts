@@ -157,7 +157,7 @@ export function GetMenuList(pathname: string): Group[] {
 							href: `${nav_prefix}/notifications/send`,
 							label: "Send Tester",
 							active: pathname === `${nav_prefix}/notifications/send`,
-						}
+						},
 					],
 				},
 

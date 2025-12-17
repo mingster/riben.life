@@ -380,6 +380,7 @@ This document describes the user interface design for the Notification System, c
 **Channel Configuration:**
 
 **Built-in Channels (On-Site, Email):**
+
 - Always enabled and cannot be disabled
 - No enable/disable toggle shown
 - Display status as "Always Available"
@@ -387,6 +388,7 @@ This document describes the user interface design for the Notification System, c
 - Email: Uses system SMTP configuration
 
 **Plugin Channels (LINE, WhatsApp, WeChat, SMS, Telegram, Push):**
+
 - **System Status Indicator**: Shows if plugin is enabled/disabled by System Admin
 - **Enable/Disable Toggle**: Store-level toggle (only enabled if System Admin has enabled the plugin)
 - **Credentials Fields**: Encrypted input fields for API keys/tokens
@@ -416,7 +418,7 @@ Similar to `/sysAdmin/mail-templates` but:
 
 - Only shows templates for the current store (or global templates)
 - Store admins can create/edit store-specific templates
-- Cannot edit global templates (read-only)
+- Store admins can edit global templates - when edited, saves as store's own copy
 - Filter by template type
 - Filter by global vs store-specific
 
@@ -525,7 +527,7 @@ Similar to `/sysAdmin/mail-templates` but:
 
 #### 3.5.1 Preferences Page
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │  Store Notification Preferences                         │
 │  ───────────────────────────────────────────────────  │
@@ -573,7 +575,7 @@ Similar to `/sysAdmin/mail-templates` but:
 
 #### 4.1.1 Notification Bell Component
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │  🔔 (3)                                  │
 └─────────────────────────────────────────┘
@@ -587,7 +589,7 @@ Similar to `/sysAdmin/mail-templates` but:
 
 #### 4.1.2 Notification Dropdown
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │  Notifications                              [View All]  │
 │  ───────────────────────────────────────────────────  │
@@ -627,7 +629,7 @@ Similar to `/sysAdmin/mail-templates` but:
 
 #### 4.2.1 Notification Center Layout
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │  Notifications                              [Settings]  │
 │  ───────────────────────────────────────────────────  │
@@ -677,7 +679,7 @@ Similar to `/sysAdmin/mail-templates` but:
 
 #### 4.3.1 Preferences Page Layout
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │  Notification Preferences                                │
 │  ───────────────────────────────────────────────────  │

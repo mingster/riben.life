@@ -233,10 +233,13 @@ export function StoreAdminSidebar() {
 																		{submenus.map(({ href, label, active }) => (
 																			<SidebarMenuItem key={label}>
 																				<SidebarMenuButton
+																					asChild
 																					tooltip={label}
 																					isActive={active}
 																				>
-																					<span>{label}</span>
+																					<Link href={href}>
+																						<span>{label}</span>
+																					</Link>
 																				</SidebarMenuButton>
 																			</SidebarMenuItem>
 																		))}
