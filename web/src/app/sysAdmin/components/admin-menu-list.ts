@@ -119,11 +119,27 @@ export function GetMenuList(pathname: string): Group[] {
 			groupLabel: "系統",
 			menus: [
 				{
-					href: `${nav_prefix}/notifications/settings`,
+					href: `${nav_prefix}/notifications/dashboard`,
 					label: "Notification",
-					active: pathname.includes(`${nav_prefix}/notifications/settings`),
+					active: pathname.includes(`${nav_prefix}/notifications`),
 					icon: IconBell,
-					submenus: [],
+					submenus: [
+						{
+							href: `${nav_prefix}/notifications/dashboard`,
+							label: "Dashboard",
+							active: pathname === `${nav_prefix}/notifications/dashboard`,
+						},
+						{
+							href: `${nav_prefix}/notifications/send`,
+							label: "Send Notification",
+							active: pathname === `${nav_prefix}/notifications/send`,
+						},
+						{
+							href: `${nav_prefix}/notifications/settings`,
+							label: "Settings",
+							active: pathname === `${nav_prefix}/notifications/settings`,
+						},
+					],
 				},
 				{
 					href: `${nav_prefix}/sysmsg`,
@@ -188,13 +204,6 @@ export function GetMenuList(pathname: string): Group[] {
 					submenus: [],
 				},
 				{
-					href: `${nav_prefix}/mail-templates`,
-					label: "Mail Templates",
-					active: pathname.includes(`${nav_prefix}/mail-templates`),
-					icon: IconMail,
-					submenus: [],
-				},
-				{
 					href: `${nav_prefix}/locales`,
 					label: "Locales",
 					active: pathname.includes(`${nav_prefix}/locales`),
@@ -206,6 +215,13 @@ export function GetMenuList(pathname: string): Group[] {
 					label: "Currencies",
 					active: pathname.includes(`${nav_prefix}/currencies`),
 					icon: IconCurrencyDollar,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/mail-templates`,
+					label: "Mail Templates",
+					active: pathname.includes(`${nav_prefix}/mail-templates`),
+					icon: IconMail,
 					submenus: [],
 				},
 			],
