@@ -125,43 +125,42 @@ export function GetMenuList(pathname: string): Group[] {
 					icon: IconBell,
 					submenus: [
 						{
+							href: `${nav_prefix}/notifications/sysmsg`,
+							label: "System Messages",
+							active: pathname.includes(`${nav_prefix}/notifications/sysmsg`),
+						},
+						{
 							href: `${nav_prefix}/notifications/dashboard`,
 							label: "Dashboard",
 							active: pathname === `${nav_prefix}/notifications/dashboard`,
 						},
 						{
-							href: `${nav_prefix}/notifications/send`,
-							label: "Send Notification",
-							active: pathname === `${nav_prefix}/notifications/send`,
+							href: `${nav_prefix}/notifications/mail-queue`,
+							label: "Mail Queue",
+							active: pathname.includes(
+								`${nav_prefix}/notifications/mail-queue`,
+							),
+						},
+						{
+							href: `${nav_prefix}/notifications/message-queue`,
+							label: "Message Queue",
+							active: pathname.includes(
+								`${nav_prefix}/notifications/message-queue`,
+							),
 						},
 						{
 							href: `${nav_prefix}/notifications/settings`,
 							label: "Settings",
 							active: pathname === `${nav_prefix}/notifications/settings`,
 						},
+						{
+							href: `${nav_prefix}/notifications/send`,
+							label: "Send Tester",
+							active: pathname === `${nav_prefix}/notifications/send`,
+						}
 					],
 				},
-				{
-					href: `${nav_prefix}/sysmsg`,
-					label: "System Messages",
-					active: pathname.includes(`${nav_prefix}/sysmsg`),
-					icon: IconMessageCircle,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/mail-queue`,
-					label: "Mail Queue",
-					active: pathname.includes(`${nav_prefix}/mail-queue`),
-					icon: IconMail,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/message-queue`,
-					label: "Message Queue",
-					active: pathname.includes(`${nav_prefix}/message-queue`),
-					icon: IconMessageCircle,
-					submenus: [],
-				},
+
 				{
 					href: `${nav_prefix}/syslog`,
 					label: "System Logs",
