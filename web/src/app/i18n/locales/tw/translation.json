@@ -1011,5 +1011,19 @@
   "no_notifications": "沒有通知",
   "failed_to_load_notifications": "載入通知失敗",
   "mark_all_as_read": "全部標記為已讀",
-  "all_notifications_marked_read": "所有通知已標記為已讀"
+  "all_notifications_marked_read": "所有通知已標記為已讀",
+  "notification_center_description": "查看和管理您的所有通知",
+  "settings": "設定",
+  "unread": "未讀",
+  "read": "已讀",
+  "select_all": "全選",
+  "no_notifications_found": "找不到通知",
+  "marking_all_read": "正在標記全部為已讀...",
+  "failed_to_mark_all_read": "標記全部為已讀失敗",
+  "order": "訂單",
+  "reservation": "預約",
+  "credit": "點數",
+  "payment": "付款",
+  "system": "系統",
+  "marketing": "行銷"
 }

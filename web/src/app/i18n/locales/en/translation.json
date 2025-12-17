@@ -994,5 +994,19 @@
   "no_notifications": "No notifications",
   "failed_to_load_notifications": "Failed to load notifications",
   "mark_all_as_read": "Mark All as Read",
-  "all_notifications_marked_read": "All notifications marked as read"
+  "all_notifications_marked_read": "All notifications marked as read",
+  "notification_center_description": "View and manage all your notifications",
+  "settings": "Settings",
+  "unread": "Unread",
+  "read": "Read",
+  "select_all": "Select All",
+  "no_notifications_found": "No notifications found",
+  "marking_all_read": "Marking all as read...",
+  "failed_to_mark_all_read": "Failed to mark all as read",
+  "order": "Order",
+  "reservation": "Reservation",
+  "credit": "Credit",
+  "payment": "Payment",
+  "system": "System",
+  "marketing": "Marketing"
 }
