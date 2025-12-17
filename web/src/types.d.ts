@@ -276,14 +276,25 @@ export type SupportTicket = Prisma.SupportTicketGetPayload<
 	typeof supportTicketObj
 >;
 
-const notificationObj = Prisma.validator<Prisma.StoreNotificationDefaultArgs>()(
-	{
-		include: {
-			Sender: true,
+const notificationObj = Prisma.validator<Prisma.MessageQueueDefaultArgs>()({
+	include: {
+		Sender: {
+			select: {
+				id: true,
+				name: true,
+				email: true,
+			},
+		},
+		Recipient: {
+			select: {
+				id: true,
+				name: true,
+				email: true,
+			},
 		},
 	},
-);
-export type StoreNotification = Prisma.StoreNotificationGetPayload<
+});
+export type MessageQueue = Prisma.MessageQueueGetPayload<
 	typeof notificationObj
 >;
 

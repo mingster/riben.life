@@ -341,16 +341,16 @@ export const EditMailQueue: React.FC<props> = ({
 											<FormControl>
 												<Select
 													disabled={loading || form.formState.isSubmitting}
-													value={field.value || ""}
+													value={field.value || "--"}
 													onValueChange={(value) =>
-														field.onChange(value || null)
+														field.onChange(value === "--" ? null : value)
 													}
 												>
 													<SelectTrigger>
 														<SelectValue placeholder="Select a store (optional)" />
 													</SelectTrigger>
 													<SelectContent>
-														<SelectItem value="">None</SelectItem>
+														<SelectItem value="--">None</SelectItem>
 														{stores.map((store) => (
 															<SelectItem key={store.id} value={store.id}>
 																{store.name || store.id}
@@ -373,16 +373,16 @@ export const EditMailQueue: React.FC<props> = ({
 											<FormControl>
 												<Select
 													disabled={loading || form.formState.isSubmitting}
-													value={field.value || ""}
+													value={field.value || "--"}
 													onValueChange={(value) =>
-														field.onChange(value || null)
+														field.onChange(value === "--" ? null : value)
 													}
 												>
 													<SelectTrigger>
 														<SelectValue placeholder="Select a template (optional)" />
 													</SelectTrigger>
 													<SelectContent>
-														<SelectItem value="">None</SelectItem>
+														<SelectItem value="--">None</SelectItem>
 														{messageTemplates.map((template) => (
 															<SelectItem key={template.id} value={template.id}>
 																{template.name}

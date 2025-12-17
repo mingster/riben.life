@@ -15,6 +15,12 @@ export default async function NotificationSettingsPage() {
 		settings = await sqlClient.systemNotificationSettings.create({
 			data: {
 				notificationsEnabled: true,
+				lineEnabled: false,
+				whatsappEnabled: false,
+				wechatEnabled: false,
+				smsEnabled: false,
+				telegramEnabled: false,
+				pushEnabled: false,
 				maxRetryAttempts: 3,
 				retryBackoffMs: 1000,
 				queueBatchSize: 100,

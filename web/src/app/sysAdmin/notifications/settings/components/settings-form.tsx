@@ -71,6 +71,160 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 
 				<Separator />
 
+				{/* External Channel Plugins */}
+				<div className="space-y-4">
+					<div>
+						<h3 className="text-lg font-medium">External Channel Plugins</h3>
+						<p className="text-sm text-muted-foreground">
+							Enable or disable external notification channel plugins
+							system-wide. Built-in channels (On-Site, Email) are always
+							enabled.
+						</p>
+					</div>
+
+					<div className="space-y-3">
+						<FormField
+							control={form.control}
+							name="lineEnabled"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+									<div className="space-y-0.5">
+										<FormLabel className="text-base">LINE Messaging</FormLabel>
+										<FormDescription>
+											Enable LINE messaging plugin system-wide
+										</FormDescription>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+											disabled={loading || form.formState.isSubmitting}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="whatsappEnabled"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+									<div className="space-y-0.5">
+										<FormLabel className="text-base">
+											WhatsApp Business
+										</FormLabel>
+										<FormDescription>
+											Enable WhatsApp Business plugin system-wide
+										</FormDescription>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+											disabled={loading || form.formState.isSubmitting}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="wechatEnabled"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+									<div className="space-y-0.5">
+										<FormLabel className="text-base">
+											WeChat Official Account
+										</FormLabel>
+										<FormDescription>
+											Enable WeChat Official Account plugin system-wide
+										</FormDescription>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+											disabled={loading || form.formState.isSubmitting}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="smsEnabled"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+									<div className="space-y-0.5">
+										<FormLabel className="text-base">SMS</FormLabel>
+										<FormDescription>
+											Enable SMS plugin system-wide
+										</FormDescription>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+											disabled={loading || form.formState.isSubmitting}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="telegramEnabled"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+									<div className="space-y-0.5">
+										<FormLabel className="text-base">Telegram Bot</FormLabel>
+										<FormDescription>
+											Enable Telegram Bot plugin system-wide
+										</FormDescription>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+											disabled={loading || form.formState.isSubmitting}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="pushEnabled"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+									<div className="space-y-0.5">
+										<FormLabel className="text-base">
+											Push Notifications
+										</FormLabel>
+										<FormDescription>
+											Enable Push notification plugin system-wide
+										</FormDescription>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+											disabled={loading || form.formState.isSubmitting}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+					</div>
+				</div>
+
+				<Separator />
+
 				{/* Queue Configuration */}
 				<div className="space-y-4">
 					<div>

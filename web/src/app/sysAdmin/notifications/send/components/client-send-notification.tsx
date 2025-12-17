@@ -223,10 +223,10 @@ export function ClientSendNotification({
 											))}
 										</div>
 									)}
-									<FormDescription>
+									<p className="text-sm text-muted-foreground">
 										{selectedUsers.length} user
 										{selectedUsers.length !== 1 ? "s" : ""} selected
-									</FormDescription>
+									</p>
 								</div>
 							)}
 						</CardContent>
@@ -354,7 +354,7 @@ export function ClientSendNotification({
 												</SelectTrigger>
 											</FormControl>
 											<SelectContent>
-												<SelectItem value="">None</SelectItem>
+												<SelectItem value="--">None</SelectItem>
 												{messageTemplates.map((template) => (
 													<SelectItem key={template.id} value={template.id}>
 														{template.name}

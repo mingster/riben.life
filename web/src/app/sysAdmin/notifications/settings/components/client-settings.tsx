@@ -31,6 +31,12 @@ export function ClientNotificationSettings({
 	const defaultValues = {
 		id: settings.id,
 		notificationsEnabled: settings.notificationsEnabled,
+		lineEnabled: settings.lineEnabled ?? false,
+		whatsappEnabled: settings.whatsappEnabled ?? false,
+		wechatEnabled: settings.wechatEnabled ?? false,
+		smsEnabled: settings.smsEnabled ?? false,
+		telegramEnabled: settings.telegramEnabled ?? false,
+		pushEnabled: settings.pushEnabled ?? false,
 		maxRetryAttempts: settings.maxRetryAttempts,
 		retryBackoffMs: settings.retryBackoffMs,
 		queueBatchSize: settings.queueBatchSize,

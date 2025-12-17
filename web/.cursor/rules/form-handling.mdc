@@ -178,3 +178,121 @@ const schema = z.object({
 
 - Use `text-destructive` class for the asterisk to match error styling
 - Place the asterisk immediately after the label text with a space
+
+## Select Component Values
+
+**CRITICAL: Never use empty string (`""`) as a value for `SelectItem` components.**
+
+Empty string values can cause issues with form validation, state management, and component behavior. Always use a placeholder value like `"--"` for optional/nullable selections.
+
+### Pattern
+
+```tsx
+// ✅ CORRECT: Use placeholder value for optional/nullable fields
+<Select
+  value={field.value || "--"}
+  onValueChange={(value) =>
+    field.onChange(value === "--" ? null : value)
+  }
+>
+  <SelectTrigger>
+    <SelectValue placeholder="Select an option (optional)" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="--">None</SelectItem>
+    {options.map((option) => (
+      <SelectItem key={option.id} value={option.id}>
+        {option.name}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+```
+
+```tsx
+// ❌ WRONG: Don't use empty string as value
+<SelectItem value="">None</SelectItem>
+
+// ❌ WRONG: Don't use empty string in value prop
+<Select value={field.value || ""}>
+```
+
+### Rules
+
+1. **Use `"--"` as placeholder value** for optional/nullable Select fields
+2. **Convert `"--"` to `null`** in `onValueChange` handler
+3. **Use `"--"` as fallback** in `value` prop when field value is null/undefined
+4. **Never use empty string (`""`)** as a SelectItem value
+
+### Example: Optional Store Selection
+
+```tsx
+<FormField
+  control={form.control}
+  name="storeId"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Store</FormLabel>
+      <FormControl>
+        <Select
+          value={field.value || "--"}
+          onValueChange={(value) =>
+            field.onChange(value === "--" ? null : value)
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a store (optional)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="--">None</SelectItem>
+            {stores.map((store) => (
+              <SelectItem key={store.id} value={store.id}>
+                {store.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+### Example: Optional Template Selection
+
+```tsx
+<FormField
+  control={form.control}
+  name="templateId"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Template</FormLabel>
+      <Select
+        onValueChange={(value) =>
+          field.onChange(value === "--" ? null : value)
+        }
+        value={field.value || "--"}
+      >
+        <FormControl>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a template (optional)" />
+          </SelectTrigger>
+        </FormControl>
+        <SelectContent>
+          <SelectItem value="--">None</SelectItem>
+          {templates.map((template) => (
+            <SelectItem key={template.id} value={template.id}>
+              {template.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <FormDescription>
+        Optional: Use a message template for consistent formatting
+      </FormDescription>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```

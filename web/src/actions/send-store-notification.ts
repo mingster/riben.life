@@ -3,15 +3,13 @@ import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import nodemailer from "nodemailer";
 
-const notificationObj = Prisma.validator<Prisma.StoreNotificationDefaultArgs>()(
-	{
-		include: {
-			Sender: true,
-			Recipient: true,
-		},
+const notificationObj = Prisma.validator<Prisma.MessageQueueDefaultArgs>()({
+	include: {
+		Sender: true,
+		Recipient: true,
 	},
-);
-export type StoreNotification = Prisma.StoreNotificationGetPayload<
+});
+export type MessageQueue = Prisma.MessageQueueGetPayload<
 	typeof notificationObj
 >;
 
@@ -70,7 +68,7 @@ export async function sendMail(
 	return true;
 }
 
-export async function sendStoreNotification(mailtoSend: StoreNotification) {
+export async function sendStoreNotification(mailtoSend: MessageQueue) {
 	if (mailtoSend === null) return;
 	if (mailtoSend.id === null) return;
 	if (mailtoSend === null) return;
@@ -86,7 +84,7 @@ export async function sendStoreNotification(mailtoSend: StoreNotification) {
 
 	if (result) {
 		// update sent status
-		const obj = await sqlClient.storeNotification.update({
+		const obj = await sqlClient.messageQueue.update({
 			where: {
 				id: mailtoSend.id,
 			},

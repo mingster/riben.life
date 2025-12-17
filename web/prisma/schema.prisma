@@ -56,8 +56,8 @@ model User {
   Addresses                 Address[]
   SupportTicketFrom         SupportTicket[]           @relation("SupportTicketFrom")
   SupportTicketTo           SupportTicket[]           @relation("SupportTicketTo")
-  NotificationFrom          StoreNotification[]       @relation("NotificationFrom")
-  NotificationTo            StoreNotification[]       @relation("NotificationTo")
+  NotificationFrom          MessageQueue[]       @relation("NotificationFrom")
+  NotificationTo            MessageQueue[]       @relation("NotificationTo")
   Store                     Store[]
   Orders                    StoreOrder[]              @relation("UserOrders")
   Reservations              Rsvp[]
@@ -636,7 +636,7 @@ model Store {
   FaqCategories              FaqCategory[]
   StoreAnnouncement          StoreAnnouncement[]
   SupportTicket              SupportTicket[]
-  StoreNotification          StoreNotification[]
+  MessageQueue          MessageQueue[]
   StoreShippingMethods       StoreShipMethodMapping[]
   NotificationPreferences    NotificationPreferences[]
   NotificationChannelConfigs NotificationChannelConfig[]
@@ -1285,7 +1285,7 @@ model SystemMessage {
   @@index([published])
 }
 
-model StoreNotification {
+model MessageQueue {
   id          String  @id @default(uuid())
   senderId    String
   recipientId String
@@ -1378,13 +1378,13 @@ model EmailQueue {
 
   // Email metadata
   storeId        String?
-  notificationId String? // Link to StoreNotification if applicable
+  notificationId String? // Link to MessageQueue if applicable
   templateId     String? // Link to MessageTemplate if applicable
   priority       Int     @default(0)
 
   // Relations
   Store        Store?             @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Notification StoreNotification? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  Notification MessageQueue? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
   Template     MessageTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
 
   @@index([sendTries])
@@ -1463,6 +1463,17 @@ model NotificationChannelConfig {
 model SystemNotificationSettings {
   id                   String  @id @default(uuid())
   notificationsEnabled Boolean @default(true) // Master switch
+  
+  // Plugin channel enable/disable (system-wide)
+  lineEnabled      Boolean @default(false) // LINE plugin enabled
+  whatsappEnabled Boolean @default(false) // WhatsApp plugin enabled
+  wechatEnabled   Boolean @default(false) // WeChat plugin enabled
+  smsEnabled       Boolean @default(false) // SMS plugin enabled
+  telegramEnabled Boolean @default(false) // Telegram plugin enabled
+  pushEnabled      Boolean @default(false) // Push notification plugin enabled
+  
+  // Note: Built-in channels (on-site, email) are always enabled and not stored here
+  
   maxRetryAttempts     Int     @default(3)
   retryBackoffMs       Int     @default(1000) // Initial backoff in milliseconds
   queueBatchSize       Int     @default(100)
@@ -1487,7 +1498,7 @@ model NotificationDeliveryStatus {
   createdAt      BigInt // Epoch milliseconds
   updatedAt      BigInt // Epoch milliseconds
 
-  Notification StoreNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  Notification MessageQueue @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   @@index([notificationId])
   @@index([channel])

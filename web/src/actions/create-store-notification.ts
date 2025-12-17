@@ -3,11 +3,11 @@
 import { auth } from "@/lib/auth";
 
 import { sqlClient } from "@/lib/prismadb";
-import type { StoreNotification } from "@prisma/client";
+import type { MessageQueue } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
-export async function CreateNotification(values: StoreNotification) {
+export async function CreateNotification(values: MessageQueue) {
 	const session = await auth.api.getSession({
 		headers: await headers(), // you need to pass the headers object.
 	});
@@ -23,7 +23,7 @@ export async function CreateNotification(values: StoreNotification) {
 		throw Error("Unauthorized");
 	}
 
-	await sqlClient.storeNotification.create({
+	await sqlClient.messageQueue.create({
 		data: { ...values },
 	});
 

@@ -34,7 +34,7 @@ export class OnSiteChannel implements NotificationChannelAdapter {
 
 		// On-site notifications are already created in the database
 		// Just mark as sent
-		await sqlClient.storeNotification.update({
+		await sqlClient.messageQueue.update({
 			where: { id: notification.id },
 			data: {
 				sentOn: BigInt(Date.now()),
@@ -58,7 +58,7 @@ export class OnSiteChannel implements NotificationChannelAdapter {
 	}
 
 	async getDeliveryStatus(messageId: string): Promise<DeliveryStatusInfo> {
-		const notification = await sqlClient.storeNotification.findUnique({
+		const notification = await sqlClient.messageQueue.findUnique({
 			where: { id: messageId },
 		});
 

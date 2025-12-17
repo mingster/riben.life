@@ -29,7 +29,7 @@ export default async function NotificationDashboardPage() {
 		deliveryStatuses,
 	] = await Promise.all([
 		// Total notifications sent in last 24h
-		sqlClient.storeNotification.count({
+		sqlClient.messageQueue.count({
 			where: {
 				createdAt: {
 					gte: last24h,
@@ -38,7 +38,7 @@ export default async function NotificationDashboardPage() {
 		}),
 
 		// Total notifications sent in last 7d
-		sqlClient.storeNotification.count({
+		sqlClient.messageQueue.count({
 			where: {
 				createdAt: {
 					gte: last7d,
@@ -47,7 +47,7 @@ export default async function NotificationDashboardPage() {
 		}),
 
 		// Total notifications sent in last 30d
-		sqlClient.storeNotification.count({
+		sqlClient.messageQueue.count({
 			where: {
 				createdAt: {
 					gte: last30d,
@@ -56,7 +56,7 @@ export default async function NotificationDashboardPage() {
 		}),
 
 		// Pending notifications (not sent yet)
-		sqlClient.storeNotification.count({
+		sqlClient.messageQueue.count({
 			where: {
 				sentOn: null,
 			},
@@ -90,7 +90,7 @@ export default async function NotificationDashboardPage() {
 		}),
 
 		// Recent notifications (last 20)
-		sqlClient.storeNotification.findMany({
+		sqlClient.messageQueue.findMany({
 			take: 20,
 			orderBy: {
 				createdAt: "desc",

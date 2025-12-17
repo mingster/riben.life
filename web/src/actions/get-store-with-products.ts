@@ -15,9 +15,13 @@ const getStoreWithProducts = async (
 ): Promise<StoreWithProducts | null> => {
 	// Validate storeId format and prevent reserved routes from being treated as storeIds
 	if (isReservedRoute(storeId)) {
-		throw new Error(
-			`Invalid storeId: "${storeId}" is a reserved route or invalid format`,
-		);
+		logger.warn("Reserved route detected in getStoreWithProducts", {
+			metadata: {
+				storeId,
+				message: `"${storeId}" is a reserved route and cannot be used as a storeId`,
+			},
+			tags: ["store", "reserved-route", "warning"],
+		});
 
 		return null;
 	}
