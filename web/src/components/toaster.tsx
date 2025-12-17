@@ -1,9 +1,15 @@
 import { Toaster as SonnerToaster, toast } from "sonner";
-import { IconAlertTriangle } from "@tabler/icons-react";
+import { IconAlertTriangle, IconCheck } from "@tabler/icons-react";
 
 export function toastSuccess(options: { title?: string; description: string }) {
 	return toast.success(options.title || "Success", {
 		description: options.description,
+		duration: 10_000,
+		icon: <IconCheck className="h-5 w-5" />,
+		style: {
+			backgroundColor: "var(--primary)",
+			color: "var(--primary-foreground)",
+		},
 	});
 }
 

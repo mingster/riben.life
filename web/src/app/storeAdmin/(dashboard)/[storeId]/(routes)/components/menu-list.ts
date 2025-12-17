@@ -7,6 +7,7 @@ import { StoreLevel, TicketStatus } from "@/types/enum";
 
 import {
 	IconArrowRight,
+	IconBell,
 	IconBox,
 	IconBuilding,
 	IconBuildingFactory,
@@ -15,6 +16,7 @@ import {
 	IconCoin,
 	IconCreditCard,
 	IconCurrencyDollar,
+	IconFileText,
 	IconHelp,
 	IconHistory,
 	IconHttpOptions,
@@ -312,6 +314,35 @@ export function GetMenuList(
 					active: pathname.includes(`${nav_prefix}/qrcode`),
 					icon: IconQrcode,
 					submenus: [],
+				},
+
+				{
+					href: `${nav_prefix}/notifications/dashboard`,
+					label: t("notification_system"),
+					active: pathname.includes(`${nav_prefix}/notifications`),
+					icon: IconBell,
+					submenus: [
+						{
+							href: `${nav_prefix}/notifications/settings`,
+							label: t("notification_settings"),
+							active: pathname.includes(`${nav_prefix}/notifications/settings`),
+						},
+						{
+							href: `${nav_prefix}/notifications/templates`,
+							label: t("notification_templates"),
+							active: pathname === `${nav_prefix}/notifications/templates`,
+						},
+						{
+							href: `${nav_prefix}/notifications/send`,
+							label: t("send_notification"),
+							active: pathname === `${nav_prefix}/notifications/send`,
+						},
+						{
+							href: `${nav_prefix}/notifications/preferences`,
+							label: t("notification_preferences"),
+							active: pathname === `${nav_prefix}/notifications/preferences`,
+						},
+					],
 				},
 			],
 		},
