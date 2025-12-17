@@ -95,6 +95,10 @@ export const EditMessageTemplate: React.FC<props> = ({
 	async function onSubmit(data: z.infer<typeof updateMessageTemplateSchema>) {
 		//console.log("data", data);
 		setLoading(true);
+		if (data.storeId === "--Global--") {
+			data.storeId = null;
+		}
+
 		const result = await updateMessageTemplateAction(data);
 		if (!result) {
 			toastError({ description: "An error occurred" });
@@ -259,7 +263,9 @@ export const EditMessageTemplate: React.FC<props> = ({
 														<SelectValue placeholder="Select a store (optional)" />
 													</SelectTrigger>
 													<SelectContent>
-														<SelectItem value="">None (Global)</SelectItem>
+														<SelectItem value="--Global--">
+															None (Global)
+														</SelectItem>
 														{stores.map((store) => (
 															<SelectItem key={store.id} value={store.id}>
 																{store.name || store.id}

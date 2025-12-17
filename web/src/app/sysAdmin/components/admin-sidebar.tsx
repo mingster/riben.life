@@ -75,11 +75,13 @@ export function AdminSidebar() {
 					<SidebarMenuItem>
 						<SidebarMenuButton
 							asChild
-							className="data-[slot=sidebar-menu-button]:!p-1.5"
+							className="data-[slot=sidebar-menu-button]:p-1.5!"
 						>
 							<Link href="/sysAdmin">
-								<IconInnerShadowTop className="!size-5" />
-								<span className="text-base font-semibold">Admin Dashboard</span>
+								<IconInnerShadowTop className="size-5!" />
+								<span className="font-mono text-xs font-semibold">
+									Admin Dashboard
+								</span>
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
@@ -106,7 +108,7 @@ export function AdminSidebar() {
 										{menus.map(
 											({ href, label, icon: Icon, active, submenus }) =>
 												submenus.length === 0 ? (
-													<SidebarMenuItem key={label} className="font-mono">
+													<SidebarMenuItem key={label}>
 														<SidebarMenuButton asChild isActive={active}>
 															<a href={href}>
 																<Icon />
