@@ -988,5 +988,11 @@
   "notification_deleted": "Notification deleted",
   "notifications_deleted": "{{count}} notifications deleted",
   "failed_to_delete_notifications": "Failed to delete notifications",
-  "failed_to_delete_notification": "Failed to delete notification"
+  "failed_to_delete_notification": "Failed to delete notification",
+  "notifications": "Notifications",
+  "view_all": "View All",
+  "no_notifications": "No notifications",
+  "failed_to_load_notifications": "Failed to load notifications",
+  "mark_all_as_read": "Mark All as Read",
+  "all_notifications_marked_read": "All notifications marked as read"
 }

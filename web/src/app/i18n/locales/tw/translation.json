@@ -1005,5 +1005,11 @@
   "notification_deleted": "通知已刪除",
   "notifications_deleted": "已刪除 {{count}} 則通知",
   "failed_to_delete_notifications": "刪除通知失敗",
-  "failed_to_delete_notification": "刪除通知失敗"
+  "failed_to_delete_notification": "刪除通知失敗",
+  "notifications": "通知",
+  "view_all": "查看全部",
+  "no_notifications": "沒有通知",
+  "failed_to_load_notifications": "載入通知失敗",
+  "mark_all_as_read": "全部標記為已讀",
+  "all_notifications_marked_read": "所有通知已標記為已讀"
 }

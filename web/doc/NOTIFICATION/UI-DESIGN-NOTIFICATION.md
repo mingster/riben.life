@@ -567,7 +567,7 @@ Similar to `/sysAdmin/mail-templates` but:
 
 ### 4.1 Notification Center (Bell Icon)
 
-**Location:** Global navigation (all authenticated pages)
+**Location:** Global navigation (all authenticated pages) -  `src/components/notification/dropdown-notification.tsx`
 
 **Purpose:** Real-time notification display and management.
 
