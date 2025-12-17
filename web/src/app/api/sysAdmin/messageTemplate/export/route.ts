@@ -4,8 +4,14 @@ import path from "path";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { getUtcNow } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { CheckAdminApiAccess } from "../../api_helper";
 
 export async function POST() {
+	const accessCheck = await CheckAdminApiAccess();
+	if (accessCheck) {
+		return accessCheck;
+	}
 	try {
 		// Fetch all message template localizations
 		const messageTemplates = await sqlClient.messageTemplate.findMany({
@@ -13,6 +19,9 @@ export async function POST() {
 				MessageTemplateLocalized: true,
 			},
 		});
+
+		// Transform BigInt and Decimal to numbers for JSON serialization
+		transformPrismaDataForJson(messageTemplates);
 
 		// Prepare backup directory
 		const backupDir = path.join(process.cwd(), "public", "backup");
@@ -36,8 +45,9 @@ export async function POST() {
 		logger.error("message template export", {
 			metadata: {
 				error: error instanceof Error ? error.message : String(error),
+				stack: error instanceof Error ? error.stack : undefined,
 			},
-			tags: ["api", "error"],
+			tags: ["api", "error", "export"],
 		});
 		return NextResponse.json(
 			{ success: false, error: error?.message || "Unknown error" },
