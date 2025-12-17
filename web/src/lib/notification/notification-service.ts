@@ -91,7 +91,7 @@ export class NotificationService {
 		}
 
 		// Create notification record
-		const notification = await sqlClient.storeNotification.create({
+		const notification = await sqlClient.messageQueue.create({
 			data: {
 				senderId: input.senderId,
 				recipientId: input.recipientId,
@@ -128,7 +128,7 @@ export class NotificationService {
 			tags: ["notification", "send"],
 		});
 
-		const notification = await sqlClient.storeNotification.findUnique({
+		const notification = await sqlClient.messageQueue.findUnique({
 			where: { id: notificationId },
 		});
 
@@ -237,7 +237,7 @@ export class NotificationService {
 	async getNotificationStatus(
 		notificationId: string,
 	): Promise<NotificationStatus> {
-		const notification = await sqlClient.storeNotification.findUnique({
+		const notification = await sqlClient.messageQueue.findUnique({
 			where: { id: notificationId },
 		});
 
@@ -284,7 +284,7 @@ export class NotificationService {
 	 * Mark notification as read
 	 */
 	async markAsRead(notificationId: string, userId: string): Promise<void> {
-		const notification = await sqlClient.storeNotification.findUnique({
+		const notification = await sqlClient.messageQueue.findUnique({
 			where: { id: notificationId },
 		});
 
@@ -296,7 +296,7 @@ export class NotificationService {
 			throw new Error("User is not the recipient of this notification");
 		}
 
-		await sqlClient.storeNotification.update({
+		await sqlClient.messageQueue.update({
 			where: { id: notificationId },
 			data: {
 				isRead: true,
@@ -316,7 +316,7 @@ export class NotificationService {
 		userId: string,
 		type: "sender" | "recipient",
 	): Promise<void> {
-		const notification = await sqlClient.storeNotification.findUnique({
+		const notification = await sqlClient.messageQueue.findUnique({
 			where: { id: notificationId },
 		});
 
@@ -346,7 +346,7 @@ export class NotificationService {
 			updateData.isDeletedByRecipient = true;
 		}
 
-		await sqlClient.storeNotification.update({
+		await sqlClient.messageQueue.update({
 			where: { id: notificationId },
 			data: updateData,
 		});

@@ -52,10 +52,13 @@ The notification system follows a layered architecture:
 1. **Notification Service**: Core service for creating, managing, and sending notifications
 2. **Queue Manager**: Handles asynchronous notification processing
 3. **Channel Adapters**: Abstraction layer for different notification channels
-4. **Template Engine**: Processes notification templates with variable substitution
-5. **Preference Manager**: Manages user and store notification preferences
-6. **Delivery Tracker**: Monitors and tracks notification delivery status
-7. **Real-time Service**: WebSocket/SSE service for on-site notifications
+   - **Built-in Channels**: On-site and Email (always available, cannot be disabled)
+   - **Plugin Channels**: LINE, WhatsApp, WeChat, SMS, Telegram, Push (implemented as plugins, can be enabled/disabled)
+4. **Plugin System**: Extensible architecture for external notification channels
+5. **Template Engine**: Processes notification templates with variable substitution
+6. **Preference Manager**: Manages user and store notification preferences
+7. **Delivery Tracker**: Monitors and tracks notification delivery status
+8. **Real-time Service**: WebSocket/SSE service for on-site notifications
 
 ### 1.3 Technology Stack
 
@@ -152,16 +155,24 @@ interface NotificationChannel {
 }
 ```
 
-**Channel Implementations:**
+**Channel Types:**
 
-- `OnSiteChannel`: Real-time in-app notifications
-- `EmailChannel`: SMTP email delivery
-- `LineChannel`: LINE Messaging API
-- `WhatsAppChannel`: WhatsApp Business API
-- `WeChatChannel`: WeChat Official Account API
-- `SmsChannel`: SMS provider abstraction (Twilio, AWS SNS, etc.)
-- `TelegramChannel`: Telegram Bot API
-- `PushChannel`: FCM/APNs push notifications
+1. **Built-in Channels (Always Available, Cannot Be Disabled):**
+   - `OnSiteChannel`: Real-time in-app notifications
+   - `EmailChannel`: SMTP email delivery
+   - These channels are core functionality and always enabled
+   - No plugin system required - implemented directly in the codebase
+
+2. **Plugin Channels (Can Be Enabled/Disabled by System Admin):**
+   - `LineChannel`: LINE Messaging API (plugin)
+   - `WhatsAppChannel`: WhatsApp Business API (plugin)
+   - `WeChatChannel`: WeChat Official Account API (plugin)
+   - `SmsChannel`: SMS provider abstraction (Twilio, AWS SNS, etc.) (plugin)
+   - `TelegramChannel`: Telegram Bot API (plugin)
+   - `PushChannel`: FCM/APNs push notifications (plugin)
+   - All external channels must be implemented as plugins
+   - System admins can enable/disable plugins system-wide
+   - Store admins can enable/disable plugins for their store (only if enabled by system admin)
 
 **Channel Configuration:**
 
@@ -170,11 +181,25 @@ Each channel requires store-specific configuration stored in the database:
 ```typescript
 interface ChannelConfig {
   storeId: string;
-  enabled: boolean;
+  enabled: boolean; // For plugin channels only - built-in channels are always enabled
   credentials: Record<string, string>; // Encrypted API keys/tokens
   settings: Record<string, any>; // Channel-specific settings
 }
 ```
+
+**Built-in Channel Behavior:**
+
+- Built-in channels (on-site, email) are always available
+- `isEnabled()` always returns `true` for built-in channels
+- No enable/disable configuration exists for built-in channels
+- These channels are not registered in the plugin system
+
+**Plugin Channel Behavior:**
+
+- Plugin channels must be registered in the plugin registry
+- System admins can enable/disable plugins system-wide
+- Store admins can enable/disable plugins for their store (only if system admin has enabled it)
+- Plugin channels check both system-wide and store-level enable/disable status
 
 #### 2.1.4 Template Engine
 
@@ -268,12 +293,12 @@ The Real-time Service provides WebSocket or SSE connections for on-site notifica
 
 ### 2.2 Database Schema
 
-#### 2.2.1 StoreNotification Model
+#### 2.2.1 MessageQueue Model
 
-Stores on-site notifications for users.
+Stores notifications in a queue for processing and delivery across all channels.
 
 ```prisma
-model StoreNotification {
+model MessageQueue {
   id          String  @id @default(uuid())
   senderId    String
   recipientId String
@@ -320,6 +345,8 @@ model StoreNotification {
 - Soft delete via `isDeletedByAuthor` and `isDeletedByRecipient`
 - Supports action URLs for deep linking
 - Priority field for urgent notifications
+- Used as the central queue for all notification channels (on-site, email, LINE, WhatsApp, SMS, etc.)
+- Tracks delivery status across multiple channels via `NotificationDeliveryStatus` relation
 
 #### 2.2.2 EmailQueue Model
 
@@ -343,13 +370,13 @@ model EmailQueue {
   
   // Email metadata
   storeId         String?
-  notificationId  String? // Link to StoreNotification if applicable
+  notificationId  String? // Link to MessageQueue if applicable
   templateId      String? // Link to MessageTemplate if applicable
   priority        Int     @default(0)
   
   // Relations
   Store          Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Notification   StoreNotification? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  Notification   MessageQueue? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
   Template       MessageTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
   
   @@index([sendTries])
@@ -368,7 +395,7 @@ model EmailQueue {
 
 - Supports both plain text and HTML email
 - Tracks send attempts for retry logic
-- Links to StoreNotification and MessageTemplate for traceability
+- Links to MessageQueue and MessageTemplate for traceability
 - Priority field for urgent emails
 
 #### 2.2.3 MessageTemplate and MessageTemplateLocalized Models
@@ -470,14 +497,16 @@ model NotificationPreferences {
 
 #### 2.2.5 NotificationChannelConfig Model (New)
 
-Stores store-specific configuration for each notification channel.
+Stores store-specific configuration for each external notification channel (plugin channels only).
+
+**Note:** Built-in channels (on-site, email) do not use this model as they are always enabled and cannot be disabled.
 
 ```prisma
 model NotificationChannelConfig {
   id        String  @id @default(uuid())
   storeId   String
-  channel   String  // "line", "whatsapp", "wechat", "sms", "telegram", "push"
-  enabled   Boolean @default(false)
+  channel   String  // "line", "whatsapp", "wechat", "sms", "telegram", "push" (plugin channels only)
+  enabled   Boolean @default(false) // Store-level enable/disable (only effective if system admin enabled the plugin)
   
   // Encrypted credentials (JSON string, encrypted at application level)
   credentials String? // Encrypted JSON: { apiKey: "...", accessToken: "...", etc. }
@@ -499,19 +528,32 @@ model NotificationChannelConfig {
 
 **Key Points:**
 
-- One record per store per channel
+- **Only for plugin channels** - Built-in channels (on-site, email) are not stored here
+- One record per store per plugin channel
 - Credentials stored encrypted
 - Settings stored as JSON for flexibility
-- Enables store-level channel control
+- Enables store-level plugin channel control
+- Store-level `enabled` is only effective if the plugin is enabled system-wide
 
 #### 2.2.6 SystemNotificationSettings Model (New)
 
-Stores system-wide notification settings.
+Stores system-wide notification settings and plugin enable/disable status.
 
 ```prisma
 model SystemNotificationSettings {
   id                    String  @id @default(uuid())
-  notificationsEnabled  Boolean @default(true) // Master switch
+  notificationsEnabled  Boolean @default(true) // Master switch (affects all channels)
+  
+  // Plugin channel enable/disable (system-wide)
+  lineEnabled      Boolean @default(false) // LINE plugin enabled
+  whatsappEnabled Boolean @default(false) // WhatsApp plugin enabled
+  wechatEnabled   Boolean @default(false) // WeChat plugin enabled
+  smsEnabled       Boolean @default(false) // SMS plugin enabled
+  telegramEnabled Boolean @default(false) // Telegram plugin enabled
+  pushEnabled      Boolean @default(false) // Push notification plugin enabled
+  
+  // Note: Built-in channels (on-site, email) are always enabled and not stored here
+  
   maxRetryAttempts      Int     @default(3)
   retryBackoffMs        Int     @default(1000) // Initial backoff in milliseconds
   queueBatchSize        Int     @default(100)
@@ -528,7 +570,10 @@ model SystemNotificationSettings {
 **Key Points:**
 
 - Singleton pattern (only one record)
-- Master switch for system-wide enable/disable
+- Master switch (`notificationsEnabled`) affects all channels (built-in and plugins)
+- Plugin channel enable/disable flags control system-wide plugin availability
+- Built-in channels (on-site, email) are always enabled and not stored in this model
+- Store admins can only enable/disable plugins for their store if system admin has enabled the plugin
 - Configurable retry and rate limiting
 - History retention policy
 
@@ -549,7 +594,7 @@ model NotificationDeliveryStatus {
   createdAt      BigInt  // Epoch milliseconds
   updatedAt      BigInt  // Epoch milliseconds
   
-  Notification StoreNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  Notification MessageQueue @relation(fields: [notificationId], references: [id], onDelete: Cascade)
   
   @@index([notificationId])
   @@index([channel])
@@ -604,6 +649,7 @@ export const [actionName]Action = [actionClient]
 - `enable-disable-channel.ts` - Store admin: enable/disable channel
 - `enable-disable-system-notifications.ts` - System admin: master switch
 - `get-delivery-status.ts` - Get notification delivery status
+- `update-message-queue.ts` - System admin: Create/update message in queue (`/sysAdmin/message-queue`)
 
 #### 2.3.2 API Routes
 
@@ -623,59 +669,86 @@ export const [actionName]Action = [actionClient]
 
 - `POST /api/notifications/queue/process` - Process notification queue (called by cron/worker)
 
+**Message Queue Management:**
+
+- `DELETE /api/sysAdmin/messageQueue/[id]` - Delete message from queue (system admin only)
+
 ---
 
 ### 2.4 Integration Architecture
 
-#### 2.4.1 External Service Integration
+#### 2.4.1 Channel Architecture
 
-**LINE Messaging API:**
+**Built-in Channels (Always Available):**
+
+- **On-site Notifications**: Real-time in-app notifications via WebSocket/SSE
+  - Always enabled, cannot be disabled
+  - No external service integration required
+  - Implemented directly in the codebase
+
+- **Email Notifications**: SMTP email delivery via Nodemailer
+  - Always enabled, cannot be disabled
+  - Requires SMTP server configuration
+  - Implemented directly in the codebase
+
+**Plugin Channels (Can Be Enabled/Disabled):**
+
+All external notification channels are implemented as plugins and can be enabled/disabled by system administrators:
+
+#### 2.4.2 External Service Integration (Plugin Channels)
+
+**LINE Messaging API (Plugin):**
 
 - **Endpoint:** `https://api.line.me/v2/bot/message/push`
 - **Authentication:** Bearer token (Channel Access Token)
 - **Rate Limits:** 600 messages/second per channel
 - **Webhook:** Receives delivery status updates
 
-**WhatsApp Business API:**
+**WhatsApp Business API (Plugin):**
 
 - **Endpoint:** `https://graph.facebook.com/v18.0/{phone-number-id}/messages`
 - **Authentication:** Bearer token (Page Access Token)
 - **Rate Limits:** 1000 messages/second per phone number
 - **Webhook:** Receives delivery and read receipts
+- **Implementation:** Plugin-based, can be enabled/disabled by system admin
 
-**WeChat Official Account API:**
+**WeChat Official Account API (Plugin):**
 
 - **Endpoint:** `https://api.weixin.qq.com/cgi-bin/message/template/send`
 - **Authentication:** Access Token (refreshed periodically)
 - **Rate Limits:** 100,000 calls/day
 - **Webhook:** Receives user interactions
+- **Implementation:** Plugin-based, can be enabled/disabled by system admin
 
-**SMS Providers:**
+**SMS Providers (Plugin):**
 
 - **Twilio:** REST API with account SID and auth token
 - **AWS SNS:** AWS SDK with IAM credentials
 - **Vonage:** REST API with API key and secret
 - **Abstraction:** Unified SMS provider interface
+- **Implementation:** Plugin-based, can be enabled/disabled by system admin
 
-**Telegram Bot API:**
+**Telegram Bot API (Plugin):**
 
 - **Endpoint:** `https://api.telegram.org/bot{token}/sendMessage`
 - **Authentication:** Bot token
 - **Rate Limits:** 30 messages/second per bot
 - **Webhook:** Receives updates via long polling or webhook
+- **Implementation:** Plugin-based, can be enabled/disabled by system admin
 
-**Push Notifications:**
+**Push Notifications (Plugin):**
 
 - **FCM (Android):** Firebase Cloud Messaging REST API
 - **APNs (iOS):** Apple Push Notification Service HTTP/2 API
 - **Abstraction:** Unified push notification service
+- **Implementation:** Plugin-based, can be enabled/disabled by system admin
 
-#### 2.4.2 Integration Pattern
+#### 2.4.3 Plugin Integration Pattern
 
-All external integrations follow the adapter pattern:
+All external integrations follow the plugin adapter pattern:
 
 ```typescript
-// Base channel adapter
+// Base channel adapter (for both built-in and plugin channels)
 abstract class BaseChannelAdapter implements NotificationChannel {
   abstract name: string;
   abstract send(notification: Notification, config: ChannelConfig): Promise<DeliveryResult>;
@@ -691,13 +764,68 @@ abstract class BaseChannelAdapter implements NotificationChannel {
   }
 }
 
-// Concrete implementations
-class LineChannelAdapter extends BaseChannelAdapter {
+// Built-in channel implementations (always available)
+class OnSiteChannelAdapter extends BaseChannelAdapter {
+  name = 'onsite';
+  // Always enabled, no enable/disable check needed
+}
+
+class EmailChannelAdapter extends BaseChannelAdapter {
+  name = 'email';
+  // Always enabled, no enable/disable check needed
+}
+
+// Plugin channel implementations (can be enabled/disabled)
+class LineChannelAdapter extends BaseChannelAdapter implements NotificationPlugin {
   name = 'line';
   async send(notification: Notification, config: ChannelConfig): Promise<DeliveryResult> {
+    // Check if plugin is enabled system-wide and store-level
+    if (!await this.isSystemEnabled()) {
+      throw new Error('LINE plugin is disabled system-wide');
+    }
+    if (!await this.isStoreEnabled(config.storeId)) {
+      throw new Error('LINE plugin is disabled for this store');
+    }
     // LINE-specific implementation
   }
+  
+  async isSystemEnabled(): Promise<boolean> {
+    // Check SystemNotificationSettings.lineEnabled
+  }
+  
+  async isStoreEnabled(storeId: string): Promise<boolean> {
+    // Check NotificationChannelConfig for store
+  }
 }
+```
+
+**Plugin Registration:**
+
+```typescript
+// Plugin registry
+class PluginRegistry {
+  private plugins: Map<string, NotificationPlugin> = new Map();
+  
+  register(plugin: NotificationPlugin): void {
+    this.plugins.set(plugin.name, plugin);
+  }
+  
+  getPlugin(name: string): NotificationPlugin | undefined {
+    return this.plugins.get(name);
+  }
+  
+  getEnabledPlugins(): NotificationPlugin[] {
+    // Return only plugins enabled system-wide
+  }
+}
+
+// Register plugins at startup
+const registry = new PluginRegistry();
+registry.register(new LineChannelAdapter());
+registry.register(new WhatsAppChannelAdapter());
+// ... other plugin channels
+
+// Built-in channels are NOT registered as plugins
 ```
 
 ---
@@ -775,6 +903,40 @@ All notification operations logged:
 - **Peak Load Handling:** Auto-scaling queue workers
 - **Database Scaling:** Read replicas for notification queries
 - **External API Limits:** Respect rate limits and implement queuing
+
+---
+
+### 2.8 Admin Interface Components
+
+#### 2.8.1 System Admin Pages
+
+**Message Queue Management (`/sysAdmin/message-queue`):**
+
+- **Purpose:** Monitor and manage the central message queue (`MessageQueue` model) for all notification channels
+- **Server Component:** `src/app/sysAdmin/message-queue/page.tsx`
+  - Fetches `MessageQueue` records with `Sender` and `Recipient` relations
+  - Fetches stores and users for dropdowns
+  - Transforms Prisma data for JSON serialization (BigInt to string)
+- **Client Component:** `src/app/sysAdmin/message-queue/components/client-message-queue.tsx`
+  - Displays message queue in `DataTableCheckbox` with row selection
+  - Columns: Select, Sender, Recipient, Subject, Type, Priority, Read, Store, Created, Sent, Actions
+  - Bulk delete functionality
+  - Edit dialog integration
+- **Edit Dialog:** `src/app/sysAdmin/message-queue/components/edit-message-queue.tsx`
+  - Form for editing message details (sender, recipient, subject, message, type, priority, etc.)
+  - Uses React Hook Form with Zod validation
+  - Handles create and update operations
+- **Server Actions:**
+  - `src/actions/sysAdmin/messageQueue/update-message-queue.ts` - Create/update message
+  - Delete via API route: `DELETE /api/sysAdmin/messageQueue/[id]`
+
+**Key Differences from Mail Queue:**
+
+- **Mail Queue** (`/sysAdmin/mail-queue`): Email-specific queue (`EmailQueue` model) for SMTP email delivery
+- **Message Queue** (`/sysAdmin/message-queue`): Central queue (`MessageQueue` model) for all notification channels
+- Message Queue includes notifications from all channels (on-site, email, LINE, WhatsApp, WeChat, SMS, Telegram, push)
+- Message Queue tracks sender/recipient relationships and notification metadata
+- Mail Queue is specifically for email delivery with SMTP details (from, to, subject, HTML/text content)
 
 ---
 

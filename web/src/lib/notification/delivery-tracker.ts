@@ -74,7 +74,7 @@ export class DeliveryTracker {
 	 */
 	async markAsRead(notificationId: string, userId: string): Promise<void> {
 		// Update on-site notification
-		await sqlClient.storeNotification.update({
+		await sqlClient.messageQueue.update({
 			where: { id: notificationId },
 			data: {
 				isRead: true,

@@ -45,6 +45,18 @@ This document describes the user interface design for the Notification System, c
 │  [Master Switch] Enable Notifications System-Wide      │
 │  ☑ Enabled                                             │
 │                                                         │
+│  External Channel Plugins                               │
+│  ───────────────────────────────────────────────────  │
+│  ☐ LINE Messaging                                       │
+│  ☐ WhatsApp Business                                    │
+│  ☐ WeChat Official Account                              │
+│  ☐ SMS                                                  │
+│  ☐ Telegram Bot                                         │
+│  ☐ Push Notifications                                   │
+│                                                         │
+│  Note: Built-in channels (On-Site, Email) are always   │
+│  enabled and cannot be disabled.                       │
+│                                                         │
 │  Queue Configuration                                   │
 │  ───────────────────────────────────────────────────  │
 │  Max Retry Attempts:        [3]                        │
@@ -62,7 +74,16 @@ This document describes the user interface design for the Notification System, c
 
 **Fields:**
 
-- **Master Switch**: Toggle to enable/disable entire notification system
+- **Master Switch**: Toggle to enable/disable entire notification system (affects all channels)
+- **External Channel Plugins**: Toggles for each external channel plugin:
+  - **LINE Messaging**: Enable/disable LINE plugin system-wide
+  - **WhatsApp Business**: Enable/disable WhatsApp plugin system-wide
+  - **WeChat Official Account**: Enable/disable WeChat plugin system-wide
+  - **SMS**: Enable/disable SMS plugin system-wide
+  - **Telegram Bot**: Enable/disable Telegram plugin system-wide
+  - **Push Notifications**: Enable/disable Push notification plugin system-wide
+  - Built-in channels (On-Site, Email) are always enabled and not shown here
+  - Only external channel plugins can be enabled/disabled by system admin
 - **Max Retry Attempts**: Number of retry attempts for failed notifications (default: 3)
 - **Retry Backoff (ms)**: Initial backoff delay in milliseconds (default: 1000)
 - **Queue Batch Size**: Number of notifications to process per batch (default: 100)
@@ -133,7 +154,80 @@ This document describes the user interface design for the Notification System, c
    - Show delivery status for each channel
    - Color-coded badges: Pending (gray), Sent (blue), Delivered (green), Failed (red)
 
-### 2.4 System Notification Dashboard
+### 2.4 Message Queue Management
+
+**Location:** `/sysAdmin/message-queue`
+
+**Purpose:** Monitor and manage the central message queue (`MessageQueue` model) for all notification channels across all stores.
+
+**Components:**
+
+#### 2.4.1 Message Queue Page Layout
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Message Queue                              [1,234]     │
+│  ───────────────────────────────────────────────────  │
+│  Manage Message Queue. (2025-01-27 14:30:00)          │
+│                                                         │
+│  [Delete Selected]                                      │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐  │
+│  │ [✓] │ Sender │ Recipient │ Subject │ Type │ ... │  │
+│  ├─────┼────────┼───────────┼─────────┼──────┼─────┤  │
+│  │ [ ] │ Admin  │ User 1    │ Order   │ order│ ... │  │
+│  │     │        │           │ Created │      │     │  │
+│  ├─────┼────────┼───────────┼─────────┼──────┼─────┤  │
+│  │ [ ] │ System │ User 2    │ Welcome │system│ ... │  │
+│  └─────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Table Columns:**
+
+- **Select**: Checkbox for row selection
+- **Sender**: Sender name/email with link to user page
+- **Recipient**: Recipient name/email with link to user page
+- **Subject**: Notification subject with edit button
+- **Type**: Notification type badge (order, reservation, credit, system, etc.)
+- **Priority**: Priority badge (Normal, High, Urgent)
+- **Read**: Read status indicator (✓ or ✗)
+- **Store**: Store name (if applicable)
+- **Created**: Creation timestamp
+- **Sent**: Sent timestamp (if sent)
+- **Actions**: Dropdown menu (Copy ID, Delete)
+
+**Features:**
+
+- **View All Messages**: Display all messages in the `MessageQueue` across all channels
+- **Edit Messages**: Edit message details via dialog
+- **Delete Messages**: Delete single or multiple messages
+- **Filter by Store**: Filter messages by store (future enhancement)
+- **Filter by Type**: Filter by notification type (future enhancement)
+- **Filter by Status**: Filter by read/unread status (future enhancement)
+- **Search**: Search by subject, sender, or recipient (via DataTable search)
+- **Sort**: Sortable columns
+- **Bulk Actions**: Delete selected messages
+- **Real-time Updates**: Current time display updates every 10 seconds
+
+**Implementation:**
+
+- Server component: `src/app/sysAdmin/message-queue/page.tsx`
+- Client component: `src/app/sysAdmin/message-queue/components/client-message-queue.tsx`
+- Edit dialog: `src/app/sysAdmin/message-queue/components/edit-message-queue.tsx`
+- Server actions:
+  - `src/actions/sysAdmin/messageQueue/update-message-queue.ts`
+  - Delete via API route: `/api/sysAdmin/messageQueue/[id]`
+
+**Key Differences from Mail Queue:**
+
+- **Mail Queue** (`/sysAdmin/mail-queue`): Email-specific queue (`EmailQueue` model)
+- **Message Queue** (`/sysAdmin/message-queue`): Central queue for all channels (`MessageQueue` model)
+- Message Queue includes notifications from all channels (on-site, email, LINE, WhatsApp, etc.)
+- Message Queue tracks sender/recipient relationships and notification metadata
+- Mail Queue is specifically for email delivery with SMTP details
+
+### 2.5 System Notification Dashboard
 
 **Location:** `/sysAdmin/notifications/dashboard`
 
@@ -141,7 +235,7 @@ This document describes the user interface design for the Notification System, c
 
 **Components:**
 
-#### 2.4.1 Dashboard Layout
+#### 2.5.1 Dashboard Layout
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -180,7 +274,7 @@ This document describes the user interface design for the Notification System, c
 - Queue size and processing time
 - Recent activity feed
 
-### 2.5 Send System Notification
+### 2.6 Send System Notification
 
 **Location:** `/sysAdmin/notifications/send`
 
@@ -188,7 +282,7 @@ This document describes the user interface design for the Notification System, c
 
 **Components:**
 
-#### 2.5.1 Send Notification Form
+#### 2.6.1 Send Notification Form
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -253,25 +347,28 @@ This document describes the user interface design for the Notification System, c
 │                                                         │
 │  On-Site Notifications                                  │
 │  ───────────────────────────────────────────────────  │
-│  ☑ Enabled                                             │
-│  (Always enabled - no configuration needed)            │
+│  ☑ Enabled (Built-in - Always Available)               │
+│  (Cannot be disabled - core functionality)             │
 │                                                         │
 │  Email Notifications                                    │
 │  ───────────────────────────────────────────────────  │
-│  ☑ Enabled                                             │
-│  (Uses system SMTP configuration)                      │
+│  ☑ Enabled (Built-in - Always Available)               │
+│  (Cannot be disabled - uses system SMTP configuration) │
 │                                                         │
-│  LINE Messaging                                         │
+│  LINE Messaging (Plugin)                                │
 │  ───────────────────────────────────────────────────  │
-│  ☐ Enabled                                             │
+│  System Status: [Disabled by System Admin]              │
+│  ☐ Enabled (Store-level - only if enabled by system)   │
 │  Channel ID:        [________________________]          │
 │  Channel Secret:    [________________________]          │
 │  Access Token:      [________________________]          │
 │  [Test Connection]                                     │
+│  Note: Plugin must be enabled by System Admin first     │
 │                                                         │
-│  WhatsApp Business                                     │
+│  WhatsApp Business (Plugin)                             │
 │  ───────────────────────────────────────────────────  │
-│  ☐ Enabled                                             │
+│  System Status: [Enabled by System Admin]               │
+│  ☐ Enabled (Store-level)                                │
 │  Phone Number ID:   [________________________]          │
 │  Access Token:      [________________________]         │
 │  [Test Connection]                                     │
@@ -282,13 +379,21 @@ This document describes the user interface design for the Notification System, c
 
 **Channel Configuration:**
 
-Each external channel (LINE, WhatsApp, WeChat, SMS, Telegram, Push) has:
+**Built-in Channels (On-Site, Email):**
+- Always enabled and cannot be disabled
+- No enable/disable toggle shown
+- Display status as "Always Available"
+- On-Site: No configuration needed
+- Email: Uses system SMTP configuration
 
-- **Enable/Disable Toggle**: Master switch for the channel
+**Plugin Channels (LINE, WhatsApp, WeChat, SMS, Telegram, Push):**
+- **System Status Indicator**: Shows if plugin is enabled/disabled by System Admin
+- **Enable/Disable Toggle**: Store-level toggle (only enabled if System Admin has enabled the plugin)
 - **Credentials Fields**: Encrypted input fields for API keys/tokens
 - **Settings Fields**: Channel-specific configuration
 - **Test Connection Button**: Verify credentials work
 - **Status Indicator**: Show connection status (Connected, Disconnected, Error)
+- **Note**: Store admins can only enable plugins that have been enabled by System Admin
 
 **Implementation:**
 
@@ -940,11 +1045,12 @@ interface ChannelStatusBadgeProps {
 
 ### 12.1 System Admin UI
 
-- [ ] System notification settings page
+- [x] System notification settings page
 - [ ] Enhanced global template management
 - [ ] Enhanced mail queue monitoring
-- [ ] Notification dashboard
-- [ ] Send system notification page
+- [x] Message queue management (`/sysAdmin/message-queue`)
+- [x] Notification dashboard
+- [x] Send system notification page
 - [ ] Server actions for all operations
 
 ### 12.2 Store Admin UI
@@ -985,7 +1091,8 @@ interface ChannelStatusBadgeProps {
 - Tables: `/storeAdmin/[storeId]/tables` (canonical CRUD pattern)
 - Settings: `/storeAdmin/[storeId]/settings` (settings form pattern)
 - Templates: `/sysAdmin/mail-templates` (template management pattern)
-- Queue: `/sysAdmin/mail-queue` (queue monitoring pattern)
+- Email Queue: `/sysAdmin/mail-queue` (email queue monitoring pattern)
+- Message Queue: `/sysAdmin/message-queue` (central message queue pattern)
 
 ### 13.2 Component Reuse
 

@@ -16,17 +16,25 @@
 
 The Notification System provides a comprehensive multi-channel notification infrastructure that enables the platform to communicate with users through on-site notifications, email, and external messaging systems (LINE, WhatsApp, WeChat, SMS, Telegram, and push notifications). The system supports both real-time and queued notifications, template-based messaging, user preferences, delivery tracking, and integration with various business events across the platform.
 
+**Channel Architecture:**
+
+- **Built-in Channels (Always Available):**
+  - On-site in-app notifications with real-time updates (cannot be disabled)
+  - Email notifications with queue management and retry logic (cannot be disabled)
+  
+- **External Channels (Plugin-based, Enable/Disable by System Admin):**
+  - LINE (popular in Taiwan/Japan) - implemented as plugin
+  - WhatsApp Business API (global reach) - implemented as plugin
+  - WeChat Official Account (Taiwan/China market) - implemented as plugin
+  - SMS (universal reach) - implemented as plugin
+  - Telegram Bot API - implemented as plugin
+  - Push notifications (iOS/Android mobile apps) - implemented as plugin
+
 **Key Features:**
 
-- On-site in-app notifications with real-time updates
-- Email notifications with queue management and retry logic
-- External messaging system integration:
-  - LINE (popular in Taiwan/Japan)
-  - WhatsApp Business API (global reach)
-  - WeChat Official Account (Taiwan/China market)
-  - SMS (universal reach)
-  - Telegram Bot API
-  - Push notifications (iOS/Android mobile apps)
+- Built-in channels (on-site, email) are always available and cannot be disabled
+- External channels are implemented as plugins and can be enabled/disabled by system administrators
+- Plugin architecture allows for easy addition of new notification channels
 - Template-based message generation with localization support
 - User notification preferences and channel selection
 - Delivery tracking and status monitoring
@@ -52,7 +60,8 @@ The Notification System provides a comprehensive multi-channel notification infr
 ### 2.2 Store Admin
 
 - Store owners and administrators
-- Can enable/disable each notification method for their store
+- Can enable/disable external notification channels (LINE, WhatsApp, WeChat, SMS, Telegram, push) for their store (if enabled by system admin)
+- Cannot disable built-in channels (on-site, email) - these are always available
 - Can send notifications to customers and staff
 - Can configure notification templates
 - Can view notification delivery status
@@ -71,9 +80,12 @@ The Notification System provides a comprehensive multi-channel notification infr
 
 - Platform administrators
 - Can enable/disable the notification system system-wide
+- Can enable/disable external notification channels (LINE, WhatsApp, WeChat, SMS, Telegram, push) system-wide
+- Cannot disable built-in channels (on-site, email) - these are always available
 - Can send system-wide notifications
 - Can manage global notification templates
-- Can configure external system integrations (LINE, SMS providers)
+- Can configure external system integrations (LINE, SMS providers) via plugin system
+- Can install/uninstall notification channel plugins
 - Can monitor notification delivery across the platform
 - Can manage notification queue and retry policies
 
@@ -103,7 +115,8 @@ Store Staff cannot:
 
 Store Admins have all Store Staff permissions, plus:
 
-- Enable/disable each notification method for their store (on-site, email, LINE, WhatsApp, WeChat, SMS, Telegram, push notifications)
+- Enable/disable external notification channels for their store (LINE, WhatsApp, WeChat, SMS, Telegram, push notifications) - only if enabled by system admin
+- Built-in channels (on-site, email) are always available and cannot be disabled
 - Configure all notification settings for their store
 - Create and manage notification templates
 - Configure external system integrations (LINE, SMS) for their store
@@ -230,6 +243,43 @@ System Admins have all Store Admin permissions, plus:
 - Retry failed emails
 - Cancel queued emails (if not yet sent)
 
+#### 3.2.3 Message Queue Management
+
+**FR-NOTIF-037:** The system must provide a message queue management interface at `/sysAdmin/message-queue` for system administrators.
+
+**FR-NOTIF-038:** System admins must be able to view all messages in the `MessageQueue` model across all notification channels.
+
+**FR-NOTIF-039:** The message queue interface must display:
+
+- Sender information (name/email with link to user page)
+- Recipient information (name/email with link to user page)
+- Notification subject
+- Notification type (order, reservation, credit, system, etc.)
+- Priority level (Normal, High, Urgent)
+- Read status (read/unread)
+- Store association (if applicable)
+- Creation timestamp
+- Sent timestamp (if sent)
+
+**FR-NOTIF-040:** System admins must be able to edit message details via a dialog interface.
+
+**FR-NOTIF-041:** System admins must be able to delete single or multiple messages from the queue.
+
+**FR-NOTIF-042:** The message queue interface must support:
+
+- Row selection with checkboxes
+- Bulk delete operations
+- Search functionality (by subject, sender, or recipient)
+- Sortable columns
+- Real-time timestamp updates
+
+**FR-NOTIF-043:** The message queue must be distinct from the email queue:
+
+- **Email Queue** (`/sysAdmin/mail-queue`): Email-specific queue (`EmailQueue` model) for SMTP email delivery
+- **Message Queue** (`/sysAdmin/message-queue`): Central queue (`MessageQueue` model) for all notification channels
+- Message Queue includes notifications from all channels (on-site, email, LINE, WhatsApp, WeChat, SMS, Telegram, push)
+- Message Queue tracks sender/recipient relationships and notification metadata
+
 #### 3.2.2 Email Delivery
 
 **FR-NOTIF-025:** The system must send emails using SMTP with configurable server settings.
@@ -252,11 +302,11 @@ System Admins have all Store Admin permissions, plus:
 
 **FR-NOTIF-030:** The system must support email attachments (future enhancement).
 
-#### 3.2.3 Email Templates
+#### 3.2.4 Email Templates
 
-**FR-NOTIF-031:** The system must support email templates using `MessageTemplate` and `MessageTemplateLocalized`.
+**FR-NOTIF-044:** The system must support email templates using `MessageTemplate` and `MessageTemplateLocalized`.
 
-**FR-NOTIF-032:** Email templates must support localization:
+**FR-NOTIF-045:** Email templates must support localization:
 
 - Multiple language versions per template
 - Locale-specific content
@@ -293,9 +343,9 @@ System Admins have all Store Admin permissions, plus:
 
 **FR-NOTIF-039:** The system must support LINE messaging integration for notifications.
 
-**FR-NOTIF-040:** LINE notifications must be sent through the LINE Messaging API.
+**FR-NOTIF-053:** LINE notifications must be sent through the LINE Messaging API.
 
-**FR-NOTIF-041:** The system must support LINE notification types:
+**FR-NOTIF-054:** The system must support LINE notification types:
 
 - Text messages
 - Rich messages (buttons, images, carousels)
@@ -498,10 +548,19 @@ System Admins have all Store Admin permissions, plus:
 
 **FR-NOTIF-109:** The system must provide a plugin/extension mechanism for adding new notification channels:
 
+- **All external channels (LINE, WhatsApp, WeChat, SMS, Telegram, push) must be implemented as plugins**
 - Plugin API for custom channel integrations
 - Configuration interface for new channels
 - Template support for new channels
 - Delivery tracking for new channels
+- System admins can enable/disable plugins system-wide
+- Store admins can enable/disable plugins for their store (only if enabled by system admin)
+
+**FR-NOTIF-110:** Built-in channels (on-site, email) must always be available and cannot be disabled:
+
+- On-site notifications are always enabled and cannot be disabled by any user
+- Email notifications are always enabled and cannot be disabled by any user
+- These channels are core functionality and not implemented as plugins
 
 ---
 
@@ -604,16 +663,16 @@ System Admins have all Store Admin permissions, plus:
 
 #### 3.5.2 Store-Level Preferences
 
-**FR-NOTIF-075:** Store admins must be able to enable/disable each notification method for their store:
+**FR-NOTIF-075:** Store admins must be able to enable/disable external notification channels for their store (only if enabled by system admin):
 
-- On-site notifications
-- Email notifications
-- LINE notifications
-- WhatsApp notifications
-- WeChat notifications
-- SMS notifications
-- Telegram notifications
-- Push notifications
+- LINE notifications (plugin)
+- WhatsApp notifications (plugin)
+- WeChat notifications (plugin)
+- SMS notifications (plugin)
+- Telegram notifications (plugin)
+- Push notifications (plugin)
+
+**Note:** Built-in channels (on-site, email) cannot be disabled and are always available.
 
 **FR-NOTIF-076:** When a notification method is disabled for a store:
 
@@ -648,7 +707,9 @@ System Admins have all Store Admin permissions, plus:
 
 **FR-NOTIF-082:** Store-level notification method enable/disable settings must respect system-wide notification disable:
 
-- If system-wide notifications are disabled, all store-level methods are effectively disabled regardless of store settings
+- If system-wide notifications are disabled, all channels (built-in and plugins) are effectively disabled regardless of store settings
+- Built-in channels (on-site, email) cannot be disabled by store admins, but are affected by system-wide disable
+- Plugin channels can only be enabled by store admins if the plugin is enabled system-wide
 - Store admins should see an indicator that system-wide notifications are disabled
 
 #### 3.5.3 System-Level Preferences
@@ -663,15 +724,18 @@ System Admins have all Store Admin permissions, plus:
 - Store admins and staff cannot send notifications
 - Automated notification triggers are disabled
 - Users can still view existing notifications in their notification center
-- Store-level notification method enable/disable settings are overridden (all methods effectively disabled)
+- All channels (built-in and plugins) are effectively disabled regardless of store settings
+- Built-in channels (on-site, email) are affected by system-wide disable even though they cannot be individually disabled
 
 **FR-NOTIF-085:** When the notification system is enabled system-wide:
 
 - All notification functionality is restored
+- Built-in channels (on-site, email) are immediately available
+- Plugin channels are available only if enabled by system admin
 - Queued notifications resume processing
-- Store admins and staff can send notifications (subject to store-level method enable/disable settings)
+- Store admins and staff can send notifications (subject to plugin enable/disable settings)
 - Automated notification triggers are active
-- Store-level notification method enable/disable settings take effect
+- Store-level plugin enable/disable settings take effect (only for plugins enabled by system admin)
 
 **FR-NOTIF-086:** The system must display a clear indicator when notifications are disabled system-wide:
 
@@ -979,7 +1043,7 @@ System Admins have all Store Admin permissions, plus:
 
 ### 6.1 Data Models
 
-**FR-NOTIF-134:** The system must use the `StoreNotification` model for on-site notifications.
+**FR-NOTIF-134:** The system must use the `MessageQueue` model for notifications across all channels.
 
 **FR-NOTIF-135:** The system must use the `EmailQueue` model for email notifications.
 

@@ -3,13 +3,13 @@ import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import sendStoreNotification, {
-	type StoreNotification,
+	type MessageQueue,
 } from "@/actions/send-store-notification";
 
 export const sendTestNoficiation = async () => {
 	"use server";
 
-	const obj = await sqlClient.storeNotification.create({
+	const obj = await sqlClient.messageQueue.create({
 		data: {
 			subject: "test",
 			message: "test",
@@ -28,8 +28,8 @@ export const sendTestNoficiation = async () => {
 		},
 	});
 
-	const notifyTest: StoreNotification | null =
-		await sqlClient.storeNotification.findUnique({
+	const notifyTest: MessageQueue | null =
+		await sqlClient.messageQueue.findUnique({
 			where: {
 				id: obj.id,
 			},

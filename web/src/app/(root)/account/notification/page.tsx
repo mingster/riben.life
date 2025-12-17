@@ -1,7 +1,7 @@
 //import { auth } from "@/auth";
 
 import getCurrentUser from "@/actions/user/get-current-user";
-import type { StoreNotification } from "@/actions/send-store-notification";
+import type { MessageQueue } from "@/actions/send-store-notification";
 
 import Container from "@/components/ui/container";
 import { Heading } from "@/components/ui/heading";
@@ -45,10 +45,10 @@ const session = await auth.api.getSession({
 
 		// mark all notification as read
 		//
-		await sqlClient.storeNotification.updateMany({
+		await sqlClient.messageQueue.updateMany({
 			where: {
 				id: {
-					in: notifications.map((n: StoreNotification) => n.id),
+					in: notifications.map((n: MessageQueue) => n.id),
 				},
 			},
 			data: {
@@ -66,7 +66,7 @@ const session = await auth.api.getSession({
 					<Heading title={title} description={""} />
 
 					<div className="w-full">
-						{notifications.map((obj: StoreNotification) => (
+						{notifications.map((obj: MessageQueue) => (
 							<div
 								key={obj.id}
 								className="flex flex-row gap-5 border-collapse pb-5"

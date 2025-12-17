@@ -156,6 +156,13 @@ export function GetMenuList(pathname: string): Group[] {
 					submenus: [],
 				},
 				{
+					href: `${nav_prefix}/message-queue`,
+					label: "Message Queue",
+					active: pathname.includes(`${nav_prefix}/message-queue`),
+					icon: IconMessageCircle,
+					submenus: [],
+				},
+				{
 					href: `${nav_prefix}/syslog`,
 					label: "System Logs",
 					active: pathname.includes(`${nav_prefix}/syslog`),

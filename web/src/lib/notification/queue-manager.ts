@@ -24,7 +24,7 @@ export class QueueManager {
 
 		// For email channel, add to EmailQueue
 		if (channels.includes("email")) {
-			const notification = await sqlClient.storeNotification.findUnique({
+			const notification = await sqlClient.messageQueue.findUnique({
 				where: { id: notificationId },
 			});
 
@@ -112,7 +112,7 @@ export class QueueManager {
 			tags: ["queue", "process"],
 		});
 
-		const notification = await sqlClient.storeNotification.findUnique({
+		const notification = await sqlClient.messageQueue.findUnique({
 			where: { id: notificationId },
 		});
 
