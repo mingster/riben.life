@@ -50,6 +50,7 @@ export async function POST(req: Request) {
 		>();
 
 		// Collect all templates and merge their localizations
+		// When duplicates exist, prefer non-null values and true for isGlobal
 		for (const messageTemplate of messageTemplates) {
 			const templateId = messageTemplate.id;
 			const existing = templateMap.get(templateId);
@@ -57,7 +58,24 @@ export async function POST(req: Request) {
 			if (existing) {
 				// Merge localizations from duplicate entries
 				if (Array.isArray(messageTemplate.MessageTemplateLocalized)) {
-					existing.localizations.push(...messageTemplate.MessageTemplateLocalized);
+					existing.localizations.push(
+						...messageTemplate.MessageTemplateLocalized,
+					);
+				}
+				// Resolve metadata conflicts: prefer non-null and more permissive values
+				if (messageTemplate.storeId && !existing.storeId) {
+					existing.storeId = messageTemplate.storeId;
+				}
+				// Prefer isGlobal: true if any occurrence has it (more permissive)
+				if (messageTemplate.isGlobal === true) {
+					existing.isGlobal = true;
+				}
+				// Prefer non-empty templateType
+				if (
+					messageTemplate.templateType &&
+					messageTemplate.templateType !== "email"
+				) {
+					existing.templateType = messageTemplate.templateType;
 				}
 			} else {
 				// First occurrence of this template
@@ -96,13 +114,35 @@ export async function POST(req: Request) {
 
 			// Process all localizations for this template
 			for (const messageTemplateLocalized of template.localizations) {
-				// Verify locale exists before trying to connect
-				// localeId in backup is the Locale.id (e.g., "tw", "en", "ja")
-				const localeExists = await sqlClient.locale.findUnique({
+				// The localeId in backup might be the language code (lng) like "tw", "en", "ja"
+				// or the full locale ID like "zh-TW", "en-US", "ja-JP"
+				// Try to find locale by ID first, then by lng if not found
+				let locale = await sqlClient.locale.findUnique({
 					where: { id: messageTemplateLocalized.localeId },
 				});
 
-				if (!localeExists) {
+				// If not found by ID, try to find by lng (language code)
+				if (!locale) {
+					const localesByLng = await sqlClient.locale.findMany({
+						where: { lng: messageTemplateLocalized.localeId },
+					});
+					if (localesByLng.length > 0) {
+						locale = localesByLng[0]; // Use the first match
+						log.info(
+							`Locale found by lng: ${messageTemplateLocalized.localeId} -> ${locale.id}`,
+							{
+								metadata: {
+									backupLocaleId: messageTemplateLocalized.localeId,
+									actualLocaleId: locale.id,
+									templateId: templateId,
+								},
+								tags: ["import", "locale", "mapping"],
+							},
+						);
+					}
+				}
+
+				if (!locale) {
 					log.warn(
 						`Locale not found: ${messageTemplateLocalized.localeId}. Skipping localization.`,
 						{
@@ -121,30 +161,45 @@ export async function POST(req: Request) {
 					await sqlClient.messageTemplateLocalized.upsert({
 						where: { id: messageTemplateLocalized.id },
 						update: {
-							bCCEmailAddresses: messageTemplateLocalized.bCCEmailAddresses || null,
+							bCCEmailAddresses:
+								messageTemplateLocalized.bCCEmailAddresses || null,
 							subject: messageTemplateLocalized.subject,
 							body: messageTemplateLocalized.body,
 							isActive: messageTemplateLocalized.isActive ?? true,
+							localeId: locale.id, // Use the actual locale ID from database
 						},
 						create: {
 							id: messageTemplateLocalized.id,
 							messageTemplateId: templateId,
-							localeId: messageTemplateLocalized.localeId,
-							bCCEmailAddresses: messageTemplateLocalized.bCCEmailAddresses || null,
+							localeId: locale.id, // Use the actual locale ID from database
+							bCCEmailAddresses:
+								messageTemplateLocalized.bCCEmailAddresses || null,
 							subject: messageTemplateLocalized.subject,
 							body: messageTemplateLocalized.body,
 							isActive: messageTemplateLocalized.isActive ?? true,
 						},
 					});
+					log.info(
+						`Successfully imported MessageTemplateLocalized: ${messageTemplateLocalized.id}`,
+						{
+							metadata: {
+								localizedId: messageTemplateLocalized.id,
+								templateId: templateId,
+								localeId: locale.id,
+							},
+							tags: ["import", "success"],
+						},
+					);
 				} catch (error: any) {
 					log.error(
 						`Failed to upsert MessageTemplateLocalized: ${messageTemplateLocalized.id}`,
 						{
 							metadata: {
 								error: error instanceof Error ? error.message : String(error),
+								stack: error instanceof Error ? error.stack : undefined,
 								localizedId: messageTemplateLocalized.id,
 								templateId: templateId,
-								localeId: messageTemplateLocalized.localeId,
+								localeId: locale.id,
 							},
 							tags: ["import", "error"],
 						},

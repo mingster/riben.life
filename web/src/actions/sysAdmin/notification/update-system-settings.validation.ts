@@ -13,4 +13,3 @@ export const updateSystemNotificationSettingsSchema = z.object({
 export type UpdateSystemNotificationSettingsInput = z.infer<
 	typeof updateSystemNotificationSettingsSchema
 >;
-

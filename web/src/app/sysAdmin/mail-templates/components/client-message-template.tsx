@@ -17,6 +17,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Heading } from "@/components/heading";
+import { Loader } from "@/components/loader";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -276,7 +277,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 		//console.log("localizedTemplates", localizedTemplates);
 
 		// 2. filter out locales that already have localized template
-		const availableLocales: Locale[] = locales.filter(
+		const availableLocales: Locale[] = (locales || []).filter(
 			(locale) =>
 				!localizedTemplates.some(
 					(localized) => localized.localeId === locale.lng,
@@ -288,10 +289,15 @@ export const MessageTemplateClient: React.FC<props> = ({
 
 		//console.log("availableLocales", availableLocales);
 
+		// If no locales are available, don't render the button
+		if (availableLocales.length === 0) {
+			return null;
+		}
+
 		const newObj: z.infer<typeof updateMessageTemplateLocalizedSchema> = {
 			id: "new",
 			messageTemplateId: item.id,
-			localeId: availableLocales[0].lng || "",
+			localeId: availableLocales[0]?.lng || "",
 			subject: "",
 			body: "",
 			isActive: true,
@@ -612,6 +618,11 @@ export const MessageTemplateClient: React.FC<props> = ({
 
 	return (
 		<>
+			{importing && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+					<Loader />
+				</div>
+			)}
 			<Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
 				<DialogContent>
 					<DialogHeader>
@@ -622,6 +633,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 							value={selectedFile}
 							onChange={(e) => setSelectedFile(e.target.value)}
 							className="border rounded p-2"
+							disabled={importing}
 						>
 							<option value="">{t("select_backup_file")}</option>
 							{backupFiles.map((f) => (
@@ -632,7 +644,11 @@ export const MessageTemplateClient: React.FC<props> = ({
 						</select>
 					</div>
 					<DialogFooter>
-						<Button onClick={() => setImportDialogOpen(false)} variant="ghost">
+						<Button
+							onClick={() => setImportDialogOpen(false)}
+							variant="ghost"
+							disabled={importing}
+						>
 							{t("cancel")}
 						</Button>
 						<Button

@@ -10,5 +10,11 @@
 		"name": "正體中文",
 		"lng": "tw",
 		"defaultCurrencyId": "TWD"
+	},
+	{
+		"id": "ja-JP",
+		"name": "日本語",
+		"lng": "ja",
+		"defaultCurrencyId": "JPY"
 	}
 ]

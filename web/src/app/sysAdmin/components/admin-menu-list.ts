@@ -1,8 +1,10 @@
 import {
+	IconBell,
 	IconBookmark,
 	IconBuildingStore,
 	IconClock,
 	IconCurrencyDollar,
+	IconLanguage,
 	IconMail,
 	IconMapPin,
 	IconMessageCircle,
@@ -117,6 +119,13 @@ export function GetMenuList(pathname: string): Group[] {
 			groupLabel: "系統",
 			menus: [
 				{
+					href: `${nav_prefix}/notifications/settings`,
+					label: "Notification",
+					active: pathname.includes(`${nav_prefix}/notifications/settings`),
+					icon: IconBell,
+					submenus: [],
+				},
+				{
 					href: `${nav_prefix}/sysmsg`,
 					label: "System Messages",
 					active: pathname.includes(`${nav_prefix}/sysmsg`),
@@ -183,6 +192,20 @@ export function GetMenuList(pathname: string): Group[] {
 					label: "Mail Templates",
 					active: pathname.includes(`${nav_prefix}/mail-templates`),
 					icon: IconMail,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/locales`,
+					label: "Locales",
+					active: pathname.includes(`${nav_prefix}/locales`),
+					icon: IconLanguage,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/currencies`,
+					label: "Currencies",
+					active: pathname.includes(`${nav_prefix}/currencies`),
+					icon: IconCurrencyDollar,
 					submenus: [],
 				},
 			],
