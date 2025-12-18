@@ -79,10 +79,7 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 						storeTimezone={storeTimezone}
 						rsvpSettings={rsvpSettings}
 						trigger={
-							<Button
-								variant="outline"
-								className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
-							>
+							<Button variant="outline" className="h-10 sm:h-9">
 								<IconPlus className="mr-2 h-4 w-4" />
 								<span className="text-sm sm:text-xs">{t("create")}</span>
 							</Button>

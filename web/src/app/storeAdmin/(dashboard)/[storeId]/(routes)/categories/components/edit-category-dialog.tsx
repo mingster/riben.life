@@ -213,7 +213,7 @@ export function EditCategoryDialog({
 										<Input
 											disabled={loading || form.formState.isSubmitting}
 											{...field}
-											className="h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
+											className="h-10 text-base sm:h-9 sm:text-sm"
 										/>
 									</FormControl>
 									<FormMessage />
@@ -236,7 +236,7 @@ export function EditCategoryDialog({
 											disabled={loading || form.formState.isSubmitting}
 											value={field.value?.toString() ?? ""}
 											onChange={(event) => field.onChange(event.target.value)}
-											className="h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
+											className="h-10 text-base sm:h-9 sm:text-sm"
 										/>
 									</FormControl>
 									<FormMessage />
@@ -269,7 +269,7 @@ export function EditCategoryDialog({
 								variant="outline"
 								onClick={() => handleOpenChange(false)}
 								disabled={loading || form.formState.isSubmitting}
-								className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+								className="w-full sm:w-auto h-10 sm:h-9"
 							>
 								<span className="text-sm sm:text-xs">{t("cancel")}</span>
 							</Button>
@@ -280,7 +280,7 @@ export function EditCategoryDialog({
 									!form.formState.isValid ||
 									form.formState.isSubmitting
 								}
-								className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+								className="w-full sm:w-auto h-10 sm:h-9"
 							>
 								<span className="text-sm sm:text-xs">
 									{isEditMode ? t("save") : t("create")}

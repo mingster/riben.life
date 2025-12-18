@@ -23,6 +23,9 @@ import DropdownUser from "@/components/auth/dropdown-user";
 import { LanguageToggler } from "@/components/language-toggler";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
+import pkg from "../../../../../package.json";
+
+const appVersion = pkg.version;
 
 interface props {
 	store: Store;
@@ -44,7 +47,7 @@ export function SheetMenu({ store }: props) {
 		<Sheet open={isOpen} onOpenChange={setIsOpen}>
 			<SheetTrigger asChild>
 				<Button
-					className="h-10 w-10 min-h-[44px] min-w-[44px] border-gray/20 bg-stroke/20 hover:text-meta-1 active:bg-stroke/30 sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0 touch-manipulation"
+					className="h-10 w-10 border-gray/20 bg-stroke/20 hover:text-meta-1 active:bg-stroke/30 sm:h-8 sm:w-8"
 					variant="outline"
 					size="icon"
 				>
@@ -57,14 +60,11 @@ export function SheetMenu({ store }: props) {
 			>
 				<SheetHeader className="shrink-0 pb-2">
 					<Button
-						className="flex pb-2 pt-1 h-10 min-h-[44px] sm:h-auto sm:min-h-0 touch-manipulation"
+						className="flex pb-2 pt-1 h-10 sm:h-auto"
 						variant="link"
 						asChild
 					>
-						<Link
-							href={`/${store.id}`}
-							className="flex gap-2 items-center touch-manipulation"
-						>
+						<Link href={`/${store.id}`} className="flex gap-2 items-center">
 							<IconHome className="mr-1 h-6 w-6 sm:size-6" />
 						</Link>
 					</Button>
@@ -74,21 +74,24 @@ export function SheetMenu({ store }: props) {
 				<div className="flex-1 min-h-0 overflow-hidden">
 					<StoreMenu store={store} isOpen title="" setIsOpen={setIsOpen} />
 				</div>
-				<div className="shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2 min-h-[44px] flex-wrap">
+				<div className="shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2 flex-wrap">
 					<ThemeToggler />
 					<DropdownUser />
 					<LanguageToggler />
 					{store.useOrderSystem && <DropdownCart />}
 				</div>
-				<div className="shrink-0 pt-1 pb-2 sm:pb-0 flex items-center justify-center w-full font-mono text-sm">
+				<div className="shrink-0 pt-1 pb-1 sm:pb-0 items-center justify-center w-full font-mono text-sm flex flex-col">
 					<Link href="/unv" className="w-full sm:w-auto">
 						<Button
 							variant="link"
-							className="w-full text-xs font-mono dark:text-white h-10 min-h-[44px] sm:w-auto sm:h-9 sm:min-h-0 touch-manipulation"
+							className="w-full text-xs font-mono dark:text-white h-10 sm:w-auto sm:h-9"
 						>
 							{t("system_provider")}
 						</Button>
 					</Link>
+					<span className="text-xs text-muted-foreground font-mono shrink-0">
+						{appVersion ? `v${appVersion}` : null}
+					</span>
 				</div>
 			</SheetContent>
 		</Sheet>

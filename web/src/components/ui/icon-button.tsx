@@ -21,9 +21,8 @@ p-2
 hover:scale-110
 active:scale-105
 transition
-h-10 w-10 min-h-[44px] min-w-[44px]
-sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0
-touch-manipulation
+h-10 w-10
+sm:h-9 sm:w-9
 `;
 
 const IconButton: React.FC<IconButtonProps> = ({

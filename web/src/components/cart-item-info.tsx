@@ -170,7 +170,7 @@ const CartItemInfo: React.FC<cartItemProps> = ({
 										<div className="flex flex-nowrap content-center item">
 											<input
 												type="number"
-												className="w-10 sm:w-10 h-10 min-h-[44px] text-center border text-base sm:text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none touch-manipulation"
+												className="w-10 sm:w-10 h-10 text-center border text-base sm:text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 												placeholder="0"
 												value={currentItem.quantity}
 												onChange={handleQuantityInputChange}

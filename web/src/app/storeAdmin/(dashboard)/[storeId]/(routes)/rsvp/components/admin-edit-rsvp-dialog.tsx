@@ -912,7 +912,7 @@ export function AdminEditRsvpDialog({
 														form.formState.isSubmitting ||
 														isDisabled
 													}
-													className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+													className="h-5 w-5 sm:h-4 sm:w-4"
 												/>
 											</FormControl>
 											<FormLabel>{t("rsvp_already_paid")}</FormLabel>
@@ -955,7 +955,7 @@ export function AdminEditRsvpDialog({
 													form.formState.isSubmitting ||
 													isDisabled
 												}
-												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+												className="h-5 w-5 sm:h-4 sm:w-4"
 											/>
 										</FormControl>
 										<FormLabel>{t("rsvp_confirmed_by_store")}</FormLabel>
@@ -1049,7 +1049,7 @@ export function AdminEditRsvpDialog({
 													form.formState.isSubmitting ||
 													isDisabled
 												}
-												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+												className="h-5 w-5 sm:h-4 sm:w-4"
 											/>
 										</FormControl>
 										<FormLabel>{t("rsvp_confirmed_by_customer")}</FormLabel>
@@ -1094,7 +1094,7 @@ export function AdminEditRsvpDialog({
 													form.formState.isSubmitting ||
 													isNoShow
 												}
-												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+												className="h-5 w-5 sm:h-4 sm:w-4"
 											/>
 										</FormControl>
 										<FormLabel>{t("rsvp_cancelled")}</FormLabel>
@@ -1137,7 +1137,7 @@ export function AdminEditRsvpDialog({
 													form.formState.isSubmitting ||
 													isCancelled
 												}
-												className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+												className="h-5 w-5 sm:h-4 sm:w-4"
 											/>
 										</FormControl>
 										<FormLabel>{t("rsvp_no_show")}</FormLabel>

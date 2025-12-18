@@ -723,14 +723,14 @@ export const CustomerWeekViewCalendar: React.FC<
 						size="icon"
 						onClick={handlePreviousWeek}
 						disabled={isWeekInPast}
-						className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+						className="h-10 w-10 sm:h-9 sm:w-9"
 					>
 						<IconChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
 					</Button>
 					<Button
 						variant="outline"
 						onClick={handleToday}
-						className="h-10 min-h-[44px] px-3 text-sm sm:h-9 sm:min-h-0"
+						className="h-10 px-3 text-sm sm:h-9"
 					>
 						{t("today")}
 					</Button>
@@ -738,7 +738,7 @@ export const CustomerWeekViewCalendar: React.FC<
 						variant="outline"
 						size="icon"
 						onClick={handleNextWeek}
-						className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+						className="h-10 w-10 sm:h-9 sm:w-9"
 					>
 						<IconChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
 					</Button>
@@ -825,7 +825,7 @@ export const CustomerWeekViewCalendar: React.FC<
 															const rsvpCard = (
 																<div
 																	className={cn(
-																		"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs min-h-[44px] touch-manipulation border-l-2 relative",
+																		"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs border-l-2 relative",
 																		rsvp.confirmedByStore
 																			? "bg-green-50 dark:bg-green-950/20 border-l-green-500"
 																			: "bg-yellow-50 dark:bg-yellow-950/20 border-l-yellow-500",
@@ -840,7 +840,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																		<Button
 																			variant="ghost"
 																			size="icon"
-																			className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 sm:min-h-0 sm:min-w-0 text-destructive hover:text-destructive p-0"
+																			className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 text-destructive hover:text-destructive p-0"
 																			onClick={(e) =>
 																				handleCancelClick(e, rsvp)
 																			}
@@ -924,7 +924,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																		type="button"
 																		disabled={isPast}
 																		className={cn(
-																			"w-full h-full min-h-[44px] sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground touch-manipulation flex items-center justify-center",
+																			"w-full h-full sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground flex items-center justify-center",
 																			isPast && "cursor-not-allowed opacity-50",
 																		)}
 																	>
@@ -940,7 +940,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																}
 																disabled={isPast}
 																className={cn(
-																	"w-full h-full min-h-[44px] sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground touch-manipulation flex items-center justify-center",
+																	"w-full h-full sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground flex items-center justify-center",
 																	isPast && "cursor-not-allowed opacity-50",
 																)}
 															>

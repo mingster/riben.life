@@ -70,12 +70,12 @@ export default async function StoreFaqHomePage(props: {
 
 				<Tabs defaultValue={faqCategories[0]?.id} className="w-full">
 					<div className="overflow-x-auto -mx-3 sm:mx-0">
-						<TabsList className="w-full min-w-fit sm:w-auto inline-flex h-10 min-h-[44px] sm:h-9 sm:min-h-0 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground gap-1 sm:gap-2">
+						<TabsList className="w-full min-w-fit sm:w-auto inline-flex h-10 sm:h-9 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground gap-1 sm:gap-2">
 							{faqCategories.map((category) => (
 								<TabsTrigger
 									key={category.id}
 									value={category.id}
-									className="h-9 min-h-[44px] sm:min-h-0 px-3 sm:px-4 text-xs sm:text-sm touch-manipulation whitespace-nowrap"
+									className="h-9 px-3 sm:px-4 text-xs sm:text-sm whitespace-nowrap"
 								>
 									{category.name}
 								</TabsTrigger>
@@ -92,7 +92,7 @@ export default async function StoreFaqHomePage(props: {
 								{category.FAQ.map((faq) => (
 									<Accordion key={faq.id} type="single" collapsible>
 										<AccordionItem value={faq.id}>
-											<AccordionTrigger className="text-left min-h-[44px] sm:min-h-0 py-3 sm:py-4 px-3 sm:px-4 touch-manipulation">
+											<AccordionTrigger className="text-left py-3 sm:py-4 px-3 sm:px-4">
 												<h2 className="text-sm sm:text-base lg:text-xl text-link font-semibold pr-4">
 													{faq.question}
 												</h2>

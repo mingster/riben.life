@@ -224,7 +224,7 @@ export const StoreProductList: React.FC<props> = ({
 									>
 										<div
 											data-to-scrollspy-id={category.id}
-											className="ss-item lg:text-xl min-h-[44px] touch-manipulation"
+											className="ss-item lg:text-xl"
 										>
 											{category.name}
 										</div>
@@ -271,7 +271,7 @@ export const StoreProductList: React.FC<props> = ({
 				{/* scroll up to top */}
 				<div className="relative flex w-full justify-center align-top py-2">
 					<button
-						className="h-12 w-12 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-background border shadow-sm hover:bg-muted active:bg-muted/70 transition-colors touch-manipulation sm:h-10 sm:w-10 sm:min-h-0 sm:min-w-0"
+						className="h-12 w-12 flex items-center justify-center rounded-full bg-background border shadow-sm hover:bg-muted active:bg-muted/70 transition-colors sm:h-10 sm:w-10"
 						type="button"
 						title="scroll up to top"
 						onClick={(e) => {

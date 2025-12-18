@@ -25,7 +25,7 @@ export function NotificationBell({
 			variant="ghost"
 			size="icon"
 			onClick={onOpen}
-			className={`relative h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 ${className || ""}`}
+			className={`relative h-10 w-10 sm:h-9 sm:w-9 ${className || ""}`}
 		>
 			<IconBell className="h-5 w-5" />
 			{unreadCount > 0 && (

@@ -74,7 +74,7 @@ const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 			trigger={
 				<button
 					type="button"
-					className="w-full h-full min-h-[44px] sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground touch-manipulation flex items-center justify-center"
+					className="w-full h-full sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground flex items-center justify-center"
 				>
 					+
 				</button>
@@ -540,7 +540,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 								variant="outline"
 								size="icon"
 								className={cn(
-									"h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0",
+									"h-10 w-10 sm:h-9 sm:w-9",
 									!currentWeek && "text-muted-foreground",
 								)}
 							>
@@ -568,7 +568,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						variant="outline"
 						size="icon"
 						onClick={handlePreviousWeek}
-						className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+						className="h-10 w-10 sm:h-9 sm:w-9"
 					>
 						<IconChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
 					</Button>
@@ -576,7 +576,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						type="button"
 						variant="outline"
 						onClick={handleToday}
-						className="h-10 min-h-[44px] px-3 text-sm sm:h-9 sm:min-h-0"
+						className="h-10 px-3 text-sm sm:h-9"
 					>
 						{t("today")}
 					</Button>
@@ -585,7 +585,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						variant="outline"
 						size="icon"
 						onClick={handleNextWeek}
-						className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+						className="h-10 w-10 sm:h-9 sm:w-9"
 					>
 						<IconChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
 					</Button>
@@ -668,7 +668,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																		type="button"
 																		disabled
 																		className={cn(
-																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors min-h-[44px] touch-manipulation w-full cursor-default",
+																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
 																			getStatusColorClasses(rsvp.status, false),
 																		)}
 																	>
@@ -711,7 +711,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																		<button
 																			type="button"
 																			className={cn(
-																				"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors min-h-[44px] touch-manipulation",
+																				"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors",
 																				getStatusColorClasses(rsvp.status),
 																			)}
 																		>

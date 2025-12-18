@@ -28,6 +28,7 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { IconHome } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
+import DropdownNotification from "@/components/notification/dropdown-notification";
 
 export interface props {
 	sqlData: Store;
@@ -91,12 +92,12 @@ function StoreAdminHeader() {
 			<BackgroundImage />
 
 			<div className="flex w-full items-center gap-1.5 px-3 sm:gap-2 sm:px-4 lg:gap-2 lg:px-6">
-				<SidebarTrigger className="-ml-1 h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0" />
+				<SidebarTrigger className="-ml-1 h-10 w-10 sm:h-9 sm:w-9" />
 				<Separator
 					orientation="vertical"
 					className="mx-1.5 hidden sm:block data-[orientation=vertical]:h-4 sm:mx-2"
 				/>
-				<div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+				<div className="flex items-center gap-1.5 sm:gap-1 min-w-0 flex-1">
 					<h1 className="text-sm font-medium truncate sm:text-base">
 						<Link href={`/storeAdmin/${store.id}`}>{title}</Link>
 					</h1>
@@ -104,7 +105,7 @@ function StoreAdminHeader() {
 						variant="outline"
 						size="sm"
 						onClick={() => router.push(`/${store.id}`)}
-						className="hidden items-center gap-1 text-xs h-9 min-h-[36px] sm:flex"
+						className="inline-flex items-center gap-1 text-xs h-10 sm:h-9 sm:min-h-[36px]"
 						title={t("back_to_store")}
 					>
 						<IconHome />
@@ -112,7 +113,7 @@ function StoreAdminHeader() {
 					</Button>
 				</div>
 
-				<div className="ml-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
+				<div className="ml-auto flex items-center gap-1 shrink-0">
 					<Button
 						variant="outline"
 						size="sm"
@@ -136,6 +137,7 @@ function StoreAdminHeader() {
 					<ThemeToggler />
 					<DropdownUser />
 					<LanguageToggler />
+					<DropdownNotification />
 				</div>
 			</div>
 		</header>

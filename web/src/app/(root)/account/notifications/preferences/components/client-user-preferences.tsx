@@ -514,7 +514,7 @@ function PreferencesForm({
 				</Card>
 
 				{/* Actions */}
-				<div className="flex justify-end gap-4">
+				<div className="flex gap-4">
 					<Button type="submit" disabled={isSubmitting}>
 						{isSubmitting ? (
 							<>
@@ -762,7 +762,7 @@ function StorePreferencesForm({
 					</Card>
 
 					{/* Actions */}
-					<div className="flex justify-end gap-4">
+					<div className="flex gap-4">
 						<Button type="submit" disabled={isSubmitting}>
 							{isSubmitting ? (
 								<>

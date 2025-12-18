@@ -249,7 +249,7 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 					variant="ghost"
 					size="sm"
 					onClick={handleButtonClick}
-					className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors touch-manipulation"
+					className="h-10 w-10 sm:h-8 sm:w-8 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
 					aria-label={t("ticket_close")}
 				>
 					<IconInputX size={16} />
@@ -273,7 +273,7 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 						onValueChange={setTicketStatusFilter}
 						aria-label={t("filter_by_status")}
 					>
-						<SelectTrigger className="w-full sm:w-48 h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation">
+						<SelectTrigger className="w-full sm:w-48 h-10 sm:h-9">
 							<SelectValue placeholder={t("TicketStatus_all")} />
 						</SelectTrigger>
 						<SelectContent>
@@ -281,7 +281,7 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 								<SelectItem
 									key={option.value}
 									value={option.value}
-									className="min-h-[44px] sm:min-h-0 touch-manipulation"
+									className=""
 								>
 									{option.label}
 								</SelectItem>

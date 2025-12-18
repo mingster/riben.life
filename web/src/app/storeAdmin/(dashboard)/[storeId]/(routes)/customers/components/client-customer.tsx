@@ -451,7 +451,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 							onClick={handleExport}
 							disabled={exporting}
 							variant="outline"
-							className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+							className="h-10 sm:h-9"
 						>
 							{exporting ? (
 								<>

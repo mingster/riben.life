@@ -136,13 +136,6 @@ export function GetMenuList(
 					icon: IconHttpOptions,
 					submenus: [],
 				},
-				{
-					href: `${nav_prefix}/credit-bonus-rule`,
-					label: t("Credit_Bonus_Rules"),
-					active: pathname.includes(`${nav_prefix}/credit-bonus-rule`),
-					icon: IconCoin,
-					submenus: [],
-				},
 			],
 		},
 		{
@@ -276,6 +269,13 @@ export function GetMenuList(
 					label: t("Settings"),
 					active: pathname.includes(`${nav_prefix}/settings`),
 					icon: IconSettings,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/credit-bonus-rule`,
+					label: t("Credit_Bonus_Rules"),
+					active: pathname.includes(`${nav_prefix}/credit-bonus-rule`),
+					icon: IconCoin,
 					submenus: [],
 				},
 				{

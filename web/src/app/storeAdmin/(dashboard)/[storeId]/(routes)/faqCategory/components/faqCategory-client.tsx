@@ -38,7 +38,7 @@ export const FaqCategoryClient: React.FC<FaqCategoryClientProps> = ({
 					onClick={() =>
 						router.push(`/storeAdmin/${params.storeId}/faqCategory/new`)
 					}
-					className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+					className="h-10 sm:h-9"
 				>
 					<Plus className="mr-2 size-4" />
 					<span className="text-sm sm:text-xs">{t("create")}</span>

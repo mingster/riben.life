@@ -80,7 +80,7 @@ export function ProductCard({
 							product.ProductAttribute?.isRecurring ? t("subscribe") : t("buy")
 						}
 						variant={"default"}
-						className="w-full h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+						className="w-full h-10 sm:h-9"
 						onClick={onPurchase}
 						//onClick={() => handleAddToCart(product)}
 					>

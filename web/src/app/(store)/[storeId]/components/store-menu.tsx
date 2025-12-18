@@ -58,7 +58,7 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 	};
 
 	return (
-		<ScrollArea className="[&>div>div[style]]:!block">
+		<ScrollArea className="[&>div>div[style]]:block!">
 			<nav className="mt-8 size-full ">
 				{isOpen && <div className="space-y-1 px-2">{title}</div>}
 				<ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px)]">
@@ -99,7 +99,7 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 																	? "default"
 																	: "ghost"
 															}
-															className="mb-1 h-11 min-h-[44px] w-full justify-start sm:h-10 sm:min-h-0 touch-manipulation"
+															className="mb-1 h-11 w-full justify-start sm:h-10"
 															asChild
 														>
 															<Button

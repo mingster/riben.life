@@ -172,7 +172,7 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 												type="button"
 												variant="outline"
 												onClick={() => form.setValue("creditAmount", amount)}
-												className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 flex flex-row"
+												className="h-10 sm:h-9 flex flex-row"
 											>
 												<span className="font-semibold">
 													{amount} {t("points")}
@@ -202,7 +202,7 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 										<Input
 											type="number"
 											placeholder={t("credit_enter_points")}
-											className="h-10 min-h-[44px] text-base sm:text-sm"
+											className="h-10 text-base sm:text-sm"
 											{...field}
 											onChange={(e) => {
 												const value = e.target.value;
@@ -224,7 +224,7 @@ export function RechargeForm({ storeId, store }: RechargeFormProps) {
 						<Button
 							type="submit"
 							disabled={isSubmitting}
-							className="w-full h-10 min-h-[44px] sm:h-9 sm:min-h-0"
+							className="w-full h-10 sm:h-9"
 						>
 							{isSubmitting
 								? t("credit_processing")

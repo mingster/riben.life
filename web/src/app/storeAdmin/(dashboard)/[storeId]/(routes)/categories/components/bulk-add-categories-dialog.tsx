@@ -136,7 +136,7 @@ export function BulkAddCategoriesDialog({
 				<Button
 					variant="outline"
 					onClick={() => setOpen(true)}
-					className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+					className="h-10 sm:h-9"
 				>
 					<IconPlus className="mr-2 size-4" />
 					<span className="text-sm sm:text-xs">
@@ -166,7 +166,7 @@ export function BulkAddCategoriesDialog({
 											disabled={loading || form.formState.isSubmitting}
 											value={field.value ?? ""}
 											onChange={field.onChange}
-											className="min-h-[44px] text-base sm:text-sm touch-manipulation"
+											className="text-base sm:text-sm"
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
@@ -204,7 +204,7 @@ export function BulkAddCategoriesDialog({
 								<Button
 									disabled={loading || form.formState.isSubmitting}
 									variant="outline"
-									className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+									className="w-full sm:w-auto h-10 sm:h-9"
 								>
 									<span className="text-sm sm:text-xs">{t("cancel")}</span>
 								</Button>
@@ -216,7 +216,7 @@ export function BulkAddCategoriesDialog({
 									form.formState.isSubmitting ||
 									!form.formState.isValid
 								}
-								className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+								className="w-full sm:w-auto h-10 sm:h-9"
 							>
 								<span className="text-sm sm:text-xs">{t("create")}</span>
 							</Button>

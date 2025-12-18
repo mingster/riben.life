@@ -81,7 +81,7 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
 						<Button
 							onClick={onCheckout}
 							disabled={cart.items.length === 0}
-							className="w-full h-12 min-h-[48px] sm:h-11 sm:min-h-[44px] hover:opacity-50 active:opacity-70 touch-manipulation"
+							className="w-full h-12 sm:h-11 hover:opacity-50 active:opacity-70"
 						>
 							<div className="flex w-full items-center justify-between gap-2">
 								<div className="grow font-bold text-base sm:text-lg lg:text-xl truncate">
