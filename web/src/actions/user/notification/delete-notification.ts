@@ -50,4 +50,3 @@ export const deleteNotificationAction = userRequiredActionClient
 
 		return updated;
 	});
-

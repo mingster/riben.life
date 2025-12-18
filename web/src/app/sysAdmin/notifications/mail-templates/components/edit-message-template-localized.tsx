@@ -46,12 +46,14 @@ import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Locale, MessageTemplateLocalized } from "@/types";
 import logger from "@/lib/logger";
+import { TemplateVariablePreview } from "@/components/notification/template-variable-preview";
 
 interface props {
 	item: z.infer<typeof updateMessageTemplateLocalizedSchema>;
 	locales: Locale[];
 	onUpdated?: (newValue: MessageTemplateLocalized) => void;
 	isNew?: boolean;
+	templateType?: string | null;
 }
 
 export const EditMessageTemplateLocalized: React.FC<props> = ({
@@ -59,6 +61,7 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 	locales,
 	onUpdated,
 	isNew,
+	templateType,
 }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
@@ -207,13 +210,26 @@ export const EditMessageTemplateLocalized: React.FC<props> = ({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Body</FormLabel>
-										<FormControl>
-											<EditorComp
-												markdown={field.value || ""}
-												onPChange={field.onChange}
-											/>
-										</FormControl>
-										<FormMessage />
+										<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+											<div className="lg:col-span-2">
+												<FormControl>
+													<EditorComp
+														markdown={field.value || ""}
+														onPChange={field.onChange}
+													/>
+												</FormControl>
+												<FormMessage />
+											</div>
+											<div className="lg:col-span-1">
+												<TemplateVariablePreview
+													notificationType={templateType || null}
+													onVariableSelect={(variable) => {
+														const currentValue = field.value || "";
+														field.onChange(`${currentValue}${variable}`);
+													}}
+												/>
+											</div>
+										</div>
 									</FormItem>
 								)}
 							/>

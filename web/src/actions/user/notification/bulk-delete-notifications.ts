@@ -7,7 +7,9 @@ import logger from "@/lib/logger";
 import { SafeError } from "@/utils/error";
 
 const bulkDeleteNotificationsSchema = z.object({
-	notificationIds: z.array(z.string().min(1)).min(1, "At least one notification ID is required"),
+	notificationIds: z
+		.array(z.string().min(1))
+		.min(1, "At least one notification ID is required"),
 });
 
 export const bulkDeleteNotificationsAction = userRequiredActionClient
@@ -55,4 +57,3 @@ export const bulkDeleteNotificationsAction = userRequiredActionClient
 
 		return { count: result.count };
 	});
-

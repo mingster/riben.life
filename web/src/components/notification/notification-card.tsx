@@ -76,7 +76,13 @@ export function NotificationCard({
 		if (notification.actionUrl) {
 			router.push(notification.actionUrl);
 		}
-	}, [notification.isRead, notification.id, notification.actionUrl, onMarkAsRead, router]);
+	}, [
+		notification.isRead,
+		notification.id,
+		notification.actionUrl,
+		onMarkAsRead,
+		router,
+	]);
 
 	// Handle delete
 	const handleDelete = useCallback(
@@ -92,9 +98,7 @@ export function NotificationCard({
 	return (
 		<Card
 			className={`transition-colors ${
-				!notification.isRead
-					? "border-primary/50 bg-primary/5"
-					: ""
+				!notification.isRead ? "border-primary/50 bg-primary/5" : ""
 			} ${className || ""}`}
 		>
 			<CardContent className="p-4">
@@ -109,16 +113,11 @@ export function NotificationCard({
 					</div>
 
 					{/* Content */}
-					<div
-						className="flex-1 min-w-0 cursor-pointer"
-						onClick={handleClick}
-					>
+					<div className="flex-1 min-w-0 cursor-pointer" onClick={handleClick}>
 						<div className="flex items-start gap-3 mb-2">
 							{notification.Sender?.image && (
 								<Image
-									src={
-										notification.Sender.image || avatarPlaceholder
-									}
+									src={notification.Sender.image || avatarPlaceholder}
 									alt={notification.Sender.name || "User"}
 									width={32}
 									height={32}
@@ -149,9 +148,7 @@ export function NotificationCard({
 									}}
 								/>
 								<div className="flex items-center gap-4">
-									<p className="text-xs text-muted-foreground">
-										{timeAgo}
-									</p>
+									<p className="text-xs text-muted-foreground">{timeAgo}</p>
 									{notification.actionUrl && (
 										<Button
 											variant="link"
@@ -188,4 +185,3 @@ export function NotificationCard({
 		</Card>
 	);
 }
-

@@ -7,9 +7,9 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { IconBell } from "@tabler/icons-react";
+import { ChannelStatusBadge } from "@/components/notification/channel-status-badge";
 
 interface RecentActivityProps {
 	notifications: Array<{
@@ -24,24 +24,6 @@ interface RecentActivityProps {
 		}>;
 	}>;
 }
-
-const statusColors: Record<string, string> = {
-	pending: "bg-gray-500",
-	sent: "bg-blue-500",
-	delivered: "bg-green-500",
-	read: "bg-green-600",
-	failed: "bg-red-500",
-	bounced: "bg-orange-500",
-};
-
-const statusLabels: Record<string, string> = {
-	pending: "Pending",
-	sent: "Sent",
-	delivered: "Delivered",
-	read: "Read",
-	failed: "Failed",
-	bounced: "Bounced",
-};
 
 export function RecentActivity({ notifications }: RecentActivityProps) {
 	return (
@@ -83,14 +65,12 @@ export function RecentActivity({ notifications }: RecentActivityProps) {
 										</p>
 										<div className="flex flex-wrap gap-1">
 											{notification.statuses.map((status, idx) => (
-												<Badge
+												<ChannelStatusBadge
 													key={idx}
-													variant="secondary"
-													className={`text-xs ${statusColors[status.status] || "bg-gray-500"} text-white`}
-												>
-													{status.channel}:{" "}
-													{statusLabels[status.status] || status.status}
-												</Badge>
+													channel={status.channel as any}
+													status={status.status as any}
+													size="sm"
+												/>
 											))}
 										</div>
 									</div>

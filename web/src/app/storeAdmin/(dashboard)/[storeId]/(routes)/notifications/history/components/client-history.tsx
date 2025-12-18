@@ -34,6 +34,7 @@ import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { ChannelStatusBadge } from "@/components/notification/channel-status-badge";
 import type { MessageQueue } from "@prisma/client";
 
 interface MessageQueueWithDelivery extends MessageQueue {
@@ -51,8 +52,11 @@ interface MessageQueueWithDelivery extends MessageQueue {
 		id: string;
 		channel: string;
 		status: string;
-		deliveredAt: number | null;
+		deliveredAt: number | bigint | null;
+		readAt: number | bigint | null;
 		errorMessage: string | null;
+		createdAt: number | bigint;
+		updatedAt: number | bigint;
 	}>;
 }
 
@@ -61,7 +65,7 @@ interface ClientHistoryProps {
 	initialData: MessageQueueWithDelivery[];
 }
 
-const statusColors: Record<string, string> = {
+const overallStatusClasses: Record<string, string> = {
 	pending: "bg-gray-500",
 	sent: "bg-blue-500",
 	delivered: "bg-green-500",
@@ -70,7 +74,7 @@ const statusColors: Record<string, string> = {
 	bounced: "bg-orange-500",
 };
 
-const statusLabels: Record<string, string> = {
+const overallStatusLabels: Record<string, string> = {
 	pending: "Pending",
 	sent: "Sent",
 	delivered: "Delivered",
@@ -79,7 +83,8 @@ const statusLabels: Record<string, string> = {
 	bounced: "Bounced",
 };
 
-const channelLabels: Record<string, string> = {
+// Used only for filter dropdown labels (badge rendering uses ChannelStatusBadge)
+const channelFilterLabels: Record<string, string> = {
 	onsite: "On-Site",
 	email: "Email",
 	line: "LINE",
@@ -387,16 +392,17 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 					return (
 						<div className="flex flex-wrap gap-1">
 							{statuses.map((status) => (
-								<Badge
+								<ChannelStatusBadge
 									key={status.id}
-									variant="secondary"
-									className={`text-xs ${
-										statusColors[status.status] || "bg-gray-500"
-									} text-white`}
-								>
-									{channelLabels[status.channel] || status.channel}:{" "}
-									{statusLabels[status.status] || status.status}
-								</Badge>
+									channel={status.channel as any}
+									status={status.status as any}
+									size="sm"
+									errorMessage={status.errorMessage}
+									deliveredAt={status.deliveredAt}
+									readAt={status.readAt}
+									createdAt={status.createdAt}
+									updatedAt={status.updatedAt}
+								/>
 							))}
 						</div>
 					);
@@ -413,10 +419,10 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 						<Badge
 							variant="secondary"
 							className={`${
-								statusColors[overallStatus] || "bg-gray-500"
+								overallStatusClasses[overallStatus] || "bg-gray-500"
 							} text-white`}
 						>
-							{statusLabels[overallStatus] || overallStatus}
+							{overallStatusLabels[overallStatus] || overallStatus}
 						</Badge>
 					);
 				},
@@ -503,7 +509,7 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="all">{t("all_statuses")}</SelectItem>
-						{Object.entries(statusLabels).map(([value, label]) => (
+						{Object.entries(overallStatusLabels).map(([value, label]) => (
 							<SelectItem key={value} value={value}>
 								{label}
 							</SelectItem>
@@ -517,7 +523,7 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="all">{t("all_channels")}</SelectItem>
-						{Object.entries(channelLabels).map(([value, label]) => (
+						{Object.entries(channelFilterLabels).map(([value, label]) => (
 							<SelectItem key={value} value={value}>
 								{label}
 							</SelectItem>

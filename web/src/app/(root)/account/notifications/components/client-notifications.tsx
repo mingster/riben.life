@@ -19,18 +19,19 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toastError, toastSuccess } from "@/components/toaster";
-import { formatDistanceToNow } from "date-fns";
-import { epochToDate } from "@/utils/datetime-utils";
 import { markNotificationReadAction } from "@/actions/user/notification/mark-notification-read";
 import { markAllNotificationsReadAction } from "@/actions/user/notification/mark-all-notifications-read";
 import { deleteNotificationAction } from "@/actions/user/notification/delete-notification";
 import { bulkDeleteNotificationsAction } from "@/actions/user/notification/bulk-delete-notifications";
-import { IconLoader, IconTrash, IconSettings, IconCheck } from "@tabler/icons-react";
-import Image from "next/image";
+import {
+	IconLoader,
+	IconTrash,
+	IconSettings,
+	IconCheck,
+} from "@tabler/icons-react";
 import { AlertModal } from "@/components/modals/alert-modal";
+import { NotificationCard } from "@/components/notification/notification-card";
 import type { MessageQueue } from "@prisma/client";
-
-const avatarPlaceholder = "/images/user/avatar_placeholder.png";
 
 interface NotificationWithRelations extends MessageQueue {
 	Sender?: {
@@ -65,10 +66,11 @@ export function ClientNotifications({
 	const { t } = useTranslation(lng);
 	const router = useRouter();
 
-	const [notifications, setNotifications] = useState<NotificationWithRelations[]>(
-		initialNotifications,
+	const [notifications, setNotifications] =
+		useState<NotificationWithRelations[]>(initialNotifications);
+	const [statusFilter, setStatusFilter] = useState<"all" | "unread" | "read">(
+		"all",
 	);
-	const [statusFilter, setStatusFilter] = useState<"all" | "unread" | "read">("all");
 	const [typeFilter, setTypeFilter] = useState<string>("all");
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [loading, setLoading] = useState(false);
@@ -90,21 +92,16 @@ export function ClientNotifications({
 	}, [notifications, statusFilter, typeFilter]);
 
 	// Handle marking notification as read
-	const handleMarkAsRead = useCallback(
-		async (notificationId: string) => {
-			const result = await markNotificationReadAction({ notificationId });
-			if (result?.serverError) {
-				toastError({ description: result.serverError });
-			} else {
-				setNotifications((prev) =>
-					prev.map((n) =>
-						n.id === notificationId ? { ...n, isRead: true } : n,
-					),
-				);
-			}
-		},
-		[],
-	);
+	const handleMarkAsRead = useCallback(async (notificationId: string) => {
+		const result = await markNotificationReadAction({ notificationId });
+		if (result?.serverError) {
+			toastError({ description: result.serverError });
+		} else {
+			setNotifications((prev) =>
+				prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
+			);
+		}
+	}, []);
 
 	// Handle marking all as read
 	const handleMarkAllAsRead = useCallback(async () => {
@@ -169,9 +166,7 @@ export function ClientNotifications({
 			if (result?.serverError) {
 				toastError({ description: result.serverError });
 			} else {
-				setNotifications((prev) =>
-					prev.filter((n) => !selectedIds.has(n.id)),
-				);
+				setNotifications((prev) => prev.filter((n) => !selectedIds.has(n.id)));
 				setSelectedIds(new Set());
 				toastSuccess({
 					description: t("notifications_deleted", {
@@ -255,7 +250,10 @@ export function ClientNotifications({
 
 			{/* Filters */}
 			<div className="flex flex-wrap items-center gap-4">
-				<Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+				<Select
+					value={statusFilter}
+					onValueChange={(v) => setStatusFilter(v as any)}
+				>
 					<SelectTrigger className="w-[150px]">
 						<SelectValue placeholder={t("filter_by_status")} />
 					</SelectTrigger>
@@ -324,7 +322,9 @@ export function ClientNotifications({
 			{filteredNotifications.length === 0 ? (
 				<Card>
 					<CardContent className="py-12 text-center">
-						<p className="text-muted-foreground">{t("no_notifications_found")}</p>
+						<p className="text-muted-foreground">
+							{t("no_notifications_found")}
+						</p>
 					</CardContent>
 				</Card>
 			) : (
@@ -343,131 +343,41 @@ export function ClientNotifications({
 						</span>
 					</div>
 
-					{filteredNotifications.map((notification) => {
-						const createdAt = epochToDate(BigInt(notification.createdAt));
-						const timeAgo = createdAt
-							? formatDistanceToNow(createdAt, { addSuffix: true })
-							: "";
+					{filteredNotifications.map((notification) => (
+						<div
+							key={notification.id}
+							className={`relative ${selectedIds.has(notification.id) ? "ring-2 ring-primary rounded-md" : ""}`}
+						>
+							{/* Checkbox overlay */}
+							<div className="absolute left-2 top-2 z-10">
+								<Checkbox
+									checked={selectedIds.has(notification.id)}
+									onCheckedChange={() => toggleSelection(notification.id)}
+									onClick={(e) => e.stopPropagation()}
+								/>
+							</div>
 
-						return (
-							<Card
-								key={notification.id}
-								className={`transition-colors ${
-									!notification.isRead
-										? "border-primary/50 bg-primary/5"
-										: ""
-								} ${selectedIds.has(notification.id) ? "ring-2 ring-primary" : ""}`}
-							>
-								<CardContent className="p-4">
-									<div className="flex gap-4">
-										{/* Checkbox */}
-										<div className="pt-1">
-											<Checkbox
-												checked={selectedIds.has(notification.id)}
-												onCheckedChange={() => toggleSelection(notification.id)}
-											/>
-										</div>
-
-										{/* Unread Indicator */}
-										<div className="pt-1 shrink-0">
-											{notification.isRead ? (
-												<span className="block w-2 h-2 rounded-full bg-muted" />
-											) : (
-												<span className="block w-2 h-2 rounded-full bg-primary" />
-											)}
-										</div>
-
-										{/* Content */}
-										<div
-											className="flex-1 min-w-0 cursor-pointer"
-											onClick={() => handleNotificationClick(notification)}
-										>
-											<div className="flex items-start gap-3 mb-2">
-												{notification.Sender?.image && (
-													<Image
-														src={
-															notification.Sender.image ||
-															avatarPlaceholder
-														}
-														alt={
-															notification.Sender.name || "User"
-														}
-														width={32}
-														height={32}
-														className="rounded-full shrink-0"
-													/>
-												)}
-												<div className="flex-1 min-w-0">
-													<div className="flex items-center gap-2 mb-1">
-														<h4 className="text-sm font-semibold">
-															{notification.subject}
-														</h4>
-														{notification.notificationType && (
-															<Badge variant="outline" className="text-xs">
-																{t(
-																	notificationTypeLabels[
-																		notification.notificationType
-																	] || notification.notificationType,
-																)}
-															</Badge>
-														)}
-													</div>
-													{notification.Store && (
-														<p className="text-xs text-muted-foreground mb-1">
-															{notification.Store.name}
-														</p>
-													)}
-													<div
-														className="text-sm text-muted-foreground line-clamp-2 mb-2"
-														dangerouslySetInnerHTML={{
-															__html: notification.message,
-														}}
-													/>
-													<div className="flex items-center gap-4">
-														<p className="text-xs text-muted-foreground">
-															{timeAgo}
-														</p>
-														{notification.actionUrl && (
-															<Button
-																variant="link"
-																size="sm"
-																className="h-auto p-0 text-xs"
-																onClick={(e) => {
-																	e.stopPropagation();
-																	router.push(notification.actionUrl!);
-																}}
-															>
-																{t("view_details")}
-															</Button>
-														)}
-													</div>
-												</div>
-											</div>
-										</div>
-
-										{/* Actions */}
-										<div className="shrink-0">
-											<Button
-												variant="ghost"
-												size="icon"
-												onClick={(e) => {
-													e.stopPropagation();
-													handleDelete(notification.id);
-												}}
-												disabled={loading}
-												className="h-8 w-8"
-											>
-												<IconTrash className="h-4 w-4" />
-											</Button>
-										</div>
-									</div>
-								</CardContent>
-							</Card>
-						);
-					})}
+							<NotificationCard
+								notification={{
+									id: notification.id,
+									subject: notification.subject,
+									message: notification.message,
+									notificationType: notification.notificationType,
+									actionUrl: notification.actionUrl,
+									createdAt: notification.createdAt,
+									isRead: notification.isRead,
+									Sender: notification.Sender,
+									Store: notification.Store,
+								}}
+								onMarkAsRead={handleMarkAsRead}
+								onDelete={handleDelete}
+								showActions={true}
+								className={selectedIds.has(notification.id) ? "ring-0" : ""}
+							/>
+						</div>
+					))}
 				</div>
 			)}
 		</div>
 	);
 }
-

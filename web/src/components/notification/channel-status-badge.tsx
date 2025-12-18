@@ -7,7 +7,10 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { NotificationChannel, DeliveryStatus } from "@/lib/notification/types";
+import type {
+	NotificationChannel,
+	DeliveryStatus,
+} from "@/lib/notification/types";
 import { epochToDate } from "@/utils/datetime-utils";
 import { formatDateTime } from "@/utils/datetime-utils";
 import { IconCheck, IconX, IconClock, IconSend } from "@tabler/icons-react";
@@ -99,9 +102,7 @@ export function ChannelStatusBadge({
 			typeof deliveredAt === "bigint" ? deliveredAt : BigInt(deliveredAt),
 		);
 		if (deliveredDate) {
-			tooltipContent.push(
-				`Delivered: ${formatDateTime(deliveredDate)}`,
-			);
+			tooltipContent.push(`Delivered: ${formatDateTime(deliveredDate)}`);
 		}
 	}
 	if (readAt) {
@@ -165,4 +166,3 @@ export function ChannelStatusBadge({
 
 	return badge;
 }
-

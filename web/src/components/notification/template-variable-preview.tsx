@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,7 +21,15 @@ export interface TemplateVariable {
 	name: string;
 	description: string;
 	example: string;
-	category: "user" | "store" | "order" | "reservation" | "credit" | "payment" | "system" | "marketing";
+	category:
+		| "user"
+		| "store"
+		| "order"
+		| "reservation"
+		| "credit"
+		| "payment"
+		| "system"
+		| "marketing";
 }
 
 export interface TemplateVariablePreviewProps {
@@ -339,7 +353,9 @@ export function TemplateVariablePreview({
 			navigator.clipboard.writeText(variableSyntax);
 			setCopiedVariable(variable.name);
 			toastSuccess({
-				description: t("variable_copied_to_clipboard", { variable: variableSyntax }),
+				description: t("variable_copied_to_clipboard", {
+					variable: variableSyntax,
+				}),
 			});
 			setTimeout(() => setCopiedVariable(null), 2000);
 		},
@@ -431,4 +447,3 @@ export function TemplateVariablePreview({
 		</Card>
 	);
 }
-
