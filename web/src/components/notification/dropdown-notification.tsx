@@ -5,7 +5,6 @@ import { markAllNotificationsReadAction } from "@/actions/user/notification/mark
 import { markNotificationReadAction } from "@/actions/user/notification/mark-notification-read";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Popover,
@@ -16,16 +15,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
-import { epochToDate } from "@/utils/datetime-utils";
-import { IconBell, IconLoader } from "@tabler/icons-react";
-import { formatDistanceToNow } from "date-fns";
-import Image from "next/image";
+import { NotificationBell } from "./notification-bell";
+import { NotificationCard } from "./notification-card";
+import { IconLoader } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import useSWR from "swr";
-
-const avatarPlaceholder = "/images/user/avatar_placeholder.png";
 
 // SWR fetcher function
 const fetcher = async () => {
@@ -116,22 +112,10 @@ export default function DropdownNotification() {
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
-				<Button
-					variant="ghost"
-					size="icon"
-					className="relative h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
-				>
-					<IconBell className="h-5 w-5" />
-					{unreadCount > 0 && (
-						<Badge
-							variant="destructive"
-							className="absolute -right-0.5 -top-0.5 h-5 w-5 min-h-[20px] min-w-[20px] flex items-center justify-center rounded-full p-0 text-xs"
-						>
-							{unreadCount > 99 ? "99+" : unreadCount}
-						</Badge>
-					)}
-					<span className="sr-only">{t("notifications")}</span>
-				</Button>
+				<NotificationBell
+					unreadCount={unreadCount}
+					onOpen={() => setOpen(true)}
+				/>
 			</PopoverTrigger>
 			<PopoverContent
 				className="w-[calc(100vw-2rem)] sm:w-[400px] p-0"
@@ -164,64 +148,26 @@ export default function DropdownNotification() {
 					<>
 						<ScrollArea className="h-[400px]">
 							<div className="divide-y">
-								{notifications.map((notification) => {
-									const createdAt = epochToDate(BigInt(notification.createdAt));
-									const timeAgo = createdAt
-										? formatDistanceToNow(createdAt, { addSuffix: true })
-										: "";
-
-									return (
-										<button
-											key={notification.id}
-											onClick={() => handleNotificationClick(notification)}
-											className="w-full text-left px-4 py-3 hover:bg-accent transition-colors"
-										>
-											<div className="flex gap-3">
-												{/* Unread indicator */}
-												<div className="shrink-0 pt-1">
-													{notification.isRead ? (
-														<span className="block w-2 h-2 rounded-full bg-muted" />
-													) : (
-														<span className="block w-2 h-2 rounded-full bg-primary" />
-													)}
-												</div>
-
-												{/* Notification content */}
-												<div className="flex-1 min-w-0">
-													<div className="flex items-start gap-2 mb-1">
-														{notification.Sender?.image && (
-															<Image
-																src={
-																	notification.Sender.image || avatarPlaceholder
-																}
-																alt={notification.Sender.name || "User"}
-																width={24}
-																height={24}
-																className="rounded-full shrink-0"
-															/>
-														)}
-														<div className="flex-1 min-w-0">
-															<p className="text-sm font-medium truncate">
-																{notification.subject}
-															</p>
-															{notification.Store && (
-																<p className="text-xs text-muted-foreground truncate">
-																	{notification.Store.name}
-																</p>
-															)}
-														</div>
-													</div>
-													<p className="text-sm text-muted-foreground line-clamp-2 mb-1">
-														{notification.message}
-													</p>
-													<p className="text-xs text-muted-foreground">
-														{timeAgo}
-													</p>
-												</div>
-											</div>
-										</button>
-									);
-								})}
+								{notifications.map((notification) => (
+									<div key={notification.id} className="px-2 py-2">
+										<NotificationCard
+											notification={{
+												id: notification.id,
+												subject: notification.subject,
+												message: notification.message,
+												notificationType: notification.notificationType,
+												actionUrl: notification.actionUrl,
+												createdAt: notification.createdAt,
+												isRead: notification.isRead,
+												Sender: notification.Sender,
+												Store: notification.Store,
+											}}
+											onMarkAsRead={handleMarkAsRead}
+											showActions={false}
+											className="border-0 shadow-none"
+										/>
+									</div>
+								))}
 							</div>
 						</ScrollArea>
 
