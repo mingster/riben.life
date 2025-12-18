@@ -120,7 +120,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 				<div className="flex flex-col sm:flex-row gap-2 w-full">
 					{canPay && (
 						<Button
-							className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 bg-green-600 hover:bg-green-700 touch-manipulation"
+							className="w-full sm:w-auto h-10 sm:h-9 bg-green-600 hover:bg-green-700"
 							size="sm"
 							onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
 						>
@@ -131,7 +131,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 					{!order.isPaid && order.PaymentMethod?.name === "cash" && (
 						<Button
 							variant="outline"
-							className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 cursor-default bg-green-50 hover:bg-green-100 dark:bg-green-950/20 touch-manipulation"
+							className="w-full sm:w-auto h-10 sm:h-9 cursor-default bg-green-50 hover:bg-green-100 dark:bg-green-950/20"
 							size="sm"
 							disabled
 						>
@@ -150,7 +150,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 					<Button
 						variant="outline"
 						size="sm"
-						className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+						className="w-full sm:w-auto h-10 sm:h-9"
 						onClick={() => contactSeller(order.storeId, order.id)}
 					>
 						{t("order_tab_contact_seller")}

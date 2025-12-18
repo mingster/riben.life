@@ -202,7 +202,7 @@ export function ClientSupport({
 				<div className="flex items-center gap-1.5 sm:gap-2">
 					<IconFilter className="h-4 w-4" />
 					<Select value={statusFilter} onValueChange={setStatusFilter}>
-						<SelectTrigger className="w-full sm:w-[180px] h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation text-base sm:text-sm">
+						<SelectTrigger className="w-full sm:w-[180px] h-10 sm:h-9 text-base sm:text-sm">
 							<SelectValue placeholder={t("ticket_status")} />
 						</SelectTrigger>
 						<SelectContent>

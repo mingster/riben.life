@@ -321,7 +321,7 @@ export function SlotPicker({
 						size="icon"
 						onClick={handlePreviousWeek}
 						disabled={isWeekInPast}
-						className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+						className="h-10 w-10 sm:h-9 sm:w-9"
 					>
 						<IconChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
 					</Button>
@@ -329,7 +329,7 @@ export function SlotPicker({
 						type="button"
 						variant="outline"
 						onClick={handleToday}
-						className="h-10 min-h-[44px] px-3 text-sm sm:h-9 sm:min-h-0"
+						className="h-10 px-3 text-sm sm:h-9"
 					>
 						{t("today")}
 					</Button>
@@ -338,7 +338,7 @@ export function SlotPicker({
 						variant="outline"
 						size="icon"
 						onClick={handleNextWeek}
-						className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+						className="h-10 w-10 sm:h-9 sm:w-9"
 					>
 						<IconChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
 					</Button>
@@ -438,7 +438,7 @@ export function SlotPicker({
 														type="button"
 														onClick={() => handleSlotClick(day, timeSlot)}
 														className={cn(
-															"w-full h-full min-h-[32px] sm:min-h-[36px] rounded hover:bg-primary/10 active:bg-primary/20 transition-colors text-[10px] sm:text-xs touch-manipulation flex items-center justify-center",
+															"w-full h-full min-h-[32px] sm:min-h-[36px] rounded hover:bg-primary/10 active:bg-primary/20 transition-colors text-[10px] sm:text-xs flex items-center justify-center",
 															isSelected &&
 																"bg-primary text-primary-foreground ring-1 ring-primary",
 														)}

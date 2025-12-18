@@ -10,7 +10,7 @@ export function Footer({ className, ...props }: { className?: string }) {
 				<a
 					href="#top"
 					title="scroll up to top"
-					className="h-12 w-12 min-h-[48px] min-w-[48px] flex items-center justify-center rounded-full bg-background border shadow-sm hover:bg-muted active:bg-muted/70 transition-colors touch-manipulation sm:h-10 sm:w-10 sm:min-h-[44px] sm:min-w-[44px]"
+					className="h-12 w-12 flex items-center justify-center rounded-full bg-background border shadow-sm hover:bg-muted active:bg-muted/70 transition-colors sm:h-10 sm:w-10"
 				>
 					<IconArrowUp className="h-6 w-6 sm:size-[35px]" />
 				</a>

@@ -86,12 +86,11 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 
 					{/*<!--  Hidden by default, but visible if screen is larger than 1024px --> */}
 					<div className="hidden md:block shrink-0">
-						<div className="flex flex-1 items-center justify-end gap-1.5 lg:gap-2">
+						<div className="flex flex-1 items-center justify-end gap-1.5 lg:gap-1">
 							<ThemeToggler />
-							<DropdownMessage messages={store.StoreAnnouncement} />
 							<DropdownNotification />
 							<DropdownUser />
-							<DropdownCart />
+							{store.useOrderSystem ? <DropdownCart /> : null}
 						</div>
 					</div>
 				</div>

@@ -71,7 +71,7 @@ const SocialLink = ({ url, children, className = "" }: SocialLinkProps) => (
 		href={url}
 		target="_blank"
 		rel="noreferrer"
-		className={`hover:text-slate active:text-slate/80 transition-colors duration-200 min-h-[44px] sm:min-h-0 flex items-center justify-center touch-manipulation ${className}`}
+		className={`hover:text-slate active:text-slate/80 transition-colors duration-200 flex items-center justify-center ${className}`}
 		aria-label={`Open ${children} in new tab`}
 	>
 		{children}
@@ -293,8 +293,8 @@ const ContactFormInner = () => {
 							<Component
 								disabled={loading}
 								className="placeholder:text-gray-700 rounded-lg 
-								outline-none font-mono h-10 min-h-[44px] text-base sm:text-sm
-								transition-opacity touch-manipulation"
+								outline-none font-mono h-10 text-base sm:text-sm
+								transition-opacity"
 								placeholder={placeholder}
 								{...field}
 								{...props}

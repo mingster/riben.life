@@ -256,7 +256,7 @@ export function EditCreditBonusRuleDialog({
 											onChange={(event) =>
 												field.onChange(Number(event.target.value))
 											}
-											className="h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
+											className="h-10 text-base sm:h-9 sm:text-sm"
 										/>
 									</FormControl>
 									<FormDescription>
@@ -289,7 +289,7 @@ export function EditCreditBonusRuleDialog({
 											onChange={(event) =>
 												field.onChange(Number(event.target.value))
 											}
-											className="h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
+											className="h-10 text-base sm:h-9 sm:text-sm"
 										/>
 									</FormControl>
 									<FormDescription>
@@ -330,7 +330,7 @@ export function EditCreditBonusRuleDialog({
 								variant="outline"
 								onClick={() => handleOpenChange(false)}
 								disabled={loading || form.formState.isSubmitting}
-								className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+								className="w-full sm:w-auto h-10 sm:h-9"
 							>
 								<span className="text-sm sm:text-xs">{t("cancel")}</span>
 							</Button>
@@ -341,7 +341,7 @@ export function EditCreditBonusRuleDialog({
 									!form.formState.isValid ||
 									form.formState.isSubmitting
 								}
-								className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+								className="w-full sm:w-auto h-10 sm:h-9"
 							>
 								<span className="text-sm sm:text-xs">
 									{isEditMode ? t("save") : t("create")}

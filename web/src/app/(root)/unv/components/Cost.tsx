@@ -79,10 +79,10 @@ export function Cost({ className, ...props }: { className?: string }) {
 				<Link
 					href="/storeAdmin/"
 					className="flex w-full m-3 sm:m-5 p-4 sm:p-5 items-center justify-center
-          mx-auto max-w-7xl sm:px-6 md:px-8 h-12 min-h-[48px]
+          mx-auto max-w-7xl sm:px-6 md:px-8 h-12
           font-semibold text-white rounded-lg bg-slate-900
           hover:bg-slate-700 active:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50
-          dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400 dark:active:bg-sky-600 touch-manipulation sm:min-h-[44px]"
+          dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400 dark:active:bg-sky-600"
 				>
 					不用洽詢，立即使用
 				</Link>

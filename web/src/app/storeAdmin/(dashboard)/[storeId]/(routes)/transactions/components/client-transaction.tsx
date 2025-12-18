@@ -197,10 +197,7 @@ export function TransactionClient({ serverData }: TransactionClientProps) {
 
 			<div className="flex flex-wrap gap-1.5 sm:gap-2 pb-2">
 				<Button
-					className={cn(
-						"h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation",
-						statusFilter === 0 && highlight_css,
-					)}
+					className={cn("h-10 sm:h-9", statusFilter === 0 && highlight_css)}
 					variant="outline"
 					onClick={() => setStatusFilter(0)}
 				>
@@ -209,10 +206,7 @@ export function TransactionClient({ serverData }: TransactionClientProps) {
 				{statusKeys.map((key) => (
 					<Button
 						key={key}
-						className={cn(
-							"h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation",
-							statusFilter === key && highlight_css,
-						)}
+						className={cn("h-10 sm:h-9", statusFilter === key && highlight_css)}
 						variant="outline"
 						onClick={() => setStatusFilter(key)}
 					>
@@ -233,7 +227,7 @@ export function TransactionClient({ serverData }: TransactionClientProps) {
 						variant="outline"
 						size="sm"
 						onClick={handleClearFilters}
-						className="h-10 min-h-[44px] sm:h-8 sm:min-h-0 touch-manipulation"
+						className="h-10 sm:h-8"
 					>
 						<span className="text-sm sm:text-xs">{t("clear_Filter")}</span>
 					</Button>
@@ -328,7 +322,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 											value={field.value ?? "f0"}
 											onValueChange={(newValue) => field.onChange(newValue)}
 										>
-											<SelectTrigger className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation text-base sm:text-sm">
+											<SelectTrigger className="h-10 sm:h-9 text-base sm:text-sm">
 												<SelectValue placeholder="" />
 											</SelectTrigger>
 											<SelectContent position="popper">
@@ -354,7 +348,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 										<FormControl>
 											<Input
 												type="number"
-												className="font-mono h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
+												className="font-mono h-10 text-base sm:h-9 sm:text-sm"
 												{...field}
 												value={field.value ?? ""}
 											/>
@@ -377,7 +371,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 													<Button
 														variant="outline"
 														className={cn(
-															"justify-start text-left font-normal h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation text-base sm:text-sm",
+															"justify-start text-left font-normal h-10 sm:h-9 text-base sm:text-sm",
 															!field.value && "text-muted-foreground",
 														)}
 													>
@@ -418,7 +412,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 													<Button
 														variant="outline"
 														className={cn(
-															"justify-start text-left font-normal h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation text-base sm:text-sm",
+															"justify-start text-left font-normal h-10 sm:h-9 text-base sm:text-sm",
 															!field.value && "text-muted-foreground",
 														)}
 													>
@@ -447,10 +441,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 							/>
 						)}
 
-						<Button
-							type="submit"
-							className="w-full h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
-						>
+						<Button type="submit" className="w-full h-10 sm:h-9">
 							<span className="text-sm sm:text-xs">{t("apply")}</span>
 						</Button>
 					</form>

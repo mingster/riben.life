@@ -55,7 +55,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 			<DropdownMenuTrigger asChild>
 				<Button
 					size="icon"
-					className="h-10 w-10 min-h-[44px] min-w-[44px] flex-none rounded-full border-gray/20 bg-stroke/20 hover:text-meta-1 active:bg-stroke/30 dark:border-strokedark dark:bg-meta-4 dark:text-primary dark:hover:text-meta-1 sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 touch-manipulation"
+					className="h-10 w-10 flex-none rounded-full border-gray/20 bg-stroke/20 hover:text-meta-1 active:bg-stroke/30 dark:border-strokedark dark:bg-meta-4 dark:text-primary dark:hover:text-meta-1 sm:h-9 sm:w-9"
 				>
 					<Image
 						src={user.image || avatarPlaceholder}
@@ -69,10 +69,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 			<DropdownMenuContent className="w-56 sm:w-56 min-w-[200px]">
 				{!session ? (
 					<DropdownMenuGroup>
-						<DropdownMenuItem
-							className="min-h-[44px] sm:min-h-0 touch-manipulation"
-							asChild
-						>
+						<DropdownMenuItem className="" asChild>
 							<DialogSignIn />
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
@@ -84,10 +81,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
-							<DropdownMenuItem
-								className="cursor-pointer min-h-[44px] sm:min-h-0 touch-manipulation"
-								asChild
-							>
+							<DropdownMenuItem className="cursor-pointer" asChild>
 								<Link
 									href="/account/subscription"
 									className="flex items-center gap-2"
@@ -96,10 +90,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 									<span>{t("user_profile_subscription")}</span>
 								</Link>
 							</DropdownMenuItem>
-							<DropdownMenuItem
-								className="cursor-pointer min-h-[44px] sm:min-h-0 touch-manipulation"
-								asChild
-							>
+							<DropdownMenuItem className="cursor-pointer" asChild>
 								<Link href="/account" className="flex items-center gap-2">
 									<IconSettings className="size-4 shrink-0" />
 									<span>{t("user_profile_myAccount")}</span>
@@ -108,10 +99,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 
 							<DropdownMenuSeparator />
 
-							<DropdownMenuItem
-								className="cursor-pointer min-h-[44px] sm:min-h-0 touch-manipulation"
-								asChild
-							>
+							<DropdownMenuItem className="cursor-pointer" asChild>
 								<Link href="/" className="flex items-center gap-2">
 									<IconHome className="size-4 shrink-0" />
 									<span>{t("home")}</span>
@@ -122,10 +110,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 								user.role === "storeAdmin" ||
 								user.role === "staff" ||
 								user.role === "owner") && (
-								<DropdownMenuItem
-									className="cursor-pointer min-h-[44px] sm:min-h-0 touch-manipulation"
-									asChild
-								>
+								<DropdownMenuItem className="cursor-pointer" asChild>
 									<Link href="/storeAdmin/" className="flex items-center gap-2">
 										<IconLock className="size-4 shrink-0" />
 										<span>{t("user_profile_linkTo_storeDashboard")}</span>
@@ -135,10 +120,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 
 							{user.role === "admin" && (
 								<>
-									<DropdownMenuItem
-										className="cursor-pointer min-h-[44px] sm:min-h-0 touch-manipulation"
-										asChild
-									>
+									<DropdownMenuItem className="cursor-pointer" asChild>
 										<Link href="/sysAdmin" className="flex items-center gap-2">
 											<IconLock className="size-4 shrink-0" />
 											<span>{t("user_profile_linkTo_admin")}</span>
@@ -149,10 +131,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 							)}
 						</DropdownMenuGroup>
 
-						<DropdownMenuItem
-							className="cursor-pointer min-h-[44px] sm:min-h-0 touch-manipulation"
-							asChild
-						>
+						<DropdownMenuItem className="cursor-pointer" asChild>
 							<SignOutButton />
 						</DropdownMenuItem>
 					</>

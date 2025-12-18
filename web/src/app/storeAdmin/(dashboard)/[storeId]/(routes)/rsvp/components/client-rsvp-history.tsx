@@ -266,10 +266,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 						storeTimezone={storeTimezone}
 						rsvpSettings={rsvpSettings}
 						trigger={
-							<Button
-								variant="outline"
-								className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
-							>
+							<Button variant="outline" className="h-10 sm:h-9">
 								<IconPlus className="mr-2 size-4" />
 								<span className="text-sm sm:text-xs">{t("create")}</span>
 							</Button>
@@ -285,7 +282,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 						variant={periodType === "week" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("week")}
-						className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+						className="h-10 sm:h-9"
 					>
 						{t("this_week") || "This Week"}
 					</Button>
@@ -293,7 +290,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 						variant={periodType === "month" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("month")}
-						className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+						className="h-10 sm:h-9"
 					>
 						{t("this_month") || "This Month"}
 					</Button>
@@ -301,7 +298,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 						variant={periodType === "year" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("year")}
-						className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+						className="h-10 sm:h-9"
 					>
 						{t("this_year") || "This Year"}
 					</Button>
@@ -327,7 +324,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 									setPeriodType("custom");
 								}
 							}}
-							className="h-10 min-h-[44px] text-base sm:text-sm sm:h-9 sm:min-h-0 touch-manipulation w-full sm:w-auto"
+							className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto"
 						/>
 					</div>
 					<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
@@ -348,7 +345,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 									setPeriodType("custom");
 								}
 							}}
-							className="h-10 min-h-[44px] text-base sm:text-sm sm:h-9 sm:min-h-0 touch-manipulation w-full sm:w-auto"
+							className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto"
 						/>
 					</div>
 				</div>

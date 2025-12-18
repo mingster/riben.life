@@ -487,7 +487,7 @@ export const DisplayReservations = ({
 									<Button
 										variant="ghost"
 										size="icon"
-										className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0"
+										className="h-8 w-8 sm:h-7 sm:w-7"
 										onClick={() => handleEditClick(item)}
 										title={t("edit_reservation")}
 										disabled={isLoadingStoreData}
@@ -498,7 +498,7 @@ export const DisplayReservations = ({
 										<Button
 											variant="ghost"
 											size="icon"
-											className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0 text-destructive hover:text-destructive"
+											className="h-8 w-8 sm:h-7 sm:w-7 text-destructive hover:text-destructive"
 											onClick={() => handleCancelClick(item)}
 											title={
 												item.status === RsvpStatus.Pending
@@ -627,7 +627,7 @@ export const DisplayReservations = ({
 												<Button
 													variant="ghost"
 													size="icon"
-													className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0"
+													className="h-8 w-8 sm:h-7 sm:w-7"
 													onClick={() => handleEditClick(item)}
 													title={t("edit_reservation")}
 													disabled={isLoadingStoreData}
@@ -638,7 +638,7 @@ export const DisplayReservations = ({
 													<Button
 														variant="ghost"
 														size="icon"
-														className="h-8 w-8 min-h-[44px] min-w-[44px] sm:h-7 sm:w-7 sm:min-h-0 sm:min-w-0 text-destructive hover:text-destructive"
+														className="h-8 w-8 sm:h-7 sm:w-7 text-destructive hover:text-destructive"
 														onClick={() => handleCancelClick(item)}
 														title={
 															item.status === RsvpStatus.Pending

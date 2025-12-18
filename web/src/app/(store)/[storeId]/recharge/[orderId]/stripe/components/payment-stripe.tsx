@@ -185,7 +185,7 @@ const StripePayButton: React.FC<{ orderId: string; storeId: string }> = ({
 				type="button"
 				onClick={handlePayment}
 				disabled={isProcessingPayment}
-				className="w-full h-10 min-h-[44px] sm:h-9 sm:min-h-0"
+				className="w-full h-10 sm:h-9"
 			>
 				{isProcessingPayment
 					? t("processing")

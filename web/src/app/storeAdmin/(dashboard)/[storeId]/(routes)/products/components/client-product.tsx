@@ -141,10 +141,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 						isNew
 						onCreated={handleCreated}
 						trigger={
-							<Button
-								variant="outline"
-								className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
-							>
+							<Button variant="outline" className="h-10 sm:h-9">
 								<IconPlus className="mr-2 size-4" />
 								<span className="text-sm sm:text-xs">{t("create")}</span>
 							</Button>
@@ -153,10 +150,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 					<BulkCreateProductsDialog
 						onCreated={handleBulkCreated}
 						trigger={
-							<Button
-								variant="outline"
-								className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
-							>
+							<Button variant="outline" className="h-10 sm:h-9">
 								<IconPlus className="mr-2 size-4" />
 								<span className="text-sm sm:text-xs">
 									{t("Product_mgmt_add_button")}

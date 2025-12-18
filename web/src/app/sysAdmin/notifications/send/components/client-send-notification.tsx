@@ -422,7 +422,7 @@ export function ClientSendNotification({
 					</Card>
 
 					{/* Actions */}
-					<div className="flex justify-end gap-4">
+					<div className="flex gap-4">
 						<Button
 							type="button"
 							variant="outline"

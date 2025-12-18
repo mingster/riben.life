@@ -100,7 +100,7 @@ export function DataTable<TData, TValue>({
 						onChange={(event) =>
 							table.getColumn(searchKey)?.setFilterValue(event.target.value)
 						}
-						className="max-w-full sm:max-w-sm h-10 min-h-[44px] text-base sm:h-9 sm:min-h-0 sm:text-sm touch-manipulation"
+						className="max-w-full sm:max-w-sm h-10 text-base sm:h-9 sm:text-sm"
 					/>
 				</div>
 			)}
@@ -180,7 +180,7 @@ export function DataTable<TData, TValue>({
 						size="sm"
 						onClick={() => table.previousPage()}
 						disabled={!table.getCanPreviousPage()}
-						className="h-10 min-h-[44px] sm:h-8 sm:min-h-0 touch-manipulation"
+						className="h-10 sm:h-8"
 					>
 						<span className="text-sm sm:text-xs">{t("previous")}</span>
 					</Button>
@@ -189,7 +189,7 @@ export function DataTable<TData, TValue>({
 						size="sm"
 						onClick={() => table.nextPage()}
 						disabled={!table.getCanNextPage()}
-						className="h-10 min-h-[44px] sm:h-8 sm:min-h-0 touch-manipulation"
+						className="h-10 sm:h-8"
 					>
 						<span className="text-sm sm:text-xs">{t("next")}</span>
 					</Button>

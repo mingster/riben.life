@@ -54,7 +54,7 @@ export function NavPopover({
 				<SheetTrigger asChild>
 					<button
 						type="button"
-						className="flex items-center justify-center h-10 w-10 min-h-[44px] min-w-[44px] text-slate-500 hover:text-slate-600 active:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 dark:active:text-slate-200 touch-manipulation sm:size-8 sm:min-h-0 sm:min-w-0"
+						className="flex items-center justify-center h-10 w-10 text-slate-500 hover:text-slate-600 active:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 dark:active:text-slate-200 sm:size-8"
 						onClick={() => setIsOpen(true)}
 					>
 						<span className="sr-only">Navigation</span>
@@ -121,7 +121,7 @@ export function NavItems() {
 					data-to-scrollspy-id="useCases"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#useCases"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
 				>
 					{t("nav_useCases")}
 				</Link>
@@ -132,7 +132,7 @@ export function NavItems() {
 					data-to-scrollspy-id="features"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#features"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
 				>
 					{t("nav_features")}
 				</Link>
@@ -143,7 +143,7 @@ export function NavItems() {
 					data-to-scrollspy-id="cost"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#cost"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
 				>
 					{t("nav_price")}
 				</Link>
@@ -165,7 +165,7 @@ export function NavItems() {
 					data-to-scrollspy-id="aboutUs"
 					onClick={(e) => onNavlinkClick(e)}
 					href="#aboutUs"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
 				>
 					{t("nav_about")}
 				</Link>
@@ -173,7 +173,7 @@ export function NavItems() {
 			<li>
 				<Link
 					href="/storeAdmin/"
-					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
+					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
 				>
 					{t("nav_storeAdmin")}
 				</Link>
@@ -230,7 +230,7 @@ export function NavBar() {
 						<div className="relative flex items-center justify-between gap-2">
 							<Link
 								href="#top"
-								className="mr-2 sm:mr-3 flex-none w-[2.0625rem] overflow-hidden md:w-auto min-h-[44px] sm:min-h-0 flex items-center touch-manipulation"
+								className="mr-2 sm:mr-3 flex-none w-[2.0625rem] overflow-hidden md:w-auto flex items-center"
 								onContextMenu={(e) => {
 									e.preventDefault();
 									//router.push("/");
@@ -312,7 +312,7 @@ export function Header() {
 					<div className="flex justify-center mt-6 space-x-6 text-sm sm:mt-10 px-3 sm:px-0">
 						<Link
 							href="/storeAdmin/"
-							className="flex items-center justify-center w-full h-12 min-h-[48px] px-6 font-semibold text-white rounded-lg bg-slate-900 hover:bg-slate-700 active:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 sm:w-auto sm:min-h-[44px] dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400 dark:active:bg-sky-600 touch-manipulation"
+							className="flex items-center justify-center w-full h-12 px-6 font-semibold text-white rounded-lg bg-slate-900 hover:bg-slate-700 active:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50 sm:w-auto dark:bg-sky-500 dark:highlight-white/20 dark:hover:bg-sky-400 dark:active:bg-sky-600"
 						>
 							不用洽詢，立即使用
 						</Link>

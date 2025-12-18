@@ -60,10 +60,7 @@ export function LocaleClient({ serverData }: LocaleClientProps) {
 					isNew
 					onCreated={handleCreated}
 					trigger={
-						<Button
-							variant="outline"
-							className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
-						>
+						<Button variant="outline" className="h-10 sm:h-9">
 							<IconPlus className="mr-2 size-4" />
 							<span className="text-sm sm:text-xs">{t("create")}</span>
 						</Button>

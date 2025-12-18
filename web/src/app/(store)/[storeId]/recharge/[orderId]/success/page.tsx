@@ -63,17 +63,10 @@ export default async function RechargeSuccessPage(props: { params: Params }) {
 						</p>
 					</div>
 					<div className="flex flex-col sm:flex-row gap-2 pt-4">
-						<Button
-							asChild
-							className="flex-1 h-10 min-h-[44px] sm:h-9 sm:min-h-0"
-						>
+						<Button asChild className="flex-1 h-10 sm:h-9">
 							<Link href={`/${params.storeId}`}>Back to Store</Link>
 						</Button>
-						<Button
-							asChild
-							variant="outline"
-							className="flex-1 h-10 min-h-[44px] sm:h-9 sm:min-h-0"
-						>
+						<Button asChild variant="outline" className="flex-1 h-10 sm:h-9">
 							<Link href="/account/subscription?tab=credits">
 								View Credit Balance
 							</Link>
