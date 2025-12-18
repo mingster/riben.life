@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 
 import { checkAdminAccess } from "./admin-utils";
 import AdminLayout from "./components/admin-layout";
-import logger from "@/lib/logger";
 
 export default async function AdminDashboardLayout({
 	children,

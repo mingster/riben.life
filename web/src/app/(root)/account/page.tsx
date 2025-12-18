@@ -15,7 +15,7 @@ export default async function AccountPage() {
 	const [user, { t }] = await Promise.all([getCurrentUser(), getT()]);
 
 	if (!user) {
-		redirect(`/signin?callbackUrl=/account`);
+		redirect(`/signIn?callbackUrl=/account`);
 	}
 
 	const title = t("page_title_account");

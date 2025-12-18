@@ -17,7 +17,7 @@ export default async function UserNotificationPreferencesPage() {
 	const user = await getCurrentUser();
 
 	if (!user) {
-		redirect(`/signin?callbackUrl=/account/notifications/preferences`);
+		redirect(`/signIn?callbackUrl=/account/notifications/preferences`);
 	}
 
 	const { t } = await getT();

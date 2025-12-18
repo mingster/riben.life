@@ -18,7 +18,7 @@ export default async function SubscriptionPage() {
 	const user = (await getCurrentUser()) as User;
 
 	if (!user) {
-		redirect(`/signin?callbackUrl=/account`);
+		redirect(`/signIn?callbackUrl=/account`);
 	} else {
 		//console.log(`user: ${JSON.stringify(u)}`);
 

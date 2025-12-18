@@ -754,6 +754,7 @@
   "ShippingStatus_ShippingNotRequired": "Not required",
   "sign_in_with_google": "Sign in with Google",
   "sign_in_with_line": "Sign in with Line",
+  "sign_in_with_apple": "Sign in with Apple ID",
   "sign_in_with_magic_link": "Sign in with Magic Link",
   "sign_in_with_passkey": "Sign in with Passkey",
   "sign_up_description": "Enter your information to create an account",

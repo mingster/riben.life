@@ -14,7 +14,7 @@ import { Role } from "@prisma/client";
 
 // Route constants
 const ROUTES = {
-	SIGNIN: "/signin",
+	SIGNIN: "/signIn",
 	ERROR_403: "/error/?code=403",
 } as const;
 
