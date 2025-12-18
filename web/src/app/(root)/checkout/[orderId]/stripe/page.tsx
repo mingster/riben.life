@@ -18,7 +18,7 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
     const session = await getServerSession(authOptions);
     if (!session) {
       //if (status != 'authenticated') {
-      redirect(`/signin`);
+      redirect(`/signIn`);
     }
     //get user with needed assoicated objects
     //

@@ -81,14 +81,14 @@ export const auth = betterAuth({
 			clientSecret: process.env.AUTH_LINE_SECRET as string,
 			scopes: ["openid", "profile", "email"],
 		},
-		apple: { 
-            clientId: process.env.AUTH_APPLE_ID as string, 
-            clientSecret: process.env.AUTH_APPLE_SECRET as string, 
-            // Optional
-            appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER as string, 
-        },
+		apple: {
+			clientId: process.env.AUTH_APPLE_ID as string,
+			clientSecret: process.env.AUTH_APPLE_SECRET as string,
+			// Optional
+			appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER as string,
+		},
 	},
-	trustedOrigins: ["https://appleid.apple.com"], 
+	trustedOrigins: ["https://appleid.apple.com"],
 	plugins: [
 		...(options.plugins ?? []),
 		customSession(async ({ user, session }, ctx) => {

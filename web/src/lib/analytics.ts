@@ -10,14 +10,16 @@ const sendGAEventSafe = (params: Parameters<typeof sendGAEvent>[0]) => {
 // Enhanced analytics utilities for the riben.life platform
 export const analytics = {
 	// User authentication events
-	trackLogin: (method: "email" | "google" | "line" | "passkey" = "email") => {
+	trackLogin: (
+		method: "email" | "google" | "line" | "appleId" | "passkey" = "email",
+	) => {
 		sendGAEventSafe({
 			event: "login",
 			method: method,
 		});
 	},
 
-	trackSignUp: (method: "email" | "google" | "line" = "email") => {
+	trackSignUp: (method: "email" | "google" | "line" | "appleId" = "email") => {
 		sendGAEventSafe({
 			event: "sign_up",
 			method: method,
