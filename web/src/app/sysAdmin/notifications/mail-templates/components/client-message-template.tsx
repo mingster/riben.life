@@ -308,6 +308,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 			<EditMessageTemplateLocalized
 				item={newObj}
 				locales={availableLocales}
+				templateType={item.templateType || null}
 				onUpdated={handleMessageTemplateLocalizedCreated}
 				isNew={true}
 			/>
@@ -461,27 +462,33 @@ export const MessageTemplateClient: React.FC<props> = ({
 				header: ({ column }) => {
 					return <DataTableColumnHeader column={column} title="subject" />;
 				},
-				cell: ({ row }) => (
-					<div>
-						{row.getValue("subject")}
-						<EditMessageTemplateLocalized
-							item={
-								{
-									...row.original,
-									bCCEmailAddresses:
-										row.original.bCCEmailAddresses ?? undefined,
-								} as z.infer<typeof updateMessageTemplateLocalizedSchema>
-							}
-							locales={locales}
-							onUpdated={(updated) => {
-								handleMessageTemplateLocalizedUpdated({
-									...updated,
-									bCCEmailAddresses: updated.bCCEmailAddresses ?? null,
-								} as MessageTemplateLocalized);
-							}}
-						/>
-					</div>
-				),
+				cell: ({ row }) => {
+					const template = messageTemplateData.find(
+						(tpl) => tpl.id === row.original.messageTemplateId,
+					);
+					return (
+						<div>
+							{row.getValue("subject")}
+							<EditMessageTemplateLocalized
+								item={
+									{
+										...row.original,
+										bCCEmailAddresses:
+											row.original.bCCEmailAddresses ?? undefined,
+									} as z.infer<typeof updateMessageTemplateLocalizedSchema>
+								}
+								locales={locales}
+								templateType={template?.templateType ?? null}
+								onUpdated={(updated) => {
+									handleMessageTemplateLocalizedUpdated({
+										...updated,
+										bCCEmailAddresses: updated.bCCEmailAddresses ?? null,
+									} as MessageTemplateLocalized);
+								}}
+							/>
+						</div>
+					);
+				},
 				enableHiding: false,
 			},
 			{

@@ -443,6 +443,7 @@ export const MessageTemplateClient: React.FC<props> = ({
 									} as MessageTemplateLocalized);
 								}}
 								storeId={storeId}
+								templateType={template?.templateType || null}
 							/>
 						</div>
 					);
