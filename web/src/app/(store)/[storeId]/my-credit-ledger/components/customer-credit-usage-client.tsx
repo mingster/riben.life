@@ -1,6 +1,5 @@
 "use client";
 
-import { IconPlus } from "@tabler/icons-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	startOfWeek,
@@ -12,53 +11,37 @@ import {
 } from "date-fns";
 
 import { useTranslation } from "@/app/i18n/client";
-import { DataTable } from "@/components/dataTable";
-import { Button } from "@/components/ui/button";
+import { useI18n } from "@/providers/i18n-provider";
+import { DisplayCreditLedger } from "@/components/display-credit-ledger";
 import { Heading } from "@/components/ui/heading";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { useI18n } from "@/providers/i18n-provider";
-import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
-
-import type { Rsvp } from "@/types";
+import type { CustomerCreditLedger } from "@/types";
 import {
-	getDateInTz,
 	getOffsetHours,
 	dateToEpoch,
 	convertToUtc,
 	formatUtcDateToDateTimeLocal,
 } from "@/utils/datetime-utils";
-import { createRsvpColumns } from "./columns";
-import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
-interface RsvpHistoryClientProps {
-	serverData: Rsvp[];
+interface CustomerCreditUsageClientProps {
+	ledger: CustomerCreditLedger[];
 	storeTimezone: string;
-	rsvpSettings?: {
-		prepaidRequired?: boolean | null;
-	} | null;
 }
 
 type PeriodType = "week" | "month" | "year" | "custom";
 
-export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
-	serverData,
-	storeTimezone,
-	rsvpSettings,
-}) => {
+export const CustomerCreditUsageClient: React.FC<
+	CustomerCreditUsageClientProps
+> = ({ ledger, storeTimezone }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const [allData, setAllData] = useState<Rsvp[]>(serverData);
+	const [allData, setAllData] = useState<CustomerCreditLedger[]>(ledger);
 	const [periodType, setPeriodType] = useState<PeriodType>("week");
 	const [startDate, setStartDate] = useState<Date | null>(null);
 	const [endDate, setEndDate] = useState<Date | null>(null);
-
-	// Get timezone offset
-	const offsetHours = useMemo(
-		() => getOffsetHours(storeTimezone),
-		[storeTimezone],
-	);
 
 	// Helper to get current date/time in store timezone
 	const getNowInStoreTimezone = useCallback((): Date => {
@@ -183,39 +166,28 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 			return allData;
 		}
 
-		return allData.filter((rsvp) => {
-			const rsvpTime = rsvp.rsvpTime;
-			if (!rsvpTime) return false;
+		return allData.filter((entry) => {
+			const createdAt = entry.createdAt;
+			if (!createdAt) return false;
 
-			// rsvpTime is BigInt epoch milliseconds
-			const rsvpTimeBigInt =
-				typeof rsvpTime === "bigint" ? rsvpTime : BigInt(rsvpTime);
+			// createdAt is Date or BigInt epoch milliseconds
+			let createdAtBigInt: bigint;
+			if (createdAt instanceof Date) {
+				createdAtBigInt = BigInt(createdAt.getTime());
+			} else if (typeof createdAt === "bigint") {
+				createdAtBigInt = createdAt;
+			} else if (typeof createdAt === "number") {
+				createdAtBigInt = BigInt(createdAt);
+			} else {
+				return false;
+			}
+
 			const startBigInt = startEpoch;
 			const endBigInt = endEpoch;
 
-			return rsvpTimeBigInt >= startBigInt && rsvpTimeBigInt <= endBigInt;
+			return createdAtBigInt >= startBigInt && createdAtBigInt <= endBigInt;
 		});
 	}, [allData, startDate, endDate]);
-
-	const handleCreated = useCallback((newRsvp: Rsvp) => {
-		if (!newRsvp) return;
-		setAllData((prev) => {
-			const exists = prev.some((item) => item.id === newRsvp.id);
-			if (exists) return prev;
-			return [newRsvp, ...prev];
-		});
-	}, []);
-
-	const handleDeleted = useCallback((rsvpId: string) => {
-		setAllData((prev) => prev.filter((item) => item.id !== rsvpId));
-	}, []);
-
-	const handleUpdated = useCallback((updated: Rsvp) => {
-		if (!updated) return;
-		setAllData((prev) =>
-			prev.map((item) => (item.id === updated.id ? updated : item)),
-		);
-	}, []);
 
 	// Format date for datetime-local input (display in store timezone)
 	const formatDateForInput = useCallback(
@@ -241,39 +213,14 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 		[storeTimezone],
 	);
 
-	const columns = useMemo(
-		() =>
-			createRsvpColumns(t, {
-				onDeleted: handleDeleted,
-				onUpdated: handleUpdated,
-				storeTimezone,
-				rsvpSettings,
-			}),
-		[t, handleDeleted, handleUpdated, storeTimezone, rsvpSettings],
-	);
-
 	return (
 		<>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
-					title={t("rsvp_history") || "Reservation History"}
+					title={t("customer_mgmt_tabs_credits") || "Credit History"}
 					badge={data.length}
 					description=""
 				/>
-				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
-					<AdminEditRsvpDialog
-						isNew
-						onCreated={handleCreated}
-						storeTimezone={storeTimezone}
-						rsvpSettings={rsvpSettings}
-						trigger={
-							<Button variant="outline" className="h-10 sm:h-9">
-								<IconPlus className="mr-2 size-4" />
-								<span className="text-sm sm:text-xs">{t("create")}</span>
-							</Button>
-						}
-					/>
-				</div>
 			</div>
 			<Separator />
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3">
@@ -352,12 +299,9 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 				</div>
 			</div>
 			<Separator />
-			<DataTable<Rsvp, unknown>
-				columns={columns}
-				data={data}
-				searchKey="message"
-			/>
-			<RsvpStatusLegend t={t} />
+			<div className="py-4">
+				<DisplayCreditLedger ledger={data} />
+			</div>
 		</>
 	);
 };

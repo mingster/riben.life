@@ -8,9 +8,6 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { cn } from "@/lib/utils";
 
 import type { Rsvp } from "@/types";
-import { RsvpStatus } from "@/types/enum";
-import { CellAction } from "./cell-action";
-import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 import {
 	epochToDate,
 	getDateInTz,
@@ -18,25 +15,15 @@ import {
 } from "@/utils/datetime-utils";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 
-interface CreateRsvpColumnsOptions {
-	onDeleted?: (rsvpId: string) => void;
-	onUpdated?: (rsvp: Rsvp) => void;
+interface CreateCustomerRsvpColumnsOptions {
 	storeTimezone?: string;
-	rsvpSettings?: {
-		prepaidRequired?: boolean | null;
-	} | null;
 }
 
-export const createRsvpColumns = (
+export const createCustomerRsvpColumns = (
 	t: TFunction,
-	options: CreateRsvpColumnsOptions = {},
+	options: CreateCustomerRsvpColumnsOptions = {},
 ): ColumnDef<Rsvp>[] => {
-	const {
-		onDeleted,
-		onUpdated,
-		storeTimezone = "Asia/Taipei",
-		rsvpSettings,
-	} = options;
+	const { storeTimezone = "Asia/Taipei" } = options;
 
 	return [
 		{
@@ -59,7 +46,7 @@ export const createRsvpColumns = (
 
 				const utcDate = epochToDate(rsvpTimeEpoch) ?? new Date();
 
-				// Convert to store timezone for display (use store's timezone if available, otherwise fall back to provided storeTimezone)
+				// Convert to store timezone for display
 				const storeDate = getDateInTz(
 					utcDate,
 					getOffsetHours(
@@ -72,16 +59,6 @@ export const createRsvpColumns = (
 						{format(storeDate, `${datetimeFormat} HH:mm`)}
 					</span>
 				);
-			},
-		},
-		{
-			id: "customerName",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("customer")} />
-			),
-			cell: ({ row }) => {
-				const rsvp = row.original;
-				return <span>{rsvp.Customer?.name || "-"}</span>;
 			},
 		},
 		{
@@ -156,19 +133,6 @@ export const createRsvpColumns = (
 					</span>
 				);
 			},
-		},
-		{
-			id: "actions",
-			header: ({ column }) => <div className="text-xs">{t("actions")}</div>,
-			cell: ({ row }) => (
-				<CellAction
-					data={row.original}
-					onDeleted={onDeleted}
-					onUpdated={onUpdated}
-					storeTimezone={storeTimezone}
-					rsvpSettings={rsvpSettings}
-				/>
-			),
 		},
 	];
 };

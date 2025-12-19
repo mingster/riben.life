@@ -24,6 +24,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
+import { Role } from "@/types/enum";
 import DialogSignIn from "./dialog-sign-in";
 import SignOutButton from "./sign-out-button";
 
@@ -83,11 +84,11 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 						<DropdownMenuGroup>
 							<DropdownMenuItem className="cursor-pointer" asChild>
 								<Link
-									href="/account/subscription"
+									href="/account/order-history"
 									className="flex items-center gap-2"
 								>
 									<IconBrandStripe className="size-4 shrink-0" />
-									<span>{t("user_profile_subscription")}</span>
+									<span>{t("user_profile_billing")}</span>
 								</Link>
 							</DropdownMenuItem>
 							<DropdownMenuItem className="cursor-pointer" asChild>
@@ -106,10 +107,10 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 								</Link>
 							</DropdownMenuItem>
 
-							{(user.role === "admin" ||
-								user.role === "storeAdmin" ||
-								user.role === "staff" ||
-								user.role === "owner") && (
+							{(user.role === Role.admin ||
+								user.role === Role.storeAdmin ||
+								user.role === Role.staff ||
+								user.role === Role.owner) && (
 								<DropdownMenuItem className="cursor-pointer" asChild>
 									<Link href="/storeAdmin/" className="flex items-center gap-2">
 										<IconLock className="size-4 shrink-0" />
@@ -118,7 +119,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 								</DropdownMenuItem>
 							)}
 
-							{user.role === "admin" && (
+							{user.role === Role.admin && (
 								<>
 									<DropdownMenuItem className="cursor-pointer" asChild>
 										<Link href="/sysAdmin" className="flex items-center gap-2">

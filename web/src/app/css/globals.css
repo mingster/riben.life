@@ -69,6 +69,9 @@
 	--tracking-widest: calc(var(--tracking-normal) + 0.1em);
 
 	/*customized*/
+	--letter-spacing-tightest: -0.022em;
+	--letter-spacing-apple: -0.011em;
+
 	--text-3xl: 2rem;
 	/* 32px */
 	--text-7xl: 4rem;
@@ -215,9 +218,13 @@
 		@apply border-border outline-ring/50;
 	}
 
+	html {
+		font-size: 14px;
+	}
+
 	body {
 		@apply bg-background text-foreground;
-		font-family: var(--font-minimal);
+		font-family: var(--font-sans);
 		letter-spacing: var(--tracking-normal);
 	}
 

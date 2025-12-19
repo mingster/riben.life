@@ -467,7 +467,7 @@ const StripeCheckoutForm: React.FC<paymentProps> = ({ order }) => {
 			// confirming the payment. Show error to your customer (for example, payment
 			// details incomplete)
 			setErrorMessage(error.message);
-			logger.info("paymentHandler", { metadata: { error: error.message } });
+			logger.error("paymentHandler", { metadata: { error: error.message } });
 		} else {
 			// Your customer will be redirected to your `return_url`. For some payment
 			// methods like iDEAL, your customer will be redirected to an intermediate

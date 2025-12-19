@@ -1,6 +1,5 @@
 "use client";
 
-import { IconPlus } from "@tabler/icons-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	startOfWeek,
@@ -28,10 +27,9 @@ import {
 	convertToUtc,
 	formatUtcDateToDateTimeLocal,
 } from "@/utils/datetime-utils";
-import { createRsvpColumns } from "./columns";
-import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
+import { createCustomerRsvpColumns } from "./customer-rsvp-columns";
 
-interface RsvpHistoryClientProps {
+interface CustomerReservationHistoryClientProps {
 	serverData: Rsvp[];
 	storeTimezone: string;
 	rsvpSettings?: {
@@ -41,11 +39,9 @@ interface RsvpHistoryClientProps {
 
 type PeriodType = "week" | "month" | "year" | "custom";
 
-export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
-	serverData,
-	storeTimezone,
-	rsvpSettings,
-}) => {
+export const CustomerReservationHistoryClient: React.FC<
+	CustomerReservationHistoryClientProps
+> = ({ serverData, storeTimezone, rsvpSettings }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
@@ -197,26 +193,6 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 		});
 	}, [allData, startDate, endDate]);
 
-	const handleCreated = useCallback((newRsvp: Rsvp) => {
-		if (!newRsvp) return;
-		setAllData((prev) => {
-			const exists = prev.some((item) => item.id === newRsvp.id);
-			if (exists) return prev;
-			return [newRsvp, ...prev];
-		});
-	}, []);
-
-	const handleDeleted = useCallback((rsvpId: string) => {
-		setAllData((prev) => prev.filter((item) => item.id !== rsvpId));
-	}, []);
-
-	const handleUpdated = useCallback((updated: Rsvp) => {
-		if (!updated) return;
-		setAllData((prev) =>
-			prev.map((item) => (item.id === updated.id ? updated : item)),
-		);
-	}, []);
-
 	// Format date for datetime-local input (display in store timezone)
 	const formatDateForInput = useCallback(
 		(date: Date | null): string => {
@@ -242,14 +218,8 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 	);
 
 	const columns = useMemo(
-		() =>
-			createRsvpColumns(t, {
-				onDeleted: handleDeleted,
-				onUpdated: handleUpdated,
-				storeTimezone,
-				rsvpSettings,
-			}),
-		[t, handleDeleted, handleUpdated, storeTimezone, rsvpSettings],
+		() => createCustomerRsvpColumns(t, { storeTimezone }),
+		[t, storeTimezone],
 	);
 
 	return (
@@ -260,20 +230,6 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 					badge={data.length}
 					description=""
 				/>
-				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
-					<AdminEditRsvpDialog
-						isNew
-						onCreated={handleCreated}
-						storeTimezone={storeTimezone}
-						rsvpSettings={rsvpSettings}
-						trigger={
-							<Button variant="outline" className="h-10 sm:h-9">
-								<IconPlus className="mr-2 size-4" />
-								<span className="text-sm sm:text-xs">{t("create")}</span>
-							</Button>
-						}
-					/>
-				</div>
 			</div>
 			<Separator />
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3">

@@ -406,5 +406,13 @@ export const ContactForm = () => {
 		);
 	}
 
-	return <ContactFormInner />;
+	return (
+		<GoogleReCaptchaProvider
+			reCaptchaKey={siteKey}
+			useEnterprise={true}
+			useRecaptchaNet={false}
+		>
+			<ContactFormInner />
+		</GoogleReCaptchaProvider>
+	);
 };

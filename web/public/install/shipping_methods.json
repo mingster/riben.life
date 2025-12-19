@@ -44,6 +44,17 @@
 		"canDelete": false
 	},
 	{
+		"name": "預約",
+		"identifier": "reserve",
+		"description": "",
+		"basic_price": 0,
+		"currencyId": "TWD",
+		"shipRequired": false,
+		"isDeleted": false,
+		"isDefault": true,
+		"canDelete": false
+	},
+	{
 		"name": "自取",
 		"identifier": "takeout",
 		"description": "",

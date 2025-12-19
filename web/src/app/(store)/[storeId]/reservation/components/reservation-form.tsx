@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconCalendarCheck } from "@tabler/icons-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 
@@ -73,6 +73,9 @@ interface ReservationFormProps {
 	creditServiceExchangeRate?: number | null;
 }
 
+// * Implements **UC-RSVP-001:**, et al from FUNCTIONAL-REQUIREMENTS-CREDIT.md
+// allow anonymous or signed-in customers to create reservations
+//
 export function ReservationForm({
 	storeId,
 	rsvpSettings,
@@ -92,6 +95,7 @@ export function ReservationForm({
 }: ReservationFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const params = useParams();
+	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
@@ -222,11 +226,13 @@ export function ReservationForm({
 			} as UpdateReservationInput;
 		} else {
 			// Create mode: use default values
+			// Only include email and phone for anonymous users (when user is not logged in)
+			const isAnonymous = !user;
 			return {
 				storeId,
 				customerId: user?.id || null,
-				email: user?.email || "",
-				phone: "",
+				email: isAnonymous ? "" : undefined,
+				phone: isAnonymous ? "" : undefined,
 				facilityId: facilities.length > 0 ? facilities[0].id : "",
 				numOfAdult: 1,
 				numOfChild: 0,
@@ -320,13 +326,45 @@ export function ReservationForm({
 						onReservationUpdated?.(result.data.rsvp as Rsvp);
 					}
 				} else {
-					toastSuccess({
-						description: t("reservation_created"),
-					});
-					// Reset form after successful submission (create mode only)
-					form.reset(defaultValues as CreateReservationInput);
+					// Create mode
 					if (result?.data?.rsvp) {
-						onReservationCreated?.(result.data.rsvp as Rsvp);
+						// Check if prepaid is required and user needs to recharge
+						const data = result.data as {
+							rsvp: Rsvp;
+							requiresPrepaid?: boolean;
+							requiresSignIn?: boolean;
+						};
+						const requiresPrepaid = data.requiresPrepaid ?? false;
+						const requiresSignIn = data.requiresSignIn ?? false;
+
+						if (requiresPrepaid) {
+							if (requiresSignIn) {
+								// Anonymous user: redirect to sign-in, then to recharge
+								const rsvpId = data.rsvp.id;
+								const callbackUrl = `/${params.storeId}/recharge?rsvpId=${rsvpId}`;
+								router.push(
+									`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`,
+								);
+							} else {
+								// Logged-in user: redirect directly to recharge
+								const rsvpId = data.rsvp.id;
+								router.push(`/${params.storeId}/recharge?rsvpId=${rsvpId}`);
+							}
+						} else {
+							// No prepaid required: show success message
+							toastSuccess({
+								description: t("reservation_created"),
+							});
+							// Reset form after successful submission
+							form.reset(defaultValues as CreateReservationInput);
+							onReservationCreated?.(data.rsvp);
+						}
+					} else {
+						// Fallback: show success message even if no RSVP data
+						toastSuccess({
+							description: t("reservation_created"),
+						});
+						form.reset(defaultValues as CreateReservationInput);
 					}
 				}
 			}
@@ -441,7 +479,10 @@ export function ReservationForm({
 													: ""
 											}
 											onChange={(e) => {
-												// Convert datetime-local string (interpreted as store timezone) to UTC
+												// Convert datetime-local string (interpreted as store timezone) to UTC Date
+												// This matches the admin form behavior - both convert to UTC before sending
+												// The server action's convertDateToUtc will handle the conversion correctly
+												// by extracting the Date's components and re-interpreting them as store timezone
 												const value = e.target.value;
 												if (value) {
 													const utcDate = convertToUtc(value, storeTimezone);
@@ -559,7 +600,7 @@ export function ReservationForm({
 						}}
 					/>
 
-					{/* Contact Information - Only in create mode when user is not logged in */}
+					{/* Contact Information - Only show for anonymous users (not logged in) */}
 					{!isEditMode && !user && (
 						<div className="space-y-4">
 							<FormField
@@ -567,7 +608,9 @@ export function ReservationForm({
 								name="email"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("email")}</FormLabel>
+										<FormLabel>
+											{t("email")} <span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Input
 												type="email"
@@ -586,7 +629,9 @@ export function ReservationForm({
 								name="phone"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("phone")}</FormLabel>
+										<FormLabel>
+											{t("phone")} <span className="text-destructive">*</span>
+										</FormLabel>
 										<FormControl>
 											<Input
 												type="tel"

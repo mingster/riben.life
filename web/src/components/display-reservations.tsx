@@ -7,8 +7,9 @@ import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, User } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { format } from "date-fns";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import {
 	getDateInTz,
 	getOffsetHours,
@@ -34,7 +35,12 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { ReservationDialog } from "@/app/(store)/[storeId]/reservation/components/reservation-dialog";
 import type { StoreFacility, RsvpSettings, StoreSettings } from "@/types";
 import { getUtcNow } from "@/utils/datetime-utils";
+import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 
+/**
+ * Display all RSVPs for the signed-in user, regardless of status.
+ * Shows: Pending, Ready, Completed, Cancelled, NoShow, and any other statuses.
+ */
 export const DisplayReservations = ({
 	reservations,
 	user,
@@ -64,6 +70,74 @@ export const DisplayReservations = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
+
+	// Get color classes based on RSVP status (matching storeAdmin WeekViewCalendar)
+	// includeInteractions: if true, includes hover and active states (for buttons), if false, returns base classes only (for legend)
+	const getStatusColorClasses = useCallback(
+		(
+			status: number | null | undefined,
+			includeInteractions: boolean = true,
+		): string => {
+			// Normalize status to always be a number (default to Pending)
+			const normalizedStatus =
+				status != null ? Number(status) : RsvpStatus.Pending;
+
+			// Ensure it's a valid number
+			if (isNaN(normalizedStatus)) {
+				return includeInteractions
+					? "bg-gray-100 hover:bg-gray-200 active:bg-gray-300 border-l-2 border-l-gray-400"
+					: "bg-gray-100 border-l-2 border-l-gray-400";
+			}
+
+			// Base color classes for each status
+			let baseClasses: string;
+			let hoverClasses: string = "";
+			let activeClasses: string = "";
+
+			switch (normalizedStatus) {
+				case RsvpStatus.Pending:
+					baseClasses =
+						"bg-gray-300 text-gray-700 border-l-2 border-l-gray-500";
+					hoverClasses = "hover:bg-gray-200";
+					activeClasses = "active:bg-gray-300";
+					break;
+				case RsvpStatus.Ready:
+					baseClasses =
+						"bg-indigo-100 text-gray-700 border-l-2 border-l-indigo-500";
+					hoverClasses = "hover:bg-indigo-200";
+					activeClasses = "active:bg-indigo-300";
+					break;
+				case RsvpStatus.Completed:
+					baseClasses =
+						"bg-emerald-800 text-gray-300 border-l-2 border-l-emerald-600";
+					hoverClasses = "hover:bg-emerald-200";
+					activeClasses = "active:bg-emerald-300";
+					break;
+				case RsvpStatus.Cancelled:
+					baseClasses = "bg-red-100 text-gray-700 border-l-2 border-l-red-500";
+					hoverClasses = "hover:bg-red-200";
+					activeClasses = "active:bg-red-300";
+					break;
+				case RsvpStatus.NoShow:
+					baseClasses =
+						"bg-rose-500 text-gray-300 border-l-2 border-l-rose-600";
+					hoverClasses = "hover:bg-rose-200";
+					activeClasses = "active:bg-rose-300";
+					break;
+				default:
+					baseClasses =
+						"bg-gray-100 text-gray-700 border-l-2 border-l-gray-400";
+					hoverClasses = "hover:bg-gray-200";
+					activeClasses = "active:bg-gray-300";
+					break;
+			}
+
+			return includeInteractions
+				? `${baseClasses} ${hoverClasses} ${activeClasses}`
+				: baseClasses;
+		},
+		[],
+	);
 
 	// Sort reservations by rsvpTime (ascending - earliest first)
 	const sortedReservations = useMemo(() => {
@@ -385,7 +459,10 @@ export const DisplayReservations = ({
 				{sortedReservations.map((item) => (
 					<div
 						key={item.id}
-						className="rounded-lg border bg-card p-3 space-y-2 text-xs"
+						className={cn(
+							"rounded-lg border bg-card p-3 space-y-2 text-xs",
+							getStatusColorClasses(item.status, false),
+						)}
 					>
 						<div className="flex items-start justify-between gap-2">
 							<div className="flex-1 min-w-0">
@@ -421,20 +498,10 @@ export const DisplayReservations = ({
 							</div>
 							<div className="shrink-0">
 								<span
-									className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
-										item.status === RsvpStatus.Pending
-											? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
-											: item.alreadyPaid
-												? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-												: item.confirmedByStore || item.confirmedByCustomer
-													? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
-													: item.status === RsvpStatus.Seated ||
-															item.status === RsvpStatus.Completed
-														? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
-														: item.status === RsvpStatus.Cancelled
-															? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
-															: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
-									}`}
+									className={cn(
+										"inline-flex items-center px-2 py-1 text-[10px] font-medium rounded",
+										getStatusColorClasses(item.status, false),
+									)}
 								>
 									{t(`rsvp_status_${item.status}`)}
 								</span>
@@ -570,20 +637,10 @@ export const DisplayReservations = ({
 									</td>
 									<td className="px-3 py-2 text-xs">
 										<span
-											className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
-												item.status === RsvpStatus.Pending
-													? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
-													: item.alreadyPaid
-														? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-														: item.confirmedByStore || item.confirmedByCustomer
-															? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
-															: item.status === RsvpStatus.Seated ||
-																	item.status === RsvpStatus.Completed
-																? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
-																: item.status === RsvpStatus.Cancelled
-																	? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
-																	: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
-											}`}
+											className={cn(
+												"inline-flex items-center px-2 py-1 text-[10px] font-medium rounded",
+												getStatusColorClasses(item.status, false),
+											)}
 										>
 											{t(`rsvp_status_${item.status}`)}
 										</span>
@@ -719,6 +776,9 @@ export const DisplayReservations = ({
 					onReservationUpdated={handleReservationUpdated}
 				/>
 			)}
+
+			{/* Status Legend */}
+			<RsvpStatusLegend t={t} />
 		</div>
 	);
 };

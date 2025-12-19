@@ -27,11 +27,13 @@ export function SessionWrapper({ children }: { children: ReactNode }) {
 			social={{
 				providers: ["google", "line", "apple" /*"facebook", "discord"*/],
 			}}
+			/*
 			captcha={{
 				provider: "google-recaptcha-v3",
 				siteKey: process.env.NEXT_PUBLIC_RECAPTCHA as string,
 				endpoints: ["/sign-up/email", "/sign-in/email", "/forget-password"],
 			}}
+			*/
 			multiSession
 			magicLink
 			passkey

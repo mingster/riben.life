@@ -125,11 +125,6 @@ export function GetMenuList(pathname: string): Group[] {
 					icon: IconBell,
 					submenus: [
 						{
-							href: `${nav_prefix}/notifications/sysmsg`,
-							label: "System Messages",
-							active: pathname.includes(`${nav_prefix}/notifications/sysmsg`),
-						},
-						{
 							href: `${nav_prefix}/notifications/dashboard`,
 							label: "Dashboard",
 							active: pathname === `${nav_prefix}/notifications/dashboard`,
@@ -157,6 +152,11 @@ export function GetMenuList(pathname: string): Group[] {
 							href: `${nav_prefix}/notifications/send`,
 							label: "Send Tester",
 							active: pathname === `${nav_prefix}/notifications/send`,
+						},
+						{
+							href: `${nav_prefix}/notifications/sysmsg`,
+							label: "System Messages",
+							active: pathname.includes(`${nav_prefix}/notifications/sysmsg`),
 						},
 					],
 				},

@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export const updateStorePaidOptionsAction = storeActionClient
 	.metadata({ name: "updateStorePaidOptions" })
@@ -57,6 +58,9 @@ export const updateStorePaidOptionsAction = storeActionClient
 				defaultTimezone: defaultTimezone ?? existingStore.defaultTimezone,
 			},
 		});
+
+		// Transform Decimal objects to numbers for client components
+		transformPrismaDataForJson(store);
 
 		return { store };
 	});

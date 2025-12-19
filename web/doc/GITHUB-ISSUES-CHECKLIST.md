@@ -118,7 +118,7 @@ This document provides a comprehensive checklist of GitHub issues organized by f
     - Notifications sent on cancellation
 
 - [ ] **Issue #7:** Implement reservation status management
-  - [ ] Create actions for status changes (confirm, seated, completed, no-show)
+  - [ ] Create actions for status changes (confirm, ready, completed, no-show)
   - [ ] Add status change UI components
   - [ ] Implement dual confirmation system
   - **Labels:** `feature`, `rsvp`, `backend`, `frontend`

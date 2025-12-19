@@ -1,19 +1,9 @@
-import Container from "@/components/ui/container";
-import BusinessHours from "@/lib/businessHours";
-
 import { transformPrismaDataForJson } from "@/utils/utils";
-
 import { redirect } from "next/navigation";
-import { StoreProductList } from "./components/store-product-list";
-
 import getStoreWithProducts from "@/actions/get-store-with-products";
-import { getT } from "@/app/i18n";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { isReservedRoute } from "@/lib/reserved-routes";
-import type { StoreWithProductNCategories } from "@/types";
-import type { RsvpSettings, StoreSettings } from "@prisma/client";
-import { formatDate } from "date-fns";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -56,7 +46,7 @@ export default async function StoreHomePage(props: {
 	const acceptReservation =
 		rsvpSettings && rsvpSettings.acceptReservation === true;
 	if (store.useOrderSystem) {
-		redirect(`/${store.id}/online-order`);
+		redirect(`/${store.id}/menu`);
 	} else if (acceptReservation) {
 		redirect(`/${store.id}/reservation`);
 	} else {

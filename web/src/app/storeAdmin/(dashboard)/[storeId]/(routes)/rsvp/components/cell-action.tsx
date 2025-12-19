@@ -1,6 +1,12 @@
 "use client";
 
-import { IconCopy, IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
+import {
+	IconCheck,
+	IconCopy,
+	IconDots,
+	IconEdit,
+	IconTrash,
+} from "@tabler/icons-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
@@ -18,7 +24,10 @@ import {
 import { useI18n } from "@/providers/i18n-provider";
 
 import { deleteRsvpAction } from "@/actions/storeAdmin/rsvp/delete-rsvp";
+import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
 import type { Rsvp } from "@/types";
+import { RsvpStatus } from "@/types/enum";
+import { epochToDate } from "@/utils/datetime-utils";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 interface CellActionProps {
@@ -84,6 +93,88 @@ export const CellAction: React.FC<CellActionProps> = ({
 		});
 	};
 
+	const onConfirmStore = async () => {
+		if (data.status !== RsvpStatus.ReadyToConfirm) {
+			return;
+		}
+
+		try {
+			setLoading(true);
+
+			// Convert rsvpTime from epoch to Date
+			const rsvpTimeEpoch =
+				typeof data.rsvpTime === "number"
+					? BigInt(data.rsvpTime)
+					: data.rsvpTime instanceof Date
+						? BigInt(data.rsvpTime.getTime())
+						: data.rsvpTime;
+			const rsvpTimeDate = epochToDate(rsvpTimeEpoch);
+
+			if (!rsvpTimeDate) {
+				toastError({
+					title: t("error_title"),
+					description: "Invalid reservation time",
+				});
+				return;
+			}
+
+			// Convert arriveTime if it exists
+			let arriveTimeDate: Date | null = null;
+			if (data.arriveTime) {
+				const arriveTimeEpoch =
+					typeof data.arriveTime === "number"
+						? BigInt(data.arriveTime)
+						: data.arriveTime instanceof Date
+							? BigInt(data.arriveTime.getTime())
+							: data.arriveTime;
+				arriveTimeDate = epochToDate(arriveTimeEpoch);
+			}
+
+			const result = await updateRsvpAction(String(params.storeId), {
+				id: data.id,
+				customerId: data.customerId || null,
+				facilityId: data.facilityId || "",
+				numOfAdult: data.numOfAdult || 1,
+				numOfChild: data.numOfChild || 0,
+				rsvpTime: rsvpTimeDate,
+				arriveTime: arriveTimeDate,
+				status:
+					data.status === RsvpStatus.ReadyToConfirm
+						? RsvpStatus.Ready
+						: data.status,
+				message: data.message || null,
+				alreadyPaid: data.alreadyPaid || false,
+				confirmedByStore: true, // Set to true
+				confirmedByCustomer: data.confirmedByCustomer || false,
+				facilityCost: data.facilityCost ? Number(data.facilityCost) : null,
+				pricingRuleId: data.pricingRuleId || null,
+			});
+
+			if (result?.serverError) {
+				toastError({
+					title: t("error_title"),
+					description: result.serverError,
+				});
+				return;
+			}
+
+			if (result?.data?.rsvp) {
+				toastSuccess({
+					title: t("rsvp_confirmed_by_store"),
+					description: "",
+				});
+				onUpdated?.(result.data.rsvp);
+			}
+		} catch (error: unknown) {
+			toastError({
+				title: t("error_title"),
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	return (
 		<>
 			<AlertModal
@@ -101,11 +192,22 @@ export const CellAction: React.FC<CellActionProps> = ({
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuLabel>{t("actions")}</DropdownMenuLabel>
+					{data.status === RsvpStatus.ReadyToConfirm && (
+						<DropdownMenuItem
+							className="cursor-pointer"
+							onClick={onConfirmStore}
+							disabled={loading}
+						>
+							<IconEdit className="mr-0 size-4" />
+							{t("rsvp_confirm_this_rsvp")}
+						</DropdownMenuItem>
+					)}
 					<DropdownMenuItem
 						className="cursor-pointer"
 						onClick={() => onCopy(data.id)}
 					>
-						<IconCopy className="mr-0 size-4" /> Copy Id
+						<IconCopy className="mr-0 size-4" />
+						{t("copy_id")}
 					</DropdownMenuItem>
 
 					<DropdownMenuItem
