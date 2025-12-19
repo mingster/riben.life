@@ -141,7 +141,7 @@ export function GetMenuList(
 			? [
 					{
 						href: `${nav_prefix}/my-credit-ledger`,
-						label: t("my_credit_usage"),
+						label: t("my_credit_ledger"),
 						active: pathname.includes(`${nav_prefix}/my-credit-ledger`),
 						icon: IconCreditCard,
 						submenus: [],

@@ -5,7 +5,7 @@ import { updateProductSchema } from "./update-product.validation";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { mapProductToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/products/product-column";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export const updateProductAction = storeActionClient
 	.metadata({ name: "updateProduct" })
@@ -48,7 +48,8 @@ export const updateProductAction = storeActionClient
 			throw new SafeError("Failed to load updated product");
 		}
 
-		transformDecimalsToNumbers(productWithRelations);
+		// Transform Decimal objects to numbers for client components
+		transformPrismaDataForJson(productWithRelations);
 
 		return {
 			product: mapProductToColumn(productWithRelations),

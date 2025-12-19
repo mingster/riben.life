@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export const updateStoreRsvpAction = storeActionClient
 	.metadata({ name: "updateStoreRsvp" })
@@ -54,6 +55,9 @@ export const updateStoreRsvpAction = storeActionClient
 						updatedAt: getUtcNowEpoch(),
 					},
 				});
+
+		// Transform Decimal objects to numbers for client components
+		transformPrismaDataForJson(rsvpSettings);
 
 		return { rsvpSettings };
 	});

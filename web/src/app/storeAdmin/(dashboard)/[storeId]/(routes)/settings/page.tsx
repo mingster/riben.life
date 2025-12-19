@@ -48,6 +48,7 @@ export default async function StoreSettingsPage(props: {
 	const store = storeResult;
 
 	// Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
+	transformPrismaDataForJson(store);
 	transformPrismaDataForJson(allPaymentMethods);
 	transformPrismaDataForJson(allShippingMethods);
 

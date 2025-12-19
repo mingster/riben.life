@@ -211,6 +211,8 @@
   "customer_mgmt_member_since": "您自{0}起即為會員。",
   "customer_mgmt_tabs_billing": "帳單記錄",
   "customer_mgmt_tabs_credits": "點數紀錄",
+  "my_credit_ledger": "點數紀錄",
+
   "customer_mgmt_tabs_info": "訂閱資訊",
   "customer_mgmt_tabs_rsvp": "預約紀錄",
   "customer_mgmt_tabs_stats": "統計資訊",
@@ -968,7 +970,7 @@
   "theme_toggler_title": "Toggle theme",
   "this_month": "本月",
   "this_week": "本週",
-  "this_year": "本年",
+  "this_year": "今年",
   "ticket": "工單",
   "ticket_close": "結案",
   "ticket_close_success": "工單已結案。",

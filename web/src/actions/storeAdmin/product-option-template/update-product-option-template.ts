@@ -4,7 +4,7 @@ import { mapProductOptionTemplateToColumn } from "@/app/storeAdmin/(dashboard)/[
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { updateProductOptionTemplateSchema } from "./update-product-option-template.validation";
 
 interface SelectionInput {
@@ -117,7 +117,8 @@ export const updateProductOptionTemplateAction = storeActionClient
 			throw new SafeError("Option template not found after update");
 		}
 
-		transformDecimalsToNumbers(fullTemplate);
+		// Transform Decimal objects to numbers for client components
+		transformPrismaDataForJson(fullTemplate);
 
 		return {
 			template: mapProductOptionTemplateToColumn(fullTemplate),

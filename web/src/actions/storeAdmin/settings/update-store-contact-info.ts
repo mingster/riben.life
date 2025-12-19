@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export const updateStoreContactInfoAction = storeActionClient
 	.metadata({ name: "updateStoreContactInfo" })
@@ -44,6 +45,9 @@ export const updateStoreContactInfoAction = storeActionClient
 				updatedAt: getUtcNowEpoch(),
 			},
 		});
+
+		// Transform Decimal objects to numbers for client components
+		transformPrismaDataForJson(storeSettings);
 
 		return { storeSettings };
 	});

@@ -4,7 +4,7 @@ import { mapProductOptionTemplateToColumn } from "@/app/storeAdmin/(dashboard)/[
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { Prisma } from "@prisma/client";
 import { createProductOptionTemplateSchema } from "./create-product-option-template.validation";
 
@@ -113,7 +113,8 @@ export const createProductOptionTemplateAction = storeActionClient
 				throw new SafeError("Failed to create template");
 			}
 
-			transformDecimalsToNumbers(fullTemplate);
+			// Transform Decimal objects to numbers for client components
+			transformPrismaDataForJson(fullTemplate);
 
 			return {
 				template: mapProductOptionTemplateToColumn(fullTemplate),

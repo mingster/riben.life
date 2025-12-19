@@ -18,11 +18,6 @@ export const getUserNotificationsAction = userRequiredActionClient
 		const userId = ctx.userId;
 		const { limit, offset } = parsedInput;
 
-		logger.info("Fetching user notifications", {
-			metadata: { userId, limit, offset },
-			tags: ["notification", "user", "fetch"],
-		});
-
 		const [notifications, totalCount] = await Promise.all([
 			sqlClient.messageQueue.findMany({
 				where: {
