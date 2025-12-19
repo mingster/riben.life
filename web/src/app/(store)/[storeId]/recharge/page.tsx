@@ -32,9 +32,9 @@ export default async function RechargePage(props: {
 	});
 
 	if (!session?.user?.id) {
-		redirect(`/${params.storeId}?signin=true`);
+		const callbackUrl = `/${params.storeId}/recharge${rsvpId ? `?rsvpId=${rsvpId}` : ""}`;
+		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
 	}
-
 	// Get store and validate credit system is enabled
 	const store = await sqlClient.store.findUnique({
 		where: { id: params.storeId },

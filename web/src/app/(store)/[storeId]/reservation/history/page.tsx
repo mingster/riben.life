@@ -26,7 +26,8 @@ export default async function ReservationHistoryPage(props: {
 	});
 
 	if (!session?.user?.id) {
-		redirect(`/${params.storeId}/reservation`);
+		const callbackUrl = `/${params.storeId}/reservation/history`;
+		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
 	}
 
 	// Find store by ID (UUID) or name

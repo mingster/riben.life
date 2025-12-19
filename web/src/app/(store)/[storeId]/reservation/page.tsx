@@ -113,6 +113,7 @@ export default async function ReservationPage(props: {
 			select: {
 				id: true,
 				name: true,
+				ownerId: true,
 				defaultTimezone: true,
 				useCustomerCredit: true,
 				creditExchangeRate: true,
@@ -246,6 +247,7 @@ export default async function ReservationPage(props: {
 						facilities={facilities}
 						user={user}
 						storeId={params.storeId}
+						storeOwnerId={store.ownerId}
 						storeTimezone={store.defaultTimezone || "Asia/Taipei"}
 						isBlacklisted={isBlacklisted}
 						useCustomerCredit={store.useCustomerCredit || false}

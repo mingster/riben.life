@@ -24,7 +24,8 @@ export default async function RechargeStripePage(props: { params: Params }) {
 	});
 
 	if (!session?.user?.id) {
-		redirect(`/${params.storeId}?signin=true`);
+		const callbackUrl = `/${params.storeId}/recharge/${params.orderId}/stripe`;
+		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
 	}
 
 	// Get order

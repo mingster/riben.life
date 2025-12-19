@@ -48,7 +48,10 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 
 	//logger.info("session", session);
 
-	if (!session) return null;
+	if (!session) {
+		return <DialogSignIn />;
+	}
+
 	const user = session.user;
 
 	return (
@@ -68,75 +71,66 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent className="w-56 sm:w-56 min-w-[200px]">
-				{!session ? (
+				<>
+					<DropdownMenuLabel className="px-2 py-2 sm:px-2 sm:py-1.5">
+						{session.user.name || "User"}
+					</DropdownMenuLabel>
+					<DropdownMenuSeparator />
 					<DropdownMenuGroup>
-						<DropdownMenuItem className="" asChild>
-							<DialogSignIn />
+						<DropdownMenuItem className="cursor-pointer" asChild>
+							<Link
+								href="/account/order-history"
+								className="flex items-center gap-2"
+							>
+								<IconBrandStripe className="size-4 shrink-0" />
+								<span>{t("user_profile_billing")}</span>
+							</Link>
 						</DropdownMenuItem>
+						<DropdownMenuItem className="cursor-pointer" asChild>
+							<Link href="/account" className="flex items-center gap-2">
+								<IconSettings className="size-4 shrink-0" />
+								<span>{t("user_profile_myAccount")}</span>
+							</Link>
+						</DropdownMenuItem>
+
 						<DropdownMenuSeparator />
-					</DropdownMenuGroup>
-				) : (
-					<>
-						<DropdownMenuLabel className="px-2 py-2 sm:px-2 sm:py-1.5">
-							{session.user.name || "User"}
-						</DropdownMenuLabel>
-						<DropdownMenuSeparator />
-						<DropdownMenuGroup>
-							<DropdownMenuItem className="cursor-pointer" asChild>
-								<Link
-									href="/account/order-history"
-									className="flex items-center gap-2"
-								>
-									<IconBrandStripe className="size-4 shrink-0" />
-									<span>{t("user_profile_billing")}</span>
-								</Link>
-							</DropdownMenuItem>
-							<DropdownMenuItem className="cursor-pointer" asChild>
-								<Link href="/account" className="flex items-center gap-2">
-									<IconSettings className="size-4 shrink-0" />
-									<span>{t("user_profile_myAccount")}</span>
-								</Link>
-							</DropdownMenuItem>
-
-							<DropdownMenuSeparator />
-
-							<DropdownMenuItem className="cursor-pointer" asChild>
-								<Link href="/" className="flex items-center gap-2">
-									<IconHome className="size-4 shrink-0" />
-									<span>{t("home")}</span>
-								</Link>
-							</DropdownMenuItem>
-
-							{(user.role === Role.admin ||
-								user.role === Role.storeAdmin ||
-								user.role === Role.staff ||
-								user.role === Role.owner) && (
-								<DropdownMenuItem className="cursor-pointer" asChild>
-									<Link href="/storeAdmin/" className="flex items-center gap-2">
-										<IconLock className="size-4 shrink-0" />
-										<span>{t("user_profile_linkTo_storeDashboard")}</span>
-									</Link>
-								</DropdownMenuItem>
-							)}
-
-							{user.role === Role.admin && (
-								<>
-									<DropdownMenuItem className="cursor-pointer" asChild>
-										<Link href="/sysAdmin" className="flex items-center gap-2">
-											<IconLock className="size-4 shrink-0" />
-											<span>{t("user_profile_linkTo_admin")}</span>
-										</Link>
-									</DropdownMenuItem>
-									<DropdownMenuSeparator />
-								</>
-							)}
-						</DropdownMenuGroup>
 
 						<DropdownMenuItem className="cursor-pointer" asChild>
-							<SignOutButton />
+							<Link href="/" className="flex items-center gap-2">
+								<IconHome className="size-4 shrink-0" />
+								<span>{t("home")}</span>
+							</Link>
 						</DropdownMenuItem>
-					</>
-				)}
+
+						{(user.role === Role.admin ||
+							user.role === Role.storeAdmin ||
+							user.role === Role.staff ||
+							user.role === Role.owner) && (
+							<DropdownMenuItem className="cursor-pointer" asChild>
+								<Link href="/storeAdmin/" className="flex items-center gap-2">
+									<IconLock className="size-4 shrink-0" />
+									<span>{t("user_profile_linkTo_storeDashboard")}</span>
+								</Link>
+							</DropdownMenuItem>
+						)}
+
+						{user.role === Role.admin && (
+							<>
+								<DropdownMenuItem className="cursor-pointer" asChild>
+									<Link href="/sysAdmin" className="flex items-center gap-2">
+										<IconLock className="size-4 shrink-0" />
+										<span>{t("user_profile_linkTo_admin")}</span>
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+							</>
+						)}
+					</DropdownMenuGroup>
+
+					<DropdownMenuItem className="cursor-pointer" asChild>
+						<SignOutButton />
+					</DropdownMenuItem>
+				</>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);
