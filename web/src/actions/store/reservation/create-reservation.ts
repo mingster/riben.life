@@ -16,6 +16,7 @@ import {
 
 import { createReservationSchema } from "./create-reservation.validation";
 import { RsvpStatus } from "@/types/enum";
+import { processRsvpPrepaidPayment } from "./process-rsvp-prepaid-payment";
 
 export const createReservationAction = baseClient
 	.metadata({ name: "createReservation" })
@@ -49,6 +50,9 @@ export const createReservationAction = baseClient
 					name: true,
 					useBusinessHours: true,
 					defaultTimezone: true,
+					useCustomerCredit: true,
+					creditExchangeRate: true,
+					defaultCurrency: true,
 				},
 			}),
 			sqlClient.rsvpSettings.findFirst({
@@ -85,20 +89,20 @@ export const createReservationAction = baseClient
 			throw new SafeError("Failed to convert rsvpTime to epoch");
 		}
 
-		// Check if prepaid is required
-		if (rsvpSettings.prepaidRequired) {
-			if (!sessionUserId) {
+		// Check if user is anonymous (not logged in and no customerId provided)
+		const isAnonymous = !sessionUserId && !customerId;
+
+		// Validate email and phone requirements for anonymous users
+		if (isAnonymous) {
+			// Anonymous user - email and phone are required
+			if (!email) {
+				throw new SafeError("Email is required for anonymous reservations");
+			}
+			if (!phone) {
 				throw new SafeError(
-					"Please sign in to make a reservation. Prepaid is required.",
+					"Phone number is required for anonymous reservations",
 				);
 			}
-			// TODO: Handle prepaid payment logic here
-			// For now, we'll just create the reservation without payment
-		}
-
-		// Validate email requirement for anonymous users
-		if (!sessionUserId && !email) {
-			throw new SafeError("Email is required for reservations");
 		}
 
 		// Use session userId if available, otherwise use provided customerId
@@ -139,6 +143,23 @@ export const createReservationAction = baseClient
 
 		// TODO: Add availability validation (check existing reservations, business hours, etc.)
 
+		// Process prepaid payment using shared function
+		const prepaidResult = await processRsvpPrepaidPayment({
+			storeId,
+			customerId: finalCustomerId,
+			prepaidRequired: rsvpSettings?.prepaidRequired ?? false,
+			minPrepaidAmount: rsvpSettings?.minPrepaidAmount
+				? Number(rsvpSettings.minPrepaidAmount)
+				: null,
+			store: {
+				useCustomerCredit: store.useCustomerCredit,
+				creditExchangeRate: store.creditExchangeRate
+					? Number(store.creditExchangeRate)
+					: null,
+				defaultCurrency: store.defaultCurrency,
+			},
+		});
+
 		try {
 			const rsvp = await sqlClient.rsvp.create({
 				data: {
@@ -149,8 +170,12 @@ export const createReservationAction = baseClient
 					numOfChild,
 					rsvpTime,
 					message: message || null,
-					status: Number(RsvpStatus.Pending), // pending
-					alreadyPaid: false,
+					// Store email and phone for anonymous reservations
+					email: finalCustomerId ? null : email || null, // Only store if anonymous
+					phone: finalCustomerId ? null : phone || null, // Only store if anonymous
+					status: prepaidResult.status,
+					alreadyPaid: prepaidResult.alreadyPaid,
+					orderId: prepaidResult.orderId,
 					confirmedByStore: false,
 					confirmedByCustomer: false,
 					createdBy,
@@ -162,14 +187,22 @@ export const createReservationAction = baseClient
 					Customer: true,
 					CreatedBy: true,
 					Facility: true,
+					Order: true,
 				},
 			});
 
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
 
+			// Check if prepaid is required and user needs to recharge
+			const requiresPrepaid = rsvpSettings?.prepaidRequired ?? false;
+			const needsRecharge = requiresPrepaid && !transformedRsvp.alreadyPaid;
+
 			return {
 				rsvp: transformedRsvp,
+				requiresPrepaid: needsRecharge,
+				// If prepaid is required and user is anonymous, they need to sign in first
+				requiresSignIn: needsRecharge && isAnonymous,
 			};
 		} catch (error: unknown) {
 			if (

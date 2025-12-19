@@ -126,6 +126,7 @@ export const storeActionClient = baseClient
 
 		// admin users can access any store
 		if (session.user.role === Role.admin) {
+			/*
 			logger.info("access granted - user is an admin", {
 				metadata: {
 					userId: session.user.id,
@@ -135,6 +136,7 @@ export const storeActionClient = baseClient
 					actionName: metadata?.name,
 				},
 			});
+			*/
 
 			return next({ ctx: {} });
 		}

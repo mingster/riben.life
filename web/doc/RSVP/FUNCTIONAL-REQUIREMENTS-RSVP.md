@@ -139,6 +139,7 @@ Store Admins have all Store Staff permissions, plus:
 - Default status: 0 (Pending)
 - Status values (RsvpStatus enum):
   - `0` = Pending (待確認/尚未付款) - Initial status when reservation is created
+  - `10` = ReadyToConfirm - if store doesn't require prepaid, reservation status is ReadyToConfirm; otherwise reservation is ReadyToConfirm once user completed payment.
   - `40` = Seated (已帶位) - Customer has been seated/arrived
   - `50` = Completed (已完成) - Reservation/service has been completed
   - `60` = Cancelled (已取消) - Reservation has been cancelled

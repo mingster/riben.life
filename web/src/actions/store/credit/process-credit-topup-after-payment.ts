@@ -7,8 +7,14 @@ import { SafeError } from "@/utils/error";
 import { processCreditTopUp } from "@/lib/credit-bonus";
 import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
-import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
+import {
+	OrderStatus,
+	PaymentStatus,
+	StoreLedgerType,
+	RsvpStatus,
+} from "@/types/enum";
 import logger from "@/lib/logger";
+import { processRsvpPrepaidPayment } from "@/actions/store/reservation/process-rsvp-prepaid-payment";
 
 /**
  * Process credit top-up after payment is confirmed.
@@ -34,6 +40,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 						defaultCurrency: true,
 						level: true,
 						creditExchangeRate: true, // Need exchange rate to calculate credit amount
+						useCustomerCredit: true,
 					},
 				},
 				User: {
@@ -181,6 +188,19 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 			orderUpdatedDate.getTime() + clearDays * 24 * 60 * 60 * 1000,
 		);
 
+		// Parse checkoutAttributes to check for rsvpId
+		let rsvpId: string | undefined;
+		let checkoutAttributes: Record<string, any> = { creditRecharge: true };
+		try {
+			if (order.checkoutAttributes) {
+				const parsed = JSON.parse(order.checkoutAttributes);
+				checkoutAttributes = { ...parsed, creditRecharge: true };
+				rsvpId = parsed.rsvpId;
+			}
+		} catch {
+			// If parsing fails, use default
+		}
+
 		// Mark order as paid and completed. Also create StoreLedger entry in a transaction
 		await sqlClient.$transaction(async (tx) => {
 			// Mark order as paid and completed
@@ -192,7 +212,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 					orderStatus: OrderStatus.Completed,
 					paymentStatus: PaymentStatus.Paid,
 					paymentCost: fee + feeTax + platformFee,
-					checkoutAttributes: JSON.stringify({ creditRecharge: true }),
+					checkoutAttributes: JSON.stringify(checkoutAttributes),
 					updatedAt: getUtcNowEpoch(),
 				},
 			});
@@ -217,6 +237,91 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 				},
 			});
 		});
+
+		// If rsvpId is present, check if we can process prepaid payment for the RSVP
+		if (rsvpId && order.userId) {
+			try {
+				// Get RSVP and RSVP settings
+				const [rsvp, rsvpSettings] = await Promise.all([
+					sqlClient.rsvp.findUnique({
+						where: { id: rsvpId },
+						select: {
+							id: true,
+							storeId: true,
+							customerId: true,
+							status: true,
+							alreadyPaid: true,
+							orderId: true,
+						},
+					}),
+					sqlClient.rsvpSettings.findFirst({
+						where: { storeId: order.storeId },
+					}),
+				]);
+
+				// Only process if RSVP exists, belongs to the same store, and is still pending
+				if (
+					rsvp &&
+					rsvp.storeId === order.storeId &&
+					rsvp.status === RsvpStatus.Pending &&
+					!rsvp.alreadyPaid &&
+					rsvp.customerId === order.userId
+				) {
+					// Process prepaid payment using the shared function
+					const prepaidResult = await processRsvpPrepaidPayment({
+						storeId: order.storeId,
+						customerId: order.userId,
+						prepaidRequired: rsvpSettings?.prepaidRequired ?? false,
+						minPrepaidAmount: rsvpSettings?.minPrepaidAmount
+							? Number(rsvpSettings.minPrepaidAmount)
+							: null,
+						store: {
+							useCustomerCredit: order.Store.useCustomerCredit,
+							creditExchangeRate: order.Store.creditExchangeRate
+								? Number(order.Store.creditExchangeRate)
+								: null,
+							defaultCurrency: order.Store.defaultCurrency,
+						},
+					});
+
+					// If prepaid payment was successful, update the RSVP
+					if (prepaidResult.alreadyPaid && prepaidResult.orderId) {
+						await sqlClient.rsvp.update({
+							where: { id: rsvpId },
+							data: {
+								status: prepaidResult.status,
+								alreadyPaid: prepaidResult.alreadyPaid,
+								orderId: prepaidResult.orderId,
+								paidAt: getUtcNowEpoch(),
+								updatedAt: getUtcNowEpoch(),
+							},
+						});
+
+						logger.info(
+							"RSVP prepaid payment processed after credit recharge",
+							{
+								metadata: {
+									rsvpId,
+									orderId: prepaidResult.orderId,
+									rechargeOrderId: orderId,
+								},
+								tags: ["rsvp", "credit", "prepaid", "success"],
+							},
+						);
+					}
+				}
+			} catch (error) {
+				// Log error but don't fail the recharge process
+				logger.error("Failed to process RSVP prepaid payment after recharge", {
+					metadata: {
+						rsvpId,
+						orderId,
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["rsvp", "credit", "prepaid", "error"],
+				});
+			}
+		}
 
 		return {
 			success: true,

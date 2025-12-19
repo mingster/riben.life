@@ -27,6 +27,8 @@ import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
 import { RsvpStatus } from "@/types/enum";
+import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
+import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 import { ReservationDialog } from "./reservation-dialog";
 import {
 	getDateInTz,
@@ -421,9 +423,12 @@ export const CustomerWeekViewCalendar: React.FC<
 		[rsvps, weekStart, weekEnd, storeTimezone, defaultDuration],
 	);
 
-	// Pre-compute which slots are in the past to avoid repeated date calculations
+	// Pre-compute which slots are in the past or too soon (less than 1 hour advance booking)
 	const pastSlots = useMemo(() => {
 		const past = new Set<string>();
+		const now = getUtcNow();
+		const minAdvanceHours = 1; // Minimum 1 hour advance booking required
+		const minAdvanceMs = minAdvanceHours * 60 * 60 * 1000; // Convert to milliseconds
 		weekDays.forEach((day) => {
 			timeSlots.forEach((timeSlot) => {
 				const slotDateTimeUtc = dayAndTimeSlotToUtc(
@@ -431,13 +436,15 @@ export const CustomerWeekViewCalendar: React.FC<
 					timeSlot,
 					storeTimezone || "Asia/Taipei",
 				);
-				if (isBefore(slotDateTimeUtc, today)) {
+				const timeUntilSlot = slotDateTimeUtc.getTime() - now.getTime();
+				// Mark as past if slot is in the past OR less than 1 hour from now
+				if (timeUntilSlot < minAdvanceMs) {
 					past.add(`${day.toISOString()}-${timeSlot}`);
 				}
 			});
 		});
 		return past;
-	}, [weekDays, timeSlots, storeTimezone, today]);
+	}, [weekDays, timeSlots, storeTimezone]);
 
 	// Pre-compute which days are today to avoid repeated date calculations
 	const todayDays = useMemo(() => {
@@ -644,6 +651,17 @@ export const CustomerWeekViewCalendar: React.FC<
 		});
 	}, []);
 
+	// Use shared status color classes function
+	const getStatusColorClasses = useCallback(
+		(
+			status: number | null | undefined,
+			includeInteractions: boolean = true,
+		): string => {
+			return getRsvpStatusColorClasses(status, includeInteractions);
+		},
+		[],
+	);
+
 	const handleCancelClick = useCallback((e: React.MouseEvent, rsvp: Rsvp) => {
 		e.stopPropagation(); // Prevent triggering edit dialog
 		setReservationToCancel(rsvp);
@@ -819,41 +837,140 @@ export const CustomerWeekViewCalendar: React.FC<
 												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
 													{slotRsvps.length > 0 ? (
 														slotRsvps.map((rsvp) => {
+															// Disable editing if slot is in the past
 															const canEdit =
-																canEditReservation(rsvp) && storeId;
-															const canCancel = canCancelReservation(rsvp);
-															const rsvpCard = (
-																<div
+																!isPast && canEditReservation(rsvp) && storeId;
+															const canCancel =
+																!isPast && canCancelReservation(rsvp);
+															const isCompleted =
+																rsvp.status === RsvpStatus.Completed;
+
+															if (isCompleted) {
+																// Render as non-clickable button for completed RSVPs
+																return (
+																	<button
+																		key={rsvp.id}
+																		type="button"
+																		disabled
+																		className={cn(
+																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
+																			getStatusColorClasses(rsvp.status, false),
+																			isPast && "opacity-50",
+																		)}
+																	>
+																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																			{rsvp.Customer?.name
+																				? rsvp.Customer.name
+																				: rsvp.Customer?.email
+																					? rsvp.Customer.email
+																					: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																							rsvp.numOfAdult +
+																								rsvp.numOfChild ===
+																							1
+																								? "guest"
+																								: "guests"
+																						}`}
+																		</div>
+																		{rsvp.Facility?.facilityName && (
+																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																				{rsvp.Facility.facilityName}
+																			</div>
+																		)}
+																		{rsvp.message && (
+																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																				{rsvp.message}
+																			</div>
+																		)}
+																	</button>
+																);
+															}
+
+															// Render dialog for editable RSVPs or non-editable button for others
+															if (canEdit) {
+																return (
+																	<ReservationDialog
+																		key={rsvp.id}
+																		storeId={storeId || ""}
+																		rsvpSettings={rsvpSettings}
+																		storeSettings={storeSettings}
+																		facilities={facilities}
+																		user={user}
+																		rsvp={rsvp}
+																		rsvps={rsvps}
+																		storeTimezone={storeTimezone}
+																		onReservationUpdated={
+																			handleReservationUpdated
+																		}
+																		trigger={
+																			<div className="relative">
+																				{canCancel && (
+																					<Button
+																						variant="ghost"
+																						size="icon"
+																						className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 text-destructive hover:text-destructive p-0 z-10"
+																						onClick={(e) =>
+																							handleCancelClick(e, rsvp)
+																						}
+																						title={
+																							rsvp.status === RsvpStatus.Pending
+																								? t("rsvp_delete_reservation")
+																								: t("rsvp_cancel_reservation")
+																						}
+																					>
+																						<IconTrash className="h-3 w-3 sm:h-4 sm:w-4" />
+																					</Button>
+																				)}
+																				<button
+																					type="button"
+																					className={cn(
+																						"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full",
+																						getStatusColorClasses(rsvp.status),
+																						canCancel && "pr-6",
+																					)}
+																				>
+																					<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																						{rsvp.Customer?.name
+																							? rsvp.Customer.name
+																							: rsvp.Customer?.email
+																								? rsvp.Customer.email
+																								: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																										rsvp.numOfAdult +
+																											rsvp.numOfChild ===
+																										1
+																											? "guest"
+																											: "guests"
+																									}`}
+																					</div>
+																					{rsvp.Facility?.facilityName && (
+																						<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																							{rsvp.Facility.facilityName}
+																						</div>
+																					)}
+																					{rsvp.message && (
+																						<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																							{rsvp.message}
+																						</div>
+																					)}
+																				</button>
+																			</div>
+																		}
+																	/>
+																);
+															}
+
+															// Render non-editable button for other RSVPs
+															return (
+																<button
+																	key={rsvp.id}
+																	type="button"
+																	disabled
 																	className={cn(
-																		"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs border-l-2 relative",
-																		rsvp.confirmedByStore
-																			? "bg-green-50 dark:bg-green-950/20 border-l-green-500"
-																			: "bg-yellow-50 dark:bg-yellow-950/20 border-l-yellow-500",
-																		rsvp.alreadyPaid && "border-l-blue-500",
-																		isUserReservation(rsvp) &&
-																			"ring-2 ring-primary/20",
-																		canEdit &&
-																			"cursor-pointer hover:opacity-80 active:opacity-70",
+																		"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
+																		getStatusColorClasses(rsvp.status, false),
+																		isPast && "opacity-50",
 																	)}
 																>
-																	{canCancel && (
-																		<Button
-																			variant="ghost"
-																			size="icon"
-																			className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 text-destructive hover:text-destructive p-0"
-																			onClick={(e) =>
-																				handleCancelClick(e, rsvp)
-																			}
-																			title={
-																				rsvp.status === RsvpStatus.Pending
-																					? t("rsvp_delete_reservation")
-																					: t("rsvp_cancel_reservation")
-																			}
-																		>
-																			<IconTrash className="h-3 w-3 sm:h-4 sm:w-4" />
-																		</Button>
-																	)}
-																	<div className="font-medium truncate leading-tight text-[9px] sm:text-xs pr-6">
+																	<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
 																		{rsvp.Customer?.name
 																			? rsvp.Customer.name
 																			: rsvp.Customer?.email
@@ -876,27 +993,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																			{rsvp.message}
 																		</div>
 																	)}
-																</div>
-															);
-
-															return canEdit ? (
-																<ReservationDialog
-																	key={rsvp.id}
-																	storeId={storeId || ""}
-																	rsvpSettings={rsvpSettings}
-																	storeSettings={storeSettings}
-																	facilities={facilities}
-																	user={user}
-																	rsvp={rsvp}
-																	rsvps={rsvps}
-																	storeTimezone={storeTimezone}
-																	onReservationUpdated={
-																		handleReservationUpdated
-																	}
-																	trigger={rsvpCard}
-																/>
-															) : (
-																<div key={rsvp.id}>{rsvpCard}</div>
+																</button>
 															);
 														})
 													) : isAvailable ? (
@@ -928,7 +1025,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																			isPast && "cursor-not-allowed opacity-50",
 																		)}
 																	>
-																		{!isPast && "+"}
+																		{isPast ? null : "+"}
 																	</button>
 																}
 															/>
@@ -944,7 +1041,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																	isPast && "cursor-not-allowed opacity-50",
 																)}
 															>
-																{!isPast && "+"}
+																{isPast ? null : "+"}
 															</button>
 														) : null
 													) : null}
@@ -958,6 +1055,9 @@ export const CustomerWeekViewCalendar: React.FC<
 					</table>
 				</div>
 			</div>
+
+			{/* Status Legend */}
+			<RsvpStatusLegend t={t} />
 
 			{/* Cancel/Delete Confirmation Dialog */}
 			<AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>

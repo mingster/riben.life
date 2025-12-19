@@ -201,10 +201,8 @@ export default async function ReservationPage(props: {
 			// Still show the page but the form will handle the error
 		}
 
-		// If prepaid is required and user is not logged in, redirect to sign in
-		if (rsvpSettings?.prepaidRequired && !user) {
-			redirect(`/signIn/?callbackUrl=/${params.storeId}/reservation`);
-		}
+		// Note: Anonymous users can now create pending RSVPs even when prepaid is required
+		// They will be prompted to sign in and recharge after creating the reservation
 
 		// Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
 		// Transform all data once before passing to client

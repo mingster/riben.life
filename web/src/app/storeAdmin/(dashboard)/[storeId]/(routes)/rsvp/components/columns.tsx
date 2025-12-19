@@ -5,6 +5,7 @@ import type { TFunction } from "i18next";
 import { format } from "date-fns";
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
+import { cn } from "@/lib/utils";
 
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
@@ -15,6 +16,7 @@ import {
 	getDateInTz,
 	getOffsetHours,
 } from "@/utils/datetime-utils";
+import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 
 interface CreateRsvpColumnsOptions {
 	onDeleted?: (rsvpId: string) => void;
@@ -83,21 +85,23 @@ export const createRsvpColumns = (
 			},
 		},
 		{
-			accessorKey: "numOfAdult",
+			id: "numOfGuest",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("rsvp_num_of_adult")} />
+				<DataTableColumnHeader column={column} title={t("rsvp_num_of_guest")} />
 			),
-			cell: ({ row }) => <span>{row.getValue("numOfAdult") as number}</span>,
-			meta: {
-				className: "hidden sm:table-cell",
+			cell: ({ row }) => {
+				const rsvp = row.original;
+				const numOfAdult = rsvp.numOfAdult || 0;
+				const numOfChild = rsvp.numOfChild || 0;
+				return (
+					<span>
+						{t("rsvp_num_of_guest_val", {
+							adult: numOfAdult,
+							child: numOfChild,
+						})}
+					</span>
+				);
 			},
-		},
-		{
-			accessorKey: "numOfChild",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("rsvp_num_of_child")} />
-			),
-			cell: ({ row }) => <span>{row.getValue("numOfChild") as number}</span>,
 			meta: {
 				className: "hidden sm:table-cell",
 			},
@@ -112,22 +116,12 @@ export const createRsvpColumns = (
 				const status = rsvp.status;
 				return (
 					<span
-						className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
-							status === RsvpStatus.Pending
-								? "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/20 dark:text-yellow-400"
-								: rsvp.alreadyPaid
-									? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-									: rsvp.confirmedByStore || rsvp.confirmedByCustomer
-										? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
-										: status === RsvpStatus.Seated ||
-												status === RsvpStatus.Completed
-											? "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
-											: status === RsvpStatus.Cancelled
-												? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
-												: "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
-						}`}
+						className={cn(
+							"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs font-mono",
+							getRsvpStatusColorClasses(status, false),
+						)}
 					>
-						{t(`rsvp_status_${status}`)}
+						<span className="font-medium">{t(`rsvp_status_${status}`)}</span>
 					</span>
 				);
 			},
@@ -152,7 +146,15 @@ export const createRsvpColumns = (
 			),
 			cell: ({ row }) => {
 				const paid = row.getValue("alreadyPaid") as boolean;
-				return <span>{paid ? "Yes" : "No"}</span>;
+				return (
+					<span className="flex items-center justify-center">
+						<span
+							className={`h-2 w-2 rounded-full ${
+								paid ? "bg-green-500" : "bg-red-500"
+							}`}
+						/>
+					</span>
+				);
 			},
 		},
 		{

@@ -7,7 +7,7 @@ const sendGAEventSafe = (params: GAEventParams) => {
 	return; //disable analytics for now
 
 	if (process.env.NODE_ENV !== "production") return;
-	
+
 	if (typeof window === "undefined") return;
 
 	// Fire-and-forget to keep call sites synchronous

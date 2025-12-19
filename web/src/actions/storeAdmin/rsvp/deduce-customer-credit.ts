@@ -71,19 +71,19 @@ async function createStoreOrderForRsvp(
 ): Promise<string> {
 	const { tx, storeId, customerId, cashValue, defaultCurrency } = params;
 
-	// Find takeout shipping method (required for StoreOrder)
-	const takeoutShippingMethod = await tx.shippingMethod.findFirst({
+	// Find "reserve" shipping method for reservation orders (required for StoreOrder)
+	const reserveShippingMethod = await tx.shippingMethod.findFirst({
 		where: {
-			identifier: "takeout",
+			identifier: "reserve",
 			isDeleted: false,
 		},
 	});
 
 	let shippingMethodId: string;
-	if (takeoutShippingMethod) {
-		shippingMethodId = takeoutShippingMethod.id;
+	if (reserveShippingMethod) {
+		shippingMethodId = reserveShippingMethod.id;
 	} else {
-		// Fall back to default shipping method if takeout not found
+		// Fall back to default shipping method if reserve not found
 		const defaultShippingMethod = await tx.shippingMethod.findFirst({
 			where: { isDefault: true, isDeleted: false },
 		});
@@ -194,6 +194,9 @@ async function createStoreLedgerForRsvpCreditUsage(
 		});
 	}
 
+	// Get translation function for ledger note
+	const { t } = await getT();
+
 	// Create StoreLedger entry for credit usage (revenue recognition)
 	await tx.storeLedger.create({
 		data: {
@@ -205,26 +208,13 @@ async function createStoreLedgerForRsvpCreditUsage(
 			currency: defaultCurrency.toLowerCase(),
 			type: StoreLedgerType.CreditUsage, // Credit usage (revenue recognition)
 			balance: new Prisma.Decimal(newStoreBalance),
-			description: `RSVP Credit Usage - ${creditToDeduct} points`,
-			note: `RSVP ID: ${rsvpId}. Credit points used: ${creditToDeduct}. Cash value: ${cashValue} ${defaultCurrency.toUpperCase()}. Duration: ${duration} minutes.`,
+			description: t("rsvp_prepaid_payment_credit_note", {
+				points: creditToDeduct,
+			}),
 			createdBy: createdBy || null,
 			availability: getUtcNowEpoch(), // Immediate availability for credit usage
 			createdAt: getUtcNowEpoch(),
 		},
-	});
-
-	logger.info("StoreLedger entry created for RSVP credit usage", {
-		metadata: {
-			rsvpId,
-			storeId,
-			creditAmount: creditToDeduct,
-			cashValue,
-			currency: defaultCurrency,
-			orderId: orderIdForLedger,
-			storeBalanceBefore: balance,
-			storeBalanceAfter: newStoreBalance,
-		},
-		tags: ["rsvp", "credit", "store-ledger", "revenue"],
 	});
 }
 
@@ -349,19 +339,6 @@ export async function deduceCustomerCredit(
 			creatorId: createdBy || null,
 			createdAt: getUtcNowEpoch(),
 		},
-	});
-
-	logger.info("Customer credit deducted for completed RSVP", {
-		metadata: {
-			rsvpId,
-			customerId,
-			duration,
-			creditServiceExchangeRate,
-			creditAmount: creditToDeduct,
-			balanceBefore: currentBalance,
-			balanceAfter: newBalance,
-		},
-		tags: ["rsvp", "credit", "deduction"],
 	});
 
 	// Create StoreLedger entry for revenue recognition

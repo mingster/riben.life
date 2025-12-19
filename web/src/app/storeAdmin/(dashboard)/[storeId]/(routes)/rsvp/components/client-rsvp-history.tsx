@@ -18,6 +18,7 @@ import { Heading } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
+import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 
 import type { Rsvp } from "@/types";
 import {
@@ -356,6 +357,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 				data={data}
 				searchKey="message"
 			/>
+			<RsvpStatusLegend t={t} />
 		</>
 	);
 };

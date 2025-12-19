@@ -70,11 +70,6 @@ export const getUserNotificationsAction = userRequiredActionClient
 			},
 		});
 
-		logger.info("User notifications fetched", {
-			metadata: { userId, count: notifications.length, unreadCount },
-			tags: ["notification", "user", "fetched"],
-		});
-
 		return {
 			notifications,
 			totalCount,
