@@ -3,7 +3,13 @@
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { Prisma } from "@prisma/client";
-import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
+import {
+	dateToEpoch,
+	getUtcNowEpoch,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+} from "@/utils/datetime-utils";
 import {
 	RsvpStatus,
 	OrderStatus,
@@ -11,16 +17,19 @@ import {
 	StoreLedgerType,
 } from "@/types/enum";
 import { getT } from "@/app/i18n";
+import { format } from "date-fns";
 
 interface ProcessRsvpPrepaidPaymentParams {
 	storeId: string;
 	customerId: string | null;
 	prepaidRequired: boolean;
 	minPrepaidAmount: number | null;
+	rsvpTime: BigInt | number | Date; // RSVP reservation time
 	store: {
 		useCustomerCredit: boolean | null;
 		creditExchangeRate: number | null;
 		defaultCurrency: string | null;
+		defaultTimezone?: string | null; // Store timezone for date formatting
 	};
 }
 
@@ -38,8 +47,14 @@ interface ProcessRsvpPrepaidPaymentResult {
 export async function processRsvpPrepaidPayment(
 	params: ProcessRsvpPrepaidPaymentParams,
 ): Promise<ProcessRsvpPrepaidPaymentResult> {
-	const { storeId, customerId, prepaidRequired, minPrepaidAmount, store } =
-		params;
+	const {
+		storeId,
+		customerId,
+		prepaidRequired,
+		minPrepaidAmount,
+		rsvpTime,
+		store,
+	} = params;
 
 	// Determine initial status and payment status:
 	// - If prepaid is NOT required: status = ReadyToConfirm (immediately ready for confirmation)
@@ -84,6 +99,33 @@ export async function processRsvpPrepaidPayment(
 
 			// Get translation function for ledger note
 			const { t } = await getT();
+
+			// Format RSVP date/time for the note
+			let rsvpTimeEpoch: bigint;
+			if (typeof rsvpTime === "number") {
+				rsvpTimeEpoch = BigInt(rsvpTime);
+			} else if (rsvpTime instanceof Date) {
+				rsvpTimeEpoch = BigInt(rsvpTime.getTime());
+			} else if (typeof rsvpTime === "bigint") {
+				rsvpTimeEpoch = rsvpTime;
+			} else {
+				// Handle Prisma BigInt type
+				rsvpTimeEpoch =
+					typeof rsvpTime === "object" && "toString" in rsvpTime
+						? BigInt(rsvpTime.toString())
+						: BigInt(Number(rsvpTime));
+			}
+			const rsvpTimeDate = epochToDate(rsvpTimeEpoch);
+			const storeTimezone = store.defaultTimezone || "Asia/Taipei";
+			const datetimeFormat = t("datetime_format");
+			let formattedRsvpTime = "";
+			if (rsvpTimeDate) {
+				const storeDate = getDateInTz(
+					rsvpTimeDate,
+					getOffsetHours(storeTimezone),
+				);
+				formattedRsvpTime = format(storeDate, `${datetimeFormat} HH:mm`);
+			}
 
 			// Deduct credit and create order in a transaction
 			await sqlClient.$transaction(async (tx) => {
@@ -180,7 +222,9 @@ export async function processRsvpPrepaidPayment(
 						referenceId: storeOrder.id, // Link to the order
 						note: t("rsvp_prepaid_payment_credit_note", {
 							points: requiredCredit,
+							rsvpTime: formattedRsvpTime,
 						}),
+						creatorId: customerId, // Customer initiated this prepaid payment
 						createdAt: getUtcNowEpoch(),
 					},
 				});

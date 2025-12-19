@@ -5,6 +5,8 @@ import {
 	IconCalendarCheck,
 	IconClock,
 	IconCoin,
+	IconCreditCard,
+	IconHistory,
 	IconShoppingCart,
 } from "@tabler/icons-react";
 import {
@@ -48,9 +50,9 @@ export function GetMenuList(
 		...(store.useOrderSystem
 			? [
 					{
-						href: `${nav_prefix}/online-order`,
+						href: `${nav_prefix}/menu`,
 						label: t("online_order"),
-						active: pathname.includes(`${nav_prefix}/online-order`),
+						active: pathname.includes(`${nav_prefix}/menu`),
 						icon: IconShoppingCart,
 						submenus: [],
 					},
@@ -122,6 +124,30 @@ export function GetMenuList(
 			icon: HandHelping,
 			submenus: [],
 		},
+
+		...(store.rsvpSettings?.acceptReservation === true
+			? [
+					{
+						href: `${nav_prefix}/reservation/history`,
+						label: t("rsvp_history"),
+						active: pathname.includes(`${nav_prefix}/reservation/history`),
+						icon: IconHistory,
+						submenus: [],
+					},
+				]
+			: []),
+
+		...(store.useCustomerCredit
+			? [
+					{
+						href: `${nav_prefix}/my-credit-ledger`,
+						label: t("my_credit_usage"),
+						active: pathname.includes(`${nav_prefix}/my-credit-ledger`),
+						icon: IconCreditCard,
+						submenus: [],
+					},
+				]
+			: []),
 	] as Menu[];
 
 	const result = [

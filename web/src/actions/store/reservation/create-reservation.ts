@@ -151,12 +151,14 @@ export const createReservationAction = baseClient
 			minPrepaidAmount: rsvpSettings?.minPrepaidAmount
 				? Number(rsvpSettings.minPrepaidAmount)
 				: null,
+			rsvpTime,
 			store: {
 				useCustomerCredit: store.useCustomerCredit,
 				creditExchangeRate: store.creditExchangeRate
 					? Number(store.creditExchangeRate)
 					: null,
 				defaultCurrency: store.defaultCurrency,
+				defaultTimezone: store.defaultTimezone,
 			},
 		});
 

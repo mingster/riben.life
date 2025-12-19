@@ -35,6 +35,7 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { ReservationDialog } from "@/app/(store)/[storeId]/reservation/components/reservation-dialog";
 import type { StoreFacility, RsvpSettings, StoreSettings } from "@/types";
 import { getUtcNow } from "@/utils/datetime-utils";
+import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 
 /**
  * Display all RSVPs for the signed-in user, regardless of status.
@@ -777,28 +778,7 @@ export const DisplayReservations = ({
 			)}
 
 			{/* Status Legend */}
-			<div className="mt-2 p-2 sm:p-4 border rounded-lg bg-muted/30">
-				<div className="text-xs mb-2 sm:mb-3">{t("rsvp_status")}</div>
-				<div className="flex flex-wrap gap-1">
-					{[
-						RsvpStatus.Pending,
-						RsvpStatus.Ready,
-						RsvpStatus.Completed,
-						RsvpStatus.Cancelled,
-						RsvpStatus.NoShow,
-					].map((status) => (
-						<div
-							key={status}
-							className={cn(
-								"flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs font-mono",
-								getStatusColorClasses(status, false),
-							)}
-						>
-							<span className="font-medium">{t(`rsvp_status_${status}`)}</span>
-						</div>
-					))}
-				</div>
-			</div>
+			<RsvpStatusLegend t={t} />
 		</div>
 	);
 };

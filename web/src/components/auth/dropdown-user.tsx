@@ -83,11 +83,11 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 						<DropdownMenuGroup>
 							<DropdownMenuItem className="cursor-pointer" asChild>
 								<Link
-									href="/account/subscription"
+									href="/account/billing"
 									className="flex items-center gap-2"
 								>
 									<IconBrandStripe className="size-4 shrink-0" />
-									<span>{t("user_profile_subscription")}</span>
+									<span>{t("user_profile_billing")}</span>
 								</Link>
 							</DropdownMenuItem>
 							<DropdownMenuItem className="cursor-pointer" asChild>

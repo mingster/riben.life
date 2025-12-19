@@ -39,6 +39,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 					select: {
 						id: true,
 						defaultCurrency: true,
+						defaultTimezone: true,
 						level: true,
 						creditExchangeRate: true, // Need exchange rate to calculate credit amount
 						useCustomerCredit: true,
@@ -265,6 +266,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 							status: true,
 							alreadyPaid: true,
 							orderId: true,
+							rsvpTime: true,
 						},
 					}),
 					sqlClient.rsvpSettings.findFirst({
@@ -288,12 +290,14 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 						minPrepaidAmount: rsvpSettings?.minPrepaidAmount
 							? Number(rsvpSettings.minPrepaidAmount)
 							: null,
+						rsvpTime: rsvp.rsvpTime,
 						store: {
 							useCustomerCredit: order.Store.useCustomerCredit,
 							creditExchangeRate: order.Store.creditExchangeRate
 								? Number(order.Store.creditExchangeRate)
 								: null,
 							defaultCurrency: order.Store.defaultCurrency,
+							defaultTimezone: order.Store.defaultTimezone,
 						},
 					});
 
