@@ -793,7 +793,7 @@ model Rsvp {
   numOfAdult  Int     @default(1)
   numOfChild  Int     @default(0)
   rsvpTime    BigInt
-  arriveTime  BigInt? //the time should be set when status is set to Seated
+  arriveTime  BigInt? //the time should be set when status is set to Ready
   status      Int     @default(0)
   alreadyPaid Boolean @default(false) //已付款
   referenceId String? //reference to the StoreOrder id or CustomerCreditLedger id

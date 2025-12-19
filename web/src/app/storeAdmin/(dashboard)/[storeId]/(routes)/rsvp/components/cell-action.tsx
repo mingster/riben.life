@@ -138,7 +138,10 @@ export const CellAction: React.FC<CellActionProps> = ({
 				numOfChild: data.numOfChild || 0,
 				rsvpTime: rsvpTimeDate,
 				arriveTime: arriveTimeDate,
-				status: data.status,
+				status:
+					data.status === RsvpStatus.ReadyToConfirm
+						? RsvpStatus.Ready
+						: data.status,
 				message: data.message || null,
 				alreadyPaid: data.alreadyPaid || false,
 				confirmedByStore: true, // Set to true
@@ -155,11 +158,13 @@ export const CellAction: React.FC<CellActionProps> = ({
 				return;
 			}
 
-			toastSuccess({
-				title: t("rsvp_confirmed_by_store"),
-				description: "",
-			});
-			onUpdated?.(result?.data?.rsvp);
+			if (result?.data?.rsvp) {
+				toastSuccess({
+					title: t("rsvp_confirmed_by_store"),
+					description: "",
+				});
+				onUpdated?.(result.data.rsvp);
+			}
 		} catch (error: unknown) {
 			toastError({
 				title: t("error_title"),
@@ -193,15 +198,16 @@ export const CellAction: React.FC<CellActionProps> = ({
 							onClick={onConfirmStore}
 							disabled={loading}
 						>
-							<IconCheck className="mr-0 size-4" />{" "}
-							{t("rsvp_confirmed_by_store")}
+							<IconEdit className="mr-0 size-4" />
+							{t("rsvp_confirm_this_rsvp")}
 						</DropdownMenuItem>
 					)}
 					<DropdownMenuItem
 						className="cursor-pointer"
 						onClick={() => onCopy(data.id)}
 					>
-						<IconCopy className="mr-0 size-4" /> Copy Id
+						<IconCopy className="mr-0 size-4" />
+						{t("copy_id")}
 					</DropdownMenuItem>
 
 					<DropdownMenuItem

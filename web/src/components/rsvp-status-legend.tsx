@@ -24,7 +24,7 @@ export function RsvpStatusLegend({ t, className }: RsvpStatusLegendProps) {
 				{[
 					RsvpStatus.Pending,
 					RsvpStatus.ReadyToConfirm,
-					RsvpStatus.Seated,
+					RsvpStatus.Ready,
 					RsvpStatus.Completed,
 					RsvpStatus.Cancelled,
 					RsvpStatus.NoShow,

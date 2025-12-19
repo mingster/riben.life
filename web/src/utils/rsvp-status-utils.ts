@@ -36,7 +36,7 @@ export function getRsvpStatusColorClasses(
 			hoverClasses = "hover:bg-blue-200";
 			activeClasses = "active:bg-blue-300";
 			break;
-		case RsvpStatus.Seated:
+		case RsvpStatus.Ready:
 			baseClasses = "bg-green-100 text-gray-700 border-l-2 border-l-green-500";
 			hoverClasses = "hover:bg-green-200";
 			activeClasses = "active:bg-green-300";

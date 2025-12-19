@@ -49,7 +49,7 @@ const getCurrentUser = async (): Promise<User | null> => {
 			invitations: true,
 			Reservations: {
 				// Fetch ALL reservations for the user, regardless of status
-				// No status filter - includes Pending, Seated, Completed, Cancelled, NoShow, etc.
+				// No status filter - includes Pending, Ready, Completed, Cancelled, NoShow, etc.
 				include: {
 					Store: true,
 					Facility: true,

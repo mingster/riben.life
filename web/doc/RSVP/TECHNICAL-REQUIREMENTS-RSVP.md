@@ -130,7 +130,7 @@ model Rsvp {
   numOfChild        Int       @default(0)
   rsvpTime          DateTime
   arriveTime        DateTime?
-  status            Int       @default(0) // RsvpStatus enum: 0=Pending, 40=Seated, 50=Completed, 60=Cancelled, 70=NoShow
+  status            Int       @default(0) // RsvpStatus enum: 0=Pending, 10=ReadyToConfirm, 40=Ready, 50=Completed, 60=Cancelled, 70=NoShow
   message           String?
   confirmedByStore  Boolean   @default(false)
   confirmedByCustomer Boolean @default(false)
@@ -259,7 +259,7 @@ model RsvpTag {
 - `update-rsvp.ts` - Update existing reservation
 - `delete-rsvp.ts` - Delete/cancel reservation
 - `confirm-rsvp.ts` - Confirm reservation (store or customer)
-- `mark-seated.ts` - Mark reservation as seated
+- `mark-ready.ts` - Mark reservation as ready (customer arrived)
 - `mark-completed.ts` - Mark reservation as completed
 - `mark-no-show.ts` - Mark reservation as no-show
 
@@ -335,7 +335,7 @@ model RsvpTag {
 - `PATCH /api/storeAdmin/[storeId]/rsvp/[rsvpId]` - Update reservation
 - `DELETE /api/storeAdmin/[storeId]/rsvp/[rsvpId]` - Delete reservation
 - `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/confirm` - Store confirmation
-- `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/seated` - Mark as seated
+- `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/ready` - Mark as ready (customer arrived)
 - `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/completed` - Mark as completed
 - `POST /api/storeAdmin/[storeId]/rsvp/[rsvpId]/no-show` - Mark as no-show
 

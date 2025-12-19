@@ -38,7 +38,7 @@ import { getUtcNow } from "@/utils/datetime-utils";
 
 /**
  * Display all RSVPs for the signed-in user, regardless of status.
- * Shows: Pending, Seated, Completed, Cancelled, NoShow, and any other statuses.
+ * Shows: Pending, Ready, Completed, Cancelled, NoShow, and any other statuses.
  */
 export const DisplayReservations = ({
 	reservations,
@@ -100,7 +100,7 @@ export const DisplayReservations = ({
 					hoverClasses = "hover:bg-gray-200";
 					activeClasses = "active:bg-gray-300";
 					break;
-				case RsvpStatus.Seated:
+				case RsvpStatus.Ready:
 					baseClasses =
 						"bg-indigo-100 text-gray-700 border-l-2 border-l-indigo-500";
 					hoverClasses = "hover:bg-indigo-200";
@@ -782,7 +782,7 @@ export const DisplayReservations = ({
 				<div className="flex flex-wrap gap-1">
 					{[
 						RsvpStatus.Pending,
-						RsvpStatus.Seated,
+						RsvpStatus.Ready,
 						RsvpStatus.Completed,
 						RsvpStatus.Cancelled,
 						RsvpStatus.NoShow,

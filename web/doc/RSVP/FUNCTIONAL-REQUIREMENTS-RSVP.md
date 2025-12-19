@@ -16,7 +16,7 @@
 
 The RSVP (Reservation/Appointment) system enables any business to accept, manage, and track customer reservations and appointments. The system is designed to be flexible and can be used by various business types including restaurants, salons, clinics, service providers, and any other business that requires appointment scheduling. The system supports online reservations, LINE reservations, waitlists, notifications, and integration with external platforms including Reserve with Google (Google's reservation service), Google Maps, and LINE.
 
-**Note:** Throughout this document, terms like "facility" and "seated" are used generically. For restaurants, "facility" refers to dining tables. For other businesses, "facility" may represent service stations, treatment rooms, consultation rooms, or other bookable resources. "Seated" may mean "arrived" or "service started" depending on the business context.
+**Note:** Throughout this document, terms like "facility" and "ready" are used generically. For restaurants, "facility" refers to dining tables. For other businesses, "facility" may represent service stations, treatment rooms, consultation rooms, or other bookable resources. "Ready" may mean "arrived" or "service started" depending on the business context.
 
 ---
 
@@ -56,7 +56,7 @@ Store Staff can:
 - View all reservations
 - Edit reservations
 - Confirm reservations
-- Mark reservation status (Seated, NoShow, Completed, and other status values)
+- Mark reservation status (Ready, NoShow, Completed, and other status values)
 - Cancel reservations
 - View and manage waitlist
 - View resource status
@@ -140,7 +140,7 @@ Store Admins have all Store Staff permissions, plus:
 - Status values (RsvpStatus enum):
   - `0` = Pending (待確認/尚未付款) - Initial status when reservation is created
   - `10` = ReadyToConfirm - if store doesn't require prepaid, reservation status is ReadyToConfirm; otherwise reservation is ReadyToConfirm once user completed payment.
-  - `40` = Seated (已帶位) - Customer has been seated/arrived
+  - `40` = Ready (已入場) - Customer has arrived and is ready for service
   - `50` = Completed (已完成) - Reservation/service has been completed
   - `60` = Cancelled (已取消) - Reservation has been cancelled
   - `70` = NoShow (未到) - Customer did not show up for the reservation
@@ -333,12 +333,12 @@ Store Admins have all Store Staff permissions, plus:
 - Customer can confirm the reservation (if requested by store) by setting `confirmedByCustomer = true`
 - Confirmation can occur in any order (store first, customer first, or simultaneously)
 - Both confirmation flags can be true simultaneously
-- The reservation status remains `Pending (0)` until the service lifecycle begins (e.g., when customer arrives and status changes to `Seated`)
+- The reservation status remains `Pending (0)` until the service lifecycle begins (e.g., when customer arrives and status changes to `Ready`)
 
 **Service Flow:**
 
-- When the customer arrives and is seated/checked in, store staff marks status as `Seated (40)`
-- The `arriveTime` field is recorded when status changes to `Seated`
+- When the customer arrives and is ready for service, store staff marks status as `Ready (40)`
+- The `arriveTime` field is recorded when status changes to `Ready`
 - After service is completed, store staff marks status as `Completed (50)`
 
 **Termination States:**
@@ -349,7 +349,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **Status Transition Rules:**
 
-- Status transitions are generally forward-moving (e.g., `Pending` → `Seated` → `Completed`)
+- Status transitions are generally forward-moving (e.g., `Pending` → `Ready` → `Completed`)
 - Payment status (`alreadyPaid`) and confirmation flags (`confirmedByStore`, `confirmedByCustomer`) are tracked separately from the status enum
 - Status can transition to `Cancelled` or `NoShow` from any active state
 - Store staff and store admins can manually set status to any valid state (with appropriate business rule validation)
@@ -362,7 +362,7 @@ Pending (0)
   [Payment: alreadyPaid flag can be set to true if prepaid required]
   [Confirmation: confirmedByStore and/or confirmedByCustomer can be set to true]
   ↓
-Seated (40) [when customer arrives]
+Ready (40) [when customer arrives]
   ↓
 Completed (50) [when service is finished]
 
@@ -414,7 +414,7 @@ Completed (50) [when service is finished]
 **FR-RSVP-016:** Store staff and Store admins must be able to view all reservations:
 
 - Daily view (by date)
-- Filter by status (Pending, Seated, Completed, Cancelled, NoShow)
+- Filter by status (Pending, Ready, Completed, Cancelled, NoShow)
 - Filter by payment status (alreadyPaid = true/false)
 - Filter by confirmation status (confirmedByStore = true/false, confirmedByCustomer = true/false)
 - Filter by facility
@@ -470,7 +470,7 @@ Completed (50) [when service is finished]
 
 - Available resources (facilities/appointment slots)
 - Reserved resources with reservation details
-- Occupied resources (currently in use/seated)
+- Occupied resources (currently in use/ready)
 
 **FR-RSVP-024:** The system must automatically check resource availability:
 
@@ -788,7 +788,7 @@ Completed (50) [when service is finished]
 
 - Total reservations by date range
 - Reservations by status
-- Utilization rate (seated vs confirmed)
+- Utilization rate (ready vs confirmed)
 - No-show rate
 - Cancellation rate
 
@@ -825,8 +825,8 @@ Completed (50) [when service is finished]
 - Number of adults
 - Number of children
 - Reservation date/time (rsvpTime)
-- Arrival time (arriveTime, when seated)
-- Status (Pending, Seated, Completed, Cancelled, NoShow)
+- Arrival time (arriveTime, when ready)
+- Status (Pending, Ready, Completed, Cancelled, NoShow)
 - Payment status (alreadyPaid - Boolean flag)
 - Confirmation flags (confirmedByStore, confirmedByCustomer - Boolean flags)
 - Special requests/message
@@ -1159,7 +1159,7 @@ Completed (50) [when service is finished]
 - **No-show**: Customer who doesn't arrive for reservation/appointment
 - **Walk-in**: Customer who arrives without reservation
 - **Facility/Resource**: Generic term for bookable resources. For restaurants, this refers to dining tables. For other businesses (salons, clinics, etc.), this may refer to service stations, treatment rooms, consultation rooms, or other bookable resources.
-- **Seated**: Generic term meaning customer has arrived and service has started. For restaurants, this means seated at facility. For other businesses, this may mean "arrived" or "service started".
+- **Ready**: Generic term meaning customer has arrived and is ready for service. For restaurants, this means customer has arrived and is ready to be seated. For other businesses, this may mean "arrived" or "service started".
 
 ---
 

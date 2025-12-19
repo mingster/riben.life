@@ -15,6 +15,7 @@ import {
 } from "@/types/enum";
 import logger from "@/lib/logger";
 import { processRsvpPrepaidPayment } from "@/actions/store/reservation/process-rsvp-prepaid-payment";
+import { getT } from "@/app/i18n";
 
 /**
  * Process credit top-up after payment is confirmed.
@@ -201,6 +202,9 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 			// If parsing fails, use default
 		}
 
+		// Get translation function for ledger entries
+		const { t } = await getT();
+
 		// Mark order as paid and completed. Also create StoreLedger entry in a transaction
 		await sqlClient.$transaction(async (tx) => {
 			// Mark order as paid and completed
@@ -230,8 +234,17 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 					balance: new Prisma.Decimal(
 						balance + dollarAmount + (fee + feeTax) + platformFee,
 					),
-					description: `Credit Recharge - Order #${order.orderNum || order.id}`,
-					note: `Customer credit top-up: ${creditAmount} points (${dollarAmount} ${order.Store.defaultCurrency.toUpperCase()}). Credit given: ${processCreditTopUpResult.amount} + bonus ${processCreditTopUpResult.bonus} = ${processCreditTopUpResult.totalCredit} points.`,
+					description: t("credit_recharge_description_ledger", {
+						creditAmount,
+						dollarAmount,
+						currency: order.Store.defaultCurrency.toUpperCase(),
+						amount: processCreditTopUpResult.amount,
+						bonus: processCreditTopUpResult.bonus,
+						totalCredit: processCreditTopUpResult.totalCredit,
+					}),
+					note: t("credit_recharge_note_ledger", {
+						orderId: order.id,
+					}),
 					availability: BigInt(availabilityDate.getTime()),
 					createdAt: getUtcNowEpoch(),
 				},
@@ -296,18 +309,6 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 								updatedAt: getUtcNowEpoch(),
 							},
 						});
-
-						logger.info(
-							"RSVP prepaid payment processed after credit recharge",
-							{
-								metadata: {
-									rsvpId,
-									orderId: prepaidResult.orderId,
-									rechargeOrderId: orderId,
-								},
-								tags: ["rsvp", "credit", "prepaid", "success"],
-							},
-						);
 					}
 				}
 			} catch (error) {

@@ -40,6 +40,16 @@
 		"canDelete": true
 	},
 	{
+		"name": "促銷贈送",
+		"payUrl": "promo",
+		"priceDescr": "promo by operator",
+		"fee": 0,
+		"feeAdditional": 0,
+		"clearDays": 0,
+		"isDefault": true,
+		"canDelete": false
+	},
+	{
 		"name": "現金",
 		"payUrl": "cash",
 		"priceDescr": "available for paid merchants",
@@ -50,7 +60,7 @@
 		"canDelete": false
 	},
 	{
-		"name": "Credit",
+		"name": "儲值點數",
 		"payUrl": "credit",
 		"priceDescr": "store credit or customer purchased credit",
 		"fee": 0,
