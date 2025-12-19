@@ -6,6 +6,10 @@ import pino from "pino";
 import { analytics } from "./analytics";
 import { sqlClient } from "./prismadb";
 import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
+import packageJson from "../../package.json";
+
+// Read version from package.json at build time
+const APP_VERSION: string | undefined = packageJson.version;
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -94,7 +98,11 @@ class Logger {
 		this.service = options.service || "web";
 		this.environment =
 			options.environment || process.env.NODE_ENV || "development";
-		this.version = options.version || process.env.npm_package_version;
+		this.version =
+			options.version ||
+			process.env.npm_package_version ||
+			process.env.NEXT_PUBLIC_APP_VERSION ||
+			APP_VERSION;
 	}
 
 	// Static method to get singleton instance
@@ -416,7 +424,10 @@ function getLogger(): Logger {
 		globalForLogger.logger = Logger.getInstance({
 			service: "web",
 			environment: process.env.NODE_ENV,
-			version: process.env.npm_package_version,
+			version:
+				process.env.npm_package_version ||
+				process.env.NEXT_PUBLIC_APP_VERSION ||
+				APP_VERSION,
 		});
 	}
 	return globalForLogger.logger;

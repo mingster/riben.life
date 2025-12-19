@@ -187,7 +187,7 @@ export const createStoreAction = userRequiredActionClient
 				});
 			}
 		} catch (error) {
-			logger.info("Operation log", {
+			logger.error("Operation log", {
 				metadata: {
 					error: error instanceof Error ? error.message : String(error),
 				},

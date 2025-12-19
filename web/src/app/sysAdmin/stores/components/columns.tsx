@@ -24,12 +24,14 @@ export const columns: ColumnDef<StoreColumn>[] = [
 			return <DataTableColumnHeader column={column} title="Name" />;
 		},
 		cell: ({ row }) => (
-			<Link
-				className="pl-5"
-				title="edit this store"
-				href={`./stores/${row.original.id}/`}
-			>
-				{row.getValue("name")}
+			<div className="flex items-center gap-2">
+				<Link
+					className="pl-5"
+					title="edit this store"
+					href={`./stores/${row.original.id}/`}
+				>
+					{row.getValue("name")}
+				</Link>
 				{row.original.customDomain ? (
 					<Link
 						target="_blank"
@@ -39,10 +41,8 @@ export const columns: ColumnDef<StoreColumn>[] = [
 					>
 						{row.original.customDomain}
 					</Link>
-				) : (
-					""
-				)}
-			</Link>
+				) : null}
+			</div>
 		),
 	},
 	{
