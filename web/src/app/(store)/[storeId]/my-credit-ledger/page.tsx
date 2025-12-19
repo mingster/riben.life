@@ -26,7 +26,8 @@ export default async function CustomerCreditUsagePage(props: {
 	});
 
 	if (!session?.user?.id) {
-		redirect(`/${params.storeId}/reservation`);
+		const callbackUrl = `/${params.storeId}/my-credit-ledger`;
+		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
 	}
 
 	// Find store by ID (UUID) or name

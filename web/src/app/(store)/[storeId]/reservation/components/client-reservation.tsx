@@ -17,6 +17,7 @@ interface ReservationClientProps {
 	facilities: StoreFacility[];
 	user: User | null;
 	storeId: string;
+	storeOwnerId: string;
 	storeTimezone: string;
 	isBlacklisted?: boolean;
 	useCustomerCredit?: boolean;
@@ -31,6 +32,7 @@ export function ReservationClient({
 	facilities,
 	user,
 	storeId,
+	storeOwnerId,
 	storeTimezone,
 	isBlacklisted = false,
 	useCustomerCredit = false,
@@ -109,6 +111,7 @@ export function ReservationClient({
 				rsvpSettings={rsvpSettings}
 				storeSettings={storeSettings}
 				storeId={storeId}
+				storeOwnerId={storeOwnerId}
 				facilities={facilities}
 				user={user}
 				storeTimezone={storeTimezone}

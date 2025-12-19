@@ -58,6 +58,7 @@ interface CustomerWeekViewCalendarProps {
 	onTimeSlotClick?: (day: Date, timeSlot: string) => void;
 	// Props for dialog
 	storeId?: string;
+	storeOwnerId?: string;
 	facilities?: Array<{
 		id: string;
 		facilityName: string;
@@ -312,6 +313,7 @@ export const CustomerWeekViewCalendar: React.FC<
 	storeSettings,
 	onTimeSlotClick,
 	storeId,
+	storeOwnerId,
 	facilities = [],
 	user,
 	storeTimezone = "Asia/Taipei",
@@ -456,6 +458,12 @@ export const CustomerWeekViewCalendar: React.FC<
 		});
 		return todaySet;
 	}, [weekDays, storeTimezone]);
+
+	// Check if current user is the store owner
+	const isStoreOwner = useMemo(
+		() => Boolean(user?.id && storeOwnerId && user.id === storeOwnerId),
+		[user?.id, storeOwnerId],
+	);
 
 	// Helper to check if a reservation belongs to the current user
 	const isUserReservation = useCallback(
@@ -845,6 +853,26 @@ export const CustomerWeekViewCalendar: React.FC<
 															const isCompleted =
 																rsvp.status === RsvpStatus.Completed;
 
+															// If not store owner, show as "booked" without details
+															if (!isStoreOwner) {
+																return (
+																	<button
+																		key={rsvp.id}
+																		type="button"
+																		disabled
+																		className={cn(
+																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
+																			getStatusColorClasses(rsvp.status, false),
+																			isPast && "opacity-50",
+																		)}
+																	>
+																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																			{t("booked")}
+																		</div>
+																	</button>
+																);
+															}
+
 															if (isCompleted) {
 																// Render as non-clickable button for completed RSVPs
 																return (
@@ -958,7 +986,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																);
 															}
 
-															// Render non-editable button for other RSVPs
+															// Render non-editable button for other RSVPs (only visible to owner)
 															return (
 																<button
 																	key={rsvp.id}
