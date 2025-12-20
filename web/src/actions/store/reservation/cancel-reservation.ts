@@ -8,10 +8,13 @@ import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { RsvpStatus } from "@/types/enum";
+import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import { cancelReservationSchema } from "./cancel-reservation.validation";
+import { validateCancelHoursWindow } from "./validate-cancel-hours";
+import { processRsvpCreditRefund } from "./process-rsvp-refund";
+import { getT } from "@/app/i18n";
 
 export const cancelReservationAction = baseClient
 	.metadata({ name: "cancelReservation" })
@@ -27,12 +30,17 @@ export const cancelReservationAction = baseClient
 		const sessionUserId = session?.user?.id;
 		const sessionUserEmail = session?.user?.email;
 
-		// Get the existing RSVP
+		// Get the existing RSVP with Order included
 		const existingRsvp = await sqlClient.rsvp.findUnique({
 			where: { id },
 			include: {
 				Customer: true,
 				Store: true,
+				Order: {
+					include: {
+						PaymentMethod: true,
+					},
+				},
 			},
 		});
 
@@ -40,15 +48,17 @@ export const cancelReservationAction = baseClient
 			throw new SafeError("Reservation not found");
 		}
 
-		// Only allow canceling if status is Pending or if alreadyPaid
-		if (
-			existingRsvp.status !== RsvpStatus.Pending &&
-			!existingRsvp.alreadyPaid
-		) {
-			throw new SafeError(
-				"Reservation can only be cancelled when status is Pending or if already paid",
-			);
-		}
+		// Fetch RsvpSettings for cancelHours validation
+		const rsvpSettings = await sqlClient.rsvpSettings.findFirst({
+			where: { storeId: existingRsvp.storeId },
+			select: {
+				canCancel: true,
+				cancelHours: true,
+			},
+		});
+
+		// Validate cancelHours window
+		validateCancelHoursWindow(rsvpSettings, existingRsvp.rsvpTime, "cancel");
 
 		// Verify ownership: user must be logged in and match customerId, or match by email
 		let hasPermission = false;
@@ -65,6 +75,41 @@ export const cancelReservationAction = baseClient
 			);
 		}
 
+		// Process refund if reservation was prepaid (alreadyPaid = true)
+		if (existingRsvp.alreadyPaid && existingRsvp.orderId) {
+			const { t } = await getT();
+
+			// Get refund amount for the refund reason message
+			let refundPoints: number | undefined;
+			if (existingRsvp.orderId && existingRsvp.customerId) {
+				const spendEntry = await sqlClient.customerCreditLedger.findFirst({
+					where: {
+						storeId: existingRsvp.storeId,
+						userId: existingRsvp.customerId,
+						referenceId: existingRsvp.orderId,
+						type: CustomerCreditLedgerType.Spend,
+					},
+					orderBy: {
+						createdAt: "desc",
+					},
+				});
+
+				if (spendEntry) {
+					refundPoints = Math.abs(Number(spendEntry.amount));
+				}
+			}
+
+			await processRsvpCreditRefund({
+				rsvpId: id,
+				storeId: existingRsvp.storeId,
+				customerId: existingRsvp.customerId,
+				orderId: existingRsvp.orderId,
+				refundReason: refundPoints
+					? t("reservation_cancelled_by_customer", { points: refundPoints })
+					: t("reservation_cancelled_by_customer"),
+			});
+		}
+
 		try {
 			const updated = await sqlClient.rsvp.update({
 				where: { id },
@@ -76,6 +121,7 @@ export const cancelReservationAction = baseClient
 					Store: true,
 					Customer: true,
 					Facility: true,
+					Order: true,
 				},
 			});
 

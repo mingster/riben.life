@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27  
 **Status:** Active  
-**Version:** 1.2  
+**Version:** 1.5  
 **Related Documents:**
 
 - [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -81,7 +81,7 @@ model RsvpSettings {
   storeId         String
   acceptReservation Boolean  @default(true)
   prepaidRequired   Boolean  @default(false)
-  prepaidAmount     Decimal? // Can be dollar amount or CustomerCredit amount
+  prepaidAmount     Decimal? // dollar amount
   canCancel         Boolean  @default(true)
   cancelHours       Int      @default(24)
   defaultDuration   Int      @default(60)
@@ -252,18 +252,45 @@ model RsvpTag {
 
 #### 4.1.1 Reservation Actions
 
-**Location:** `src/actions/storeAdmin/rsvp/`
+**Store Admin Actions - Location:** `src/actions/storeAdmin/rsvp/`
 
-- `create-rsvp.ts` - Create new reservation
+- `create-rsvp.ts` - Create new reservation (store staff/admin)
 - `create-rsvps.ts` - Create multiple recurring reservations
-- `update-rsvp.ts` - Update existing reservation
+- `update-rsvp.ts` - Update existing reservation (store staff/admin)
 - `delete-rsvp.ts` - Delete/cancel reservation
 - `confirm-rsvp.ts` - Confirm reservation (store or customer)
 - `mark-ready.ts` - Mark reservation as ready (customer arrived)
 - `mark-completed.ts` - Mark reservation as completed
 - `mark-no-show.ts` - Mark reservation as no-show
 
+**Customer Actions - Location:** `src/actions/store/reservation/`
+
+- `create-reservation.ts` - Create new reservation (customer/public)
+- `update-reservation.ts` - Modify reservation (customer) - Implements FR-RSVP-013
+- `cancel-reservation.ts` - Cancel reservation (customer) - Implements FR-RSVP-014
+- `delete-reservation.ts` - Delete reservation (customer)
+- `confirm-reservation.ts` - Confirm reservation (customer) - Implements FR-RSVP-015
+
 **Validation Files:** `[action-name].validation.ts`
+
+**Customer Reservation Modification (FR-RSVP-013):**
+
+The `update-reservation.ts` action allows customers to modify their reservations with the following technical requirements:
+
+- **Time Window:** Modification must occur within the allowed cancellation window (`cancelHours` from `RsvpSettings`)
+- **Modifiable Fields:**
+  - `rsvpTime` (date/time) - Subject to availability validation
+  - `facilityId` - Can change to a different facility
+  - `numOfAdult` - Party size (adults)
+  - `numOfChild` - Party size (children)
+  - `message` - Special requests/notes
+- **Business Rules:**
+  - When a reservation is modified, `confirmedByStore` must be set to `false` (requires re-confirmation by store)
+  - Availability validation must check for conflicts with existing reservations
+  - Facility availability must be verified for the new date/time
+  - Store timezone must be considered when converting date/time inputs
+- **Authentication:** Requires user authentication (can modify own reservations only)
+- **Authorization:** Customers can only modify reservations where `customerId` matches their user ID
 
 #### 4.1.2 Settings Actions
 
@@ -322,8 +349,63 @@ model RsvpTag {
 
 - `POST /api/store/[storeId]/rsvp` - Create reservation (public)
 - `GET /api/store/[storeId]/rsvp/availability` - Get availability
-- `POST /api/store/[storeId]/rsvp/[rsvpId]/confirm` - Customer confirmation
-- `POST /api/store/[storeId]/rsvp/[rsvpId]/cancel` - Customer cancellation
+- `PATCH /api/store/[storeId]/rsvp/[rsvpId]` - Customer reservation modification (FR-RSVP-013)
+- `POST /api/store/[storeId]/rsvp/[rsvpId]/confirm` - Customer confirmation (FR-RSVP-015)
+- `POST /api/store/[storeId]/rsvp/[rsvpId]/cancel` - Customer cancellation (FR-RSVP-014)
+
+**Customer Reservation Modification API (FR-RSVP-013):**
+
+- **Endpoint:** `PATCH /api/store/[storeId]/rsvp/[rsvpId]` (via Server Action: `update-reservation.ts`)
+- **Authentication:** Required (user must be authenticated)
+- **Authorization:** Customer can only modify their own reservations (verified by `customerId` or email match)
+- **Request Body:**
+
+  ```typescript
+  {
+    id: string;
+    facilityId: string;
+    numOfAdult: number;
+    numOfChild: number;
+    rsvpTime: Date; // ISO date string or Date object
+    message?: string | null; // Optional special requests/notes
+  }
+  ```
+
+- **Business Rules:**
+  - Modification must occur within `cancelHours` window (from `RsvpSettings.cancelHours`, validated before allowing modification)
+  - When modified, `confirmedByStore` **must be set to `false`** (requires re-confirmation by store)
+  - Date/time conversion must account for store timezone (`Store.defaultTimezone`)
+  - Availability validation should check for conflicts with existing reservations (TODO in current implementation)
+  - Facility must exist and belong to the store
+- **Response:** Returns updated reservation object with all relations
+
+**Customer Reservation Cancellation API (FR-RSVP-014):**
+
+- **Endpoint:** `POST /api/store/[storeId]/rsvp/[rsvpId]/cancel` (via Server Action: `cancel-reservation.ts`)
+- **Authentication:** Required (user must be authenticated)
+- **Authorization:** Customer can only cancel their own reservations (verified by `customerId` or email match)
+- **Request Body:**
+
+  ```typescript
+  {
+    id: string; // Reservation ID
+  }
+  ```
+
+- **Business Rules:**
+  - Cancellation must occur within `cancelHours` window (from `RsvpSettings.cancelHours`, validated before allowing cancellation)
+  - If `canCancel` is false in `RsvpSettings`, customers cannot self-cancel (store staff/admin must cancel)
+  - **Refund Processing:** If reservation was prepaid (`alreadyPaid = true` and `orderId` exists), automatic refund is processed:
+    - **Credit Refund:** If payment method is "credit", credit is automatically refunded to customer
+    - **Refund Process:**
+      1. Finds original SPEND ledger entry to determine refund amount
+      2. Restores credit to customer balance (`CustomerCredit`)
+      3. Creates `CustomerCreditLedger` entry (type: "REFUND", positive amount)
+      4. Creates `StoreLedger` entry (revenue reversal, negative amount, type: `CreditUsage`)
+      5. Updates `StoreOrder` status to `Refunded` (both `orderStatus` and `paymentStatus`)
+    - **Refund Function:** `processRsvpRefund()` - Shared utility function located in `src/actions/store/reservation/process-rsvp-refund.ts`
+    - **Transaction Safety:** All refund operations are performed within a database transaction
+- **Response:** Returns cancelled reservation object with all relations (including updated Order if refunded)
 
 #### 4.2.2 Store Admin API Routes
 
@@ -352,6 +434,77 @@ model RsvpTag {
 
 - `GET /api/storeAdmin/[storeId]/rsvp/reserve-with-google/oauth/callback` - Handle OAuth callback from Google Business Profile
 - `GET /api/storeAdmin/[storeId]/rsvp/reserve-with-google/oauth/connect` - Initiate OAuth connection flow
+
+#### 4.2.5 External Availability Query API
+
+**Location:** `src/app/api/store/[storeId]/rsvp/availability/`
+
+- `GET /api/store/[storeId]/rsvp/availability/slots` - Query available reservation slots (external systems, other stores)
+
+**External Availability Query API:**
+
+- **Endpoint:** `GET /api/store/[storeId]/rsvp/availability/slots`
+- **Purpose:** Allow external systems or other stores to query available reservation slots
+- **Authentication Options:**
+  - **API Key Authentication:** For external systems (via `X-API-Key` header)
+  - **Store-to-Store Authentication:** For other stores (via `storeActionClient` with store membership)
+  - **Public Access:** Limited availability information (if store allows public availability queries)
+- **Query Parameters:**
+
+  ```typescript
+  {
+    startDate: string;        // ISO 8601 date string (required)
+    endDate: string;          // ISO 8601 date string (required)
+    facilityId?: string;      // Optional: filter by specific facility
+    duration?: number;         // Optional: required duration in minutes (default: facility defaultDuration)
+    timezone?: string;         // Optional: timezone for response (default: store defaultTimezone)
+  }
+  ```
+
+- **Response Format:**
+
+  ```typescript
+  {
+    storeId: string;
+    storeName: string;
+    timezone: string;
+    availableSlots: Array<{
+      facilityId: string;
+      facilityName: string;
+      date: string;              // ISO 8601 date string
+      time: string;              // HH:mm format in store timezone
+      available: boolean;
+      capacity?: number;          // Available capacity (if facility has capacity limits)
+      cost?: number;              // Cost for this slot (if showCostToCustomer is enabled)
+      credit?: number;            // Credit cost for this slot (if showCostToCustomer is enabled)
+    }>;
+    facilities: Array<{
+      id: string;
+      name: string;
+      capacity: number;
+      defaultDuration: number;
+      defaultCost: number;
+      defaultCredit: number;
+    }>;
+  }
+  ```
+
+- **Business Rules:**
+  - Only returns slots within the query date range
+  - Excludes slots that conflict with existing reservations
+  - Respects facility capacity limits (if applicable)
+  - Considers business hours (if `useBusinessHours` is enabled)
+  - Respects RSVP settings (`acceptReservation` must be true)
+  - Time slots are returned in store timezone (or specified timezone)
+  - Slot duration matches facility `defaultDuration` or specified `duration` parameter
+  - Cost/credit information only included if `showCostToCustomer` is enabled in `RsvpSettings`
+- **Rate Limiting:** Recommended rate limiting for external API access (e.g., 100 requests per minute per API key)
+- **Error Responses:**
+  - `400 Bad Request` - Invalid date range or parameters
+  - `401 Unauthorized` - Invalid or missing API key
+  - `403 Forbidden` - Store does not allow external availability queries
+  - `404 Not Found` - Store not found
+  - `429 Too Many Requests` - Rate limit exceeded
 
 ### 4.3 Response Format
 
@@ -619,6 +772,131 @@ For Google Actions Center Appointments Redirect integration:
 
 ---
 
+## 7. Shared Utility Functions
+
+### 7.1 Reservation Validation Utilities
+
+**Location:** `src/actions/store/reservation/`
+
+#### 7.1.1 Business Hours Validation
+
+**Function:** `validateFacilityBusinessHours()`
+
+**File:** `validate-facility-business-hours.ts`
+
+**Purpose:** Validates that a reservation time falls within facility business hours.
+
+**Parameters:**
+
+- `businessHours: string | null | undefined` - JSON string containing facility business hours schedule
+- `rsvpTimeUtc: Date` - UTC Date object representing the reservation time
+- `storeTimezone: string` - Store timezone string (e.g., "Asia/Taipei")
+- `facilityId?: string` - Facility ID for logging purposes
+
+**Behavior:**
+
+- If no business hours are configured, validation passes (facility always available)
+- Converts UTC time to store timezone for checking
+- Validates day of week and time range
+- Handles time ranges spanning midnight (e.g., 22:00 to 02:00)
+- Throws `SafeError` if time is outside business hours
+- Gracefully handles JSON parse errors (logs warning, allows reservation)
+
+**Usage:** Used by `create-reservation.ts` and `update-reservation.ts` actions.
+
+#### 7.1.2 Cancellation Window Validation
+
+**Function:** `validateCancelHoursWindow()`
+
+**File:** `validate-cancel-hours.ts`
+
+**Purpose:** Validates that a reservation modification or cancellation occurs within the allowed cancellation window.
+
+**Parameters:**
+
+- `rsvpSettings: RsvpSettingsForValidation | null | undefined` - RsvpSettings object containing `canCancel` and `cancelHours`
+- `rsvpTime: bigint` - BigInt epoch time (milliseconds) representing the reservation time
+- `action: "modify" | "cancel"` - Action being performed (for error message customization)
+
+**Behavior:**
+
+- Only validates if `canCancel` is enabled and `cancelHours` is set
+- Calculates hours until reservation time
+- Throws `SafeError` if action occurs outside the cancellation window
+- Returns early (no validation) if cancellation is not enabled or `cancelHours` is not set
+
+**Usage:** Used by `update-reservation.ts` (action: "modify") and `cancel-reservation.ts` (action: "cancel").
+
+### 7.2 Refund Processing Utilities
+
+**Location:** `src/actions/store/reservation/`
+
+#### 7.2.1 RSVP Refund Processing
+
+**Function:** `processRsvpRefund()`
+
+**File:** `process-rsvp-refund.ts`
+
+**Purpose:** Processes refund for RSVP reservation if it was prepaid. Refunds credit back to customer and reverses revenue recognition.
+
+**Parameters:**
+
+- `rsvpId: string` - Reservation ID
+- `storeId: string` - Store ID
+- `customerId: string | null` - Customer user ID (required for refund)
+- `orderId: string | null` - Store order ID (required for refund)
+- `refundReason?: string` - Optional refund reason for ledger notes
+
+**Returns:**
+
+- `ProcessRsvpRefundResult`:
+  - `refunded: boolean` - Whether refund was processed
+  - `refundAmount?: number` - Credit points refunded (if refunded)
+
+**Behavior:**
+
+- **Early Returns:** Returns `{ refunded: false }` if:
+  - No `orderId` or `customerId` provided (reservation wasn't prepaid)
+  - Order not found (might have been deleted)
+  - Payment method is not "credit" (only credit refunds are supported)
+  - Order is already refunded
+  - No SPEND ledger entry found (might not have been paid with credit)
+
+- **Refund Process (if conditions met):**
+  1. Finds original SPEND ledger entry by `orderId` to determine refund amount
+  2. Calculates refund amount (absolute value of SPEND entry amount)
+  3. Gets current customer credit balance
+  4. Calculates new balance (current + refund amount)
+  5. Gets store credit exchange rate for cash value calculation
+  6. **Transaction Processing:**
+     - Updates `CustomerCredit` balance (adds refund amount)
+     - Creates `CustomerCreditLedger` entry:
+       - Type: "REFUND"
+       - Amount: positive (credit restored)
+       - `referenceId`: original order ID
+       - `note`: refund reason or default message
+     - Creates `StoreLedger` entry:
+       - Type: `CreditUsage` (same as original credit usage)
+       - Amount: negative (revenue reversal)
+       - `orderId`: original order ID
+       - `balance`: decreases by refund cash amount
+     - Updates `StoreOrder`:
+       - `refundAmount`: cash value of refund
+       - `orderStatus`: `Refunded`
+       - `paymentStatus`: `Refunded`
+
+**Transaction Safety:** All refund operations are performed within a single database transaction to ensure data consistency.
+
+**Error Handling:**
+
+- Throws `SafeError` if store not found
+- All database operations are wrapped in transaction (rollback on error)
+- Returns gracefully if refund conditions are not met (no error thrown)
+
+**Usage:** Used by `cancel-reservation.ts` action when `alreadyPaid = true` and `orderId` exists.
+
+---
+
 ## 8. Error Handling
 
 ### 8.1 Error Types
@@ -800,6 +1078,9 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.5 | 2025-01-27 | System | Added refund processing documentation for customer reservation cancellation (FR-RSVP-014): Documented automatic refund functionality when prepaid reservations are cancelled. Added `processRsvpRefund()` shared utility function details, refund flow (credit restoration, ledger entries, order status updates), transaction safety, and integration with `cancel-reservation.ts` action. Updated Customer Reservation Cancellation API section with refund business rules and technical requirements. |
+| 1.4 | 2025-01-27 | System | Added External Availability Query API (Section 4.2.5): New endpoint `GET /api/store/[storeId]/rsvp/availability/slots` for external systems and other stores to query available reservation slots. Supports API key authentication, store-to-store authentication, and public access. Includes query parameters (date range, facility, duration, timezone), response format with available slots, business rules (conflict checking, capacity limits, business hours), and error handling. |
+| 1.3 | 2025-01-27 | System | Added customer reservation modification technical requirements (FR-RSVP-013): Documented `update-reservation.ts` action, API endpoint, business rules including `confirmedByStore` reset requirement, time window validation (`cancelHours`), status constraints (Pending only), and authorization requirements. Separated customer actions from store admin actions in API design section. |
 | 1.2 | 2025-01-27 | System | Updated integration requirements based on Google Actions Center Appointments Redirect documentation. Added onboarding/launch process (sandbox/production workflow), eligibility requirements (physical location, Google Maps address verification), feed-based integration support, conversion tracking requirements, and action links specifications. Clarified multiple integration approaches (API-based vs Feed-based). Added feed generation, validation, and submission actions. |
 | 1.1 | 2025-01-27 | System | Added comprehensive Reserve with Google integration technical requirements including OAuth 2.0 flow, API client implementation, webhook handling, token management, sync strategy, and security considerations. Updated database schema requirements, API routes, and environment variables. |
 | 1.0 | 2025-01-27 | System | Initial technical requirements document |

@@ -456,9 +456,8 @@ Completed (50) [when service is finished]
 
 **FR-RSVP-019:** Store staff and Store admins must be able to mark reservation status:
 
-- Mark as "seated" when customers arrive (`arriveTime` recorded)
+- Mark as "completed" when customers arrive (`arriveTime` recorded)
 - Mark as "no-show" if customers don't arrive
-- Mark as "completed" after service
 - Cancel reservations (with reason tracking)
 - View customer signature if provided
 

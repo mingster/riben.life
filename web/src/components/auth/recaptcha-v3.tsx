@@ -73,20 +73,10 @@ function RecaptchaV3Style() {
 	const { lang } = useLang();
 
 	useEffect(() => {
-		// Log script loading status for debugging
+		// Monitor script loading with timeout - only show error if script fails to load after delay
 		if (typeof window === "undefined") return;
 
-		// Check if script is loading (supports both regular and Enterprise)
-		const scriptTag = document.querySelector(
-			'script[src*="recaptcha"][src*="enterprise"], script[src*="recaptcha"][src*="api"]',
-		);
-		if (!scriptTag) {
-			console.warn(
-				"reCAPTCHA script tag not found. The provider should load it automatically.",
-			);
-		}
-
-		// Monitor script loading with timeout
+		// Wait for script to load - provider loads it asynchronously
 		const timeout = setTimeout(() => {
 			const grecaptcha = (window as any).grecaptcha;
 			if (!executeRecaptcha && !grecaptcha) {
