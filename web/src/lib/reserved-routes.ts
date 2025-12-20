@@ -2,7 +2,7 @@
  * Reserved route names that should not be treated as store IDs
  *
  * These routes are protected from being interpreted as dynamic [storeId] parameters
- * in the (store) route group. This prevents conflicts with application routes.
+ * in the s route group. This prevents conflicts with application routes.
  */
 export const RESERVED_STORE_ROUTES = [
 	"undefined",

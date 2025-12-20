@@ -44,10 +44,10 @@ export const DropdownCart = () => {
 
 		if (params.facilityId !== null) {
 			router.push(
-				`/${params.storeId}/checkout/?facilityId=${params.facilityId}`,
+				`/s/${params.storeId}/checkout/?facilityId=${params.facilityId}`,
 			);
 		} else {
-			router.push(`/${params.storeId}/checkout`);
+			router.push(`/s/${params.storeId}/checkout`);
 		}
 	}
 

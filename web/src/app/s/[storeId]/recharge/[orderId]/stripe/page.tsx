@@ -24,7 +24,7 @@ export default async function RechargeStripePage(props: { params: Params }) {
 	});
 
 	if (!session?.user?.id) {
-		const callbackUrl = `/${params.storeId}/recharge/${params.orderId}/stripe`;
+		const callbackUrl = `/s/${params.storeId}/recharge/${params.orderId}/stripe`;
 		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
 	}
 
@@ -32,22 +32,22 @@ export default async function RechargeStripePage(props: { params: Params }) {
 	const order = await getOrderById(params.orderId);
 
 	if (!order) {
-		redirect(`/${params.storeId}/recharge`);
+		redirect(`/s/${params.storeId}/recharge`);
 	}
 
 	// Verify order belongs to user
 	if (order.userId !== session.user.id) {
-		redirect(`/${params.storeId}/recharge`);
+		redirect(`/s/${params.storeId}/recharge`);
 	}
 
 	// Verify order belongs to store
 	if (order.storeId !== params.storeId) {
-		redirect(`/${params.storeId}/recharge`);
+		redirect(`/s/${params.storeId}/recharge`);
 	}
 
 	// If already paid, redirect to success
 	if (order.isPaid) {
-		redirect(`/${params.storeId}/recharge/${params.orderId}/success`);
+		redirect(`/s/${params.storeId}/recharge/${params.orderId}/success`);
 	}
 
 	transformPrismaDataForJson(order);

@@ -46,10 +46,10 @@ export default async function StoreHomePage(props: {
 	const acceptReservation =
 		rsvpSettings && rsvpSettings.acceptReservation === true;
 	if (store.useOrderSystem) {
-		redirect(`/${store.id}/menu`);
+		redirect(`/s/${store.id}/menu`);
 	} else if (acceptReservation) {
-		redirect(`/${store.id}/reservation`);
+		redirect(`/s/${store.id}/reservation`);
 	} else {
-		redirect(`/${store.id}/faq`);
+		redirect(`/s/${store.id}/faq`);
 	}
 }

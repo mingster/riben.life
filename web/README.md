@@ -172,7 +172,7 @@ For detailed file organization standards, see [File Organization Standards](./.c
 The application uses Next.js 15 App Router with route groups for logical organization:
 
 - **`(root)/`**: Public-facing pages (home, account, checkout, orders)
-- **`(store)/[storeId]/`**: Store-specific pages (menu, products, FAQ, support)
+- **`s/[storeId]/`**: Store-specific pages (menu, products, FAQ, support)
 - **`storeAdmin/`**: Store management dashboard (requires store owner role)
 - **`sysAdmin/`**: Platform administration (requires admin role)
 - **`api/`**: API endpoints for external integrations and webhooks

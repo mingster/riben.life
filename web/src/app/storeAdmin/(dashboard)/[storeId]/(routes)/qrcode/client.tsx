@@ -43,9 +43,9 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 	};
 
 	const baseUrl = getBaseUrl();
-	const orderingUrl = `${baseUrl}/${store.id}`;
-	const reservationUrl = `${baseUrl}/${store.id}/reservation`;
-	const waitingListUrl = `${baseUrl}/${store.id}/waiting-list`;
+	const orderingUrl = `${baseUrl}/s/${store.id}`;
+	const reservationUrl = `${baseUrl}/s/${store.id}/reservation`;
+	const waitingListUrl = `${baseUrl}/s/${store.id}/waiting-list`;
 
 	const QrCodeCard = ({
 		title,
@@ -143,7 +143,7 @@ export const QrCodeClient: React.FC<props> = ({ store, facilities }) => {
 					<CardContent>
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 							{facilities.map((facility) => {
-								const facilityUrl = `${baseUrl}/${store.id}/${facility.id}`;
+								const facilityUrl = `${baseUrl}/s/${store.id}/${facility.id}`;
 								return (
 									<Card key={facility.id}>
 										<CardHeader>

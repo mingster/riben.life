@@ -341,14 +341,14 @@ export function ReservationForm({
 							if (requiresSignIn) {
 								// Anonymous user: redirect to sign-in, then to recharge
 								const rsvpId = data.rsvp.id;
-								const callbackUrl = `/${params.storeId}/recharge?rsvpId=${rsvpId}`;
+								const callbackUrl = `/s/${params.storeId}/recharge?rsvpId=${rsvpId}`;
 								router.push(
 									`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`,
 								);
 							} else {
 								// Logged-in user: redirect directly to recharge
 								const rsvpId = data.rsvp.id;
-								router.push(`/${params.storeId}/recharge?rsvpId=${rsvpId}`);
+								router.push(`/s/${params.storeId}/recharge?rsvpId=${rsvpId}`);
 							}
 						} else {
 							// No prepaid required: show success message
@@ -392,7 +392,7 @@ export function ReservationForm({
 				<div className="mb-4 space-y-3 rounded-md bg-yellow-50 p-4 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
 					<p>{t("reservation_prepaid_required")}</p>
 					<Link
-						href={`/signIn/?callbackUrl=/${params.storeId}/reservation`}
+						href={`/signIn/?callbackUrl=/s/${params.storeId}/reservation`}
 						className="inline-block"
 					>
 						<Button

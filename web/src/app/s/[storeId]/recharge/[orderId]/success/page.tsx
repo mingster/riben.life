@@ -34,7 +34,7 @@ export default async function RechargeSuccessPage(props: { params: Params }) {
 	});
 
 	if (!order) {
-		redirect(`/${params.storeId}`);
+		redirect(`/s/${params.storeId}`);
 	}
 
 	transformPrismaDataForJson(order);
@@ -64,7 +64,7 @@ export default async function RechargeSuccessPage(props: { params: Params }) {
 					</div>
 					<div className="flex flex-col sm:flex-row gap-2 pt-4">
 						<Button asChild className="flex-1 h-10 sm:h-9">
-							<Link href={`/${params.storeId}`}>Back to Store</Link>
+							<Link href={`/s/${params.storeId}`}>Back to Store</Link>
 						</Button>
 						<Button asChild variant="outline" className="flex-1 h-10 sm:h-9">
 							<Link href="/account/subscription?tab=credits">

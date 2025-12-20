@@ -64,7 +64,7 @@ export function SheetMenu({ store }: props) {
 						variant="link"
 						asChild
 					>
-						<Link href={`/${store.id}`} className="flex gap-2 items-center">
+						<Link href={`/s/${store.id}`} className="flex gap-2 items-center">
 							<IconHome className="mr-1 h-6 w-6 sm:size-6" />
 						</Link>
 					</Button>

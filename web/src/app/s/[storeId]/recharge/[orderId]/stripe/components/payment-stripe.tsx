@@ -39,7 +39,7 @@ export function PaymentStripe({ order, storeId }: PaymentStripeProps) {
 	// Create payment intent
 	useEffect(() => {
 		if (order.isPaid) {
-			router.push(`/${storeId}/recharge/${order.id}/success`);
+			router.push(`/s/${storeId}/recharge/${order.id}/success`);
 			return;
 		}
 
@@ -143,7 +143,7 @@ const StripePayButton: React.FC<{ orderId: string; storeId: string }> = ({
 	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 	const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
-	const returnUrl = `${getAbsoluteUrl()}/${storeId}/recharge/${orderId}/stripe/confirmed`;
+	const returnUrl = `${getAbsoluteUrl()}/s/${storeId}/recharge/${orderId}/stripe/confirmed`;
 
 	const handlePayment = async () => {
 		if (!stripe || !elements) {

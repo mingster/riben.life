@@ -113,7 +113,7 @@ src/app/
 │   ├── privacy/            # Privacy policy
 │   ├── terms/              # Terms of service
 │   └── unv/                # Universal landing pages
-├── (store)/                 # Store route group
+├── s/                       # Store route group
 │   └── [storeId]/          # Dynamic store routes
 │       ├── category/       # Category pages
 │       ├── product/        # Product pages
