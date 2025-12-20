@@ -33,12 +33,12 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
 	function onCheckout() {
 		if (params.facilityId !== null) {
 			router.push(
-				`/${params.storeId}/checkout/?facilityId=${params.facilityId}`,
+				`/s/${params.storeId}/checkout/?facilityId=${params.facilityId}`,
 			);
 		} else {
-			router.push(`/${params.storeId}/checkout`);
+			router.push(`/s/${params.storeId}/checkout`);
 		}
-		//router.push(`/${params.storeId}/checkout/?facilityId=${params.facilityId}`);
+		//router.push(`/s/${params.storeId}/checkout/?facilityId=${params.facilityId}`);
 	}
 
 	useEffect(() => {

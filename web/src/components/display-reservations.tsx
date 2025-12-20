@@ -32,7 +32,7 @@ import { deleteReservationAction } from "@/actions/store/reservation/delete-rese
 import { getStoreDataAction } from "@/actions/store/reservation/get-store-data";
 import { getRsvpSettingsAction } from "@/actions/store/reservation/get-rsvp-settings";
 import { toastError, toastSuccess } from "@/components/toaster";
-import { ReservationDialog } from "@/app/(store)/[storeId]/reservation/components/reservation-dialog";
+import { ReservationDialog } from "@/app/s/[storeId]/reservation/components/reservation-dialog";
 import type { StoreFacility, RsvpSettings, StoreSettings } from "@/types";
 import { getUtcNow } from "@/utils/datetime-utils";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
@@ -469,7 +469,7 @@ export const DisplayReservations = ({
 								<div className="font-medium text-sm truncate">
 									{item.Store?.id ? (
 										<Link
-											href={`/${item.Store.id}/reservation`}
+											href={`/s/${item.Store.id}/reservation`}
 											className="hover:underline text-primary"
 										>
 											{item.Store.name}
@@ -648,7 +648,7 @@ export const DisplayReservations = ({
 									<td className="px-3 py-2 text-xs">
 										{item.Store?.id ? (
 											<Link
-												href={`/${item.Store.id}/reservation`}
+												href={`/s/${item.Store.id}/reservation`}
 												className="hover:underline text-primary"
 											>
 												{item.Store.name}

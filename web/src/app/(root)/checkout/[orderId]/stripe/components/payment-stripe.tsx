@@ -110,7 +110,7 @@ const PaymentStripe: React.FC<paymentProps> = ({ order }) => {
 
 	const router = useRouter();
 	if (order.isPaid) {
-		router.push(`/${order.storeId}/billing/${order.id}`);
+		router.push(`/s/${order.storeId}/billing/${order.id}`);
 
 		return;
 	}

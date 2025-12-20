@@ -24,7 +24,7 @@ export default async function SupportHomePage(props: {
 	});
 
 	if (!session) {
-		redirect(`/signIn/?callbackUrl=/${params.storeId}/support`);
+		redirect(`/signIn/?callbackUrl=/s/${params.storeId}/support`);
 	}
 
 	// Parallel queries for optimal performance - 3x faster!

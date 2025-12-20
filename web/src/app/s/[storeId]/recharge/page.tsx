@@ -32,7 +32,7 @@ export default async function RechargePage(props: {
 	});
 
 	if (!session?.user?.id) {
-		const callbackUrl = `/${params.storeId}/recharge${rsvpId ? `?rsvpId=${rsvpId}` : ""}`;
+		const callbackUrl = `/s/${params.storeId}/recharge${rsvpId ? `?rsvpId=${rsvpId}` : ""}`;
 		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
 	}
 	// Get store and validate credit system is enabled

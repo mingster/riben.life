@@ -47,7 +47,18 @@ export default class BusinessHours {
 			throw new Error("no hours provided");
 		}
 
-		const data = JSON.parse(h) as WeeklySchedule;
+		// Clean JSON string: remove trailing commas (invalid JSON but sometimes present)
+		const cleaned = h.replace(/,(\s*[}\]])/g, "$1");
+
+		let data: WeeklySchedule;
+		try {
+			data = JSON.parse(cleaned) as WeeklySchedule;
+		} catch (error) {
+			throw new Error(
+				`Invalid JSON format for business hours: ${error instanceof Error ? error.message : String(error)}`,
+			);
+		}
+
 		if (!data) {
 			throw new Error("not valid JSON format");
 		}

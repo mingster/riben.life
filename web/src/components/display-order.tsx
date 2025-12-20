@@ -13,6 +13,7 @@ import { formatDateTime } from "@/utils/datetime-utils";
 import type { orderitemview } from "@prisma/client";
 import Currency from "./currency";
 import { DisplayOrderStatus } from "./display-order-status";
+import Link from "next/link";
 
 type orderProps = { order: StoreOrder };
 
@@ -53,7 +54,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 	};
 
 	const contactSeller = (storeId: string, orderId: string) => {
-		router.push(`${storeId}/support/new?orderid=${orderId}`);
+		router.push(`/s/${storeId}/support/new?orderid=${orderId}`);
 	};
 
 	const canPay =
@@ -69,7 +70,12 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 				<div className="space-y-2 sm:space-y-1 mb-3">
 					<div className="flex items-start justify-between gap-2">
 						<div className="font-semibold text-sm sm:text-base truncate">
-							{order.Store?.name}
+							<Link
+								href={`/s/${order.Store.id}`}
+								className="hover:underline text-primary"
+							>
+								{order.Store.name}
+							</Link>
 						</div>
 						<div className="text-[10px] sm:text-xs text-muted-foreground font-mono shrink-0">
 							{formatDateTime(order.createdAt)}
