@@ -319,40 +319,59 @@ Store Admins have all Store Staff permissions, plus:
 - If `prepaidRequired` is true, a store order is automatically created with `minPrepaidAmount`
 - The reservation remains in `Pending` status until payment and/or confirmation occurs
 
-**Payment Flow (if prepaid required):**
+**Payment Flow (if prepaid required and store uses credit system):**
 
-- Customer can create a pending RSVP first, then be prompted to complete recharge of store credit
-- When payment is received (via customer credit or order payment), the `alreadyPaid` flag is set to `true`
-- The reservation status remains `Pending (0)` until the service lifecycle begins
+- Customer can create a pending RSVP first, then be prompted to complete recharge of store credit if his/her credit is not sufficient.
+- When customer's credit is recharged, system deduced needed credit for the RSVP, the `alreadyPaid` flag is set to `true`
+- The transaction is saved to StoreOrder, CreditLedger, and StoreLeger for the recharge and the credit usage.
+- The reservation status changes to `ReadyToConfirm (10)`
 - The reservation is linked to the order via `orderId`
-- Store staff notifications are sent only when `alreadyPaid = true`
+- Store staff notifications are sent only when `alreadyPaid = true` and status is `ReadyToConfirm (10)`
 
-**Confirmation Flow:**
+**Payment Flow (if prepaid required and store do not use credit system):**
 
-- Store staff or admin can confirm the reservation by setting `confirmedByStore = true`
-- Customer can confirm the reservation (if requested by store) by setting `confirmedByCustomer = true`
-- Confirmation can occur in any order (store first, customer first, or simultaneously)
-- Both confirmation flags can be true simultaneously
-- The reservation status remains `Pending (0)` until the service lifecycle begins (e.g., when customer arrives and status changes to `Ready`)
+- Customer can create a pending RSVP first, then be prompted for the needed payment.
+- Customer completes the needed payment, the transaction is saved to StoreOrder, CreditLedger, and StoreLeger for the payment.
+- The reservation status changes to `ReadyToConfirm (10)`
+- Store staff notifications are sent only when `alreadyPaid = true` and status is `ReadyToConfirm (10)`
+
+**Payment Flow (if prepaid is not required):**
+
+- Customer create a RSVP, the reservation status is `ReadyToConfirm (10)`
+- Store staff notifications are sent only when `alreadyPaid = true` and status is `ReadyToConfirm (10)`
+
+**Confirmation Flow for store staff:**
+
+- Store staff or admin receive notification to confirm the `ReadyToConfirm (10)` reservation.
+- As staff confirm the reservation, reservation's `confirmedByStore = true`, the status changes to `Ready (40)`.
+- Customer receives notification for the update.
+
+**Confirmation Flow for customer:**
+
+- Customer receives notification again 24 hours prior to the reservation time.
+- Customer confirm the reservation, which will update reservation to `confirmedByCustomer = true`
 
 **Service Flow:**
 
-- When the customer arrives and is ready for service, store staff marks status as `Ready (40)`
-- The `arriveTime` field is recorded when status changes to `Ready`
-- After service is completed, store staff marks status as `Completed (50)`
+- When the customer arrives and service is completed, store staff marks status as `Completed (50)`
+- The `arriveTime` field is recorded as the status changes.
 
 **Termination States:**
 
+- Customer can cancel RSVP if `RSVPSettings.canCancel = true` and date time is prior to `cancelHours`.
+- If the cancel policy is fulfilled, customer can cancel RSVP regardless status.
 - If the reservation is cancelled (by customer or store), status changes to `Cancelled (60)`
+- When cancelled, customer credit or payment will be refunded if any.
 - If the customer does not show up for the reservation, store staff can mark status as `NoShow (70)`
-- Once in `Cancelled` or `NoShow` status, the reservation cannot transition to active states
+- Once in `Cancelled` or `NoShow` status, the reservation cannot transition to active states.
+- Customer can delete the RSVP when it still pending.
 
 **Status Transition Rules:**
 
-- Status transitions are generally forward-moving (e.g., `Pending` → `Ready` → `Completed`)
+- Status transitions are generally forward-moving (e.g., `Pending` → `ReadyToConfirm` → `Ready` → `Completed`)
 - Payment status (`alreadyPaid`) and confirmation flags (`confirmedByStore`, `confirmedByCustomer`) are tracked separately from the status enum
 - Status can transition to `Cancelled` or `NoShow` from any active state
-- Store staff and store admins can manually set status to any valid state (with appropriate business rule validation)
+- Store admins can manually set status to any valid state (with appropriate business rule validation)
 - Status transitions should be logged for audit purposes
 
 **Lifecycle Diagram:**
@@ -362,7 +381,9 @@ Pending (0)
   [Payment: alreadyPaid flag can be set to true if prepaid required]
   [Confirmation: confirmedByStore and/or confirmedByCustomer can be set to true]
   ↓
-Ready (40) [when customer arrives]
+ReadyToConfirm (10) [when customer paid. Notification will be sent to store staff]
+  ↓
+Ready (40) [when staff confirmed the reservation request]
   ↓
 Completed (50) [when service is finished]
 
@@ -390,6 +411,7 @@ Completed (50) [when service is finished]
 - Update party size
 - Update special requests/notes
 - Modify within the allowed cancellation window (`cancelHours`)
+- When modified, `ConfirmedByStore` is set to false again.
 
 **FR-RSVP-014:** Customers must be able to cancel reservations:
 
@@ -434,9 +456,8 @@ Completed (50) [when service is finished]
 
 **FR-RSVP-019:** Store staff and Store admins must be able to mark reservation status:
 
-- Mark as "seated" when customers arrive (`arriveTime` recorded)
+- Mark as "completed" when customers arrive (`arriveTime` recorded)
 - Mark as "no-show" if customers don't arrive
-- Mark as "completed" after service
 - Cancel reservations (with reason tracking)
 - View customer signature if provided
 

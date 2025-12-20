@@ -17,6 +17,7 @@ import {
 import { createReservationSchema } from "./create-reservation.validation";
 import { RsvpStatus } from "@/types/enum";
 import { processRsvpPrepaidPayment } from "./process-rsvp-prepaid-payment";
+import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
 
 export const createReservationAction = baseClient
 	.metadata({ name: "createReservation" })
@@ -135,13 +136,23 @@ export const createReservationAction = baseClient
 				id: facilityId,
 				storeId,
 			},
+			select: {
+				id: true,
+				businessHours: true,
+			},
 		});
 
 		if (!facility) {
 			throw new SafeError("Facility not found");
 		}
 
-		// TODO: Add availability validation (check existing reservations, business hours, etc.)
+		// Validate business hours (if facility has business hours)
+		validateFacilityBusinessHours(
+			facility.businessHours,
+			rsvpTimeUtc,
+			storeTimezone,
+			facilityId,
+		);
 
 		// Process prepaid payment using shared function
 		const prepaidResult = await processRsvpPrepaidPayment({

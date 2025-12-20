@@ -662,6 +662,7 @@
   "rsvp_cancel_reservation_confirmation": "您確定要取消此預約嗎？此操作無法復原。",
   "rsvp_cancellation_policy": "若你無法依預約時間前來，請在{{hours}}小時前取消預約。",
   "RSVP_Cancellation_Settings": "取消設定",
+  "reservation_cancelled_by_customer": "客戶取消預約（已退還 {{points}} 點）",
   "rsvp_cancelled": "已取消",
   "rsvp_cancelled_descr": "標記此預約為已取消狀態。若已付款，會退還給客戶。",
   "rsvp_completed_readonly": "此預約已完成，無法編輯。",
