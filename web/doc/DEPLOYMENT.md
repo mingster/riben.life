@@ -27,7 +27,7 @@ sudo hostnamectl status
 ```bash
 sudo nano /etc/hosts
 
-127.0.0.1    localhost
+localhost    localhost
 127.0.1.1    riben.life
 ```
 
@@ -105,7 +105,6 @@ sudo install lazygit -D -t /usr/local/bin/
 sudo apt install postgresql postgresql-contrib
 ```
 
-
 #### PM2
 
 ```bash
@@ -145,7 +144,7 @@ sudo nano /etc/nginx/sites-available/riben.life
 
 Add the following configuration:
 
-```text
+```bash
 server {
     listen 80;
     server_name riben.life;
@@ -153,11 +152,39 @@ server {
     location / {
         proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
+
+        # Critical for OAuth callbacks and better-auth: pass proxy headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+
+        # critical: avoid caching dynamic responses
+        add_header Cache-Control "no-store" always;
+
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
+        
+        # Increase timeouts for OAuth callbacks
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
+
+    # Static build assets can be cached aggressively (safe)
+    #location ^~ /_next/static/ {
+    #    proxy_pass http://localhost:3001;
+    #    add_header Cache-Control "public, max-age=31536000, immutable" always;
+    #}
+
+    # If you use next/image
+    #location ^~ /_next/image/ {
+    #    proxy_pass http://localhost:3001;
+    #    add_header Cache-Control "public, max-age=60" always;
+    #}
 }
 ```
 
@@ -188,7 +215,6 @@ sudo certbot --nginx -d riben.life
 ```
 
 ## configure
-
 
 ### clone the source
 

@@ -11,6 +11,16 @@ import { Loader } from "@/components/loader";
 import { getAbsoluteUrl } from "@/utils/utils";
 import logger from "@/lib/logger";
 
+function isNextRedirectError(err: unknown): boolean {
+	// next/navigation's redirect() throws an internal error used for control flow.
+	// It commonly has `message === "NEXT_REDIRECT"` and/or a `digest` starting with "NEXT_REDIRECT".
+	if (err instanceof Error && err.message === "NEXT_REDIRECT") return true;
+	if (typeof err !== "object" || err === null) return false;
+	if (!("digest" in err)) return false;
+	const digest = (err as { digest?: unknown }).digest;
+	return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT");
+}
+
 /**
  * Payment confirmation page for credit recharge.
  * Called when Stripe redirects back after payment.
@@ -79,6 +89,10 @@ export default async function RechargeConfirmedPage(props: {
 				);
 			}
 		} catch (error) {
+			if (isNextRedirectError(error)) {
+				// Expected control flow from redirect(); do not log as an error.
+				throw error;
+			}
 			logger.error("Payment confirmation error", {
 				metadata: {
 					orderId: params.orderId,

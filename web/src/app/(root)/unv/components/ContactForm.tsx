@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
+import { RecaptchaV3 } from "@/components/auth/recaptcha-v3";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -393,26 +394,9 @@ const ContactFormInner = () => {
 // Following Google Cloud documentation: https://docs.cloud.google.com/recaptcha/docs/instrument-web-pages
 // Enterprise mode uses grecaptcha.enterprise.execute() and loads enterprise.js script
 export const ContactForm = () => {
-	const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA as string;
-
-	if (!siteKey) {
-		logger.error("NEXT_PUBLIC_RECAPTCHA environment variable is not set", {
-			tags: ["error"],
-		});
-		return (
-			<div className="text-red-500 p-4">
-				reCAPTCHA configuration error. Please contact support.
-			</div>
-		);
-	}
-
 	return (
-		<GoogleReCaptchaProvider
-			reCaptchaKey={siteKey}
-			useEnterprise={true}
-			useRecaptchaNet={false}
-		>
+		<RecaptchaV3 actionName="contact_form">
 			<ContactFormInner />
-		</GoogleReCaptchaProvider>
+		</RecaptchaV3>
 	);
 };

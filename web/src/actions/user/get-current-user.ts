@@ -48,6 +48,8 @@ const getCurrentUser = async (): Promise<User | null> => {
 			members: true,
 			invitations: true,
 			Reservations: {
+				// Fetch ALL reservations for the user, regardless of status
+				// No status filter - includes Pending, Ready, Completed, Cancelled, NoShow, etc.
 				include: {
 					Store: true,
 					Facility: true,
@@ -63,6 +65,7 @@ const getCurrentUser = async (): Promise<User | null> => {
 			CustomerCreditLedger: {
 				include: {
 					Creator: true,
+					Store: true,
 				},
 				orderBy: {
 					createdAt: "desc",
@@ -76,7 +79,6 @@ const getCurrentUser = async (): Promise<User | null> => {
 	}
 
 	transformPrismaDataForJson(obj);
-
 	//console.log(obj.Rsvp.map((r) => r.rsvpTime));
 	return obj as User;
 };

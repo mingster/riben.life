@@ -25,7 +25,7 @@ export function SessionWrapper({ children }: { children: ReactNode }) {
 			}}
 			Link={Link}
 			social={{
-				providers: ["google", "line" /*"facebook", "apple", "discord"*/],
+				providers: ["google", "line", "apple" /*"facebook", "discord"*/],
 			}}
 			/*
 			captcha={{

@@ -4,7 +4,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
-import { transformDecimalsToNumbers } from "@/utils/utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 const getRsvpSettingsSchema = z.object({});
 
@@ -28,7 +28,11 @@ export const getRsvpSettingsAction = storeActionClient
 		const rsvpSettings = await sqlClient.rsvpSettings.findFirst({
 			where: { storeId },
 		});
-		transformDecimalsToNumbers(rsvpSettings);
+
+		// Transform Decimal objects to numbers for client components
+		if (rsvpSettings) {
+			transformPrismaDataForJson(rsvpSettings);
+		}
 
 		return { rsvpSettings };
 	});

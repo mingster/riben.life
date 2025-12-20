@@ -1,23 +1,38 @@
-import { sendGAEvent } from "@next/third-parties/google";
+type GAEventParams = Record<string, unknown> & { event: string };
 
-// Wrapper to only send GA events in production
-const sendGAEventSafe = (params: Parameters<typeof sendGAEvent>[0]) => {
-	if (process.env.NODE_ENV === "production") {
-		sendGAEvent(params);
-	}
+// Wrapper to only send GA events in production, and only from the client.
+// IMPORTANT: Do NOT import "@next/third-parties/google" at module scope.
+// It is a client-only module and will throw if evaluated from the server.
+const sendGAEventSafe = (params: GAEventParams) => {
+	return; //disable analytics for now
+
+	if (process.env.NODE_ENV !== "production") return;
+
+	if (typeof window === "undefined") return;
+
+	// Fire-and-forget to keep call sites synchronous
+	void import("@next/third-parties/google")
+		.then(({ sendGAEvent }) => {
+			sendGAEvent(params);
+		})
+		.catch(() => {
+			// no-op: analytics should never break the app
+		});
 };
 
 // Enhanced analytics utilities for the riben.life platform
 export const analytics = {
 	// User authentication events
-	trackLogin: (method: "email" | "google" | "line" | "passkey" = "email") => {
+	trackLogin: (
+		method: "email" | "google" | "line" | "appleId" | "passkey" = "email",
+	) => {
 		sendGAEventSafe({
 			event: "login",
 			method: method,
 		});
 	},
 
-	trackSignUp: (method: "email" | "google" | "line" = "email") => {
+	trackSignUp: (method: "email" | "google" | "line" | "appleId" = "email") => {
 		sendGAEventSafe({
 			event: "sign_up",
 			method: method,

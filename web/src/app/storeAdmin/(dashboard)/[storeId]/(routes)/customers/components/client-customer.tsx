@@ -257,7 +257,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 							className="cursor-pointer"
 							onClick={() => onCopy(item.id)}
 						>
-							<IconCopy className="mr-0 size-4" /> {t("copy_user_id")}
+							<IconCopy className="mr-0 size-4" /> {t("copy_id")}
 						</DropdownMenuItem>
 						{item.stripeCustomerId && (
 							<DropdownMenuItem

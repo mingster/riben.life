@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export const updateStoreTermsAction = storeActionClient
 	.metadata({ name: "updateStoreTerms" })
@@ -46,6 +47,9 @@ export const updateStoreTermsAction = storeActionClient
 				updatedAt: getUtcNowEpoch(),
 			},
 		});
+
+		// Transform Decimal objects to numbers for client components
+		transformPrismaDataForJson(storeSettings);
 
 		return { storeSettings };
 	});

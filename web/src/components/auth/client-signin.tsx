@@ -4,6 +4,7 @@ import { IconBrandMeta } from "@tabler/icons-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import GoogleLoginButton from "@/components/auth/button-google-login";
+import AppleLoginButton from "@/components/auth/button-apple-login";
 import PasskeyLoginButton from "@/components/auth/button-passkey-login";
 import FormMagicLink from "@/components/auth/form-magic-link";
 import {
@@ -48,6 +49,7 @@ export default function ClientSignIn({
 			<CardContent className="flex flex-col gap-10">
 				<GoogleLoginButton callbackUrl={callbackUrl} />
 				<LineLoginButton callbackUrl={callbackUrl} />
+				<AppleLoginButton callbackUrl={callbackUrl} />
 				<FormMagicLink callbackUrl={callbackUrl} />
 
 				{/* display supported 3rd party login buttons */}
@@ -55,8 +57,6 @@ export default function ClientSignIn({
 					<PasskeyLoginButton callbackUrl={callbackUrl} />
 					<IconBrandMeta className="mr-0 size-4" />
 				</div>
-
-				<Separator className="!w-auto grow pt-5 pb-5 bg-transparent" />
 
 				<CardFooter className="flex py-1 justify-end items-center pt-10">
 					<div className="flex gap-1">

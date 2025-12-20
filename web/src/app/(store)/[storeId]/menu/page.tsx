@@ -18,7 +18,7 @@ import { StoreProductList } from "../components/store-product-list";
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-// online order page
+// allow anonymous or signed-in customer to access online order page.
 //
 export default async function OnlineOrderPage(props: {
 	params: Params;

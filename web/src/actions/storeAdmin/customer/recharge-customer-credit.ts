@@ -10,6 +10,7 @@ import { rechargeCustomerCreditSchema } from "./recharge-customer-credit.validat
 import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
 import { Prisma } from "@prisma/client";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { getT } from "@/app/i18n";
 
 export const rechargeCustomerCreditAction = storeActionClient
 	.metadata({ name: "rechargeCustomerCredit" })
@@ -30,12 +31,12 @@ export const rechargeCustomerCreditAction = storeActionClient
 		}
 
 		// Verify customer exists
-		const user = await sqlClient.user.findUnique({
+		const customer = await sqlClient.user.findUnique({
 			where: { id: userId },
 			select: { id: true },
 		});
 
-		if (!user) {
+		if (!customer) {
 			throw new SafeError("Customer not found");
 		}
 
@@ -62,27 +63,27 @@ export const rechargeCustomerCreditAction = storeActionClient
 			throw new SafeError("Store not found");
 		}
 
-		// Get shipping method with identifier "takeout" for the order (required field)
+		// Get shipping method with identifier "digital" for the order (required field)
 		let shippingMethodId: string;
 
-		// First, try to find "takeout" in store's shipping methods
-		const takeoutMethod = store.StoreShippingMethods.find(
-			(mapping) => mapping.ShippingMethod.identifier === "takeout",
+		// First, try to find "digital" in store's shipping methods
+		const digitalMethod = store.StoreShippingMethods.find(
+			(mapping) => mapping.ShippingMethod.identifier === "digital",
 		);
 
-		if (takeoutMethod) {
-			shippingMethodId = takeoutMethod.ShippingMethod.id;
+		if (digitalMethod) {
+			shippingMethodId = digitalMethod.ShippingMethod.id;
 		} else {
 			// If not found in store's methods, try to find it directly
-			const takeoutShippingMethod = await sqlClient.shippingMethod.findFirst({
+			const digitalShippingMethod = await sqlClient.shippingMethod.findFirst({
 				where: {
-					identifier: "takeout",
+					identifier: "digital",
 					isDeleted: false,
 				},
 			});
 
-			if (takeoutShippingMethod) {
-				shippingMethodId = takeoutShippingMethod.id;
+			if (digitalShippingMethod) {
+				shippingMethodId = digitalShippingMethod.id;
 			} else {
 				// Fall back to default shipping method
 				const defaultShippingMethod = await sqlClient.shippingMethod.findFirst({
@@ -97,7 +98,7 @@ export const rechargeCustomerCreditAction = storeActionClient
 
 		let orderId: string | null = null;
 
-		// If paid recharge, create StoreOrder first
+		// If paid in cash, create StoreOrder first
 		if (isPaid && cashAmount && cashAmount > 0) {
 			// Find the cash payment method by payUrl
 			const cashPaymentMethod = await sqlClient.paymentMethod.findFirst({
@@ -130,6 +131,9 @@ export const rechargeCustomerCreditAction = storeActionClient
 			orderId = order.id;
 		}
 
+		// Get translation function for default notes
+		const { t } = await getT();
+
 		// Process credit top-up using the shared function
 		const result = await processCreditTopUp(
 			storeId,
@@ -139,8 +143,8 @@ export const rechargeCustomerCreditAction = storeActionClient
 			creatorId, // Store operator who created this
 			note ||
 				(isPaid
-					? `In-person cash recharge`
-					: `Promotional recharge by operator`),
+					? t("in_person_cash_recharge_default_note")
+					: t("promotional_recharge_by_operator_default_note")),
 		);
 
 		// Create StoreLedger entry
@@ -153,7 +157,7 @@ export const rechargeCustomerCreditAction = storeActionClient
 		const balance = Number(lastLedger ? lastLedger.balance : 0);
 
 		if (isPaid && cashAmount && cashAmount > 0) {
-			// Paid recharge: create StoreLedger entry with cash amount
+			// Paid in person: create StoreLedger entry with cash amount
 			await sqlClient.storeLedger.create({
 				data: {
 					storeId,
@@ -164,8 +168,27 @@ export const rechargeCustomerCreditAction = storeActionClient
 					currency: store.defaultCurrency,
 					type: StoreLedgerType.CreditRecharge,
 					balance: new Prisma.Decimal(balance + Number(cashAmount)), // Balance increases
-					description: `In-Person Credit Recharge - ${result.totalCredit} points`,
-					note: `Cash payment: ${cashAmount} ${store.defaultCurrency}. Credit given: ${result.amount} + bonus ${result.bonus} = ${result.totalCredit} points. Operator: ${creatorId}. ${note || ""}`,
+					description: t("in_person_credit_recharge_description_ledger", {
+						totalCredit: result.totalCredit,
+					}),
+					note: note
+						? t("in_person_credit_recharge_note_with_extra", {
+								cashAmount,
+								currency: store.defaultCurrency.toUpperCase(),
+								amount: result.amount,
+								bonus: result.bonus,
+								totalCredit: result.totalCredit,
+								operator: creatorId,
+								note,
+							})
+						: t("in_person_credit_recharge_note_ledger", {
+								cashAmount,
+								currency: store.defaultCurrency.toUpperCase(),
+								amount: result.amount,
+								bonus: result.bonus,
+								totalCredit: result.totalCredit,
+								operator: creatorId,
+							}),
 					createdBy: creatorId, // Store operator who created this ledger entry
 					availability: getUtcNowEpoch(), // Immediate for cash
 					createdAt: getUtcNowEpoch(),
@@ -173,16 +196,25 @@ export const rechargeCustomerCreditAction = storeActionClient
 			});
 		} else {
 			// Promotional recharge: create a minimal system order for StoreLedger reference
-			// Note: According to design doc 3.2, orderId should be null for promotional recharge,
-			// but StoreLedger schema requires orderId. Creating minimal order as workaround.
-			// TODO: Update StoreLedger schema to make orderId nullable
+			//
+			const promoPaymentMethod = await sqlClient.paymentMethod.findFirst({
+				where: {
+					payUrl: "promo",
+					isDeleted: false,
+				},
+			});
+
+			if (!promoPaymentMethod) {
+				throw new SafeError("Promo payment method not found");
+			}
+
 			const systemOrder = await sqlClient.storeOrder.create({
 				data: {
 					storeId,
 					userId,
 					orderTotal: new Prisma.Decimal(0), // Zero amount for promotional
 					currency: store.defaultCurrency,
-					paymentMethodId: "promotional_credit", // Special payment method
+					paymentMethodId: promoPaymentMethod.id, // Special payment method
 					shippingMethodId,
 					orderStatus: OrderStatus.Confirmed,
 					paymentStatus: PaymentStatus.Paid,
@@ -204,8 +236,23 @@ export const rechargeCustomerCreditAction = storeActionClient
 					currency: store.defaultCurrency,
 					type: StoreLedgerType.CreditRecharge,
 					balance: new Prisma.Decimal(balance), // Balance unchanged
-					description: `Promotional Credit Recharge - ${result.totalCredit} points`,
-					note: `Promotional credit: ${result.amount} + bonus ${result.bonus} = ${result.totalCredit} points. Operator: ${creatorId}. ${note || ""}`,
+					description: t("promotional_credit_recharge_description_ledger", {
+						totalCredit: result.totalCredit,
+					}),
+					note: note
+						? t("promotional_credit_recharge_note_with_extra", {
+								amount: result.amount,
+								bonus: result.bonus,
+								totalCredit: result.totalCredit,
+								operator: creatorId,
+								note,
+							})
+						: t("promotional_credit_recharge_note_ledger", {
+								amount: result.amount,
+								bonus: result.bonus,
+								totalCredit: result.totalCredit,
+								operator: creatorId,
+							}),
 					createdBy: creatorId, // Store operator who created this ledger entry
 					availability: getUtcNowEpoch(),
 					createdAt: getUtcNowEpoch(),

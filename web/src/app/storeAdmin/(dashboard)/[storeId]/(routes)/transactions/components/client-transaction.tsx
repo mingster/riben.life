@@ -229,7 +229,7 @@ export function TransactionClient({ serverData }: TransactionClientProps) {
 						onClick={handleClearFilters}
 						className="h-10 sm:h-8"
 					>
-						<span className="text-sm sm:text-xs">{t("clear_Filter")}</span>
+						<span className="text-sm sm:text-xs">{t("clear_filter")}</span>
 					</Button>
 					<div className="flex gap-1 text-xs font-mono text-muted-foreground">
 						{TimerFilterSelections.find(

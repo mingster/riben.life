@@ -40,9 +40,10 @@ type RechargeFormValues = z.infer<typeof rechargeFormSchema>;
 interface RechargeFormProps {
 	storeId: string;
 	store: Store;
+	rsvpId?: string;
 }
 
-export function RechargeForm({ storeId, store }: RechargeFormProps) {
+export function RechargeForm({ storeId, store, rsvpId }: RechargeFormProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const router = useRouter();

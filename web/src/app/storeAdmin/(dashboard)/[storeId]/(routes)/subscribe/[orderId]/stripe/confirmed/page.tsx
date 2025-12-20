@@ -1,16 +1,16 @@
 "use server";
 import Container from "@/components/ui/container";
-import confirmPayment from "@/actions/storeAdmin/subscription/stripe/confirm-payment";
+import confirmSubscriptionPayment from "@/actions/storeAdmin/subscription/stripe/confirm-payment";
 import { SuccessAndRedirect } from "./SuccessAndRedirect";
 import logger from "@/lib/logger";
 
 // This page is triggered when Stripe confirms the payment.
 // Marks the SubscriptionPayment as paid, activates the subscription, and shows confirmation.
 export default async function StripeConfirmedPage(props: {
-	params: Promise<{ orderId: string }>;
+	params: Promise<{ storeId: string; orderId: string }>;
 	searchParams: Promise<{
-		payment_intent: string;
-		payment_intent_client_secret: string;
+		payment_intent?: string;
+		payment_intent_client_secret?: string;
 	}>;
 }) {
 	const searchParams = await props.searchParams;
@@ -25,7 +25,18 @@ export default async function StripeConfirmedPage(props: {
 		);
 	}
 
-	const confirmed = (await confirmPayment(
+	if (
+		!searchParams.payment_intent ||
+		!searchParams.payment_intent_client_secret
+	) {
+		return (
+			<Container>
+				Error: Missing payment intent parameters. Please try again.
+			</Container>
+		);
+	}
+
+	const confirmed = (await confirmSubscriptionPayment(
 		params.orderId,
 		searchParams.payment_intent,
 		searchParams.payment_intent_client_secret,
@@ -36,7 +47,7 @@ export default async function StripeConfirmedPage(props: {
 	if (confirmed) {
 		return (
 			<Container>
-				<SuccessAndRedirect orderId={"12345"} />
+				<SuccessAndRedirect orderId={params.orderId} />
 			</Container>
 		);
 	}

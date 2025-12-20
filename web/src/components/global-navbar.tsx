@@ -169,7 +169,7 @@ export function NavPopover({
 						<ul className="space-y-6"> {/* TODO: add menu items here */}</ul>
 						<div className="flex pt-6 mt-6 border-t border-slate-200 dark:border-slate-200/10">
 							<ThemeToggler />
-							{session !== null ? <DropdownUser /> : <DialogSignIn />}
+							<DropdownUser />
 							<LanguageToggler />
 						</div>
 					</div>

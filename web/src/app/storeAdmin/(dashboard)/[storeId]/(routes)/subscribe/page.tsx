@@ -22,7 +22,7 @@ export default async function StoreSubscribePage(props: {
 	});
 
 	if (!session) {
-		redirect(`/signin?callbackUrl=/storeAdmin/${params.storeId}/subscribe`);
+		redirect(`/signIn?callbackUrl=/storeAdmin/${params.storeId}/subscribe`);
 	}
 
 	// Note: checkStoreStaffAccess already called in layout (cached)

@@ -16,7 +16,6 @@ export default async function BalanceMgmtPage(props: {
 	const ledgers = await sqlClient.storeLedger.findMany({
 		where: {
 			storeId: params.storeId,
-			type: 0,
 		},
 		orderBy: {
 			createdAt: "desc",

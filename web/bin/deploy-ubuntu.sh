@@ -41,59 +41,11 @@ check_permissions() {
     fi
 }
 
-# Create backup of current deployment
-create_backup() {
-    log "Creating backup..."
-    
-    local backup_dir="${APP_DIR}/backups/$(date +'%Y%m%d_%H%M%S')"
-    mkdir -p "${backup_dir}"
-    
-    if [ -d "${WEB_DIR}/.next" ]; then
-        cp -r "${WEB_DIR}/.next" "${backup_dir}/.next" || warning "Failed to backup .next directory"
-    fi
-    
-    if [ -f "${WEB_DIR}/package.json" ]; then
-        cp "${WEB_DIR}/package.json" "${backup_dir}/" || warning "Failed to backup package.json"
-    fi
-    
-    # Backup .env file if it exists
-    if [ -f "${WEB_DIR}/.env" ]; then
-        cp "${WEB_DIR}/.env" "${backup_dir}/.env" || warning "Failed to backup .env file"
-    fi
-    
-    log "Backup created at ${backup_dir}"
-    echo "${backup_dir}" > "${APP_DIR}/.last_backup"
-}
-
-# Restore from backup
-restore_backup() {
-    local backup_dir=$(cat "${APP_DIR}/.last_backup" 2>/dev/null || echo "")
-    
-    if [ -z "$backup_dir" ] || [ ! -d "$backup_dir" ]; then
-        error "No backup found to restore"
-        return 1
-    fi
-    
-    log "Restoring from backup: ${backup_dir}"
-    
-    if [ -d "${backup_dir}/.next" ]; then
-        rm -rf "${WEB_DIR}/.next"
-        cp -r "${backup_dir}/.next" "${WEB_DIR}/.next"
-    fi
-    
-    log "Backup restored"
-}
-
 # Pull latest code from git
 update_code() {
     log "Updating code from git (branch: ${BRANCH})..."
     
     cd "${APP_DIR}"
-    
-    # Preserve .env file if it exists
-    if [ -f "${WEB_DIR}/.env" ]; then
-        cp "${WEB_DIR}/.env" "${WEB_DIR}/.env.backup" || warning "Failed to backup .env before git pull"
-    fi
     
     # Fetch latest changes
     git fetch origin
@@ -103,12 +55,6 @@ update_code() {
     
     # Pull latest changes
     git pull origin "${BRANCH}"
-    
-    # Restore .env file if it was backed up
-    if [ -f "${WEB_DIR}/.env.backup" ]; then
-        mv "${WEB_DIR}/.env.backup" "${WEB_DIR}/.env" || warning "Failed to restore .env file"
-        log ".env file preserved"
-    fi
     
     log "Code updated successfully"
     log "Current commit: $(git rev-parse --short HEAD)"
@@ -219,9 +165,6 @@ main() {
         exit 1
     fi
     
-    # Create backup before deployment
-    create_backup
-    
     # Deployment steps
     local deployment_failed=false
     
@@ -255,10 +198,7 @@ main() {
     
     # Handle deployment failure
     if [ "$deployment_failed" = true ]; then
-        error "Deployment failed! Restoring from backup..."
-        restore_backup
-        restart_pm2
-        error "Deployment rolled back to previous version"
+        error "Deployment failed!"
         exit 1
     fi
     

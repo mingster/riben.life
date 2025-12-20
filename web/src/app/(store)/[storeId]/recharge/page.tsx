@@ -12,13 +12,19 @@ import { Loader } from "@/components/loader";
 import type { Store } from "@/types";
 
 type Params = Promise<{ storeId: string }>;
+type SearchParams = Promise<{ rsvpId?: string }>;
 
 /**
  * Customer credit recharge page.
  * Implements FR-CREDIT-008 to FR-CREDIT-011 from FUNCTIONAL-REQUIREMENTS-CREDIT.md
  */
-export default async function RechargePage(props: { params: Params }) {
+export default async function RechargePage(props: {
+	params: Params;
+	searchParams: SearchParams;
+}) {
 	const params = await props.params;
+	const searchParams = await props.searchParams;
+	const rsvpId = searchParams.rsvpId;
 
 	// Check authentication
 	const session = await auth.api.getSession({
@@ -26,9 +32,9 @@ export default async function RechargePage(props: { params: Params }) {
 	});
 
 	if (!session?.user?.id) {
-		redirect(`/${params.storeId}?signin=true`);
+		const callbackUrl = `/${params.storeId}/recharge${rsvpId ? `?rsvpId=${rsvpId}` : ""}`;
+		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
 	}
-
 	// Get store and validate credit system is enabled
 	const store = await sqlClient.store.findUnique({
 		where: { id: params.storeId },
@@ -57,7 +63,11 @@ export default async function RechargePage(props: { params: Params }) {
 		<Container className="bg-transparent">
 			<div className="space-y-6">
 				<Suspense fallback={<Loader />}>
-					<RechargeForm storeId={params.storeId} store={store as Store} />
+					<RechargeForm
+						storeId={params.storeId}
+						store={store as Store}
+						rsvpId={rsvpId}
+					/>
 				</Suspense>
 			</div>
 		</Container>

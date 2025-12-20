@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export const deleteStoreAction = storeActionClient
 	.metadata({ name: "deleteStore" })
@@ -53,6 +54,9 @@ export const deleteStoreAction = storeActionClient
 				where: { id: storeId },
 			});
 
+			// Transform Decimal objects to numbers for client components
+			transformPrismaDataForJson(deletedStore);
+
 			return { store: deletedStore, deletedCompletely: true };
 		}
 
@@ -63,6 +67,9 @@ export const deleteStoreAction = storeActionClient
 				isDeleted: true,
 			},
 		});
+
+		// Transform Decimal objects to numbers for client components
+		transformPrismaDataForJson(updatedStore);
 
 		return { store: updatedStore, deletedCompletely: false };
 	});

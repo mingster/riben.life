@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 
 export const updateStoreBankAction = storeActionClient
 	.metadata({ name: "updateStoreBank" })
@@ -39,6 +40,9 @@ export const updateStoreBankAction = storeActionClient
 				updatedAt: getUtcNowEpoch(),
 			},
 		});
+
+		// Transform Decimal objects to numbers for client components
+		transformPrismaDataForJson(store);
 
 		return { store };
 	});

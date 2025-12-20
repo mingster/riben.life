@@ -121,6 +121,19 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 	const [dateFrom, setDateFrom] = useState<string>("");
 	const [dateTo, setDateTo] = useState<string>("");
 
+	// Memoize filter change handlers to prevent infinite re-renders
+	const handleTypeFilterChange = useCallback((value: string) => {
+		setTypeFilter(value);
+	}, []);
+
+	const handleStatusFilterChange = useCallback((value: string) => {
+		setStatusFilter(value);
+	}, []);
+
+	const handleChannelFilterChange = useCallback((value: string) => {
+		setChannelFilter(value);
+	}, []);
+
 	const handleDeleted = useCallback(
 		(deletedItem: MessageQueueWithDelivery) => {
 			setData((prev) => prev.filter((item) => item.id !== deletedItem.id));
@@ -489,7 +502,7 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 					className="max-w-sm"
 				/>
 
-				<Select value={typeFilter} onValueChange={setTypeFilter}>
+				<Select value={typeFilter} onValueChange={handleTypeFilterChange}>
 					<SelectTrigger className="max-w-sm">
 						<SelectValue placeholder={t("filter_by_type")} />
 					</SelectTrigger>
@@ -503,7 +516,7 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 					</SelectContent>
 				</Select>
 
-				<Select value={statusFilter} onValueChange={setStatusFilter}>
+				<Select value={statusFilter} onValueChange={handleStatusFilterChange}>
 					<SelectTrigger className="max-w-sm">
 						<SelectValue placeholder={t("filter_by_status")} />
 					</SelectTrigger>
@@ -517,7 +530,7 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 					</SelectContent>
 				</Select>
 
-				<Select value={channelFilter} onValueChange={setChannelFilter}>
+				<Select value={channelFilter} onValueChange={handleChannelFilterChange}>
 					<SelectTrigger className="max-w-sm">
 						<SelectValue placeholder={t("filter_by_channel")} />
 					</SelectTrigger>
