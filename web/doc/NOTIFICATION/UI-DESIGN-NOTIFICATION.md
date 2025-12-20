@@ -575,17 +575,30 @@ Similar to `/sysAdmin/mail-templates` but:
 
 #### 4.1.1 Notification Bell Component
 
+**Facebook-style Bell Icon:**
+
 ```text
 ┌─────────────────────────────────────────┐
-│  🔔 (3)                                  │
+│  🔔                                      │
+│    ●  (small red dot when unread)       │
 └─────────────────────────────────────────┘
 ```
 
+**Visual Design:**
+
+- Clean, minimal bell icon (no visible button background)
+- Small red dot/badge at top-right corner when unread notifications exist
+- Badge shows count number for counts 10-99, "99+" for counts over 99
+- Hover effect: subtle background color change
+- Positioned in global navigation header
+
 **Features:**
 
-- Badge showing unread count
+- Minimal icon design matching Facebook's notification bell
+- Small red indicator dot/badge showing unread count
 - Click opens notification dropdown
-- Real-time updates via WebSocket/SSE
+- Real-time updates via SWR polling (every 30 seconds)
+- Accessible with proper ARIA labels
 
 #### 4.1.2 Notification Dropdown
 
