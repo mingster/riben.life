@@ -179,7 +179,7 @@ export const DisplayStoreOrdersToday: React.FC<props> = ({ store }) => {
 					</div>
 				</div>
 
-				<Link href={`/${storeId}`} className="">
+				<Link href={`/s/${storeId}`} className="">
 					<Button className="w-full">
 						{t("cart_summary_keepShopping")}
 					</Button>{" "}

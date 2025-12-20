@@ -33,7 +33,7 @@ export const DisplayCreditLedger = ({
 								<div className="font-medium text-sm truncate">
 									{item.Store?.id ? (
 										<Link
-											href={`/${item.Store.id}`}
+											href={`/s/${item.Store.id}`}
 											className="hover:underline text-primary"
 										>
 											{item.Store.name}
@@ -154,7 +154,7 @@ export const DisplayCreditLedger = ({
 									<td className="px-3 py-2 text-xs">
 										{item.Store?.id ? (
 											<Link
-												href={`/${item.Store.id}`}
+												href={`/s/${item.Store.id}`}
 												className="hover:underline text-primary"
 											>
 												{item.Store.name}

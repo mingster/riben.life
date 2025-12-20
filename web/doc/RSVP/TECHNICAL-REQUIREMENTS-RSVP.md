@@ -714,7 +714,7 @@ src/
 │       ├── rsvpTag/           # Tag actions
 │       └── reserveWithGoogle/ # Reserve with Google integration actions
 ├── app/
-│   ├── (store)/[storeId]/rsvp/     # Public RSVP page
+│   ├── s/[storeId]/rsvp/           # Public RSVP page
 │   ├── storeAdmin/[storeId]/(routes)/
 │   │   ├── rsvp/                    # Reservation management
 │   │   ├── rsvp-settings/           # Settings page

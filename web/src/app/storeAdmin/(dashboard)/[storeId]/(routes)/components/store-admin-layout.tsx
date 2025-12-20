@@ -104,7 +104,7 @@ function StoreAdminHeader() {
 					<Button
 						variant="outline"
 						size="sm"
-						onClick={() => router.push(`/${store.id}`)}
+						onClick={() => router.push(`/s/${store.id}`)}
 						className="inline-flex items-center gap-1 text-xs h-10 sm:h-9 sm:min-h-[36px]"
 						title={t("back_to_store")}
 					>

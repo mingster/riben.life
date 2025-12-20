@@ -276,7 +276,7 @@ export function StoreAdminSidebar() {
 									<Link
 										className="flex items-center gap-1"
 										title={t("back_to_store")}
-										href={`/${store.id}`}
+										href={`/s/${store.id}`}
 									>
 										<IconHome />
 										{store.name}

@@ -113,7 +113,7 @@ export function RechargeForm({ storeId, store, rsvpId }: RechargeFormProps) {
 
 				if (result?.data?.order) {
 					// Redirect to Stripe payment page
-					router.push(`/${storeId}/recharge/${result.data.order.id}/stripe`);
+					router.push(`/s/${storeId}/recharge/${result.data.order.id}/stripe`);
 				}
 			} catch (error) {
 				toastError({

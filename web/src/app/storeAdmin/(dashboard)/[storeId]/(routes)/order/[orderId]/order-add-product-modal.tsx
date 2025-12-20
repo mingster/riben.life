@@ -139,7 +139,7 @@ export const OrderAddProductModal: React.FC<props> = ({
 										<a
 											key={category.id}
 											onClick={(e) => onNavlinkClick(e)}
-											href={`${getAbsoluteUrl()}/${store.id}#${category.id}`}
+											href={`${getAbsoluteUrl()}/s/${store.id}#${category.id}`}
 										>
 											<div
 												data-to-scrollspy-id={category.id}

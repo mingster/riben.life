@@ -21,12 +21,12 @@ export const QRCode: React.FC<QrCodeProps> = ({ data }) => {
 
 	return (
 		<Link
-			href={`/${data.storeId}/${data.id}`}
+			href={`/s/${data.storeId}/${data.id}`}
 			target="_blank"
 			title="click to preview the table store page."
 		>
 			<SVG
-				text={`/${data.storeId}/${data.id}`}
+				text={`/s/${data.storeId}/${data.id}`}
 				options={{
 					margin: 2,
 					width: 100,

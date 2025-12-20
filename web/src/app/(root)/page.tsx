@@ -44,7 +44,7 @@ export default function GlobalHomePage() {
 
 						const storeId = stores[0].id;
 						if (storeId) {
-							url = `./${storeId}`;
+							url = `./s/${storeId}`;
 						}
 					}
 

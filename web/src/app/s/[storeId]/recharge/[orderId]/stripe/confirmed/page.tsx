@@ -85,7 +85,7 @@ export default async function RechargeConfirmedPage(props: {
 
 				// Redirect to success page
 				redirect(
-					`${getAbsoluteUrl()}/${params.storeId}/recharge/${params.orderId}/success`,
+					`${getAbsoluteUrl()}/s/${params.storeId}/recharge/${params.orderId}/success`,
 				);
 			}
 		} catch (error) {

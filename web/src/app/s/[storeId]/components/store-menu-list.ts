@@ -40,7 +40,7 @@ export function GetMenuList(
 	storeId: string,
 	pathname: string,
 ): Group[] {
-	const STORE_PATH = "/";
+	const STORE_PATH = "/s/";
 	const nav_prefix = STORE_PATH + storeId;
 
 	const { lng } = useI18n();
