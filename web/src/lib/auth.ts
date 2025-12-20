@@ -44,6 +44,16 @@ export const auth = betterAuth({
 		{ name: "storeAdmin" },
 		{ name: "admin" },
 	],
+	advanced: {
+		cookies: {
+			state: {
+				attributes: {
+					sameSite: "none",
+					secure: true,
+				},
+			},
+		},
+	},
 	session: {
 		expiresIn: 60 * 60 * 24 * 365, // 365 days
 		updateAge: 60 * 60 * 24, // 1 day (every 1 day the session expiration is updated)
@@ -52,7 +62,7 @@ export const auth = betterAuth({
 		accountLinking: {
 			enabled: true,
 			allowDifferentEmails: true,
-			trustedProviders: ["google", "line"],
+			trustedProviders: ["google", "line", "apple"],
 		},
 	},
 	emailAndPassword: {
