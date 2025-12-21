@@ -254,7 +254,7 @@ export class LinePayPlugin implements PaymentMethodPlugin {
 				// - VOIDED_AUTHORIZATION: Authorization voided (failed)
 				// - EXPIRED_AUTHORIZATION: Authorization expired (failed)
 				const payStatus = transactionInfo.payStatus;
-				
+
 				if (payStatus === "CAPTURE") {
 					return {
 						status: "paid",

@@ -10,6 +10,8 @@ import logger from "@/lib/logger";
  * - total: number (order total in currency units, e.g., 100.00 for $100)
  * - currency: string (ISO currency code, e.g., "usd", "twd")
  * - stripeCustomerId?: string (optional Stripe customer ID)
+ * - orderId?: string (optional order ID for webhook metadata)
+ * - storeId?: string (optional store ID for webhook metadata)
  *
  * Returns:
  * - Stripe PaymentIntent object with client_secret
@@ -17,7 +19,7 @@ import logger from "@/lib/logger";
 export async function POST(req: Request) {
 	try {
 		const data = await req.json();
-		const { total, currency, stripeCustomerId } = data;
+		const { total, currency, stripeCustomerId, orderId, storeId } = data;
 
 		// Validate total
 		if (total === undefined || total === null) {
@@ -48,6 +50,11 @@ export async function POST(req: Request) {
 			amount: Math.round(total * 100), // Convert to cents
 			currency: currency.toLowerCase(),
 			automatic_payment_methods: { enabled: true },
+			// Include orderId and storeId in metadata for webhook processing
+			metadata: {
+				...(orderId && { orderId }),
+				...(storeId && { storeId }),
+			},
 		});
 
 		logger.info("Stripe payment intent created", {

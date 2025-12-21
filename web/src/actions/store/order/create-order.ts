@@ -79,6 +79,38 @@ export const createOrderAction = userRequiredActionClient
 			throw new SafeError("Payment method not found");
 		}
 
+		// Validate order total against cart totals (sum of unitPrice * quantity)
+		const calculatedTotal = products.reduce((sum, product, index) => {
+			const productIndex = productIds.indexOf(product.id);
+			if (productIndex === -1) {
+				return sum;
+			}
+			const unitPrice = unitPrices[productIndex];
+			const quantity = quantities[productIndex];
+			const variantCost = variantCosts?.[productIndex]
+				? Number(variantCosts[productIndex])
+				: 0;
+			return sum + unitPrice * quantity + variantCost;
+		}, 0);
+
+		// Allow small floating point differences (0.01 tolerance)
+		const totalDifference = Math.abs(calculatedTotal - total);
+		if (totalDifference > 0.01) {
+			logger.error("Order total validation failed", {
+				metadata: {
+					storeId,
+					userId: userId || null,
+					providedTotal: total,
+					calculatedTotal,
+					difference: totalDifference,
+				},
+				tags: ["order", "validation", "error"],
+			});
+			throw new SafeError(
+				`Order total mismatch. Provided: ${total}, Calculated: ${calculatedTotal.toFixed(2)}`,
+			);
+		}
+
 		const now = getUtcNowEpoch();
 
 		// Determine order status based on store auto-accept setting

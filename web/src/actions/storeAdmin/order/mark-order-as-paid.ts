@@ -57,7 +57,46 @@ export const markOrderAsPaidAction = storeActionClient
 		}
 
 		if (order.isPaid) {
-			// Order is already paid, return it as-is
+			// Order is already paid, return it as-is (idempotent)
+			const existingOrder = await sqlClient.storeOrder.findUnique({
+				where: { id: orderId },
+				include: {
+					Store: true,
+					OrderNotes: true,
+					OrderItemView: true,
+					User: true,
+					ShippingMethod: true,
+					PaymentMethod: true,
+				},
+			});
+
+			if (!existingOrder) {
+				throw new SafeError("Failed to retrieve order");
+			}
+
+			transformPrismaDataForJson(existingOrder);
+			return { order: existingOrder };
+		}
+
+		// Idempotency check: Check for existing ledger entry to prevent duplicate charges
+		const existingLedger = await sqlClient.storeLedger.findFirst({
+			where: { orderId: order.id },
+		});
+
+		if (existingLedger) {
+			// Ledger entry already exists, return existing order (idempotent)
+			logger.warn(
+				"Duplicate payment attempt detected - ledger entry already exists",
+				{
+					metadata: {
+						orderId,
+						ledgerId: existingLedger.id,
+						storeId,
+					},
+					tags: ["order", "payment", "idempotency", "store-admin"],
+				},
+			);
+
 			const existingOrder = await sqlClient.storeOrder.findUnique({
 				where: { id: orderId },
 				include: {

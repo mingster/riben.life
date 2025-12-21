@@ -49,6 +49,8 @@ export function PaymentStripe({ order, storeId }: PaymentStripeProps) {
 				const body = JSON.stringify({
 					total: Number(order.orderTotal),
 					currency: order.currency,
+					orderId: order.id, // Include for webhook processing
+					storeId: order.storeId, // Include for webhook processing
 				});
 
 				const response = await fetch(url, {

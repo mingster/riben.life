@@ -95,9 +95,7 @@ export default async function LinePayConfirmedPage({
 		if (process.env.NODE_ENV === "development")
 			logger.info("LinePayConfirmedPage");
 
-		redirect(
-			`${getAbsoluteUrl()}/checkout/${order.id}/linePay/success`,
-		);
+		redirect(`${getAbsoluteUrl()}/checkout/${order.id}/linePay/success`);
 	}
 
 	return <></>;

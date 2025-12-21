@@ -1031,26 +1031,11 @@ export default async function LinePayConfirmedPage({
 
 #### 5.2.2 Payment Processing Routes
 
-**Stripe Payment Intent:**
+**Stripe Payment Intent Creation Route:**
 
 **Location:** `src/app/api/payment/stripe/create-payment-intent/route.ts`
 
-**Implementation:**
-
-```typescript
-export async function POST(req: Request) {
-  // 1. Parse request body: { total, currency, stripeCustomerId? }
-  // 2. Validate total (required, positive number)
-  // 3. Validate currency (required, string)
-  // 4. Create Stripe PaymentIntent:
-  //    - amount: total * 100 (convert to cents)
-  //    - currency: currency.toLowerCase()
-  //    - customer: stripeCustomerId (optional)
-  //    - automatic_payment_methods: { enabled: true }
-  // 5. Log payment intent creation
-  // 6. Return PaymentIntent object (includes client_secret)
-}
-```
+**Endpoint:** `POST /api/payment/stripe/create-payment-intent`
 
 **Request Body:**
 
@@ -1059,68 +1044,155 @@ export async function POST(req: Request) {
   total: number;              // Order total in currency units (e.g., 100.00)
   currency: string;           // ISO currency code (e.g., "usd", "twd")
   stripeCustomerId?: string;  // Optional Stripe customer ID
+  orderId?: string;          // Optional order ID (for webhook metadata)
+  storeId?: string;          // Optional store ID (for webhook metadata)
 }
 ```
 
 **Response:**
 
-Returns Stripe PaymentIntent object with `client_secret` for client-side payment processing.
-
-**Implementation Details:**
-
-- API route handler (route.ts) - handles POST requests
-- Validates input: total must be positive number, currency required
-- Converts amount to cents (multiplies by 100) for Stripe API
-- Uses `stripe` instance from `@/lib/stripe/config`
-- Enables automatic payment methods (cards, wallets, etc.)
-- Logs payment intent creation for tracking
-- Returns proper error responses with status codes
-
-**LINE Pay Request:**
-
-**Location:** `src/app/(root)/checkout/[orderId]/linePay/page.tsx`
-
-**Implementation:**
-
 ```typescript
-export default async function PaymentPage(props: {
-  params: Promise<{ orderId: string }>;
-}) {
-  // 1. Extract orderId from params
-  // 2. Get order from database with OrderItemView
-  // 3. Check if order is already paid (early return if yes)
-  // 4. Get store and create LINE Pay client
-  // 5. Determine protocol (http/https) based on environment
-  // 6. Build confirmUrl and cancelUrl:
-  //    - confirmUrl: {protocol}//{host}/checkout/{orderId}/linePay/confirmed
-  //    - cancelUrl: {protocol}//{host}/checkout/{orderId}/linePay/canceled
-  // 7. Build request body:
-  //    - amount: order.orderTotal
-  //    - currency: order.currency
-  //    - orderId: order.id
-  //    - packages: map OrderItemView to LINE Pay package format
-  //    - redirectUrls: { confirmUrl, cancelUrl }
-  // 8. Call LINE Pay request API
-  // 9. If returnCode === "0000":
-  //    - Extract paymentUrl.web, paymentUrl.app, transactionId, paymentAccessToken
-  //    - Update order: checkoutAttributes = transactionId, checkoutRef = paymentAccessToken
-  //    - Log payment request creation
-  //    - Redirect to paymentUrl.web (PC) or paymentUrl.app (mobile)
-  // 10. If failed, log error and throw
+{
+  id: string;                 // PaymentIntent ID
+  client_secret: string;       // Client secret for Stripe Elements
+  amount: number;             // Amount in cents
+  currency: string;           // Currency code
+  status: string;             // PaymentIntent status
+  metadata: {
+    orderId?: string;        // Order ID (if provided)
+    storeId?: string;        // Store ID (if provided)
+  }
 }
 ```
 
 **Implementation Details:**
 
-- Server component (page.tsx) - handles LINE Pay payment initiation
-- Checks order payment status (idempotency)
-- Creates LINE Pay payment request with order details
-- Maps order items to LINE Pay package format
-- Stores transaction ID in `checkoutAttributes` for confirmation
-- Stores payment access token in `checkoutRef` for future reference
-- Detects mobile vs desktop and redirects to appropriate payment URL
-- Handles errors with proper logging
-- Uses `getLinePayClientByStore()` to get store-specific LINE Pay client
+- Validates `total` is a positive number
+- Validates `currency` is provided
+- Converts `total` to cents (multiplies by 100) for Stripe API
+- Includes `orderId` and `storeId` in metadata for webhook processing
+- Returns PaymentIntent with `client_secret` for client-side payment processing
+
+**Error Handling:**
+
+- Returns 400 if `total` or `currency` is missing/invalid
+- Returns 500 if Stripe API call fails
+- Logs errors with structured metadata
+
+**Usage:**
+
+```typescript
+// In payment-stripe.tsx or similar
+const response = await fetch("/api/payment/stripe/create-payment-intent", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    total: Number(order.orderTotal),
+    currency: order.currency,
+    orderId: order.id,        // Include for webhook processing
+    storeId: order.storeId,   // Include for webhook processing
+  }),
+});
+
+const paymentIntent = await response.json();
+const clientSecret = paymentIntent.client_secret;
+```
+
+**LINE Pay Payment Request Route:**
+
+**Location:** `src/app/(root)/checkout/[orderId]/linePay/page.tsx`
+
+**Endpoint:** Server-side page (not API route)
+
+**Process:**
+
+- Fetches order by `orderId`
+- Creates LINE Pay payment request via `linePayClient.request.send()`
+- Stores `transactionId` in `order.checkoutAttributes`
+- Stores `paymentAccessToken` in `order.checkoutRef`
+- Redirects user to LINE Pay payment page (web or app URL based on device)
+
+**Implementation Details:**
+
+- Validates order exists and is not already paid
+- Creates LINE Pay request with order details
+- Handles mobile vs desktop redirect URLs
+- Logs payment request creation with structured metadata
+
+**Error Handling:**
+
+- Returns error if order not found
+- Returns error if LINE Pay API returns non-"0000" code
+- Logs errors with full context
+
+**Stripe Webhook Handler:**
+
+**Location:** `src/app/api/payment/stripe/webhooks/route.ts`
+
+**Endpoint:** `POST /api/payment/stripe/webhooks`
+
+**Supported Events:**
+
+- `payment_intent.succeeded` - Handles successful payment confirmations
+- `payment_intent.payment_failed` - Logs failed payments
+- `payment_intent.canceled` - Logs canceled payments
+- `product.created/updated/deleted` - Product management (legacy)
+- `price.created/updated/deleted` - Price management (legacy)
+- `customer.subscription.created/updated/deleted` - Subscription management (legacy)
+- `checkout.session.completed` - Checkout session completion (legacy)
+
+**Implementation:**
+
+```typescript
+export async function POST(req: Request) {
+  // 1. Verify webhook signature using STRIPE_WEBHOOK_SECRET
+  // 2. Construct Stripe event from request body
+  // 3. Handle event based on event.type
+  // 4. For payment_intent.succeeded:
+  //    - Extract orderId from paymentIntent.metadata.orderId
+  //    - Call markOrderAsPaidAction with orderId and checkoutAttributes
+  //    - Log success/error
+  // 5. For payment_intent.payment_failed/canceled:
+  //    - Log payment failure/cancellation with orderId
+  // 6. Return 200 OK response
+}
+```
+
+**Implementation Details:**
+
+- Verifies webhook signature using `stripe.webhooks.constructEvent()`
+- Extracts `orderId` from `paymentIntent.metadata.orderId` (set during PaymentIntent creation)
+- Calls `markOrderAsPaidAction` to process payment (idempotent)
+- Handles errors gracefully without exposing internal details
+- Logs all webhook events with structured metadata
+
+**Security:**
+
+- Webhook secret verified on every request
+- Invalid signatures return 400 error
+- Only processes events from Stripe (verified signature)
+
+**Error Handling:**
+
+- Invalid signature: Returns 400 with error message
+- Missing orderId in metadata: Logs warning, continues
+- Payment processing failure: Logs error, returns 200 (to prevent retries)
+- Unknown event types: Returns 400
+
+**Usage:**
+
+Webhook is automatically called by Stripe when payment events occur. Configure webhook endpoint in Stripe Dashboard:
+
+- **URL:** `https://yourdomain.com/api/payment/stripe/webhooks`
+- **Events:** `payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled`
+- **Secret:** Set `STRIPE_WEBHOOK_SECRET` environment variable
+
+**Benefits:**
+
+- Reliable payment confirmation (not dependent on user redirect)
+- Handles cases where user closes browser before redirect
+- Provides backup confirmation mechanism
+- Enables real-time payment status updates
 
 #### 5.2.3 Store Admin Payment Routes
 
@@ -4102,12 +4174,18 @@ if (paymentGatewayStatus === "succeeded") {
 - **API Keys:** Payment gateway credentials stored as environment variables, never exposed to client
 - **Payment Verification:** All payment confirmations verified server-side via payment gateway API
 - **Idempotency:** Payment processing checks for existing ledger entries to prevent duplicate charges
+  - Checks `order.isPaid` flag before processing
+  - Checks for existing `StoreLedger` entry with same `orderId`
+  - Database unique constraint on `StoreLedger.orderId` prevents duplicates
 - **Transaction Safety:** All payment-related database operations use Prisma transactions
 
 ### 7.2 Payment Amount Validation
 
 - All payment amounts validated server-side before processing
-- Order totals validated against cart totals
+- **Order totals validated against cart totals:**
+  - `createOrderAction` calculates total from `unitPrice * quantity` for each product
+  - Validates provided `total` matches calculated total (0.01 tolerance for floating point)
+  - Throws error if mismatch detected
 - Credit amounts validated against store limits (min/max purchase)
 
 ### 7.3 Payment Retry Protection
@@ -4189,21 +4267,80 @@ try {
 
 Prisma returns `BigInt` for epoch time fields and `Decimal` for monetary fields. These types cannot be serialized directly.
 
-### 10.3 Payment Method Plugin Implementation (Future)
+### 10.3 Payment Method Plugin Implementation
 
-Current implementation uses hardcoded payment method logic based on `payUrl` field. Future enhancement will implement true plugin architecture:
+**Status:** ✅ **IMPLEMENTED**
 
-- Plugin registry system
-- Dynamic plugin loading
-- Plugin configuration management
-- Plugin interface implementation
+The payment system implements a true plugin-based architecture where payment methods are installable, configurable plugins.
 
-Current `payUrl` values:
+**Implemented Components:**
+
+1. **Plugin Interface** (`src/lib/payment/plugins/types.ts`):
+   - `PaymentMethodPlugin` interface with required methods
+   - Supporting types: `PaymentResult`, `PaymentConfirmation`, `PaymentStatus`, `FeeStructure`, `PluginConfig`, etc.
+
+2. **Plugin Registry** (`src/lib/payment/plugins/registry.ts`):
+   - Singleton registry for managing plugin instances
+   - Methods: `register()`, `get()`, `has()`, `getAll()`, `getIdentifiers()`, `unregister()`, `clear()`
+
+3. **Built-in Plugins**:
+   - **Stripe Plugin** (`src/lib/payment/plugins/stripe-plugin.ts`): Stripe payment gateway integration
+   - **LINE Pay Plugin** (`src/lib/payment/plugins/linepay-plugin.ts`): LINE Pay service integration
+   - **Credit Plugin** (`src/lib/payment/plugins/credit-plugin.ts`): Customer credit balance payments
+   - **Cash Plugin** (`src/lib/payment/plugins/cash-plugin.ts`): Cash/in-person payments
+
+4. **Plugin Utilities** (`src/lib/payment/plugins/utils.ts`):
+   - Functions to bridge database `PaymentMethod` records with plugin instances
+   - Configuration building from platform/store settings
+   - Plugin validation and availability checking
+
+5. **Plugin Loader** (`src/lib/payment/plugins/loader.ts`):
+   - Plugin registration, validation, and synchronization with database
+   - Metadata extraction and plugin discovery
+
+**Plugin Registration:**
+
+Plugins are automatically registered when the module is loaded:
+
+```typescript
+// src/lib/payment/plugins/index.ts
+import { registerPaymentPlugin } from "./registry";
+import { StripePlugin } from "./stripe-plugin";
+import { LinePayPlugin } from "./linepay-plugin";
+import { CreditPlugin } from "./credit-plugin";
+import { CashPlugin } from "./cash-plugin";
+
+// Auto-register built-in plugins
+registerPaymentPlugin(new StripePlugin());
+registerPaymentPlugin(new LinePayPlugin());
+registerPaymentPlugin(new CreditPlugin());
+registerPaymentPlugin(new CashPlugin());
+```
+
+**Plugin Identifiers (payUrl values):**
 
 - `"stripe"` - Stripe payment gateway
 - `"linepay"` - LINE Pay service
 - `"credit"` - Credit-based payment
 - `"cash"` - Cash/in-person payment
+
+**Usage:**
+
+```typescript
+import { getPaymentPlugin } from "@/lib/payment/plugins";
+
+const plugin = getPaymentPlugin("stripe");
+if (plugin) {
+  const result = await plugin.processPayment(order, config);
+}
+```
+
+**Future Enhancements:**
+
+- Dynamic plugin loading from external packages
+- Plugin marketplace/installation UI
+- Plugin versioning and updates
+- Plugin-specific configuration UI
 
 ---
 

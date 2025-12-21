@@ -82,10 +82,7 @@ export default async function StripeConfirmedPage(props: {
 				);
 			}
 		} catch (error) {
-			if (
-				error instanceof Error &&
-				error.message === "NEXT_REDIRECT"
-			) {
+			if (error instanceof Error && error.message === "NEXT_REDIRECT") {
 				// Expected control flow from redirect(); do not log as an error
 				throw error;
 			}

@@ -54,6 +54,8 @@ const PaymentStripe: React.FC<paymentProps> = ({ order }) => {
 			const body = JSON.stringify({
 				total: Number(order.orderTotal),
 				currency: order.currency,
+				orderId: order.id, // Include for webhook processing
+				storeId: order.storeId, // Include for webhook processing
 			});
 
 			fetch(url, {
