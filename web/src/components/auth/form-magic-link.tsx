@@ -1,16 +1,18 @@
 "use client";
 
+import { useTranslation } from "@/app/i18n/client";
+import { useIsHydrated } from "@/hooks/use-hydrated";
+import { analytics } from "@/lib/analytics";
+import { authClient } from "@/lib/auth-client";
+import { clientLogger } from "@/lib/client-logger";
+import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { BetterFetchOption } from "better-auth/react";
 import { useGoogleReCaptcha } from "@wojtekmaj/react-recaptcha-v3";
+import type { BetterFetchOption } from "better-auth/react";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useTranslation } from "@/app/i18n/client";
-import { useIsHydrated } from "@/hooks/use-hydrated";
-import { authClient } from "@/lib/auth-client";
-import { useI18n } from "@/providers/i18n-provider";
 import { toastError, toastSuccess } from "../toaster";
 import { Button } from "../ui/button";
 import {
@@ -22,9 +24,6 @@ import {
 	FormMessage,
 } from "../ui/form";
 import { Input } from "../ui/input";
-import { RecaptchaV3 } from "./recaptcha-v3";
-import { clientLogger } from "@/lib/client-logger";
-import { analytics } from "@/lib/analytics";
 
 function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	const { lng } = useI18n();
@@ -192,15 +191,11 @@ function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	);
 }
 
-// Wrapper component with RecaptchaV3 provider
+// Wrapper component - reCAPTCHA provider is in root layout
 export default function FormMagicLink({
 	callbackUrl = "/",
 }: {
 	callbackUrl?: string;
 }) {
-	return (
-		<RecaptchaV3 actionName="magic-link">
-			<FormMagicLinkInner callbackUrl={callbackUrl} />
-		</RecaptchaV3>
-	);
+	return <FormMagicLinkInner callbackUrl={callbackUrl} />;
 }

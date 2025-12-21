@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
-import { RecaptchaV3 } from "@/components/auth/recaptcha-v3";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -22,10 +21,7 @@ import {
 	IconBrandFacebookFilled,
 	IconBrandInstagramFilled,
 } from "@tabler/icons-react";
-import {
-	GoogleReCaptchaProvider,
-	useGoogleReCaptcha,
-} from "@wojtekmaj/react-recaptcha-v3";
+import { useGoogleReCaptcha } from "@wojtekmaj/react-recaptcha-v3";
 import axios, { type AxiosError } from "axios";
 import { motion } from "framer-motion";
 import { useCallback, useMemo, useState } from "react";
@@ -394,9 +390,5 @@ const ContactFormInner = () => {
 // Following Google Cloud documentation: https://docs.cloud.google.com/recaptcha/docs/instrument-web-pages
 // Enterprise mode uses grecaptcha.enterprise.execute() and loads enterprise.js script
 export const ContactForm = () => {
-	return (
-		<RecaptchaV3 actionName="contact_form" useEnterprise={true}>
-			<ContactFormInner />
-		</RecaptchaV3>
-	);
+	return <ContactFormInner />;
 };

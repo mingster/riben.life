@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import I18nProvider from "@/providers/i18n-provider";
 import { SessionWrapper } from "@/providers/session-provider";
 import NextThemeProvider from "@/providers/theme-provider";
+import { RecaptchaProvider } from "@/providers/recaptcha-provider";
 import type { Viewport } from "next";
 import { CookiesProvider } from "next-client-cookies/server";
 import { cookies } from "next/headers";
@@ -146,18 +147,20 @@ export default async function RootLayout({
 					enableSystem
 					disableTransitionOnChange
 				>
-					<CookiesProvider>
-						<I18nProvider initialLng={htmlLang}>
-							<SessionWrapper>
-								<IOSVersionCheck>
-									<Suspense fallback={null}>
-										<PageViewTracker />
-									</Suspense>
-									{children}
-								</IOSVersionCheck>
-							</SessionWrapper>
-						</I18nProvider>
-					</CookiesProvider>
+					<RecaptchaProvider useEnterprise={true}>
+						<CookiesProvider>
+							<I18nProvider initialLng={htmlLang}>
+								<SessionWrapper>
+									<IOSVersionCheck>
+										<Suspense fallback={null}>
+											<PageViewTracker />
+										</Suspense>
+										{children}
+									</IOSVersionCheck>
+								</SessionWrapper>
+							</I18nProvider>
+						</CookiesProvider>
+					</RecaptchaProvider>
 				</NextThemeProvider>
 				<Toaster />
 				{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (

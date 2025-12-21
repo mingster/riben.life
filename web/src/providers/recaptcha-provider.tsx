@@ -11,12 +11,19 @@ import { useIsHydrated } from "@/hooks/use-hydrated";
 import { useTheme } from "@/hooks/use-theme";
 import { useLang } from "@/hooks/use-lang";
 
-export function RecaptchaV3({
+/**
+ * Global reCAPTCHA Provider Component
+ *
+ * This provider should be placed in the root layout to ensure a single
+ * reCAPTCHA instance across the entire application.
+ *
+ * Supports both standard and Enterprise reCAPTCHA modes.
+ */
+export function RecaptchaProvider({
 	children,
 	useEnterprise = false,
 }: {
 	children: ReactNode;
-	actionName?: string;
 	useEnterprise?: boolean;
 }) {
 	const isHydrated = useIsHydrated();
