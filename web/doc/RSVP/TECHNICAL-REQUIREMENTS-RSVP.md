@@ -393,17 +393,18 @@ The `update-reservation.ts` action allows customers to modify their reservations
   ```
 
 - **Business Rules:**
-  - Cancellation must occur within `cancelHours` window (from `RsvpSettings.cancelHours`, validated before allowing cancellation)
+  - Customers can cancel without time restriction if `canCancel` is true in `RsvpSettings`
   - If `canCancel` is false in `RsvpSettings`, customers cannot self-cancel (store staff/admin must cancel)
-  - **Refund Processing:** If reservation was prepaid (`alreadyPaid = true` and `orderId` exists), automatic refund is processed:
-    - **Credit Refund:** If payment method is "credit", credit is automatically refunded to customer
+  - **Refund Processing:** If reservation was prepaid (`alreadyPaid = true` and `orderId` exists), refund is processed only if cancellation occurs OUTSIDE the `cancelHours` window (i.e., cancelled more than `cancelHours` hours before the reservation time). If cancellation occurs WITHIN the `cancelHours` window (i.e., less than `cancelHours` hours before the reservation time), no refund is given.
+    - **Credit Refund:** If payment method is "credit" and cancellation is outside the cancelHours window, credit is automatically refunded to customer
     - **Refund Process:**
-      1. Finds original SPEND ledger entry to determine refund amount
-      2. Restores credit to customer balance (`CustomerCredit`)
-      3. Creates `CustomerCreditLedger` entry (type: "REFUND", positive amount)
-      4. Creates `StoreLedger` entry (revenue reversal, negative amount, type: `CreditUsage`)
-      5. Updates `StoreOrder` status to `Refunded` (both `orderStatus` and `paymentStatus`)
-    - **Refund Function:** `processRsvpRefund()` - Shared utility function located in `src/actions/store/reservation/process-rsvp-refund.ts`
+      1. Checks if cancellation is within cancelHours window using `isCancellationWithinCancelHours()` helper
+      2. If outside window, finds original SPEND ledger entry to determine refund amount
+      3. Restores credit to customer balance (`CustomerCredit`)
+      4. Creates `CustomerCreditLedger` entry (type: "REFUND", positive amount)
+      5. Creates `StoreLedger` entry (revenue reversal, negative amount, type: `CreditUsage`)
+      6. Updates `StoreOrder` status to `Refunded` (both `orderStatus` and `paymentStatus`)
+    - **Refund Function:** `processRsvpCreditRefund()` - Shared utility function located in `src/actions/store/reservation/process-rsvp-refund.ts`
     - **Transaction Safety:** All refund operations are performed within a database transaction
 - **Response:** Returns cancelled reservation object with all relations (including updated Order if refunded)
 
@@ -806,26 +807,50 @@ For Google Actions Center Appointments Redirect integration:
 
 #### 7.1.2 Cancellation Window Validation
 
-**Function:** `validateCancelHoursWindow()`
+**Function:** `isCancellationWithinCancelHours()`
 
 **File:** `validate-cancel-hours.ts`
 
-**Purpose:** Validates that a reservation modification or cancellation occurs within the allowed cancellation window.
+**Purpose:** Checks if cancellation is within the cancelHours window (for refund determination). Returns `true` if cancellation is within the window (no refund), `false` if outside the window (refund allowed).
 
 **Parameters:**
 
 - `rsvpSettings: RsvpSettingsForValidation | null | undefined` - RsvpSettings object containing `canCancel` and `cancelHours`
 - `rsvpTime: bigint` - BigInt epoch time (milliseconds) representing the reservation time
-- `action: "modify" | "cancel"` - Action being performed (for error message customization)
+
+**Returns:**
+
+- `boolean` - `true` if cancellation is within cancelHours window (no refund), `false` if outside window (refund allowed)
+
+**Behavior:**
+
+- Only checks if `canCancel` is enabled and `cancelHours` is set
+- Calculates hours until reservation time
+- Returns `false` (refund allowed) if cancellation is not enabled, `cancelHours` is not set, or if hoursUntilReservation >= cancelHours
+- Returns `true` (no refund) if hoursUntilReservation < cancelHours
+
+**Usage:** Used by `cancel-reservation.ts` to determine if refund should be processed.
+
+**Function:** `validateCancelHoursWindow()`
+
+**File:** `validate-cancel-hours.ts`
+
+**Purpose:** Validates that a reservation modification occurs within the allowed cancellation window (blocks modification if too close to reservation time).
+
+**Parameters:**
+
+- `rsvpSettings: RsvpSettingsForValidation | null | undefined` - RsvpSettings object containing `canCancel` and `cancelHours`
+- `rsvpTime: bigint` - BigInt epoch time (milliseconds) representing the reservation time
+- `action: "modify"` - Action being performed (for error message customization)
 
 **Behavior:**
 
 - Only validates if `canCancel` is enabled and `cancelHours` is set
 - Calculates hours until reservation time
-- Throws `SafeError` if action occurs outside the cancellation window
+- Throws `SafeError` if modification occurs within the cancellation window (too close to reservation time)
 - Returns early (no validation) if cancellation is not enabled or `cancelHours` is not set
 
-**Usage:** Used by `update-reservation.ts` (action: "modify") and `cancel-reservation.ts` (action: "cancel").
+**Usage:** Used by `update-reservation.ts` (action: "modify") to enforce time restrictions on modifications.
 
 ### 7.2 Refund Processing Utilities
 
