@@ -918,29 +918,116 @@ export const updateStorePaymentMethodsSchema = z.object({
 
 #### 5.2.1 Payment Confirmation Routes
 
-**Stripe Confirmation:**
+**Stripe Checkout Confirmation:**
 
-**Location:** `src/app/(root)/checkout/[orderId]/stripe/confirmed/route.ts`
+**Location:** `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx`
 
-- Verifies Stripe PaymentIntent status
-- Calls `processCreditTopUpAfterPaymentAction` for credit recharges
-- Redirects to success page
+**Implementation:**
+
+```typescript
+export default async function StripeConfirmedPage(props: {
+  params: Promise<{ orderId: string }>;
+  searchParams: Promise<{
+    payment_intent?: string;
+    payment_intent_client_secret?: string;
+    redirect_status?: string;
+  }>;
+}) {
+  // 1. Extract orderId from params and payment_intent from searchParams
+  // 2. Verify payment_intent and payment_intent_client_secret are present
+  // 3. Verify redirect_status === "succeeded"
+  // 4. Retrieve PaymentIntent from Stripe API using payment_intent and client_secret
+  // 5. Verify PaymentIntent.status === "succeeded"
+  // 6. Prepare checkoutAttributes JSON with payment_intent and client_secret
+  // 7. Call markOrderAsPaidAction({ orderId, checkoutAttributes })
+  // 8. Log success/error
+  // 9. Redirect to success page: /checkout/{orderId}/stripe/success
+}
+```
+
+**Implementation Details:**
+
+- Server component (page.tsx) - handles Stripe redirect after payment
+- Verifies PaymentIntent status via Stripe API before processing
+- Uses `markOrderAsPaidAction` from `@/actions/store/order/mark-order-as-paid`
+- Stores payment intent data in `checkoutAttributes` for reference
+- Handles Next.js redirect errors properly (doesn't log them)
+- Shows loading state with `SuccessAndRedirect` component during processing
 
 **Credit Recharge Stripe Confirmation:**
 
 **Location:** `src/app/s/[storeId]/recharge/[orderId]/stripe/confirmed/page.tsx`
 
-- Verifies Stripe PaymentIntent status
-- Calls `processCreditTopUpAfterPaymentAction`
-- Redirects to success page
+**Implementation:**
+
+```typescript
+export default async function RechargeConfirmedPage(props: {
+  params: Promise<{ storeId: string; orderId: string }>;
+  searchParams: Promise<{
+    payment_intent?: string;
+    payment_intent_client_secret?: string;
+    redirect_status?: string;
+  }>;
+}) {
+  // 1. Extract orderId and storeId from params
+  // 2. Extract payment_intent, payment_intent_client_secret, redirect_status from searchParams
+  // 3. Verify redirect_status === "succeeded"
+  // 4. Retrieve PaymentIntent from Stripe API
+  // 5. Verify PaymentIntent.status === "succeeded"
+  // 6. Call processCreditTopUpAfterPaymentAction({ orderId })
+  //    - This action handles credit top-up, bonus calculation, and RSVP prepaid payment
+  // 7. Log success/error
+  // 8. Redirect to success page: /s/{storeId}/recharge/{orderId}/success
+}
+```
+
+**Implementation Details:**
+
+- Server component (page.tsx) - handles Stripe redirect after credit recharge
+- Verifies PaymentIntent status via Stripe API before processing
+- Uses `processCreditTopUpAfterPaymentAction` which:
+  - Processes credit top-up (adds credit to customer balance)
+  - Calculates and applies bonus credit (if applicable)
+  - Marks order as paid
+  - Creates StoreLedger entry
+  - Processes RSVP prepaid payment if `rsvpId` is in checkoutAttributes
+- Handles Next.js redirect errors properly (doesn't log them)
+- Shows loading state with `SuccessAndRedirect` component during processing
 
 **LINE Pay Confirmation:**
 
 **Location:** `src/app/(root)/checkout/[orderId]/linePay/confirmed/page.tsx`
 
-- Verifies LINE Pay transaction status
-- Calls `mark-order-as-paid` action
-- Redirects to success page
+**Implementation:**
+
+```typescript
+export default async function LinePayConfirmedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  // 1. Extract orderId and transactionId from searchParams
+  // 2. Get order from database
+  // 3. Verify transactionId matches order.checkoutAttributes
+  // 4. Check if order is already paid (early return if yes)
+  // 5. Get store and create LINE Pay client
+  // 6. Call LINE Pay confirm API with transactionId, currency, and amount
+  // 7. Verify response returnCode === "0000"
+  // 8. Call markOrderAsPaidAction({ orderId, checkoutAttributes })
+  // 9. Log success/error
+  // 10. Redirect to success page: /checkout/{orderId}/linePay/success
+}
+```
+
+**Implementation Details:**
+
+- Server component (page.tsx) - handles LINE Pay redirect after payment
+- Verifies transaction ID matches order's checkoutAttributes (security check)
+- Calls LINE Pay confirm API to finalize payment
+- Uses `markOrderAsPaidAction` from `@/actions/store/order/mark-order-as-paid`
+- Stores transaction data in `checkoutAttributes` for reference
+- Handles idempotency (returns early if order already paid)
+- Shows loading state with `SuccessAndRedirect` component if order already paid
 
 #### 5.2.2 Payment Processing Routes
 
@@ -948,22 +1035,151 @@ export const updateStorePaymentMethodsSchema = z.object({
 
 **Location:** `src/app/api/payment/stripe/create-payment-intent/route.ts`
 
-- Creates Stripe PaymentIntent
-- Returns payment intent to client
+**Implementation:**
+
+```typescript
+export async function POST(req: Request) {
+  // 1. Parse request body: { total, currency, stripeCustomerId? }
+  // 2. Validate total (required, positive number)
+  // 3. Validate currency (required, string)
+  // 4. Create Stripe PaymentIntent:
+  //    - amount: total * 100 (convert to cents)
+  //    - currency: currency.toLowerCase()
+  //    - customer: stripeCustomerId (optional)
+  //    - automatic_payment_methods: { enabled: true }
+  // 5. Log payment intent creation
+  // 6. Return PaymentIntent object (includes client_secret)
+}
+```
+
+**Request Body:**
+
+```typescript
+{
+  total: number;              // Order total in currency units (e.g., 100.00)
+  currency: string;           // ISO currency code (e.g., "usd", "twd")
+  stripeCustomerId?: string;  // Optional Stripe customer ID
+}
+```
+
+**Response:**
+
+Returns Stripe PaymentIntent object with `client_secret` for client-side payment processing.
+
+**Implementation Details:**
+
+- API route handler (route.ts) - handles POST requests
+- Validates input: total must be positive number, currency required
+- Converts amount to cents (multiplies by 100) for Stripe API
+- Uses `stripe` instance from `@/lib/stripe/config`
+- Enables automatic payment methods (cards, wallets, etc.)
+- Logs payment intent creation for tracking
+- Returns proper error responses with status codes
 
 **LINE Pay Request:**
 
 **Location:** `src/app/(root)/checkout/[orderId]/linePay/page.tsx`
 
-- Creates LINE Pay payment request
-- Redirects to LINE Pay payment page
+**Implementation:**
+
+```typescript
+export default async function PaymentPage(props: {
+  params: Promise<{ orderId: string }>;
+}) {
+  // 1. Extract orderId from params
+  // 2. Get order from database with OrderItemView
+  // 3. Check if order is already paid (early return if yes)
+  // 4. Get store and create LINE Pay client
+  // 5. Determine protocol (http/https) based on environment
+  // 6. Build confirmUrl and cancelUrl:
+  //    - confirmUrl: {protocol}//{host}/checkout/{orderId}/linePay/confirmed
+  //    - cancelUrl: {protocol}//{host}/checkout/{orderId}/linePay/canceled
+  // 7. Build request body:
+  //    - amount: order.orderTotal
+  //    - currency: order.currency
+  //    - orderId: order.id
+  //    - packages: map OrderItemView to LINE Pay package format
+  //    - redirectUrls: { confirmUrl, cancelUrl }
+  // 8. Call LINE Pay request API
+  // 9. If returnCode === "0000":
+  //    - Extract paymentUrl.web, paymentUrl.app, transactionId, paymentAccessToken
+  //    - Update order: checkoutAttributes = transactionId, checkoutRef = paymentAccessToken
+  //    - Log payment request creation
+  //    - Redirect to paymentUrl.web (PC) or paymentUrl.app (mobile)
+  // 10. If failed, log error and throw
+}
+```
+
+**Implementation Details:**
+
+- Server component (page.tsx) - handles LINE Pay payment initiation
+- Checks order payment status (idempotency)
+- Creates LINE Pay payment request with order details
+- Maps order items to LINE Pay package format
+- Stores transaction ID in `checkoutAttributes` for confirmation
+- Stores payment access token in `checkoutRef` for future reference
+- Detects mobile vs desktop and redirects to appropriate payment URL
+- Handles errors with proper logging
+- Uses `getLinePayClientByStore()` to get store-specific LINE Pay client
 
 #### 5.2.3 Store Admin Payment Routes
 
+**Cash Mark as Paid:**
+
 **Location:** `src/app/api/storeAdmin/[storeId]/orders/cash-mark-as-paid/[orderId]/route.ts`
 
-- Mark cash order as paid (store admin)
-- Calls `mark-order-as-paid` action
+**Implementation:**
+
+```typescript
+export async function POST(
+  _req: Request,
+  props: { params: Promise<{ storeId: string; orderId: string }> },
+) {
+  // 1. Extract storeId and orderId from params
+  // 2. Validate orderId and storeId are present
+  // 3. Call markOrderAsPaidAction with:
+  //    - storeId as bound argument (first parameter)
+  //    - { orderId, checkoutAttributes: JSON.stringify({ paymentMethod: "cash" }) }
+  // 4. Handle result:
+  //    - If serverError: return error response (400)
+  //    - If data: return success response with order (200)
+  // 5. Log success/error with structured metadata
+}
+```
+
+**Request:**
+
+- Method: POST
+- Path: `/api/storeAdmin/[storeId]/orders/cash-mark-as-paid/[orderId]`
+- No request body required (orderId and storeId from URL params)
+
+**Response:**
+
+```typescript
+// Success (200)
+{
+  success: true,
+  order: StoreOrder // Updated order object
+}
+
+// Error (400/500)
+{
+  success: false,
+  message: string // Error message
+}
+```
+
+**Implementation Details:**
+
+- API route handler (route.ts) - handles POST requests
+- Access control: `markOrderAsPaidAction` uses `storeActionClient` which validates:
+  - User is authenticated
+  - User is a member of the store's organization with role: owner, storeAdmin, staff, or sysAdmin
+  - Order belongs to the specified store
+- Stores `checkoutAttributes` as JSON: `{ paymentMethod: "cash" }`
+- Uses structured logging with metadata (storeId, orderId, error details)
+- Returns proper HTTP status codes (400 for validation errors, 500 for server errors)
+- Returns updated order object on success
 
 ---
 
@@ -973,188 +1189,2909 @@ export const updateStorePaymentMethodsSchema = z.object({
 
 #### 6.1.1 Stripe Payment Flow
 
-1. **Order Creation:**
-   - Create `StoreOrder` with `paymentStatus = Pending`
-   - Store order ID for payment intent
+**Overview:**
 
-2. **Payment Intent Creation:**
-   - Call Stripe API to create PaymentIntent
-   - Store payment intent ID in `checkoutAttributes` or `checkoutRef`
+The Stripe payment flow uses Stripe Elements for client-side payment processing. The flow involves order creation, payment intent creation, client-side payment processing, server-side confirmation, and order completion.
 
-3. **Payment Processing:**
-   - Client redirects to Stripe payment page
-   - Customer completes payment on Stripe
+**Flow Diagram:**
 
-4. **Payment Confirmation:**
-   - Stripe redirects to confirmation page with `payment_intent` parameter
-   - Server verifies PaymentIntent status via Stripe API
-   - If `status === "succeeded"`, process payment completion
+```text
+1. Checkout → 2. Order Creation → 3. Redirect to Stripe Page
+                                              ↓
+6. Success Page ← 5. Confirmation ← 4. Payment Processing
+```
 
-5. **Order Completion:**
-   - Update order: `isPaid = true`, `paymentStatus = Paid`, `orderStatus = Confirmed`
-   - Create `StoreLedger` entry
-   - Calculate and record fees
+**Detailed Flow:**
+
+**1. Order Creation:**
+
+**Location:** `src/app/s/[storeId]/checkout/client.tsx`
+
+**Process:**
+
+- User clicks "Place Order" button in checkout
+- Client component (`CheckoutSteps`) collects:
+  - Cart items (productIds, quantities, unitPrices, variants, variantCosts)
+  - Selected payment method (`paymentMethodId`)
+  - Selected shipping method (`shippingMethodId`)
+  - Order note (optional)
+  - User ID (optional, for anonymous orders)
+- Calls API: `POST /api/store/[storeId]/create-order`
+- Server action: `createOrderAction` (see section 5.1.1)
+- Creates `StoreOrder` with:
+  - `paymentStatus = PaymentStatus.Pending`
+  - `orderStatus = OrderStatus.Pending` (or `Processing` if `autoAcceptOrder`)
+  - `isPaid = false`
+  - `paymentMethodId` = Stripe payment method ID
+- Returns created order object
+- Client redirects to: `/checkout/${order.id}/stripe`
+
+**Code Reference:**
+
+```typescript
+// In checkout/client.tsx
+const placeOrder = async () => {
+  // ... validation ...
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/create-order`;
+  const result = await axios.post(url, body);
+  const order = result.data.order as StoreOrder;
+  
+  // Redirect to payment page
+  const paymenturl = `/checkout/${order.id}/${paymentMethod.payUrl}`;
+  router.push(paymenturl);
+};
+```
+
+**2. Payment Intent Creation:**
+
+**Location:** `src/app/(root)/checkout/[orderId]/stripe/components/payment-stripe.tsx`
+
+**Process:**
+
+- Payment page loads: `/checkout/[orderId]/stripe/page.tsx`
+- Server component fetches order via `getOrderById`
+- If order is already paid, redirects to success page
+- Client component `PaymentStripe` mounts
+- `useEffect` hook calls: `POST /api/payment/stripe/create-payment-intent`
+- API route: `src/app/api/payment/stripe/create-payment-intent/route.ts`
+- Creates Stripe PaymentIntent:
+  - `amount`: `orderTotal * 100` (convert to cents)
+  - `currency`: `order.currency.toLowerCase()`
+  - `automatic_payment_methods`: `{ enabled: true }`
+  - `metadata`: `{ orderId, storeId }`
+- Returns PaymentIntent with `client_secret`
+- Client stores `client_secret` in component state
+
+**Code Reference:**
+
+```typescript
+// In payment-stripe.tsx
+useEffect(() => {
+  if (order.isPaid) return;
+  
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/payment/stripe/create-payment-intent`;
+  const body = JSON.stringify({
+    total: Number(order.orderTotal),
+    currency: order.currency,
+  });
+  
+  fetch(url, { method: "POST", headers: {...}, body })
+    .then((res) => res.json())
+    .then((data) => {
+      setClientSecret(data.client_secret);
+    });
+}, [order]);
+```
+
+**3. Payment Processing (Client-Side):**
+
+**Location:** `src/app/(root)/checkout/[orderId]/stripe/components/payment-stripe.tsx`
+
+**Process:**
+
+- Once `clientSecret` is available, renders Stripe Elements:
+  - `<Elements>` wrapper with `clientSecret` and Stripe instance
+  - `<LinkAuthenticationElement>` for email collection
+  - `<PaymentElement>` for payment method input
+  - `<StripePayButton>` for payment submission
+- User enters payment details (card number, expiry, CVC, etc.)
+- User clicks "Pay" button
+- `StripePayButton` component:
+  - Calls `stripe.confirmPayment()` with:
+    - `elements`: Stripe Elements instance
+    - `confirmParams.return_url`: `/checkout/${orderId}/stripe/confirmed`
+  - Stripe processes payment:
+    - For card payments: immediate processing
+    - For redirect methods (iDEAL, etc.): redirects to bank, then back
+  - On success: Stripe redirects to `return_url` with query params:
+    - `payment_intent`: PaymentIntent ID
+    - `payment_intent_client_secret`: Client secret
+    - `redirect_status`: "succeeded" or "failed"
+
+**Code Reference:**
+
+```typescript
+// In StripePayButton component
+const fetchData = async () => {
+  if (!stripe || !elements) return;
+  
+  const { error } = await stripe.confirmPayment({
+    elements,
+    confirmParams: {
+      return_url: `${getAbsoluteUrl()}/checkout/${orderId}/stripe/confirmed`,
+    },
+  });
+  
+  if (error) {
+    setErrorMessage(error.message);
+  } else {
+    router.push(returnUrl);
+  }
+};
+```
+
+**4. Payment Confirmation (Server-Side):**
+
+**Location:** `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx`
+
+**Process:**
+
+- Stripe redirects to: `/checkout/[orderId]/stripe/confirmed?payment_intent=pi_xxx&payment_intent_client_secret=pi_xxx_secret_xxx&redirect_status=succeeded`
+- Server component extracts query parameters
+- Verifies `redirect_status === "succeeded"`
+- Calls Stripe API to verify PaymentIntent:
+  - `stripe.paymentIntents.retrieve(payment_intent, { client_secret })`
+  - Checks `paymentIntent.status === "succeeded"`
+- If verified:
+  - Prepares `checkoutAttributes`:
+
+    ```json
+    {
+      "payment_intent": "pi_xxx",
+      "client_secret": "pi_xxx_secret_xxx"
+    }
+    ```
+
+  - Calls `markOrderAsPaidAction`:
+    - Updates order: `isPaid = true`, `paymentStatus = Paid`, `orderStatus = Processing`
+    - Creates `StoreLedger` entry with fees
+    - Calculates payment processing fees
+  - Logs success
+  - Redirects to: `/checkout/[orderId]/stripe/success`
+- If verification fails:
+  - Logs error
+  - Shows error state (does not mark as paid)
+
+**Code Reference:**
+
+```typescript
+// In confirmed/page.tsx
+if (searchParams.redirect_status === "succeeded") {
+  const paymentIntent = await stripe.paymentIntents.retrieve(
+    searchParams.payment_intent,
+    { client_secret: searchParams.payment_intent_client_secret }
+  );
+  
+  if (paymentIntent.status === "succeeded") {
+    const checkoutAttributes = JSON.stringify({
+      payment_intent: searchParams.payment_intent,
+      client_secret: searchParams.payment_intent_client_secret,
+    });
+    
+    const result = await markOrderAsPaidAction({
+      orderId: params.orderId,
+      checkoutAttributes,
+    });
+    
+    redirect(`${getAbsoluteUrl()}/checkout/${params.orderId}/stripe/success`);
+  }
+}
+```
+
+**5. Order Completion:**
+
+**Location:** `src/actions/store/order/mark-order-as-paid.ts`
+
+**Process:**
+
+- `markOrderAsPaidAction` is called (see section 5.1.1)
+- Validates order exists and is not already paid
+- Determines platform payment processing (`usePlatform`)
+- Calculates fees:
+  - Payment method fee: `orderTotal * feeRate + feeAdditional`
+  - Fee tax: `fee * 0.05` (5% tax on fees)
+  - Platform fee: `orderTotal * 0.01` (1% for free stores)
+- Updates order in transaction:
+  - `isPaid = true`
+  - `paidDate = getUtcNowEpoch()`
+  - `orderStatus = OrderStatus.Processing`
+  - `paymentStatus = PaymentStatus.Paid`
+  - `paymentCost = fee + feeTax + platformFee`
+  - `checkoutAttributes` = payment intent data (JSON string)
+- Creates `StoreLedger` entry:
+  - `amount`: order total (positive)
+  - `fee`: payment method fee + tax (negative)
+  - `platformFee`: platform fee (negative)
+  - `type`: `PlatformPayment` (0) or `StorePaymentProvider` (1)
+  - `availability`: order date + payment method `clearDays`
+  - `balance`: previous balance + amount + fees
+- Returns updated order
+
+**6. Success Page:**
+
+**Location:** `src/app/(root)/checkout/[orderId]/stripe/success/page.tsx`
+
+**Process:**
+
+- Displays success message
+- Shows order details
+- Provides navigation:
+  - Back to store
+  - View order history
+  - Continue shopping
+
+**State Transitions:**
+
+```text
+Order State Flow:
+Pending → Processing (after payment confirmation)
+PaymentStatus: Pending → Paid
+isPaid: false → true
+```
+
+**Error Handling:**
+
+1. **Payment Intent Creation Failure:**
+   - API returns error response
+   - Client logs error
+   - User sees error message
+   - Order remains in `Pending` state
+
+2. **Payment Processing Failure:**
+   - Stripe returns error in `confirmPayment()`
+   - Error message displayed to user
+   - User can retry payment
+   - Order remains in `Pending` state
+
+3. **Payment Confirmation Failure:**
+   - PaymentIntent status not "succeeded"
+   - Server logs error
+   - User redirected to error state
+   - Order remains in `Pending` state
+
+4. **Order Completion Failure:**
+   - `markOrderAsPaidAction` fails
+   - Error logged with structured metadata
+   - User redirected to success page (payment succeeded but order update failed)
+   - Manual intervention may be required
+
+**Security Considerations:**
+
+- PaymentIntent client secret is only used client-side
+- Server verifies PaymentIntent status before marking order as paid
+- PaymentIntent metadata includes `orderId` and `storeId` for verification
+- `checkoutAttributes` stores payment intent data for audit trail
+- All payment operations are logged with structured metadata
+
+**Files Involved:**
+
+- `src/app/s/[storeId]/checkout/client.tsx` - Checkout and order creation
+- `src/app/api/store/[storeId]/create-order/route.ts` - Order creation API
+- `src/actions/store/order/create-order.ts` - Order creation action
+- `src/app/(root)/checkout/[orderId]/stripe/page.tsx` - Stripe payment page
+- `src/app/(root)/checkout/[orderId]/stripe/components/payment-stripe.tsx` - Payment UI component
+- `src/app/api/payment/stripe/create-payment-intent/route.ts` - PaymentIntent creation API
+- `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx` - Payment confirmation
+- `src/actions/store/order/mark-order-as-paid.ts` - Order completion action
+- `src/app/(root)/checkout/[orderId]/stripe/success/page.tsx` - Success page
+
+**Testing Checklist:**
+
+- [ ] Order creation with Stripe payment method
+- [ ] PaymentIntent creation with correct amount and currency
+- [ ] Stripe Elements renders correctly
+- [ ] Payment processing with valid card
+- [ ] Payment processing with invalid card (error handling)
+- [ ] Payment confirmation with succeeded status
+- [ ] Payment confirmation with failed status
+- [ ] Order marked as paid after successful payment
+- [ ] StoreLedger entry created correctly
+- [ ] Fees calculated correctly
+- [ ] Success page displays correctly
+- [ ] Error states handled gracefully
 
 #### 6.1.2 LINE Pay Payment Flow
 
-1. **Order Creation:**
-   - Create `StoreOrder` with `paymentStatus = Pending`
+**Overview:**
 
-2. **Payment Request:**
-   - Call LINE Pay API to create payment request
-   - Store transaction ID in `checkoutAttributes`
-   - Store payment access token in `checkoutRef`
+The LINE Pay payment flow uses LINE Pay's online payment API for payment processing. Unlike Stripe, LINE Pay requires server-side payment request creation and redirects users to LINE Pay's payment page. The flow involves order creation, payment request creation, redirect to LINE Pay, confirmation, and order completion.
 
-3. **Payment Processing:**
-   - Redirect customer to LINE Pay payment page
-   - Customer completes payment on LINE Pay
+**Flow Diagram:**
 
-4. **Payment Confirmation:**
-   - LINE Pay redirects to confirmation page
-   - Server verifies transaction status via LINE Pay API
-   - If confirmed, process payment completion
+```text
+1. Checkout → 2. Order Creation → 3. Payment Request → 4. Redirect to LINE Pay
+                                                                    ↓
+6. Success Page ← 5. Confirmation ← LINE Pay Payment Page
+```
 
-5. **Order Completion:**
-   - Update order: `isPaid = true`, `paymentStatus = Paid`, `orderStatus = Confirmed`
-   - Create `StoreLedger` entry
-   - Calculate and record fees
+**Detailed Flow:**
+
+**1. Order Creation:**
+
+**Location:** `src/app/s/[storeId]/checkout/client.tsx`
+
+**Process:**
+
+- User clicks "Place Order" button in checkout
+- Client component (`CheckoutSteps`) collects:
+  - Cart items (productIds, quantities, unitPrices, variants, variantCosts)
+  - Selected payment method (`paymentMethodId` - LINE Pay)
+  - Selected shipping method (`shippingMethodId`)
+  - Order note (optional)
+  - User ID (optional, for anonymous orders)
+- Calls API: `POST /api/store/[storeId]/create-order`
+- Server action: `createOrderAction` (see section 5.1.1)
+- Creates `StoreOrder` with:
+  - `paymentStatus = PaymentStatus.Pending`
+  - `orderStatus = OrderStatus.Pending` (or `Processing` if `autoAcceptOrder`)
+  - `isPaid = false`
+  - `paymentMethodId` = LINE Pay payment method ID
+- Returns created order object
+- Client redirects to: `/checkout/${order.id}/linePay`
+
+**Code Reference:**
+
+```typescript
+// In checkout/client.tsx (same as Stripe)
+const placeOrder = async () => {
+  // ... validation ...
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/store/${params.storeId}/create-order`;
+  const result = await axios.post(url, body);
+  const order = result.data.order as StoreOrder;
+  
+  // Redirect to payment page
+  const paymenturl = `/checkout/${order.id}/${paymentMethod.payUrl}`;
+  router.push(paymenturl); // payUrl = "linePay"
+};
+```
+
+**2. Payment Request Creation:**
+
+**Location:** `src/app/(root)/checkout/[orderId]/linePay/page.tsx`
+
+**Process:**
+
+- Payment page loads: `/checkout/[orderId]/linePay/page.tsx`
+- Server component:
+  - Fetches order via `getOrderById`
+  - If order is already paid, shows success state
+  - Fetches store via `getStoreById`
+  - Gets LINE Pay client via `getLinePayClientByStore(store)`
+  - Detects mobile vs desktop user agent
+  - Determines protocol (http for dev, https for production)
+  - Constructs redirect URLs:
+    - `confirmUrl`: `/checkout/${orderId}/linePay/confirmed`
+    - `cancelUrl`: `/checkout/${orderId}/linePay/canceled`
+- Prepares LINE Pay request body:
+  - `amount`: `Number(order.orderTotal)`
+  - `currency`: `order.currency` (as `Currency` type)
+  - `orderId`: `order.id`
+  - `packages`: Array of order items with:
+    - `id`: Order item ID
+    - `amount`: `unitPrice * quantity`
+    - `products`: Array with item details (name, quantity, price)
+  - `redirectUrls`: `{ confirmUrl, cancelUrl }`
+- Calls LINE Pay API: `linePayClient.request.send(requestConfig)`
+- If `returnCode === "0000"` (success):
+  - Extracts from response:
+    - `weburl`: Web payment URL
+    - `appurl`: Mobile app payment URL
+    - `transactionId`: Transaction ID
+    - `paymentAccessToken`: Payment access token
+  - Updates order:
+    - `checkoutAttributes` = `transactionId` (string)
+    - `checkoutRef` = `paymentAccessToken` (string)
+  - Logs payment request creation
+  - Redirects user:
+    - Mobile: `redirect(appurl)`
+    - Desktop: `redirect(weburl)`
+- If request fails:
+  - Logs error with return code and message
+  - Throws error
+
+**Code Reference:**
+
+```typescript
+// In linePay/page.tsx
+const order = await getOrderById(params.orderId);
+const store = await getStoreById(order.storeId);
+const linePayClient = await getLinePayClientByStore(store);
+
+const requestBody: RequestRequestBody = {
+  amount: Number(order.orderTotal),
+  currency: order.currency as Currency,
+  orderId: order.id,
+  packages: order.OrderItemView.map((item) => ({
+    id: item.id,
+    amount: Number(item.unitPrice) * item.quantity,
+    products: [{
+      name: item.name,
+      quantity: item.quantity,
+      price: Number(item.unitPrice),
+    }],
+  })),
+  redirectUrls: {
+    confirmUrl: `${protocol}//${host}/checkout/${order.id}/linePay/confirmed`,
+    cancelUrl: `${protocol}//${host}/checkout/${order.id}/linePay/canceled`,
+  },
+};
+
+const res = await linePayClient.request.send({ body: requestBody });
+
+if (res.body.returnCode === "0000") {
+  const { weburl, appurl, transactionId, paymentAccessToken } = res.body.info;
+  
+  await sqlClient.storeOrder.update({
+    where: { id: order.id },
+    data: {
+      checkoutAttributes: transactionId,
+      checkoutRef: paymentAccessToken,
+    },
+  });
+  
+  redirect(isMobile ? appurl : weburl);
+}
+```
+
+**3. Payment Processing (LINE Pay Side):**
+
+**Process:**
+
+- User is redirected to LINE Pay payment page (web or app)
+- User authenticates with LINE Pay account
+- User reviews order details and payment amount
+- User confirms payment
+- LINE Pay processes payment:
+  - Validates payment method
+  - Processes transaction
+  - On success: Redirects to `confirmUrl` with query params:
+    - `orderId`: Order ID
+    - `transactionId`: Transaction ID
+  - On cancel: Redirects to `cancelUrl` with query params:
+    - `orderId`: Order ID
+    - `transactionId`: Transaction ID (may be present)
+
+**Note:** This step happens entirely on LINE Pay's servers. Our application does not handle this directly.
+
+**4. Payment Confirmation (Server-Side):**
+
+**Location:** `src/app/(root)/checkout/[orderId]/linePay/confirmed/page.tsx`
+
+**Process:**
+
+- LINE Pay redirects to: `/checkout/[orderId]/linePay/confirmed?orderId=xxx&transactionId=xxx`
+- Server component extracts query parameters:
+  - `orderId`: Order ID
+  - `transactionId`: Transaction ID from LINE Pay
+- Validates:
+  - `orderId` is present
+  - Order exists via `getOrderById`
+  - `order.checkoutAttributes === transactionId` (security check)
+  - Order is not already paid
+- Gets store and LINE Pay client
+- Prepares confirmation request:
+  - `transactionId`: From query params
+  - `body.currency`: `order.currency`
+  - `body.amount`: `Number(order.orderTotal)`
+- Calls LINE Pay API: `linePayClient.confirm.send(confirmRequest)`
+- If `returnCode === "0000"` (success):
+  - Calls `markOrderAsPaidAction`:
+    - Updates order: `isPaid = true`, `paymentStatus = Paid`, `orderStatus = Processing`
+    - Creates `StoreLedger` entry with fees
+    - Calculates payment processing fees
+  - Logs success
+  - Redirects to: `/checkout/[orderId]/linePay/success`
+- If confirmation fails:
+  - Logs error
+  - Returns empty component (error state)
+  - Order remains in `Pending` state
+
+**Code Reference:**
+
+```typescript
+// In linePay/confirmed/page.tsx
+const { orderId, transactionId } = await searchParams;
+
+const order = await getOrderById(orderId as string);
+
+// Security check: verify transactionId matches
+if (order.checkoutAttributes !== transactionId) {
+  throw new Error("transactionId not match");
+}
+
+const store = await getStoreById(order.storeId);
+const linePayClient = await getLinePayClientByStore(store);
+
+const confirmRequest: ConfirmRequestConfig = {
+  transactionId: transactionId as string,
+  body: {
+    currency: order.currency as Currency,
+    amount: Number(order.orderTotal),
+  },
+};
+
+const res = await linePayClient.confirm.send(confirmRequest);
+
+if (res.body.returnCode === "0000") {
+  const result = await markOrderAsPaidAction({
+    orderId: order.id,
+    checkoutAttributes: order.checkoutAttributes || "",
+  });
+  
+  redirect(`${getAbsoluteUrl()}/checkout/${order.id}/linePay/success`);
+}
+```
+
+**5. Order Completion:**
+
+**Location:** `src/actions/store/order/mark-order-as-paid.ts`
+
+**Process:**
+
+- `markOrderAsPaidAction` is called (see section 5.1.1)
+- Same process as Stripe:
+  - Validates order exists and is not already paid
+  - Determines platform payment processing (`usePlatform`)
+  - Calculates fees:
+    - Payment method fee: `orderTotal * feeRate + feeAdditional`
+    - Fee tax: `fee * 0.05` (5% tax on fees)
+    - Platform fee: `orderTotal * 0.01` (1% for free stores)
+  - Updates order in transaction
+  - Creates `StoreLedger` entry
+  - Returns updated order
+
+**6. Success Page:**
+
+**Location:** `src/app/(root)/checkout/[orderId]/linePay/success/page.tsx`
+
+**Process:**
+
+- Displays success message
+- Shows order details via `SuccessAndRedirect` component
+- Provides navigation:
+  - Back to store
+  - View order history
+  - Continue shopping
+
+**7. Cancel Page (Optional):**
+
+**Location:** `src/app/(root)/checkout/[orderId]/linePay/canceled/page.tsx`
+
+**Process:**
+
+- User cancels payment on LINE Pay
+- LINE Pay redirects to cancel URL
+- Displays cancellation message
+- Provides navigation back to checkout or store
+- Order remains in `Pending` state (not paid)
+
+**State Transitions:**
+
+```text
+Order State Flow:
+Pending → Processing (after payment confirmation)
+PaymentStatus: Pending → Paid
+isPaid: false → true
+```
+
+**Error Handling:**
+
+1. **Payment Request Creation Failure:**
+   - LINE Pay API returns non-"0000" return code
+   - Server logs error with return code and message
+   - Throws error
+   - Order remains in `Pending` state
+   - User sees error page
+
+2. **Transaction ID Mismatch:**
+   - `order.checkoutAttributes !== transactionId` from query params
+   - Security check fails
+   - Throws error: "transactionId not match"
+   - Prevents unauthorized payment confirmation
+   - Order remains in `Pending` state
+
+3. **Payment Confirmation Failure:**
+   - LINE Pay confirm API returns non-"0000" return code
+   - Server logs error
+   - Returns empty component
+   - Order remains in `Pending` state
+   - User may need to retry or contact support
+
+4. **Order Completion Failure:**
+   - `markOrderAsPaidAction` fails
+   - Error logged with structured metadata
+   - User redirected to success page (payment confirmed but order update failed)
+   - Manual intervention may be required
+
+5. **User Cancellation:**
+   - User cancels on LINE Pay page
+   - Redirected to cancel URL
+   - Order remains in `Pending` state
+   - User can retry payment
+
+**Security Considerations:**
+
+- Transaction ID stored in `checkoutAttributes` is verified on confirmation
+- Payment access token stored in `checkoutRef` for future reference
+- Server-side confirmation ensures payment was actually processed
+- LINE Pay API credentials are store-specific (from `Store.LINE_PAY_ID` and `Store.LINE_PAY_SECRET`)
+- All payment operations are logged with structured metadata
+- Mobile vs desktop detection ensures correct payment URL
+
+**LINE Pay API Details:**
+
+- **Request API:** Creates payment request and returns payment URLs
+- **Confirm API:** Confirms payment after user completes on LINE Pay
+- **Return Codes:**
+  - `"0000"`: Success
+  - Other codes: Various error conditions (see LINE Pay documentation)
+- **Payment URLs:**
+  - `web`: Desktop/web payment URL
+  - `app`: Mobile app payment URL
+- **Transaction ID:** Unique identifier for the payment transaction
+- **Payment Access Token:** Token for accessing payment details
+
+**Files Involved:**
+
+- `src/app/s/[storeId]/checkout/client.tsx` - Checkout and order creation
+- `src/app/api/store/[storeId]/create-order/route.ts` - Order creation API
+- `src/actions/store/order/create-order.ts` - Order creation action
+- `src/app/(root)/checkout/[orderId]/linePay/page.tsx` - Payment request page
+- `src/lib/linePay/index.ts` - LINE Pay client creation
+- `src/lib/linePay/line-pay-api/request.ts` - LINE Pay request API
+- `src/app/(root)/checkout/[orderId]/linePay/confirmed/page.tsx` - Payment confirmation
+- `src/lib/linePay/line-pay-api/confirm.ts` - LINE Pay confirm API
+- `src/actions/store/order/mark-order-as-paid.ts` - Order completion action
+- `src/app/(root)/checkout/[orderId]/linePay/success/page.tsx` - Success page
+- `src/app/(root)/checkout/[orderId]/linePay/canceled/page.tsx` - Cancel page
+
+**Testing Checklist:**
+
+- [ ] Order creation with LINE Pay payment method
+- [ ] Payment request creation with correct amount and currency
+- [ ] Transaction ID and payment access token stored correctly
+- [ ] Mobile user redirected to app URL
+- [ ] Desktop user redirected to web URL
+- [ ] Payment processing on LINE Pay (manual testing)
+- [ ] Payment confirmation with succeeded status
+- [ ] Transaction ID verification (security check)
+- [ ] Payment confirmation with failed status
+- [ ] Order marked as paid after successful payment
+- [ ] StoreLedger entry created correctly
+- [ ] Fees calculated correctly
+- [ ] Success page displays correctly
+- [ ] Cancel page handles cancellation correctly
+- [ ] Error states handled gracefully
+- [ ] Payment request failure handled
+- [ ] Transaction ID mismatch detected
 
 #### 6.1.3 Credit-Based Payment Flow
 
-1. **Availability Check:**
-   - Verify customer is signed in
-   - Verify store has credit system enabled
-   - Verify customer has sufficient credit balance
+**Overview:**
 
-2. **Payment Processing:**
-   - Deduct credit from customer balance (atomic transaction)
-   - Create `CustomerCreditLedger` entry (type: SPEND)
-   - Create `StoreOrder` with credit payment method
-   - Mark order as paid immediately
+The credit-based payment flow uses the customer's internal credit balance to pay for orders. Credit payments are processed immediately (no external gateway), with credit deduction, ledger entries, and order completion happening in a single atomic transaction. Credit payments have zero processing fees.
 
-3. **Order Completion:**
-   - Order already marked as paid
-   - Create `StoreLedger` entry
-   - Credit payments have zero fees
+**Flow Diagram:**
 
-#### 6.1.4 Cash/In-Person Payment Flow
-
-1. **Order Creation:**
-   - Create `StoreOrder` with cash payment method
-   - `paymentStatus = Pending` (or `Paid` if immediate confirmation mode)
-
-2. **Payment Confirmation:**
-   - **Option 1 (Immediate):** Order marked as paid immediately upon creation
-   - **Option 2 (Manual):** Store staff marks order as paid via admin interface
-
-3. **Order Completion:**
-   - Update order: `isPaid = true`, `paymentStatus = Paid`, `paidDate = current timestamp`
-   - Create `StoreLedger` entry with zero fees
-
-### 6.2 Fee Calculation
-
-#### 6.2.1 Payment Gateway Fees
-
-```typescript
-// Fee calculation logic
-const gatewayFee = -(orderTotal * paymentMethod.fee + paymentMethod.feeAdditional);
-const feeTax = gatewayFee * 0.05; // 5% tax on fees
-const totalGatewayFees = gatewayFee + feeTax;
+```text
+1. Checkout → 2. Order Creation → 3. Credit Validation → 4. Credit Deduction
+                                                                    ↓
+5. Order Completion (immediate) → 6. Success
 ```
 
-**Conditions:**
+**Detailed Flow:**
 
-- Fees only apply if using platform gateway (`usePlatform = true`)
-- Cash payments: `gatewayFee = 0`, `feeTax = 0`
-- Credit payments: `gatewayFee = 0`, `feeTax = 0`
+**1. Order Creation:**
 
-#### 6.2.2 Platform Fees
+**Location:** `src/app/s/[storeId]/checkout/client.tsx` → `src/actions/store/order/create-order.ts`
+
+**Process:**
+
+- User clicks "Place Order" button in checkout
+- User selects credit payment method (`payUrl = "credit"`)
+- Client component collects order data (same as Stripe/LINE Pay)
+- Calls API: `POST /api/store/[storeId]/create-order`
+- Server action: `createOrderAction` creates `StoreOrder` with:
+  - `paymentStatus = PaymentStatus.Pending`
+  - `orderStatus = OrderStatus.Pending` (or `Processing` if `autoAcceptOrder`)
+  - `isPaid = false` (initially)
+  - `paymentMethodId` = Credit payment method ID
+- Returns created order object
+- **Note:** For credit payments, the order is typically processed immediately after creation (see step 3)
+
+**Code Reference:**
 
 ```typescript
-// Platform fee calculation
-const platformFee = isPro ? 0 : -(orderTotal * 0.01); // 1% for Free stores
-```
-
-**Conditions:**
-
-- Only applies to Free-level stores
-- Pro-level stores: `platformFee = 0`
-- Cash payments: `platformFee = 0` (even for Free stores)
-
-#### 6.2.3 Store Ledger Entry
-
-```typescript
-// StoreLedger entry creation
-const balance = Number(lastLedger?.balance || 0);
-const newBalance = balance + Number(orderTotal) + totalGatewayFees + platformFee;
-
-await sqlClient.storeLedger.create({
+// In create-order.ts
+const order = await sqlClient.storeOrder.create({
   data: {
-    storeId: order.storeId,
-    orderId: order.id,
-    amount: order.orderTotal, // Positive for revenue
-    fee: totalGatewayFees, // Negative for fees
-    platformFee: platformFee, // Negative for platform fee
-    currency: order.currency,
-    type: StoreLedgerType.Order, // Or CreditRecharge for credit top-ups
-    balance: new Prisma.Decimal(newBalance),
-    availability: BigInt(availabilityDate.getTime()), // Based on clearDays
+    storeId,
+    userId: userId || null, // Required for credit payments
+    paymentMethodId, // Credit payment method
+    isPaid: false, // Will be set to true after credit deduction
+    paymentStatus: PaymentStatus.Pending,
     // ... other fields
   },
 });
 ```
 
-### 6.3 Payment Status Verification
+**2. Availability Check:**
 
-#### 6.3.1 Stripe Verification
+**Location:** `src/lib/payment/plugins/credit-plugin.ts`
+
+**Process:**
+
+- Before processing payment, validate:
+  - Customer is signed in (`order.userId` must exist)
+  - Store has credit system enabled (`Store.useCustomerCredit = true`)
+  - Customer has sufficient credit balance
+- Credit plugin's `checkAvailability()` method performs basic checks
+- Full validation happens in `confirmPayment()` method
+
+**Code Reference:**
 
 ```typescript
-import { stripe } from "@/lib/stripe/config";
-
-const paymentIntent = await stripe.paymentIntents.retrieve(
-  paymentIntentId,
-  { client_secret: clientSecret }
-);
-
-if (paymentIntent.status === "succeeded") {
-  // Process payment completion
+// In credit-plugin.ts
+checkAvailability(order: StoreOrder, config: PluginConfig): AvailabilityResult {
+  if (!order.userId) {
+    return {
+      available: false,
+      reason: "User must be signed in to use credit payment",
+    };
+  }
+  return { available: true };
 }
 ```
 
-#### 6.3.2 LINE Pay Verification
+**3. Payment Processing (Credit Deduction):**
+
+**Location:** `src/lib/payment/plugins/credit-plugin.ts` → Payment processing logic
+
+**Process:**
+
+- After order creation, payment processing is triggered
+- Credit plugin's `confirmPayment()` method:
+  - Fetches order with Store and User relations
+  - Validates:
+    - Order exists
+    - User ID exists
+    - Store has credit system enabled
+  - Calculates required credit:
+    - `requiredCredit = orderTotal / creditExchangeRate`
+  - Checks customer credit balance:
+    - Queries `CustomerCredit` table
+    - Gets current balance
+    - Compares with required credit
+  - If insufficient balance:
+    - Returns error: "Insufficient credit balance"
+    - Logs warning
+    - Order remains unpaid
+  - If sufficient balance:
+    - Returns success confirmation
+    - Actual credit deduction happens in transaction (see step 4)
+
+**Code Reference:**
 
 ```typescript
-import { linePayClient } from "@/lib/linePay/config";
+// In credit-plugin.ts
+async confirmPayment(orderId: string, paymentData: PaymentData, config: PluginConfig) {
+  const order = await sqlClient.storeOrder.findUnique({
+    where: { id: orderId },
+    include: { Store: true, User: true },
+  });
+  
+  const requiredCredit = Number(order.orderTotal) / Number(order.Store.creditExchangeRate);
+  const customerCredit = await sqlClient.customerCredit.findUnique({
+    where: { storeId_userId: { storeId: order.storeId, userId: order.User.id } },
+  });
+  
+  const currentBalance = customerCredit ? Number(customerCredit.point) : 0;
+  
+  if (currentBalance < requiredCredit) {
+    return { success: false, paymentStatus: "failed", error: "Insufficient credit balance" };
+  }
+  
+  return { success: true, paymentStatus: "paid" };
+}
+```
 
+**4. Credit Deduction and Order Completion (Atomic Transaction):**
+
+**Location:** Payment processing logic (varies by use case)
+
+**Process:**
+
+- Credit deduction and order completion happen in a single database transaction
+- Transaction includes:
+  1. **Deduct credit from customer balance:**
+     - Update `CustomerCredit.point` (decrement by required credit)
+     - Calculate new balance: `newBalance = currentBalance - requiredCredit`
+  2. **Create `CustomerCreditLedger` entry:**
+     - Type: `SPEND`
+     - Amount: negative (debit) = `-requiredCredit`
+     - Balance: new balance after deduction
+     - `referenceId`: order ID
+     - Note: Description of purchase
+  3. **Update order:**
+     - `isPaid = true`
+     - `paidDate = getUtcNowEpoch()`
+     - `paymentStatus = PaymentStatus.Paid`
+     - `orderStatus = OrderStatus.Processing` (or `Confirmed`)
+  4. **Create `StoreLedger` entry:**
+     - Amount: order total (positive, revenue)
+     - Fee: 0 (credit payments have zero fees)
+     - Platform fee: 0 (credit payments have zero platform fees)
+     - Type: `CreditUsage` (revenue recognition)
+     - Balance: previous balance + order total
+     - Description: Order details
+     - Availability: Immediate (no clear days for credit usage)
+
+**Code Reference (from RSVP prepaid payment example):**
+
+```typescript
+await sqlClient.$transaction(async (tx) => {
+  // 1. Create StoreOrder
+  const storeOrder = await tx.storeOrder.create({
+    data: {
+      // ... order data
+      isPaid: true,
+      paymentStatus: PaymentStatus.Paid,
+      paymentMethodId: creditPaymentMethod.id,
+    },
+  });
+  
+  // 2. Deduct credit
+  const newBalance = currentBalance - requiredCredit;
+  await tx.customerCredit.upsert({
+    where: { storeId_userId: { storeId, userId: customerId } },
+    update: { point: new Prisma.Decimal(newBalance) },
+    create: { storeId, userId: customerId, point: new Prisma.Decimal(newBalance) },
+  });
+  
+  // 3. Create CustomerCreditLedger
+  await tx.customerCreditLedger.create({
+    data: {
+      storeId,
+      userId: customerId,
+      amount: new Prisma.Decimal(-requiredCredit),
+      balance: new Prisma.Decimal(newBalance),
+      type: "SPEND",
+      referenceId: storeOrder.id,
+      note: "Order payment",
+    },
+  });
+  
+  // 4. Create StoreLedger
+  await tx.storeLedger.create({
+    data: {
+      storeId,
+      orderId: storeOrder.id,
+      amount: new Prisma.Decimal(cashValue),
+      fee: new Prisma.Decimal(0),
+      platformFee: new Prisma.Decimal(0),
+      type: StoreLedgerType.CreditUsage,
+      balance: new Prisma.Decimal(previousBalance + cashValue),
+    },
+  });
+});
+```
+
+**5. Success/Completion:**
+
+**Process:**
+
+- Order is immediately marked as paid
+- Customer credit balance is reduced
+- Ledger entries are created
+- Order is ready for processing/fulfillment
+- No redirect to external payment page needed
+- User can proceed to order confirmation/success page
+
+**State Transitions:**
+
+```text
+Order State Flow:
+Pending → Processing/Confirmed (immediate, after credit deduction)
+PaymentStatus: Pending → Paid (immediate)
+isPaid: false → true (immediate)
+CustomerCredit: balance → balance - requiredCredit
+```
+
+**Error Handling:**
+
+1. **User Not Signed In:**
+   - Credit payment not available
+   - User must sign in to use credit
+   - Order creation may fail or use different payment method
+
+2. **Store Credit System Disabled:**
+   - `Store.useCustomerCredit = false`
+   - Credit payment not available
+   - Error: "Store does not have credit system enabled"
+
+3. **Insufficient Credit Balance:**
+   - `currentBalance < requiredCredit`
+   - Payment confirmation fails
+   - Order remains unpaid
+   - User needs to recharge credit or use different payment method
+   - Warning logged with balance details
+
+4. **Credit Exchange Rate Not Configured:**
+   - `creditExchangeRate = 0` or null
+   - Cannot calculate required credit
+   - Payment processing fails
+   - Error: "Credit exchange rate is not configured"
+
+5. **Transaction Failure:**
+   - Database transaction fails
+   - All changes rolled back
+   - Order remains unpaid
+   - Credit balance unchanged
+   - Error logged with details
+
+**Security Considerations:**
+
+- Credit deduction happens in atomic transaction (all-or-nothing)
+- Credit balance checked before deduction (prevents negative balances)
+- Order ID stored in `CustomerCreditLedger.referenceId` for audit trail
+- All credit operations logged with structured metadata
+- User must be authenticated to use credit payments
+- Store credit system must be enabled
+
+**Fee Structure:**
+
+- **Payment Gateway Fee:** 0 (no external gateway)
+- **Fee Tax:** 0 (no fees to tax)
+- **Platform Fee:** 0 (credit usage is revenue recognition, not payment processing)
+- **Total Fees:** 0
+
+**Files Involved:**
+
+- `src/app/s/[storeId]/checkout/client.tsx` - Checkout and order creation
+- `src/actions/store/order/create-order.ts` - Order creation action
+- `src/lib/payment/plugins/credit-plugin.ts` - Credit payment plugin
+- `src/actions/store/reservation/process-rsvp-prepaid-payment.ts` - RSVP credit payment example
+- `src/actions/storeAdmin/rsvp/deduce-customer-credit.ts` - Credit deduction utilities
+
+**Testing Checklist:**
+
+- [ ] Order creation with credit payment method
+- [ ] User must be signed in to use credit
+- [ ] Store credit system must be enabled
+- [ ] Credit balance validation (sufficient vs insufficient)
+- [ ] Credit deduction in atomic transaction
+- [ ] CustomerCreditLedger entry created correctly
+- [ ] StoreLedger entry created with zero fees
+- [ ] Order marked as paid immediately
+- [ ] Insufficient balance error handling
+- [ ] Transaction rollback on failure
+- [ ] Credit exchange rate calculation
+- [ ] Multiple concurrent credit payments (race condition handling)
+
+#### 6.1.4 Cash/In-Person Payment Flow
+
+**Overview:**
+
+The cash/in-person payment flow handles payments made with physical cash or in-person transactions at the store location. Payment confirmation can be immediate (upon order creation) or manual (by store staff via admin interface). Cash payments have zero processing fees.
+
+**Flow Diagram:**
+
+```text
+Option 1 (Immediate):
+1. Checkout → 2. Order Creation → 3. Immediate Confirmation → 4. Success
+
+Option 2 (Manual):
+1. Checkout → 2. Order Creation → 3. Pending Payment → 4. Store Staff Confirms → 5. Success
+```
+
+**Detailed Flow:**
+
+**1. Order Creation:**
+
+**Location:** `src/app/s/[storeId]/checkout/client.tsx` → `src/actions/store/order/create-order.ts`
+
+**Process:**
+
+- User clicks "Place Order" button in checkout
+- User selects cash/in-person payment method (`payUrl = "cash"`)
+- Client component collects order data
+- Calls API: `POST /api/store/[storeId]/create-order`
+- Server action: `createOrderAction` creates `StoreOrder` with:
+  - `paymentMethodId` = Cash payment method ID
+  - `paymentStatus = PaymentStatus.Pending` (default)
+  - `isPaid = false` (default, unless immediate confirmation)
+  - `orderStatus = OrderStatus.Pending` (or `Processing` if `autoAcceptOrder`)
+
+**Configuration Options:**
+
+- **Immediate Confirmation Mode:**
+  - If `storeConfig.immediateConfirmation = true`
+  - Order is marked as paid immediately upon creation
+  - `isPaid = true`, `paymentStatus = Paid`, `paidDate = current timestamp`
+  - Suitable for: Online orders with cash-on-delivery, pickup orders
+
+- **Manual Confirmation Mode (Default):**
+  - If `storeConfig.immediateConfirmation = false` or not set
+  - Order remains in `Pending` payment status
+  - Store staff confirms payment later via admin interface
+  - Suitable for: In-store orders, orders requiring verification
+
+**Code Reference:**
+
+```typescript
+// In create-order.ts
+const order = await sqlClient.storeOrder.create({
+  data: {
+    storeId,
+    paymentMethodId, // Cash payment method
+    isPaid: false, // Or true if immediate confirmation
+    paymentStatus: PaymentStatus.Pending, // Or Paid if immediate
+    // ... other fields
+  },
+});
+```
+
+**2. Payment Confirmation:**
+
+##### Option 1: Immediate Confirmation
+
+**Location:** Order creation logic or cash plugin
+
+**Process:**
+
+- If `immediateConfirmation = true`:
+  - Order is marked as paid during creation
+  - `isPaid = true`
+  - `paidDate = getUtcNowEpoch()`
+  - `paymentStatus = PaymentStatus.Paid`
+  - Proceeds directly to order completion (step 3)
+
+##### Option 2: Manual Confirmation
+
+**Location:** `src/app/api/storeAdmin/[storeId]/orders/cash-mark-as-paid/[orderId]/route.ts`
+
+**Process:**
+
+- Order remains in `Pending` payment status
+- Store staff accesses admin interface
+- Staff views unpaid orders
+- Staff clicks "Mark as Paid" for cash orders
+- API call: `POST /api/storeAdmin/[storeId]/orders/cash-mark-as-paid/[orderId]`
+- Server action: `markOrderAsPaidAction` (store admin version)
+- Validates:
+  - Order exists
+  - Order belongs to store
+  - Order is not already paid
+  - User has store admin access
+- Marks order as paid:
+  - `isPaid = true`
+  - `paidDate = getUtcNowEpoch()`
+  - `paymentStatus = PaymentStatus.Paid`
+  - `orderStatus = OrderStatus.Processing`
+  - `checkoutAttributes = JSON.stringify({ paymentMethod: "cash" })`
+
+**Code Reference:**
+
+```typescript
+// In cash-mark-as-paid route
+const result = await markOrderAsPaidAction(
+  params.storeId,
+  {
+    orderId: params.orderId,
+    checkoutAttributes: JSON.stringify({ paymentMethod: "cash" }),
+  }
+);
+```
+
+**3. Order Completion:**
+
+**Location:** `src/actions/storeAdmin/order/mark-order-as-paid.ts` or `src/actions/store/order/mark-order-as-paid.ts`
+
+**Process:**
+
+- `markOrderAsPaidAction` is called (see section 5.1.1)
+- Determines platform payment processing (`usePlatform`)
+- Calculates fees:
+  - **Payment Gateway Fee:** 0 (cash has no gateway)
+  - **Fee Tax:** 0 (no fees to tax)
+  - **Platform Fee:** 0 (cash payments have zero platform fees, even for free stores)
+- Updates order in transaction:
+  - `isPaid = true`
+  - `paidDate = getUtcNowEpoch()`
+  - `orderStatus = OrderStatus.Processing`
+  - `paymentStatus = PaymentStatus.Paid`
+  - `paymentCost = 0` (zero fees)
+  - `checkoutAttributes` = payment method data
+- Creates `StoreLedger` entry:
+  - Amount: order total (positive, revenue)
+  - Fee: 0
+  - Platform fee: 0
+  - Type: `StorePaymentProvider` (1) or `PlatformPayment` (0) based on `usePlatform`
+  - Balance: previous balance + order total
+  - Description: Order details
+  - Availability: Order date + payment method `clearDays` (typically 0 for cash)
+- Returns updated order
+
+**Code Reference:**
+
+```typescript
+// In mark-order-as-paid.ts
+// Cash payments: fees are always zero
+let fee = new Prisma.Decimal(0);
+let feeTax = new Prisma.Decimal(0);
+let platformFee = new Prisma.Decimal(0);
+
+await sqlClient.$transaction(async (tx) => {
+  await tx.storeOrder.update({
+    where: { id: orderId },
+    data: {
+      isPaid: true,
+      paidDate: now,
+      paymentStatus: PaymentStatus.Paid,
+      paymentCost: fee.add(feeTax).add(platformFee), // = 0
+    },
+  });
+  
+  await tx.storeLedger.create({
+    data: {
+      orderId,
+      storeId,
+      amount: order.orderTotal,
+      fee: new Prisma.Decimal(0),
+      platformFee: new Prisma.Decimal(0),
+      type: StoreLedgerType.StorePaymentProvider,
+      balance: new Prisma.Decimal(previousBalance + Number(order.orderTotal)),
+    },
+  });
+});
+```
+
+**4. Success/Completion:**
+
+**Process:**
+
+- Order is marked as paid
+- StoreLedger entry created with zero fees
+- Order is ready for processing/fulfillment
+- Store staff can view confirmed orders
+- Customer receives order confirmation
+
+**State Transitions:**
+
+```text
+Order State Flow (Immediate):
+Pending → Processing (immediate, upon creation)
+PaymentStatus: Pending → Paid (immediate)
+isPaid: false → true (immediate)
+
+Order State Flow (Manual):
+Pending → Pending (awaiting confirmation)
+PaymentStatus: Pending → Pending (awaiting confirmation)
+isPaid: false → false (awaiting confirmation)
+  ↓ (after staff confirmation)
+Pending → Processing
+PaymentStatus: Pending → Paid
+isPaid: false → true
+```
+
+**Error Handling:**
+
+1. **Order Already Paid:**
+   - Order is already marked as paid
+   - Action returns existing order (idempotent)
+   - No error, just returns current state
+
+2. **Order Not Found:**
+   - Order ID doesn't exist
+   - Error: "Order not found"
+   - Returns 400 status
+
+3. **Order Belongs to Different Store:**
+   - Store admin tries to mark order from different store
+   - Error: "Order does not belong to this store"
+   - Returns 400 status
+
+4. **Access Denied:**
+   - User doesn't have store admin access
+   - `storeActionClient` validates access
+   - Returns 401/403 status
+
+5. **Transaction Failure:**
+   - Database transaction fails
+   - All changes rolled back
+   - Order remains unpaid
+   - Error logged with details
+
+**Security Considerations:**
+
+- Store admin access required for manual confirmation
+- Order ownership validated (order must belong to store)
+- Idempotent operation (can be called multiple times safely)
+- All payment confirmations logged with structured metadata
+- `checkoutAttributes` stores payment method for audit trail
+
+**Fee Structure:**
+
+- **Payment Gateway Fee:** 0 (no external gateway)
+- **Fee Tax:** 0 (no fees to tax)
+- **Platform Fee:** 0 (cash payments have zero platform fees, even for free stores)
+- **Total Fees:** 0
+
+**Configuration:**
+
+- **Immediate Confirmation:**
+  - `storeConfig.immediateConfirmation = true`
+  - Order marked as paid immediately
+  - Suitable for: COD, pickup orders
+
+- **Manual Confirmation (Default):**
+  - `storeConfig.immediateConfirmation = false` or not set
+  - Requires store staff confirmation
+  - Suitable for: In-store orders, verification required
+
+**Files Involved:**
+
+- `src/app/s/[storeId]/checkout/client.tsx` - Checkout and order creation
+- `src/actions/store/order/create-order.ts` - Order creation action
+- `src/lib/payment/plugins/cash-plugin.ts` - Cash payment plugin
+- `src/app/api/storeAdmin/[storeId]/orders/cash-mark-as-paid/[orderId]/route.ts` - Manual confirmation API
+- `src/actions/storeAdmin/order/mark-order-as-paid.ts` - Store admin mark as paid action
+- `src/actions/store/order/mark-order-as-paid.ts` - General mark as paid action
+
+**Testing Checklist:**
+
+- [ ] Order creation with cash payment method
+- [ ] Immediate confirmation mode (if configured)
+- [ ] Manual confirmation via admin interface
+- [ ] Store admin access validation
+- [ ] Order ownership validation
+- [ ] Idempotent operation (multiple calls safe)
+- [ ] StoreLedger entry created with zero fees
+- [ ] Order marked as paid correctly
+- [ ] Payment cost is zero
+- [ ] Platform fee is zero (even for free stores)
+- [ ] Error handling for invalid orders
+- [ ] Error handling for access denied
+- [ ] Transaction rollback on failure
+
+### 6.2 Fee Calculation
+
+#### 6.2.1 Payment Gateway Fees
+
+**Overview:**
+
+Payment gateway fees are charges from payment processing providers (Stripe, LINE Pay) for processing payments. These fees are deducted from the store's revenue and recorded in the `StoreLedger` entry. Gateway fees only apply when the platform processes payments on behalf of the store (`usePlatform = true`).
+
+**Fee Calculation Logic:**
+
+**Location:** `src/actions/store/order/mark-order-as-paid.ts`, `src/actions/storeAdmin/order/mark-order-as-paid.ts`
+
+**Formula:**
+
+```typescript
+// Step 1: Calculate base gateway fee
+const feeAmount = orderTotal * paymentMethod.fee + paymentMethod.feeAdditional;
+
+// Step 2: Apply as negative value (deduction from revenue)
+const gatewayFee = new Prisma.Decimal(-feeAmount);
+
+// Step 3: Calculate tax on fees (5% tax on the fee amount)
+const feeTax = new Prisma.Decimal(feeAmount * 0.05);
+
+// Step 4: Total gateway fees (both negative, representing deductions)
+const totalGatewayFees = gatewayFee + feeTax;
+```
+
+**Components:**
+
+1. **Fee Rate (`paymentMethod.fee`):**
+   - Percentage-based fee (e.g., 0.029 for 2.9%)
+   - Stored in `PaymentMethod.fee` field (Decimal)
+   - Applied to order total: `orderTotal * fee`
+
+2. **Additional Fee (`paymentMethod.feeAdditional`):**
+   - Fixed fee amount (e.g., 0.30 for 30 cents)
+   - Stored in `PaymentMethod.feeAdditional` field (Decimal)
+   - Added to percentage-based fee
+
+3. **Fee Tax:**
+   - 5% tax on the total fee amount
+   - Calculated as: `feeAmount * 0.05`
+   - Represents tax on payment processing fees
+
+**Conditions for Gateway Fees:**
+
+**Fees Apply When:**
+
+- `usePlatform = true` (platform processes payment)
+- Payment method is Stripe or LINE Pay (not cash or credit)
+- Order is marked as paid
+
+**Fees Do NOT Apply When:**
+
+- `usePlatform = false` (store uses own payment provider)
+- Payment method is cash (`payUrl = "cash"`)
+- Payment method is credit (`payUrl = "credit"`)
+
+**Determining `usePlatform`:**
+
+```typescript
+// In mark-order-as-paid.ts
+const isPro = (order.Store.level ?? 0) > 0;
+let usePlatform = false;
+
+if (!isPro) {
+  // Free-level stores always use platform payment processing
+  usePlatform = true;
+} else {
+  // Pro-level stores use platform if they have LINE Pay or Stripe configured
+  if (
+    order.Store.LINE_PAY_ID !== null ||
+    order.Store.STRIPE_SECRET_KEY !== null
+  ) {
+    usePlatform = true;
+  }
+}
+```
+
+**Payment Method-Specific Fees:**
+
+**Stripe:**
+
+- Default fee rate: 2.9% (0.029)
+- Default additional fee: $0.30 (0.30)
+- Formula: `orderTotal * 0.029 + 0.30`
+- Example: $100 order → $2.90 + $0.30 = $3.20 fee
+- Fee tax: $3.20 * 0.05 = $0.16
+- Total gateway fees: -$3.36
+
+**LINE Pay:**
+
+- Default fee rate: 3.0% (0.03)
+- Default additional fee: $0.00 (0)
+- Formula: `orderTotal * 0.03`
+- Example: $100 order → $3.00 fee
+- Fee tax: $3.00 * 0.05 = $0.15
+- Total gateway fees: -$3.15
+
+**Credit:**
+
+- Fee rate: 0% (0)
+- Additional fee: $0.00 (0)
+- Total gateway fees: $0.00
+- No fees applied (credit usage is revenue recognition, not payment processing)
+
+**Cash:**
+
+- Fee rate: 0% (0)
+- Additional fee: $0.00 (0)
+- Total gateway fees: $0.00
+- No fees applied (no external gateway)
+
+**Implementation:**
+
+```typescript
+// In mark-order-as-paid.ts
+// Calculate fees (only for platform payments)
+let fee = new Prisma.Decimal(0);
+let feeTax = new Prisma.Decimal(0);
+
+if (usePlatform) {
+  // Fee rate is determined by payment method
+  const feeAmount =
+    Number(order.orderTotal) * Number(order.PaymentMethod.fee) +
+    Number(order.PaymentMethod.feeAdditional);
+  fee = new Prisma.Decimal(-feeAmount); // Negative for deduction
+  feeTax = new Prisma.Decimal(feeAmount * 0.05); // 5% tax on fees
+}
+
+// Store in order
+paymentCost: fee.toNumber() + feeTax.toNumber() + platformFee.toNumber(),
+
+// Store in ledger
+fee: fee.add(feeTax), // Combined fee and tax
+```
+
+**StoreLedger Entry:**
+
+```typescript
+await sqlClient.storeLedger.create({
+  data: {
+    orderId: order.id,
+    storeId: order.storeId,
+    amount: order.orderTotal, // Positive: revenue
+    fee: fee.add(feeTax), // Negative: gateway fees (fee + tax)
+    platformFee: platformFee, // Negative: platform fee (if applicable)
+    currency: order.currency,
+    type: usePlatform ? StoreLedgerType.PlatformPayment : StoreLedgerType.StorePaymentProvider,
+    balance: new Prisma.Decimal(
+      previousBalance +
+      Number(order.orderTotal) +
+      fee.toNumber() +
+      feeTax.toNumber() +
+      platformFee.toNumber()
+    ),
+  },
+});
+```
+
+**Examples:**
+
+##### Example 1: Stripe Payment (Free Store)
+
+- Order total: $100.00
+- Payment method: Stripe (fee: 0.029, feeAdditional: 0.30)
+- `usePlatform = true` (Free store)
+- Calculation:
+  - Fee amount: $100 * 0.029 + $0.30 = $2.90 + $0.30 = $3.20
+  - Gateway fee: -$3.20
+  - Fee tax: $3.20 * 0.05 = $0.16
+  - Platform fee: -$1.00 (1% of $100, see section 6.2.2)
+  - Total deductions: -$3.20 - $0.16 - $1.00 = -$4.36
+  - Store receives: $100.00 - $4.36 = $95.64
+
+##### Example 2: LINE Pay Payment (Pro Store with Platform Processing)
+
+- Order total: $100.00
+- Payment method: LINE Pay (fee: 0.03, feeAdditional: 0)
+- `usePlatform = true` (Pro store with LINE Pay configured)
+- Calculation:
+  - Fee amount: $100 * 0.03 + $0 = $3.00
+  - Gateway fee: -$3.00
+  - Fee tax: $3.00 * 0.05 = $0.15
+  - Platform fee: $0 (Pro store)
+  - Total deductions: -$3.00 - $0.15 = -$3.15
+  - Store receives: $100.00 - $3.15 = $96.85
+
+##### Example 3: Cash Payment
+
+- Order total: $100.00
+- Payment method: Cash
+- `usePlatform = false` (cash has no gateway)
+- Calculation:
+  - Gateway fee: $0
+  - Fee tax: $0
+  - Platform fee: $0 (cash payments exempt)
+  - Total deductions: $0
+  - Store receives: $100.00
+
+##### Example 4: Credit Payment
+
+- Order total: $100.00
+- Payment method: Credit
+- `usePlatform = false` (credit has no gateway)
+- Calculation:
+  - Gateway fee: $0
+  - Fee tax: $0
+  - Platform fee: $0 (credit usage is revenue recognition)
+  - Total deductions: $0
+  - Store receives: $100.00
+
+**Files Involved:**
+
+- `src/actions/store/order/mark-order-as-paid.ts` - General order payment
+- `src/actions/storeAdmin/order/mark-order-as-paid.ts` - Store admin order payment
+- `src/lib/payment/plugins/stripe-plugin.ts` - Stripe fee calculation
+- `src/lib/payment/plugins/linepay-plugin.ts` - LINE Pay fee calculation
+- `src/lib/payment/plugins/credit-plugin.ts` - Credit fee calculation (zero fees)
+- `src/lib/payment/plugins/cash-plugin.ts` - Cash fee calculation (zero fees)
+
+**Testing Checklist:**
+
+- [ ] Gateway fees calculated correctly for Stripe
+- [ ] Gateway fees calculated correctly for LINE Pay
+- [ ] Fee tax (5%) calculated correctly
+- [ ] Gateway fees only apply when `usePlatform = true`
+- [ ] Cash payments have zero gateway fees
+- [ ] Credit payments have zero gateway fees
+- [ ] Fees stored as negative values in ledger
+- [ ] Payment method fee rates used correctly
+- [ ] Additional fees added correctly
+- [ ] Fee calculation handles edge cases (zero amounts, very large amounts)
+
+#### 6.2.2 Platform Fees
+
+**Overview:**
+
+Platform fees are charges by riben.life for using the platform's payment processing services. These fees are separate from payment gateway fees and only apply to Free-level stores. Platform fees are deducted from the store's revenue and recorded in the `StoreLedger` entry.
+
+**Fee Calculation Logic:**
+
+**Location:** `src/actions/store/order/mark-order-as-paid.ts`, `src/actions/storeAdmin/order/mark-order-as-paid.ts`
+
+**Formula:**
+
+```typescript
+// Determine if store is Pro-level
+const isPro = (order.Store.level ?? 0) > 0;
+
+// Calculate platform fee (only for Free stores)
+let platformFee = new Prisma.Decimal(0);
+if (!isPro) {
+  // 1% platform fee for Free-level stores
+  platformFee = new Prisma.Decimal(-Number(order.orderTotal) * 0.01);
+}
+```
+
+**Components:**
+
+1. **Store Level Determination:**
+   - `isPro = true`: Store has Pro or Multi subscription (`level > 0`)
+   - `isPro = false`: Store is Free-level (`level = 0` or null)
+
+2. **Platform Fee Rate:**
+   - Fixed rate: 1% (0.01)
+   - Applied to order total: `orderTotal * 0.01`
+   - Stored as negative value (deduction from revenue)
+
+**Conditions for Platform Fees:**
+
+**Fees Apply When:**
+
+- Store is Free-level (`isPro = false`)
+- Order is marked as paid
+- Payment method is NOT cash
+
+**Fees Do NOT Apply When:**
+
+- Store is Pro-level (`isPro = true`)
+- Payment method is cash (`payUrl = "cash"`) - **Even for Free stores**
+- Payment method is credit (`payUrl = "credit"`) - Credit usage is revenue recognition
+
+**Store Level Determination:**
+
+```typescript
+// In mark-order-as-paid.ts
+const isPro = (order.Store.level ?? 0) > 0;
+
+// Platform fee calculation
+let platformFee = new Prisma.Decimal(0);
+if (!isPro) {
+  // Always charge platform fee for free stores
+  platformFee = new Prisma.Decimal(-Number(order.orderTotal) * 0.01);
+}
+```
+
+**Implementation:**
+
+```typescript
+// In mark-order-as-paid.ts
+// Platform fee (only for Free stores)
+let platformFee = new Prisma.Decimal(0);
+if (!isPro) {
+  // 1% platform fee for Free-level stores
+  platformFee = new Prisma.Decimal(-Number(order.orderTotal) * 0.01);
+}
+
+// Store in order
+paymentCost: fee.toNumber() + feeTax.toNumber() + platformFee.toNumber(),
+
+// Store in ledger
+platformFee: platformFee, // Negative: platform fee (if applicable)
+```
+
+**StoreLedger Entry:**
+
+```typescript
+await sqlClient.storeLedger.create({
+  data: {
+    orderId: order.id,
+    storeId: order.storeId,
+    amount: order.orderTotal, // Positive: revenue
+    fee: fee.add(feeTax), // Negative: gateway fees (if applicable)
+    platformFee: platformFee, // Negative: platform fee (if applicable)
+    currency: order.currency,
+    type: usePlatform ? StoreLedgerType.PlatformPayment : StoreLedgerType.StorePaymentProvider,
+    balance: new Prisma.Decimal(
+      previousBalance +
+      Number(order.orderTotal) +
+      fee.toNumber() +
+      feeTax.toNumber() +
+      platformFee.toNumber()
+    ),
+  },
+});
+```
+
+**Examples:**
+
+##### Example 1: Free Store - Stripe Payment
+
+- Order total: $100.00
+- Store level: 0 (Free)
+- Payment method: Stripe
+- Calculation:
+  - Platform fee: -$100.00 * 0.01 = -$1.00
+  - Gateway fees: -$3.36 (from section 6.2.1)
+  - Total deductions: -$1.00 - $3.36 = -$4.36
+  - Store receives: $100.00 - $4.36 = $95.64
+
+##### Example 2: Free Store - Cash Payment
+
+- Order total: $100.00
+- Store level: 0 (Free)
+- Payment method: Cash
+- Calculation:
+  - Platform fee: $0 (cash payments exempt, even for Free stores)
+  - Gateway fees: $0 (cash has no gateway)
+  - Total deductions: $0
+  - Store receives: $100.00
+
+##### Example 3: Pro Store - Stripe Payment
+
+- Order total: $100.00
+- Store level: 1+ (Pro)
+- Payment method: Stripe
+- Calculation:
+  - Platform fee: $0 (Pro stores exempt)
+  - Gateway fees: -$3.36 (from section 6.2.1)
+  - Total deductions: -$3.36
+  - Store receives: $100.00 - $3.36 = $96.64
+
+##### Example 4: Free Store - Credit Payment
+
+- Order total: $100.00
+- Store level: 0 (Free)
+- Payment method: Credit
+- Calculation:
+  - Platform fee: $0 (credit usage is revenue recognition, not payment processing)
+  - Gateway fees: $0 (credit has no gateway)
+  - Total deductions: $0
+  - Store receives: $100.00
+
+**Special Cases:**
+
+**Cash Payments (Free Stores):**
+
+- Even though Free stores normally pay 1% platform fee
+- Cash payments are exempt from platform fees
+- Rationale: Cash payments don't use platform payment processing services
+- Platform fee: $0 (regardless of store level)
+
+**Credit Payments (All Stores):**
+
+- Credit usage is revenue recognition, not payment processing
+- No platform fees apply (even for Free stores)
+- Rationale: Customer credit was already purchased (revenue recognized at purchase)
+- Platform fee: $0 (regardless of store level)
+
+**Combined Fee Calculation:**
+
+```typescript
+// Complete fee calculation example
+const orderTotal = 100.00;
+const isPro = false; // Free store
+const usePlatform = true; // Using platform payment processing
+const paymentMethod = { fee: 0.029, feeAdditional: 0.30 }; // Stripe
+
+// Gateway fees
+const feeAmount = orderTotal * paymentMethod.fee + paymentMethod.feeAdditional;
+// = 100 * 0.029 + 0.30 = 2.90 + 0.30 = 3.20
+const gatewayFee = -feeAmount; // -3.20
+const feeTax = feeAmount * 0.05; // 3.20 * 0.05 = 0.16
+const totalGatewayFees = gatewayFee + feeTax; // -3.20 + 0.16 = -3.36
+
+// Platform fee
+const platformFee = isPro ? 0 : -(orderTotal * 0.01);
+// = -(100 * 0.01) = -1.00
+
+// Total fees
+const totalFees = totalGatewayFees + platformFee;
+// = -3.36 + (-1.00) = -4.36
+
+// Store receives
+const storeReceives = orderTotal + totalFees;
+// = 100.00 + (-4.36) = 95.64
+```
+
+**Files Involved:**
+
+- `src/actions/store/order/mark-order-as-paid.ts` - General order payment
+- `src/actions/storeAdmin/order/mark-order-as-paid.ts` - Store admin order payment
+- `src/actions/storeAdmin/is-pro-level.ts` - Store level determination utility
+
+**Testing Checklist:**
+
+- [ ] Platform fee calculated correctly for Free stores (1%)
+- [ ] Platform fee is zero for Pro stores
+- [ ] Platform fee is zero for cash payments (even Free stores)
+- [ ] Platform fee is zero for credit payments (even Free stores)
+- [ ] Platform fee stored as negative value in ledger
+- [ ] Store level determination works correctly
+- [ ] Combined with gateway fees correctly
+- [ ] Fee calculation handles edge cases (zero amounts, very large amounts)
+
+#### 6.2.3 Store Ledger Entry
+
+**Overview:**
+
+StoreLedger entries track all financial transactions for a store, including order payments, fees, and credit operations. Each entry represents a change to the store's balance and includes revenue, fees, and availability date information. StoreLedger entries are created atomically with order payment confirmation to ensure data consistency.
+
+**Purpose:**
+
+- Track store revenue and expenses
+- Calculate running balance for each store
+- Record payment processing fees
+- Track platform fees
+- Determine fund availability dates
+- Provide audit trail for all financial transactions
+
+**Entry Creation Process:**
+
+**Location:** `src/actions/store/order/mark-order-as-paid.ts`, `src/actions/storeAdmin/order/mark-order-as-paid.ts`
+
+##### Step 1: Get Last Ledger Balance
+
+```typescript
+// Get the most recent ledger entry for the store
+const lastLedger = await sqlClient.storeLedger.findFirst({
+  where: { storeId: order.storeId },
+  orderBy: { createdAt: "desc" },
+  take: 1,
+});
+
+// Extract balance (default to 0 if no previous entries)
+const balance = Number(lastLedger ? lastLedger.balance : 0);
+```
+
+##### Step 2: Calculate Availability Date
+
+```typescript
+// Convert order updatedAt (BigInt epoch) to Date
+const orderUpdatedDate = epochToDate(order.updatedAt);
+if (!orderUpdatedDate) {
+  throw new SafeError("Order updatedAt is invalid");
+}
+
+// Get payment method clear days (settlement period)
+const clearDays = order.PaymentMethod.clearDays || 0;
+
+// Calculate availability date: order date + clear days
+const availabilityDate = new Date(
+  orderUpdatedDate.getTime() + clearDays * 24 * 60 * 60 * 1000
+);
+
+// Convert back to BigInt epoch for storage
+const availability = BigInt(availabilityDate.getTime());
+```
+
+**Clear Days Explanation:**
+
+- `clearDays`: Number of days until funds are available for withdrawal
+- Payment methods have different settlement periods:
+
+  - Stripe: Typically 2-7 days (configurable)
+  - LINE Pay: Typically 1-3 days (configurable)
+  - Cash: Typically 0 days (immediate)
+  - Credit: Typically 0 days (immediate, revenue recognition)
+
+- `availability` field stores when funds become available for payout
+
+##### Step 3: Determine Ledger Type
+
+```typescript
+// Determine ledger type based on payment processing method
+const ledgerType = usePlatform
+  ? StoreLedgerType.PlatformPayment // 0: 代收 (platform payment processing)
+  : StoreLedgerType.StorePaymentProvider; // 1: Store's own payment provider
+```
+
+**Ledger Types:**
+
+- **`PlatformPayment` (0)**: Platform processes payment on behalf of store
+
+  - Used when: `usePlatform = true`
+  - Examples: Free stores, Pro stores using platform Stripe/LINE Pay
+  - Funds held by platform until availability date
+
+- **`StorePaymentProvider` (1)**: Store uses own payment provider
+
+  - Used when: `usePlatform = false`
+  - Examples: Pro stores with own Stripe/LINE Pay accounts
+  - Funds go directly to store's payment provider
+
+- **`CreditRecharge` (2)**: Customer credit top-up
+
+  - Used for: Credit recharge orders
+  - Represents: Unearned revenue (liability)
+  - Funds: Held until credit is used
+
+- **`CreditUsage` (3)**: Credit usage for purchase
+
+  - Used for: Orders paid with customer credit
+  - Represents: Revenue recognition
+  - Funds: Immediate availability (no clear days)
+
+##### Step 4: Calculate New Balance
+
+```typescript
+// Calculate new balance after this transaction
+const newBalance = balance +
+  Number(order.orderTotal) +      // Revenue (positive)
+  fee.toNumber() +                // Gateway fee (negative)
+  feeTax.toNumber() +             // Fee tax (negative)
+  platformFee.toNumber();         // Platform fee (negative)
+
+// Example: $100 order, -$3.20 fee, -$0.16 tax, -$1.00 platform fee
+// newBalance = previousBalance + 100 - 3.20 - 0.16 - 1.00
+//            = previousBalance + 95.64
+```
+
+**Balance Calculation Formula:**
+
+```typescript
+newBalance = previousBalance + orderTotal + fee + feeTax + platformFee
+```
+
+Where:
+
+- `previousBalance`: Balance from last ledger entry (or 0 if first entry)
+- `orderTotal`: Order amount (positive, revenue)
+- `fee`: Gateway fee (negative, deduction)
+- `feeTax`: Tax on fees (negative, deduction)
+- `platformFee`: Platform fee (negative, deduction)
+
+##### Step 5: Create StoreLedger Entry
+
+```typescript
+await sqlClient.storeLedger.create({
+  data: {
+    storeId: order.storeId,                    // Store ID
+    orderId: order.id,                         // Order ID (required)
+    amount: order.orderTotal,                  // Order total (positive, revenue)
+    fee: fee.add(feeTax),                      // Combined gateway fees (negative)
+    platformFee: platformFee,                   // Platform fee (negative, if applicable)
+    currency: order.currency.toLowerCase(),     // Currency code (lowercase)
+    type: ledgerType,                          // Ledger type (0, 1, 2, or 3)
+    description: `order # ${order.orderNum || order.id}`, // Description
+    note: `${order.PaymentMethod?.name || "Unknown"}, order id: ${order.id}`, // Note
+    availability: BigInt(availabilityDate.getTime()), // Availability date (BigInt epoch)
+    balance: new Prisma.Decimal(newBalance),   // New running balance
+    createdAt: getUtcNowEpoch(),               // Creation timestamp
+    createdBy: session?.user?.id || null,      // User who created (if applicable)
+  },
+});
+```
+
+**Field Descriptions:**
+
+| Field | Type | Description | Example |
+|-------|------|-------------|---------|
+| `id` | String | Unique ledger entry ID | `"uuid"` |
+| `storeId` | String | Store ID (required) | `"store_123"` |
+| `orderId` | String | Order ID (required) | `"order_456"` |
+| `amount` | Decimal | Order total (positive, revenue) | `100.00` |
+| `fee` | Decimal | Gateway fees + tax (negative) | `-3.36` |
+| `platformFee` | Decimal | Platform fee (negative, if applicable) | `-1.00` |
+| `currency` | String | Currency code (lowercase) | `"twd"` |
+| `type` | Int | Ledger type (0-3) | `0` (PlatformPayment) |
+| `description` | String | Entry description | `"order # ORD-123"` |
+| `note` | String? | Additional notes | `"Stripe, order id: abc"` |
+| `availability` | BigInt | Availability date (epoch milliseconds) | `1735689600000` |
+| `balance` | Decimal | Running balance after this entry | `195.64` |
+| `createdAt` | BigInt | Creation timestamp (epoch milliseconds) | `1735689600000` |
+| `createdBy` | String? | User ID who created (optional) | `"user_789"` |
+
+**Complete Implementation Example:**
+
+```typescript
+// In mark-order-as-paid.ts
+// 1. Get last balance
+const lastLedger = await sqlClient.storeLedger.findFirst({
+  where: { storeId: order.storeId },
+  orderBy: { createdAt: "desc" },
+  take: 1,
+});
+const balance = Number(lastLedger ? lastLedger.balance : 0);
+
+// 2. Calculate fees (from sections 6.2.1 and 6.2.2)
+let fee = new Prisma.Decimal(0);
+let feeTax = new Prisma.Decimal(0);
+if (usePlatform) {
+  const feeAmount =
+    Number(order.orderTotal) * Number(order.PaymentMethod.fee) +
+    Number(order.PaymentMethod.feeAdditional);
+  fee = new Prisma.Decimal(-feeAmount);
+  feeTax = new Prisma.Decimal(feeAmount * 0.05);
+}
+
+let platformFee = new Prisma.Decimal(0);
+if (!isPro) {
+  platformFee = new Prisma.Decimal(-Number(order.orderTotal) * 0.01);
+}
+
+// 3. Calculate availability date
+const orderUpdatedDate = epochToDate(order.updatedAt);
+if (!orderUpdatedDate) {
+  throw new SafeError("Order updatedAt is invalid");
+}
+const clearDays = order.PaymentMethod.clearDays || 0;
+const availabilityDate = new Date(
+  orderUpdatedDate.getTime() + clearDays * 24 * 60 * 60 * 1000
+);
+
+// 4. Determine ledger type
+const ledgerType = usePlatform
+  ? StoreLedgerType.PlatformPayment
+  : StoreLedgerType.StorePaymentProvider;
+
+// 5. Calculate new balance
+const newBalance = balance +
+  Number(order.orderTotal) +
+  fee.toNumber() +
+  feeTax.toNumber() +
+  platformFee.toNumber();
+
+// 6. Create ledger entry in transaction
+await sqlClient.$transaction(async (tx) => {
+  // Update order
+  await tx.storeOrder.update({
+    where: { id: orderId },
+    data: {
+      isPaid: true,
+      paidDate: getUtcNowEpoch(),
+      paymentStatus: PaymentStatus.Paid,
+      paymentCost: fee.toNumber() + feeTax.toNumber() + platformFee.toNumber(),
+    },
+  });
+
+  // Create ledger entry
+  await tx.storeLedger.create({
+    data: {
+      storeId: order.storeId,
+      orderId: order.id,
+      amount: order.orderTotal,
+      fee: fee.add(feeTax),
+      platformFee,
+      currency: order.currency.toLowerCase(),
+      type: ledgerType,
+      description: `order # ${order.orderNum || order.id}`,
+      note: `${order.PaymentMethod?.name || "Unknown"}, order id: ${order.id}`,
+      availability: BigInt(availabilityDate.getTime()),
+      balance: new Prisma.Decimal(newBalance),
+      createdAt: getUtcNowEpoch(),
+    },
+  });
+});
+```
+
+**Examples:**
+
+##### Example 1: Stripe Payment (Free Store) - StoreLedger
+
+**Scenario:**
+
+- Previous balance: $100.00
+- Order total: $100.00
+- Payment method: Stripe (fee: 2.9% + $0.30, clearDays: 7)
+- Store level: Free (platform fee applies)
+
+**Calculation:**
+
+- Gateway fee: -$3.20 (2.9% of $100 + $0.30)
+- Fee tax: -$0.16 (5% of $3.20)
+- Platform fee: -$1.00 (1% of $100)
+- New balance: $100.00 + $100.00 - $3.20 - $0.16 - $1.00 = $195.64
+- Availability: Order date + 7 days
+
+**StoreLedger Entry:**
+
+```typescript
+{
+  storeId: "store_123",
+  orderId: "order_456",
+  amount: 100.00,           // Revenue
+  fee: -3.36,               // Gateway fees + tax
+  platformFee: -1.00,       // Platform fee
+  currency: "twd",
+  type: 0,                  // PlatformPayment
+  description: "order # ORD-456",
+  note: "Stripe, order id: order_456",
+  availability: 1736294400000, // Order date + 7 days
+  balance: 195.64,          // Previous $100 + $95.64 net
+  createdAt: 1735689600000,
+}
+```
+
+##### Example 2: Cash Payment (Free Store) - StoreLedger
+
+**Scenario:**
+
+- Previous balance: $100.00
+- Order total: $100.00
+- Payment method: Cash (clearDays: 0)
+- Store level: Free (but cash exempt from platform fee)
+
+**Calculation:**
+
+- Gateway fee: $0 (cash has no gateway)
+- Fee tax: $0
+- Platform fee: $0 (cash exempt, even for Free stores)
+- New balance: $100.00 + $100.00 = $200.00
+- Availability: Order date (immediate)
+
+**StoreLedger Entry:**
+
+```typescript
+{
+  storeId: "store_123",
+  orderId: "order_789",
+  amount: 100.00,           // Revenue
+  fee: 0,                   // No gateway fees
+  platformFee: 0,           // Cash exempt
+  currency: "twd",
+  type: 1,                  // StorePaymentProvider
+  description: "order # ORD-789",
+  note: "Cash/In-Person, order id: order_789",
+  availability: 1735689600000, // Immediate (0 days)
+  balance: 200.00,          // Previous $100 + $100
+  createdAt: 1735689600000,
+}
+```
+
+##### Example 3: Credit Payment - StoreLedger
+
+**Scenario:**
+
+- Previous balance: $100.00
+- Order total: $100.00
+- Payment method: Credit (clearDays: 0)
+- Store level: Free
+
+**Calculation:**
+
+- Gateway fee: $0 (credit has no gateway)
+- Fee tax: $0
+- Platform fee: $0 (credit usage is revenue recognition)
+- New balance: $100.00 + $100.00 = $200.00
+- Availability: Order date (immediate)
+
+**StoreLedger Entry:**
+
+```typescript
+{
+  storeId: "store_123",
+  orderId: "order_101",
+  amount: 100.00,           // Revenue
+  fee: 0,                   // No gateway fees
+  platformFee: 0,           // Credit usage exempt
+  currency: "twd",
+  type: 3,                  // CreditUsage
+  description: "order # ORD-101",
+  note: "Credit, order id: order_101",
+  availability: 1735689600000, // Immediate (0 days)
+  balance: 200.00,          // Previous $100 + $100
+  createdAt: 1735689600000,
+}
+```
+
+**Transaction Safety:**
+
+- StoreLedger entry creation happens within a database transaction
+- Transaction includes:
+  - Order update (mark as paid)
+  - StoreLedger entry creation
+- If either operation fails, both are rolled back
+- Ensures data consistency (order and ledger always in sync)
+
+**Balance Tracking:**
+
+- Each StoreLedger entry maintains a running balance
+- Balance represents store's total revenue minus fees
+- Balance is calculated incrementally:
+  - First entry: `balance = orderTotal + fees`
+  - Subsequent entries: `balance = previousBalance + orderTotal + fees`
+- Balance is stored as `Decimal` for precision
+- Balance can be queried to get current store revenue
+
+**Availability Date:**
+
+- Determines when funds are available for payout
+- Calculated as: `order date + payment method clearDays`
+- Stored as BigInt epoch milliseconds
+- Used for:
+  - Payout scheduling
+  - Fund availability reporting
+  - Cash flow management
+
+**Ledger Type Usage:**
+
+- **Type 0 (PlatformPayment)**: Platform holds funds until availability
+- **Type 1 (StorePaymentProvider)**: Store receives funds directly
+- **Type 2 (CreditRecharge)**: Credit top-up (unearned revenue)
+- **Type 3 (CreditUsage)**: Credit usage (revenue recognition)
+
+**Files Involved:**
+
+- `src/actions/store/order/mark-order-as-paid.ts` - General order payment
+- `src/actions/storeAdmin/order/mark-order-as-paid.ts` - Store admin order payment
+- `src/actions/storeAdmin/storeLedger/create-store-ledger.ts` - Manual ledger entry creation
+- `src/actions/store/reservation/process-rsvp-prepaid-payment.ts` - RSVP credit payment
+- `src/actions/store/credit/process-credit-topup-after-payment.ts` - Credit recharge
+- `src/types/enum.ts` - StoreLedgerType enum definition
+- `prisma/schema.prisma` - StoreLedger model definition
+
+**Testing Checklist:**
+
+- [ ] Last ledger balance retrieved correctly
+- [ ] New balance calculated correctly
+- [ ] Availability date calculated correctly (order date + clearDays)
+- [ ] Ledger type determined correctly (PlatformPayment vs StorePaymentProvider)
+- [ ] StoreLedger entry created in transaction
+- [ ] Transaction rollback on failure
+- [ ] All fields populated correctly
+- [ ] Balance increments correctly for multiple entries
+- [ ] Currency stored in lowercase
+- [ ] Description and note formatted correctly
+- [ ] BigInt epoch conversion works correctly
+- [ ] Decimal precision maintained
+- [ ] First ledger entry (no previous balance) handled correctly
+
+### 6.3 Payment Status Verification
+
+**Overview:**
+
+Payment status verification ensures that payments have been successfully processed by the payment gateway before marking orders as paid. Each payment method plugin implements a `verifyPaymentStatus` method that checks the current state of a payment transaction. Verification is performed server-side to ensure security and accuracy.
+
+**Purpose:**
+
+- Verify payment completion before order fulfillment
+- Prevent duplicate payment processing
+- Handle payment failures gracefully
+- Support payment status polling for pending transactions
+- Provide accurate payment status for order management
+
+**Verification Flow:**
+
+1. **Payment Gateway Verification:**
+   - Query payment gateway API for transaction status
+   - Compare with expected payment state
+   - Return standardized status: `paid`, `pending`, or `failed`
+
+2. **Order Status Update:**
+   - If verified as `paid`: Mark order as paid and create ledger entry
+   - If `pending`: Keep order in pending state, allow retry
+   - If `failed`: Log error, keep order in pending state
+
+3. **Error Handling:**
+   - Network errors: Log and return `failed` or `pending`
+   - API errors: Log with metadata, return appropriate status
+   - Invalid payment data: Return `failed`
+
+**Payment Status Types:**
+
+- **`paid`**: Payment successfully completed
+- **`pending`**: Payment in progress or awaiting confirmation
+- **`failed`**: Payment failed or was canceled
+
+#### 6.3.1 Stripe Verification
+
+**Overview:**
+
+Stripe payment verification uses the Stripe PaymentIntent API to check payment status. PaymentIntents represent a customer's intent to pay and track the payment lifecycle from creation to completion.
+
+**Implementation:**
+
+**Location:** `src/lib/payment/plugins/stripe-plugin.ts`
+
+**Method:** `verifyPaymentStatus`
+
+**Process:**
+
+1. Extract `paymentIntentId` from `paymentData`
+2. Call Stripe API: `stripe.paymentIntents.retrieve(paymentIntentId)`
+3. Check `paymentIntent.status`:
+   - `"succeeded"` → Return `paid`
+   - `"requires_payment_method"` or `"canceled"` → Return `failed`
+   - Other statuses → Return `pending`
+
+**Code Implementation:**
+
+```typescript
+async verifyPaymentStatus(
+  orderId: string,
+  paymentData: PaymentData,
+  config: PluginConfig,
+): Promise<PaymentStatus> {
+  const paymentIntentId = paymentData.paymentIntentId as string;
+
+  if (!paymentIntentId) {
+    return {
+      status: "failed",
+    };
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status === "succeeded") {
+      return {
+        status: "paid",
+        paymentData: {
+          paymentIntentId: paymentIntent.id,
+        },
+      };
+    }
+
+    if (
+      paymentIntent.status === "requires_payment_method" ||
+      paymentIntent.status === "canceled"
+    ) {
+      return {
+        status: "failed",
+        paymentData: {
+          paymentIntentId: paymentIntent.id,
+        },
+      };
+    }
+
+    // Payment is still processing
+    return {
+      status: "pending",
+      paymentData: {
+        paymentIntentId: paymentIntent.id,
+      },
+    };
+  } catch (error) {
+    logger.error("Stripe payment status verification failed", {
+      metadata: {
+        orderId,
+        paymentIntentId,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      tags: ["payment", "stripe", "error"],
+    });
+
+    return {
+      status: "failed",
+    };
+  }
+}
+```
+
+**Stripe PaymentIntent Status Values:**
+
+| Status | Meaning | Verification Result |
+|--------|---------|---------------------|
+| `succeeded` | Payment completed successfully | `paid` |
+| `requires_payment_method` | Payment method required (failed) | `failed` |
+| `requires_confirmation` | Payment needs confirmation | `pending` |
+| `requires_action` | Additional action required (3D Secure, etc.) | `pending` |
+| `processing` | Payment is being processed | `pending` |
+| `requires_capture` | Payment authorized, needs capture | `pending` |
+| `canceled` | Payment was canceled | `failed` |
+
+**Usage in Confirmation Pages:**
+
+**Location:** `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx`
+
+**Process:**
+
+1. Extract `payment_intent` and `payment_intent_client_secret` from query params
+2. Verify `redirect_status === "succeeded"`
+3. Call Stripe API with client secret:
+
+```typescript
+const paymentIntent = await stripe.paymentIntents.retrieve(
+  searchParams.payment_intent,
+  {
+    client_secret: searchParams.payment_intent_client_secret,
+  },
+);
+
+if (paymentIntent && paymentIntent.status === "succeeded") {
+  // Mark order as paid
+  await markOrderAsPaidAction({
+    orderId: params.orderId,
+    checkoutAttributes: JSON.stringify({
+      payment_intent: searchParams.payment_intent,
+      client_secret: searchParams.payment_intent_client_secret,
+    }),
+  });
+}
+```
+
+**Error Handling:**
+
+- **Missing paymentIntentId**: Return `failed` immediately
+- **Stripe API error**: Log error with metadata, return `failed`
+- **Invalid payment status**: Return `pending` (may resolve later)
+- **Network timeout**: Log error, return `failed`
+
+**Security Considerations:**
+
+- PaymentIntent ID validated before API call
+- Client secret used for additional verification
+- Server-side verification only (never trust client)
+- All errors logged with structured metadata
+
+**Files Involved:**
+
+- `src/lib/payment/plugins/stripe-plugin.ts` - Plugin verification method
+- `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx` - Confirmation page
+- `src/app/s/[storeId]/recharge/[orderId]/stripe/confirmed/page.tsx` - Credit recharge confirmation
+
+**Testing Checklist:**
+
+- [ ] PaymentIntent retrieval works correctly
+- [ ] Status mapping (succeeded → paid) works
+- [ ] Failed statuses (canceled, requires_payment_method) handled
+- [ ] Pending statuses handled correctly
+- [ ] Missing paymentIntentId handled
+- [ ] Stripe API errors handled gracefully
+- [ ] Error logging includes all metadata
+- [ ] Client secret validation works
+
+#### 6.3.2 LINE Pay Verification
+
+**Overview:**
+
+LINE Pay payment verification uses the LINE Pay Payment Details API to check transaction status. The API returns detailed transaction information including payment status, which is used to determine if payment was successful.
+
+**Implementation:**
+
+**Location:** `src/lib/payment/plugins/linepay-plugin.ts`
+
+**Method:** `verifyPaymentStatus`
+
+**Process:**
+
+1. Extract `transactionId` from `paymentData`
+2. Get LINE Pay client for store
+3. Call LINE Pay API: `linePayClient.paymentDetails.send({ params: { transactionId: [transactionId] } })`
+4. Check `returnCode === "0000"` (success)
+5. Find transaction in `info` array
+6. Check `payStatus`:
+   - `"CAPTURE"` or `"PAYMENT"` → Return `paid`
+   - `"VOIDED_AUTHORIZATION"` or `"EXPIRED_AUTHORIZATION"` → Return `failed`
+   - `"AUTHORIZATION"` → Return `pending`
+
+**Code Implementation:**
+
+```typescript
+async verifyPaymentStatus(
+  orderId: string,
+  paymentData: PaymentData,
+  config: PluginConfig,
+): Promise<PaymentStatus> {
+  const transactionId = paymentData.transactionId as string;
+
+  if (!transactionId) {
+    return {
+      status: "failed",
+    };
+  }
+
+  const linePayClient = await this.getLinePayClientForStore(
+    config.storeId,
+    config,
+  );
+
+  if (!linePayClient) {
+    return {
+      status: "failed",
+    };
+  }
+
+  try {
+    // Check payment status via LINE Pay Payment Details API
+    const paymentDetailsResult = await linePayClient.paymentDetails.send({
+      params: {
+        transactionId: [transactionId],
+      },
+    });
+
+    if (paymentDetailsResult.body.returnCode === "0000") {
+      // Find the transaction in the info array
+      const transactionInfo = paymentDetailsResult.body.info?.find(
+        (info) => info.transactionId === transactionId,
+      );
+
+      if (!transactionInfo) {
+        return {
+          status: "failed",
+        };
+      }
+
+      // Check payment status from transaction info
+      const payStatus = transactionInfo.payStatus;
+
+      if (payStatus === "CAPTURE" || payStatus === "PAYMENT") {
+        return {
+          status: "paid",
+          paymentData: {
+            transactionId,
+          },
+        };
+      }
+
+      if (
+        payStatus === "VOIDED_AUTHORIZATION" ||
+        payStatus === "EXPIRED_AUTHORIZATION" ||
+        payStatus === "CANCEL"
+      ) {
+        return {
+          status: "failed",
+          paymentData: {
+            transactionId,
+          },
+        };
+      }
+
+      // Payment is still pending (AUTHORIZATION status needs capture)
+      return {
+        status: "pending",
+        paymentData: {
+          transactionId,
+        },
+      };
+    }
+
+    return {
+      status: "failed",
+    };
+  } catch (error) {
+    logger.error("LINE Pay payment status verification failed", {
+      metadata: {
+        orderId,
+        transactionId,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      tags: ["payment", "linepay", "error"],
+    });
+
+    return {
+      status: "failed",
+    };
+  }
+}
+```
+
+**LINE Pay Payment Status Values:**
+
+| payStatus | Meaning | Verification Result |
+|-----------|---------|---------------------|
+| `CAPTURE` | Payment captured (completed) | `paid` |
+| `PAYMENT` | Payment completed | `paid` |
+| `AUTHORIZATION` | Authorized, needs capture | `pending` |
+| `VOIDED_AUTHORIZATION` | Authorization voided | `failed` |
+| `EXPIRED_AUTHORIZATION` | Authorization expired | `failed` |
+| `CANCEL` | Payment canceled | `failed` |
+| `EXPIRED` | Payment expired | `failed` |
+
+**LINE Pay Return Codes:**
+
+- `"0000"`: Success
+- Other codes: Various error conditions (see LINE Pay documentation)
+
+**Usage in Confirmation Pages:**
+
+**Location:** `src/app/(root)/checkout/[orderId]/linePay/confirmed/page.tsx`
+
+**Process:**
+
+1. Extract `transactionId` from query params
+2. Verify `transactionId` matches `order.checkoutAttributes`
+3. Call LINE Pay Confirm API:
+
+```typescript
 const confirmResult = await linePayClient.confirm.send({
-  transactionId: transactionId,
+  transactionId: transactionId as string,
   body: {
-    amount: orderTotal,
-    currency: currency,
+    amount: Number(order.orderTotal),
+    currency: order.currency as Currency,
   },
 });
 
 if (confirmResult.body.returnCode === "0000") {
-  // Process payment completion
+  // Mark order as paid
+  await markOrderAsPaidAction({
+    orderId: order.id,
+    checkoutAttributes: order.checkoutAttributes || "",
+  });
 }
 ```
 
+**Error Handling:**
+
+- **Missing transactionId**: Return `failed` immediately
+- **LINE Pay client not configured**: Return `failed`
+- **API returnCode !== "0000"**: Return `failed`
+- **Transaction not found in info array**: Return `failed`
+- **LINE Pay API error**: Log error with metadata, return `failed`
+
+**Security Considerations:**
+
+- Transaction ID validated before API call
+- Transaction ID verified against order `checkoutAttributes`
+- Server-side verification only
+- Store-specific LINE Pay credentials used
+- All errors logged with structured metadata
+
+**Files Involved:**
+
+- `src/lib/payment/plugins/linepay-plugin.ts` - Plugin verification method
+- `src/app/(root)/checkout/[orderId]/linePay/confirmed/page.tsx` - Confirmation page
+- `src/lib/linePay/line-pay-api/payment-details.ts` - Payment Details API types
+
+**Testing Checklist:**
+
+- [ ] Payment Details API call works correctly
+- [ ] Return code "0000" handled correctly
+- [ ] Status mapping (CAPTURE/PAYMENT → paid) works
+- [ ] Failed statuses (VOIDED, EXPIRED, CANCEL) handled
+- [ ] Pending status (AUTHORIZATION) handled correctly
+- [ ] Missing transactionId handled
+- [ ] Transaction not found in info array handled
+- [ ] LINE Pay API errors handled gracefully
+- [ ] Error logging includes all metadata
+- [ ] Store-specific credentials used correctly
+
 #### 6.3.3 Credit Verification
 
-Credit payments are verified immediately during deduction:
+**Overview:**
+
+Credit payment verification checks the order's payment status directly from the database. Since credit payments are processed immediately and atomically, the order's `isPaid` status is the source of truth.
+
+**Implementation:**
+
+**Location:** `src/lib/payment/plugins/credit-plugin.ts`
+
+**Method:** `verifyPaymentStatus`
+
+**Process:**
+
+1. Query order from database
+2. Check `order.isPaid`:
+   - `true` → Return `paid`
+   - `false` → Return `pending`
+
+**Code Implementation:**
 
 ```typescript
-// Credit deduction is atomic - if successful, payment is verified
-const newBalance = currentBalance - requiredCredit;
+async verifyPaymentStatus(
+  orderId: string,
+  paymentData: PaymentData,
+  config: PluginConfig,
+): Promise<PaymentStatus> {
+  // Credit payments are confirmed immediately
+  // If the order is marked as paid, payment is successful
+  const order = await sqlClient.storeOrder.findUnique({
+    where: { id: orderId },
+    select: {
+      isPaid: true,
+      paymentStatus: true,
+    },
+  });
 
-await tx.customerCredit.upsert({
-  where: { storeId_userId: { storeId, userId } },
-  update: { balance: newBalance },
-  create: { storeId, userId, balance: newBalance },
+  if (!order) {
+    return {
+      status: "failed",
+    };
+  }
+
+  if (order.isPaid) {
+    return {
+      status: "paid",
+      paymentData: {
+        orderId,
+      },
+    };
+  }
+
+  return {
+    status: "pending",
+    paymentData: {
+      orderId,
+    },
+  };
+}
+```
+
+**Credit Payment Processing:**
+
+Credit payments are processed atomically during payment confirmation:
+
+1. **Credit Deduction:**
+   - Check customer credit balance
+   - Calculate required credit amount
+   - Deduct credit in database transaction
+   - If deduction succeeds, payment is verified
+
+2. **Order Update:**
+   - Mark order as paid (`isPaid = true`)
+   - Update payment status (`paymentStatus = Paid`)
+   - Create StoreLedger entry
+
+3. **Verification:**
+   - Query order `isPaid` status
+   - If `true`, payment is verified
+   - If `false`, payment is pending or failed
+
+**Credit Payment Flow:**
+
+```typescript
+// In processRsvpPrepaidPayment or order payment processing
+await sqlClient.$transaction(async (tx) => {
+  // 1. Deduct credit
+  const newBalance = currentBalance - requiredCredit;
+  await tx.customerCredit.upsert({
+    where: { storeId_userId: { storeId, userId } },
+    update: { point: new Prisma.Decimal(newBalance) },
+    create: { storeId, userId, point: new Prisma.Decimal(newBalance) },
+  });
+
+  // 2. Create order (if needed)
+  const order = await tx.storeOrder.create({
+    data: {
+      // ... order data
+      isPaid: true, // Credit payment is immediate
+      paymentStatus: PaymentStatus.Paid,
+    },
+  });
+
+  // 3. Create ledger entries
+  // ... ledger entries
 });
 
-// If no error, payment is verified
+// If transaction succeeds, payment is verified
+// If transaction fails, payment is not processed
 ```
+
+**Error Handling:**
+
+- **Order not found**: Return `failed`
+- **Credit deduction fails**: Transaction rolls back, order remains unpaid
+- **Insufficient credit**: Payment fails before order creation
+
+**Security Considerations:**
+
+- Credit deduction is atomic (transaction)
+- Order status is source of truth
+- No external API calls needed
+- Database transaction ensures consistency
+
+**Files Involved:**
+
+- `src/lib/payment/plugins/credit-plugin.ts` - Plugin verification method
+- `src/actions/store/reservation/process-rsvp-prepaid-payment.ts` - RSVP credit payment
+- `src/actions/store/credit/process-credit-topup-after-payment.ts` - Credit recharge processing
+
+**Testing Checklist:**
+
+- [ ] Order query works correctly
+- [ ] isPaid status checked correctly
+- [ ] Order not found handled
+- [ ] Paid status returns `paid`
+- [ ] Unpaid status returns `pending`
+- [ ] Credit deduction atomicity verified
+- [ ] Transaction rollback on failure works
+
+#### 6.3.4 Cash/In-Person Verification
+
+**Overview:**
+
+Cash/in-person payment verification checks the order's payment status from the database. Since cash payments are confirmed manually by store staff, the order's `isPaid` status reflects the manual confirmation.
+
+**Implementation:**
+
+**Location:** `src/lib/payment/plugins/cash-plugin.ts`
+
+**Method:** `verifyPaymentStatus`
+
+**Process:**
+
+1. Return `pending` status (delegates to caller)
+2. Caller queries order `isPaid` status directly
+3. If `isPaid = true`, payment is verified
+
+**Code Implementation:**
+
+```typescript
+async verifyPaymentStatus(
+  orderId: string,
+  paymentData: PaymentData,
+  config: PluginConfig,
+): Promise<PaymentStatus> {
+  // Cash payment status is determined by order.isPaid
+  // If order is marked as paid, payment is successful
+  // Status check is done by the caller querying the order
+  return {
+    status: "pending", // Will be updated by caller based on actual order status
+    paymentData: {
+      orderId,
+    },
+  };
+}
+```
+
+**Cash Payment Processing:**
+
+Cash payments are confirmed manually by store staff:
+
+1. **Order Creation:**
+   - Order created with `isPaid = false`
+   - Payment status: `Pending`
+   - Order status: `Pending`
+
+2. **Manual Confirmation:**
+   - Store staff confirms payment received
+   - Calls `markOrderAsPaidAction` (store admin)
+   - Order updated: `isPaid = true`, `paymentStatus = Paid`
+
+3. **Verification:**
+   - Query order `isPaid` status
+   - If `true`, payment is verified
+   - If `false`, payment is pending
+
+**Cash Payment Confirmation Flow:**
+
+```typescript
+// Store admin marks cash order as paid
+// Location: src/app/api/storeAdmin/[storeId]/orders/cash-mark-as-paid/[orderId]/route.ts
+
+const result = await markOrderAsPaidAction(
+  storeId,
+  {
+    orderId: params.orderId,
+    checkoutAttributes: JSON.stringify({ paymentMethod: "cash" }),
+  },
+);
+
+// markOrderAsPaidAction updates:
+// - order.isPaid = true
+// - order.paymentStatus = PaymentStatus.Paid
+// - order.orderStatus = OrderStatus.Processing
+// - Creates StoreLedger entry
+```
+
+**Verification by Caller:**
+
+Since cash plugin returns `pending`, the caller should query the order directly:
+
+```typescript
+// In caller code
+const order = await sqlClient.storeOrder.findUnique({
+  where: { id: orderId },
+  select: { isPaid: true, paymentStatus: true },
+});
+
+if (order?.isPaid) {
+  // Payment verified
+} else {
+  // Payment pending
+}
+```
+
+**Error Handling:**
+
+- **Order not found**: Return `failed` or handle in caller
+- **Manual confirmation fails**: Order remains unpaid
+- **No external API**: No network errors
+
+**Security Considerations:**
+
+- Manual confirmation requires store admin access
+- Order status is source of truth
+- No external payment gateway
+- Store admin action validates store membership
+
+**Files Involved:**
+
+- `src/lib/payment/plugins/cash-plugin.ts` - Plugin verification method
+- `src/actions/storeAdmin/order/mark-order-as-paid.ts` - Store admin mark as paid
+- `src/app/api/storeAdmin/[storeId]/orders/cash-mark-as-paid/[orderId]/route.ts` - API route
+
+**Testing Checklist:**
+
+- [ ] Plugin returns `pending` status
+- [ ] Caller queries order correctly
+- [ ] isPaid status checked correctly
+- [ ] Manual confirmation works
+- [ ] Store admin access validated
+- [ ] Order update works correctly
+
+**Common Verification Patterns:**
+
+**1. Plugin-Based Verification:**
+
+```typescript
+// Get plugin for payment method
+const plugin = getPluginFromOrder(order);
+
+if (plugin) {
+  const status = await plugin.verifyPaymentStatus(
+    order.id,
+    paymentData,
+    config,
+  );
+
+  if (status.status === "paid") {
+    // Payment verified
+  }
+}
+```
+
+**2. Direct Order Query (Cash/Credit):**
+
+```typescript
+// For cash/credit, query order directly
+const order = await sqlClient.storeOrder.findUnique({
+  where: { id: orderId },
+  select: { isPaid: true, paymentStatus: true },
+});
+
+if (order?.isPaid) {
+  // Payment verified
+}
+```
+
+**3. Confirmation Page Verification:**
+
+```typescript
+// In confirmation pages (Stripe/LINE Pay)
+// 1. Verify payment gateway status
+// 2. If verified, mark order as paid
+// 3. Redirect to success page
+
+if (paymentGatewayStatus === "succeeded") {
+  await markOrderAsPaidAction({ orderId, checkoutAttributes });
+  redirect("/success");
+}
+```
+
+**Error Handling Best Practices:**
+
+1. **Network Errors:**
+   - Log with structured metadata
+   - Return `pending` (may resolve on retry)
+   - Or return `failed` if critical
+
+2. **API Errors:**
+   - Log error code and message
+   - Return appropriate status
+   - Include error in response metadata
+
+3. **Invalid Data:**
+   - Validate payment data before API calls
+   - Return `failed` immediately
+   - Log validation errors
+
+4. **Retry Logic:**
+   - For `pending` status, allow retry
+   - Implement exponential backoff
+   - Set maximum retry attempts
+
+**Files Involved:**
+
+- `src/lib/payment/plugins/stripe-plugin.ts` - Stripe verification
+- `src/lib/payment/plugins/linepay-plugin.ts` - LINE Pay verification
+- `src/lib/payment/plugins/credit-plugin.ts` - Credit verification
+- `src/lib/payment/plugins/cash-plugin.ts` - Cash verification
+- `src/lib/payment/plugins/types.ts` - PaymentStatus interface
+- `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx` - Stripe confirmation
+- `src/app/(root)/checkout/[orderId]/linePay/confirmed/page.tsx` - LINE Pay confirmation
+
+**Testing Checklist:**
+
+- [ ] All payment methods verify correctly
+- [ ] Status mapping works for all methods
+- [ ] Error handling works for all methods
+- [ ] Network errors handled gracefully
+- [ ] Invalid data handled correctly
+- [ ] Retry logic works (if implemented)
+- [ ] Error logging includes all metadata
+- [ ] Security validations work
 
 ---
 
@@ -1262,6 +4199,7 @@ Current implementation uses hardcoded payment method logic based on `payUrl` fie
 - Plugin interface implementation
 
 Current `payUrl` values:
+
 - `"stripe"` - Stripe payment gateway
 - `"linepay"` - LINE Pay service
 - `"credit"` - Credit-based payment
@@ -1294,5 +4232,4 @@ Current `payUrl` values:
 
 ---
 
-**Document End**
-
+## Document End

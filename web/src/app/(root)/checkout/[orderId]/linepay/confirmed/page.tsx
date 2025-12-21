@@ -1,25 +1,17 @@
 "use server";
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
-import isProLevel from "@/actions/storeAdmin/is-pro-level";
-import MarkAsPaid from "@/actions/storeAdmin/mark-order-as-paid";
+import { markOrderAsPaidAction } from "@/actions/store/order/mark-order-as-paid";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import {
-	ConfirmRequestBody,
 	type ConfirmRequestConfig,
 	type Currency,
-	createLinePayClient,
-	getLinePayClient,
 	getLinePayClientByStore,
 } from "@/lib/linePay";
-import type { LinePayClient } from "@/lib/linePay/type";
-import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
-import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { getAbsoluteUrl } from "@/utils/utils";
-import { getUtcNow } from "@/utils/datetime-utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import logger from "@/lib/logger";
@@ -75,15 +67,36 @@ export default async function LinePayConfirmedPage({
 	const res = await linePayClient.confirm.send(confirmRequest);
 
 	if (res.body.returnCode === "0000") {
-		// mark order as paid
-		const checkoutAttributes = order.checkoutAttributes;
-		const updated_order = await MarkAsPaid(order.id, checkoutAttributes);
+		// Mark order as paid using the new action
+		const checkoutAttributes = order.checkoutAttributes || "";
+		const result = await markOrderAsPaidAction({
+			orderId: order.id,
+			checkoutAttributes,
+		});
+
+		if (result?.serverError) {
+			logger.error("Failed to mark order as paid", {
+				metadata: {
+					orderId: order.id,
+					error: result.serverError,
+				},
+				tags: ["error", "payment", "linepay"],
+			});
+			// Still redirect to success page, but log the error
+		} else if (result?.data) {
+			logger.info("Order payment processed successfully", {
+				metadata: {
+					orderId: order.id,
+				},
+				tags: ["payment", "linepay", "success"],
+			});
+		}
 
 		if (process.env.NODE_ENV === "development")
 			logger.info("LinePayConfirmedPage");
 
 		redirect(
-			`${getAbsoluteUrl()}/checkout/${updated_order.id}/linePay/success`,
+			`${getAbsoluteUrl()}/checkout/${order.id}/linePay/success`,
 		);
 	}
 

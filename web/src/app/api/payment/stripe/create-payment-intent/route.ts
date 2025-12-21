@@ -2,54 +2,79 @@ import { stripe } from "@/lib/stripe/config";
 import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
 
-//create stripe payment intent
-export async function POST(
-	req: Request,
-	//{ params }: { params: { chargeTotal: number } }
-) {
+/**
+ * Create Stripe PaymentIntent API route.
+ * Used by checkout and credit recharge flows to create payment intents.
+ *
+ * Request Body:
+ * - total: number (order total in currency units, e.g., 100.00 for $100)
+ * - currency: string (ISO currency code, e.g., "usd", "twd")
+ * - stripeCustomerId?: string (optional Stripe customer ID)
+ *
+ * Returns:
+ * - Stripe PaymentIntent object with client_secret
+ */
+export async function POST(req: Request) {
 	try {
 		const data = await req.json();
 		const { total, currency, stripeCustomerId } = data;
 
-		if (!total) {
+		// Validate total
+		if (total === undefined || total === null) {
 			return NextResponse.json(
-				{ success: false, message: "orderTotal is required." },
-				{ status: 402 },
+				{ success: false, message: "Total is required." },
+				{ status: 400 },
 			);
 		}
 
-		if (Number.isNaN(total)) {
+		if (typeof total !== "number" || Number.isNaN(total) || total <= 0) {
 			return NextResponse.json(
-				{ success: false, message: "orderTotal is required." },
-				{ status: 403 },
+				{ success: false, message: "Total must be a positive number." },
+				{ status: 400 },
 			);
 		}
 
-		if (!currency) {
+		// Validate currency
+		if (!currency || typeof currency !== "string") {
 			return NextResponse.json(
-				{ success: false, message: "currency is required." },
-				{ status: 404 },
+				{ success: false, message: "Currency is required." },
+				{ status: 400 },
 			);
 		}
 
+		// Create Stripe PaymentIntent
 		const paymentIntent = await stripe.paymentIntents.create({
-			customer: stripeCustomerId || undefined, // Change here to allow undefined
-			amount: total * 100,
-			currency: currency,
+			customer: stripeCustomerId || undefined,
+			amount: Math.round(total * 100), // Convert to cents
+			currency: currency.toLowerCase(),
 			automatic_payment_methods: { enabled: true },
 		});
 
-		//console.log('paymentIntent: ' + JSON.stringify(paymentIntent));
+		logger.info("Stripe payment intent created", {
+			metadata: {
+				paymentIntentId: paymentIntent.id,
+				amount: paymentIntent.amount,
+				currency: paymentIntent.currency,
+			},
+			tags: ["payment", "stripe", "api"],
+		});
 
 		return NextResponse.json(paymentIntent);
 	} catch (error) {
-		logger.info("stripe payment intent", {
+		logger.error("Failed to create Stripe payment intent", {
 			metadata: {
 				error: error instanceof Error ? error.message : String(error),
+				stack: error instanceof Error ? error.stack : undefined,
 			},
-			tags: ["api"],
+			tags: ["payment", "stripe", "error", "api"],
 		});
 
-		return new NextResponse("Internal error", { status: 500 });
+		return NextResponse.json(
+			{
+				success: false,
+				message: "Failed to create payment intent. Please try again.",
+			},
+			{ status: 500 },
+		);
 	}
 }

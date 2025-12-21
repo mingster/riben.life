@@ -1,82 +1,110 @@
 "use server";
-import MarkAsPaid from "@/actions/storeAdmin/mark-order-as-paid";
+
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
-import { sqlClient } from "@/lib/prismadb";
-import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { getAbsoluteUrl } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import Stripe from "stripe";
+import { stripe } from "@/lib/stripe/config";
 import logger from "@/lib/logger";
+import { markOrderAsPaidAction } from "@/actions/store/order/mark-order-as-paid";
 
-// this page is hit when stripe element confirmed the payment.
-// here we mark the order as paid, show customer a message and redirect to account page.
+/**
+ * Payment confirmation page for Stripe checkout orders.
+ * Called when Stripe redirects back after payment.
+ * Verifies PaymentIntent status and marks order as paid.
+ */
 export default async function StripeConfirmedPage(props: {
 	params: Promise<{ orderId: string }>;
 	searchParams: Promise<{
-		payment_intent: string;
-		payment_intent_client_secret: string;
+		payment_intent?: string;
+		payment_intent_client_secret?: string;
+		redirect_status?: string;
 	}>;
 }) {
 	const searchParams = await props.searchParams;
 	const params = await props.params;
+
 	if (!params.orderId) {
-		throw new Error("order Id is missing");
+		throw new Error("Order ID is missing");
 	}
 
-	//http://localhost:3001/payment/52af45f3-12bc-4c6d-967a-b51c980c7b48/stripe/confirm?
-	//payment_intent=pi_2OMs29qw2UGRduYS1g2umg13&
-	//payment_intent_client_secret=pi_2OMs29qw2UGRduYS1g2umg13_secret_bxm9PFV4eQP7vhHVam5Gf5Y0K
-	//&redirect_status=succeeded
-
-	//console.log('orderId: ' + params.orderId);
-	//console.log('payment_intent: ' + searchParams.payment_intent);
-	//console.log('client_secret: ' + searchParams.payment_intent_client_secret);
-
-	//const payment_intent = searchParams.get('payment_intent');
-	//const client_secret = searchParams.get('payment_intent_client_secret');
+	// Verify payment intent
 	if (
 		searchParams.payment_intent &&
-		searchParams.payment_intent_client_secret
+		searchParams.payment_intent_client_secret &&
+		searchParams.redirect_status === "succeeded"
 	) {
-		const stripe = new Stripe(
-			`${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`,
-		);
-		const pi = await stripe.paymentIntents.retrieve(
-			searchParams.payment_intent,
-			{
-				client_secret: searchParams.payment_intent_client_secret,
-			},
-		);
+		try {
+			// Verify payment intent with Stripe
+			const paymentIntent = await stripe.paymentIntents.retrieve(
+				searchParams.payment_intent,
+				{
+					client_secret: searchParams.payment_intent_client_secret,
+				},
+			);
 
-		if (pi) {
-			const checkoutAttributes = JSON.stringify({
-				payment_intent: searchParams.payment_intent,
-				client_secret: searchParams.payment_intent_client_secret,
+			if (paymentIntent && paymentIntent.status === "succeeded") {
+				// Prepare checkout attributes with payment intent data
+				const checkoutAttributes = JSON.stringify({
+					payment_intent: searchParams.payment_intent,
+					client_secret: searchParams.payment_intent_client_secret,
+				});
+
+				// Mark order as paid using the new action
+				const result = await markOrderAsPaidAction({
+					orderId: params.orderId,
+					checkoutAttributes,
+				});
+
+				if (result?.serverError) {
+					logger.error("Failed to mark order as paid", {
+						metadata: {
+							orderId: params.orderId,
+							error: result.serverError,
+						},
+						tags: ["error", "payment", "stripe"],
+					});
+					// Still redirect to success page, but log the error
+				} else if (result?.data) {
+					logger.info("Order payment processed successfully", {
+						metadata: {
+							orderId: params.orderId,
+						},
+						tags: ["payment", "stripe", "success"],
+					});
+				}
+
+				// Redirect to success page
+				redirect(
+					`${getAbsoluteUrl()}/checkout/${params.orderId}/stripe/success`,
+				);
+			}
+		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.message === "NEXT_REDIRECT"
+			) {
+				// Expected control flow from redirect(); do not log as an error
+				throw error;
+			}
+			logger.error("Payment confirmation error", {
+				metadata: {
+					orderId: params.orderId,
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["error", "payment", "stripe"],
 			});
-
-			// mark order as paid
-			const updated_order = await MarkAsPaid(
-				params.orderId,
-				checkoutAttributes,
-			);
-
-			if (process.env.NODE_ENV === "development")
-				logger.info("StripeConfirmedPage");
-
-			redirect(
-				`${getAbsoluteUrl()}/checkout/${updated_order.id}/stripe/success`,
-			);
-
-			return (
-				<Suspense fallback={<Loader />}>
-					<Container>
-						<SuccessAndRedirect orderId={updated_order.id} />
-					</Container>
-				</Suspense>
-			);
 		}
 	}
+
+	// Show loading state while processing
+	return (
+		<Suspense fallback={<Loader />}>
+			<Container>
+				<SuccessAndRedirect orderId={params.orderId} />
+			</Container>
+		</Suspense>
+	);
 }
