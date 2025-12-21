@@ -144,50 +144,59 @@ model StoreOrder {
   storeId           String
   userId            String? // Optional for anonymous orders
   facilityId        String?
-  orderNum          Int?            @default(autoincrement()) @unique
-  orderTotal        Decimal         @default(0)
+  orderNum          Int?            @default(autoincrement()) // Unique at database level
+  pickupCode        String?
+  isPaid            Boolean         @default(false)
+  paidDate          BigInt? // Epoch milliseconds
+  checkoutAttributes String         @default("") // JSON string for plugin-specific data (e.g., rsvpId, payment intent IDs)
+  checkoutRef       String          @default("") // Reference ID from payment gateway (e.g., transaction ID)
   currency          String          @default("twd")
   currencyRate      Decimal         @default(1)
   discount          Decimal         @default(0)
   paymentMethodId   String? // Optional payment method
-  shippingMethodId  String
-  pickupCode        String?
-  isPaid            Boolean         @default(false)
-  paidDate          BigInt? // Epoch milliseconds
   paymentStatus     Int             @default(10) // PaymentStatus enum (10 = Pending)
-  orderStatus       Int             @default(10) // OrderStatus enum (10 = Pending)
-  paymentCost       Decimal         @default(0) // Total fees (gateway fees + platform fees)
   refundAmount      Decimal         @default(0)
   returnStatus      Int             @default(0)
+  shippingMethodId  String
   shippingAddress   String          @default("")
   shippingCost      Decimal         @default(0)
   shippingStatus    Int             @default(10)
+  orderStatus       Int             @default(10) // OrderStatus enum (10 = Pending)
+  paymentCost       Decimal         @default(0) // Total fees (gateway fees + platform fees)
   taxRate           Decimal         @default(0)
   orderTax          Decimal         @default(0)
-  checkoutAttributes String         @default("") // JSON string for plugin-specific data (e.g., rsvpId, payment intent IDs)
-  checkoutRef       String          @default("") // Reference ID from payment gateway (e.g., transaction ID)
+  orderTotal        Decimal         @default(0)
   createdAt         BigInt // Epoch milliseconds
   updatedAt         BigInt // Epoch milliseconds
   // Note: RSVP relationship is reverse - Rsvp.orderId references StoreOrder.id
 
-  Store           Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User            User?           @relation(fields: [userId], references: [id])
-  PaymentMethod   PaymentMethod?  @relation(fields: [paymentMethodId], references: [id])
-  ShippingMethod  ShippingMethod  @relation(fields: [shippingMethodId], references: [id])
-  Rsvp            Rsvp[]          // Reverse relation: RSVPs linked via Rsvp.orderId
-  OrderNotes      OrderNote[]
-  OrderItems      OrderItem[]
-  OrderItemView   OrderItemView[]
-  StoreLedger     StoreLedger[]
-  Shipment        Shipment[]
+  Store                 Store                @relation("StoreToOrder", fields: [storeId], references: [id], onDelete: Cascade)
+  User                  User?                @relation("UserOrders", fields: [userId], references: [id])
+  OrderNotes            OrderNote[]          @relation("orderNoteToStoreOrder")
+  OrderItems            OrderItem[]          @relation("itemToStoreOrder")
+  OrderItemView         orderitemview[]      @relation("itemViewToStoreOrder")
+  ShippingMethod        ShippingMethod       @relation(fields: [shippingMethodId], references: [id])
+  Shipment              Shipment[]
+  PaymentMethod         PaymentMethod?       @relation(fields: [paymentMethodId], references: [id])
+  Rsvp                  Rsvp[]               // Reverse relation: RSVPs linked via Rsvp.orderId
+  StoreLedger           StoreLedger[]
+  customerCreditLedgers CustomerCreditLedger[]
 
-  @@index([storeId])
   @@index([userId])
+  @@index([facilityId])
   @@index([paymentMethodId])
   @@index([paymentStatus])
-  @@index([orderStatus])
+  @@index([returnStatus])
+  @@index([shippingMethodId])
+  @@index([shippingStatus])
+  @@index([storeId])
+  @@index([checkoutAttributes])
   @@index([isPaid])
+  @@index([paidDate])
+  @@index([currency])
+  @@index([orderStatus])
   @@index([createdAt])
+  @@index([updatedAt])
 }
 ```
 
@@ -208,26 +217,29 @@ model StoreOrder {
 model StoreLedger {
   id          String   @id @default(uuid())
   storeId     String
-  orderId     String?
+  orderId     String // Required (not optional in actual schema)
   amount      Decimal  // Positive for revenue, negative for fees/refunds
-  fee         Decimal  @default(0) // Payment gateway fee (negative)
-  platformFee Decimal  @default(0) // Platform fee (negative, Free stores only)
-  currency    String
-  type        Int      // StoreLedgerType enum
+  fee         Decimal  // Payment gateway fee (negative)
+  platformFee Decimal  // Platform fee (negative, Free stores only)
+  currency    String   @default("twd")
+  type        Int      @default(0) // StoreLedgerType enum (0: PlatformPayment, 1: StorePaymentProvider, 2: CreditRecharge, 3: CreditUsage)
   balance     Decimal  // Running balance after this transaction
-  description String?
+  description String   // Required (not optional in actual schema)
   note        String?
+  createdBy   String?  // userId who created this ledger entry
   availability BigInt  // Epoch milliseconds - when funds become available
   createdAt   BigInt   // Epoch milliseconds
 
-  Store Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Order StoreOrder? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  StoreOrder StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  CreatedBy  User?      @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  // Note: storeId field exists but no Store relation defined (storeId validated via StoreOrder.storeId)
 
   @@index([storeId])
   @@index([orderId])
   @@index([type])
   @@index([createdAt])
-  @@index([availability])
+  @@index([createdBy])
+  // Note: availability index not present in actual schema
 }
 ```
 
@@ -237,7 +249,12 @@ model StoreLedger {
 - `type = 1`: StorePaymentProvider - Store's own payment provider (if store uses own gateway)
 - `type = 2`: CreditRecharge - Customer credit recharge (unearned revenue - liability)
 - `type = 3`: CreditUsage - Credit usage (revenue recognition)
-- Other types as defined in `StoreLedgerType` enum
+
+**Additional Fields:**
+
+- `createdBy`: Optional userId field for tracking who created the ledger entry (store operator for manual entries)
+- `description`: Required field (not optional) - description of the ledger entry
+- `orderId`: Required field (not optional) - all ledger entries must be associated with an order
 
 **Fee Fields:**
 
@@ -250,14 +267,15 @@ model StoreLedger {
 - **Unique Constraints:**
   - `PaymentMethod.name` - Unique payment method names
   - `StorePaymentMethodMapping.storeId + methodId` - One mapping per store per payment method
-  - `StoreOrder.orderNum` - Unique order numbers (auto-incrementing integer)
+  - `StoreOrder.orderNum` - Unique order numbers (auto-incrementing integer) - Note: Unique constraint exists but not explicitly shown in model definition
 
 - **Indexes:**
   - All foreign keys indexed for query performance
   - `PaymentMethod.payUrl` indexed for plugin lookup
-  - `StoreOrder.paymentStatus` and `orderStatus` indexed for status queries
+  - `StoreOrder` indexes: `userId`, `facilityId`, `paymentMethodId`, `paymentStatus`, `returnStatus`, `shippingMethodId`, `shippingStatus`, `storeId`, `checkoutAttributes`, `isPaid`, `paidDate`, `currency`, `orderStatus`, `createdAt`, `updatedAt`
   - `StoreLedger.type` indexed for filtering by transaction type
-  - `StoreLedger.availability` indexed for revenue recognition queries
+  - `StoreLedger.createdBy` indexed (userId who created ledger entry)
+  - Note: `StoreLedger.availability` index not present in actual schema (though field exists)
 
 - **Cascade Deletes:**
   - Store deletion cascades to orders and ledger entries
@@ -389,6 +407,124 @@ Plugins are registered in the system via `PaymentMethod` table records:
 
 - `mark-order-as-paid.ts` - Mark order as paid (store admin)
 
+**Validation Files:** `[action-name].validation.ts`
+
+**Create Order Action:**
+
+**Location:** `src/actions/store/order/create-order.ts`
+
+```typescript
+export const createOrderAction = userRequiredActionClient
+  .metadata({ name: "createOrder" })
+  .schema(createOrderSchema)
+  .action(async ({ parsedInput }) => {
+    const { storeId, userId, facilityId, total, currency, productIds, quantities, unitPrices, variants, variantCosts, orderNote, shippingMethodId, paymentMethodId } = parsedInput;
+    
+    // 1. Validate products exist and belong to store
+    // 2. Validate store exists
+    // 3. Validate shipping method exists and is not deleted
+    // 4. Validate payment method exists and is not deleted
+    // 5. Determine order status based on store.autoAcceptOrder
+    // 6. Create StoreOrder with:
+    //    - OrderItems (createMany from products array)
+    //    - OrderNotes (single note entry)
+    //    - paymentStatus: Pending
+    //    - orderStatus: Processing (if autoAcceptOrder) or Pending
+    //    - pickupCode: random 6-digit code
+    // 7. Fetch complete order with all relations
+    // 8. Transform Prisma data for JSON serialization
+    // 9. Log order creation
+    // 10. Return order
+    
+    return { order };
+  });
+```
+
+**Implementation Details:**
+
+- Uses `userRequiredActionClient` (requires authenticated user, but userId can be null for guest orders)
+- Validates all input arrays have matching lengths
+- Creates order items using `createMany` for efficiency
+- Generates random 6-digit pickup code
+- Returns complete order with all relations for client use
+
+**Mark Order as Paid Action (Store Level):**
+
+**Location:** `src/actions/store/order/mark-order-as-paid.ts`
+
+```typescript
+export const markOrderAsPaidAction = baseClient
+  .metadata({ name: "markOrderAsPaid" })
+  .schema(markOrderAsPaidSchema)
+  .action(async ({ parsedInput }) => {
+    const { orderId, checkoutAttributes } = parsedInput;
+    
+    // 1. Get order with Store and PaymentMethod relations
+    // 2. Check if order is already paid (return early if so)
+    // 3. Determine if platform payment processing is used:
+    //    - Free stores: always use platform
+    //    - Pro stores: use platform if LINE_PAY_ID or STRIPE_SECRET_KEY configured
+    // 4. Get last ledger balance
+    // 5. Calculate fees (only for platform payments):
+    //    - fee = orderTotal * paymentMethod.fee + paymentMethod.feeAdditional
+    //    - feeTax = fee * 0.05
+    // 6. Calculate platform fee (Free stores only: 1% of orderTotal)
+    // 7. Calculate availability date (order.updatedAt + paymentMethod.clearDays)
+    // 8. In transaction:
+    //    - Update order: isPaid=true, paidDate, orderStatus=Processing, paymentStatus=Paid
+    //    - Create StoreLedger entry:
+    //      * type: PlatformPayment (0) or StorePaymentProvider (1)
+    //      * amount: orderTotal (positive)
+    //      * fee: gateway fees (negative)
+    //      * platformFee: platform fee (negative, Free stores only)
+    //      * availability: calculated availability date
+    // 9. Fetch updated order with all relations
+    // 10. Transform and return order
+    
+    return { order };
+  });
+```
+
+**Implementation Details:**
+
+- Uses `baseClient` (no authentication required) - can be called from webhooks or admin interfaces
+- Idempotent: returns existing order if already paid
+- Fee calculation based on payment method configuration
+- Platform fee (1%) only applies to Free-level stores
+- StoreLedger type distinguishes platform vs store-owned payment processing
+
+**Mark Order as Paid Action (Store Admin):**
+
+**Location:** `src/actions/storeAdmin/order/mark-order-as-paid.ts`
+
+```typescript
+export const markOrderAsPaidAction = storeActionClient
+  .metadata({ name: "markOrderAsPaid" })
+  .schema(markOrderAsPaidSchema)
+  .action(async ({ parsedInput, bindArgsClientInputs }) => {
+    const storeId = bindArgsClientInputs[0] as string;
+    const { orderId, checkoutAttributes } = parsedInput;
+    
+    // 1. Get order with Store and PaymentMethod relations
+    // 2. Validate order belongs to the store (storeId match)
+    // 3. Check if order is already paid (return early if so)
+    // 4. Determine if platform payment processing is used (same logic as store-level)
+    // 5. Calculate fees and platform fees (same logic as store-level)
+    // 6. Mark order as paid and create ledger entry (same logic as store-level)
+    // 7. Fetch updated order with all relations
+    // 8. Transform and return order
+    
+    return { order };
+  });
+```
+
+**Implementation Details:**
+
+- Uses `storeActionClient` (requires store membership with appropriate role)
+- Validates order belongs to the store before processing
+- Same fee calculation and ledger logic as store-level action
+- Intended for store admin interfaces to manually mark orders as paid
+
 #### 5.1.2 Credit Recharge Actions
 
 **Location:** `src/actions/store/credit/`
@@ -400,8 +536,9 @@ Plugins are registered in the system via `PaymentMethod` table records:
 
 **Create Recharge Order Action:**
 
+**Location:** `src/actions/store/credit/create-recharge-order.ts`
+
 ```typescript
-// create-recharge-order.ts
 export const createRechargeOrderAction = userRequiredActionClient
   .metadata({ name: "createRechargeOrder" })
   .schema(createRechargeOrderSchema)
@@ -410,34 +547,76 @@ export const createRechargeOrderAction = userRequiredActionClient
     
     // Validation: Check store credit system enabled
     // Validation: Check credit amount against min/max limits
-    // Calculate dollar amount from credit amount
-    // Create StoreOrder with checkoutAttributes containing rsvpId
+    // Calculate dollar amount from credit amount using creditExchangeRate
+    // Find Stripe payment method by payUrl
+    // Create StoreOrder with:
+    //   - paymentMethodId: Stripe payment method ID
+    //   - checkoutAttributes: JSON string containing rsvpId (if provided) and creditRecharge flag
+    //   - paymentStatus: Pending
+    //   - orderStatus: Pending
+    //   - isPaid: false
     
     return { order: createdOrder };
   });
 ```
 
+**Implementation Details:**
+
+- Validates store has credit system enabled (`useCustomerCredit`)
+- Validates credit amount against store min/max purchase limits
+- Calculates dollar amount: `dollarAmount = creditAmount * creditExchangeRate`
+- Finds Stripe payment method by `payUrl = "stripe"`
+- Stores `rsvpId` in `checkoutAttributes` JSON for later processing
+- Creates order with `paymentStatus = Pending`, `orderStatus = Pending`
+
 **Process Credit Top-Up After Payment:**
 
+**Location:** `src/actions/store/credit/process-credit-topup-after-payment.ts`
+
 ```typescript
-// process-credit-topup-after-payment.ts
 export const processCreditTopUpAfterPaymentAction = baseClient
   .metadata({ name: "processCreditTopUpAfterPayment" })
   .schema(processCreditTopUpAfterPaymentSchema)
   .action(async ({ parsedInput }) => {
     const { orderId } = parsedInput;
     
-    // Check idempotency (existing ledger entry)
-    // Calculate credit amount and bonuses
-    // Update customer credit balance
-    // Create CustomerCreditLedger entry
-    // Mark order as paid
-    // Create StoreLedger entry (type: CreditRecharge)
-    // Process RSVP prepaid payment if rsvpId present
+    // 1. Get order with Store, User, and PaymentMethod relations
+    // 2. Validate order exists and has userId
+    // 3. Check idempotency: Look for existing CustomerCreditLedger entry with referenceId = orderId, type = "TOPUP"
+    // 4. If already processed, mark order as paid (if not already) and return early
+    // 5. Calculate credit amount from dollar amount: creditAmount = dollarAmount / creditExchangeRate
+    // 6. Process credit top-up (including bonus calculation) via processCreditTopUp()
+    //    - Creates CustomerCreditLedger entry (type: TOPUP)
+    //    - Updates CustomerCredit balance
+    // 7. Calculate fees (gateway fees, platform fees) from PaymentMethod
+    // 8. Create StoreLedger entry in transaction:
+    //    - type: CreditRecharge (unearned revenue)
+    //    - amount: dollarAmount (positive)
+    //    - fee: gateway fees (negative)
+    //    - platformFee: platform fee (negative, Free stores only)
+    //    - availability: based on PaymentMethod.clearDays
+    // 9. Mark order as paid in same transaction:
+    //    - isPaid: true
+    //    - paidDate: current timestamp
+    //    - paymentStatus: Paid
+    //    - orderStatus: Completed
+    // 10. Parse checkoutAttributes to check for rsvpId
+    // 11. If rsvpId present, process RSVP prepaid payment via processRsvpPrepaidPayment()
+    //     - Updates RSVP: alreadyPaid, orderId, status, paidAt
     
-    return { success: true, ... };
+    return { success: true, orderId, amount, bonus, totalCredit };
   });
 ```
+
+**Implementation Details:**
+
+- Uses `baseClient` (no authentication required) for webhook/payment confirmation callbacks
+- Idempotency check prevents duplicate credit top-ups
+- Credit top-up includes bonus calculation via `processCreditTopUp()` from `@/lib/credit-bonus`
+- Fee calculation uses PaymentMethod's fee and feeAdditional fields
+- Platform fee (1%) only applies to Free-level stores
+- StoreLedger type is `CreditRecharge` (unearned revenue/liability)
+- If `rsvpId` in checkoutAttributes, automatically processes RSVP prepaid payment after recharge
 
 #### 5.1.3 RSVP Prepaid Payment Actions
 
@@ -447,18 +626,89 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 
 **Shared Function:**
 
+**Location:** `src/actions/store/reservation/process-rsvp-prepaid-payment.ts`
+
 ```typescript
-// process-rsvp-prepaid-payment.ts
 export async function processRsvpPrepaidPayment(
   params: ProcessRsvpPrepaidPaymentParams
 ): Promise<ProcessRsvpPrepaidPaymentResult> {
-  // Check customer credit balance
-  // Calculate required credit amount
-  // Create StoreOrder with credit payment method
-  // Deduct credit from customer balance (transaction)
-  // Create CustomerCreditLedger entry
-  // Create StoreLedger entry
-  // Return result with orderId and status
+  const {
+    storeId,
+    customerId,
+    prepaidRequired,
+    minPrepaidAmount,
+    rsvpTime,
+    store,
+  } = params;
+
+  // 1. Determine initial status:
+  //    - If prepaid NOT required: status = ReadyToConfirm
+  //    - If prepaid required: status = Pending (will be updated after payment)
+
+  // 2. If prepaid required and customer signed in:
+  //    - Get customer credit balance
+  //    - Check if balance >= minPrepaidAmount
+  //    - If sufficient:
+  //      a. Calculate cash value: cashValue = minPrepaidAmount * creditExchangeRate
+  //      b. Find credit payment method by payUrl = "credit"
+  //      c. Find shipping method (prefer "reserve", fallback to default)
+  //      d. In transaction:
+  //         - Create StoreOrder:
+  //           * paymentMethodId: credit payment method ID
+  //           * orderTotal: cashValue
+  //           * paymentStatus: Paid
+  //           * orderStatus: Confirmed
+  //           * isPaid: true
+  //           * paidDate: current timestamp
+  //         - Deduct credit from CustomerCredit balance
+  //         - Create CustomerCreditLedger entry (type: SPEND, negative amount)
+  //         - Create StoreLedger entry:
+  //           * type: CreditUsage (revenue recognition)
+  //           * amount: cashValue (positive)
+  //           * fee: 0, platformFee: 0 (credit payments have no fees)
+  //           * availability: immediate (getUtcNowEpoch())
+  //      e. Update status to ReadyToConfirm, alreadyPaid = true, orderId = created order ID
+
+  // 3. Return result: { status, alreadyPaid, orderId }
+}
+```
+
+**Implementation Details:**
+
+- Shared function (not a server action) - can be called from other actions
+- Only processes prepaid payment if:
+  - `prepaidRequired` is true
+  - `customerId` exists
+  - Store has `useCustomerCredit` enabled
+  - `minPrepaidAmount` > 0
+  - Customer has sufficient credit balance
+- Creates StoreOrder with credit payment method (`payUrl = "credit"`)
+- Uses transaction to ensure atomicity (order creation, credit deduction, ledger entries)
+- StoreLedger type is `CreditUsage` (revenue recognition, not unearned)
+- Credit payments have zero fees (no gateway fees, no platform fees)
+- Returns status, alreadyPaid flag, and orderId for RSVP update
+
+**Parameters Interface:**
+
+```typescript
+interface ProcessRsvpPrepaidPaymentParams {
+  storeId: string;
+  customerId: string | null;
+  prepaidRequired: boolean;
+  minPrepaidAmount: number | null; // In credit points
+  rsvpTime: BigInt | number | Date;
+  store: {
+    useCustomerCredit: boolean | null;
+    creditExchangeRate: number | null;
+    defaultCurrency: string | null;
+    defaultTimezone?: string | null;
+  };
+}
+
+interface ProcessRsvpPrepaidPaymentResult {
+  status: number; // RsvpStatus enum value
+  alreadyPaid: boolean;
+  orderId: string | null;
 }
 ```
 

@@ -84,6 +84,18 @@ export const createRechargeOrderAction = userRequiredActionClient
 			throw new SafeError("No shipping method available");
 		}
 
+		// Find Stripe payment method (default for credit recharge)
+		const stripePaymentMethod = await sqlClient.paymentMethod.findFirst({
+			where: {
+				payUrl: "stripe",
+				isDeleted: false,
+			},
+		});
+
+		if (!stripePaymentMethod) {
+			throw new SafeError("Stripe payment method not found");
+		}
+
 		// Create StoreOrder for recharge
 		const now = getUtcNowEpoch();
 
@@ -100,7 +112,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 				isPaid: false,
 				orderTotal: new Prisma.Decimal(dollarAmount),
 				currency: store.defaultCurrency,
-				paymentMethodId: "stripe", // Default to stripe for credit recharge
+				paymentMethodId: stripePaymentMethod.id, // Use Stripe payment method ID
 				shippingMethodId: defaultShippingMethod.id,
 				pickupCode: undefined, // Optional field - use undefined instead of null
 				checkoutAttributes,

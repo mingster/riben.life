@@ -9,7 +9,6 @@ import { useTranslation } from "react-i18next";
 import { useI18n } from "@/providers/i18n-provider";
 
 export function toastSuccess(options: { title?: string; description: string }) {
-
 	return toast.success(options.title || "✅ Success", {
 		description: options.description,
 		duration: 10_000,

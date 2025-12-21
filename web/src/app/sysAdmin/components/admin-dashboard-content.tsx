@@ -30,7 +30,7 @@ export const AdminDashboardContent = () => {
 								<ArrowRightIcon className="ml-2" />
 							</Link>
 						</Button>
-						
+
 						<Button
 							onClick={() => {
 								toastSuccess({
@@ -41,7 +41,8 @@ export const AdminDashboardContent = () => {
 						>
 							Show success toast
 						</Button>
-						<Button variant="secondary"
+						<Button
+							variant="secondary"
 							onClick={() => {
 								toastWarning({
 									title: "Scheduled: Catch up",
@@ -52,7 +53,8 @@ export const AdminDashboardContent = () => {
 							Show warning toast
 						</Button>
 
-						<Button variant="destructive"
+						<Button
+							variant="destructive"
 							onClick={() => {
 								toastError({
 									title: "Scheduled: Catch up",
@@ -63,7 +65,8 @@ export const AdminDashboardContent = () => {
 							Show error toast
 						</Button>
 
-						<Button variant="outline"
+						<Button
+							variant="outline"
 							onClick={() => {
 								toastInfo({
 									title: "Scheduled: Catch up",

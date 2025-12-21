@@ -6,6 +6,7 @@ import { requestWithClient } from "./line-pay-api/request";
 import type { LineMerchantConfig } from "./line-pay-api/type";
 import { createPaymentApi } from "./payment-api/create";
 import type { LinePayClient } from "./type";
+export type { LinePayClient } from "./type";
 export {
 	createPaymentDetailsRecoveryHandler,
 	paymentDetailsToConfirm,
