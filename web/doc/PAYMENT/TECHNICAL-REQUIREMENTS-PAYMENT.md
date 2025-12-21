@@ -714,15 +714,205 @@ interface ProcessRsvpPrepaidPaymentResult {
 
 #### 5.1.4 Payment Method Management Actions
 
+**System Admin Actions:**
+
 **Location:** `src/actions/sysAdmin/paymentMethod/`
 
 - `create-payment-method.ts` - Create payment method (System Admin)
 - `update-payment-method.ts` - Update payment method (System Admin)
 - `delete-payment-method.ts` - Delete payment method (System Admin)
 
+**Create Payment Method:**
+
+**Location:** `src/actions/sysAdmin/paymentMethod/create-payment-method.ts`
+
+```typescript
+export const createPaymentMethodAction = adminActionClient
+  .metadata({ name: "createPaymentMethod" })
+  .schema(createPaymentMethodSchema)
+  .action(async ({ parsedInput }) => {
+    const {
+      name,
+      payUrl,
+      priceDescr,
+      fee,
+      feeAdditional,
+      clearDays,
+      isDeleted,
+      isDefault,
+      canDelete,
+    } = parsedInput;
+
+    // 1. Check if name already exists (unique constraint)
+    // 2. Create PaymentMethod with provided fields
+    // 3. Set createdAt and updatedAt to current timestamp (BigInt epoch)
+    // 4. Include _count for StorePaymentMethodMapping and StoreOrder
+    // 5. Transform result using mapPaymentMethodToColumn
+    // 6. Return transformed payment method
+    
+    return { paymentMethod: transformed };
+  });
+```
+
+**Validation Schema:**
+
+```typescript
+export const createPaymentMethodSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  payUrl: z.string().default(""), // Plugin identifier (e.g., "stripe", "linepay", "credit", "cash")
+  priceDescr: z.string().default(""), // Description of pricing/fees
+  fee: z.coerce.number().default(0.029), // Fee rate (e.g., 0.029 = 2.9%)
+  feeAdditional: z.coerce.number().default(0), // Additional fixed fee
+  clearDays: z.coerce.number().int().default(3), // Days until funds are available
+  isDeleted: z.boolean().default(false),
+  isDefault: z.boolean().default(false), // Default payment method for all stores
+  canDelete: z.boolean().default(false), // Whether store owners can delete this method
+});
+```
+
+**Implementation Details:**
+
+- Uses `adminActionClient` (requires System Admin role)
+- Validates unique `name` constraint (PaymentMethod.name is unique)
+- `payUrl` field identifies the plugin (must match plugin identifier)
+- Default values: fee = 2.9%, feeAdditional = 0, clearDays = 3
+- Creates PaymentMethod record with BigInt timestamps
+- Returns payment method with counts of related mappings and orders
+
+**Update Payment Method:**
+
+**Location:** `src/actions/sysAdmin/paymentMethod/update-payment-method.ts`
+
+```typescript
+export const updatePaymentMethodAction = adminActionClient
+  .metadata({ name: "updatePaymentMethod" })
+  .schema(updatePaymentMethodSchema)
+  .action(async ({ parsedInput }) => {
+    const {
+      id,
+      name,
+      payUrl,
+      priceDescr,
+      fee,
+      feeAdditional,
+      clearDays,
+      isDeleted,
+      isDefault,
+      canDelete,
+    } = parsedInput;
+
+    // 1. Verify payment method exists
+    // 2. If name is being changed, check new name doesn't already exist
+    // 3. Update PaymentMethod with provided fields
+    // 4. Update updatedAt to current timestamp (BigInt epoch)
+    // 5. Include _count for StorePaymentMethodMapping and StoreOrder
+    // 6. Transform result using mapPaymentMethodToColumn
+    // 7. Return transformed payment method
+    
+    return { paymentMethod: transformed };
+  });
+```
+
+**Validation Schema:**
+
+```typescript
+export const updatePaymentMethodSchema = createPaymentMethodSchema.extend({
+  id: z.string().min(1, "ID is required"),
+});
+```
+
+**Implementation Details:**
+
+- Uses `adminActionClient` (requires System Admin role)
+- Validates payment method exists before update
+- Validates unique `name` if name is being changed
+- All fields from create schema are updatable
+- Updates `updatedAt` timestamp
+- Returns updated payment method with counts
+
+**Delete Payment Method:**
+
+**Location:** `src/actions/sysAdmin/paymentMethod/delete-payment-method.ts`
+
+```typescript
+export const deletePaymentMethodAction = adminActionClient
+  .metadata({ name: "deletePaymentMethod" })
+  .schema(deletePaymentMethodSchema)
+  .action(async ({ parsedInput }) => {
+    const { id } = parsedInput;
+
+    // 1. Verify payment method exists
+    // 2. Delete PaymentMethod record
+    //    - Cascades to StorePaymentMethodMapping (onDelete: Cascade)
+    //    - StoreOrder.paymentMethodId becomes null (no cascade)
+    // 3. Return deleted payment method ID
+    
+    return { id };
+  });
+```
+
+**Validation Schema:**
+
+```typescript
+export const deletePaymentMethodSchema = z.object({
+  id: z.string().min(1, "ID is required"),
+});
+```
+
+**Implementation Details:**
+
+- Uses `adminActionClient` (requires System Admin role)
+- Hard delete (not soft delete via `isDeleted`)
+- Cascades to `StorePaymentMethodMapping` (relations are deleted)
+- `StoreOrder` records are NOT deleted, but `paymentMethodId` may become invalid
+- Consider checking for existing orders before allowing delete
+
+**Store Admin Actions:**
+
 **Location:** `src/actions/storeAdmin/settings/`
 
 - `update-store-payment-methods.ts` - Enable/disable payment methods for store
+
+**Update Store Payment Methods:**
+
+**Location:** `src/actions/storeAdmin/settings/update-store-payment-methods.ts`
+
+```typescript
+export const updateStorePaymentMethodsAction = storeActionClient
+  .metadata({ name: "updateStorePaymentMethods" })
+  .schema(updateStorePaymentMethodsSchema)
+  .action(async ({ parsedInput, bindArgsClientInputs }) => {
+    const storeId = bindArgsClientInputs[0] as string;
+    const { methodIds } = parsedInput;
+
+    // 1. Verify user is store owner/admin (via storeActionClient)
+    // 2. In transaction:
+    //    a. Delete all existing StorePaymentMethodMapping records for store
+    //    b. Create new StorePaymentMethodMapping records for provided methodIds
+    // 3. Fetch updated store with StorePaymentMethods and PaymentMethod relations
+    // 4. Transform result for JSON serialization
+    // 5. Return updated store
+    
+    return { store };
+  });
+```
+
+**Validation Schema:**
+
+```typescript
+export const updateStorePaymentMethodsSchema = z.object({
+  methodIds: z.array(z.string().min(1)), // Array of PaymentMethod IDs
+});
+```
+
+**Implementation Details:**
+
+- Uses `storeActionClient` (requires store membership: owner, storeAdmin, staff, or sysAdmin)
+- `storeId` is passed as bound argument (first parameter)
+- Transaction ensures atomic update (all mappings replaced atomically)
+- Empty `methodIds` array results in all payment methods being disabled for the store
+- Returns updated store with enabled payment methods and their details
+- This action enables/disables payment methods for checkout (doesn't create PaymentMethod records)
 
 ### 5.2 API Routes
 
