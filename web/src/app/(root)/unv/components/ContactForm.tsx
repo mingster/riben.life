@@ -395,7 +395,7 @@ const ContactFormInner = () => {
 // Enterprise mode uses grecaptcha.enterprise.execute() and loads enterprise.js script
 export const ContactForm = () => {
 	return (
-		<RecaptchaV3 actionName="contact_form">
+		<RecaptchaV3 actionName="contact_form" useEnterprise={true}>
 			<ContactFormInner />
 		</RecaptchaV3>
 	);

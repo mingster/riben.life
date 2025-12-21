@@ -38,11 +38,12 @@ import {
 } from "@/components/ui/sidebar";
 import { useI18n } from "@/providers/i18n-provider";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GetMenuList } from "./menu-list";
 import StoreSwitcher from "./store-switcher";
 import { useStoreAdminContext } from "./store-admin-context";
+import useSWR from "swr";
 
 //export function StoreAdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 export function StoreAdminSidebar() {
@@ -51,10 +52,22 @@ export function StoreAdminSidebar() {
 	const { t } = useTranslation(lng);
 	const { open } = useSidebar();
 	const { store, supportTicketCount } = useStoreAdminContext();
+	const params = useParams<{ storeId: string }>();
 
 	const pathname = usePathname();
+
+	// Fetch ready to confirm RSVP count
+	const readyToConfirmUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/ready-to-confirm-count`;
+	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
+	const { data: readyToConfirmData } = useSWR<{ count: number }>(
+		readyToConfirmUrl,
+		fetcher,
+	);
+	const readyToConfirmRsvpCount = readyToConfirmData?.count ?? 0;
+
 	const menuList = GetMenuList(store, pathname, {
 		supportTicketCount,
+		readyToConfirmRsvpCount,
 	});
 
 	const { setOpen } = useSidebar();

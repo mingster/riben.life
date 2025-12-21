@@ -1164,9 +1164,11 @@ export function AdminEditRsvpDialog({
 															{cancelPolicyInfo.hoursUntilReservation > 0 ? (
 																<>
 																	{t("hours_until_reservation", {
-																		hours: Math.round(
-																			cancelPolicyInfo.hoursUntilReservation * 10,
-																		) / 10,
+																		hours:
+																			Math.round(
+																				cancelPolicyInfo.hoursUntilReservation *
+																					10,
+																			) / 10,
 																	}) ||
 																		`${Math.round(cancelPolicyInfo.hoursUntilReservation * 10) / 10} hours until reservation`}
 																</>

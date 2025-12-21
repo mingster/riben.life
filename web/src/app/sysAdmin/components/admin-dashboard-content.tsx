@@ -1,6 +1,11 @@
 "use client";
 
-import { toastSuccess } from "@/components/toaster";
+import {
+	toastError,
+	toastInfo,
+	toastSuccess,
+	toastWarning,
+} from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 
 import { ArrowRightIcon } from "@radix-ui/react-icons";
@@ -25,25 +30,48 @@ export const AdminDashboardContent = () => {
 								<ArrowRightIcon className="ml-2" />
 							</Link>
 						</Button>
-						<Button variant="outline" asChild>
-							<Link
-								href="https://ui.shadcn.com/"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								Learn shadcn/ui
-							</Link>
-						</Button>
+						
 						<Button
 							onClick={() => {
-								logger.info("click me");
 								toastSuccess({
 									title: "Scheduled: Catch up",
 									description: "Friday, February 10, 2023 at 5:57 PM",
 								});
 							}}
 						>
-							Show Toast
+							Show success toast
+						</Button>
+						<Button variant="secondary"
+							onClick={() => {
+								toastWarning({
+									title: "Scheduled: Catch up",
+									description: "Friday, February 10, 2023 at 5:57 PM",
+								});
+							}}
+						>
+							Show warning toast
+						</Button>
+
+						<Button variant="destructive"
+							onClick={() => {
+								toastError({
+									title: "Scheduled: Catch up",
+									description: "Friday, February 10, 2023 at 5:57 PM",
+								});
+							}}
+						>
+							Show error toast
+						</Button>
+
+						<Button variant="outline"
+							onClick={() => {
+								toastInfo({
+									title: "Scheduled: Catch up",
+									description: "Friday, February 10, 2023 at 5:57 PM",
+								});
+							}}
+						>
+							Show info toast
 						</Button>
 					</div>
 				</section>

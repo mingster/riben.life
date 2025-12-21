@@ -68,7 +68,9 @@ export function RecaptchaV3({
 }
 
 function RecaptchaV3Style() {
-	const { executeRecaptcha } = useGoogleReCaptcha();
+	// Hook must be called unconditionally - it's safe because this component is only rendered inside GoogleReCaptchaProvider
+	const hookResult = useGoogleReCaptcha();
+	const executeRecaptcha = hookResult?.executeRecaptcha;
 	const { theme } = useTheme();
 	const { lang } = useLang();
 

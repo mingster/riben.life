@@ -58,6 +58,7 @@ export function GetMenuList(
 	pathname: string,
 	options?: {
 		supportTicketCount?: number;
+		readyToConfirmRsvpCount?: number;
 	},
 ): Group[] {
 	const STORE_ADMIN_PATH = "/storeAdmin/";
@@ -175,6 +176,7 @@ export function GetMenuList(
 					active: pathname.startsWith(`${nav_prefix}/rsvp/history`),
 					icon: IconHistory,
 					submenus: [],
+					badge: options?.readyToConfirmRsvpCount,
 				},
 				{
 					href: `${nav_prefix}/waiting-list`,
