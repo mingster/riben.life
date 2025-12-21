@@ -37,6 +37,34 @@ export default async function RechargeSuccessPage(props: { params: Params }) {
 		redirect(`/s/${params.storeId}`);
 	}
 
+	// Check if this recharge was for an RSVP and redirect if prepaid was processed
+	let rsvpId: string | undefined;
+	try {
+		if (order.checkoutAttributes) {
+			const parsed = JSON.parse(order.checkoutAttributes);
+			rsvpId = parsed.rsvpId;
+		}
+	} catch {
+		// If parsing fails, continue without rsvpId
+	}
+
+	// If rsvpId exists and order is paid, check if RSVP prepaid was processed
+	if (rsvpId && order.isPaid) {
+		const rsvp = await sqlClient.rsvp.findUnique({
+			where: { id: rsvpId },
+			select: {
+				id: true,
+				storeId: true,
+				alreadyPaid: true,
+			},
+		});
+
+		// If RSVP exists, belongs to this store, and is already paid, redirect to reservation page
+		if (rsvp && rsvp.storeId === params.storeId && rsvp.alreadyPaid) {
+			redirect(`/s/${params.storeId}/reservation`);
+		}
+	}
+
 	transformPrismaDataForJson(order);
 
 	return (

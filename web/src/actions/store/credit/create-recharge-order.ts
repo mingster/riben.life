@@ -20,7 +20,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 	.metadata({ name: "createRechargeOrder" })
 	.schema(createRechargeOrderSchema)
 	.action(async ({ parsedInput }) => {
-		const { storeId, creditAmount } = parsedInput;
+		const { storeId, creditAmount, rsvpId } = parsedInput;
 
 		const session = await auth.api.getSession({
 			headers: await headers(),
@@ -87,6 +87,11 @@ export const createRechargeOrderAction = userRequiredActionClient
 		// Create StoreOrder for recharge
 		const now = getUtcNowEpoch();
 
+		// Prepare checkoutAttributes with rsvpId if provided
+		const checkoutAttributes = rsvpId
+			? JSON.stringify({ rsvpId, creditRecharge: true })
+			: JSON.stringify({ creditRecharge: true });
+
 		const order = await sqlClient.storeOrder.create({
 			data: {
 				storeId,
@@ -98,6 +103,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 				paymentMethodId: "stripe", // Default to stripe for credit recharge
 				shippingMethodId: defaultShippingMethod.id,
 				pickupCode: undefined, // Optional field - use undefined instead of null
+				checkoutAttributes,
 				createdAt: now,
 				updatedAt: now,
 				paymentStatus: PaymentStatus.Pending,

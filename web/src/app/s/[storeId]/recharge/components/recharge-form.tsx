@@ -102,6 +102,7 @@ export function RechargeForm({ storeId, store, rsvpId }: RechargeFormProps) {
 				const result = await createRechargeOrderAction({
 					storeId,
 					creditAmount: data.creditAmount,
+					rsvpId: rsvpId,
 				});
 
 				if (result?.serverError) {
