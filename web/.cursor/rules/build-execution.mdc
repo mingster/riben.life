@@ -1,8 +1,9 @@
 ---
 description: Guidelines for when to run builds during development and code changes
-globs: 
+globs:
 alwaysApply: true
 ---
+
 # Build Execution Guidelines
 
 This rule defines when builds should and should NOT be run during development and code changes.
@@ -13,7 +14,7 @@ This rule defines when builds should and should NOT be run during development an
 
 ## When to Run Builds
 
-### ✅ DO Run Builds When:
+### ✅ DO Run Builds When
 
 1. **After TypeScript/Schema Changes**
    - Modified Prisma schema (`schema.prisma`)
@@ -42,7 +43,7 @@ This rule defines when builds should and should NOT be run during development an
    - Import/module resolution errors
    - Dependency resolution issues
 
-### ❌ DO NOT Run Builds When:
+### ❌ DO NOT Run Builds When
 
 1. **Routine Code Changes**
    - Adding new functions/components
@@ -138,6 +139,7 @@ bun run lint
 **Action:** ❌ **DO run build**  
 **Reason:** Schema changes affect generated types  
 **Steps:**
+
 ```bash
 bunx prisma generate
 bun run build
@@ -148,6 +150,7 @@ bun run build
 **Action:** ❌ **DO run build**  
 **Reason:** Dependencies affect build output  
 **Steps:**
+
 ```bash
 bun add <package>
 bun run build  # Verify no conflicts
@@ -187,12 +190,14 @@ For large refactorings that touch many files:
 ## Performance Impact
 
 **Why avoid unnecessary builds:**
+
 - Builds take 30-60 seconds (slow)
 - Uses CPU/memory resources
 - Interrupts development flow
 - Usually unnecessary if TypeScript/linter pass
 
 **When builds are needed:**
+
 - Catch integration issues
 - Verify production build works
 - Check for runtime-only errors
@@ -202,7 +207,7 @@ For large refactorings that touch many files:
 
 ### Quick Decision Tree
 
-```
+```text
 Did you change:
 ├─ Prisma schema? → Run build
 ├─ package.json? → Run build

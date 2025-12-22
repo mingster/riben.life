@@ -210,7 +210,7 @@ The system includes the following built-in payment method plugins:
 
 **Payment Processing Flow:**
 
-3. System delegates payment processing to the selected payment method plugin:
+1. System delegates payment processing to the selected payment method plugin:
    - Plugin handles payment initiation according to its implementation
    - Plugins may redirect to external payment pages (Stripe, LINE Pay)
    - Plugins may process payments internally (Credit-based payments, Cash/In-Person payments)
@@ -225,14 +225,14 @@ The system includes the following built-in payment method plugins:
 - Cash payments have zero processing fees (no gateway fees, no platform fees)
 - Suitable for in-store transactions, order pickup, or delivery scenarios
 
-4. After payment confirmation:
-   - System updates order:
+1. After payment confirmation:
+  - System updates order:
      - `isPaid`: `true`
      - `paidDate`: Current timestamp
      - `paymentStatus`: `Paid`
      - `orderStatus`: `Confirmed` (or `Processing` based on order type)
-   - System creates `StoreLedger` entry for revenue recognition
-   - System calculates and records fees (payment gateway fees, platform fees)
+  - System creates `StoreLedger` entry for revenue recognition
+  - System calculates and records fees (payment gateway fees, platform fees)
 
 **FR-PAY-010:** Payment confirmation must be handled by payment method plugins:
 
@@ -772,7 +772,7 @@ The system includes the following built-in payment method plugins:
 - `processPayment(order: Order, config: PluginConfig): PaymentResult`
   - Initiates payment processing
   - Returns payment initiation result (redirect URL, internal processing status, etc.)
-  
+
 - `confirmPayment(orderId: string, paymentData: PaymentData, config: PluginConfig): PaymentConfirmation`
   - Confirms payment after customer completes payment flow
   - Verifies payment status with payment gateway
