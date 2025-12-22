@@ -6,6 +6,7 @@ import { requestWithClient } from "./line-pay-api/request";
 import type { LineMerchantConfig } from "./line-pay-api/type";
 import { createPaymentApi } from "./payment-api/create";
 import type { LinePayClient } from "./type";
+export type { LinePayClient } from "./type";
 export {
 	createPaymentDetailsRecoveryHandler,
 	paymentDetailsToConfirm,
@@ -191,12 +192,22 @@ export function getLinePayClient(id: string | null, secret: string | null) {
 		linePaySecret = process.env.LINE_PAY_SECRET || null;
 	}
 
+	// Trim whitespace and validate
+	linePayId = linePayId?.trim() || null;
+	linePaySecret = linePaySecret?.trim() || null;
+
 	if (!linePayId || !linePaySecret) {
 		throw new Error("LINE_PAY is not set");
 	}
 
+	if (linePayId.length === 0 || linePaySecret.length === 0) {
+		throw new Error("LINE_PAY_ID and LINE_PAY_SECRET cannot be empty");
+	}
+
 	const env =
 		process.env.NODE_ENV === "development" ? "development" : "production";
+
+	console.log("linePayId", linePayId, "linePaySecret", linePaySecret);
 
 	const linePayClient = createLinePayClient({
 		channelId: linePayId,
@@ -208,23 +219,31 @@ export function getLinePayClient(id: string | null, secret: string | null) {
 }
 
 export async function getLinePayClientByStore(store: Store) {
-	// determine line pay id and secret
-	let linePayId = store.LINE_PAY_ID;
-	let linePaySecret = store.LINE_PAY_SECRET;
+	// Use environment variables by default
+	let linePayId = process.env.LINE_PAY_ID || null;
+	let linePaySecret = process.env.LINE_PAY_SECRET || null;
 
-	// this store is pro version or not?
+	// Check if store is Pro level
 	const isPro = await isProLevel(store?.id);
-	//console.log("isPro", isPro);
 
-	if (isPro === false) {
-		linePayId = process.env.LINE_PAY_ID || null;
-		linePaySecret = process.env.LINE_PAY_SECRET || null;
-
-		//console.log('linePayId', linePayId, 'linePaySecret', linePaySecret);
+	// Only use store-level settings if:
+	// 1. Store is Pro level (not free)
+	// 2. Store has LINE_PAY_ID and LINE_PAY_SECRET values set
+	if (isPro && store.LINE_PAY_ID && store.LINE_PAY_SECRET) {
+		linePayId = store.LINE_PAY_ID;
+		linePaySecret = store.LINE_PAY_SECRET;
 	}
+
+	// Trim whitespace and validate
+	linePayId = linePayId?.trim() || null;
+	linePaySecret = linePaySecret?.trim() || null;
 
 	if (!linePayId || !linePaySecret) {
 		throw new Error("LINE_PAY is not set");
+	}
+
+	if (linePayId.length === 0 || linePaySecret.length === 0) {
+		throw new Error("LINE_PAY_ID and LINE_PAY_SECRET cannot be empty");
 	}
 
 	const linePayClient = getLinePayClient(

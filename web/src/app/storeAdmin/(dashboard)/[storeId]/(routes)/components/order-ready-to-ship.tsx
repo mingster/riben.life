@@ -108,7 +108,7 @@ export const OrderReadyToShip = ({ store, orders, parentLoading }: props) => {
 										{t("Order_total")}
 									</TableHead>
 									<TableHead className="w-[80px] text-center">
-										{t("Order_shipout")}
+										{t("Order_ship_out")}
 									</TableHead>
 								</TableRow>
 							</TableHeader>

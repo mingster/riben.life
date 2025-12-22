@@ -42,6 +42,7 @@ const formSchema = z.object({
 	isDeleted: z.boolean().default(false),
 	isDefault: z.boolean().default(false),
 	canDelete: z.boolean().default(false),
+	visibleToCustomer: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -87,6 +88,7 @@ export function EditPaymentMethodDialog({
 			isDeleted: paymentMethod?.isDeleted ?? false,
 			isDefault: paymentMethod?.isDefault ?? false,
 			canDelete: paymentMethod?.canDelete ?? false,
+			visibleToCustomer: paymentMethod?.visibleToCustomer ?? false,
 		}),
 		[paymentMethod],
 	);
@@ -361,6 +363,25 @@ export function EditPaymentMethodDialog({
 									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
 										<div className="space-y-0.5">
 											<FormLabel>Can Delete</FormLabel>
+										</div>
+										<FormControl>
+											<Switch
+												disabled={loading || form.formState.isSubmitting}
+												checked={field.value}
+												onCheckedChange={field.onChange}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="visibleToCustomer"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:col-span-2">
+										<div className="space-y-0.5">
+											<FormLabel>Visible To Customer</FormLabel>
 										</div>
 										<FormControl>
 											<Switch

@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { getStoreWithRelations } from "@/lib/store-access";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Store } from "@/types";
 import type { StoreFacility } from "@prisma/client";
 import type { Metadata } from "next";
@@ -21,7 +22,7 @@ export default async function CashCashierAdminPage(props: {
 
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance
-	const [store, tables] = await Promise.all([
+	const [store, facilities] = await Promise.all([
 		await getStoreWithRelations(params.storeId),
 		sqlClient.storeFacility.findMany({
 			where: { storeId: params.storeId },
@@ -29,7 +30,14 @@ export default async function CashCashierAdminPage(props: {
 		}),
 	]);
 
+	// Convert Prisma Decimal/BigInt to plain JSON-friendly values
+	transformPrismaDataForJson(facilities);
+	transformPrismaDataForJson(store);
+
 	return (
-		<CashCashier store={store as Store} tables={tables as StoreFacility[]} />
+		<CashCashier
+			store={store as Store}
+			facilities={facilities as StoreFacility[]}
+		/>
 	);
 }

@@ -19,6 +19,8 @@ export const updateRsvpSettingsAction = storeActionClient
 			minPrepaidAmount,
 			canCancel,
 			cancelHours,
+			canReserveBefore,
+			canReserveAfter,
 			defaultDuration,
 			requireSignature,
 			showCostToCustomer,
@@ -74,6 +76,12 @@ export const updateRsvpSettingsAction = storeActionClient
 		}
 		if (cancelHours !== undefined) {
 			updateData.cancelHours = cancelHours;
+		}
+		if (canReserveBefore !== undefined) {
+			updateData.canReserveBefore = canReserveBefore;
+		}
+		if (canReserveAfter !== undefined) {
+			updateData.canReserveAfter = canReserveAfter;
 		}
 		if (defaultDuration !== undefined) {
 			updateData.defaultDuration = defaultDuration;
@@ -157,6 +165,8 @@ export const updateRsvpSettingsAction = storeActionClient
 									: new Prisma.Decimal(0),
 							canCancel: canCancel ?? true,
 							cancelHours: cancelHours ?? 24,
+							canReserveBefore: canReserveBefore ?? 2,
+							canReserveAfter: canReserveAfter ?? 2190,
 							defaultDuration: defaultDuration ?? 60,
 							requireSignature: requireSignature ?? false,
 							showCostToCustomer: showCostToCustomer ?? false,

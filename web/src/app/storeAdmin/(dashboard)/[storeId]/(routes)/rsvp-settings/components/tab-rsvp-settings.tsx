@@ -62,6 +62,8 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								: null,
 						canCancel: rsvpSettings.canCancel,
 						cancelHours: rsvpSettings.cancelHours,
+						canReserveBefore: rsvpSettings.canReserveBefore,
+						canReserveAfter: rsvpSettings.canReserveAfter,
 						defaultDuration: rsvpSettings.defaultDuration,
 						requireSignature: rsvpSettings.requireSignature,
 						showCostToCustomer: rsvpSettings.showCostToCustomer,
@@ -80,6 +82,8 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						minPrepaidAmount: null,
 						canCancel: true,
 						cancelHours: 24,
+						canReserveBefore: 2,
+						canReserveAfter: 2190,
 						defaultDuration: 60,
 						requireSignature: false,
 						showCostToCustomer: false,
@@ -422,6 +426,56 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 										)}
 									/>
 								)}
+							</div>
+
+							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+								<FormField
+									control={form.control}
+									name="canReserveBefore"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("RSVP_Can_Reserve_Before")}</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													disabled={loading || form.formState.isSubmitting}
+													value={field.value?.toString() ?? ""}
+													onChange={(event) =>
+														field.onChange(Number(event.target.value))
+													}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("RSVP_Can_Reserve_Before_descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="canReserveAfter"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("RSVP_Can_Reserve_After")}</FormLabel>
+											<FormControl>
+												<Input
+													type="number"
+													disabled={loading || form.formState.isSubmitting}
+													value={field.value?.toString() ?? ""}
+													onChange={(event) =>
+														field.onChange(Number(event.target.value))
+													}
+												/>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("RSVP_Can_Reserve_After_descr")}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 							</div>
 
 							<FormField

@@ -1,6 +1,5 @@
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
-import isProLevel from "@/actions/storeAdmin/is-pro-level";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
@@ -8,10 +7,8 @@ import {
 	type Currency,
 	type RequestRequestBody,
 	type RequestRequestConfig,
-	getLinePayClient,
 	getLinePayClientByStore,
 } from "@/lib/linePay";
-import type { LinePayClient } from "@/lib/linePay/type";
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { isMobileUserAgent } from "@/utils/utils";
@@ -27,8 +24,12 @@ import logger from "@/lib/logger";
 // https://developers-pay.line.me/online
 // https://developers-pay.line.me/online-api
 // https://developers-pay.line.me/online/implement-basic-payment#confirm
-const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
+const PaymentPage = async (props: {
+	params: Promise<{ orderId: string }>;
+	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) => {
 	const params = await props.params;
+	const searchParams = await props.searchParams;
 	if (!params.orderId) {
 		throw new Error("order Id is missing");
 	}
@@ -37,6 +38,12 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 	//const pathname = headerList.get("x-current-path");
 	//console.log("pathname", host, pathname);
 	const isMobile = isMobileUserAgent(headerList.get("user-agent"));
+
+	// Extract returnUrl from search params
+	const returnUrl =
+		typeof searchParams.returnUrl === "string"
+			? searchParams.returnUrl
+			: undefined;
 
 	//console.log('orderId: ' + params.orderId);
 
@@ -51,7 +58,7 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect orderId={order.id} />
+					<SuccessAndRedirect order={order} />
 				</Container>
 			</Suspense>
 		);
@@ -68,8 +75,15 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 		protocol = "https:";
 	}
 
-	const confirmUrl = `${protocol}//${host}/checkout/${order.id}/linePay/confirmed`;
-	const cancelUrl = `${protocol}//${host}/checkout/${order.id}/linePay/canceled`;
+	// Include returnUrl in confirmed and canceled URLs if provided
+	const confirmUrlBase = `${protocol}//${host}/checkout/${order.id}/linePay/confirmed`;
+	const cancelUrlBase = `${protocol}//${host}/checkout/${order.id}/linePay/canceled`;
+	const confirmUrl = returnUrl
+		? `${confirmUrlBase}?returnUrl=${encodeURIComponent(returnUrl)}`
+		: confirmUrlBase;
+	const cancelUrl = returnUrl
+		? `${cancelUrlBase}?returnUrl=${encodeURIComponent(returnUrl)}`
+		: cancelUrlBase;
 
 	const requestBody: RequestRequestBody = {
 		amount: Number(order.orderTotal),
@@ -107,6 +121,7 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 		const transactionId = res.body.info.transactionId;
 		const paymentAccessToken = res.body.info.paymentAccessToken;
 
+		// Store transaction ID and payment access token for confirmation
 		await sqlClient.storeOrder.update({
 			where: {
 				id: order.id,
@@ -115,6 +130,16 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 				checkoutAttributes: transactionId,
 				checkoutRef: paymentAccessToken,
 			},
+		});
+
+		logger.info("LINE Pay payment request created", {
+			metadata: {
+				orderId: order.id,
+				transactionId,
+				amount: Number(order.orderTotal),
+				currency: order.currency,
+			},
+			tags: ["payment", "linepay", "success"],
 		});
 
 		// for pc user, redirect to web
@@ -126,11 +151,16 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 		}
 	}
 
-	// something wrong
-	logger.error("Operation log", {
-		tags: ["error"],
+	// LINE Pay request failed
+	logger.error("LINE Pay payment request failed", {
+		metadata: {
+			orderId: order.id,
+			returnCode: res.body.returnCode,
+			returnMessage: res.body.returnMessage,
+		},
+		tags: ["payment", "linepay", "error"],
 	});
-	throw new Error(res.body.returnMessage);
+	throw new Error(res.body.returnMessage || "LINE Pay payment request failed");
 };
 
 export default PaymentPage;

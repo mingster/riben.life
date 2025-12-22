@@ -113,6 +113,9 @@ Store Admins have all Store Staff permissions, plus:
 **FR-RSVP-003:** The system must validate reservation availability based on:
 
 - Store's RSVP settings (acceptReservation flag)
+- **Reservation time window:** 
+  - Reservations must be at least `canReserveBefore` hours in the future (e.g., if `canReserveBefore = 2`, current time is 7PM, only reservations at 9PM or later are allowed)
+  - Reservations must be no more than `canReserveAfter` hours in the future (e.g., if `canReserveAfter = 2190` (3 months), reservations beyond 3 months are not allowed)
 - Business hours (useBusinessHours, rsvpHours)
 - Facility capacity and availability
 - Existing reservations for the requested time slot
@@ -358,10 +361,9 @@ Store Admins have all Store Staff permissions, plus:
 
 **Termination States:**
 
-- Customer can cancel RSVP if `RSVPSettings.canCancel = true` and date time is prior to `cancelHours`.
-- If the cancel policy is fulfilled, customer can cancel RSVP regardless status.
+- Customer can cancel RSVP without time restriction if `RSVPSettings.canCancel = true`.
 - If the reservation is cancelled (by customer or store), status changes to `Cancelled (60)`
-- When cancelled, customer credit or payment will be refunded if any.
+- **Refund Policy:** When cancelled, customer credit or payment will be refunded only if cancellation occurs OUTSIDE the `cancelHours` window (i.e., cancelled more than `cancelHours` hours before the reservation time). If cancellation occurs WITHIN the `cancelHours` window (i.e., less than `cancelHours` hours before the reservation time), no refund is given.
 - If the customer does not show up for the reservation, store staff can mark status as `NoShow (70)`
 - Once in `Cancelled` or `NoShow` status, the reservation cannot transition to active states.
 - Customer can delete the RSVP when it still pending.
@@ -909,7 +911,7 @@ Completed (50) [when service is finished]
 
 ### 5.2 Cancellation Rules
 
-**BR-RSVP-005:** Customers can only cancel within the configured cancellation window (`cancelHours` before reservation time).
+**BR-RSVP-005:** Customers can cancel without time restriction if `canCancel` is true in `RsvpSettings`. Refunds are only provided if cancellation occurs outside the `cancelHours` window (i.e., cancelled more than `cancelHours` hours before the reservation time). If cancellation occurs within the `cancelHours` window (i.e., less than `cancelHours` hours before the reservation time), no refund is given.
 
 **BR-RSVP-006:** If `canCancel` is false, customers cannot self-cancel (store staff or store admin must cancel).
 

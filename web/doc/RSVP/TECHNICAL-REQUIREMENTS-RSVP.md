@@ -78,23 +78,25 @@ export const [actionName]Action = [actionClient]
 ```prisma
 model RsvpSettings {
   id              String   @id @default(uuid())
-  storeId         String
-  acceptReservation Boolean  @default(true)
-  prepaidRequired   Boolean  @default(false)
-  prepaidAmount     Decimal? // dollar amount
-  canCancel         Boolean  @default(true)
-  cancelHours       Int      @default(24)
-  defaultDuration   Int      @default(60)
-  requireSignature   Boolean  @default(false)
-  showCostToCustomer Boolean  @default(false)
+  storeId         String   @unique
+  acceptReservation Boolean  @default(true) // turn on/off the reservation system
+  prepaidRequired   Boolean  @default(false) //預付制：儲值後才可預約 / //訂位需付訂金
+  minPrepaidAmount  Decimal? @default(0) //最低預付金額
+  canCancel         Boolean  @default(true) //可取消預約
+  cancelHours       Int      @default(24) //取消預約時間：小時前可取消
+  canReserveBefore  Int      @default(2) //從現在起，可預約幾小時後的時間。 e.g. 現在7PM，只能預約9PM後的時間。
+  canReserveAfter   Int      @default(2190) //從現在起，最多可預約未來幾小時。 e.g. ㄧ年後=8760小時; 一個月後=730. 預設值：3個月後。
+  defaultDuration   Int      @default(60) //預約時間：60分鐘
+  requireSignature   Boolean  @default(false) //需要簽名
+  showCostToCustomer Boolean  @default(false) //顯示預約金額
   useBusinessHours   Boolean  @default(true)
-  rsvpHours          String?
-  reminderHours      Int      @default(24)
-  useReminderSMS     Boolean  @default(false)
-  useReminderLine    Boolean  @default(false)
-  useReminderEmail   Boolean  @default(false)
-  syncWithGoogle     Boolean  @default(false)
-  syncWithApple      Boolean  @default(false)
+  rsvpHours          String? //營業時間：M-F 09:00-18:00
+  reminderHours      Int      @default(24) //預約提醒時間：??小時前發送確認通知
+  useReminderSMS     Boolean  @default(false) //使用簡訊通知
+  useReminderLine    Boolean  @default(false) //使用Line通知
+  useReminderEmail   Boolean  @default(false) //使用email通知
+  syncWithGoogle     Boolean  @default(false) //同步Google月曆
+  syncWithApple      Boolean  @default(false) //同步Apple日曆
   
   // Reserve with Google integration fields
   reserveWithGoogleEnabled     Boolean  @default(false)
@@ -102,13 +104,13 @@ model RsvpSettings {
   googleBusinessProfileName    String?  // Store name in Google Business Profile
   reserveWithGoogleAccessToken String?  // Encrypted OAuth access token
   reserveWithGoogleRefreshToken String? // Encrypted OAuth refresh token
-  reserveWithGoogleTokenExpiry DateTime? // Token expiry timestamp
-  reserveWithGoogleLastSync    DateTime? // Last successful sync timestamp
+  reserveWithGoogleTokenExpiry BigInt?  // Token expiry timestamp (epoch milliseconds)
+  reserveWithGoogleLastSync    BigInt?  // Last successful sync timestamp (epoch milliseconds)
   reserveWithGoogleSyncStatus  String?  // "connected", "error", "disconnected"
   reserveWithGoogleError       String?  // Last error message
   
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          BigInt  // Epoch milliseconds, not DateTime
+  updatedAt          BigInt  // Epoch milliseconds, not DateTime
   
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
   
@@ -122,34 +124,42 @@ model RsvpSettings {
 model Rsvp {
   id                String    @id @default(uuid())
   storeId           String
-  alreadyPaid       Boolean   @default(false)
-  userId            String?
+  customerId        String?
   orderId           String?
-  facilityId       String?
+  facilityId        String?
   numOfAdult        Int       @default(1)
   numOfChild        Int       @default(0)
-  rsvpTime          DateTime
-  arriveTime        DateTime?
+  rsvpTime          BigInt    // Epoch milliseconds, not DateTime
+  arriveTime        BigInt?   // Epoch milliseconds, not DateTime. The time should be set when status is set to Ready
   status            Int       @default(0) // RsvpStatus enum: 0=Pending, 10=ReadyToConfirm, 40=Ready, 50=Completed, 60=Cancelled, 70=NoShow
+  alreadyPaid       Boolean   @default(false) //已付款
+  referenceId       String?   // reference to the StoreOrder id or CustomerCreditLedger id
+  paidAt            BigInt?   // Epoch milliseconds. The time when the reservation was paid
   message           String?
-  confirmedByStore  Boolean   @default(false)
-  confirmedByCustomer Boolean @default(false)
-  signature         String?   // Base64 encoded signature image/data
-  signatureTimestamp DateTime?
-  source            String?   // e.g., "reserve_with_google", "line", "phone", "walk-in", "online"
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  email             String?   // Email address (required if not logged in)
+  phone             String?   // Phone number (required for anonymous reservations)
+  confirmedByStore  Boolean   @default(false) //店家已確認預約
+  confirmedByCustomer Boolean @default(false) //客戶已確認預約
+  facilityCost      Decimal?  // The cost that was charged
+  facilityCredit    Decimal?  // The credit that was charged
+  pricingRuleId     String?   // Reference to the pricing rule used
+  createdAt         BigInt    // Epoch milliseconds, not DateTime
+  updatedAt         BigInt    // Epoch milliseconds, not DateTime
+  createdBy         String?   // userId who created this reservation
   
-  Store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  User     User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Order    StoreOrder?    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  Facility StoreFacility? @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  Store               Store                @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Customer            User?                @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  CreatedBy           User?                @relation("RsvpCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  Order               StoreOrder?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  Facility            StoreFacility?       @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  FacilityPricingRule FacilityPricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
   
   @@index([storeId])
-  @@index([userId])
+  @@index([customerId])
+  @@index([createdBy])
   @@index([orderId])
   @@index([facilityId])
-  @@index([rsvpTime])
+  @@index([pricingRuleId])
 }
 ```
 
@@ -182,7 +192,7 @@ model CustomerCredit {
   storeId   String
   userId    String
   balance   Decimal  @default(0)
-  updatedAt DateTime @updatedAt
+  updatedAt BigInt   // Epoch milliseconds, not DateTime
   
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
   User  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -201,8 +211,8 @@ model RsvpBlacklist {
   storeId   String
   userId    String
   reason    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt BigInt  // Epoch milliseconds, not DateTime
+  updatedAt BigInt   // Epoch milliseconds, not DateTime
   
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
   
@@ -218,7 +228,7 @@ model RsvpTag {
   id        String   @id @default(uuid())
   storeId   String
   name      String
-  createdAt DateTime @default(now())
+  createdAt BigInt  // Epoch milliseconds, not DateTime
   
   Store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
   
@@ -393,17 +403,18 @@ The `update-reservation.ts` action allows customers to modify their reservations
   ```
 
 - **Business Rules:**
-  - Cancellation must occur within `cancelHours` window (from `RsvpSettings.cancelHours`, validated before allowing cancellation)
+  - Customers can cancel without time restriction if `canCancel` is true in `RsvpSettings`
   - If `canCancel` is false in `RsvpSettings`, customers cannot self-cancel (store staff/admin must cancel)
-  - **Refund Processing:** If reservation was prepaid (`alreadyPaid = true` and `orderId` exists), automatic refund is processed:
-    - **Credit Refund:** If payment method is "credit", credit is automatically refunded to customer
+  - **Refund Processing:** If reservation was prepaid (`alreadyPaid = true` and `orderId` exists), refund is processed only if cancellation occurs OUTSIDE the `cancelHours` window (i.e., cancelled more than `cancelHours` hours before the reservation time). If cancellation occurs WITHIN the `cancelHours` window (i.e., less than `cancelHours` hours before the reservation time), no refund is given.
+    - **Credit Refund:** If payment method is "credit" and cancellation is outside the cancelHours window, credit is automatically refunded to customer
     - **Refund Process:**
-      1. Finds original SPEND ledger entry to determine refund amount
-      2. Restores credit to customer balance (`CustomerCredit`)
-      3. Creates `CustomerCreditLedger` entry (type: "REFUND", positive amount)
-      4. Creates `StoreLedger` entry (revenue reversal, negative amount, type: `CreditUsage`)
-      5. Updates `StoreOrder` status to `Refunded` (both `orderStatus` and `paymentStatus`)
-    - **Refund Function:** `processRsvpRefund()` - Shared utility function located in `src/actions/store/reservation/process-rsvp-refund.ts`
+      1. Checks if cancellation is within cancelHours window using `isCancellationWithinCancelHours()` helper
+      2. If outside window, finds original SPEND ledger entry to determine refund amount
+      3. Restores credit to customer balance (`CustomerCredit`)
+      4. Creates `CustomerCreditLedger` entry (type: "REFUND", positive amount)
+      5. Creates `StoreLedger` entry (revenue reversal, negative amount, type: `CreditUsage`)
+      6. Updates `StoreOrder` status to `Refunded` (both `orderStatus` and `paymentStatus`)
+    - **Refund Function:** `processRsvpCreditRefund()` - Shared utility function located in `src/actions/store/reservation/process-rsvp-refund.ts`
     - **Transaction Safety:** All refund operations are performed within a database transaction
 - **Response:** Returns cancelled reservation object with all relations (including updated Order if refunded)
 
@@ -495,6 +506,9 @@ The `update-reservation.ts` action allows customers to modify their reservations
   - Respects facility capacity limits (if applicable)
   - Considers business hours (if `useBusinessHours` is enabled)
   - Respects RSVP settings (`acceptReservation` must be true)
+  - **Reservation Time Window:** Only returns slots that fall within the allowed reservation window:
+    - Slots must be at least `canReserveBefore` hours in the future (e.g., if `canReserveBefore = 2`, current time is 7PM, only slots at 9PM or later are available)
+    - Slots must be no more than `canReserveAfter` hours in the future (e.g., if `canReserveAfter = 2190` (3 months), slots beyond 3 months are not available)
   - Time slots are returned in store timezone (or specified timezone)
   - Slot duration matches facility `defaultDuration` or specified `duration` parameter
   - Cost/credit information only included if `showCostToCustomer` is enabled in `RsvpSettings`
@@ -806,26 +820,50 @@ For Google Actions Center Appointments Redirect integration:
 
 #### 7.1.2 Cancellation Window Validation
 
-**Function:** `validateCancelHoursWindow()`
+**Function:** `isCancellationWithinCancelHours()`
 
 **File:** `validate-cancel-hours.ts`
 
-**Purpose:** Validates that a reservation modification or cancellation occurs within the allowed cancellation window.
+**Purpose:** Checks if cancellation is within the cancelHours window (for refund determination). Returns `true` if cancellation is within the window (no refund), `false` if outside the window (refund allowed).
 
 **Parameters:**
 
 - `rsvpSettings: RsvpSettingsForValidation | null | undefined` - RsvpSettings object containing `canCancel` and `cancelHours`
 - `rsvpTime: bigint` - BigInt epoch time (milliseconds) representing the reservation time
-- `action: "modify" | "cancel"` - Action being performed (for error message customization)
+
+**Returns:**
+
+- `boolean` - `true` if cancellation is within cancelHours window (no refund), `false` if outside window (refund allowed)
+
+**Behavior:**
+
+- Only checks if `canCancel` is enabled and `cancelHours` is set
+- Calculates hours until reservation time
+- Returns `false` (refund allowed) if cancellation is not enabled, `cancelHours` is not set, or if hoursUntilReservation >= cancelHours
+- Returns `true` (no refund) if hoursUntilReservation < cancelHours
+
+**Usage:** Used by `cancel-reservation.ts` to determine if refund should be processed.
+
+**Function:** `validateCancelHoursWindow()`
+
+**File:** `validate-cancel-hours.ts`
+
+**Purpose:** Validates that a reservation modification occurs within the allowed cancellation window (blocks modification if too close to reservation time).
+
+**Parameters:**
+
+- `rsvpSettings: RsvpSettingsForValidation | null | undefined` - RsvpSettings object containing `canCancel` and `cancelHours`
+- `rsvpTime: bigint` - BigInt epoch time (milliseconds) representing the reservation time
+- `action: "modify"` - Action being performed (for error message customization)
 
 **Behavior:**
 
 - Only validates if `canCancel` is enabled and `cancelHours` is set
 - Calculates hours until reservation time
-- Throws `SafeError` if action occurs outside the cancellation window
+- Throws `SafeError` if modification occurs within the cancellation window (too close to reservation time)
 - Returns early (no validation) if cancellation is not enabled or `cancelHours` is not set
 
-**Usage:** Used by `update-reservation.ts` (action: "modify") and `cancel-reservation.ts` (action: "cancel").
+**Usage:** Used by `update-reservation.ts` (action: "modify") to enforce time restrictions on modifications.
 
 ### 7.2 Refund Processing Utilities
 
@@ -1078,6 +1116,7 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.6 | 2025-01-27 | System | Updated RsvpSettings schema documentation: Added `canReserveBefore` and `canReserveAfter` fields to control reservation time window (minimum hours in advance and maximum hours in future). Updated all timestamp fields from DateTime to BigInt (epoch milliseconds) to match actual schema. Fixed field names (`minPrepaidAmount` instead of `prepaidAmount`, `customerId` instead of `userId` in Rsvp model). Added reservation time window business rules to External Availability Query API section. Updated all model schemas to reflect BigInt timestamps. |
 | 1.5 | 2025-01-27 | System | Added refund processing documentation for customer reservation cancellation (FR-RSVP-014): Documented automatic refund functionality when prepaid reservations are cancelled. Added `processRsvpRefund()` shared utility function details, refund flow (credit restoration, ledger entries, order status updates), transaction safety, and integration with `cancel-reservation.ts` action. Updated Customer Reservation Cancellation API section with refund business rules and technical requirements. |
 | 1.4 | 2025-01-27 | System | Added External Availability Query API (Section 4.2.5): New endpoint `GET /api/store/[storeId]/rsvp/availability/slots` for external systems and other stores to query available reservation slots. Supports API key authentication, store-to-store authentication, and public access. Includes query parameters (date range, facility, duration, timezone), response format with available slots, business rules (conflict checking, capacity limits, business hours), and error handling. |
 | 1.3 | 2025-01-27 | System | Added customer reservation modification technical requirements (FR-RSVP-013): Documented `update-reservation.ts` action, API endpoint, business rules including `confirmedByStore` reset requirement, time window validation (`cancelHours`), status constraints (Pending only), and authorization requirements. Separated customer actions from store admin actions in API design section. |

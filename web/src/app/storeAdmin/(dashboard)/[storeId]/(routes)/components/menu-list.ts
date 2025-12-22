@@ -16,7 +16,6 @@ import {
 	IconCoin,
 	IconCreditCard,
 	IconCurrencyDollar,
-	IconFileText,
 	IconHelp,
 	IconHistory,
 	IconHttpOptions,
@@ -27,7 +26,6 @@ import {
 	IconQrcode,
 	IconScale,
 	IconSettings,
-	IconTable,
 	IconTicket,
 	IconUsers,
 } from "@tabler/icons-react";
@@ -58,6 +56,7 @@ export function GetMenuList(
 	pathname: string,
 	options?: {
 		supportTicketCount?: number;
+		readyToConfirmRsvpCount?: number;
 	},
 ): Group[] {
 	const STORE_ADMIN_PATH = "/storeAdmin/";
@@ -97,13 +96,13 @@ export function GetMenuList(
 			menus: [
 				//...(store.autoAcceptOrder ? [] : [orderConfirmation]),
 				// add cash (現金結帳) menu if store level is not free
-				// otherwise display orderCofirmation
+				// otherwise display orderConfirmation
+
+				...(store.level !== StoreLevel.Free ? [cash] : []),
 
 				// show order ready to ship menu only when useOrderSystem is true
 				...(store.useOrderSystem
 					? [
-							...(store.level !== StoreLevel.Free ? [cash] : []),
-
 							{
 								href: `${nav_prefix}/order/awaiting_to_ship`,
 								label: t("Order_ready_to_ship"),
@@ -175,6 +174,7 @@ export function GetMenuList(
 					active: pathname.startsWith(`${nav_prefix}/rsvp/history`),
 					icon: IconHistory,
 					submenus: [],
+					badge: options?.readyToConfirmRsvpCount,
 				},
 				{
 					href: `${nav_prefix}/waiting-list`,

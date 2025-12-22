@@ -21,6 +21,8 @@ interface RsvpCalendarClientProps {
 		rsvpHours: string | null;
 		defaultDuration?: number | null;
 		prepaidRequired?: boolean | null;
+		canCancel?: boolean | null;
+		cancelHours?: number | null;
 	} | null;
 	storeSettings: { businessHours: string | null } | null;
 	storeTimezone: string;

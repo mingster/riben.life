@@ -17,6 +17,7 @@ import { headers } from "next/headers";
 
 import { createRsvpSchema } from "./create-rsvp.validation";
 import { deduceCustomerCredit } from "./deduce-customer-credit";
+import { validateReservationTimeWindow } from "@/actions/store/reservation/validate-reservation-time-window";
 
 export const createRsvpAction = storeActionClient
 	.metadata({ name: "createRsvp" })
@@ -95,6 +96,19 @@ export const createRsvpAction = storeActionClient
 		if (!rsvpTime) {
 			throw new SafeError("Failed to convert rsvpTime to epoch");
 		}
+
+		// Get RSVP settings for time window validation
+		const rsvpSettings = await sqlClient.rsvpSettings.findFirst({
+			where: { storeId },
+			select: {
+				canReserveBefore: true,
+				canReserveAfter: true,
+			},
+		});
+
+		// Validate reservation time window (canReserveBefore and canReserveAfter)
+		// Note: Store admin can still create reservations, but we validate to ensure consistency
+		validateReservationTimeWindow(rsvpSettings, rsvpTime);
 
 		// Convert arriveTime to UTC Date, then to BigInt epoch
 		// Same conversion as rsvpTime - interpret as store timezone and convert to UTC

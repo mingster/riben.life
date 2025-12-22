@@ -4,23 +4,25 @@ import { createRechargeOrderSchema } from "./create-recharge-order.validation";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { OrderStatus, PaymentStatus } from "@/types/enum";
+import { OrderStatus, PaymentStatus, StoreLevel } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { ensureCreditRechargeProduct } from "./ensure-credit-recharge-product";
+import { getT } from "@/app/i18n";
 
 /**
  * Create a recharge order for customer credit top-up.
- * This creates a StoreOrder that will be paid via Stripe.
+ * This creates a StoreOrder that will be paid via selected payment method.
  * After payment is confirmed, processCreditTopUpAfterPayment should be called.
  */
 export const createRechargeOrderAction = userRequiredActionClient
 	.metadata({ name: "createRechargeOrder" })
 	.schema(createRechargeOrderSchema)
 	.action(async ({ parsedInput }) => {
-		const { storeId, creditAmount } = parsedInput;
+		const { storeId, creditAmount, paymentMethodId, rsvpId } = parsedInput;
 
 		const session = await auth.api.getSession({
 			headers: await headers(),
@@ -42,6 +44,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 				creditMaxPurchase: true,
 				creditExchangeRate: true,
 				defaultCurrency: true,
+				level: true,
 			},
 		});
 
@@ -75,17 +78,71 @@ export const createRechargeOrderAction = userRequiredActionClient
 
 		const dollarAmount = creditAmount * creditExchangeRate;
 
-		// Get default shipping method (required for StoreOrder)
-		const defaultShippingMethod = await sqlClient.shippingMethod.findFirst({
-			where: { isDefault: true, isDeleted: false },
+		// Get digital shipping method (required for StoreOrder)
+		// Digital shipping is appropriate for credit recharge orders
+		let shippingMethod = await sqlClient.shippingMethod.findFirst({
+			where: { identifier: "digital" },
 		});
 
-		if (!defaultShippingMethod) {
-			throw new SafeError("No shipping method available");
+		if (!shippingMethod) {
+			// Fall back to default shipping method if digital is not found
+			shippingMethod = await sqlClient.shippingMethod.findFirst({
+				where: { isDefault: true, isDeleted: false },
+			});
+
+			if (!shippingMethod) {
+				throw new SafeError("No shipping method available");
+			}
 		}
+
+		// Validate payment method exists and is enabled for store
+		const paymentMethod = await sqlClient.paymentMethod.findUnique({
+			where: { id: paymentMethodId },
+		});
+
+		if (!paymentMethod) {
+			throw new SafeError("Payment method not found");
+		}
+
+		if (paymentMethod.isDeleted) {
+			throw new SafeError("Payment method is not available");
+		}
+
+		// Check if payment method is enabled for this store
+		const storePaymentMethodMapping =
+			await sqlClient.storePaymentMethodMapping.findUnique({
+				where: {
+					storeId_methodId: {
+						storeId,
+						methodId: paymentMethodId,
+					},
+				},
+			});
+
+		// If no mapping exists, check if it's a default payment method
+		if (!storePaymentMethodMapping && !paymentMethod.isDefault) {
+			throw new SafeError("Payment method is not enabled for this store");
+		}
+
+		// Validate cash payment is not allowed for Free-tier stores
+		// Cash is only available for Pro (2) or Multi (3) level stores
+		if (paymentMethod.payUrl === "cash" && store.level === StoreLevel.Free) {
+			throw new SafeError("Cash payment is not available for Free-tier stores");
+		}
+
+		// Ensure credit recharge product exists (create if not found)
+		const creditRechargeProduct = await ensureCreditRechargeProduct(storeId);
+
+		// Get translation function for order note
+		const { t } = await getT();
 
 		// Create StoreOrder for recharge
 		const now = getUtcNowEpoch();
+
+		// Prepare checkoutAttributes with rsvpId if provided
+		const checkoutAttributes = rsvpId
+			? JSON.stringify({ rsvpId, creditRecharge: true })
+			: JSON.stringify({ creditRecharge: true });
 
 		const order = await sqlClient.storeOrder.create({
 			data: {
@@ -95,16 +152,32 @@ export const createRechargeOrderAction = userRequiredActionClient
 				isPaid: false,
 				orderTotal: new Prisma.Decimal(dollarAmount),
 				currency: store.defaultCurrency,
-				paymentMethodId: "stripe", // Default to stripe for credit recharge
-				shippingMethodId: defaultShippingMethod.id,
+				paymentMethodId: paymentMethod.id, // Use selected payment method ID
+				shippingMethodId: shippingMethod.id,
 				pickupCode: undefined, // Optional field - use undefined instead of null
+				checkoutAttributes,
 				createdAt: now,
 				updatedAt: now,
 				paymentStatus: PaymentStatus.Pending,
 				orderStatus: OrderStatus.Pending,
+				OrderItems: {
+					create: {
+						productId: creditRechargeProduct.id,
+						productName: t("store_credit"),
+						quantity: creditAmount, // Number of credit points being purchased
+						unitPrice: new Prisma.Decimal(creditExchangeRate), // Dollar amount per credit point
+						unitDiscount: new Prisma.Decimal(0),
+						variants: null,
+						variantCosts: null,
+					},
+				},
 				OrderNotes: {
 					create: {
-						note: `Credit recharge: ${creditAmount} points (${dollarAmount} ${store.defaultCurrency.toUpperCase()})`,
+						note: t("credit_recharge_order_note", {
+							creditAmount,
+							dollarAmount,
+							currency: store.defaultCurrency.toUpperCase(),
+						}),
 						displayToCustomer: true,
 						createdAt: now,
 						updatedAt: now,

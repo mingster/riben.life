@@ -46,6 +46,12 @@ export async function POST(
 					User: true,
 					ShippingMethod: true,
 					PaymentMethod: true,
+					Store: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
 				},
 				orderBy: {
 					updatedAt: "desc",
@@ -100,6 +106,12 @@ export async function POST(
 					User: true,
 					ShippingMethod: true,
 					PaymentMethod: true,
+					Store: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
 				},
 				orderBy: {
 					updatedAt: "desc",

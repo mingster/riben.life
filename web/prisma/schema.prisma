@@ -56,8 +56,8 @@ model User {
   Addresses                 Address[]
   SupportTicketFrom         SupportTicket[]           @relation("SupportTicketFrom")
   SupportTicketTo           SupportTicket[]           @relation("SupportTicketTo")
-  NotificationFrom          MessageQueue[]       @relation("NotificationFrom")
-  NotificationTo            MessageQueue[]       @relation("NotificationTo")
+  NotificationFrom          MessageQueue[]            @relation("NotificationFrom")
+  NotificationTo            MessageQueue[]            @relation("NotificationTo")
   Store                     Store[]
   Orders                    StoreOrder[]              @relation("UserOrders")
   Reservations              Rsvp[]
@@ -374,16 +374,18 @@ model Address {
 }
 
 model PaymentMethod {
-  id                        String                      @id @default(uuid())
-  name                      String                      @unique
-  payUrl                    String                      @default("")
-  priceDescr                String                      @default("")
-  fee                       Decimal                     @default("0.029")
-  feeAdditional             Decimal                     @default("0")
-  clearDays                 Int                         @default(3)
-  isDeleted                 Boolean                     @default(false)
-  isDefault                 Boolean                     @default(false)
-  canDelete                 Boolean                     @default(false) //store owner cannot delete this method
+  id                String  @id @default(uuid())
+  name              String  @unique
+  payUrl            String  @default("")
+  priceDescr        String  @default("")
+  fee               Decimal @default("0.029")
+  feeAdditional     Decimal @default("0")
+  clearDays         Int     @default(3)
+  isDeleted         Boolean @default(false)
+  isDefault         Boolean @default(false)
+  canDelete         Boolean @default(false) //store owner cannot delete this method
+  visibleToCustomer Boolean @default(false)
+
   createdAt                 BigInt
   updatedAt                 BigInt
   StorePaymentMethodMapping StorePaymentMethodMapping[]
@@ -636,7 +638,7 @@ model Store {
   FaqCategories              FaqCategory[]
   StoreAnnouncement          StoreAnnouncement[]
   SupportTicket              SupportTicket[]
-  MessageQueue          MessageQueue[]
+  MessageQueue               MessageQueue[]
   StoreShippingMethods       StoreShipMethodMapping[]
   NotificationPreferences    NotificationPreferences[]
   NotificationChannelConfigs NotificationChannelConfig[]
@@ -716,8 +718,11 @@ model RsvpSettings {
   prepaidRequired   Boolean  @default(false) //預付制：儲值後才可預約 / //訂位需付訂金
   minPrepaidAmount  Decimal? @default(0) //最低預付金額
 
-  canCancel   Boolean @default(true) //可取消預約
-  cancelHours Int     @default(24) //取消預約時間：小時前可取消
+  canCancel   Boolean @default(true) //可否取消預約?
+  cancelHours Int     @default(24) //最慢免費取消預約時間：幾小時前可免費取消?
+
+  canReserveBefore  Int @default(2) //從現在起，可預約幾小時後的時間。 e.g. 現在7PM，只能預約9PM後的時間。
+  canReserveAfter  Int @default(2190) //從現在起，最多可預約未來幾小時。 e.g. ㄧ年後=8760小時; 一個月後=730. 預設值：3個月後。
 
   defaultDuration    Int     @default(60) //預約時間：60分鐘
   requireSignature   Boolean @default(false) //需要簽名
@@ -801,8 +806,8 @@ model Rsvp {
 
   message String?
   // Contact information for anonymous reservations (when customerId is null)
-  email String? // Email address (required if not logged in)
-  phone String? // Phone number (required for anonymous reservations)
+  email   String? // Email address (required if not logged in)
+  phone   String? // Phone number (required for anonymous reservations)
 
   confirmedByStore    Boolean @default(false) //店家已確認預約
   confirmedByCustomer Boolean @default(false) //客戶已確認預約
@@ -1386,9 +1391,9 @@ model EmailQueue {
   priority       Int     @default(0)
 
   // Relations
-  Store        Store?             @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Notification MessageQueue? @relation(fields: [notificationId], references: [id], onDelete: SetNull)
-  Template     MessageTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  Store        Store?           @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Notification MessageQueue?    @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  Template     MessageTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
 
   @@index([sendTries])
   @@index([createdOn])
@@ -1466,22 +1471,22 @@ model NotificationChannelConfig {
 model SystemNotificationSettings {
   id                   String  @id @default(uuid())
   notificationsEnabled Boolean @default(true) // Master switch
-  
+
   // Plugin channel enable/disable (system-wide)
-  lineEnabled      Boolean @default(false) // LINE plugin enabled
+  lineEnabled     Boolean @default(false) // LINE plugin enabled
   whatsappEnabled Boolean @default(false) // WhatsApp plugin enabled
   wechatEnabled   Boolean @default(false) // WeChat plugin enabled
-  smsEnabled       Boolean @default(false) // SMS plugin enabled
+  smsEnabled      Boolean @default(false) // SMS plugin enabled
   telegramEnabled Boolean @default(false) // Telegram plugin enabled
-  pushEnabled      Boolean @default(false) // Push notification plugin enabled
-  
+  pushEnabled     Boolean @default(false) // Push notification plugin enabled
+
   // Note: Built-in channels (on-site, email) are always enabled and not stored here
-  
-  maxRetryAttempts     Int     @default(3)
-  retryBackoffMs       Int     @default(1000) // Initial backoff in milliseconds
-  queueBatchSize       Int     @default(100)
-  rateLimitPerMinute   Int     @default(1000)
-  historyRetentionDays Int     @default(90)
+
+  maxRetryAttempts     Int @default(3)
+  retryBackoffMs       Int @default(1000) // Initial backoff in milliseconds
+  queueBatchSize       Int @default(100)
+  rateLimitPerMinute   Int @default(1000)
+  historyRetentionDays Int @default(90)
 
   updatedAt BigInt // Epoch milliseconds
   updatedBy String // User ID of system admin who last updated

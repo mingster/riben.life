@@ -1,0 +1,92 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import Container from "@/components/ui/container";
+import { useRouter } from "next/navigation";
+import { IconShoppingCart, IconCalendar, IconHelp } from "@tabler/icons-react";
+import type { Store, RsvpSettings } from "@/types";
+
+interface StoreHomeLandingProps {
+	store: Store;
+	rsvpSettings: RsvpSettings | null;
+	useOrderSystem: boolean;
+	acceptReservation: boolean;
+}
+
+export function StoreHomeLanding({
+	store,
+	rsvpSettings,
+	useOrderSystem,
+	acceptReservation,
+}: StoreHomeLandingProps) {
+	const router = useRouter();
+
+	const handleNavigate = (path: string) => {
+		router.push(path);
+	};
+
+	return (
+		<div className="relative w-full min-h-[60vh] overflow-hidden">
+			{/* Background Video */}
+			<video
+				autoPlay
+				loop
+				muted
+				playsInline
+				className="absolute inset-0 w-full h-full object-cover z-0"
+			>
+				<source src="/videos/store-home-background.mp4" type="video/mp4" />
+			</video>
+
+			{/* Overlay for better text readability */}
+			<div className="absolute inset-0 bg-black/40 z-10" />
+
+			{/* Content */}
+			<Container className="relative z-20">
+				<div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 py-12">
+					<div className="text-center">
+						<h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-2">
+							{store.name}
+						</h1>
+						<p className="text-lg text-white/90">{store.name}</p>
+					</div>
+
+					<div className="flex flex-wrap gap-4 justify-center mt-8">
+						{useOrderSystem && (
+							<Button
+								size="lg"
+								onClick={() => handleNavigate(`/s/${store.id}/menu`)}
+								className="min-w-[200px] h-12"
+							>
+								<IconShoppingCart className="mr-2 h-5 w-5" />
+								線上訂購 Online Order
+							</Button>
+						)}
+
+						{acceptReservation && (
+							<Button
+								size="lg"
+								variant={useOrderSystem ? "outline" : "default"}
+								onClick={() => handleNavigate(`/s/${store.id}/reservation`)}
+								className="min-w-[200px] h-12"
+							>
+								<IconCalendar className="mr-2 h-5 w-5" />
+								預約訂位 Reservation
+							</Button>
+						)}
+
+						<Button
+							size="lg"
+							variant="outline"
+							onClick={() => handleNavigate(`/s/${store.id}/faq`)}
+							className="min-w-[200px] h-12"
+						>
+							<IconHelp className="mr-2 h-5 w-5" />
+							常見問題 FAQ
+						</Button>
+					</div>
+				</div>
+			</Container>
+		</div>
+	);
+}

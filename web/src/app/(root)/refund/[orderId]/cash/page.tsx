@@ -1,6 +1,8 @@
+import getOrderById from "@/actions/get-order-by_id";
+import { Loader } from "@/components/loader";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
+import { StoreOrder } from "@/types";
 import { Suspense } from "react";
 
 type Params = Promise<{ orderId: string }>;
@@ -15,10 +17,15 @@ export default async function CashRefundPage(props: {
 	const orderId = params.orderId;
 	const _query = searchParams.query;
 
+	const order = (await getOrderById(orderId)) as StoreOrder;
+	if (!order) {
+		throw new Error("order not found");
+	}
+
 	return (
 		<Suspense fallback={<Loader />}>
 			<Container>
-				<SuccessAndRedirect orderId={orderId} />
+				<SuccessAndRedirect order={order} />
 			</Container>
 		</Suspense>
 	);

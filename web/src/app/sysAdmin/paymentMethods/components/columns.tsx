@@ -71,6 +71,23 @@ export const createPaymentMethodColumns = (
 			},
 		},
 		{
+			accessorKey: "visibleToCustomer",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title="Visible To Customer" />
+			),
+			cell: ({ row }) => {
+				const val = row.getValue("visibleToCustomer") as boolean;
+				return val ? (
+					<IconCheck className="text-green-400 size-4" />
+				) : (
+					<IconX className="text-red-400 size-4" />
+				);
+			},
+			meta: {
+				className: "hidden sm:table-cell",
+			},
+		},
+		{
 			accessorKey: "StorePaymentMethodMapping",
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title="# of Stores" />

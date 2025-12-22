@@ -12,7 +12,7 @@ import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import { cancelReservationSchema } from "./cancel-reservation.validation";
-import { validateCancelHoursWindow } from "./validate-cancel-hours";
+import { isCancellationWithinCancelHours } from "./validate-cancel-hours";
 import { processRsvpCreditRefund } from "./process-rsvp-refund";
 import { getT } from "@/app/i18n";
 
@@ -48,7 +48,7 @@ export const cancelReservationAction = baseClient
 			throw new SafeError("Reservation not found");
 		}
 
-		// Fetch RsvpSettings for cancelHours validation
+		// Fetch RsvpSettings for refund determination
 		const rsvpSettings = await sqlClient.rsvpSettings.findFirst({
 			where: { storeId: existingRsvp.storeId },
 			select: {
@@ -56,9 +56,6 @@ export const cancelReservationAction = baseClient
 				cancelHours: true,
 			},
 		});
-
-		// Validate cancelHours window
-		validateCancelHoursWindow(rsvpSettings, existingRsvp.rsvpTime, "cancel");
 
 		// Verify ownership: user must be logged in and match customerId, or match by email
 		let hasPermission = false;
@@ -76,7 +73,18 @@ export const cancelReservationAction = baseClient
 		}
 
 		// Process refund if reservation was prepaid (alreadyPaid = true)
-		if (existingRsvp.alreadyPaid && existingRsvp.orderId) {
+		// Only refund if cancellation is OUTSIDE the cancelHours window
+		// If cancellation is WITHIN the cancelHours window, no refund is given
+		const isWithinCancelHours = isCancellationWithinCancelHours(
+			rsvpSettings,
+			existingRsvp.rsvpTime,
+		);
+
+		if (
+			existingRsvp.alreadyPaid &&
+			existingRsvp.orderId &&
+			!isWithinCancelHours
+		) {
 			const { t } = await getT();
 
 			// Get refund amount for the refund reason message

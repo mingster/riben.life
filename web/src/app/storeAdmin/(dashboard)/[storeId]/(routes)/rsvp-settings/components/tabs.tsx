@@ -29,6 +29,8 @@ export type RsvpSettingsData = {
 	minPrepaidAmount: number | null;
 	canCancel: boolean;
 	cancelHours: number;
+	canReserveBefore: number;
+	canReserveAfter: number;
 	defaultDuration: number;
 	requireSignature: boolean;
 	showCostToCustomer: boolean;
@@ -71,22 +73,25 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 	const pathname = usePathname();
 
 	const STORAGE_KEY = "rsvp-settings-tab-selection";
+	const [isMounted, setIsMounted] = useState(false);
 
 	// Get initial tab: URL param > localStorage > default
-	const getInitialTab = (): string => {
+	// Always start with "basic" to avoid hydration mismatch, then update after mount
+	const [activeTab, setActiveTab] = useState<string>("basic");
+
+	// Update active tab after mount to avoid hydration mismatch
+	useEffect(() => {
+		setIsMounted(true);
 		const urlTab = searchParams.get("tab");
-		if (urlTab) return urlTab;
-
-		// Try to get from localStorage (client-side only)
-		if (typeof window !== "undefined") {
+		if (urlTab) {
+			setActiveTab(urlTab);
+		} else if (typeof window !== "undefined") {
 			const storedTab = localStorage.getItem(STORAGE_KEY);
-			if (storedTab) return storedTab;
+			if (storedTab) {
+				setActiveTab(storedTab);
+			}
 		}
-
-		return "basic"; // default
-	};
-
-	const [activeTab, setActiveTab] = useState<string>(() => getInitialTab());
+	}, [searchParams]);
 
 	// Manage store state in client component
 	const [store, setStore] = useState(initialStore);

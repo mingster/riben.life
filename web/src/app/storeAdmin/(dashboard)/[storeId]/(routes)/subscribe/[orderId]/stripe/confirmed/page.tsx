@@ -1,8 +1,11 @@
 "use server";
 import Container from "@/components/ui/container";
 import confirmSubscriptionPayment from "@/actions/storeAdmin/subscription/stripe/confirm-payment";
-import { SuccessAndRedirect } from "./SuccessAndRedirect";
+
 import logger from "@/lib/logger";
+import getOrderById from "@/actions/get-order-by_id";
+import { StoreOrder } from "@/types";
+import { SuccessAndRedirect } from "@/components/success-and-redirect";
 
 // This page is triggered when Stripe confirms the payment.
 // Marks the SubscriptionPayment as paid, activates the subscription, and shows confirmation.
@@ -36,8 +39,13 @@ export default async function StripeConfirmedPage(props: {
 		);
 	}
 
+	const order = (await getOrderById(params.orderId)) as StoreOrder;
+	if (!order) {
+		throw new Error("order not found");
+	}
+
 	const confirmed = (await confirmSubscriptionPayment(
-		params.orderId,
+		order.id,
 		searchParams.payment_intent,
 		searchParams.payment_intent_client_secret,
 	)) as boolean;
@@ -47,7 +55,7 @@ export default async function StripeConfirmedPage(props: {
 	if (confirmed) {
 		return (
 			<Container>
-				<SuccessAndRedirect orderId={params.orderId} />
+				<SuccessAndRedirect order={order} />
 			</Container>
 		);
 	}

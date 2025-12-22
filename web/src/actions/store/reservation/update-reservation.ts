@@ -15,6 +15,7 @@ import { dateToEpoch, convertDateToUtc } from "@/utils/datetime-utils";
 import { updateReservationSchema } from "./update-reservation.validation";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
 import { validateCancelHoursWindow } from "./validate-cancel-hours";
+import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 
 // implement FR-RSVP-013
 //
@@ -69,6 +70,8 @@ export const updateReservationAction = baseClient
 				cancelHours: true,
 				canCancel: true,
 				defaultDuration: true,
+				canReserveBefore: true,
+				canReserveAfter: true,
 			},
 		});
 
@@ -134,6 +137,9 @@ export const updateReservationAction = baseClient
 
 		// Validate cancelHours window (FR-RSVP-013)
 		validateCancelHoursWindow(rsvpSettingsResult, rsvpTime, "modify");
+
+		// Validate reservation time window (canReserveBefore and canReserveAfter)
+		validateReservationTimeWindow(rsvpSettingsResult, rsvpTime);
 
 		// Validate business hours (if facility has business hours)
 		validateFacilityBusinessHours(
