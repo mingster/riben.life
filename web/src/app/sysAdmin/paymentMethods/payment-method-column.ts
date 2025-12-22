@@ -11,6 +11,7 @@ export interface PaymentMethodColumn {
 	clearDays: number;
 	isDefault: boolean;
 	isDeleted: boolean;
+	visibleToCustomer: boolean;
 	updatedAt: string;
 	updatedAtIso: string;
 	createdAt: string;
@@ -37,6 +38,7 @@ export const mapPaymentMethodToColumn = (
 	clearDays: paymentMethod.clearDays,
 	isDefault: paymentMethod.isDefault,
 	isDeleted: paymentMethod.isDeleted,
+	visibleToCustomer: paymentMethod.visibleToCustomer ?? false,
 	updatedAt: formatDateTime(epochToDate(paymentMethod.updatedAt) ?? new Date()),
 	createdAt: formatDateTime(epochToDate(paymentMethod.createdAt) ?? new Date()),
 	updatedAtIso:

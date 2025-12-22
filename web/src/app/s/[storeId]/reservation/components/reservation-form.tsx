@@ -19,7 +19,7 @@ import {
 } from "@/actions/store/reservation/update-reservation.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { FacilityCombobox } from "@/components/combobox-facility";
-import { toastError, toastSuccess } from "@/components/toaster";
+import { toastError, toastSuccess, toastWarning } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -46,6 +46,7 @@ import {
 	formatUtcDateToDateTimeLocal,
 	getDateInTz,
 	getOffsetHours,
+	getUtcNow,
 } from "@/utils/datetime-utils";
 import type { RsvpSettings, StoreSettings } from "@prisma/client";
 import { SlotPicker } from "./slot-picker";
@@ -300,6 +301,29 @@ export function ReservationForm({
 			});
 			return;
 		}
+
+		// Validate reservation time window (client-side check)
+		if (data.rsvpTime) {
+			const { getReservationTimeWindowError } = await import(
+				"@/utils/rsvp-time-window-utils"
+			);
+			const timeWindowError = getReservationTimeWindowError(
+				rsvpSettings,
+				data.rsvpTime,
+			);
+			if (timeWindowError) {
+				toastError({
+					title: t("Error"),
+					description: timeWindowError,
+				});
+				form.setError("rsvpTime", {
+					type: "manual",
+					message: timeWindowError,
+				});
+				return;
+			}
+		}
+
 		setIsSubmitting(true);
 
 		try {
@@ -355,6 +379,48 @@ export function ReservationForm({
 							toastSuccess({
 								description: t("reservation_created"),
 							});
+
+							// Check if the reservation cannot be canceled and show warning
+							let cannotCancel = false;
+
+							// Case 1: Cancellation is completely disabled
+							if (!rsvpSettings?.canCancel) {
+								cannotCancel = true;
+							}
+							// Case 2: Cancellation is enabled but reservation is within cancelHours window
+							else if (
+								rsvpSettings.canCancel &&
+								rsvpSettings.cancelHours !== null &&
+								rsvpSettings.cancelHours !== undefined
+							) {
+								const cancelHours = rsvpSettings.cancelHours ?? 24;
+								const now = getUtcNow();
+								const rsvpTimeDate = data.rsvp.rsvpTime
+									? epochToDate(
+											typeof data.rsvp.rsvpTime === "number"
+												? BigInt(data.rsvp.rsvpTime)
+												: data.rsvp.rsvpTime instanceof Date
+													? BigInt(data.rsvp.rsvpTime.getTime())
+													: data.rsvp.rsvpTime,
+										)
+									: null;
+
+								if (rsvpTimeDate) {
+									const hoursUntilReservation =
+										(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+									// Cannot cancel if reservation is within cancelHours window
+									cannotCancel = hoursUntilReservation < cancelHours;
+								}
+							}
+
+							if (cannotCancel) {
+								toastWarning({
+									title: t("warning"),
+									description: t("rsvp_can_not_be_cancelled"),
+								});
+							}
+
 							// Reset form after successful submission
 							form.reset(defaultValues as CreateReservationInput);
 							onReservationCreated?.(data.rsvp);

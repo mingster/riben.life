@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import I18nProvider from "@/providers/i18n-provider";
 import { SessionWrapper } from "@/providers/session-provider";
 import NextThemeProvider from "@/providers/theme-provider";
+import { RecaptchaProvider } from "@/providers/recaptcha-provider";
 import type { Viewport } from "next";
 import { CookiesProvider } from "next-client-cookies/server";
 import { cookies } from "next/headers";
@@ -108,6 +109,7 @@ export default async function RootLayout({
 	const langCookie = cookieStore.get(cookieName);
 	const htmlLang = langCookie?.value ?? fallbackLng;
 
+	//</RecaptchaProvider>
 	return (
 		<html lang={htmlLang} suppressHydrationWarning>
 			<head>
@@ -153,7 +155,9 @@ export default async function RootLayout({
 									<Suspense fallback={null}>
 										<PageViewTracker />
 									</Suspense>
-									{children}
+									<RecaptchaProvider useEnterprise={true}>
+										{children}
+									</RecaptchaProvider>
 								</IOSVersionCheck>
 							</SessionWrapper>
 						</I18nProvider>

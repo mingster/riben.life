@@ -77,6 +77,10 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 	}
 
 	//console.log(`user: ${JSON.stringify(user.Rsvp)}`);
+	/*					<TabsTrigger className="px-5 lg:min-w-40" value="address">
+						{t("account_tabs_address")}
+					</TabsTrigger>
+*/
 	return (
 		<Container className="bg-transparent">
 			<Tabs
@@ -96,10 +100,6 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 
 					<TabsTrigger className="px-5 lg:min-w-40" value="credits">
 						{t("account_tabs_credits")}
-					</TabsTrigger>
-
-					<TabsTrigger className="px-5 lg:min-w-40" value="address">
-						{t("account_tabs_address")}
 					</TabsTrigger>
 				</TabsList>
 

@@ -40,12 +40,13 @@ import logger from "@/lib/logger";
 type props = {
 	store: Store;
 	user: User | null;
+	returnUrl?: string;
 	onChange?: (newValue: boolean) => void;
 };
 
 // parse cart into order, and process to the selected payment method
 // TODO: implement shipping method
-export const Checkout = ({ store, user }: props) => {
+export const Checkout = ({ store, user, returnUrl }: props) => {
 	const cart = useCart();
 	const router = useRouter();
 
@@ -59,12 +60,17 @@ export const Checkout = ({ store, user }: props) => {
 
 	return (
 		<Container>
-			<CheckoutSteps store={store} user={user} onChange={setInCheckoutSteps} />
+			<CheckoutSteps
+				store={store}
+				user={user}
+				returnUrl={returnUrl}
+				onChange={setInCheckoutSteps}
+			/>
 		</Container>
 	);
 };
 
-const CheckoutSteps = ({ store, user, onChange }: props) => {
+const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 	const router = useRouter();
 	const params = useParams();
 
@@ -262,8 +268,11 @@ const CheckoutSteps = ({ store, user, onChange }: props) => {
 			//return value to parent component
 			onChange?.(true);
 
-			// redirect to payment page
-			const paymenturl = `/checkout/${order.id}/${paymentMethod.payUrl}`;
+			// redirect to payment page with optional returnUrl
+			let paymenturl = `/checkout/${order.id}/${paymentMethod.payUrl}`;
+			if (returnUrl) {
+				paymenturl += `?returnUrl=${encodeURIComponent(returnUrl)}`;
+			}
 			router.push(paymenturl);
 		} catch (error: unknown) {
 			const err = error as AxiosError;

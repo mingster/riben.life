@@ -6,8 +6,12 @@ import type { StoreOrder } from "@/types";
 import { Suspense } from "react";
 import PaymentStripe from "./components/payment-stripe";
 
-const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
+const PaymentPage = async (props: {
+	params: Promise<{ orderId: string }>;
+	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) => {
 	const params = await props.params;
+	const searchParams = await props.searchParams;
 	//console.log('orderId: ' + params.orderId);
 
 	if (!params.orderId) {
@@ -28,11 +32,16 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 	const order = (await getOrderById(params.orderId)) as StoreOrder;
 	//console.log('order: ' + JSON.stringify(order));
 
+	const returnUrl =
+		typeof searchParams.returnUrl === "string"
+			? searchParams.returnUrl
+			: undefined;
+
 	if (order.isPaid) {
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect orderId={order.id} />
+					<SuccessAndRedirect order={order} />
 				</Container>
 			</Suspense>
 		);
@@ -40,7 +49,7 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 
 	return (
 		<div className="px-5 pt-10">
-			<PaymentStripe order={order} />
+			<PaymentStripe order={order} returnUrl={returnUrl} />
 		</div>
 	);
 };

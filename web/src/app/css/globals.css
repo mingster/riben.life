@@ -201,9 +201,8 @@
 
 	/*customized*/
 	--gold: oklch(0.75 0.1469 83.99);
-	--warning: oklch(0.84 0.16 84);
-	--warning-foreground: oklch(0.28 0.07 46);
-
+	--warning: oklch(0.41 0.11 46);
+	--warning-foreground: oklch(0.99 0.02 95);
 	--font-sans:
 		"Noto Sans TC", -apple-system, "Microsoft YaHei", system-ui, sans-serif;
 	--font-serif: Montserrat, sans-serif;

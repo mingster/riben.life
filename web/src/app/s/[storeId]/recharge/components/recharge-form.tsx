@@ -26,24 +26,35 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import type { Store } from "@/types";
+import type { Store, StorePaymentMethodMapping } from "@/types";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const rechargeFormSchema = z.object({
 	creditAmount: z.coerce
 		.number()
 		.positive("Credit amount must be positive")
 		.min(1, "Credit amount must be at least 1 point"),
+	paymentMethodId: z.string().min(1, "Payment method is required"),
 });
 
 type RechargeFormValues = z.infer<typeof rechargeFormSchema>;
 
 interface RechargeFormProps {
 	storeId: string;
-	store: Store;
+	store: Store & {
+		StorePaymentMethods: StorePaymentMethodMapping[];
+	};
 	rsvpId?: string;
+	returnUrl?: string;
 }
 
-export function RechargeForm({ storeId, store, rsvpId }: RechargeFormProps) {
+export function RechargeForm({
+	storeId,
+	store,
+	rsvpId,
+	returnUrl,
+}: RechargeFormProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const router = useRouter();
@@ -60,10 +71,23 @@ export function RechargeForm({ storeId, store, rsvpId }: RechargeFormProps) {
 		: 0;
 	const currency = store.defaultCurrency.toUpperCase();
 
+	// Get payment methods
+	const allPaymentMethods =
+		store.StorePaymentMethods as StorePaymentMethodMapping[];
+
+	// Default to first payment method, or Stripe if available
+	let defaultPaymentMethod = allPaymentMethods.find(
+		(mapping) => mapping.PaymentMethod.payUrl === "stripe",
+	);
+	if (!defaultPaymentMethod && allPaymentMethods.length > 0) {
+		defaultPaymentMethod = allPaymentMethods[0];
+	}
+
 	const form = useForm<RechargeFormValues>({
 		resolver: zodResolver(rechargeFormSchema) as any,
 		defaultValues: {
 			creditAmount: minPurchase > 0 ? minPurchase : 100,
+			paymentMethodId: defaultPaymentMethod?.methodId || "",
 		},
 	});
 
@@ -102,6 +126,8 @@ export function RechargeForm({ storeId, store, rsvpId }: RechargeFormProps) {
 				const result = await createRechargeOrderAction({
 					storeId,
 					creditAmount: data.creditAmount,
+					paymentMethodId: data.paymentMethodId,
+					rsvpId: rsvpId,
 				});
 
 				if (result?.serverError) {
@@ -112,8 +138,27 @@ export function RechargeForm({ storeId, store, rsvpId }: RechargeFormProps) {
 				}
 
 				if (result?.data?.order) {
-					// Redirect to Stripe payment page
-					router.push(`/s/${storeId}/recharge/${result.data.order.id}/stripe`);
+					// Get payment method to determine redirect URL
+					const selectedPaymentMethod = allPaymentMethods.find(
+						(mapping) => mapping.methodId === data.paymentMethodId,
+					);
+
+					if (!selectedPaymentMethod) {
+						toastError({
+							description: "Payment method not found",
+						});
+						return;
+					}
+
+					const payUrl = selectedPaymentMethod.PaymentMethod.payUrl;
+
+					// Redirect to payment page using standard /checkout/[orderId]/[payUrl] pattern
+					// All payment methods (cash, credit, stripe, linepay, etc.) use the same URL pattern
+					let paymentUrl = `/checkout/${result.data.order.id}/${payUrl}`;
+					if (returnUrl) {
+						paymentUrl += `?returnUrl=${encodeURIComponent(returnUrl)}`;
+					}
+					router.push(paymentUrl);
 				}
 			} catch (error) {
 				toastError({
@@ -126,7 +171,7 @@ export function RechargeForm({ storeId, store, rsvpId }: RechargeFormProps) {
 				setIsSubmitting(false);
 			}
 		},
-		[storeId, minPurchase, maxPurchase, currency, router],
+		[storeId, minPurchase, maxPurchase, currency, router, allPaymentMethods],
 	);
 
 	// Preset amounts: start with minPurchase, then 3 multiples
@@ -221,6 +266,47 @@ export function RechargeForm({ storeId, store, rsvpId }: RechargeFormProps) {
 								</FormItem>
 							)}
 						/>
+
+						{allPaymentMethods.length > 0 && (
+							<FormField
+								control={form.control}
+								name="paymentMethodId"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel className="pb-2">
+											{t("checkout_paymentMethod")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<RadioGroup
+												className="pt-2"
+												value={field.value}
+												onValueChange={field.onChange}
+											>
+												{allPaymentMethods.map((mapping) => (
+													<div
+														key={mapping.methodId}
+														className="flex items-center gap-3"
+													>
+														<RadioGroupItem
+															value={mapping.methodId}
+															id={mapping.methodId}
+														/>
+														<Label htmlFor={mapping.methodId}>
+															{mapping.paymentDisplayName !== null &&
+															mapping.paymentDisplayName !== ""
+																? mapping.paymentDisplayName
+																: mapping.PaymentMethod.name}
+														</Label>
+													</div>
+												))}
+											</RadioGroup>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						)}
 
 						<Button
 							type="submit"

@@ -95,6 +95,32 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/downloaded-key.json
 - ⚠️ The service account needs proper permissions to create assessments
 - ⚠️ If verification is not completed, you'll see: "您必須先完成 reCAPTCHA 驗證，才能繼續操作"
 
+## Architecture
+
+### Provider Structure
+
+The reCAPTCHA provider is configured at the **root layout level** to ensure:
+
+- ✅ **Single Provider Instance**: One `GoogleReCaptchaProvider` for the entire application
+- ✅ **No Duplicate Scripts**: Prevents "reCAPTCHA has already been loaded" errors
+- ✅ **Global Access**: All components can use `useGoogleReCaptcha()` hook directly
+- ✅ **Consistent Configuration**: Enterprise mode configured once at root level
+
+**Provider Hierarchy:**
+
+```
+Root Layout (src/app/layout.tsx)
+  └── RecaptchaProvider (useEnterprise={true})
+      └── All Application Pages
+          ├── ContactForm (uses useGoogleReCaptcha() hook)
+          ├── FormMagicLink (uses useGoogleReCaptcha() hook)
+          └── Any other component needing reCAPTCHA
+```
+
+**Migration Note:**
+
+Previously, components wrapped themselves with `<RecaptchaV3>` which created multiple provider instances. This has been refactored to use a single root-level provider. The `RecaptchaV3` component is now a no-op wrapper for backward compatibility.
+
 ## How It Works
 
 ### Flow Diagram
@@ -124,17 +150,23 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/downloaded-key.json
 
 ### Frontend Implementation
 
-The contact form uses **reCAPTCHA Enterprise** on the frontend, following the [official Google Cloud documentation](https://docs.cloud.google.com/recaptcha/docs/instrument-web-pages):
+The application uses **reCAPTCHA Enterprise** on the frontend, following the [official Google Cloud documentation](https://docs.cloud.google.com/recaptcha/docs/instrument-web-pages):
 
+- **Provider Location**: `GoogleReCaptchaProvider` is configured in the root layout (`src/app/layout.tsx`)
+- **WebGL Context Optimization**: The `GoogleReCaptcha` component is **not** rendered in the provider to prevent multiple WebGL contexts. For reCAPTCHA v3, the badge is automatically rendered by Google's script, and components use the `useGoogleReCaptcha()` hook directly to execute reCAPTCHA.
+- **Single Provider Instance**: One provider instance for the entire application prevents duplicate script loading
 - **Script Loading**: Automatically loads `https://www.google.com/recaptcha/enterprise.js?render=SITE_KEY`
 - **Token Generation**: Uses `grecaptcha.enterprise.execute(SITE_KEY, {action: 'contact_form'})`
-- **Provider**: `GoogleReCaptchaProvider` with `useEnterprise={true}`
+- **Enterprise Mode**: Provider configured with `useEnterprise={true}` at root level
 - **Action Name**: `"contact_form"` (validated on backend)
 
 **Key Files:**
 
-- `src/app/(root)/unv/components/ContactForm.tsx` - Main contact form with Enterprise reCAPTCHA
-- `src/components/auth/recaptcha-v3.tsx` - Reusable reCAPTCHA component (supports Enterprise via prop)
+- `src/app/layout.tsx` - Root layout with `RecaptchaProvider` (single provider instance)
+- `src/providers/recaptcha-provider.tsx` - Global reCAPTCHA provider component
+- `src/app/(root)/unv/components/ContactForm.tsx` - Contact form (uses `useGoogleReCaptcha()` hook directly)
+- `src/components/auth/form-magic-link.tsx` - Magic link form (uses `useGoogleReCaptcha()` hook directly)
+- `src/components/auth/recaptcha-v3.tsx` - No-op wrapper component (for backward compatibility)
 
 ### Assessment Creation (Enterprise)
 
@@ -157,32 +189,52 @@ When using reCAPTCHA Enterprise, the system:
 
 4. **Returns Result**: With score, reasons, and success status
 
-### Frontend Implementation
+### Frontend Implementation Details
 
-The contact form uses Enterprise reCAPTCHA on the frontend, following the [official Google Cloud documentation](https://docs.cloud.google.com/recaptcha/docs/instrument-web-pages):
+The reCAPTCHA provider is configured in the root layout, ensuring a single instance across the entire application:
 
 ```typescript
-// In ContactForm.tsx
-<GoogleReCaptchaProvider
-  reCaptchaKey={siteKey}
-  useEnterprise={true}  // ✅ Uses Enterprise API
-  useRecaptchaNet={false}
->
-  <ContactFormInner />
-</GoogleReCaptchaProvider>
+// In src/app/layout.tsx (Root Layout)
+<RecaptchaProvider useEnterprise={true}>
+  <CookiesProvider>
+    <I18nProvider>
+      <SessionWrapper>
+        {children}  {/* All pages have access to reCAPTCHA */}
+      </SessionWrapper>
+    </I18nProvider>
+  </CookiesProvider>
+</RecaptchaProvider>
+```
 
-// When form is submitted:
-const token = await executeRecaptcha("contact_form");
-// This calls: grecaptcha.enterprise.execute(SITE_KEY, {action: 'contact_form'})
+**Components can use the hook directly:**
+
+```typescript
+// In any component (e.g., ContactForm.tsx, FormMagicLink.tsx)
+import { useGoogleReCaptcha } from "@wojtekmaj/react-recaptcha-v3";
+
+function MyComponent() {
+  const { executeRecaptcha } = useGoogleReCaptcha();
+  
+  const handleSubmit = async () => {
+    const token = await executeRecaptcha("contact_form");
+    // This calls: grecaptcha.enterprise.execute(SITE_KEY, {action: 'contact_form'})
+    // Send token to backend for verification
+  };
+}
 ```
 
 **What happens:**
 
-1. Provider loads: `https://www.google.com/recaptcha/enterprise.js?render=SITE_KEY`
-2. On submit: Calls `grecaptcha.enterprise.execute()` (not `grecaptcha.execute()`)
-3. Token is sent to backend for verification
+1. Root layout loads provider: `https://www.google.com/recaptcha/enterprise.js?render=SITE_KEY`
+2. All components can access `useGoogleReCaptcha()` hook
+3. On submit: Calls `grecaptcha.enterprise.execute()` (not `grecaptcha.execute()`)
+4. Token is sent to backend for verification
 
-**Important:** The frontend **requires** an Enterprise site key. Using a basic reCAPTCHA key will cause errors.
+**Important:**
+
+- The frontend **requires** an Enterprise site key. Using a basic reCAPTCHA key will cause errors.
+- The provider is configured once at the root level, preventing duplicate script loading errors.
+- Components no longer need to wrap themselves with `RecaptchaV3` - they can use the hook directly.
 
 ### Backend Implementation
 
@@ -394,8 +446,9 @@ Use this checklist to verify your reCAPTCHA setup:
 
 - [ ] Site key is an Enterprise key (created in Google Cloud Console)
 - [ ] Site key verification completed in Google Console
-- [ ] `GoogleReCaptchaProvider` uses `useEnterprise={true}`
+- [ ] `RecaptchaProvider` in root layout (`src/app/layout.tsx`) uses `useEnterprise={true}`
 - [ ] Enterprise script loads: `enterprise.js` (not `api.js`)
+- [ ] Only one provider instance exists (check browser console for duplicate warnings)
 
 **Backend (Optional but Recommended):**
 
@@ -446,11 +499,14 @@ Use this checklist to verify your reCAPTCHA setup:
 
 ### Core Files
 
+- `src/app/layout.tsx` - Root layout with `RecaptchaProvider` (single provider instance)
+- `src/providers/recaptcha-provider.tsx` - Global reCAPTCHA provider component
 - `src/lib/recaptcha-verify.ts` - Verification utility with Enterprise support
 - `src/app/api/common/contact-us-mail/route.ts` - Contact form API endpoint
 - `src/app/api/common/recaptcha-verify/route.ts` - Test/verification API endpoint
-- `src/app/(root)/unv/components/ContactForm.tsx` - Contact form component (uses Enterprise reCAPTCHA)
-- `src/components/auth/recaptcha-v3.tsx` - Reusable reCAPTCHA component (supports Enterprise via `useEnterprise` prop)
+- `src/app/(root)/unv/components/ContactForm.tsx` - Contact form component (uses `useGoogleReCaptcha()` hook)
+- `src/components/auth/form-magic-link.tsx` - Magic link form (uses `useGoogleReCaptcha()` hook)
+- `src/components/auth/recaptcha-v3.tsx` - No-op wrapper component (for backward compatibility only)
 
 ### Installation & Testing
 
@@ -508,9 +564,13 @@ Your system is currently configured for **Enterprise reCAPTCHA** on the frontend
 
 ```
 ✓ Frontend: Enterprise reCAPTCHA (grecaptcha.enterprise.execute)
+  - Provider Location: Root layout (src/app/layout.tsx)
+  - Provider Component: RecaptchaProvider (src/providers/recaptcha-provider.tsx)
   - Uses: https://www.google.com/recaptcha/enterprise.js
-  - Provider: GoogleReCaptchaProvider with useEnterprise={true}
-  - Action: "contact_form"
+  - Configuration: useEnterprise={true} (configured at root level)
+  - Single Instance: One provider for entire application (prevents duplicate errors)
+  - Action: "contact_form" (and other actions like "magic_link_signin")
+  - Usage: Components use useGoogleReCaptcha() hook directly
 ✓ Backend: Enterprise verification (if configured) with Basic fallback
   - Tries Enterprise first (if credentials configured)
   - Falls back to Basic verification if Enterprise unavailable

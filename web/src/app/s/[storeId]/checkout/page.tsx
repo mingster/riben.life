@@ -14,6 +14,7 @@ export default async function StoreCheckoutPage(props: {
 	searchParams: SearchParams;
 }) {
 	const params = await props.params;
+	const searchParams = await props.searchParams;
 
 	// Parallel queries for optimal performance
 	const [store, user] = await Promise.all([
@@ -29,7 +30,15 @@ export default async function StoreCheckoutPage(props: {
 
 	return (
 		<Container>
-			<Checkout store={store as Store} user={user} />
+			<Checkout
+				store={store as Store}
+				user={user}
+				returnUrl={
+					typeof searchParams.returnUrl === "string"
+						? searchParams.returnUrl
+						: undefined
+				}
+			/>
 		</Container>
 	);
 }

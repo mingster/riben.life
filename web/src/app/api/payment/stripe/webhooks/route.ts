@@ -2,6 +2,7 @@ import { stripe } from "@/lib/stripe/config";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import logger from "@/lib/logger";
+import { markOrderAsPaidAction } from "@/actions/store/order/mark-order-as-paid";
 
 const relevantEvents = new Set([
 	"product.created",
@@ -14,6 +15,9 @@ const relevantEvents = new Set([
 	"customer.subscription.created",
 	"customer.subscription.updated",
 	"customer.subscription.deleted",
+	"payment_intent.succeeded",
+	"payment_intent.payment_failed",
+	"payment_intent.canceled",
 ]);
 
 // stripe webhook handler
@@ -62,6 +66,102 @@ export async function POST(req: Request) {
 					break;
 				case "checkout.session.completed":
 					break;
+				case "payment_intent.succeeded": {
+					// Handle successful payment for store orders
+					const paymentIntent = event.data.object as Stripe.PaymentIntent;
+					const orderId = paymentIntent.metadata?.orderId;
+
+					if (orderId) {
+						try {
+							// Mark order as paid via webhook (idempotent)
+							const checkoutAttributes = JSON.stringify({
+								payment_intent: paymentIntent.id,
+								client_secret: paymentIntent.client_secret,
+								source: "webhook",
+							});
+
+							const result = await markOrderAsPaidAction({
+								orderId,
+								checkoutAttributes,
+							});
+
+							if (result?.serverError) {
+								logger.error("Failed to mark order as paid via webhook", {
+									metadata: {
+										orderId,
+										paymentIntentId: paymentIntent.id,
+										error: result.serverError,
+									},
+									tags: ["payment", "stripe", "webhook", "error"],
+								});
+							} else if (result?.data) {
+								logger.info("Order marked as paid via Stripe webhook", {
+									metadata: {
+										orderId,
+										paymentIntentId: paymentIntent.id,
+										amount: paymentIntent.amount,
+										currency: paymentIntent.currency,
+									},
+									tags: ["payment", "stripe", "webhook", "success"],
+								});
+							}
+						} catch (error) {
+							logger.error(
+								"Error processing payment_intent.succeeded webhook",
+								{
+									metadata: {
+										orderId,
+										paymentIntentId: paymentIntent.id,
+										error:
+											error instanceof Error ? error.message : String(error),
+									},
+									tags: ["payment", "stripe", "webhook", "error"],
+								},
+							);
+						}
+					} else {
+						logger.warn(
+							"payment_intent.succeeded webhook missing orderId metadata",
+							{
+								metadata: {
+									paymentIntentId: paymentIntent.id,
+									metadata: paymentIntent.metadata,
+								},
+								tags: ["payment", "stripe", "webhook", "warning"],
+							},
+						);
+					}
+					break;
+				}
+				case "payment_intent.payment_failed": {
+					// Log failed payment
+					const paymentIntent = event.data.object as Stripe.PaymentIntent;
+					const orderId = paymentIntent.metadata?.orderId;
+
+					logger.warn("Payment intent failed", {
+						metadata: {
+							orderId,
+							paymentIntentId: paymentIntent.id,
+							error: paymentIntent.last_payment_error?.message,
+						},
+						tags: ["payment", "stripe", "webhook", "failed"],
+					});
+					break;
+				}
+				case "payment_intent.canceled": {
+					// Log canceled payment
+					const paymentIntent = event.data.object as Stripe.PaymentIntent;
+					const orderId = paymentIntent.metadata?.orderId;
+
+					logger.info("Payment intent canceled", {
+						metadata: {
+							orderId,
+							paymentIntentId: paymentIntent.id,
+						},
+						tags: ["payment", "stripe", "webhook", "canceled"],
+					});
+					break;
+				}
 				default:
 					throw new Error("Unhandled relevant event!");
 			}

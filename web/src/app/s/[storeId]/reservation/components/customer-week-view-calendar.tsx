@@ -827,7 +827,11 @@ export const CustomerWeekViewCalendar: React.FC<
 									</td>
 									{weekDays.map((day) => {
 										const slotRsvps = getRsvpsForSlot(day, timeSlot);
-										const isAvailable = slotRsvps.length === 0;
+										// Filter out cancelled RSVPs when determining availability
+										const activeRsvps = slotRsvps.filter(
+											(rsvp) => rsvp.status !== RsvpStatus.Cancelled,
+										);
+										const isAvailable = activeRsvps.length === 0;
 										// Check if this day/time slot is in the past using pre-computed map
 										const slotKey = `${day.toISOString()}-${timeSlot}`;
 										const isPast = pastSlots.has(slotKey);
@@ -843,8 +847,8 @@ export const CustomerWeekViewCalendar: React.FC<
 												)}
 											>
 												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
-													{slotRsvps.length > 0 ? (
-														slotRsvps.map((rsvp) => {
+													{activeRsvps.length > 0 ? (
+														activeRsvps.map((rsvp) => {
 															// Disable editing if slot is in the past
 															const canEdit =
 																!isPast && canEditReservation(rsvp) && storeId;
@@ -873,8 +877,9 @@ export const CustomerWeekViewCalendar: React.FC<
 																);
 															}
 
+															// Render as non-clickable for completed RSVPs
 															if (isCompleted) {
-																// Render as non-clickable button for completed RSVPs
+																// Render as non-clickable button (display only, not clickable)
 																return (
 																	<button
 																		key={rsvp.id}

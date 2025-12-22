@@ -2,26 +2,31 @@
 
 import {
 	GoogleReCaptchaProvider,
-	GoogleReCaptcha,
 	useGoogleReCaptcha,
 } from "@wojtekmaj/react-recaptcha-v3";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo } from "react";
 
 import { useIsHydrated } from "@/hooks/use-hydrated";
 import { useTheme } from "@/hooks/use-theme";
 import { useLang } from "@/hooks/use-lang";
 
-export function RecaptchaV3({
+/**
+ * Global reCAPTCHA Provider Component
+ *
+ * This provider should be placed in the root layout to ensure a single
+ * reCAPTCHA instance across the entire application.
+ *
+ * Supports both standard and Enterprise reCAPTCHA modes.
+ */
+export function RecaptchaProvider({
 	children,
 	useEnterprise = false,
 }: {
 	children: ReactNode;
-	actionName?: string;
 	useEnterprise?: boolean;
 }) {
 	const isHydrated = useIsHydrated();
 	const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA as string;
-	const [token, setToken] = useState("");
 
 	// Check if site key is configured
 	if (!siteKey) {
@@ -30,14 +35,10 @@ export function RecaptchaV3({
 		return <>{children}</>;
 	}
 
-	return (
-		<GoogleReCaptchaProvider
-			reCaptchaKey={siteKey}
-			useEnterprise={useEnterprise}
-			useRecaptchaNet={false}
-		>
-			{isHydrated && (
-				<style>{`
+	// Memoize the badge styles to prevent re-renders
+	const badgeStyles = useMemo(
+		() => (
+			<style>{`
                     .grecaptcha-badge {
                         visibility: hidden;
                         border-radius: var(--radius) !important;
@@ -51,42 +52,69 @@ export function RecaptchaV3({
                         border-color: var(--input) !important;
                     }
                 `}</style>
-			)}
-			<RecaptchaV3Style />
-			{children}
-			<GoogleReCaptcha
-				onVerify={(token) => {
-					if (token) {
-						setToken(token);
-					} else {
-						console.warn("reCAPTCHA returned empty token");
-					}
-				}}
-			/>
-		</GoogleReCaptchaProvider>
+		),
+		[],
 	);
+
+	// return GoogleReCaptchaProvider in production, otherwise return children
+	if (process.env.NODE_ENV === "production") {
+		return (
+			<GoogleReCaptchaProvider
+				reCaptchaKey={siteKey}
+				useEnterprise={useEnterprise}
+				useRecaptchaNet={false}
+			>
+				{isHydrated && badgeStyles}
+				<RecaptchaV3Style />
+				{children}
+				{/* 
+					Note: GoogleReCaptcha component removed to prevent WebGL context issues.
+					For reCAPTCHA v3, the badge is automatically rendered by Google's script.
+					Components can use useGoogleReCaptcha() hook directly to execute reCAPTCHA.
+				*/}
+			</GoogleReCaptchaProvider>
+		);
+	} else {
+		return <>{children}</>;
+	}
 }
 
 function RecaptchaV3Style() {
-	const { executeRecaptcha } = useGoogleReCaptcha();
+	// Hook must be called unconditionally - it's safe because this component is only rendered inside GoogleReCaptchaProvider
+	const hookResult = useGoogleReCaptcha();
+	const executeRecaptcha = hookResult?.executeRecaptcha;
 	const { theme } = useTheme();
 	const { lang } = useLang();
 
 	useEffect(() => {
-		// Log script loading status for debugging
+		// Monitor script loading with timeout - only show error if script fails to load after delay
 		if (typeof window === "undefined") return;
 
-		// Check if script is loading (supports both regular and Enterprise)
-		const scriptTag = document.querySelector(
-			'script[src*="recaptcha"][src*="enterprise"], script[src*="recaptcha"][src*="api"]',
-		);
-		if (!scriptTag) {
-			console.warn(
-				"reCAPTCHA script tag not found. The provider should load it automatically.",
-			);
-		}
+		// Handle unhandled promise rejections from Google's reCAPTCHA script
+		const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+			const errorMessage = event.reason?.message || String(event.reason || "");
+			if (
+				errorMessage.includes("timeout") ||
+				errorMessage.includes("Timeout") ||
+				errorMessage === "Timeout (b)" ||
+				errorMessage.includes("recaptcha")
+			) {
+				// Suppress the error from console - we handle it in our code
+				event.preventDefault();
+				console.warn(
+					"reCAPTCHA timeout detected. This may be due to:\n" +
+						"1. Network connectivity issues\n" +
+						"2. Ad blocker blocking reCAPTCHA\n" +
+						"3. reCAPTCHA service being temporarily unavailable\n" +
+						"4. Site key needs verification in Google Console\n\n" +
+						"The error has been caught and will be handled gracefully.",
+				);
+			}
+		};
 
-		// Monitor script loading with timeout
+		window.addEventListener("unhandledrejection", handleUnhandledRejection);
+
+		// Wait for script to load - provider loads it asynchronously
 		const timeout = setTimeout(() => {
 			const grecaptcha = (window as any).grecaptcha;
 			if (!executeRecaptcha && !grecaptcha) {
@@ -105,7 +133,13 @@ function RecaptchaV3Style() {
 			}
 		}, 15000);
 
-		return () => clearTimeout(timeout);
+		return () => {
+			clearTimeout(timeout);
+			window.removeEventListener(
+				"unhandledrejection",
+				handleUnhandledRejection,
+			);
+		};
 	}, [executeRecaptcha]);
 
 	useEffect(() => {

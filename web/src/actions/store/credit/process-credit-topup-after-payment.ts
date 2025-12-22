@@ -123,6 +123,9 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 
 		const creditAmount = dollarAmount / creditExchangeRate;
 
+		// Get translation function for ledger note
+		const { t } = await getT();
+
 		// Process credit top-up first (this creates CustomerCreditLedger entries)
 		// Note: processCreditTopUp expects credit amount (points), not dollar amount
 		const processCreditTopUpResult = await processCreditTopUp(
@@ -131,7 +134,11 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 			creditAmount,
 			orderId, // referenceId
 			null, // creatorId (null for customer-initiated)
-			`Credit recharge: ${creditAmount} points (${dollarAmount} ${order.Store.defaultCurrency.toUpperCase()})`,
+			t("credit_recharge_customer_ledger_note", {
+				creditAmount,
+				dollarAmount,
+				currency: order.Store.defaultCurrency.toUpperCase(),
+			}),
 		);
 
 		// If credit top-up failed, return early without further processing
@@ -202,9 +209,6 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 		} catch {
 			// If parsing fails, use default
 		}
-
-		// Get translation function for ledger entries
-		const { t } = await getT();
 
 		// Mark order as paid and completed. Also create StoreLedger entry in a transaction
 		await sqlClient.$transaction(async (tx) => {

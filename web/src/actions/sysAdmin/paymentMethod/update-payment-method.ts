@@ -24,6 +24,7 @@ export const updatePaymentMethodAction = adminActionClient
 			isDeleted,
 			isDefault,
 			canDelete,
+			visibleToCustomer,
 		} = parsedInput;
 
 		const existing = await sqlClient.paymentMethod.findUnique({
@@ -58,6 +59,7 @@ export const updatePaymentMethodAction = adminActionClient
 					isDeleted,
 					isDefault,
 					canDelete,
+					visibleToCustomer,
 					updatedAt: getUtcNowEpoch(),
 				},
 				include: {

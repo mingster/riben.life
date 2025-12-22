@@ -35,6 +35,10 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 		return <></>;
 	}
 
+	// Safety check: Use storeId as fallback if Store relation is not loaded
+	const storeId = order.Store?.id || order.storeId;
+	const storeName = order.Store?.name || "Store";
+
 	//console.log('order', JSON.stringify(order));
 	//console.log("status", order.orderStatus);
 
@@ -69,15 +73,21 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 				{/* Header section with store name and order info */}
 				<div className="space-y-2 sm:space-y-1 mb-3">
 					<div className="flex items-start justify-between gap-2">
-						<div className="font-semibold text-sm sm:text-base truncate">
-							<Link
-								href={`/s/${order.Store.id}`}
-								className="hover:underline text-primary"
-							>
-								{order.Store.name}
-							</Link>
+						<div className="">
+							{storeId ? (
+								<Link
+									href={`/s/${storeId}`}
+									className="font-semibold text-xl capitalize"
+								>
+									{storeName}
+								</Link>
+							) : (
+								<span className="font-semibold text-sm sm:text-base capitalize">
+									{storeName}
+								</span>
+							)}
 						</div>
-						<div className="text-[10px] sm:text-xs text-muted-foreground font-mono shrink-0">
+						<div className="text-[10px] sm:text-xs text-muted-foreground font-mono shrink-0 items-end justify-end">
 							{formatDateTime(order.createdAt)}
 						</div>
 					</div>
@@ -104,14 +114,14 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 				</div>
 
 				{/* Order items */}
-				<div className="space-y-2 border-t pt-3">
+				<div className="space-y-2 pt-3">
 					{order.OrderItemView.map((item: orderitemview) => (
 						<DisplayOrderItem key={item.id} currentItem={item} />
 					))}
 				</div>
 
 				{/* Total */}
-				<div className="flex items-center justify-between mt-3 pt-3 border-t">
+				<div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
 					<span className="font-semibold text-sm sm:text-base">
 						{t("orderTotal_label")}
 					</span>
@@ -121,47 +131,45 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 				</div>
 			</CardContent>
 
-			<CardFooter className="flex-col gap-2 p-3 sm:p-4 pt-0 sm:pt-0 bg-muted/30">
+			<CardFooter className="flex flex-col sm:flex-row gap-1 w-full items-baseline">
 				{/* Action buttons */}
-				<div className="flex flex-col sm:flex-row gap-2 w-full">
-					{canPay && (
-						<Button
-							className="w-full sm:w-auto h-10 sm:h-9 bg-green-600 hover:bg-green-700"
-							size="sm"
-							onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
-						>
-							{order.PaymentMethod?.name} {t("order_tab_pay")}
-						</Button>
-					)}
+				{canPay && (
+					<Button
+						className="w-full sm:w-auto h-10 sm:h-9 bg-green-600 hover:bg-green-700"
+						size="sm"
+						onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
+					>
+						{order.PaymentMethod?.name} {t("order_tab_pay")}
+					</Button>
+				)}
 
-					{!order.isPaid && order.PaymentMethod?.name === "cash" && (
-						<Button
-							variant="outline"
-							className="w-full sm:w-auto h-10 sm:h-9 cursor-default bg-green-50 hover:bg-green-100 dark:bg-green-950/20"
-							size="sm"
-							disabled
-						>
-							現金{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
-						</Button>
-					)}
-
-					<div className="flex-1 w-full sm:w-auto">
-						<DisplayOrderStatus
-							status={order.orderStatus}
-							displayBuyAgain={true}
-							onCompletedStatus={() => buyAgain(order.id)}
-						/>
-					</div>
-
+				{!order.isPaid && order.PaymentMethod?.name === "cash" && (
 					<Button
 						variant="outline"
+						className="w-full sm:w-auto h-10 sm:h-9 cursor-default bg-green-50 hover:bg-green-100 dark:bg-green-950/20"
 						size="sm"
-						className="w-full sm:w-auto h-10 sm:h-9"
-						onClick={() => contactSeller(order.storeId, order.id)}
+						disabled
 					>
-						{t("order_tab_contact_seller")}
+						現金{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
 					</Button>
+				)}
+
+				<div className="flex-1 w-full sm:w-auto">
+					<DisplayOrderStatus
+						status={order.orderStatus}
+						displayBuyAgain={true}
+						onCompletedStatus={() => buyAgain(order.id)}
+					/>
 				</div>
+
+				<Button
+					variant="outline"
+					size="sm"
+					className="w-full sm:w-auto h-10 sm:h-9"
+					onClick={() => contactSeller(order.storeId, order.id)}
+				>
+					{t("order_tab_contact_seller")}
+				</Button>
 			</CardFooter>
 		</Card>
 	);

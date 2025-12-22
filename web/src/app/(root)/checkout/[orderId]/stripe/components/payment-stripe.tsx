@@ -23,12 +23,13 @@ import logger from "@/lib/logger";
 
 type paymentProps = {
 	order: StoreOrder;
+	returnUrl?: string;
 };
 
 // SECTION PaymentStripe creates a stripe payment intent, and then use it to display payment form provided by stripe (<Elements/>).
 // Following the payment form, a Pay button is displayed (<StripePayButton/>) for user to process the payment.
 //
-const PaymentStripe: React.FC<paymentProps> = ({ order }) => {
+const PaymentStripe: React.FC<paymentProps> = ({ order, returnUrl }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "payment-stripe");
 
@@ -54,6 +55,8 @@ const PaymentStripe: React.FC<paymentProps> = ({ order }) => {
 			const body = JSON.stringify({
 				total: Number(order.orderTotal),
 				currency: order.currency,
+				orderId: order.id, // Include for webhook processing
+				storeId: order.storeId, // Include for webhook processing
 			});
 
 			fetch(url, {
@@ -144,7 +147,7 @@ const PaymentStripe: React.FC<paymentProps> = ({ order }) => {
 					{t("payment_stripe_payAmount")}
 					{Number(order.orderTotal)} {order.currency.toUpperCase()}
 				</div>
-				<StripePayButton orderId={order.id} />
+				<StripePayButton orderId={order.id} returnUrl={returnUrl} />
 			</Elements>
 		)
 	);
@@ -158,13 +161,17 @@ const defaultFormFields = {
 };
 type PaymentStripeProp = {
 	orderId: string;
+	returnUrl?: string;
 };
 
 //SECTION - As user clicks the pay button, we call stripe.confirmPayment to verify the payment status.
 // If payment is confirmed, redirect user to success page (return_url).
 // if payment is NOT confirmed, display error message.
 //
-const StripePayButton: React.FC<PaymentStripeProp> = ({ orderId }) => {
+const StripePayButton: React.FC<PaymentStripeProp> = ({
+	orderId,
+	returnUrl: customReturnUrl,
+}) => {
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "payment-stripe");
@@ -178,7 +185,10 @@ const StripePayButton: React.FC<PaymentStripeProp> = ({ orderId }) => {
 	const [formFields, setFormFields] = useState(defaultFormFields);
 	//const { displayName, email } = formFields;
 
-	const returnUrl = `${getAbsoluteUrl()}/checkout/${orderId}/stripe/confirmed`;
+	// Use custom returnUrl if provided, otherwise use default confirmed URL
+	const confirmedUrl = customReturnUrl
+		? `${getAbsoluteUrl()}/checkout/${orderId}/stripe/confirmed?returnUrl=${encodeURIComponent(customReturnUrl)}`
+		: `${getAbsoluteUrl()}/checkout/${orderId}/stripe/confirmed`;
 
 	const fetchData = async () => {
 		if (!stripe || !elements) {
@@ -192,7 +202,7 @@ const StripePayButton: React.FC<PaymentStripeProp> = ({ orderId }) => {
 			confirmParams: {
 				// redirect to route thankyou
 				//return_url: 'http://localhost:3001/checkout/success',
-				return_url: returnUrl,
+				return_url: confirmedUrl,
 			},
 		});
 
@@ -206,12 +216,16 @@ const StripePayButton: React.FC<PaymentStripeProp> = ({ orderId }) => {
 					error: error instanceof Error ? error.message : String(error),
 				},
 			});
+			// On error, redirect to returnUrl with status=failed if provided
+			if (customReturnUrl) {
+				router.push(`${customReturnUrl}?status=failed`);
+			}
 		} else {
 			// Your customer will be redirected to your `return_url`. For some payment
 			// methods like iDEAL, your customer will be redirected to an intermediate
 			// site first to authorize the payment, then redirected to the `return_url`.
 			logger.info("payment confirmed");
-			router.push(returnUrl);
+			router.push(confirmedUrl);
 		}
 	};
 

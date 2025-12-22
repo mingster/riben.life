@@ -1,16 +1,18 @@
 "use client";
 
+import { useTranslation } from "@/app/i18n/client";
+import { useIsHydrated } from "@/hooks/use-hydrated";
+import { analytics } from "@/lib/analytics";
+import { authClient } from "@/lib/auth-client";
+import { clientLogger } from "@/lib/client-logger";
+import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { BetterFetchOption } from "better-auth/react";
 import { useGoogleReCaptcha } from "@wojtekmaj/react-recaptcha-v3";
+import type { BetterFetchOption } from "better-auth/react";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useTranslation } from "@/app/i18n/client";
-import { useIsHydrated } from "@/hooks/use-hydrated";
-import { authClient } from "@/lib/auth-client";
-import { useI18n } from "@/providers/i18n-provider";
 import { toastError, toastSuccess } from "../toaster";
 import { Button } from "../ui/button";
 import {
@@ -22,9 +24,6 @@ import {
 	FormMessage,
 } from "../ui/form";
 import { Input } from "../ui/input";
-import { RecaptchaV3 } from "./recaptcha-v3";
-import { clientLogger } from "@/lib/client-logger";
-import { analytics } from "@/lib/analytics";
 
 function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	const { lng } = useI18n();
@@ -67,20 +66,42 @@ function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 			}
 
 			// Get reCAPTCHA token with timeout to prevent infinite loading
+			// Also handle Google's internal timeout errors
 			let recaptchaToken: string | null = null;
 			try {
+				// Verify grecaptcha is available before executing
+				const grecaptcha = (window as any).grecaptcha;
+				if (grecaptcha) {
+					// Check if enterprise API is available (for Enterprise mode)
+					const hasEnterprise =
+						grecaptcha.enterprise && grecaptcha.enterprise.execute;
+					const hasStandard = grecaptcha.execute;
+
+					if (!hasEnterprise && !hasStandard) {
+						throw new Error(
+							"reCAPTCHA API not available - script may not be fully loaded",
+						);
+					}
+				}
+
 				const tokenPromise = executeRecaptcha("magic_link_signin");
 				const timeoutPromise = new Promise<never>((_, reject) =>
 					setTimeout(() => reject(new Error("reCAPTCHA timeout")), 10000),
 				);
 				recaptchaToken = await Promise.race([tokenPromise, timeoutPromise]);
 			} catch (error) {
+				const errorMessage =
+					error instanceof Error ? error.message : String(error);
+				const isTimeoutError =
+					errorMessage.includes("timeout") ||
+					errorMessage.includes("Timeout") ||
+					errorMessage === "Timeout (b)";
+
 				console.error("reCAPTCHA execution error:", error);
 				toastError({
-					description:
-						error instanceof Error && error.message === "reCAPTCHA timeout"
-							? "reCAPTCHA is taking too long to load. Please check your network connection or disable ad blockers."
-							: "reCAPTCHA verification failed. Please try again.",
+					description: isTimeoutError
+						? "reCAPTCHA is taking too long to load. This may be due to network issues, ad blockers, or the service being unavailable. Please check your network connection or try again later."
+						: "reCAPTCHA verification failed. Please try again.",
 				});
 				return;
 			}
@@ -192,15 +213,11 @@ function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	);
 }
 
-// Wrapper component with RecaptchaV3 provider
+// Wrapper component - reCAPTCHA provider is in root layout
 export default function FormMagicLink({
 	callbackUrl = "/",
 }: {
 	callbackUrl?: string;
 }) {
-	return (
-		<RecaptchaV3 actionName="magic-link">
-			<FormMagicLinkInner callbackUrl={callbackUrl} />
-		</RecaptchaV3>
-	);
+	return <FormMagicLinkInner callbackUrl={callbackUrl} />;
 }

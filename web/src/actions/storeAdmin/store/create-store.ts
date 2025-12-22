@@ -1,8 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-
 import { sqlClient } from "@/lib/prismadb";
 import { StoreLevel } from "@/types/enum";
 import logger from "@/lib/logger";
@@ -13,8 +10,9 @@ import { SafeError } from "@/utils/error";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
 import { createStoreSchema } from "./create-store.validation";
 import fs from "node:fs";
-import { Role } from "@prisma/client";
+import { Role, type Organization } from "@prisma/client";
 import crypto from "crypto";
+import { ensureCreditRechargeProduct } from "@/actions/store/credit/ensure-credit-recharge-product";
 
 export const createStoreAction = userRequiredActionClient
 	.metadata({ name: "createStore" })
@@ -64,7 +62,7 @@ export const createStoreAction = userRequiredActionClient
 			},
 		});
 
-		let organization;
+		let organization: Organization | null = null;
 
 		// If user has no organizations, create one
 		if (userOrganizations.length === 0) {
@@ -84,14 +82,14 @@ export const createStoreAction = userRequiredActionClient
 						storeSlug + "-" + Math.random().toString(36).substring(2, 15);
 				}
 
-				organization = await auth.api.createOrganization({
+				organization = (await auth.api.createOrganization({
 					headers: headersList,
 					body: {
 						name: name, // Use original name for organization display name
 						slug: storeSlug,
 						keepCurrentActiveOrganization: true,
 					},
-				});
+				})) as unknown as Organization;
 
 				if (!organization || !organization.id) {
 					throw new SafeError("Failed to create organization");
@@ -118,7 +116,26 @@ export const createStoreAction = userRequiredActionClient
 			}
 		} else {
 			// User already has organizations, reuse the first one (one org per user, multiple stores)
-			organization = userOrganizations[0].organization;
+			const orgData = userOrganizations[0].organization;
+			if (!orgData || !orgData.id) {
+				logger.error(
+					"User has organization membership but organization not found",
+					{
+						metadata: {
+							userId: ownerId,
+							memberId: userOrganizations[0].id,
+							organizationId: userOrganizations[0].organizationId,
+						},
+						tags: ["store", "organization", "error"],
+					},
+				);
+				throw new SafeError("Organization not found. Please contact support.");
+			}
+
+			// Fetch full organization data
+			organization = await sqlClient.organization.findUnique({
+				where: { id: orgData.id },
+			});
 
 			if (!organization || !organization.id) {
 				logger.error(
@@ -245,6 +262,23 @@ export const createStoreAction = userRequiredActionClient
 				updatedAt: getUtcNowEpoch(),
 			},
 		});
+
+		// Create special system product for credit recharge (FR-PAY-004.1)
+		try {
+			await ensureCreditRechargeProduct(databaseId);
+		} catch (error) {
+			// Log but don't fail store creation if product creation fails
+			logger.error(
+				"Failed to create credit recharge product during store creation",
+				{
+					metadata: {
+						storeId: databaseId,
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["store", "product", "credit", "error"],
+				},
+			);
+		}
 
 		return { storeId: databaseId };
 	});

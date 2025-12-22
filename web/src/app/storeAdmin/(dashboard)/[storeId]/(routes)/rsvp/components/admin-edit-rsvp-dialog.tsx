@@ -60,6 +60,8 @@ import {
 import type { StoreFacility } from "@/types";
 import { useEffect } from "react";
 import { RsvpStatus } from "@/types/enum";
+import { isCancellationWithinCancelHours } from "@/actions/store/reservation/validate-cancel-hours";
+import { dateToEpoch } from "@/utils/datetime-utils";
 
 interface EditRsvpDialogProps {
 	rsvp?: Rsvp | null;
@@ -73,6 +75,8 @@ interface EditRsvpDialogProps {
 	storeTimezone?: string;
 	rsvpSettings?: {
 		prepaidRequired?: boolean | null;
+		canCancel?: boolean | null;
+		cancelHours?: number | null;
 	} | null;
 }
 
@@ -368,6 +372,44 @@ export function AdminEditRsvpDialog({
 	const rsvpTime = form.watch("rsvpTime");
 	const status = form.watch("status");
 	const isCompleted = status === RsvpStatus.Completed;
+	const alreadyPaid = form.watch("alreadyPaid");
+
+	// Calculate cancel policy information
+	const cancelPolicyInfo = useMemo(() => {
+		if (
+			!rsvpSettings?.canCancel ||
+			!rsvpSettings.cancelHours ||
+			!rsvpTime ||
+			!(rsvpTime instanceof Date) ||
+			isNaN(rsvpTime.getTime())
+		) {
+			return null;
+		}
+
+		const rsvpTimeEpoch = dateToEpoch(rsvpTime);
+		if (!rsvpTimeEpoch) {
+			return null;
+		}
+
+		const isWithinCancelHours = isCancellationWithinCancelHours(
+			{
+				canCancel: rsvpSettings.canCancel,
+				cancelHours: rsvpSettings.cancelHours,
+			},
+			rsvpTimeEpoch,
+		);
+
+		const hoursUntilReservation =
+			(rsvpTime.getTime() - getUtcNow().getTime()) / (1000 * 60 * 60);
+
+		return {
+			canCancel: rsvpSettings.canCancel,
+			cancelHours: rsvpSettings.cancelHours,
+			isWithinCancelHours,
+			hoursUntilReservation,
+			wouldRefund: alreadyPaid && !isWithinCancelHours,
+		};
+	}, [rsvpSettings, rsvpTime, alreadyPaid]);
 
 	// Get current user session to check admin role
 	const { data: session } = authClient.useSession();
@@ -1071,37 +1113,91 @@ export function AdminEditRsvpDialog({
 								const isCancelled = field.value === RsvpStatus.Cancelled;
 								const isNoShow = field.value === RsvpStatus.NoShow;
 								return (
-									<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-										<FormControl>
-											<input
-												type="checkbox"
-												checked={isCancelled}
-												onChange={(e) => {
-													if (e.target.checked) {
-														// Set status to Cancelled and uncheck other status checkboxes
-														field.onChange(RsvpStatus.Cancelled);
-														form.setValue("alreadyPaid", false);
-														form.setValue("confirmedByStore", false);
-														form.setValue("confirmedByCustomer", false);
-													} else {
-														// Uncheck cancelled, reset to Pending
-														field.onChange(RsvpStatus.Pending);
+									<FormItem className="flex flex-col space-y-2">
+										<div className="flex flex-row items-center space-x-3 space-y-0">
+											<FormControl>
+												<input
+													type="checkbox"
+													checked={isCancelled}
+													onChange={(e) => {
+														if (e.target.checked) {
+															// Set status to Cancelled and uncheck other status checkboxes
+															field.onChange(RsvpStatus.Cancelled);
+															form.setValue("alreadyPaid", false);
+															form.setValue("confirmedByStore", false);
+															form.setValue("confirmedByCustomer", false);
+														} else {
+															// Uncheck cancelled, reset to Pending
+															field.onChange(RsvpStatus.Pending);
+														}
+													}}
+													disabled={
+														!canEditCompleted ||
+														loading ||
+														form.formState.isSubmitting ||
+														isNoShow
 													}
-												}}
-												disabled={
-													!canEditCompleted ||
-													loading ||
-													form.formState.isSubmitting ||
-													isNoShow
-												}
-												className="h-5 w-5 sm:h-4 sm:w-4"
-											/>
-										</FormControl>
-										<FormLabel>{t("rsvp_cancelled")}</FormLabel>
+													className="h-5 w-5 sm:h-4 sm:w-4"
+												/>
+											</FormControl>
+											<FormLabel>{t("rsvp_cancelled")}</FormLabel>
+										</div>
 										<FormMessage />
 										<FormDescription className="text-xs text-muted-foreground font-mono">
 											{t("rsvp_cancelled_descr")}
 										</FormDescription>
+										{/* Cancel Policy Information */}
+										{cancelPolicyInfo && (
+											<div className="mt-2 p-3 rounded-md bg-muted/50 border border-border">
+												<div className="text-xs font-medium mb-1">
+													{t("cancel_policy") || "Cancel Policy"}
+												</div>
+												<div className="text-xs text-muted-foreground space-y-1">
+													<div>
+														{t("cancel_hours_policy", {
+															hours: cancelPolicyInfo.cancelHours,
+														}) ||
+															`Cancellation must be made at least ${cancelPolicyInfo.cancelHours} hours before reservation time.`}
+													</div>
+													{rsvpTime && (
+														<div>
+															{cancelPolicyInfo.hoursUntilReservation > 0 ? (
+																<>
+																	{t("hours_until_reservation", {
+																		hours:
+																			Math.round(
+																				cancelPolicyInfo.hoursUntilReservation *
+																					10,
+																			) / 10,
+																	}) ||
+																		`${Math.round(cancelPolicyInfo.hoursUntilReservation * 10) / 10} hours until reservation`}
+																</>
+															) : (
+																<>
+																	{t("reservation_passed") ||
+																		"Reservation time has passed"}
+																</>
+															)}
+														</div>
+													)}
+													{alreadyPaid && (
+														<div
+															className={
+																cancelPolicyInfo.wouldRefund
+																	? "text-green-600 dark:text-green-400 font-medium"
+																	: "text-orange-600 dark:text-orange-400 font-medium"
+															}
+														>
+															{cancelPolicyInfo.wouldRefund
+																? t("cancellation_would_refund") ||
+																	"✓ Cancellation would result in refund"
+																: t("cancellation_no_refund") ||
+																	"⚠ Cancellation within policy window - no refund"}
+														</div>
+													)}
+												</div>
+											</div>
+										)}
 									</FormItem>
 								);
 							}}

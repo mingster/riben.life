@@ -23,6 +23,7 @@ export const createPaymentMethodAction = adminActionClient
 			isDeleted,
 			isDefault,
 			canDelete,
+			visibleToCustomer,
 		} = parsedInput;
 
 		// Check if name already exists
@@ -46,6 +47,7 @@ export const createPaymentMethodAction = adminActionClient
 					isDeleted,
 					isDefault,
 					canDelete,
+					visibleToCustomer,
 					createdAt: getUtcNowEpoch(),
 					updatedAt: getUtcNowEpoch(),
 				},

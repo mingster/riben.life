@@ -25,6 +25,7 @@ import {
 	dayAndTimeSlotToUtc,
 	epochToDate,
 } from "@/utils/datetime-utils";
+import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
 
 interface TimeRange {
 	from: string;
@@ -407,7 +408,12 @@ export function SlotPicker({
 										);
 										// Compare UTC times for accurate past/future check
 										const isPast = isBefore(slotDateTimeUtc, todayUtc);
-										const canSelect = isAvailable && !isPast;
+										// Check if slot is within reservation time window
+										const isWithinWindow = isWithinReservationTimeWindow(
+											rsvpSettings,
+											slotDateTimeUtc,
+										);
+										const canSelect = isAvailable && !isPast && isWithinWindow;
 
 										// Check if this slot is selected
 										const isSelected = selectedDateTime

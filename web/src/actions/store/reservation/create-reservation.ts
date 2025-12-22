@@ -17,6 +17,8 @@ import {
 import { createReservationSchema } from "./create-reservation.validation";
 import { RsvpStatus } from "@/types/enum";
 import { processRsvpPrepaidPayment } from "./process-rsvp-prepaid-payment";
+import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
+import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 
 export const createReservationAction = baseClient
 	.metadata({ name: "createReservation" })
@@ -89,6 +91,9 @@ export const createReservationAction = baseClient
 			throw new SafeError("Failed to convert rsvpTime to epoch");
 		}
 
+		// Validate reservation time window (canReserveBefore and canReserveAfter)
+		validateReservationTimeWindow(rsvpSettings, rsvpTime);
+
 		// Check if user is anonymous (not logged in and no customerId provided)
 		const isAnonymous = !sessionUserId && !customerId;
 
@@ -135,13 +140,23 @@ export const createReservationAction = baseClient
 				id: facilityId,
 				storeId,
 			},
+			select: {
+				id: true,
+				businessHours: true,
+			},
 		});
 
 		if (!facility) {
 			throw new SafeError("Facility not found");
 		}
 
-		// TODO: Add availability validation (check existing reservations, business hours, etc.)
+		// Validate business hours (if facility has business hours)
+		validateFacilityBusinessHours(
+			facility.businessHours,
+			rsvpTimeUtc,
+			storeTimezone,
+			facilityId,
+		);
 
 		// Process prepaid payment using shared function
 		const prepaidResult = await processRsvpPrepaidPayment({

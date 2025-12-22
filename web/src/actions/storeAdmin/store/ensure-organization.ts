@@ -36,6 +36,7 @@ export const ensureOrganizationAction = storeActionClient
 
 		// Get or create organization if needed
 		let organization: Organization | null = null;
+		let wasOrganizationCreatedOrLinked = false; // Track if we created/linked org in this call
 
 		if (store.organizationId) {
 			// Store already has organizationId, fetch the organization
@@ -48,6 +49,7 @@ export const ensureOrganizationAction = storeActionClient
 
 		// If store doesn't have organizationId or organization not found, create/link one
 		if (!store.organizationId || !organization) {
+			wasOrganizationCreatedOrLinked = true; // We're about to create or link
 			// First, check if store owner already has an organization (one org per user design)
 			const ownerOrganizations = await sqlClient.member.findMany({
 				where: {
@@ -169,9 +171,10 @@ export const ensureOrganizationAction = storeActionClient
 			}
 		}
 
-		// Set active organization if we have one
-		// Only call this once, not on every render, to avoid memory leaks
-		if (organization && organization.id) {
+		// Set active organization ONLY if we just created/linked it in this call
+		// This prevents unnecessary calls on every page load that can trigger Bun memory allocator panics
+		// The wasOrganizationCreatedOrLinked flag tracks if we actually created/linked in this execution
+		if (organization && organization.id && wasOrganizationCreatedOrLinked) {
 			try {
 				await auth.api.setActiveOrganization({
 					headers: headersList,
@@ -180,9 +183,17 @@ export const ensureOrganizationAction = storeActionClient
 						organizationSlug: organization.slug,
 					},
 				});
+
+				logger.info("Active organization set after creation/linking", {
+					metadata: {
+						organizationId: organization.id,
+						storeId: store.id,
+					},
+					tags: ["store", "organization"],
+				});
 			} catch (error) {
 				// Log but don't throw - setting active org is not critical for page rendering
-				logger.warn("Failed to set active organization", {
+				logger.error("Failed to set active organization", {
 					metadata: {
 						error: error instanceof Error ? error.message : String(error),
 						organizationId: organization.id,

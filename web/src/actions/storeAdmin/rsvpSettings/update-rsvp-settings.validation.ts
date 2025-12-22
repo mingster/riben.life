@@ -6,6 +6,8 @@ export const updateRsvpSettingsSchema = z.object({
 	minPrepaidAmount: z.number().nonnegative().nullable().optional(),
 	canCancel: z.boolean().optional(),
 	cancelHours: z.number().int().min(0).optional(),
+	canReserveBefore: z.number().int().min(0).optional(),
+	canReserveAfter: z.number().int().min(0).optional(),
 	defaultDuration: z.number().int().min(1).optional(),
 	requireSignature: z.boolean().optional(),
 	showCostToCustomer: z.boolean().optional(),
