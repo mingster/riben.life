@@ -48,7 +48,11 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
 	// turn off footer in those pages
 	const pathName = usePathname();
 
+	// Check if we're on the store home page (exactly /s/[storeId])
+	const isStoreHome = pathName === `/s/${params.storeId}`;
+
 	if (
+		isStoreHome ||
 		pathName.includes("billing") ||
 		pathName.includes("checkout") ||
 		pathName.includes("faq") ||

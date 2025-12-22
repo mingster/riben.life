@@ -55,9 +55,16 @@ function generateHeader(
 	nonce: string,
 	signature: string,
 ): RequestHeader {
+	// Validate channelId is not empty or invalid
+	if (!channelId || channelId.trim().length === 0) {
+		throw new Error("LINE Pay ChannelId is empty or invalid");
+	}
+
+	const trimmedChannelId = channelId.trim();
+
 	return {
 		"Content-Type": "application/json",
-		"X-LINE-ChannelId": channelId,
+		"X-LINE-ChannelId": trimmedChannelId,
 		"X-LINE-Authorization-Nonce": nonce,
 		"X-LINE-Authorization": signature,
 	};

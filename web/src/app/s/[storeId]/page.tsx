@@ -4,10 +4,14 @@ import getStoreWithProducts from "@/actions/get-store-with-products";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { isReservedRoute } from "@/lib/reserved-routes";
+import { StoreHomeLanding } from "./components/store-home-landing";
+import type { Store, RsvpSettings } from "@/types";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
+// Store home page - landing page with navigation options
+// No redirects on first load - shows landing page with navigation buttons
 export default async function StoreHomePage(props: {
 	params: Params;
 	searchParams: SearchParams;
@@ -19,8 +23,13 @@ export default async function StoreHomePage(props: {
 		redirect("/");
 	}
 
-	// Fetch store first (supports both ID and name)
-	const store = await getStoreWithProducts(params.storeId);
+	// Fetch store and RSVP settings in parallel
+	const [store, rsvpSettings] = await Promise.all([
+		getStoreWithProducts(params.storeId),
+		sqlClient.rsvpSettings.findUnique({
+			where: { storeId: params.storeId },
+		}),
+	]);
 
 	// Store is guaranteed to exist here due to getStoreWithProducts throwing if not found
 	if (!store) {
@@ -30,13 +39,8 @@ export default async function StoreHomePage(props: {
 		});
 		redirect("/unv");
 	}
-	if (store) {
-		transformPrismaDataForJson(store);
-	}
 
-	const rsvpSettings = await sqlClient.rsvpSettings.findUnique({
-		where: { storeId: params.storeId },
-	});
+	transformPrismaDataForJson(store);
 
 	// Transform BigInt (epoch timestamps) and Decimal for settings if they exist
 	if (rsvpSettings) {
@@ -45,11 +49,14 @@ export default async function StoreHomePage(props: {
 
 	const acceptReservation =
 		rsvpSettings && rsvpSettings.acceptReservation === true;
-	if (store.useOrderSystem) {
-		redirect(`/s/${store.id}/menu`);
-	} else if (acceptReservation) {
-		redirect(`/s/${store.id}/reservation`);
-	} else {
-		redirect(`/s/${store.id}/faq`);
-	}
+
+	// Render landing page instead of redirecting
+	return (
+		<StoreHomeLanding
+			store={store as Store}
+			rsvpSettings={rsvpSettings as RsvpSettings | null}
+			useOrderSystem={store.useOrderSystem}
+			acceptReservation={acceptReservation}
+		/>
+	);
 }

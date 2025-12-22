@@ -15,7 +15,7 @@ import { getT } from "@/app/i18n";
 
 /**
  * Create a recharge order for customer credit top-up.
- * This creates a StoreOrder that will be paid via Stripe.
+ * This creates a StoreOrder that will be paid via selected payment method.
  * After payment is confirmed, processCreditTopUpAfterPayment should be called.
  */
 export const createRechargeOrderAction = userRequiredActionClient
@@ -78,13 +78,21 @@ export const createRechargeOrderAction = userRequiredActionClient
 
 		const dollarAmount = creditAmount * creditExchangeRate;
 
-		// Get default shipping method (required for StoreOrder)
-		const defaultShippingMethod = await sqlClient.shippingMethod.findFirst({
-			where: { isDefault: true, isDeleted: false },
+		// Get digital shipping method (required for StoreOrder)
+		// Digital shipping is appropriate for credit recharge orders
+		let shippingMethod = await sqlClient.shippingMethod.findFirst({
+			where: { identifier: "digital" },
 		});
 
-		if (!defaultShippingMethod) {
-			throw new SafeError("No shipping method available");
+		if (!shippingMethod) {
+			// Fall back to default shipping method if digital is not found
+			shippingMethod = await sqlClient.shippingMethod.findFirst({
+				where: { isDefault: true, isDeleted: false },
+			});
+
+			if (!shippingMethod) {
+				throw new SafeError("No shipping method available");
+			}
 		}
 
 		// Validate payment method exists and is enabled for store
@@ -145,7 +153,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 				orderTotal: new Prisma.Decimal(dollarAmount),
 				currency: store.defaultCurrency,
 				paymentMethodId: paymentMethod.id, // Use selected payment method ID
-				shippingMethodId: defaultShippingMethod.id,
+				shippingMethodId: shippingMethod.id,
 				pickupCode: undefined, // Optional field - use undefined instead of null
 				checkoutAttributes,
 				createdAt: now,
@@ -155,7 +163,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 				OrderItems: {
 					create: {
 						productId: creditRechargeProduct.id,
-						productName: `Store Credit`,
+						productName: t("store_credit"),
 						quantity: creditAmount, // Number of credit points being purchased
 						unitPrice: new Prisma.Decimal(creditExchangeRate), // Dollar amount per credit point
 						unitDiscount: new Prisma.Decimal(0),

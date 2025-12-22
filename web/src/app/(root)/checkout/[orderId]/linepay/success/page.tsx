@@ -2,40 +2,8 @@ import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
 import { Suspense } from "react";
-
-/*
-interface pageProps {
-  params: {
-    storeId: string;
-    orderId: string;
-  };
-}
-
-const CheckoutSuccessPage: React.FC<pageProps> = props => {
-  const params = use(props.params);
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng);
-
-  return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        <SuccessAndRedirect orderId={params.orderId} />
-      </Container>
-    </Suspense>
-  );
-};
-export default CheckoutSuccessPage;
-
-export async function generateMetadata(props: {
-  params: Params
-  searchParams: SearchParams
-}) {
-  const params = await props.params;
-  const searchParams = await props.searchParams;
-  const orderId = params.orderId;
-  const query = searchParams.query;
-}
-*/
+import { StoreOrder } from "@/types";
+import getOrderById from "@/actions/get-order-by_id";
 
 type Params = Promise<{ orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -49,10 +17,15 @@ export default async function CheckoutSuccessPage(props: {
 	const orderId = params.orderId;
 	const _query = searchParams.query;
 
+	const order = (await getOrderById(orderId)) as StoreOrder;
+	if (!order) {
+		throw new Error("order not found");
+	}
+
 	return (
 		<Suspense fallback={<Loader />}>
 			<Container>
-				<SuccessAndRedirect orderId={orderId} />
+				<SuccessAndRedirect order={order} />
 			</Container>
 		</Suspense>
 	);

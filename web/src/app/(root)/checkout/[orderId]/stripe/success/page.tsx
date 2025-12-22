@@ -1,30 +1,9 @@
+import getOrderById from "@/actions/get-order-by_id";
+import { Loader } from "@/components/loader";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
-import { Loader } from "@/components/loader";
+import { StoreOrder } from "@/types";
 import { Suspense } from "react";
-
-/*
-interface pageProps {
-  params: {
-    storeId: string;
-    orderId: string;
-  };
-}
-
-const CheckoutSuccessPage: React.FC<pageProps> = props => {
-  const params = use(props.params);
-  const { lng } = useI18n();
-  const { t } = useTranslation(lng);
-  return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        <SuccessAndRedirect orderId={params.orderId} />
-      </Container>
-    </Suspense>
-  );
-};
-export default CheckoutSuccessPage;
-*/
 
 type Params = Promise<{ orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -38,10 +17,15 @@ export default async function CashPaymentPage(props: {
 	const orderId = params.orderId;
 	const _query = searchParams.query;
 
+	const order = (await getOrderById(orderId)) as StoreOrder;
+	if (!order) {
+		throw new Error("order not found");
+	}
+
 	return (
 		<Suspense fallback={<Loader />}>
 			<Container>
-				<SuccessAndRedirect orderId={orderId} />
+				<SuccessAndRedirect order={order} />
 			</Container>
 		</Suspense>
 	);

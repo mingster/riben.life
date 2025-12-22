@@ -3,12 +3,11 @@
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
-import { getAbsoluteUrl } from "@/utils/utils";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { stripe } from "@/lib/stripe/config";
 import logger from "@/lib/logger";
 import { markOrderAsPaidAction } from "@/actions/store/order/mark-order-as-paid";
+import { StoreOrder } from "@/types";
 
 /**
  * Payment confirmation page for Stripe checkout orders.
@@ -81,14 +80,19 @@ export default async function StripeConfirmedPage(props: {
 					});
 				}
 
-				// Redirect to returnUrl if provided, otherwise default success page
-				if (returnUrl) {
-					redirect(returnUrl);
-				} else {
-					redirect(
-						`${getAbsoluteUrl()}/checkout/${params.orderId}/stripe/success`,
-					);
+				// Always show success page briefly, then redirect to returnUrl if provided
+				const updatedOrder = result?.data?.order as StoreOrder;
+				if (!updatedOrder) {
+					throw new Error("order not found");
 				}
+
+				return (
+					<Suspense fallback={<Loader />}>
+						<Container>
+							<SuccessAndRedirect order={updatedOrder} returnUrl={returnUrl} />
+						</Container>
+					</Suspense>
+				);
 			}
 		} catch (error) {
 			if (error instanceof Error && error.message === "NEXT_REDIRECT") {
@@ -107,10 +111,8 @@ export default async function StripeConfirmedPage(props: {
 
 	// Show loading state while processing
 	return (
-		<Suspense fallback={<Loader />}>
-			<Container>
-				<SuccessAndRedirect orderId={params.orderId} />
-			</Container>
-		</Suspense>
+		<Container>
+			<Loader />
+		</Container>
 	);
 }

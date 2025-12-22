@@ -5,6 +5,8 @@ import { Loader } from "@/components/loader";
 import { Suspense } from "react";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { StoreOrder } from "@/types";
+import getOrderById from "@/actions/get-order-by_id";
 
 type Params = Promise<{ orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -24,21 +26,9 @@ export default async function CheckoutSuccessPage(props: {
 			? searchParams.returnUrl
 			: undefined;
 
-	const order = await sqlClient.storeOrder.findUnique({
-		where: { id: params.orderId },
-		include: {
-			Store: {
-				select: {
-					id: true,
-					name: true,
-				},
-			},
-		},
-	});
-
+	const order = (await getOrderById(params.orderId)) as StoreOrder;
 	if (!order) {
-		// If order not found, redirect to home
-		redirect("/");
+		throw new Error("order not found");
 	}
 
 	// Check if this order was for an RSVP prepaid payment (via recharge)
@@ -81,7 +71,7 @@ export default async function CheckoutSuccessPage(props: {
 	return (
 		<Suspense fallback={<Loader />}>
 			<Container>
-				<SuccessAndRedirect orderId={order.id} />
+				<SuccessAndRedirect order={order} />
 			</Container>
 		</Suspense>
 	);

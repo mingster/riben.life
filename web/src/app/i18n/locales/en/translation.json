@@ -188,6 +188,7 @@
   "credit_recharge_note_ledger": "Order # {{orderId}}",
   "credit_recharge_order_note": "Store Credit: {{creditAmount}} points ({{dollarAmount}} {{currency}})",
   "credit_recharge_customer_ledger_note": "Credit recharge: {{creditAmount}} points ({{dollarAmount}} {{currency}})",
+  "store_credit": "Store Credit",
   "credit_total_amount": "Total",
   "currency_combobox_changePlaceHolder": "Change currency...",
   "currency_combobox_notFound": "No results found.",

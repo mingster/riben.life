@@ -178,98 +178,154 @@ export function StoreAdminSidebar() {
 			</SidebarHeader>
 
 			<SidebarContent>
-				{menuList.map(({ groupLabel, menus }) => {
-					const groupKey = `group-${groupLabel}`;
-					const isGroupOpen = getCollapsibleState(groupKey, true);
-
-					return (
-						<Collapsible
-							key={groupLabel}
-							open={isGroupOpen}
-							onOpenChange={() => toggleCollapsible(groupKey)}
-							className="group/collapsible"
-						>
-							<SidebarGroup>
-								<SidebarGroupLabel asChild>
-									<CollapsibleTrigger>
-										{groupLabel}
-										<IconChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-									</CollapsibleTrigger>
-								</SidebarGroupLabel>
-								<CollapsibleContent>
-									<SidebarGroupContent>
-										<SidebarMenu>
-											{menus.map(
-												({
-													href,
-													label,
-													icon: Icon,
-													active,
-													submenus,
-													badge,
-												}) => {
-													if (submenus.length === 0) {
-														return (
-															<SidebarMenuItem
-																key={label}
-																className="font-mono"
-															>
-																<SidebarMenuButton asChild isActive={active}>
-																	<a href={href}>
-																		<Icon />
-																		{renderMenuLabel(label, badge)}
-																	</a>
-																</SidebarMenuButton>
-															</SidebarMenuItem>
-														);
-													}
-
-													const menuKey = `menu-${label}`;
-													const isMenuOpen = getCollapsibleState(menuKey, true);
-
-													return (
-														<Collapsible
-															key={label}
-															open={isMenuOpen}
-															onOpenChange={() => toggleCollapsible(menuKey)}
-															className="group/collapsible"
-														>
-															<SidebarMenuItem>
-																<CollapsibleTrigger asChild>
-																	<SidebarMenuButton isActive={active}>
-																		<Icon />
-																		{renderMenuLabel(label, badge)}
+				{!isMounted
+					? // Render placeholder during SSR to avoid hydration mismatch
+						menuList.map(({ groupLabel, menus }) => (
+							<SidebarGroup key={groupLabel}>
+								<SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
+								<SidebarGroupContent>
+									<SidebarMenu>
+										{menus.map(
+											({ label, icon: Icon, active, href, submenus, badge }) =>
+												submenus.length === 0 ? (
+													<SidebarMenuItem key={label} className="font-mono">
+														<SidebarMenuButton asChild isActive={active}>
+															<a href={href}>
+																<Icon />
+																{renderMenuLabel(label, badge)}
+															</a>
+														</SidebarMenuButton>
+													</SidebarMenuItem>
+												) : (
+													<SidebarMenuItem key={label}>
+														<SidebarMenuButton isActive={active}>
+															<Icon />
+															{renderMenuLabel(label, badge)}
+														</SidebarMenuButton>
+														<SidebarMenuSub className="pl-5">
+															{submenus.map(({ href, label, active }) => (
+																<SidebarMenuItem key={label}>
+																	<SidebarMenuButton
+																		asChild
+																		tooltip={label}
+																		isActive={active}
+																	>
+																		<Link href={href}>
+																			<span>{label}</span>
+																		</Link>
 																	</SidebarMenuButton>
-																</CollapsibleTrigger>
-																<CollapsibleContent>
-																	<SidebarMenuSub className="pl-5">
-																		{submenus.map(({ href, label, active }) => (
-																			<SidebarMenuItem key={label}>
-																				<SidebarMenuButton
-																					asChild
-																					tooltip={label}
-																					isActive={active}
-																				>
-																					<Link href={href}>
-																						<span>{label}</span>
-																					</Link>
-																				</SidebarMenuButton>
-																			</SidebarMenuItem>
-																		))}
-																	</SidebarMenuSub>
-																</CollapsibleContent>
-															</SidebarMenuItem>
-														</Collapsible>
-													);
-												},
-											)}
-										</SidebarMenu>
-									</SidebarGroupContent>
-								</CollapsibleContent>
+																</SidebarMenuItem>
+															))}
+														</SidebarMenuSub>
+													</SidebarMenuItem>
+												),
+										)}
+									</SidebarMenu>
+								</SidebarGroupContent>
 							</SidebarGroup>
-						</Collapsible>
-					);
-				})}
+						))
+					: menuList.map(({ groupLabel, menus }) => {
+							const groupKey = `group-${groupLabel}`;
+							const isGroupOpen = getCollapsibleState(groupKey, true);
+
+							return (
+								<Collapsible
+									key={groupLabel}
+									open={isGroupOpen}
+									onOpenChange={() => toggleCollapsible(groupKey)}
+									className="group/collapsible"
+								>
+									<SidebarGroup>
+										<SidebarGroupLabel asChild>
+											<CollapsibleTrigger>
+												{groupLabel}
+												<IconChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+											</CollapsibleTrigger>
+										</SidebarGroupLabel>
+										<CollapsibleContent>
+											<SidebarGroupContent>
+												<SidebarMenu>
+													{menus.map(
+														({
+															href,
+															label,
+															icon: Icon,
+															active,
+															submenus,
+															badge,
+														}) => {
+															if (submenus.length === 0) {
+																return (
+																	<SidebarMenuItem
+																		key={label}
+																		className="font-mono"
+																	>
+																		<SidebarMenuButton
+																			asChild
+																			isActive={active}
+																		>
+																			<a href={href}>
+																				<Icon />
+																				{renderMenuLabel(label, badge)}
+																			</a>
+																		</SidebarMenuButton>
+																	</SidebarMenuItem>
+																);
+															}
+
+															const menuKey = `menu-${label}`;
+															const isMenuOpen = getCollapsibleState(
+																menuKey,
+																true,
+															);
+
+															return (
+																<Collapsible
+																	key={label}
+																	open={isMenuOpen}
+																	onOpenChange={() =>
+																		toggleCollapsible(menuKey)
+																	}
+																	className="group/collapsible"
+																>
+																	<SidebarMenuItem>
+																		<CollapsibleTrigger asChild>
+																			<SidebarMenuButton isActive={active}>
+																				<Icon />
+																				{renderMenuLabel(label, badge)}
+																			</SidebarMenuButton>
+																		</CollapsibleTrigger>
+																		<CollapsibleContent>
+																			<SidebarMenuSub className="pl-5">
+																				{submenus.map(
+																					({ href, label, active }) => (
+																						<SidebarMenuItem key={label}>
+																							<SidebarMenuButton
+																								asChild
+																								tooltip={label}
+																								isActive={active}
+																							>
+																								<Link href={href}>
+																									<span>{label}</span>
+																								</Link>
+																							</SidebarMenuButton>
+																						</SidebarMenuItem>
+																					),
+																				)}
+																			</SidebarMenuSub>
+																		</CollapsibleContent>
+																	</SidebarMenuItem>
+																</Collapsible>
+															);
+														},
+													)}
+												</SidebarMenu>
+											</SidebarGroupContent>
+										</CollapsibleContent>
+									</SidebarGroup>
+								</Collapsible>
+							);
+						})}
 			</SidebarContent>
 
 			<SidebarFooter>

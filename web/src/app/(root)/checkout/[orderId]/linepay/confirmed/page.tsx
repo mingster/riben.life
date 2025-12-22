@@ -11,7 +11,6 @@ import {
 	getLinePayClientByStore,
 } from "@/lib/linePay";
 import type { Store, StoreOrder } from "@/types";
-import { getAbsoluteUrl } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import logger from "@/lib/logger";
@@ -48,7 +47,7 @@ export default async function LinePayConfirmedPage({
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect orderId={order.id} />
+					<SuccessAndRedirect order={order} returnUrl={customReturnUrl} />
 				</Container>
 			</Suspense>
 		);
@@ -97,12 +96,20 @@ export default async function LinePayConfirmedPage({
 		if (process.env.NODE_ENV === "development")
 			logger.info("LinePayConfirmedPage");
 
-		// Redirect to returnUrl if provided, otherwise default success page
-		if (customReturnUrl) {
-			redirect(customReturnUrl);
-		} else {
-			redirect(`${getAbsoluteUrl()}/checkout/${order.id}/linePay/success`);
-		}
+		// Always show success page briefly, then redirect to customReturnUrl if provided
+		// Use the updated order from the result if available, otherwise use the original order
+		const updatedOrder = result?.data?.order || order;
+
+		return (
+			<Suspense fallback={<Loader />}>
+				<Container>
+					<SuccessAndRedirect
+						order={updatedOrder}
+						returnUrl={customReturnUrl}
+					/>
+				</Container>
+			</Suspense>
+		);
 	}
 
 	// If confirmation failed, redirect to returnUrl with status=failed if provided

@@ -273,20 +273,20 @@ export function RechargeForm({
 								name="paymentMethodId"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>
+										<FormLabel className="pb-2">
 											{t("checkout_paymentMethod")}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
 											<RadioGroup
-												className="flex flex-col space-y-2"
+												className="pt-2"
 												value={field.value}
 												onValueChange={field.onChange}
 											>
 												{allPaymentMethods.map((mapping) => (
 													<div
 														key={mapping.methodId}
-														className="flex items-center space-x-2"
+														className="flex items-center gap-3"
 													>
 														<RadioGroupItem
 															value={mapping.methodId}

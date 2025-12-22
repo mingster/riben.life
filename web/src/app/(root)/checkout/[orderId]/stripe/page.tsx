@@ -41,7 +41,7 @@ const PaymentPage = async (props: {
 		return (
 			<Suspense fallback={<Loader />}>
 				<Container>
-					<SuccessAndRedirect orderId={order.id} />
+					<SuccessAndRedirect order={order} />
 				</Container>
 			</Suspense>
 		);
