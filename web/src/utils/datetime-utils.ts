@@ -59,21 +59,84 @@ export function getDateInTz(dt: Date, offsetHours: number): Date {
 
 export function getOffsetHours(timezone: string): number {
 	try {
-		// Create a date object for January 1st to avoid DST issues
-		const date = new Date(2024, 0, 1);
+		// Create a UTC date object for January 1st to avoid DST issues
+		// Use Date.UTC to ensure server timezone independence
+		const date = new Date(Date.UTC(2024, 0, 1, 12, 0, 0, 0));
 
-		// Get the time in UTC
-		const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
-
-		// Get the time in the target timezone
-		const targetTimeString = date.toLocaleString("en-US", {
+		// Use Intl.DateTimeFormat to get the time in the target timezone
+		// This is more reliable and server-timezone-independent
+		const tzFormatter = new Intl.DateTimeFormat("en", {
 			timeZone: timezone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
 		});
-		const targetTime = new Date(targetTimeString);
 
-		// Calculate the offset in hours
-		const offsetMs = targetTime.getTime() - utcTime;
-		const offsetHours = offsetMs / (1000 * 60 * 60);
+		const utcFormatter = new Intl.DateTimeFormat("en", {
+			timeZone: "UTC",
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		});
+
+		// Format the same date in both timezones
+		const tzParts = tzFormatter.formatToParts(date);
+		const utcParts = utcFormatter.formatToParts(date);
+
+		// Extract values from parts
+		const getValue = (
+			parts: Intl.DateTimeFormatPart[],
+			type: string,
+		): number => {
+			const part = parts.find((p) => p.type === type);
+			if (!part) {
+				return NaN;
+			}
+			const value = Number.parseInt(part.value, 10);
+			return isNaN(value) ? NaN : value;
+		};
+
+		const tzHour = getValue(tzParts, "hour");
+		const tzMinute = getValue(tzParts, "minute");
+		const utcHour = getValue(utcParts, "hour");
+		const utcMinute = getValue(utcParts, "minute");
+
+		// Calculate offset in minutes
+		const tzMinutes = tzHour * 60 + tzMinute;
+		const utcMinutes = utcHour * 60 + utcMinute;
+		let offsetMinutes = tzMinutes - utcMinutes;
+
+		// Handle day differences (if timezone crosses date boundary)
+		const tzDay = getValue(tzParts, "day");
+		const utcDay = getValue(utcParts, "day");
+		if (tzDay !== utcDay) {
+			const dayDiff = tzDay - utcDay;
+			offsetMinutes += dayDiff * 24 * 60;
+		}
+
+		const offsetHours = offsetMinutes / 60;
+
+		// Validate result
+		if (isNaN(offsetHours) || !Number.isFinite(offsetHours)) {
+			logger.warn("Calculated offset is NaN or infinite in getOffsetHours", {
+				metadata: {
+					timezone,
+					offsetMinutes,
+					tzHour,
+					utcHour,
+				},
+				tags: ["timezone", "warn"],
+			});
+			return 0;
+		}
 
 		return offsetHours;
 	} catch (error) {
@@ -324,10 +387,11 @@ export function dayAndTimeSlotToUtc(
 ): Date {
 	const [hours, minutes] = timeSlot.split(":").map(Number);
 
-	// Extract date components from day
-	const year = day.getFullYear();
-	const month = String(day.getMonth() + 1).padStart(2, "0");
-	const dayOfMonth = String(day.getDate()).padStart(2, "0");
+	// Extract date components from day using UTC methods to ensure server timezone independence
+	// This ensures consistent behavior whether server is in UTC or any other timezone
+	const year = day.getUTCFullYear();
+	const month = String(day.getUTCMonth() + 1).padStart(2, "0");
+	const dayOfMonth = String(day.getUTCDate()).padStart(2, "0");
 	const hourStr = String(hours).padStart(2, "0");
 	const minuteStr = String(minutes).padStart(2, "0");
 
@@ -342,6 +406,11 @@ export function dayAndTimeSlotToUtc(
  * Convert a Date object (from datetime-local input) to UTC Date
  * The Date object from datetime-local input represents a time in the browser's local timezone.
  * This function interprets it as store timezone time and converts to UTC.
+ *
+ * IMPORTANT: When a Date object is sent from client to server, it's serialized as UTC.
+ * To correctly extract the intended time in the store timezone, we format the Date
+ * in the store timezone first, then convert that string to UTC.
+ *
  * @param dateInput - Date object from datetime-local input
  * @param storeTimezone - Store's timezone (e.g., "Asia/Taipei")
  * @returns Date object in UTC
@@ -360,14 +429,16 @@ export function convertDateToUtc(dateInput: Date, storeTimezone: string): Date {
 		throw new Error("Invalid date provided");
 	}
 
-	// Convert the Date to a datetime-local string format (YYYY-MM-DDTHH:mm)
-	// This extracts the local time components that the user selected
-	const year = dateInput.getFullYear();
-	const month = String(dateInput.getMonth() + 1).padStart(2, "0");
-	const day = String(dateInput.getDate()).padStart(2, "0");
-	const hour = String(dateInput.getHours()).padStart(2, "0");
-	const minute = String(dateInput.getMinutes()).padStart(2, "0");
-	const datetimeLocalString = `${year}-${month}-${day}T${hour}:${minute}`;
+	// Format the Date in the store timezone to get the intended datetime-local string
+	// This ensures we extract the correct components regardless of server timezone
+	const datetimeLocalString = formatUtcDateToDateTimeLocal(
+		dateInput,
+		storeTimezone,
+	);
+
+	if (!datetimeLocalString) {
+		throw new Error("Failed to format date to datetime-local string");
+	}
 
 	// Use convertToUtc to interpret this as store timezone and convert to UTC
 	const utcDate = convertToUtc(datetimeLocalString, storeTimezone);
@@ -452,13 +523,17 @@ export function convertToUtc(
 
 /**
  * Get timezone offset in minutes
+ * NOTE: This function appears to be incomplete/unused. Use getOffsetHours() or getTimezoneOffsetForDate() instead.
+ * @deprecated Use getOffsetHours() or getTimezoneOffsetForDate() for timezone offset calculations
  */
 export function getTimezoneOffset(timezone: string): number {
 	try {
-		const now = new Date();
-		const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-		const targetTime = new Date(utc + 0 * 60000); // Adjust this based on your timezone logic
-		return targetTime.getTimezoneOffset();
+		// Use UTC now to ensure server timezone independence
+		const now = getUtcNow();
+		// Get offset for the current time
+		const offsetHours = getTimezoneOffsetForDate(now, timezone);
+		// Convert to minutes (negative because getTimezoneOffset returns negative for ahead-of-UTC)
+		return -offsetHours * 60;
 	} catch (error) {
 		logger.warn("Failed to calculate timezone offset", {
 			message: "Failed to calculate timezone offset",
@@ -694,7 +769,8 @@ export const calculateTrialEndUnixTimestamp = (
 		return undefined;
 	}
 
-	const currentDate = new Date(); // Current date and time
+	// Use UTC now to ensure server timezone independence
+	const currentDate = getUtcNow();
 	const trialEnd = new Date(
 		currentDate.getTime() + (trialPeriodDays + 1) * 24 * 60 * 60 * 1000,
 	); // Add trial days
@@ -703,8 +779,9 @@ export const calculateTrialEndUnixTimestamp = (
 };
 
 export const toDateTime = (secs: number) => {
-	const t = new Date(+0); // Unix epoch start.
-	t.setSeconds(secs);
+	// Use UTC methods to ensure server timezone independence
+	// Create a Date from Unix timestamp (seconds) - timestamps are always UTC
+	const t = new Date(secs * 1000); // Convert seconds to milliseconds
 
 	return t;
 };

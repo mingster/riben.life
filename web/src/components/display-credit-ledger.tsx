@@ -26,11 +26,11 @@ export const DisplayCreditLedger = ({
 				{ledger.map((item) => (
 					<div
 						key={item.id}
-						className="rounded-lg border bg-card p-3 space-y-2 text-xs"
+						className="rounded-lg border bg-card p-3 sm:p-4 space-y-2 text-xs"
 					>
 						<div className="flex items-start justify-between gap-2">
 							<div className="flex-1 min-w-0">
-								<div className="font-medium text-sm truncate">
+								<div className="font-medium text-sm sm:text-base truncate">
 									{item.Store?.id ? (
 										<Link
 											href={`/s/${item.Store.id}`}

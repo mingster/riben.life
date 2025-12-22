@@ -55,7 +55,7 @@ export const createCustomerRsvpColumns = (
 				);
 
 				return (
-					<span className="font-mono">
+					<span className="font-mono text-xs sm:text-sm">
 						{format(storeDate, `${datetimeFormat} HH:mm`)}
 					</span>
 				);
@@ -71,7 +71,7 @@ export const createCustomerRsvpColumns = (
 				const numOfAdult = rsvp.numOfAdult || 0;
 				const numOfChild = rsvp.numOfChild || 0;
 				return (
-					<span>
+					<span className="text-xs sm:text-sm">
 						{t("rsvp_num_of_guest_val", {
 							adult: numOfAdult,
 							child: numOfChild,
@@ -94,7 +94,7 @@ export const createCustomerRsvpColumns = (
 				return (
 					<span
 						className={cn(
-							"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs font-mono",
+							"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded text-[10px] sm:text-xs font-mono",
 							getRsvpStatusColorClasses(status, false),
 						)}
 					>
@@ -110,7 +110,11 @@ export const createCustomerRsvpColumns = (
 			),
 			cell: ({ row }) => {
 				const message = row.getValue("message") as string | null;
-				return <span className="max-w-[200px] truncate">{message || "-"}</span>;
+				return (
+					<span className="max-w-[200px] truncate text-xs sm:text-sm">
+						{message || "-"}
+					</span>
+				);
 			},
 			meta: {
 				className: "hidden sm:table-cell",
