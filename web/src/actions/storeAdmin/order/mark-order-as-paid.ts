@@ -10,6 +10,7 @@ import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import logger from "@/lib/logger";
 import isProLevel from "@/actions/storeAdmin/is-pro-level";
+import { processCreditTopUpAfterPaymentAction } from "@/actions/store/credit/process-credit-topup-after-payment";
 
 /**
  * Mark order as paid (store admin).
@@ -27,7 +28,7 @@ export const markOrderAsPaidAction = storeActionClient
 		const storeId = bindArgsClientInputs[0] as string;
 		const { orderId, checkoutAttributes } = parsedInput;
 
-		// Get order with relations
+		// Get order with relations (including OrderItemView to check for Store Credit)
 		const order = await sqlClient.storeOrder.findUnique({
 			where: { id: orderId },
 			include: {
@@ -40,6 +41,12 @@ export const markOrderAsPaidAction = storeActionClient
 					},
 				},
 				PaymentMethod: true,
+				OrderItemView: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
 			},
 		});
 
@@ -54,6 +61,74 @@ export const markOrderAsPaidAction = storeActionClient
 
 		if (!order.PaymentMethod) {
 			throw new SafeError("Payment method not found");
+		}
+
+		// Check if this is a Store Credit (credit recharge) order
+		// Store Credit orders should use processCreditTopUpAfterPaymentAction instead
+		const isStoreCreditOrder = order.OrderItemView.some(
+			(item) => item.name === "Store Credit",
+		);
+
+		if (isStoreCreditOrder) {
+			// For Store Credit orders, use the credit top-up processing action
+			// This will handle both marking as paid AND processing credit top-up
+			logger.info("Processing Store Credit order via credit top-up action", {
+				metadata: {
+					orderId,
+					storeId,
+				},
+				tags: ["order", "payment", "credit", "store-admin"],
+			});
+
+			const creditResult = await processCreditTopUpAfterPaymentAction({
+				orderId,
+			});
+
+			if (creditResult?.serverError) {
+				logger.error("Failed to process credit top-up for Store Credit order", {
+					metadata: {
+						orderId,
+						storeId,
+						error: creditResult.serverError,
+					},
+					tags: ["order", "payment", "credit", "error", "store-admin"],
+				});
+				throw new SafeError(
+					creditResult.serverError || "Failed to process credit top-up",
+				);
+			}
+
+			// Fetch updated order with all relations
+			const updatedOrder = await sqlClient.storeOrder.findUnique({
+				where: { id: orderId },
+				include: {
+					Store: true,
+					OrderNotes: true,
+					OrderItemView: true,
+					User: true,
+					ShippingMethod: true,
+					PaymentMethod: true,
+				},
+			});
+
+			if (!updatedOrder) {
+				throw new SafeError("Failed to retrieve updated order");
+			}
+
+			transformPrismaDataForJson(updatedOrder);
+
+			logger.info("Store Credit order processed successfully", {
+				metadata: {
+					orderId,
+					storeId,
+					creditAmount: creditResult.data?.amount,
+					bonus: creditResult.data?.bonus,
+					totalCredit: creditResult.data?.totalCredit,
+				},
+				tags: ["order", "payment", "credit", "store-admin"],
+			});
+
+			return { order: updatedOrder };
 		}
 
 		if (order.isPaid) {

@@ -73,19 +73,19 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 				{/* Header section with store name and order info */}
 				<div className="space-y-2 sm:space-y-1 mb-3">
 					<div className="flex items-start justify-between gap-2">
-						<div className="font-semibold text-sm sm:text-base truncate">
+						<div className="">
 							{storeId ? (
 								<Link
 									href={`/s/${storeId}`}
-									className="hover:underline text-primary"
+									className="font-semibold text-xl capitalize"
 								>
 									{storeName}
 								</Link>
 							) : (
-								<span className="text-primary">{storeName}</span>
+								<span className="font-semibold text-sm sm:text-base capitalize">{storeName}</span>
 							)}
 						</div>
-						<div className="text-[10px] sm:text-xs text-muted-foreground font-mono shrink-0">
+						<div className="text-[10px] sm:text-xs text-muted-foreground font-mono shrink-0 items-end justify-end">
 							{formatDateTime(order.createdAt)}
 						</div>
 					</div>
@@ -112,14 +112,14 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 				</div>
 
 				{/* Order items */}
-				<div className="space-y-2 border-t pt-3">
+				<div className="space-y-2 pt-3">
 					{order.OrderItemView.map((item: orderitemview) => (
 						<DisplayOrderItem key={item.id} currentItem={item} />
 					))}
 				</div>
 
 				{/* Total */}
-				<div className="flex items-center justify-between mt-3 pt-3 border-t">
+				<div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
 					<span className="font-semibold text-sm sm:text-base">
 						{t("orderTotal_label")}
 					</span>
@@ -129,9 +129,8 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 				</div>
 			</CardContent>
 
-			<CardFooter className="flex-col gap-2 p-3 sm:p-4 pt-0 sm:pt-0 bg-muted/30">
+			<CardFooter className="flex flex-col sm:flex-row gap-1 w-full items-baseline">
 				{/* Action buttons */}
-				<div className="flex flex-col sm:flex-row gap-2 w-full">
 					{canPay && (
 						<Button
 							className="w-full sm:w-auto h-10 sm:h-9 bg-green-600 hover:bg-green-700"
@@ -169,7 +168,7 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 					>
 						{t("order_tab_contact_seller")}
 					</Button>
-				</div>
+					
 			</CardFooter>
 		</Card>
 	);

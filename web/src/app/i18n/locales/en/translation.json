@@ -81,6 +81,7 @@
   "cart_summary_title": "Order Summary",
   "cart_summary_total": "Total Amount",
   "cash-cashier": "Cash Payment",
+  "cash_payment_instruction": "Please pay at the counter.",
   "categories": "Product Categories",
   "Categories": "Category Management",
   "Category": "Category",

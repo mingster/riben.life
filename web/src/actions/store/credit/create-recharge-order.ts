@@ -4,7 +4,7 @@ import { createRechargeOrderSchema } from "./create-recharge-order.validation";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { OrderStatus, PaymentStatus } from "@/types/enum";
+import { OrderStatus, PaymentStatus, StoreLevel } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
@@ -44,6 +44,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 				creditMaxPurchase: true,
 				creditExchangeRate: true,
 				defaultCurrency: true,
+				level: true,
 			},
 		});
 
@@ -113,6 +114,14 @@ export const createRechargeOrderAction = userRequiredActionClient
 		// If no mapping exists, check if it's a default payment method
 		if (!storePaymentMethodMapping && !paymentMethod.isDefault) {
 			throw new SafeError("Payment method is not enabled for this store");
+		}
+
+		// Validate cash payment is not allowed for Free-tier stores
+		// Cash is only available for Pro (2) or Multi (3) level stores
+		if (paymentMethod.payUrl === "cash" && store.level === StoreLevel.Free) {
+			throw new SafeError(
+				"Cash payment is not available for Free-tier stores",
+			);
 		}
 
 		// Ensure credit recharge product exists (create if not found)

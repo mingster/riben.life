@@ -87,6 +87,12 @@ export default async function RechargePage(props: {
 		}
 	}
 
+	// Filter payment methods to only show those visible to customers
+	// Only payment methods with visibleToCustomer=true are shown to customers
+	store.StorePaymentMethods = store.StorePaymentMethods.filter(
+		(mapping) => mapping.PaymentMethod.visibleToCustomer === true,
+	);
+
 	// Filter out cash payment method for Free-tier stores
 	// Cash is only available for Pro (2) or Multi (3) level stores
 	if (store.level === StoreLevel.Free) {

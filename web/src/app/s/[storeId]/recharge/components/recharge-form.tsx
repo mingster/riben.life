@@ -27,7 +27,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import type { Store, StorePaymentMethodMapping } from "@/types";
-import type { PaymentMethod } from "@prisma/client";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
@@ -153,26 +152,13 @@ export function RechargeForm({
 
 					const payUrl = selectedPaymentMethod.PaymentMethod.payUrl;
 
-					// Redirect based on payment method
-					// For cash/credit, redirect to success page (payment processed immediately)
-					// For external gateways (stripe, linepay), redirect to payment page
-					// All payment processing uses standard /checkout/[orderId]/[payUrl] pattern
-					if (payUrl === "cash" || payUrl === "credit") {
-						// For immediate payment methods, redirect to generic success page with returnUrl
-						let successUrl = `/checkout/${result.data.order.id}/success`;
-						if (returnUrl) {
-							successUrl += `?returnUrl=${encodeURIComponent(returnUrl)}`;
-						}
-						router.push(successUrl);
-					} else {
-						// External payment gateway (stripe, linepay, etc.)
-						// Use standard checkout payment URL pattern with returnUrl
-						let paymentUrl = `/checkout/${result.data.order.id}/${payUrl}`;
-						if (returnUrl) {
-							paymentUrl += `?returnUrl=${encodeURIComponent(returnUrl)}`;
-						}
-						router.push(paymentUrl);
+					// Redirect to payment page using standard /checkout/[orderId]/[payUrl] pattern
+					// All payment methods (cash, credit, stripe, linepay, etc.) use the same URL pattern
+					let paymentUrl = `/checkout/${result.data.order.id}/${payUrl}`;
+					if (returnUrl) {
+						paymentUrl += `?returnUrl=${encodeURIComponent(returnUrl)}`;
 					}
+					router.push(paymentUrl);
 				}
 			} catch (error) {
 				toastError({

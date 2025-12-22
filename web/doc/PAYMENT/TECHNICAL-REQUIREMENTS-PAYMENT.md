@@ -591,6 +591,10 @@ export const createRechargeOrderAction = userRequiredActionClient
 - Validates store has credit system enabled (`useCustomerCredit`)
 - Validates credit amount against store min/max purchase limits
 - Validates payment method exists, is not deleted, and is enabled for the store (via `StorePaymentMethodMapping`)
+- **Validates cash payment is not allowed for Free-tier stores:**
+  - Checks if payment method `payUrl === "cash"` and store `level === StoreLevel.Free`
+  - Throws error: "Cash payment is not available for Free-tier stores"
+  - Cash payment is only available for Pro (2) or Multi (3) level stores
 - Calculates dollar amount: `dollarAmount = creditAmount * creditExchangeRate`
 - **Creates or retrieves special system product for credit recharge:**
   - Queries `Product` table for store with name matching "Credit Recharge" pattern
@@ -616,6 +620,10 @@ export const createRechargeOrderAction = userRequiredActionClient
   - `variants`: null (no product variants for credit recharge)
   - `variantCosts`: null
 - Payment method selection: Customer must select a payment method from available payment methods for the store (only methods with `visibleToCustomer=true` are shown)
+- **Store level restrictions:**
+  - Cash payment method (`payUrl = "cash"`) is filtered out for Free-tier stores on the recharge page
+  - Server-side validation in `create-recharge-order.ts` also prevents cash payment for Free-tier stores
+  - Cash payment is only available for Pro (2) or Multi (3) level stores
 - After order creation, client redirects to: `/checkout/${orderId}/${paymentMethod.payUrl}` (standard payment URL pattern)
 
 **Process Credit Top-Up After Payment:**
@@ -2947,6 +2955,15 @@ CustomerCredit: balance → balance - requiredCredit
 
 The cash/in-person payment flow handles payments made with physical cash or in-person transactions at the store location. Payment confirmation can be immediate (upon order creation) or manual (by store staff via admin interface). Cash payments have zero processing fees.
 
+**Store Level Restriction:**
+
+- **Cash payment is NOT available for Free-tier stores** (`level = 0`)
+- Cash payment is only available for Pro (2) or Multi (3) level stores
+- This restriction is enforced in:
+  - Client-side: Recharge page filters out cash payment method for Free-tier stores
+  - Server-side: `create-recharge-order.ts` validates and rejects cash payment for Free-tier stores
+- Error message: "Cash payment is not available for Free-tier stores"
+
 **Flow Diagram:**
 
 ```text
@@ -2967,9 +2984,12 @@ Option 2 (Manual):
 
 - User clicks "Place Order" button in checkout
 - User selects cash/in-person payment method (`payUrl = "cash"`)
+- **Store level validation:**
+  - For credit recharge orders: `create-recharge-order.ts` validates store level and rejects cash payment for Free-tier stores
+  - For regular orders: Cash payment availability should be validated based on store level (implementation may vary)
 - Client component collects order data
-- Calls API: `POST /api/store/[storeId]/create-order`
-- Server action: `createOrderAction` creates `StoreOrder` with:
+- Calls API: `POST /api/store/[storeId]/create-order` (or `createRechargeOrderAction` for credit recharge)
+- Server action creates `StoreOrder` with:
   - `paymentMethodId` = Cash payment method ID
   - `paymentStatus = PaymentStatus.Pending` (default)
   - `isPaid = false` (default, unless immediate confirmation)

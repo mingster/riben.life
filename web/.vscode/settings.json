@@ -1,0 +1,23 @@
+{
+  // Prisma extension settings
+  "prisma.fileWatcher": true,
+  "prisma.showPrismaDataPlatformNotification": false,
+  
+  // File associations
+  "files.associations": {
+    "*.prisma": "prisma"
+  },
+  
+  // Language-specific settings
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma",
+    "editor.formatOnSave": true,
+    "editor.quickSuggestions": {
+      "strings": true
+    }
+  },
+  
+  // Schema file location (if needed)
+  "prisma.schema": "${workspaceFolder}/prisma/schema.prisma"
+}
+
