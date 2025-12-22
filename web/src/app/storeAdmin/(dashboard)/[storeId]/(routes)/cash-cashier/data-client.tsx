@@ -12,12 +12,12 @@ import logger from "@/lib/logger";
 
 export interface props {
 	store: Store;
-	tables: StoreFacility[];
+	facilities: StoreFacility[];
 }
 
 // store admin home page.
 // it checks for new orders every 10 seconds.
-export const CashCashier: React.FC<props> = ({ store, tables }) => {
+export const CashCashier: React.FC<props> = ({ store, facilities }) => {
 	//const { lng } = useI18n();
 	//const { t } = useTranslation(lng);
 	const [mounted, setMounted] = useState(false);
@@ -86,7 +86,7 @@ export const CashCashier: React.FC<props> = ({ store, tables }) => {
 				<div className="flex flex-col gap-1">
 					<OrderUnpaid
 						store={store}
-						tables={tables}
+						facilities={facilities}
 						orders={unpaidOrders}
 						parentLoading={loading}
 					/>

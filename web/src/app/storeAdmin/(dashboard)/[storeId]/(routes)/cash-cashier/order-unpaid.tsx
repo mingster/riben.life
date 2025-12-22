@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { toastError, toastSuccess } from "@/components/toaster";
+import { toastSuccess } from "@/components/toaster";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -33,14 +33,14 @@ import { useParams, useRouter } from "next/navigation";
 import { getTableName } from "@/lib/getTableName";
 interface props {
 	store: Store;
-	tables: StoreFacility[];
+	facilities: StoreFacility[];
 	orders: StoreOrder[];
 	parentLoading: boolean;
 }
 
 export const OrderUnpaid = ({
 	store,
-	tables,
+	facilities,
 	orders,
 	parentLoading,
 }: props) => {
@@ -80,10 +80,10 @@ export const OrderUnpaid = ({
 
 	return (
 		<Card>
-			<div className="flex justify-between">
+			<div className="flex justify-between items-center p-2 border-b border-gray-200 dark:border-gray-800">
 				<Heading
-					title={t("Order_unpiad_title")}
-					description={orders.length !== 0 ? t("Order_unpiad_descr") : ""}
+					title={t("Order_unpaid_title")}
+					description={orders.length !== 0 ? t("Order_unpaid_descr") : ""}
 					badge={orders.length}
 					className="pt-2"
 				/>
@@ -107,6 +107,9 @@ export const OrderUnpaid = ({
 						<TableHeader>
 							<TableRow>
 								{/*單號/桌號*/}
+								<TableHead className="w-[80px] text-center align-middle">
+									{t("Order_cashier_confirm")}
+								</TableHead>
 								<TableHead className="">{t("Order_number")}</TableHead>
 								<TableHead className="w-[200px]">{t("Order_items")}</TableHead>
 								<TableHead>{t("Order_note")}</TableHead>
@@ -116,18 +119,25 @@ export const OrderUnpaid = ({
 								<TableHead className="w-[90px] text-right">
 									{t("Order_total")}
 								</TableHead>
-								<TableHead className="w-[80px] text-center">
-									{t("Order_cashier_confirm")}
-								</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
 							{orders.map((order: StoreOrder) => (
 								<TableRow key={order.id}>
+									<TableCell className="w-[80px] text-center align-middle">
+										<div className="flex items-center justify-center">
+											<Checkbox
+												className="h-6 w-6 sm:h-5 sm:w-5"
+												value={order.id}
+												onClick={() => handleChecked(order.id)}
+											/>
+										</div>
+									</TableCell>
+
 									<TableCell className="text-2xl font-extrabold">
 										{order.orderNum}
 										{order.facilityId &&
-											` / ${getTableName(tables, order.facilityId)}`}
+											` / ${getTableName(facilities, order.facilityId)}`}
 									</TableCell>
 
 									<TableCell>
@@ -188,13 +198,6 @@ export const OrderUnpaid = ({
 
 									<TableCell className="text-right text-2xl font-extrabold">
 										<Currency value={Number(order.orderTotal)} />
-									</TableCell>
-
-									<TableCell className="bg-slate-200 dark:bg-slate-900 text-center">
-										<Checkbox
-											value={order.id}
-											onClick={() => handleChecked(order.id)}
-										/>
 									</TableCell>
 								</TableRow>
 							))}

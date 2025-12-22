@@ -82,7 +82,9 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 									{storeName}
 								</Link>
 							) : (
-								<span className="font-semibold text-sm sm:text-base capitalize">{storeName}</span>
+								<span className="font-semibold text-sm sm:text-base capitalize">
+									{storeName}
+								</span>
 							)}
 						</div>
 						<div className="text-[10px] sm:text-xs text-muted-foreground font-mono shrink-0 items-end justify-end">
@@ -131,44 +133,43 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 
 			<CardFooter className="flex flex-col sm:flex-row gap-1 w-full items-baseline">
 				{/* Action buttons */}
-					{canPay && (
-						<Button
-							className="w-full sm:w-auto h-10 sm:h-9 bg-green-600 hover:bg-green-700"
-							size="sm"
-							onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
-						>
-							{order.PaymentMethod?.name} {t("order_tab_pay")}
-						</Button>
-					)}
+				{canPay && (
+					<Button
+						className="w-full sm:w-auto h-10 sm:h-9 bg-green-600 hover:bg-green-700"
+						size="sm"
+						onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
+					>
+						{order.PaymentMethod?.name} {t("order_tab_pay")}
+					</Button>
+				)}
 
-					{!order.isPaid && order.PaymentMethod?.name === "cash" && (
-						<Button
-							variant="outline"
-							className="w-full sm:w-auto h-10 sm:h-9 cursor-default bg-green-50 hover:bg-green-100 dark:bg-green-950/20"
-							size="sm"
-							disabled
-						>
-							現金{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
-						</Button>
-					)}
-
-					<div className="flex-1 w-full sm:w-auto">
-						<DisplayOrderStatus
-							status={order.orderStatus}
-							displayBuyAgain={true}
-							onCompletedStatus={() => buyAgain(order.id)}
-						/>
-					</div>
-
+				{!order.isPaid && order.PaymentMethod?.name === "cash" && (
 					<Button
 						variant="outline"
+						className="w-full sm:w-auto h-10 sm:h-9 cursor-default bg-green-50 hover:bg-green-100 dark:bg-green-950/20"
 						size="sm"
-						className="w-full sm:w-auto h-10 sm:h-9"
-						onClick={() => contactSeller(order.storeId, order.id)}
+						disabled
 					>
-						{t("order_tab_contact_seller")}
+						現金{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
 					</Button>
-					
+				)}
+
+				<div className="flex-1 w-full sm:w-auto">
+					<DisplayOrderStatus
+						status={order.orderStatus}
+						displayBuyAgain={true}
+						onCompletedStatus={() => buyAgain(order.id)}
+					/>
+				</div>
+
+				<Button
+					variant="outline"
+					size="sm"
+					className="w-full sm:w-auto h-10 sm:h-9"
+					onClick={() => contactSeller(order.storeId, order.id)}
+				>
+					{t("order_tab_contact_seller")}
+				</Button>
 			</CardFooter>
 		</Card>
 	);

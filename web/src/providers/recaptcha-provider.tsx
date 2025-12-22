@@ -56,22 +56,27 @@ export function RecaptchaProvider({
 		[],
 	);
 
-	return (
-		<GoogleReCaptchaProvider
-			reCaptchaKey={siteKey}
-			useEnterprise={useEnterprise}
-			useRecaptchaNet={false}
-		>
-			{isHydrated && badgeStyles}
-			<RecaptchaV3Style />
-			{children}
-			{/* 
-				Note: GoogleReCaptcha component removed to prevent WebGL context issues.
-				For reCAPTCHA v3, the badge is automatically rendered by Google's script.
-				Components can use useGoogleReCaptcha() hook directly to execute reCAPTCHA.
-			*/}
-		</GoogleReCaptchaProvider>
-	);
+	// return GoogleReCaptchaProvider in production, otherwise return children
+	if (process.env.NODE_ENV === "production") {
+		return (
+			<GoogleReCaptchaProvider
+				reCaptchaKey={siteKey}
+				useEnterprise={useEnterprise}
+				useRecaptchaNet={false}
+			>
+				{isHydrated && badgeStyles}
+				<RecaptchaV3Style />
+				{children}
+				{/* 
+					Note: GoogleReCaptcha component removed to prevent WebGL context issues.
+					For reCAPTCHA v3, the badge is automatically rendered by Google's script.
+					Components can use useGoogleReCaptcha() hook directly to execute reCAPTCHA.
+				*/}
+			</GoogleReCaptchaProvider>
+		);
+	} else {
+		return <>{children}</>;
+	}
 }
 
 function RecaptchaV3Style() {
