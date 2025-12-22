@@ -668,6 +668,8 @@
   "rsvp_cancel_reservation": "Cancel Reservation",
   "rsvp_cancel_reservation_confirmation": "Are you sure you want to cancel this reservation? This action cannot be undone.",
   "rsvp_cancellation_policy": "If you cannot come at the reserved time, please cancel at least {{hours}} hours before the reservation.",
+  "rsvp_cancellation_refund_description": "Refund for reservation cancel: {{points}} points.",
+  "rsvp_cancellation_refund_note": "{{amount}} {{currency}} refunded.",
   "RSVP_Cancellation_Settings": "Cancellation",
   "rsvp_completed_this_month": "Completed This Month",
   "rsvp_confirm_this_rsvp": "Confirm this RSVP",
