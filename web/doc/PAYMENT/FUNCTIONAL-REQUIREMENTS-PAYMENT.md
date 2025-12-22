@@ -109,6 +109,17 @@ The system includes the following built-in payment method plugins:
 - Store Admins can override default fee structure (if plugin allows)
 - Store-level configuration takes precedence over platform-level configuration
 
+**FR-PAY-004.1:** When a store is created, the system must automatically create a special system product for credit recharge:
+
+- **Product Name**: "Credit Recharge" or similar descriptive name
+- **Product Description**: Description of credit recharge product
+- **Price**: 0 (price is determined by `creditExchangeRate` at time of purchase)
+- **Currency**: Store's default currency
+- **Status**: Active
+- **Is Featured**: false
+- **Purpose**: This product is used as the `productId` in `OrderItem` entries for credit recharge orders
+- **Note**: This product should be created during store creation to ensure it's available when customers initiate credit recharges
+
 **FR-PAY-005:** Payment method plugins must implement a standard interface:
 
 - **Payment Processing**: Handle payment initiation and processing
@@ -296,6 +307,25 @@ The system includes the following built-in payment method plugins:
    - `paymentMethodId`: Selected payment method ID
    - `orderTotal`: Calculated dollar amount
    - `checkoutAttributes`: JSON string containing `rsvpId` (if provided) and `creditRecharge: true`
+7. System creates or retrieves the special system product for credit recharge:
+   - If the product doesn't exist for the store, create it with:
+     - `storeId`: The store ID
+     - `name`: "Credit Recharge" or similar descriptive name
+     - `description`: Description of credit recharge product
+     - `price`: 0 (price is determined by `creditExchangeRate` at time of purchase)
+     - `currency`: Store's default currency
+     - `status`: Active
+     - `isFeatured`: false
+   - If the product already exists, use the existing product ID
+8. System creates `OrderItem` entry for the recharge:
+   - `orderId`: The created StoreOrder ID
+   - `productId`: System product ID for credit recharge (the special system product created/retrieved in step 7)
+   - `productName`: "Credit Recharge" or similar descriptive name (e.g., "Credit Recharge: {creditAmount} points")
+   - `quantity`: Number of credit points being purchased (the `creditAmount` entered by the customer)
+   - `unitPrice`: Calculated dollar amount per credit point (i.e., `creditExchangeRate`)
+   - `unitDiscount`: 0 (no discount for credit recharge)
+   - `variants`: null (no product variants for credit recharge)
+   - `variantCosts`: null
 
 **FR-PAY-010:** Credit recharge orders can be linked to RSVP prepaid payments:
 

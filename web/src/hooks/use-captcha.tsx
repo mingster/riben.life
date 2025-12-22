@@ -66,7 +66,9 @@ export function useCaptcha() {
 					// Check if grecaptcha is available as fallback
 					const grecaptcha = (window as any).grecaptcha;
 					if (!grecaptcha) {
-						throw new Error("reCAPTCHA not ready - script may be blocked or failed to load");
+						throw new Error(
+							"reCAPTCHA not ready - script may be blocked or failed to load",
+						);
 					}
 					throw new Error("reCAPTCHA not ready");
 				}
@@ -78,11 +80,14 @@ export function useCaptcha() {
 					const grecaptcha = (window as any).grecaptcha;
 					if (grecaptcha) {
 						// Check if enterprise API is available (for Enterprise mode)
-						const hasEnterprise = grecaptcha.enterprise && grecaptcha.enterprise.execute;
+						const hasEnterprise =
+							grecaptcha.enterprise && grecaptcha.enterprise.execute;
 						const hasStandard = grecaptcha.execute;
-						
+
 						if (!hasEnterprise && !hasStandard) {
-							throw new Error("reCAPTCHA API not available - script may not be fully loaded");
+							throw new Error(
+								"reCAPTCHA API not available - script may not be fully loaded",
+							);
 						}
 					}
 
@@ -94,9 +99,10 @@ export function useCaptcha() {
 					logger.info("reCAPTCHA response received");
 				} catch (error) {
 					// Handle Google's internal timeout errors
-					const errorMessage = error instanceof Error ? error.message : String(error);
-					const isTimeoutError = 
-						errorMessage.includes("timeout") || 
+					const errorMessage =
+						error instanceof Error ? error.message : String(error);
+					const isTimeoutError =
+						errorMessage.includes("timeout") ||
 						errorMessage.includes("Timeout") ||
 						errorMessage === "Timeout (b)";
 
@@ -113,8 +119,8 @@ export function useCaptcha() {
 					if (isTimeoutError) {
 						throw new Error(
 							"reCAPTCHA timeout - The verification service is taking too long. " +
-							"This may be due to network issues, ad blockers, or the reCAPTCHA service being unavailable. " +
-							"Please try again or check your network connection."
+								"This may be due to network issues, ad blockers, or the reCAPTCHA service being unavailable. " +
+								"Please try again or check your network connection.",
 						);
 					}
 

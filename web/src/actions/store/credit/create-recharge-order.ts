@@ -10,6 +10,8 @@ import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { ensureCreditRechargeProduct } from "./ensure-credit-recharge-product";
+import { getT } from "@/app/i18n";
 
 /**
  * Create a recharge order for customer credit top-up.
@@ -113,6 +115,12 @@ export const createRechargeOrderAction = userRequiredActionClient
 			throw new SafeError("Payment method is not enabled for this store");
 		}
 
+		// Ensure credit recharge product exists (create if not found)
+		const creditRechargeProduct = await ensureCreditRechargeProduct(storeId);
+
+		// Get translation function for order note
+		const { t } = await getT();
+
 		// Create StoreOrder for recharge
 		const now = getUtcNowEpoch();
 
@@ -137,9 +145,24 @@ export const createRechargeOrderAction = userRequiredActionClient
 				updatedAt: now,
 				paymentStatus: PaymentStatus.Pending,
 				orderStatus: OrderStatus.Pending,
+				OrderItems: {
+					create: {
+						productId: creditRechargeProduct.id,
+						productName: `Store Credit`,
+						quantity: creditAmount, // Number of credit points being purchased
+						unitPrice: new Prisma.Decimal(creditExchangeRate), // Dollar amount per credit point
+						unitDiscount: new Prisma.Decimal(0),
+						variants: null,
+						variantCosts: null,
+					},
+				},
 				OrderNotes: {
 					create: {
-						note: `Credit recharge: ${creditAmount} points (${dollarAmount} ${store.defaultCurrency.toUpperCase()})`,
+						note: t("credit_recharge_order_note", {
+							creditAmount,
+							dollarAmount,
+							currency: store.defaultCurrency.toUpperCase(),
+						}),
 						displayToCustomer: true,
 						createdAt: now,
 						updatedAt: now,

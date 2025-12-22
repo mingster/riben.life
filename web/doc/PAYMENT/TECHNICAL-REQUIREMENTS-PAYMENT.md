@@ -94,6 +94,7 @@ model PaymentMethod {
   isDeleted                 Boolean                     @default(false)
   isDefault                 Boolean                     @default(false)
   canDelete                 Boolean                     @default(false) // Store owner cannot delete this method
+  visibleToCustomer         Boolean                     @default(false) // Only payment methods with visibleToCustomer=true are shown to customers
   createdAt                 BigInt // Epoch milliseconds
   updatedAt                 BigInt // Epoch milliseconds
   
@@ -115,6 +116,7 @@ model PaymentMethod {
 - `fee`: Fee rate as decimal (e.g., 0.029 = 2.9%)
 - `feeAdditional`: Additional flat fee amount
 - `clearDays`: Number of days until payment is available to store (for revenue recognition timing)
+- `visibleToCustomer`: Boolean flag indicating if the payment method should be displayed to customers. **Only payment methods with `visibleToCustomer=true` are shown to customers** in checkout flows, recharge pages, and other customer-facing payment selection interfaces. Payment methods with `visibleToCustomer=false` are hidden from customers but may still be used internally or by store administrators.
 
 #### 3.1.2 StorePaymentMethodMapping
 
@@ -135,6 +137,21 @@ model StorePaymentMethodMapping {
 ```
 
 **Purpose:** Maps payment methods to stores, enabling stores to enable/disable specific payment methods.
+
+**Important:** When displaying payment methods to customers (e.g., in checkout flows, recharge pages, or payment selection interfaces), **only payment methods with `PaymentMethod.visibleToCustomer=true` should be shown**. Payment methods with `visibleToCustomer=false` are hidden from customers but may still be used internally or by store administrators. This filtering should be applied in:
+
+- Checkout pages (`/s/[storeId]/checkout`)
+- Credit recharge pages (`/s/[storeId]/recharge`)
+- Any customer-facing payment method selection interfaces
+
+**Filtering Pattern:**
+
+```typescript
+// When fetching payment methods for customer display
+const customerVisiblePaymentMethods = store.StorePaymentMethods.filter(
+  (mapping) => mapping.PaymentMethod.visibleToCustomer === true
+);
+```
 
 #### 3.1.3 StoreOrder
 
@@ -549,12 +566,21 @@ export const createRechargeOrderAction = userRequiredActionClient
     // Validation: Check credit amount against min/max limits
     // Validation: Validate payment method exists and is enabled for store
     // Calculate dollar amount from credit amount using creditExchangeRate
+    // Create or retrieve special system product for credit recharge
     // Create StoreOrder with:
     //   - paymentMethodId: Selected payment method ID
     //   - checkoutAttributes: JSON string containing rsvpId (if provided) and creditRecharge flag
     //   - paymentStatus: Pending
     //   - orderStatus: Pending
     //   - isPaid: false
+    //   - OrderItems: Create OrderItem entry with:
+    //     * productId: Credit recharge system product ID
+    //     * productName: "Credit Recharge: {creditAmount} points"
+    //     * quantity: creditAmount (number of credit points)
+    //     * unitPrice: creditExchangeRate (dollar amount per credit point)
+    //     * unitDiscount: 0
+    //     * variants: null
+    //     * variantCosts: null
     
     return { order: createdOrder };
   });
@@ -566,9 +592,30 @@ export const createRechargeOrderAction = userRequiredActionClient
 - Validates credit amount against store min/max purchase limits
 - Validates payment method exists, is not deleted, and is enabled for the store (via `StorePaymentMethodMapping`)
 - Calculates dollar amount: `dollarAmount = creditAmount * creditExchangeRate`
+- **Creates or retrieves special system product for credit recharge:**
+  - Queries `Product` table for store with name matching "Credit Recharge" pattern
+  - If product doesn't exist, creates it with:
+    - `storeId`: The store ID
+    - `name`: "Credit Recharge" or similar descriptive name
+    - `description`: Description of credit recharge product
+    - `price`: 0 (price is determined by `creditExchangeRate` at time of purchase)
+    - `currency`: Store's default currency
+    - `status`: Active
+    - `isFeatured`: false
+  - If product exists, uses existing product ID
+  - **Note:** According to FR-PAY-004.1, this product should be created automatically when a store is created. The create-or-retrieve logic here serves as a fallback to ensure the product exists even if it wasn't created during store creation.
 - Stores `rsvpId` in `checkoutAttributes` JSON for later processing
 - Creates order with `paymentStatus = Pending`, `orderStatus = Pending`
-- Payment method selection: Customer must select a payment method from available payment methods for the store
+- **Creates `OrderItem` entry for the recharge:**
+  - `orderId`: The created StoreOrder ID
+  - `productId`: System product ID for credit recharge (created/retrieved above)
+  - `productName`: "Credit Recharge" or similar descriptive name (e.g., "Credit Recharge: {creditAmount} points")
+  - `quantity`: Number of credit points being purchased (the `creditAmount` entered by the customer)
+  - `unitPrice`: Calculated dollar amount per credit point (i.e., `creditExchangeRate`)
+  - `unitDiscount`: 0 (no discount for credit recharge)
+  - `variants`: null (no product variants for credit recharge)
+  - `variantCosts`: null
+- Payment method selection: Customer must select a payment method from available payment methods for the store (only methods with `visibleToCustomer=true` are shown)
 - After order creation, client redirects to: `/checkout/${orderId}/${paymentMethod.payUrl}` (standard payment URL pattern)
 
 **Process Credit Top-Up After Payment:**
@@ -743,6 +790,7 @@ export const createPaymentMethodAction = adminActionClient
       isDeleted,
       isDefault,
       canDelete,
+      visibleToCustomer,
     } = parsedInput;
 
     // 1. Check if name already exists (unique constraint)
@@ -769,6 +817,7 @@ export const createPaymentMethodSchema = z.object({
   isDeleted: z.boolean().default(false),
   isDefault: z.boolean().default(false), // Default payment method for all stores
   canDelete: z.boolean().default(false), // Whether store owners can delete this method
+  visibleToCustomer: z.boolean().default(false), // Only payment methods with visibleToCustomer=true are shown to customers
 });
 ```
 
@@ -777,9 +826,10 @@ export const createPaymentMethodSchema = z.object({
 - Uses `adminActionClient` (requires System Admin role)
 - Validates unique `name` constraint (PaymentMethod.name is unique)
 - `payUrl` field identifies the plugin (must match plugin identifier)
-- Default values: fee = 2.9%, feeAdditional = 0, clearDays = 3
+- Default values: fee = 2.9%, feeAdditional = 0, clearDays = 3, visibleToCustomer = false
 - Creates PaymentMethod record with BigInt timestamps
 - Returns payment method with counts of related mappings and orders
+- **Important:** Only payment methods with `visibleToCustomer=true` are displayed to customers in checkout flows and payment selection interfaces
 
 **Update Payment Method:**
 
@@ -801,6 +851,7 @@ export const updatePaymentMethodAction = adminActionClient
       isDeleted,
       isDefault,
       canDelete,
+      visibleToCustomer,
     } = parsedInput;
 
     // 1. Verify payment method exists
@@ -828,9 +879,10 @@ export const updatePaymentMethodSchema = createPaymentMethodSchema.extend({
 - Uses `adminActionClient` (requires System Admin role)
 - Validates payment method exists before update
 - Validates unique `name` if name is being changed
-- All fields from create schema are updatable
+- All fields from create schema are updatable (including `visibleToCustomer`)
 - Updates `updatedAt` timestamp
 - Returns updated payment method with counts
+- **Important:** Only payment methods with `visibleToCustomer=true` are displayed to customers in checkout flows and payment selection interfaces
 
 **Delete Payment Method:**
 

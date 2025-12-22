@@ -73,11 +73,14 @@ function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 				const grecaptcha = (window as any).grecaptcha;
 				if (grecaptcha) {
 					// Check if enterprise API is available (for Enterprise mode)
-					const hasEnterprise = grecaptcha.enterprise && grecaptcha.enterprise.execute;
+					const hasEnterprise =
+						grecaptcha.enterprise && grecaptcha.enterprise.execute;
 					const hasStandard = grecaptcha.execute;
-					
+
 					if (!hasEnterprise && !hasStandard) {
-						throw new Error("reCAPTCHA API not available - script may not be fully loaded");
+						throw new Error(
+							"reCAPTCHA API not available - script may not be fully loaded",
+						);
 					}
 				}
 
@@ -87,9 +90,10 @@ function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 				);
 				recaptchaToken = await Promise.race([tokenPromise, timeoutPromise]);
 			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : String(error);
-				const isTimeoutError = 
-					errorMessage.includes("timeout") || 
+				const errorMessage =
+					error instanceof Error ? error.message : String(error);
+				const isTimeoutError =
+					errorMessage.includes("timeout") ||
 					errorMessage.includes("Timeout") ||
 					errorMessage === "Timeout (b)";
 

@@ -130,7 +130,10 @@ function RecaptchaV3Style() {
 
 		return () => {
 			clearTimeout(timeout);
-			window.removeEventListener("unhandledrejection", handleUnhandledRejection);
+			window.removeEventListener(
+				"unhandledrejection",
+				handleUnhandledRejection,
+			);
 		};
 	}, [executeRecaptcha]);
 

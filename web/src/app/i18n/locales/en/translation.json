@@ -185,6 +185,7 @@
   "credit_recharge_description": "Top up your credit balance to use for future purchases",
   "credit_recharge_description_ledger": "Credit recharge: {{creditAmount}} points. Cash value: {{dollarAmount}} {{currency}}. Amount: {{amount}} points. Bonus: {{bonus}} points. Total credit: {{totalCredit}} points.",
   "credit_recharge_note_ledger": "Order # {{orderId}}",
+  "credit_recharge_order_note": "Store Credit: {{creditAmount}} points ({{dollarAmount}} {{currency}})",
   "credit_total_amount": "Total",
   "currency_combobox_changePlaceHolder": "Change currency...",
   "currency_combobox_notFound": "No results found.",

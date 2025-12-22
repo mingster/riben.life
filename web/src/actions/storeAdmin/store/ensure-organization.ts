@@ -174,11 +174,7 @@ export const ensureOrganizationAction = storeActionClient
 		// Set active organization ONLY if we just created/linked it in this call
 		// This prevents unnecessary calls on every page load that can trigger Bun memory allocator panics
 		// The wasOrganizationCreatedOrLinked flag tracks if we actually created/linked in this execution
-		if (
-			organization &&
-			organization.id &&
-			wasOrganizationCreatedOrLinked
-		) {
+		if (organization && organization.id && wasOrganizationCreatedOrLinked) {
 			try {
 				await auth.api.setActiveOrganization({
 					headers: headersList,

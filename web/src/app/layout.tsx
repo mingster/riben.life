@@ -148,20 +148,18 @@ export default async function RootLayout({
 					enableSystem
 					disableTransitionOnChange
 				>
-					
-						<CookiesProvider>
-							<I18nProvider initialLng={htmlLang}>
-								<SessionWrapper>
-									<IOSVersionCheck>
-										<Suspense fallback={null}>
-											<PageViewTracker />
-										</Suspense>
-										{children}
-									</IOSVersionCheck>
-								</SessionWrapper>
-							</I18nProvider>
-						</CookiesProvider>
-					
+					<CookiesProvider>
+						<I18nProvider initialLng={htmlLang}>
+							<SessionWrapper>
+								<IOSVersionCheck>
+									<Suspense fallback={null}>
+										<PageViewTracker />
+									</Suspense>
+									{children}
+								</IOSVersionCheck>
+							</SessionWrapper>
+						</I18nProvider>
+					</CookiesProvider>
 				</NextThemeProvider>
 				<Toaster />
 				{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (

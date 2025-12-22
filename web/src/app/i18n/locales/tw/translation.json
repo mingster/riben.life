@@ -185,6 +185,7 @@
   "credit_recharge_description": "儲值點數",
   "credit_recharge_description_ledger": "儲值點數：{{creditAmount}}點。現金價值：{{dollarAmount}} {{currency}}。獎勵點數：{{bonus}}點。總點數：{{totalCredit}}點。",
   "credit_recharge_note_ledger": "訂單編號：{{orderNum}}",
+  "credit_recharge_order_note": "儲值：{{creditAmount}}點（{{dollarAmount}} {{currency}}）",
   "credit_total_amount": "總金額",
   "currency_combobox_changePlaceHolder": "變更幣別...",
   "currency_combobox_notFound": "找不到結果。",
