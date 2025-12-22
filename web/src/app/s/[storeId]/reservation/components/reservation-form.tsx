@@ -301,6 +301,29 @@ export function ReservationForm({
 			});
 			return;
 		}
+
+		// Validate reservation time window (client-side check)
+		if (data.rsvpTime) {
+			const { getReservationTimeWindowError } = await import(
+				"@/utils/rsvp-time-window-utils"
+			);
+			const timeWindowError = getReservationTimeWindowError(
+				rsvpSettings,
+				data.rsvpTime,
+			);
+			if (timeWindowError) {
+				toastError({
+					title: t("Error"),
+					description: timeWindowError,
+				});
+				form.setError("rsvpTime", {
+					type: "manual",
+					message: timeWindowError,
+				});
+				return;
+			}
+		}
+
 		setIsSubmitting(true);
 
 		try {

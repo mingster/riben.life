@@ -718,8 +718,11 @@ model RsvpSettings {
   prepaidRequired   Boolean  @default(false) //預付制：儲值後才可預約 / //訂位需付訂金
   minPrepaidAmount  Decimal? @default(0) //最低預付金額
 
-  canCancel   Boolean @default(true) //可取消預約
-  cancelHours Int     @default(24) //取消預約時間：小時前可取消
+  canCancel   Boolean @default(true) //可否取消預約?
+  cancelHours Int     @default(24) //最慢免費取消預約時間：幾小時前可免費取消?
+
+  canReserveBefore  Int @default(2) //從現在起，可預約幾小時後的時間。 e.g. 現在7PM，只能預約9PM後的時間。
+  canReserveAfter  Int @default(2190) //從現在起，最多可預約未來幾小時。 e.g. ㄧ年後=8760小時; 一個月後=730. 預設值：3個月後。
 
   defaultDuration    Int     @default(60) //預約時間：60分鐘
   requireSignature   Boolean @default(false) //需要簽名

@@ -113,6 +113,9 @@ Store Admins have all Store Staff permissions, plus:
 **FR-RSVP-003:** The system must validate reservation availability based on:
 
 - Store's RSVP settings (acceptReservation flag)
+- **Reservation time window:** 
+  - Reservations must be at least `canReserveBefore` hours in the future (e.g., if `canReserveBefore = 2`, current time is 7PM, only reservations at 9PM or later are allowed)
+  - Reservations must be no more than `canReserveAfter` hours in the future (e.g., if `canReserveAfter = 2190` (3 months), reservations beyond 3 months are not allowed)
 - Business hours (useBusinessHours, rsvpHours)
 - Facility capacity and availability
 - Existing reservations for the requested time slot

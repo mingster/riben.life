@@ -18,6 +18,7 @@ import { createReservationSchema } from "./create-reservation.validation";
 import { RsvpStatus } from "@/types/enum";
 import { processRsvpPrepaidPayment } from "./process-rsvp-prepaid-payment";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
+import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 
 export const createReservationAction = baseClient
 	.metadata({ name: "createReservation" })
@@ -89,6 +90,9 @@ export const createReservationAction = baseClient
 		if (!rsvpTime) {
 			throw new SafeError("Failed to convert rsvpTime to epoch");
 		}
+
+		// Validate reservation time window (canReserveBefore and canReserveAfter)
+		validateReservationTimeWindow(rsvpSettings, rsvpTime);
 
 		// Check if user is anonymous (not logged in and no customerId provided)
 		const isAnonymous = !sessionUserId && !customerId;

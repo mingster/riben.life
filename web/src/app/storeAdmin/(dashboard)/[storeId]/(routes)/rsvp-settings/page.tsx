@@ -5,6 +5,7 @@ import { Store } from "@/types";
 import { RsvpSettingTabs, type RsvpSettingsData } from "./components/tabs";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { epochToDate } from "@/utils/datetime-utils";
 import { redirect } from "next/navigation";
 
 type Params = Promise<{ storeId: string }>;
@@ -46,6 +47,8 @@ export default async function RsvpSettingsPage(props: {
 				: null,
 			canCancel: rsvpSettings.canCancel,
 			cancelHours: rsvpSettings.cancelHours,
+			canReserveBefore: rsvpSettings.canReserveBefore,
+			canReserveAfter: rsvpSettings.canReserveAfter,
 			defaultDuration: rsvpSettings.defaultDuration,
 			requireSignature: rsvpSettings.requireSignature,
 			showCostToCustomer: rsvpSettings.showCostToCustomer,
@@ -57,8 +60,8 @@ export default async function RsvpSettingsPage(props: {
 			useReminderEmail: rsvpSettings.useReminderEmail,
 			syncWithGoogle: rsvpSettings.syncWithGoogle,
 			syncWithApple: rsvpSettings.syncWithApple,
-			createdAt: rsvpSettings.createdAt,
-			updatedAt: rsvpSettings.updatedAt,
+			createdAt: epochToDate(rsvpSettings.createdAt) ?? new Date(),
+			updatedAt: epochToDate(rsvpSettings.updatedAt) ?? new Date(),
 		};
 	}
 

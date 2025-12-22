@@ -29,6 +29,8 @@ export type RsvpSettingsData = {
 	minPrepaidAmount: number | null;
 	canCancel: boolean;
 	cancelHours: number;
+	canReserveBefore: number;
+	canReserveAfter: number;
 	defaultDuration: number;
 	requireSignature: boolean;
 	showCostToCustomer: boolean;

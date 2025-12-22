@@ -35,6 +35,7 @@ import {
 	getOffsetHours,
 	dayAndTimeSlotToUtc,
 } from "@/utils/datetime-utils";
+import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
@@ -52,6 +53,8 @@ interface CreateRsvpButtonProps {
 		prepaidRequired?: boolean | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
+		canReserveBefore?: number | null;
+		canReserveAfter?: number | null;
 	} | null;
 }
 
@@ -98,6 +101,8 @@ interface WeekViewCalendarProps {
 		prepaidRequired?: boolean | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
+		canReserveBefore?: number | null;
+		canReserveAfter?: number | null;
 	} | null;
 	storeSettings: { businessHours: string | null } | null;
 	storeTimezone: string;
@@ -604,64 +609,24 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 												)}
 											>
 												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
-													{slotRsvps.length > 0 ? (
-														slotRsvps.map((rsvp) => {
-															const isCompleted =
-																rsvp.status === RsvpStatus.Completed;
+													{slotRsvps.length > 0
+														? slotRsvps.map((rsvp) => {
+																const isCompleted =
+																	rsvp.status === RsvpStatus.Completed;
 
-															if (isCompleted) {
-																// Render as non-clickable button for completed RSVPs
-																return (
-																	<button
-																		key={rsvp.id}
-																		type="button"
-																		disabled
-																		className={cn(
-																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
-																			getStatusColorClasses(rsvp.status, false),
-																		)}
-																	>
-																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																			{rsvp.Customer?.name
-																				? rsvp.Customer.name
-																				: rsvp.Customer?.email
-																					? rsvp.Customer.email
-																					: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																							rsvp.numOfAdult +
-																								rsvp.numOfChild ===
-																							1
-																								? "guest"
-																								: "guests"
-																						}`}
-																		</div>
-																		{rsvp.Facility?.facilityName && (
-																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																				{rsvp.Facility.facilityName}
-																			</div>
-																		)}
-																		{rsvp.message && (
-																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																				{rsvp.message}
-																			</div>
-																		)}
-																	</button>
-																);
-															}
-
-															// Render dialog for non-completed RSVPs
-															return (
-																<AdminEditRsvpDialog
-																	key={rsvp.id}
-																	rsvp={rsvp}
-																	onUpdated={handleRsvpUpdated}
-																	storeTimezone={storeTimezone}
-																	rsvpSettings={rsvpSettings}
-																	trigger={
+																if (isCompleted) {
+																	// Render as non-clickable button for completed RSVPs
+																	return (
 																		<button
+																			key={rsvp.id}
 																			type="button"
+																			disabled
 																			className={cn(
-																				"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors",
-																				getStatusColorClasses(rsvp.status),
+																				"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
+																				getStatusColorClasses(
+																					rsvp.status,
+																					false,
+																				),
 																			)}
 																		>
 																			<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
@@ -688,19 +653,93 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																				</div>
 																			)}
 																		</button>
-																	}
-																/>
-															);
-														})
-													) : (
-														<CreateRsvpButton
-															day={day}
-															timeSlot={timeSlot}
-															onCreated={handleRsvpCreated}
-															storeTimezone={storeTimezone}
-															rsvpSettings={rsvpSettings}
-														/>
-													)}
+																	);
+																}
+
+																// Render dialog for non-completed RSVPs
+																return (
+																	<AdminEditRsvpDialog
+																		key={rsvp.id}
+																		rsvp={rsvp}
+																		onUpdated={handleRsvpUpdated}
+																		storeTimezone={storeTimezone}
+																		rsvpSettings={rsvpSettings}
+																		trigger={
+																			<button
+																				type="button"
+																				className={cn(
+																					"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors",
+																					getStatusColorClasses(rsvp.status),
+																				)}
+																			>
+																				<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																					{rsvp.Customer?.name
+																						? rsvp.Customer.name
+																						: rsvp.Customer?.email
+																							? rsvp.Customer.email
+																							: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																									rsvp.numOfAdult +
+																										rsvp.numOfChild ===
+																									1
+																										? "guest"
+																										: "guests"
+																								}`}
+																				</div>
+																				{rsvp.Facility?.facilityName && (
+																					<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																						{rsvp.Facility.facilityName}
+																					</div>
+																				)}
+																				{rsvp.message && (
+																					<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																						{rsvp.message}
+																					</div>
+																				)}
+																			</button>
+																		}
+																	/>
+																);
+															})
+														: (() => {
+																// Check if this time slot is within the reservation window
+																const slotTimeUtc = dayAndTimeSlotToUtc(
+																	day,
+																	timeSlot,
+																	storeTimezone,
+																);
+																const isWithinWindow =
+																	isWithinReservationTimeWindow(
+																		rsvpSettings,
+																		slotTimeUtc,
+																	);
+
+																if (!isWithinWindow) {
+																	// Slot is outside the allowed window - show disabled state
+																	return (
+																		<button
+																			type="button"
+																			disabled
+																			className="w-full h-full sm:min-h-[60px] text-left p-2 rounded text-xs sm:text-sm text-muted-foreground/50 flex items-center justify-center cursor-not-allowed opacity-50"
+																			title={
+																				t("rsvp_time_outside_window") ||
+																				"This time slot is outside the allowed reservation window"
+																			}
+																		>
+																			+
+																		</button>
+																	);
+																}
+
+																return (
+																	<CreateRsvpButton
+																		day={day}
+																		timeSlot={timeSlot}
+																		onCreated={handleRsvpCreated}
+																		storeTimezone={storeTimezone}
+																		rsvpSettings={rsvpSettings}
+																	/>
+																);
+															})()}
 												</div>
 											</td>
 										);
