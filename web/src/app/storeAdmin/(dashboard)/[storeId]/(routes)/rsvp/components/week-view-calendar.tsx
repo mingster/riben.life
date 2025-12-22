@@ -419,12 +419,22 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		[currentWeek],
 	);
 
-	// Generate days of the week
+	// Generate days of the week using UTC methods for server timezone independence
 	const weekDays = useMemo(() => {
 		const days: Date[] = [];
 		for (let i = 0; i < 7; i++) {
-			const date = new Date(weekStart);
-			date.setDate(weekStart.getDate() + i);
+			// Use UTC methods to ensure consistent behavior regardless of server timezone
+			const date = new Date(
+				Date.UTC(
+					weekStart.getUTCFullYear(),
+					weekStart.getUTCMonth(),
+					weekStart.getUTCDate() + i,
+					0,
+					0,
+					0,
+					0,
+				),
+			);
 			days.push(date);
 		}
 		return days;
@@ -714,7 +724,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																	);
 
 																if (!isWithinWindow) {
-																	// Slot is outside the allowed window - show disabled state
+																	// Slot is outside the allowed window - show empty disabled state
 																	return (
 																		<button
 																			type="button"
@@ -724,9 +734,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																				t("rsvp_time_outside_window") ||
 																				"This time slot is outside the allowed reservation window"
 																			}
-																		>
-																			+
-																		</button>
+																		></button>
 																	);
 																}
 
