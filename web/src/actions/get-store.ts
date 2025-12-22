@@ -7,6 +7,7 @@ import type {
 } from "@/types";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import type { PaymentMethod, ShippingMethod } from "@prisma/client";
+import { StoreLevel } from "@/types/enum";
 
 const getStoreWithCategories = async (storeId: string): Promise<Store> => {
 	if (!storeId) {
@@ -91,6 +92,15 @@ const getStoreWithCategories = async (storeId: string): Promise<Store> => {
 				store.StoreShippingMethods.push(mapping);
 			}
 		});
+	}
+
+	// Filter out cash payment method for Free-tier stores
+	// Cash is only available for Pro (2) or Multi (3) level stores
+	if (store.level === StoreLevel.Free) {
+		store.StorePaymentMethods = store.StorePaymentMethods.filter(
+			(mapping: { PaymentMethod: { payUrl: string } }) =>
+				mapping.PaymentMethod.payUrl !== "cash",
+		);
 	}
 
 	transformPrismaDataForJson(store);

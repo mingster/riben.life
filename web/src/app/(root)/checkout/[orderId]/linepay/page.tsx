@@ -24,8 +24,12 @@ import logger from "@/lib/logger";
 // https://developers-pay.line.me/online
 // https://developers-pay.line.me/online-api
 // https://developers-pay.line.me/online/implement-basic-payment#confirm
-const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
+const PaymentPage = async (props: {
+	params: Promise<{ orderId: string }>;
+	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) => {
 	const params = await props.params;
+	const searchParams = await props.searchParams;
 	if (!params.orderId) {
 		throw new Error("order Id is missing");
 	}
@@ -34,6 +38,12 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 	//const pathname = headerList.get("x-current-path");
 	//console.log("pathname", host, pathname);
 	const isMobile = isMobileUserAgent(headerList.get("user-agent"));
+
+	// Extract returnUrl from search params
+	const returnUrl =
+		typeof searchParams.returnUrl === "string"
+			? searchParams.returnUrl
+			: undefined;
 
 	//console.log('orderId: ' + params.orderId);
 
@@ -65,8 +75,15 @@ const PaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
 		protocol = "https:";
 	}
 
-	const confirmUrl = `${protocol}//${host}/checkout/${order.id}/linePay/confirmed`;
-	const cancelUrl = `${protocol}//${host}/checkout/${order.id}/linePay/canceled`;
+	// Include returnUrl in confirmed and canceled URLs if provided
+	const confirmUrlBase = `${protocol}//${host}/checkout/${order.id}/linePay/confirmed`;
+	const cancelUrlBase = `${protocol}//${host}/checkout/${order.id}/linePay/canceled`;
+	const confirmUrl = returnUrl
+		? `${confirmUrlBase}?returnUrl=${encodeURIComponent(returnUrl)}`
+		: confirmUrlBase;
+	const cancelUrl = returnUrl
+		? `${cancelUrlBase}?returnUrl=${encodeURIComponent(returnUrl)}`
+		: cancelUrlBase;
 
 	const requestBody: RequestRequestBody = {
 		amount: Number(order.orderTotal),

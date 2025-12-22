@@ -25,7 +25,9 @@ export default async function LinePayConfirmedPage({
 }: {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-	const { orderId, transactionId } = await searchParams;
+	const searchParamsData = await searchParams;
+	const { orderId, transactionId, returnUrl } = searchParamsData;
+	const customReturnUrl = typeof returnUrl === "string" ? returnUrl : undefined;
 	//console.log('orderId', orderId, 'transactionId', transactionId);
 
 	if (!orderId) {
@@ -95,7 +97,17 @@ export default async function LinePayConfirmedPage({
 		if (process.env.NODE_ENV === "development")
 			logger.info("LinePayConfirmedPage");
 
-		redirect(`${getAbsoluteUrl()}/checkout/${order.id}/linePay/success`);
+		// Redirect to returnUrl if provided, otherwise default success page
+		if (customReturnUrl) {
+			redirect(customReturnUrl);
+		} else {
+			redirect(`${getAbsoluteUrl()}/checkout/${order.id}/linePay/success`);
+		}
+	}
+
+	// If confirmation failed, redirect to returnUrl with status=failed if provided
+	if (customReturnUrl) {
+		redirect(`${customReturnUrl}?status=failed`);
 	}
 
 	return <></>;

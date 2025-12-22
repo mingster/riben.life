@@ -9,7 +9,9 @@ import { headers } from "next/headers";
 import { SafeError } from "@/utils/error";
 import { Suspense } from "react";
 import { Loader } from "@/components/loader";
-import type { Store } from "@/types";
+import type { Store, StorePaymentMethodMapping } from "@/types";
+import type { PaymentMethod } from "@prisma/client";
+import { StoreLevel } from "@/types/enum";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ rsvpId?: string }>;
@@ -46,6 +48,12 @@ export default async function RechargePage(props: {
 			creditMaxPurchase: true,
 			creditExchangeRate: true,
 			defaultCurrency: true,
+			level: true,
+			StorePaymentMethods: {
+				include: {
+					PaymentMethod: true,
+				},
+			},
 		},
 	});
 
@@ -57,7 +65,40 @@ export default async function RechargePage(props: {
 		throw new SafeError("Customer credit system is not enabled for this store");
 	}
 
+	// Add default payment methods if store has none
+	if (store.StorePaymentMethods.length === 0) {
+		const defaultPaymentMethods = await sqlClient.paymentMethod.findMany({
+			where: {
+				isDefault: true,
+				isDeleted: false,
+			},
+		});
+
+		for (const paymentMethod of defaultPaymentMethods) {
+			const mapping = {
+				id: "",
+				storeId: store.id,
+				methodId: paymentMethod.id,
+				paymentDisplayName: null,
+				PaymentMethod: paymentMethod,
+			} as StorePaymentMethodMapping;
+
+			store.StorePaymentMethods.push(mapping);
+		}
+	}
+
+	// Filter out cash payment method for Free-tier stores
+	// Cash is only available for Pro (2) or Multi (3) level stores
+	if (store.level === StoreLevel.Free) {
+		store.StorePaymentMethods = store.StorePaymentMethods.filter(
+			(mapping) => mapping.PaymentMethod.payUrl !== "cash",
+		);
+	}
+
 	transformPrismaDataForJson(store);
+
+	// Default returnUrl to credit ledger page
+	const returnUrl = `/s/${params.storeId}/my-credit-ledger`;
 
 	return (
 		<Container className="bg-transparent">
@@ -65,8 +106,13 @@ export default async function RechargePage(props: {
 				<Suspense fallback={<Loader />}>
 					<RechargeForm
 						storeId={params.storeId}
-						store={store as Store}
+						store={
+							store as Store & {
+								StorePaymentMethods: StorePaymentMethodMapping[];
+							}
+						}
 						rsvpId={rsvpId}
+						returnUrl={returnUrl}
 					/>
 				</Suspense>
 			</div>

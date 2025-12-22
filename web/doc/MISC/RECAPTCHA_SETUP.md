@@ -153,6 +153,7 @@ Previously, components wrapped themselves with `<RecaptchaV3>` which created mul
 The application uses **reCAPTCHA Enterprise** on the frontend, following the [official Google Cloud documentation](https://docs.cloud.google.com/recaptcha/docs/instrument-web-pages):
 
 - **Provider Location**: `GoogleReCaptchaProvider` is configured in the root layout (`src/app/layout.tsx`)
+- **WebGL Context Optimization**: The `GoogleReCaptcha` component is **not** rendered in the provider to prevent multiple WebGL contexts. For reCAPTCHA v3, the badge is automatically rendered by Google's script, and components use the `useGoogleReCaptcha()` hook directly to execute reCAPTCHA.
 - **Single Provider Instance**: One provider instance for the entire application prevents duplicate script loading
 - **Script Loading**: Automatically loads `https://www.google.com/recaptcha/enterprise.js?render=SITE_KEY`
 - **Token Generation**: Uses `grecaptcha.enterprise.execute(SITE_KEY, {action: 'contact_form'})`

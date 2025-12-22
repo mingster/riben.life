@@ -270,7 +270,7 @@ The system includes the following built-in payment method plugins:
 
 ### 3.3 Credit Recharge Payment Flow
 
-#### 3.3.1 Credit Recharge Order Creation
+#### 3.3.1 Credit Recharge Order Creation (點數儲值)
 
 **FR-PAY-009:** The system must support credit recharge payments:
 
@@ -288,11 +288,12 @@ The system includes the following built-in payment method plugins:
    - Minimum purchase (`creditMinPurchase`)
    - Maximum purchase (`creditMaxPurchase`)
 4. System calculates dollar amount: `dollarAmount = creditAmount * creditExchangeRate`
-5. System creates `StoreOrder` for recharge with:
+5. Customer selects payment method from available payment methods for the store
+6. System creates `StoreOrder` for recharge with:
    - `orderStatus`: `Pending`
    - `paymentStatus`: `Pending`
    - `isPaid`: `false`
-   - `paymentMethodId`: `"stripe"` (default for recharge)
+   - `paymentMethodId`: Selected payment method ID
    - `orderTotal`: Calculated dollar amount
    - `checkoutAttributes`: JSON string containing `rsvpId` (if provided) and `creditRecharge: true`
 
@@ -303,7 +304,7 @@ The system includes the following built-in payment method plugins:
   - After successful payment, system attempts to process RSVP prepaid payment
   - If RSVP prepaid is processed, customer is redirected to reservation page
 
-#### 3.3.2 Credit Recharge Payment Processing
+#### 3.3.2 Credit Recharge Payment Processing Flow
 
 **FR-PAY-011:** After successful credit recharge payment:
 

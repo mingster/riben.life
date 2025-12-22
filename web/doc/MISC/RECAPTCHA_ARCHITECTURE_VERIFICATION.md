@@ -48,6 +48,7 @@ The reCAPTCHA implementation uses a **single provider instance** at the root lay
 - ✅ Monitors script loading with timeout
 - ✅ Updates iframe theme/language dynamically
 - ✅ Provides helpful error messages
+- ✅ **WebGL Optimization**: `GoogleReCaptcha` component removed to prevent multiple WebGL contexts (badge auto-rendered by Google's script)
 
 ### ✅ 3. Component Usage
 

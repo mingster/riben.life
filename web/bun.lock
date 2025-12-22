@@ -129,7 +129,7 @@
         "@types/react": "^19.2.6",
         "@types/react-dom": "^19.2.3",
         "@types/react-google-recaptcha": "^2.1.9",
-        "@types/uuid": "11.0.0",
+        "@types/uuid": "^11.0.0",
         "@typescript-eslint/eslint-plugin": "^8.50.0",
         "@typescript-eslint/parser": "^8.50.0",
         "autoprefixer": "^10.4.23",

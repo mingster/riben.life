@@ -6,6 +6,7 @@ export const createRechargeOrderSchema = z.object({
 		.number()
 		.positive("Credit amount must be positive")
 		.min(1, "Credit amount must be at least 1 point"),
+	paymentMethodId: z.string().min(1, "Payment method is required"),
 	rsvpId: z.string().optional(),
 });
 

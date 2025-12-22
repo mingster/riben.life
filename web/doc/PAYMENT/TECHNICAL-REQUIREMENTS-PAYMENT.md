@@ -543,14 +543,14 @@ export const createRechargeOrderAction = userRequiredActionClient
   .metadata({ name: "createRechargeOrder" })
   .schema(createRechargeOrderSchema)
   .action(async ({ parsedInput }) => {
-    const { storeId, creditAmount, rsvpId } = parsedInput;
+    const { storeId, creditAmount, paymentMethodId, rsvpId } = parsedInput;
     
     // Validation: Check store credit system enabled
     // Validation: Check credit amount against min/max limits
+    // Validation: Validate payment method exists and is enabled for store
     // Calculate dollar amount from credit amount using creditExchangeRate
-    // Find Stripe payment method by payUrl
     // Create StoreOrder with:
-    //   - paymentMethodId: Stripe payment method ID
+    //   - paymentMethodId: Selected payment method ID
     //   - checkoutAttributes: JSON string containing rsvpId (if provided) and creditRecharge flag
     //   - paymentStatus: Pending
     //   - orderStatus: Pending
@@ -564,10 +564,12 @@ export const createRechargeOrderAction = userRequiredActionClient
 
 - Validates store has credit system enabled (`useCustomerCredit`)
 - Validates credit amount against store min/max purchase limits
+- Validates payment method exists, is not deleted, and is enabled for the store (via `StorePaymentMethodMapping`)
 - Calculates dollar amount: `dollarAmount = creditAmount * creditExchangeRate`
-- Finds Stripe payment method by `payUrl = "stripe"`
 - Stores `rsvpId` in `checkoutAttributes` JSON for later processing
 - Creates order with `paymentStatus = Pending`, `orderStatus = Pending`
+- Payment method selection: Customer must select a payment method from available payment methods for the store
+- After order creation, client redirects to: `/checkout/${orderId}/${paymentMethod.payUrl}` (standard payment URL pattern)
 
 **Process Credit Top-Up After Payment:**
 
@@ -954,45 +956,30 @@ export default async function StripeConfirmedPage(props: {
 - Handles Next.js redirect errors properly (doesn't log them)
 - Shows loading state with `SuccessAndRedirect` component during processing
 
-**Credit Recharge Stripe Confirmation:**
+**Credit Recharge Payment Processing:**
 
-**Location:** `src/app/s/[storeId]/recharge/[orderId]/stripe/confirmed/page.tsx`
+**Location:** `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx` (standard checkout route)
 
 **Implementation:**
 
-```typescript
-export default async function RechargeConfirmedPage(props: {
-  params: Promise<{ storeId: string; orderId: string }>;
-  searchParams: Promise<{
-    payment_intent?: string;
-    payment_intent_client_secret?: string;
-    redirect_status?: string;
-  }>;
-}) {
-  // 1. Extract orderId and storeId from params
-  // 2. Extract payment_intent, payment_intent_client_secret, redirect_status from searchParams
-  // 3. Verify redirect_status === "succeeded"
-  // 4. Retrieve PaymentIntent from Stripe API
-  // 5. Verify PaymentIntent.status === "succeeded"
-  // 6. Call processCreditTopUpAfterPaymentAction({ orderId })
-  //    - This action handles credit top-up, bonus calculation, and RSVP prepaid payment
-  // 7. Log success/error
-  // 8. Redirect to success page: /s/{storeId}/recharge/{orderId}/success
-}
-```
+Credit recharge orders use the same payment processing routes as regular store orders. After order creation:
+
+1. Client redirects to: `/checkout/${orderId}/${paymentMethod.payUrl}` (standard payment URL pattern)
+2. Payment processing follows the same flow as regular orders
+3. After payment confirmation, redirects to: `/checkout/${orderId}/stripe/success`
+4. Success page calls `processCreditTopUpAfterPaymentAction({ orderId })` which:
+   - Processes credit top-up (adds credit to customer balance)
+   - Calculates and applies bonus credit (if applicable)
+   - Marks order as paid
+   - Creates StoreLedger entry
+   - Processes RSVP prepaid payment if `rsvpId` is in checkoutAttributes
 
 **Implementation Details:**
 
-- Server component (page.tsx) - handles Stripe redirect after credit recharge
-- Verifies PaymentIntent status via Stripe API before processing
-- Uses `processCreditTopUpAfterPaymentAction` which:
-  - Processes credit top-up (adds credit to customer balance)
-  - Calculates and applies bonus credit (if applicable)
-  - Marks order as paid
-  - Creates StoreLedger entry
-  - Processes RSVP prepaid payment if `rsvpId` is in checkoutAttributes
-- Handles Next.js redirect errors properly (doesn't log them)
-- Shows loading state with `SuccessAndRedirect` component during processing
+- Uses standard checkout payment routes (not recharge-specific routes)
+- Payment confirmation handled by standard Stripe confirmed page
+- Success page includes RSVP redirect logic for recharge orders linked to reservations
+- All payment processing uses unified `/checkout/[orderId]/[payUrl]` pattern
 
 **LINE Pay Confirmation:**
 
@@ -1259,7 +1246,631 @@ export async function POST(
 
 ### 6.1 Payment Flow
 
-#### 6.1.1 Stripe Payment Flow
+#### 6.1.0 Regular Store Order Payment
+
+**Overview:**
+
+This section describes the technical implementation of the regular store order payment flow. The system processes payments for regular store orders through a plugin-based architecture where payment method plugins handle payment initiation, processing, and confirmation.
+
+**Technical Flow:**
+
+**1. Order Creation:**
+
+**Location:** `src/actions/store/order/create-order.ts`
+
+**Process:**
+
+- Customer completes checkout and selects payment method
+- Server action `createOrderAction` creates `StoreOrder` with:
+  - `orderStatus`: `OrderStatus.Pending` (or `OrderStatus.Processing` if `store.autoAcceptOrder` is enabled)
+  - `paymentStatus`: `PaymentStatus.Pending`
+  - `isPaid`: `false`
+  - `paymentMethodId`: Selected payment method ID
+  - `orderTotal`: Total amount to be paid (calculated from order items, shipping, taxes, discounts)
+  - `currency`: Currency from store settings (default: "twd")
+  - `checkoutAttributes`: JSON string for plugin-specific data (initialized as empty string)
+  - `checkoutRef`: Reference ID from payment gateway (initialized as empty string)
+- Order is created with all related `OrderItem` and `OrderNote` records
+- Returns complete order object with all relations
+
+**Code Reference:**
+
+```typescript
+// In create-order.ts
+export const createOrderAction = userRequiredActionClient
+  .metadata({ name: "createOrder" })
+  .schema(createOrderSchema)
+  .action(async ({ parsedInput }) => {
+    // ... validation ...
+    const order = await sqlClient.storeOrder.create({
+      data: {
+        storeId,
+        userId,
+        // ... other fields ...
+        paymentStatus: PaymentStatus.Pending,
+        orderStatus: store.autoAcceptOrder ? OrderStatus.Processing : OrderStatus.Pending,
+        isPaid: false,
+        paymentMethodId,
+        orderTotal: calculatedTotal,
+        currency: store.currency || "twd",
+        checkoutAttributes: "",
+        checkoutRef: "",
+        // ... timestamps ...
+      },
+    });
+    return { order };
+  });
+```
+
+**2. Payment Processing Delegation:**
+
+**Location:** Payment method plugin implementations
+
+**Standard Payment URL Pattern:**
+
+All payment processing (regular orders, credit recharge, RSVP prepaid) uses the unified URL pattern:
+
+```text
+/checkout/[orderId]/[payUrl]?returnUrl=[optional_custom_url]
+```
+
+Where:
+
+- `orderId`: The `StoreOrder.id` (UUID)
+- `payUrl`: The `PaymentMethod.payUrl` value (e.g., "stripe", "linepay", "credit", "cash")
+- `returnUrl` (optional): Custom URL to redirect customer after payment success or failure. If not provided, uses default success/failure pages.
+
+**Examples:**
+
+- Stripe: `/checkout/[orderId]/stripe`
+- LINE Pay: `/checkout/[orderId]/linePay`
+- Credit: `/checkout/[orderId]/credit`
+- Cash: `/checkout/[orderId]/cash`
+- With custom return URL: `/checkout/[orderId]/stripe?returnUrl=https://example.com/success`
+
+**Return URL Behavior:**
+
+The optional `returnUrl` query parameter allows custom redirect destinations after payment processing:
+
+- **On Success**: Customer is redirected to the `returnUrl` (if provided) or default success page
+- **On Failure**: Customer is redirected to the `returnUrl` with `?status=failed` query parameter (if provided) or default failure page
+- **Default Behavior**: If `returnUrl` is not provided:
+  - Success: `/checkout/[orderId]/[payUrl]/success` (e.g., `/checkout/[orderId]/stripe/success`)
+  - Failure: `/checkout/[orderId]/[payUrl]/canceled` or payment method-specific failure page
+
+**Success Page Pattern:**
+
+After payment confirmation, all orders redirect to:
+
+- **With returnUrl**: Customer redirected to `returnUrl` (success) or `returnUrl?status=failed` (failure)
+- **Without returnUrl**:
+  - Payment method-specific success: `/checkout/[orderId]/[payUrl]/success` (e.g., `/checkout/[orderId]/stripe/success`)
+  - Generic success (for immediate payments): `/checkout/[orderId]/success`
+
+**Process:**
+
+- System delegates payment processing to the selected payment method plugin
+- Plugin is identified by `PaymentMethod.payUrl` field (e.g., "stripe", "linepay", "credit", "cash")
+- After order creation, client redirects to: `/checkout/${orderId}/${paymentMethod.payUrl}?returnUrl=${encodeURIComponent(customUrl)}` (returnUrl is optional)
+- Payment page extracts `returnUrl` from query parameters (if provided)
+- Plugin handles payment initiation according to its implementation:
+  - **External Gateway Plugins** (Stripe, LINE Pay):
+    - Create payment intent/request via gateway API
+    - Store payment intent/transaction ID in `order.checkoutAttributes` or `order.checkoutRef`
+    - Use `returnUrl` (if provided) or default confirmed URL for gateway redirect
+    - Redirect user to external payment page
+    - On return from gateway, redirect to `returnUrl` (success) or `returnUrl?status=failed` (failure)
+  - **Internal Processing Plugins** (Credit, Cash):
+    - Process payment immediately (credit deduction or cash confirmation)
+    - May mark order as paid immediately (cash with immediate confirmation)
+    - Store plugin-specific data in `order.checkoutAttributes`
+    - Redirect to `returnUrl` (if provided) or generic success page: `/checkout/${orderId}/success`
+
+**Plugin Interface:**
+
+```typescript
+// Payment method plugins implement PaymentMethodPlugin interface
+interface PaymentMethodPlugin {
+  processPayment(
+    order: StoreOrder,
+    config: PluginConfig
+  ): Promise<PaymentResult>;
+  
+  confirmPayment(
+    orderId: string,
+    paymentData: PaymentData,
+    config: PluginConfig
+  ): Promise<PaymentConfirmation>;
+}
+```
+
+**3. Cash/In-Person Payment Specific Flow:**
+
+**Location:** `src/actions/store/order/mark-order-as-paid.ts` or `src/actions/storeAdmin/order/mark-order-as-paid.ts`
+
+**Process:**
+
+- Orders with cash/in-person payment method (`payUrl = "cash"`) are created with `paymentStatus = Pending`
+- Payment confirmation can be handled in two ways:
+  - **Immediate confirmation**: Order marked as paid immediately upon creation (if configured)
+    - Implemented in `createOrderAction` for cash payments with immediate confirmation flag
+  - **Manual confirmation**: Store staff manually confirms payment receipt via admin interface
+    - API route: `POST /api/storeAdmin/[storeId]/orders/cash-mark-as-paid/[orderId]`
+    - Server action: `markOrderAsPaidAction` (store admin version)
+- Cash payments have zero processing fees:
+  - No gateway fees (`fee = 0`)
+  - No platform fees (`platformFee = 0`)
+- Suitable for in-store transactions, order pickup, or delivery scenarios
+
+**4. Payment Confirmation:**
+
+**Location:** Payment method plugin implementations + `src/actions/store/order/mark-order-as-paid.ts`
+
+**Process:**
+
+- After payment confirmation (via webhook, redirect callback, or manual confirmation):
+- System calls `markOrderAsPaidAction` which:
+  1. Validates order exists and is not already paid (idempotent check)
+  2. Determines if platform payment processing is used:
+     - Free stores: always use platform
+     - Pro stores: use platform if `LINE_PAY_ID` or `STRIPE_SECRET_KEY` configured
+  3. Calculates fees:
+     - Gateway fees: `fee = orderTotal * paymentMethod.fee + paymentMethod.feeAdditional`
+     - Platform fees: `platformFee = orderTotal * 0.01` (Free stores only)
+  4. Calculates availability date: `availability = order.updatedAt + paymentMethod.clearDays`
+  5. In a database transaction:
+     - Updates order:
+       - `isPaid`: `true`
+       - `paidDate`: Current timestamp (`getUtcNowEpoch()`)
+       - `paymentStatus`: `PaymentStatus.Paid`
+       - `orderStatus`: `OrderStatus.Processing` (or `OrderStatus.Confirmed` based on order type)
+     - Creates `StoreLedger` entry:
+       - `type`: `PlatformPayment` (0) or `StorePaymentProvider` (1)
+       - `amount`: `orderTotal` (positive)
+       - `fee`: Gateway fees (negative)
+       - `platformFee`: Platform fee (negative, Free stores only)
+       - `availability`: Calculated availability date
+       - `orderId`: Reference to the order
+       - `description`: "Order payment"
+  6. Returns updated order with all relations
+
+**Code Reference:**
+
+```typescript
+// In mark-order-as-paid.ts
+export const markOrderAsPaidAction = baseClient
+  .metadata({ name: "markOrderAsPaid" })
+  .schema(markOrderAsPaidSchema)
+  .action(async ({ parsedInput }) => {
+    const { orderId, checkoutAttributes } = parsedInput;
+    
+    // ... validation and idempotency check ...
+    
+    // Calculate fees
+    const fee = calculateGatewayFees(order.orderTotal, paymentMethod);
+    const platformFee = isFreeStore ? order.orderTotal * 0.01 : 0;
+    const availability = order.updatedAt + BigInt(paymentMethod.clearDays * 24 * 60 * 60 * 1000);
+    
+    // Transaction: Update order + Create ledger entry
+    await sqlClient.$transaction(async (tx) => {
+      await tx.storeOrder.update({
+        where: { id: orderId },
+        data: {
+          isPaid: true,
+          paidDate: getUtcNowEpoch(),
+          paymentStatus: PaymentStatus.Paid,
+          orderStatus: OrderStatus.Processing,
+          checkoutAttributes: checkoutAttributes || order.checkoutAttributes,
+        },
+      });
+      
+      await tx.storeLedger.create({
+        data: {
+          storeId: order.storeId,
+          type: isPlatformPayment ? 0 : 1, // PlatformPayment or StorePaymentProvider
+          amount: order.orderTotal,
+          fee: -fee,
+          platformFee: -platformFee,
+          availability,
+          orderId: order.id,
+          description: "Order payment",
+        },
+      });
+    });
+    
+    return { order: updatedOrder };
+  });
+```
+
+**5. Payment Confirmation by Plugins:**
+
+**FR-PAY-010 Implementation:**
+
+- Each payment method plugin implements payment confirmation logic via `confirmPayment()` method
+- Plugins verify payment status via their payment gateway API (if applicable):
+  - **Stripe Plugin**: Verifies `PaymentIntent` status via Stripe API
+  - **LINE Pay Plugin**: Verifies transaction status via LINE Pay API
+  - **Credit Plugin**: Verifies credit deduction was successful (internal check)
+  - **Cash Plugin**: Manual confirmation (no API verification needed)
+- Plugins return `PaymentConfirmation` with:
+  - `success`: boolean
+  - `paymentStatus`: "paid" | "failed" | "pending"
+  - `paymentData`: Additional payment information
+- Payment must be verified by plugin before marking order as paid
+- System calls `markOrderAsPaidAction` only after plugin confirms payment success
+
+**Plugin Confirmation Pattern:**
+
+```typescript
+// Example: Stripe plugin confirmation
+async confirmPayment(
+  orderId: string,
+  paymentData: PaymentData,
+  config: PluginConfig
+): Promise<PaymentConfirmation> {
+  const paymentIntentId = paymentData.paymentIntentId;
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  
+  if (paymentIntent.status === "succeeded") {
+    return {
+      success: true,
+      paymentStatus: "paid",
+      paymentData: { paymentIntentId },
+    };
+  }
+  
+  return {
+    success: false,
+    paymentStatus: "failed",
+    error: "Payment not completed",
+  };
+}
+```
+
+**State Transitions:**
+
+```text
+Order Creation:
+  orderStatus: Pending → Processing (if autoAcceptOrder) or Pending
+  paymentStatus: Pending
+  isPaid: false
+
+Payment Confirmation:
+  orderStatus: Pending/Processing → Processing/Confirmed
+  paymentStatus: Pending → Paid
+  isPaid: false → true
+  paidDate: null → Current timestamp
+```
+
+**Error Handling:**
+
+- Order creation failures: Return error to client, order not created
+- Payment processing failures: Order remains in `Pending` state, user can retry
+- Payment confirmation failures: Order remains unpaid, can be retried or cancelled
+- Idempotent operations: `markOrderAsPaidAction` checks if order is already paid before processing
+
+**Related Sections:**
+
+- Section 5.1.1: Order Payment Actions (server actions)
+- Section 6.1.1: Payment Method Plugin Configuration (configuration management)
+- Section 6.1.2: Stripe Payment Flow (specific implementation)
+- Section 6.1.3: LINE Pay Payment Flow (specific implementation)
+- Section 6.1.4: Credit-Based Payment Flow (specific implementation)
+- Section 6.1.5: Cash/In-Person Payment Flow (specific implementation)
+- Section 4: Payment Method Plugin Interface (plugin architecture)
+
+#### 6.1.1 Payment Method Plugin Configuration
+
+**Overview:**
+
+This section describes the technical implementation of multi-level configuration for payment method plugins. The system supports platform-level and store-level configuration with a priority hierarchy: Store-level > Platform-level > Plugin defaults.
+
+**FR-PAY-011 Implementation: Multi-Level Configuration**
+
+**Configuration Hierarchy:**
+
+1. **Store-level Configuration** (highest priority)
+2. **Platform-level Configuration** (fallback)
+3. **Plugin Defaults** (lowest priority)
+
+**Platform-level Configuration:**
+
+**Location:** Platform configuration storage (environment variables, database, or config files)
+
+**Process:**
+
+- System Admins configure default settings for each plugin
+- Platform configuration includes:
+  - Default credentials (API keys, secrets)
+  - Fee structure (fee rate, additional fees)
+  - Plugin-specific settings (endpoints, timeouts, etc.)
+- Platform configuration serves as fallback for stores
+- Stored in system-wide configuration (e.g., environment variables like `STRIPE_SECRET_KEY`, `LINE_PAY_ID`)
+
+**Code Reference:**
+
+```typescript
+// Platform configuration example
+const platformConfig = {
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  },
+  linepay: {
+    channelId: process.env.LINE_PAY_ID,
+    channelSecret: process.env.LINE_PAY_SECRET,
+    sandbox: process.env.LINE_PAY_SANDBOX === "true",
+  },
+};
+```
+
+**Store-level Configuration:**
+
+**Location:** `StorePaymentMethodMapping` table + plugin-specific configuration tables (future enhancement)
+
+**Process:**
+
+- Store Admins can override platform configuration with store-specific settings
+- Store configuration includes:
+  - Store-specific credentials (for Pro-level stores)
+  - Fee overrides (custom fee rates)
+  - Plugin-specific options (store-specific endpoints, custom settings)
+- Store configuration takes precedence over platform configuration
+- Currently implemented via:
+  - `StorePaymentMethodMapping` table (maps payment methods to stores)
+  - Environment variable checks for store-specific credentials (future: database storage)
+
+**Code Reference:**
+
+```typescript
+// Store configuration lookup pattern
+async function getPluginConfig(storeId: string, pluginId: string): Promise<PluginConfig> {
+  const store = await sqlClient.store.findUnique({
+    where: { id: storeId },
+    include: { StorePaymentMethodMapping: true },
+  });
+  
+  // Check for store-level configuration first
+  const storeConfig = await getStoreLevelConfig(storeId, pluginId);
+  if (storeConfig) {
+    return {
+      storeId,
+      storeConfig,
+      platformConfig: getPlatformConfig(pluginId), // Fallback
+    };
+  }
+  
+  // Fall back to platform configuration
+  return {
+    storeId,
+    platformConfig: getPlatformConfig(pluginId),
+  };
+}
+```
+
+**FR-PAY-012 Implementation: Configuration Routing**
+
+**Configuration Resolution Logic:**
+
+**Location:** Plugin implementations and configuration helper functions
+
+**Process:**
+
+1. **Plugins check for store-level configuration first:**
+   - Query `StorePaymentMethodMapping` for store-specific payment method mapping
+   - Check for store-specific credentials in database (future enhancement)
+   - Check for store-specific environment variables (e.g., `STRIPE_SECRET_KEY_${storeId}`)
+
+2. **If store-level configuration is not available, plugins use platform-level configuration:**
+   - Read from environment variables (e.g., `STRIPE_SECRET_KEY`, `LINE_PAY_ID`)
+   - Read from platform configuration database (future enhancement)
+
+3. **If platform-level configuration is not available, plugins use default configuration:**
+   - Plugin-defined defaults (e.g., default fee rates from `PaymentMethod` table)
+   - Fallback values for missing configuration
+
+**Store Tier Restrictions:**
+
+- **Free-level stores:**
+  - Configuration may be restricted (e.g., must use platform credentials)
+  - Cannot configure store-specific credentials
+  - Must use platform payment processing
+  - Platform fee applies (1% of order total)
+
+- **Pro-level stores:**
+  - Can configure store-specific credentials and settings
+  - Can use own payment gateway accounts
+  - Can override fee structures (via `PaymentMethod` configuration)
+  - No platform fee (if using own payment processing)
+
+**Code Reference:**
+
+```typescript
+// Configuration resolution in plugin
+async function resolveConfig(storeId: string, pluginId: string): Promise<PluginConfig> {
+  const store = await sqlClient.store.findUnique({
+    where: { id: storeId },
+  });
+  
+  // Free stores: always use platform config
+  if (store.tier === "FREE") {
+    return {
+      storeId,
+      platformConfig: getPlatformConfig(pluginId),
+    };
+  }
+  
+  // Pro stores: check for store-level config first
+  const storeConfig = await getStoreLevelConfig(storeId, pluginId);
+  if (storeConfig) {
+    return {
+      storeId,
+      storeConfig,
+      platformConfig: getPlatformConfig(pluginId), // Fallback
+    };
+  }
+  
+  // Fallback to platform config
+  return {
+    storeId,
+    platformConfig: getPlatformConfig(pluginId),
+  };
+}
+```
+
+**FR-PAY-013 Implementation: Configuration Validation**
+
+**Validation Process:**
+
+**Location:** Plugin `validateConfiguration()` method implementation
+
+**Process:**
+
+- Plugins validate configuration when enabled or updated
+- Invalid configuration prevents plugin from being enabled
+- Configuration validation includes:
+  - **Credential validation** (when applicable):
+    - API key format validation
+    - Test API calls to verify credentials work
+    - Webhook endpoint validation
+  - **Fee structure validation**:
+    - Fee rates must be between 0 and 1 (0% to 100%)
+    - Additional fees must be non-negative
+  - **Required field validation**:
+    - All required fields must be present
+    - Field types must match expected types
+- Configuration errors are reported to System/Store Admins
+
+**Code Reference:**
+
+```typescript
+// Plugin validation implementation
+interface PaymentMethodPlugin {
+  validateConfiguration(config: PluginConfig): ValidationResult;
+}
+
+// Example: Stripe plugin validation
+async validateConfiguration(config: PluginConfig): Promise<ValidationResult> {
+  const errors: string[] = [];
+  
+  // Determine which config to validate (store-level or platform-level)
+  const configToValidate = config.storeConfig || config.platformConfig;
+  
+  if (!configToValidate) {
+    return {
+      valid: false,
+      errors: ["No configuration provided"],
+    };
+  }
+  
+  // Validate secret key
+  if (!configToValidate.secretKey || !configToValidate.secretKey.startsWith("sk_")) {
+    errors.push("Invalid Stripe secret key format");
+  }
+  
+  // Validate publishable key
+  if (!configToValidate.publishableKey || !configToValidate.publishableKey.startsWith("pk_")) {
+    errors.push("Invalid Stripe publishable key format");
+  }
+  
+  // Test API call (optional, can be expensive)
+  if (errors.length === 0) {
+    try {
+      const stripe = new Stripe(configToValidate.secretKey);
+      await stripe.customers.list({ limit: 1 }); // Test API call
+    } catch (error) {
+      errors.push(`Stripe API test failed: ${error.message}`);
+    }
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+}
+```
+
+**Configuration Storage:**
+
+**Current Implementation:**
+
+- Platform-level: Environment variables
+- Store-level: `StorePaymentMethodMapping` table (basic mapping only)
+- Payment method defaults: `PaymentMethod` table (fee rates, clear days)
+
+**Future Enhancement:**
+
+- Database storage for platform-level configuration
+- Database storage for store-level configuration (plugin-specific config tables)
+- Configuration UI for System Admins and Store Admins
+- Configuration versioning and audit logging
+
+**Database Schema:**
+
+```prisma
+// Current: StorePaymentMethodMapping
+model StorePaymentMethodMapping {
+  id                 String  @id @default(uuid())
+  storeId            String
+  methodId           String
+  paymentDisplayName String? // Optional custom display name for store
+  
+  Store         Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  PaymentMethod PaymentMethod @relation(fields: [methodId], references: [id], onDelete: Cascade)
+  
+  @@unique([storeId, methodId])
+}
+
+// Future: Plugin-specific configuration tables
+// Example: StripePluginConfig
+model StripePluginConfig {
+  id              String  @id @default(uuid())
+  storeId         String? // null for platform-level config
+  secretKey       String
+  publishableKey  String
+  webhookSecret   String?
+  // ... other plugin-specific fields
+}
+```
+
+**Configuration Access Pattern:**
+
+```typescript
+// Helper function to get merged configuration
+async function getMergedConfig(
+  storeId: string,
+  pluginId: string
+): Promise<MergedPluginConfig> {
+  // 1. Get platform config
+  const platformConfig = await getPlatformConfig(pluginId);
+  
+  // 2. Get store config (if exists)
+  const storeConfig = await getStoreConfig(storeId, pluginId);
+  
+  // 3. Merge: store config overrides platform config
+  return {
+    ...platformConfig,
+    ...storeConfig, // Store config takes precedence
+  };
+}
+```
+
+**Error Handling:**
+
+- Configuration validation failures: Return validation errors to admin interface
+- Missing configuration: Use plugin defaults or return error if required
+- Invalid credentials: Log error, prevent plugin activation, notify admin
+- Configuration update failures: Rollback changes, maintain previous configuration
+
+**Related Sections:**
+
+- Section 4.2: Type Definitions (`PluginConfig` interface)
+- Section 4.3: Plugin Registration (plugin registration mechanism)
+- Section 5.1.1: Order Payment Actions (configuration usage in payment processing)
+- Section 6.1.0: Regular Store Order Payment (configuration routing in payment flow)
+
+#### 6.1.2 Stripe Payment Flow
 
 **Overview:**
 
@@ -1296,7 +1907,7 @@ The Stripe payment flow uses Stripe Elements for client-side payment processing.
   - `isPaid = false`
   - `paymentMethodId` = Stripe payment method ID
 - Returns created order object
-- Client redirects to: `/checkout/${order.id}/stripe`
+- Client redirects to: `/checkout/${order.id}/${paymentMethod.payUrl}` (standard payment URL pattern)
 
 **Code Reference:**
 
@@ -1384,20 +1995,33 @@ useEffect(() => {
 
 ```typescript
 // In StripePayButton component
+// Extract returnUrl from query parameters (optional)
+const searchParams = useSearchParams();
+const returnUrl = searchParams.get('returnUrl');
+
 const fetchData = async () => {
   if (!stripe || !elements) return;
+  
+  // Use returnUrl if provided, otherwise use default confirmed URL
+  const confirmedUrl = returnUrl 
+    ? `${getAbsoluteUrl()}/checkout/${orderId}/stripe/confirmed?returnUrl=${encodeURIComponent(returnUrl)}`
+    : `${getAbsoluteUrl()}/checkout/${orderId}/stripe/confirmed`;
   
   const { error } = await stripe.confirmPayment({
     elements,
     confirmParams: {
-      return_url: `${getAbsoluteUrl()}/checkout/${orderId}/stripe/confirmed`,
+      return_url: confirmedUrl,
     },
   });
   
   if (error) {
     setErrorMessage(error.message);
+    // On error, redirect to returnUrl with status=failed if provided
+    if (returnUrl) {
+      router.push(`${returnUrl}?status=failed`);
+    }
   } else {
-    router.push(returnUrl);
+    router.push(confirmedUrl);
   }
 };
 ```
@@ -1408,8 +2032,12 @@ const fetchData = async () => {
 
 **Process:**
 
-- Stripe redirects to: `/checkout/[orderId]/stripe/confirmed?payment_intent=pi_xxx&payment_intent_client_secret=pi_xxx_secret_xxx&redirect_status=succeeded`
-- Server component extracts query parameters
+- Stripe redirects to: `/checkout/[orderId]/stripe/confirmed?payment_intent=pi_xxx&payment_intent_client_secret=pi_xxx_secret_xxx&redirect_status=succeeded&returnUrl=[optional]`
+- Server component extracts query parameters:
+  - `payment_intent`: PaymentIntent ID from Stripe
+  - `payment_intent_client_secret`: Client secret for verification
+  - `redirect_status`: "succeeded" or "failed"
+  - `returnUrl` (optional): Custom return URL passed through from payment page
 - Verifies `redirect_status === "succeeded"`
 - Calls Stripe API to verify PaymentIntent:
   - `stripe.paymentIntents.retrieve(payment_intent, { client_secret })`
@@ -1429,9 +2057,14 @@ const fetchData = async () => {
     - Creates `StoreLedger` entry with fees
     - Calculates payment processing fees
   - Logs success
-  - Redirects to: `/checkout/[orderId]/stripe/success`
+  - Redirects based on `returnUrl`:
+    - If `returnUrl` provided: Redirects to `returnUrl` (success)
+    - If `returnUrl` not provided: Redirects to `/checkout/[orderId]/stripe/success` (default)
 - If verification fails:
   - Logs error
+  - Redirects based on `returnUrl`:
+    - If `returnUrl` provided: Redirects to `returnUrl?status=failed`
+    - If `returnUrl` not provided: Redirects to default failure page or shows error
   - Shows error state (does not mark as paid)
 
 **Code Reference:**
@@ -1572,7 +2205,7 @@ isPaid: false → true
 - [ ] Success page displays correctly
 - [ ] Error states handled gracefully
 
-#### 6.1.2 LINE Pay Payment Flow
+#### 6.1.3 LINE Pay Payment Flow
 
 **Overview:**
 
@@ -1609,7 +2242,7 @@ The LINE Pay payment flow uses LINE Pay's online payment API for payment process
   - `isPaid = false`
   - `paymentMethodId` = LINE Pay payment method ID
 - Returns created order object
-- Client redirects to: `/checkout/${order.id}/linePay`
+- Client redirects to: `/checkout/${order.id}/${paymentMethod.payUrl}` (standard payment URL pattern)
 
 **Code Reference:**
 
@@ -1641,9 +2274,10 @@ const placeOrder = async () => {
   - Gets LINE Pay client via `getLinePayClientByStore(store)`
   - Detects mobile vs desktop user agent
   - Determines protocol (http for dev, https for production)
+  - Extracts `returnUrl` from query parameters (optional)
   - Constructs redirect URLs:
-    - `confirmUrl`: `/checkout/${orderId}/linePay/confirmed`
-    - `cancelUrl`: `/checkout/${orderId}/linePay/canceled`
+    - `confirmUrl`: `/checkout/${orderId}/linePay/confirmed` (with optional `?returnUrl=[encoded_url]` if provided)
+    - `cancelUrl`: `/checkout/${orderId}/linePay/canceled` (with optional `?returnUrl=[encoded_url]` if provided)
 - Prepares LINE Pay request body:
   - `amount`: `Number(order.orderTotal)`
   - `currency`: `order.currency` (as `Currency` type)
@@ -1741,10 +2375,11 @@ if (res.body.returnCode === "0000") {
 
 **Process:**
 
-- LINE Pay redirects to: `/checkout/[orderId]/linePay/confirmed?orderId=xxx&transactionId=xxx`
+- LINE Pay redirects to: `/checkout/[orderId]/linePay/confirmed?orderId=xxx&transactionId=xxx&returnUrl=[optional]`
 - Server component extracts query parameters:
   - `orderId`: Order ID
   - `transactionId`: Transaction ID from LINE Pay
+  - `returnUrl` (optional): Custom return URL passed through from payment page
 - Validates:
   - `orderId` is present
   - Order exists via `getOrderById`
@@ -1762,10 +2397,14 @@ if (res.body.returnCode === "0000") {
     - Creates `StoreLedger` entry with fees
     - Calculates payment processing fees
   - Logs success
-  - Redirects to: `/checkout/[orderId]/linePay/success`
+  - Redirects based on `returnUrl`:
+    - If `returnUrl` provided: Redirects to `returnUrl` (success)
+    - If `returnUrl` not provided: Redirects to `/checkout/[orderId]/linePay/success` (default)
 - If confirmation fails:
   - Logs error
-  - Returns empty component (error state)
+  - Redirects based on `returnUrl`:
+    - If `returnUrl` provided: Redirects to `returnUrl?status=failed`
+    - If `returnUrl` not provided: Returns empty component (error state)
   - Order remains in `Pending` state
 
 **Code Reference:**
@@ -1947,7 +2586,7 @@ isPaid: false → true
 - [ ] Payment request failure handled
 - [ ] Transaction ID mismatch detected
 
-#### 6.1.3 Credit-Based Payment Flow
+#### 6.1.4 Credit-Based Payment Flow
 
 **Overview:**
 
@@ -2250,7 +2889,7 @@ CustomerCredit: balance → balance - requiredCredit
 - [ ] Credit exchange rate calculation
 - [ ] Multiple concurrent credit payments (race condition handling)
 
-#### 6.1.4 Cash/In-Person Payment Flow
+#### 6.1.5 Cash/In-Person Payment Flow
 
 **Overview:**
 
@@ -3591,7 +4230,7 @@ if (paymentIntent && paymentIntent.status === "succeeded") {
 
 - `src/lib/payment/plugins/stripe-plugin.ts` - Plugin verification method
 - `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx` - Confirmation page
-- `src/app/s/[storeId]/recharge/[orderId]/stripe/confirmed/page.tsx` - Credit recharge confirmation
+- `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx` - Payment confirmation (used for all orders including recharge)
 
 **Testing Checklist:**
 

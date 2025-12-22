@@ -2,10 +2,9 @@
 
 import {
 	GoogleReCaptchaProvider,
-	GoogleReCaptcha,
 	useGoogleReCaptcha,
 } from "@wojtekmaj/react-recaptcha-v3";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo } from "react";
 
 import { useIsHydrated } from "@/hooks/use-hydrated";
 import { useTheme } from "@/hooks/use-theme";
@@ -28,7 +27,6 @@ export function RecaptchaProvider({
 }) {
 	const isHydrated = useIsHydrated();
 	const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA as string;
-	const [token, setToken] = useState("");
 
 	// Check if site key is configured
 	if (!siteKey) {
@@ -37,14 +35,10 @@ export function RecaptchaProvider({
 		return <>{children}</>;
 	}
 
-	return (
-		<GoogleReCaptchaProvider
-			reCaptchaKey={siteKey}
-			useEnterprise={useEnterprise}
-			useRecaptchaNet={false}
-		>
-			{isHydrated && (
-				<style>{`
+	// Memoize the badge styles to prevent re-renders
+	const badgeStyles = useMemo(
+		() => (
+			<style>{`
                     .grecaptcha-badge {
                         visibility: hidden;
                         border-radius: var(--radius) !important;
@@ -58,18 +52,24 @@ export function RecaptchaProvider({
                         border-color: var(--input) !important;
                     }
                 `}</style>
-			)}
+		),
+		[],
+	);
+
+	return (
+		<GoogleReCaptchaProvider
+			reCaptchaKey={siteKey}
+			useEnterprise={useEnterprise}
+			useRecaptchaNet={false}
+		>
+			{isHydrated && badgeStyles}
 			<RecaptchaV3Style />
 			{children}
-			<GoogleReCaptcha
-				onVerify={(token) => {
-					if (token) {
-						setToken(token);
-					} else {
-						console.warn("reCAPTCHA returned empty token");
-					}
-				}}
-			/>
+			{/* 
+				Note: GoogleReCaptcha component removed to prevent WebGL context issues.
+				For reCAPTCHA v3, the badge is automatically rendered by Google's script.
+				Components can use useGoogleReCaptcha() hook directly to execute reCAPTCHA.
+			*/}
 		</GoogleReCaptchaProvider>
 	);
 }

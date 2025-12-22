@@ -20,7 +20,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 	.metadata({ name: "createRechargeOrder" })
 	.schema(createRechargeOrderSchema)
 	.action(async ({ parsedInput }) => {
-		const { storeId, creditAmount, rsvpId } = parsedInput;
+		const { storeId, creditAmount, paymentMethodId, rsvpId } = parsedInput;
 
 		const session = await auth.api.getSession({
 			headers: await headers(),
@@ -84,16 +84,33 @@ export const createRechargeOrderAction = userRequiredActionClient
 			throw new SafeError("No shipping method available");
 		}
 
-		// Find Stripe payment method (default for credit recharge)
-		const stripePaymentMethod = await sqlClient.paymentMethod.findFirst({
-			where: {
-				payUrl: "stripe",
-				isDeleted: false,
-			},
+		// Validate payment method exists and is enabled for store
+		const paymentMethod = await sqlClient.paymentMethod.findUnique({
+			where: { id: paymentMethodId },
 		});
 
-		if (!stripePaymentMethod) {
-			throw new SafeError("Stripe payment method not found");
+		if (!paymentMethod) {
+			throw new SafeError("Payment method not found");
+		}
+
+		if (paymentMethod.isDeleted) {
+			throw new SafeError("Payment method is not available");
+		}
+
+		// Check if payment method is enabled for this store
+		const storePaymentMethodMapping =
+			await sqlClient.storePaymentMethodMapping.findUnique({
+				where: {
+					storeId_methodId: {
+						storeId,
+						methodId: paymentMethodId,
+					},
+				},
+			});
+
+		// If no mapping exists, check if it's a default payment method
+		if (!storePaymentMethodMapping && !paymentMethod.isDefault) {
+			throw new SafeError("Payment method is not enabled for this store");
 		}
 
 		// Create StoreOrder for recharge
@@ -112,7 +129,7 @@ export const createRechargeOrderAction = userRequiredActionClient
 				isPaid: false,
 				orderTotal: new Prisma.Decimal(dollarAmount),
 				currency: store.defaultCurrency,
-				paymentMethodId: stripePaymentMethod.id, // Use Stripe payment method ID
+				paymentMethodId: paymentMethod.id, // Use selected payment method ID
 				shippingMethodId: defaultShippingMethod.id,
 				pickupCode: undefined, // Optional field - use undefined instead of null
 				checkoutAttributes,

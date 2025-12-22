@@ -21,10 +21,15 @@ export default async function StripeConfirmedPage(props: {
 		payment_intent?: string;
 		payment_intent_client_secret?: string;
 		redirect_status?: string;
+		returnUrl?: string;
 	}>;
 }) {
 	const searchParams = await props.searchParams;
 	const params = await props.params;
+	const returnUrl =
+		typeof searchParams.returnUrl === "string"
+			? searchParams.returnUrl
+			: undefined;
 
 	if (!params.orderId) {
 		throw new Error("Order ID is missing");
@@ -76,10 +81,14 @@ export default async function StripeConfirmedPage(props: {
 					});
 				}
 
-				// Redirect to success page
-				redirect(
-					`${getAbsoluteUrl()}/checkout/${params.orderId}/stripe/success`,
-				);
+				// Redirect to returnUrl if provided, otherwise default success page
+				if (returnUrl) {
+					redirect(returnUrl);
+				} else {
+					redirect(
+						`${getAbsoluteUrl()}/checkout/${params.orderId}/stripe/success`,
+					);
+				}
 			}
 		} catch (error) {
 			if (error instanceof Error && error.message === "NEXT_REDIRECT") {
