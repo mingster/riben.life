@@ -384,6 +384,8 @@ model PaymentMethod {
   isDeleted                 Boolean                     @default(false)
   isDefault                 Boolean                     @default(false)
   canDelete                 Boolean                     @default(false) //store owner cannot delete this method
+  visibleToCustomer                 Boolean                     @default(false)
+
   createdAt                 BigInt
   updatedAt                 BigInt
   StorePaymentMethodMapping StorePaymentMethodMapping[]

@@ -35,6 +35,10 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 		return <></>;
 	}
 
+	// Safety check: Use storeId as fallback if Store relation is not loaded
+	const storeId = order.Store?.id || order.storeId;
+	const storeName = order.Store?.name || "Store";
+
 	//console.log('order', JSON.stringify(order));
 	//console.log("status", order.orderStatus);
 
@@ -70,12 +74,16 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 				<div className="space-y-2 sm:space-y-1 mb-3">
 					<div className="flex items-start justify-between gap-2">
 						<div className="font-semibold text-sm sm:text-base truncate">
-							<Link
-								href={`/s/${order.Store.id}`}
-								className="hover:underline text-primary"
-							>
-								{order.Store.name}
-							</Link>
+							{storeId ? (
+								<Link
+									href={`/s/${storeId}`}
+									className="hover:underline text-primary"
+								>
+									{storeName}
+								</Link>
+							) : (
+								<span className="text-primary">{storeName}</span>
+							)}
 						</div>
 						<div className="text-[10px] sm:text-xs text-muted-foreground font-mono shrink-0">
 							{formatDateTime(order.createdAt)}

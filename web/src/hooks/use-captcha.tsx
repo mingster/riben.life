@@ -63,11 +63,29 @@ export function useCaptcha() {
 				});
 
 				if (!executeRecaptcha) {
+					// Check if grecaptcha is available as fallback
+					const grecaptcha = (window as any).grecaptcha;
+					if (!grecaptcha) {
+						throw new Error("reCAPTCHA not ready - script may be blocked or failed to load");
+					}
 					throw new Error("reCAPTCHA not ready");
 				}
 
 				// Add timeout to prevent infinite loading
+				// Also catch Google's internal timeout errors
 				try {
+					// Verify grecaptcha is available before executing
+					const grecaptcha = (window as any).grecaptcha;
+					if (grecaptcha) {
+						// Check if enterprise API is available (for Enterprise mode)
+						const hasEnterprise = grecaptcha.enterprise && grecaptcha.enterprise.execute;
+						const hasStandard = grecaptcha.execute;
+						
+						if (!hasEnterprise && !hasStandard) {
+							throw new Error("reCAPTCHA API not available - script may not be fully loaded");
+						}
+					}
+
 					const tokenPromise = executeRecaptcha(sanitizedAction);
 					const timeoutPromise = new Promise<never>((_, reject) =>
 						setTimeout(() => reject(new Error("reCAPTCHA timeout")), 10000),
@@ -75,13 +93,31 @@ export function useCaptcha() {
 					response = await Promise.race([tokenPromise, timeoutPromise]);
 					logger.info("reCAPTCHA response received");
 				} catch (error) {
+					// Handle Google's internal timeout errors
+					const errorMessage = error instanceof Error ? error.message : String(error);
+					const isTimeoutError = 
+						errorMessage.includes("timeout") || 
+						errorMessage.includes("Timeout") ||
+						errorMessage === "Timeout (b)";
+
 					logger.error("reCAPTCHA execution failed", {
 						metadata: {
-							error: error instanceof Error ? error.message : String(error),
+							error: errorMessage,
 							action: sanitizedAction,
+							isTimeout: isTimeoutError,
 						},
 						tags: ["captcha", "error"],
 					});
+
+					// Provide more helpful error message for timeout
+					if (isTimeoutError) {
+						throw new Error(
+							"reCAPTCHA timeout - The verification service is taking too long. " +
+							"This may be due to network issues, ad blockers, or the reCAPTCHA service being unavailable. " +
+							"Please try again or check your network connection."
+						);
+					}
+
 					throw error;
 				}
 				break;

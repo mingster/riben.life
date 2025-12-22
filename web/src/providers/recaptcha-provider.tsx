@@ -85,6 +85,30 @@ function RecaptchaV3Style() {
 		// Monitor script loading with timeout - only show error if script fails to load after delay
 		if (typeof window === "undefined") return;
 
+		// Handle unhandled promise rejections from Google's reCAPTCHA script
+		const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+			const errorMessage = event.reason?.message || String(event.reason || "");
+			if (
+				errorMessage.includes("timeout") ||
+				errorMessage.includes("Timeout") ||
+				errorMessage === "Timeout (b)" ||
+				errorMessage.includes("recaptcha")
+			) {
+				// Suppress the error from console - we handle it in our code
+				event.preventDefault();
+				console.warn(
+					"reCAPTCHA timeout detected. This may be due to:\n" +
+						"1. Network connectivity issues\n" +
+						"2. Ad blocker blocking reCAPTCHA\n" +
+						"3. reCAPTCHA service being temporarily unavailable\n" +
+						"4. Site key needs verification in Google Console\n\n" +
+						"The error has been caught and will be handled gracefully.",
+				);
+			}
+		};
+
+		window.addEventListener("unhandledrejection", handleUnhandledRejection);
+
 		// Wait for script to load - provider loads it asynchronously
 		const timeout = setTimeout(() => {
 			const grecaptcha = (window as any).grecaptcha;
@@ -104,7 +128,10 @@ function RecaptchaV3Style() {
 			}
 		}, 15000);
 
-		return () => clearTimeout(timeout);
+		return () => {
+			clearTimeout(timeout);
+			window.removeEventListener("unhandledrejection", handleUnhandledRejection);
+		};
 	}, [executeRecaptcha]);
 
 	useEffect(() => {

@@ -109,6 +109,7 @@ export default async function RootLayout({
 	const langCookie = cookieStore.get(cookieName);
 	const htmlLang = langCookie?.value ?? fallbackLng;
 
+	//<RecaptchaProvider useEnterprise={true}></RecaptchaProvider>
 	return (
 		<html lang={htmlLang} suppressHydrationWarning>
 			<head>
@@ -147,7 +148,7 @@ export default async function RootLayout({
 					enableSystem
 					disableTransitionOnChange
 				>
-					<RecaptchaProvider useEnterprise={true}>
+					
 						<CookiesProvider>
 							<I18nProvider initialLng={htmlLang}>
 								<SessionWrapper>
@@ -160,7 +161,7 @@ export default async function RootLayout({
 								</SessionWrapper>
 							</I18nProvider>
 						</CookiesProvider>
-					</RecaptchaProvider>
+					
 				</NextThemeProvider>
 				<Toaster />
 				{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (

@@ -7,7 +7,8 @@
 		"feeAdditional": 0.3,
 		"clearDays": 3,
 		"isDefault": true,
-		"canDelete": false
+		"canDelete": false,
+		"visibleToCustomer": true
 	},
 	{
 		"name": "PayPal",
@@ -17,7 +18,8 @@
 		"feeAdditional": 0.3,
 		"clearDays": 5,
 		"isDefault": false,
-		"canDelete": false
+		"canDelete": false,
+		"visibleToCustomer": false
 	},
 	{
 		"name": "LinePay",
@@ -27,7 +29,8 @@
 		"feeAdditional": 0,
 		"clearDays": 2,
 		"isDefault": true,
-		"canDelete": false
+		"canDelete": false,
+		"visibleToCustomer": true
 	},
 	{
 		"name": "ApplePay",
@@ -37,7 +40,8 @@
 		"feeAdditional": 0,
 		"clearDays": 2,
 		"isDefault": false,
-		"canDelete": true
+		"canDelete": true,
+		"visibleToCustomer": true
 	},
 	{
 		"name": "促銷贈送",
@@ -47,7 +51,8 @@
 		"feeAdditional": 0,
 		"clearDays": 0,
 		"isDefault": true,
-		"canDelete": false
+		"canDelete": false,
+		"visibleToCustomer": false
 	},
 	{
 		"name": "現金",
@@ -57,7 +62,8 @@
 		"feeAdditional": 0,
 		"clearDays": 0,
 		"isDefault": false,
-		"canDelete": false
+		"canDelete": false,
+		"visibleToCustomer": true
 	},
 	{
 		"name": "儲值點數",
@@ -67,6 +73,7 @@
 		"feeAdditional": 0,
 		"clearDays": 0,
 		"isDefault": false,
-		"canDelete": false
+		"canDelete": false,
+		"visibleToCustomer": false
 	}
 ]

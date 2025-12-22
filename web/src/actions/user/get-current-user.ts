@@ -35,6 +35,12 @@ const getCurrentUser = async (): Promise<User | null> => {
 					ShippingMethod: true,
 					PaymentMethod: true,
 					OrderItemView: true,
+					Store: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
 				},
 				orderBy: {
 					updatedAt: "desc",

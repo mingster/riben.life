@@ -10,6 +10,7 @@ export const createPaymentMethodSchema = z.object({
 	isDeleted: z.boolean().default(false),
 	isDefault: z.boolean().default(false),
 	canDelete: z.boolean().default(false),
+	visibleToCustomer: z.boolean().default(false),
 });
 
 export type CreatePaymentMethodInput = z.infer<

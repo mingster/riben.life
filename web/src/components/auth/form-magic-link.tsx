@@ -66,20 +66,38 @@ function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 			}
 
 			// Get reCAPTCHA token with timeout to prevent infinite loading
+			// Also handle Google's internal timeout errors
 			let recaptchaToken: string | null = null;
 			try {
+				// Verify grecaptcha is available before executing
+				const grecaptcha = (window as any).grecaptcha;
+				if (grecaptcha) {
+					// Check if enterprise API is available (for Enterprise mode)
+					const hasEnterprise = grecaptcha.enterprise && grecaptcha.enterprise.execute;
+					const hasStandard = grecaptcha.execute;
+					
+					if (!hasEnterprise && !hasStandard) {
+						throw new Error("reCAPTCHA API not available - script may not be fully loaded");
+					}
+				}
+
 				const tokenPromise = executeRecaptcha("magic_link_signin");
 				const timeoutPromise = new Promise<never>((_, reject) =>
 					setTimeout(() => reject(new Error("reCAPTCHA timeout")), 10000),
 				);
 				recaptchaToken = await Promise.race([tokenPromise, timeoutPromise]);
 			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error);
+				const isTimeoutError = 
+					errorMessage.includes("timeout") || 
+					errorMessage.includes("Timeout") ||
+					errorMessage === "Timeout (b)";
+
 				console.error("reCAPTCHA execution error:", error);
 				toastError({
-					description:
-						error instanceof Error && error.message === "reCAPTCHA timeout"
-							? "reCAPTCHA is taking too long to load. Please check your network connection or disable ad blockers."
-							: "reCAPTCHA verification failed. Please try again.",
+					description: isTimeoutError
+						? "reCAPTCHA is taking too long to load. This may be due to network issues, ad blockers, or the service being unavailable. Please check your network connection or try again later."
+						: "reCAPTCHA verification failed. Please try again.",
 				});
 				return;
 			}
