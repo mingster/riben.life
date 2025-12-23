@@ -290,10 +290,8 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 					const prepaidResult = await processRsvpPrepaidPayment({
 						storeId: order.storeId,
 						customerId: order.userId,
-						prepaidRequired: rsvpSettings?.prepaidRequired ?? false,
-						minPrepaidAmount: rsvpSettings?.minPrepaidAmount
-							? Number(rsvpSettings.minPrepaidAmount)
-							: null,
+						minPrepaidPercentage: rsvpSettings?.minPrepaidPercentage ?? 0,
+						totalCost: null,
 						rsvpTime: rsvp.rsvpTime,
 						store: {
 							useCustomerCredit: order.Store.useCustomerCredit,

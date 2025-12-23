@@ -6,6 +6,7 @@ import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
 import { updateFacilitySchema } from "./update-facility.validation";
+import BusinessHours from "@/lib/businessHours";
 
 export const updateFacilityAction = storeActionClient
 	.metadata({ name: "updateFacility" })
@@ -32,6 +33,19 @@ export const updateFacilityAction = storeActionClient
 
 		if (!facility || facility.storeId !== storeId) {
 			throw new SafeError("Facility not found");
+		}
+
+		// Validate businessHours JSON when provided
+		if (businessHours && businessHours.trim().length > 0) {
+			try {
+				new BusinessHours(businessHours);
+			} catch (error) {
+				throw new SafeError(
+					`Invalid businessHours: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+			}
 		}
 
 		try {

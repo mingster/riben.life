@@ -10,15 +10,23 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import Currency from "@/components/currency";
 import { useI18n } from "@/providers/i18n-provider";
+import BusinessHours from "@/lib/businessHours";
 
 export interface props {
-	visible: boolean;
 	store: Store;
+	useBusinessHours?: boolean;
+	businessHours?: string | null;
+	initialVisible?: boolean;
 }
 
 // store footer, show fixed sticky checkout button.
 //
-export const StoreFooter: React.FC<props> = ({ store, visible }) => {
+export const StoreFooter: React.FC<props> = ({
+	store,
+	useBusinessHours = false,
+	businessHours = null,
+	initialVisible = true,
+}) => {
 	const router = useRouter();
 
 	const params = useParams<{ storeId: string; facilityId: string }>();
@@ -29,6 +37,8 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
 
 	const cart = useCart();
 	const [numInCart, setNumInCart] = useState(cart.totalItems);
+	const [isOpen, setIsOpen] = useState<boolean | null>(null);
+	const [visible, setVisible] = useState(initialVisible);
 
 	function onCheckout() {
 		if (params.facilityId !== null) {
@@ -44,6 +54,21 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
 	useEffect(() => {
 		setNumInCart(cart.totalItems);
 	}, [cart.totalItems]);
+
+	// compute business hours on client to avoid SSR/CSR mismatch
+	useEffect(() => {
+		if (useBusinessHours && businessHours) {
+			try {
+				const bh = new BusinessHours(businessHours);
+				setIsOpen(bh.isOpenNow());
+			} catch (_err) {
+				// fallback to visible to avoid breaking UX
+				setIsOpen(true);
+			}
+		} else {
+			setIsOpen(true);
+		}
+	}, [useBusinessHours, businessHours]);
 
 	// turn off footer in those pages
 	const pathName = usePathname();
@@ -65,11 +90,14 @@ export const StoreFooter: React.FC<props> = ({ store, visible }) => {
 		pathName.includes("reservation") ||
 		pathName.includes("waiting-list")
 	) {
-		visible = false;
+		if (visible) setVisible(false);
 	}
 	//}, [visible]);
 
 	if (!visible) return <></>;
+	// avoid hydration mismatch: wait for isOpen computation when businessHours is used
+	if (isOpen === null) return null;
+	if (!isOpen) return null;
 
 	//w-full shadow backdrop-blur dark:shadow-secondary mx-4 flex h-14 items-center justify-center
 	//hidden sm:block

@@ -1,7 +1,6 @@
 import Container from "@/components/ui/container";
 import { isPro } from "@/lib/store-admin-utils";
 import { getStoreWithRelations } from "@/lib/store-access";
-import { Store } from "@/types";
 import { RsvpSettingTabs, type RsvpSettingsData } from "./components/tabs";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
@@ -20,13 +19,40 @@ export default async function RsvpSettingsPage(props: {
 
 	// Note: checkStoreStaffAccess already called in layout (cached)
 	// Parallel queries for optimal performance
-	const [storeResult, isProLevel, rsvpSettings] = await Promise.all([
-		getStoreWithRelations(params.storeId, {}),
-		isPro(params.storeId),
-		sqlClient.rsvpSettings.findFirst({
-			where: { storeId: params.storeId },
-		}),
-	]);
+	const [storeResult, isProLevel, rsvpSettings, rsvpBlacklist] =
+		await Promise.all([
+			getStoreWithRelations(params.storeId, {}),
+			isPro(params.storeId),
+			sqlClient.rsvpSettings.findFirst({
+				where: { storeId: params.storeId },
+			}),
+			sqlClient.rsvpBlacklist.findMany({
+				where: { storeId: params.storeId },
+				orderBy: {
+					createdAt: "desc",
+				},
+			}),
+		]);
+
+	// Fetch user data for blacklist entries
+	const userIds = rsvpBlacklist.map((item: { userId: string }) => item.userId);
+	const users =
+		userIds.length > 0
+			? await sqlClient.user.findMany({
+					where: {
+						id: {
+							in: userIds,
+						},
+					},
+					select: {
+						id: true,
+						name: true,
+						email: true,
+					},
+				})
+			: [];
+
+	const userMap = new Map(users.map((u) => [u.id, u]));
 
 	if (!storeResult) {
 		redirect("/storeAdmin");
@@ -41,10 +67,7 @@ export default async function RsvpSettingsPage(props: {
 			id: rsvpSettings.id,
 			storeId: rsvpSettings.storeId,
 			acceptReservation: rsvpSettings.acceptReservation,
-			prepaidRequired: rsvpSettings.prepaidRequired,
-			minPrepaidAmount: rsvpSettings.minPrepaidAmount
-				? Number(rsvpSettings.minPrepaidAmount)
-				: null,
+			minPrepaidPercentage: rsvpSettings.minPrepaidPercentage,
 			canCancel: rsvpSettings.canCancel,
 			cancelHours: rsvpSettings.cancelHours,
 			canReserveBefore: rsvpSettings.canReserveBefore,
@@ -65,9 +88,54 @@ export default async function RsvpSettingsPage(props: {
 		};
 	}
 
+	// Transform blacklist data
+	let transformedBlacklist: Array<{
+		id: string;
+		storeId: string;
+		userId: string;
+		userName: string | null;
+		userEmail: string | null;
+		createdAt: bigint;
+		updatedAt: bigint;
+		User?: {
+			id: string;
+			name: string | null;
+			email: string | null;
+		} | null;
+	}> = [];
+
+	if (rsvpBlacklist) {
+		transformPrismaDataForJson(rsvpBlacklist);
+		transformedBlacklist = rsvpBlacklist.map(
+			(item: {
+				userId: string;
+				id: any;
+				storeId: any;
+				createdAt: any;
+				updatedAt: any;
+			}) => {
+				const user = userMap.get(item.userId);
+				return {
+					id: item.id,
+					storeId: item.storeId,
+					userId: item.userId,
+					userName: user?.name ?? null,
+					userEmail: user?.email ?? null,
+					createdAt: item.createdAt,
+					updatedAt: item.updatedAt,
+					User: user || null,
+				};
+			},
+		);
+	}
+
 	return (
 		<Container>
-			<RsvpSettingTabs store={store} rsvpSettings={transformedRsvpSettings} />
+			<RsvpSettingTabs
+				store={store}
+				rsvpSettings={transformedRsvpSettings}
+				rsvpBlacklist={transformedBlacklist}
+			/>
 		</Container>
 	);
 }

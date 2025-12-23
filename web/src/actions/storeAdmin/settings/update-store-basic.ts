@@ -8,6 +8,7 @@ import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import BusinessHours from "@/lib/businessHours";
 
 export const updateStoreBasicAction = storeActionClient
 	.metadata({ name: "updateStoreBasic" })
@@ -39,6 +40,19 @@ export const updateStoreBasicAction = storeActionClient
 
 		if (typeof userId !== "string") {
 			throw new SafeError("Unauthorized");
+		}
+
+		// Validate businessHours JSON when provided
+		if (businessHours && businessHours.trim().length > 0) {
+			try {
+				new BusinessHours(businessHours);
+			} catch (error) {
+				throw new SafeError(
+					`Invalid businessHours: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+			}
 		}
 
 		const store = await sqlClient.store.update({

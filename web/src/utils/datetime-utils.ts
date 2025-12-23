@@ -101,7 +101,7 @@ export function getOffsetHours(timezone: string): number {
 				return NaN;
 			}
 			const value = Number.parseInt(part.value, 10);
-			return isNaN(value) ? NaN : value;
+			return Number.isNaN(value) ? NaN : value;
 		};
 
 		const tzHour = getValue(tzParts, "hour");
@@ -125,7 +125,7 @@ export function getOffsetHours(timezone: string): number {
 		const offsetHours = offsetMinutes / 60;
 
 		// Validate result
-		if (isNaN(offsetHours) || !Number.isFinite(offsetHours)) {
+		if (Number.isNaN(offsetHours) || !Number.isFinite(offsetHours)) {
 			logger.warn("Calculated offset is NaN or infinite in getOffsetHours", {
 				metadata: {
 					timezone,
@@ -159,144 +159,37 @@ export function getOffsetHours(timezone: string): number {
  * @returns Offset in hours (positive means timezone is ahead of UTC)
  */
 export function getTimezoneOffsetForDate(date: Date, timezone: string): number {
-	// Validate input date
-	if (!date || isNaN(date.getTime())) {
+	if (!date || Number.isNaN(date.getTime())) {
 		logger.warn("Invalid date provided to getTimezoneOffsetForDate", {
 			metadata: { timezone, date },
 			tags: ["datetime", "timezone", "warn"],
 		});
 		const fallback = getOffsetHours(timezone);
-		return isNaN(fallback) || !Number.isFinite(fallback) ? 0 : fallback;
+		return Number.isNaN(fallback) || !Number.isFinite(fallback) ? 0 : fallback;
 	}
 
 	try {
-		// Use a simpler, more reliable method: compare what the same UTC moment looks like in different timezones
-		// Create formatters for both UTC and target timezone
-		const tzFormatter = new Intl.DateTimeFormat("en", {
-			timeZone: timezone,
-			year: "numeric",
-			month: "2-digit",
-			day: "2-digit",
-			hour: "2-digit",
-			minute: "2-digit",
-			second: "2-digit",
-			hour12: false,
-		});
+		// Calculate offset by comparing the same instant in UTC vs target timezone.
+		// This approach is server-timezone independent because it relies on Intl APIs.
+		const local = new Date(
+			date.toLocaleString("en-US", { timeZone: timezone }),
+		);
+		const utc = new Date(date.toLocaleString("en-US", { timeZone: "UTC" }));
+		const offsetMinutes = (local.getTime() - utc.getTime()) / (1000 * 60);
+		const offsetHours = offsetMinutes / 60;
 
-		const utcFormatter = new Intl.DateTimeFormat("en", {
-			timeZone: "UTC",
-			year: "numeric",
-			month: "2-digit",
-			day: "2-digit",
-			hour: "2-digit",
-			minute: "2-digit",
-			second: "2-digit",
-			hour12: false,
-		});
-
-		// Format the same date in both timezones
-		const tzParts = tzFormatter.formatToParts(date);
-		const utcParts = utcFormatter.formatToParts(date);
-
-		// Extract values from parts
-		const getValue = (
-			parts: Intl.DateTimeFormatPart[],
-			type: string,
-		): number => {
-			const part = parts.find((p) => p.type === type);
-			if (!part) {
-				return NaN;
-			}
-			const value = Number.parseInt(part.value, 10);
-			return isNaN(value) ? NaN : value;
-		};
-
-		const tzYear = getValue(tzParts, "year");
-		const tzMonth = getValue(tzParts, "month");
-		const tzDay = getValue(tzParts, "day");
-		const tzHour = getValue(tzParts, "hour");
-		const tzMinute = getValue(tzParts, "minute");
-
-		const utcYear = getValue(utcParts, "year");
-		const utcMonth = getValue(utcParts, "month");
-		const utcDay = getValue(utcParts, "day");
-		const utcHour = getValue(utcParts, "hour");
-		const utcMinute = getValue(utcParts, "minute");
-
-		// Validate all parts were found and are valid numbers
-		if (
-			isNaN(tzYear) ||
-			isNaN(tzMonth) ||
-			isNaN(tzDay) ||
-			isNaN(tzHour) ||
-			isNaN(tzMinute) ||
-			isNaN(utcYear) ||
-			isNaN(utcMonth) ||
-			isNaN(utcDay) ||
-			isNaN(utcHour) ||
-			isNaN(utcMinute)
-		) {
-			logger.warn("Failed to extract timezone parts", {
-				metadata: {
-					timezone,
-					tzParts: JSON.stringify(tzParts),
-					utcParts: JSON.stringify(utcParts),
-					date: date.toISOString(),
-				},
-				tags: ["datetime", "timezone", "warn"],
-			});
-			const fallback = getOffsetHours(timezone);
-			return isNaN(fallback) || !Number.isFinite(fallback) ? 0 : fallback;
-		}
-
-		// Calculate offset in minutes
-		const tzMinutes = tzHour * 60 + tzMinute;
-		const utcMinutes = utcHour * 60 + utcMinute;
-		let offsetMinutes = tzMinutes - utcMinutes;
-
-		// Handle day differences
-		if (tzYear !== utcYear || tzMonth !== utcMonth || tzDay !== utcDay) {
-			// Calculate day difference
-			const dayDiff = tzDay - utcDay;
-			// Also account for month/year differences
-			if (tzYear !== utcYear || tzMonth !== utcMonth) {
-				// More complex calculation needed for month/year differences
-				// Use UTC for both to ensure timezone-independent calculation
-				// We're comparing the formatted date components, so we need to create
-				// UTC dates representing midnight in each timezone's date
-				const tzDate = new Date(Date.UTC(tzYear, tzMonth - 1, tzDay));
-				const utcDate = new Date(Date.UTC(utcYear, utcMonth - 1, utcDay));
-				const dayDiffMs = tzDate.getTime() - utcDate.getTime();
-				const dayDiffCalculated = Math.round(dayDiffMs / (1000 * 60 * 60 * 24));
-				offsetMinutes += dayDiffCalculated * 24 * 60;
-			} else {
-				offsetMinutes += dayDiff * 24 * 60;
-			}
-		}
-
-		const result = offsetMinutes / 60;
-
-		// Validate result is not NaN or infinite
-		if (isNaN(result) || !Number.isFinite(result)) {
+		if (Number.isNaN(offsetHours) || !Number.isFinite(offsetHours)) {
 			logger.warn("Calculated offset is NaN or infinite", {
-				metadata: {
-					timezone,
-					offsetMinutes,
-					tzHour,
-					utcHour,
-					tzDay,
-					utcDay,
-					tzYear,
-					utcYear,
-					result,
-				},
+				metadata: { timezone, offsetMinutes },
 				tags: ["datetime", "timezone", "warn"],
 			});
 			const fallback = getOffsetHours(timezone);
-			return isNaN(fallback) || !Number.isFinite(fallback) ? 0 : fallback;
+			return Number.isNaN(fallback) || !Number.isFinite(fallback)
+				? 0
+				: fallback;
 		}
 
-		return result;
+		return offsetHours;
 	} catch (error) {
 		logger.warn("Failed to get timezone offset for date", {
 			metadata: {
@@ -307,14 +200,13 @@ export function getTimezoneOffsetForDate(date: Date, timezone: string): number {
 			tags: ["datetime", "timezone", "warn"],
 		});
 		const fallback = getOffsetHours(timezone);
-		// Ensure fallback is not NaN
-		return isNaN(fallback) || !Number.isFinite(fallback) ? 0 : fallback;
+		return Number.isNaN(fallback) || !Number.isFinite(fallback) ? 0 : fallback;
 	}
 }
 
 /**
  * Format a UTC Date to datetime-local string in a specific timezone
- * @param date - UTC Date object to format
+ * @param date - Date object to format
  * @param timezone - Target timezone (e.g., "Asia/Taipei")
  * @returns String in format "YYYY-MM-DDTHH:mm" representing the date/time in the target timezone
  */
@@ -324,7 +216,7 @@ export function formatUtcDateToDateTimeLocal(
 ): string {
 	try {
 		// Validate input date
-		if (!date || isNaN(date.getTime())) {
+		if (!date || Number.isNaN(date.getTime())) {
 			logger.warn("Invalid date provided to formatUtcDateToDateTimeLocal", {
 				metadata: { timezone, date },
 				tags: ["datetime", "timezone", "warn"],
@@ -417,20 +309,16 @@ export function dayAndTimeSlotToUtc(
  * @throws Error if date is invalid or conversion fails
  */
 export function convertDateToUtc(dateInput: Date, storeTimezone: string): Date {
-	// Validate input is a Date object
 	if (!(dateInput instanceof Date)) {
 		throw new Error(
 			`Invalid date format: expected Date, got ${typeof dateInput}`,
 		);
 	}
 
-	// Validate the date is valid
-	if (isNaN(dateInput.getTime())) {
+	if (Number.isNaN(dateInput.getTime())) {
 		throw new Error("Invalid date provided");
 	}
 
-	// Format the Date in the store timezone to get the intended datetime-local string
-	// This ensures we extract the correct components regardless of server timezone
 	const datetimeLocalString = formatUtcDateToDateTimeLocal(
 		dateInput,
 		storeTimezone,
@@ -440,11 +328,9 @@ export function convertDateToUtc(dateInput: Date, storeTimezone: string): Date {
 		throw new Error("Failed to format date to datetime-local string");
 	}
 
-	// Use convertToUtc to interpret this as store timezone and convert to UTC
 	const utcDate = convertToUtc(datetimeLocalString, storeTimezone);
 
-	// Validate the converted date is valid
-	if (isNaN(utcDate.getTime())) {
+	if (Number.isNaN(utcDate.getTime())) {
 		throw new Error("Failed to convert date to UTC");
 	}
 
@@ -594,18 +480,13 @@ export function dateToEpoch(date: Date | null | undefined): bigint | null {
 export function epochToDate(epoch: bigint | null | undefined): Date | null {
 	if (epoch === null || epoch === undefined) return null;
 
-	// Create Date from UTC epoch timestamp
-	// The timestamp is already UTC, so new Date() creates a UTC Date
-	// We explicitly ensure it's treated as UTC by using the timestamp directly
 	const timestamp = Number(epoch);
 	const utcDate = new Date(timestamp);
 
-	// Validate the date is valid
-	if (isNaN(utcDate.getTime())) {
+	if (Number.isNaN(utcDate.getTime())) {
 		return null;
 	}
 
-	// Return the UTC Date (JavaScript Date objects are always stored as UTC internally)
 	return utcDate;
 }
 
@@ -618,19 +499,13 @@ export function epochToDate(epoch: bigint | null | undefined): Date | null {
 export function epochToDateOrNow(epoch: bigint | null | undefined): Date {
 	if (epoch === null || epoch === undefined) return getUtcNow();
 
-	// Create Date from UTC epoch timestamp
-	// The timestamp is already UTC, so new Date() creates a UTC Date
-	// We explicitly ensure it's treated as UTC by using the timestamp directly
 	const timestamp = Number(epoch);
 	const utcDate = new Date(timestamp);
 
-	// Validate the date is valid
-	if (isNaN(utcDate.getTime())) {
-		// If invalid, fallback to current UTC time
+	if (Number.isNaN(utcDate.getTime())) {
 		return getUtcNow();
 	}
 
-	// Return the UTC Date (JavaScript Date objects are always stored as UTC internally)
 	return utcDate;
 }
 
@@ -644,104 +519,19 @@ export function epochToDateOrNow(epoch: bigint | null | undefined): Date {
  */
 export function getUserCurrentTimeFromUtc(timezone: string): Date {
 	try {
-		const now = getUtcNow();
+		const nowUtc = getUtcNow();
+		const offsetHours = getTimezoneOffsetForDate(nowUtc, timezone);
 
-		// Get the current time in the user's timezone
-		const userTimeString = now.toLocaleString("en-CA", {
-			timeZone: timezone,
-			year: "numeric",
-			month: "2-digit",
-			day: "2-digit",
-			hour: "2-digit",
-			minute: "2-digit",
-			second: "2-digit",
-			hour12: false,
-		});
-
-		// Parse the timezone-adjusted time string
-		// Format: YYYY-MM-DD, HH:MM:SS
-		const [datePart, timePart] = userTimeString.split(", ");
-		const [year, month, day] = datePart.split("-");
-		const [hour, minute, second] = timePart.split(":");
-
-		// Validate parsed values
-		const yearNum = parseInt(year, 10);
-		const monthNum = parseInt(month, 10);
-		const dayNum = parseInt(day, 10);
-		const hourNum = parseInt(hour, 10);
-		const minuteNum = parseInt(minute, 10);
-		const secondNum = parseInt(second, 10);
-
-		if (
-			isNaN(yearNum) ||
-			isNaN(monthNum) ||
-			isNaN(dayNum) ||
-			isNaN(hourNum) ||
-			isNaN(minuteNum) ||
-			isNaN(secondNum)
-		) {
-			logger.warn("Failed to parse timezone string", {
-				metadata: {
-					timezone,
-					userTimeString,
-				},
-				tags: ["datetime", "timezone", "warn"],
-			});
-			return getUtcNow();
-		}
-
-		// Create a temporary Date from local time components as if they were UTC
-		// This gives us a reference point
-		const localTimeAsUtc = new Date(
-			Date.UTC(
-				yearNum,
-				monthNum - 1, // JavaScript months are 0-based
-				dayNum,
-				hourNum,
-				minuteNum,
-				secondNum,
-			),
-		);
-
-		// Get the timezone offset for this timezone at the current moment
-		// The offset tells us how many hours ahead/behind UTC the timezone is
-		const offsetHours = getTimezoneOffsetForDate(localTimeAsUtc, timezone);
-
-		// Validate offset
-		if (isNaN(offsetHours) || !Number.isFinite(offsetHours)) {
+		if (Number.isNaN(offsetHours) || !Number.isFinite(offsetHours)) {
 			logger.warn("Invalid timezone offset", {
-				metadata: {
-					timezone,
-					offsetHours,
-				},
+				metadata: { timezone, offsetHours },
 				tags: ["datetime", "timezone", "warn"],
 			});
-			return getUtcNow();
+			return nowUtc;
 		}
 
-		// Convert local time to UTC by subtracting the offset
-		// If timezone is UTC+8 and local time is 10:00 AM, UTC is 2:00 AM
-		// So: UTC = localTime - offset
-		const utcTimestamp =
-			localTimeAsUtc.getTime() - offsetHours * 60 * 60 * 1000;
-
-		// Create the final Date object representing the current time in the target timezone
-		const result = new Date(utcTimestamp);
-
-		// Validate the result
-		if (isNaN(result.getTime())) {
-			logger.warn("Invalid Date created", {
-				metadata: {
-					timezone,
-					utcTimestamp,
-					offsetHours,
-				},
-				tags: ["datetime", "timezone", "warn"],
-			});
-			return getUtcNow();
-		}
-
-		return result;
+		// Add offset to UTC to get the time in the target timezone.
+		return addHours(nowUtc, offsetHours);
 	} catch (error) {
 		logger.warn("Failed to get user current time from UTC", {
 			message: "Failed to get user current time from UTC",
@@ -751,8 +541,6 @@ export function getUserCurrentTimeFromUtc(timezone: string): Date {
 			},
 			tags: ["datetime", "timezone", "warn"],
 		});
-
-		// Fallback to UTC time if timezone conversion fails
 		return getUtcNow();
 	}
 }

@@ -35,7 +35,7 @@ interface RsvpHistoryClientProps {
 	serverData: Rsvp[];
 	storeTimezone: string;
 	rsvpSettings?: {
-		prepaidRequired?: boolean | null;
+		minPrepaidPercentage?: number | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
 	} | null;

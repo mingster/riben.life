@@ -53,20 +53,24 @@ model User {
   members     Member[]
   invitations Invitation[]
 
-  Addresses                 Address[]
-  SupportTicketFrom         SupportTicket[]           @relation("SupportTicketFrom")
-  SupportTicketTo           SupportTicket[]           @relation("SupportTicketTo")
-  NotificationFrom          MessageQueue[]            @relation("NotificationFrom")
-  NotificationTo            MessageQueue[]            @relation("NotificationTo")
-  Store                     Store[]
-  Orders                    StoreOrder[]              @relation("UserOrders")
-  Reservations              Rsvp[]
-  RsvpCreator               Rsvp[]                    @relation("RsvpCreatedBy")
-  CustomerCredits           CustomerCredit[]
-  CustomerCreditLedger      CustomerCreditLedger[]    @relation("UserCustomerCreditLogs")
-  CustomerCreditLogsCreator CustomerCreditLedger[]    @relation("UserCustomerCreditLogsCreator")
-  StoreLedgerCreated        StoreLedger[]
-  NotificationPreferences   NotificationPreferences[]
+  Addresses         Address[]
+  SupportTicketFrom SupportTicket[] @relation("SupportTicketFrom")
+  SupportTicketTo   SupportTicket[] @relation("SupportTicketTo")
+  NotificationFrom  MessageQueue[]  @relation("NotificationFrom")
+  NotificationTo    MessageQueue[]  @relation("NotificationTo")
+  Store             Store[]
+  Orders            StoreOrder[]    @relation("UserOrders")
+  Reservations      Rsvp[]
+  RsvpCreator       Rsvp[]          @relation("RsvpCreatedBy")
+
+  CustomerCredits            CustomerCredit[]
+  CustomerCreditLedger       CustomerCreditLedger[] @relation("UserCustomerCreditLogs")
+  CustomerCreditLogsCreator  CustomerCreditLedger[] @relation("UserCustomerCreditLogsCreator")
+  CustomerFiatLedger         CustomerFiatLedger[]   @relation("UserFiatAccountLogs")
+  UserFiatAccountLogsCreator CustomerFiatLedger[]   @relation("UserFiatAccountLogsCreator")
+
+  StoreLedgerCreated      StoreLedger[]
+  NotificationPreferences NotificationPreferences[]
 
   @@unique([normalizedEmail])
   @@index([email])
@@ -535,7 +539,8 @@ model CustomerCredit {
   id        String  @id @default(uuid())
   storeId   String
   userId    String //userId of the customer
-  point     Decimal @default(0)
+  point     Decimal @default(0) //store credit point on account
+  fiat      Decimal @default(0) //store fiat balance on account
   updatedAt BigInt
   Store     Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
   User      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -568,6 +573,31 @@ model CustomerCreditLedger {
   @@index([referenceId])
   @@index([createdAt])
   @@map("CustomerCreditLedger")
+}
+
+model CustomerFiatLedger {
+  id          String  @id @default(uuid())
+  storeId     String
+  userId      String // userId of the customer
+  amount      Decimal // Transaction amount (positive for credit, negative for debit)
+  balance     Decimal // Balance after this transaction
+  type        String // PAYMENT, REFUND, TOPUP, ADJUSTMENT
+  referenceId String? // RSVP ID, StoreOrder ID, or other reference
+  note        String? // Optional note/description
+  creatorId   String? // userId who created this transaction
+  createdAt   BigInt // Epoch milliseconds
+
+  Store      Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User       User        @relation("UserFiatAccountLogs", fields: [userId], references: [id], onDelete: Cascade)
+  Creator    User?       @relation("UserFiatAccountLogsCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  StoreOrder StoreOrder? @relation(fields: [referenceId], references: [id], onDelete: SetNull)
+
+  @@index([storeId])
+  @@index([userId])
+  @@index([creatorId])
+  @@index([referenceId])
+  @@index([createdAt])
+  @@map("CustomerFiatLedger")
 }
 
 model CreditBonusRule {
@@ -655,6 +685,7 @@ model Store {
   CustomerCredits            CustomerCredit[]
   CreditBonusRules           CreditBonusRule[]
   CustomerCreditLogs         CustomerCreditLedger[]
+  CustomerFiatLedgers        CustomerFiatLedger[]
   FacilityPricingRules       FacilityPricingRule[]
 
   @@index([ownerId])
@@ -715,13 +746,12 @@ model RsvpSettings {
   storeId String @unique
 
   acceptReservation Boolean  @default(true) // turn on/off the reservation system
-  prepaidRequired   Boolean  @default(false) //預付制：儲值後才可預約 / //訂位需付訂金
-  minPrepaidAmount  Decimal? @default(0) //最低預付金額
+  minPrepaidPercentage Int    @default(0) //最低預付百分比；0 表示不需預付，100 表示全額預付
 
   canCancel   Boolean @default(true) //可否取消預約?
   cancelHours Int     @default(24) //最慢免費取消預約時間：幾小時前可免費取消?
 
-  canReserveBefore  Int @default(2) //從現在起，可預約幾小時後的時間。 e.g. 現在7PM，只能預約9PM後的時間。
+  canReserveBefore Int @default(2) //從現在起，可預約幾小時後的時間。 e.g. 現在7PM，只能預約9PM後的時間。
   canReserveAfter  Int @default(2190) //從現在起，最多可預約未來幾小時。 e.g. ㄧ年後=8760小時; 一個月後=730. 預設值：3個月後。
 
   defaultDuration    Int     @default(60) //預約時間：60分鐘
@@ -937,6 +967,7 @@ model Product {
   currency          String              @default("twd")
   price             Decimal             @default(0)
   useOption         Boolean             @default(true) // when true, price is calculated based on product option
+  canDelete        Boolean             @default(true)
   createdAt         BigInt
   updatedAt         BigInt
   Store             Store               @relation("StoreToProduct", fields: [storeId], references: [id], onDelete: Cascade)
@@ -1189,6 +1220,7 @@ model StoreOrder {
   Rsvp                  Rsvp[]
   StoreLedger           StoreLedger[]
   customerCreditLedgers CustomerCreditLedger[]
+  customerFiatLedgers   CustomerFiatLedger[]
 
   @@index([userId])
   @@index([facilityId])

@@ -39,7 +39,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Rsvp, StoreFacility, User } from "@/types";
+import type {
+	Rsvp,
+	RsvpSettings,
+	StoreFacility,
+	StoreSettings,
+	User,
+} from "@/types";
+
 import {
 	convertToUtc,
 	epochToDate,
@@ -48,13 +55,12 @@ import {
 	getOffsetHours,
 	getUtcNow,
 } from "@/utils/datetime-utils";
-import type { RsvpSettings, StoreSettings } from "@prisma/client";
 import { SlotPicker } from "./slot-picker";
 import { Separator } from "@/components/ui/separator";
 
 interface ReservationFormProps {
 	storeId: string;
-	rsvpSettings: RsvpSettings | null;
+	rsvpSettings: (RsvpSettings & { defaultCost?: number | null }) | null;
 	storeSettings?: StoreSettings | null;
 	facilities: StoreFacility[];
 	user: User | null;
@@ -444,8 +450,10 @@ export function ReservationForm({
 		}
 	}
 
-	// Check if prepaid is required (create mode only)
-	const prepaidRequired = rsvpSettings?.prepaidRequired ?? false;
+	// Prepaid requirement derived from percentage and cost
+	const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
+	const prepaidRequired =
+		(minPrepaidPercentage ?? 0) > 0 && (rsvpSettings?.defaultCost ?? 0) > 0;
 	const requiresLogin = !isEditMode && prepaidRequired && !user;
 	const acceptReservation = rsvpSettings?.acceptReservation ?? true; // Default to true
 	// Note: isBlacklisted is not passed to ReservationForm, so we rely on server-side validation
@@ -739,40 +747,16 @@ export function ReservationForm({
 							{t("rsvp_rules_and_restrictions")}
 						</p>
 						<ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
-							{rsvpSettings?.prepaidRequired &&
-								rsvpSettings?.minPrepaidAmount && (
+							{(rsvpSettings?.minPrepaidPercentage ?? 0) > 0 &&
+								rsvpSettings?.defaultCost && (
 									<li>
 										{(() => {
-											const minPrepaidAmount = Number(
-												rsvpSettings.minPrepaidAmount,
+											const totalCost = Number(rsvpSettings.defaultCost);
+											const percentage = Number(
+												rsvpSettings.minPrepaidPercentage ?? 0,
 											);
-											let creditPoints: number | null = null;
-
-											// Calculate credit points based on reservation duration
-											if (
-												useCustomerCredit &&
-												creditServiceExchangeRate &&
-												creditServiceExchangeRate > 0
-											) {
-												// Calculate from duration: creditPoints = duration (minutes) / creditServiceExchangeRate
-												const duration = rsvpSettings?.defaultDuration || 60; // Default to 60 minutes
-												creditPoints = duration / creditServiceExchangeRate;
-											} else if (
-												useCustomerCredit &&
-												creditExchangeRate &&
-												creditExchangeRate > 0
-											) {
-												// Fallback: minPrepaidAmount is in dollars, convert to credit points
-												creditPoints = minPrepaidAmount / creditExchangeRate;
-											} else {
-												// minPrepaidAmount is already in credit points
-												creditPoints = minPrepaidAmount;
-											}
-
-											const points = creditPoints
-												? Math.ceil(creditPoints)
-												: minPrepaidAmount;
-											return t("rsvp_prepaid_required", { points });
+											const prepaid = Math.ceil(totalCost * (percentage / 100));
+											return t("rsvp_prepaid_required", { points: prepaid });
 										})()}
 									</li>
 								)}

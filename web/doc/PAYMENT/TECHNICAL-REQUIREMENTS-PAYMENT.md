@@ -692,8 +692,8 @@ export async function processRsvpPrepaidPayment(
   const {
     storeId,
     customerId,
-    prepaidRequired,
-    minPrepaidAmount,
+    minPrepaidPercentage,
+    totalCost,
     rsvpTime,
     store,
   } = params;
@@ -703,10 +703,12 @@ export async function processRsvpPrepaidPayment(
   //    - If prepaid required: status = Pending (will be updated after payment)
 
   // 2. If prepaid required and customer signed in:
+  //    - Compute prepaidRequired = minPrepaidPercentage > 0 && totalCost > 0
+  //    - Compute requiredPrepaid = ceil(totalCost * minPrepaidPercentage / 100)
   //    - Get customer credit balance
-  //    - Check if balance >= minPrepaidAmount
+  //    - Check if balance >= requiredPrepaid
   //    - If sufficient:
-  //      a. Calculate cash value: cashValue = minPrepaidAmount * creditExchangeRate
+  //      a. Calculate cash value: cashValue = requiredPrepaid * creditExchangeRate
   //      b. Find credit payment method by payUrl = "credit"
   //      c. Find shipping method (prefer "reserve", fallback to default)
   //      d. In transaction:
@@ -734,11 +736,10 @@ export async function processRsvpPrepaidPayment(
 
 - Shared function (not a server action) - can be called from other actions
 - Only processes prepaid payment if:
-  - `prepaidRequired` is true
+  - `minPrepaidPercentage` > 0 AND totalCost > 0
   - `customerId` exists
   - Store has `useCustomerCredit` enabled
-  - `minPrepaidAmount` > 0
-  - Customer has sufficient credit balance
+  - Customer has sufficient credit balance to cover requiredPrepaid = `ceil(totalCost * minPrepaidPercentage / 100)`
 - Creates StoreOrder with credit payment method (`payUrl = "credit"`)
 - Uses transaction to ensure atomicity (order creation, credit deduction, ledger entries)
 - StoreLedger type is `CreditUsage` (revenue recognition, not unearned)
@@ -751,8 +752,8 @@ export async function processRsvpPrepaidPayment(
 interface ProcessRsvpPrepaidPaymentParams {
   storeId: string;
   customerId: string | null;
-  prepaidRequired: boolean;
-  minPrepaidAmount: number | null; // In credit points
+minPrepaidPercentage: number;
+totalCost: number | null; // used to derive requiredPrepaid
   rsvpTime: BigInt | number | Date;
   store: {
     useCustomerCredit: boolean | null;
