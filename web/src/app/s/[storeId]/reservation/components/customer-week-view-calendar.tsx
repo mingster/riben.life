@@ -20,12 +20,18 @@ import {
 import { enUS } from "date-fns/locale/en-US";
 import { zhTW } from "date-fns/locale/zh-TW";
 import { ja } from "date-fns/locale/ja";
-import { useCallback, useMemo, useState, memo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
+import type {
+	Rsvp,
+	RsvpSettings,
+	StoreFacility,
+	StoreSettings,
+	User,
+} from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
@@ -59,12 +65,8 @@ interface CustomerWeekViewCalendarProps {
 	// Props for dialog
 	storeId?: string;
 	storeOwnerId?: string;
-	facilities?: Array<{
-		id: string;
-		facilityName: string;
-		defaultCost: number | null;
-	}>;
-	user?: { id: string; email: string | null } | null;
+	facilities?: StoreFacility[];
+	user?: User | null;
 	storeTimezone?: string;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
 	isBlacklisted?: boolean;

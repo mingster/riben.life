@@ -108,7 +108,7 @@ Store Admins have all Store Staff permissions, plus:
 - Special requests or notes (message, optional)
 - Facility preference (facilityId, optional)
 
-**Note:** If prepaid is required (`prepaidRequired = true`), customers must be signed in to create a reservation.
+**Note:** If prepaid is required (`minPrepaidPercentage > 0`), customers must be signed in to create a reservation.
 
 **FR-RSVP-003:** The system must validate reservation availability based on:
 
@@ -122,17 +122,14 @@ Store Admins have all Store Staff permissions, plus:
 
 **FR-RSVP-004:** The system must support prepaid reservations when enabled:
 
-- If `prepaidRequired` is true:
+- If `minPrepaidPercentage > 0`:
   - Anonymous users must sign in or register before creating a reservation
   - Customer must be signed in (authentication required)
-  - Customer can create a pending RSVP first, then be prompted to complete recharge of store credit
-  - When a customer creates a pending RSVP, a store order is automatically created with `minPrepaidAmount` from `RsvpSettings`
-  - Customer must pay the prepaid amount (minimum `minPrepaidAmount`) before the `alreadyPaid` flag is set to `true`
-- `minPrepaidAmount` can be specified as either:
-  - A dollar amount (currency value, e.g., $50.00)
-  - A CustomerCredit amount (points/credits value, e.g., 100 credits)
+  - Customer can create a pending RSVP first, then be prompted to complete recharge/payment
+  - When a customer creates a pending RSVP, a store order is automatically created with the prepaid amount
+  - Prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`; if total cost is missing or zero, prepaid is skipped
 - Payment can be made using existing customer credit (`CustomerCredit` database table)
-- If customer credit is insufficient, customer must top up credit or purchase products to refill his/her credit
+- If customer credit is insufficient, customer must top up credit or purchase products to refill credit
 - Payment status tracked via `alreadyPaid` flag
 - Reservation linked to order via `orderId` when prepaid
 - Customer credit balance is deducted when credit is used for prepaid reservation
@@ -160,12 +157,12 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.1.1a Use Case: Customer-Facing Online Reservation (Prepaid NOT Required)
 
-**UC-RSVP-001:** Customer creates a reservation when prepaid is not required (`prepaidRequired = false`):
+**UC-RSVP-001:** Customer creates a reservation when prepaid is not required (`minPrepaidPercentage = 0`):
 
 **Preconditions:**
 
 - Store has RSVP enabled (`acceptReservation = true`)
-- Prepaid is not required (`prepaidRequired = false`)
+- Prepaid is not required (`minPrepaidPercentage = 0`)
 - Customer is on the store's public RSVP page
 
 **Main Flow:**
@@ -215,7 +212,7 @@ Store Admins have all Store Staff permissions, plus:
      - No order is created (no `orderId`) (initially)
    - Reservation is saved to database
 
-   **If `rsvpSettings.prepaidRequired = true` and `store.useCustomerCredit = true`:**
+   **If `rsvpSettings.minPrepaidPercentage > 0` and `store.useCustomerCredit = true`:**
 
    - System checks if customer has sufficient credit balance
    - **If customer doesn't have enough credit:**
@@ -231,9 +228,9 @@ Store Admins have all Store Staff permissions, plus:
      - Reservation `status` is set to ReadyToConfirm
      - Flow continues to step 6
 
-   **If `rsvpSettings.prepaidRequired = true` and `store.useCustomerCredit = false`:**
+   **If `rsvpSettings.minPrepaidPercentage > 0` and `store.useCustomerCredit = false`:**
 
-   - System redirects customer to payment page for `minPrepaidAmount`
+   - System redirects customer to payment page for the prepaid amount (percentage-based)
    - Customer completes payment (Stripe, LINE Pay, etc.)
    - Once payment is completed:
      - System creates `storeOrder` for the prepaid amount
@@ -319,7 +316,7 @@ Store Admins have all Store Staff permissions, plus:
 **Initial State:**
 
 - When a reservation is created (online or by staff), it starts with status `Pending (0)`
-- If `prepaidRequired` is true, a store order is automatically created with `minPrepaidAmount`
+- If `minPrepaidPercentage > 0`, a store order is automatically created with the prepaid amount
 - The reservation remains in `Pending` status until payment and/or confirmation occurs
 
 **Payment Flow (if prepaid required and store uses credit system):**
@@ -534,12 +531,11 @@ Completed (50) [when service is finished]
 
 **FR-RSVP-029:** Store admins must be able to configure prepaid requirements:
 
-- Enable/disable prepaid requirement (`prepaidRequired`)
-- Set minimum prepaid amount (`minPrepaidAmount`) which can be specified as:
-  - A dollar amount (currency value)
-  - A CustomerCredit amount (points/credits value)
-- When `prepaidRequired` is true and a customer creates a pending RSVP, a store order is automatically created with `minPrepaidAmount`
-- Require payment before reservation confirmation
+- Configure minimum prepaid percentage (`minPrepaidPercentage`, 0–100)
+- Prepaid is required iff `minPrepaidPercentage > 0`
+- Required prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`
+- If total reservation cost is missing or zero, prepaid is skipped
+- When prepaid is required, a pending RSVP creates a store order with the prepaid amount and must be paid before confirmation
 
 #### 3.4.3 Cancellation Settings
 
@@ -919,15 +915,15 @@ Completed (50) [when service is finished]
 
 ### 5.3 Prepaid Rules
 
-**BR-RSVP-008:** If `prepaidRequired` is true, customers must be signed in (authentication required) to create a reservation. Anonymous users must sign in or register before creating a reservation.
+**BR-RSVP-008:** If `minPrepaidPercentage > 0`, customers must be signed in (authentication required) to create a reservation. Anonymous users must sign in or register before creating a reservation.
 
-**BR-RSVP-009:** If `prepaidRequired` is true, when a customer creates a pending RSVP, a store order is automatically created with `minPrepaidAmount` from `RsvpSettings`. Reservation is not confirmed until payment is received.
+**BR-RSVP-009:** If `minPrepaidPercentage > 0`, when a customer creates a pending RSVP, a store order is automatically created with the prepaid amount (percentage of total). Reservation is not confirmed until payment is received.
 
-**BR-RSVP-010:** Minimum prepaid amount (`minPrepaidAmount`, which can be specified as a dollar amount or CustomerCredit amount) must be paid before reservation time.
+**BR-RSVP-010:** Required prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`. If total cost is missing/0, prepaid is skipped. Prepaid must be paid before reservation time.
 
 **BR-RSVP-010a:** Customers can pay prepaid amount using existing credit from `CustomerCredit` table.
 
-**BR-RSVP-010b:** If customer credit is insufficient to cover prepaid amount, customer must top up credit or purchase products to refill credit.
+**BR-RSVP-010b:** If customer credit is insufficient to cover the prepaid amount, customer must top up credit or purchase products to refill credit.
 
 **BR-RSVP-010c:** When customer credit is used for prepaid reservation, the credit balance must be deducted immediately upon reservation confirmation.
 

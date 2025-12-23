@@ -36,7 +36,7 @@ interface CellActionProps {
 	onUpdated?: (rsvp: Rsvp) => void;
 	storeTimezone?: string;
 	rsvpSettings?: {
-		prepaidRequired?: boolean | null;
+		minPrepaidPercentage?: number | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
 	} | null;

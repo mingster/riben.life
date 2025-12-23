@@ -12,8 +12,13 @@ import {
 import { ReservationForm } from "./reservation-form";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StoreFacility, User, Rsvp } from "@/types";
-import type { RsvpSettings, StoreSettings } from "@prisma/client";
+import type {
+	Rsvp,
+	RsvpSettings,
+	StoreFacility,
+	StoreSettings,
+	User,
+} from "@/types";
 
 interface ReservationDialogProps {
 	storeId: string;

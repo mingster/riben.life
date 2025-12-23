@@ -20,7 +20,7 @@ interface RsvpCalendarClientProps {
 		useBusinessHours: boolean;
 		rsvpHours: string | null;
 		defaultDuration?: number | null;
-		prepaidRequired?: boolean | null;
+		minPrepaidPercentage?: number | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
 	} | null;

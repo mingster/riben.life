@@ -4,7 +4,6 @@ import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { Prisma } from "@prisma/client";
 import {
-	dateToEpoch,
 	getUtcNowEpoch,
 	epochToDate,
 	getDateInTz,
@@ -22,8 +21,8 @@ import { format } from "date-fns";
 interface ProcessRsvpPrepaidPaymentParams {
 	storeId: string;
 	customerId: string | null;
-	prepaidRequired: boolean;
-	minPrepaidAmount: number | null;
+	minPrepaidPercentage: number;
+	totalCost: number | null;
 	rsvpTime: BigInt | number | Date; // RSVP reservation time
 	store: {
 		useCustomerCredit: boolean | null;
@@ -50,11 +49,17 @@ export async function processRsvpPrepaidPayment(
 	const {
 		storeId,
 		customerId,
-		prepaidRequired,
-		minPrepaidAmount,
+		minPrepaidPercentage,
+		totalCost,
 		rsvpTime,
 		store,
 	} = params;
+
+	const prepaidRequired =
+		minPrepaidPercentage > 0 && totalCost !== null && totalCost > 0;
+	const requiredPrepaid = prepaidRequired
+		? Math.ceil(totalCost * (minPrepaidPercentage / 100))
+		: null;
 
 	// Determine initial status and payment status:
 	// - If prepaid is NOT required: status = ReadyToConfirm (immediately ready for confirmation)
@@ -70,10 +75,10 @@ export async function processRsvpPrepaidPayment(
 	// If prepaid is required and customer is signed in, check credit balance
 	if (
 		prepaidRequired &&
+		requiredPrepaid !== null &&
+		requiredPrepaid > 0 &&
 		customerId &&
-		store.useCustomerCredit &&
-		minPrepaidAmount &&
-		minPrepaidAmount > 0
+		store.useCustomerCredit
 	) {
 		// Get customer credit balance
 		const customerCredit = await sqlClient.customerCredit.findUnique({
@@ -87,14 +92,15 @@ export async function processRsvpPrepaidPayment(
 
 		const currentBalance = customerCredit ? Number(customerCredit.point) : 0;
 
-		// minPrepaidAmount is in credit points (not dollars)
-		// If it were in dollars, we'd need to convert using creditExchangeRate
-		// For now, assuming minPrepaidAmount is already in credit points
-		const requiredCredit = minPrepaidAmount;
+		// Convert currency to credit points if exchange rate is provided; otherwise assume 1:1
+		const creditExchangeRate = Number(store.creditExchangeRate) || 1;
+		const requiredCredit =
+			creditExchangeRate > 0
+				? requiredPrepaid / creditExchangeRate
+				: requiredPrepaid;
 
 		if (currentBalance >= requiredCredit) {
 			// Customer has enough credit - deduct it and mark as paid
-			const creditExchangeRate = Number(store.creditExchangeRate) || 1;
 			const cashValue = requiredCredit * creditExchangeRate;
 
 			// Get translation function for ledger note

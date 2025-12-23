@@ -25,8 +25,7 @@ export type RsvpSettingsData = {
 	id: string;
 	storeId: string;
 	acceptReservation: boolean;
-	prepaidRequired: boolean;
-	minPrepaidAmount: number | null;
+	minPrepaidPercentage: number;
 	canCancel: boolean;
 	cancelHours: number;
 	canReserveBefore: number;

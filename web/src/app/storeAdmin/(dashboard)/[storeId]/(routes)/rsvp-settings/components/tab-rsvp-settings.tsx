@@ -55,11 +55,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 			rsvpSettings
 				? {
 						acceptReservation: rsvpSettings.acceptReservation,
-						prepaidRequired: rsvpSettings.prepaidRequired,
-						minPrepaidAmount:
-							rsvpSettings.minPrepaidAmount !== null
-								? Number(rsvpSettings.minPrepaidAmount)
-								: null,
+						minPrepaidPercentage: rsvpSettings.minPrepaidPercentage ?? 0,
 						canCancel: rsvpSettings.canCancel,
 						cancelHours: rsvpSettings.cancelHours,
 						canReserveBefore: rsvpSettings.canReserveBefore,
@@ -78,8 +74,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 					}
 				: {
 						acceptReservation: true,
-						prepaidRequired: false,
-						minPrepaidAmount: null,
+						minPrepaidPercentage: 0,
 						canCancel: true,
 						cancelHours: 24,
 						canReserveBefore: 2,
@@ -134,38 +129,10 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 				const rsvpSettings = result.data.rsvpSettings;
 				const updatedRsvpSettings: RsvpSettingsData = {
 					...rsvpSettings,
-					minPrepaidAmount: rsvpSettings.minPrepaidAmount
-						? Number(rsvpSettings.minPrepaidAmount)
-						: null,
+					minPrepaidPercentage: rsvpSettings.minPrepaidPercentage ?? 0,
 					createdAt: epochToDate(rsvpSettings.createdAt) ?? new Date(),
 					updatedAt: epochToDate(rsvpSettings.updatedAt) ?? new Date(),
 				};
-				/*
-				const updatedRsvpSettings: RsvpSettingsData = {
-					id: result.data.rsvpSettings.id,
-					storeId: result.data.rsvpSettings.storeId,
-					acceptReservation: result.data.rsvpSettings.acceptReservation,
-					prepaidRequired: result.data.rsvpSettings.prepaidRequired,
-					minPrepaidAmount: result.data.rsvpSettings.minPrepaidAmount
-						? Number(result.data.rsvpSettings.minPrepaidAmount)
-						: null,
-					canCancel: result.data.rsvpSettings.canCancel,
-					cancelHours: Number(result.data.rsvpSettings.cancelHours),
-					defaultDuration: Number(result.data.rsvpSettings.defaultDuration),
-					requireSignature: result.data.rsvpSettings.requireSignature,
-					showCostToCustomer: result.data.rsvpSettings.showCostToCustomer,
-					useBusinessHours: result.data.rsvpSettings.useBusinessHours,
-					rsvpHours: result.data.rsvpSettings.rsvpHours,
-					reminderHours: Number(result.data.rsvpSettings.reminderHours),
-					useReminderSMS: result.data.rsvpSettings.useReminderSMS,
-					useReminderLine: result.data.rsvpSettings.useReminderLine,
-					useReminderEmail: result.data.rsvpSettings.useReminderEmail,
-					syncWithGoogle: result.data.rsvpSettings.syncWithGoogle,
-					syncWithApple: result.data.rsvpSettings.syncWithApple,
-					createdAt: result.data.rsvpSettings.createdAt,
-					updatedAt: result.data.rsvpSettings.updatedAt,
-				};
-				*/
 
 				// Notify parent to update state
 				onRsvpSettingsUpdated?.(updatedRsvpSettings);
@@ -361,63 +328,36 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								{t("RSVP_Prepaid_Settings")}
 							</h3>
 
-							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-								<FormField
-									control={form.control}
-									name="prepaidRequired"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
-											<div className="space-y-0.5">
-												<FormLabel>{t("RSVP_Prepaid_Required")}</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("RSVP_Prepaid_Required_descr")}
-												</FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-
-								{form.watch("prepaidRequired") && (
-									<FormField
-										control={form.control}
-										name="minPrepaidAmount"
-										render={({ field }) => (
-											<FormItem>
-												<FormLabel>{t("RSVP_Prepaid_Amount")}</FormLabel>
-												<FormControl>
-													<Input
-														type="number"
-														step="0.01"
-														disabled={loading || form.formState.isSubmitting}
-														value={
-															field.value !== null && field.value !== undefined
-																? field.value.toString()
-																: ""
-														}
-														onChange={(event) => {
-															const value = event.target.value;
-															field.onChange(
-																value === "" ? null : Number(value),
-															);
-														}}
-													/>
-												</FormControl>
-												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("RSVP_Prepaid_Amount_descr")}
-												</FormDescription>
-												<FormMessage />
-											</FormItem>
-										)}
-									/>
+							<FormField
+								control={form.control}
+								name="minPrepaidPercentage"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("RSVP_Prepaid_Percentage")}</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												min={0}
+												max={100}
+												step="1"
+												disabled={loading || form.formState.isSubmitting}
+												value={field.value?.toString() ?? "0"}
+												onChange={(event) =>
+													field.onChange(
+														Number.isNaN(Number(event.target.value))
+															? 0
+															: Number(event.target.value),
+													)
+												}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("RSVP_Prepaid_Percentage_descr")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
 								)}
-							</div>
+							/>
 						</div>
 
 						<Separator />

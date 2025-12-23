@@ -32,7 +32,7 @@ interface CustomerReservationHistoryClientProps {
 	serverData: Rsvp[];
 	storeTimezone: string;
 	rsvpSettings?: {
-		prepaidRequired?: boolean | null;
+		minPrepaidPercentage?: number | null;
 	} | null;
 }
 

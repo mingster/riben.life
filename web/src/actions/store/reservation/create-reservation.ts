@@ -143,6 +143,7 @@ export const createReservationAction = baseClient
 			select: {
 				id: true,
 				businessHours: true,
+				defaultCost: true,
 			},
 		});
 
@@ -159,13 +160,16 @@ export const createReservationAction = baseClient
 		);
 
 		// Process prepaid payment using shared function
+		const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
+		const totalCost = facility?.defaultCost
+			? Number(facility.defaultCost)
+			: null;
+
 		const prepaidResult = await processRsvpPrepaidPayment({
 			storeId,
 			customerId: finalCustomerId,
-			prepaidRequired: rsvpSettings?.prepaidRequired ?? false,
-			minPrepaidAmount: rsvpSettings?.minPrepaidAmount
-				? Number(rsvpSettings.minPrepaidAmount)
-				: null,
+			minPrepaidPercentage,
+			totalCost,
 			rsvpTime,
 			store: {
 				useCustomerCredit: store.useCustomerCredit,
@@ -212,7 +216,8 @@ export const createReservationAction = baseClient
 			transformPrismaDataForJson(transformedRsvp);
 
 			// Check if prepaid is required and user needs to recharge
-			const requiresPrepaid = rsvpSettings?.prepaidRequired ?? false;
+			const requiresPrepaid =
+				(minPrepaidPercentage ?? 0) > 0 && (totalCost ?? 0) > 0;
 			const needsRecharge = requiresPrepaid && !transformedRsvp.alreadyPaid;
 
 			return {

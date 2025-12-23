@@ -1,4 +1,4 @@
-import type { RsvpBlacklist } from "@prisma/client";
+import type { RsvpBlacklist } from "@/types";
 
 export interface RsvpBlacklistColumn {
 	id: string;

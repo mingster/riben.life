@@ -1,31 +1,30 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
-import {
-	format,
-	startOfWeek,
-	endOfWeek,
-	addWeeks,
-	subWeeks,
-	isSameDay,
-	isBefore,
-	startOfDay,
-	addHours,
-} from "date-fns";
-import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import { useTranslation } from "@/app/i18n/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
 import {
-	getDateInTz,
-	getUtcNow,
-	getOffsetHours,
 	dayAndTimeSlotToUtc,
 	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+	getUtcNow,
 } from "@/utils/datetime-utils";
 import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
+import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import {
+	addWeeks,
+	endOfWeek,
+	format,
+	isBefore,
+	isSameDay,
+	startOfDay,
+	startOfWeek,
+	subWeeks,
+} from "date-fns";
+import { useCallback, useMemo, useState } from "react";
 
 interface TimeRange {
 	from: string;

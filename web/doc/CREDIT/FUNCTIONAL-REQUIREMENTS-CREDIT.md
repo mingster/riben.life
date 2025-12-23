@@ -278,8 +278,8 @@ Store Admins have all Store Staff permissions, plus:
 
 **FR-CREDIT-019:** Credit can be used for RSVP prepaid reservations:
 
-- When `prepaidRequired` is true in RSVP settings
-- Customer can use credit to pay `minPrepaidAmount`
+- When `minPrepaidPercentage > 0` in RSVP settings and total cost > 0
+- Customer can use credit to pay the required prepaid amount (`ceil(totalCost * minPrepaidPercentage / 100)`)
 - Credit is deducted when the `alreadyPaid` flag is set to `true` on the reservation
 - Reservation is linked to order via `orderId`
 - Credit usage follows same flow as regular purchase

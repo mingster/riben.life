@@ -371,7 +371,7 @@ The system includes the following built-in payment method plugins:
 
 **Preconditions:**
 
-- RSVP settings must have `prepaidRequired = true`
+- RSVP settings must have `minPrepaidPercentage > 0`
 - Customer must be signed in
 - Store must have customer credit system enabled (for credit-based prepaid)
 
@@ -390,10 +390,9 @@ The system includes the following built-in payment method plugins:
 
 **FR-PAY-014:** RSVP prepaid payment amount:
 
-- Minimum prepaid amount is specified in `RsvpSettings.minPrepaidAmount`
-- Amount can be specified as:
-  - Dollar amount (currency value)
-  - Credit points (if credit system enabled)
+- Minimum prepaid percentage is specified in `RsvpSettings.minPrepaidPercentage` (0–100)
+- Required prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`
+- If total reservation cost is missing or zero, prepaid is skipped
 - If customer has insufficient credit, must recharge before completing prepaid payment
 
 #### 3.4.2 RSVP Prepaid Payment Processing
@@ -401,9 +400,10 @@ The system includes the following built-in payment method plugins:
 **FR-PAY-015:** When processing RSVP prepaid payment with credit:
 
 1. System checks customer credit balance
-2. System calculates required credit amount:
-   - If `minPrepaidAmount` is in dollars: Convert to credit using `creditExchangeRate`
-   - If `minPrepaidAmount` is already in credit points: Use directly
+2. System calculates required prepaid amount:
+   - PrepaidRequired = `minPrepaidPercentage > 0` AND totalCost > 0
+   - Required prepaid = `ceil(totalCost * minPrepaidPercentage / 100)`
+   - If totalCost is missing/0, prepaid is skipped
 3. If sufficient balance:
    - Creates `StoreOrder` with credit payment method
    - Deducts credit from customer balance

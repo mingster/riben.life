@@ -344,17 +344,27 @@ const rsvpObj = Prisma.validator<Prisma.RsvpDefaultArgs>()({
 });
 export type Rsvp = Prisma.RsvpGetPayload<typeof rsvpObj>;
 
-const rsvpSettingsObj = Prisma.validator<Prisma.RsvpSettingsDefaultArgs>()({});
-export type RsvpSettings = Prisma.RsvpSettingsGetPayload<
-	typeof rsvpSettingsObj
->;
-
 const storeSettingsObj = Prisma.validator<Prisma.StoreSettingsDefaultArgs>()(
 	{},
 );
 export type StoreSettings = Prisma.StoreSettingsGetPayload<
 	typeof storeSettingsObj
 >;
+
+const rsvpSettingsObj = Prisma.validator<Prisma.RsvpSettingsDefaultArgs>()({});
+export type RsvpSettings = Prisma.RsvpSettingsGetPayload<
+	typeof rsvpSettingsObj
+>;
+
+const rsvpBlacklistObj = Prisma.validator<Prisma.RsvpBlacklistDefaultArgs>()(
+	{},
+);
+export type RsvpBlacklist = Prisma.RsvpBlacklistGetPayload<
+	typeof rsvpBlacklistObj
+>;
+
+const rsvpTagObj = Prisma.validator<Prisma.RsvpTagDefaultArgs>()({});
+export type RsvpTag = Prisma.RsvpTagGetPayload<typeof rsvpTagObj>;
 
 /* endregion */
 

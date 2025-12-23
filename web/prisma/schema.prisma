@@ -746,8 +746,7 @@ model RsvpSettings {
   storeId String @unique
 
   acceptReservation Boolean  @default(true) // turn on/off the reservation system
-  prepaidRequired   Boolean  @default(false) //預付制：儲值後才可預約 / //訂位需付訂金
-  minPrepaidAmount  Decimal? @default(0) //最低預付金額
+  minPrepaidPercentage Int    @default(0) //最低預付百分比；0 表示不需預付，100 表示全額預付
 
   canCancel   Boolean @default(true) //可否取消預約?
   cancelHours Int     @default(24) //最慢免費取消預約時間：幾小時前可免費取消?

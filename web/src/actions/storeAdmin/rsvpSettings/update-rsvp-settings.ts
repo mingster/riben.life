@@ -16,8 +16,7 @@ export const updateRsvpSettingsAction = storeActionClient
 		const storeId = bindArgsClientInputs[0] as string;
 		const {
 			acceptReservation,
-			prepaidRequired,
-			minPrepaidAmount,
+			minPrepaidPercentage,
 			canCancel,
 			cancelHours,
 			canReserveBefore,
@@ -78,12 +77,8 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (acceptReservation !== undefined) {
 			updateData.acceptReservation = acceptReservation;
 		}
-		if (prepaidRequired !== undefined) {
-			updateData.prepaidRequired = prepaidRequired;
-		}
-		if (minPrepaidAmount !== undefined) {
-			updateData.minPrepaidAmount =
-				minPrepaidAmount !== null ? new Prisma.Decimal(minPrepaidAmount) : null;
+		if (minPrepaidPercentage !== undefined) {
+			updateData.minPrepaidPercentage = minPrepaidPercentage;
 		}
 		if (canCancel !== undefined) {
 			updateData.canCancel = canCancel;
@@ -172,11 +167,7 @@ export const updateRsvpSettingsAction = storeActionClient
 						data: {
 							storeId,
 							acceptReservation: acceptReservation ?? true,
-							prepaidRequired: prepaidRequired ?? false,
-							minPrepaidAmount:
-								minPrepaidAmount !== undefined && minPrepaidAmount !== null
-									? new Prisma.Decimal(minPrepaidAmount)
-									: new Prisma.Decimal(0),
+							minPrepaidPercentage: minPrepaidPercentage ?? 0,
 							canCancel: canCancel ?? true,
 							cancelHours: cancelHours ?? 24,
 							canReserveBefore: canReserveBefore ?? 2,

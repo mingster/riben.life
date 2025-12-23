@@ -1,7 +1,6 @@
 import Container from "@/components/ui/container";
 import { isPro } from "@/lib/store-admin-utils";
 import { getStoreWithRelations } from "@/lib/store-access";
-import { Store } from "@/types";
 import { RsvpSettingTabs, type RsvpSettingsData } from "./components/tabs";
 import { sqlClient } from "@/lib/prismadb";
 import { transformPrismaDataForJson } from "@/utils/utils";
@@ -68,10 +67,7 @@ export default async function RsvpSettingsPage(props: {
 			id: rsvpSettings.id,
 			storeId: rsvpSettings.storeId,
 			acceptReservation: rsvpSettings.acceptReservation,
-			prepaidRequired: rsvpSettings.prepaidRequired,
-			minPrepaidAmount: rsvpSettings.minPrepaidAmount
-				? Number(rsvpSettings.minPrepaidAmount)
-				: null,
+			minPrepaidPercentage: rsvpSettings.minPrepaidPercentage,
 			canCancel: rsvpSettings.canCancel,
 			cancelHours: rsvpSettings.cancelHours,
 			canReserveBefore: rsvpSettings.canReserveBefore,
@@ -110,19 +106,27 @@ export default async function RsvpSettingsPage(props: {
 
 	if (rsvpBlacklist) {
 		transformPrismaDataForJson(rsvpBlacklist);
-		transformedBlacklist = rsvpBlacklist.map((item: { userId: string; id: any; storeId: any; createdAt: any; updatedAt: any; }) => {
-			const user = userMap.get(item.userId);
-			return {
-				id: item.id,
-				storeId: item.storeId,
-				userId: item.userId,
-				userName: user?.name ?? null,
-				userEmail: user?.email ?? null,
-				createdAt: item.createdAt,
-				updatedAt: item.updatedAt,
-				User: user || null,
-			};
-		});
+		transformedBlacklist = rsvpBlacklist.map(
+			(item: {
+				userId: string;
+				id: any;
+				storeId: any;
+				createdAt: any;
+				updatedAt: any;
+			}) => {
+				const user = userMap.get(item.userId);
+				return {
+					id: item.id,
+					storeId: item.storeId,
+					userId: item.userId,
+					userName: user?.name ?? null,
+					userEmail: user?.email ?? null,
+					createdAt: item.createdAt,
+					updatedAt: item.updatedAt,
+					User: user || null,
+				};
+			},
+		);
 	}
 
 	return (

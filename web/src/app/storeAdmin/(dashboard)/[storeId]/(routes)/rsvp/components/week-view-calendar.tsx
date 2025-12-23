@@ -50,7 +50,7 @@ interface CreateRsvpButtonProps {
 	onCreated?: (rsvp: Rsvp) => void;
 	storeTimezone: string;
 	rsvpSettings?: {
-		prepaidRequired?: boolean | null;
+		minPrepaidPercentage?: number | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
 		canReserveBefore?: number | null;
@@ -98,7 +98,7 @@ interface WeekViewCalendarProps {
 		useBusinessHours: boolean;
 		rsvpHours: string | null;
 		defaultDuration?: number | null;
-		prepaidRequired?: boolean | null;
+		minPrepaidPercentage?: number | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
 		canReserveBefore?: number | null;
