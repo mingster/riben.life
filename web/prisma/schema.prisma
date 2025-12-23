@@ -968,6 +968,7 @@ model Product {
   currency          String              @default("twd")
   price             Decimal             @default(0)
   useOption         Boolean             @default(true) // when true, price is calculated based on product option
+  canDelete        Boolean             @default(true)
   createdAt         BigInt
   updatedAt         BigInt
   Store             Store               @relation("StoreToProduct", fields: [storeId], references: [id], onDelete: Cascade)

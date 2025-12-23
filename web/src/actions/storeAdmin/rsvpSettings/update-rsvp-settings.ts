@@ -7,6 +7,7 @@ import { Prisma } from "@prisma/client";
 import { updateRsvpSettingsSchema } from "./update-rsvp-settings.validation";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
+import BusinessHours from "@/lib/businessHours";
 
 export const updateRsvpSettingsAction = storeActionClient
 	.metadata({ name: "updateRsvpSettings" })
@@ -51,6 +52,19 @@ export const updateRsvpSettingsAction = storeActionClient
 
 		if (!store) {
 			throw new SafeError("Store not found");
+		}
+
+		// Validate rsvpHours JSON (when provided and not using business hours)
+		if (rsvpHours !== undefined && rsvpHours !== null) {
+			try {
+				new BusinessHours(rsvpHours);
+			} catch (error) {
+				throw new SafeError(
+					`Invalid RSVP hours: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+			}
 		}
 
 		// Find existing RsvpSettings

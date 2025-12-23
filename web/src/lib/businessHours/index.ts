@@ -344,12 +344,21 @@ export default class BusinessHours {
 	// check the time defined inside to/from node.
 	_isHourValid(time: string) {
 		if (time === "closed") return true;
-		if (time.length !== 5) return false;
-		if (time.indexOf(":") !== 2) return false;
 
-		const modifiedTime = time.replace(":", "");
+		// Accept both "08:00" and "8:00" formats
+		const parts = time.split(":");
+		if (parts.length !== 2) return false;
 
-		if (Number.isNaN(modifiedTime)) return false;
+		const [hourStr, minuteStr] = parts;
+		if (hourStr.length < 1 || hourStr.length > 2) return false;
+		if (minuteStr.length !== 2) return false;
+
+		const hour = Number(hourStr);
+		const minute = Number(minuteStr);
+
+		if (Number.isNaN(hour) || Number.isNaN(minute)) return false;
+		if (hour < 0 || hour > 23) return false;
+		if (minute < 0 || minute > 59) return false;
 
 		return true;
 	}

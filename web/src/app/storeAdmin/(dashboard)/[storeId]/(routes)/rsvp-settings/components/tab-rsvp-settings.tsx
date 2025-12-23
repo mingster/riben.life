@@ -303,6 +303,56 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 							/>
 						)}
 
+						<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+							<FormField
+								control={form.control}
+								name="canReserveBefore"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("RSVP_Can_Reserve_Before")}</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading || form.formState.isSubmitting}
+												value={field.value?.toString() ?? ""}
+												onChange={(event) =>
+													field.onChange(Number(event.target.value))
+												}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("RSVP_Can_Reserve_Before_descr")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="canReserveAfter"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("RSVP_Can_Reserve_After")}</FormLabel>
+										<FormControl>
+											<Input
+												type="number"
+												disabled={loading || form.formState.isSubmitting}
+												value={field.value?.toString() ?? ""}
+												onChange={(event) =>
+													field.onChange(Number(event.target.value))
+												}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("RSVP_Can_Reserve_After_descr")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+
 						<Separator />
 
 						{/* Prepaid Settings */}
@@ -426,56 +476,6 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 										)}
 									/>
 								)}
-							</div>
-
-							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-								<FormField
-									control={form.control}
-									name="canReserveBefore"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>{t("RSVP_Can_Reserve_Before")}</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													disabled={loading || form.formState.isSubmitting}
-													value={field.value?.toString() ?? ""}
-													onChange={(event) =>
-														field.onChange(Number(event.target.value))
-													}
-												/>
-											</FormControl>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Can_Reserve_Before_descr")}
-											</FormDescription>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
-								<FormField
-									control={form.control}
-									name="canReserveAfter"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>{t("RSVP_Can_Reserve_After")}</FormLabel>
-											<FormControl>
-												<Input
-													type="number"
-													disabled={loading || form.formState.isSubmitting}
-													value={field.value?.toString() ?? ""}
-													onChange={(event) =>
-														field.onChange(Number(event.target.value))
-													}
-												/>
-											</FormControl>
-											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Can_Reserve_After_descr")}
-											</FormDescription>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
 							</div>
 
 							<FormField

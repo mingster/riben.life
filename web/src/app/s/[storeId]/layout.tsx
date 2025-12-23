@@ -5,22 +5,21 @@ import type { Store } from "@/types";
 import { StoreFooter } from "./components/store-footer";
 import { StoreNavbar } from "./components/store-navbar";
 
-import BusinessHours from "@/lib/businessHours";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { isValidGuid } from "@/utils/guid-utils";
 import type { StoreSettings } from "@prisma/client";
-import type { Metadata, ResolvingMetadata } from "next";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 type Props = {
-	params: Promise<{ storeId: string }>;
-	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+	params: { storeId: string };
+	searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export async function generateMetadata(
 	props: Props,
 	//parent: ResolvingMetadata,
 ): Promise<Metadata> {
-	const params = await props.params;
+	const params = props.params;
 
 	// Prevent admin and reserved routes from being treated as store routes
 	if (isReservedRoute(params.storeId)) {
@@ -54,12 +53,12 @@ export async function generateMetadata(
 }
 
 export default async function StoreHomeLayout(props: {
-	params: Promise<{
+	params: {
 		storeId: string;
-	}>;
+	};
 	children: React.ReactNode;
 }) {
-	const params = await props.params;
+	const params = props.params;
 
 	const {
 		// will be a page or nested layout
@@ -106,15 +105,6 @@ export default async function StoreHomeLayout(props: {
 		},
 	})) as StoreSettings;
 
-	let isStoreOpen = store.isOpen;
-	if (storeSettings != null) {
-		const bizHour = storeSettings.businessHours;
-		if (store.useBusinessHours && bizHour !== null) {
-			const businessHours = new BusinessHours(bizHour);
-			isStoreOpen = businessHours.isOpenNow();
-		}
-	}
-
 	return (
 		<CartProvider>
 			<div className="bg-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
@@ -123,7 +113,12 @@ export default async function StoreHomeLayout(props: {
 					<span className="hash-span" id="top" />
 					{children}
 				</main>
-				<StoreFooter visible={isStoreOpen} store={store} />
+				<StoreFooter
+					initialVisible={true}
+					store={store}
+					useBusinessHours={store.useBusinessHours}
+					businessHours={storeSettings?.businessHours ?? null}
+				/>
 			</div>
 		</CartProvider>
 	);

@@ -49,12 +49,27 @@ export type RsvpSettingsData = {
 export interface RsvpSettingsProps {
 	store: Store;
 	rsvpSettings?: RsvpSettingsData | null;
+	rsvpBlacklist?: Array<{
+		id: string;
+		storeId: string;
+		userId: string;
+		userName: string | null;
+		userEmail: string | null;
+		createdAt: bigint;
+		updatedAt: bigint;
+		User?: {
+			id: string;
+			name: string | null;
+			email: string | null;
+		} | null;
+	}>;
 	onStoreUpdated?: (store: Store) => void;
 }
 
 export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 	store: initialStore,
 	rsvpSettings: initialRsvpSettings,
+	rsvpBlacklist: initialRsvpBlacklist = [],
 	onStoreUpdated,
 }) => {
 	const router = useRouter();
@@ -190,6 +205,7 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 					<RsvpBlacklistTab
 						store={store}
 						rsvpSettings={rsvpSettings}
+						rsvpBlacklist={initialRsvpBlacklist}
 						onStoreUpdated={onStoreUpdated}
 						onRsvpSettingsUpdated={handleRsvpSettingsUpdated}
 					/>
