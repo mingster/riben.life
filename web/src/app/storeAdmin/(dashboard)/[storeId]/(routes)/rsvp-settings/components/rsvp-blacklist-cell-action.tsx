@@ -55,7 +55,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 			}
 
 			toastSuccess({
-				title: t("RSVP_Blacklist_deleted") || "Blacklist entry deleted",
+				title: t("rsvp_Blacklist_deleted") || "Blacklist entry deleted",
 				description: "",
 			});
 			onDeleted?.(data.id);

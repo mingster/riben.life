@@ -159,7 +159,7 @@ export function EditRsvpBlacklistDialog({
 		}
 
 		toastSuccess({
-			title: t("RSVP_Blacklist") + " " + t(isEditMode ? "updated" : "created"),
+			title: t("rsvp_Blacklist") + " " + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 

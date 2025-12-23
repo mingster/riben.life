@@ -203,7 +203,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 							name="defaultDuration"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("RSVP_Default_Duration")}</FormLabel>
+									<FormLabel>{t("rsvp_Default_Duration")}</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
@@ -215,7 +215,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("RSVP_Default_Duration_descr")}
+										{t("rsvp_Default_Duration_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -228,9 +228,9 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("RSVP_Use_Business_Hours")}</FormLabel>
+										<FormLabel>{t("rsvp_Use_Business_Hours")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("RSVP_Use_Business_Hours_descr")}
+											{t("rsvp_Use_Business_Hours_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -250,7 +250,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								name="rsvpHours"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("RSVP_Hours")}</FormLabel>
+										<FormLabel>{t("rsvp_Hours")}</FormLabel>
 										<FormControl>
 											<Textarea
 												disabled={loading || form.formState.isSubmitting}
@@ -262,7 +262,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("RSVP_Hours_descr")}
+											{t("rsvp_Hours_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -276,7 +276,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								name="canReserveBefore"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("RSVP_Can_Reserve_Before")}</FormLabel>
+										<FormLabel>{t("rsvp_Can_Reserve_Before")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -288,7 +288,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("RSVP_Can_Reserve_Before_descr")}
+											{t("rsvp_Can_Reserve_Before_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -300,7 +300,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								name="canReserveAfter"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("RSVP_Can_Reserve_After")}</FormLabel>
+										<FormLabel>{t("rsvp_Can_Reserve_After")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -312,7 +312,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("RSVP_Can_Reserve_After_descr")}
+											{t("rsvp_Can_Reserve_After_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -325,7 +325,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						{/* Prepaid Settings */}
 						<div className="space-y-4">
 							<h3 className="text-lg font-semibold">
-								{t("RSVP_Prepaid_Settings")}
+								{t("rsvp_Prepaid_Settings")}
 							</h3>
 
 							<FormField
@@ -333,7 +333,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								name="minPrepaidPercentage"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("RSVP_Prepaid_Percentage")}</FormLabel>
+										<FormLabel>{t("rsvp_Prepaid_Percentage")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -352,7 +352,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("RSVP_Prepaid_Percentage_descr")}
+											{t("rsvp_Prepaid_Percentage_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -365,7 +365,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						{/* Cancellation Settings */}
 						<div className="space-y-4">
 							<h3 className="text-lg font-semibold">
-								{t("RSVP_Cancellation_Settings")}
+								{t("rsvp_Cancellation_Settings")}
 							</h3>
 
 							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
@@ -375,9 +375,9 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 									render={({ field }) => (
 										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
-												<FormLabel>{t("RSVP_Can_Cancel")}</FormLabel>
+												<FormLabel>{t("rsvp_Can_Cancel")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("RSVP_Can_Cancel_descr")}
+													{t("rsvp_Can_Cancel_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>
@@ -397,7 +397,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 										name="cancelHours"
 										render={({ field }) => (
 											<FormItem>
-												<FormLabel>{t("RSVP_Cancel_Hours")}</FormLabel>
+												<FormLabel>{t("rsvp_Cancel_Hours")}</FormLabel>
 												<FormControl>
 													<Input
 														type="number"
@@ -409,7 +409,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 													/>
 												</FormControl>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("RSVP_Cancel_Hours_descr")}
+													{t("rsvp_Cancel_Hours_descr")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -424,9 +424,9 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								render={({ field }) => (
 									<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
-											<FormLabel>{t("RSVP_Require_Signature")}</FormLabel>
+											<FormLabel>{t("rsvp_Require_Signature")}</FormLabel>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Require_Signature_descr")}
+												{t("rsvp_Require_Signature_descr")}
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -446,7 +446,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						{/* Display & Signature Settings */}
 						<div className="space-y-4">
 							<h3 className="text-lg font-semibold">
-								{t("RSVP_Display_Settings")}
+								{t("rsvp_Display_Settings")}
 							</h3>
 							<FormField
 								control={form.control}
@@ -454,9 +454,9 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								render={({ field }) => (
 									<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
-											<FormLabel>{t("RSVP_Show_Cost")}</FormLabel>
+											<FormLabel>{t("rsvp_Show_Cost")}</FormLabel>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("RSVP_Show_Cost_descr")}
+												{t("rsvp_Show_Cost_descr")}
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -476,14 +476,14 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						{/* Reminder Settings */}
 						<div className="space-y-4">
 							<h3 className="text-lg font-semibold">
-								{t("RSVP_Reminder_Settings")}
+								{t("rsvp_Reminder_Settings")}
 							</h3>
 							<FormField
 								control={form.control}
 								name="reminderHours"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("RSVP_Reminder_Hours")}</FormLabel>
+										<FormLabel>{t("rsvp_Reminder_Hours")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -495,7 +495,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("RSVP_Reminder_Hours_descr")}
+											{t("rsvp_Reminder_Hours_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -509,7 +509,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 									render={({ field }) => (
 										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
-												<FormLabel>{t("RSVP_Reminder_Email")}</FormLabel>
+												<FormLabel>{t("rsvp_Reminder_Email")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
 											</div>
 											<FormControl>
@@ -529,7 +529,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 									render={({ field }) => (
 										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
-												<FormLabel>{t("RSVP_Reminder_SMS")}</FormLabel>
+												<FormLabel>{t("rsvp_Reminder_SMS")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
 											</div>
 											<FormControl>
@@ -549,7 +549,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 									render={({ field }) => (
 										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
-												<FormLabel>{t("RSVP_Reminder_Line")}</FormLabel>
+												<FormLabel>{t("rsvp_Reminder_Line")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
 											</div>
 											<FormControl>
@@ -574,7 +574,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 									render={({ field }) => (
 										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
-												<FormLabel>{t("RSVP_Sync_Google")}</FormLabel>
+												<FormLabel>{t("rsvp_Sync_Google")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
 											</div>
 											<FormControl>
@@ -594,7 +594,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 									render={({ field }) => (
 										<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
-												<FormLabel>{t("RSVP_Sync_Apple")}</FormLabel>
+												<FormLabel>{t("rsvp_Sync_Apple")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
 											</div>
 											<FormControl>

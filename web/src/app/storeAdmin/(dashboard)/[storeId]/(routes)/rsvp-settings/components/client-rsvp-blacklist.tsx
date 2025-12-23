@@ -94,9 +94,9 @@ export const RsvpBlacklistClient: React.FC<RsvpBlacklistClientProps> = ({
 		<>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
-					title={t("RSVP_Blacklist_Settings")}
+					title={t("rsvp_Blacklist_Settings")}
 					badge={data.length}
-					description={t("RSVP_Blacklist_Settings_Descr")}
+					description={t("rsvp_Blacklist_Settings_descr")}
 				/>
 				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
 					<EditRsvpBlacklistDialog
