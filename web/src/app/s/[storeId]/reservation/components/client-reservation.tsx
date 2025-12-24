@@ -24,6 +24,7 @@ interface ReservationClientProps {
 	storeId: string;
 	storeOwnerId: string;
 	storeTimezone: string;
+	storeUseBusinessHours?: boolean | null;
 	isBlacklisted?: boolean;
 	useCustomerCredit?: boolean;
 	creditExchangeRate?: number | null;
@@ -39,6 +40,7 @@ export function ReservationClient({
 	storeId,
 	storeOwnerId,
 	storeTimezone,
+	storeUseBusinessHours,
 	isBlacklisted = false,
 	useCustomerCredit = false,
 	creditExchangeRate = null,
@@ -121,6 +123,7 @@ export function ReservationClient({
 				facilities={facilities}
 				user={user}
 				storeTimezone={storeTimezone}
+				storeUseBusinessHours={storeUseBusinessHours}
 				onReservationCreated={handleReservationCreated}
 				isBlacklisted={isBlacklisted}
 				useCustomerCredit={useCustomerCredit}
@@ -139,6 +142,7 @@ export function ReservationClient({
 					rsvp={editRsvp}
 					rsvps={initialRsvps}
 					storeTimezone={storeTimezone}
+					storeUseBusinessHours={storeUseBusinessHours}
 					open={Boolean(editRsvpId)}
 					onOpenChange={(open) => {
 						if (!open) {

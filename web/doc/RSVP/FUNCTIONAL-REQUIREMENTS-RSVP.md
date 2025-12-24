@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27
 **Status:** Active
-**Version:** 1.6
+**Version:** 1.7
 
 **Related Documents:**
 
@@ -116,8 +116,18 @@ Store Admins have all Store Staff permissions, plus:
 * **Reservation time window:**
   * Reservations must be at least `canReserveBefore` hours in the future (e.g., if `canReserveBefore = 2`, current time is 7PM, only reservations at 9PM or later are allowed)
   * Reservations must be no more than `canReserveAfter` hours in the future (e.g., if `canReserveAfter = 2190` (3 months), reservations beyond 3 months are not allowed)
-* Business hours (useBusinessHours, rsvpHours)
+* **Business hours validation (rsvpTime):**
+  * **If `RsvpSettings.useBusinessHours = true`:** Validate `rsvpTime` against `RsvpSettings.rsvpHours`
+  * **If `RsvpSettings.useBusinessHours = false` AND `Store.useBusinessHours = true`:** Validate `rsvpTime` against `StoreSettings.businessHours`
+  * **If `RsvpSettings.useBusinessHours = false` AND `Store.useBusinessHours = false`:** No business hours validation (all times allowed)
+  * Validation occurs both in the UI (real-time feedback) and on form submission
 * Facility capacity and availability
+* **UI Facility Filtering:**
+  * The reservation form dynamically filters available facilities based on the selected time slot
+  * Facilities that are already booked at the selected time are hidden from the facility dropdown
+  * **If `singleServiceMode` is `true`:** If any reservation exists for the time slot, all facilities are filtered out
+  * **If `singleServiceMode` is `false` (default):** Only facilities with existing reservations are filtered out
+  * When editing an existing reservation, the current facility is always included even if it would normally be filtered out
 * Existing reservations for the requested time slot
 * **If `singleServiceMode` is `true`:** Only one reservation is allowed per time slot across all facilities (personal shop mode)
 * **If `singleServiceMode` is `false` (default):** Multiple reservations can exist on the same time slot as long as they use different facilities
@@ -500,6 +510,12 @@ Completed (50) [when service is finished]
 * Verify capacity matches party size (adults + children) or service requirements
 * Prevent double-booking of same resource at same time
 * Consider resource capacity when showing availability
+* **UI Facility Filtering:**
+  * The reservation form (both customer-facing and admin) dynamically filters available facilities based on the selected time slot
+  * Facilities that are already booked at the selected time are hidden from the facility dropdown
+  * **If `singleServiceMode` is `true`:** If any reservation exists for the time slot, all facilities are filtered out
+  * **If `singleServiceMode` is `false` (default):** Only facilities with existing reservations are filtered out
+  * When editing an existing reservation, the current facility is always included even if it would normally be filtered out
 * **If `singleServiceMode` is `true`:** Check if any reservation exists for the requested time slot (across all facilities) and block if one exists
 * **If `singleServiceMode` is `false` (default):** Check if the specific facility is available for the requested time slot (allows multiple reservations on same time slot with different facilities)
 
@@ -911,7 +927,12 @@ Completed (50) [when service is finished]
 
 ### 5.1 Availability Rules
 
-**BR-RSVP-001:** Reservations can only be created during configured business hours.
+**BR-RSVP-001:** Reservations can only be created during configured business hours. The business hours validation follows this priority:
+
+* **If `RsvpSettings.useBusinessHours = true`:** Validate `rsvpTime` against `RsvpSettings.rsvpHours`
+* **If `RsvpSettings.useBusinessHours = false` AND `Store.useBusinessHours = true`:** Validate `rsvpTime` against `StoreSettings.businessHours`
+* **If `RsvpSettings.useBusinessHours = false` AND `Store.useBusinessHours = false`:** No business hours validation (all times allowed)
+  Validation occurs both in the UI (real-time feedback when user selects a time) and on form submission (server-side validation).
 
 **BR-RSVP-002:** Reservations cannot be created for past dates/times.
 
@@ -1203,6 +1224,7 @@ Completed (50) [when service is finished]
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.7 | 2025-01-27 | System | Enhanced reservation validation and UI improvements: (1) Added detailed business hours validation logic with priority rules (RsvpSettings.useBusinessHours vs Store.useBusinessHours), including real-time UI validation and server-side validation on form submission. (2) Implemented dynamic facility filtering in reservation forms (both customer-facing and admin) - facilities already booked at the selected time slot are automatically filtered out from the dropdown, with special handling for singleServiceMode and edit mode. Updated FR-RSVP-003, FR-RSVP-024, and BR-RSVP-001 to document these enhancements. |
 | 1.6 | 2025-01-27 | System | Added `singleServiceMode` field to RsvpSettings: Boolean field (default: `false`) for personal shops where only ONE reservation per time slot is allowed across all facilities. When enabled, availability checking blocks any reservation if another reservation exists for the same time slot, regardless of facility. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities. Updated business rules (BR-RSVP-004a, BR-RSVP-004b) and functional requirements (FR-RSVP-003, FR-RSVP-024, FR-RSVP-060) to document this behavior. |
 |---------|------|--------|---------|
 | 1.5 | 2025-01-27 | System | Added explicit requirement for Reserve with Google service connection. Updated all references from "Google Maps Reserve" to "Reserve with Google" for clarity. Enhanced integration requirements to emphasize connection establishment and Google Business Profile linking. |

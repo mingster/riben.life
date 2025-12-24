@@ -692,6 +692,8 @@
   "rsvp_credit_deduction_note": "預約完成：扣抵 {{points}} 點",
   "rsvp_Default_Duration": "每次預約時長",
   "rsvp_Default_Duration_descr": "例如60分鐘",
+  "rsvp_Single_Service_Mode": "單一服務模式",
+  "rsvp_Single_Service_Mode_descr": "個人工作室專用：同一時段只能有一個預約（不限設施）。啟用後，若該時段已有任何預約，將無法再建立新預約。停用時（預設），同一時段可有多個預約，只要使用不同設施即可。",
   "rsvp_delete_reservation": "取消預約",
   "rsvp_delete_reservation_confirmation": "確定要取消預約嗎？",
   "rsvp_Display_Settings": "顯示設定",

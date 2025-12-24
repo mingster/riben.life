@@ -55,6 +55,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 			rsvpSettings
 				? {
 						acceptReservation: rsvpSettings.acceptReservation,
+						singleServiceMode: rsvpSettings.singleServiceMode ?? false,
 						minPrepaidPercentage: rsvpSettings.minPrepaidPercentage ?? 0,
 						canCancel: rsvpSettings.canCancel,
 						cancelHours: rsvpSettings.cancelHours,
@@ -74,6 +75,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 					}
 				: {
 						acceptReservation: true,
+						singleServiceMode: false,
 						minPrepaidPercentage: 0,
 						canCancel: true,
 						cancelHours: 24,
@@ -185,6 +187,28 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 										</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("StoreSettings_acceptReservation_descr")}
+										</FormDescription>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+											disabled={loading || form.formState.isSubmitting}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
+
+						<FormField
+							control={form.control}
+							name="singleServiceMode"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+									<div className="space-y-0.5">
+										<FormLabel>{t("rsvp_Single_Service_Mode")}</FormLabel>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("rsvp_Single_Service_Mode_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>

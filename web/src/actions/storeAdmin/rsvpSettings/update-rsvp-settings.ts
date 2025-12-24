@@ -16,6 +16,7 @@ export const updateRsvpSettingsAction = storeActionClient
 		const storeId = bindArgsClientInputs[0] as string;
 		const {
 			acceptReservation,
+			singleServiceMode,
 			minPrepaidPercentage,
 			canCancel,
 			cancelHours,
@@ -76,6 +77,9 @@ export const updateRsvpSettingsAction = storeActionClient
 
 		if (acceptReservation !== undefined) {
 			updateData.acceptReservation = acceptReservation;
+		}
+		if (singleServiceMode !== undefined) {
+			updateData.singleServiceMode = singleServiceMode;
 		}
 		if (minPrepaidPercentage !== undefined) {
 			updateData.minPrepaidPercentage = minPrepaidPercentage;
@@ -167,6 +171,7 @@ export const updateRsvpSettingsAction = storeActionClient
 						data: {
 							storeId,
 							acceptReservation: acceptReservation ?? true,
+							singleServiceMode: singleServiceMode ?? false,
 							minPrepaidPercentage: minPrepaidPercentage ?? 0,
 							canCancel: canCancel ?? true,
 							cancelHours: cancelHours ?? 24,
