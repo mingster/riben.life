@@ -13,6 +13,7 @@ import fs from "node:fs";
 import { Role, type Organization } from "@prisma/client";
 import crypto from "crypto";
 import { ensureCreditRechargeProduct } from "@/actions/store/credit/ensure-credit-recharge-product";
+import { ensureReservationPrepaidProduct } from "@/actions/store/reservation/ensure-reservation-prepaid-product";
 
 export const createStoreAction = userRequiredActionClient
 	.metadata({ name: "createStore" })
@@ -311,6 +312,7 @@ export const createStoreAction = userRequiredActionClient
 		// Create special system product for credit recharge (FR-PAY-004.1)
 		try {
 			await ensureCreditRechargeProduct(databaseId);
+			await ensureReservationPrepaidProduct(databaseId);
 		} catch (error) {
 			// Log but don't fail store creation if product creation fails
 			logger.error(

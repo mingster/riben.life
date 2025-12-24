@@ -31,6 +31,8 @@ interface RsvpCalendarClientProps {
 	storeTimezone: string;
 	storeCurrency?: string;
 	storeUseBusinessHours?: boolean | null;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
 }
 
 export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
@@ -40,6 +42,8 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 	storeTimezone,
 	storeCurrency = "twd",
 	storeUseBusinessHours,
+	useCustomerCredit = false,
+	creditExchangeRate = null,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -82,15 +86,17 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 					description=""
 				/>
 				<div className="flex gap-1.5 sm:gap-2">
-				<AdminEditRsvpDialog
-					isNew
-					onCreated={handleCreated}
-					storeTimezone={storeTimezone}
-					storeCurrency={storeCurrency}
-					rsvpSettings={rsvpSettings}
-					storeSettings={storeSettings}
-					storeUseBusinessHours={storeUseBusinessHours}
-					trigger={
+					<AdminEditRsvpDialog
+						isNew
+						onCreated={handleCreated}
+						storeTimezone={storeTimezone}
+						storeCurrency={storeCurrency}
+						rsvpSettings={rsvpSettings}
+						storeSettings={storeSettings}
+						storeUseBusinessHours={storeUseBusinessHours}
+						useCustomerCredit={useCustomerCredit}
+						creditExchangeRate={creditExchangeRate}
+						trigger={
 							<Button variant="outline" className="h-10 sm:h-9">
 								<IconPlus className="mr-2 h-4 w-4" />
 								<span className="text-sm sm:text-xs">{t("create")}</span>
@@ -109,6 +115,8 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 				storeTimezone={storeTimezone}
 				storeCurrency={storeCurrency}
 				storeUseBusinessHours={storeUseBusinessHours}
+				useCustomerCredit={useCustomerCredit}
+				creditExchangeRate={creditExchangeRate}
 			/>
 		</>
 	);

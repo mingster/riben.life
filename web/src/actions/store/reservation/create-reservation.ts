@@ -1,26 +1,30 @@
 "use server";
 
-import { sqlClient } from "@/lib/prismadb";
-import { SafeError } from "@/utils/error";
-import { baseClient } from "@/utils/actions/safe-action";
-import { Prisma } from "@prisma/client";
-import { transformPrismaDataForJson } from "@/utils/utils";
-import type { Rsvp } from "@/types";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { sqlClient } from "@/lib/prismadb";
+import type { Rsvp } from "@/types";
+import { baseClient } from "@/utils/actions/safe-action";
 import {
+	convertDateToUtc,
 	dateToEpoch,
 	getUtcNowEpoch,
-	convertDateToUtc,
 } from "@/utils/datetime-utils";
+import { SafeError } from "@/utils/error";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { Prisma } from "@prisma/client";
+import { headers } from "next/headers";
 
 import { createReservationSchema } from "./create-reservation.validation";
-import { RsvpStatus } from "@/types/enum";
-import { processRsvpPrepaidPayment } from "./process-rsvp-prepaid-payment";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
+import { createRsvpStoreOrder } from "./create-rsvp-store-order";
+import { RsvpStatus } from "@/types/enum";
+import { getT } from "@/app/i18n";
 
+// create a reservation by the customer.
+// this action will create a reservation record, store order, and related ledger records in the database,
+// and process the prepaid payment if required.
 export const createReservationAction = baseClient
 	.metadata({ name: "createReservation" })
 	.schema(createReservationSchema)
@@ -170,27 +174,53 @@ export const createReservationAction = baseClient
 			facility.defaultDuration, // Use facility duration if available
 		);
 
-		// Process prepaid payment using shared function
+		// Check if prepaid is required
 		const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
 		const totalCost = facility?.defaultCost
 			? Number(facility.defaultCost)
 			: null;
 
-		const prepaidResult = await processRsvpPrepaidPayment({
-			storeId,
-			customerId: finalCustomerId,
-			minPrepaidPercentage,
-			totalCost,
-			rsvpTime,
-			store: {
-				useCustomerCredit: store.useCustomerCredit,
-				creditExchangeRate: store.creditExchangeRate
-					? Number(store.creditExchangeRate)
-					: null,
-				defaultCurrency: store.defaultCurrency,
-				defaultTimezone: store.defaultTimezone,
-			},
-		});
+		const prepaidRequired =
+			minPrepaidPercentage > 0 && totalCost !== null && totalCost > 0;
+		const requiredPrepaid = prepaidRequired
+			? Math.ceil(totalCost * (minPrepaidPercentage / 100))
+			: null;
+
+		// Determine RSVP status and payment status
+		let rsvpStatus = prepaidRequired
+			? Number(RsvpStatus.Pending)
+			: Number(RsvpStatus.ReadyToConfirm);
+		let alreadyPaid = false;
+		let orderId: string | null = null;
+
+		// If prepaid is required and customer is signed in, create order for checkout
+		if (
+			prepaidRequired &&
+			requiredPrepaid !== null &&
+			requiredPrepaid > 0 &&
+			finalCustomerId
+		) {
+			// Get translation function for order note
+			const { t } = await getT();
+
+			// Determine payment method based on store settings
+			const paymentMethodPayUrl = store.useCustomerCredit ? "credit" : "TBD";
+
+			// Create unpaid order in transaction (customer will pay at checkout)
+			await sqlClient.$transaction(async (tx) => {
+				orderId = await createRsvpStoreOrder({
+					tx,
+					storeId,
+					customerId: finalCustomerId, // finalCustomerId is guaranteed to be non-null here
+					orderTotal: requiredPrepaid,
+					currency: store.defaultCurrency || "twd",
+					paymentMethodPayUrl, // "credit" if useCustomerCredit=true, "TBD" otherwise
+					note:
+						t("rsvp_reservation_payment_note") || "RSVP reservation payment",
+					isPaid: false, // Customer will pay at checkout
+				});
+			});
+		}
 
 		try {
 			const rsvp = await sqlClient.rsvp.create({
@@ -205,9 +235,9 @@ export const createReservationAction = baseClient
 					// Store email and phone for anonymous reservations
 					email: finalCustomerId ? null : email || null, // Only store if anonymous
 					phone: finalCustomerId ? null : phone || null, // Only store if anonymous
-					status: prepaidResult.status,
-					alreadyPaid: prepaidResult.alreadyPaid,
-					orderId: prepaidResult.orderId,
+					status: rsvpStatus,
+					alreadyPaid,
+					orderId,
 					confirmedByStore: false,
 					confirmedByCustomer: false,
 					createdBy,
@@ -226,16 +256,11 @@ export const createReservationAction = baseClient
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
 
-			// Check if prepaid is required and user needs to recharge
-			const requiresPrepaid =
-				(minPrepaidPercentage ?? 0) > 0 && (totalCost ?? 0) > 0;
-			const needsRecharge = requiresPrepaid && !transformedRsvp.alreadyPaid;
-
 			return {
 				rsvp: transformedRsvp,
-				requiresPrepaid: needsRecharge,
+				orderId, // Return orderId so frontend can redirect to checkout
 				// If prepaid is required and user is anonymous, they need to sign in first
-				requiresSignIn: needsRecharge && isAnonymous,
+				requiresSignIn: prepaidRequired && isAnonymous,
 			};
 		} catch (error: unknown) {
 			if (

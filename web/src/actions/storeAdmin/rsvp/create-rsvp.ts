@@ -244,6 +244,7 @@ export const createRsvpAction = storeActionClient
 							customerId,
 							orderTotal: totalCost,
 							currency: store.defaultCurrency || "twd",
+							paymentMethodPayUrl: "TBD", // TBD payment method for admin-created orders
 							note: t("rsvp_reservation_payment_note"),
 							isPaid: false, // Unpaid order for customer to pay later
 						});

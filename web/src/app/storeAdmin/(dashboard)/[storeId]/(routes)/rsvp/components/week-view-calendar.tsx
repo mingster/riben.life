@@ -70,6 +70,8 @@ interface CreateRsvpButtonProps {
 	} | null;
 	storeUseBusinessHours?: boolean | null;
 	existingReservations?: Rsvp[];
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
 }
 
 const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
@@ -82,6 +84,8 @@ const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 	storeSettings,
 	storeUseBusinessHours,
 	existingReservations = [],
+	useCustomerCredit = false,
+	creditExchangeRate = null,
 }) => {
 	const [slotTime] = useState(() => {
 		// day is already in store timezone (from getDateInTz)
@@ -100,6 +104,8 @@ const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 			storeSettings={storeSettings}
 			storeUseBusinessHours={storeUseBusinessHours}
 			existingReservations={existingReservations}
+			useCustomerCredit={useCustomerCredit}
+			creditExchangeRate={creditExchangeRate}
 			trigger={
 				<button
 					type="button"
@@ -131,6 +137,8 @@ interface WeekViewCalendarProps {
 	storeTimezone: string;
 	storeCurrency?: string;
 	storeUseBusinessHours?: boolean | null;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
 }
 
 interface TimeRange {
@@ -376,6 +384,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 	storeTimezone,
 	storeCurrency = "twd",
 	storeUseBusinessHours,
+	useCustomerCredit = false,
+	creditExchangeRate = null,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -898,6 +908,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																	storeSettings={storeSettings}
 																	storeUseBusinessHours={storeUseBusinessHours}
 																	existingReservations={rsvps}
+																	useCustomerCredit={useCustomerCredit}
+																	creditExchangeRate={creditExchangeRate}
 																	trigger={
 																		<button
 																			type="button"
@@ -991,6 +1003,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																storeSettings={storeSettings}
 																storeUseBusinessHours={storeUseBusinessHours}
 																existingReservations={rsvps}
+																useCustomerCredit={useCustomerCredit}
+																creditExchangeRate={creditExchangeRate}
 															/>
 														);
 													})()}

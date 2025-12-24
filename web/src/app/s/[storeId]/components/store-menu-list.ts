@@ -122,6 +122,13 @@ export function GetMenuList(
 					},
 				]
 			: []),
+		{
+			href: `${nav_prefix}/my-fiat-ledger`,
+			label: t("my_fiat_ledger"),
+			active: pathname.includes(`${nav_prefix}/my-fiat-ledger`),
+			icon: IconCreditCard,
+			submenus: [],
+		},
 
 		{
 			href: `${nav_prefix}/faq`,

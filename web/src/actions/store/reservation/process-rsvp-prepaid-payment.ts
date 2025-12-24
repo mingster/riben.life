@@ -40,7 +40,7 @@ interface ProcessRsvpPrepaidPaymentResult {
  *
  * SHOULD NOT call this action if store.useCustomerCredit = false
  */
-export async function processRsvpPrepaidPayment(
+export async function processRsvpPrepaidPaymentUsingCredit(
 	params: ProcessRsvpPrepaidPaymentParams,
 ): Promise<ProcessRsvpPrepaidPaymentResult> {
 	const {
@@ -145,7 +145,9 @@ export async function processRsvpPrepaidPayment(
 					customerId,
 					orderTotal: cashValue,
 					currency: store.defaultCurrency || "twd",
+					paymentMethodPayUrl: "credit", // Credit payment for prepaid
 					note: orderNote,
+					isPaid: true, // Already paid via credit deduction
 				});
 
 				// Deduct credit from customer balance

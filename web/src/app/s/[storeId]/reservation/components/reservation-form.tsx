@@ -574,7 +574,10 @@ export function ReservationForm({
 		setIsSubmitting(true);
 
 		try {
-			let result;
+			let result:
+				| Awaited<ReturnType<typeof createReservationAction>>
+				| Awaited<ReturnType<typeof updateReservationAction>>
+				| undefined;
 			if (isEditMode) {
 				// Update mode
 				result = await updateReservationAction(data as UpdateReservationInput);
@@ -599,27 +602,25 @@ export function ReservationForm({
 				} else {
 					// Create mode
 					if (result?.data?.rsvp) {
-						// Check if prepaid is required and user needs to recharge
 						const data = result.data as {
 							rsvp: Rsvp;
-							requiresPrepaid?: boolean;
+							orderId?: string | null;
 							requiresSignIn?: boolean;
 						};
-						const requiresPrepaid = data.requiresPrepaid ?? false;
+						const orderId = data.orderId;
 						const requiresSignIn = data.requiresSignIn ?? false;
 
-						if (requiresPrepaid) {
+						if (orderId) {
+							// Prepaid required: redirect to checkout page
 							if (requiresSignIn) {
-								// Anonymous user: redirect to sign-in, then to recharge
-								const rsvpId = data.rsvp.id;
-								const callbackUrl = `/s/${params.storeId}/recharge?rsvpId=${rsvpId}`;
+								// Anonymous user: redirect to sign-in first, then to checkout
+								const callbackUrl = `/checkout/${orderId}`;
 								router.push(
 									`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`,
 								);
 							} else {
-								// Logged-in user: redirect directly to recharge
-								const rsvpId = data.rsvp.id;
-								router.push(`/s/${params.storeId}/recharge?rsvpId=${rsvpId}`);
+								// Logged-in user: redirect directly to checkout
+								router.push(`/checkout/${orderId}`);
 							}
 						} else {
 							// No prepaid required: show success message
@@ -1009,6 +1010,8 @@ export function ReservationForm({
 								rsvpSettings={rsvpSettings}
 								facilityCost={facilityCost}
 								currency={storeCurrency}
+								useCustomerCredit={useCustomerCredit}
+								creditExchangeRate={creditExchangeRate}
 							/>
 						)}
 					</div>

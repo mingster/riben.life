@@ -84,6 +84,8 @@ interface EditRsvpDialogProps {
 	} | null;
 	storeUseBusinessHours?: boolean | null; // Store.useBusinessHours
 	existingReservations?: Rsvp[]; // Existing reservations to check for conflicts
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
 }
 
 // dialog to edit or create an rsvp by admin user.
@@ -105,6 +107,8 @@ export function AdminEditRsvpDialog({
 	storeSettings,
 	storeUseBusinessHours,
 	existingReservations = [],
+	useCustomerCredit = false,
+	creditExchangeRate = null,
 }: EditRsvpDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
@@ -1360,6 +1364,8 @@ export function AdminEditRsvpDialog({
 											rsvpSettings={rsvpSettings}
 											facilityCost={facilityCost}
 											currency={storeCurrency}
+											useCustomerCredit={useCustomerCredit}
+											creditExchangeRate={creditExchangeRate}
 										/>
 									</FormItem>
 								);

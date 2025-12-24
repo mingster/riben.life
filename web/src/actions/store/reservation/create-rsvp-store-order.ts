@@ -5,6 +5,7 @@ import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
 import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
+import { ensureReservationPrepaidProduct } from "./ensure-reservation-prepaid-product";
 
 interface CreateRsvpStoreOrderParams {
 	tx: Omit<
@@ -15,14 +16,15 @@ interface CreateRsvpStoreOrderParams {
 	customerId: string;
 	orderTotal: number; // Cash value in store currency
 	currency: string;
+	paymentMethodPayUrl: string; // Payment method identifier (e.g., "credit", "TBD")
 	note?: string; // Optional order note
-	isPaid?: boolean; // Whether the order is already paid (default: true for prepaid)
+	isPaid?: boolean; // Whether the order is already paid (default: false for checkout flow)
 }
 
 /**
  * Creates a store order for an RSVP reservation.
  * Uses "digital" shipping method if available, otherwise falls back to default shipping method.
- * Uses "TBD" (To Be Determined) payment method, as the customer will choose payment method later.
+ * Uses the specified payment method (e.g., "credit" or "TBD").
  *
  * @param params - Parameters for creating the order
  * @returns The created store order ID
@@ -37,8 +39,9 @@ export async function createRsvpStoreOrder(
 		customerId,
 		orderTotal,
 		currency,
+		paymentMethodPayUrl,
 		note,
-		isPaid = true,
+		isPaid = false, // Default to false for checkout flow
 	} = params;
 
 	// Find "digital" shipping method for reservation orders (preferred)
@@ -60,17 +63,28 @@ export async function createRsvpStoreOrder(
 		throw new SafeError("No shipping method available");
 	}
 
-	// Find TBD payment method (payment method to be determined by customer)
-	const tbdPaymentMethod = await tx.paymentMethod.findFirst({
+	// Find payment method by payUrl identifier
+	const paymentMethod = await tx.paymentMethod.findFirst({
 		where: {
-			payUrl: "TBD",
+			payUrl: paymentMethodPayUrl,
 			isDeleted: false,
 		},
 	});
 
-	if (!tbdPaymentMethod) {
-		throw new SafeError("TBD payment method not found");
+	if (!paymentMethod) {
+		throw new SafeError(
+			`Payment method with identifier "${paymentMethodPayUrl}" not found`,
+		);
 	}
+
+	const reservationPrepaidProduct =
+		await ensureReservationPrepaidProduct(storeId);
+
+	if (!reservationPrepaidProduct) {
+		throw new SafeError("Reservation prepaid product not found");
+	}
+
+	const now = getUtcNowEpoch();
 
 	// Create the store order
 	const storeOrder = await tx.storeOrder.create({
@@ -79,7 +93,7 @@ export async function createRsvpStoreOrder(
 			userId: customerId,
 			orderTotal: new Prisma.Decimal(orderTotal),
 			currency: currency.toLowerCase(),
-			paymentMethodId: tbdPaymentMethod.id,
+			paymentMethodId: paymentMethod.id,
 			shippingMethodId: defaultShippingMethod.id,
 			orderStatus: isPaid
 				? Number(OrderStatus.Confirmed)
@@ -88,16 +102,27 @@ export async function createRsvpStoreOrder(
 				? Number(PaymentStatus.Paid)
 				: Number(PaymentStatus.Pending),
 			isPaid,
-			...(isPaid && { paidDate: getUtcNowEpoch() }),
-			createdAt: getUtcNowEpoch(),
-			updatedAt: getUtcNowEpoch(),
+			...(isPaid && { paidDate: now }),
+			createdAt: now,
+			updatedAt: now,
+			OrderItems: {
+				create: {
+					productId: reservationPrepaidProduct.id,
+					productName: reservationPrepaidProduct.name,
+					quantity: 1, // Single prepaid payment
+					unitPrice: new Prisma.Decimal(orderTotal), // Prepaid amount
+					unitDiscount: new Prisma.Decimal(0),
+					variants: null,
+					variantCosts: null,
+				},
+			},
 			...(note && {
 				OrderNotes: {
 					create: {
 						note,
 						displayToCustomer: true,
-						createdAt: getUtcNowEpoch(),
-						updatedAt: getUtcNowEpoch(),
+						createdAt: now,
+						updatedAt: now,
 					},
 				},
 			}),

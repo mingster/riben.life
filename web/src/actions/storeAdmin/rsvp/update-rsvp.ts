@@ -18,7 +18,7 @@ import { updateRsvpSchema } from "./update-rsvp.validation";
 import { deduceCustomerCredit } from "./deduce-customer-credit";
 import { validateReservationTimeWindow } from "@/actions/store/reservation/validate-reservation-time-window";
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
-import { processRsvpPrepaidPayment } from "@/actions/store/reservation/process-rsvp-prepaid-payment";
+import { processRsvpPrepaidPaymentUsingCredit } from "@/actions/store/reservation/process-rsvp-prepaid-payment";
 
 export const updateRsvpAction = storeActionClient
 	.metadata({ name: "updateRsvp" })
@@ -211,7 +211,7 @@ export const updateRsvpAction = storeActionClient
 
 		// Only process prepaid payment if customerId is provided, no existing order, and store uses credit
 		if (customerId && !rsvp.orderId && store.useCustomerCredit === true) {
-			prepaidResult = await processRsvpPrepaidPayment({
+			prepaidResult = await processRsvpPrepaidPaymentUsingCredit({
 				storeId,
 				customerId,
 				minPrepaidPercentage,

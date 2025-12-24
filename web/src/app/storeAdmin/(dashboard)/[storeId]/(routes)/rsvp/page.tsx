@@ -104,7 +104,13 @@ export default async function RsvpPage(props: {
 		}),
 		sqlClient.store.findUnique({
 			where: { id: params.storeId },
-			select: { defaultTimezone: true, defaultCurrency: true, useBusinessHours: true },
+			select: {
+				defaultTimezone: true,
+				defaultCurrency: true,
+				useBusinessHours: true,
+				useCustomerCredit: true,
+				creditExchangeRate: true,
+			},
 		}),
 	]);
 
@@ -133,6 +139,10 @@ export default async function RsvpPage(props: {
 				storeTimezone={store?.defaultTimezone || "Asia/Taipei"}
 				storeCurrency={store?.defaultCurrency || "twd"}
 				storeUseBusinessHours={store?.useBusinessHours ?? true}
+				useCustomerCredit={store?.useCustomerCredit || false}
+				creditExchangeRate={
+					store?.creditExchangeRate ? Number(store.creditExchangeRate) : null
+				}
 			/>
 		</Container>
 	);
