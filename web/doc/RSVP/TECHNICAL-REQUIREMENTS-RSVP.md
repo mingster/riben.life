@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27\
 **Status:** Active\
-**Version:** 1.5\
+**Version:** 1.7\
 **Related Documents:**
 
 * [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -1129,6 +1129,7 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.7 | 2025-01-27 | System | Added `singleServiceMode` field to RsvpSettings model: Boolean field (default: `false`) for personal shops where only ONE reservation per time slot is allowed across all facilities. When enabled, availability checking blocks any reservation if another reservation exists for the same time slot, regardless of facility. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities. Updated availability rules and functional requirements to document this behavior. |
 | 1.6 | 2025-01-27 | System | Updated RsvpSettings schema documentation: Added `canReserveBefore` and `canReserveAfter` fields to control reservation time window (minimum hours in advance and maximum hours in future). Updated all timestamp fields from DateTime to BigInt (epoch milliseconds) to match actual schema. Fixed field names (`minPrepaidPercentage` for prepaid, `customerId` instead of `userId` in Rsvp model). Added reservation time window business rules to External Availability Query API section. Updated all model schemas to reflect BigInt timestamps. |
 | 1.5 | 2025-01-27 | System | Added refund processing documentation for customer reservation cancellation (FR-RSVP-014): Documented automatic refund functionality when prepaid reservations are cancelled. Added `processRsvpRefund()` shared utility function details, refund flow (credit restoration, ledger entries, order status updates), transaction safety, and integration with `cancel-reservation.ts` action. Updated Customer Reservation Cancellation API section with refund business rules and technical requirements. |
 | 1.4 | 2025-01-27 | System | Added External Availability Query API (Section 4.2.5): New endpoint `GET /api/store/[storeId]/rsvp/availability/slots` for external systems and other stores to query available reservation slots. Supports API key authentication, store-to-store authentication, and public access. Includes query parameters (date range, facility, duration, timezone), response format with available slots, business rules (conflict checking, capacity limits, business hours), and error handling. |

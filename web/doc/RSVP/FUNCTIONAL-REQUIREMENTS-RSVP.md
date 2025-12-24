@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27
 **Status:** Active
-**Version:** 1.5
+**Version:** 1.6
 
 **Related Documents:**
 
@@ -119,6 +119,8 @@ Store Admins have all Store Staff permissions, plus:
 * Business hours (useBusinessHours, rsvpHours)
 * Facility capacity and availability
 * Existing reservations for the requested time slot
+* **If `singleServiceMode` is `true`:** Only one reservation is allowed per time slot across all facilities (personal shop mode)
+* **If `singleServiceMode` is `false` (default):** Multiple reservations can exist on the same time slot as long as they use different facilities
 
 **FR-RSVP-004:** The system must support prepaid reservations when enabled:
 
@@ -498,6 +500,8 @@ Completed (50) [when service is finished]
 * Verify capacity matches party size (adults + children) or service requirements
 * Prevent double-booking of same resource at same time
 * Consider resource capacity when showing availability
+* **If `singleServiceMode` is `true`:** Check if any reservation exists for the requested time slot (across all facilities) and block if one exists
+* **If `singleServiceMode` is `false` (default):** Check if the specific facility is available for the requested time slot (allows multiple reservations on same time slot with different facilities)
 
 #### 3.3.2 Resource Assignment
 
@@ -864,12 +868,19 @@ Completed (50) [when service is finished]
 * `singleServiceMode` (Boolean, default: `false`) - When enabled, only ONE reservation per time slot is allowed across all facilities. This is designed for personal shops where the service provider can only handle one reservation at a time. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities.
 
 * Accept reservation flag
+
 * Prepaid requirements and amount (can be dollar amount or CustomerCredit amount)
+
 * Cancellation policy (enabled, hours)
+
 * Business hours configuration
+
 * Reminder settings (hours, channels)
+
 * Calendar sync preferences
+
 * Reserve with Google integration settings (enabled/disabled, API credentials, Google Business Profile connection, sync status)
+
 * Signature requirements (enabled, required before confirmation, required at check-in)
 
 ### 4.3 Resource Data Model (Facilities/Appointment Slots)
@@ -1191,6 +1202,8 @@ Completed (50) [when service is finished]
 ## 14. Revision History
 
 | Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.6 | 2025-01-27 | System | Added `singleServiceMode` field to RsvpSettings: Boolean field (default: `false`) for personal shops where only ONE reservation per time slot is allowed across all facilities. When enabled, availability checking blocks any reservation if another reservation exists for the same time slot, regardless of facility. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities. Updated business rules (BR-RSVP-004a, BR-RSVP-004b) and functional requirements (FR-RSVP-003, FR-RSVP-024, FR-RSVP-060) to document this behavior. |
 |---------|------|--------|---------|
 | 1.5 | 2025-01-27 | System | Added explicit requirement for Reserve with Google service connection. Updated all references from "Google Maps Reserve" to "Reserve with Google" for clarity. Enhanced integration requirements to emphasize connection establishment and Google Business Profile linking. |
 | 1.4 | 2025-01-27 | System | Added comprehensive Google Maps integration requirements including Reserve API integration, webhook handling, configuration settings, status monitoring, and business rules. Added new section 3.4.7 for Google Maps Integration Settings. |
