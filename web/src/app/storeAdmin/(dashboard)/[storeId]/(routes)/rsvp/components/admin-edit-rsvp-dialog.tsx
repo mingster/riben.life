@@ -959,7 +959,7 @@ export function AdminEditRsvpDialog({
 											</FormControl>
 											<FormLabel>{t("rsvp_already_paid")}</FormLabel>
 											<FormMessage />
-											<FormDescription className="text-xs text-muted-foreground font-mono">
+											<FormDescription className="text-xs font-mono text-gray-500">
 												{t("rsvp_already_paid_descr")}
 											</FormDescription>
 										</FormItem>
@@ -1002,7 +1002,7 @@ export function AdminEditRsvpDialog({
 										</FormControl>
 										<FormLabel>{t("rsvp_confirmed_by_store")}</FormLabel>
 										<FormMessage />
-										<FormDescription className="text-xs text-muted-foreground font-mono">
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("rsvp_confirmed_by_store_descr")}
 										</FormDescription>
 									</FormItem>
@@ -1096,7 +1096,7 @@ export function AdminEditRsvpDialog({
 										</FormControl>
 										<FormLabel>{t("rsvp_confirmed_by_customer")}</FormLabel>
 										<FormMessage />
-										<FormDescription className="text-xs text-muted-foreground font-mono">
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("rsvp_confirmed_by_customer_descr")}
 										</FormDescription>
 									</FormItem>
@@ -1143,7 +1143,7 @@ export function AdminEditRsvpDialog({
 											<FormLabel>{t("rsvp_cancelled")}</FormLabel>
 										</div>
 										<FormMessage />
-										<FormDescription className="text-xs text-muted-foreground font-mono">
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("rsvp_cancelled_descr")}
 										</FormDescription>
 										{/* Cancel Policy Information */}
@@ -1238,7 +1238,7 @@ export function AdminEditRsvpDialog({
 										</FormControl>
 										<FormLabel>{t("rsvp_no_show")}</FormLabel>
 										<FormMessage />
-										<FormDescription className="text-xs text-muted-foreground font-mono">
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("rsvp_no_show_descr")}
 										</FormDescription>
 									</FormItem>

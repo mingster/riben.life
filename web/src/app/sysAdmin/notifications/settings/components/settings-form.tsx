@@ -52,7 +52,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 									<FormLabel className="text-base">
 										Enable Notifications System-Wide
 									</FormLabel>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										When disabled, no notifications will be sent across the
 										entire platform
 									</FormDescription>
@@ -90,7 +90,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
 									<div className="space-y-0.5">
 										<FormLabel className="text-base">LINE Messaging</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											Enable LINE messaging plugin system-wide
 										</FormDescription>
 									</div>
@@ -114,7 +114,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 										<FormLabel className="text-base">
 											WhatsApp Business
 										</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											Enable WhatsApp Business plugin system-wide
 										</FormDescription>
 									</div>
@@ -138,7 +138,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 										<FormLabel className="text-base">
 											WeChat Official Account
 										</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											Enable WeChat Official Account plugin system-wide
 										</FormDescription>
 									</div>
@@ -160,7 +160,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
 									<div className="space-y-0.5">
 										<FormLabel className="text-base">SMS</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											Enable SMS plugin system-wide
 										</FormDescription>
 									</div>
@@ -182,7 +182,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
 									<div className="space-y-0.5">
 										<FormLabel className="text-base">Telegram Bot</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											Enable Telegram Bot plugin system-wide
 										</FormDescription>
 									</div>
@@ -206,7 +206,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 										<FormLabel className="text-base">
 											Push Notifications
 										</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											Enable Push notification plugin system-wide
 										</FormDescription>
 									</div>
@@ -254,7 +254,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 											onChange={(e) => field.onChange(Number(e.target.value))}
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										Number of retry attempts for failed notifications (1-10)
 									</FormDescription>
 									<FormMessage />
@@ -281,7 +281,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 											onChange={(e) => field.onChange(Number(e.target.value))}
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										Initial backoff delay in milliseconds (100-60000)
 									</FormDescription>
 									<FormMessage />
@@ -307,7 +307,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 											onChange={(e) => field.onChange(Number(e.target.value))}
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										Number of notifications to process per batch (1-1000)
 									</FormDescription>
 									<FormMessage />
@@ -334,7 +334,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 											onChange={(e) => field.onChange(Number(e.target.value))}
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										Maximum notifications per minute (1-10000)
 									</FormDescription>
 									<FormMessage />
@@ -374,7 +374,7 @@ export function SettingsForm({ form, onSubmit, loading }: SettingsFormProps) {
 										onChange={(e) => field.onChange(Number(e.target.value))}
 									/>
 								</FormControl>
-								<FormDescription>
+								<FormDescription className="text-xs font-mono text-gray-500">
 									Days to keep notification history (1-365)
 								</FormDescription>
 								<FormMessage />

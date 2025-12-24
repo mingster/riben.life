@@ -229,7 +229,7 @@ export function EditLocaleDialog({
 											}}
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										{isEditMode
 											? "Language code cannot be changed after creation."
 											: "2-digit language code (e.g., tw, en, ja)"}

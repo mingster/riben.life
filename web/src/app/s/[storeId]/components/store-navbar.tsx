@@ -2,7 +2,6 @@
 
 import { BackgroundImage } from "@/components/BackgroundImage";
 import DropdownCart from "@/components/dropdown-cart";
-import DropdownMessage from "@/components/dropdown-message";
 import DropdownNotification from "@/components/notification/dropdown-notification";
 import DropdownUser from "@/components/auth/dropdown-user";
 import { ThemeToggler } from "@/components/theme-toggler";
@@ -61,12 +60,13 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 	) {
 		visible = false;
 	}
+<h1 className="grow text-center text-base font-bold leading-tight tracking-tighter truncate px-2 sm:text-lg lg:text-xl lg:leading-[1.1]">
+{store.name}
+</h1>
 	*/
 
-	if (store == null) return;
-	if (store.Categories == null) return;
-
-	if (!visible) return <></>;
+	if (!store) return null;
+	if (!visible) return null;
 
 	return (
 		<>
@@ -75,14 +75,10 @@ export const StoreNavbar: React.FC<props> = ({ store, visible }) => {
 			<header
 				className={`sticky ${scrollDirection === "down" ? "-top-24" : "top-0"} z-10 w-full shadow backdrop-blur dark:shadow-secondary`}
 			>
-				<div className="mx-3 flex h-14 items-center gap-1.5 px-1 sm:mx-1 sm:gap-2 sm:px-4 lg:px-6">
+				<div className="mx-3 flex h-14 items-center justify-between gap-1.5 px-1 sm:mx-1 sm:gap-2 sm:px-4 lg:px-6">
 					<div className="flex items-center shrink-0">
 						<SheetMenu store={store} />
 					</div>
-
-					<h1 className="grow text-center text-base font-bold leading-tight tracking-tighter truncate px-2 sm:text-lg lg:text-xl lg:leading-[1.1]">
-						{store.name}
-					</h1>
 
 					{/*<!--  Hidden by default, but visible if screen is larger than 1024px --> */}
 					<div className="hidden md:block shrink-0">

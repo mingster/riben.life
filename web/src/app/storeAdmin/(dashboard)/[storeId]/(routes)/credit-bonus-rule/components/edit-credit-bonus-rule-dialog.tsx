@@ -259,7 +259,7 @@ export function EditCreditBonusRuleDialog({
 											className="h-10 text-base sm:h-9 sm:text-sm"
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										{t(
 											"credit_bonus_rule_minimum_top_up_amount_to_trigger_bonus",
 										)}
@@ -292,7 +292,7 @@ export function EditCreditBonusRuleDialog({
 											className="h-10 text-base sm:h-9 sm:text-sm"
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										{t(
 											"credit_bonus_rule_bonus_amount_given_when_threshold_is_met",
 										)}
@@ -309,7 +309,7 @@ export function EditCreditBonusRuleDialog({
 								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
 										<FormLabel>{t("active")}</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("credit_bonus_rule_enable_or_disable_this_bonus_rule")}
 										</FormDescription>
 									</div>

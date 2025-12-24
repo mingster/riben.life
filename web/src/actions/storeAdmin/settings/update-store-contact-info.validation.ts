@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const updateStoreContactInfoSchema = z.object({
+	orderNoteToCustomer: z.string().optional().nullable(),
 	aboutUs: z.string().optional().nullable(),
 	supportEmail: z.string().optional().nullable(),
 	supportPhoneNumber: z.string().optional().nullable(),

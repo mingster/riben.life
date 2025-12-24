@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -30,6 +31,7 @@ import { updateStoreContactInfoAction } from "@/actions/storeAdmin/settings/upda
 import type { UpdateStoreContactInfoInput } from "@/actions/storeAdmin/settings/update-store-contact-info.validation";
 
 const contactInfoFormSchema = z.object({
+	orderNoteToCustomer: z.string().optional().default(""),
 	aboutUs: z.string().optional().default(""),
 	supportEmail: z.string().optional().default(""),
 	supportPhoneNumber: z.string().optional().default(""),
@@ -61,6 +63,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 		? {
 				///...initialData,
 				...storeSettings,
+				orderNoteToCustomer: storeSettings.orderNoteToCustomer ?? "",
 				aboutUs: storeSettings.aboutUs ?? "",
 				supportEmail: storeSettings.supportEmail ?? "",
 				supportPhoneNumber: storeSettings.supportPhoneNumber ?? "",
@@ -73,6 +76,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 				wechatId: storeSettings.wechatId ?? "",
 			}
 		: {
+				orderNoteToCustomer: "",
 				aboutUs: "",
 				supportEmail: "",
 				supportPhoneNumber: "",
@@ -98,6 +102,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 			setLoading(true);
 
 			const payload: Omit<UpdateStoreContactInfoInput, "storeId"> = {
+				orderNoteToCustomer: data.orderNoteToCustomer ?? "",
 				aboutUs: data.aboutUs ?? "",
 				supportEmail: data.supportEmail ?? "",
 				supportPhoneNumber: data.supportPhoneNumber ?? "",
@@ -147,6 +152,30 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 							onSubmit={form.handleSubmit(oncontactInfoSubmit)}
 							className="w-full space-y-1"
 						>
+							<FormField
+								control={form.control}
+								name="orderNoteToCustomer"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>
+											{t("StoreSettings_orderNoteToCustomer")}
+										</FormLabel>
+										<FormControl>
+											<Textarea
+												disabled={loading || form.formState.isSubmitting}
+												className="font-mono min-h-20"
+												placeholder=""
+												{...field}
+											/>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("StoreSettings_orderNoteToCustomer_desccr")}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
 							<FormField
 								control={form.control}
 								name="aboutUs"

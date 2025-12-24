@@ -878,6 +878,8 @@
   "StoreSettings_ig_url": "Instagram URL",
   "StoreSettings_isOpen": "Is Opened",
   "StoreSettings_isOpen_descr": "Indicates whether the store is open or closed regardless of the business hours setting.",
+  "storeSettings_Store_Description": "Store Description",
+  "storeSettings_Store_Description_descr": "A concise and compelling store introduction that will be displayed prominently on the homepage, allowing customers to immediately understand your store's unique value. For example: \"Crafting every cup with care, bringing you the warmest moments\" or \"Fresh ingredients and professional service, creating unforgettable dining experiences\".",
   "StoreSettings_orderNoteToCustomer": "Order note to customer",
   "StoreSettings_orderNoteToCustomer_desccr": "",
   "StoreSettings_PayoutSchedule": "Pay out schedule",

@@ -252,12 +252,56 @@ export const createStoreAction = userRequiredActionClient
 		const bizhoursfilePath = `${process.cwd()}/public/defaults/business-hours.json`;
 		const businessHours = fs.readFileSync(bizhoursfilePath, "utf8");
 
-		await sqlClient.storeSettings.create({
-			data: {
+		// StoreSettings is required - always create it when creating a store
+		// Use upsert to handle edge cases where it might already exist
+		await sqlClient.storeSettings.upsert({
+			where: { storeId: databaseId },
+			update: {
+				// If it exists, update with defaults (shouldn't happen, but safe)
+				businessHours,
+				privacyPolicy,
+				tos,
+				updatedAt: getUtcNowEpoch(),
+			},
+			create: {
 				storeId: databaseId,
 				businessHours,
 				privacyPolicy,
 				tos,
+				createdAt: getUtcNowEpoch(),
+				updatedAt: getUtcNowEpoch(),
+			},
+		});
+
+		// RsvpSettings is required - always create it when creating a store
+		// Use upsert to handle edge cases where it might already exist
+		// All fields use schema defaults, so we only need to set required fields
+		await sqlClient.rsvpSettings.upsert({
+			where: { storeId: databaseId },
+			update: {
+				// If it exists, just update timestamp (shouldn't happen, but safe)
+				updatedAt: getUtcNowEpoch(),
+			},
+			create: {
+				storeId: databaseId,
+				// All other fields use schema defaults:
+				// acceptReservation: true
+				// minPrepaidPercentage: 0
+				// canCancel: true
+				// cancelHours: 24
+				// canReserveBefore: 2
+				// canReserveAfter: 2190
+				// defaultDuration: 60
+				// requireSignature: false
+				// showCostToCustomer: false
+				// useBusinessHours: true
+				// reminderHours: 24
+				// useReminderSMS: false
+				// useReminderLine: false
+				// useReminderEmail: false
+				// syncWithGoogle: false
+				// syncWithApple: false
+				// reserveWithGoogleEnabled: false
 				createdAt: getUtcNowEpoch(),
 				updatedAt: getUtcNowEpoch(),
 			},

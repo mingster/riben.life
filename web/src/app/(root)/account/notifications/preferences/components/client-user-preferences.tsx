@@ -423,7 +423,7 @@ function PreferencesForm({
 											<div className="space-y-1 leading-none">
 												<FormLabel>{channel.label}</FormLabel>
 												{channel.alwaysEnabled && (
-													<FormDescription>
+													<FormDescription className="text-xs font-mono text-gray-500">
 														{t("always_enabled")}
 													</FormDescription>
 												)}
@@ -671,7 +671,7 @@ function StorePreferencesForm({
 												<div className="space-y-1 leading-none">
 													<FormLabel>{channel.label}</FormLabel>
 													{channel.alwaysEnabled && (
-														<FormDescription>
+														<FormDescription className="text-xs font-mono text-gray-500">
 															{t("always_enabled")}
 														</FormDescription>
 													)}

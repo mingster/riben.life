@@ -5,10 +5,12 @@ import Container from "@/components/ui/container";
 import { useRouter } from "next/navigation";
 import { IconShoppingCart, IconCalendar, IconHelp } from "@tabler/icons-react";
 import type { Store, RsvpSettings } from "@/types";
+import type { StoreSettings } from "@prisma/client";
 
 interface StoreHomeLandingProps {
 	store: Store;
-	rsvpSettings: RsvpSettings | null;
+	rsvpSettings: RsvpSettings;
+	storeSettings: StoreSettings;
 	useOrderSystem: boolean;
 	acceptReservation: boolean;
 }
@@ -16,6 +18,7 @@ interface StoreHomeLandingProps {
 export function StoreHomeLanding({
 	store,
 	rsvpSettings,
+	storeSettings,
 	useOrderSystem,
 	acceptReservation,
 }: StoreHomeLandingProps) {
@@ -48,7 +51,11 @@ export function StoreHomeLanding({
 						<h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-2">
 							{store.name}
 						</h1>
-						<p className="text-lg text-white/90">{store.name}</p>
+						{storeSettings.description && (
+							<p className="text-lg text-white/90">
+								{storeSettings.description}
+							</p>
+						)}
 					</div>
 
 					<div className="flex flex-wrap gap-4 justify-center mt-8">

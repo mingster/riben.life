@@ -203,7 +203,7 @@ export function ClientPreferences({
 										</FormControl>
 										<div className="space-y-1 leading-none">
 											<FormLabel>{t("onsite")}</FormLabel>
-											<FormDescription>
+											<FormDescription className="text-xs font-mono text-gray-500">
 												{t("onsite_always_enabled")}
 											</FormDescription>
 										</div>
@@ -225,7 +225,7 @@ export function ClientPreferences({
 										</FormControl>
 										<div className="space-y-1 leading-none">
 											<FormLabel>{t("email")}</FormLabel>
-											<FormDescription>
+											<FormDescription className="text-xs font-mono text-gray-500">
 												{t("email_always_enabled")}
 											</FormDescription>
 										</div>
