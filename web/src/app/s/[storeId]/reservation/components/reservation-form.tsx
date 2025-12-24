@@ -49,14 +49,18 @@ import type {
 
 import {
 	convertToUtc,
+	dateToEpoch,
 	epochToDate,
 	formatUtcDateToDateTimeLocal,
 	getDateInTz,
 	getOffsetHours,
 	getUtcNow,
 } from "@/utils/datetime-utils";
+import { RsvpStatus } from "@/types/enum";
 import { SlotPicker } from "./slot-picker";
 import { Separator } from "@/components/ui/separator";
+import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
 
 interface ReservationFormProps {
 	storeId: string;
@@ -74,6 +78,7 @@ interface ReservationFormProps {
 	// Common props
 	hideCard?: boolean;
 	storeTimezone?: string;
+	storeUseBusinessHours?: boolean | null;
 	// Store credit info
 	useCustomerCredit?: boolean;
 	creditExchangeRate?: number | null;
@@ -96,6 +101,7 @@ export function ReservationForm({
 	onReservationUpdated,
 	hideCard = false,
 	storeTimezone = "Asia/Taipei",
+	storeUseBusinessHours,
 	useCustomerCredit = false,
 	creditExchangeRate = null,
 	creditServiceExchangeRate = null,
@@ -198,6 +204,117 @@ export function ReservationForm({
 		[storeTimezone],
 	);
 
+	// Helper function to validate rsvpTime against store business hours or RSVP hours
+	const validateRsvpTimeAgainstHours = useCallback(
+		(rsvpTime: Date | null | undefined): string | null => {
+			if (!rsvpTime || isNaN(rsvpTime.getTime())) {
+				return null; // No validation if time is invalid
+			}
+
+			const rsvpUseBusinessHours = rsvpSettings?.useBusinessHours ?? true;
+			let hoursJson: string | null | undefined = null;
+			let errorMessage = "The selected time is outside allowed hours";
+
+			// Logic:
+			// 1. If RsvpSettings.useBusinessHours = true, use RsvpSettings.rsvpHours
+			if (rsvpUseBusinessHours) {
+				hoursJson = rsvpSettings?.rsvpHours ?? null;
+				errorMessage = "The selected time is outside RSVP hours";
+			}
+			// 2. If RsvpSettings.useBusinessHours = false AND Store.useBusinessHours = true, use StoreSettings.businessHours
+			else if (storeUseBusinessHours === true) {
+				hoursJson = storeSettings?.businessHours ?? null;
+				errorMessage = "The selected time is outside store business hours";
+			}
+			// 3. If RsvpSettings.useBusinessHours = false AND Store.useBusinessHours = false, no validation needed
+			else {
+				return null; // No validation needed
+			}
+
+			// If no hours specified, allow all times
+			if (!hoursJson) {
+				return null;
+			}
+
+			try {
+				const schedule = JSON.parse(hoursJson) as {
+					Monday?: Array<{ from: string; to: string }> | "closed";
+					Tuesday?: Array<{ from: string; to: string }> | "closed";
+					Wednesday?: Array<{ from: string; to: string }> | "closed";
+					Thursday?: Array<{ from: string; to: string }> | "closed";
+					Friday?: Array<{ from: string; to: string }> | "closed";
+					Saturday?: Array<{ from: string; to: string }> | "closed";
+					Sunday?: Array<{ from: string; to: string }> | "closed";
+				};
+
+				// Convert UTC time to store timezone for checking
+				const offsetHours = getOffsetHours(storeTimezone);
+				const timeInStoreTz = getDateInTz(rsvpTime, offsetHours);
+
+				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+				const dayOfWeek = timeInStoreTz.getDay();
+				const dayNames = [
+					"Sunday",
+					"Monday",
+					"Tuesday",
+					"Wednesday",
+					"Thursday",
+					"Friday",
+					"Saturday",
+				] as const;
+				const dayName = dayNames[dayOfWeek];
+
+				// Get hours for this day
+				const dayHours = schedule[dayName];
+				if (!dayHours || dayHours === "closed") {
+					return errorMessage;
+				}
+
+				// Check if time falls within any time range
+				const checkHour = timeInStoreTz.getHours();
+				const checkMinute = timeInStoreTz.getMinutes();
+				const checkTimeMinutes = checkHour * 60 + checkMinute;
+
+				for (const range of dayHours) {
+					const [fromHour, fromMinute] = range.from.split(":").map(Number);
+					const [toHour, toMinute] = range.to.split(":").map(Number);
+
+					const fromMinutes = fromHour * 60 + fromMinute;
+					const toMinutes = toHour * 60 + toMinute;
+
+					// Check if time falls within range
+					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
+						return null; // Valid time
+					}
+
+					// Handle range spanning midnight (e.g., 22:00 to 02:00)
+					if (fromMinutes > toMinutes) {
+						if (
+							checkTimeMinutes >= fromMinutes ||
+							checkTimeMinutes < toMinutes
+						) {
+							return null; // Valid time
+						}
+					}
+				}
+
+				// Time is not within any range
+				return errorMessage;
+			} catch (error) {
+				// If parsing fails, allow the time (graceful degradation)
+				console.error("Failed to parse hours JSON:", error);
+				return null;
+			}
+		},
+		[
+			rsvpSettings?.useBusinessHours,
+			rsvpSettings?.rsvpHours,
+			storeSettings?.businessHours,
+			storeUseBusinessHours,
+			storeTimezone,
+		],
+	);
+
 	// Default values - different for create vs edit
 	const defaultValues = useMemo(() => {
 		if (isEditMode && rsvp) {
@@ -264,15 +381,119 @@ export function ReservationForm({
 	// Watch rsvpTime to filter facilities
 	const rsvpTime = form.watch("rsvpTime");
 
-	// Filter facilities based on rsvpTime
+	// Calculate cancel policy information (only for edit mode with existing reservation)
+	const cancelPolicyInfo = useMemo(() => {
+		if (!isEditMode || !rsvp) {
+			return null;
+		}
+		// Get alreadyPaid from the existing reservation
+		const alreadyPaid = rsvp.alreadyPaid ?? false;
+		return calculateCancelPolicyInfo(rsvpSettings, rsvpTime, alreadyPaid);
+	}, [isEditMode, rsvp, rsvpSettings, rsvpTime]);
+
+	// Filter facilities based on rsvpTime and existing reservations
 	const availableFacilities = useMemo(() => {
 		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
 			return facilities;
 		}
-		return facilities.filter((facility) =>
+
+		// First filter by business hours availability
+		let filtered = facilities.filter((facility) =>
 			isFacilityAvailableAtTime(facility, rsvpTime, storeTimezone),
 		);
-	}, [facilities, rsvpTime, storeTimezone, isFacilityAvailableAtTime]);
+
+		// Get singleServiceMode setting
+		const singleServiceMode = rsvpSettings?.singleServiceMode ?? false;
+		const defaultDuration = rsvpSettings?.defaultDuration ?? 60;
+
+		// Convert rsvpTime to epoch for comparison
+		const rsvpTimeEpoch = dateToEpoch(rsvpTime);
+		if (!rsvpTimeEpoch) {
+			return filtered;
+		}
+
+		// Calculate slot duration in milliseconds
+		const durationMs = defaultDuration * 60 * 1000;
+		const slotStart = Number(rsvpTimeEpoch);
+		const slotEnd = slotStart + durationMs;
+
+		// Find existing reservations that overlap with this time slot
+		const conflictingReservations = rsvps.filter((existingRsvp) => {
+			// Exclude the current reservation being edited
+			if (isEditMode && existingRsvp.id === rsvp?.id) {
+				return false;
+			}
+
+			// Exclude cancelled reservations
+			if (existingRsvp.status === RsvpStatus.Cancelled) {
+				return false;
+			}
+
+			// Convert existing reservation time to epoch
+			let existingRsvpTime: bigint;
+			if (existingRsvp.rsvpTime instanceof Date) {
+				existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+			} else if (typeof existingRsvp.rsvpTime === "number") {
+				existingRsvpTime = BigInt(existingRsvp.rsvpTime);
+			} else if (typeof existingRsvp.rsvpTime === "bigint") {
+				existingRsvpTime = existingRsvp.rsvpTime;
+			} else {
+				return false;
+			}
+
+			const existingStart = Number(existingRsvpTime);
+			// Get duration from facility or use default
+			const existingDuration =
+				existingRsvp.Facility?.defaultDuration ?? defaultDuration;
+			const existingDurationMs = existingDuration * 60 * 1000;
+			const existingEnd = existingStart + existingDurationMs;
+
+			// Check if slots overlap (they overlap if one starts before the other ends)
+			return slotStart < existingEnd && slotEnd > existingStart;
+		});
+
+		if (singleServiceMode) {
+			// Single Service Mode: If ANY reservation exists, filter out ALL facilities
+			if (conflictingReservations.length > 0) {
+				filtered = [];
+			}
+		} else {
+			// Default Mode: Filter out only facilities that have reservations
+			const bookedFacilityIds = new Set(
+				conflictingReservations
+					.map((r) => r.facilityId)
+					.filter((id): id is string => Boolean(id)),
+			);
+
+			filtered = filtered.filter(
+				(facility) => !bookedFacilityIds.has(facility.id),
+			);
+		}
+
+		// When editing, ensure the current facility is included even if filtered out
+		if (isEditMode && rsvp?.facilityId) {
+			const currentFacility = facilities.find((f) => f.id === rsvp.facilityId);
+			if (
+				currentFacility &&
+				!filtered.find((f) => f.id === currentFacility.id)
+			) {
+				filtered.push(currentFacility);
+			}
+		}
+
+		return filtered;
+	}, [
+		facilities,
+		rsvpTime,
+		storeTimezone,
+		isFacilityAvailableAtTime,
+		rsvps,
+		rsvpSettings?.singleServiceMode,
+		rsvpSettings?.defaultDuration,
+		isEditMode,
+		rsvp?.id,
+		rsvp?.facilityId,
+	]);
 
 	// Update form when defaultRsvpTime changes (create mode) or rsvp changes (edit mode)
 	useEffect(() => {
@@ -486,89 +707,109 @@ export function ReservationForm({
 					<FormField
 						control={form.control}
 						name="rsvpTime"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>
-									{t("rsvp_time")} <span className="text-destructive">*</span>
-								</FormLabel>
-								<FormControl>
-									{isEditMode ? (
-										// Edit mode: Use SlotPicker
-										<div className="border rounded-lg p-4">
-											<SlotPicker
-												existingReservations={rsvps}
-												rsvpSettings={rsvpSettings}
-												storeSettings={storeSettings || null}
-												storeTimezone={storeTimezone}
-												currentRsvpId={rsvp?.id}
-												selectedDateTime={field.value || null}
-												onSlotSelect={(dateTime) => {
-													// dateTime is already a UTC Date object from convertStoreTimezoneToUtc
-													// No need for additional conversion
-													if (!dateTime) {
-														field.onChange(null);
-														return;
-													}
+						render={({ field }) => {
+							// Validate time against store/RSVP hours when it changes
+							const timeValidationError = field.value
+								? validateRsvpTimeAgainstHours(field.value)
+								: null;
 
-													// Validate the date
-													if (isNaN(dateTime.getTime())) {
-														// Silently ignore invalid dates
-														return;
-													}
+							return (
+								<FormItem>
+									<FormLabel>
+										{t("rsvp_time")} <span className="text-destructive">*</span>
+									</FormLabel>
+									<FormControl>
+										{isEditMode ? (
+											// Edit mode: Use SlotPicker
+											<div className="border rounded-lg p-4">
+												<SlotPicker
+													existingReservations={rsvps}
+													rsvpSettings={rsvpSettings}
+													storeSettings={storeSettings || null}
+													storeTimezone={storeTimezone}
+													currentRsvpId={rsvp?.id}
+													selectedDateTime={field.value || null}
+													onSlotSelect={(dateTime) => {
+														// dateTime is already a UTC Date object from convertStoreTimezoneToUtc
+														// No need for additional conversion
+														if (!dateTime) {
+															field.onChange(null);
+															return;
+														}
 
-													field.onChange(dateTime);
-												}}
-											/>
-										</div>
-									) : (
-										// Create mode: Use datetime-local input
-										<Input
-											type="datetime-local"
-											disabled={isSubmitting}
-											value={
-												field.value
-													? (() => {
-															try {
-																// Ensure we have a proper Date object
-																const utcDate =
-																	field.value instanceof Date
-																		? field.value
-																		: new Date(field.value);
+														// Validate the date
+														if (isNaN(dateTime.getTime())) {
+															// Silently ignore invalid dates
+															return;
+														}
 
-																// Validate date
-																if (Number.isNaN(utcDate.getTime())) {
+														field.onChange(dateTime);
+													}}
+												/>
+											</div>
+										) : (
+											// Create mode: Use datetime-local input
+											<Input
+												type="datetime-local"
+												disabled={isSubmitting}
+												value={
+													field.value
+														? (() => {
+																try {
+																	// Ensure we have a proper Date object
+																	const utcDate =
+																		field.value instanceof Date
+																			? field.value
+																			: new Date(field.value);
+
+																	// Validate date
+																	if (Number.isNaN(utcDate.getTime())) {
+																		return "";
+																	}
+
+																	// Use formatUtcDateToDateTimeLocal to correctly format UTC date in store timezone
+																	return formatUtcDateToDateTimeLocal(
+																		utcDate,
+																		storeTimezone,
+																	);
+																} catch {
+																	// Silently handle formatting errors
 																	return "";
 																}
-
-																// Use formatUtcDateToDateTimeLocal to correctly format UTC date in store timezone
-																return formatUtcDateToDateTimeLocal(
-																	utcDate,
-																	storeTimezone,
-																);
-															} catch {
-																// Silently handle formatting errors
-																return "";
-															}
-														})()
-													: ""
-											}
-											onChange={(e) => {
-												// Convert datetime-local string (interpreted as store timezone) to UTC Date
-												// This matches the admin form behavior - both convert to UTC before sending
-												// The server action's convertDateToUtc will handle the conversion correctly
-												// by extracting the Date's components and re-interpreting them as store timezone
-												const value = e.target.value;
-												if (value) {
-													const utcDate = convertToUtc(value, storeTimezone);
-													field.onChange(utcDate);
+															})()
+														: ""
 												}
-											}}
+												onChange={(e) => {
+													// Convert datetime-local string (interpreted as store timezone) to UTC Date
+													// This matches the admin form behavior - both convert to UTC before sending
+													// The server action's convertDateToUtc will handle the conversion correctly
+													// by extracting the Date's components and re-interpreting them as store timezone
+													const value = e.target.value;
+													if (value) {
+														const utcDate = convertToUtc(value, storeTimezone);
+														field.onChange(utcDate);
+													}
+												}}
+											/>
+										)}
+									</FormControl>
+									{timeValidationError && (
+										<p className="text-sm font-medium text-destructive">
+											{timeValidationError}
+										</p>
+									)}
+									<FormMessage />
+									{/* Cancel Policy Information (only shown in edit mode) */}
+									{isEditMode && (
+										<RsvpCancelPolicyInfo
+											cancelPolicyInfo={cancelPolicyInfo}
+											rsvpTime={rsvpTime}
+											alreadyPaid={rsvp?.alreadyPaid ?? false}
 										/>
 									)}
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
+								</FormItem>
+							);
+						}}
 					/>
 
 					{/* Number of Adults and Children */}

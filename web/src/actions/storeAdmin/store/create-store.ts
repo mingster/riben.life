@@ -286,6 +286,7 @@ export const createStoreAction = userRequiredActionClient
 				storeId: databaseId,
 				// All other fields use schema defaults:
 				// acceptReservation: true
+				// singleServiceMode: false
 				// minPrepaidPercentage: 0
 				// canCancel: true
 				// cancelHours: 24

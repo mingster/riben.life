@@ -68,6 +68,7 @@ interface CustomerWeekViewCalendarProps {
 	facilities?: StoreFacility[];
 	user?: User | null;
 	storeTimezone?: string;
+	storeUseBusinessHours?: boolean | null;
 	onReservationCreated?: (newRsvp: Rsvp) => void;
 	isBlacklisted?: boolean;
 	useCustomerCredit?: boolean;
@@ -319,6 +320,7 @@ export const CustomerWeekViewCalendar: React.FC<
 	facilities = [],
 	user,
 	storeTimezone = "Asia/Taipei",
+	storeUseBusinessHours,
 	onReservationCreated,
 	isBlacklisted = false,
 	useCustomerCredit = false,
@@ -933,6 +935,9 @@ export const CustomerWeekViewCalendar: React.FC<
 																		rsvp={rsvp}
 																		rsvps={rsvps}
 																		storeTimezone={storeTimezone}
+																		storeUseBusinessHours={
+																			storeUseBusinessHours
+																		}
 																		onReservationUpdated={
 																			handleReservationUpdated
 																		}
@@ -1046,6 +1051,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																)}
 																onReservationCreated={handleReservationCreated}
 																storeTimezone={storeTimezone}
+																storeUseBusinessHours={storeUseBusinessHours}
 																useCustomerCredit={useCustomerCredit}
 																creditExchangeRate={creditExchangeRate}
 																creditServiceExchangeRate={

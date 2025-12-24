@@ -16,6 +16,7 @@ import { updateReservationSchema } from "./update-reservation.validation";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
 import { validateCancelHoursWindow } from "./validate-cancel-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
+import { validateRsvpAvailability } from "./validate-rsvp-availability";
 
 // implement FR-RSVP-013
 //
@@ -72,6 +73,7 @@ export const updateReservationAction = baseClient
 				defaultDuration: true,
 				canReserveBefore: true,
 				canReserveAfter: true,
+				singleServiceMode: true,
 			},
 		});
 
@@ -149,55 +151,19 @@ export const updateReservationAction = baseClient
 			facilityId,
 		);
 
-		// Validate availability - check for conflicting reservations (BR-RSVP-004)
-		// Get all active reservations for this facility and check for overlaps
-		const facilityDuration =
-			facility.defaultDuration || rsvpSettingsResult?.defaultDuration || 60; // minutes
-		const durationMs = facilityDuration * 60 * 1000;
-		const newSlotStart = Number(rsvpTime);
-		const newSlotEnd = newSlotStart + durationMs;
-
-		// Find all active reservations (excluding current one and cancelled)
-		// We check reservations that could potentially overlap:
-		// - Start time before our end time (might overlap)
-		// - End time after our start time (might overlap)
-		const potentiallyConflictingReservations = await sqlClient.rsvp.findMany({
-			where: {
-				storeId: existingRsvp.storeId,
-				facilityId: facilityId,
-				id: { not: id }, // Exclude current reservation
-				status: {
-					not: RsvpStatus.Cancelled, // Exclude cancelled
-				},
-				rsvpTime: {
-					lt: BigInt(newSlotEnd), // Start time is before our slot ends
-				},
-			},
-			include: {
-				Facility: {
-					select: {
-						defaultDuration: true,
-					},
-				},
-			},
-		});
-
-		// Check for actual overlaps considering each reservation's duration
-		for (const existingReservation of potentiallyConflictingReservations) {
-			const existingDuration =
-				existingReservation.Facility?.defaultDuration ||
-				rsvpSettingsResult?.defaultDuration ||
-				60;
-			const existingDurationMs = existingDuration * 60 * 1000;
-			const existingSlotStart = Number(existingReservation.rsvpTime);
-			const existingSlotEnd = existingSlotStart + existingDurationMs;
-
-			// Check if slots overlap (they overlap if one starts before the other ends)
-			if (newSlotStart < existingSlotEnd && newSlotEnd > existingSlotStart) {
-				throw new SafeError(
-					"This time slot is already booked. Please select a different time.",
-				);
-			}
+		// Validate availability based on singleServiceMode (BR-RSVP-004)
+		// Check if rsvpTime is different from existing reservation
+		const existingRsvpTime = existingRsvp.rsvpTime;
+		if (existingRsvpTime !== rsvpTime) {
+			// Time changed, validate availability
+			await validateRsvpAvailability(
+				existingRsvp.storeId,
+				rsvpSettingsResult,
+				rsvpTime,
+				facilityId,
+				facility.defaultDuration,
+				id, // Exclude current reservation from conflict check
+			);
 		}
 
 		try {

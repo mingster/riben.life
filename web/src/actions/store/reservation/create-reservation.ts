@@ -19,6 +19,7 @@ import { RsvpStatus } from "@/types/enum";
 import { processRsvpPrepaidPayment } from "./process-rsvp-prepaid-payment";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
+import { validateRsvpAvailability } from "./validate-rsvp-availability";
 
 export const createReservationAction = baseClient
 	.metadata({ name: "createReservation" })
@@ -144,6 +145,7 @@ export const createReservationAction = baseClient
 				id: true,
 				businessHours: true,
 				defaultCost: true,
+				defaultDuration: true,
 			},
 		});
 
@@ -157,6 +159,15 @@ export const createReservationAction = baseClient
 			rsvpTimeUtc,
 			storeTimezone,
 			facilityId,
+		);
+
+		// Validate availability based on singleServiceMode
+		await validateRsvpAvailability(
+			storeId,
+			rsvpSettings,
+			rsvpTime,
+			facilityId,
+			facility.defaultDuration, // Use facility duration if available
 		);
 
 		// Process prepaid payment using shared function

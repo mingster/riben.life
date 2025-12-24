@@ -104,7 +104,7 @@ export default async function RsvpPage(props: {
 		}),
 		sqlClient.store.findUnique({
 			where: { id: params.storeId },
-			select: { defaultTimezone: true },
+			select: { defaultTimezone: true, useBusinessHours: true },
 		}),
 	]);
 
@@ -131,6 +131,7 @@ export default async function RsvpPage(props: {
 				rsvpSettings={rsvpSettings}
 				storeSettings={storeSettings}
 				storeTimezone={store?.defaultTimezone || "Asia/Taipei"}
+				storeUseBusinessHours={store?.useBusinessHours ?? true}
 			/>
 		</Container>
 	);

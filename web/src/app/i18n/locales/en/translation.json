@@ -683,6 +683,8 @@
   "rsvp_credit_deduction_note": "RSVP completed: {{points}} points",
   "rsvp_Default_Duration": "Default Duration",
   "rsvp_Default_Duration_descr": "e.g. 60 minutes",
+  "rsvp_Single_Service_Mode": "Single Service Mode",
+  "rsvp_Single_Service_Mode_descr": "For personal shops: only ONE reservation per time slot across all facilities. When enabled, blocks any reservation if another reservation exists for the same time slot, regardless of facility. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities.",
   "rsvp_delete_reservation": "Delete Reservation",
   "rsvp_delete_reservation_confirmation": "Are you sure you want to delete this reservation?",
   "rsvp_Display_Settings": "Display",

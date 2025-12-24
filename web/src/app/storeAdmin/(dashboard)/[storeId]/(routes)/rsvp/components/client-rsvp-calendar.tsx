@@ -23,9 +23,13 @@ interface RsvpCalendarClientProps {
 		minPrepaidPercentage?: number | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
+		canReserveBefore?: number | null;
+		canReserveAfter?: number | null;
+		singleServiceMode?: boolean | null;
 	} | null;
 	storeSettings: { businessHours: string | null } | null;
 	storeTimezone: string;
+	storeUseBusinessHours?: boolean | null;
 }
 
 export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
@@ -33,6 +37,7 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 	rsvpSettings,
 	storeSettings,
 	storeTimezone,
+	storeUseBusinessHours,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -80,6 +85,8 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 						onCreated={handleCreated}
 						storeTimezone={storeTimezone}
 						rsvpSettings={rsvpSettings}
+						storeSettings={storeSettings}
+						storeUseBusinessHours={storeUseBusinessHours}
 						trigger={
 							<Button variant="outline" className="h-10 sm:h-9">
 								<IconPlus className="mr-2 h-4 w-4" />
@@ -97,6 +104,7 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 				rsvpSettings={rsvpSettings}
 				storeSettings={storeSettings}
 				storeTimezone={storeTimezone}
+				storeUseBusinessHours={storeUseBusinessHours}
 			/>
 		</>
 	);

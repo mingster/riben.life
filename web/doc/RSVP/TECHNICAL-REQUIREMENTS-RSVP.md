@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27\
 **Status:** Active\
-**Version:** 1.5\
+**Version:** 1.8\
 **Related Documents:**
 
 * [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -807,11 +807,59 @@ For Google Actions Center Appointments Redirect integration:
 
 #### 7.1.1 Business Hours Validation
 
+**Function:** `validateRsvpTimeAgainstHours()` (Client-side) / Server-side validation in actions
+
+**File:** `admin-edit-rsvp-dialog.tsx`, `reservation-form.tsx` (client-side validation)
+
+**Purpose:** Validates that a reservation time (`rsvpTime`) falls within configured business hours based on priority rules.
+
+**Priority Rules:**
+
+1. **If `RsvpSettings.useBusinessHours = true`:** Validate `rsvpTime` against `RsvpSettings.rsvpHours`
+2. **If `RsvpSettings.useBusinessHours = false` AND `Store.useBusinessHours = true`:** Validate `rsvpTime` against `StoreSettings.businessHours`
+3. **If `RsvpSettings.useBusinessHours = false` AND `Store.useBusinessHours = false`:** No validation (all times allowed)
+
+**Client-Side Validation (UI):**
+
+* Real-time validation when user selects/changes `rsvpTime` in the form
+* Displays error message below the time input field
+* Prevents form submission if time is invalid
+
+**Server-Side Validation:**
+
+* Validates `rsvpTime` before creating/updating reservation
+* Returns error toast if validation fails
+* Uses same priority rules as client-side validation
+
+**Parameters (Client-side function):**
+
+* `rsvpTime: Date | null | undefined` - Selected reservation time
+* `rsvpSettings.useBusinessHours: boolean | null` - Whether to use RSVP-specific hours
+* `rsvpSettings.rsvpHours: string | null` - RSVP-specific business hours JSON
+* `storeSettings.businessHours: string | null` - Store general business hours JSON
+* `storeUseBusinessHours: boolean | null` - Whether store uses business hours
+* `storeTimezone: string` - Store timezone string (e.g., "Asia/Taipei")
+
+**Behavior:**
+
+* If no hours are configured for the selected source, validation passes (all times allowed)
+* Converts UTC time to store timezone for checking
+* Validates day of week and time range
+* Handles time ranges spanning midnight (e.g., 22:00 to 02:00)
+* Returns error message string if invalid, `null` if valid
+* Gracefully handles JSON parse errors (logs error, allows reservation)
+
+**Usage:** Used in both customer-facing (`reservation-form.tsx`) and admin (`admin-edit-rsvp-dialog.tsx`) reservation forms for real-time validation and form submission validation.
+
+#### 7.1.1a Facility Business Hours Validation (Legacy)
+
 **Function:** `validateFacilityBusinessHours()`
 
 **File:** `validate-facility-business-hours.ts`
 
-**Purpose:** Validates that a reservation time falls within facility business hours.
+**Purpose:** Validates that a reservation time falls within facility-specific business hours (if facility has its own business hours configured).
+
+**Note:** This is separate from the RSVP/Store business hours validation above. Facilities can have their own business hours that override store/RSVP hours.
 
 **Parameters:**
 
@@ -829,9 +877,34 @@ For Google Actions Center Appointments Redirect integration:
 * Throws `SafeError` if time is outside business hours
 * Gracefully handles JSON parse errors (logs warning, allows reservation)
 
-**Usage:** Used by `create-reservation.ts` and `update-reservation.ts` actions.
+**Usage:** Used by `create-reservation.ts` and `update-reservation.ts` actions for facility-specific business hours validation.
 
-#### 7.1.2 Cancellation Window Validation
+#### 7.1.2 Facility Availability Filtering (UI)
+
+**Location:** `admin-edit-rsvp-dialog.tsx`, `reservation-form.tsx`
+
+**Purpose:** Dynamically filters available facilities in the reservation form based on the selected time slot and existing reservations.
+
+**Behavior:**
+
+* Filters facilities that are already booked at the selected time slot
+* **If `singleServiceMode` is `true`:** If any reservation exists for the time slot, all facilities are filtered out
+* **If `singleServiceMode` is `false` (default):** Only facilities with existing reservations are filtered out
+* When editing an existing reservation, the current facility is always included even if it would normally be filtered out
+* Also filters by facility business hours (if facility has its own business hours configured)
+
+**Implementation:**
+
+* Uses `useMemo` to compute `availableFacilities` based on:
+  * Selected `rsvpTime`
+  * Existing reservations (`rsvps` array)
+  * `singleServiceMode` setting
+  * `defaultDuration` for overlap detection
+  * Facility business hours
+
+**Usage:** Used in both customer-facing (`reservation-form.tsx`) and admin (`admin-edit-rsvp-dialog.tsx`) reservation forms to prevent users from selecting facilities that are already booked.
+
+#### 7.1.3 Cancellation Window Validation
 
 **Function:** `isCancellationWithinCancelHours()`
 
@@ -1129,6 +1202,8 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.8 | 2025-01-27 | System | Enhanced reservation validation and UI improvements: (1) Added detailed business hours validation logic with priority rules (RsvpSettings.useBusinessHours vs Store.useBusinessHours) - validation occurs both client-side (real-time UI feedback) and server-side (form submission). Updated Section 7.1.1 to document the new validation function and priority rules. (2) Implemented dynamic facility filtering in reservation forms (both customer-facing and admin) - facilities already booked at the selected time slot are automatically filtered out from the dropdown, with special handling for singleServiceMode and edit mode. Added Section 7.1.2 to document facility availability filtering. |
+| 1.7 | 2025-01-27 | System | Added `singleServiceMode` field to RsvpSettings model: Boolean field (default: `false`) for personal shops where only ONE reservation per time slot is allowed across all facilities. When enabled, availability checking blocks any reservation if another reservation exists for the same time slot, regardless of facility. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities. Updated availability rules and functional requirements to document this behavior. |
 | 1.6 | 2025-01-27 | System | Updated RsvpSettings schema documentation: Added `canReserveBefore` and `canReserveAfter` fields to control reservation time window (minimum hours in advance and maximum hours in future). Updated all timestamp fields from DateTime to BigInt (epoch milliseconds) to match actual schema. Fixed field names (`minPrepaidPercentage` for prepaid, `customerId` instead of `userId` in Rsvp model). Added reservation time window business rules to External Availability Query API section. Updated all model schemas to reflect BigInt timestamps. |
 | 1.5 | 2025-01-27 | System | Added refund processing documentation for customer reservation cancellation (FR-RSVP-014): Documented automatic refund functionality when prepaid reservations are cancelled. Added `processRsvpRefund()` shared utility function details, refund flow (credit restoration, ledger entries, order status updates), transaction safety, and integration with `cancel-reservation.ts` action. Updated Customer Reservation Cancellation API section with refund business rules and technical requirements. |
 | 1.4 | 2025-01-27 | System | Added External Availability Query API (Section 4.2.5): New endpoint `GET /api/store/[storeId]/rsvp/availability/slots` for external systems and other stores to query available reservation slots. Supports API key authentication, store-to-store authentication, and public access. Includes query parameters (date range, facility, duration, timezone), response format with available slots, business rules (conflict checking, capacity limits, business hours), and error handling. |

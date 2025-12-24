@@ -67,6 +67,7 @@ export default async function RsvpSettingsPage(props: {
 			id: rsvpSettings.id,
 			storeId: rsvpSettings.storeId,
 			acceptReservation: rsvpSettings.acceptReservation,
+			singleServiceMode: rsvpSettings.singleServiceMode ?? false,
 			minPrepaidPercentage: rsvpSettings.minPrepaidPercentage,
 			canCancel: rsvpSettings.canCancel,
 			cancelHours: rsvpSettings.cancelHours,
