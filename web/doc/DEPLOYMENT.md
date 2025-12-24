@@ -239,11 +239,11 @@ bun run build
 
 1. Sendmail
 
-Cron Script: ```bin/run-sendmail-cron.sh```
+Cron Script: `bin/run-sendmail-cron.sh`
 
 Calls the API endpoint via curl
 
-API Endpoint: ```web/src/app/api/cron-jobs/sendmail/route.ts```
+API Endpoint: `web/src/app/api/cron-jobs/sendmail/route.ts`
 
 Handles GET requests
 
@@ -251,19 +251,19 @@ Calls sendMailsInQueue() action
 
 Crontab Configuration:
 
-- Runs every 15 minutes: ```*/15 * * * *```
-- Runs every 10 second:  ```** * * * * sleep 10```
+* Runs every 15 minutes: `*/15 * * * *`
+* Runs every 10 second:  `** * * * * sleep 10`
 
 Actual Implementation:
 
-The script calls: ```curl https://riben.life/api/cron-jobs/sendmail```
+The script calls: `curl https://riben.life/api/cron-jobs/sendmail`
 
-The API route processes the email queue using sendMailsInQueue() from ```@/actions/mail/send-mails-in-queue```
+The API route processes the email queue using sendMailsInQueue() from `@/actions/mail/send-mails-in-queue`
 
 To set it up, add this to your crontab:
 
-```** * * * * sleep 10 /Volumes/data3/pstv/web2/bin/run-sendmail-cron.sh >> /var/log/pstv/sendmail.log 2>&1```
+`** * * * * sleep 10 curl https://riben.life/api/cron-jobs/sendmail >> /var/www/riben.life/logs/sendmail.log 2>&1`
 
 Or for Windows/Cygwin (as shown in DEPLOYMENT.md):
 
-```** * * * * sleep 10; curl https://riben.life/api/cron-jobs/sendmail```
+`** * * * * sleep 10; curl https://riben.life/api/cron-jobs/sendmail >> /var/www/riben.life/logs/sendmail.log 2>&1`

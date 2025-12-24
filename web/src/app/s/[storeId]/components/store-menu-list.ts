@@ -90,12 +90,46 @@ export function GetMenuList(
 					{
 						href: `${nav_prefix}/reservation`,
 						label: t("reservation"),
-						active: pathname.includes(`${nav_prefix}/reservation`),
+						active: pathname === `${nav_prefix}/reservation`,
 						icon: IconCalendarCheck,
 						submenus: [],
 					},
 				]
 			: []),
+
+		...(store.rsvpSettings?.acceptReservation === true
+			? [
+					{
+						href: `${nav_prefix}/reservation/history`,
+						label: t("rsvp_history"),
+						active:
+							pathname === `${nav_prefix}/reservation/history` ||
+							pathname.startsWith(`${nav_prefix}/reservation/history/`),
+						icon: IconHistory,
+						submenus: [],
+					},
+				]
+			: []),
+
+		...(store.useCustomerCredit
+			? [
+					{
+						href: `${nav_prefix}/my-credit-ledger`,
+						label: t("my_credit_ledger"),
+						active: pathname.includes(`${nav_prefix}/my-credit-ledger`),
+						icon: IconCreditCard,
+						submenus: [],
+					},
+				]
+			: []),
+		{
+			href: `${nav_prefix}/my-fiat-ledger`,
+			label: t("my_fiat_ledger"),
+			active: pathname.includes(`${nav_prefix}/my-fiat-ledger`),
+			icon: IconCreditCard,
+			submenus: [],
+		},
+
 		{
 			href: `${nav_prefix}/faq`,
 			label: t("FAQ"),
@@ -124,30 +158,6 @@ export function GetMenuList(
 			icon: HandHelping,
 			submenus: [],
 		},
-
-		...(store.rsvpSettings?.acceptReservation === true
-			? [
-					{
-						href: `${nav_prefix}/reservation/history`,
-						label: t("rsvp_history"),
-						active: pathname.includes(`${nav_prefix}/reservation/history`),
-						icon: IconHistory,
-						submenus: [],
-					},
-				]
-			: []),
-
-		...(store.useCustomerCredit
-			? [
-					{
-						href: `${nav_prefix}/my-credit-ledger`,
-						label: t("my_credit_ledger"),
-						active: pathname.includes(`${nav_prefix}/my-credit-ledger`),
-						icon: IconCreditCard,
-						submenus: [],
-					},
-				]
-			: []),
 	] as Menu[];
 
 	const result = [

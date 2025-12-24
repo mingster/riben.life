@@ -69,6 +69,7 @@ interface EditRsvpDialogProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	storeTimezone?: string;
+	storeCurrency?: string;
 	rsvpSettings?: {
 		minPrepaidPercentage?: number | null;
 		canCancel?: boolean | null;
@@ -83,6 +84,8 @@ interface EditRsvpDialogProps {
 	} | null;
 	storeUseBusinessHours?: boolean | null; // Store.useBusinessHours
 	existingReservations?: Rsvp[]; // Existing reservations to check for conflicts
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
 }
 
 // dialog to edit or create an rsvp by admin user.
@@ -99,10 +102,13 @@ export function AdminEditRsvpDialog({
 	open,
 	onOpenChange,
 	storeTimezone = "Asia/Taipei",
+	storeCurrency = "twd",
 	rsvpSettings,
 	storeSettings,
 	storeUseBusinessHours,
 	existingReservations = [],
+	useCustomerCredit = false,
+	creditExchangeRate = null,
 }: EditRsvpDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
@@ -492,6 +498,22 @@ export function AdminEditRsvpDialog({
 	const status = form.watch("status");
 	const isCompleted = status === RsvpStatus.Completed;
 	const alreadyPaid = form.watch("alreadyPaid");
+
+	// Get selected facility for cost calculation
+	const selectedFacility = useMemo(() => {
+		if (!facilityId || !storeFacilities) return null;
+		return storeFacilities.find((f) => f.id === facilityId) || null;
+	}, [facilityId, storeFacilities]);
+
+	// Get facility cost for prepaid calculation
+	const facilityCost = useMemo(() => {
+		if (selectedFacility?.defaultCost) {
+			return typeof selectedFacility.defaultCost === "number"
+				? selectedFacility.defaultCost
+				: Number(selectedFacility.defaultCost);
+		}
+		return null;
+	}, [selectedFacility]);
 
 	// Calculate cancel policy information
 	const cancelPolicyInfo = useMemo(
@@ -1339,6 +1361,11 @@ export function AdminEditRsvpDialog({
 											cancelPolicyInfo={cancelPolicyInfo}
 											rsvpTime={rsvpTime}
 											alreadyPaid={alreadyPaid}
+											rsvpSettings={rsvpSettings}
+											facilityCost={facilityCost}
+											currency={storeCurrency}
+											useCustomerCredit={useCustomerCredit}
+											creditExchangeRate={creditExchangeRate}
 										/>
 									</FormItem>
 								);

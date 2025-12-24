@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27\
 **Status:** Active\
-**Version:** 1.8\
+**Version:** 1.9\
 **Related Documents:**
 
 * [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -282,6 +282,43 @@ model RsvpTag {
 * `confirm-reservation.ts` - Confirm reservation (customer) - Implements FR-RSVP-015
 
 **Validation Files:** `[action-name].validation.ts`
+
+**Customer Reservation Creation (FR-RSVP-001, FR-RSVP-003, FR-RSVP-004):**
+
+The `create-reservation.ts` action handles customer-facing reservation creation with the following technical requirements:
+
+* **Authentication:** 
+  * Anonymous users can create reservations if prepaid is not required
+  * Authentication required if `minPrepaidPercentage > 0`
+* **Validation:**
+  * Reservation time window (`canReserveBefore`, `canReserveAfter`)
+  * Business hours validation (priority: `RsvpSettings.rsvpHours` > `StoreSettings.businessHours`)
+  * Facility availability (respects `singleServiceMode`)
+  * Facility business hours (if facility has its own hours)
+* **Prepaid Payment Flow:**
+  * **If prepaid NOT required (`minPrepaidPercentage = 0`):**
+    * Creates RSVP with `status = ReadyToConfirm`
+    * No order is created
+    * Returns RSVP data to frontend
+  * **If prepaid required (`minPrepaidPercentage > 0`):**
+    * Creates unpaid `StoreOrder` with prepaid amount
+    * Payment method selection:
+      * If `store.useCustomerCredit = true`: Order created with "credit" payment method
+      * If `store.useCustomerCredit = false`: Order created with "TBD" payment method
+    * Shipping method: "digital" (for reservation orders)
+    * Order status: `Pending` (unpaid)
+    * RSVP created with `status = Pending`, `alreadyPaid = false`
+    * RSVP `orderId` linked to created order
+    * Returns `orderId` to frontend for checkout redirect
+* **Checkout Integration:**
+  * Frontend redirects to `/checkout/[orderId]` when `orderId` is returned
+  * Customer selects payment method at checkout page
+  * Payment processing handled by checkout flow (credit, Stripe, LINE Pay, etc.)
+  * After payment completion, reservation `alreadyPaid` and `status` are updated
+* **Shared Utilities:**
+  * `create-rsvp-store-order.ts` - Creates store order for RSVP prepaid
+  * `validate-rsvp-availability.ts` - Validates time slot availability
+  * `validate-facility-business-hours.ts` - Validates facility-specific hours
 
 **Customer Reservation Modification (FR-RSVP-013):**
 
@@ -799,13 +836,13 @@ For Google Actions Center Appointments Redirect integration:
 
 ***
 
-## 7. Shared Utility Functions
+## 8. Shared Utility Functions
 
-### 7.1 Reservation Validation Utilities
+### 8.1 Reservation Validation Utilities
 
 **Location:** `src/actions/store/reservation/`
 
-#### 7.1.1 Business Hours Validation
+#### 8.1.1 Business Hours Validation
 
 **Function:** `validateRsvpTimeAgainstHours()` (Client-side) / Server-side validation in actions
 
@@ -851,7 +888,7 @@ For Google Actions Center Appointments Redirect integration:
 
 **Usage:** Used in both customer-facing (`reservation-form.tsx`) and admin (`admin-edit-rsvp-dialog.tsx`) reservation forms for real-time validation and form submission validation.
 
-#### 7.1.1a Facility Business Hours Validation (Legacy)
+#### 8.1.1a Facility Business Hours Validation (Legacy)
 
 **Function:** `validateFacilityBusinessHours()`
 
@@ -879,7 +916,7 @@ For Google Actions Center Appointments Redirect integration:
 
 **Usage:** Used by `create-reservation.ts` and `update-reservation.ts` actions for facility-specific business hours validation.
 
-#### 7.1.2 Facility Availability Filtering (UI)
+#### 8.1.2 Facility Availability Filtering (UI)
 
 **Location:** `admin-edit-rsvp-dialog.tsx`, `reservation-form.tsx`
 
@@ -904,7 +941,7 @@ For Google Actions Center Appointments Redirect integration:
 
 **Usage:** Used in both customer-facing (`reservation-form.tsx`) and admin (`admin-edit-rsvp-dialog.tsx`) reservation forms to prevent users from selecting facilities that are already booked.
 
-#### 7.1.3 Cancellation Window Validation
+#### 8.1.3 Cancellation Window Validation
 
 **Function:** `isCancellationWithinCancelHours()`
 
@@ -930,6 +967,48 @@ For Google Actions Center Appointments Redirect integration:
 
 **Usage:** Used by `cancel-reservation.ts` to determine if refund should be processed.
 
+### 8.3 Order Creation Utilities
+
+**Location:** `src/actions/store/reservation/`
+
+#### 8.3.1 RSVP Store Order Creation
+
+**Function:** `createRsvpStoreOrder()`
+
+**File:** `create-rsvp-store-order.ts`
+
+**Purpose:** Creates a store order for RSVP reservation prepaid payment. Used by customer reservation creation and admin RSVP creation flows.
+
+**Parameters:**
+
+* `tx` - Prisma transaction client
+* `storeId` - Store ID
+* `customerId` - Customer user ID
+* `orderTotal` - Prepaid amount (cash value in store currency)
+* `currency` - Store currency code
+* `paymentMethodPayUrl` - Payment method identifier ("credit" or "TBD")
+* `note` - Optional order note
+* `isPaid` - Whether order is already paid (default: `false` for checkout flow)
+
+**Returns:**
+
+* `string` - Created store order ID
+
+**Behavior:**
+
+* Finds "digital" shipping method (preferred) or falls back to default shipping method
+* Finds payment method by `payUrl` identifier
+* Ensures "Reservation Prepaid" system product exists for the store
+* Creates `StoreOrder` with:
+  * Order status: `Pending` if unpaid, `Confirmed` if paid
+  * Payment status: `Pending` if unpaid, `Paid` if paid
+  * Shipping method: "digital"
+  * Payment method: Based on `paymentMethodPayUrl` parameter
+* Creates `OrderItem` linking to "Reservation Prepaid" system product
+* Creates `OrderNote` if note is provided
+
+**Usage:** Used by `create-reservation.ts` (customer) and `create-rsvp.ts` (admin) to create orders for prepaid reservations.
+
 **Function:** `validateCancelHoursWindow()`
 
 **File:** `validate-cancel-hours.ts`
@@ -951,11 +1030,11 @@ For Google Actions Center Appointments Redirect integration:
 
 **Usage:** Used by `update-reservation.ts` (action: "modify") to enforce time restrictions on modifications.
 
-### 7.2 Refund Processing Utilities
+### 8.2 Refund Processing Utilities
 
 **Location:** `src/actions/store/reservation/`
 
-#### 7.2.1 RSVP Refund Processing
+#### 8.2.1 RSVP Refund Processing
 
 **Function:** `processRsvpRefund()`
 
@@ -1021,21 +1100,21 @@ For Google Actions Center Appointments Redirect integration:
 
 ***
 
-## 8. Error Handling
+## 9. Error Handling
 
-### 8.1 Error Types
+### 9.1 Error Types
 
 * **Validation Errors:** Returned in `validationErrors` field
 * **Business Logic Errors:** Returned in `serverError` field
 * **System Errors:** Logged with `logger.error()`, return generic error to client
 
-### 8.2 Error Logging
+### 9.2 Error Logging
 
 * **Structured Logging:** Use `logger` utility with metadata
 * **Error Context:** Include storeId, userId, reservationId in error logs
 * **Stack Traces:** Include in development, sanitize in production
 
-### 8.3 User-Facing Errors
+### 9.3 User-Facing Errors
 
 * **Toast Notifications:** Use `toastError()` for user feedback
 * **Form Validation:** Inline validation errors in forms
@@ -1043,21 +1122,21 @@ For Google Actions Center Appointments Redirect integration:
 
 ***
 
-## 9. Testing Requirements
+## 10. Testing Requirements
 
-### 9.1 Unit Tests
+### 10.1 Unit Tests
 
 * **Server Actions:** Test validation, business logic, error handling
 * **Utility Functions:** Test date/time utilities, validation helpers
 * **Type Safety:** TypeScript compilation ensures type safety
 
-### 9.2 Integration Tests
+### 10.2 Integration Tests
 
 * **Database Operations:** Test CRUD operations with test database
 * **Authentication:** Test access control and authorization
 * **API Routes:** Test request/response handling
 
-### 9.3 E2E Tests
+### 10.3 E2E Tests
 
 * **Reservation Flow:** Test complete reservation creation flow
 * **Payment Flow:** Test prepaid reservation flow
@@ -1065,9 +1144,9 @@ For Google Actions Center Appointments Redirect integration:
 
 ***
 
-## 10. Deployment Requirements
+## 11. Deployment Requirements
 
-### 10.1 Environment Variables
+### 11.1 Environment Variables
 
 **Platform-Level Variables (shared across all stores):**
 
@@ -1087,13 +1166,13 @@ For Google Actions Center Appointments Redirect integration:
 * `LINE_PAY_ID` - LINE Pay merchant ID
 * `LINE_PAY_SECRET` - LINE Pay secret
 
-### 10.2 Database Migrations
+### 11.2 Database Migrations
 
 * **Prisma Migrations:** Use `prisma migrate dev` for development
 * **Production Migrations:** Use `prisma migrate deploy` for production
 * **Migration Strategy:** Always test migrations on staging first
 
-### 10.3 Build Requirements
+### 11.3 Build Requirements
 
 * **TypeScript:** Strict mode enabled
 * **Linting:** Biome linter configured
@@ -1101,9 +1180,9 @@ For Google Actions Center Appointments Redirect integration:
 
 ***
 
-## 11. Code Organization
+## 12. Code Organization
 
-### 11.1 Directory Structure
+### 12.1 Directory Structure
 
 ```plaintext
 src/
@@ -1133,7 +1212,7 @@ src/
 │   └── reserve-with-google/   # Reserve with Google API client library
 ```
 
-### 11.2 Naming Conventions
+### 12.2 Naming Conventions
 
 * **Actions:** `verb-object.ts` (e.g., `create-rsvp.ts`)
 * **Validation:** `verb-object.validation.ts`
@@ -1142,15 +1221,15 @@ src/
 
 ***
 
-## 12. Data Migration
+## 13. Data Migration
 
-### 12.1 Initial Data Setup
+### 13.1 Initial Data Setup
 
 * **Default Settings:** Create default `RsvpSettings` for existing stores
 * **Facility Migration:** Migrate existing `StoreTables` to `StoreFacility`
 * **Data Transformation:** Transform `tableName` to `facilityName`
 
-### 12.2 Backward Compatibility
+### 13.2 Backward Compatibility
 
 * **API Versioning:** Maintain backward compatibility during migration
 * **Data Mapping:** Map old field names to new field names
@@ -1158,21 +1237,21 @@ src/
 
 ***
 
-## 13. Monitoring & Observability
+## 14. Monitoring & Observability
 
-### 13.1 Logging
+### 14.1 Logging
 
 * **Structured Logging:** Use `logger` utility with metadata
 * **Log Levels:** info, warn, error, debug
 * **Log Context:** Include storeId, userId, reservationId in logs
 
-### 13.2 Metrics
+### 14.2 Metrics
 
 * **Reservation Metrics:** Count of reservations by status
 * **Performance Metrics:** Response times for key operations
 * **Error Rates:** Track error rates by operation type
 
-### 13.3 Alerts
+### 14.3 Alerts
 
 * **Critical Errors:** Alert on reservation creation failures
 * **Sync Failures:** Alert on Reserve with Google sync failures
@@ -1182,15 +1261,15 @@ src/
 
 ***
 
-## 14. Future Technical Considerations
+## 15. Future Technical Considerations
 
-### 14.1 Scalability
+### 15.1 Scalability
 
 * **Database Sharding:** Consider sharding by storeId for large scale
 * **Caching Layer:** Redis for frequently accessed data
 * **CDN:** Static assets served via CDN
 
-### 14.2 Advanced Features
+### 15.2 Advanced Features
 
 * **Real-time Updates:** WebSocket support for live reservation updates
 * **Queue System:** Background job processing for notifications
@@ -1198,11 +1277,12 @@ src/
 
 ***
 
-## 15. Revision History
+## 16. Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
-| 1.8 | 2025-01-27 | System | Enhanced reservation validation and UI improvements: (1) Added detailed business hours validation logic with priority rules (RsvpSettings.useBusinessHours vs Store.useBusinessHours) - validation occurs both client-side (real-time UI feedback) and server-side (form submission). Updated Section 7.1.1 to document the new validation function and priority rules. (2) Implemented dynamic facility filtering in reservation forms (both customer-facing and admin) - facilities already booked at the selected time slot are automatically filtered out from the dropdown, with special handling for singleServiceMode and edit mode. Added Section 7.1.2 to document facility availability filtering. |
+| 1.9 | 2025-01-27 | System | Updated customer-facing RSVP creation flow with checkout integration: (1) Modified `create-reservation.ts` to create unpaid store orders and redirect to checkout instead of processing payment immediately. (2) Updated `create-rsvp-store-order.ts` to accept `paymentMethodPayUrl` parameter ("credit" or "TBD") instead of hardcoding payment method. (3) Payment method selection: Orders created with "credit" if `store.useCustomerCredit = true`, otherwise "TBD". (4) Customer credit deduction: No longer deducted at reservation creation; only deducted when customer completes payment using credit at checkout. (5) Added documentation for customer reservation creation flow and checkout integration in Section 4.1.1. (6) Added `createRsvpStoreOrder()` utility function documentation in Section 8.3.1. (7) Updated payment integration section (7.3) to document unified checkout flow. |
+| 1.8 | 2025-01-27 | System | Enhanced reservation validation and UI improvements: (1) Added detailed business hours validation logic with priority rules (RsvpSettings.useBusinessHours vs Store.useBusinessHours) - validation occurs both client-side (real-time UI feedback) and server-side (form submission). Updated Section 8.1.1 to document the new validation function and priority rules. (2) Implemented dynamic facility filtering in reservation forms (both customer-facing and admin) - facilities already booked at the selected time slot are automatically filtered out from the dropdown, with special handling for singleServiceMode and edit mode. Added Section 8.1.2 to document facility availability filtering. |
 | 1.7 | 2025-01-27 | System | Added `singleServiceMode` field to RsvpSettings model: Boolean field (default: `false`) for personal shops where only ONE reservation per time slot is allowed across all facilities. When enabled, availability checking blocks any reservation if another reservation exists for the same time slot, regardless of facility. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities. Updated availability rules and functional requirements to document this behavior. |
 | 1.6 | 2025-01-27 | System | Updated RsvpSettings schema documentation: Added `canReserveBefore` and `canReserveAfter` fields to control reservation time window (minimum hours in advance and maximum hours in future). Updated all timestamp fields from DateTime to BigInt (epoch milliseconds) to match actual schema. Fixed field names (`minPrepaidPercentage` for prepaid, `customerId` instead of `userId` in Rsvp model). Added reservation time window business rules to External Availability Query API section. Updated all model schemas to reflect BigInt timestamps. |
 | 1.5 | 2025-01-27 | System | Added refund processing documentation for customer reservation cancellation (FR-RSVP-014): Documented automatic refund functionality when prepaid reservations are cancelled. Added `processRsvpRefund()` shared utility function details, refund flow (credit restoration, ledger entries, order status updates), transaction safety, and integration with `cancel-reservation.ts` action. Updated Customer Reservation Cancellation API section with refund business rules and technical requirements. |

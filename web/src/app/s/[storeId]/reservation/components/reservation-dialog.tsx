@@ -35,6 +35,7 @@ interface ReservationDialogProps {
 	onReservationUpdated?: (updatedRsvp: Rsvp) => void;
 	// Common props
 	storeTimezone?: string;
+	storeCurrency?: string;
 	storeUseBusinessHours?: boolean | null;
 	trigger?: React.ReactNode;
 	open?: boolean;
@@ -56,6 +57,7 @@ export function ReservationDialog({
 	rsvps = [],
 	onReservationUpdated,
 	storeTimezone = "Asia/Taipei",
+	storeCurrency = "twd",
 	storeUseBusinessHours,
 	trigger,
 	open,
@@ -115,6 +117,7 @@ export function ReservationDialog({
 						rsvp={rsvp}
 						rsvps={rsvps}
 						storeTimezone={storeTimezone}
+						storeCurrency={storeCurrency}
 						storeUseBusinessHours={storeUseBusinessHours}
 						onReservationUpdated={handleReservationUpdated}
 						hideCard={true}

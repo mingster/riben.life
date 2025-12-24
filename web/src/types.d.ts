@@ -321,6 +321,19 @@ export type CustomerCreditLedger = Prisma.CustomerCreditLedgerGetPayload<
 	typeof customerCreditLedgerObj
 >;
 
+const customerFiatLedgerObj =
+	Prisma.validator<Prisma.CustomerFiatLedgerDefaultArgs>()({
+		include: {
+			Store: true,
+			User: true,
+			Creator: true,
+			StoreOrder: true,
+		},
+	});
+export type CustomerFiatLedger = Prisma.CustomerFiatLedgerGetPayload<
+	typeof customerFiatLedgerObj
+>;
+
 const storeFacilityObj = Prisma.validator<Prisma.StoreFacilityDefaultArgs>()({
 	include: {
 		Store: true,

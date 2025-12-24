@@ -86,7 +86,7 @@ export const ShippingPaymentMethodTab: React.FC<
 			setSelectedShippingIds(nextSelection);
 
 			toastSuccess({
-				title: t("Product_category") + t("updated"),
+				title: t("shippingMethod") + t("updated"),
 				description: "",
 			});
 		}
@@ -171,7 +171,7 @@ export const ShippingPaymentMethodTab: React.FC<
 			setSelectedPayMethodIds(nextSelection);
 
 			toastSuccess({
-				title: t("Product_category") + t("updated"),
+				title: t("PaymentMethod") + t("updated"),
 				description: "",
 			});
 		}

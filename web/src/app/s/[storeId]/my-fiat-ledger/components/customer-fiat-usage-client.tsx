@@ -11,43 +11,34 @@ import {
 } from "date-fns";
 
 import { useTranslation } from "@/app/i18n/client";
-import { DataTable } from "@/components/dataTable";
-import { Button } from "@/components/ui/button";
+import { useI18n } from "@/providers/i18n-provider";
+import { DisplayFiatLedger } from "@/components/display-fiat-ledger";
 import { Heading } from "@/components/ui/heading";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { useI18n } from "@/providers/i18n-provider";
-import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
-
-import type { Rsvp } from "@/types";
+import type { CustomerFiatLedger } from "@/types";
 import {
 	dateToEpoch,
 	convertToUtc,
 	formatUtcDateToDateTimeLocal,
 } from "@/utils/datetime-utils";
-import { createRsvpColumns } from "./columns";
 
-interface RsvpHistoryClientProps {
-	serverData: Rsvp[];
+interface CustomerFiatUsageClientProps {
+	ledger: CustomerFiatLedger[];
 	storeTimezone: string;
-	rsvpSettings?: {
-		minPrepaidPercentage?: number | null;
-		canCancel?: boolean | null;
-		cancelHours?: number | null;
-	} | null;
+	currency: string;
 }
 
 type PeriodType = "week" | "month" | "year" | "custom";
 
-export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
-	serverData,
-	storeTimezone,
-	rsvpSettings,
-}) => {
+export const CustomerFiatUsageClient: React.FC<
+	CustomerFiatUsageClientProps
+> = ({ ledger, storeTimezone, currency }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const [allData, setAllData] = useState<Rsvp[]>(serverData);
+	const [allData, setAllData] = useState<CustomerFiatLedger[]>(ledger);
 	const [periodType, setPeriodType] = useState<PeriodType>("week");
 	const [startDate, setStartDate] = useState<Date | null>(null);
 	const [endDate, setEndDate] = useState<Date | null>(null);
@@ -175,30 +166,28 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 			return allData;
 		}
 
-		return allData.filter((rsvp) => {
-			const rsvpTime = rsvp.rsvpTime;
-			if (!rsvpTime) return false;
+		return allData.filter((entry) => {
+			const createdAt = entry.createdAt;
+			if (!createdAt) return false;
 
-			// rsvpTime is BigInt epoch milliseconds
-			const rsvpTimeBigInt =
-				typeof rsvpTime === "bigint" ? rsvpTime : BigInt(rsvpTime);
+			// createdAt is Date or BigInt epoch milliseconds
+			let createdAtBigInt: bigint;
+			if (createdAt instanceof Date) {
+				createdAtBigInt = BigInt(createdAt.getTime());
+			} else if (typeof createdAt === "bigint") {
+				createdAtBigInt = createdAt;
+			} else if (typeof createdAt === "number") {
+				createdAtBigInt = BigInt(createdAt);
+			} else {
+				return false;
+			}
+
 			const startBigInt = startEpoch;
 			const endBigInt = endEpoch;
 
-			return rsvpTimeBigInt >= startBigInt && rsvpTimeBigInt <= endBigInt;
+			return createdAtBigInt >= startBigInt && createdAtBigInt <= endBigInt;
 		});
 	}, [allData, startDate, endDate]);
-
-	const handleDeleted = useCallback((rsvpId: string) => {
-		setAllData((prev) => prev.filter((item) => item.id !== rsvpId));
-	}, []);
-
-	const handleUpdated = useCallback((updated: Rsvp) => {
-		if (!updated) return;
-		setAllData((prev) =>
-			prev.map((item) => (item.id === updated.id ? updated : item)),
-		);
-	}, []);
 
 	// Format date for datetime-local input (display in store timezone)
 	const formatDateForInput = useCallback(
@@ -224,35 +213,24 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 		[storeTimezone],
 	);
 
-	const columns = useMemo(
-		() =>
-			createRsvpColumns(t, {
-				onDeleted: handleDeleted,
-				onUpdated: handleUpdated,
-				storeTimezone,
-				rsvpSettings,
-			}),
-		[t, handleDeleted, handleUpdated, storeTimezone, rsvpSettings],
-	);
-
 	return (
 		<>
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+			<div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
-					title={t("rsvp_history") || "Reservation History"}
+					title={t("my_fiat_ledger") || "Fiat Ledger"}
 					badge={data.length}
 					description=""
 				/>
 			</div>
 			<Separator />
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3">
+			<div className="flex flex-col gap-3 sm:gap-4 py-3">
 				{/* Period Toggle Buttons */}
 				<div className="flex flex-wrap gap-1.5 sm:gap-2">
 					<Button
 						variant={periodType === "week" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("week")}
-						className="h-10 sm:h-9"
+						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
 					>
 						{t("this_week") || "This Week"}
 					</Button>
@@ -260,7 +238,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 						variant={periodType === "month" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("month")}
-						className="h-10 sm:h-9"
+						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
 					>
 						{t("this_month") || "This Month"}
 					</Button>
@@ -268,65 +246,64 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 						variant={periodType === "year" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("year")}
-						className="h-10 sm:h-9"
+						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
 					>
 						{t("this_year") || "This Year"}
 					</Button>
 				</div>
 
 				{/* Date Range Inputs */}
-				<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-					<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
-						<label
-							htmlFor="start-time"
-							className="text-sm font-medium whitespace-nowrap"
-						>
-							{t("start_time") || "Start Time"}:
-						</label>
-						<Input
-							id="start-time"
-							type="datetime-local"
-							value={formatDateForInput(startDate)}
-							onChange={(e) => {
-								const newDate = parseDateFromInput(e.target.value);
-								if (newDate) {
-									setStartDate(newDate);
-									setPeriodType("custom");
-								}
-							}}
-							className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto"
-						/>
-					</div>
-					<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
-						<label
-							htmlFor="end-time"
-							className="text-sm font-medium whitespace-nowrap"
-						>
-							{t("end_time") || "End Time"}:
-						</label>
-						<Input
-							id="end-time"
-							type="datetime-local"
-							value={formatDateForInput(endDate)}
-							onChange={(e) => {
-								const newDate = parseDateFromInput(e.target.value);
-								if (newDate) {
-									setEndDate(newDate);
-									setPeriodType("custom");
-								}
-							}}
-							className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto"
-						/>
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+					<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+						<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+							<label
+								htmlFor="start-time"
+								className="text-sm font-medium whitespace-nowrap"
+							>
+								{t("start_time") || "Start Time"}:
+							</label>
+							<Input
+								id="start-time"
+								type="datetime-local"
+								value={formatDateForInput(startDate)}
+								onChange={(e) => {
+									const newDate = parseDateFromInput(e.target.value);
+									if (newDate) {
+										setStartDate(newDate);
+										setPeriodType("custom");
+									}
+								}}
+								className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto touch-manipulation"
+							/>
+						</div>
+						<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+							<label
+								htmlFor="end-time"
+								className="text-sm font-medium whitespace-nowrap"
+							>
+								{t("end_time") || "End Time"}:
+							</label>
+							<Input
+								id="end-time"
+								type="datetime-local"
+								value={formatDateForInput(endDate)}
+								onChange={(e) => {
+									const newDate = parseDateFromInput(e.target.value);
+									if (newDate) {
+										setEndDate(newDate);
+										setPeriodType("custom");
+									}
+								}}
+								className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto touch-manipulation"
+							/>
+						</div>
 					</div>
 				</div>
 			</div>
 			<Separator />
-			<DataTable<Rsvp, unknown>
-				columns={columns}
-				data={data}
-				searchKey="message"
-			/>
-			<RsvpStatusLegend t={t} />
+			<div className="py-3 sm:py-4">
+				<DisplayFiatLedger ledger={data} currency={currency} />
+			</div>
 		</>
 	);
 };

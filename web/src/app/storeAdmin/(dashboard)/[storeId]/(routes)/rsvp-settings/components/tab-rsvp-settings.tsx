@@ -57,6 +57,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						acceptReservation: rsvpSettings.acceptReservation,
 						singleServiceMode: rsvpSettings.singleServiceMode ?? false,
 						minPrepaidPercentage: rsvpSettings.minPrepaidPercentage ?? 0,
+						noNeedToConfirm: rsvpSettings.noNeedToConfirm ?? false,
 						canCancel: rsvpSettings.canCancel,
 						cancelHours: rsvpSettings.cancelHours,
 						canReserveBefore: rsvpSettings.canReserveBefore,
@@ -77,6 +78,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						acceptReservation: true,
 						singleServiceMode: false,
 						minPrepaidPercentage: 0,
+						noNeedToConfirm: false,
 						canCancel: true,
 						cancelHours: 24,
 						canReserveBefore: 2,
@@ -379,6 +381,28 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											{t("rsvp_Prepaid_Percentage_descr")}
 										</FormDescription>
 										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="noNeedToConfirm"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>{t("rsvp_No_Need_To_Confirm")}</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("rsvp_No_Need_To_Confirm_descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
 									</FormItem>
 								)}
 							/>

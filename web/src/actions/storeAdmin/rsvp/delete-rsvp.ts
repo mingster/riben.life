@@ -1,9 +1,8 @@
 "use server";
 
 import { sqlClient } from "@/lib/prismadb";
-import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
-import { RsvpStatus } from "@/types/enum";
+import { SafeError } from "@/utils/error";
 
 import { deleteRsvpSchema } from "./delete-rsvp.validation";
 

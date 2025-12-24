@@ -749,7 +749,8 @@ model RsvpSettings {
   singleServiceMode Boolean  @default(false) // for personal shop: only ONE reservation per time slot
 
   minPrepaidPercentage Int    @default(0) //最低預付百分比；0 表示不需預付，100 表示全額預付
-
+  noNeedToConfirm     Boolean @default(false) //若已付清預約金額，不需要店家再確認預約。
+  
   canCancel   Boolean @default(true) //可否取消預約?
   cancelHours Int     @default(24) //最慢免費取消預約時間：幾小時前可免費取消?
 

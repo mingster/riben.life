@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27
 **Status:** Active
-**Version:** 1.7
+**Version:** 1.8
 
 **Related Documents:**
 
@@ -137,14 +137,20 @@ Store Admins have all Store Staff permissions, plus:
 * If `minPrepaidPercentage > 0`:
   * Anonymous users must sign in or register before creating a reservation
   * Customer must be signed in (authentication required)
-  * Customer can create a pending RSVP first, then be prompted to complete recharge/payment
-  * When a customer creates a pending RSVP, a store order is automatically created with the prepaid amount
-  * Prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`; if total cost is missing or zero, prepaid is skipped
-* Payment can be made using existing customer credit (`CustomerCredit` database table)
-* If customer credit is insufficient, customer must top up credit or purchase products to refill credit
-* Payment status tracked via `alreadyPaid` flag
+  * When a customer creates a reservation with prepaid required:
+    * System creates a store order with the prepaid amount
+    * Prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`; if total cost is missing or zero, prepaid is skipped
+    * Payment method is determined based on store settings:
+      * If `store.useCustomerCredit = true`: Order is created with "credit" payment method
+      * If `store.useCustomerCredit = false`: Order is created with "TBD" (To Be Determined) payment method
+    * Order is created as unpaid (`isPaid = false`) for customer to complete payment at checkout
+    * Customer is redirected to `/checkout/[orderId]` to select payment method and complete payment
+  * Payment can be made using:
+    * Customer credit (if `useCustomerCredit = true` and customer selects "credit" payment method)
+    * Other payment methods (Stripe, LINE Pay, cash, etc.) available at checkout
+* Payment status tracked via `alreadyPaid` flag (updated after payment completion)
 * Reservation linked to order via `orderId` when prepaid
-* Customer credit balance is deducted when credit is used for prepaid reservation
+* Customer credit balance is deducted only when customer completes payment using credit at checkout
 
 **FR-RSVP-005:** The system must assign a reservation status:
 
@@ -225,32 +231,29 @@ Store Admins have all Store Staff permissions, plus:
      * No order is created (no `orderId`) (initially)
    * Reservation is saved to database
 
-   **If `rsvpSettings.minPrepaidPercentage > 0` and `store.useCustomerCredit = true`:**
+   **If `rsvpSettings.minPrepaidPercentage > 0`:**
 
-   * System checks if customer has sufficient credit balance
-   * **If customer doesn't have enough credit:**
-     * System prompts customer to deposit credit
-     * Customer is redirected to `{store}/recharge` page to add credit
-     * Once credit is added, flow continues to payment processing (see below)
-   * **If customer has enough credit balance:**
-     * System creates `storeOrder` for the prepaid amount
-     * System creates `storeLedger` entry to record the transaction
-     * System deduces credit from customer's balance
-     * System marks reservation as paid (`alreadyPaid = true`)
-     * Reservation `orderId` is set to the created order ID
-     * Reservation `status` is set to ReadyToConfirm
-     * Flow continues to step 6
-
-   **If `rsvpSettings.minPrepaidPercentage > 0` and `store.useCustomerCredit = false`:**
-
-   * System redirects customer to payment page for the prepaid amount (percentage-based)
-   * Customer completes payment (Stripe, LINE Pay, etc.)
-   * Once payment is completed:
-     * System creates `storeOrder` for the prepaid amount
-     * System creates `storeLedger` entry to record the transaction
-     * System marks reservation as paid (`alreadyPaid = true`)
-     * Reservation `orderId` is set to the created order ID
-     * Reservation `status` is set to ReadyToConfirm
+   * System creates `storeOrder` for the prepaid amount with:
+     * Payment method: "credit" if `store.useCustomerCredit = true`, otherwise "TBD"
+     * Order status: `Pending` (unpaid)
+     * Shipping method: "digital"
+   * Reservation `orderId` is set to the created order ID
+   * Reservation `status` is set to `Pending` (will be updated to `ReadyToConfirm` after payment)
+   * Reservation `alreadyPaid` is set to `false` (will be updated after payment completion)
+   * Customer is redirected to `/checkout/[orderId]` to complete payment
+   * At checkout page:
+     * Customer can select payment method (credit, Stripe, LINE Pay, cash, etc.)
+     * If customer selects "credit" payment method:
+       * System checks if customer has sufficient credit balance
+       * If sufficient: System deducts credit and marks order as paid
+       * If insufficient: Customer must recharge credit or select different payment method
+     * If customer selects other payment method (Stripe, LINE Pay, etc.):
+       * Customer completes payment through payment provider
+       * System marks order as paid after payment confirmation
+   * After payment completion:
+     * System updates reservation `alreadyPaid` to `true`
+     * System updates reservation `status` to `ReadyToConfirm`
+     * System creates `storeLedger` entry to record the transaction (if applicable)
      * Flow continues to step 6
 
 6. **Store Staff Notification:**
@@ -1224,6 +1227,7 @@ Completed (50) [when service is finished]
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.8 | 2025-01-27 | System | Updated customer-facing RSVP creation flow with checkout integration: (1) Changed prepaid payment flow - when prepaid is required, system now creates an unpaid store order and redirects customer to checkout page (`/checkout/[orderId]`) instead of processing payment immediately. (2) Payment method selection: Orders are created with "credit" payment method if `store.useCustomerCredit = true`, otherwise "TBD" payment method. Customer selects payment method at checkout. (3) Credit deduction: Customer credit is no longer deducted at reservation creation time; it's deducted only when customer completes payment using credit at checkout. (4) Updated FR-RSVP-004 and UC-RSVP-001 to reflect new checkout-based payment flow. |
 | 1.7 | 2025-01-27 | System | Enhanced reservation validation and UI improvements: (1) Added detailed business hours validation logic with priority rules (RsvpSettings.useBusinessHours vs Store.useBusinessHours), including real-time UI validation and server-side validation on form submission. (2) Implemented dynamic facility filtering in reservation forms (both customer-facing and admin) - facilities already booked at the selected time slot are automatically filtered out from the dropdown, with special handling for singleServiceMode and edit mode. Updated FR-RSVP-003, FR-RSVP-024, and BR-RSVP-001 to document these enhancements. |
 | 1.6 | 2025-01-27 | System | Added `singleServiceMode` field to RsvpSettings: Boolean field (default: `false`) for personal shops where only ONE reservation per time slot is allowed across all facilities. When enabled, availability checking blocks any reservation if another reservation exists for the same time slot, regardless of facility. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities. Updated business rules (BR-RSVP-004a, BR-RSVP-004b) and functional requirements (FR-RSVP-003, FR-RSVP-024, FR-RSVP-060) to document this behavior. |
 |---------|------|--------|---------|

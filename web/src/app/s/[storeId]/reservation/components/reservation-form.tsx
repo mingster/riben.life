@@ -78,6 +78,7 @@ interface ReservationFormProps {
 	// Common props
 	hideCard?: boolean;
 	storeTimezone?: string;
+	storeCurrency?: string;
 	storeUseBusinessHours?: boolean | null;
 	// Store credit info
 	useCustomerCredit?: boolean;
@@ -101,6 +102,7 @@ export function ReservationForm({
 	onReservationUpdated,
 	hideCard = false,
 	storeTimezone = "Asia/Taipei",
+	storeCurrency = "twd",
 	storeUseBusinessHours,
 	useCustomerCredit = false,
 	creditExchangeRate = null,
@@ -380,16 +382,7 @@ export function ReservationForm({
 
 	// Watch rsvpTime to filter facilities
 	const rsvpTime = form.watch("rsvpTime");
-
-	// Calculate cancel policy information (only for edit mode with existing reservation)
-	const cancelPolicyInfo = useMemo(() => {
-		if (!isEditMode || !rsvp) {
-			return null;
-		}
-		// Get alreadyPaid from the existing reservation
-		const alreadyPaid = rsvp.alreadyPaid ?? false;
-		return calculateCancelPolicyInfo(rsvpSettings, rsvpTime, alreadyPaid);
-	}, [isEditMode, rsvp, rsvpSettings, rsvpTime]);
+	const facilityId = form.watch("facilityId");
 
 	// Filter facilities based on rsvpTime and existing reservations
 	const availableFacilities = useMemo(() => {
@@ -495,6 +488,33 @@ export function ReservationForm({
 		rsvp?.facilityId,
 	]);
 
+	// Get selected facility for cost calculation
+	const selectedFacility = useMemo(() => {
+		if (!facilityId) return null;
+		return availableFacilities.find((f) => f.id === facilityId) || null;
+	}, [facilityId, availableFacilities]);
+
+	// Get facility cost for prepaid calculation
+	const facilityCost = useMemo(() => {
+		if (selectedFacility?.defaultCost) {
+			return typeof selectedFacility.defaultCost === "number"
+				? selectedFacility.defaultCost
+				: Number(selectedFacility.defaultCost);
+		}
+		return null;
+	}, [selectedFacility]);
+
+	// Calculate cancel policy information (for both create and edit modes when rsvpTime is selected)
+	const cancelPolicyInfo = useMemo(() => {
+		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
+			return null;
+		}
+		// Get alreadyPaid from the existing reservation (if in edit mode), otherwise false
+		const alreadyPaid =
+			isEditMode && rsvp ? (rsvp.alreadyPaid ?? false) : false;
+		return calculateCancelPolicyInfo(rsvpSettings, rsvpTime, alreadyPaid);
+	}, [isEditMode, rsvp, rsvpSettings, rsvpTime]);
+
 	// Update form when defaultRsvpTime changes (create mode) or rsvp changes (edit mode)
 	useEffect(() => {
 		if (isEditMode) {
@@ -554,7 +574,10 @@ export function ReservationForm({
 		setIsSubmitting(true);
 
 		try {
-			let result;
+			let result:
+				| Awaited<ReturnType<typeof createReservationAction>>
+				| Awaited<ReturnType<typeof updateReservationAction>>
+				| undefined;
 			if (isEditMode) {
 				// Update mode
 				result = await updateReservationAction(data as UpdateReservationInput);
@@ -579,27 +602,25 @@ export function ReservationForm({
 				} else {
 					// Create mode
 					if (result?.data?.rsvp) {
-						// Check if prepaid is required and user needs to recharge
 						const data = result.data as {
 							rsvp: Rsvp;
-							requiresPrepaid?: boolean;
+							orderId?: string | null;
 							requiresSignIn?: boolean;
 						};
-						const requiresPrepaid = data.requiresPrepaid ?? false;
+						const orderId = data.orderId;
 						const requiresSignIn = data.requiresSignIn ?? false;
 
-						if (requiresPrepaid) {
+						if (orderId) {
+							// Prepaid required: redirect to checkout page
 							if (requiresSignIn) {
-								// Anonymous user: redirect to sign-in, then to recharge
-								const rsvpId = data.rsvp.id;
-								const callbackUrl = `/s/${params.storeId}/recharge?rsvpId=${rsvpId}`;
+								// Anonymous user: redirect to sign-in first, then to checkout
+								const callbackUrl = `/checkout/${orderId}`;
 								router.push(
 									`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`,
 								);
 							} else {
-								// Logged-in user: redirect directly to recharge
-								const rsvpId = data.rsvp.id;
-								router.push(`/s/${params.storeId}/recharge?rsvpId=${rsvpId}`);
+								// Logged-in user: redirect directly to checkout
+								router.push(`/checkout/${orderId}`);
 							}
 						} else {
 							// No prepaid required: show success message
@@ -799,14 +820,6 @@ export function ReservationForm({
 										</p>
 									)}
 									<FormMessage />
-									{/* Cancel Policy Information (only shown in edit mode) */}
-									{isEditMode && (
-										<RsvpCancelPolicyInfo
-											cancelPolicyInfo={cancelPolicyInfo}
-											rsvpTime={rsvpTime}
-											alreadyPaid={rsvp?.alreadyPaid ?? false}
-										/>
-									)}
 								</FormItem>
 							);
 						}}
@@ -987,29 +1000,20 @@ export function ReservationForm({
 						<p className="text-sm font-medium">
 							{t("rsvp_rules_and_restrictions")}
 						</p>
-						<ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
-							{(rsvpSettings?.minPrepaidPercentage ?? 0) > 0 &&
-								rsvpSettings?.defaultCost && (
-									<li>
-										{(() => {
-											const totalCost = Number(rsvpSettings.defaultCost);
-											const percentage = Number(
-												rsvpSettings.minPrepaidPercentage ?? 0,
-											);
-											const prepaid = Math.ceil(totalCost * (percentage / 100));
-											return t("rsvp_prepaid_required", { points: prepaid });
-										})()}
-									</li>
-								)}
 
-							{rsvpSettings?.canCancel && (
-								<li>
-									{t("rsvp_cancellation_policy", {
-										hours: rsvpSettings?.cancelHours ?? 24,
-									})}
-								</li>
-							)}
-						</ol>
+						{/* Cancel Policy Information */}
+						{cancelPolicyInfo && (
+							<RsvpCancelPolicyInfo
+								cancelPolicyInfo={cancelPolicyInfo}
+								rsvpTime={rsvpTime}
+								alreadyPaid={isEditMode ? (rsvp?.alreadyPaid ?? false) : false}
+								rsvpSettings={rsvpSettings}
+								facilityCost={facilityCost}
+								currency={storeCurrency}
+								useCustomerCredit={useCustomerCredit}
+								creditExchangeRate={creditExchangeRate}
+							/>
+						)}
 					</div>
 
 					{/* Submit Button */}

@@ -2,7 +2,12 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
-import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
+import {
+	OrderStatus,
+	PaymentStatus,
+	StoreLedgerType,
+	RsvpStatus,
+} from "@/types/enum";
 import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
@@ -256,6 +261,63 @@ export async function markOrderAsPaidCore(
 				updatedAt: getUtcNowEpoch(),
 			},
 		});
+
+		// Update RSVP if this order is for a reservation
+		const rsvp = await tx.rsvp.findFirst({
+			where: { orderId: order.id },
+		});
+
+		if (rsvp) {
+			const now = getUtcNowEpoch();
+
+			// Check if noNeedToConfirm is enabled in RSVP settings
+			// If enabled, auto-confirm the reservation since the order is being marked as paid
+			const rsvpSettings = await tx.rsvpSettings.findFirst({
+				where: { storeId: rsvp.storeId },
+				select: { noNeedToConfirm: true },
+			});
+
+			// If noNeedToConfirm is enabled, auto-confirm the reservation (order is being marked as paid)
+			const shouldAutoConfirm = rsvpSettings?.noNeedToConfirm === true;
+
+			// Determine new status based on current status and noNeedToConfirm setting
+			// If noNeedToConfirm is enabled and status is Pending, set to Ready (auto-confirmed)
+			// If noNeedToConfirm is disabled and status is Pending, set to ReadyToConfirm (needs confirmation)
+			// Otherwise, keep the current status
+			let newStatus = rsvp.status;
+			if (rsvp.status === RsvpStatus.Pending) {
+				newStatus = shouldAutoConfirm
+					? RsvpStatus.Ready
+					: RsvpStatus.ReadyToConfirm;
+			}
+
+			// Update RSVP status and mark as already paid
+			await tx.rsvp.update({
+				where: { id: rsvp.id },
+				data: {
+					alreadyPaid: true,
+					paidAt: now,
+					status: newStatus,
+					confirmedByStore: shouldAutoConfirm ? true : rsvp.confirmedByStore,
+					updatedAt: now,
+				},
+			});
+
+			// TODO: 1. send notification to customer to confirm the reservation
+			// TODO: 2. send notification to store staff to confirm the reservation
+
+			logger.info("RSVP updated after order payment", {
+				metadata: {
+					rsvpId: rsvp.id,
+					orderId: order.id,
+					previousStatus: rsvp.status,
+					newStatus: newStatus,
+					noNeedToConfirm: rsvpSettings?.noNeedToConfirm ?? false,
+					autoConfirmed: shouldAutoConfirm,
+				},
+				tags: ["rsvp", "payment", "order", ...logTags],
+			});
+		}
 
 		// Create StoreLedger entry
 		const ledgerType = usePlatform

@@ -71,19 +71,19 @@ async function createStoreOrderForRsvp(
 ): Promise<string> {
 	const { tx, storeId, customerId, cashValue, defaultCurrency } = params;
 
-	// Find "reserve" shipping method for reservation orders (required for StoreOrder)
-	const reserveShippingMethod = await tx.shippingMethod.findFirst({
+	// Find "digital" shipping method for reservation orders (required for StoreOrder)
+	const digitalShippingMethod = await tx.shippingMethod.findFirst({
 		where: {
-			identifier: "reserve",
+			identifier: "digital",
 			isDeleted: false,
 		},
 	});
 
 	let shippingMethodId: string;
-	if (reserveShippingMethod) {
-		shippingMethodId = reserveShippingMethod.id;
+	if (digitalShippingMethod) {
+		shippingMethodId = digitalShippingMethod.id;
 	} else {
-		// Fall back to default shipping method if reserve not found
+		// Fall back to default shipping method if digital not found
 		const defaultShippingMethod = await tx.shippingMethod.findFirst({
 			where: { isDefault: true, isDeleted: false },
 		});

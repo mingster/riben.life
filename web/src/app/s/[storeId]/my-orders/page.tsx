@@ -1,14 +1,12 @@
-import getStoreById from "@/actions/get-store-by_id";
-import { DisplayStoreOrdersToday } from "@/app/(root)/order/display-order-today";
-import { GlobalNavbar } from "@/components/global-navbar";
-import { Loader } from "@/components/loader";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import Container from "@/components/ui/container";
-import type { Store } from "@/types";
+import { Loader } from "@/components/loader";
 import { Suspense } from "react";
+import { getStoreUserOrdersAction } from "@/actions/store/get-store-user-orders";
+import { ClientMyOrders } from "./components/client-my-orders";
 
-// 點餐記錄 - show order history from local storage.
-//NOTE - why local storage?  because we allow anonymous user to place order.
-//
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
@@ -19,11 +17,31 @@ export default async function MyOrdersPage(props: {
 	const params = await props.params;
 	const storeId = params.storeId;
 
-	const store = (await getStoreById(storeId)) as Store;
+	// Get session to check if user is logged in
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+
+	if (!session?.user?.id) {
+		const callbackUrl = `/s/${storeId}/my-orders`;
+		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+	}
+
+	// Fetch orders for the logged-in user in this store
+	const result = await getStoreUserOrdersAction({ storeId });
+
+	if (result?.serverError || !result?.data) {
+		// Handle error - could redirect or show error message
+		redirect(`/s/${storeId}`);
+	}
+
+	const { orders, storeTimezone } = result.data;
 
 	return (
 		<Container>
-			<DisplayStoreOrdersToday store={store} />
+			<Suspense fallback={<Loader />}>
+				<ClientMyOrders serverData={orders} storeTimezone={storeTimezone} />
+			</Suspense>
 		</Container>
 	);
 }

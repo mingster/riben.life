@@ -21,7 +21,6 @@ import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 
 import type { Rsvp } from "@/types";
 import {
-	getOffsetHours,
 	dateToEpoch,
 	convertToUtc,
 	formatUtcDateToDateTimeLocal,
@@ -48,12 +47,6 @@ export const CustomerReservationHistoryClient: React.FC<
 	const [periodType, setPeriodType] = useState<PeriodType>("week");
 	const [startDate, setStartDate] = useState<Date | null>(null);
 	const [endDate, setEndDate] = useState<Date | null>(null);
-
-	// Get timezone offset
-	const offsetHours = useMemo(
-		() => getOffsetHours(storeTimezone),
-		[storeTimezone],
-	);
 
 	// Helper to get current date/time in store timezone
 	const getNowInStoreTimezone = useCallback((): Date => {

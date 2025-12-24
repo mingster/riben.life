@@ -29,7 +29,10 @@ interface RsvpCalendarClientProps {
 	} | null;
 	storeSettings: { businessHours: string | null } | null;
 	storeTimezone: string;
+	storeCurrency?: string;
 	storeUseBusinessHours?: boolean | null;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
 }
 
 export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
@@ -37,7 +40,10 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 	rsvpSettings,
 	storeSettings,
 	storeTimezone,
+	storeCurrency = "twd",
 	storeUseBusinessHours,
+	useCustomerCredit = false,
+	creditExchangeRate = null,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -84,9 +90,12 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 						isNew
 						onCreated={handleCreated}
 						storeTimezone={storeTimezone}
+						storeCurrency={storeCurrency}
 						rsvpSettings={rsvpSettings}
 						storeSettings={storeSettings}
 						storeUseBusinessHours={storeUseBusinessHours}
+						useCustomerCredit={useCustomerCredit}
+						creditExchangeRate={creditExchangeRate}
 						trigger={
 							<Button variant="outline" className="h-10 sm:h-9">
 								<IconPlus className="mr-2 h-4 w-4" />
@@ -104,7 +113,10 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 				rsvpSettings={rsvpSettings}
 				storeSettings={storeSettings}
 				storeTimezone={storeTimezone}
+				storeCurrency={storeCurrency}
 				storeUseBusinessHours={storeUseBusinessHours}
+				useCustomerCredit={useCustomerCredit}
+				creditExchangeRate={creditExchangeRate}
 			/>
 		</>
 	);
