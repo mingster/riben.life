@@ -334,7 +334,7 @@ function ChannelConfigSection({
 									<FormLabel className="text-base">
 										Enabled (Store-level)
 									</FormLabel>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										{systemEnabled
 											? "Enable this channel for your store"
 											: "Plugin must be enabled by System Admin first"}

@@ -17,7 +17,7 @@ export const updateStoreBasicAction = storeActionClient
 		const storeId = bindArgsClientInputs[0] as string;
 		const {
 			name,
-			orderNoteToCustomer,
+			description,
 			defaultLocale,
 			defaultCountry,
 			defaultCurrency,
@@ -80,13 +80,13 @@ export const updateStoreBasicAction = storeActionClient
 		const storeSettings = await sqlClient.storeSettings.upsert({
 			where: { storeId },
 			update: {
-				orderNoteToCustomer: orderNoteToCustomer ?? "",
+				description: description ?? "",
 				businessHours: businessHours ?? "",
 				updatedAt: getUtcNowEpoch(),
 			},
 			create: {
 				storeId,
-				orderNoteToCustomer: orderNoteToCustomer ?? "",
+				description: description ?? "",
 				businessHours: businessHours ?? "",
 				createdAt: getUtcNowEpoch(),
 				updatedAt: getUtcNowEpoch(),

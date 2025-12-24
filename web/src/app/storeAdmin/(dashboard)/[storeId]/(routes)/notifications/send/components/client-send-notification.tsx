@@ -474,7 +474,7 @@ export function ClientSendNotification({
 												))}
 											</SelectContent>
 										</Select>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("template_description")}
 										</FormDescription>
 										<FormMessage />
@@ -523,7 +523,7 @@ export function ClientSendNotification({
 												type="url"
 											/>
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("action_url_description")}
 										</FormDescription>
 										<FormMessage />

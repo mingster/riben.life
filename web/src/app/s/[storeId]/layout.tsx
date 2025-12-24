@@ -11,15 +11,15 @@ import type { StoreSettings } from "@prisma/client";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 type Props = {
-	params: { storeId: string };
-	searchParams: { [key: string]: string | string[] | undefined };
+	params: Promise<{ storeId: string }>;
+	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export async function generateMetadata(
 	props: Props,
 	//parent: ResolvingMetadata,
 ): Promise<Metadata> {
-	const params = props.params;
+	const params = await props.params;
 
 	// Prevent admin and reserved routes from being treated as store routes
 	if (isReservedRoute(params.storeId)) {
@@ -53,12 +53,12 @@ export async function generateMetadata(
 }
 
 export default async function StoreHomeLayout(props: {
-	params: {
+	params: Promise<{
 		storeId: string;
-	};
+	}>;
 	children: React.ReactNode;
 }) {
-	const params = props.params;
+	const params = await props.params;
 
 	const {
 		// will be a page or nested layout

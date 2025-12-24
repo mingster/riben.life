@@ -80,6 +80,7 @@ model RsvpSettings {
   id              String   @id @default(uuid())
   storeId         String   @unique
   acceptReservation Boolean  @default(true) // turn on/off the reservation system
+  singleServiceMode Boolean  @default(false) // for personal shop: only ONE reservation per time slot
   minPrepaidPercentage Int   @default(0) //最低預付百分比；0表示不需預付，100表示全額預付
   canCancel         Boolean  @default(true) //可取消預約
   cancelHours       Int      @default(24) //取消預約時間：小時前可取消

@@ -1,11 +1,8 @@
-import { transformPrismaDataForJson } from "@/utils/utils";
 import { redirect } from "next/navigation";
-import getStoreWithProducts from "@/actions/get-store-with-products";
-import logger from "@/lib/logger";
-import { sqlClient } from "@/lib/prismadb";
 import { isReservedRoute } from "@/lib/reserved-routes";
 import { StoreHomeLanding } from "./components/store-home-landing";
-import type { Store, RsvpSettings } from "@/types";
+import { getStoreHomeDataAction } from "@/actions/store/get-store-home-data";
+import type { Store } from "@/types";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -23,38 +20,27 @@ export default async function StoreHomePage(props: {
 		redirect("/");
 	}
 
-	// Fetch store and RSVP settings in parallel
-	const [store, rsvpSettings] = await Promise.all([
-		getStoreWithProducts(params.storeId),
-		sqlClient.rsvpSettings.findUnique({
-			where: { storeId: params.storeId },
-		}),
-	]);
+	// Fetch store, RSVP settings, and store settings all at once
+	const result = await getStoreHomeDataAction({ storeId: params.storeId });
 
-	// Store is guaranteed to exist here due to getStoreWithProducts throwing if not found
-	if (!store) {
-		logger.error("Store is null after fetch", {
-			metadata: { storeId: params.storeId },
-			tags: ["store", "page-load", "error"],
-		});
+	if (result?.serverError) {
 		redirect("/unv");
 	}
 
-	transformPrismaDataForJson(store);
-
-	// Transform BigInt (epoch timestamps) and Decimal for settings if they exist
-	if (rsvpSettings) {
-		transformPrismaDataForJson(rsvpSettings);
+	if (!result?.data) {
+		redirect("/unv");
 	}
 
-	const acceptReservation =
-		rsvpSettings && rsvpSettings.acceptReservation === true;
+	const { store, rsvpSettings, storeSettings } = result.data;
+
+	const acceptReservation = rsvpSettings.acceptReservation === true;
 
 	// Render landing page instead of redirecting
 	return (
 		<StoreHomeLanding
 			store={store as Store}
-			rsvpSettings={rsvpSettings as RsvpSettings | null}
+			rsvpSettings={rsvpSettings}
+			storeSettings={storeSettings}
 			useOrderSystem={store.useOrderSystem}
 			acceptReservation={acceptReservation}
 		/>

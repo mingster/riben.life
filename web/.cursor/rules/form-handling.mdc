@@ -288,7 +288,7 @@ Empty string values can cause issues with form validation, state management, and
           ))}
         </SelectContent>
       </Select>
-      <FormDescription>
+      <FormDescription className="text-xs font-mono text-gray-500">
         Optional: Use a message template for consistent formatting
       </FormDescription>
       <FormMessage />
@@ -296,3 +296,74 @@ Empty string values can cause issues with form validation, state management, and
   )}
 />
 ```
+
+## FormDescription Styling Standard
+
+**CRITICAL: All `FormDescription` components must use the standard className for consistency across the entire project.**
+
+### Standard Pattern
+
+All `FormDescription` components must use this exact className:
+
+```tsx
+<FormDescription className="text-xs font-mono text-gray-500">
+  {descriptionText}
+</FormDescription>
+```
+
+### Rules
+
+1. **Always use `className="text-xs font-mono text-gray-500"`** for all FormDescription components
+2. **Never use different className values** like `text-muted-foreground` or omit className entirely
+3. **Apply to all instances** including empty FormDescription components: `<FormDescription className="text-xs font-mono text-gray-500" />`
+
+### Examples
+
+```tsx
+// ✅ CORRECT: Standard styling
+<FormDescription className="text-xs font-mono text-gray-500">
+  {t("field_description")}
+</FormDescription>
+
+// ✅ CORRECT: Empty FormDescription with standard styling
+<FormDescription className="text-xs font-mono text-gray-500" />
+
+// ❌ WRONG: Missing className
+<FormDescription>
+  {t("field_description")}
+</FormDescription>
+
+// ❌ WRONG: Different className
+<FormDescription className="text-xs text-muted-foreground font-mono">
+  {t("field_description")}
+</FormDescription>
+```
+
+### Complete Form Field Example
+
+```tsx
+<FormField
+  control={form.control}
+  name="description"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>
+        {t("Description")} <span className="text-destructive">*</span>
+      </FormLabel>
+      <FormControl>
+        <Textarea {...field} />
+      </FormControl>
+      <FormDescription className="text-xs font-mono text-gray-500">
+        {t("description_helper_text")}
+      </FormDescription>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+### Why This Standard?
+
+- **Consistency**: Ensures all form descriptions have the same visual appearance
+- **Readability**: Small, monospace font with gray color provides subtle but clear helper text
+- **Maintainability**: Single standard makes it easy to update styling globally if needed
