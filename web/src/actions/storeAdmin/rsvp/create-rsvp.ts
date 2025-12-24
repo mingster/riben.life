@@ -19,7 +19,11 @@ import { createRsvpSchema } from "./create-rsvp.validation";
 import { deduceCustomerCredit } from "./deduce-customer-credit";
 import { validateReservationTimeWindow } from "@/actions/store/reservation/validate-reservation-time-window";
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
+import { createRsvpStoreOrder } from "@/actions/store/reservation/create-rsvp-store-order";
+import { getT } from "@/app/i18n";
 
+// Create RSVP by admin or store staff
+//
 export const createRsvpAction = storeActionClient
 	.metadata({ name: "createRsvp" })
 	.schema(createRsvpSchema)
@@ -41,7 +45,7 @@ export const createRsvpAction = storeActionClient
 			pricingRuleId,
 		} = parsedInput;
 
-		// Fetch store to get timezone, creditServiceExchangeRate, creditExchangeRate, and defaultCurrency
+		// Fetch store to get timezone, creditServiceExchangeRate, creditExchangeRate, defaultCurrency, and useCustomerCredit
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
 			select: {
@@ -50,6 +54,7 @@ export const createRsvpAction = storeActionClient
 				creditServiceExchangeRate: true,
 				creditExchangeRate: true,
 				defaultCurrency: true,
+				useCustomerCredit: true,
 			},
 		});
 
@@ -72,6 +77,7 @@ export const createRsvpAction = storeActionClient
 			select: {
 				id: true,
 				defaultDuration: true,
+				defaultCost: true,
 			},
 		});
 
@@ -98,7 +104,7 @@ export const createRsvpAction = storeActionClient
 			throw new SafeError("Failed to convert rsvpTime to epoch");
 		}
 
-		// Get RSVP settings for time window validation and availability checking
+		// Get RSVP settings for time window validation, availability checking, and prepaid payment
 		const rsvpSettings = await sqlClient.rsvpSettings.findFirst({
 			where: { storeId },
 			select: {
@@ -106,6 +112,7 @@ export const createRsvpAction = storeActionClient
 				canReserveAfter: true,
 				singleServiceMode: true,
 				defaultDuration: true,
+				minPrepaidPercentage: true,
 			},
 		});
 
@@ -143,6 +150,21 @@ export const createRsvpAction = storeActionClient
 		});
 		const createdBy = session?.user?.id || null;
 
+		// Calculate total cost: use facilityCost if provided, otherwise use facility.defaultCost
+		const totalCost =
+			facilityCost !== null && facilityCost !== undefined
+				? facilityCost
+				: facility.defaultCost
+					? Number(facility.defaultCost)
+					: null;
+
+		// For admin-created RSVPs, we don't process prepaid payment (no credit deduction)
+		// Just create an unpaid store order for the customer to pay later
+		// Use the provided status and alreadyPaid values
+		const finalStatus = status;
+		const finalAlreadyPaid = alreadyPaid;
+		let finalOrderId: string | null = null;
+
 		try {
 			const rsvp = await sqlClient.$transaction(async (tx) => {
 				const createdRsvp = await tx.rsvp.create({
@@ -154,9 +176,10 @@ export const createRsvpAction = storeActionClient
 						numOfChild,
 						rsvpTime,
 						arriveTime: arriveTime || null,
-						status,
+						status: finalStatus,
 						message: message || null,
-						alreadyPaid,
+						alreadyPaid: finalAlreadyPaid,
+						orderId: finalOrderId || null,
 						confirmedByStore,
 						confirmedByCustomer,
 						facilityCost:
@@ -179,9 +202,10 @@ export const createRsvpAction = storeActionClient
 				});
 
 				// If status is Completed, not alreadyPaid, and has customerId, deduct customer's credit
+				// Note: This is for service credit usage (after service completion), not prepaid payment
 				if (
-					status === RsvpStatus.Completed &&
-					!alreadyPaid &&
+					finalStatus === RsvpStatus.Completed &&
+					!finalAlreadyPaid &&
 					customerId &&
 					store.creditServiceExchangeRate &&
 					Number(store.creditServiceExchangeRate) > 0 &&
@@ -207,6 +231,25 @@ export const createRsvpAction = storeActionClient
 						defaultCurrency,
 						createdBy: createdBy || null,
 					});
+				} else {
+					// Create unpaid store order for customer to pay for the RSVP
+					// This allows the customer to view and pay for the reservation
+					if (customerId && totalCost !== null && totalCost > 0) {
+						// Get translation function for order note
+						const { t } = await getT();
+
+						finalOrderId = await createRsvpStoreOrder({
+							tx,
+							storeId,
+							customerId,
+							orderTotal: totalCost,
+							currency: store.defaultCurrency || "twd",
+							note: t("rsvp_reservation_payment_note"),
+							isPaid: false, // Unpaid order for customer to pay later
+						});
+
+						// TODO:notify customer about the unpaid order
+					}
 				}
 
 				return createdRsvp;

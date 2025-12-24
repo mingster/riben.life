@@ -710,7 +710,7 @@ export async function processRsvpPrepaidPayment(
   //    - If sufficient:
   //      a. Calculate cash value: cashValue = requiredPrepaid * creditExchangeRate
   //      b. Find credit payment method by payUrl = "credit"
-  //      c. Find shipping method (prefer "reserve", fallback to default)
+  //      c. Find shipping method (prefer "digital", fallback to default)
   //      d. In transaction:
   //         - Create StoreOrder:
   //           * paymentMethodId: credit payment method ID

@@ -237,6 +237,35 @@ All button variants should include:
 
 ## Navigation
 
+### Menu Items
+
+**CRITICAL: Menu items should NOT use `min-h-[44px]`. Use `h-11` (44px) directly instead.**
+
+Menu items in navigation menus (sidebar menus, sheet menus, etc.) should use fixed heights rather than minimum heights:
+
+```tsx
+// ✅ CORRECT: Use fixed height for menu items
+<Button
+  className="h-11 w-full justify-start px-3 sm:h-10 sm:px-2 touch-manipulation"
+>
+  <Icon className="h-5 w-5 sm:h-[18px] sm:w-[18px]" />
+  <span>Menu Item</span>
+</Button>
+
+// ❌ WRONG: Don't use min-h-[44px] for menu items
+<Button
+  className="h-11 min-h-[44px] w-full sm:h-10 sm:min-h-0"
+>
+  Menu Item
+</Button>
+```
+
+**Rationale:**
+- Menu items are typically in scrollable containers where fixed heights work better
+- `min-h-[44px]` can cause layout issues in flex containers
+- `h-11` (44px) provides the required touch target size directly
+- Consistent height makes scrolling and layout calculations more predictable
+
 ### Header Elements
 
 ```tsx
@@ -469,5 +498,6 @@ When implementing mobile optimizations:
 8. ✅ Conditional display for mobile vs desktop elements
 9. ✅ Proper active states for touch feedback
 10. ✅ 16px+ font size for inputs to prevent iOS zoom
+11. ✅ **Menu items: Use `h-11` (44px) directly, NOT `min-h-[44px]`**
 
 Following these guidelines ensures a consistent, touch-friendly mobile experience optimized for iPhone 16 and later devices.

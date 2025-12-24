@@ -1,117 +1,134 @@
 # reCAPTCHA Architecture Verification Report
 
 **Date:** 2025-01-21  
-**Status:** ✅ Verified
+**Last Updated:** 2025-01-21  
+**Status:** ✅ Verified (Updated for Next.js Script-based Architecture)
 
 ## Architecture Overview
 
-The reCAPTCHA implementation uses a **single provider instance** at the root layout level to prevent duplicate script loading errors and ensure consistent configuration across the entire application.
+The reCAPTCHA implementation uses **Next.js Script component** to load the script once at the root layout level, with a custom hook that directly accesses the grecaptcha API. This approach works better with Next.js App Router than the provider pattern and prevents duplicate script loading errors.
 
 ## Verification Results
 
 ### ✅ 1. Root Layout Configuration
 
-**File:** `src/app/layout.tsx` (Line 150)
+**File:** `src/app/layout.tsx`
 
 ```typescript
-<RecaptchaProvider useEnterprise={true}>
-  <CookiesProvider>
-    <I18nProvider initialLng={htmlLang}>
-      <SessionWrapper>
-        {children}
-      </SessionWrapper>
-    </I18nProvider>
-  </CookiesProvider>
-</RecaptchaProvider>
+<body>
+  <RecaptchaScript useEnterprise={true} />
+  <NextThemeProvider>
+    <CookiesProvider>
+      <I18nProvider>
+        <SessionWrapper>
+          {children}
+        </SessionWrapper>
+      </I18nProvider>
+    </CookiesProvider>
+  </NextThemeProvider>
+</body>
 ```
 
 **Status:** ✅ **VERIFIED**
-- Provider is correctly placed in root layout
-- Wraps all application children
+- Script component is correctly placed in root layout
+- Loads before all application children
 - Configured with `useEnterprise={true}` for Enterprise mode
-- Single instance ensures no duplicate providers
+- Single script instance ensures no duplicate loads
 
-### ✅ 2. Provider Component
+### ✅ 2. Script Component
 
-**File:** `src/providers/recaptcha-provider.tsx`
+**File:** `src/components/recaptcha-script.tsx`
 
 **Status:** ✅ **VERIFIED**
-- Implements `GoogleReCaptchaProvider` correctly
+- Uses Next.js Script component for optimal loading
 - Supports Enterprise mode via `useEnterprise` prop
 - Includes proper error handling and script loading detection
-- Has theme and language synchronization
-- Includes badge styling for dark/light modes
+- Injects badge styling for dark/light modes
+- Uses `strategy="afterInteractive"` for optimal performance
 
 **Key Features:**
 - ✅ Checks for site key configuration
 - ✅ Handles missing site key gracefully
-- ✅ Monitors script loading with timeout
-- ✅ Updates iframe theme/language dynamically
+- ✅ Uses Next.js Script component (better than manual script tags)
 - ✅ Provides helpful error messages
-- ✅ **WebGL Optimization**: `GoogleReCaptcha` component removed to prevent multiple WebGL contexts (badge auto-rendered by Google's script)
+- ✅ Badge styling for dark/light themes
 
-### ✅ 3. Component Usage
+### ✅ 3. Custom Hook
+
+**File:** `src/hooks/use-recaptcha.ts`
+
+**Status:** ✅ **VERIFIED**
+- Directly accesses grecaptcha API without provider pattern
+- Supports Enterprise and standard modes
+- Provides `isReady` state for script loading status
+- Includes error handling and timeout protection
+- Works seamlessly with Next.js App Router
+
+**Key Features:**
+- ✅ Monitors script loading with polling fallback
+- ✅ Provides `executeRecaptcha` function when ready
+- ✅ Returns `isReady` boolean state
+- ✅ Returns `error` string for error states
+- ✅ Handles both Enterprise and standard modes
+
+### ✅ 4. Component Usage
 
 #### FormMagicLink Component
 
 **File:** `src/components/auth/form-magic-link.tsx`
 
 **Status:** ✅ **VERIFIED**
-- Uses `useGoogleReCaptcha()` hook directly (Line 32)
-- No wrapper component needed
+- Uses `useRecaptcha()` hook directly
+- Checks `isReady` state before executing
 - Action: `"magic_link_signin"`
 - Proper error handling and timeout protection
 
 **Code Pattern:**
 ```typescript
-const { executeRecaptcha } = useGoogleReCaptcha();
+const { executeRecaptcha, isReady } = useRecaptcha(true);
 // ...
+if (!executeRecaptcha || !isReady) {
+  // Handle not ready state
+  return;
+}
 const token = await executeRecaptcha("magic_link_signin");
 ```
 
 #### ContactForm Component
 
-**File:** `src/app/(root)/unv/components/ContactForm.tsx`
+**File:** `src/app/(store)/[storeId]/components/AboutUs.tsx`
 
 **Status:** ✅ **VERIFIED**
-- Uses `useGoogleReCaptcha()` hook directly (Line 153)
-- No wrapper component needed
+- Uses `useRecaptcha()` hook directly
+- Checks `isReady` state before executing
 - Action: `"contact_form"`
 - Proper error handling
 
 **Code Pattern:**
 ```typescript
-const { executeRecaptcha } = useGoogleReCaptcha();
+const { executeRecaptcha, isReady: isRecaptchaReady } = useRecaptcha(true);
 // ...
-const token = await executeRecaptcha("contact_form");
+if (executeRecaptcha && isRecaptchaReady) {
+  const token = await executeRecaptcha("contact_form");
+}
 ```
 
-### ✅ 4. No Duplicate Providers
+### ✅ 5. No Duplicate Scripts
 
 **Status:** ✅ **VERIFIED**
 
 **Search Results:**
-- Only **one** `GoogleReCaptchaProvider` instance in codebase
-- Located in: `src/providers/recaptcha-provider.tsx`
-- No other components create provider instances
+- Only **one** `RecaptchaScript` component in codebase
+- Located in: `src/app/layout.tsx`
+- No other components load reCAPTCHA script
 - All components use the hook directly
 
 **Files Checked:**
-- ✅ `src/app/layout.tsx` - Uses `RecaptchaProvider` (wrapper, not provider)
-- ✅ `src/providers/recaptcha-provider.tsx` - Contains the only `GoogleReCaptchaProvider`
+- ✅ `src/app/layout.tsx` - Uses `RecaptchaScript` component
+- ✅ `src/components/recaptcha-script.tsx` - Contains script loading logic
 - ✅ `src/components/auth/form-magic-link.tsx` - Uses hook only
-- ✅ `src/app/(root)/unv/components/ContactForm.tsx` - Uses hook only
+- ✅ `src/app/(store)/[storeId]/components/AboutUs.tsx` - Uses hook only
 - ✅ `src/hooks/use-captcha.tsx` - Uses hook only
-
-### ✅ 5. Old Component Cleanup
-
-**Status:** ✅ **VERIFIED**
-
-**Deleted Files:**
-- ✅ `src/components/auth/recaptcha-v3.tsx` - Removed (was creating duplicate providers)
-
-**Updated Comments:**
-- ✅ `form-magic-link.tsx` - Comment updated to reflect root layout provider
 
 ### ✅ 6. Build Verification
 
@@ -122,36 +139,39 @@ const token = await executeRecaptcha("contact_form");
 - ✅ All imports resolve correctly
 - ✅ TypeScript compilation successful
 - ✅ API routes compile correctly
+- ✅ No provider pattern dependencies
 
 ## Architecture Diagram
 
 ```
 ┌─────────────────────────────────────┐
 │  Root Layout (layout.tsx)           │
-│  └── RecaptchaProvider              │
+│  └── RecaptchaScript                │ ← Single script load
 │      (useEnterprise={true})         │
-│      └── GoogleReCaptchaProvider    │ ← Single instance
+│      └── Next.js Script Component   │
 │          └── All Pages              │
 │              ├── ContactForm        │
-│              │   └── useGoogleReCaptcha() hook
+│              │   └── useRecaptcha() hook
 │              ├── FormMagicLink      │
-│              │   └── useGoogleReCaptcha() hook
+│              │   └── useRecaptcha() hook
 │              └── Any other component│
-│                  └── useGoogleReCaptcha() hook
+│                  └── useRecaptcha() hook
 └─────────────────────────────────────┘
 ```
 
 ## Key Benefits
 
-1. **✅ Single Provider Instance**
+1. **✅ Single Script Load**
    - Prevents "reCAPTCHA has already been loaded" errors
    - Ensures consistent configuration
    - Reduces script loading overhead
+   - Better performance with Next.js Script component
 
 2. **✅ Global Access**
-   - All components can use `useGoogleReCaptcha()` hook
-   - No need to wrap components
+   - All components can use `useRecaptcha()` hook
+   - No provider pattern needed
    - Cleaner component code
+   - Better Next.js App Router compatibility
 
 3. **✅ Enterprise Mode**
    - Configured once at root level
@@ -162,6 +182,13 @@ const token = await executeRecaptcha("contact_form");
    - No duplicate script loading
    - No parameter conflicts
    - Graceful degradation if site key missing
+   - Better hot reload handling
+
+5. **✅ Next.js Optimized**
+   - Uses Next.js Script component
+   - Works better with App Router
+   - No provider pattern issues
+   - Better hydration handling
 
 ## Component Usage Patterns
 
@@ -169,12 +196,17 @@ const token = await executeRecaptcha("contact_form");
 
 ```typescript
 // Component directly uses hook
-import { useGoogleReCaptcha } from "@wojtekmaj/react-recaptcha-v3";
+import { useRecaptcha } from "@/hooks/use-recaptcha";
 
 function MyComponent() {
-  const { executeRecaptcha } = useGoogleReCaptcha();
+  const { executeRecaptcha, isReady } = useRecaptcha(true);
   
   const handleSubmit = async () => {
+    if (!executeRecaptcha || !isReady) {
+      // Handle not ready state
+      return;
+    }
+    
     const token = await executeRecaptcha("my_action");
     // Use token...
   };
@@ -184,23 +216,24 @@ function MyComponent() {
 ### ❌ Old Pattern (Removed)
 
 ```typescript
-// DON'T DO THIS - Creates duplicate providers
-<RecaptchaV3>
+// DON'T DO THIS - Provider pattern doesn't work well with Next.js
+<RecaptchaProvider>
   <MyComponent />
-</RecaptchaV3>
+</RecaptchaProvider>
 ```
 
 ## Testing Checklist
 
-- [x] Root layout has `RecaptchaProvider`
-- [x] Provider configured with `useEnterprise={true}`
-- [x] Components use `useGoogleReCaptcha()` hook directly
-- [x] No duplicate `GoogleReCaptchaProvider` instances
-- [x] Old wrapper component removed
+- [x] Root layout has `RecaptchaScript`
+- [x] Script component configured with `useEnterprise={true}`
+- [x] Components use `useRecaptcha()` hook directly
+- [x] No duplicate script loading
+- [x] Old provider pattern removed
 - [x] Build passes without errors
-- [x] No console warnings about duplicate providers
+- [x] No console warnings about duplicate scripts
 - [x] Enterprise script loads correctly (`enterprise.js`)
-- [x] Hook is available in all components
+- [x] Hook provides `isReady` state correctly
+- [x] Hook works in all components
 
 ## Files Summary
 
@@ -208,10 +241,11 @@ function MyComponent() {
 
 | File | Purpose | Status |
 |------|---------|--------|
-| `src/app/layout.tsx` | Root layout with provider | ✅ Verified |
-| `src/providers/recaptcha-provider.tsx` | Provider implementation | ✅ Verified |
+| `src/app/layout.tsx` | Root layout with script component | ✅ Verified |
+| `src/components/recaptcha-script.tsx` | Script loading component | ✅ Verified |
+| `src/hooks/use-recaptcha.ts` | Custom hook implementation | ✅ Verified |
 | `src/components/auth/form-magic-link.tsx` | Uses hook directly | ✅ Verified |
-| `src/app/(root)/unv/components/ContactForm.tsx` | Uses hook directly | ✅ Verified |
+| `src/app/(store)/[storeId]/components/AboutUs.tsx` | Uses hook directly | ✅ Verified |
 
 ### Supporting Files
 
@@ -220,16 +254,28 @@ function MyComponent() {
 | `src/lib/recaptcha-verify.ts` | Backend verification | ✅ Verified |
 | `src/hooks/use-captcha.tsx` | Captcha hook wrapper | ✅ Verified |
 
+## Migration Notes
+
+**From Provider Pattern to Script-based:**
+
+- ✅ Removed `RecaptchaProvider` component
+- ✅ Removed dependency on `@wojtekmaj/react-recaptcha-v3` provider
+- ✅ Created `RecaptchaScript` component using Next.js Script
+- ✅ Created `useRecaptcha` hook that directly uses grecaptcha API
+- ✅ Updated all components to use new hook
+- ✅ Better compatibility with Next.js App Router
+- ✅ No hot reload issues
+
 ## Conclusion
 
 ✅ **Architecture is correctly implemented and verified.**
 
-The reCAPTCHA architecture follows best practices:
-- Single provider instance at root level
-- Components use hooks directly
+The reCAPTCHA architecture follows Next.js best practices:
+- Uses Next.js Script component for optimal loading
+- Custom hook directly accesses grecaptcha API
+- No provider pattern (works better with Next.js)
 - Enterprise mode configured consistently
-- No duplicate providers or script loading errors
+- No duplicate scripts or loading errors
 - Clean, maintainable code structure
 
-All components can now use `useGoogleReCaptcha()` hook without wrapping, and the provider ensures a single reCAPTCHA instance across the entire application.
-
+All components can now use `useRecaptcha()` hook without any provider, and the script ensures a single reCAPTCHA instance across the entire application.

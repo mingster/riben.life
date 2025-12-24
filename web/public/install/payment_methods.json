@@ -1,5 +1,16 @@
 [
 	{
+		"name": "TBD",
+		"payUrl": "TBD",
+		"priceDescr": "0",
+		"fee": 0,
+		"feeAdditional": 0,
+		"clearDays": 0,
+		"isDefault": true,
+		"canDelete": false,
+		"visibleToCustomer": false
+	},
+	{
 		"name": "信用卡",
 		"payUrl": "stripe",
 		"priceDescr": "2.9% + 30¢",

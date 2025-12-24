@@ -1,7 +1,6 @@
 "use server";
 
 import { sqlClient } from "@/lib/prismadb";
-import { SafeError } from "@/utils/error";
 import { Prisma } from "@prisma/client";
 import {
 	getUtcNowEpoch,
@@ -9,14 +8,10 @@ import {
 	getDateInTz,
 	getOffsetHours,
 } from "@/utils/datetime-utils";
-import {
-	RsvpStatus,
-	OrderStatus,
-	PaymentStatus,
-	StoreLedgerType,
-} from "@/types/enum";
+import { RsvpStatus, StoreLedgerType } from "@/types/enum";
 import { getT } from "@/app/i18n";
 import { format } from "date-fns";
+import { createRsvpStoreOrder } from "./create-rsvp-store-order";
 
 interface ProcessRsvpPrepaidPaymentParams {
 	storeId: string;
@@ -42,6 +37,8 @@ interface ProcessRsvpPrepaidPaymentResult {
  * Process prepaid payment for RSVP using customer credit.
  * If customer has sufficient credit, deducts it and creates order/ledger entries.
  * Returns the status, alreadyPaid flag, and orderId.
+ *
+ * SHOULD NOT call this action if store.useCustomerCredit = false
  */
 export async function processRsvpPrepaidPayment(
 	params: ProcessRsvpPrepaidPaymentParams,
@@ -136,65 +133,20 @@ export async function processRsvpPrepaidPayment(
 			// Deduct credit and create order in a transaction
 			await sqlClient.$transaction(async (tx) => {
 				// Create StoreOrder first (needed for referenceId in CustomerCreditLedger)
-				// Use "reserve" shipping method for reservation orders
-				const reserveShippingMethod = await tx.shippingMethod.findFirst({
-					where: {
-						identifier: "reserve",
-						isDeleted: false,
-					},
+				const orderNote = t("rsvp_prepaid_payment_note", {
+					points: requiredCredit,
+					cashValue,
+					currency: (store.defaultCurrency || "twd").toUpperCase(),
 				});
 
-				const defaultShippingMethod = reserveShippingMethod
-					? reserveShippingMethod
-					: await tx.shippingMethod.findFirst({
-							where: { isDefault: true, isDeleted: false },
-						});
-
-				if (!defaultShippingMethod) {
-					throw new SafeError("No shipping method available");
-				}
-
-				const creditPaymentMethod = await tx.paymentMethod.findFirst({
-					where: {
-						payUrl: "credit",
-						isDeleted: false,
-					},
+				orderId = await createRsvpStoreOrder({
+					tx,
+					storeId,
+					customerId,
+					orderTotal: cashValue,
+					currency: store.defaultCurrency || "twd",
+					note: orderNote,
 				});
-
-				if (!creditPaymentMethod) {
-					throw new SafeError("Credit payment method not found");
-				}
-
-				const storeOrder = await tx.storeOrder.create({
-					data: {
-						storeId,
-						userId: customerId,
-						orderTotal: new Prisma.Decimal(cashValue),
-						currency: store.defaultCurrency || "twd",
-						paymentMethodId: creditPaymentMethod.id,
-						shippingMethodId: defaultShippingMethod.id,
-						orderStatus: Number(OrderStatus.Confirmed),
-						paymentStatus: Number(PaymentStatus.Paid),
-						isPaid: true,
-						paidDate: getUtcNowEpoch(),
-						createdAt: getUtcNowEpoch(),
-						updatedAt: getUtcNowEpoch(),
-						OrderNotes: {
-							create: {
-								note: t("rsvp_prepaid_payment_note", {
-									points: requiredCredit,
-									cashValue,
-									currency: (store.defaultCurrency || "twd").toUpperCase(),
-								}),
-								displayToCustomer: true,
-								createdAt: getUtcNowEpoch(),
-								updatedAt: getUtcNowEpoch(),
-							},
-						},
-					},
-				});
-
-				orderId = storeOrder.id;
 
 				// Deduct credit from customer balance
 				const newBalance = currentBalance - requiredCredit;
@@ -225,7 +177,7 @@ export async function processRsvpPrepaidPayment(
 						amount: new Prisma.Decimal(-requiredCredit), // Negative for deduction
 						balance: new Prisma.Decimal(newBalance),
 						type: "SPEND",
-						referenceId: storeOrder.id, // Link to the order
+						referenceId: orderId, // Link to the order
 						note: t("rsvp_prepaid_payment_credit_note", {
 							points: requiredCredit,
 							rsvpTime: formattedRsvpTime,
@@ -248,7 +200,7 @@ export async function processRsvpPrepaidPayment(
 				await tx.storeLedger.create({
 					data: {
 						storeId,
-						orderId: storeOrder.id,
+						orderId: orderId,
 						amount: new Prisma.Decimal(cashValue), // Positive for revenue
 						fee: new Prisma.Decimal(0), // No payment processing fee for credit usage
 						platformFee: new Prisma.Decimal(0), // No platform fee for credit usage

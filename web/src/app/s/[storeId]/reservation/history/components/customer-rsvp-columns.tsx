@@ -62,6 +62,38 @@ export const createCustomerRsvpColumns = (
 			},
 		},
 		{
+			id: "facilityName",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("facility_name")} />
+			),
+			cell: ({ row }) => {
+				const rsvp = row.original;
+				const storeName = rsvp.Store?.name;
+				const facilityName = rsvp.Facility?.facilityName;
+
+				if (!storeName && !facilityName) {
+					return <span className="text-xs sm:text-sm">-</span>;
+				}
+
+				if (storeName && facilityName) {
+					return (
+						<span className="text-xs sm:text-sm">
+							{storeName} - {facilityName}
+						</span>
+					);
+				}
+
+				return (
+					<span className="text-xs sm:text-sm">
+						{storeName || facilityName}
+					</span>
+				);
+			},
+			meta: {
+				className: "hidden sm:table-cell",
+			},
+		},
+		{
 			id: "numOfGuest",
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("rsvp_num_of_guest")} />
@@ -136,6 +168,44 @@ export const createCustomerRsvpColumns = (
 						/>
 					</span>
 				);
+			},
+		},
+		{
+			accessorKey: "createdAt",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("created_at")} />
+			),
+			cell: ({ row }) => {
+				const rsvp = row.original;
+				const createdAt = rsvp.createdAt;
+				const datetimeFormat = t("datetime_format");
+
+				// Convert createdAt to Date object
+				const createdAtEpoch =
+					typeof createdAt === "number"
+						? BigInt(createdAt)
+						: createdAt instanceof Date
+							? BigInt(createdAt.getTime())
+							: createdAt;
+
+				const utcDate = epochToDate(createdAtEpoch) ?? new Date();
+
+				// Convert to store timezone for display
+				const storeDate = getDateInTz(
+					utcDate,
+					getOffsetHours(
+						rsvp.Store?.defaultTimezone ?? storeTimezone ?? "Asia/Taipei",
+					),
+				);
+
+				return (
+					<span className="font-mono text-xs sm:text-sm">
+						{format(storeDate, `${datetimeFormat} HH:mm`)}
+					</span>
+				);
+			},
+			meta: {
+				className: "hidden sm:table-cell",
 			},
 		},
 	];

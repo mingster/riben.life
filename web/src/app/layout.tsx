@@ -4,7 +4,6 @@ import { Toaster } from "@/components/ui/sonner";
 import I18nProvider from "@/providers/i18n-provider";
 import { SessionWrapper } from "@/providers/session-provider";
 import NextThemeProvider from "@/providers/theme-provider";
-import { RecaptchaProvider } from "@/providers/recaptcha-provider";
 import type { Viewport } from "next";
 import { CookiesProvider } from "next-client-cookies/server";
 import { cookies } from "next/headers";
@@ -14,6 +13,7 @@ import { IOSVersionCheck } from "@/components/ios-version-check";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./css/globals.css";
 import { Suspense } from "react";
+import { RecaptchaScript } from "@/components/recaptcha-script";
 
 export const viewport: Viewport = {
 	width: "device-width",
@@ -142,6 +142,7 @@ export default async function RootLayout({
 				/>
 			</head>
 			<body className={"antialiased"}>
+				<RecaptchaScript useEnterprise={true} />
 				<NextThemeProvider
 					attribute="class"
 					defaultTheme="dark"
@@ -155,9 +156,7 @@ export default async function RootLayout({
 									<Suspense fallback={null}>
 										<PageViewTracker />
 									</Suspense>
-									<RecaptchaProvider useEnterprise={true}>
-										{children}
-									</RecaptchaProvider>
+									{children}
 								</IOSVersionCheck>
 							</SessionWrapper>
 						</I18nProvider>
