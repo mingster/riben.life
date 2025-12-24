@@ -1,11 +1,9 @@
-import { Loader } from "@/components/loader";
-import { SuccessAndRedirect } from "@/components/success-and-redirect";
-import Container from "@/components/ui/container";
-import { Suspense } from "react";
+import getOrderById from "@/actions/get-order-by_id";
 import { getT } from "@/app/i18n";
 import { DisplayOrder } from "@/components/display-order";
-import getOrderById from "@/actions/get-order-by_id";
+import { Loader } from "@/components/loader";
 import { StoreOrder } from "@/types";
+import { Suspense } from "react";
 
 /*
 const CashPaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
@@ -13,18 +11,18 @@ const CashPaymentPage = async (props: { params: Promise<{ orderId: string }> }) 
   //console.log('orderId: ' + params.orderId);
 
   if (!params.orderId) {
-    throw new Error("order Id is missing");
+	throw new Error("order Id is missing");
   }
 
   const order = (await getOrderById(params.orderId)) as StoreOrder;
   //console.log('order: ' + JSON.stringify(order));
 
   return (
-    <Suspense fallback={<Loader />}>
-      <Container>
-        <SuccessAndRedirect orderId={order.id} />
-      </Container>
-    </Suspense>
+	<Suspense fallback={<Loader />}>
+	  <Container>
+		<SuccessAndRedirect orderId={order.id} />
+	  </Container>
+	</Suspense>
   );
 };
 export default CashPaymentPage;

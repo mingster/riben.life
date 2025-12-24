@@ -7,10 +7,8 @@ import {
 } from "@tabler/icons-react";
 import {
 	format,
-	startOfWeek,
-	endOfWeek,
-	addWeeks,
-	subWeeks,
+	addDays,
+	subDays,
 	isSameDay,
 	parseISO,
 	Locale,
@@ -340,8 +338,8 @@ export const CustomerWeekViewCalendar: React.FC<
 		[todayUtc, storeTimezone],
 	);
 	const [rsvps, setRsvps] = useState<Rsvp[]>(initialRsvps);
-	const [currentWeek, setCurrentWeek] = useState(() => {
-		// Always start with today to ensure we don't start on a past week
+	const [currentDay, setCurrentDay] = useState(() => {
+		// Always start with today as the first day
 		// Use UTC for consistency, then convert to store timezone for display
 		return getUtcNow();
 	});
@@ -562,25 +560,24 @@ export const CustomerWeekViewCalendar: React.FC<
 		return localeMap[lng || "tw"] || zhTW;
 	}, [lng]);
 
-	// Convert currentWeek (which is in local time) to store timezone for week calculations
-	const currentWeekInStoreTz = useMemo(
-		() => getDateInTz(currentWeek, getOffsetHours(storeTimezone)),
-		[currentWeek, storeTimezone],
+	// Convert currentDay (which is in local time) to store timezone for day calculations
+	const currentDayInStoreTz = useMemo(
+		() => getDateInTz(currentDay, getOffsetHours(storeTimezone)),
+		[currentDay, storeTimezone],
 	);
 
+	// Always start with today (or the selected day) as the first day
 	const weekStart = useMemo(
-		() => startOfWeek(currentWeekInStoreTz, { weekStartsOn: 0 }), // Sunday
-		[currentWeekInStoreTz],
+		() => startOfDay(currentDayInStoreTz),
+		[currentDayInStoreTz],
 	);
-	const weekEnd = useMemo(
-		() => endOfWeek(currentWeekInStoreTz, { weekStartsOn: 0 }), // Saturday
-		[currentWeekInStoreTz],
-	);
+	// Week end is 6 days after week start (7 days total starting from today)
+	const weekEnd = useMemo(() => startOfDay(addDays(weekStart, 6)), [weekStart]);
 
-	// Check if week start is before today
-	const isWeekInPast = useMemo(
-		() => isBefore(startOfDay(weekStart), today),
-		[weekStart, today],
+	// Check if current day is before today
+	const isDayInPast = useMemo(
+		() => isBefore(startOfDay(currentDayInStoreTz), today),
+		[currentDayInStoreTz, today],
 	);
 
 	// Generate days of the week
@@ -771,23 +768,26 @@ export const CustomerWeekViewCalendar: React.FC<
 	);
 
 	const handlePreviousWeek = useCallback(() => {
-		setCurrentWeek((prev) => {
-			const newWeek = subWeeks(prev, 1);
-			const newWeekStart = startOfWeek(newWeek, { weekStartsOn: 0 });
-			// Don't allow navigation to past weeks
-			if (isBefore(startOfDay(newWeekStart), today)) {
-				return prev; // Stay on current week
+		setCurrentDay((prev) => {
+			const newDay = subDays(prev, 1);
+			const newDayInStoreTz = getDateInTz(
+				newDay,
+				getOffsetHours(storeTimezone),
+			);
+			// Don't allow navigation to past days
+			if (isBefore(startOfDay(newDayInStoreTz), today)) {
+				return prev; // Stay on current day
 			}
-			return newWeek;
+			return newDay;
 		});
-	}, [today]);
+	}, [today, storeTimezone]);
 
 	const handleNextWeek = useCallback(() => {
-		setCurrentWeek((prev) => addWeeks(prev, 1));
+		setCurrentDay((prev) => addDays(prev, 1));
 	}, []);
 
 	const handleToday = useCallback(() => {
-		setCurrentWeek(getUtcNow());
+		setCurrentDay(getUtcNow());
 	}, []);
 
 	const getRsvpsForSlot = useCallback(
@@ -934,7 +934,7 @@ export const CustomerWeekViewCalendar: React.FC<
 						variant="outline"
 						size="icon"
 						onClick={handlePreviousWeek}
-						disabled={isWeekInPast}
+						disabled={isDayInPast}
 						className="h-10 w-10 sm:h-9 sm:w-9"
 					>
 						<IconChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />

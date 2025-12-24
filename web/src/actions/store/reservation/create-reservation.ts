@@ -193,65 +193,88 @@ export const createReservationAction = baseClient
 		let alreadyPaid = false;
 		let orderId: string | null = null;
 
-		// If prepaid is required and customer is signed in, create order for checkout
-		if (
-			prepaidRequired &&
-			requiredPrepaid !== null &&
-			requiredPrepaid > 0 &&
-			finalCustomerId
-		) {
-			// Get translation function for order note
-			const { t } = await getT();
+		try {
+			// Create RSVP first, then create order if prepaid is required
+			const rsvp = await sqlClient.$transaction(async (tx) => {
+				// Step 1: Create RSVP first (without orderId initially)
+				const createdRsvp = await tx.rsvp.create({
+					data: {
+						storeId,
+						customerId: finalCustomerId,
+						facilityId,
+						numOfAdult,
+						numOfChild,
+						rsvpTime,
+						message: message || null,
+						// Store email and phone for anonymous reservations
+						email: finalCustomerId ? null : email || null, // Only store if anonymous
+						phone: finalCustomerId ? null : phone || null, // Only store if anonymous
+						status: rsvpStatus,
+						alreadyPaid,
+						orderId: null, // Will be updated after order creation
+						confirmedByStore: false,
+						confirmedByCustomer: false,
+						createdBy,
+						createdAt: getUtcNowEpoch(),
+						updatedAt: getUtcNowEpoch(),
+					},
+				});
 
-			// Determine payment method based on store settings
-			const paymentMethodPayUrl = store.useCustomerCredit ? "credit" : "TBD";
+				// Step 2: If prepaid is required and customer is signed in, create order with RSVP ID in note
+				if (
+					prepaidRequired &&
+					requiredPrepaid !== null &&
+					requiredPrepaid > 0 &&
+					finalCustomerId
+				) {
+					// Get translation function for order note
+					const { t } = await getT();
 
-			// Create unpaid order in transaction (customer will pay at checkout)
-			await sqlClient.$transaction(async (tx) => {
-				orderId = await createRsvpStoreOrder({
-					tx,
-					storeId,
-					customerId: finalCustomerId, // finalCustomerId is guaranteed to be non-null here
-					orderTotal: requiredPrepaid,
-					currency: store.defaultCurrency || "twd",
-					paymentMethodPayUrl, // "credit" if useCustomerCredit=true, "TBD" otherwise
-					note:
-						t("rsvp_reservation_payment_note") || "RSVP reservation payment",
-					isPaid: false, // Customer will pay at checkout
+					// Determine payment method based on store settings
+					const paymentMethodPayUrl = "TBD";
+
+					// Create order note with RSVP ID
+					const orderNote = `${t("rsvp_reservation_payment_note") || "RSVP reservation payment"} (RSVP ID: ${createdRsvp.id})`;
+
+					// Create unpaid order (customer will pay at checkout)
+					const createdOrderId = await createRsvpStoreOrder({
+						tx,
+						storeId,
+						customerId: finalCustomerId, // finalCustomerId is guaranteed to be non-null here
+						orderTotal: requiredPrepaid,
+						currency: store.defaultCurrency || "twd",
+						paymentMethodPayUrl,
+						rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
+						facilityId, // Pass facility ID for pickupCode
+						note: orderNote,
+						isPaid: false, // Customer will pay at checkout
+					});
+
+					// Step 3: Update RSVP with orderId
+					await tx.rsvp.update({
+						where: { id: createdRsvp.id },
+						data: { orderId: createdOrderId },
+					});
+
+					orderId = createdOrderId;
+				}
+
+				// Return RSVP with all relations
+				return await tx.rsvp.findUnique({
+					where: { id: createdRsvp.id },
+					include: {
+						Store: true,
+						Customer: true,
+						CreatedBy: true,
+						Facility: true,
+						Order: true,
+					},
 				});
 			});
-		}
 
-		try {
-			const rsvp = await sqlClient.rsvp.create({
-				data: {
-					storeId,
-					customerId: finalCustomerId,
-					facilityId,
-					numOfAdult,
-					numOfChild,
-					rsvpTime,
-					message: message || null,
-					// Store email and phone for anonymous reservations
-					email: finalCustomerId ? null : email || null, // Only store if anonymous
-					phone: finalCustomerId ? null : phone || null, // Only store if anonymous
-					status: rsvpStatus,
-					alreadyPaid,
-					orderId,
-					confirmedByStore: false,
-					confirmedByCustomer: false,
-					createdBy,
-					createdAt: getUtcNowEpoch(),
-					updatedAt: getUtcNowEpoch(),
-				},
-				include: {
-					Store: true,
-					Customer: true,
-					CreatedBy: true,
-					Facility: true,
-					Order: true,
-				},
-			});
+			if (!rsvp) {
+				throw new SafeError("Failed to create reservation");
+			}
 
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);

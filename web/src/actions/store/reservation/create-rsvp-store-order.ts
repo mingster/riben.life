@@ -17,6 +17,8 @@ interface CreateRsvpStoreOrderParams {
 	orderTotal: number; // Cash value in store currency
 	currency: string;
 	paymentMethodPayUrl: string; // Payment method identifier (e.g., "credit", "TBD")
+	rsvpId: string; // RSVP reservation ID
+	facilityId: string; // Facility ID
 	note?: string; // Optional order note
 	isPaid?: boolean; // Whether the order is already paid (default: false for checkout flow)
 }
@@ -40,6 +42,8 @@ export async function createRsvpStoreOrder(
 		orderTotal,
 		currency,
 		paymentMethodPayUrl,
+		rsvpId,
+		facilityId,
 		note,
 		isPaid = false, // Default to false for checkout flow
 	} = params;
@@ -86,11 +90,16 @@ export async function createRsvpStoreOrder(
 
 	const now = getUtcNowEpoch();
 
+	// Create pickupCode with RSVP ID and facility ID
+	const pickupCode = `RSVP:${rsvpId}|FACILITY:${facilityId}`;
+
 	// Create the store order
 	const storeOrder = await tx.storeOrder.create({
 		data: {
 			storeId,
 			userId: customerId,
+			facilityId, // Store facility ID in order
+			pickupCode, // Store RSVP ID and facility ID in pickupCode
 			orderTotal: new Prisma.Decimal(orderTotal),
 			currency: currency.toLowerCase(),
 			paymentMethodId: paymentMethod.id,

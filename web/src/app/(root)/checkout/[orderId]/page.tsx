@@ -111,6 +111,7 @@ const CheckoutHomePage = async (props: {
 
 	// Transform order data for JSON serialization
 	transformPrismaDataForJson(order);
+	transformPrismaDataForJson(paymentMethods);
 
 	return (
 		<Suspense fallback={<Loader />}>
@@ -118,7 +119,11 @@ const CheckoutHomePage = async (props: {
 				<div className="px-2 py-4">
 					<div className="text-lg font-medium mb-4">
 						{/* Order display */}
-						<DisplayOrder order={order} />
+						<DisplayOrder
+							order={order}
+							hidePaymentMethod={true}
+							hideOrderStatus={true}
+						/>
 					</div>
 
 					{/* Payment method selection */}

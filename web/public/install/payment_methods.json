@@ -77,14 +77,25 @@
 		"visibleToCustomer": true
 	},
 	{
-		"name": "儲值點數",
+		"name": "帳戶餘額",
 		"payUrl": "credit",
-		"priceDescr": "store credit or customer purchased credit",
+		"priceDescr": "fiat account balance of the customer",
 		"fee": 0,
 		"feeAdditional": 0,
 		"clearDays": 0,
-		"isDefault": false,
+		"isDefault": true,
 		"canDelete": false,
-		"visibleToCustomer": false
+		"visibleToCustomer": true
+	},	
+	{
+		"name": "儲值點數",
+		"payUrl": "creditPoint",
+		"priceDescr": "store credit point of customer purchased credit",
+		"fee": 0,
+		"feeAdditional": 0,
+		"clearDays": 0,
+		"isDefault": true,
+		"canDelete": false,
+		"visibleToCustomer": true
 	}
 ]

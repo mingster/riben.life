@@ -245,6 +245,8 @@ export const createRsvpAction = storeActionClient
 							orderTotal: totalCost,
 							currency: store.defaultCurrency || "twd",
 							paymentMethodPayUrl: "TBD", // TBD payment method for admin-created orders
+							rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
+							facilityId: facility.id, // Pass facility ID for pickupCode
 							note: t("rsvp_reservation_payment_note"),
 							isPaid: false, // Unpaid order for customer to pay later
 						});

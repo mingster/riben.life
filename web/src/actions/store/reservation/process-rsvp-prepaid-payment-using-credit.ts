@@ -19,6 +19,8 @@ interface ProcessRsvpPrepaidPaymentParams {
 	minPrepaidPercentage: number;
 	totalCost: number | null;
 	rsvpTime: BigInt | number | Date; // RSVP reservation time
+	rsvpId: string; // RSVP reservation ID
+	facilityId: string; // Facility ID
 	store: {
 		useCustomerCredit: boolean | null;
 		creditExchangeRate: number | null;
@@ -49,6 +51,8 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 		minPrepaidPercentage,
 		totalCost,
 		rsvpTime,
+		rsvpId,
+		facilityId,
 		store,
 	} = params;
 
@@ -146,6 +150,8 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 					orderTotal: cashValue,
 					currency: store.defaultCurrency || "twd",
 					paymentMethodPayUrl: "credit", // Credit payment for prepaid
+					rsvpId, // Pass RSVP ID for pickupCode
+					facilityId, // Pass facility ID for pickupCode
 					note: orderNote,
 					isPaid: true, // Already paid via credit deduction
 				});

@@ -18,6 +18,7 @@ export const updateRsvpSettingsAction = storeActionClient
 			acceptReservation,
 			singleServiceMode,
 			minPrepaidPercentage,
+			noNeedToConfirm,
 			canCancel,
 			cancelHours,
 			canReserveBefore,
@@ -83,6 +84,9 @@ export const updateRsvpSettingsAction = storeActionClient
 		}
 		if (minPrepaidPercentage !== undefined) {
 			updateData.minPrepaidPercentage = minPrepaidPercentage;
+		}
+		if (noNeedToConfirm !== undefined) {
+			updateData.noNeedToConfirm = noNeedToConfirm;
 		}
 		if (canCancel !== undefined) {
 			updateData.canCancel = canCancel;
@@ -173,6 +177,7 @@ export const updateRsvpSettingsAction = storeActionClient
 							acceptReservation: acceptReservation ?? true,
 							singleServiceMode: singleServiceMode ?? false,
 							minPrepaidPercentage: minPrepaidPercentage ?? 0,
+							noNeedToConfirm: noNeedToConfirm ?? false,
 							canCancel: canCancel ?? true,
 							cancelHours: cancelHours ?? 24,
 							canReserveBefore: canReserveBefore ?? 2,

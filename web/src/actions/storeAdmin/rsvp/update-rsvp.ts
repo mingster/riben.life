@@ -18,7 +18,7 @@ import { updateRsvpSchema } from "./update-rsvp.validation";
 import { deduceCustomerCredit } from "./deduce-customer-credit";
 import { validateReservationTimeWindow } from "@/actions/store/reservation/validate-reservation-time-window";
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
-import { processRsvpPrepaidPaymentUsingCredit } from "@/actions/store/reservation/process-rsvp-prepaid-payment";
+import { processRsvpPrepaidPaymentUsingCredit } from "@/actions/store/reservation/process-rsvp-prepaid-payment-using-credit";
 
 export const updateRsvpAction = storeActionClient
 	.metadata({ name: "updateRsvp" })
@@ -217,6 +217,8 @@ export const updateRsvpAction = storeActionClient
 				minPrepaidPercentage,
 				totalCost,
 				rsvpTime,
+				rsvpId: id, // Pass RSVP ID for pickupCode
+				facilityId: facility.id, // Pass facility ID for pickupCode
 				store: {
 					useCustomerCredit: store.useCustomerCredit,
 					creditExchangeRate: store.creditExchangeRate
