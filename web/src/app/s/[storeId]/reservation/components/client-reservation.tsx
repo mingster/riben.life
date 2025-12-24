@@ -1,24 +1,31 @@
 "use client";
 
 import { useTranslation } from "@/app/i18n/client";
+import { Heading } from "@/components/ui/heading";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Rsvp, StoreFacility, User } from "@/types";
-import type { RsvpSettings, StoreSettings } from "@prisma/client";
+import type {
+	Rsvp,
+	RsvpSettings,
+	StoreFacility,
+	StoreSettings,
+	User,
+} from "@/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
 import { ReservationDialog } from "./reservation-dialog";
-import { Heading } from "@/components/ui/heading";
 
 interface ReservationClientProps {
 	rsvps: Rsvp[];
-	rsvpSettings: RsvpSettings | null;
+	rsvpSettings: (RsvpSettings & { defaultCost?: number | null }) | null;
 	storeSettings: StoreSettings | null;
 	facilities: StoreFacility[];
 	user: User | null;
 	storeId: string;
 	storeOwnerId: string;
 	storeTimezone: string;
+	storeCurrency?: string;
+	storeUseBusinessHours?: boolean | null;
 	isBlacklisted?: boolean;
 	useCustomerCredit?: boolean;
 	creditExchangeRate?: number | null;
@@ -34,6 +41,8 @@ export function ReservationClient({
 	storeId,
 	storeOwnerId,
 	storeTimezone,
+	storeCurrency = "twd",
+	storeUseBusinessHours,
 	isBlacklisted = false,
 	useCustomerCredit = false,
 	creditExchangeRate = null,
@@ -90,9 +99,10 @@ export function ReservationClient({
 		[removeEditParam],
 	);
 
-	const prepaidRequired = rsvpSettings?.prepaidRequired
-		? t("store_reservation_required")
-		: t("store_reservation_non-required");
+	const prepaidRequired =
+		(rsvpSettings?.minPrepaidPercentage ?? 0) > 0
+			? t("store_reservation_required")
+			: t("store_reservation_non-required");
 	const hours = rsvpSettings?.cancelHours;
 
 	return (
@@ -115,6 +125,8 @@ export function ReservationClient({
 				facilities={facilities}
 				user={user}
 				storeTimezone={storeTimezone}
+				storeCurrency={storeCurrency}
+				storeUseBusinessHours={storeUseBusinessHours}
 				onReservationCreated={handleReservationCreated}
 				isBlacklisted={isBlacklisted}
 				useCustomerCredit={useCustomerCredit}
@@ -133,6 +145,8 @@ export function ReservationClient({
 					rsvp={editRsvp}
 					rsvps={initialRsvps}
 					storeTimezone={storeTimezone}
+					storeCurrency={storeCurrency}
+					storeUseBusinessHours={storeUseBusinessHours}
 					open={Boolean(editRsvpId)}
 					onOpenChange={(open) => {
 						if (!open) {

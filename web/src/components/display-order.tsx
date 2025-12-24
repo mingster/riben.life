@@ -15,10 +15,18 @@ import Currency from "./currency";
 import { DisplayOrderStatus } from "./display-order-status";
 import Link from "next/link";
 
-type orderProps = { order: StoreOrder };
+type orderProps = {
+	order: StoreOrder;
+	hidePaymentMethod?: boolean;
+	hideOrderStatus?: boolean;
+};
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
-export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
+export const DisplayOrder: React.FC<orderProps> = ({
+	order,
+	hidePaymentMethod = false,
+	hideOrderStatus = false,
+}) => {
 	//console.log("DisplayOrder", JSON.stringify(order));
 	//logger.info(order);
 
@@ -133,34 +141,40 @@ export const DisplayOrder: React.FC<orderProps> = ({ order }) => {
 
 			<CardFooter className="flex flex-col sm:flex-row gap-1 w-full items-baseline">
 				{/* Action buttons */}
-				{canPay && (
-					<Button
-						className="w-full sm:w-auto h-10 sm:h-9 bg-green-600 hover:bg-green-700"
-						size="sm"
-						onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
-					>
-						{order.PaymentMethod?.name} {t("order_tab_pay")}
-					</Button>
+				{!hidePaymentMethod && (
+					<>
+						{canPay && (
+							<Button
+								className="w-full sm:w-auto h-10 sm:h-9 bg-green-600 hover:bg-green-700"
+								size="sm"
+								onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
+							>
+								{order.PaymentMethod?.name} {t("order_tab_pay")}
+							</Button>
+						)}
+
+						{!order.isPaid && order.PaymentMethod?.name === "cash" && (
+							<Button
+								variant="outline"
+								className="w-full sm:w-auto h-10 sm:h-9 cursor-default bg-green-50 hover:bg-green-100 dark:bg-green-950/20"
+								size="sm"
+								disabled
+							>
+								現金{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
+							</Button>
+						)}
+					</>
 				)}
 
-				{!order.isPaid && order.PaymentMethod?.name === "cash" && (
-					<Button
-						variant="outline"
-						className="w-full sm:w-auto h-10 sm:h-9 cursor-default bg-green-50 hover:bg-green-100 dark:bg-green-950/20"
-						size="sm"
-						disabled
-					>
-						現金{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
-					</Button>
+				{!hideOrderStatus && (
+					<div className="flex-1 w-full sm:w-auto">
+						<DisplayOrderStatus
+							status={order.orderStatus}
+							displayBuyAgain={true}
+							onCompletedStatus={() => buyAgain(order.id)}
+						/>
+					</div>
 				)}
-
-				<div className="flex-1 w-full sm:w-auto">
-					<DisplayOrderStatus
-						status={order.orderStatus}
-						displayBuyAgain={true}
-						onCompletedStatus={() => buyAgain(order.id)}
-					/>
-				</div>
 
 				<Button
 					variant="outline"

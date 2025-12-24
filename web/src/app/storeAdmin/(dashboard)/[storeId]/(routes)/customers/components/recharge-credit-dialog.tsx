@@ -238,7 +238,7 @@ export function RechargeCreditDialog({
 											{t("customer_credit_paid_in_person") ||
 												"Customer Paid In Person"}
 										</FormLabel>
-										<FormDescription className="text-xs font-mono text-muted-foreground">
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("customer_credit_paid_in_person_description") ||
 												"Check if customer paid cash in person. Leave unchecked for promotional credit."}
 										</FormDescription>
@@ -275,7 +275,7 @@ export function RechargeCreditDialog({
 											/>
 										</FormControl>
 										<FormMessage />
-										<FormDescription className="text-xs font-mono text-muted-foreground">
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("customer_credit_cash_amount_required_when_paid") ||
 												"Cash amount is required when customer paid in person"}
 										</FormDescription>

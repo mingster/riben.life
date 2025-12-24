@@ -1,17 +1,22 @@
+import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
+import { auth } from "@/lib/auth";
+import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
+import type {
+	Rsvp,
+	RsvpSettings,
+	StoreFacility,
+	StoreSettings,
+	User,
+} from "@/types";
+import { dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
+import { isValidGuid } from "@/utils/guid-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Loader } from "@/components/loader";
 import { ReservationClient } from "./components/client-reservation";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import type { StoreFacility, User, Rsvp } from "@/types";
-import type { RsvpSettings, StoreSettings } from "@prisma/client";
-import logger from "@/lib/logger";
-import { getUtcNow, dateToEpoch } from "@/utils/datetime-utils";
-import { isValidGuid } from "@/utils/guid-utils";
 
 type Params = Promise<{ storeId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
@@ -115,6 +120,8 @@ export default async function ReservationPage(props: {
 				name: true,
 				ownerId: true,
 				defaultTimezone: true,
+				defaultCurrency: true,
+				useBusinessHours: true,
 				useCustomerCredit: true,
 				creditExchangeRate: true,
 				creditServiceExchangeRate: true,
@@ -249,6 +256,8 @@ export default async function ReservationPage(props: {
 						storeId={params.storeId}
 						storeOwnerId={store.ownerId}
 						storeTimezone={store.defaultTimezone || "Asia/Taipei"}
+						storeCurrency={store.defaultCurrency || "twd"}
+						storeUseBusinessHours={store.useBusinessHours ?? true}
 						isBlacklisted={isBlacklisted}
 						useCustomerCredit={store.useCustomerCredit || false}
 						creditExchangeRate={

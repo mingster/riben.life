@@ -178,11 +178,11 @@ export async function processRsvpCreditRefund(
 				type: StoreLedgerType.CreditUsage, // Same type as credit usage (revenue-related)
 				balance: new Prisma.Decimal(newStoreBalance),
 				description: t("rsvp_cancellation_refund_description", {
-					orderNum: order.orderNum || orderId,
+					points: refundCreditAmount,
 				}),
 				note:
 					refundReason ||
-					t("rsvp_cancellation_refund_note_cash", {
+					t("rsvp_cancellation_refund_note", {
 						amount: refundCashAmount,
 						currency: (store.defaultCurrency || "twd").toUpperCase(),
 					}),

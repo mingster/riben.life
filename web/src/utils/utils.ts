@@ -43,7 +43,7 @@ export function getRandomNum(length: number) {
 	return randomNum;
 }
 
-// recursive function looping deeply throug an object to find Decimals
+// recursive function looping deeply through an object to find Decimals and convert to numbers
 export const transformDecimalsToNumbers = (obj: any) => {
 	if (!obj) {
 		return;
@@ -52,7 +52,9 @@ export const transformDecimalsToNumbers = (obj: any) => {
 	for (const key of Object.keys(obj)) {
 		if (Decimal.isDecimal(obj[key])) {
 			obj[key] = obj[key].toNumber();
-		} else if (typeof obj[key] === "object") {
+		} else if (Array.isArray(obj[key])) {
+			obj[key].forEach((item: any) => transformDecimalsToNumbers(item));
+		} else if (typeof obj[key] === "object" && obj[key] !== null) {
 			transformDecimalsToNumbers(obj[key]);
 		}
 	}

@@ -34,6 +34,7 @@ import {
 	getDateInTz,
 	getOffsetHours,
 	dayAndTimeSlotToUtc,
+	dateToEpoch,
 } from "@/utils/datetime-utils";
 import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
 import { useI18n } from "@/providers/i18n-provider";
@@ -42,6 +43,9 @@ import { RsvpStatus } from "@/types/enum";
 import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import useSWR from "swr";
+import type { StoreFacility } from "@/types";
+import { useParams } from "next/navigation";
 
 // Component for creating RSVP at specific time slot
 interface CreateRsvpButtonProps {
@@ -49,13 +53,25 @@ interface CreateRsvpButtonProps {
 	timeSlot: string;
 	onCreated?: (rsvp: Rsvp) => void;
 	storeTimezone: string;
+	storeCurrency?: string;
 	rsvpSettings?: {
-		prepaidRequired?: boolean | null;
+		minPrepaidPercentage?: number | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
 		canReserveBefore?: number | null;
 		canReserveAfter?: number | null;
+		singleServiceMode?: boolean | null;
+		defaultDuration?: number | null;
+		useBusinessHours?: boolean | null;
+		rsvpHours?: string | null;
 	} | null;
+	storeSettings?: {
+		businessHours?: string | null;
+	} | null;
+	storeUseBusinessHours?: boolean | null;
+	existingReservations?: Rsvp[];
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
 }
 
 const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
@@ -63,7 +79,13 @@ const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 	timeSlot,
 	onCreated,
 	storeTimezone,
+	storeCurrency = "twd",
 	rsvpSettings,
+	storeSettings,
+	storeUseBusinessHours,
+	existingReservations = [],
+	useCustomerCredit = false,
+	creditExchangeRate = null,
 }) => {
 	const [slotTime] = useState(() => {
 		// day is already in store timezone (from getDateInTz)
@@ -77,7 +99,13 @@ const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
 			defaultRsvpTime={slotTime}
 			onCreated={onCreated}
 			storeTimezone={storeTimezone}
+			storeCurrency={storeCurrency}
 			rsvpSettings={rsvpSettings}
+			storeSettings={storeSettings}
+			storeUseBusinessHours={storeUseBusinessHours}
+			existingReservations={existingReservations}
+			useCustomerCredit={useCustomerCredit}
+			creditExchangeRate={creditExchangeRate}
 			trigger={
 				<button
 					type="button"
@@ -98,14 +126,19 @@ interface WeekViewCalendarProps {
 		useBusinessHours: boolean;
 		rsvpHours: string | null;
 		defaultDuration?: number | null;
-		prepaidRequired?: boolean | null;
+		minPrepaidPercentage?: number | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
 		canReserveBefore?: number | null;
 		canReserveAfter?: number | null;
+		singleServiceMode?: boolean | null;
 	} | null;
 	storeSettings: { businessHours: string | null } | null;
 	storeTimezone: string;
+	storeCurrency?: string;
+	storeUseBusinessHours?: boolean | null;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
 }
 
 interface TimeRange {
@@ -349,11 +382,29 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 	rsvpSettings,
 	storeSettings,
 	storeTimezone,
+	storeCurrency = "twd",
+	storeUseBusinessHours,
+	useCustomerCredit = false,
+	creditExchangeRate = null,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-	const [currentWeek, setCurrentWeek] = useState(() => getUtcNow());
+	const params = useParams();
+	const [currentWeek, setCurrentWeek] = useState(() => {
+		// Always start on Sunday
+		const now = getUtcNow();
+		return startOfWeek(now, { weekStartsOn: 0 });
+	});
 	const [rsvps, setRsvps] = useState<Rsvp[]>(reservations);
+
+	// Fetch facilities for availability checking
+	const facilitiesUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/facilities`;
+	const facilitiesFetcher = (url: RequestInfo) =>
+		fetch(url).then((res) => res.json());
+	const { data: storeFacilities } = useSWR<StoreFacility[]>(
+		facilitiesUrl,
+		facilitiesFetcher,
+	);
 
 	// Sync with prop changes (e.g., when server data is refreshed)
 	useEffect(() => {
@@ -388,6 +439,185 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
 	const businessHours = storeSettings?.businessHours ?? null;
 	const defaultDuration = rsvpSettings?.defaultDuration ?? 60; // Default to 60 minutes
+	const singleServiceMode = rsvpSettings?.singleServiceMode ?? false;
+
+	// Helper function to check if a facility is available at a given time
+	const isFacilityAvailableAtTime = useCallback(
+		(
+			facility: StoreFacility,
+			checkTime: Date | null | undefined,
+			timezone: string,
+		): boolean => {
+			// If no time selected, show all facilities
+			if (!checkTime || isNaN(checkTime.getTime())) {
+				return true;
+			}
+
+			// If facility has no business hours, assume it's always available
+			if (!facility.businessHours) {
+				return true;
+			}
+
+			try {
+				// Parse business hours JSON
+				const schedule = JSON.parse(facility.businessHours) as {
+					Monday?: Array<{ from: string; to: string }> | "closed";
+					Tuesday?: Array<{ from: string; to: string }> | "closed";
+					Wednesday?: Array<{ from: string; to: string }> | "closed";
+					Thursday?: Array<{ from: string; to: string }> | "closed";
+					Friday?: Array<{ from: string; to: string }> | "closed";
+					Saturday?: Array<{ from: string; to: string }> | "closed";
+					Sunday?: Array<{ from: string; to: string }> | "closed";
+				};
+
+				// Convert UTC time to store timezone for checking
+				const offsetHours = getOffsetHours(timezone);
+				const timeInStoreTz = getDateInTz(checkTime, offsetHours);
+
+				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+				const dayOfWeek = timeInStoreTz.getDay();
+				const dayNames = [
+					"Sunday",
+					"Monday",
+					"Tuesday",
+					"Wednesday",
+					"Thursday",
+					"Friday",
+					"Saturday",
+				] as const;
+				const dayName = dayNames[dayOfWeek];
+
+				// Get hours for this day
+				const dayHours = schedule[dayName];
+				if (!dayHours || dayHours === "closed") {
+					return false;
+				}
+
+				// Check if time falls within any time range
+				const checkHour = timeInStoreTz.getHours();
+				const checkMinute = timeInStoreTz.getMinutes();
+				const checkTimeMinutes = checkHour * 60 + checkMinute;
+
+				for (const range of dayHours) {
+					const [fromHour, fromMinute] = range.from.split(":").map(Number);
+					const [toHour, toMinute] = range.to.split(":").map(Number);
+
+					const fromMinutes = fromHour * 60 + fromMinute;
+					const toMinutes = toHour * 60 + toMinute;
+
+					// Check if time falls within range
+					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
+						return true;
+					}
+
+					// Handle range spanning midnight (e.g., 22:00 to 02:00)
+					if (fromMinutes > toMinutes) {
+						if (
+							checkTimeMinutes >= fromMinutes ||
+							checkTimeMinutes < toMinutes
+						) {
+							return true;
+						}
+					}
+				}
+
+				return false;
+			} catch (error) {
+				// If parsing fails, assume facility is available
+				console.error("Failed to parse facility business hours:", error);
+				return true;
+			}
+		},
+		[],
+	);
+
+	// Helper function to check if any facilities are available for a time slot
+	const hasAvailableFacilities = useCallback(
+		(slotTime: Date, existingReservations: Rsvp[]): boolean => {
+			if (!storeFacilities || storeFacilities.length === 0) {
+				return false;
+			}
+
+			// First filter by business hours availability
+			let available = storeFacilities.filter((facility: StoreFacility) =>
+				isFacilityAvailableAtTime(facility, slotTime, storeTimezone),
+			);
+
+			if (available.length === 0) {
+				return false;
+			}
+
+			// Convert slotTime to epoch for comparison
+			const slotTimeEpoch = dateToEpoch(slotTime);
+			if (!slotTimeEpoch) {
+				return available.length > 0;
+			}
+
+			// Calculate slot duration in milliseconds
+			const durationMs = defaultDuration * 60 * 1000;
+			const slotStart = Number(slotTimeEpoch);
+			const slotEnd = slotStart + durationMs;
+
+			// Find existing reservations that overlap with this time slot
+			const conflictingReservations = existingReservations.filter(
+				(existingRsvp) => {
+					// Exclude cancelled reservations
+					if (existingRsvp.status === RsvpStatus.Cancelled) {
+						return false;
+					}
+
+					// Convert existing reservation time to epoch
+					let existingRsvpTime: bigint;
+					if (existingRsvp.rsvpTime instanceof Date) {
+						existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+					} else if (typeof existingRsvp.rsvpTime === "number") {
+						existingRsvpTime = BigInt(existingRsvp.rsvpTime);
+					} else if (typeof existingRsvp.rsvpTime === "bigint") {
+						existingRsvpTime = existingRsvp.rsvpTime;
+					} else {
+						return false;
+					}
+
+					const existingStart = Number(existingRsvpTime);
+					// Get duration from facility or use default
+					const existingDuration =
+						existingRsvp.Facility?.defaultDuration ?? defaultDuration;
+					const existingDurationMs = existingDuration * 60 * 1000;
+					const existingEnd = existingStart + existingDurationMs;
+
+					// Check if slots overlap (they overlap if one starts before the other ends)
+					return slotStart < existingEnd && slotEnd > existingStart;
+				},
+			);
+
+			if (singleServiceMode) {
+				// Single Service Mode: If ANY reservation exists, no facilities available
+				if (conflictingReservations.length > 0) {
+					return false;
+				}
+			} else {
+				// Default Mode: Filter out only facilities that have reservations
+				const bookedFacilityIds = new Set(
+					conflictingReservations
+						.map((r) => r.facilityId)
+						.filter((id): id is string => Boolean(id)),
+				);
+
+				available = available.filter(
+					(facility) => !bookedFacilityIds.has(facility.id),
+				);
+			}
+
+			return available.length > 0;
+		},
+		[
+			storeFacilities,
+			isFacilityAvailableAtTime,
+			storeTimezone,
+			defaultDuration,
+			singleServiceMode,
+		],
+	);
 
 	const timeSlots = useMemo(
 		() =>
@@ -419,12 +649,22 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		[currentWeek],
 	);
 
-	// Generate days of the week
+	// Generate days of the week using UTC methods for server timezone independence
 	const weekDays = useMemo(() => {
 		const days: Date[] = [];
 		for (let i = 0; i < 7; i++) {
-			const date = new Date(weekStart);
-			date.setDate(weekStart.getDate() + i);
+			// Use UTC methods to ensure consistent behavior regardless of server timezone
+			const date = new Date(
+				Date.UTC(
+					weekStart.getUTCFullYear(),
+					weekStart.getUTCMonth(),
+					weekStart.getUTCDate() + i,
+					0,
+					0,
+					0,
+					0,
+				),
+			);
 			days.push(date);
 		}
 		return days;
@@ -454,12 +694,15 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 	}, []);
 
 	const handleToday = useCallback(() => {
-		setCurrentWeek(getUtcNow());
+		// Always start on Sunday
+		const now = getUtcNow();
+		setCurrentWeek(startOfWeek(now, { weekStartsOn: 0 }));
 	}, []);
 
 	const handleDateSelect = useCallback((date: Date | undefined) => {
 		if (date) {
-			setCurrentWeek(date);
+			// Always start on Sunday
+			setCurrentWeek(startOfWeek(date, { weekStartsOn: 0 }));
 		}
 	}, []);
 
@@ -609,24 +852,70 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 												)}
 											>
 												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
-													{slotRsvps.length > 0
-														? slotRsvps.map((rsvp) => {
-																const isCompleted =
-																	rsvp.status === RsvpStatus.Completed;
+													{slotRsvps.length > 0 &&
+														slotRsvps.map((rsvp) => {
+															const isCompleted =
+																rsvp.status === RsvpStatus.Completed;
 
-																if (isCompleted) {
-																	// Render as non-clickable button for completed RSVPs
-																	return (
+															if (isCompleted) {
+																// Render as non-clickable button for completed RSVPs
+																return (
+																	<button
+																		key={rsvp.id}
+																		type="button"
+																		disabled
+																		className={cn(
+																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
+																			getStatusColorClasses(rsvp.status, false),
+																		)}
+																	>
+																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																			{rsvp.Customer?.name
+																				? rsvp.Customer.name
+																				: rsvp.Customer?.email
+																					? rsvp.Customer.email
+																					: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																							rsvp.numOfAdult +
+																								rsvp.numOfChild ===
+																							1
+																								? "guest"
+																								: "guests"
+																						}`}
+																		</div>
+																		{rsvp.Facility?.facilityName && (
+																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																				{rsvp.Facility.facilityName}
+																			</div>
+																		)}
+																		{rsvp.message && (
+																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																				{rsvp.message}
+																			</div>
+																		)}
+																	</button>
+																);
+															}
+
+															// Render dialog for non-completed RSVPs
+															return (
+																<AdminEditRsvpDialog
+																	key={rsvp.id}
+																	rsvp={rsvp}
+																	onUpdated={handleRsvpUpdated}
+																	storeTimezone={storeTimezone}
+																	storeCurrency={storeCurrency}
+																	rsvpSettings={rsvpSettings}
+																	storeSettings={storeSettings}
+																	storeUseBusinessHours={storeUseBusinessHours}
+																	existingReservations={rsvps}
+																	useCustomerCredit={useCustomerCredit}
+																	creditExchangeRate={creditExchangeRate}
+																	trigger={
 																		<button
-																			key={rsvp.id}
 																			type="button"
-																			disabled
 																			className={cn(
-																				"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
-																				getStatusColorClasses(
-																					rsvp.status,
-																					false,
-																				),
+																				"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors",
+																				getStatusColorClasses(rsvp.status),
 																			)}
 																		>
 																			<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
@@ -653,93 +942,72 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																				</div>
 																			)}
 																		</button>
-																	);
-																}
+																	}
+																/>
+															);
+														})}
 
-																// Render dialog for non-completed RSVPs
-																return (
-																	<AdminEditRsvpDialog
-																		key={rsvp.id}
-																		rsvp={rsvp}
-																		onUpdated={handleRsvpUpdated}
-																		storeTimezone={storeTimezone}
-																		rsvpSettings={rsvpSettings}
-																		trigger={
-																			<button
-																				type="button"
-																				className={cn(
-																					"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors",
-																					getStatusColorClasses(rsvp.status),
-																				)}
-																			>
-																				<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																					{rsvp.Customer?.name
-																						? rsvp.Customer.name
-																						: rsvp.Customer?.email
-																							? rsvp.Customer.email
-																							: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																									rsvp.numOfAdult +
-																										rsvp.numOfChild ===
-																									1
-																										? "guest"
-																										: "guests"
-																								}`}
-																				</div>
-																				{rsvp.Facility?.facilityName && (
-																					<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																						{rsvp.Facility.facilityName}
-																					</div>
-																				)}
-																				{rsvp.message && (
-																					<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																						{rsvp.message}
-																					</div>
-																				)}
-																			</button>
-																		}
-																	/>
-																);
-															})
-														: (() => {
-																// Check if this time slot is within the reservation window
-																const slotTimeUtc = dayAndTimeSlotToUtc(
-																	day,
-																	timeSlot,
-																	storeTimezone,
-																);
-																const isWithinWindow =
-																	isWithinReservationTimeWindow(
-																		rsvpSettings,
-																		slotTimeUtc,
-																	);
+													{/* Show "+" button if:
+														1. No reservations exist, OR
+														2. singleServiceMode is false (multiple reservations allowed per time slot)
+														3. AND there are available facilities for this time slot
+													*/}
+													{(() => {
+														const canAddMore =
+															slotRsvps.length === 0 || !singleServiceMode;
 
-																if (!isWithinWindow) {
-																	// Slot is outside the allowed window - show disabled state
-																	return (
-																		<button
-																			type="button"
-																			disabled
-																			className="w-full h-full sm:min-h-[60px] text-left p-2 rounded text-xs sm:text-sm text-muted-foreground/50 flex items-center justify-center cursor-not-allowed opacity-50"
-																			title={
-																				t("rsvp_time_outside_window") ||
-																				"This time slot is outside the allowed reservation window"
-																			}
-																		>
-																			+
-																		</button>
-																	);
-																}
+														if (!canAddMore) {
+															return null;
+														}
 
-																return (
-																	<CreateRsvpButton
-																		day={day}
-																		timeSlot={timeSlot}
-																		onCreated={handleRsvpCreated}
-																		storeTimezone={storeTimezone}
-																		rsvpSettings={rsvpSettings}
-																	/>
-																);
-															})()}
+														// Check if this time slot is within the reservation window
+														const slotTimeUtc = dayAndTimeSlotToUtc(
+															day,
+															timeSlot,
+															storeTimezone,
+														);
+														const isWithinWindow =
+															isWithinReservationTimeWindow(
+																rsvpSettings,
+																slotTimeUtc,
+															);
+
+														if (!isWithinWindow) {
+															// Slot is outside the allowed window - show empty disabled state
+															return (
+																<button
+																	type="button"
+																	disabled
+																	className="w-full h-full sm:min-h-[60px] text-left p-2 rounded text-xs sm:text-sm text-muted-foreground/50 flex items-center justify-center cursor-not-allowed opacity-50"
+																	title={
+																		t("rsvp_time_outside_window") ||
+																		"This time slot is outside the allowed reservation window"
+																	}
+																></button>
+															);
+														}
+
+														// Check if there are any available facilities for this time slot
+														if (!hasAvailableFacilities(slotTimeUtc, rsvps)) {
+															return null;
+														}
+
+														return (
+															<CreateRsvpButton
+																day={day}
+																timeSlot={timeSlot}
+																onCreated={handleRsvpCreated}
+																storeTimezone={storeTimezone}
+																storeCurrency={storeCurrency}
+																rsvpSettings={rsvpSettings}
+																storeSettings={storeSettings}
+																storeUseBusinessHours={storeUseBusinessHours}
+																existingReservations={rsvps}
+																useCustomerCredit={useCustomerCredit}
+																creditExchangeRate={creditExchangeRate}
+															/>
+														);
+													})()}
 												</div>
 											</td>
 										);

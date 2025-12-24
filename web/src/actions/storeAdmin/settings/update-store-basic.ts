@@ -8,6 +8,7 @@ import { SafeError } from "@/utils/error";
 import { sqlClient } from "@/lib/prismadb";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import BusinessHours from "@/lib/businessHours";
 
 export const updateStoreBasicAction = storeActionClient
 	.metadata({ name: "updateStoreBasic" })
@@ -16,7 +17,7 @@ export const updateStoreBasicAction = storeActionClient
 		const storeId = bindArgsClientInputs[0] as string;
 		const {
 			name,
-			orderNoteToCustomer,
+			description,
 			defaultLocale,
 			defaultCountry,
 			defaultCurrency,
@@ -39,6 +40,19 @@ export const updateStoreBasicAction = storeActionClient
 
 		if (typeof userId !== "string") {
 			throw new SafeError("Unauthorized");
+		}
+
+		// Validate businessHours JSON when provided
+		if (businessHours && businessHours.trim().length > 0) {
+			try {
+				new BusinessHours(businessHours);
+			} catch (error) {
+				throw new SafeError(
+					`Invalid businessHours: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+			}
 		}
 
 		const store = await sqlClient.store.update({
@@ -66,13 +80,13 @@ export const updateStoreBasicAction = storeActionClient
 		const storeSettings = await sqlClient.storeSettings.upsert({
 			where: { storeId },
 			update: {
-				orderNoteToCustomer: orderNoteToCustomer ?? "",
+				description: description ?? "",
 				businessHours: businessHours ?? "",
 				updatedAt: getUtcNowEpoch(),
 			},
 			create: {
 				storeId,
-				orderNoteToCustomer: orderNoteToCustomer ?? "",
+				description: description ?? "",
 				businessHours: businessHours ?? "",
 				createdAt: getUtcNowEpoch(),
 				updatedAt: getUtcNowEpoch(),

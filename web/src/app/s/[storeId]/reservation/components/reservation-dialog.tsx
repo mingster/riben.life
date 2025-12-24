@@ -12,8 +12,13 @@ import {
 import { ReservationForm } from "./reservation-form";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StoreFacility, User, Rsvp } from "@/types";
-import type { RsvpSettings, StoreSettings } from "@prisma/client";
+import type {
+	Rsvp,
+	RsvpSettings,
+	StoreFacility,
+	StoreSettings,
+	User,
+} from "@/types";
 
 interface ReservationDialogProps {
 	storeId: string;
@@ -30,6 +35,8 @@ interface ReservationDialogProps {
 	onReservationUpdated?: (updatedRsvp: Rsvp) => void;
 	// Common props
 	storeTimezone?: string;
+	storeCurrency?: string;
+	storeUseBusinessHours?: boolean | null;
 	trigger?: React.ReactNode;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
@@ -50,6 +57,8 @@ export function ReservationDialog({
 	rsvps = [],
 	onReservationUpdated,
 	storeTimezone = "Asia/Taipei",
+	storeCurrency = "twd",
+	storeUseBusinessHours,
 	trigger,
 	open,
 	onOpenChange,
@@ -108,6 +117,8 @@ export function ReservationDialog({
 						rsvp={rsvp}
 						rsvps={rsvps}
 						storeTimezone={storeTimezone}
+						storeCurrency={storeCurrency}
+						storeUseBusinessHours={storeUseBusinessHours}
 						onReservationUpdated={handleReservationUpdated}
 						hideCard={true}
 						useCustomerCredit={useCustomerCredit}

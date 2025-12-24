@@ -303,7 +303,7 @@ export const ProductEditAttributeTab = ({
 									<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
 											<FormLabel>shipping is required?</FormLabel>
-											<FormDescription />
+											<FormDescription className="text-xs font-mono text-gray-500" />
 										</div>
 										<FormControl>
 											<Switch
@@ -322,7 +322,7 @@ export const ProductEditAttributeTab = ({
 										<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>free shipping?</FormLabel>
-												<FormDescription />
+												<FormDescription className="text-xs font-mono text-gray-500" />
 											</div>
 											<FormControl>
 												<Switch
@@ -381,7 +381,7 @@ export const ProductEditAttributeTab = ({
 										<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>display stock availability</FormLabel>
-												<FormDescription />
+												<FormDescription className="text-xs font-mono text-gray-500" />
 											</div>
 											<FormControl>
 												<Switch
@@ -399,7 +399,7 @@ export const ProductEditAttributeTab = ({
 										<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>display stock quantity</FormLabel>
-												<FormDescription />
+												<FormDescription className="text-xs font-mono text-gray-500" />
 											</div>
 											<FormControl>
 												<Switch
@@ -420,7 +420,7 @@ export const ProductEditAttributeTab = ({
 										<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>allow back order</FormLabel>
-												<FormDescription />
+												<FormDescription className="text-xs font-mono text-gray-500" />
 											</div>
 											<FormControl>
 												<Switch
@@ -439,7 +439,7 @@ export const ProductEditAttributeTab = ({
 										<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>disable buy button</FormLabel>
-												<FormDescription />
+												<FormDescription className="text-xs font-mono text-gray-500" />
 											</div>
 											<FormControl>
 												<Switch
@@ -535,7 +535,7 @@ export const ProductEditAttributeTab = ({
 													/>
 												</PopoverContent>
 											</Popover>
-											<FormDescription />
+											<FormDescription className="text-xs font-mono text-gray-500" />
 											<FormMessage />
 										</FormItem>
 									)}

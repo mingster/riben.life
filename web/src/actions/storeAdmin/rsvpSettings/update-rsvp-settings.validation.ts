@@ -2,8 +2,9 @@ import { z } from "zod";
 
 export const updateRsvpSettingsSchema = z.object({
 	acceptReservation: z.boolean().optional(),
-	prepaidRequired: z.boolean().optional(),
-	minPrepaidAmount: z.number().nonnegative().nullable().optional(),
+	singleServiceMode: z.boolean().optional(),
+	minPrepaidPercentage: z.number().int().min(0).max(100).optional(),
+	noNeedToConfirm: z.boolean().optional(),
 	canCancel: z.boolean().optional(),
 	cancelHours: z.number().int().min(0).optional(),
 	canReserveBefore: z.number().int().min(0).optional(),

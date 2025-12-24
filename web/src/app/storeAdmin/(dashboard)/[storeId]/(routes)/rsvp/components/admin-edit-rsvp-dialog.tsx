@@ -29,19 +29,14 @@ import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import type { Rsvp } from "@/types";
 import { createRsvpAction } from "@/actions/storeAdmin/rsvp/create-rsvp";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
-import {
-	createRsvpSchema,
-	type CreateRsvpInput,
-} from "@/actions/storeAdmin/rsvp/create-rsvp.validation";
+import { createRsvpSchema } from "@/actions/storeAdmin/rsvp/create-rsvp.validation";
 import {
 	updateRsvpSchema,
 	type UpdateRsvpInput,
 } from "@/actions/storeAdmin/rsvp/update-rsvp.validation";
-import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { StoreMembersCombobox } from "../../customers/components/combobox-store-members";
 import { FacilityCombobox } from "@/components/combobox-facility";
@@ -56,12 +51,13 @@ import {
 	convertToUtc,
 	getDateInTz,
 	getOffsetHours,
+	dateToEpoch,
 } from "@/utils/datetime-utils";
 import type { StoreFacility } from "@/types";
 import { useEffect } from "react";
 import { RsvpStatus } from "@/types/enum";
-import { isCancellationWithinCancelHours } from "@/actions/store/reservation/validate-cancel-hours";
-import { dateToEpoch } from "@/utils/datetime-utils";
+import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
 
 interface EditRsvpDialogProps {
 	rsvp?: Rsvp | null;
@@ -73,11 +69,23 @@ interface EditRsvpDialogProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	storeTimezone?: string;
+	storeCurrency?: string;
 	rsvpSettings?: {
-		prepaidRequired?: boolean | null;
+		minPrepaidPercentage?: number | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
+		singleServiceMode?: boolean | null;
+		defaultDuration?: number | null;
+		useBusinessHours?: boolean | null;
+		rsvpHours?: string | null;
 	} | null;
+	storeSettings?: {
+		businessHours?: string | null;
+	} | null;
+	storeUseBusinessHours?: boolean | null; // Store.useBusinessHours
+	existingReservations?: Rsvp[]; // Existing reservations to check for conflicts
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
 }
 
 // dialog to edit or create an rsvp by admin user.
@@ -94,7 +102,13 @@ export function AdminEditRsvpDialog({
 	open,
 	onOpenChange,
 	storeTimezone = "Asia/Taipei",
+	storeCurrency = "twd",
 	rsvpSettings,
+	storeSettings,
+	storeUseBusinessHours,
+	existingReservations = [],
+	useCustomerCredit = false,
+	creditExchangeRate = null,
 }: EditRsvpDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
@@ -180,6 +194,117 @@ export function AdminEditRsvpDialog({
 	} = useSWR<StoreFacility[]>(facilitiesUrl, facilitiesFetcher);
 
 	const isEditMode = Boolean(rsvp) && !isNew;
+
+	// Helper function to validate rsvpTime against store business hours or RSVP hours
+	const validateRsvpTimeAgainstHours = useCallback(
+		(rsvpTime: Date | null | undefined): string | null => {
+			if (!rsvpTime || isNaN(rsvpTime.getTime())) {
+				return null; // No validation if time is invalid
+			}
+
+			const rsvpUseBusinessHours = rsvpSettings?.useBusinessHours ?? true;
+			let hoursJson: string | null | undefined = null;
+			let errorMessage = "The selected time is outside allowed hours";
+
+			// Logic:
+			// 1. If RsvpSettings.useBusinessHours = true, use RsvpSettings.rsvpHours
+			if (rsvpUseBusinessHours) {
+				hoursJson = rsvpSettings?.rsvpHours;
+				errorMessage = "The selected time is outside RSVP hours";
+			}
+			// 2. If RsvpSettings.useBusinessHours = false AND Store.useBusinessHours = true, use StoreSettings.businessHours
+			else if (storeUseBusinessHours === true) {
+				hoursJson = storeSettings?.businessHours;
+				errorMessage = "The selected time is outside store business hours";
+			}
+			// 3. If RsvpSettings.useBusinessHours = false AND Store.useBusinessHours = false, no validation needed
+			else {
+				return null; // No validation needed
+			}
+
+			// If no hours specified, allow all times
+			if (!hoursJson) {
+				return null;
+			}
+
+			try {
+				const schedule = JSON.parse(hoursJson) as {
+					Monday?: Array<{ from: string; to: string }> | "closed";
+					Tuesday?: Array<{ from: string; to: string }> | "closed";
+					Wednesday?: Array<{ from: string; to: string }> | "closed";
+					Thursday?: Array<{ from: string; to: string }> | "closed";
+					Friday?: Array<{ from: string; to: string }> | "closed";
+					Saturday?: Array<{ from: string; to: string }> | "closed";
+					Sunday?: Array<{ from: string; to: string }> | "closed";
+				};
+
+				// Convert UTC time to store timezone for checking
+				const offsetHours = getOffsetHours(storeTimezone);
+				const timeInStoreTz = getDateInTz(rsvpTime, offsetHours);
+
+				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+				const dayOfWeek = timeInStoreTz.getDay();
+				const dayNames = [
+					"Sunday",
+					"Monday",
+					"Tuesday",
+					"Wednesday",
+					"Thursday",
+					"Friday",
+					"Saturday",
+				] as const;
+				const dayName = dayNames[dayOfWeek];
+
+				// Get hours for this day
+				const dayHours = schedule[dayName];
+				if (!dayHours || dayHours === "closed") {
+					return errorMessage;
+				}
+
+				// Check if time falls within any time range
+				const checkHour = timeInStoreTz.getHours();
+				const checkMinute = timeInStoreTz.getMinutes();
+				const checkTimeMinutes = checkHour * 60 + checkMinute;
+
+				for (const range of dayHours) {
+					const [fromHour, fromMinute] = range.from.split(":").map(Number);
+					const [toHour, toMinute] = range.to.split(":").map(Number);
+
+					const fromMinutes = fromHour * 60 + fromMinute;
+					const toMinutes = toHour * 60 + toMinute;
+
+					// Check if time falls within range
+					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
+						return null; // Valid time
+					}
+
+					// Handle range spanning midnight (e.g., 22:00 to 02:00)
+					if (fromMinutes > toMinutes) {
+						if (
+							checkTimeMinutes >= fromMinutes ||
+							checkTimeMinutes < toMinutes
+						) {
+							return null; // Valid time
+						}
+					}
+				}
+
+				// Time is not within any range
+				return errorMessage;
+			} catch (error) {
+				// If parsing fails, allow the time (graceful degradation)
+				console.error("Failed to parse hours JSON:", error);
+				return null;
+			}
+		},
+		[
+			rsvpSettings?.useBusinessHours,
+			rsvpSettings?.rsvpHours,
+			storeSettings?.businessHours,
+			storeUseBusinessHours,
+			storeTimezone,
+		],
+	);
 
 	// Helper function to check if a facility is available at a given time
 	const isFacilityAvailableAtTime = useCallback(
@@ -374,42 +499,27 @@ export function AdminEditRsvpDialog({
 	const isCompleted = status === RsvpStatus.Completed;
 	const alreadyPaid = form.watch("alreadyPaid");
 
+	// Get selected facility for cost calculation
+	const selectedFacility = useMemo(() => {
+		if (!facilityId || !storeFacilities) return null;
+		return storeFacilities.find((f) => f.id === facilityId) || null;
+	}, [facilityId, storeFacilities]);
+
+	// Get facility cost for prepaid calculation
+	const facilityCost = useMemo(() => {
+		if (selectedFacility?.defaultCost) {
+			return typeof selectedFacility.defaultCost === "number"
+				? selectedFacility.defaultCost
+				: Number(selectedFacility.defaultCost);
+		}
+		return null;
+	}, [selectedFacility]);
+
 	// Calculate cancel policy information
-	const cancelPolicyInfo = useMemo(() => {
-		if (
-			!rsvpSettings?.canCancel ||
-			!rsvpSettings.cancelHours ||
-			!rsvpTime ||
-			!(rsvpTime instanceof Date) ||
-			isNaN(rsvpTime.getTime())
-		) {
-			return null;
-		}
-
-		const rsvpTimeEpoch = dateToEpoch(rsvpTime);
-		if (!rsvpTimeEpoch) {
-			return null;
-		}
-
-		const isWithinCancelHours = isCancellationWithinCancelHours(
-			{
-				canCancel: rsvpSettings.canCancel,
-				cancelHours: rsvpSettings.cancelHours,
-			},
-			rsvpTimeEpoch,
-		);
-
-		const hoursUntilReservation =
-			(rsvpTime.getTime() - getUtcNow().getTime()) / (1000 * 60 * 60);
-
-		return {
-			canCancel: rsvpSettings.canCancel,
-			cancelHours: rsvpSettings.cancelHours,
-			isWithinCancelHours,
-			hoursUntilReservation,
-			wouldRefund: alreadyPaid && !isWithinCancelHours,
-		};
-	}, [rsvpSettings, rsvpTime, alreadyPaid]);
+	const cancelPolicyInfo = useMemo(
+		() => calculateCancelPolicyInfo(rsvpSettings, rsvpTime, alreadyPaid),
+		[rsvpSettings, rsvpTime, alreadyPaid],
+	);
 
 	// Get current user session to check admin role
 	const { data: session } = authClient.useSession();
@@ -418,7 +528,7 @@ export function AdminEditRsvpDialog({
 	// Only allow editing completed RSVPs if user is admin
 	const canEditCompleted = !isCompleted || isAdmin;
 
-	// Filter facilities based on rsvpTime
+	// Filter facilities based on rsvpTime and existing reservations
 	// When editing, always include the current facility even if it's not available at the selected time
 	const availableFacilities = useMemo(() => {
 		if (!storeFacilities) {
@@ -427,9 +537,81 @@ export function AdminEditRsvpDialog({
 		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
 			return storeFacilities;
 		}
-		const filtered = storeFacilities.filter((facility: StoreFacility) =>
+
+		// First filter by business hours availability
+		let filtered = storeFacilities.filter((facility: StoreFacility) =>
 			isFacilityAvailableAtTime(facility, rsvpTime, storeTimezone),
 		);
+
+		// Get singleServiceMode setting
+		const singleServiceMode = rsvpSettings?.singleServiceMode ?? false;
+		const defaultDuration = rsvpSettings?.defaultDuration ?? 60;
+
+		// Convert rsvpTime to epoch for comparison
+		const rsvpTimeEpoch = dateToEpoch(rsvpTime);
+		if (!rsvpTimeEpoch) {
+			return filtered;
+		}
+
+		// Calculate slot duration in milliseconds
+		const durationMs = defaultDuration * 60 * 1000;
+		const slotStart = Number(rsvpTimeEpoch);
+		const slotEnd = slotStart + durationMs;
+
+		// Find existing reservations that overlap with this time slot
+		const conflictingReservations = existingReservations.filter(
+			(existingRsvp) => {
+				// Exclude the current reservation being edited
+				if (isEditMode && existingRsvp.id === rsvp?.id) {
+					return false;
+				}
+
+				// Exclude cancelled reservations
+				if (existingRsvp.status === RsvpStatus.Cancelled) {
+					return false;
+				}
+
+				// Convert existing reservation time to epoch
+				let existingRsvpTime: bigint;
+				if (existingRsvp.rsvpTime instanceof Date) {
+					existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+				} else if (typeof existingRsvp.rsvpTime === "number") {
+					existingRsvpTime = BigInt(existingRsvp.rsvpTime);
+				} else if (typeof existingRsvp.rsvpTime === "bigint") {
+					existingRsvpTime = existingRsvp.rsvpTime;
+				} else {
+					return false;
+				}
+
+				const existingStart = Number(existingRsvpTime);
+				// Get duration from facility or use default
+				const existingDuration =
+					existingRsvp.Facility?.defaultDuration ?? defaultDuration;
+				const existingDurationMs = existingDuration * 60 * 1000;
+				const existingEnd = existingStart + existingDurationMs;
+
+				// Check if slots overlap (they overlap if one starts before the other ends)
+				return slotStart < existingEnd && slotEnd > existingStart;
+			},
+		);
+
+		if (singleServiceMode) {
+			// Single Service Mode: If ANY reservation exists, filter out ALL facilities
+			if (conflictingReservations.length > 0) {
+				filtered = [];
+			}
+		} else {
+			// Default Mode: Filter out only facilities that have reservations
+			const bookedFacilityIds = new Set(
+				conflictingReservations
+					.map((r) => r.facilityId)
+					.filter((id): id is string => Boolean(id)),
+			);
+
+			filtered = filtered.filter(
+				(facility) => !bookedFacilityIds.has(facility.id),
+			);
+		}
 
 		// When editing, ensure the current facility is included even if filtered out
 		// Use form's facilityId first, then fall back to rsvp.facilityId
@@ -455,6 +637,10 @@ export function AdminEditRsvpDialog({
 		isEditMode,
 		form,
 		rsvp?.facilityId,
+		rsvp?.id,
+		rsvpSettings?.singleServiceMode,
+		rsvpSettings?.defaultDuration,
+		existingReservations,
 	]);
 
 	// Clear facility selection if it's no longer available
@@ -561,6 +747,17 @@ export function AdminEditRsvpDialog({
 	const onSubmit = async (values: FormInput) => {
 		try {
 			setLoading(true);
+
+			// Validate rsvpTime against store business hours or RSVP hours
+			const timeValidationError = validateRsvpTimeAgainstHours(values.rsvpTime);
+			if (timeValidationError) {
+				toastError({
+					title: t("error_title"),
+					description: timeValidationError,
+				});
+				setLoading(false);
+				return;
+			}
 
 			// Check if cancelled or no-show first (highest priority)
 			if (values.status === RsvpStatus.Cancelled) {
@@ -783,33 +980,46 @@ export function AdminEditRsvpDialog({
 						<FormField
 							control={form.control}
 							name="rsvpTime"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										{t("rsvp_time")} <span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<Input
-											type="datetime-local"
-											disabled={
-												!canEditCompleted ||
-												loading ||
-												form.formState.isSubmitting
-											}
-											value={
-												field.value ? formatDateTimeLocal(field.value) : ""
-											}
-											onChange={(event) => {
-												const value = event.target.value;
-												if (value) {
-													field.onChange(parseDateTimeLocal(value));
+							render={({ field }) => {
+								// Validate time against store/RSVP hours when it changes
+								const timeValidationError = field.value
+									? validateRsvpTimeAgainstHours(field.value)
+									: null;
+
+								return (
+									<FormItem>
+										<FormLabel>
+											{t("rsvp_time")}{" "}
+											<span className="text-destructive">*</span>
+										</FormLabel>
+										<FormControl>
+											<Input
+												type="datetime-local"
+												disabled={
+													!canEditCompleted ||
+													loading ||
+													form.formState.isSubmitting
 												}
-											}}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
+												value={
+													field.value ? formatDateTimeLocal(field.value) : ""
+												}
+												onChange={(event) => {
+													const value = event.target.value;
+													if (value) {
+														field.onChange(parseDateTimeLocal(value));
+													}
+												}}
+											/>
+										</FormControl>
+										{timeValidationError && (
+											<p className="text-sm font-medium text-destructive">
+												{timeValidationError}
+											</p>
+										)}
+										<FormMessage />
+									</FormItem>
+								);
+							}}
 						/>
 						<FormField
 							control={form.control}
@@ -959,7 +1169,7 @@ export function AdminEditRsvpDialog({
 											</FormControl>
 											<FormLabel>{t("rsvp_already_paid")}</FormLabel>
 											<FormMessage />
-											<FormDescription className="text-xs text-muted-foreground font-mono">
+											<FormDescription className="text-xs font-mono text-gray-500">
 												{t("rsvp_already_paid_descr")}
 											</FormDescription>
 										</FormItem>
@@ -1002,7 +1212,7 @@ export function AdminEditRsvpDialog({
 										</FormControl>
 										<FormLabel>{t("rsvp_confirmed_by_store")}</FormLabel>
 										<FormMessage />
-										<FormDescription className="text-xs text-muted-foreground font-mono">
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("rsvp_confirmed_by_store_descr")}
 										</FormDescription>
 									</FormItem>
@@ -1096,7 +1306,7 @@ export function AdminEditRsvpDialog({
 										</FormControl>
 										<FormLabel>{t("rsvp_confirmed_by_customer")}</FormLabel>
 										<FormMessage />
-										<FormDescription className="text-xs text-muted-foreground font-mono">
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("rsvp_confirmed_by_customer_descr")}
 										</FormDescription>
 									</FormItem>
@@ -1143,61 +1353,20 @@ export function AdminEditRsvpDialog({
 											<FormLabel>{t("rsvp_cancelled")}</FormLabel>
 										</div>
 										<FormMessage />
-										<FormDescription className="text-xs text-muted-foreground font-mono">
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("rsvp_cancelled_descr")}
 										</FormDescription>
 										{/* Cancel Policy Information */}
-										{cancelPolicyInfo && (
-											<div className="mt-2 p-3 rounded-md bg-muted/50 border border-border">
-												<div className="text-xs font-medium mb-1">
-													{t("cancel_policy") || "Cancel Policy"}
-												</div>
-												<div className="text-xs text-muted-foreground space-y-1">
-													<div>
-														{t("cancel_hours_policy", {
-															hours: cancelPolicyInfo.cancelHours,
-														}) ||
-															`Cancellation must be made at least ${cancelPolicyInfo.cancelHours} hours before reservation time.`}
-													</div>
-													{rsvpTime && (
-														<div>
-															{cancelPolicyInfo.hoursUntilReservation > 0 ? (
-																<>
-																	{t("hours_until_reservation", {
-																		hours:
-																			Math.round(
-																				cancelPolicyInfo.hoursUntilReservation *
-																					10,
-																			) / 10,
-																	}) ||
-																		`${Math.round(cancelPolicyInfo.hoursUntilReservation * 10) / 10} hours until reservation`}
-																</>
-															) : (
-																<>
-																	{t("reservation_passed") ||
-																		"Reservation time has passed"}
-																</>
-															)}
-														</div>
-													)}
-													{alreadyPaid && (
-														<div
-															className={
-																cancelPolicyInfo.wouldRefund
-																	? "text-green-600 dark:text-green-400 font-medium"
-																	: "text-orange-600 dark:text-orange-400 font-medium"
-															}
-														>
-															{cancelPolicyInfo.wouldRefund
-																? t("cancellation_would_refund") ||
-																	"✓ Cancellation would result in refund"
-																: t("cancellation_no_refund") ||
-																	"⚠ Cancellation within policy window - no refund"}
-														</div>
-													)}
-												</div>
-											</div>
-										)}
+										<RsvpCancelPolicyInfo
+											cancelPolicyInfo={cancelPolicyInfo}
+											rsvpTime={rsvpTime}
+											alreadyPaid={alreadyPaid}
+											rsvpSettings={rsvpSettings}
+											facilityCost={facilityCost}
+											currency={storeCurrency}
+											useCustomerCredit={useCustomerCredit}
+											creditExchangeRate={creditExchangeRate}
+										/>
 									</FormItem>
 								);
 							}}
@@ -1238,7 +1407,7 @@ export function AdminEditRsvpDialog({
 										</FormControl>
 										<FormLabel>{t("rsvp_no_show")}</FormLabel>
 										<FormMessage />
-										<FormDescription className="text-xs text-muted-foreground font-mono">
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("rsvp_no_show_descr")}
 										</FormDescription>
 									</FormItem>

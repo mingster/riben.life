@@ -18,8 +18,8 @@ export const RsvpTagTab: React.FC<RsvpTagTabProps> = ({
 	return (
 		<>
 			<Heading
-				title={t("RSVP_Tag_Settings")}
-				description={t("RSVP_Tag_Settings_Descr")}
+				title={t("rsvp_Tag_Settings")}
+				description={t("rsvp_Tag_Settings_Descr")}
 			/>
 		</>
 	);

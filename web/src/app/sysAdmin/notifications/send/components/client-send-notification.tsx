@@ -362,7 +362,7 @@ export function ClientSendNotification({
 												))}
 											</SelectContent>
 										</Select>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											Optional: Use a message template for consistent formatting
 										</FormDescription>
 										<FormMessage />
@@ -411,7 +411,7 @@ export function ClientSendNotification({
 												type="url"
 											/>
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											Optional: Deep link URL for action buttons
 										</FormDescription>
 										<FormMessage />

@@ -13,6 +13,7 @@ import fs from "node:fs";
 import { Role, type Organization } from "@prisma/client";
 import crypto from "crypto";
 import { ensureCreditRechargeProduct } from "@/actions/store/credit/ensure-credit-recharge-product";
+import { ensureReservationPrepaidProduct } from "@/actions/store/reservation/ensure-reservation-prepaid-product";
 
 export const createStoreAction = userRequiredActionClient
 	.metadata({ name: "createStore" })
@@ -252,8 +253,18 @@ export const createStoreAction = userRequiredActionClient
 		const bizhoursfilePath = `${process.cwd()}/public/defaults/business-hours.json`;
 		const businessHours = fs.readFileSync(bizhoursfilePath, "utf8");
 
-		await sqlClient.storeSettings.create({
-			data: {
+		// StoreSettings is required - always create it when creating a store
+		// Use upsert to handle edge cases where it might already exist
+		await sqlClient.storeSettings.upsert({
+			where: { storeId: databaseId },
+			update: {
+				// If it exists, update with defaults (shouldn't happen, but safe)
+				businessHours,
+				privacyPolicy,
+				tos,
+				updatedAt: getUtcNowEpoch(),
+			},
+			create: {
 				storeId: databaseId,
 				businessHours,
 				privacyPolicy,
@@ -263,9 +274,45 @@ export const createStoreAction = userRequiredActionClient
 			},
 		});
 
+		// RsvpSettings is required - always create it when creating a store
+		// Use upsert to handle edge cases where it might already exist
+		// All fields use schema defaults, so we only need to set required fields
+		await sqlClient.rsvpSettings.upsert({
+			where: { storeId: databaseId },
+			update: {
+				// If it exists, just update timestamp (shouldn't happen, but safe)
+				updatedAt: getUtcNowEpoch(),
+			},
+			create: {
+				storeId: databaseId,
+				// All other fields use schema defaults:
+				// acceptReservation: true
+				// singleServiceMode: false
+				// minPrepaidPercentage: 0
+				// canCancel: true
+				// cancelHours: 24
+				// canReserveBefore: 2
+				// canReserveAfter: 2190
+				// defaultDuration: 60
+				// requireSignature: false
+				// showCostToCustomer: false
+				// useBusinessHours: true
+				// reminderHours: 24
+				// useReminderSMS: false
+				// useReminderLine: false
+				// useReminderEmail: false
+				// syncWithGoogle: false
+				// syncWithApple: false
+				// reserveWithGoogleEnabled: false
+				createdAt: getUtcNowEpoch(),
+				updatedAt: getUtcNowEpoch(),
+			},
+		});
+
 		// Create special system product for credit recharge (FR-PAY-004.1)
 		try {
 			await ensureCreditRechargeProduct(databaseId);
+			await ensureReservationPrepaidProduct(databaseId);
 		} catch (error) {
 			// Log but don't fail store creation if product creation fails
 			logger.error(

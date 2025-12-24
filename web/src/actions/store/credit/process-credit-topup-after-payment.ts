@@ -14,7 +14,7 @@ import {
 	RsvpStatus,
 } from "@/types/enum";
 import logger from "@/lib/logger";
-import { processRsvpPrepaidPayment } from "@/actions/store/reservation/process-rsvp-prepaid-payment";
+import { processRsvpPrepaidPaymentUsingCredit } from "@/actions/store/reservation/process-rsvp-prepaid-payment-using-credit";
 import { getT } from "@/app/i18n";
 
 /**
@@ -271,6 +271,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 							alreadyPaid: true,
 							orderId: true,
 							rsvpTime: true,
+							facilityId: true, // Need facilityId for pickupCode
 						},
 					}),
 					sqlClient.rsvpSettings.findFirst({
@@ -287,14 +288,14 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 					rsvp.customerId === order.userId
 				) {
 					// Process prepaid payment using the shared function
-					const prepaidResult = await processRsvpPrepaidPayment({
+					const prepaidResult = await processRsvpPrepaidPaymentUsingCredit({
 						storeId: order.storeId,
 						customerId: order.userId,
-						prepaidRequired: rsvpSettings?.prepaidRequired ?? false,
-						minPrepaidAmount: rsvpSettings?.minPrepaidAmount
-							? Number(rsvpSettings.minPrepaidAmount)
-							: null,
+						minPrepaidPercentage: rsvpSettings?.minPrepaidPercentage ?? 0,
+						totalCost: null,
 						rsvpTime: rsvp.rsvpTime,
+						rsvpId: rsvp.id, // Pass RSVP ID for pickupCode
+						facilityId: rsvp.facilityId || "", // Pass facility ID for pickupCode (required, but may be empty)
 						store: {
 							useCustomerCredit: order.Store.useCustomerCredit,
 							creditExchangeRate: order.Store.creditExchangeRate

@@ -51,7 +51,7 @@ const formSchema = z.object({
 	defaultCurrency: z.string().min(1),
 	defaultTimezone: z.string().optional().default("Asia/Taipei"),
 	businessHours: z.string().min(1),
-	orderNoteToCustomer: z.string().optional(),
+	description: z.string().optional(),
 
 	requireSeating: z.boolean().optional().default(false), //需要帶位or not
 	requirePrepaid: z.boolean().optional().default(true), //先付款再出貨
@@ -98,10 +98,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 	const defaultValues = store
 		? {
 				...store,
-				orderNoteToCustomer: storeSettings?.orderNoteToCustomer || "",
+				description: storeSettings?.description || "",
 				businessHours: storeSettings?.businessHours || "",
 			}
-		: { orderNoteToCustomer: "", businessHours: "" };
+		: { description: "", businessHours: "" };
 
 	// Replace null values with empty strings for string fields
 	const sanitizedDefaultValues = Object.fromEntries(
@@ -216,7 +216,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 
 			const payload: Omit<UpdateStoreBasicInput, "storeId"> = {
 				name: data.name,
-				orderNoteToCustomer: data.orderNoteToCustomer ?? "",
+				description: data.description ?? "",
 				defaultLocale: data.defaultLocale,
 				defaultCountry: data.defaultCountry,
 				defaultCurrency: data.defaultCurrency,
@@ -313,22 +313,22 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 							<div className="grid grid-flow-row-dense grid-cols-1 gap-1">
 								<FormField
 									control={form.control}
-									name="orderNoteToCustomer"
+									name="description"
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("StoreSettings_orderNoteToCustomer")}
+												{t("storeSettings_Store_Description")}
 											</FormLabel>
 											<FormControl>
 												<Textarea
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono min-h-20"
-													placeholder=""
+													placeholder={`${t("input_placeholder1")}${t("storeSettings_Store_Description")}`}
 													{...field}
 												/>
 											</FormControl>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("StoreSettings_orderNoteToCustomer_desccr")}
+												{t("storeSettings_Store_Description_descr")}
 											</FormDescription>
 											<FormMessage />
 										</FormItem>

@@ -17,9 +17,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Store } from "@/types";
 import { useState } from "react";
 import { GetMenuList } from "./store-menu-list";
-import { ThemeToggler } from "@/components/theme-toggler";
-import DropdownUser from "@/components/auth/dropdown-user";
-import { LanguageToggler } from "@/components/language-toggler";
 
 interface MenuProps {
 	store: Store;
@@ -59,22 +56,32 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 
 	return (
 		<ScrollArea className="[&>div>div[style]]:block!">
-			<nav className="mt-8 size-full ">
-				{isOpen && <div className="space-y-1 px-2">{title}</div>}
-				<ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-32px-40px-32px)]">
+			<nav className="mt-4 sm:mt-8 size-full">
+				{isOpen && (
+					<div className="space-y-1 px-2 sm:px-2 mb-2 sm:mb-0">
+						{title && (
+							<p className="text-sm sm:text-base font-semibold text-foreground">
+								{title}
+							</p>
+						)}
+					</div>
+				)}
+				<ul className="flex min-h-[calc(100vh-48px-36px-16px-32px)] flex-col items-start space-y-1 px-2 sm:px-2 lg:min-h-[calc(100vh-32px-40px-32px)]">
 					{menuList.map(({ groupLabel, menus }, index) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-						<li className={cn("w-full", groupLabel ? "pt-5" : "")} key={index}>
+						<li
+							className={cn("w-full", groupLabel ? "pt-3 sm:pt-5" : "")}
+							key={index}
+						>
 							{(isOpen && groupLabel) || isOpen === undefined ? (
-								<p className="max-w-[248px] truncate px-4 pb-2 text-sm font-medium text-muted-foreground">
+								<p className="max-w-[248px] truncate px-3 sm:px-4 pb-2 sm:pb-2 text-xs sm:text-sm font-medium text-muted-foreground">
 									{groupLabel}
 								</p>
 							) : !isOpen && isOpen !== undefined && groupLabel ? (
 								<TooltipProvider>
 									<Tooltip delayDuration={100}>
-										<TooltipTrigger className="w-full">
+										<TooltipTrigger className="w-full touch-manipulation">
 											<div className="flex w-full items-center justify-center">
-												<Ellipsis className="size-5" />
+												<Ellipsis className="size-5 sm:size-5" />
 											</div>
 										</TooltipTrigger>
 										<TooltipContent side="right">
@@ -99,34 +106,32 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 																	? "default"
 																	: "ghost"
 															}
-															className="mb-1 h-11 w-full justify-start sm:h-10"
-															asChild
+															className={cn(
+																"mb-1 h-11 w-full justify-start px-3 sm:h-10 sm:px-2 touch-manipulation",
+																active || activeSpot === href
+																	? "text-link"
+																	: "",
+																"font-semibold hover:opacity-50 active:opacity-70",
+															)}
+															onClick={() => menuClick(href)}
 														>
-															<Button
+															<span
 																className={cn(
-																	active || activeSpot === href
-																		? "text-link"
-																		: "",
-																	"font-semibold hover:opacity-50 active:opacity-70",
+																	isOpen === false ? "" : "mr-3 sm:mr-4",
 																)}
-																onClick={() => menuClick(href)}
 															>
-																<span
-																	className={cn(isOpen === false ? "" : "mr-4")}
-																>
-																	<Icon size={18} />
-																</span>
-																<p
-																	className={cn(
-																		"max-w-[200px] truncate",
-																		isOpen === false
-																			? "-translate-x-96 opacity-0"
-																			: "translate-x-0 opacity-100",
-																	)}
-																>
-																	{label}
-																</p>
-															</Button>
+																<Icon className="h-5 w-5 sm:h-[18px] sm:w-[18px]" />
+															</span>
+															<p
+																className={cn(
+																	"max-w-[200px] truncate text-sm sm:text-base",
+																	isOpen === false
+																		? "-translate-x-96 opacity-0"
+																		: "translate-x-0 opacity-100",
+																)}
+															>
+																{label}
+															</p>
 														</Button>
 													</TooltipTrigger>
 													{isOpen === false && (

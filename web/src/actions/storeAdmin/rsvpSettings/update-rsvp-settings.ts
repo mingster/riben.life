@@ -7,6 +7,7 @@ import { Prisma } from "@prisma/client";
 import { updateRsvpSettingsSchema } from "./update-rsvp-settings.validation";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
+import BusinessHours from "@/lib/businessHours";
 
 export const updateRsvpSettingsAction = storeActionClient
 	.metadata({ name: "updateRsvpSettings" })
@@ -15,8 +16,9 @@ export const updateRsvpSettingsAction = storeActionClient
 		const storeId = bindArgsClientInputs[0] as string;
 		const {
 			acceptReservation,
-			prepaidRequired,
-			minPrepaidAmount,
+			singleServiceMode,
+			minPrepaidPercentage,
+			noNeedToConfirm,
 			canCancel,
 			cancelHours,
 			canReserveBefore,
@@ -53,6 +55,19 @@ export const updateRsvpSettingsAction = storeActionClient
 			throw new SafeError("Store not found");
 		}
 
+		// Validate rsvpHours JSON (when provided and not using business hours)
+		if (rsvpHours !== undefined && rsvpHours !== null) {
+			try {
+				new BusinessHours(rsvpHours);
+			} catch (error) {
+				throw new SafeError(
+					`Invalid RSVP hours: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+			}
+		}
+
 		// Find existing RsvpSettings
 		const existing = await sqlClient.rsvpSettings.findFirst({
 			where: { storeId },
@@ -64,12 +79,14 @@ export const updateRsvpSettingsAction = storeActionClient
 		if (acceptReservation !== undefined) {
 			updateData.acceptReservation = acceptReservation;
 		}
-		if (prepaidRequired !== undefined) {
-			updateData.prepaidRequired = prepaidRequired;
+		if (singleServiceMode !== undefined) {
+			updateData.singleServiceMode = singleServiceMode;
 		}
-		if (minPrepaidAmount !== undefined) {
-			updateData.minPrepaidAmount =
-				minPrepaidAmount !== null ? new Prisma.Decimal(minPrepaidAmount) : null;
+		if (minPrepaidPercentage !== undefined) {
+			updateData.minPrepaidPercentage = minPrepaidPercentage;
+		}
+		if (noNeedToConfirm !== undefined) {
+			updateData.noNeedToConfirm = noNeedToConfirm;
 		}
 		if (canCancel !== undefined) {
 			updateData.canCancel = canCancel;
@@ -158,11 +175,9 @@ export const updateRsvpSettingsAction = storeActionClient
 						data: {
 							storeId,
 							acceptReservation: acceptReservation ?? true,
-							prepaidRequired: prepaidRequired ?? false,
-							minPrepaidAmount:
-								minPrepaidAmount !== undefined && minPrepaidAmount !== null
-									? new Prisma.Decimal(minPrepaidAmount)
-									: new Prisma.Decimal(0),
+							singleServiceMode: singleServiceMode ?? false,
+							minPrepaidPercentage: minPrepaidPercentage ?? 0,
+							noNeedToConfirm: noNeedToConfirm ?? false,
 							canCancel: canCancel ?? true,
 							cancelHours: cancelHours ?? 24,
 							canReserveBefore: canReserveBefore ?? 2,

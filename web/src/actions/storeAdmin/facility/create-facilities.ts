@@ -7,6 +7,7 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { Prisma } from "@prisma/client";
 
 import { createFacilitiesSchema } from "./create-facilities.validation";
+import BusinessHours from "@/lib/businessHours";
 
 export const createFacilitiesAction = storeActionClient
 	.metadata({ name: "createFacilities" })
@@ -30,6 +31,19 @@ export const createFacilitiesAction = storeActionClient
 
 		if (!store) {
 			throw new SafeError("Store not found");
+		}
+
+		// Validate businessHours JSON when provided
+		if (businessHours && businessHours.trim().length > 0) {
+			try {
+				new BusinessHours(businessHours);
+			} catch (error) {
+				throw new SafeError(
+					`Invalid businessHours: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+			}
 		}
 
 		const operations = Array.from({ length: numOfFacilities }, (_, index) =>

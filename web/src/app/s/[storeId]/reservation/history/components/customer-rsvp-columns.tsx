@@ -55,10 +55,42 @@ export const createCustomerRsvpColumns = (
 				);
 
 				return (
-					<span className="font-mono">
+					<span className="font-mono text-xs sm:text-sm">
 						{format(storeDate, `${datetimeFormat} HH:mm`)}
 					</span>
 				);
+			},
+		},
+		{
+			id: "facilityName",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("facility_name")} />
+			),
+			cell: ({ row }) => {
+				const rsvp = row.original;
+				const storeName = rsvp.Store?.name;
+				const facilityName = rsvp.Facility?.facilityName;
+
+				if (!storeName && !facilityName) {
+					return <span className="text-xs sm:text-sm">-</span>;
+				}
+
+				if (storeName && facilityName) {
+					return (
+						<span className="text-xs sm:text-sm">
+							{storeName} - {facilityName}
+						</span>
+					);
+				}
+
+				return (
+					<span className="text-xs sm:text-sm">
+						{storeName || facilityName}
+					</span>
+				);
+			},
+			meta: {
+				className: "hidden sm:table-cell",
 			},
 		},
 		{
@@ -71,7 +103,7 @@ export const createCustomerRsvpColumns = (
 				const numOfAdult = rsvp.numOfAdult || 0;
 				const numOfChild = rsvp.numOfChild || 0;
 				return (
-					<span>
+					<span className="text-xs sm:text-sm">
 						{t("rsvp_num_of_guest_val", {
 							adult: numOfAdult,
 							child: numOfChild,
@@ -94,7 +126,7 @@ export const createCustomerRsvpColumns = (
 				return (
 					<span
 						className={cn(
-							"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs font-mono",
+							"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded text-[10px] sm:text-xs font-mono",
 							getRsvpStatusColorClasses(status, false),
 						)}
 					>
@@ -110,7 +142,11 @@ export const createCustomerRsvpColumns = (
 			),
 			cell: ({ row }) => {
 				const message = row.getValue("message") as string | null;
-				return <span className="max-w-[200px] truncate">{message || "-"}</span>;
+				return (
+					<span className="max-w-[200px] truncate text-xs sm:text-sm">
+						{message || "-"}
+					</span>
+				);
 			},
 			meta: {
 				className: "hidden sm:table-cell",
@@ -132,6 +168,44 @@ export const createCustomerRsvpColumns = (
 						/>
 					</span>
 				);
+			},
+		},
+		{
+			accessorKey: "createdAt",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("created_at")} />
+			),
+			cell: ({ row }) => {
+				const rsvp = row.original;
+				const createdAt = rsvp.createdAt;
+				const datetimeFormat = t("datetime_format");
+
+				// Convert createdAt to Date object
+				const createdAtEpoch =
+					typeof createdAt === "number"
+						? BigInt(createdAt)
+						: createdAt instanceof Date
+							? BigInt(createdAt.getTime())
+							: createdAt;
+
+				const utcDate = epochToDate(createdAtEpoch) ?? new Date();
+
+				// Convert to store timezone for display
+				const storeDate = getDateInTz(
+					utcDate,
+					getOffsetHours(
+						rsvp.Store?.defaultTimezone ?? storeTimezone ?? "Asia/Taipei",
+					),
+				);
+
+				return (
+					<span className="font-mono text-xs sm:text-sm">
+						{format(storeDate, `${datetimeFormat} HH:mm`)}
+					</span>
+				);
+			},
+			meta: {
+				className: "hidden sm:table-cell",
 			},
 		},
 	];

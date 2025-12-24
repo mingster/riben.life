@@ -1,6 +1,5 @@
 "use client";
 
-import { IconPlus } from "@tabler/icons-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	startOfWeek,
@@ -22,20 +21,17 @@ import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 
 import type { Rsvp } from "@/types";
 import {
-	getDateInTz,
-	getOffsetHours,
 	dateToEpoch,
 	convertToUtc,
 	formatUtcDateToDateTimeLocal,
 } from "@/utils/datetime-utils";
 import { createRsvpColumns } from "./columns";
-import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
 
 interface RsvpHistoryClientProps {
 	serverData: Rsvp[];
 	storeTimezone: string;
 	rsvpSettings?: {
-		prepaidRequired?: boolean | null;
+		minPrepaidPercentage?: number | null;
 		canCancel?: boolean | null;
 		cancelHours?: number | null;
 	} | null;
@@ -55,12 +51,6 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 	const [periodType, setPeriodType] = useState<PeriodType>("week");
 	const [startDate, setStartDate] = useState<Date | null>(null);
 	const [endDate, setEndDate] = useState<Date | null>(null);
-
-	// Get timezone offset
-	const offsetHours = useMemo(
-		() => getOffsetHours(storeTimezone),
-		[storeTimezone],
-	);
 
 	// Helper to get current date/time in store timezone
 	const getNowInStoreTimezone = useCallback((): Date => {
@@ -199,15 +189,6 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 		});
 	}, [allData, startDate, endDate]);
 
-	const handleCreated = useCallback((newRsvp: Rsvp) => {
-		if (!newRsvp) return;
-		setAllData((prev) => {
-			const exists = prev.some((item) => item.id === newRsvp.id);
-			if (exists) return prev;
-			return [newRsvp, ...prev];
-		});
-	}, []);
-
 	const handleDeleted = useCallback((rsvpId: string) => {
 		setAllData((prev) => prev.filter((item) => item.id !== rsvpId));
 	}, []);
@@ -262,20 +243,6 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 					badge={data.length}
 					description=""
 				/>
-				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
-					<AdminEditRsvpDialog
-						isNew
-						onCreated={handleCreated}
-						storeTimezone={storeTimezone}
-						rsvpSettings={rsvpSettings}
-						trigger={
-							<Button variant="outline" className="h-10 sm:h-9">
-								<IconPlus className="mr-2 size-4" />
-								<span className="text-sm sm:text-xs">{t("create")}</span>
-							</Button>
-						}
-					/>
-				</div>
 			</div>
 			<Separator />
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3">

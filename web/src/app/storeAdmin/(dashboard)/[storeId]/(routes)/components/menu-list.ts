@@ -280,7 +280,7 @@ export function GetMenuList(
 				},
 				{
 					href: `${nav_prefix}/rsvp-settings`,
-					label: t("RSVP_Settings"),
+					label: t("rsvp_Settings"),
 					active: pathname.includes(`${nav_prefix}/rsvp-settings`),
 					icon: IconCalendarCheck,
 					submenus: [],

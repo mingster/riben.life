@@ -21,8 +21,6 @@ import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 
 import type { Rsvp } from "@/types";
 import {
-	getDateInTz,
-	getOffsetHours,
 	dateToEpoch,
 	convertToUtc,
 	formatUtcDateToDateTimeLocal,
@@ -33,7 +31,7 @@ interface CustomerReservationHistoryClientProps {
 	serverData: Rsvp[];
 	storeTimezone: string;
 	rsvpSettings?: {
-		prepaidRequired?: boolean | null;
+		minPrepaidPercentage?: number | null;
 	} | null;
 }
 
@@ -49,12 +47,6 @@ export const CustomerReservationHistoryClient: React.FC<
 	const [periodType, setPeriodType] = useState<PeriodType>("week");
 	const [startDate, setStartDate] = useState<Date | null>(null);
 	const [endDate, setEndDate] = useState<Date | null>(null);
-
-	// Get timezone offset
-	const offsetHours = useMemo(
-		() => getOffsetHours(storeTimezone),
-		[storeTimezone],
-	);
 
 	// Helper to get current date/time in store timezone
 	const getNowInStoreTimezone = useCallback((): Date => {
@@ -224,7 +216,7 @@ export const CustomerReservationHistoryClient: React.FC<
 
 	return (
 		<>
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+			<div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
 					title={t("rsvp_history") || "Reservation History"}
 					badge={data.length}
@@ -232,14 +224,14 @@ export const CustomerReservationHistoryClient: React.FC<
 				/>
 			</div>
 			<Separator />
-			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3">
+			<div className="flex flex-col gap-3 sm:gap-4 py-3">
 				{/* Period Toggle Buttons */}
 				<div className="flex flex-wrap gap-1.5 sm:gap-2">
 					<Button
 						variant={periodType === "week" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("week")}
-						className="h-10 sm:h-9"
+						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
 					>
 						{t("this_week") || "This Week"}
 					</Button>
@@ -247,7 +239,7 @@ export const CustomerReservationHistoryClient: React.FC<
 						variant={periodType === "month" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("month")}
-						className="h-10 sm:h-9"
+						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
 					>
 						{t("this_month") || "This Month"}
 					</Button>
@@ -255,55 +247,57 @@ export const CustomerReservationHistoryClient: React.FC<
 						variant={periodType === "year" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("year")}
-						className="h-10 sm:h-9"
+						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
 					>
 						{t("this_year") || "This Year"}
 					</Button>
 				</div>
 
 				{/* Date Range Inputs */}
-				<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-					<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
-						<label
-							htmlFor="start-time"
-							className="text-sm font-medium whitespace-nowrap"
-						>
-							{t("start_time") || "Start Time"}:
-						</label>
-						<Input
-							id="start-time"
-							type="datetime-local"
-							value={formatDateForInput(startDate)}
-							onChange={(e) => {
-								const newDate = parseDateFromInput(e.target.value);
-								if (newDate) {
-									setStartDate(newDate);
-									setPeriodType("custom");
-								}
-							}}
-							className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto"
-						/>
-					</div>
-					<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
-						<label
-							htmlFor="end-time"
-							className="text-sm font-medium whitespace-nowrap"
-						>
-							{t("end_time") || "End Time"}:
-						</label>
-						<Input
-							id="end-time"
-							type="datetime-local"
-							value={formatDateForInput(endDate)}
-							onChange={(e) => {
-								const newDate = parseDateFromInput(e.target.value);
-								if (newDate) {
-									setEndDate(newDate);
-									setPeriodType("custom");
-								}
-							}}
-							className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto"
-						/>
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+					<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+						<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+							<label
+								htmlFor="start-time"
+								className="text-sm font-medium whitespace-nowrap"
+							>
+								{t("start_time") || "Start Time"}:
+							</label>
+							<Input
+								id="start-time"
+								type="datetime-local"
+								value={formatDateForInput(startDate)}
+								onChange={(e) => {
+									const newDate = parseDateFromInput(e.target.value);
+									if (newDate) {
+										setStartDate(newDate);
+										setPeriodType("custom");
+									}
+								}}
+								className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto touch-manipulation"
+							/>
+						</div>
+						<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+							<label
+								htmlFor="end-time"
+								className="text-sm font-medium whitespace-nowrap"
+							>
+								{t("end_time") || "End Time"}:
+							</label>
+							<Input
+								id="end-time"
+								type="datetime-local"
+								value={formatDateForInput(endDate)}
+								onChange={(e) => {
+									const newDate = parseDateFromInput(e.target.value);
+									if (newDate) {
+										setEndDate(newDate);
+										setPeriodType("custom");
+									}
+								}}
+								className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto touch-manipulation"
+							/>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -313,7 +307,9 @@ export const CustomerReservationHistoryClient: React.FC<
 				data={data}
 				searchKey="message"
 			/>
-			<RsvpStatusLegend t={t} />
+			<div className="mt-4">
+				<RsvpStatusLegend t={t} />
+			</div>
 		</>
 	);
 };

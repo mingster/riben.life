@@ -17,6 +17,8 @@ import { headers } from "next/headers";
 import { updateRsvpSchema } from "./update-rsvp.validation";
 import { deduceCustomerCredit } from "./deduce-customer-credit";
 import { validateReservationTimeWindow } from "@/actions/store/reservation/validate-reservation-time-window";
+import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
+import { processRsvpPrepaidPaymentUsingCredit } from "@/actions/store/reservation/process-rsvp-prepaid-payment-using-credit";
 
 export const updateRsvpAction = storeActionClient
 	.metadata({ name: "updateRsvp" })
@@ -49,6 +51,7 @@ export const updateRsvpAction = storeActionClient
 				status: true,
 				alreadyPaid: true,
 				customerId: true,
+				orderId: true,
 			},
 		});
 
@@ -64,7 +67,7 @@ export const updateRsvpAction = storeActionClient
 		});
 		const createdBy = session?.user?.id || rsvp.createdBy || null;
 
-		// Fetch store to get timezone, creditServiceExchangeRate, creditExchangeRate, and defaultCurrency
+		// Fetch store to get timezone, creditServiceExchangeRate, creditExchangeRate, defaultCurrency, and useCustomerCredit
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
 			select: {
@@ -73,6 +76,7 @@ export const updateRsvpAction = storeActionClient
 				creditServiceExchangeRate: true,
 				creditExchangeRate: true,
 				defaultCurrency: true,
+				useCustomerCredit: true,
 			},
 		});
 
@@ -95,6 +99,7 @@ export const updateRsvpAction = storeActionClient
 			select: {
 				id: true,
 				defaultDuration: true,
+				defaultCost: true,
 			},
 		});
 
@@ -121,18 +126,50 @@ export const updateRsvpAction = storeActionClient
 			throw new SafeError("Failed to convert rsvpTime to epoch");
 		}
 
-		// Get RSVP settings for time window validation
+		// Get RSVP settings for time window validation, availability checking, and prepaid payment
 		const rsvpSettings = await sqlClient.rsvpSettings.findFirst({
 			where: { storeId },
 			select: {
 				canReserveBefore: true,
 				canReserveAfter: true,
+				singleServiceMode: true,
+				defaultDuration: true,
+				minPrepaidPercentage: true,
 			},
 		});
 
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
 		// Note: Store admin can still update reservations, but we validate to ensure consistency
 		validateReservationTimeWindow(rsvpSettings, rsvpTime);
+
+		// Validate availability based on singleServiceMode (only if rsvpTime changed)
+		// Check if rsvpTime is different from existing reservation
+		const existingRsvpTime = await sqlClient.rsvp.findUnique({
+			where: { id },
+			select: { rsvpTime: true },
+		});
+
+		if (existingRsvpTime && existingRsvpTime.rsvpTime !== rsvpTime) {
+			// Time changed, validate availability
+			await validateRsvpAvailability(
+				storeId,
+				rsvpSettings,
+				rsvpTime,
+				facilityId,
+				facility.defaultDuration,
+				id, // Exclude current reservation from conflict check
+			);
+		} else if (!existingRsvpTime) {
+			// New reservation or time definitely changed
+			await validateRsvpAvailability(
+				storeId,
+				rsvpSettings,
+				rsvpTime,
+				facilityId,
+				facility.defaultDuration,
+				id, // Exclude current reservation from conflict check
+			);
+		}
 
 		// Convert arriveTime to UTC Date, then to BigInt epoch (or null)
 		// Same conversion as rsvpTime - interpret as store timezone and convert to UTC
@@ -149,6 +186,59 @@ export const updateRsvpAction = storeActionClient
 					})()
 				: null;
 
+		// Calculate total cost: use facilityCost if provided, otherwise use facility.defaultCost
+		const totalCost =
+			facilityCost !== null && facilityCost !== undefined
+				? facilityCost
+				: facility.defaultCost
+					? Number(facility.defaultCost)
+					: null;
+
+		// Process prepaid payment if:
+		// 1. customerId is provided
+		// 2. No existing orderId (to avoid creating duplicate orders)
+		// 3. Store uses customer credit
+		const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
+		let prepaidResult: {
+			status: number;
+			alreadyPaid: boolean;
+			orderId: string | null;
+		} = {
+			status,
+			alreadyPaid,
+			orderId: rsvp.orderId, // Keep existing orderId if it exists
+		};
+
+		// Only process prepaid payment if customerId is provided, no existing order, and store uses credit
+		if (customerId && !rsvp.orderId && store.useCustomerCredit === true) {
+			prepaidResult = await processRsvpPrepaidPaymentUsingCredit({
+				storeId,
+				customerId,
+				minPrepaidPercentage,
+				totalCost,
+				rsvpTime,
+				rsvpId: id, // Pass RSVP ID for pickupCode
+				facilityId: facility.id, // Pass facility ID for pickupCode
+				store: {
+					useCustomerCredit: store.useCustomerCredit,
+					creditExchangeRate: store.creditExchangeRate
+						? Number(store.creditExchangeRate)
+						: null,
+					defaultCurrency: store.defaultCurrency,
+					defaultTimezone: store.defaultTimezone,
+				},
+			});
+		}
+
+		// Use status and alreadyPaid from prepaid payment processing if it was processed
+		// Otherwise, use the provided values
+		// Only override if prepaid payment was actually processed (orderId was created)
+		const finalStatus = prepaidResult.orderId ? prepaidResult.status : status;
+		const finalAlreadyPaid = prepaidResult.orderId
+			? prepaidResult.alreadyPaid
+			: alreadyPaid;
+		const finalOrderId = prepaidResult.orderId || rsvp.orderId;
+
 		try {
 			const updated = await sqlClient.$transaction(async (tx) => {
 				const updatedRsvp = await tx.rsvp.update({
@@ -160,9 +250,10 @@ export const updateRsvpAction = storeActionClient
 						numOfChild,
 						rsvpTime,
 						arriveTime: arriveTime || null,
-						status,
+						status: finalStatus,
 						message: message || null,
-						alreadyPaid,
+						alreadyPaid: finalAlreadyPaid,
+						orderId: finalOrderId || null,
 						confirmedByStore,
 						confirmedByCustomer,
 						facilityCost:
@@ -184,9 +275,10 @@ export const updateRsvpAction = storeActionClient
 				});
 
 				// If status is Completed, not alreadyPaid, and wasn't previously Completed, deduct customer's credit
+				// Note: This is for service credit usage (after service completion), not prepaid payment
 				if (
-					status === RsvpStatus.Completed &&
-					!alreadyPaid &&
+					finalStatus === RsvpStatus.Completed &&
+					!finalAlreadyPaid &&
 					!wasCompleted &&
 					customerId &&
 					store.creditServiceExchangeRate &&

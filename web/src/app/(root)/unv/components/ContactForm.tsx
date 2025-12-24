@@ -21,7 +21,7 @@ import {
 	IconBrandFacebookFilled,
 	IconBrandInstagramFilled,
 } from "@tabler/icons-react";
-import { useGoogleReCaptcha } from "@wojtekmaj/react-recaptcha-v3";
+import { useRecaptcha } from "@/hooks/use-recaptcha";
 import axios, { type AxiosError } from "axios";
 import { motion } from "framer-motion";
 import { useCallback, useMemo, useState } from "react";
@@ -148,12 +148,9 @@ export function ContactFormComponent({
 const ContactFormInner = () => {
 	const [loading, setLoading] = useState(false);
 	const [captchaError, setCaptchaError] = useState<string>("");
-	const { executeRecaptcha } = useGoogleReCaptcha();
+	const { executeRecaptcha, isReady: isRecaptchaReady } = useRecaptcha(true);
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
-
-	// Check if ReCAPTCHA is ready
-	const isRecaptchaReady = !!executeRecaptcha;
 
 	// Memoized form default values
 	const defaultValues = useMemo(

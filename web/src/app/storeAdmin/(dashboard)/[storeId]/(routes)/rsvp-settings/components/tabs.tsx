@@ -25,8 +25,9 @@ export type RsvpSettingsData = {
 	id: string;
 	storeId: string;
 	acceptReservation: boolean;
-	prepaidRequired: boolean;
-	minPrepaidAmount: number | null;
+	singleServiceMode: boolean;
+	minPrepaidPercentage: number;
+	noNeedToConfirm: boolean;
 	canCancel: boolean;
 	cancelHours: number;
 	canReserveBefore: number;
@@ -49,12 +50,27 @@ export type RsvpSettingsData = {
 export interface RsvpSettingsProps {
 	store: Store;
 	rsvpSettings?: RsvpSettingsData | null;
+	rsvpBlacklist?: Array<{
+		id: string;
+		storeId: string;
+		userId: string;
+		userName: string | null;
+		userEmail: string | null;
+		createdAt: bigint;
+		updatedAt: bigint;
+		User?: {
+			id: string;
+			name: string | null;
+			email: string | null;
+		} | null;
+	}>;
 	onStoreUpdated?: (store: Store) => void;
 }
 
 export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 	store: initialStore,
 	rsvpSettings: initialRsvpSettings,
+	rsvpBlacklist: initialRsvpBlacklist = [],
 	onStoreUpdated,
 }) => {
 	const router = useRouter();
@@ -145,8 +161,8 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("RSVP_Settings")}
-					description={t("RSVP_Settings_descr")}
+					title={t("rsvp_Settings")}
+					description={t("rsvp_Settings_descr")}
 				/>
 			</div>
 
@@ -158,13 +174,13 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 			>
 				<TabsList>
 					<TabsTrigger className="px-1 lg:min-w-25" value="basic">
-						{t("RSVP_Tab_System")}
+						{t("rsvp_Tab_System")}
 					</TabsTrigger>
 					<TabsTrigger className="px-1 lg:min-w-25" value="blacklist">
-						{t("RSVP_Tab_Blacklist")}
+						{t("rsvp_Tab_Blacklist")}
 					</TabsTrigger>
 					<TabsTrigger className="px-1 lg:min-w-25" value="tag">
-						{t("RSVP_Tab_Tag")}
+						{t("rsvp_Tab_Tag")}
 					</TabsTrigger>
 				</TabsList>
 
@@ -190,6 +206,7 @@ export const RsvpSettingTabs: React.FC<RsvpSettingsProps> = ({
 					<RsvpBlacklistTab
 						store={store}
 						rsvpSettings={rsvpSettings}
+						rsvpBlacklist={initialRsvpBlacklist}
 						onStoreUpdated={onStoreUpdated}
 						onRsvpSettingsUpdated={handleRsvpSettingsUpdated}
 					/>

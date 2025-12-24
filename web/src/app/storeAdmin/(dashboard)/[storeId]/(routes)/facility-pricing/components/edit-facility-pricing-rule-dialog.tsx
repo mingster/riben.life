@@ -311,7 +311,7 @@ export function EditFacilityPricingRuleDialog({
 											}}
 										/>
 									</FormControl>
-									<FormDescription></FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
@@ -335,7 +335,7 @@ export function EditFacilityPricingRuleDialog({
 											}
 										/>
 									</FormControl>
-									<FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500">
 										{t("pricing_rule_priority_descr")}
 									</FormDescription>
 									<FormMessage />
@@ -360,7 +360,7 @@ export function EditFacilityPricingRuleDialog({
 											}
 										/>
 									</FormControl>
-									<FormDescription></FormDescription>
+									<FormDescription className="text-xs font-mono text-gray-500"></FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
@@ -433,7 +433,7 @@ export function EditFacilityPricingRuleDialog({
 												}}
 											/>
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("pricing_rule_cost_descr")}
 										</FormDescription>
 										<FormMessage />
@@ -463,7 +463,7 @@ export function EditFacilityPricingRuleDialog({
 												}}
 											/>
 										</FormControl>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("pricing_rule_credit_descr")}
 										</FormDescription>
 										<FormMessage />
@@ -479,7 +479,7 @@ export function EditFacilityPricingRuleDialog({
 								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
 										<FormLabel>{t("pricing_rule_status")}</FormLabel>
-										<FormDescription>
+										<FormDescription className="text-xs font-mono text-gray-500">
 											{t("pricing_rule_status_descr")}
 										</FormDescription>
 									</div>
