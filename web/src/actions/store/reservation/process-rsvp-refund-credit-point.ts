@@ -36,11 +36,21 @@ export async function processRsvpCreditPointsRefund(
 		return { refunded: false };
 	}
 
-	// Get the order to check payment method
+	// Get the order to check payment method and get currency
 	const order = await sqlClient.storeOrder.findUnique({
 		where: { id: orderId },
-		include: {
-			PaymentMethod: true,
+		select: {
+			id: true,
+			orderStatus: true,
+			paymentStatus: true,
+			currency: true,
+			PaymentMethod: {
+				select: {
+					id: true,
+					payUrl: true,
+					name: true,
+				},
+			},
 		},
 	});
 
@@ -84,12 +94,14 @@ export async function processRsvpCreditPointsRefund(
 	// Get absolute value of amount (it's negative for SPEND)
 	const refundCreditAmount = Math.abs(Number(spendEntry.amount));
 
+	// Use order's currency
+	const orderCurrency = (order.currency || "twd").toLowerCase();
+
 	// Get store to get credit exchange rate for StoreLedger
 	const store = await sqlClient.store.findUnique({
 		where: { id: storeId },
 		select: {
 			creditExchangeRate: true,
-			defaultCurrency: true,
 		},
 	});
 
@@ -175,7 +187,7 @@ export async function processRsvpCreditPointsRefund(
 				amount: new Prisma.Decimal(-refundCashAmount), // Negative: revenue reversal
 				fee: new Prisma.Decimal(0), // No fee for credit refunds
 				platformFee: new Prisma.Decimal(0), // No platform fee for credit refunds
-				currency: (store.defaultCurrency || "twd").toLowerCase(),
+				currency: orderCurrency,
 				type: StoreLedgerType.CreditUsage, // Same type as credit usage (revenue-related)
 				balance: new Prisma.Decimal(newStoreBalance),
 				description: t("rsvp_cancellation_refund_description", {
@@ -185,7 +197,7 @@ export async function processRsvpCreditPointsRefund(
 					refundReason ||
 					t("rsvp_cancellation_refund_note", {
 						amount: refundCashAmount,
-						currency: (store.defaultCurrency || "twd").toUpperCase(),
+						currency: orderCurrency.toUpperCase(),
 					}),
 				availability: getUtcNowEpoch(), // Immediate availability for refunds
 				createdAt: getUtcNowEpoch(),

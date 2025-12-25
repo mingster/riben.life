@@ -4,6 +4,7 @@ import { transformPrismaDataForJson } from "@/utils/utils";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { Prisma, StoreShipMethodMapping } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 
 //create an new empty order
 //
@@ -99,12 +100,21 @@ export async function POST(
 	// Use UTC for timestamps
 	const now = getUtcNowEpoch();
 
+	// Add customer as store member if userId is provided
+	if (userId) {
+		await ensureCustomerIsStoreMember(params.storeId, userId, "user");
+	}
+
 	const orderStatus = store?.autoAcceptOrder
 		? OrderStatus.Processing
 		: OrderStatus.Pending;
 
 	// Use store's defaultCurrency at the time of creation
-	const orderCurrency = (store.defaultCurrency || currency || "twd").toLowerCase();
+	const orderCurrency = (
+		store.defaultCurrency ||
+		currency ||
+		"twd"
+	).toLowerCase();
 
 	const result = await sqlClient.storeOrder.create({
 		data: {

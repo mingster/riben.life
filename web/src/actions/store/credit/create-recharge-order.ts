@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { ensureCreditRechargeProduct } from "./ensure-credit-recharge-product";
 import { getT } from "@/app/i18n";
+import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 
 import { z } from "zod";
 
@@ -153,6 +154,9 @@ export const createRefillCreditPointsOrderAction = userRequiredActionClient
 
 		// Create StoreOrder for recharge
 		const now = getUtcNowEpoch();
+
+		// Add customer as store member
+		await ensureCustomerIsStoreMember(storeId, userId, "user");
 
 		// Prepare checkoutAttributes with rsvpId if provided
 		const checkoutAttributes = rsvpId

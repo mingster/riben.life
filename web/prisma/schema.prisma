@@ -1187,10 +1187,6 @@ model StoreOrder {
   paidDate           BigInt?
   checkoutAttributes String  @default("")
   checkoutRef        String  @default("")
-  currency           String  @default("twd")
-  currencyRate       Decimal @default(1)
-
-  discount Decimal @default(0)
 
   paymentMethodId String?
   paymentStatus   Int     @default(10)
@@ -1204,11 +1200,12 @@ model StoreOrder {
 
   orderStatus Int @default(10)
 
+  currency           String  @default("twd")
+  discount Decimal @default(0)
   paymentCost Decimal @default(0)
   taxRate     Decimal @default(0)
   orderTax    Decimal @default(0)
   orderTotal  Decimal @default(0)
-  currency String  @default("twd")
 
   createdAt      BigInt
   updatedAt      BigInt

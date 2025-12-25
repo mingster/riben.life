@@ -20,6 +20,7 @@ type orderProps = {
 	hidePaymentMethod?: boolean;
 	hideOrderStatus?: boolean;
 	showOrderNotes?: boolean;
+	hideContactSeller?: boolean;
 };
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
@@ -28,6 +29,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 	hidePaymentMethod = false,
 	hideOrderStatus = false,
 	showOrderNotes = false,
+	hideContactSeller = false,
 }) => {
 	//console.log("DisplayOrder", JSON.stringify(order));
 	//logger.info(order);
@@ -216,14 +218,16 @@ export const DisplayOrder: React.FC<orderProps> = ({
 					</div>
 				)}
 
-				<Button
-					variant="outline"
-					size="sm"
-					className="w-full sm:w-auto h-10 sm:h-9"
-					onClick={() => contactSeller(order.storeId, order.id)}
-				>
-					{t("order_tab_contact_seller")}
-				</Button>
+				{!hideContactSeller && (
+					<Button
+						variant="outline"
+						size="sm"
+						className="w-full sm:w-auto h-10 sm:h-9"
+						onClick={() => contactSeller(order.storeId, order.id)}
+					>
+						{t("order_tab_contact_seller")}
+					</Button>
+				)}
 			</CardFooter>
 		</Card>
 	);

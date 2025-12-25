@@ -28,6 +28,7 @@ type Menu = {
 	active: boolean;
 	icon: any;
 	submenus: Submenu[];
+	badge?: string | number; // Badge text or number to display
 };
 
 type Group = {
@@ -39,6 +40,8 @@ export function GetMenuList(
 	store: Store,
 	storeId: string,
 	pathname: string,
+	fiatBalance?: number | null,
+	fiatCurrency?: string,
 ): Group[] {
 	const STORE_PATH = "/s/";
 	const nav_prefix = STORE_PATH + storeId;
@@ -122,6 +125,22 @@ export function GetMenuList(
 					},
 				]
 			: []),
+		{
+			href: `${nav_prefix}/my-fiat-ledger`,
+			label: t("my_fiat_ledger"),
+			active: pathname.includes(`${nav_prefix}/my-fiat-ledger`),
+			icon: IconCoin,
+			submenus: [],
+			badge:
+				fiatBalance !== undefined && fiatBalance !== null && fiatBalance > 0
+					? new Intl.NumberFormat("en-US", {
+							style: "currency",
+							currency: (fiatCurrency || "twd").toUpperCase(),
+							minimumFractionDigits: 0,
+							maximumFractionDigits: 0,
+						}).format(fiatBalance)
+					: undefined,
+		},
 		{
 			href: `${nav_prefix}/faq`,
 			label: t("FAQ"),

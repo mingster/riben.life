@@ -8,12 +8,14 @@ import {
 } from "@/components/ui/tooltip";
 import { Ellipsis } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
+import useSWR from "swr";
 
 import { cn } from "@/utils/utils";
 
 import { CollapseMenuButton } from "@/components/collapse-menu-button";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import type { Store } from "@/types";
 import { useState } from "react";
 import { GetMenuList } from "./store-menu-list";
@@ -31,10 +33,37 @@ interface MenuProps {
 export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 	const pathname = usePathname();
 	const params = useParams<{ storeId: string }>();
-	const menuList = GetMenuList(store, params.storeId, pathname);
 	const router = useRouter();
 
 	const [activeSpot, setActiveSpot] = useState("");
+
+	// Fetch customer fiat balance using SWR
+	const { data: fiatBalanceData } = useSWR<{ fiat: number; currency: string }>(
+		`/api/store/${params.storeId}/customer/fiat-balance`,
+		async (url: string) => {
+			const res = await fetch(url);
+			if (!res.ok) {
+				// If unauthorized or not found, return null (user not logged in or no balance)
+				return null;
+			}
+			return res.json();
+		},
+		{
+			revalidateOnFocus: true,
+			revalidateOnReconnect: true,
+		},
+	);
+
+	const fiatBalance = fiatBalanceData?.fiat ?? null;
+	const fiatCurrency =
+		fiatBalanceData?.currency || store.defaultCurrency || "twd";
+	const menuList = GetMenuList(
+		store,
+		params.storeId,
+		pathname,
+		fiatBalance,
+		fiatCurrency,
+	);
 
 	function menuClick(href: string) {
 		setActiveSpot(href);
@@ -94,7 +123,10 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 							)}
 
 							{menus.map(
-								({ href, label, icon: Icon, active, submenus }, index) =>
+								(
+									{ href, label, icon: Icon, active, submenus, badge },
+									index,
+								) =>
 									submenus.length === 0 ? (
 										<div className="w-full" key={index}>
 											<TooltipProvider disableHoverableContent>
@@ -132,6 +164,14 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 															>
 																{label}
 															</p>
+															{badge !== undefined && isOpen !== false && (
+																<Badge
+																	variant="secondary"
+																	className="ml-2 shrink-0 text-xs font-normal"
+																>
+																	{badge}
+																</Badge>
+															)}
 														</Button>
 													</TooltipTrigger>
 													{isOpen === false && (

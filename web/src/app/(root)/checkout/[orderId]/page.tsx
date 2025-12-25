@@ -203,6 +203,7 @@ const CheckoutHomePage = async (props: {
 							order={order}
 							hidePaymentMethod={true}
 							hideOrderStatus={true}
+							hideContactSeller={true}
 						/>
 					</div>
 

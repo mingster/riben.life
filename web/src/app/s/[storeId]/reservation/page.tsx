@@ -6,6 +6,7 @@ import { sqlClient } from "@/lib/prismadb";
 import type {
 	Rsvp,
 	RsvpSettings,
+	Store,
 	StoreFacility,
 	StoreSettings,
 	User,
@@ -31,6 +32,12 @@ export default async function ReservationPage(props: {
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});
+
+	// Require sign-in for reservations
+	if (!session?.user?.id) {
+		const callbackUrl = `/s/${params.storeId}/reservation`;
+		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+	}
 
 	// Get RSVPs for a wider range (current week ± 2 weeks) to support navigation
 	// Use UTC to ensure server-independent time calculations
@@ -98,7 +105,7 @@ export default async function ReservationPage(props: {
 	}
 
 	// Fetch all data in parallel for better performance
-	let store;
+	let store: Store | null;
 	let rsvpSettings: RsvpSettings | null;
 	let facilities: StoreFacility[];
 	let existingReservations: Rsvp[];

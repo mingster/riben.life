@@ -10,6 +10,7 @@ import {
 	type Currency,
 	getLinePayClientByStore,
 } from "@/lib/linePay";
+import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

@@ -247,17 +247,15 @@ export const createRsvpAction = storeActionClient
 						const rsvpTimeDate = epochToDate(createdRsvp.rsvpTime);
 						const formattedRsvpTime = rsvpTimeDate
 							? format(
-									getDateInTz(
-										rsvpTimeDate,
-										getOffsetHours(storeTimezone),
-									),
+									getDateInTz(rsvpTimeDate, getOffsetHours(storeTimezone)),
 									"yyyy-MM-dd HH:mm",
 								)
 							: "";
 
 						// Build order note with RSVP details
 						const baseNote = t("rsvp_reservation_payment_note");
-						const facilityName = facility.facilityName || t("facility_name") || "Facility";
+						const facilityName =
+							facility.facilityName || t("facility_name") || "Facility";
 						const orderNote = `${baseNote}\n${t("rsvp_id") || "RSVP ID"}: ${createdRsvp.id}\n${t("facility_name") || "Facility"}: ${facilityName}\n${t("rsvp_time") || "Reservation Time"}: ${formattedRsvpTime}`;
 
 						finalOrderId = await createRsvpStoreOrder({

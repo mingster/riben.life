@@ -61,6 +61,7 @@ import { SlotPicker } from "./slot-picker";
 import { Separator } from "@/components/ui/separator";
 import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
 import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
+import { clientLogger } from "@/lib/client-logger";
 
 interface ReservationFormProps {
 	storeId: string;
@@ -444,6 +445,14 @@ export function ReservationForm({
 					}
 
 					const existingStart = Number(existingRsvpTime);
+
+					// Quick check: if reservations are on different days (more than 24 hours apart), they can't overlap
+					const timeDiff = Math.abs(slotStart - existingStart);
+					const oneDayMs = 24 * 60 * 60 * 1000;
+					if (timeDiff >= oneDayMs) {
+						return false; // Different days, no overlap possible
+					}
+
 					// Get duration from facility or use default
 					const existingDuration =
 						r.Facility?.defaultDuration ?? defaultDuration;
@@ -655,6 +664,28 @@ export function ReservationForm({
 					});
 					if (result?.data?.rsvp) {
 						onReservationUpdated?.(result.data.rsvp as Rsvp);
+
+						// if associated order is still unpaid, bring user to checkout page
+						if (
+							result?.data?.rsvp?.orderId &&
+							!result?.data?.rsvp?.alreadyPaid
+						) {
+							router.push(`/checkout/${result?.data?.rsvp?.orderId}`);
+						}
+					} else {
+						//something went wrong??
+						clientLogger.error(
+							"Something went wrong when updating reservation",
+							{
+								metadata: {
+									result: result,
+								},
+							},
+						);
+						toastError({
+							title: t("Error"),
+							description: t("Something went wrong when updating reservation"),
+						});
 					}
 				} else {
 					// Create mode
