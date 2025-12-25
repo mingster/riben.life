@@ -14,11 +14,12 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { cn } from "@/lib/utils";
 import type { StorePaymentMethodMapping } from "@/types";
 
 interface CheckoutPaymentMethodsProps {
 	orderId: string;
-	paymentMethods: StorePaymentMethodMapping[];
+	paymentMethods: (StorePaymentMethodMapping & { disabled?: boolean })[];
 	returnUrl?: string;
 }
 
@@ -30,13 +31,19 @@ export function CheckoutPaymentMethods({
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	// Find first enabled payment method for initial selection
+	const firstEnabledMethod = paymentMethods.find((m) => !m.disabled);
 	const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<
 		string | null
-	>(paymentMethods[0]?.methodId || null);
+	>(firstEnabledMethod?.methodId || null);
 	const [isProcessing, setIsProcessing] = useState(false);
 
 	const handlePaymentMethodChange = (value: string) => {
-		setSelectedPaymentMethodId(value);
+		// Don't allow selection of disabled payment methods
+		const selectedMethod = paymentMethods.find((m) => m.methodId === value);
+		if (selectedMethod && !selectedMethod.disabled) {
+			setSelectedPaymentMethodId(value);
+		}
 	};
 
 	const handleContinueToPayment = () => {
@@ -90,10 +97,19 @@ export function CheckoutPaymentMethods({
 				>
 					{paymentMethods.map((mapping) => (
 						<div key={mapping.methodId} className="flex items-center space-x-2">
-							<RadioGroupItem value={mapping.methodId} id={mapping.methodId} />
+							<RadioGroupItem
+								value={mapping.methodId}
+								id={mapping.methodId}
+								disabled={mapping.disabled}
+							/>
 							<Label
 								htmlFor={mapping.methodId}
-								className="font-normal cursor-pointer"
+								className={cn(
+									"font-normal",
+									mapping.disabled
+										? "cursor-not-allowed opacity-50"
+										: "cursor-pointer",
+								)}
 							>
 								{mapping.paymentDisplayName !== null &&
 								mapping.paymentDisplayName !== ""

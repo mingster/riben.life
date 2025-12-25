@@ -47,6 +47,18 @@ export function GetMenuList(
 	const { t } = useTranslation(lng);
 
 	const storeFixedMenu = [
+		...(store.rsvpSettings?.acceptReservation === true
+			? [
+					{
+						href: `${nav_prefix}/reservation`,
+						label: t("reservation"),
+						active: pathname === `${nav_prefix}/reservation`,
+						icon: IconCalendarCheck,
+						submenus: [],
+					},
+				]
+			: []),
+
 		...(store.useOrderSystem
 			? [
 					{
@@ -76,22 +88,10 @@ export function GetMenuList(
 		...(store.useCustomerCredit
 			? [
 					{
-						href: `${nav_prefix}/recharge`,
-						label: t("credit_recharge"),
-						active: pathname.includes(`${nav_prefix}/recharge`),
+						href: `${nav_prefix}/refill-credit-points`,
+						label: t("credit_refill_points"),
+						active: pathname.includes(`${nav_prefix}/refill-credit-points`),
 						icon: IconCoin,
-						submenus: [],
-					},
-				]
-			: []),
-
-		...(store.rsvpSettings?.acceptReservation === true
-			? [
-					{
-						href: `${nav_prefix}/reservation`,
-						label: t("reservation"),
-						active: pathname === `${nav_prefix}/reservation`,
-						icon: IconCalendarCheck,
 						submenus: [],
 					},
 				]
@@ -122,14 +122,6 @@ export function GetMenuList(
 					},
 				]
 			: []),
-		{
-			href: `${nav_prefix}/my-fiat-ledger`,
-			label: t("my_fiat_ledger"),
-			active: pathname.includes(`${nav_prefix}/my-fiat-ledger`),
-			icon: IconCreditCard,
-			submenus: [],
-		},
-
 		{
 			href: `${nav_prefix}/faq`,
 			label: t("FAQ"),

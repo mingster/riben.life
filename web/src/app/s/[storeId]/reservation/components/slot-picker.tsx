@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp, RsvpSettings, StoreSettings } from "@/types";
 import {
+	convertToUtc,
 	dayAndTimeSlotToUtc,
 	epochToDate,
 	getDateInTz,
@@ -303,9 +304,29 @@ export function SlotPicker({
 
 	const handleSlotClick = useCallback(
 		(day: Date, timeSlot: string) => {
-			// Convert day + timeSlot to UTC Date using store timezone
-			const dateInStoreTz = dayAndTimeSlotToUtc(day, timeSlot, storeTimezone);
-			onSlotSelect(dateInStoreTz);
+			// Extract date components from day in store timezone (not UTC)
+			const formatter = new Intl.DateTimeFormat("en-US", {
+				timeZone: storeTimezone,
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+			});
+			const parts = formatter.formatToParts(day);
+			const year = parts.find((p) => p.type === "year")?.value || "";
+			const month = parts.find((p) => p.type === "month")?.value || "";
+			const dayOfMonth = parts.find((p) => p.type === "day")?.value || "";
+
+			// Extract time from timeSlot
+			const [hours, minutes] = timeSlot.split(":").map(Number);
+			const hourStr = String(hours).padStart(2, "0");
+			const minuteStr = String(minutes).padStart(2, "0");
+
+			// Create datetime-local string (interpreted as store timezone)
+			const datetimeLocalString = `${year}-${month}-${dayOfMonth}T${hourStr}:${minuteStr}`;
+
+			// Convert store timezone datetime to UTC Date
+			const dateInUtc = convertToUtc(datetimeLocalString, storeTimezone);
+			onSlotSelect(dateInUtc);
 		},
 		[onSlotSelect, storeTimezone],
 	);

@@ -52,9 +52,14 @@ export const createOrderAction = userRequiredActionClient
 			);
 		}
 
-		// Validate store exists
+		// Validate store exists and get defaultCurrency
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
+			select: {
+				id: true,
+				autoAcceptOrder: true,
+				defaultCurrency: true,
+			},
 		});
 
 		if (!store) {
@@ -118,6 +123,9 @@ export const createOrderAction = userRequiredActionClient
 			? OrderStatus.Processing
 			: OrderStatus.Pending;
 
+		// Use store's defaultCurrency at the time of creation
+		const orderCurrency = (store.defaultCurrency || currency || "twd").toLowerCase();
+
 		// Create order with order items
 		const result = await sqlClient.storeOrder.create({
 			data: {
@@ -126,7 +134,7 @@ export const createOrderAction = userRequiredActionClient
 				facilityId: facilityId || null,
 				isPaid: false,
 				orderTotal: new Prisma.Decimal(total),
-				currency,
+				currency: orderCurrency,
 				paymentMethodId,
 				shippingMethodId,
 				pickupCode: getRandomNum(6),

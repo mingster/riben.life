@@ -136,6 +136,11 @@ export async function POST(
 		where: {
 			id: params.storeId,
 		},
+		select: {
+			id: true,
+			autoAcceptOrder: true,
+			defaultCurrency: true,
+		},
 	});
 
 	if (!store) {
@@ -152,6 +157,9 @@ export async function POST(
 		? OrderStatus.Processing
 		: OrderStatus.Pending;
 
+	// Use store's defaultCurrency at the time of creation
+	const orderCurrency = (store.defaultCurrency || currency || "twd").toLowerCase();
+
 	// shipping method
 
 	const result = await sqlClient.storeOrder.create({
@@ -161,7 +169,7 @@ export async function POST(
 			facilityId: facilityId || null,
 			isPaid: false,
 			orderTotal: new Prisma.Decimal(total),
-			currency: currency,
+			currency: orderCurrency,
 			paymentMethodId: paymentMethodId,
 			shippingMethodId: shippingMethodId,
 			pickupCode: getRandomNum(6),

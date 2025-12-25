@@ -6,6 +6,7 @@ import { SafeError } from "@/utils/error";
 import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { ensureReservationPrepaidProduct } from "./ensure-reservation-prepaid-product";
+import { getT } from "@/app/i18n";
 
 interface CreateRsvpStoreOrderParams {
 	tx: Omit<
@@ -88,10 +89,27 @@ export async function createRsvpStoreOrder(
 		throw new SafeError("Reservation prepaid product not found");
 	}
 
+	// Fetch store to get defaultCurrency at the time of creation
+	const store = await tx.store.findUnique({
+		where: { id: storeId },
+		select: {
+			defaultCurrency: true,
+		},
+	});
+
+	if (!store) {
+		throw new SafeError("Store not found");
+	}
+
 	const now = getUtcNowEpoch();
 
 	// Create pickupCode with RSVP ID and facility ID
 	const pickupCode = `RSVP:${rsvpId}|FACILITY:${facilityId}`;
+
+	const { t } = await getT();
+
+	// Use store's defaultCurrency at the time of creation
+	const orderCurrency = (store.defaultCurrency || currency || "twd").toLowerCase();
 
 	// Create the store order
 	const storeOrder = await tx.storeOrder.create({
@@ -101,7 +119,7 @@ export async function createRsvpStoreOrder(
 			facilityId, // Store facility ID in order
 			pickupCode, // Store RSVP ID and facility ID in pickupCode
 			orderTotal: new Prisma.Decimal(orderTotal),
-			currency: currency.toLowerCase(),
+			currency: orderCurrency,
 			paymentMethodId: paymentMethod.id,
 			shippingMethodId: defaultShippingMethod.id,
 			orderStatus: isPaid
@@ -117,7 +135,7 @@ export async function createRsvpStoreOrder(
 			OrderItems: {
 				create: {
 					productId: reservationPrepaidProduct.id,
-					productName: reservationPrepaidProduct.name,
+					productName: t("reservation_prepaid") || "Prepaid for Reservation",
 					quantity: 1, // Single prepaid payment
 					unitPrice: new Prisma.Decimal(orderTotal), // Prepaid amount
 					unitDiscount: new Prisma.Decimal(0),

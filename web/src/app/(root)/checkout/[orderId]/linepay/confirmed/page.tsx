@@ -68,10 +68,23 @@ export default async function LinePayConfirmedPage({
 	const res = await linePayClient.confirm.send(confirmRequest);
 
 	if (res.body.returnCode === "0000") {
+		// Find LINE Pay payment method
+		const linePayPaymentMethod = await sqlClient.paymentMethod.findFirst({
+			where: {
+				payUrl: "linePay",
+				isDeleted: false,
+			},
+		});
+
+		if (!linePayPaymentMethod) {
+			throw new Error("LINE Pay payment method not found");
+		}
+
 		// Mark order as paid using the new action
 		const checkoutAttributes = order.checkoutAttributes || "";
 		const result = await markOrderAsPaidAction({
 			orderId: order.id,
+			paymentMethodId: linePayPaymentMethod.id,
 			checkoutAttributes,
 		});
 

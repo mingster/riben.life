@@ -101,7 +101,7 @@ export default async function ReservationPage(props: {
 	let store;
 	let rsvpSettings: RsvpSettings | null;
 	let facilities: StoreFacility[];
-	let rsvps: Rsvp[];
+	let existingReservations: Rsvp[];
 	let storeSettings: StoreSettings | null;
 	let user: User | null = null;
 	let formattedRsvps: Rsvp[] = [];
@@ -167,7 +167,10 @@ export default async function ReservationPage(props: {
 				include: {
 					Store: true,
 					Customer: true,
+					CreatedBy: true,
+					Order: true,
 					Facility: true,
+					FacilityPricingRule: true,
 				},
 				orderBy: { rsvpTime: "asc" },
 			}),
@@ -178,7 +181,7 @@ export default async function ReservationPage(props: {
 
 		rsvpSettings = rsvpSettingsResult;
 		facilities = facilitiesResult;
-		rsvps = rsvpsResult;
+		existingReservations = rsvpsResult;
 		storeSettings = storeSettingsResult;
 
 		// Fetch user and check blacklist in parallel (only if logged in)
@@ -226,7 +229,7 @@ export default async function ReservationPage(props: {
 		}
 
 		// Transform RSVPs once (no need for double transformation)
-		formattedRsvps = rsvps.map((rsvp) => {
+		formattedRsvps = existingReservations.map((rsvp) => {
 			const transformed = { ...rsvp };
 			transformPrismaDataForJson(transformed);
 			return transformed as Rsvp;
@@ -248,7 +251,7 @@ export default async function ReservationPage(props: {
 			<Suspense fallback={<Loader />}>
 				<div className="mx-auto max-w-7xl py-6">
 					<ReservationClient
-						rsvps={formattedRsvps}
+						existingReservations={existingReservations}
 						rsvpSettings={rsvpSettings}
 						storeSettings={storeSettings}
 						facilities={facilities}

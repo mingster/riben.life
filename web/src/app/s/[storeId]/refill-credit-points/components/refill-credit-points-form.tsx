@@ -1,14 +1,8 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useRouter } from "next/navigation";
 import { useTranslation } from "@/app/i18n/client";
-import { useI18n } from "@/providers/i18n-provider";
+import { toastError } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
 	Form,
 	FormControl,
@@ -17,8 +11,15 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import { toastError } from "@/components/toaster";
-import { createRechargeOrderAction } from "@/actions/store/credit/create-recharge-order";
+import { Input } from "@/components/ui/input";
+import { useI18n } from "@/providers/i18n-provider";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { createRefillCreditPointsOrderAction } from "@/actions/store/credit/create-recharge-order";
 import {
 	Card,
 	CardContent,
@@ -26,21 +27,23 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import type { Store, StorePaymentMethodMapping } from "@/types";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import type { Store, StorePaymentMethodMapping } from "@/types";
 
-const rechargeFormSchema = z.object({
+const refillCreditPointsFormSchema = z.object({
 	creditAmount: z.coerce
 		.number()
-		.positive("Credit amount must be positive")
-		.min(1, "Credit amount must be at least 1 point"),
+		.positive("Credit points amount must be positive")
+		.min(1, "Credit points amount must be at least 1 point"),
 	paymentMethodId: z.string().min(1, "Payment method is required"),
 });
 
-type RechargeFormValues = z.infer<typeof rechargeFormSchema>;
+type RefillCreditPointsFormValues = z.infer<
+	typeof refillCreditPointsFormSchema
+>;
 
-interface RechargeFormProps {
+interface RefillCreditPointsFormProps {
 	storeId: string;
 	store: Store & {
 		StorePaymentMethods: StorePaymentMethodMapping[];
@@ -49,12 +52,12 @@ interface RechargeFormProps {
 	returnUrl?: string;
 }
 
-export function RechargeForm({
+export function RefillCreditPointsForm({
 	storeId,
 	store,
 	rsvpId,
 	returnUrl,
-}: RechargeFormProps) {
+}: RefillCreditPointsFormProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const router = useRouter();
@@ -83,8 +86,8 @@ export function RechargeForm({
 		defaultPaymentMethod = allPaymentMethods[0];
 	}
 
-	const form = useForm<RechargeFormValues>({
-		resolver: zodResolver(rechargeFormSchema) as any,
+	const form = useForm<RefillCreditPointsFormValues>({
+		resolver: zodResolver(refillCreditPointsFormSchema) as any,
 		defaultValues: {
 			creditAmount: minPurchase > 0 ? minPurchase : 100,
 			paymentMethodId: defaultPaymentMethod?.methodId || "",
@@ -99,7 +102,7 @@ export function RechargeForm({
 	}, [creditAmount, creditExchangeRate]);
 
 	const onSubmit = useCallback(
-		async (data: RechargeFormValues) => {
+		async (data: RefillCreditPointsFormValues) => {
 			try {
 				setIsSubmitting(true);
 
@@ -122,8 +125,8 @@ export function RechargeForm({
 					return;
 				}
 
-				// Create recharge order
-				const result = await createRechargeOrderAction({
+				// Create refill credit points order
+				const result = await createRefillCreditPointsOrderAction({
 					storeId,
 					creditAmount: data.creditAmount,
 					paymentMethodId: data.paymentMethodId,
@@ -165,7 +168,7 @@ export function RechargeForm({
 					description:
 						error instanceof Error
 							? error.message
-							: "Failed to create recharge order",
+							: "Failed to create refill credit points order",
 				});
 			} finally {
 				setIsSubmitting(false);

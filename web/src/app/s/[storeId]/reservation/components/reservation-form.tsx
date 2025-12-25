@@ -73,7 +73,7 @@ interface ReservationFormProps {
 	onReservationCreated?: (newRsvp: Rsvp) => void;
 	// Edit mode props
 	rsvp?: Rsvp;
-	rsvps?: Rsvp[];
+	existingReservations?: Rsvp[]; // Existing reservations to check for conflicts
 	onReservationUpdated?: (updatedRsvp: Rsvp) => void;
 	// Common props
 	hideCard?: boolean;
@@ -98,7 +98,7 @@ export function ReservationForm({
 	defaultRsvpTime,
 	onReservationCreated,
 	rsvp,
-	rsvps = [],
+	existingReservations = [],
 	onReservationUpdated,
 	hideCard = false,
 	storeTimezone = "Asia/Taipei",
@@ -385,13 +385,20 @@ export function ReservationForm({
 	const facilityId = form.watch("facilityId");
 
 	// Filter facilities based on rsvpTime and existing reservations
+	// When editing, always include the current facility even if it's not available at the selected time
 	const availableFacilities = useMemo(() => {
+		// Use same naming as store admin for consistency
+		const storeFacilities = facilities;
+
+		if (!storeFacilities) {
+			return [];
+		}
 		if (!rsvpTime || isNaN(rsvpTime.getTime())) {
-			return facilities;
+			return storeFacilities;
 		}
 
 		// First filter by business hours availability
-		let filtered = facilities.filter((facility) =>
+		let filtered = storeFacilities.filter((facility: StoreFacility) =>
 			isFacilityAvailableAtTime(facility, rsvpTime, storeTimezone),
 		);
 
@@ -410,40 +417,86 @@ export function ReservationForm({
 		const slotStart = Number(rsvpTimeEpoch);
 		const slotEnd = slotStart + durationMs;
 
+		// Remove facilities that are already reserved in the same time slot
+		const existingFacilityIds = new Set(
+			existingReservations
+				.filter((r) => {
+					// Exclude the current reservation being edited
+					if (isEditMode && r.id === rsvp?.id) {
+						return false;
+					}
+
+					// Exclude cancelled reservations
+					if (r.status === RsvpStatus.Cancelled) {
+						return false;
+					}
+
+					// Check if reservation is in the same time slot
+					let existingRsvpTime: bigint;
+					if (r.rsvpTime instanceof Date) {
+						existingRsvpTime = BigInt(r.rsvpTime.getTime());
+					} else if (typeof r.rsvpTime === "number") {
+						existingRsvpTime = BigInt(r.rsvpTime);
+					} else if (typeof r.rsvpTime === "bigint") {
+						existingRsvpTime = r.rsvpTime;
+					} else {
+						return false;
+					}
+
+					const existingStart = Number(existingRsvpTime);
+					// Get duration from facility or use default
+					const existingDuration =
+						r.Facility?.defaultDuration ?? defaultDuration;
+					const existingDurationMs = existingDuration * 60 * 1000;
+					const existingEnd = existingStart + existingDurationMs;
+
+					// Check if slots overlap (they overlap if one starts before the other ends)
+					return slotStart < existingEnd && slotEnd > existingStart;
+				})
+				.map((r) => r.facilityId)
+				.filter((id): id is string => Boolean(id)),
+		);
+
+		filtered = filtered.filter(
+			(facility) => !existingFacilityIds.has(facility.id),
+		);
+
 		// Find existing reservations that overlap with this time slot
-		const conflictingReservations = rsvps.filter((existingRsvp) => {
-			// Exclude the current reservation being edited
-			if (isEditMode && existingRsvp.id === rsvp?.id) {
-				return false;
-			}
+		const conflictingReservations = existingReservations.filter(
+			(existingRsvp) => {
+				// Exclude the current reservation being edited
+				if (isEditMode && existingRsvp.id === rsvp?.id) {
+					return false;
+				}
 
-			// Exclude cancelled reservations
-			if (existingRsvp.status === RsvpStatus.Cancelled) {
-				return false;
-			}
+				// Exclude cancelled reservations
+				if (existingRsvp.status === RsvpStatus.Cancelled) {
+					return false;
+				}
 
-			// Convert existing reservation time to epoch
-			let existingRsvpTime: bigint;
-			if (existingRsvp.rsvpTime instanceof Date) {
-				existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
-			} else if (typeof existingRsvp.rsvpTime === "number") {
-				existingRsvpTime = BigInt(existingRsvp.rsvpTime);
-			} else if (typeof existingRsvp.rsvpTime === "bigint") {
-				existingRsvpTime = existingRsvp.rsvpTime;
-			} else {
-				return false;
-			}
+				// Convert existing reservation time to epoch
+				let existingRsvpTime: bigint;
+				if (existingRsvp.rsvpTime instanceof Date) {
+					existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+				} else if (typeof existingRsvp.rsvpTime === "number") {
+					existingRsvpTime = BigInt(existingRsvp.rsvpTime);
+				} else if (typeof existingRsvp.rsvpTime === "bigint") {
+					existingRsvpTime = existingRsvp.rsvpTime;
+				} else {
+					return false;
+				}
 
-			const existingStart = Number(existingRsvpTime);
-			// Get duration from facility or use default
-			const existingDuration =
-				existingRsvp.Facility?.defaultDuration ?? defaultDuration;
-			const existingDurationMs = existingDuration * 60 * 1000;
-			const existingEnd = existingStart + existingDurationMs;
+				const existingStart = Number(existingRsvpTime);
+				// Get duration from facility or use default
+				const existingDuration =
+					existingRsvp.Facility?.defaultDuration ?? defaultDuration;
+				const existingDurationMs = existingDuration * 60 * 1000;
+				const existingEnd = existingStart + existingDurationMs;
 
-			// Check if slots overlap (they overlap if one starts before the other ends)
-			return slotStart < existingEnd && slotEnd > existingStart;
-		});
+				// Check if slots overlap (they overlap if one starts before the other ends)
+				return slotStart < existingEnd && slotEnd > existingStart;
+			},
+		);
 
 		if (singleServiceMode) {
 			// Single Service Mode: If ANY reservation exists, filter out ALL facilities
@@ -464,11 +517,15 @@ export function ReservationForm({
 		}
 
 		// When editing, ensure the current facility is included even if filtered out
-		if (isEditMode && rsvp?.facilityId) {
-			const currentFacility = facilities.find((f) => f.id === rsvp.facilityId);
+		// Use form's facilityId first, then fall back to rsvp.facilityId
+		const currentFacilityId = form.getValues("facilityId") || rsvp?.facilityId;
+		if (isEditMode && currentFacilityId) {
+			const currentFacility = storeFacilities.find(
+				(f: StoreFacility) => f.id === currentFacilityId,
+			);
 			if (
 				currentFacility &&
-				!filtered.find((f) => f.id === currentFacility.id)
+				!filtered.find((f: StoreFacility) => f.id === currentFacility.id)
 			) {
 				filtered.push(currentFacility);
 			}
@@ -480,14 +537,14 @@ export function ReservationForm({
 		rsvpTime,
 		storeTimezone,
 		isFacilityAvailableAtTime,
-		rsvps,
+		isEditMode,
+		form,
+		rsvp?.facilityId,
+		rsvp?.id,
 		rsvpSettings?.singleServiceMode,
 		rsvpSettings?.defaultDuration,
-		isEditMode,
-		rsvp?.id,
-		rsvp?.facilityId,
+		existingReservations,
 	]);
-
 	// Get selected facility for cost calculation
 	const selectedFacility = useMemo(() => {
 		if (!facilityId) return null;
@@ -744,7 +801,7 @@ export function ReservationForm({
 											// Edit mode: Use SlotPicker
 											<div className="border rounded-lg p-4">
 												<SlotPicker
-													existingReservations={rsvps}
+													existingReservations={existingReservations}
 													rsvpSettings={rsvpSettings}
 													storeSettings={storeSettings || null}
 													storeTimezone={storeTimezone}
@@ -896,7 +953,7 @@ export function ReservationForm({
 												<>
 													<FacilityCombobox
 														storeFacilities={availableFacilities}
-														disabled={isSubmitting}
+														disabled={isSubmitting || isEditMode}
 														defaultValue={selectedFacility}
 														onValueChange={(facility) => {
 															field.onChange(facility?.id || "");

@@ -376,8 +376,17 @@ export const DisplayReservations = ({
 					}
 				}
 			} else {
+				if (!reservationToCancel.Store?.id) {
+					toastError({
+						title: t("Error"),
+						description: "Store ID is required",
+					});
+					return;
+				}
+
 				const result = await cancelReservationAction({
 					id: reservationToCancel.id,
+					storeId: reservationToCancel.Store.id,
 				});
 
 				if (result?.serverError) {
@@ -761,7 +770,7 @@ export const DisplayReservations = ({
 					facilities={storeData.facilities}
 					user={user}
 					rsvp={reservationToEdit}
-					rsvps={sortedReservations}
+					existingReservations={sortedReservations}
 					storeTimezone={
 						reservationToEdit.Store.defaultTimezone || "Asia/Taipei"
 					}

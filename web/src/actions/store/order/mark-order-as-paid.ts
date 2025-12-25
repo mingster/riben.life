@@ -17,7 +17,7 @@ export const markOrderAsPaidAction = baseClient
 	.metadata({ name: "markOrderAsPaid" })
 	.schema(markOrderAsPaidSchema)
 	.action(async ({ parsedInput }) => {
-		const { orderId, checkoutAttributes } = parsedInput;
+		const { orderId, paymentMethodId, checkoutAttributes } = parsedInput;
 
 		// Get order with relations (including OrderItemView to check for Store Credit)
 		const order = await sqlClient.storeOrder.findUnique({
@@ -45,12 +45,22 @@ export const markOrderAsPaidAction = baseClient
 			throw new SafeError("Order not found");
 		}
 
+		// Use provided paymentMethodId or fall back to order's PaymentMethod
+		let finalPaymentMethodId = paymentMethodId;
+		if (!finalPaymentMethodId) {
+			if (!order.PaymentMethod) {
+				throw new SafeError("Payment method not found");
+			}
+			finalPaymentMethodId = order.PaymentMethod.id;
+		}
+
 		// Determine if store is Pro level
 		const isPro = (order.Store.level ?? 0) > 0;
 
 		// Use shared core function
 		const updatedOrder = await markOrderAsPaidCore({
 			order,
+			paymentMethodId: finalPaymentMethodId,
 			isPro,
 			checkoutAttributes,
 		});

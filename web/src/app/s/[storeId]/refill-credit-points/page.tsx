@@ -1,32 +1,30 @@
-import { redirect } from "next/navigation";
-import { sqlClient } from "@/lib/prismadb";
-import { transformPrismaDataForJson } from "@/utils/utils";
-import Container from "@/components/ui/container";
-import { Heading } from "@/components/ui/heading";
-import { RechargeForm } from "./components/recharge-form";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { SafeError } from "@/utils/error";
-import { Suspense } from "react";
 import { Loader } from "@/components/loader";
+import Container from "@/components/ui/container";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { auth } from "@/lib/auth";
+import { sqlClient } from "@/lib/prismadb";
 import type { Store, StorePaymentMethodMapping } from "@/types";
-import type { PaymentMethod } from "@prisma/client";
 import { StoreLevel } from "@/types/enum";
-
-type Params = Promise<{ storeId: string }>;
-type SearchParams = Promise<{ rsvpId?: string }>;
+import { SafeError } from "@/utils/error";
+import { transformPrismaDataForJson } from "@/utils/utils";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { RefillCreditPointsForm } from "./components/refill-credit-points-form";
+import { getT } from "@/app/i18n";
+import { IconAlertCircle } from "@tabler/icons-react";
 
 /**
- * Customer credit recharge page.
+ * Customer credit points recharge page.
  * Implements FR-CREDIT-008 to FR-CREDIT-011 from FUNCTIONAL-REQUIREMENTS-CREDIT.md
  */
-export default async function RechargePage(props: {
-	params: Params;
-	searchParams: SearchParams;
+export default async function RefillCreditPointsPage(props: {
+	params: Promise<{ storeId: string }>;
+	searchParams: Promise<{ rsvpId?: string }>;
 }) {
 	const params = await props.params;
 	const searchParams = await props.searchParams;
-	const rsvpId = searchParams.rsvpId;
+	const rsvpId = searchParams?.rsvpId;
 
 	// Check authentication
 	const session = await auth.api.getSession({
@@ -34,12 +32,12 @@ export default async function RechargePage(props: {
 	});
 
 	if (!session?.user?.id) {
-		const callbackUrl = `/s/${params.storeId}/recharge${rsvpId ? `?rsvpId=${rsvpId}` : ""}`;
-		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+		const callbackUrl = `/s/${params.storeId}/refill-credit-points${rsvpId ? `?rsvpId=${rsvpId}` : ""}`;
+		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl ?? "")}`);
 	}
 	// Get store and validate credit system is enabled
 	const store = await sqlClient.store.findUnique({
-		where: { id: params.storeId },
+		where: { id: params?.storeId },
 		select: {
 			id: true,
 			name: true,
@@ -61,8 +59,23 @@ export default async function RechargePage(props: {
 		throw new SafeError("Store not found");
 	}
 
+	// Get translation function
+	const { t } = await getT();
+
+	// If customer credit is not enabled, display error gracefully
 	if (!store.useCustomerCredit) {
-		throw new SafeError("Customer credit system is not enabled for this store");
+		return (
+			<Container className="bg-transparent">
+				<Alert variant="destructive">
+					<IconAlertCircle className="h-4 w-4" />
+					<AlertTitle>{t("error_title") || "Error"}</AlertTitle>
+					<AlertDescription>
+						{t("customer_credit_system_not_enabled") ||
+							"Customer credit system is not enabled for this store."}
+					</AlertDescription>
+				</Alert>
+			</Container>
+		);
 	}
 
 	// Add default payment methods if store has none
@@ -110,7 +123,7 @@ export default async function RechargePage(props: {
 		<Container className="bg-transparent">
 			<div className="space-y-6">
 				<Suspense fallback={<Loader />}>
-					<RechargeForm
+					<RefillCreditPointsForm
 						storeId={params.storeId}
 						store={
 							store as Store & {

@@ -1,6 +1,7 @@
 import { markOrderAsPaidAction } from "@/actions/storeAdmin/order/mark-order-as-paid";
 import logger from "@/lib/logger";
 import { NextResponse } from "next/server";
+import { sqlClient } from "@/lib/prismadb";
 
 /**
  * Store Admin API route to mark cash/in-person orders as paid.
@@ -31,12 +32,28 @@ export async function POST(
 	}
 
 	try {
+		// Find cash payment method
+		const cashPaymentMethod = await sqlClient.paymentMethod.findFirst({
+			where: {
+				payUrl: "cash",
+				isDeleted: false,
+			},
+		});
+
+		if (!cashPaymentMethod) {
+			return NextResponse.json(
+				{ success: false, message: "Cash payment method not found" },
+				{ status: 400 },
+			);
+		}
+
 		// Mark order as paid using the safe-action
 		// storeActionClient validates store admin access automatically
 		const result = await markOrderAsPaidAction(
 			params.storeId, // Bound argument: storeId
 			{
 				orderId: params.orderId,
+				paymentMethodId: cashPaymentMethod.id,
 				checkoutAttributes: JSON.stringify({ paymentMethod: "cash" }),
 			},
 		);

@@ -37,6 +37,22 @@ export function RsvpCancelPolicyInfo({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
+	// If canCancel is false, show cannot cancel message
+	if (rsvpSettings?.canCancel === false) {
+		return (
+			<div className="mt-2 p-3 rounded-md bg-muted/50 border border-border">
+				<div className="text-xs font-medium mb-1">
+					{t("cancel_policy") || "Cancel Policy"}
+				</div>
+				<div className="text-xs text-muted-foreground">
+					{t("rsvp_cannot_cancel_reservation") ||
+						"Reservations cannot be cancelled"}
+				</div>
+			</div>
+		);
+	}
+
+	// If cancelPolicyInfo is null (canCancel not enabled or invalid), don't show anything
 	if (!cancelPolicyInfo) {
 		return null;
 	}
@@ -44,7 +60,6 @@ export function RsvpCancelPolicyInfo({
 	// Calculate total cost: use facilityCost if provided, otherwise use rsvpSettings.defaultCost
 	const totalCost = facilityCost ?? rsvpSettings?.defaultCost ?? null;
 
-	console.log("totalCost", totalCost);
 	return (
 		<div className="mt-2 p-3 rounded-md bg-muted/50 border border-border">
 			<div className="text-xs font-medium mb-1">
@@ -53,6 +68,14 @@ export function RsvpCancelPolicyInfo({
 
 			<div className="text-xs text-muted-foreground space-y-1">
 				<ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+					{rsvpSettings?.canCancel && (
+						<li>
+							{t("rsvp_cancellation_policy", {
+								hours: rsvpSettings.cancelHours ?? 24,
+							})}
+						</li>
+					)}
+
 					{/* TODO: Display credit points needed if useCustomerCredit is true and there's a facility cost
 					{useCustomerCredit &&
 						creditExchangeRate &&
@@ -122,14 +145,6 @@ export function RsvpCancelPolicyInfo({
 								</li>
 							);
 						})()}
-
-					{rsvpSettings?.canCancel && (
-						<li>
-							{t("rsvp_cancellation_policy", {
-								hours: rsvpSettings.cancelHours ?? 24,
-							})}
-						</li>
-					)}
 
 					{rsvpTime && (
 						<li>

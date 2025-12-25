@@ -1208,6 +1208,7 @@ model StoreOrder {
   taxRate     Decimal @default(0)
   orderTax    Decimal @default(0)
   orderTotal  Decimal @default(0)
+  currency String  @default("twd")
 
   createdAt      BigInt
   updatedAt      BigInt

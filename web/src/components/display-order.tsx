@@ -19,6 +19,7 @@ type orderProps = {
 	order: StoreOrder;
 	hidePaymentMethod?: boolean;
 	hideOrderStatus?: boolean;
+	showOrderNotes?: boolean;
 };
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
@@ -26,6 +27,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 	order,
 	hidePaymentMethod = false,
 	hideOrderStatus = false,
+	showOrderNotes = false,
 }) => {
 	//console.log("DisplayOrder", JSON.stringify(order));
 	//logger.info(order);
@@ -51,7 +53,16 @@ export const DisplayOrder: React.FC<orderProps> = ({
 	//console.log("status", order.orderStatus);
 
 	const buyAgain = async (orderId: string) => {
-		alert(`buy again${orderId}`);
+		// Check if order is for RSVP (pickupCode starts with "RSVP:")
+		const isRsvpOrder = order.pickupCode?.startsWith("RSVP:") ?? false;
+
+		if (isRsvpOrder) {
+			// Navigate to store's reservation page
+			router.push(`/s/${storeId}/reservation`);
+		} else {
+			// Navigate to store's menu page
+			router.push(`/s/${storeId}/menu`);
+		}
 	};
 
 	const pay = async (orderId: string, payUrl?: string) => {
@@ -60,13 +71,13 @@ export const DisplayOrder: React.FC<orderProps> = ({
 		// if no pay url, use stripe as default
 		if (!purl) purl = "stripe";
 
-		const url = `/checkout/${orderId}/${purl}/`;
+		const url = `/checkout/${orderId}/`;
 		//console.log(url);
 		router.push(url);
 	};
 
 	const contactSeller = (storeId: string, orderId: string) => {
-		router.push(`/s/${storeId}/support/new?orderid=${orderId}`);
+		router.push(`/s/${storeId}/support`);
 	};
 
 	const canPay =
@@ -128,13 +139,37 @@ export const DisplayOrder: React.FC<orderProps> = ({
 					))}
 				</div>
 
+				{/* Order notes (only display notes marked for customer) */}
+				{showOrderNotes &&
+					order.OrderNotes &&
+					order.OrderNotes.filter(
+						(note: { displayToCustomer?: boolean }) =>
+							note.displayToCustomer === true,
+					).length > 0 && (
+						<div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
+							<div className="space-y-1.5">
+								{order.OrderNotes.filter(
+									(note: { displayToCustomer?: boolean }) =>
+										note.displayToCustomer === true,
+								).map((note: { id: string; note: string }) => (
+									<div
+										key={note.id}
+										className="text-xs sm:text-sm text-muted-foreground bg-muted/50 p-2 rounded"
+									>
+										{note.note}
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+
 				{/* Total */}
 				<div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
 					<span className="font-semibold text-sm sm:text-base">
 						{t("orderTotal_label")}
 					</span>
-					<span className="font-bold text-base sm:text-lg">
-						${Number(order.orderTotal)} {order.currency}
+					<span className="font-bold text-base sm:text-lg capitalize">
+						{Number(order.orderTotal)} {order.currency.toUpperCase()}
 					</span>
 				</div>
 			</CardContent>
@@ -149,7 +184,11 @@ export const DisplayOrder: React.FC<orderProps> = ({
 								size="sm"
 								onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
 							>
-								{order.PaymentMethod?.name} {t("order_tab_pay")}
+								{order.PaymentMethod?.name &&
+									order.PaymentMethod.name !== "TBD" && (
+										<>{order.PaymentMethod.name} </>
+									)}
+								{t("order_tab_pay")}
 							</Button>
 						)}
 
@@ -160,7 +199,8 @@ export const DisplayOrder: React.FC<orderProps> = ({
 								size="sm"
 								disabled
 							>
-								現金{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
+								{t("cash")}{" "}
+								{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
 							</Button>
 						)}
 					</>
