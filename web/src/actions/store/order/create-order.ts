@@ -10,6 +10,7 @@ import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { getRandomNum } from "@/utils/utils";
 import logger from "@/lib/logger";
+import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 
 /**
  * Create a store order (checkout).
@@ -118,13 +119,22 @@ export const createOrderAction = userRequiredActionClient
 
 		const now = getUtcNowEpoch();
 
+		// Add customer as store member if userId is provided
+		if (userId) {
+			await ensureCustomerIsStoreMember(storeId, userId, "user");
+		}
+
 		// Determine order status based on store auto-accept setting
 		const orderStatus = store.autoAcceptOrder
 			? OrderStatus.Processing
 			: OrderStatus.Pending;
 
 		// Use store's defaultCurrency at the time of creation
-		const orderCurrency = (store.defaultCurrency || currency || "twd").toLowerCase();
+		const orderCurrency = (
+			store.defaultCurrency ||
+			currency ||
+			"twd"
+		).toLowerCase();
 
 		// Create order with order items
 		const result = await sqlClient.storeOrder.create({

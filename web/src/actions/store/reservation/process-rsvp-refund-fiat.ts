@@ -1,7 +1,6 @@
 "use server";
 
 import { sqlClient } from "@/lib/prismadb";
-import { SafeError } from "@/utils/error";
 import { Prisma } from "@prisma/client";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
@@ -37,13 +36,14 @@ export async function processRsvpFiatRefund(
 		return { refunded: false };
 	}
 
-	// Get the order to check if it's paid
+	// Get the order to check if it's paid and get currency
 	const order = await sqlClient.storeOrder.findUnique({
 		where: { id: orderId },
 		select: {
 			id: true,
 			isPaid: true,
 			orderTotal: true,
+			currency: true,
 			PaymentMethod: {
 				select: {
 					payUrl: true,
@@ -72,6 +72,8 @@ export async function processRsvpFiatRefund(
 
 	// Use order total as refund amount (for any payment method other than credit points)
 	const refundFiatAmount = Number(order.orderTotal);
+	// Use order's currency
+	const orderCurrency = (order.currency || "twd").toLowerCase();
 
 	logger.info("Processing fiat refund for paid order", {
 		metadata: {
@@ -80,23 +82,12 @@ export async function processRsvpFiatRefund(
 			customerId,
 			orderId,
 			orderTotal: refundFiatAmount,
+			currency: orderCurrency,
 			paymentMethod: order.PaymentMethod?.name,
 			paymentMethodPayUrl: order.PaymentMethod?.payUrl,
 		},
 		tags: ["refund", "fiat"],
 	});
-
-	// Get store to get default currency
-	const store = await sqlClient.store.findUnique({
-		where: { id: storeId },
-		select: {
-			defaultCurrency: true,
-		},
-	});
-
-	if (!store) {
-		throw new SafeError("Store not found");
-	}
 
 	// Get translation function
 	const { t } = await getT();
@@ -150,7 +141,7 @@ export async function processRsvpFiatRefund(
 					refundReason ||
 					t("rsvp_cancellation_refund_note", {
 						amount: refundFiatAmount,
-						currency: (store.defaultCurrency || "twd").toUpperCase(),
+						currency: orderCurrency.toUpperCase(),
 					}),
 				creatorId: customerId, // Customer initiated cancellation
 				createdAt: getUtcNowEpoch(),
@@ -200,18 +191,18 @@ export async function processRsvpFiatRefund(
 					amount: new Prisma.Decimal(-refundFiatAmount), // Negative: revenue reversal
 					fee: new Prisma.Decimal(0), // No fee for fiat refunds
 					platformFee: new Prisma.Decimal(0), // No platform fee for fiat refunds
-					currency: (store.defaultCurrency || "twd").toLowerCase(),
+					currency: orderCurrency,
 					type: StoreLedgerType.StorePaymentProvider, // Revenue-related type
 					balance: new Prisma.Decimal(newStoreBalance),
 					description: t("rsvp_cancellation_refund_description", {
 						amount: refundFiatAmount,
-						currency: (store.defaultCurrency || "twd").toUpperCase(),
+						currency: orderCurrency.toUpperCase(),
 					}),
 					note:
 						refundReason ||
 						t("rsvp_cancellation_refund_note", {
 							amount: refundFiatAmount,
-							currency: (store.defaultCurrency || "twd").toUpperCase(),
+							currency: orderCurrency.toUpperCase(),
 						}),
 					availability: getUtcNowEpoch(), // Immediate availability for refunds
 					createdAt: getUtcNowEpoch(),

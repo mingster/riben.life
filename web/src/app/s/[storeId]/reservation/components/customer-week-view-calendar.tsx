@@ -680,11 +680,6 @@ export const CustomerWeekViewCalendar: React.FC<
 				return false;
 			}
 
-			// Only allow edit for Pending status or if alreadyPaid
-			if (rsvp.status === RsvpStatus.Pending) {
-				return false;
-			}
-
 			// If rsvpSettings is not available, assume editing is not allowed
 			if (!rsvpSettings) {
 				return false;

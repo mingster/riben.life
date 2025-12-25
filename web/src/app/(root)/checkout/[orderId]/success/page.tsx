@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { sqlClient } from "@/lib/prismadb";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
@@ -31,6 +30,9 @@ export default async function CheckoutSuccessPage(props: {
 		throw new Error("order not found");
 	}
 
+	// Determine the redirect URL based on order type and context
+	let finalReturnUrl: string | undefined = returnUrl;
+
 	// Check if this order was for an RSVP prepaid payment (via recharge)
 	// This handles the case where a customer recharges credit to pay for an RSVP
 	let rsvpId: string | undefined;
@@ -44,6 +46,7 @@ export default async function CheckoutSuccessPage(props: {
 	}
 
 	// If rsvpId exists and order is paid, check if RSVP prepaid was processed
+	// Priority: RSVP redirect > returnUrl > default order page
 	if (rsvpId && order.isPaid) {
 		const rsvp = await sqlClient.rsvp.findUnique({
 			where: { id: rsvpId },
@@ -56,22 +59,23 @@ export default async function CheckoutSuccessPage(props: {
 
 		// If RSVP exists, belongs to the same store, and is already paid, redirect to reservation page
 		if (rsvp && rsvp.storeId === order.storeId && rsvp.alreadyPaid) {
-			redirect(`/s/${order.storeId}/reservation`);
+			finalReturnUrl = `/s/${order.storeId}/reservation`;
 		}
 	}
 
-	// If returnUrl is provided, redirect to it instead of showing success page
-	if (returnUrl) {
-		redirect(returnUrl);
+	// If returnUrl is null and order is for RSVP, set returnUrl to store's reservation page
+	if (!finalReturnUrl && order.pickupCode?.startsWith("RSVP:")) {
+		finalReturnUrl = `/s/${order.storeId}/reservation`;
 	}
 
 	transformPrismaDataForJson(order);
 
-	// Use generic success component that redirects to order detail page
+	// Show success message briefly, then redirect
+	// SuccessAndRedirect component handles the 3-second delay and redirect
 	return (
 		<Suspense fallback={<Loader />}>
 			<Container>
-				<SuccessAndRedirect order={order} />
+				<SuccessAndRedirect order={order} returnUrl={finalReturnUrl} />
 			</Container>
 		</Suspense>
 	);

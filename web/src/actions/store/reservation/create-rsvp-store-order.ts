@@ -7,6 +7,7 @@ import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { ensureReservationPrepaidProduct } from "./ensure-reservation-prepaid-product";
 import { getT } from "@/app/i18n";
+import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 
 interface CreateRsvpStoreOrderParams {
 	tx: Omit<
@@ -103,13 +104,20 @@ export async function createRsvpStoreOrder(
 
 	const now = getUtcNowEpoch();
 
+	// Add customer as store member (within transaction)
+	await ensureCustomerIsStoreMember(storeId, customerId, "user", tx);
+
 	// Create pickupCode with RSVP ID and facility ID
 	const pickupCode = `RSVP:${rsvpId}|FACILITY:${facilityId}`;
 
 	const { t } = await getT();
 
 	// Use store's defaultCurrency at the time of creation
-	const orderCurrency = (store.defaultCurrency || currency || "twd").toLowerCase();
+	const orderCurrency = (
+		store.defaultCurrency ||
+		currency ||
+		"twd"
+	).toLowerCase();
 
 	// Create the store order
 	const storeOrder = await tx.storeOrder.create({

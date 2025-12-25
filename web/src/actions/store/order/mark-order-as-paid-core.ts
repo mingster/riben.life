@@ -63,19 +63,18 @@ export async function markOrderAsPaidCore(
 		logTags = [],
 	} = params;
 
-	// Fetch payment method if not provided in order
-	let paymentMethod = order.PaymentMethod;
-	if (!paymentMethod) {
-		paymentMethod = await sqlClient.paymentMethod.findUnique({
-			where: { id: paymentMethodId },
-		});
-	}
+	// Fetch payment method by the provided paymentMethodId
+	// Always use the provided paymentMethodId (e.g., when changing from TBD to cash)
+	// Only fall back to order's PaymentMethod if paymentMethodId is not provided
+	let paymentMethod = await sqlClient.paymentMethod.findUnique({
+		where: { id: paymentMethodId },
+	});
 
 	if (!paymentMethod) {
 		throw new SafeError("Payment method not found");
 	}
 
-	// Ensure the payment method ID matches
+	// Ensure the payment method ID matches (should always match since we fetched by ID)
 	if (paymentMethod.id !== paymentMethodId) {
 		throw new SafeError("Payment method ID mismatch");
 	}
