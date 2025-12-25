@@ -5,11 +5,7 @@ SELECT item.id,
     item.quantity,
     item."unitDiscount",
     item."unitPrice",
-    (
-        SELECT p.name
-        FROM "Product" p
-        WHERE p.id = item."productId"
-    ) AS name,
+    item."productName" AS name,
     (
         SELECT pi.url
         FROM "ProductImages" pi

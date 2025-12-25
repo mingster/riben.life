@@ -11,7 +11,11 @@ import {
 	dateToEpoch,
 	getUtcNowEpoch,
 	convertDateToUtc,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
 } from "@/utils/datetime-utils";
+import { format } from "date-fns";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -76,6 +80,7 @@ export const createRsvpAction = storeActionClient
 			},
 			select: {
 				id: true,
+				facilityName: true,
 				defaultDuration: true,
 				defaultCost: true,
 			},
@@ -238,6 +243,23 @@ export const createRsvpAction = storeActionClient
 						// Get translation function for order note
 						const { t } = await getT();
 
+						// Format RSVP time in store timezone for display
+						const rsvpTimeDate = epochToDate(createdRsvp.rsvpTime);
+						const formattedRsvpTime = rsvpTimeDate
+							? format(
+									getDateInTz(
+										rsvpTimeDate,
+										getOffsetHours(storeTimezone),
+									),
+									"yyyy-MM-dd HH:mm",
+								)
+							: "";
+
+						// Build order note with RSVP details
+						const baseNote = t("rsvp_reservation_payment_note");
+						const facilityName = facility.facilityName || t("facility_name") || "Facility";
+						const orderNote = `${baseNote}\n${t("rsvp_id") || "RSVP ID"}: ${createdRsvp.id}\n${t("facility_name") || "Facility"}: ${facilityName}\n${t("rsvp_time") || "Reservation Time"}: ${formattedRsvpTime}`;
+
 						finalOrderId = await createRsvpStoreOrder({
 							tx,
 							storeId,
@@ -247,7 +269,7 @@ export const createRsvpAction = storeActionClient
 							paymentMethodPayUrl: "TBD", // TBD payment method for admin-created orders
 							rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
 							facilityId: facility.id, // Pass facility ID for pickupCode
-							note: t("rsvp_reservation_payment_note"),
+							note: orderNote,
 							isPaid: false, // Unpaid order for customer to pay later
 						});
 

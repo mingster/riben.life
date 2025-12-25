@@ -89,12 +89,27 @@ export async function createRsvpStoreOrder(
 		throw new SafeError("Reservation prepaid product not found");
 	}
 
+	// Fetch store to get defaultCurrency at the time of creation
+	const store = await tx.store.findUnique({
+		where: { id: storeId },
+		select: {
+			defaultCurrency: true,
+		},
+	});
+
+	if (!store) {
+		throw new SafeError("Store not found");
+	}
+
 	const now = getUtcNowEpoch();
 
 	// Create pickupCode with RSVP ID and facility ID
 	const pickupCode = `RSVP:${rsvpId}|FACILITY:${facilityId}`;
 
 	const { t } = await getT();
+
+	// Use store's defaultCurrency at the time of creation
+	const orderCurrency = (store.defaultCurrency || currency || "twd").toLowerCase();
 
 	// Create the store order
 	const storeOrder = await tx.storeOrder.create({
@@ -104,7 +119,7 @@ export async function createRsvpStoreOrder(
 			facilityId, // Store facility ID in order
 			pickupCode, // Store RSVP ID and facility ID in pickupCode
 			orderTotal: new Prisma.Decimal(orderTotal),
-			currency: currency.toLowerCase(),
+			currency: orderCurrency,
 			paymentMethodId: paymentMethod.id,
 			shippingMethodId: defaultShippingMethod.id,
 			orderStatus: isPaid
