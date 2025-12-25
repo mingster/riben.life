@@ -23,7 +23,7 @@ interface MarkOrderAsPaidCoreParams {
 			LINE_PAY_ID: string | null;
 			STRIPE_SECRET_KEY: string | null;
 		};
-		PaymentMethod: {
+		PaymentMethod?: {
 			id: string;
 			fee: number | Prisma.Decimal;
 			feeAdditional: number | Prisma.Decimal;
@@ -35,6 +35,7 @@ interface MarkOrderAsPaidCoreParams {
 			name: string;
 		}>;
 	};
+	paymentMethodId: string; // Payment method ID to use for this payment
 	isPro: boolean;
 	checkoutAttributes?: string;
 	logTags?: string[];
@@ -54,10 +55,29 @@ interface MarkOrderAsPaidCoreParams {
 export async function markOrderAsPaidCore(
 	params: MarkOrderAsPaidCoreParams,
 ): Promise<StoreOrder> {
-	const { order, isPro, checkoutAttributes, logTags = [] } = params;
+	const {
+		order,
+		paymentMethodId,
+		isPro,
+		checkoutAttributes,
+		logTags = [],
+	} = params;
 
-	if (!order.PaymentMethod) {
+	// Fetch payment method if not provided in order
+	let paymentMethod = order.PaymentMethod;
+	if (!paymentMethod) {
+		paymentMethod = await sqlClient.paymentMethod.findUnique({
+			where: { id: paymentMethodId },
+		});
+	}
+
+	if (!paymentMethod) {
 		throw new SafeError("Payment method not found");
+	}
+
+	// Ensure the payment method ID matches
+	if (paymentMethod.id !== paymentMethodId) {
+		throw new SafeError("Payment method ID mismatch");
 	}
 
 	// Check if this is a Store Credit (credit recharge) order
@@ -221,8 +241,8 @@ export async function markOrderAsPaidCore(
 	if (usePlatform) {
 		// Fee rate is determined by payment method
 		const feeAmount =
-			Number(order.orderTotal) * Number(order.PaymentMethod.fee) +
-			Number(order.PaymentMethod.feeAdditional);
+			Number(order.orderTotal) * Number(paymentMethod.fee) +
+			Number(paymentMethod.feeAdditional);
 		fee = new Prisma.Decimal(-feeAmount);
 		feeTax = new Prisma.Decimal(feeAmount * 0.05);
 	}
@@ -239,7 +259,7 @@ export async function markOrderAsPaidCore(
 		throw new SafeError("Order updatedAt is invalid");
 	}
 
-	const clearDays = order.PaymentMethod.clearDays || 0;
+	const clearDays = paymentMethod.clearDays || 0;
 	const availabilityDate = new Date(
 		orderUpdatedDate.getTime() + clearDays * 24 * 60 * 60 * 1000,
 	);
@@ -265,7 +285,7 @@ export async function markOrderAsPaidCore(
 				paidDate: getUtcNowEpoch(),
 				orderStatus: newOrderStatus,
 				paymentStatus: PaymentStatus.Paid,
-				paymentMethodId: order.PaymentMethod.id, // Update to the actual payment method used
+				paymentMethodId: paymentMethodId, // Update to the actual payment method used
 				paymentCost:
 					fee.toNumber() + feeTax.toNumber() + platformFee.toNumber(),
 				checkoutAttributes:
@@ -341,7 +361,7 @@ export async function markOrderAsPaidCore(
 				currency: order.currency,
 				type: ledgerType,
 				description: `order # ${order.orderNum || order.id}`,
-				note: `${order.PaymentMethod?.name || "Unknown"}, order id: ${order.id}`,
+				note: `${paymentMethod.name || "Unknown"}, order id: ${order.id}`,
 				availability: BigInt(availabilityDate.getTime()),
 				balance: new Prisma.Decimal(
 					balance +

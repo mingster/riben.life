@@ -402,24 +402,6 @@ export function ReservationForm({
 			isFacilityAvailableAtTime(facility, rsvpTime, storeTimezone),
 		);
 
-		// Remove facilities that are already in existingReservations
-		const existingFacilityIds = new Set(
-			existingReservations
-				.filter((r) => {
-					// Exclude the current reservation being edited
-					if (isEditMode && r.id === rsvp?.id) {
-						return false;
-					}
-					return true;
-				})
-				.map((r) => r.facilityId)
-				.filter((id): id is string => Boolean(id)),
-		);
-
-		filtered = filtered.filter(
-			(facility) => !existingFacilityIds.has(facility.id),
-		);
-
 		// Get singleServiceMode setting
 		const singleServiceMode = rsvpSettings?.singleServiceMode ?? false;
 		const defaultDuration = rsvpSettings?.defaultDuration ?? 60;
@@ -434,6 +416,50 @@ export function ReservationForm({
 		const durationMs = defaultDuration * 60 * 1000;
 		const slotStart = Number(rsvpTimeEpoch);
 		const slotEnd = slotStart + durationMs;
+
+		// Remove facilities that are already reserved in the same time slot
+		const existingFacilityIds = new Set(
+			existingReservations
+				.filter((r) => {
+					// Exclude the current reservation being edited
+					if (isEditMode && r.id === rsvp?.id) {
+						return false;
+					}
+
+					// Exclude cancelled reservations
+					if (r.status === RsvpStatus.Cancelled) {
+						return false;
+					}
+
+					// Check if reservation is in the same time slot
+					let existingRsvpTime: bigint;
+					if (r.rsvpTime instanceof Date) {
+						existingRsvpTime = BigInt(r.rsvpTime.getTime());
+					} else if (typeof r.rsvpTime === "number") {
+						existingRsvpTime = BigInt(r.rsvpTime);
+					} else if (typeof r.rsvpTime === "bigint") {
+						existingRsvpTime = r.rsvpTime;
+					} else {
+						return false;
+					}
+
+					const existingStart = Number(existingRsvpTime);
+					// Get duration from facility or use default
+					const existingDuration =
+						r.Facility?.defaultDuration ?? defaultDuration;
+					const existingDurationMs = existingDuration * 60 * 1000;
+					const existingEnd = existingStart + existingDurationMs;
+
+					// Check if slots overlap (they overlap if one starts before the other ends)
+					return slotStart < existingEnd && slotEnd > existingStart;
+				})
+				.map((r) => r.facilityId)
+				.filter((id): id is string => Boolean(id)),
+		);
+
+		filtered = filtered.filter(
+			(facility) => !existingFacilityIds.has(facility.id),
+		);
 
 		// Find existing reservations that overlap with this time slot
 		const conflictingReservations = existingReservations.filter(

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 import type { StoreOrder } from "@/types";
+import { OrderStatus, PaymentStatus } from "@/types/enum";
 import {
 	epochToDate,
 	getDateInTz,
@@ -50,7 +51,11 @@ export const createCustomerOrderColumns = (
 			),
 			cell: ({ row }) => {
 				const order = row.original;
-				const total = Number(order.orderTotal ?? 0);
+				let total = Number(order.orderTotal ?? 0);
+				const isRefunded = order.orderStatus === Number(OrderStatus.Refunded);
+				if (isRefunded) {
+					total = -Number(order.orderTotal);
+				}
 				return <Currency value={total} />;
 			},
 		},
@@ -64,26 +69,95 @@ export const createCustomerOrderColumns = (
 			),
 		},
 		{
-			accessorKey: "isPaid",
+			accessorKey: "paymentStatus",
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("Order_isPaid")} />
 			),
 			cell: ({ row }) => {
-				const isPaid = row.getValue("isPaid") === true;
+				const order = row.original;
+				const paymentStatus = order.paymentStatus;
+
+				let statusText: string;
+				let statusClass: string;
+
+				switch (paymentStatus) {
+					case Number(PaymentStatus.Paid):
+						statusText = t("PaymentStatus_Paid");
+						statusClass =
+							"bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300";
+						break;
+					case Number(PaymentStatus.Refunded):
+						statusText = t("PaymentStatus_Refunded");
+						statusClass =
+							"bg-orange-50 text-orange-700 dark:bg-orange-900 dark:text-orange-300";
+						break;
+					case Number(PaymentStatus.PartiallyRefunded):
+						statusText = t("PaymentStatus_PartiallyRefunded");
+						statusClass =
+							"bg-yellow-50 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
+						break;
+					case Number(PaymentStatus.Authorized):
+						statusText = t("PaymentStatus_Authorized");
+						statusClass =
+							"bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
+						break;
+					case Number(PaymentStatus.SelfPickup):
+						statusText = t("PaymentStatus_SelfPickup");
+						statusClass =
+							"bg-purple-50 text-purple-700 dark:bg-purple-900 dark:text-purple-300";
+						break;
+					case Number(PaymentStatus.Voided):
+						statusText = t("PaymentStatus_Voided");
+						statusClass =
+							"bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-300";
+						break;
+					case Number(PaymentStatus.Pending):
+						statusText = t("PaymentStatus_Pending");
+						statusClass =
+							"bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300";
+						break;
+					default:
+						statusText = t("PaymentStatus_NoPayment");
+						statusClass =
+							"bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300";
+						break;
+				}
+
 				return (
 					<Button
 						variant="outline"
-						className={cn(
-							"cursor-default",
-							isPaid
-								? "bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300"
-								: "bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300",
-						)}
+						className={cn("cursor-default", statusClass)}
 						size="sm"
 					>
-						{isPaid ? t("isPaid") : t("isNotPaid")}
+						{statusText}
 					</Button>
 				);
+			},
+			meta: {
+				className: "hidden sm:table-cell",
+			},
+		},
+		{
+			id: "paymentMethod",
+			header: ({ column }) => (
+				<DataTableColumnHeader
+					column={column}
+					title={t("paymentMethod_name")}
+				/>
+			),
+			cell: ({ row }) => {
+				const order = row.original;
+				const paymentMethodName = order.PaymentMethod?.name;
+
+				if (!paymentMethodName || paymentMethodName === "TBD") {
+					return (
+						<span className="text-xs sm:text-sm text-muted-foreground">
+							{paymentMethodName}
+						</span>
+					);
+				}
+
+				return <span className="text-xs sm:text-sm">{paymentMethodName}</span>;
 			},
 			meta: {
 				className: "hidden sm:table-cell",

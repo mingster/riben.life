@@ -8,6 +8,7 @@ import { stripe } from "@/lib/stripe/config";
 import logger from "@/lib/logger";
 import { markOrderAsPaidAction } from "@/actions/store/order/mark-order-as-paid";
 import { StoreOrder } from "@/types";
+import { sqlClient } from "@/lib/prismadb";
 
 /**
  * Payment confirmation page for Stripe checkout orders.
@@ -50,6 +51,18 @@ export default async function StripeConfirmedPage(props: {
 			);
 
 			if (paymentIntent && paymentIntent.status === "succeeded") {
+				// Find Stripe payment method
+				const stripePaymentMethod = await sqlClient.paymentMethod.findFirst({
+					where: {
+						payUrl: "stripe",
+						isDeleted: false,
+					},
+				});
+
+				if (!stripePaymentMethod) {
+					throw new Error("Stripe payment method not found");
+				}
+
 				// Prepare checkout attributes with payment intent data
 				const checkoutAttributes = JSON.stringify({
 					payment_intent: searchParams.payment_intent,
@@ -59,6 +72,7 @@ export default async function StripeConfirmedPage(props: {
 				// Mark order as paid using the new action
 				const result = await markOrderAsPaidAction({
 					orderId: params.orderId,
+					paymentMethodId: stripePaymentMethod.id,
 					checkoutAttributes,
 				});
 

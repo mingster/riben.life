@@ -908,8 +908,17 @@ export const CustomerWeekViewCalendar: React.FC<
 					);
 				}
 			} else {
+				if (!storeId) {
+					toastError({
+						title: t("Error"),
+						description: "Store ID is required",
+					});
+					return;
+				}
+
 				const result = await cancelReservationAction({
 					id: reservationToCancel.id,
+					storeId: storeId,
 				});
 
 				if (result?.serverError) {
@@ -942,7 +951,7 @@ export const CustomerWeekViewCalendar: React.FC<
 			setCancelDialogOpen(false);
 			setReservationToCancel(null);
 		}
-	}, [reservationToCancel, t, handleReservationUpdated]);
+	}, [reservationToCancel, storeId, t, handleReservationUpdated]);
 
 	return (
 		<div className="flex flex-col gap-3 sm:gap-4">

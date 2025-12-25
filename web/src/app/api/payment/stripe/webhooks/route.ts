@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import logger from "@/lib/logger";
 import { markOrderAsPaidAction } from "@/actions/store/order/mark-order-as-paid";
+import { sqlClient } from "@/lib/prismadb";
 
 const relevantEvents = new Set([
 	"product.created",
@@ -73,6 +74,26 @@ export async function POST(req: Request) {
 
 					if (orderId) {
 						try {
+							// Find Stripe payment method
+							const stripePaymentMethod =
+								await sqlClient.paymentMethod.findFirst({
+									where: {
+										payUrl: "stripe",
+										isDeleted: false,
+									},
+								});
+
+							if (!stripePaymentMethod) {
+								logger.error("Stripe payment method not found for webhook", {
+									metadata: {
+										orderId,
+										paymentIntentId: paymentIntent.id,
+									},
+									tags: ["payment", "stripe", "webhook", "error"],
+								});
+								break;
+							}
+
 							// Mark order as paid via webhook (idempotent)
 							const checkoutAttributes = JSON.stringify({
 								payment_intent: paymentIntent.id,
@@ -82,6 +103,7 @@ export async function POST(req: Request) {
 
 							const result = await markOrderAsPaidAction({
 								orderId,
+								paymentMethodId: stripePaymentMethod.id,
 								checkoutAttributes,
 							});
 

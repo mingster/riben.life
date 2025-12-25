@@ -660,7 +660,7 @@
   "required_pro_version": "請升級到進階版",
   "reservation_cancelled": "預約取消成功！",
   "order_payment_fiat_note": "訂單付款：{{orderId}}，金額：{{amount}} {{currency}}",
-  "reservation_cancelled_by_customer": "客戶取消預約（已退還 {{points}} 點）",
+  "reservation_cancelled_by_customer": "客戶取消預約",
   "reservation_created": "預約建立成功！",
   "reservation_notifications": "預約通知",
   "reservation_prepaid_required": "此預約需要預付費。請登入以繼續。",

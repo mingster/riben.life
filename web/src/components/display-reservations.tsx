@@ -376,8 +376,17 @@ export const DisplayReservations = ({
 					}
 				}
 			} else {
+				if (!reservationToCancel.Store?.id) {
+					toastError({
+						title: t("Error"),
+						description: "Store ID is required",
+					});
+					return;
+				}
+
 				const result = await cancelReservationAction({
 					id: reservationToCancel.id,
+					storeId: reservationToCancel.Store.id,
 				});
 
 				if (result?.serverError) {

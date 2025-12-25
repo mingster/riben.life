@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
 import { getT } from "@/app/i18n";
+import logger from "@/lib/logger";
 
 interface ProcessRsvpFiatRefundParams {
 	rsvpId: string;
@@ -21,8 +22,8 @@ interface ProcessRsvpFiatRefundResult {
 }
 
 /**
- * Process refund for RSVP reservation if it was paid with fiat balance.
- * Refunds fiat back to customer and reverses revenue recognition.
+ * Process refund for RSVP reservation back to customer's fiat balance for any payment method other than credit points.
+ *
  * @param params - Refund parameters including rsvpId, storeId, customerId, and orderId
  * @returns Result indicating if refund was processed and the refund amount
  */
@@ -31,36 +32,59 @@ export async function processRsvpFiatRefund(
 ): Promise<ProcessRsvpFiatRefundResult> {
 	const { rsvpId, storeId, customerId, orderId, refundReason } = params;
 
-	// If no customerId, no refund needed (reservation wasn't prepaid with fiat)
-	if (!customerId) {
+	// If no customerId or orderId, no refund needed
+	if (!customerId || !orderId) {
 		return { refunded: false };
 	}
 
-	// Find the original PAYMENT ledger entry to get the fiat amount
-	// Try to find by rsvpId first (fiat payments may not have orderId)
-	// If not found, try by orderId
-	const paymentEntry = await sqlClient.customerFiatLedger.findFirst({
-		where: {
-			storeId,
-			userId: customerId,
-			type: "PAYMENT", // CustomerFiatLedgerType.Payment
-			OR: [
-				...(rsvpId ? [{ referenceId: rsvpId }] : []),
-				...(orderId ? [{ referenceId: orderId }] : []),
-			],
-		},
-		orderBy: {
-			createdAt: "desc", // Get the most recent PAYMENT entry
+	// Get the order to check if it's paid
+	const order = await sqlClient.storeOrder.findUnique({
+		where: { id: orderId },
+		select: {
+			id: true,
+			isPaid: true,
+			orderTotal: true,
+			PaymentMethod: {
+				select: {
+					payUrl: true,
+					name: true,
+				},
+			},
 		},
 	});
 
-	if (!paymentEntry) {
-		// No PAYMENT entry found - might not have been paid with fiat, skip refund
+	if (!order) {
+		logger.warn("Order not found for fiat refund", {
+			metadata: { rsvpId, storeId, customerId, orderId },
+			tags: ["refund", "fiat"],
+		});
 		return { refunded: false };
 	}
 
-	// Get absolute value of amount (it's negative for PAYMENT)
-	const refundFiatAmount = Math.abs(Number(paymentEntry.amount));
+	// Only process refund if order is paid
+	if (!order.isPaid) {
+		logger.info("Order is not paid, skipping fiat refund", {
+			metadata: { rsvpId, storeId, customerId, orderId },
+			tags: ["refund", "fiat"],
+		});
+		return { refunded: false };
+	}
+
+	// Use order total as refund amount (for any payment method other than credit points)
+	const refundFiatAmount = Number(order.orderTotal);
+
+	logger.info("Processing fiat refund for paid order", {
+		metadata: {
+			rsvpId,
+			storeId,
+			customerId,
+			orderId,
+			orderTotal: refundFiatAmount,
+			paymentMethod: order.PaymentMethod?.name,
+			paymentMethodPayUrl: order.PaymentMethod?.payUrl,
+		},
+		tags: ["refund", "fiat"],
+	});
 
 	// Get store to get default currency
 	const store = await sqlClient.store.findUnique({
@@ -133,69 +157,66 @@ export async function processRsvpFiatRefund(
 			},
 		});
 
-		// 4. If orderId exists, update order status and create StoreLedger entry for revenue reversal
-		if (orderId) {
-			// Get the order to check payment method and status
-			const order = await tx.storeOrder.findUnique({
+		// 4. Update order status to Refunded and create StoreLedger entry for revenue reversal
+		// Check if order is already refunded
+		const orderToUpdate = await tx.storeOrder.findUnique({
+			where: { id: orderId },
+			select: {
+				orderStatus: true,
+				paymentStatus: true,
+			},
+		});
+
+		if (
+			orderToUpdate &&
+			orderToUpdate.orderStatus !== Number(OrderStatus.Refunded) &&
+			orderToUpdate.paymentStatus !== Number(PaymentStatus.Refunded)
+		) {
+			// Update order status to Refunded
+			await tx.storeOrder.update({
 				where: { id: orderId },
-				include: {
-					PaymentMethod: true,
+				data: {
+					refundAmount: new Prisma.Decimal(refundFiatAmount),
+					orderStatus: Number(OrderStatus.Refunded),
+					paymentStatus: Number(PaymentStatus.Refunded),
+					updatedAt: getUtcNowEpoch(),
 				},
 			});
 
-			if (order) {
-				// Check if order is already refunded
-				if (
-					order.orderStatus !== Number(OrderStatus.Refunded) &&
-					order.paymentStatus !== Number(PaymentStatus.Refunded)
-				) {
-					// Update order status to Refunded
-					await tx.storeOrder.update({
-						where: { id: orderId },
-						data: {
-							refundAmount: new Prisma.Decimal(refundFiatAmount),
-							orderStatus: Number(OrderStatus.Refunded),
-							paymentStatus: Number(PaymentStatus.Refunded),
-							updatedAt: getUtcNowEpoch(),
-						},
-					});
+			// Create StoreLedger entry for revenue reversal
+			const lastLedger = await tx.storeLedger.findFirst({
+				where: { storeId },
+				orderBy: { createdAt: "desc" },
+				take: 1,
+			});
 
-					// Create StoreLedger entry for revenue reversal
-					const lastLedger = await tx.storeLedger.findFirst({
-						where: { storeId },
-						orderBy: { createdAt: "desc" },
-						take: 1,
-					});
+			const storeBalance = Number(lastLedger ? lastLedger.balance : 0);
+			const newStoreBalance = storeBalance - refundFiatAmount; // Decrease balance
 
-					const storeBalance = Number(lastLedger ? lastLedger.balance : 0);
-					const newStoreBalance = storeBalance - refundFiatAmount; // Decrease balance
-
-					await tx.storeLedger.create({
-						data: {
-							storeId,
-							orderId: orderId,
-							amount: new Prisma.Decimal(-refundFiatAmount), // Negative: revenue reversal
-							fee: new Prisma.Decimal(0), // No fee for fiat refunds
-							platformFee: new Prisma.Decimal(0), // No platform fee for fiat refunds
-							currency: (store.defaultCurrency || "twd").toLowerCase(),
-							type: StoreLedgerType.StorePaymentProvider, // Revenue-related type
-							balance: new Prisma.Decimal(newStoreBalance),
-							description: t("rsvp_cancellation_refund_description", {
-								amount: refundFiatAmount,
-								currency: (store.defaultCurrency || "twd").toUpperCase(),
-							}),
-							note:
-								refundReason ||
-								t("rsvp_cancellation_refund_note", {
-									amount: refundFiatAmount,
-									currency: (store.defaultCurrency || "twd").toUpperCase(),
-								}),
-							availability: getUtcNowEpoch(), // Immediate availability for refunds
-							createdAt: getUtcNowEpoch(),
-						},
-					});
-				}
-			}
+			await tx.storeLedger.create({
+				data: {
+					storeId,
+					orderId: orderId,
+					amount: new Prisma.Decimal(-refundFiatAmount), // Negative: revenue reversal
+					fee: new Prisma.Decimal(0), // No fee for fiat refunds
+					platformFee: new Prisma.Decimal(0), // No platform fee for fiat refunds
+					currency: (store.defaultCurrency || "twd").toLowerCase(),
+					type: StoreLedgerType.StorePaymentProvider, // Revenue-related type
+					balance: new Prisma.Decimal(newStoreBalance),
+					description: t("rsvp_cancellation_refund_description", {
+						amount: refundFiatAmount,
+						currency: (store.defaultCurrency || "twd").toUpperCase(),
+					}),
+					note:
+						refundReason ||
+						t("rsvp_cancellation_refund_note", {
+							amount: refundFiatAmount,
+							currency: (store.defaultCurrency || "twd").toUpperCase(),
+						}),
+					availability: getUtcNowEpoch(), // Immediate availability for refunds
+					createdAt: getUtcNowEpoch(),
+				},
+			});
 		}
 	});
 

@@ -47,6 +47,18 @@ export function GetMenuList(
 	const { t } = useTranslation(lng);
 
 	const storeFixedMenu = [
+		...(store.rsvpSettings?.acceptReservation === true
+			? [
+					{
+						href: `${nav_prefix}/reservation`,
+						label: t("reservation"),
+						active: pathname === `${nav_prefix}/reservation`,
+						icon: IconCalendarCheck,
+						submenus: [],
+					},
+				]
+			: []),
+
 		...(store.useOrderSystem
 			? [
 					{
@@ -80,18 +92,6 @@ export function GetMenuList(
 						label: t("credit_refill_points"),
 						active: pathname.includes(`${nav_prefix}/refill-credit-points`),
 						icon: IconCoin,
-						submenus: [],
-					},
-				]
-			: []),
-
-		...(store.rsvpSettings?.acceptReservation === true
-			? [
-					{
-						href: `${nav_prefix}/reservation`,
-						label: t("reservation"),
-						active: pathname === `${nav_prefix}/reservation`,
-						icon: IconCalendarCheck,
 						submenus: [],
 					},
 				]

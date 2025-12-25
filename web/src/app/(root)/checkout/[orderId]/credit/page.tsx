@@ -182,11 +182,24 @@ export default async function CreditPaymentPage(props: {
 		tags: ["payment", "credit", "fiat", "success"],
 	});
 
-	// 3. Mark order as paid using markOrderAsPaidCore
+	// 3. Find credit payment method
+	const creditPaymentMethod = await sqlClient.paymentMethod.findFirst({
+		where: {
+			payUrl: "credit",
+			isDeleted: false,
+		},
+	});
+
+	if (!creditPaymentMethod) {
+		throw new SafeError("Credit payment method not found");
+	}
+
+	// 4. Mark order as paid using markOrderAsPaidCore
 	// This will create StoreLedger entry and update order status
 	const isPro = store.level === 2 || store.level === 3; // Pro or Multi level
 	const updatedOrder = await markOrderAsPaidCore({
 		order,
+		paymentMethodId: creditPaymentMethod.id,
 		isPro,
 		logTags: ["credit", "fiat"],
 	});

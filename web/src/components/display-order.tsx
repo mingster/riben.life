@@ -19,6 +19,7 @@ type orderProps = {
 	order: StoreOrder;
 	hidePaymentMethod?: boolean;
 	hideOrderStatus?: boolean;
+	showOrderNotes?: boolean;
 };
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
@@ -26,6 +27,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 	order,
 	hidePaymentMethod = false,
 	hideOrderStatus = false,
+	showOrderNotes = false,
 }) => {
 	//console.log("DisplayOrder", JSON.stringify(order));
 	//logger.info(order);
@@ -136,6 +138,30 @@ export const DisplayOrder: React.FC<orderProps> = ({
 						<DisplayOrderItem key={item.id} currentItem={item} />
 					))}
 				</div>
+
+				{/* Order notes (only display notes marked for customer) */}
+				{showOrderNotes &&
+					order.OrderNotes &&
+					order.OrderNotes.filter(
+						(note: { displayToCustomer?: boolean }) =>
+							note.displayToCustomer === true,
+					).length > 0 && (
+						<div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
+							<div className="space-y-1.5">
+								{order.OrderNotes.filter(
+									(note: { displayToCustomer?: boolean }) =>
+										note.displayToCustomer === true,
+								).map((note: { id: string; note: string }) => (
+									<div
+										key={note.id}
+										className="text-xs sm:text-sm text-muted-foreground bg-muted/50 p-2 rounded"
+									>
+										{note.note}
+									</div>
+								))}
+							</div>
+						</div>
+					)}
 
 				{/* Total */}
 				<div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
