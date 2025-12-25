@@ -761,7 +761,7 @@ export const DisplayReservations = ({
 					facilities={storeData.facilities}
 					user={user}
 					rsvp={reservationToEdit}
-					rsvps={sortedReservations}
+					existingReservations={sortedReservations}
 					storeTimezone={
 						reservationToEdit.Store.defaultTimezone || "Asia/Taipei"
 					}

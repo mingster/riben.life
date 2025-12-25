@@ -61,8 +61,8 @@ export async function createRsvpStoreOrder(
 	const defaultShippingMethod = digitalShippingMethod
 		? digitalShippingMethod
 		: await tx.shippingMethod.findFirst({
-			where: { isDefault: true, isDeleted: false },
-		});
+				where: { isDefault: true, isDeleted: false },
+			});
 
 	if (!defaultShippingMethod) {
 		throw new SafeError("No shipping method available");
@@ -120,7 +120,7 @@ export async function createRsvpStoreOrder(
 			OrderItems: {
 				create: {
 					productId: reservationPrepaidProduct.id,
-					productName: t("reservation_prepaid") || "Reservation Prepaid",
+					productName: t("reservation_prepaid") || "Prepaid for Reservation",
 					quantity: 1, // Single prepaid payment
 					unitPrice: new Prisma.Decimal(orderTotal), // Prepaid amount
 					unitDiscount: new Prisma.Decimal(0),

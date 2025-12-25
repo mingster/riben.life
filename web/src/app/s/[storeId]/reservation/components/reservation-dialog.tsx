@@ -31,7 +31,7 @@ interface ReservationDialogProps {
 	onReservationCreated?: (newRsvp: Rsvp) => void;
 	// Edit mode props
 	rsvp?: Rsvp;
-	rsvps?: Rsvp[];
+	existingReservations?: Rsvp[];
 	onReservationUpdated?: (updatedRsvp: Rsvp) => void;
 	// Common props
 	storeTimezone?: string;
@@ -54,7 +54,7 @@ export function ReservationDialog({
 	defaultRsvpTime,
 	onReservationCreated,
 	rsvp,
-	rsvps = [],
+	existingReservations = [],
 	onReservationUpdated,
 	storeTimezone = "Asia/Taipei",
 	storeCurrency = "twd",
@@ -115,7 +115,7 @@ export function ReservationDialog({
 						defaultRsvpTime={defaultRsvpTime}
 						onReservationCreated={handleReservationCreated}
 						rsvp={rsvp}
-						rsvps={rsvps}
+						existingReservations={existingReservations}
 						storeTimezone={storeTimezone}
 						storeCurrency={storeCurrency}
 						storeUseBusinessHours={storeUseBusinessHours}

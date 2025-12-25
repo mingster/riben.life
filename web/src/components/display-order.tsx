@@ -51,7 +51,16 @@ export const DisplayOrder: React.FC<orderProps> = ({
 	//console.log("status", order.orderStatus);
 
 	const buyAgain = async (orderId: string) => {
-		alert(`buy again${orderId}`);
+		// Check if order is for RSVP (pickupCode starts with "RSVP:")
+		const isRsvpOrder = order.pickupCode?.startsWith("RSVP:") ?? false;
+
+		if (isRsvpOrder) {
+			// Navigate to store's reservation page
+			router.push(`/s/${storeId}/reservation`);
+		} else {
+			// Navigate to store's menu page
+			router.push(`/s/${storeId}/menu`);
+		}
 	};
 
 	const pay = async (orderId: string, payUrl?: string) => {
@@ -66,7 +75,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 	};
 
 	const contactSeller = (storeId: string, orderId: string) => {
-		router.push(`/s/${storeId}/support/new?orderid=${orderId}`);
+		router.push(`/s/${storeId}/support`);
 	};
 
 	const canPay =
@@ -149,9 +158,10 @@ export const DisplayOrder: React.FC<orderProps> = ({
 								size="sm"
 								onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
 							>
-								{order.PaymentMethod?.name && order.PaymentMethod.name !== "TBD" && (
-									<>{order.PaymentMethod.name} </>
-								)}
+								{order.PaymentMethod?.name &&
+									order.PaymentMethod.name !== "TBD" && (
+										<>{order.PaymentMethod.name} </>
+									)}
 								{t("order_tab_pay")}
 							</Button>
 						)}
@@ -163,7 +173,8 @@ export const DisplayOrder: React.FC<orderProps> = ({
 								size="sm"
 								disabled
 							>
-								{t("cash")} {t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
+								{t("cash")}{" "}
+								{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
 							</Button>
 						)}
 					</>

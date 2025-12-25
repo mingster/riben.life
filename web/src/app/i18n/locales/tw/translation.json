@@ -387,7 +387,7 @@
   "monthly": "每月",
   "multiple_customers": "多個客戶",
   "my_credit_ledger": "點數紀錄",
-  "my_fiat_ledger": "付款紀錄",
+  "my_fiat_ledger": "帳戶餘額",
   "my_orders": "我的訂單",
   "name": "名稱",
   "nav_about": "關於我們",
@@ -692,6 +692,9 @@
   "rsvp_Cancel_Hours_descr": "",
   "rsvp_cancel_reservation": "取消預約",
   "rsvp_cancel_reservation_confirmation": "您確定要取消此預約嗎？此操作無法復原。",
+
+  "rsvp_cannot_cancel_reservation": "本店的預約皆不可取消，請確認後再預約。",
+
   "rsvp_cancellation_policy": "若你無法依預約時間前來，請在{{hours}}小時前取消預約，否則將無法退費。",
   "rsvp_cancellation_refund_description": "預約取消退款：扣抵 {{points}} 點。",
   "rsvp_cancellation_refund_note": "預約取消：退還 {{amount}} {{currency}}。",

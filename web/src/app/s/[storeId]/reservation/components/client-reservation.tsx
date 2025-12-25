@@ -16,7 +16,7 @@ import { CustomerWeekViewCalendar } from "./customer-week-view-calendar";
 import { ReservationDialog } from "./reservation-dialog";
 
 interface ReservationClientProps {
-	rsvps: Rsvp[];
+	existingReservations: Rsvp[];
 	rsvpSettings: (RsvpSettings & { defaultCost?: number | null }) | null;
 	storeSettings: StoreSettings | null;
 	facilities: StoreFacility[];
@@ -33,7 +33,7 @@ interface ReservationClientProps {
 }
 
 export function ReservationClient({
-	rsvps: initialRsvps,
+	existingReservations,
 	rsvpSettings,
 	storeSettings,
 	facilities,
@@ -63,13 +63,13 @@ export function ReservationClient({
 	useEffect(() => {
 		const editId = searchParams.get("edit");
 		if (editId) {
-			const rsvp = initialRsvps.find((r) => r.id === editId);
+			const rsvp = existingReservations.find((r) => r.id === editId);
 			if (rsvp) {
 				setEditRsvp(rsvp);
 				setEditRsvpId(editId);
 			}
 		}
-	}, [searchParams, initialRsvps]);
+	}, [searchParams, existingReservations]);
 
 	const handleReservationCreated = useCallback((newRsvp: Rsvp) => {
 		// Reset selected date/time after successful creation
@@ -117,7 +117,7 @@ export function ReservationClient({
 
 			{/* Week View Calendar */}
 			<CustomerWeekViewCalendar
-				rsvps={initialRsvps}
+				existingReservations={existingReservations}
 				rsvpSettings={rsvpSettings}
 				storeSettings={storeSettings}
 				storeId={storeId}
@@ -143,7 +143,7 @@ export function ReservationClient({
 					facilities={facilities}
 					user={user}
 					rsvp={editRsvp}
-					rsvps={initialRsvps}
+					existingReservations={existingReservations}
 					storeTimezone={storeTimezone}
 					storeCurrency={storeCurrency}
 					storeUseBusinessHours={storeUseBusinessHours}

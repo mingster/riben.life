@@ -31,9 +31,11 @@ export const DropdownCart = () => {
 	const [isOpen, setIsOpen] = useState(false);
 
 	const cart = useCart();
-	const [numInCart, setNumInCart] = useState(cart.totalItems);
+	const [numInCart, setNumInCart] = useState(0);
+	const [mounted, setMounted] = useState(false);
 
 	useEffect(() => {
+		setMounted(true);
 		setNumInCart(cart.totalItems);
 	}, [cart.totalItems]);
 
@@ -54,20 +56,13 @@ export const DropdownCart = () => {
 	function removeAll() {
 		cart.emptyCart();
 	}
-	/*
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  if (!mounted) return <></>;
-  */
 
 	return (
 		<>
 			<Sheet open={isOpen} onOpenChange={setIsOpen}>
 				<SheetTrigger asChild>
 					<strong className="relative inline-flex items-center rounded">
-						{numInCart > 0 && (
+						{mounted && numInCart > 0 && (
 							<span className="absolute -top-1 -right-2 size-5 rounded-full bg-red-800 text-slate-100 flex justify-center items-center text-xs pb-1">
 								<span>{numInCart}</span>
 							</span>
@@ -97,7 +92,7 @@ export const DropdownCart = () => {
 							) : (
 								<>
 									<strong className="w-full relative inline-flex items-center rounded">
-										{numInCart > 0 && (
+										{mounted && numInCart > 0 && (
 											<span className="absolute -top-1 -right-2 size-5 rounded-full bg-red-800 text-slate-100 flex justify-center items-center text-xs pb-1">
 												<span>{numInCart}</span>
 											</span>
