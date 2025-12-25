@@ -45,13 +45,16 @@ export default async function StripeConfirmedPage(props: {
 	try {
 		order = (await getOrderById(params.orderId)) as StoreOrder;
 	} catch (error) {
-		logger.warn("Order not found, continuing with subscription payment confirmation", {
-			metadata: {
-				orderId: params.orderId,
-				error: error instanceof Error ? error.message : String(error),
+		logger.warn(
+			"Order not found, continuing with subscription payment confirmation",
+			{
+				metadata: {
+					orderId: params.orderId,
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["subscription", "payment", "stripe"],
 			},
-			tags: ["subscription", "payment", "stripe"],
-		});
+		);
 	}
 
 	const confirmed = (await confirmSubscriptionPayment(
@@ -71,7 +74,10 @@ export default async function StripeConfirmedPage(props: {
 	if (confirmed) {
 		return (
 			<Container>
-				<SuccessAndRedirect order={order || undefined} orderId={params.orderId} />
+				<SuccessAndRedirect
+					order={order || undefined}
+					orderId={params.orderId}
+				/>
 			</Container>
 		);
 	}

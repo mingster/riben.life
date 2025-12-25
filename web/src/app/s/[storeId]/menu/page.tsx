@@ -11,7 +11,11 @@ import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
 import { isReservedRoute } from "@/lib/reserved-routes";
 import type { StoreWithProductNCategories } from "@/types";
-import type { RsvpSettings, StoreSettings } from "@prisma/client";
+import type {
+	RsvpSettings,
+	StoreSettings,
+	StoreFacility,
+} from "@prisma/client";
 import { formatDate } from "date-fns";
 import { StoreProductList } from "../components/store-product-list";
 
@@ -31,10 +35,19 @@ export default async function OnlineOrderPage(props: {
 		redirect("/");
 	}
 
-	// Fetch store, storeSettings, and rsvpSettings in parallel for better performance
+	// Get facility ID from query parameter if present
+	const searchParams = await props.searchParams;
+	const facilityId = searchParams.facility
+		? typeof searchParams.facility === "string"
+			? searchParams.facility
+			: searchParams.facility[0]
+		: null;
+
+	// Fetch store, storeSettings, rsvpSettings, and facility in parallel for better performance
 	let store: Awaited<ReturnType<typeof getStoreWithProducts>>;
 	let storeSettings: StoreSettings | null = null;
 	let rsvpSettings: RsvpSettings | null = null;
+	let facility: StoreFacility | null = null;
 
 	try {
 		// Fetch store first (supports both ID and name)
@@ -52,15 +65,25 @@ export default async function OnlineOrderPage(props: {
 		// Use the actual store ID for subsequent queries (in case we found by name)
 		const actualStoreId = store.id;
 
-		// Fetch settings in parallel
-		const [storeSettings, rsvpSettings] = await Promise.all([
-			sqlClient.storeSettings.findFirst({
-				where: { storeId: actualStoreId },
-			}),
-			sqlClient.rsvpSettings.findFirst({
-				where: { storeId: actualStoreId },
-			}),
-		]);
+		// Fetch settings and facility in parallel
+		const [storeSettingsResult, rsvpSettingsResult, facilityResult] =
+			await Promise.all([
+				sqlClient.storeSettings.findFirst({
+					where: { storeId: actualStoreId },
+				}),
+				sqlClient.rsvpSettings.findFirst({
+					where: { storeId: actualStoreId },
+				}),
+				facilityId
+					? sqlClient.storeFacility.findUnique({
+							where: { id: facilityId },
+						})
+					: Promise.resolve(null),
+			]);
+
+		storeSettings = storeSettingsResult;
+		rsvpSettings = rsvpSettingsResult;
+		facility = facilityResult;
 
 		transformPrismaDataForJson(store);
 
@@ -70,6 +93,9 @@ export default async function OnlineOrderPage(props: {
 		}
 		if (storeSettings) {
 			transformPrismaDataForJson(storeSettings);
+		}
+		if (facility) {
+			transformPrismaDataForJson(facility);
 		}
 	} catch (error) {
 		logger.error("Failed to load store or settings", {
@@ -112,7 +138,33 @@ const { t } = await useTranslation(store?.defaultLocale || "en");
 		const bizHour = storeSettings.businessHours;
 		const businessHours = new BusinessHours(bizHour);
 
-		isStoreOpen = businessHours.isOpenNow();
+		// Debug: Check current time and business hours
+		const now = new Date();
+		const bizHourData = JSON.parse(bizHour);
+		const dayNames = [
+			"Sunday",
+			"Monday",
+			"Tuesday",
+			"Wednesday",
+			"Thursday",
+			"Friday",
+			"Saturday",
+		];
+		const currentDay = dayNames[now.getDay()];
+
+		console.log("=== Business Hours Debug ===");
+		console.log("Current time (UTC):", now.toISOString());
+		console.log("Current time (local):", now.toString());
+		console.log("Current day (JS getDay):", now.getDay(), "->", currentDay);
+		console.log("Store timezone:", bizHourData.timeZone);
+		console.log("Store isOpen flag:", store?.isOpen);
+		console.log("Today's hours:", bizHourData[currentDay]);
+		console.log("Holidays:", bizHourData.holidays);
+		console.log("isOpenNow() result:", businessHours.isOpenNow());
+		console.log("isClosedNow() result:", businessHours.isClosedNow());
+		console.log("===========================");
+
+		isStoreOpen = store?.isOpen && businessHours.isOpenNow();
 
 		const nextOpeningDate = businessHours.nextOpeningDate();
 		const nextOpeningHour = businessHours.nextOpeningHour();
@@ -137,6 +189,7 @@ const { t } = await useTranslation(store?.defaultLocale || "en");
 				<StoreProductList
 					storeData={store as StoreWithProductNCategories}
 					storeSettings={storeSettings as StoreSettings}
+					facilityData={facility || undefined}
 				/>
 			)}
 		</Container>

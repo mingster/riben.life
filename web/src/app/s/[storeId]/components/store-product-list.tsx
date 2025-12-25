@@ -34,7 +34,7 @@ import ScrollSpy from "react-ui-scrollspy";
 export interface props {
 	storeData: StoreWithProductNCategories;
 	storeSettings: StoreSettings;
-	tableData?: StoreFacility;
+	facilityData?: StoreFacility | null;
 }
 
 // display product list and allow user to add to cart.
@@ -42,7 +42,7 @@ export interface props {
 export const StoreProductList: React.FC<props> = ({
 	storeData,
 	storeSettings,
-	tableData,
+	facilityData,
 }) => {
 	/*
   const session = useSession();
@@ -64,7 +64,7 @@ export const StoreProductList: React.FC<props> = ({
 
 	const cart = useCart();
 
-	const params = useParams<{ storeId: string; facilityId: string }>();
+	const params = useParams<{ storeId: string; facilityId?: string }>();
 
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -175,7 +175,7 @@ export const StoreProductList: React.FC<props> = ({
 						price: Number(product.price),
 						quantity: 1,
 						storeId: params.storeId,
-						facilityId: params.facilityId,
+						facilityId: facilityData?.id ?? params.facilityId ?? null,
 						//...product,
 						//cartStatus: CartProductStatus.InProgress,
 						//userData: "",

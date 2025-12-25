@@ -246,25 +246,32 @@ export async function markOrderAsPaidCore(
 
 	// Mark order as paid and create ledger entry in transaction
 	await sqlClient.$transaction(async (tx) => {
-		// Mark order as paid
+		// Check if this order is for an RSVP reservation
+		const rsvp = await tx.rsvp.findFirst({
+			where: { orderId: order.id },
+		});
+
+		// For RSVP orders, set status to Completed when payment is successful
+		// For regular orders, set status to Processing
+		const newOrderStatus = rsvp
+			? OrderStatus.Completed
+			: OrderStatus.Processing;
+
+		// Mark order as paid and update payment method
 		await tx.storeOrder.update({
 			where: { id: order.id },
 			data: {
 				isPaid: true,
 				paidDate: getUtcNowEpoch(),
-				orderStatus: OrderStatus.Processing,
+				orderStatus: newOrderStatus,
 				paymentStatus: PaymentStatus.Paid,
+				paymentMethodId: order.PaymentMethod.id, // Update to the actual payment method used
 				paymentCost:
 					fee.toNumber() + feeTax.toNumber() + platformFee.toNumber(),
 				checkoutAttributes:
 					checkoutAttributes || order.checkoutAttributes || "",
 				updatedAt: getUtcNowEpoch(),
 			},
-		});
-
-		// Update RSVP if this order is for a reservation
-		const rsvp = await tx.rsvp.findFirst({
-			where: { orderId: order.id },
 		});
 
 		if (rsvp) {
