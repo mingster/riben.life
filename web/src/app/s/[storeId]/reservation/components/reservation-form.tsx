@@ -927,7 +927,7 @@ export function ReservationForm({
 												<>
 													<FacilityCombobox
 														storeFacilities={availableFacilities}
-														disabled={isSubmitting}
+														disabled={isSubmitting || isEditMode}
 														defaultValue={selectedFacility}
 														onValueChange={(facility) => {
 															field.onChange(facility?.id || "");

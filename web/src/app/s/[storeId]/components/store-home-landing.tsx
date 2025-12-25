@@ -64,6 +64,7 @@ export function StoreHomeLanding({
 						{useOrderSystem && (
 							<Button
 								size="lg"
+								variant={useOrderSystem ? "outline" : "default"}
 								onClick={() => handleNavigate(`/s/${store.id}/menu`)}
 								className="min-w-[200px] h-12"
 							>
@@ -75,7 +76,6 @@ export function StoreHomeLanding({
 						{acceptReservation && (
 							<Button
 								size="lg"
-								variant={useOrderSystem ? "outline" : "default"}
 								onClick={() => handleNavigate(`/s/${store.id}/reservation`)}
 								className="min-w-[200px] h-12"
 							>

@@ -76,9 +76,9 @@ export function GetMenuList(
 		...(store.useCustomerCredit
 			? [
 					{
-						href: `${nav_prefix}/recharge`,
-						label: t("credit_recharge"),
-						active: pathname.includes(`${nav_prefix}/recharge`),
+						href: `${nav_prefix}/refill-credit-points`,
+						label: t("credit_refill_points"),
+						active: pathname.includes(`${nav_prefix}/refill-credit-points`),
 						icon: IconCoin,
 						submenus: [],
 					},

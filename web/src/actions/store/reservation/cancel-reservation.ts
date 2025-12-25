@@ -13,9 +13,15 @@ import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import { cancelReservationSchema } from "./cancel-reservation.validation";
 import { isCancellationWithinCancelHours } from "./validate-cancel-hours";
-import { processRsvpCreditRefund } from "./process-rsvp-refund";
+import { processRsvpCreditPointsRefund } from "./process-rsvp-refund-credit-point";
+import { processRsvpFiatRefund } from "./process-rsvp-refund-fiat";
 import { getT } from "@/app/i18n";
+import logger from "@/lib/logger";
 
+// customer can cancel their reservation at any time if canCancel is true in rsvpSettings.
+// when cancel within cancelHours window, refund to either credit or fiat depending on how the reservation was paid.
+// when cancel outside cancelHours window, no refund is given.
+//
 export const cancelReservationAction = baseClient
 	.metadata({ name: "cancelReservation" })
 	.schema(cancelReservationSchema)
@@ -73,23 +79,28 @@ export const cancelReservationAction = baseClient
 		}
 
 		// Process refund if reservation was prepaid (alreadyPaid = true)
-		// Only refund if cancellation is OUTSIDE the cancelHours window
-		// If cancellation is WITHIN the cancelHours window, no refund is given
+		// Only refund if cancellation is WITHIN the cancelHours window
+		// If cancellation is OUTSIDE the cancelHours window, no refund is given
 		const isWithinCancelHours = isCancellationWithinCancelHours(
 			rsvpSettings,
 			existingRsvp.rsvpTime,
 		);
 
-		if (
+		// Track if refund was needed and if it completed successfully
+		let refundCompleted = false;
+		const refundNeeded =
 			existingRsvp.alreadyPaid &&
-			existingRsvp.orderId &&
-			!isWithinCancelHours
-		) {
+			existingRsvp.customerId &&
+			isWithinCancelHours;
+
+		if (refundNeeded) {
 			const { t } = await getT();
 
-			// Get refund amount for the refund reason message
-			let refundPoints: number | undefined;
+			// Determine payment method: check for credit points first, otherwise assume fiat
+			let paymentMethod: "credit" | "fiat" | null = null;
+
 			if (existingRsvp.orderId && existingRsvp.customerId) {
+				// Check for credit points payment
 				const spendEntry = await sqlClient.customerCreditLedger.findFirst({
 					where: {
 						storeId: existingRsvp.storeId,
@@ -103,21 +114,70 @@ export const cancelReservationAction = baseClient
 				});
 
 				if (spendEntry) {
-					refundPoints = Math.abs(Number(spendEntry.amount));
+					paymentMethod = "credit";
+				} else {
+					// If not credit, assume fiat
+					paymentMethod = "fiat";
 				}
+			} else {
+				// No orderId, assume fiat payment directly linked to RSVP
+				paymentMethod = "fiat";
 			}
 
-			await processRsvpCreditRefund({
-				rsvpId: id,
-				storeId: existingRsvp.storeId,
-				customerId: existingRsvp.customerId,
-				orderId: existingRsvp.orderId,
-				refundReason: refundPoints
-					? t("reservation_cancelled_by_customer", { points: refundPoints })
-					: t("reservation_cancelled_by_customer"),
+			logger.info("Ready to cancel reservation and process refund", {
+				metadata: {
+					rsvpId: id,
+					storeId: existingRsvp.storeId,
+					customerId: existingRsvp.customerId,
+					orderId: existingRsvp.orderId,
+					paymentMethod: paymentMethod,
+				},
 			});
+
+			// Process refund based on payment method and check if it succeeded
+			if (paymentMethod === "credit") {
+				const refundResult = await processRsvpCreditPointsRefund({
+					rsvpId: id,
+					storeId: existingRsvp.storeId,
+					customerId: existingRsvp.customerId,
+					orderId: existingRsvp.orderId,
+					refundReason: t("reservation_cancelled_by_customer"),
+				});
+				refundCompleted = refundResult.refunded;
+			} else if (paymentMethod === "fiat") {
+				const refundResult = await processRsvpFiatRefund({
+					rsvpId: id,
+					storeId: existingRsvp.storeId,
+					customerId: existingRsvp.customerId,
+					orderId: existingRsvp.orderId,
+					refundReason: t("reservation_cancelled_by_customer"),
+				});
+				refundCompleted = refundResult.refunded;
+			} else {
+				logger.error("Invalid payment method", {
+					metadata: {
+						rsvpId: id,
+						storeId: existingRsvp.storeId,
+						customerId: existingRsvp.customerId,
+						orderId: existingRsvp.orderId,
+						paymentMethod: paymentMethod,
+					},
+				});
+				throw new SafeError("Invalid payment method");
+			}
+
+			// If refund was needed but didn't complete, throw error
+			if (!refundCompleted) {
+				throw new SafeError(
+					"Refund processing failed. Reservation was not cancelled.",
+				);
+			}
 		}
 
+		// Only update RSVP status to Cancelled if:
+		// 1. No refund was needed (alreadyPaid is false OR outside cancelHours), OR
+		// 2. Refund was successfully completed
+		// (If we reach here, either no refund was needed or refund completed successfully)
 		try {
 			const updated = await sqlClient.rsvp.update({
 				where: { id },

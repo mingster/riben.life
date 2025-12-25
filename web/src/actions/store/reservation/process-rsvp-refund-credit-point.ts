@@ -7,7 +7,7 @@ import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
 import { getT } from "@/app/i18n";
 
-interface ProcessRsvpRefundParams {
+interface ProcessRsvpCreditPointsRefundParams {
 	rsvpId: string;
 	storeId: string;
 	customerId: string | null;
@@ -15,20 +15,20 @@ interface ProcessRsvpRefundParams {
 	refundReason?: string;
 }
 
-interface ProcessRsvpRefundResult {
+interface ProcessRsvpCreditPointsRefundResult {
 	refunded: boolean;
 	refundAmount?: number; // Credit points refunded
 }
 
 /**
- * Process refund for RSVP reservation if it was paid with credit.
+ * Process refund for RSVP reservation if it was paid with credit points.
  * Refunds credit back to customer and reverses revenue recognition.
  * @param params - Refund parameters including rsvpId, storeId, customerId, and orderId
  * @returns Result indicating if refund was processed and the refund amount
  */
-export async function processRsvpCreditRefund(
-	params: ProcessRsvpRefundParams,
-): Promise<ProcessRsvpRefundResult> {
+export async function processRsvpCreditPointsRefund(
+	params: ProcessRsvpCreditPointsRefundParams,
+): Promise<ProcessRsvpCreditPointsRefundResult> {
 	const { rsvpId, storeId, customerId, orderId, refundReason } = params;
 
 	// If no orderId, no refund needed (reservation wasn't prepaid)
@@ -84,19 +84,6 @@ export async function processRsvpCreditRefund(
 	// Get absolute value of amount (it's negative for SPEND)
 	const refundCreditAmount = Math.abs(Number(spendEntry.amount));
 
-	// Get current customer credit balance
-	const customerCredit = await sqlClient.customerCredit.findUnique({
-		where: {
-			storeId_userId: {
-				storeId,
-				userId: customerId,
-			},
-		},
-	});
-
-	const currentBalance = customerCredit ? Number(customerCredit.point) : 0;
-	const newBalance = currentBalance + refundCreditAmount;
-
 	// Get store to get credit exchange rate for StoreLedger
 	const store = await sqlClient.store.findUnique({
 		where: { id: storeId },
@@ -118,7 +105,20 @@ export async function processRsvpCreditRefund(
 
 	// Process refund in transaction
 	await sqlClient.$transaction(async (tx) => {
-		// 1. Update customer credit balance
+		// 1. Get current customer credit balance (or 0 if record doesn't exist)
+		const customerCredit = await tx.customerCredit.findUnique({
+			where: {
+				storeId_userId: {
+					storeId,
+					userId: customerId,
+				},
+			},
+		});
+
+		const currentBalance = customerCredit ? Number(customerCredit.point) : 0;
+		const newBalance = currentBalance + refundCreditAmount;
+
+		// 2. Update or create customer credit balance
 		await tx.customerCredit.upsert({
 			where: {
 				storeId_userId: {
@@ -130,6 +130,7 @@ export async function processRsvpCreditRefund(
 				storeId,
 				userId: customerId,
 				point: new Prisma.Decimal(newBalance),
+				fiat: new Prisma.Decimal(0), // Ensure fiat is set
 				updatedAt: getUtcNowEpoch(),
 			},
 			update: {
@@ -138,7 +139,7 @@ export async function processRsvpCreditRefund(
 			},
 		});
 
-		// 2. Create CustomerCreditLedger entry for refund
+		// 3. Create CustomerCreditLedger entry for refund
 		await tx.customerCreditLedger.create({
 			data: {
 				storeId,
@@ -157,7 +158,7 @@ export async function processRsvpCreditRefund(
 			},
 		});
 
-		// 3. Create StoreLedger entry for revenue reversal
+		// 4. Create StoreLedger entry for revenue reversal
 		const lastLedger = await tx.storeLedger.findFirst({
 			where: { storeId },
 			orderBy: { createdAt: "desc" },
@@ -191,7 +192,7 @@ export async function processRsvpCreditRefund(
 			},
 		});
 
-		// 4. Update order status to Refunded
+		// 5. Update order status to Refunded
 		await tx.storeOrder.update({
 			where: { id: orderId },
 			data: {

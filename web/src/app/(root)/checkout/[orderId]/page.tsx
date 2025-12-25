@@ -95,6 +95,86 @@ const CheckoutHomePage = async (props: {
 		(mapping) => mapping.PaymentMethod.payUrl !== "TBD",
 	);
 
+	// First, remove credit payment method from the list (we'll add it back if customer has balance)
+	paymentMethods = paymentMethods.filter(
+		(mapping) => mapping.PaymentMethod.payUrl !== "credit",
+	);
+
+	// Add credit payment method if customer has balance
+	if (order.userId && order.userId !== "") {
+		const customerCredit = await sqlClient.customerCredit.findUnique({
+			where: {
+				storeId_userId: {
+					storeId,
+					userId: order.userId,
+				},
+			},
+		});
+
+		const creditBalance = customerCredit ? Number(customerCredit.fiat) : 0;
+		const orderTotal = Number(order.orderTotal) || 0;
+
+		// Add credit payment method if customer has balance
+		if (creditBalance > 0) {
+			// Format currency using order's currency
+			const currency = order.currency?.toUpperCase() || "TWD";
+			const currencyFormatter = new Intl.NumberFormat("en-US", {
+				style: "currency",
+				currency: currency,
+				maximumFractionDigits: 0,
+				minimumFractionDigits: 0,
+			});
+			const formattedBalance = currencyFormatter.format(creditBalance);
+
+			// Check if balance is sufficient for the order
+			const hasEnoughBalance = creditBalance >= orderTotal;
+
+			// Find credit payment method
+			const creditPaymentMethod = await sqlClient.paymentMethod.findFirst({
+				where: {
+					payUrl: "credit",
+					isDeleted: false,
+					visibleToCustomer: true,
+				},
+			});
+
+			if (creditPaymentMethod) {
+				// Check if store has a mapping for credit payment method
+				const storeCreditMapping =
+					await sqlClient.storePaymentMethodMapping.findFirst({
+						where: {
+							storeId,
+							methodId: creditPaymentMethod.id,
+						},
+						include: {
+							PaymentMethod: true,
+						},
+					});
+
+				if (storeCreditMapping) {
+					// Use store mapping if it exists, but override display name to include balance
+					const baseName =
+						storeCreditMapping.paymentDisplayName || creditPaymentMethod.name;
+					paymentMethods.push({
+						...storeCreditMapping,
+						paymentDisplayName: `${baseName} (${formattedBalance})`,
+						disabled: !hasEnoughBalance,
+					} as StorePaymentMethodMapping & { disabled?: boolean });
+				} else {
+					// Add credit payment method without store mapping, include balance in display name
+					paymentMethods.push({
+						id: "",
+						storeId,
+						methodId: creditPaymentMethod.id,
+						paymentDisplayName: `${creditPaymentMethod.name} (${formattedBalance})`,
+						PaymentMethod: creditPaymentMethod,
+						disabled: !hasEnoughBalance,
+					} as StorePaymentMethodMapping & { disabled?: boolean });
+				}
+			}
+		}
+	}
+
 	// If no payment methods available after filtering, show error
 	if (paymentMethods.length === 0) {
 		return (

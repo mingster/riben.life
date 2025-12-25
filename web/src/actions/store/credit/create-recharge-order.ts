@@ -1,6 +1,5 @@
 "use server";
 
-import { createRechargeOrderSchema } from "./create-recharge-order.validation";
 import { userRequiredActionClient } from "@/utils/actions/safe-action";
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
@@ -13,14 +12,30 @@ import { headers } from "next/headers";
 import { ensureCreditRechargeProduct } from "./ensure-credit-recharge-product";
 import { getT } from "@/app/i18n";
 
+import { z } from "zod";
+
+export const createRefillCreditPointsOrderSchema = z.object({
+	storeId: z.string().min(1, "Store ID is required"),
+	creditAmount: z.coerce
+		.number()
+		.positive("Credit points amount must be positive")
+		.min(1, "Credit points amount must be at least 1 point"),
+	paymentMethodId: z.string().min(1, "Payment method is required"),
+	rsvpId: z.string().optional(),
+});
+
+export type CreateRefillCreditPointsOrderInput = z.infer<
+	typeof createRefillCreditPointsOrderSchema
+>;
+
 /**
- * Create a recharge order for customer credit top-up.
+ * Create a refill credit points order for customer credit top-up.
  * This creates a StoreOrder that will be paid via selected payment method.
  * After payment is confirmed, processCreditTopUpAfterPayment should be called.
  */
-export const createRechargeOrderAction = userRequiredActionClient
-	.metadata({ name: "createRechargeOrder" })
-	.schema(createRechargeOrderSchema)
+export const createRefillCreditPointsOrderAction = userRequiredActionClient
+	.metadata({ name: "createRefillCreditPointsOrder" })
+	.schema(createRefillCreditPointsOrderSchema)
 	.action(async ({ parsedInput }) => {
 		const { storeId, creditAmount, paymentMethodId, rsvpId } = parsedInput;
 
