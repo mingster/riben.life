@@ -6,6 +6,7 @@ import { SafeError } from "@/utils/error";
 import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { ensureReservationPrepaidProduct } from "./ensure-reservation-prepaid-product";
+import { getT } from "@/app/i18n";
 
 interface CreateRsvpStoreOrderParams {
 	tx: Omit<
@@ -60,8 +61,8 @@ export async function createRsvpStoreOrder(
 	const defaultShippingMethod = digitalShippingMethod
 		? digitalShippingMethod
 		: await tx.shippingMethod.findFirst({
-				where: { isDefault: true, isDeleted: false },
-			});
+			where: { isDefault: true, isDeleted: false },
+		});
 
 	if (!defaultShippingMethod) {
 		throw new SafeError("No shipping method available");
@@ -93,6 +94,8 @@ export async function createRsvpStoreOrder(
 	// Create pickupCode with RSVP ID and facility ID
 	const pickupCode = `RSVP:${rsvpId}|FACILITY:${facilityId}`;
 
+	const { t } = await getT();
+
 	// Create the store order
 	const storeOrder = await tx.storeOrder.create({
 		data: {
@@ -117,7 +120,7 @@ export async function createRsvpStoreOrder(
 			OrderItems: {
 				create: {
 					productId: reservationPrepaidProduct.id,
-					productName: reservationPrepaidProduct.name,
+					productName: t("reservation_prepaid") || "Reservation Prepaid",
 					quantity: 1, // Single prepaid payment
 					unitPrice: new Prisma.Decimal(orderTotal), // Prepaid amount
 					unitDiscount: new Prisma.Decimal(0),

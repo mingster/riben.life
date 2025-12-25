@@ -49,8 +49,7 @@ export async function ensureReservationPrepaidProduct(storeId: string) {
 		data: {
 			storeId,
 			name: "Reservation Prepaid",
-			description:
-				"Reservation Prepaid product for RSVP reservation prepaid payments",
+			description: "Reservation Prepaid product for RSVP reservation prepaid payments",
 			price: new Prisma.Decimal(0), // Price is determined by facility cost and prepaid percentage at time of reservation
 			currency: store.defaultCurrency,
 			status: ProductStatus.Published,
@@ -63,3 +62,4 @@ export async function ensureReservationPrepaidProduct(storeId: string) {
 
 	return product;
 }
+

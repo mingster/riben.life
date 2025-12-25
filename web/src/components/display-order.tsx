@@ -60,7 +60,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 		// if no pay url, use stripe as default
 		if (!purl) purl = "stripe";
 
-		const url = `/checkout/${orderId}/${purl}/`;
+		const url = `/checkout/${orderId}/`;
 		//console.log(url);
 		router.push(url);
 	};
@@ -133,8 +133,8 @@ export const DisplayOrder: React.FC<orderProps> = ({
 					<span className="font-semibold text-sm sm:text-base">
 						{t("orderTotal_label")}
 					</span>
-					<span className="font-bold text-base sm:text-lg">
-						${Number(order.orderTotal)} {order.currency}
+					<span className="font-bold text-base sm:text-lg capitalize">
+						{Number(order.orderTotal)} {order.currency.toUpperCase()}
 					</span>
 				</div>
 			</CardContent>
@@ -149,7 +149,10 @@ export const DisplayOrder: React.FC<orderProps> = ({
 								size="sm"
 								onClick={() => pay(order.id, order.PaymentMethod?.payUrl)}
 							>
-								{order.PaymentMethod?.name} {t("order_tab_pay")}
+								{order.PaymentMethod?.name && order.PaymentMethod.name !== "TBD" && (
+									<>{order.PaymentMethod.name} </>
+								)}
+								{t("order_tab_pay")}
 							</Button>
 						)}
 
@@ -160,7 +163,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 								size="sm"
 								disabled
 							>
-								現金{t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
+								{t("cash")} {t(`PaymentStatus_${PaymentStatus[order.paymentStatus]}`)}
 							</Button>
 						)}
 					</>
