@@ -4,27 +4,33 @@ import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { useRouter } from "next/navigation";
 import { IconShoppingCart, IconCalendar, IconHelp } from "@tabler/icons-react";
+import { useTranslation } from "@/app/i18n/client";
 import type { Store, RsvpSettings } from "@/types";
 import type { StoreSettings } from "@prisma/client";
-import { useTranslation } from "@/app/i18n/client";
 
-interface StoreHomeLandingProps {
+interface FacilityLandingProps {
 	store: Store;
-	rsvpSettings: RsvpSettings;
+	facility: { id: string; facilityName: string } | null;
+	rsvpSettings: RsvpSettings | null;
 	storeSettings: StoreSettings;
 	useOrderSystem: boolean;
 	acceptReservation: boolean;
+	isStoreOpen: boolean;
+	closed_descr?: string;
 }
 
-export function StoreHomeLanding({
+export function FacilityLanding({
 	store,
+	facility,
 	rsvpSettings,
 	storeSettings,
 	useOrderSystem,
 	acceptReservation,
-}: StoreHomeLandingProps) {
-	const { t } = useTranslation("translation");
+	isStoreOpen,
+	closed_descr,
+}: FacilityLandingProps) {
 	const router = useRouter();
+	const { t } = useTranslation("translation");
 
 	const handleNavigate = (path: string) => {
 		router.push(path);
@@ -53,18 +59,38 @@ export function StoreHomeLanding({
 						<h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-2">
 							{store.name}
 						</h1>
-						{storeSettings.description && (
-							<p className="text-lg text-white/90">
-								{storeSettings.description}
-							</p>
+						{facility && (
+							<h2 className="text-2xl lg:text-3xl font-bold text-white/90 mb-4">
+								{facility.facilityName}
+							</h2>
+						)}
+						{!isStoreOpen ? (
+							<>
+								<p className="text-lg text-white/90 mb-2">
+									{t("store_closed")}
+								</p>
+								{closed_descr && (
+									<div className="text-base text-white/80 mb-4">
+										{t("store_next_opening_hours")}: {closed_descr}
+									</div>
+								)}
+							</>
+						) : (
+							storeSettings.description && (
+								<p className="text-lg text-white/90">
+									{storeSettings.description}
+								</p>
+							)
 						)}
 					</div>
 
 					<div className="flex flex-wrap gap-4 justify-center mt-8">
-						{useOrderSystem && (
+						{isStoreOpen && useOrderSystem && facility && (
 							<Button
 								size="lg"
-								onClick={() => handleNavigate(`/s/${store.id}/menu`)}
+								onClick={() =>
+									handleNavigate(`/s/${store.id}/menu?facility=${facility.id}`)
+								}
 								className="min-w-[200px] h-12"
 							>
 								<IconShoppingCart className="mr-2 h-5 w-5" />
@@ -72,11 +98,15 @@ export function StoreHomeLanding({
 							</Button>
 						)}
 
-						{acceptReservation && (
+						{acceptReservation && facility && (
 							<Button
 								size="lg"
-								variant={useOrderSystem ? "outline" : "default"}
-								onClick={() => handleNavigate(`/s/${store.id}/reservation`)}
+								variant={isStoreOpen && useOrderSystem ? "outline" : "default"}
+								onClick={() =>
+									handleNavigate(
+										`/s/${store.id}/reservation?facility=${facility.id}`,
+									)
+								}
 								className="min-w-[200px] h-12"
 							>
 								<IconCalendar className="mr-2 h-5 w-5" />

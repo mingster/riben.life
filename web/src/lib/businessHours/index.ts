@@ -1,4 +1,3 @@
-import logger from "@/lib/logger";
 export const weekdays = [
 	"Monday",
 	"Tuesday",
@@ -47,18 +46,7 @@ export default class BusinessHours {
 			throw new Error("no hours provided");
 		}
 
-		// Clean JSON string: remove trailing commas (invalid JSON but sometimes present)
-		const cleaned = h.replace(/,(\s*[}\]])/g, "$1");
-
-		let data: WeeklySchedule;
-		try {
-			data = JSON.parse(cleaned) as WeeklySchedule;
-		} catch (error) {
-			throw new Error(
-				`Invalid JSON format for business hours: ${error instanceof Error ? error.message : String(error)}`,
-			);
-		}
-
+		const data = JSON.parse(h) as WeeklySchedule;
 		if (!data) {
 			throw new Error("not valid JSON format");
 		}
@@ -85,16 +73,12 @@ export default class BusinessHours {
 				const bizHourPair = bizhours[0] as object;
 				if (!("from" in bizHourPair)) {
 					const err = `${day} is missing 'from' in config`;
-					logger.error("Operation log", {
-						tags: ["error"],
-					});
+					console.error(err);
 					throw new Error(err);
 				}
 				if (!("to" in bizHourPair)) {
 					const err = `${day} is missing 'to' in config`;
-					logger.error("Operation log", {
-						tags: ["error"],
-					});
+					console.error(err);
 					throw new Error(err);
 				}
 
@@ -108,9 +92,7 @@ export default class BusinessHours {
 						const t = bizHourPair.to;
 						if (!this._isHourValid(f) || !this._isHourValid(t)) {
 							const err = `${f} or ${t} is not valid`;
-							logger.error("Operation log", {
-								tags: ["error"],
-							});
+							console.error(err);
 							throw new Error(err);
 						}
 					}
@@ -123,12 +105,42 @@ export default class BusinessHours {
 	}
 
 	private now(): Date {
+		// Get current time in store's timezone
+		// We need to get the date/time components in the store timezone
 		const now = new Date();
-		const date = new Date(
-			Date.parse(
-				now.toLocaleString("en-US", { timeZone: this.hours.timeZone }),
-			),
+		const formatter = new Intl.DateTimeFormat("en-US", {
+			timeZone: this.hours.timeZone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		});
+
+		const parts = formatter.formatToParts(now);
+		const year = parseInt(parts.find((p) => p.type === "year")?.value || "0");
+		const month =
+			parseInt(parts.find((p) => p.type === "month")?.value || "0") - 1; // Month is 0-indexed
+		const day = parseInt(parts.find((p) => p.type === "day")?.value || "0");
+		const hour = parseInt(parts.find((p) => p.type === "hour")?.value || "0");
+		const minute = parseInt(
+			parts.find((p) => p.type === "minute")?.value || "0",
 		);
+		const second = parseInt(
+			parts.find((p) => p.type === "second")?.value || "0",
+		);
+
+		// Create a date object with these components (will be in local timezone, but we'll use it for comparison)
+		const date = new Date(year, month, day, hour, minute, second);
+
+		/*
+		console.log('[BusinessHours] now() - UTC time:', now.toISOString());
+		console.log('[BusinessHours] now() - Store timezone:', this.hours.timeZone);
+		console.log('[BusinessHours] now() - Store time components:', { year, month: month + 1, day, hour, minute, second });
+		console.log('[BusinessHours] now() - Created date:', date.toISOString());
+		*/
 
 		return date;
 	}
@@ -140,20 +152,74 @@ export default class BusinessHours {
 	}
 
 	private isOpenOn(dateToCheck: Date): boolean {
-		if (this.isOnHoliday(dateToCheck)) return false;
+		// Convert the date to store timezone (server independent)
+		// Use Intl.DateTimeFormat to get all components in the store's timezone
+		const dateFormatter = new Intl.DateTimeFormat("en-US", {
+			timeZone: this.hours.timeZone,
+			weekday: "long",
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: false,
+		});
 
-		const day = this._getISOWeekDayName(dateToCheck.getDay());
+		const dateParts = dateFormatter.formatToParts(dateToCheck);
+		// Get weekday name and ensure it matches the weekdays array format (capitalized)
+		const weekdayName =
+			dateParts.find((p) => p.type === "weekday")?.value || "";
+		const day =
+			weekdayName.charAt(0).toUpperCase() + weekdayName.slice(1).toLowerCase();
+		const year = parseInt(
+			dateParts.find((p) => p.type === "year")?.value || "0",
+		);
+		const month = parseInt(
+			dateParts.find((p) => p.type === "month")?.value || "0",
+		);
+		const dayOfMonth = parseInt(
+			dateParts.find((p) => p.type === "day")?.value || "0",
+		);
+		const currentHour = parseInt(
+			dateParts.find((p) => p.type === "hour")?.value || "0",
+		);
+		const currentMinute = parseInt(
+			dateParts.find((p) => p.type === "minute")?.value || "0",
+		);
+
+		//console.log('[BusinessHours] Checking day in store timezone:', day, 'Date:', `${year}-${month}-${dayOfMonth}`);
+
+		// Check holidays using store timezone date
+		const storeDate = new Date(year, month - 1, dayOfMonth, 0, 0, 0, 0);
+		if (this.isOnHoliday(storeDate)) {
+			//console.log('[BusinessHours] isOnHoliday returned true');
+			return false;
+		}
 
 		const bizhours = (
 			this.hours as unknown as { [key: string]: BusinessHoursDay }
 		)[day];
 
+		//console.log('[BusinessHours] Business hours for', day, ':', bizhours);
+
 		if (typeof bizhours === "string" && bizhours === "closed") {
+			//console.log('[BusinessHours] Day is marked as closed');
+			return false;
+		}
+
+		if (!bizhours) {
+			//console.log('[BusinessHours] No business hours found for', day);
 			return false;
 		}
 
 		// check the time value in bizHourPair
 		if (Array.isArray(bizhours)) {
+			// Use time components already extracted in store timezone (server independent)
+			const currentTimeMinutes = currentHour * 60 + currentMinute;
+			const currentTimeStr = `${String(currentHour).padStart(2, "0")}:${String(currentMinute).padStart(2, "0")}`;
+			//console.log('[BusinessHours] Current time in store timezone:', currentTimeStr, 'Input date (UTC):', dateToCheck.toISOString());
+
 			for (let i = 0; i < Number(bizhours.length); i++) {
 				//this should be a TimeRange like this: { from: "10:00", to: "13:30" }
 				const bizHourPair = bizhours[i] as TimeRange;
@@ -161,41 +227,37 @@ export default class BusinessHours {
 				const from = bizHourPair.from;
 				const to = bizHourPair.to;
 
-				const fromHours = from.substring(0, 2);
-				const fromMinutes = from.substring(3, 5);
-				const toHours = to.substring(0, 2);
-				const toMinutes = to.substring(3, 5);
+				//console.log('[BusinessHours] Checking time range:', from, 'to', to);
 
-				const fromTime = new Date(
-					dateToCheck.getFullYear(),
-					dateToCheck.getMonth(),
-					dateToCheck.getDate(),
-					Number(fromHours),
-					Number(fromMinutes),
-				);
-				const toTime = new Date(
-					dateToCheck.getFullYear(),
-					dateToCheck.getMonth(),
-					dateToCheck.getDate(),
-					Number(toHours),
-					Number(toMinutes),
-				);
+				const fromHours = Number(from.substring(0, 2));
+				const fromMinutes = Number(from.substring(3, 5));
+				const toHours = Number(to.substring(0, 2));
+				const toMinutes = Number(to.substring(3, 5));
+
+				// Convert to minutes since midnight for easier comparison
+				const fromTimeMinutes = fromHours * 60 + fromMinutes;
+				const toTimeMinutes = toHours * 60 + toMinutes;
 
 				/*
-          console.log(
-            day,
-            formatDate(dateToCheck, "yyyy-MM-dd HH:mm"),
-            formatDate(fromTime, "yyyy-MM-dd HH:mm"),
-            formatDate(toTime, "yyyy-MM-dd HH:mm"),
-            now >= fromTime,
-            now <= toTime,
-          );
-          */
+				console.log(
+					'[BusinessHours]',
+					day,
+					'Current time (minutes):', currentTimeMinutes,
+					'From time (minutes):', fromTimeMinutes,
+					'To time (minutes):', toTimeMinutes,
+					'Within range:', currentTimeMinutes >= fromTimeMinutes && currentTimeMinutes <= toTimeMinutes,
+				);
+				*/
 
-				if (dateToCheck >= fromTime && dateToCheck <= toTime) {
+				if (
+					currentTimeMinutes >= fromTimeMinutes &&
+					currentTimeMinutes <= toTimeMinutes
+				) {
+					//console.log('[BusinessHours] Store is OPEN - time is within range');
 					return true;
 				}
 			}
+			//console.log('[BusinessHours] Store is CLOSED - time is not within any range');
 		}
 
 		return false;
@@ -344,26 +406,20 @@ export default class BusinessHours {
 	// check the time defined inside to/from node.
 	_isHourValid(time: string) {
 		if (time === "closed") return true;
+		if (time.length !== 5) return false;
+		if (time.indexOf(":") !== 2) return false;
 
-		// Accept both "08:00" and "8:00" formats
-		const parts = time.split(":");
-		if (parts.length !== 2) return false;
+		const modifiedTime = time.replace(":", "");
 
-		const [hourStr, minuteStr] = parts;
-		if (hourStr.length < 1 || hourStr.length > 2) return false;
-		if (minuteStr.length !== 2) return false;
-
-		const hour = Number(hourStr);
-		const minute = Number(minuteStr);
-
-		if (Number.isNaN(hour) || Number.isNaN(minute)) return false;
-		if (hour < 0 || hour > 23) return false;
-		if (minute < 0 || minute > 59) return false;
+		if (Number.isNaN(modifiedTime)) return false;
 
 		return true;
 	}
 
 	_getISOWeekDayName(isoDay: number) {
-		return weekdays[isoDay - 1];
+		// JavaScript getDay() returns: 0=Sunday, 1=Monday, 2=Tuesday, ..., 6=Saturday
+		// weekdays array is: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+		// So we need to map: Sunday(0)->index 6, Monday(1)->index 0, Tuesday(2)->index 1, etc.
+		return weekdays[isoDay === 0 ? 6 : isoDay - 1];
 	}
 }
