@@ -279,11 +279,16 @@ export function dayAndTimeSlotToUtc(
 ): Date {
 	const [hours, minutes] = timeSlot.split(":").map(Number);
 
-	// Extract date components from day using UTC methods to ensure server timezone independence
-	// This ensures consistent behavior whether server is in UTC or any other timezone
-	const year = day.getUTCFullYear();
-	const month = String(day.getUTCMonth() + 1).padStart(2, "0");
-	const dayOfMonth = String(day.getUTCDate()).padStart(2, "0");
+	// Extract date components from day in store timezone (not UTC)
+	// This ensures we get the correct calendar day regardless of timezone
+	const formatter = new Intl.DateTimeFormat("en-CA", {
+		timeZone: storeTimezone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	});
+	const dateStr = formatter.format(day); // Returns "YYYY-MM-DD" format
+	const [year, month, dayOfMonth] = dateStr.split("-");
 	const hourStr = String(hours).padStart(2, "0");
 	const minuteStr = String(minutes).padStart(2, "0");
 

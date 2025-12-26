@@ -43,6 +43,7 @@ import {
 	epochToDate,
 	dayAndTimeSlotToUtc,
 	dateToEpoch,
+	convertToUtc,
 } from "@/utils/datetime-utils";
 import {
 	AlertDialog,
@@ -586,13 +587,30 @@ export const CustomerWeekViewCalendar: React.FC<
 	// Generate days of the week
 	const weekDays = useMemo(() => {
 		const days: Date[] = [];
+		// Extract date components from weekStart in store timezone
+		const formatter = new Intl.DateTimeFormat("en-CA", {
+			timeZone: storeTimezone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+		});
+		const weekStartStr = formatter.format(weekStart);
+		const [startYear, startMonth, startDay] = weekStartStr
+			.split("-")
+			.map(Number);
+
+		// Create day objects at 00:00 in store timezone, then convert to UTC
+		// This ensures each day represents the correct calendar day in store timezone
 		for (let i = 0; i < 7; i++) {
-			const date = new Date(weekStart);
-			date.setDate(weekStart.getDate() + i);
-			days.push(date);
+			const dayOfMonth = startDay + i;
+			// Create datetime-local string for the day at 00:00 in store timezone
+			const datetimeLocalString = `${startYear}-${String(startMonth).padStart(2, "0")}-${String(dayOfMonth).padStart(2, "0")}T00:00`;
+			// Convert to UTC Date using convertToUtc
+			const dayUtc = convertToUtc(datetimeLocalString, storeTimezone);
+			days.push(dayUtc);
 		}
 		return days;
-	}, [weekStart]);
+	}, [weekStart, storeTimezone]);
 
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 

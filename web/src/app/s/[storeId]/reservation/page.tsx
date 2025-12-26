@@ -258,7 +258,7 @@ export default async function ReservationPage(props: {
 			<Suspense fallback={<Loader />}>
 				<div className="mx-auto max-w-7xl py-6">
 					<ReservationClient
-						existingReservations={existingReservations}
+						existingReservations={formattedRsvps}
 						rsvpSettings={rsvpSettings}
 						storeSettings={storeSettings}
 						facilities={facilities}

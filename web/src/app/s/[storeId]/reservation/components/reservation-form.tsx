@@ -48,7 +48,6 @@ import type {
 } from "@/types";
 
 import {
-	convertToUtc,
 	dateToEpoch,
 	epochToDate,
 	formatUtcDateToDateTimeLocal,
@@ -857,49 +856,48 @@ export function ReservationForm({
 												/>
 											</div>
 										) : (
-											// Create mode: Use datetime-local input
-											<Input
-												type="datetime-local"
-												disabled={isSubmitting}
-												value={
-													field.value
-														? (() => {
-																try {
-																	// Ensure we have a proper Date object
-																	const utcDate =
-																		field.value instanceof Date
-																			? field.value
-																			: new Date(field.value);
+											// Create mode: Display date/time (read-only)
+											<div className="flex h-10 w-full rounded-md px-3 py-2 text-sm ring-offset-background">
+												{field.value ? (
+													(() => {
+														try {
+															// Ensure we have a proper Date object
+															const utcDate =
+																field.value instanceof Date
+																	? field.value
+																	: new Date(field.value);
 
-																	// Validate date
-																	if (Number.isNaN(utcDate.getTime())) {
-																		return "";
-																	}
+															// Validate date
+															if (Number.isNaN(utcDate.getTime())) {
+																return (
+																	<span className="text-muted-foreground">
+																		Invalid date
+																	</span>
+																);
+															}
 
-																	// Use formatUtcDateToDateTimeLocal to correctly format UTC date in store timezone
-																	return formatUtcDateToDateTimeLocal(
-																		utcDate,
-																		storeTimezone,
-																	);
-																} catch {
-																	// Silently handle formatting errors
-																	return "";
-																}
-															})()
-														: ""
-												}
-												onChange={(e) => {
-													// Convert datetime-local string (interpreted as store timezone) to UTC Date
-													// This matches the admin form behavior - both convert to UTC before sending
-													// The server action's convertDateToUtc will handle the conversion correctly
-													// by extracting the Date's components and re-interpreting them as store timezone
-													const value = e.target.value;
-													if (value) {
-														const utcDate = convertToUtc(value, storeTimezone);
-														field.onChange(utcDate);
-													}
-												}}
-											/>
+															// Format UTC date in store timezone for display
+															const formatted = formatUtcDateToDateTimeLocal(
+																utcDate,
+																storeTimezone,
+															);
+															return (
+																<span>{formatted || "No date selected"}</span>
+															);
+														} catch {
+															return (
+																<span className="text-muted-foreground">
+																	Invalid date
+																</span>
+															);
+														}
+													})()
+												) : (
+													<span className="text-muted-foreground">
+														No date selected
+													</span>
+												)}
+											</div>
 										)}
 									</FormControl>
 									{timeValidationError && (
