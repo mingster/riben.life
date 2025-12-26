@@ -56,7 +56,11 @@ export default async function CashPaymentPage(props: {
 						{t("cash_payment_instruction")}
 					</h2>
 
-					<DisplayOrder order={order as StoreOrder} />
+					<DisplayOrder order={order as StoreOrder}
+						hidePaymentMethod={true}
+						hideOrderStatus={true} 
+						hideContactSeller={true} 
+						showOrderNotes={false} />
 				</section>
 				<div className="relative flex w-full justify-center"> </div>
 			</div>

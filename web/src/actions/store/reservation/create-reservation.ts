@@ -147,6 +147,7 @@ export const createReservationAction = baseClient
 			},
 			select: {
 				id: true,
+				facilityName: true,
 				businessHours: true,
 				defaultCost: true,
 				defaultDuration: true,
@@ -246,6 +247,8 @@ export const createReservationAction = baseClient
 						paymentMethodPayUrl,
 						rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
 						facilityId, // Pass facility ID for pickupCode
+						facilityName: facility.facilityName || "Facility", // Pass facility name for product name
+						rsvpTime, // Pass RSVP time (BigInt epoch)
 						note: orderNote,
 						isPaid: false, // Customer will pay at checkout
 					});

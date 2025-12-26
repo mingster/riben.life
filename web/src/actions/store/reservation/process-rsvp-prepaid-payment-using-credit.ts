@@ -134,6 +134,13 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 				formattedRsvpTime = format(storeDate, `${datetimeFormat} HH:mm`);
 			}
 
+			// Fetch facility name for product name
+			const facility = await sqlClient.storeFacility.findUnique({
+				where: { id: facilityId },
+				select: { facilityName: true },
+			});
+			const facilityName = facility?.facilityName || t("facility_name") || "Facility";
+
 			// Deduct credit and create order in a transaction
 			await sqlClient.$transaction(async (tx) => {
 				// Create StoreOrder first (needed for referenceId in CustomerCreditLedger)
@@ -152,6 +159,8 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 					paymentMethodPayUrl: "credit", // Credit payment for prepaid
 					rsvpId, // Pass RSVP ID for pickupCode
 					facilityId, // Pass facility ID for pickupCode
+					facilityName, // Pass facility name for product name
+					rsvpTime: rsvpTimeEpoch, // Pass RSVP time (BigInt epoch)
 					note: orderNote,
 					isPaid: true, // Already paid via credit deduction
 				});
