@@ -135,10 +135,7 @@ export async function createRsvpStoreOrder(
 	const rsvpTimeDate = epochToDate(rsvpTime);
 	let formattedRsvpTime = "";
 	if (rsvpTimeDate) {
-		const storeDate = getDateInTz(
-			rsvpTimeDate,
-			getOffsetHours(storeTimezone),
-		);
+		const storeDate = getDateInTz(rsvpTimeDate, getOffsetHours(storeTimezone));
 		formattedRsvpTime = format(storeDate, "yyyy/MM/dd HH:mm");
 	}
 

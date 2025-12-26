@@ -21,6 +21,7 @@ type orderProps = {
 	hideOrderStatus?: boolean;
 	showOrderNotes?: boolean;
 	hideContactSeller?: boolean;
+	showPickupCode?: boolean;
 };
 
 // show order success prompt and then redirect the customer to view order page (購物明細)
@@ -30,6 +31,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 	hideOrderStatus = false,
 	showOrderNotes = false,
 	hideContactSeller = false,
+	showPickupCode = true,
 }) => {
 	//console.log("DisplayOrder", JSON.stringify(order));
 	//logger.info(order);
@@ -114,7 +116,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 					</div>
 
 					<div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs font-mono text-muted-foreground">
-						{order.pickupCode && (
+						{showPickupCode && order.pickupCode && (
 							<div className="flex items-center gap-1">
 								<span className="font-medium">{t("order_pickup_code")}:</span>
 								<span className="font-semibold text-foreground">

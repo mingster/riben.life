@@ -139,7 +139,8 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 				where: { id: facilityId },
 				select: { facilityName: true },
 			});
-			const facilityName = facility?.facilityName || t("facility_name") || "Facility";
+			const facilityName =
+				facility?.facilityName || t("facility_name") || "Facility";
 
 			// Deduct credit and create order in a transaction
 			await sqlClient.$transaction(async (tx) => {

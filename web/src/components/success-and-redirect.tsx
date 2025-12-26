@@ -104,11 +104,15 @@ function MyTimer({
 						{t("success_title")}
 					</h2>
 					{t("order_success_descr")}
-					{order && <DisplayOrder order={order}
-						hidePaymentMethod={true}
-						hideOrderStatus={true}
-						hideContactSeller={true}
-						showOrderNotes={false} />}
+					{order && (
+						<DisplayOrder
+							order={order}
+							hidePaymentMethod={true}
+							hideOrderStatus={true}
+							hideContactSeller={true}
+							showOrderNotes={false}
+						/>
+					)}
 				</section>
 				<div className="relative flex w-full justify-center"> </div>
 			</div>
