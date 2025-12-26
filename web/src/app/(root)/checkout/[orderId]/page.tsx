@@ -205,6 +205,7 @@ const CheckoutHomePage = async (props: {
 							hideOrderStatus={true}
 							hideContactSeller={true}
 							showOrderNotes={false}
+							showPickupCode={false}
 						/>
 					</div>
 
