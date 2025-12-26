@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27\
 **Status:** Active\
-**Version:** 1.9\
+**Version:** 2.0\
 **Related Documents:**
 
 * [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -288,7 +288,8 @@ model RsvpTag {
 The `create-reservation.ts` action handles customer-facing reservation creation with the following technical requirements:
 
 * **Authentication:** 
-  * Anonymous users can create reservations if prepaid is not required
+  * **Currently:** Authentication is required to access the reservation page (sign-in required)
+  * Previously: Anonymous users could create reservations if prepaid was not required
   * Authentication required if `minPrepaidPercentage > 0`
 * **Validation:**
   * Reservation time window (`canReserveBefore`, `canReserveAfter`)
@@ -302,14 +303,17 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
     * Returns RSVP data to frontend
   * **If prepaid required (`minPrepaidPercentage > 0`):**
     * Creates unpaid `StoreOrder` with prepaid amount
+    * **Currency Handling:** Order currency is set to store's `defaultCurrency` using `store.defaultCurrency` field
     * Payment method selection:
       * If `store.useCustomerCredit = true`: Order created with "credit" payment method
       * If `store.useCustomerCredit = false`: Order created with "TBD" payment method
+    * **Payment Method Updates:** When marking orders as paid (via `markOrderAsPaidCore`), the system explicitly uses the provided `paymentMethodId` parameter to ensure correct payment method tracking. Payment methods are fetched by `payUrl` identifier and passed to payment processing functions.
     * Shipping method: "digital" (for reservation orders)
     * Order status: `Pending` (unpaid)
     * RSVP created with `status = Pending`, `alreadyPaid = false`
     * RSVP `orderId` linked to created order
     * Returns `orderId` to frontend for checkout redirect
+    * **Store Membership:** Customer is automatically added as store member (user role) via `ensureCustomerIsStoreMember()` utility when creating order
 * **Checkout Integration:**
   * Frontend redirects to `/checkout/[orderId]` when `orderId` is returned
   * Customer selects payment method at checkout page
@@ -325,6 +329,7 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
 The `update-reservation.ts` action allows customers to modify their reservations with the following technical requirements:
 
 * **Time Window:** Modification must occur within the allowed cancellation window (`cancelHours` from `RsvpSettings`)
+* **Unpaid Reservation Redirect:** When editing an unpaid reservation (where `orderId` exists and `alreadyPaid = false`), the system automatically redirects the customer to the checkout page (`/checkout/[orderId]`) via client-side `useEffect` hook before allowing modifications.
 * **Modifiable Fields:**
   * `rsvpTime` (date/time) - Subject to availability validation
   * `facilityId` - Can change to a different facility
@@ -925,8 +930,10 @@ For Google Actions Center Appointments Redirect integration:
 **Behavior:**
 
 * Filters facilities that are already booked at the selected time slot
-* **If `singleServiceMode` is `true`:** If any reservation exists for the time slot, all facilities are filtered out
-* **If `singleServiceMode` is `false` (default):** Only facilities with existing reservations are filtered out
+* **Calendar Day Filtering:** Facilities are only filtered if existing reservations fall on the same calendar day (in store timezone) as the selected time slot. Reservations on different calendar days do not affect facility availability. This prevents incorrect filtering when selecting time slots on different days.
+* **Timezone Handling:** Date components are extracted in store timezone using `Intl.DateTimeFormat` with `timeZone` option, ensuring correct calendar day comparison regardless of UTC representation.
+* **If `singleServiceMode` is `true`:** If any reservation exists for the time slot on the same calendar day, all facilities are filtered out
+* **If `singleServiceMode` is `false` (default):** Only facilities with existing reservations on the same calendar day are filtered out
 * When editing an existing reservation, the current facility is always included even if it would normally be filtered out
 * Also filters by facility business hours (if facility has its own business hours configured)
 
@@ -967,6 +974,33 @@ For Google Actions Center Appointments Redirect integration:
 
 **Usage:** Used by `cancel-reservation.ts` to determine if refund should be processed.
 
+#### 8.1.4 Date/Time Conversion Utilities
+
+**Location:** `src/utils/datetime-utils.ts`
+
+**Function:** `dayAndTimeSlotToUtc()`
+
+**Purpose:** Converts a day Date object and time slot string to UTC Date, handling timezone conversions correctly. Used by calendar components when users click on time slots to create reservation times.
+
+**Parameters:**
+
+* `day: Date` - Date object representing the day
+* `timeSlot: string` - Time slot in "HH:mm" format
+* `storeTimezone: string` - Store timezone string (e.g., "Asia/Taipei")
+
+**Returns:**
+
+* `Date` - UTC Date object representing the reservation time
+
+**Behavior:**
+
+* **Timezone-Aware Date Extraction:** Extracts date components (year, month, day) from the day Date object in store timezone using `Intl.DateTimeFormat` with `timeZone` option and "en-CA" locale (which returns "YYYY-MM-DD" format directly), rather than UTC methods. This ensures the correct calendar day is used regardless of the Date object's UTC representation.
+* Creates datetime-local string in store timezone format ("YYYY-MM-DDTHH:mm")
+* Converts to UTC Date using `convertToUtc()` function
+* **Fixed One-Day-Off Issue:** Previously used UTC methods (`getUTCFullYear()`, `getUTCMonth()`, `getUTCDate()`) which caused date to be off by one day when the Date object represented a different day in UTC than in store timezone. For example, if a Date object represents 12/29 00:00 in store timezone (UTC+8), it's actually 12/28 16:00 in UTC. Using UTC methods would extract 28 instead of 29, causing the one-day-off issue. Now uses store timezone extraction to ensure correct calendar day.
+
+**Usage:** Used by calendar components (`slot-picker.tsx`, `customer-week-view-calendar.tsx`) when user clicks on a time slot to create reservation time. Also used in `weekDays` creation to ensure day objects represent correct calendar days in store timezone.
+
 ### 8.3 Order Creation Utilities
 
 **Location:** `src/actions/store/reservation/`
@@ -985,9 +1019,9 @@ For Google Actions Center Appointments Redirect integration:
 * `storeId` - Store ID
 * `customerId` - Customer user ID
 * `orderTotal` - Prepaid amount (cash value in store currency)
-* `currency` - Store currency code
+* `currency` - Store currency code (fetched from `store.defaultCurrency` to ensure consistency)
 * `paymentMethodPayUrl` - Payment method identifier ("credit" or "TBD")
-* `note` - Optional order note
+* `note` - Optional order note (includes RSVP details: RSVP ID, facility name, formatted reservation time in store timezone)
 * `isPaid` - Whether order is already paid (default: `false` for checkout flow)
 
 **Returns:**
@@ -1281,6 +1315,7 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 2.0 | 2025-01-27 | System | Enhanced reservation system with authentication, timezone fixes, and UI improvements: (1) Added sign-in requirement for reservation page - authentication is now required to access reservation page. (2) Fixed facility filtering - facilities are only filtered if existing reservations fall on the same calendar day (in store timezone) as the selected time slot, preventing incorrect filtering across different days. Updated `dayAndTimeSlotToUtc()` to extract date components in store timezone using `Intl.DateTimeFormat` instead of UTC methods, fixing one-day-off issue. (3) Improved payment method handling - `markOrderAsPaidCore` now explicitly uses provided `paymentMethodId` parameter, ensuring correct payment method tracking. Payment methods are fetched by `payUrl` identifier in all payment flows (Stripe, LINE Pay, credit, cash). (4) Currency consistency - orders use store's `defaultCurrency` consistently across creation and refund processes. Refund processing uses order's `currency` field instead of store's default currency. (5) Auto store membership - `ensureCustomerIsStoreMember()` utility automatically adds customers as store members (user role) when they create orders. (6) Order notes display - `DisplayOrder` component now supports `showOrderNotes` prop (default: false) to conditionally display order notes. (7) Fiat balance badge - customer menu displays fiat balance badge when balance > 0. (8) Checkout success UX - `SuccessAndRedirect` component displays brief success message before redirecting. (9) Unpaid RSVP redirect - reservation form redirects to checkout page when editing unpaid reservations. (10) Date/time display - reservation form uses display-only field for `rsvpTime` in create mode, formatted using `formatUtcDateToDateTimeLocal()` for correct timezone display. Updated Sections 4.1.1, 8.1.2, and 8.3.1 to reflect these enhancements. |
 | 1.9 | 2025-01-27 | System | Updated customer-facing RSVP creation flow with checkout integration: (1) Modified `create-reservation.ts` to create unpaid store orders and redirect to checkout instead of processing payment immediately. (2) Updated `create-rsvp-store-order.ts` to accept `paymentMethodPayUrl` parameter ("credit" or "TBD") instead of hardcoding payment method. (3) Payment method selection: Orders created with "credit" if `store.useCustomerCredit = true`, otherwise "TBD". (4) Customer credit deduction: No longer deducted at reservation creation; only deducted when customer completes payment using credit at checkout. (5) Added documentation for customer reservation creation flow and checkout integration in Section 4.1.1. (6) Added `createRsvpStoreOrder()` utility function documentation in Section 8.3.1. (7) Updated payment integration section (7.3) to document unified checkout flow. |
 | 1.8 | 2025-01-27 | System | Enhanced reservation validation and UI improvements: (1) Added detailed business hours validation logic with priority rules (RsvpSettings.useBusinessHours vs Store.useBusinessHours) - validation occurs both client-side (real-time UI feedback) and server-side (form submission). Updated Section 8.1.1 to document the new validation function and priority rules. (2) Implemented dynamic facility filtering in reservation forms (both customer-facing and admin) - facilities already booked at the selected time slot are automatically filtered out from the dropdown, with special handling for singleServiceMode and edit mode. Added Section 8.1.2 to document facility availability filtering. |
 | 1.7 | 2025-01-27 | System | Added `singleServiceMode` field to RsvpSettings model: Boolean field (default: `false`) for personal shops where only ONE reservation per time slot is allowed across all facilities. When enabled, availability checking blocks any reservation if another reservation exists for the same time slot, regardless of facility. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities. Updated availability rules and functional requirements to document this behavior. |

@@ -267,6 +267,8 @@ export const createRsvpAction = storeActionClient
 							paymentMethodPayUrl: "TBD", // TBD payment method for admin-created orders
 							rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
 							facilityId: facility.id, // Pass facility ID for pickupCode
+							facilityName, // Pass facility name for product name
+							rsvpTime: createdRsvp.rsvpTime, // Pass RSVP time (BigInt epoch)
 							note: orderNote,
 							isPaid: false, // Unpaid order for customer to pay later
 						});

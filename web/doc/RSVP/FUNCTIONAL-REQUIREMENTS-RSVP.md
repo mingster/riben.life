@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27
 **Status:** Active
-**Version:** 1.8
+**Version:** 1.9
 
 **Related Documents:**
 
@@ -96,6 +96,8 @@ Store Admins have all Store Staff permissions, plus:
 
 **FR-RSVP-001:** Customers must be able to create reservations through the store's public RSVP page.
 
+**Note:** Currently, authentication (sign-in) is required to access the reservation page. Anonymous users must sign in before creating reservations.
+
 **FR-RSVP-002:** The reservation form must collect the following information:
 
 * Date and time of reservation (rsvpTime)
@@ -125,8 +127,9 @@ Store Admins have all Store Staff permissions, plus:
 * **UI Facility Filtering:**
   * The reservation form dynamically filters available facilities based on the selected time slot
   * Facilities that are already booked at the selected time are hidden from the facility dropdown
-  * **If `singleServiceMode` is `true`:** If any reservation exists for the time slot, all facilities are filtered out
-  * **If `singleServiceMode` is `false` (default):** Only facilities with existing reservations are filtered out
+  * **Calendar Day Filtering:** Facilities are only filtered if existing reservations fall on the same calendar day (in store timezone) as the selected time slot. Reservations on different calendar days do not affect facility availability.
+  * **If `singleServiceMode` is `true`:** If any reservation exists for the time slot on the same calendar day, all facilities are filtered out
+  * **If `singleServiceMode` is `false` (default):** Only facilities with existing reservations on the same calendar day are filtered out
   * When editing an existing reservation, the current facility is always included even if it would normally be filtered out
 * Existing reservations for the requested time slot
 * **If `singleServiceMode` is `true`:** Only one reservation is allowed per time slot across all facilities (personal shop mode)
@@ -140,17 +143,21 @@ Store Admins have all Store Staff permissions, plus:
   * When a customer creates a reservation with prepaid required:
     * System creates a store order with the prepaid amount
     * Prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`; if total cost is missing or zero, prepaid is skipped
+    * **Currency Handling:** Order currency is set to the store's `defaultCurrency` to ensure consistency across order creation and payment processing.
     * Payment method is determined based on store settings:
       * If `store.useCustomerCredit = true`: Order is created with "credit" payment method
       * If `store.useCustomerCredit = false`: Order is created with "TBD" (To Be Determined) payment method
+    * **Payment Method Updates:** When marking orders as paid, the system explicitly uses the provided payment method ID to ensure correct payment method tracking. Payment methods are correctly specified during order payment and refund processes.
     * Order is created as unpaid (`isPaid = false`) for customer to complete payment at checkout
     * Customer is redirected to `/checkout/[orderId]` to select payment method and complete payment
+    * **Checkout Success:** After successful payment, a brief success message is displayed before redirecting to the appropriate page (RSVP page, custom return URL, or order page).
   * Payment can be made using:
     * Customer credit (if `useCustomerCredit = true` and customer selects "credit" payment method)
     * Other payment methods (Stripe, LINE Pay, cash, etc.) available at checkout
 * Payment status tracked via `alreadyPaid` flag (updated after payment completion)
 * Reservation linked to order via `orderId` when prepaid
 * Customer credit balance is deducted only when customer completes payment using credit at checkout
+* **Store Membership:** When customers create orders (including RSVP prepaid orders), they are automatically added as store members with "user" role in the store's organization, ensuring they can access store-specific features and services.
 
 **FR-RSVP-005:** The system must assign a reservation status:
 
@@ -427,6 +434,7 @@ Completed (50) [when service is finished]
 * Update special requests/notes
 * Modify within the allowed cancellation window (`cancelHours`)
 * When modified, `ConfirmedByStore` is set to false again.
+* **Unpaid Reservation Redirect:** When editing an unpaid reservation (where `orderId` exists and `alreadyPaid = false`), the system automatically redirects the customer to the checkout page (`/checkout/[orderId]`) to complete payment before allowing modifications.
 
 **FR-RSVP-014:** Customers must be able to cancel reservations:
 
@@ -1227,6 +1235,7 @@ Completed (50) [when service is finished]
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.9 | 2025-01-27 | System | Enhanced reservation system with authentication, timezone fixes, and UI improvements: (1) Added sign-in requirement for reservation page access - customers must authenticate before creating reservations. (2) Fixed facility filtering to only filter facilities on the same calendar day (in store timezone) as the selected time slot, preventing incorrect filtering across different days. (3) Fixed timezone handling in date/time selection - resolved one-day-off issue by ensuring date components are extracted in store timezone rather than UTC. (4) Improved payment method handling - payment methods are now explicitly specified and updated during order payment and refund processes. (5) Currency consistency - orders use store's `defaultCurrency` or order's `currency` consistently across creation and refund processes. (6) Auto store membership - customers are automatically added as store members (user role) when they create orders. (7) Order notes display - added option to display order notes in order detail views (default: hidden). (8) Fiat balance badge - added fiat balance badge to customer menu for quick balance visibility. (9) Checkout success UX - brief success message displayed before redirect on checkout success page. (10) Unpaid RSVP redirect - in edit mode, unpaid reservations automatically redirect to checkout page. (11) Date/time display - changed datetime-local input to display-only field in reservation form for better timezone handling. Updated FR-RSVP-001, FR-RSVP-003, FR-RSVP-004, and FR-RSVP-013 to reflect these enhancements. |
 | 1.8 | 2025-01-27 | System | Updated customer-facing RSVP creation flow with checkout integration: (1) Changed prepaid payment flow - when prepaid is required, system now creates an unpaid store order and redirects customer to checkout page (`/checkout/[orderId]`) instead of processing payment immediately. (2) Payment method selection: Orders are created with "credit" payment method if `store.useCustomerCredit = true`, otherwise "TBD" payment method. Customer selects payment method at checkout. (3) Credit deduction: Customer credit is no longer deducted at reservation creation time; it's deducted only when customer completes payment using credit at checkout. (4) Updated FR-RSVP-004 and UC-RSVP-001 to reflect new checkout-based payment flow. |
 | 1.7 | 2025-01-27 | System | Enhanced reservation validation and UI improvements: (1) Added detailed business hours validation logic with priority rules (RsvpSettings.useBusinessHours vs Store.useBusinessHours), including real-time UI validation and server-side validation on form submission. (2) Implemented dynamic facility filtering in reservation forms (both customer-facing and admin) - facilities already booked at the selected time slot are automatically filtered out from the dropdown, with special handling for singleServiceMode and edit mode. Updated FR-RSVP-003, FR-RSVP-024, and BR-RSVP-001 to document these enhancements. |
 | 1.6 | 2025-01-27 | System | Added `singleServiceMode` field to RsvpSettings: Boolean field (default: `false`) for personal shops where only ONE reservation per time slot is allowed across all facilities. When enabled, availability checking blocks any reservation if another reservation exists for the same time slot, regardless of facility. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities. Updated business rules (BR-RSVP-004a, BR-RSVP-004b) and functional requirements (FR-RSVP-003, FR-RSVP-024, FR-RSVP-060) to document this behavior. |

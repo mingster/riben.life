@@ -2,6 +2,7 @@ import getOrderById from "@/actions/get-order-by_id";
 import { getT } from "@/app/i18n";
 import { DisplayOrder } from "@/components/display-order";
 import { Loader } from "@/components/loader";
+import { PageQrCode } from "@/components/page-qrcode";
 import { StoreOrder } from "@/types";
 import { Suspense } from "react";
 
@@ -56,7 +57,17 @@ export default async function CashPaymentPage(props: {
 						{t("cash_payment_instruction")}
 					</h2>
 
-					<DisplayOrder order={order as StoreOrder} />
+					<DisplayOrder
+						order={order as StoreOrder}
+						hidePaymentMethod={true}
+						hideOrderStatus={true}
+						hideContactSeller={true}
+						showOrderNotes={false}
+						showPickupCode={false}
+					/>
+
+					{/* show qr code to /storeAdmin/cash-cashier */}
+					<PageQrCode url="/storeAdmin/cash-cashier" />
 				</section>
 				<div className="relative flex w-full justify-center"> </div>
 			</div>

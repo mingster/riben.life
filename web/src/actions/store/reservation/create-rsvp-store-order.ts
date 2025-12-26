@@ -1,13 +1,19 @@
 "use server";
 
 import { OrderStatus, PaymentStatus } from "@/types/enum";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import {
+	getUtcNowEpoch,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+} from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
 import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { ensureReservationPrepaidProduct } from "./ensure-reservation-prepaid-product";
 import { getT } from "@/app/i18n";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
+import { format } from "date-fns";
 
 interface CreateRsvpStoreOrderParams {
 	tx: Omit<
@@ -21,6 +27,8 @@ interface CreateRsvpStoreOrderParams {
 	paymentMethodPayUrl: string; // Payment method identifier (e.g., "credit", "TBD")
 	rsvpId: string; // RSVP reservation ID
 	facilityId: string; // Facility ID
+	facilityName: string; // Facility name for product name
+	rsvpTime: bigint; // RSVP reservation time (BigInt epoch milliseconds)
 	note?: string; // Optional order note
 	isPaid?: boolean; // Whether the order is already paid (default: false for checkout flow)
 }
@@ -46,6 +54,8 @@ export async function createRsvpStoreOrder(
 		paymentMethodPayUrl,
 		rsvpId,
 		facilityId,
+		facilityName,
+		rsvpTime,
 		note,
 		isPaid = false, // Default to false for checkout flow
 	} = params;
@@ -90,11 +100,12 @@ export async function createRsvpStoreOrder(
 		throw new SafeError("Reservation prepaid product not found");
 	}
 
-	// Fetch store to get defaultCurrency at the time of creation
+	// Fetch store to get defaultCurrency and timezone at the time of creation
 	const store = await tx.store.findUnique({
 		where: { id: storeId },
 		select: {
 			defaultCurrency: true,
+			defaultTimezone: true,
 		},
 	});
 
@@ -118,6 +129,21 @@ export async function createRsvpStoreOrder(
 		currency ||
 		"twd"
 	).toLowerCase();
+
+	// Format rsvpTime for product name: yyyy/MM/dd HH:mm
+	const storeTimezone = store.defaultTimezone || "Asia/Taipei";
+	const rsvpTimeDate = epochToDate(rsvpTime);
+	let formattedRsvpTime = "";
+	if (rsvpTimeDate) {
+		const storeDate = getDateInTz(rsvpTimeDate, getOffsetHours(storeTimezone));
+		formattedRsvpTime = format(storeDate, "yyyy/MM/dd HH:mm");
+	}
+
+	// Build product name using i18n key: 預約{{facilityName}} - {{rsvpTime}}
+	const productName = t("rsvp_order_product_name", {
+		facilityName,
+		rsvpTime: formattedRsvpTime || "",
+	});
 
 	// Create the store order
 	const storeOrder = await tx.storeOrder.create({
@@ -143,7 +169,7 @@ export async function createRsvpStoreOrder(
 			OrderItems: {
 				create: {
 					productId: reservationPrepaidProduct.id,
-					productName: t("reservation_prepaid") || "Prepaid for Reservation",
+					productName, // Format: 預約{{facilityName}} - {{formattedRsvpTime}}
 					quantity: 1, // Single prepaid payment
 					unitPrice: new Prisma.Decimal(orderTotal), // Prepaid amount
 					unitDiscount: new Prisma.Decimal(0),
