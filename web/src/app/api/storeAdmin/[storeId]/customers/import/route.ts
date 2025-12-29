@@ -243,19 +243,19 @@ export async function POST(
 
 				if (existingUser) {
 					// Update existing user
-				const updateData: {
-					name?: string;
-					phoneNumber?: string | null;
-					banned?: boolean;
-				} = {};
+					const updateData: {
+						name?: string;
+						phoneNumber?: string | null;
+						banned?: boolean;
+					} = {};
 
-				if (customer.name !== undefined && customer.name !== "") {
-					updateData.name = customer.name.trim();
-				}
+					if (customer.name !== undefined && customer.name !== "") {
+						updateData.name = customer.name.trim();
+					}
 
-				if (customer.phone !== undefined) {
-					updateData.phoneNumber = customer.phone.trim() || null;
-				}
+					if (customer.phone !== undefined) {
+						updateData.phoneNumber = customer.phone.trim() || null;
+					}
 
 					if (customer.banned !== undefined) {
 						updateData.banned = customer.banned.toLowerCase() === "true";

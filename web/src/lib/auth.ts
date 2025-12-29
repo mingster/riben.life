@@ -200,12 +200,12 @@ export const auth = betterAuth({
 	],
 	user: {
 		additionalFields: {
-			phone: {
+			phoneNumber: {
 				type: "string",
 				required: false,
 				defaultValue: "",
 			},
-			phoneVerified: {
+			phoneNumberVerified: {
 				type: "boolean",
 				required: false,
 				defaultValue: false,
