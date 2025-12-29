@@ -8,6 +8,8 @@ import {
 	endOfMonth,
 	startOfYear,
 	endOfYear,
+	subDays,
+	addDays,
 } from "date-fns";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -39,7 +41,7 @@ export const CustomerFiatUsageClient: React.FC<
 	const { t } = useTranslation(lng);
 
 	const [allData, setAllData] = useState<CustomerFiatLedger[]>(ledger);
-	const [periodType, setPeriodType] = useState<PeriodType>("week");
+	const [periodType, setPeriodType] = useState<PeriodType>("custom");
 	const [startDate, setStartDate] = useState<Date | null>(null);
 	const [endDate, setEndDate] = useState<Date | null>(null);
 
@@ -54,9 +56,9 @@ export const CustomerFiatUsageClient: React.FC<
 		return convertToUtc(formatted, storeTimezone);
 	}, [storeTimezone]);
 
-	// Initialize default to "this week"
+	// Initialize default to past 10 days to future 30 days
 	useEffect(() => {
-		if (periodType === "week" && !startDate && !endDate) {
+		if (!startDate && !endDate) {
 			const nowInTz = getNowInStoreTimezone();
 			// Extract date components in store timezone
 			const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -79,19 +81,20 @@ export const CustomerFiatUsageClient: React.FC<
 			const minute = getValue("minute");
 
 			// Create a Date object representing current time in store timezone
-			// We'll use this to calculate week boundaries
 			const storeDate = new Date(year, month, day, hour, minute);
-			const weekStart = startOfWeek(storeDate, { weekStartsOn: 0 }); // Sunday
-			const weekEnd = endOfWeek(storeDate, { weekStartsOn: 0 }); // Saturday
 
-			// Convert week boundaries to UTC (interpret as store timezone)
-			const weekStartStr = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, "0")}-${String(weekStart.getDate()).padStart(2, "0")}T00:00`;
-			const weekEndStr = `${weekEnd.getFullYear()}-${String(weekEnd.getMonth() + 1).padStart(2, "0")}-${String(weekEnd.getDate()).padStart(2, "0")}T23:59`;
+			// Calculate past 10 days and future 30 days
+			const startDateLocal = subDays(storeDate, 10);
+			const endDateLocal = addDays(storeDate, 30);
 
-			setStartDate(convertToUtc(weekStartStr, storeTimezone));
-			setEndDate(convertToUtc(weekEndStr, storeTimezone));
+			// Convert to UTC (interpret as store timezone)
+			const startStr = `${startDateLocal.getFullYear()}-${String(startDateLocal.getMonth() + 1).padStart(2, "0")}-${String(startDateLocal.getDate()).padStart(2, "0")}T00:00`;
+			const endStr = `${endDateLocal.getFullYear()}-${String(endDateLocal.getMonth() + 1).padStart(2, "0")}-${String(endDateLocal.getDate()).padStart(2, "0")}T23:59`;
+
+			setStartDate(convertToUtc(startStr, storeTimezone));
+			setEndDate(convertToUtc(endStr, storeTimezone));
 		}
-	}, [periodType, startDate, endDate, storeTimezone, getNowInStoreTimezone]);
+	}, [startDate, endDate, storeTimezone, getNowInStoreTimezone]);
 
 	// Update date range when period type changes
 	const handlePeriodChange = useCallback(

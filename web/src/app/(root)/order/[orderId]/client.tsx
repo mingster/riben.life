@@ -34,7 +34,14 @@ export const DisplayClient: React.FC<props> = ({ store, order }) => {
 					<StoreRequirePrepaidPrompt />
 				)}
 
-				<DisplayOrder order={order} showOrderNotes={true} />
+				<DisplayOrder
+					order={order}
+					showOrderNotes={true}
+					showPickupCode={false}
+					hidePaymentMethod={true}
+					hideOrderStatus={false}
+					hideContactSeller={false}
+				/>
 
 				<Link href={`/s/${store.id}`} className="">
 					<Button className="w-full">{t("cart_summary_keepShopping")}</Button>

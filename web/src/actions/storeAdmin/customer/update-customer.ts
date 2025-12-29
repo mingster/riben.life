@@ -35,7 +35,7 @@ export const updateCustomerAction = storeActionClient
 			// Update user
 			await sqlClient.user.update({
 				where: { id: customerId },
-				data: { name, locale, timezone, phone },
+				data: { name, locale, timezone, phoneNumber: phone },
 			});
 
 			const organizationId = store.organizationId;

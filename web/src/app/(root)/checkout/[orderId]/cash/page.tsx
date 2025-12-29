@@ -5,6 +5,9 @@ import { Loader } from "@/components/loader";
 import { PageQrCode } from "@/components/page-qrcode";
 import { StoreOrder } from "@/types";
 import { Suspense } from "react";
+import { sqlClient } from "@/lib/prismadb";
+import { updateOrderPaymentMethodAction } from "@/actions/store/order/update-order-payment-method";
+import logger from "@/lib/logger";
 
 /*
 const CashPaymentPage = async (props: { params: Promise<{ orderId: string }> }) => {
@@ -47,6 +50,44 @@ export default async function CashPaymentPage(props: {
 
 	if (!order) {
 		return <div>Order not found</div>;
+	}
+
+	// Update order's payment method to cash if not already set
+	try {
+		// Find cash payment method
+		const cashPaymentMethod = await sqlClient.paymentMethod.findFirst({
+			where: {
+				payUrl: "cash",
+				isDeleted: false,
+			},
+		});
+
+		if (cashPaymentMethod && order.paymentMethodId !== cashPaymentMethod.id) {
+			// Update payment method to cash
+			const result = await updateOrderPaymentMethodAction({
+				orderId: order.id,
+				paymentMethodId: cashPaymentMethod.id,
+			});
+
+			if (result?.serverError) {
+				logger.error("Failed to update order payment method to cash", {
+					metadata: {
+						orderId: order.id,
+						error: result.serverError,
+					},
+					tags: ["order", "payment-method", "error"],
+				});
+			}
+		}
+	} catch (error) {
+		// Log error but don't block page rendering
+		logger.error("Error updating order payment method to cash", {
+			metadata: {
+				orderId: order.id,
+				error: error instanceof Error ? error.message : String(error),
+			},
+			tags: ["order", "payment-method", "error"],
+		});
 	}
 
 	return (

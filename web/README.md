@@ -338,27 +338,123 @@ bun run lint:fix
 
 ## Documentation
 
-### Project Documentation
+This README serves as the index for all project documentation. Documentation is organized by category in the `/doc` directory.
 
-Additional documentation can be found in the `/doc` directory:
+### 📋 Getting Started
 
-- [Deployment Guide](./doc/DEPLOYMENT.md)
-- [PostgreSQL Deployment](./doc/DEPLOYMENT-postgres.md)
-- [Environment Variables](./doc/ENVIRONMENT_VARIABLES.md)
-- [Google Analytics Setup](./doc/GOOGLE_ANALYTICS_COMPLETE_GUIDE.md)
-- [reCAPTCHA Setup](./doc/RECAPTCHA_SETUP.md)
-- [Security Guidelines](./doc/SECURITY.md)
-- [Contributing Guidelines](./doc/CONTRIBUTING.md)
+- **[Executive Summary](./doc/EXECUTIVE-SUMMARY.md)** - High-level overview of the platform
+- **[Contributing Guidelines](./doc/CONTRIBUTING.md)** - How to contribute to the project
+- **[Environment Variables](./doc/ENVIRONMENT_VARIABLES.md)** - Required environment configuration
+- **[GitHub Issues Checklist](./doc/GITHUB-ISSUES-CHECKLIST.md)** - Checklist for creating issues
 
-### Development Rules
+### 🚀 Deployment & Operations
+
+**Deployment Guides:**
+- **[Deployment Guide](./doc/dev_op/DEPLOYMENT.md)** - General deployment instructions
+- **[PostgreSQL Deployment](./doc/dev_op/DEPLOYMENT-postgres.md)** - PostgreSQL-specific deployment
+- **[PostgreSQL on RHEL9](./doc/dev_op/DEPLOYMENT-postgres_on-RHEL9.md)** - RHEL9-specific PostgreSQL setup
+
+**Operations:**
+- **[Security Guidelines](./doc/SECURITY.md)** - Security best practices and guidelines
+
+### 🛒 Ordering System
+
+**Functional Requirements:**
+- **[Functional Requirements: Ordering](./doc/ORDERING/FUNCTIONAL-REQUIREMENTS-ORDERING.md)** - Complete ordering system requirements (store creation, products, cart, orders, admin)
+
+**Design Documents:**
+- **[Organization & Multiple Stores Design](./doc/ORDERING/ORGANIZATION-MULTIPLE-STORES-DESIGN.md)** - Multi-store architecture and organization management
+
+### 💳 Payment System
+
+**Functional Requirements:**
+- **[Functional Requirements: Payment](./doc/PAYMENT/FUNCTIONAL-REQUIREMENTS-PAYMENT.md)** - Payment processing, methods, and flows
+
+**Technical Requirements:**
+- **[Technical Requirements: Payment](./doc/PAYMENT/TECHNICAL-REQUIREMENTS-PAYMENT.md)** - Payment system implementation details
+
+### 💰 Credit System
+
+**Functional Requirements:**
+- **[Functional Requirements: Credit](./doc/CREDIT/FUNCTIONAL-REQUIREMENTS-CREDIT.md)** - Customer credit system requirements
+
+**Design Documents:**
+- **[Customer Credit Design](./doc/CREDIT/DESIGN-CUSTOMER-CREDIT.md)** - Credit system architecture and design
+
+### 📅 RSVP (Reservation) System
+
+**Functional Requirements:**
+- **[Functional Requirements: RSVP](./doc/RSVP/FUNCTIONAL-REQUIREMENTS-RSVP.md)** - Reservation system requirements
+
+**Technical Requirements:**
+- **[Technical Requirements: RSVP](./doc/RSVP/TECHNICAL-REQUIREMENTS-RSVP.md)** - RSVP system implementation details
+
+**Design Documents:**
+- **[Time-Based Pricing Design](./doc/RSVP/DESIGN-TIME-BASED-PRICING.md)** - Facility pricing rules and time-based pricing
+
+### 🔔 Notification System
+
+**Functional Requirements:**
+- **[Functional Requirements: Notification](./doc/NOTIFICATION/FUNCTIONAL-REQUIREMENTS-NOTIFICATION.md)** - Notification system requirements
+
+**Technical Design:**
+- **[Technical Design: Notification](./doc/NOTIFICATION/TECHNICAL-DESIGN-NOTIFICATION.md)** - Notification system architecture
+
+**UI Design:**
+- **[UI Design: Notification](./doc/NOTIFICATION/UI-DESIGN-NOTIFICATION.md)** - Notification user interface design
+
+### 🔧 Configuration & Setup
+
+**Third-Party Integrations:**
+- **[Google Analytics Setup](./doc/MISC/GOOGLE_ANALYTICS_COMPLETE_GUIDE.md)** - Complete Google Analytics integration guide
+- **[reCAPTCHA Setup](./doc/MISC/RECAPTCHA_SETUP.md)** - reCAPTCHA v3 configuration
+- **[reCAPTCHA Architecture Comparison](./doc/MISC/RECAPTCHA_ARCHITECTURE_COMPARISON.md)** - Architecture comparison
+- **[reCAPTCHA Architecture Verification](./doc/MISC/RECAPTCHA_ARCHITECTURE_VERIFICATION.md)** - Architecture verification
+
+**Utilities:**
+- **[Geo IP README](./doc/MISC/geo-ip-README.md)** - Geo IP utility documentation
+
+### 🏗️ Architecture & Design
+
+**Access Control:**
+- **[Role-Based Access Control](./doc/MISC/ROLE-BASED-ACCESS-CONTROL.md)** - RBAC system documentation
+
+**Refactoring & Reviews:**
+- **[Store Access Refactor](./doc/MISC/STORE-ACCESS-REFACTOR.md)** - Store access control refactoring
+- **[Review: checkStoreStaffAccess](./doc/MISC/REVIEW-checkStoreStaffAccess.md)** - Store staff access review
+- **[Review: storeAdmin Routes](./doc/MISC/REVIEW-storeAdmin-routes.md)** - Store admin routes review
+
+**Migrations:**
+- **[Migration: DateTime to Epoch](./doc/MISC/MIGRATION-datetime-to-epoch.md)** - Migration from DateTime to BigInt epoch
+
+**Performance:**
+- **[Prisma Performance Analysis](./doc/MISC/PRISMA-PERFORMANCE-ANALYSIS.md)** - Database performance analysis
+- **[Project-Wide Optimization](./doc/MISC/PROJECT-WIDE-OPTIMIZATION.md)** - Platform optimization efforts
+
+**Session Management:**
+- **[Session Summary](./doc/MISC/SESSION-SUMMARY.md)** - Session management documentation
+
+### 📚 Development Rules
 
 Development standards and conventions are documented in `.cursor/rules/`:
 
-- [File Organization Standards](./.cursor/rules/file-organization.mdc)
-- [Server Action Guide](./.cursor/rules/server-action.mdc)
-- [Icon Library Standards](./.cursor/rules/icon-library.mdc)
-- [Package Manager (Bun)](./.cursor/rules/package-manager.mdc)
-- [CRUD Operation Pattern](./.cursor/rules/) (see workspace rules)
+- **[File Organization Standards](./.cursor/rules/file-organization.mdc)** - File and directory organization
+- **[Server Action Guide](./.cursor/rules/server-action.mdc)** - Server action patterns and best practices
+- **[Icon Library Standards](./.cursor/rules/icon-library.mdc)** - Icon usage guidelines
+- **[Package Manager (Bun)](./.cursor/rules/package-manager.mdc)** - Bun package manager usage
+- **[CRUD Operation Pattern](./.cursor/rules/)** - Standard CRUD implementation patterns (see workspace rules)
+- **[Form Handling](./.cursor/rules/form-handling.mdc)** - Form validation and handling patterns
+- **[Data Fetching](./.cursor/rules/data-fetching.mdc)** - Data fetching patterns (SWR, Server Components)
+- **[i18n Translation Key Naming](./.cursor/rules/i18n-naming.mdc)** - Translation key conventions
+- **[Logging Standards](./.cursor/rules/logging.mdc)** - Structured logging guidelines
+- **[Mobile Optimization](./.cursor/rules/mobile-optimization.mdc)** - Mobile (iPhone 16+) optimization guidelines
+
+### 📖 Reference Materials
+
+Reference documents and external resources are available in `/doc/references/`:
+
+- LINE Pay integration guides and API documentation
+- Other third-party service documentation
 
 ## Learn More
 

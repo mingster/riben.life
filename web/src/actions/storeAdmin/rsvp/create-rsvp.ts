@@ -256,6 +256,7 @@ export const createRsvpAction = storeActionClient
 						const baseNote = t("rsvp_reservation_payment_note");
 						const facilityName =
 							facility.facilityName || t("facility_name") || "Facility";
+
 						const orderNote = `${baseNote}\n${t("rsvp_id") || "RSVP ID"}: ${createdRsvp.id}\n${t("facility_name") || "Facility"}: ${facilityName}\n${t("rsvp_time") || "Reservation Time"}: ${formattedRsvpTime}`;
 
 						finalOrderId = await createRsvpStoreOrder({
@@ -270,6 +271,7 @@ export const createRsvpAction = storeActionClient
 							facilityName, // Pass facility name for product name
 							rsvpTime: createdRsvp.rsvpTime, // Pass RSVP time (BigInt epoch)
 							note: orderNote,
+							displayToCustomer: false, // Internal note, not displayed to customer
 							isPaid: false, // Unpaid order for customer to pay later
 						});
 

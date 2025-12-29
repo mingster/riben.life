@@ -152,6 +152,7 @@ const { t } = await useTranslation(store?.defaultLocale || "en");
 		];
 		const currentDay = dayNames[now.getDay()];
 
+		/*
 		console.log("=== Business Hours Debug ===");
 		console.log("Current time (UTC):", now.toISOString());
 		console.log("Current time (local):", now.toString());
@@ -163,6 +164,7 @@ const { t } = await useTranslation(store?.defaultLocale || "en");
 		console.log("isOpenNow() result:", businessHours.isOpenNow());
 		console.log("isClosedNow() result:", businessHours.isClosedNow());
 		console.log("===========================");
+		*/
 
 		isStoreOpen = store?.isOpen && businessHours.isOpenNow();
 

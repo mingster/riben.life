@@ -100,10 +100,10 @@ export const ensureOrganizationAction = storeActionClient
 
 				// If still not found, create new organization
 				if (!organization) {
-					try {
-						// Generate slug from store name
-						let storeSlug = store.name.toLowerCase().replace(/ /g, "-");
+					// Generate slug from store name (declare outside try block for error logging)
+					let storeSlug = store.name.toLowerCase().replace(/ /g, "-");
 
+					try {
 						// Check if slug is already taken
 						const slugExists = await sqlClient.organization.findUnique({
 							where: { slug: storeSlug },
@@ -142,13 +142,18 @@ export const ensureOrganizationAction = storeActionClient
 						logger.error("Failed to create organization", {
 							metadata: {
 								error: error instanceof Error ? error.message : String(error),
+								errorStack: error instanceof Error ? error.stack : undefined,
 								storeId: store.id,
 								storeName: store.name,
 								ownerId: store.ownerId,
+								storeSlug: storeSlug,
 							},
 							tags: ["store", "organization", "error"],
 						});
-						throw error;
+						// Re-throw with more context
+						throw new Error(
+							`Failed to create organization for store ${store.name}: ${error instanceof Error ? error.message : String(error)}`,
+						);
 					}
 				}
 			}

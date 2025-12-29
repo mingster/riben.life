@@ -245,7 +245,7 @@ export async function POST(
 					// Update existing user
 					const updateData: {
 						name?: string;
-						phone?: string | null;
+						phoneNumber?: string | null;
 						banned?: boolean;
 					} = {};
 
@@ -254,7 +254,7 @@ export async function POST(
 					}
 
 					if (customer.phone !== undefined) {
-						updateData.phone = customer.phone.trim() || null;
+						updateData.phoneNumber = customer.phone.trim() || null;
 					}
 
 					if (customer.banned !== undefined) {

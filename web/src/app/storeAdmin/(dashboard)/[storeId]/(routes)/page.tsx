@@ -52,22 +52,39 @@ export default async function StoreAdminHomePage(props: {
 	transformPrismaDataForJson(store);
 
 	// Ensure organization exists and is linked to store
-	const result = await ensureOrganizationAction(String(params.storeId), {});
+	// This is a non-critical operation - if it fails, page still renders
+	try {
+		const result = await ensureOrganizationAction(String(params.storeId), {});
 
-	if (result?.serverError) {
-		// Log error but don't block page rendering
-		logger.error("Failed to ensure organization", {
+		if (result?.serverError) {
+			// Log error but don't block page rendering
+			logger.error("Failed to ensure organization", {
+				metadata: {
+					storeId: params.storeId,
+					error: result.serverError,
+					validationErrors: result.validationErrors,
+					storeName: store.name,
+					storeOrganizationId: store.organizationId,
+				},
+				tags: ["store", "organization", "error"],
+			});
+		} else if (result?.data?.organization) {
+			// Update store object with organizationId if it was set
+			if (!store.organizationId && result.data.organization.id) {
+				store.organizationId = result.data.organization.id;
+			}
+		}
+	} catch (error) {
+		// Catch any unexpected errors (shouldn't happen with safe-action, but just in case)
+		logger.error("Unexpected error ensuring organization", {
 			metadata: {
 				storeId: params.storeId,
-				error: result.serverError,
+				error: error instanceof Error ? error.message : String(error),
+				storeName: store.name,
+				storeOrganizationId: store.organizationId,
 			},
 			tags: ["store", "organization", "error"],
 		});
-	} else if (result?.data?.organization) {
-		// Update store object with organizationId if it was set
-		if (!store.organizationId && result.data.organization.id) {
-			store.organizationId = result.data.organization.id;
-		}
 	}
 
 	return (

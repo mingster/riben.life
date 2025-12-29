@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
-
+import createMDX from '@next/mdx'
 
 const nextConfig: NextConfig = {
+	pageExtensions: ["js", "jsx", "ts", "tsx", "mdx"],
+
 	allowedDevOrigins: ["192.168.2.5", "localhost", "riben.life"],
 	turbopack: {
 		rules: {
@@ -77,6 +79,12 @@ const nextConfig: NextConfig = {
 			},
 		],
 	},
-};
+} satisfies NextConfig;
 
-export default nextConfig;
+const withMDX = createMDX({
+	// Add markdown plugins here, as desired
+	extension: /\.(md|mdx)$/,
+})
+
+// Merge MDX config with Next.js config
+export default withMDX(nextConfig);
