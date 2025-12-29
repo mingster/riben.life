@@ -136,6 +136,7 @@
     "remark-html": "^16.0.1",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
+    "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",
     "stripe": "^20.1.0",
     "swr": "^2.3.8",
@@ -200,9 +201,5 @@
     "extends": [
       "@commitlint/config-conventional"
     ]
-  },
-  "overrides": {
-    "@types/react": "19.2.6",
-    "@types/react-dom": "19.2.3"
   }
 }
