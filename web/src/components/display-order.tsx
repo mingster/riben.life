@@ -100,12 +100,12 @@ export const DisplayOrder: React.FC<orderProps> = ({
 							{storeId ? (
 								<Link
 									href={`/s/${storeId}`}
-									className="font-semibold text-xl capitalize"
+									className="font-semibold text-xl capitalize text-primary hover:text-primary/80"
 								>
 									{storeName}
 								</Link>
 							) : (
-								<span className="font-semibold text-sm sm:text-base capitalize">
+								<span className="font-semibold text-sm sm:text-base capitalize text-primary hover:text-primary/80">
 									{storeName}
 								</span>
 							)}

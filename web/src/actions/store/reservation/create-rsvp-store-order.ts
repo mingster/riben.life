@@ -30,6 +30,7 @@ interface CreateRsvpStoreOrderParams {
 	facilityName: string; // Facility name for product name
 	rsvpTime: bigint; // RSVP reservation time (BigInt epoch milliseconds)
 	note?: string; // Optional order note
+	displayToCustomer?: boolean; // Whether to display note to customer (default: true)
 	isPaid?: boolean; // Whether the order is already paid (default: false for checkout flow)
 }
 
@@ -57,6 +58,7 @@ export async function createRsvpStoreOrder(
 		facilityName,
 		rsvpTime,
 		note,
+		displayToCustomer = true, // Default to true for customer-visible notes
 		isPaid = false, // Default to false for checkout flow
 	} = params;
 
@@ -181,7 +183,7 @@ export async function createRsvpStoreOrder(
 				OrderNotes: {
 					create: {
 						note,
-						displayToCustomer: true,
+						displayToCustomer,
 						createdAt: now,
 						updatedAt: now,
 					},

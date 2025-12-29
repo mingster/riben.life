@@ -175,13 +175,14 @@ export function GlobalNavbar({ title }: NavbarProps) {
 
 							<Link
 								href="/"
-								className="mr-3 flex-none w-[2.0625rem] overflow-hidden md:w-auto"
+								className="mr-3 flex-none w-8.25 overflow-hidden md:w-auto"
 								onContextMenu={(e) => {
 									e.preventDefault();
 									//router.push("/");
 								}}
 							>
 								<span className="sr-only">home page</span>
+								<IconHome className="mr-1 h-6 w-6 sm:size-6" />
 							</Link>
 							<h1>{title}</h1>
 							<div className="relative items-center hidden ml-auto lg:flex">

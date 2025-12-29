@@ -8,12 +8,19 @@ import {
 	StoreLedgerType,
 	RsvpStatus,
 } from "@/types/enum";
-import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
+import {
+	getUtcNowEpoch,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+} from "@/utils/datetime-utils";
+import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import logger from "@/lib/logger";
 import type { StoreOrder } from "@/types";
 import { processCreditTopUpAfterPaymentAction } from "@/actions/store/credit/process-credit-topup-after-payment";
+import { getT } from "@/app/i18n";
 
 interface MarkOrderAsPaidCoreParams {
 	order: StoreOrder & {
@@ -344,6 +351,43 @@ export async function markOrderAsPaidCore(
 				tags: ["rsvp", "payment", "order", ...logTags],
 			});
 		}
+		// Get translation function for ledger note
+		const { t } = await getT();
+
+		// Prepare ledger note - use RSVP format if it's an RSVP order
+		let ledgerNote = `${paymentMethod.name || "Unknown"}, ${t("order")}:${order.orderNum || order.id}`;
+
+		if (rsvp && rsvp.rsvpTime) {
+			// Format: `${paymentMethod.name || "Unknown"}, ${t("rsvp")}:format(${rsvp.rsvpTime},'yyyy/MM/dd HH:mm') for ${user.name}`
+			// Fetch store and user for the note
+			const store = await tx.store.findUnique({
+				where: { id: order.storeId },
+				select: { defaultTimezone: true },
+			});
+
+			const user = await tx.user.findUnique({
+				where: { id: order.userId },
+				select: { name: true },
+			});
+
+			if (store && user) {
+				// Convert RSVP time (BigInt epoch) to Date
+				const rsvpTimeDate = epochToDate(rsvp.rsvpTime);
+				if (rsvpTimeDate) {
+					// Format date in store timezone as "yyyy/MM/dd HH:mm"
+					const formattedRsvpTime = format(
+						getDateInTz(
+							rsvpTimeDate,
+							getOffsetHours(store.defaultTimezone || "Asia/Taipei"),
+						),
+						"yyyy/MM/dd HH:mm",
+					);
+
+					// Create RSVP format ledger note
+					ledgerNote = `${paymentMethod.name || "Unknown"}, ${t("rsvp")}:${formattedRsvpTime} for ${user.name}`;
+				}
+			}
+		}
 
 		// Create StoreLedger entry
 		const ledgerType = usePlatform
@@ -360,7 +404,7 @@ export async function markOrderAsPaidCore(
 				currency: order.currency,
 				type: ledgerType,
 				description: `order # ${order.orderNum || order.id}`,
-				note: `${paymentMethod.name || "Unknown"}, order id: ${order.id}`,
+				note: ledgerNote,
 				availability: BigInt(availabilityDate.getTime()),
 				balance: new Prisma.Decimal(
 					balance +

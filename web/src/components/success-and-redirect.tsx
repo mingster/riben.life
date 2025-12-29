@@ -107,6 +107,7 @@ function MyTimer({
 					{order && (
 						<DisplayOrder
 							order={order}
+							showPickupCode={false}
 							hidePaymentMethod={true}
 							hideOrderStatus={true}
 							hideContactSeller={true}
