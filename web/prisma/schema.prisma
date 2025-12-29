@@ -30,12 +30,12 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  role             String?  @default("user")
-  locale           String?
-  timezone         String?
-  stripeCustomerId String?  @unique
-  phone            String?
-  phoneVerified    Boolean? @default(false)
+  role                String?  @default("user")
+  locale              String?
+  timezone            String?
+  stripeCustomerId    String?  @unique
+  phoneNumber         String?
+  phoneNumberVerified Boolean? @default(false)
 
   twoFactorEnabled Boolean? @default(false)
 
@@ -745,12 +745,12 @@ model RsvpSettings {
   id      String @id @default(uuid())
   storeId String @unique
 
-  acceptReservation Boolean  @default(true) // turn on/off the reservation system
-  singleServiceMode Boolean  @default(false) // for personal shop: only ONE reservation per time slot
+  acceptReservation Boolean @default(true) // turn on/off the reservation system
+  singleServiceMode Boolean @default(false) // for personal shop: only ONE reservation per time slot
 
-  minPrepaidPercentage Int    @default(0) //最低預付百分比；0 表示不需預付，100 表示全額預付
-  noNeedToConfirm     Boolean @default(false) //若已付清預約金額，不需要店家再確認預約。
-  
+  minPrepaidPercentage Int     @default(0) //最低預付百分比；0 表示不需預付，100 表示全額預付
+  noNeedToConfirm      Boolean @default(false) //若已付清預約金額，不需要店家再確認預約。
+
   canCancel   Boolean @default(true) //可否取消預約?
   cancelHours Int     @default(24) //最慢免費取消預約時間：幾小時前可免費取消?
 
@@ -970,7 +970,7 @@ model Product {
   currency          String              @default("twd")
   price             Decimal             @default(0)
   useOption         Boolean             @default(true) // when true, price is calculated based on product option
-  canDelete        Boolean             @default(true)
+  canDelete         Boolean             @default(true)
   createdAt         BigInt
   updatedAt         BigInt
   Store             Store               @relation("StoreToProduct", fields: [storeId], references: [id], onDelete: Cascade)
@@ -1200,8 +1200,8 @@ model StoreOrder {
 
   orderStatus Int @default(10)
 
-  currency           String  @default("twd")
-  discount Decimal @default(0)
+  currency    String  @default("twd")
+  discount    Decimal @default(0)
   paymentCost Decimal @default(0)
   taxRate     Decimal @default(0)
   orderTax    Decimal @default(0)

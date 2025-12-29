@@ -12,10 +12,10 @@ export const updateUserSettingsAction = userRequiredActionClient
 			ctx: { userId },
 			parsedInput: { name, locale, timezone, phone },
 		}) => {
-			const updatedUser = await sqlClient.user.update({
-				where: { id: userId },
-				data: { name, locale, timezone, phone },
-			});
+		const updatedUser = await sqlClient.user.update({
+			where: { id: userId },
+			data: { name, locale, timezone, phoneNumber: phone },
+		});
 
 			return updatedUser;
 		},

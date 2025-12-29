@@ -58,7 +58,7 @@ export default function EditUser({ serverData }: props) {
 		...dbUser,
 		//id: user.id,
 		name: dbUser?.name ?? "",
-		phone: dbUser?.phone ?? "",
+		phone: (dbUser as any)?.phoneNumber ?? "",
 		locale: dbUser?.locale || activeLng,
 		timezone: dbUser?.timezone || "America/Los_Angeles",
 	};

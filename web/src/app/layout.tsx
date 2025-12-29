@@ -1,6 +1,5 @@
 import { getT } from "@/app/i18n";
 import { cookieName, fallbackLng } from "@/app/i18n/settings";
-import { Toaster } from "@/components/ui/sonner";
 import I18nProvider from "@/providers/i18n-provider";
 import { SessionWrapper } from "@/providers/session-provider";
 import NextThemeProvider from "@/providers/theme-provider";
@@ -10,10 +9,11 @@ import { cookies } from "next/headers";
 
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { IOSVersionCheck } from "@/components/ios-version-check";
-import { GoogleAnalytics } from "@next/third-parties/google";
-import "./css/globals.css";
-import { Suspense } from "react";
 import { RecaptchaScript } from "@/components/recaptcha-script";
+import { Toaster } from "@/components/ui/sonner";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { Suspense } from "react";
+import "./css/globals.css";
 
 export const viewport: Viewport = {
 	width: "device-width",

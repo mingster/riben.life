@@ -129,7 +129,7 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 		storeId: String(params.storeId),
 		email: item.email || "",
 		name: item.name || "",
-		phone: item.phone ?? "",
+		phone: (item as any).phoneNumber ?? "",
 		locale: item.locale || lng,
 		timezone: item.timezone || "Asia/Taipei",
 		memberRole: (item as any).memberRole || "customer", // Default to "customer" if role not found

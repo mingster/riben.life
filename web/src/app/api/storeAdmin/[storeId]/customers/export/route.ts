@@ -147,7 +147,7 @@ export async function POST(
 				id: user.id,
 				name: user.name || "",
 				email: user.email || "",
-				phone: user.phone || "",
+				phone: user.phoneNumber || "",
 				memberRole: member?.role || "",
 				createdAt: user.createdAt,
 				banned: user.banned || false,
