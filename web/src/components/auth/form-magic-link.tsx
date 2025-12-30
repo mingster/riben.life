@@ -148,27 +148,6 @@ function FormMagicLinkInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 					<span className="text-xs text-muted-foreground">
 						{t("signin_cannot_receive_email")}
 					</span>
-					<span className="text-xs text-muted-foreground">
-						This site is protected by reCAPTCHA and the Google
-						<a
-							href="https://policies.google.com/privacy"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-primary hover:underline"
-						>
-							Privacy Policy
-						</a>
-						and
-						<a
-							href="https://policies.google.com/terms"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-primary hover:underline"
-						>
-							Terms of Service
-						</a>
-						apply.
-					</span>
 				</div>
 			</form>
 		</Form>

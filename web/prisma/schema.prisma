@@ -21,6 +21,39 @@ enum Role {
   admin
 }
 
+model PhoneOTP {
+  id          String @id @default(cuid())
+  phoneNumber String // E.164 format, indexed
+  code        String // Hashed OTP code
+  expiresAt   BigInt // Epoch milliseconds
+  attempts    Int    @default(0)
+  createdAt   BigInt // Epoch milliseconds
+
+  @@unique([phoneNumber])
+  @@index([phoneNumber])
+  @@index([expiresAt])
+  @@map("phone_otp")
+}
+
+model PhoneAuthAuditLog {
+  id           String  @id @default(cuid())
+  eventType    String // "OTP_SEND", "OTP_VERIFY", "SIGN_UP", "SIGN_IN", "PHONE_UPDATE"
+  userId       String? // Null for sign up attempts
+  phoneNumber  String // Masked: +886****5678
+  ipAddress    String?
+  userAgent    String?
+  success      Boolean
+  errorMessage String?
+  metadata     String? // JSON string for additional data
+  createdAt    BigInt // Epoch milliseconds
+
+  @@index([userId])
+  @@index([phoneNumber])
+  @@index([createdAt])
+  @@index([eventType])
+  @@map("phone_auth_audit_log")
+}
+
 model User {
   id            String   @id @default(cuid())
   name          String?
@@ -34,7 +67,7 @@ model User {
   locale              String?
   timezone            String?
   stripeCustomerId    String?  @unique
-  phoneNumber         String?
+  phoneNumber         String? // E.164 format (e.g., +886912345678)
   phoneNumberVerified Boolean? @default(false)
 
   twoFactorEnabled Boolean? @default(false)
