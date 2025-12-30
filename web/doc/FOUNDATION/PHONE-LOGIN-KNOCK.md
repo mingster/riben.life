@@ -1,8 +1,8 @@
 # Functional Requirements: Phone Login with Knock
 
-**Date:** 2025-01-27
-**Status:** Active
-**Version:** 1.0
+**Date:** 2025-01-27  
+**Status:** Active  
+**Version:** 1.1
 
 **Related Documents:**
 
@@ -50,61 +50,47 @@ This document specifies the functional requirements for implementing phone numbe
 
 ### 3.1 Phone Number Authentication
 
-#### 3.1.1 Sign Up with Phone Number
+#### 3.1.1 Combined Sign In/Sign Up with Phone Number
 
-**FR-PHONE-001:** Users must be able to create a new account using their phone number.
+**FR-PHONE-001:** Users must be able to authenticate using their phone number, regardless of whether they have an existing account.
 
-**FR-PHONE-002:** The sign-up flow must include:
+**FR-PHONE-002:** The authentication flow must automatically handle both sign-up and sign-in:
 
 1. **Phone Number Input:**
    * User enters phone number in international format (e.g., +886912345678)
    * System validates phone number format
-   * System checks if phone number is already registered
+   * User does not need to know if they have an account or not
 
 2. **OTP Verification:**
    * System sends OTP code to phone number via Knock
    * User enters OTP code received via SMS
-   * System verifies OTP code with Knock
+   * System verifies OTP code (stored in database)
    * OTP code expires after configured time (default: 10 minutes)
 
-3. **Account Creation:**
-   * If phone number is not registered and OTP is valid:
-     * System creates new user account
-     * Phone number is stored and marked as verified (`phoneNumberVerified = true`)
-     * User is automatically signed in
-     * User is redirected to onboarding or dashboard
-
-**FR-PHONE-003:** If phone number is already registered:
-
-* System displays error message: "This phone number is already registered"
-* User is prompted to sign in instead
-* Option to reset password or use alternative authentication method
-
-#### 3.1.2 Sign In with Phone Number
-
-**FR-PHONE-004:** Users must be able to sign in using their phone number.
-
-**FR-PHONE-005:** The sign-in flow must include:
-
-1. **Phone Number Input:**
-   * User enters phone number
-   * System validates phone number format
+3. **Automatic Account Handling:**
    * System checks if phone number is registered
-
-2. **OTP Verification:**
-   * If phone number is registered:
-     * System sends OTP code to phone number via Knock
-     * User enters OTP code received via SMS
-     * System verifies OTP code with Knock
-   * If phone number is not registered:
-     * System displays error message
-     * User is prompted to sign up instead
-
-3. **Session Creation:**
-   * If OTP is valid:
-     * System creates user session
+   * **If phone number is NOT registered:**
+     * System automatically creates new user account
+     * Phone number is stored and marked as verified (`phoneNumberVerified = true`)
      * User is signed in
-     * User is redirected to requested page or dashboard
+   * **If phone number IS registered:**
+     * User is signed in with existing account
+   * No account creation needed
+   * User is redirected to requested page or dashboard
+
+**FR-PHONE-003:** The system must provide feedback about account status:
+
+* Response includes `isNewUser` flag indicating if account was just created
+* UI can display appropriate welcome message for new users
+* Existing users proceed directly to their dashboard
+
+**FR-PHONE-004:** Users must be able to sign in using their phone number (same flow as above).
+
+**FR-PHONE-005:** The sign-in/sign-up flow must be seamless:
+
+* Single action handles both sign-up and sign-in
+* No separate "Sign Up" vs "Sign In" buttons needed for phone authentication
+* Users enter phone number and OTP code, system handles the rest
 
 **FR-PHONE-006:** The system must support "Remember Me" functionality:
 
@@ -252,10 +238,11 @@ This document specifies the functional requirements for implementing phone numbe
 
 **FR-PHONE-024:** The system must handle phone number conflicts:
 
-* If user tries to register with existing phone number:
-  * System displays error: "This phone number is already registered"
-  * User is prompted to sign in instead
-  * Option to reset password or use alternative authentication
+* If user tries to link a phone number that is already registered to another account:
+  * System displays error: "This phone number is already registered to another account"
+  * User cannot link the phone number
+  * User must use a different phone number or contact support
+* Note: For authentication (sign-in/sign-up), phone numbers are automatically handled - existing users sign in, new users are signed up
 
 ### 3.4 User Experience
 
@@ -287,12 +274,11 @@ This document specifies the functional requirements for implementing phone numbe
 **FR-PHONE-028:** The system must display clear error messages:
 
 * Invalid phone number format
-* Phone number not registered (for sign in)
-* Phone number already registered (for sign up)
 * Invalid OTP code
 * OTP code expired
 * Rate limit exceeded
 * SMS delivery failure
+* Phone number already linked to another account (for account linking)
 
 **FR-PHONE-029:** Error messages must be user-friendly and actionable:
 
@@ -921,6 +907,7 @@ phoneOTP({
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2025-01-27 | System | Combined sign-in and sign-up into single unified flow. Users no longer need to know if they're registered. System automatically creates account if new, signs in if existing. Removed separate error messages for "already registered" and "not registered" during authentication. |
 | 1.0 | 2025-01-27 | System | Initial functional requirements document for phone login with Knock |
 
 ***

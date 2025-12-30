@@ -34,13 +34,23 @@ export function GetSubscriptionLength(totalCycles: number) {
 	return days;
 }
 
-export function getRandomNum(length: number) {
-	const randomNum = (
-		(10 ** length).toString().slice(length - 1) +
-		Math.floor(Math.random() * 10 ** length + 1).toString()
-	).slice(-length);
+export function maskPhoneNumber(phoneNumber: string): string {
+	// Mask phone number for logging: +886****5678
+	if (phoneNumber.length <= 4) return "****";
+	return phoneNumber.slice(0, -4) + "****";
+}
 
-	return randomNum;
+export function generateOTPCode(): string {
+	// Generate 6-digit OTP code
+	return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+export function getRandomNum(length: number): string {
+	const min = 10 ** (length - 1);
+	const max = 10 ** length - 1;
+	return Math.floor(min + Math.random() * (max - min + 1))
+		.toString()
+		.padStart(length, "0");
 }
 
 // recursive function looping deeply through an object to find Decimals and convert to numbers

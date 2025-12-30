@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27  
 **Status:** Active  
-**Version:** 1.0
+**Version:** 1.1
 
 **Related Documents:**
 
@@ -74,7 +74,7 @@ export const [actionName]Action = [actionClient]
 
 #### 2.2.4 Knock Integration Architecture
 
-```
+```txt
 ┌─────────────┐
 │   Client    │
 │  Component  │
@@ -177,7 +177,7 @@ model PhoneAuthAuditLog {
 **Installation:**
 
 ```bash
-bun add @knocklabs/node
+bun add @knocklabs/node @knocklabs/react
 ```
 
 **Environment Variables:**
@@ -194,14 +194,14 @@ KNOCK_API_URL=https://api.knock.app # Optional, defaults to production
 **File:** `src/lib/knock/client.ts`
 
 ```typescript
-import { Knock } from "@knocklabs/node";
+import Knock from "@knocklabs/node";
 
 if (!process.env.KNOCK_API_KEY) {
   throw new Error("KNOCK_API_KEY environment variable is required");
 }
 
-export const knockClient = new Knock(process.env.KNOCK_API_KEY, {
-  host: process.env.KNOCK_API_URL || "https://api.knock.app",
+export const knockClient = new Knock({
+  apiKey: process.env.KNOCK_API_KEY,
 });
 ```
 
@@ -209,21 +209,111 @@ export const knockClient = new Knock(process.env.KNOCK_API_KEY, {
 
 **Workflow Setup in Knock Dashboard:**
 
-1. Create a workflow named `phone-otp` (or use `KNOCK_WORKFLOW_KEY`)
-2. Configure workflow to send SMS with OTP code
-3. SMS template should include:
-   * OTP code (6 digits)
-   * App name/brand
-   * Expiration time
-   * Brief instructions
+#### Step 1: Access Knock Dashboard
 
-**Example SMS Template:**
+1. Log in to your Knock account at <https://app.knock.app>
+2. Navigate to your project (or create a new project if needed)
+3. Go to **Workflows** in the left sidebar
 
-```
+#### Step 2: Create New Workflow
+
+1. Click **"Create workflow"** or **"New workflow"** button
+2. Enter workflow key: `phone-otp` (or match your `KNOCK_WORKFLOW_KEY` environment variable)
+3. Enter workflow name: "Phone OTP Verification"
+4. Click **"Create workflow"**
+
+#### Step 3: Configure Workflow Steps
+
+1. **Add SMS Channel:**
+   * Click **"Add step"** or **"Add channel"**
+   * Select **"SMS"** as the channel
+   * Configure SMS provider (Twilio, AWS SNS, etc.) if not already configured
+
+2. **Configure SMS Template:**
+   * Click on the SMS step to edit
+   * In the message template editor, enter:
+
+``` txt
 Your riben.life verification code is: {{otp_code}}
 This code will expire in 10 minutes.
 Do not share this code with anyone.
 ```
+
+* **Template Variables:**
+  * `{{otp_code}}` - The 6-digit OTP code (will be passed in workflow data)
+  * `{{phone_number}}` - The recipient's phone number (optional, for reference)
+  * `{{expires_in_minutes}}` - Expiration time (optional, if passed in data)
+
+1. **Save the workflow**
+
+#### Step 4: Configure SMS Provider (if not already done)
+
+1. Go to **Settings** → **Channels** → **SMS**
+2. Select your SMS provider (Twilio, AWS SNS, etc.)
+3. Enter API credentials:
+   * **Twilio:**
+     * Account SID
+     * Auth Token
+     * From phone number (sender ID)
+   * **AWS SNS:**
+     * AWS Access Key ID
+     * AWS Secret Access Key
+     * Region
+4. Test SMS delivery to verify configuration
+
+#### Step 5: Test the Workflow
+
+1. Go back to the workflow
+2. Click **"Test workflow"** or **"Send test"**
+3. Enter test phone number (your own number for testing)
+4. Enter test data:
+
+   ```json
+   {
+     "otp_code": "123456",
+     "phone_number": "+886912345678",
+     "expires_in_minutes": 10
+   }
+   ```
+
+5. Verify you receive the SMS with the OTP code
+
+#### Step 6: Set Workflow Key in Environment Variables
+
+Add to your `.env` file:
+
+```env
+KNOCK_WORKFLOW_KEY=phone-otp
+```
+
+**Alternative SMS Template Examples:**
+
+**English:**
+
+```
+Your riben.life verification code is: {{otp_code}}
+Valid for 10 minutes. Do not share this code.
+```
+
+**Traditional Chinese:**
+
+```
+您的 riben.life 驗證碼是：{{otp_code}}
+有效期 10 分鐘。請勿與他人分享此驗證碼。
+```
+
+**Simplified Chinese:**
+
+```
+您的 riben.life 验证码是：{{otp_code}}
+有效期 10 分钟。请勿与他人分享此验证码。
+```
+
+**Note:** For multi-language support, you may need to:
+
+1. Create separate workflows per language (e.g., `phone-otp-en`, `phone-otp-tw`)
+2. Or use Knock's localization features (if available)
+3. Or pass the language in workflow data and use conditional logic in the template
 
 ### 4.4 Send OTP Implementation
 
@@ -293,28 +383,54 @@ export async function sendOTP({
     };
   }
 }
+```
 
-function generateOTPCode(): string {
-  // Generate 6-digit OTP code
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
+**Important:** Knock does not have a built-in OTP verification API. We need to:
 
-function maskPhoneNumber(phoneNumber: string): string {
-  // Mask phone number for logging: +886****5678
-  if (phoneNumber.length <= 4) return "****";
-  return phoneNumber.slice(0, -4) + "****";
+1. Generate OTP codes locally
+2. Store them temporarily in the database
+3. Verify them by comparing with stored codes
+
+### 4.5 OTP Storage Setup
+
+Since Knock only handles SMS delivery (not OTP verification), we store OTP codes in the database for verification.
+
+**Database Storage Implementation**
+
+Create a Prisma model for OTP storage:
+
+```prisma
+model PhoneOTP {
+  id          String   @id @default(uuid())
+  phoneNumber String   // E.164 format, indexed
+  code        String   // Hashed OTP code
+  expiresAt   BigInt   // Epoch milliseconds
+  attempts    Int      @default(0)
+  createdAt   BigInt   // Epoch milliseconds
+  
+  @@unique([phoneNumber])
+  @@index([phoneNumber])
+  @@index([expiresAt])
+  @@map("phone_otp")
 }
 ```
 
-**Note:** The actual OTP generation and verification may be handled by Knock's built-in OTP feature. Check Knock documentation for the recommended approach.
+**Implementation File:** `src/lib/knock/otp-db.ts`
 
-### 4.5 Verify OTP Implementation
+The database storage implementation provides:
+
+* `storeOTP()` - Stores OTP code with expiration
+* `verifyOTP()` - Verifies code, checks expiration and attempt limits
+* `cleanupExpiredOTPs()` - Cleanup function for expired OTPs (can be run via cron)
+
+### 4.6 Verify OTP Implementation
 
 **File:** `src/lib/knock/verify-otp.ts`
 
 ```typescript
-import { knockClient } from "./client";
+import { verifyOTP as verifyStoredOTP } from "./otp-db";
 import logger from "@/lib/logger";
+import { maskPhoneNumber } from "@/utils/utils";
 
 export interface VerifyOTPParams {
   phoneNumber: string; // E.164 format
@@ -331,34 +447,36 @@ export async function verifyOTP({
   code,
 }: VerifyOTPParams): Promise<VerifyOTPResult> {
   try {
-    // Verify OTP with Knock API
-    // Note: Exact API endpoint depends on Knock's OTP verification method
-    // This is a placeholder - check Knock documentation for actual implementation
+    // Verify OTP against stored code in database (Knock doesn't provide verification API)
+    const isValid = await verifyStoredOTP(phoneNumber, code);
     
-    const workflowKey = process.env.KNOCK_WORKFLOW_KEY || "phone-otp";
+    if (!isValid) {
+      logger.warn("OTP verification failed", {
+        metadata: {
+          phoneNumber: maskPhoneNumber(phoneNumber),
+          codeLength: code.length,
+        },
+        tags: ["knock", "otp", "verify", "failed"],
+      });
+      
+      return {
+        valid: false,
+        error: "Invalid or expired OTP code. Please request a new code.",
+      };
+    }
     
-    // Example: Verify OTP via Knock API
-    // const result = await knockClient.workflows.verify(workflowKey, {
-    //   recipient: phoneNumber,
-    //   code,
-    // });
-    
-    // For now, return placeholder
-    // TODO: Implement actual Knock OTP verification
-    
-    logger.info("OTP verification attempted", {
+    logger.info("OTP verification successful", {
       metadata: {
         phoneNumber: maskPhoneNumber(phoneNumber),
-        codeLength: code.length,
       },
-      tags: ["knock", "otp", "verify"],
+      tags: ["knock", "otp", "verify", "success"],
     });
     
     return {
-      valid: true, // Placeholder
+      valid: true,
     };
   } catch (error) {
-    logger.error("Failed to verify OTP via Knock", {
+    logger.error("Failed to verify OTP", {
       metadata: {
         phoneNumber: maskPhoneNumber(phoneNumber),
         error: error instanceof Error ? error.message : String(error),
@@ -373,13 +491,19 @@ export async function verifyOTP({
   }
 }
 
-function maskPhoneNumber(phoneNumber: string): string {
-  if (phoneNumber.length <= 4) return "****";
-  return phoneNumber.slice(0, -4) + "****";
-}
 ```
 
-**Important:** The exact OTP verification method depends on Knock's API. Check Knock documentation for the correct implementation.
+**Important:** Since Knock doesn't provide OTP verification, we store OTP codes in the database and verify them by comparison.
+
+**Update sendOTP to store OTP:**
+
+```typescript
+// In send-otp.ts, after generating OTP code:
+import { storeOTP } from "./otp-db";
+
+// After triggering workflow:
+storeOTP(phoneNumber, otpCode, 10); // Store for 10 minutes
+```
 
 ### 4.6 Error Handling
 
@@ -475,14 +599,34 @@ export const auth = betterAuth({
 
 ### 5.2 Better Auth Phone Authentication Methods
 
-Better Auth provides the following methods for phone authentication:
+Better Auth's `phoneNumber` plugin provides HTTP endpoints for phone authentication. Server actions use these endpoints via HTTP requests:
 
-* `auth.api.signInPhone({ phoneNumber, code })` - Sign in with phone number
-* `auth.api.signUpPhone({ phoneNumber, code })` - Sign up with phone number
-* `auth.api.sendPhoneOTP({ phoneNumber })` - Send OTP code
-* `auth.api.verifyPhoneOTP({ phoneNumber, code })` - Verify OTP code
+* `/api/auth/phone/sign-up` - Sign up with phone number (POST)
+* `/api/auth/phone/sign-in` - Sign in with phone number (POST)
 
-**Client-side Usage:**
+**Note:** The server actions (`signInPhoneAction`, `signUpPhoneAction`) automatically handle both sign-up and sign-in. If a user doesn't exist, the system signs them up first, then signs them in. If the user exists, it just signs them in.
+
+**Server Action Usage:**
+
+```typescript
+"use server";
+
+// Combined sign-in/sign-up action
+import { signInPhoneAction } from "@/actions/auth/phone/sign-in-phone";
+
+// This action works for both new and existing users
+const result = await signInPhoneAction({
+  phoneNumber: "+886912345678",
+  code: "123456",
+});
+
+if (result?.data) {
+  const { isNewUser, user, session } = result.data;
+  // isNewUser indicates if account was just created
+}
+```
+
+**Client-side Usage (Better Auth Client):**
 
 ```typescript
 "use client";
@@ -494,7 +638,7 @@ const { data, error } = await authClient.signInPhone.sendOTP({
   phoneNumber: "+886912345678",
 });
 
-// Verify OTP and sign in
+// Verify OTP and authenticate (sign up if new, sign in if existing)
 const { data: session, error: verifyError } = await authClient.signInPhone.verifyOTP({
   phoneNumber: "+886912345678",
   code: "123456",
@@ -593,90 +737,15 @@ export const sendOTPAction = baseClient
   });
 ```
 
-### 6.2 Verify OTP and Sign Up Action
+### 6.2 Combined Sign In/Sign Up Action
 
-**File:** `src/actions/auth/phone/sign-up-phone.ts`
+**Files:**
 
-```typescript
-"use server";
+* `src/actions/auth/phone/sign-in-phone.ts` (primary action)
+* `src/actions/auth/phone/sign-up-phone.ts` (backward compatibility, uses same logic)
+* `src/actions/auth/phone/sign-in-or-up-phone.ts` (explicit combined action)
 
-import { z } from "zod";
-import { baseClient } from "@/utils/actions/safe-action";
-import { auth } from "@/lib/auth";
-import { verifyOTP } from "@/lib/knock/verify-otp";
-import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
-import { sqlClient } from "@/lib/prismadb";
-
-const signUpPhoneSchema = z.object({
-  phoneNumber: z.string().min(1, "Phone number is required"),
-  code: z.string().length(6, "OTP code must be 6 digits"),
-});
-
-export const signUpPhoneAction = baseClient
-  .metadata({ name: "signUpPhone" })
-  .schema(signUpPhoneSchema)
-  .action(async ({ parsedInput, ctx }) => {
-    const { phoneNumber, code } = parsedInput;
-    
-    // Normalize phone number
-    const normalizedPhone = normalizePhoneNumber(phoneNumber);
-    
-    // Validate phone number format
-    const isValid = validatePhoneNumber(normalizedPhone);
-    if (!isValid) {
-      return {
-        serverError: "Invalid phone number format.",
-      };
-    }
-    
-    // Check if phone number is already registered
-    const existingUser = await sqlClient.user.findFirst({
-      where: { phoneNumber: normalizedPhone },
-    });
-    
-    if (existingUser) {
-      return {
-        serverError: "This phone number is already registered. Please sign in instead.",
-      };
-    }
-    
-    // Verify OTP via Knock
-    const verifyResult = await verifyOTP({
-      phoneNumber: normalizedPhone,
-      code,
-    });
-    
-    if (!verifyResult.valid) {
-      return {
-        serverError: verifyResult.error || "Invalid OTP code. Please try again.",
-      };
-    }
-    
-    // Create user account via Better Auth
-    const result = await auth.api.signUpPhone({
-      phoneNumber: normalizedPhone,
-      code,
-    });
-    
-    if (result.error) {
-      return {
-        serverError: result.error.message || "Failed to create account.",
-      };
-    }
-    
-    return {
-      data: {
-        success: true,
-        user: result.data.user,
-        session: result.data.session,
-      },
-    };
-  });
-```
-
-### 6.3 Verify OTP and Sign In Action
-
-**File:** `src/actions/auth/phone/sign-in-phone.ts`
+**Note:** All three actions use the same combined logic. The system automatically handles both sign-up and sign-in based on whether the user exists.
 
 ```typescript
 "use server";
@@ -687,21 +756,27 @@ import { auth } from "@/lib/auth";
 import { verifyOTP } from "@/lib/knock/verify-otp";
 import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
 import { sqlClient } from "@/lib/prismadb";
+import { headers } from "next/headers";
 
 const signInPhoneSchema = z.object({
   phoneNumber: z.string().min(1, "Phone number is required"),
   code: z.string().length(6, "OTP code must be 6 digits"),
 });
 
+/**
+ * Combined sign-in/sign-up action.
+ * If user doesn't exist, signs up first, then signs in.
+ * If user exists, just signs in.
+ */
 export const signInPhoneAction = baseClient
   .metadata({ name: "signInPhone" })
   .schema(signInPhoneSchema)
   .action(async ({ parsedInput, ctx }) => {
     const { phoneNumber, code } = parsedInput;
-    
+
     // Normalize phone number
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
-    
+
     // Validate phone number format
     const isValid = validatePhoneNumber(normalizedPhone);
     if (!isValid) {
@@ -709,51 +784,109 @@ export const signInPhoneAction = baseClient
         serverError: "Invalid phone number format.",
       };
     }
-    
-    // Check if phone number is registered
-    const existingUser = await sqlClient.user.findFirst({
-      where: { phoneNumber: normalizedPhone },
-    });
-    
-    if (!existingUser) {
-      return {
-        serverError: "This phone number is not registered. Please sign up instead.",
-      };
-    }
-    
-    // Verify OTP via Knock
+
+    // Verify OTP first (before checking user existence)
     const verifyResult = await verifyOTP({
       phoneNumber: normalizedPhone,
       code,
     });
-    
+
     if (!verifyResult.valid) {
       return {
         serverError: verifyResult.error || "Invalid OTP code. Please try again.",
       };
     }
-    
-    // Sign in via Better Auth
-    const result = await auth.api.signInPhone({
-      phoneNumber: normalizedPhone,
-      code,
+
+    // Check if phone number is registered
+    const existingUser = await sqlClient.user.findFirst({
+      where: { phoneNumber: normalizedPhone },
     });
-    
-    if (result.error) {
+
+    const headersList = await headers();
+    const baseURL =
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      (process.env.NODE_ENV === "production"
+        ? "https://riben.life"
+        : "http://localhost:3001");
+
+    try {
+      // If user doesn't exist, sign up first
+      if (!existingUser) {
+        // Make HTTP request to Better Auth's phone sign-up endpoint
+        const signUpResponse = await fetch(`${baseURL}/api/auth/phone/sign-up`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: headersList.get("cookie") || "",
+          },
+          body: JSON.stringify({
+            phoneNumber: normalizedPhone,
+            code,
+          }),
+        });
+
+        if (!signUpResponse.ok) {
+          const errorData = await signUpResponse.json().catch(() => ({}));
+          return {
+            serverError:
+              errorData.message || "Failed to create account. Please try again.",
+          };
+        }
+      }
+
+      // Sign in (works for both new and existing users)
+      const signInResponse = await fetch(`${baseURL}/api/auth/phone/sign-in`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: headersList.get("cookie") || "",
+        },
+        body: JSON.stringify({
+          phoneNumber: normalizedPhone,
+          code,
+        }),
+      });
+
+      if (!signInResponse.ok) {
+        const errorData = await signInResponse.json().catch(() => ({}));
+        return {
+          serverError:
+            errorData.message || "Failed to sign in. Please try again.",
+        };
+      }
+
+      // Get the session after sign in
+      const session = await auth.api.getSession({
+        headers: headersList,
+      });
+
       return {
-        serverError: result.error.message || "Failed to sign in.",
+        data: {
+          success: true,
+          isNewUser: !existingUser, // Flag indicating if account was just created
+          user: session?.user,
+          session: session?.session,
+        },
+      };
+    } catch (error) {
+      return {
+        serverError:
+          error instanceof Error
+            ? error.message
+            : "Failed to authenticate. Please try again.",
       };
     }
-    
-    return {
-      data: {
-        success: true,
-        user: result.data.user,
-        session: result.data.session,
-      },
-    };
   });
 ```
+
+**Key Features:**
+
+1. **Unified Flow:** Single action handles both sign-up and sign-in
+2. **Automatic Detection:** System checks if user exists and handles accordingly
+3. **Seamless UX:** Users don't need to know if they're registered or not
+4. **Response Flag:** Returns `isNewUser` to indicate if account was just created
+5. **Backward Compatible:** `signUpPhoneAction` and `signInPhoneAction` both work the same way
 
 ### 6.4 Link Phone Number Action
 
@@ -1229,8 +1362,9 @@ toastSuccess({ description: "OTP sent successfully!" });
 7. Create phone number utilities (`src/utils/phone-utils.ts`)
 8. Create server actions:
    * `send-otp.ts`
-   * `sign-up-phone.ts`
-   * `sign-in-phone.ts`
+   * `sign-in-phone.ts` (combined sign-in/sign-up logic)
+   * `sign-up-phone.ts` (backward compatibility, uses same logic)
+   * `sign-in-or-up-phone.ts` (explicit combined action)
 9. Create UI components:
    * Phone input form
    * OTP verification form
@@ -1240,10 +1374,10 @@ toastSuccess({ description: "OTP sent successfully!" });
 
 **Deliverables:**
 
-* Users can sign up with phone number
-* Users can sign in with phone number
+* Users can authenticate with phone number (automatic sign-up if new, sign-in if existing)
+* Seamless UX - users don't need to know if they're registered
 * OTP codes sent via Knock SMS
-* OTP codes verified via Knock API
+* OTP codes verified against database storage
 
 ### Phase 2: Enhanced Features
 
@@ -1310,24 +1444,26 @@ toastSuccess({ description: "OTP sent successfully!" });
 **Files to Test:**
 
 * `src/actions/auth/phone/send-otp.ts`
-* `src/actions/auth/phone/sign-up-phone.ts`
-* `src/actions/auth/phone/sign-in-phone.ts`
+* `src/actions/auth/phone/sign-in-phone.ts` (combined sign-in/sign-up)
+* `src/actions/auth/phone/sign-up-phone.ts` (backward compatibility)
 * `src/actions/auth/phone/link-phone.ts`
 
 **Test Cases:**
 
 * Knock API integration
-* Better Auth phoneOTP plugin integration
+* Better Auth phoneNumber plugin integration
 * OTP send and verify flow
-* Account creation and sign in
+* Combined sign-up/sign-in flow (new user)
+* Combined sign-up/sign-in flow (existing user)
 * Account linking
 
 ### 13.3 End-to-End Tests
 
 **Test Flows:**
 
-* Complete sign up flow (phone number → OTP → account creation)
-* Complete sign in flow (phone number → OTP → session creation)
+* Complete authentication flow (phone number → OTP → automatic sign-up or sign-in)
+* New user flow (phone number → OTP → account creation → sign in)
+* Existing user flow (phone number → OTP → sign in)
 * Phone number update flow
 * Account linking flow
 
@@ -1426,9 +1562,9 @@ bun add @knocklabs/node libphonenumber-js
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2025-01-27 | System | Combined sign-in and sign-up into single unified flow. Updated server actions to automatically handle both new and existing users. Added `isNewUser` flag to response. |
 | 1.0 | 2025-01-27 | System | Initial technical requirements document for phone login with Knock |
 
 ***
 
 ## End of Document
-
