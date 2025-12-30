@@ -58,7 +58,7 @@ export async function createRsvpStoreOrder(
 		facilityName,
 		rsvpTime,
 		note,
-		displayToCustomer = true, // Default to true for customer-visible notes
+		displayToCustomer = false, // Default to true for customer-visible notes
 		isPaid = false, // Default to false for checkout flow
 	} = params;
 

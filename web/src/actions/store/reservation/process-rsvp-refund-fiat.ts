@@ -2,7 +2,13 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { Prisma } from "@prisma/client";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import {
+	getUtcNowEpoch,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+} from "@/utils/datetime-utils";
+import { format } from "date-fns";
 import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
 import { getT } from "@/app/i18n";
 import logger from "@/lib/logger";
@@ -41,6 +47,7 @@ export async function processRsvpFiatRefund(
 		where: { id: orderId },
 		select: {
 			id: true,
+			orderNum: true,
 			isPaid: true,
 			orderTotal: true,
 			currency: true,
@@ -184,6 +191,46 @@ export async function processRsvpFiatRefund(
 			const storeBalance = Number(lastLedger ? lastLedger.balance : 0);
 			const newStoreBalance = storeBalance - refundFiatAmount; // Decrease balance
 
+			// Prepare ledger note - use RSVP format if RSVP data is available
+			let ledgerNote = `${order.PaymentMethod?.name || "Unknown"}, ${t("order")}:${order.orderNum || order.id}`;
+
+			// Fetch RSVP, store, and user data for RSVP format
+			const rsvp = await tx.rsvp.findUnique({
+				where: { id: rsvpId },
+				select: { rsvpTime: true },
+			});
+
+			if (rsvp && rsvp.rsvpTime) {
+				// Fetch store and user for the note
+				const store = await tx.store.findUnique({
+					where: { id: storeId },
+					select: { defaultTimezone: true },
+				});
+
+				const user = await tx.user.findUnique({
+					where: { id: customerId },
+					select: { name: true },
+				});
+
+				if (store && user) {
+					// Convert RSVP time (BigInt epoch) to Date
+					const rsvpTimeDate = epochToDate(rsvp.rsvpTime);
+					if (rsvpTimeDate) {
+						// Format date in store timezone as "yyyy/MM/dd HH:mm"
+						const formattedRsvpTime = format(
+							getDateInTz(
+								rsvpTimeDate,
+								getOffsetHours(store.defaultTimezone || "Asia/Taipei"),
+							),
+							"yyyy/MM/dd HH:mm",
+						);
+
+						// Create RSVP format ledger note
+						ledgerNote = `${order.PaymentMethod?.name || "Unknown"}, ${t("rsvp")}:${formattedRsvpTime} for ${user.name}`;
+					}
+				}
+			}
+
 			await tx.storeLedger.create({
 				data: {
 					storeId,
@@ -198,12 +245,7 @@ export async function processRsvpFiatRefund(
 						amount: refundFiatAmount,
 						currency: orderCurrency.toUpperCase(),
 					}),
-					note:
-						refundReason ||
-						t("rsvp_cancellation_refund_note", {
-							amount: refundFiatAmount,
-							currency: orderCurrency.toUpperCase(),
-						}),
+					note: refundReason || ledgerNote,
 					availability: getUtcNowEpoch(), // Immediate availability for refunds
 					createdAt: getUtcNowEpoch(),
 				},

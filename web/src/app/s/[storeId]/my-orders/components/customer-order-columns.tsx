@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 import type { StoreOrder } from "@/types";
+import type { orderitemview } from "@prisma/client";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
 import {
 	epochToDate,
@@ -43,6 +44,9 @@ export const createCustomerOrderColumns = (
 					</span>
 				);
 			},
+			meta: {
+				className: "hidden sm:table-cell",
+			},
 		},
 		{
 			accessorKey: "orderTotal",
@@ -65,7 +69,7 @@ export const createCustomerOrderColumns = (
 				<DataTableColumnHeader column={column} title={t("Order_status")} />
 			),
 			cell: ({ row }) => (
-				<DisplayOrderStatus status={row.getValue("orderStatus")} />
+				<DisplayOrderStatus status={row.getValue("orderStatus")} className="" />
 			),
 		},
 		{
@@ -171,10 +175,37 @@ export const createCustomerOrderColumns = (
 			cell: ({ row }) => {
 				const order = row.original;
 				const items = order.OrderItemView || [];
+
+				if (items.length === 0) {
+					return (
+						<span className="text-xs sm:text-sm text-muted-foreground">
+							{t("items")}
+						</span>
+					);
+				}
+
+				// Display item names, truncate if too long
+				const itemNames = items
+					.map((item: orderitemview) => item.name)
+					.join(", ");
+				const maxLength = 50; // Maximum characters to display
+
 				return (
-					<span className="text-xs sm:text-sm">
-						{items.length} {t("items")}
-					</span>
+					<div className="text-xs sm:text-sm">
+						{items.length > 1 && (
+							<span className="text-muted-foreground mr-1">
+								{items.length}x{" "}
+							</span>
+						)}
+						<span
+							className="truncate block"
+							title={itemNames} // Show full names on hover
+						>
+							{itemNames.length > maxLength
+								? `${itemNames.substring(0, maxLength)}...`
+								: itemNames}
+						</span>
+					</div>
 				);
 			},
 		},
@@ -223,6 +254,9 @@ export const createCustomerOrderColumns = (
 						<Link href={`/order/${order.id}`}>{t("view") || "View"}</Link>
 					</Button>
 				);
+			},
+			meta: {
+				className: "hidden sm:table-cell",
 			},
 		},
 	];

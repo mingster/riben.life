@@ -160,12 +160,12 @@
     "@types/mdx": "^2.0.13",
     "@types/node": "^20.19.27",
     "@types/nodemailer": "^7.0.4",
-    "@types/react": "^19.2.6",
+    "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/react-google-recaptcha": "^2.1.9",
     "@types/uuid": "^11.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.50.1",
-    "@typescript-eslint/parser": "^8.50.1",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.51.0",
     "autoprefixer": "^10.4.23",
     "dotenv": "^16.6.1",
     "eslint": "^9.39.2",
@@ -182,7 +182,7 @@
     "shiki": "^3.20.0",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.50.1"
+    "typescript-eslint": "^8.51.0"
   },
   "husky": {
     "hooks": {
