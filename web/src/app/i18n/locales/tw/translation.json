@@ -1110,5 +1110,22 @@
   "weekday_Wednesday": "週三",
   "weekly_digest": "每週摘要",
   "yes": "是",
-  "you_are_not_allowed_to_register_this_passkey": "你不能註冊這個密碼金鑰"
+  "you_are_not_allowed_to_register_this_passkey": "你不能註冊這個密碼金鑰",
+  "otp_sent_successfully": "驗證碼已成功發送，請檢查您的手機。",
+  "otp_resent_successfully": "驗證碼已重新發送，請檢查您的手機。",
+  "otp_instruction": "請輸入收到的驗證碼",
+  "otp_code": "驗證碼",
+  "otp_code_must_be_6_digits": "驗證碼必須為 6 位數字",
+  "send_otp": "發送驗證碼",
+  "verify_and_sign_in": "驗證並登入",
+  "resend_otp": "重新發送驗證碼",
+  "resend_otp_in": "{{count}} 秒後才能重新發送",
+  "change_phone_number": "更改手機號碼",
+  "phone_placeholder": "912345678",
+  "phone_format_instruction": "請輸入國際格式的手機號碼（例如：+886912345678）",
+  "phone_invalid_format": "必須為國際格式（例如：+886912345678）",
+  "phone_numbers_only": "只能包含數字",
+  "required": "為必填",
+  "account_created_and_signed_in": "帳號已建立並成功登入！",
+  "signed_in_successfully": "登入成功！"
 }

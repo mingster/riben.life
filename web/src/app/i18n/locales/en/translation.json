@@ -1093,5 +1093,22 @@
   "weekday_Wednesday": "Wednesday",
   "weekly_digest": "Weekly Digest",
   "yes": "Yes",
-  "you_are_not_allowed_to_register_this_passkey": "You are not allowed to register this passkey"
+  "you_are_not_allowed_to_register_this_passkey": "You are not allowed to register this passkey",
+  "otp_sent_successfully": "OTP code sent successfully. Please check your phone.",
+  "otp_resent_successfully": "OTP code resent successfully. Please check your phone.",
+  "otp_instruction": "Enter the 6-digit code sent to",
+  "otp_code": "OTP Code",
+  "otp_code_must_be_6_digits": "OTP code must be 6 digits",
+  "send_otp": "Send OTP",
+  "verify_and_sign_in": "Verify & Sign In",
+  "resend_otp": "Resend",
+  "resend_otp_in": "{{count}} seconds later to resend",
+  "change_phone_number": "Change Phone Number",
+  "phone_placeholder": "912345678",
+  "phone_format_instruction": "Enter your phone number in international format (e.g., +886912345678)",
+  "phone_invalid_format": "must be in international format (e.g., +886912345678)",
+  "phone_numbers_only": "must contain only numbers",
+  "required": "is required",
+  "account_created_and_signed_in": "Account created and signed in successfully!",
+  "signed_in_successfully": "Signed in successfully!"
 }

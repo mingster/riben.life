@@ -18,9 +18,9 @@ export async function sendOTP({
 	phoneNumber,
 	userId,
 }: SendOTPParams): Promise<SendOTPResult> {
-	try {
-		const workflowKey = process.env.KNOCK_WORKFLOW_KEY || "phone-otp-tw";
+	const workflowKey = process.env.KNOCK_WORKFLOW_KEY || "phone-otp-tw";
 
+	try {
 		// Generate OTP code (6 digits)
 		const otpCode = generateOTPCode();
 
@@ -51,18 +51,29 @@ export async function sendOTP({
 			messageId: result.workflow_run_id,
 		};
 	} catch (error) {
+		// Extract error message from various error formats
+		let errorMessage = "Failed to send OTP";
+		if (error instanceof Error) {
+			errorMessage = error.message;
+		} else if (typeof error === "string") {
+			errorMessage = error;
+		} else if (error && typeof error === "object" && "message" in error) {
+			errorMessage = String(error.message);
+		}
+
 		logger.error("Failed to send OTP via Knock", {
 			metadata: {
 				phoneNumber: maskPhoneNumber(phoneNumber),
 				userId,
-				error: error instanceof Error ? error.message : String(error),
+				workflowKey,
+				error: errorMessage,
 			},
 			tags: ["knock", "otp", "error"],
 		});
 
 		return {
 			success: false,
-			error: error instanceof Error ? error.message : "Failed to send OTP",
+			error: errorMessage,
 		};
 	}
 }

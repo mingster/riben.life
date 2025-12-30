@@ -606,7 +606,6 @@ Do not share this code with anyone.
 * Phone number input field
 * OTP verification flow
 * Option to switch to email/social login
-* "Forgot password" equivalent (request new OTP)
 
 ### 6.2 Account Settings
 
