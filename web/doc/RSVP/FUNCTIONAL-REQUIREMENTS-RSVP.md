@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27
 **Status:** Active
-**Version:** 1.9
+**Version:** 2.0
 
 **Related Documents:**
 
@@ -96,7 +96,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **FR-RSVP-001:** Customers must be able to create reservations through the store's public RSVP page.
 
-**Note:** Currently, authentication (sign-in) is required to access the reservation page. Anonymous users must sign in before creating reservations.
+**Note:** No sign-in is required to create reservations. Anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`).
 
 **FR-RSVP-002:** The reservation form must collect the following information:
 
@@ -104,13 +104,10 @@ Store Admins have all Store Staff permissions, plus:
 * Number of adults (numOfAdult, default: 1)
 * Number of children (numOfChild, default: 0)
 * Customer contact information:
-  * User ID (if logged in, optional)
-  * Email address (required if not logged in)
-  * Phone number (required)
+  * If logged in, (optional), keep User ID and Email address in the reservation record
+  * Phone number (required for anonymous users)
 * Special requests or notes (message, optional)
 * Facility preference (facilityId, optional)
-
-**Note:** If prepaid is required (`minPrepaidPercentage > 0`), customers must be signed in to create a reservation.
 
 **FR-RSVP-003:** The system must validate reservation availability based on:
 
@@ -138,8 +135,7 @@ Store Admins have all Store Staff permissions, plus:
 **FR-RSVP-004:** The system must support prepaid reservations when enabled:
 
 * If `minPrepaidPercentage > 0`:
-  * Anonymous users must sign in or register before creating a reservation
-  * Customer must be signed in (authentication required)
+  * Anonymous users can create reservations without signing in
   * When a customer creates a reservation with prepaid required:
     * System creates a store order with the prepaid amount
     * Prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`; if total cost is missing or zero, prepaid is skipped
@@ -214,8 +210,8 @@ Store Admins have all Store Staff permissions, plus:
      * Number of adults (numOfAdult, default: 1)
      * Number of children (numOfChild, default: 0)
    * Customer provides contact information:
-     * If logged in: User ID is automatically captured, phone number required, email optional
-     * If anonymous: Email address is optional, phone number required
+     * If logged in: (optional) User ID and Email address are kept in the reservation record
+     * If anonymous: Phone number required
    * Customer optionally selects facility preference (facilityId)
    * Customer optionally adds special requests or notes (message)
 
@@ -224,7 +220,7 @@ Store Admins have all Store Staff permissions, plus:
    * System validates:
      * Selected time is within business hours
      * Selected time slot is available
-     * Required fields are filled (email if anonymous, phone number always required)
+     * Required fields are filled (phone number required for anonymous users, email optional)
      * Party size is valid (at least 1 adult)
 
 5. **Reservation Creation:**
@@ -297,7 +293,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **A2: Missing Required Contact Information:**
 
-* Customer submits form without required contact information (email if anonymous, phone number)
+* Customer submits form without required contact information (phone number required for anonymous users)
 * System displays validation error
 * Customer provides missing required information
 * Flow continues from step 4
@@ -965,7 +961,7 @@ Completed (50) [when service is finished]
 
 ### 5.3 Prepaid Rules
 
-**BR-RSVP-008:** If `minPrepaidPercentage > 0`, customers must be signed in (authentication required) to create a reservation. Anonymous users must sign in or register before creating a reservation.
+**BR-RSVP-008:** No sign-in is required to create reservations. Anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`).
 
 **BR-RSVP-009:** If `minPrepaidPercentage > 0`, when a customer creates a pending RSVP, a store order is automatically created with the prepaid amount (percentage of total). Reservation is not confirmed until payment is received.
 
@@ -1235,6 +1231,7 @@ Completed (50) [when service is finished]
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 2.0 | 2025-01-27 | System | Updated authentication requirements: (1) Clarified that no sign-in is required to create reservations - anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`). (2) Updated FR-RSVP-001, FR-RSVP-002, FR-RSVP-004, and BR-RSVP-008 to reflect that anonymous users can create reservations regardless of prepaid requirements. |
 | 1.9 | 2025-01-27 | System | Enhanced reservation system with authentication, timezone fixes, and UI improvements: (1) Added sign-in requirement for reservation page access - customers must authenticate before creating reservations. (2) Fixed facility filtering to only filter facilities on the same calendar day (in store timezone) as the selected time slot, preventing incorrect filtering across different days. (3) Fixed timezone handling in date/time selection - resolved one-day-off issue by ensuring date components are extracted in store timezone rather than UTC. (4) Improved payment method handling - payment methods are now explicitly specified and updated during order payment and refund processes. (5) Currency consistency - orders use store's `defaultCurrency` or order's `currency` consistently across creation and refund processes. (6) Auto store membership - customers are automatically added as store members (user role) when they create orders. (7) Order notes display - added option to display order notes in order detail views (default: hidden). (8) Fiat balance badge - added fiat balance badge to customer menu for quick balance visibility. (9) Checkout success UX - brief success message displayed before redirect on checkout success page. (10) Unpaid RSVP redirect - in edit mode, unpaid reservations automatically redirect to checkout page. (11) Date/time display - changed datetime-local input to display-only field in reservation form for better timezone handling. Updated FR-RSVP-001, FR-RSVP-003, FR-RSVP-004, and FR-RSVP-013 to reflect these enhancements. |
 | 1.8 | 2025-01-27 | System | Updated customer-facing RSVP creation flow with checkout integration: (1) Changed prepaid payment flow - when prepaid is required, system now creates an unpaid store order and redirects customer to checkout page (`/checkout/[orderId]`) instead of processing payment immediately. (2) Payment method selection: Orders are created with "credit" payment method if `store.useCustomerCredit = true`, otherwise "TBD" payment method. Customer selects payment method at checkout. (3) Credit deduction: Customer credit is no longer deducted at reservation creation time; it's deducted only when customer completes payment using credit at checkout. (4) Updated FR-RSVP-004 and UC-RSVP-001 to reflect new checkout-based payment flow. |
 | 1.7 | 2025-01-27 | System | Enhanced reservation validation and UI improvements: (1) Added detailed business hours validation logic with priority rules (RsvpSettings.useBusinessHours vs Store.useBusinessHours), including real-time UI validation and server-side validation on form submission. (2) Implemented dynamic facility filtering in reservation forms (both customer-facing and admin) - facilities already booked at the selected time slot are automatically filtered out from the dropdown, with special handling for singleServiceMode and edit mode. Updated FR-RSVP-003, FR-RSVP-024, and BR-RSVP-001 to document these enhancements. |
