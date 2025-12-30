@@ -330,6 +330,8 @@
   "failed_to_verify_registration": "驗證失敗",
   "FAQ": "常見問題",
   "FAQ_Answer": "內容",
+  "more_options": "其他選項",
+  "show_less": "收起",
   "FAQ_mgmt_descr": "管理在此分類的常見問題",
   "FaqCategory": "常見問題分類",
   "FaqCategory_add_faq": "新增常見問題",

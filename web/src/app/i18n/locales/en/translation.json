@@ -639,6 +639,8 @@
   "providers": "Third-party login",
   "providers_description": "Use third-party login providers to log in.",
   "QandA": "Q&A",
+  "more_options": "More Options",
+  "show_less": "Show Less",
   "qr_code_facility_ordering_URL": "Facility Ordering URL",
   "qr_code_facility_ordering_URL_descr": "This is the ordering URL for this facility. Typically when customers are ready, they can scan this QR code to order through this URL.",
   "qr_code_ordering_URL": "Ordering URL",
