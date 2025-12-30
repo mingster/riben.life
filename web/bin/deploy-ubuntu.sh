@@ -2,6 +2,8 @@
 
 # Deployment script for Ubuntu platform
 # Usage: ./bin/deploy-ubuntu.sh [production|staging] [branch]
+# 
+# REQUIREMENT: This script MUST be run as root user
 
 set -e  # Exit on error
 
@@ -33,12 +35,25 @@ warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
-# Check if running as root or with sudo
+# Check if running as root
 check_permissions() {
+    # Check EUID (Effective User ID)
     if [ "$EUID" -ne 0 ]; then
-        error "This script must be run as root or with sudo"
+        error "This script must be run as root user"
+        error "Current EUID: $EUID"
+        error "Please run as: sudo $0 $@"
         exit 1
     fi
+    
+    # Check actual user name
+    if [ "$(id -un)" != "root" ]; then
+        error "This script must be run as root user"
+        error "Current user: $(id -un)"
+        error "Please run as: sudo $0 $@"
+        exit 1
+    fi
+    
+    log "Running as root user (UID: $(id -u), EUID: $EUID)"
 }
 
 # Pull latest code from git
@@ -148,12 +163,13 @@ health_check() {
 
 # Main deployment function
 main() {
+    # CRITICAL: Check permissions FIRST before any other operations
+    check_permissions "$@"
+    
     log "Starting deployment for ${ENVIRONMENT} environment..."
     log "Branch: ${BRANCH}"
     log "App directory: ${APP_DIR}"
-    
-    # Pre-deployment checks
-    check_permissions
+    log "Running as user: $(id -un) (UID: $(id -u))"
     
     # Verify app directory exists
     if [ ! -d "${APP_DIR}" ]; then
