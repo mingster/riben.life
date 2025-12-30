@@ -173,7 +173,7 @@ export function DataTable<TData, TValue>({
 					</Table>
 				</div>
 			</div>
-			{!noPagination && (
+			{!noPagination && table.getPageCount() > 1 && (
 				<div className="flex items-center justify-end gap-1.5 sm:gap-2 py-3 sm:py-4">
 					<Button
 						variant="outline"

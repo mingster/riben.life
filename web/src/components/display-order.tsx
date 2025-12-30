@@ -143,6 +143,15 @@ export const DisplayOrder: React.FC<orderProps> = ({
 					))}
 				</div>
 
+				{/* Total */}
+				<div className="flex items-center justify-end gap-2 mt-3 pt-3">
+					<span className="font-semibold text-sm sm:text-base">
+						{t("orderTotal_label")}
+					</span>
+					<span className="font-bold text-base sm:text-lg capitalize">
+						{Number(order.orderTotal)} {order.currency.toUpperCase()}
+					</span>
+				</div>
 				{/* Order notes (only display notes marked for customer) */}
 				{showOrderNotes &&
 					order.OrderNotes &&
@@ -166,19 +175,9 @@ export const DisplayOrder: React.FC<orderProps> = ({
 							</div>
 						</div>
 					)}
-
-				{/* Total */}
-				<div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
-					<span className="font-semibold text-sm sm:text-base">
-						{t("orderTotal_label")}
-					</span>
-					<span className="font-bold text-base sm:text-lg capitalize">
-						{Number(order.orderTotal)} {order.currency.toUpperCase()}
-					</span>
-				</div>
 			</CardContent>
 
-			<CardFooter className="flex flex-col sm:flex-row gap-1 w-full items-baseline">
+			<CardFooter className="flex flex-col sm:flex-row gap-1 w-full">
 				{/* Action buttons */}
 				{!hidePaymentMethod && (
 					<>

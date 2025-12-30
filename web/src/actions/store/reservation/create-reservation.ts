@@ -250,6 +250,7 @@ export const createReservationAction = baseClient
 						facilityName: facility.facilityName || "Facility", // Pass facility name for product name
 						rsvpTime, // Pass RSVP time (BigInt epoch)
 						note: orderNote,
+						displayToCustomer: false, // Internal note, not displayed to customer
 						isPaid: false, // Customer will pay at checkout
 					});
 

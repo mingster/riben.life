@@ -283,6 +283,9 @@ export async function markOrderAsPaidCore(
 			? OrderStatus.Completed
 			: OrderStatus.Processing;
 
+		// Get translation function for order note
+		const { t } = await getT();
+
 		// Mark order as paid and update payment method
 		await tx.storeOrder.update({
 			where: { id: order.id },
@@ -297,6 +300,18 @@ export async function markOrderAsPaidCore(
 				checkoutAttributes:
 					checkoutAttributes || order.checkoutAttributes || "",
 				updatedAt: getUtcNowEpoch(),
+			},
+		});
+
+		// Create order note: "payment" + "PaymentStatus_Completed"
+		const now = getUtcNowEpoch();
+		await tx.orderNote.create({
+			data: {
+				orderId: order.id,
+				note: `${t("payment")} ${t("PaymentStatus_Completed")}`,
+				displayToCustomer: true,
+				createdAt: now,
+				updatedAt: now,
 			},
 		});
 
@@ -351,9 +366,6 @@ export async function markOrderAsPaidCore(
 				tags: ["rsvp", "payment", "order", ...logTags],
 			});
 		}
-		// Get translation function for ledger note
-		const { t } = await getT();
-
 		// Prepare ledger note - use RSVP format if it's an RSVP order
 		let ledgerNote = `${paymentMethod.name || "Unknown"}, ${t("order")}:${order.orderNum || order.id}`;
 

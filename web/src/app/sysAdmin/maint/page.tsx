@@ -9,7 +9,9 @@ import { deleteAllLedgers } from "@/actions/sysAdmin/maint/delete-all-ledgers";
 import { deleteAllOrders } from "@/actions/sysAdmin/maint/delete-all-orders";
 import { deleteAllSupportTickets } from "@/actions/sysAdmin/maint/delete-all-support-tickets";
 import { deleteAllCustomerCredits } from "@/actions/sysAdmin/maint/delete-all-customer-credits";
+import { deleteAllCustomerFiatLedgers } from "@/actions/sysAdmin/maint/delete-all-customer-fiat-ledgers";
 import { deleteAllRsvp } from "@/actions/sysAdmin/maint/delete-all-rsvp";
+import { deleteAllData } from "@/actions/sysAdmin/maint/delete-all-data";
 import { sendTestNoficiation } from "@/actions/sysAdmin/maint/send-test-noficiation";
 import { Heading } from "@/components/ui/heading";
 import { redirect } from "next/navigation";
@@ -35,6 +37,7 @@ export default async function StoreAdminDevMaintPage() {
 		ticketCount,
 		customerCreditLedgerCount,
 		customerCreditCount,
+		customerFiatLedgerCount,
 		rsvpCount,
 		rsvpBlacklistCount,
 		rsvpTagCount,
@@ -44,6 +47,7 @@ export default async function StoreAdminDevMaintPage() {
 		sqlClient.supportTicket.count(),
 		sqlClient.customerCreditLedger.count(),
 		sqlClient.customerCredit.count(),
+		sqlClient.customerFiatLedger.count(),
 		sqlClient.rsvp.count(),
 		sqlClient.rsvpBlacklist.count(),
 		sqlClient.rsvpTag.count(),
@@ -54,6 +58,19 @@ export default async function StoreAdminDevMaintPage() {
 		readDefaultFile("terms.md").catch(() => ""),
 		readDefaultFile("privacy.md").catch(() => ""),
 	]);
+
+	// Calculate total count for "Delete All" button
+	const totalCount =
+		storeOrderCount +
+		storeLedgerCount +
+		ticketCount +
+		customerCreditLedgerCount +
+		customerCreditCount +
+		customerFiatLedgerCount +
+		rsvpCount +
+		rsvpBlacklistCount +
+		rsvpTagCount;
+
 	return (
 		<Container>
 			<Heading
@@ -62,6 +79,22 @@ export default async function StoreAdminDevMaintPage() {
 			/>
 
 			<div className="flex flex-row flex-wrap gap-3 pb-2">
+				<div className="relative inline-flex items-center">
+					<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
+						{totalCount}
+					</span>
+					<Button
+						onClick={deleteAllData}
+						type="button"
+						variant="destructive"
+						className="disabled:opacity-50 font-bold"
+						size="default"
+						{...(totalCount === 0 && { disabled: true })}
+					>
+						<IconTrash className="size-4 mr-1" /> Delete ALL Data
+					</Button>
+				</div>
+
 				<div className="relative inline-flex items-center">
 					<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
 						{storeLedgerCount}
@@ -125,6 +158,23 @@ export default async function StoreAdminDevMaintPage() {
 					>
 						<IconTrash className="size-4 mr-1" /> Delete all Customer Credit
 						data
+					</Button>
+				</div>
+
+				<div className="relative inline-flex items-center">
+					<span className="absolute -top-1 -right-2 size-5 rounded-full bg-slate-900 text-slate-100 flex justify-center items-center text-xs pb-1 z-10">
+						{customerFiatLedgerCount}
+					</span>
+					<Button
+						onClick={deleteAllCustomerFiatLedgers}
+						type="button"
+						variant="destructive"
+						className="disabled:opacity-50"
+						size="sm"
+						{...(customerFiatLedgerCount === 0 && { disabled: true })}
+					>
+						<IconTrash className="size-4 mr-1" /> Delete all Customer Fiat
+						Ledger data
 					</Button>
 				</div>
 

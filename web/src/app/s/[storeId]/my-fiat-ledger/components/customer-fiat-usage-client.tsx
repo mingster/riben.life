@@ -256,7 +256,7 @@ export const CustomerFiatUsageClient: React.FC<
 				</div>
 
 				{/* Date Range Inputs */}
-				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+				<div className="hidden sm:flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 					<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
 						<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
 							<label

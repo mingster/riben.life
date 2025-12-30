@@ -660,7 +660,7 @@
   "required_pro_version": "Pro version required",
   "reservation": "Reservation",
   "reservation_cancelled": "Reservation cancelled successfully!",
-  "reservation_cancelled_by_customer": "Reservation cancelled by customer",
+  "reservation_cancelled_by_customer": "Reservation cancelled",
   "reservation_created": "Reservation created successfully!",
   "reservation_deleted": "Reservation deleted successfully!",
   "reservation_notifications": "Reservation Notifications",

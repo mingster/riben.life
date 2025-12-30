@@ -20,13 +20,19 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 import type { Rsvp } from "@/types";
 import {
 	dateToEpoch,
 	convertToUtc,
 	formatUtcDateToDateTimeLocal,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
 } from "@/utils/datetime-utils";
+import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 import { createCustomerRsvpColumns } from "./customer-rsvp-columns";
 
 interface CustomerReservationHistoryClientProps {
@@ -217,6 +223,98 @@ export const CustomerReservationHistoryClient: React.FC<
 		[t, storeTimezone],
 	);
 
+	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
+
+	// Helper to format RSVP time
+	const formatRsvpTime = useCallback(
+		(rsvp: Rsvp): string => {
+			const rsvpTime = rsvp.rsvpTime;
+			if (!rsvpTime) return "-";
+
+			const rsvpTimeEpoch =
+				typeof rsvpTime === "number"
+					? BigInt(rsvpTime)
+					: rsvpTime instanceof Date
+						? BigInt(rsvpTime.getTime())
+						: rsvpTime;
+
+			const utcDate = epochToDate(rsvpTimeEpoch);
+			if (!utcDate) return "-";
+
+			const storeDate = getDateInTz(
+				utcDate,
+				getOffsetHours(
+					rsvp.Store?.defaultTimezone ?? storeTimezone ?? "Asia/Taipei",
+				),
+			);
+
+			return format(storeDate, `${datetimeFormat} HH:mm`);
+		},
+		[storeTimezone, datetimeFormat],
+	);
+
+	// Helper to format created at
+	const formatCreatedAt = useCallback(
+		(rsvp: Rsvp): string => {
+			const createdAt = rsvp.createdAt;
+			if (!createdAt) return "-";
+
+			const createdAtEpoch =
+				typeof createdAt === "number"
+					? BigInt(createdAt)
+					: createdAt instanceof Date
+						? BigInt(createdAt.getTime())
+						: createdAt;
+
+			const utcDate = epochToDate(createdAtEpoch);
+			if (!utcDate) return "-";
+
+			const storeDate = getDateInTz(
+				utcDate,
+				getOffsetHours(
+					rsvp.Store?.defaultTimezone ?? storeTimezone ?? "Asia/Taipei",
+				),
+			);
+
+			return format(storeDate, `${datetimeFormat} HH:mm`);
+		},
+		[storeTimezone, datetimeFormat],
+	);
+
+	// Helper to get facility name
+	const getFacilityName = useCallback((rsvp: Rsvp): string => {
+		const storeName = rsvp.Store?.name;
+		const facilityName = rsvp.Facility?.facilityName;
+
+		if (!storeName && !facilityName) {
+			return "-";
+		}
+
+		if (storeName && facilityName) {
+			return `${storeName} - ${facilityName}`;
+		}
+
+		return storeName || facilityName || "-";
+	}, []);
+
+	if (!data || data.length === 0) {
+		return (
+			<>
+				<div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<Heading
+						title={t("rsvp_history") || "Reservation History"}
+						badge={0}
+						description=""
+					/>
+				</div>
+				<Separator />
+				<div className="text-center py-8 text-muted-foreground">
+					<span className="text-2xl font-mono">{t("no_result")}</span>
+				</div>
+			</>
+		);
+	}
+
 	return (
 		<>
 			<div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -257,7 +355,7 @@ export const CustomerReservationHistoryClient: React.FC<
 				</div>
 
 				{/* Date Range Inputs */}
-				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+				<div className="hidden sm:flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 					<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
 						<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
 							<label
@@ -305,11 +403,95 @@ export const CustomerReservationHistoryClient: React.FC<
 				</div>
 			</div>
 			<Separator />
-			<DataTable<Rsvp, unknown>
-				columns={columns}
-				data={data}
-				searchKey="message"
-			/>
+
+			{/* Mobile: Card view */}
+			<div className="block sm:hidden space-y-3">
+				{data.map((rsvp) => {
+					const numOfAdult = rsvp.numOfAdult || 0;
+					const numOfChild = rsvp.numOfChild || 0;
+					const status = rsvp.status;
+					const alreadyPaid = rsvp.alreadyPaid || false;
+
+					return (
+						<div
+							key={rsvp.id}
+							className="rounded-lg border bg-card p-3 sm:p-4 space-y-2 text-xs"
+						>
+							<div className="flex items-start justify-between gap-2">
+								<div className="flex-1 min-w-0">
+									<div className="font-medium text-sm sm:text-base truncate">
+										{getFacilityName(rsvp)}
+									</div>
+									<div className="text-muted-foreground text-[10px] font-mono">
+										{formatRsvpTime(rsvp)}
+									</div>
+								</div>
+								<div className="shrink-0 flex items-center gap-1.5">
+									<span
+										className={cn(
+											"inline-flex items-center px-2 py-1 rounded text-[10px] font-mono",
+											getRsvpStatusColorClasses(status, false),
+										)}
+									>
+										<span className="font-medium">
+											{t(`rsvp_status_${status}`)}
+										</span>
+									</span>
+									<span
+										className={`h-2 w-2 rounded-full ${
+											alreadyPaid ? "bg-green-500" : "bg-red-500"
+										}`}
+									/>
+								</div>
+							</div>
+
+							<div className="flex items-center justify-between pt-2 border-t">
+								<div className="space-y-1">
+									<div className="text-[10px] text-muted-foreground">
+										{t("rsvp_num_of_guest") || "Guests"}
+									</div>
+									<div className="font-semibold text-base">
+										{t("rsvp_num_of_guest_val", {
+											adult: numOfAdult,
+											child: numOfChild,
+										})}
+									</div>
+								</div>
+
+								<div className="space-y-1 text-right">
+									<div className="text-[10px] text-muted-foreground">
+										{t("created_at")}
+									</div>
+									<div className="font-mono text-xs">
+										{formatCreatedAt(rsvp)}
+									</div>
+								</div>
+							</div>
+
+							{rsvp.message && (
+								<div className="text-[10px] pt-2 border-t">
+									<span className="font-medium text-muted-foreground">
+										{t("rsvp_message")}:
+									</span>{" "}
+									<span className="text-foreground line-clamp-2">
+										{rsvp.message}
+									</span>
+								</div>
+							)}
+						</div>
+					);
+				})}
+			</div>
+
+			{/* Desktop: Table view */}
+			<div className="hidden sm:block">
+				<DataTable<Rsvp, unknown>
+					columns={columns}
+					data={data}
+					searchKey="message"
+				/>
+			</div>
+
 			<div className="mt-4">
 				<RsvpStatusLegend t={t} />
 			</div>

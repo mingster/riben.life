@@ -36,7 +36,7 @@ export const DisplayClient: React.FC<props> = ({ store, order }) => {
 
 				<DisplayOrder
 					order={order}
-					showOrderNotes={true}
+					showOrderNotes={false}
 					showPickupCode={false}
 					hidePaymentMethod={true}
 					hideOrderStatus={false}

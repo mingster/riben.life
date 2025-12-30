@@ -15,11 +15,17 @@ export const DisplayFiatLedger = ({
 	ledger: CustomerFiatLedger[];
 	currency?: string;
 }) => {
-	if (!ledger || ledger.length === 0) return null;
-
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
+
+	if (!ledger || ledger.length === 0) {
+		return (
+			<div className="text-center py-8 text-muted-foreground">
+				<span className="text-2xl font-mono">{t("no_result")}</span>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-3 sm:space-y-4">
