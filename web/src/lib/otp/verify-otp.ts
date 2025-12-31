@@ -1,5 +1,3 @@
-"use server";
-
 import logger from "@/lib/logger";
 import { maskPhoneNumber } from "@/utils/utils";
 import { auth } from "../auth";

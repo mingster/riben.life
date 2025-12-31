@@ -2,8 +2,8 @@
 
 **Date:** 2025-01-27  
 **Status:** Active  
-**Version:** 1.2  
-**Last Updated:** 2025-01-28
+**Version:** 1.4  
+**Last Updated:** 2025-01-30
 
 **Related Documents:**
 
@@ -163,7 +163,9 @@ This document specifies the functional requirements for implementing phone numbe
 **FR-PHONE-014:** The system must send OTP codes via Twilio:
 
 * Integration with Twilio SMS API
-* OTP code is sent to user's phone number
+* **SMS Delivery Rules:**
+  * **United States/Canada (+1):** OTP codes are sent via Twilio SMS
+  * **Taiwan (+886) and other countries:** OTP codes are logged only (not sent via SMS) for development/testing purposes
 * SMS message includes OTP code and brief instructions
 * SMS is sent in user's preferred language (if configured)
 
@@ -204,7 +206,7 @@ This document specifies the functional requirements for implementing phone numbe
 * "Resend OTP" button available after initial OTP send
 * Resend is subject to rate limiting (see FR-PHONE-017)
 * New OTP code invalidates previous code
-* Resend countdown timer (e.g., "Resend in 60 seconds")
+* Resend countdown timer: 45 seconds (e.g., "Resend in 45 seconds")
 
 ### 3.3 Phone Number Management
 
@@ -214,14 +216,16 @@ This document specifies the functional requirements for implementing phone numbe
 
 * Format: `+[country code][number]` (e.g., +886912345678)
 * Country code is required
-* Leading zeros are removed
+* **Supported countries:** Only +1 (United States/Canada) and +886 (Taiwan) are supported
+* **Taiwan number handling:** For Taiwan (+886), if the local number starts with "0" (e.g., 0912345678), the leading "0" is automatically stripped before combining with the country code (result: +886912345678)
 * Spaces, dashes, and parentheses are stripped
 
 **FR-PHONE-021:** The system must validate phone number format:
 
 * Phone number must match international format
-* Country code must be valid
-* Number length must be within acceptable range (7-15 digits)
+* **Country-specific validation:**
+  * **Taiwan (+886):** Must be 9-10 digits starting with 9 (e.g., 912345678 or 0912345678, which becomes 912345678)
+  * **United States/Canada (+1):** Must be exactly 10 digits
 * Invalid format displays clear error message
 
 **FR-PHONE-022:** The system must normalize phone numbers:
@@ -398,9 +402,11 @@ This document specifies the functional requirements for implementing phone numbe
 * Store phone number in user's `phoneNumber` field
 * Update `phoneNumberVerified` flag on successful verification
 
-**FR-PHONE-040a:** Client components must NOT directly import server-only functions:
+**FR-PHONE-040a:** Client components use Better Auth client directly:
 
-* Client components should only use server actions (e.g., `sendOTPAction`, `signInOrUpPhoneAction`)
+* Client components use `authClient.phoneNumber.sendOtp()` to send OTP codes
+* Client components use `authClient.phoneNumber.verify()` to verify OTP codes and authenticate
+* Better Auth client handles session creation automatically
 * Server-only functions like `verifyOTP` should NOT be imported by client components
 * This prevents build errors and ensures proper server/client separation
 
@@ -598,9 +604,12 @@ Do not share this code with anyone.
 **UI-PHONE-001:** Sign up page must support phone number input:
 
 * Phone number input field with country code selector
-* Format validation with real-time feedback
+* **Country code selector:** Only displays +1 (United States) and +886 (Taiwan) options
+* Format validation with real-time feedback (country-specific validation)
+* **Phone number persistence:** Phone number and country code are remembered in browser localStorage
 * "Send OTP" button
 * Clear instructions and error messages
+* **Placeholder text:** Dynamic based on selected country code (e.g., "0912345678 or 912345678" for Taiwan, "4155551212" for US)
 
 **UI-PHONE-002:** OTP verification page must be user-friendly:
 
@@ -913,6 +922,7 @@ phoneOTP({
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2025-01-30 | System | Updated client components to use Better Auth client directly (`authClient.phoneNumber.sendOtp()` and `authClient.phoneNumber.verify()`). Added Taiwan number normalization (strip leading "0" before combining with +886). Limited country support to +1 (US/Canada) and +886 (Taiwan). SMS only sent via Twilio for +1 numbers; Taiwan and other countries log OTP only. Added phone number and country code persistence in localStorage. Updated resend countdown to 45 seconds. Added country-specific phone validation (Taiwan: 9-10 digits starting with 9, US: 10 digits). |
 | 1.3 | 2025-01-29 | System | Integrated Better Auth for OTP storage and verification. Removed custom OTP database storage. Better Auth now handles OTP lifecycle. Added `signUpOnVerification` for automatic user creation. Added i18n support for SMS messages. Updated file locations: `lib/knock/` → `lib/otp/` and `lib/twilio/`. Added requirement that client components should NOT import server-only functions directly. |
 | 1.2 | 2025-01-28 | System | Replaced Knock with Twilio as SMS/OTP provider. Updated all references, API integration details, and environment variables. OTP verification now uses database instead of external API. |
 | 1.1 | 2025-01-27 | System | Combined sign-in and sign-up into single unified flow. Users no longer need to know if they're registered. System automatically creates account if new, signs in if existing. Removed separate error messages for "already registered" and "not registered" during authentication. |

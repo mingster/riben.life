@@ -48,36 +48,58 @@ export async function sendOTP({
 
 		// Get translation function for SMS message
 		const { t } = await getT(locale || "tw");
-		//const { t } = await getT("en");
 
 		// Get localized SMS message
 		const smsMessage = t("otp_sms_message", { code: otpCode });
 
-		// Import Twilio client dynamically to avoid bundling issues
-		const { twilioClient } = await import("@/lib/twilio/client");
+		// Check if phone number is +1 (US/Canada) - only send via Twilio for +1
+		const isUSNumber = phoneNumber.startsWith("+1");
 
-		// Send OTP via Twilio SMS
-		const message = await twilioClient.messages.create({
-			body: smsMessage,
-			from: twilioPhoneNumber,
-			to: phoneNumber,
-		});
+		if (isUSNumber) {
+			// Import Twilio client dynamically to avoid bundling issues
+			const { twilioClient } = await import("@/lib/twilio/client");
 
-		logger.info("OTP sent via Twilio", {
-			metadata: {
-				phoneNumber: maskPhoneNumber(phoneNumber),
-				smsMessage,
-				userId,
-				locale,
-				messageSid: message.sid,
-			},
-			tags: ["twilio", "otp", "send"],
-		});
+			// Send OTP via Twilio SMS for US numbers
+			const message = await twilioClient.messages.create({
+				body: smsMessage,
+				from: twilioPhoneNumber,
+				to: phoneNumber,
+			});
 
-		return {
-			success: true,
-			messageId: message.sid,
-		};
+			logger.info("OTP sent via Twilio", {
+				metadata: {
+					phoneNumber: maskPhoneNumber(phoneNumber),
+					smsMessage,
+					userId,
+					locale,
+					messageSid: message.sid,
+				},
+				tags: ["twilio", "otp", "send"],
+			});
+
+			return {
+				success: true,
+				messageId: message.sid,
+			};
+		} else {
+			// For non-US numbers, just log the OTP code (for development/testing)
+			logger.info("OTP code generated (not sent via SMS - non-US number)", {
+				metadata: {
+					phoneNumber: maskPhoneNumber(phoneNumber),
+					otpCode,
+					smsMessage,
+					userId,
+					locale,
+					countryCode: phoneNumber.match(/^\+\d{1,3}/)?.[0] || "unknown",
+				},
+				tags: ["otp", "send", "log-only"],
+			});
+
+			return {
+				success: true,
+				messageId: "log-only",
+			};
+		}
 	} catch (error) {
 		// Extract error message from various error formats
 		let errorMessage = "Failed to send OTP";

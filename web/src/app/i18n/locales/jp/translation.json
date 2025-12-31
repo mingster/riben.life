@@ -1,3 +1,4 @@
 {
-  "otp_sms_message": "認証コードは {{code}} です。このコードは10分後に期限切れになります。"
+  "otp_sms_message": "認証コードは {{code}} です。このコードは10分後に期限切れになります。",
+  "phone_placeholder_us": "4155551212"
 }

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import * as z from "zod/v4";
@@ -24,10 +24,9 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
-import { sendOTPAction } from "@/actions/auth/phone/send-otp";
-import { signInOrUpPhoneAction } from "@/actions/auth/phone/sign-in-or-up-phone";
 import { formatPhoneNumber, maskPhoneNumber } from "@/utils/phone-utils";
 import { PhoneCountryCodeSelector } from "./phone-country-code-selector";
+import { authClient } from "@/lib/auth-client";
 
 function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	const { lng } = useI18n();
@@ -37,7 +36,7 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 
 	const [step, setStep] = useState<"phone" | "otp">("phone");
 	const [phoneNumber, setPhoneNumber] = useState<string>("");
-	const countryCode = "+886"; // Fixed to Taiwan
+	const [countryCode, setCountryCode] = useState<string>("+886"); // Default to Taiwan
 	const [localPhoneNumber, setLocalPhoneNumber] = useState<string>(""); // Phone number without country code
 	const [resendCountdown, setResendCountdown] = useState(0);
 	const [isSendingOTP, setIsSendingOTP] = useState(false);
@@ -45,30 +44,52 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	const [isAnimating, setIsAnimating] = useState(false);
 	const phoneInputRef = useRef<HTMLInputElement>(null);
 	const otpInputRef = useRef<HTMLDivElement>(null);
+	const isInitialMountRef = useRef<boolean>(true);
 
 	// Phone number form schema (local number without country code)
-	// Taiwan mobile numbers: 09XXXXXXXX (10 digits) or 9XXXXXXXX (9 digits, will be normalized to 09XXXXXXXX)
-	const phoneFormSchema = z.object({
-		phoneNumber: z
-			.string()
-			.min(1, {
-				message: t("phone") + " " + (t("required") || "is required"),
-			})
-			.regex(/^(09\d{8}|9\d{8})$/, {
-				message:
-					t("phone") +
-					" " +
-					(t("phone_must_be_9_or_10_digits_starting_with_9") ||
-						"must be 9 or 10 digits starting with 9"),
-			})
-			.transform((val) => {
-				// Normalize 9XXXXXXXX to 09XXXXXXXX
-				if (val.startsWith("9") && val.length === 9) {
-					return `0${val}`;
-				}
-				return val;
-			}),
-	});
+	// Taiwan (+886): 09XXXXXXXX (10 digits) or 9XXXXXXXX (9 digits, will be normalized to 09XXXXXXXX)
+	// US/Canada (+1): 10 digits (standard North American format)
+	const phoneFormSchema = useMemo(
+		() =>
+			z
+				.object({
+					phoneNumber: z.string().min(1, {
+						message: t("phone") + " " + (t("required") || "is required"),
+					}),
+				})
+				.refine(
+					(data) => {
+						if (countryCode === "+886") {
+							// Taiwan format: 09XXXXXXXX or 9XXXXXXXX
+							return /^(09\d{8}|9\d{8})$/.test(data.phoneNumber);
+						} else if (countryCode === "+1") {
+							// US/Canada format: 10 digits
+							return /^\d{10}$/.test(data.phoneNumber);
+						}
+						return false;
+					},
+					{
+						message:
+							countryCode === "+886"
+								? t("phone_must_be_9_or_10_digits_starting_with_9") ||
+									"must be 9 or 10 digits starting with 9"
+								: t("phone_must_be_10_digits") || "must be 10 digits",
+						path: ["phoneNumber"],
+					},
+				)
+				.transform((data) => {
+					// Normalize Taiwan numbers: 9XXXXXXXX to 09XXXXXXXX
+					if (
+						countryCode === "+886" &&
+						data.phoneNumber.startsWith("9") &&
+						data.phoneNumber.length === 9
+					) {
+						return { phoneNumber: `0${data.phoneNumber}` };
+					}
+					return data;
+				}),
+		[countryCode, t],
+	);
 
 	// OTP form schema
 	const otpFormSchema = z.object({
@@ -88,6 +109,51 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 			phoneNumber: "",
 		},
 	});
+
+	// Load phone number and country code from localStorage on mount
+	useEffect(() => {
+		if (typeof window !== "undefined" && isHydrated) {
+			const savedCountryCode = localStorage.getItem("phone_country_code");
+			const savedPhoneNumber = localStorage.getItem("phone_local_number");
+
+			if (
+				savedCountryCode &&
+				(savedCountryCode === "+1" || savedCountryCode === "+886")
+			) {
+				setCountryCode(savedCountryCode);
+			}
+			if (savedPhoneNumber) {
+				setLocalPhoneNumber(savedPhoneNumber);
+				phoneForm.setValue("phoneNumber", savedPhoneNumber);
+			}
+		}
+	}, [isHydrated, phoneForm]);
+
+	// Save country code to localStorage when it changes
+	useEffect(() => {
+		if (typeof window !== "undefined" && isHydrated) {
+			localStorage.setItem("phone_country_code", countryCode);
+		}
+	}, [countryCode, isHydrated]);
+
+	// Save local phone number to localStorage when it changes
+	useEffect(() => {
+		if (typeof window !== "undefined" && isHydrated && localPhoneNumber) {
+			localStorage.setItem("phone_local_number", localPhoneNumber);
+		}
+	}, [localPhoneNumber, isHydrated]);
+
+	// Reset form when country code changes (but not on initial mount)
+	useEffect(() => {
+		if (!isInitialMountRef.current) {
+			phoneForm.reset({ phoneNumber: "" });
+			setLocalPhoneNumber("");
+			// Clear phone number from localStorage when country changes
+			if (typeof window !== "undefined") {
+				localStorage.removeItem("phone_local_number");
+			}
+		}
+	}, [countryCode, phoneForm]);
 
 	const otpForm = useForm({
 		resolver: zodResolver(otpFormSchema),
@@ -156,136 +222,39 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 
 	async function handleSendOTP(data: z.infer<typeof phoneFormSchema>) {
 		setIsSendingOTP(true);
-		try {
-			//Combine country code with local phone number
-			const fullPhoneNumber = `${countryCode}${data.phoneNumber}`;
+		// For Taiwan (+886), strip leading "0" if present (e.g., 0912345678 -> 912345678)
+		let phoneNumberToUse = data.phoneNumber;
+		if (countryCode === "+886" && phoneNumberToUse.startsWith("0")) {
+			phoneNumberToUse = phoneNumberToUse.slice(1);
+		}
+		const fullPhoneNumber = `${countryCode}${phoneNumberToUse}`;
 
-			const result = await sendOTPAction({ phoneNumber: fullPhoneNumber });
+		const { data: sendOtpData, error: sendOtpError } =
+			await authClient.phoneNumber.sendOtp({
+				phoneNumber: fullPhoneNumber, // required
+			});
 
-			// Debug: Log the result to see what we're getting
-			if (process.env.NODE_ENV === "development") {
-				console.log("sendOTPAction result:", result);
-				console.log("result type:", typeof result);
-				console.log(
-					"result keys:",
-					result ? Object.keys(result) : "null/undefined",
-				);
-				console.log("result.serverError:", result?.serverError);
-				console.log("result.data:", result?.data);
-				console.log("result (stringified):", JSON.stringify(result, null, 2));
-			}
-
-			// Handle null/undefined result
-			if (!result) {
-				clientLogger.error(new Error("Send OTP returned null/undefined"), {
-					message: "Send OTP failed - null result",
-					metadata: { phoneNumber: maskPhoneNumber(fullPhoneNumber) },
-					tags: ["auth", "phone-otp", "error"],
-					service: "FormPhoneOtp",
-				});
-				toastError({
-					description: "Failed to send OTP. Please try again later.",
-				});
-				return;
-			}
-
-			// Check for validation errors
-			if (result.validationErrors) {
-				toastError({
-					description: "Invalid input. Please check your phone number.",
-				});
-				return;
-			}
-
-			// Check for server errors - check both top level and inside data
-			const serverError =
-				result.serverError ||
-				result.data?.serverError ||
-				(result as any)?.error ||
-				(result as any)?.message;
-			if (serverError) {
-				clientLogger.error(new Error(String(serverError)), {
-					message: "Send OTP server error",
-					metadata: {
-						phoneNumber: maskPhoneNumber(fullPhoneNumber),
-						serverError: String(serverError),
-						fullResult: JSON.stringify(result),
-					},
-					tags: ["auth", "phone-otp", "error"],
-					service: "FormPhoneOtp",
-				});
-				toastError({
-					description: String(serverError),
-				});
-				return;
-			}
-
-			// Check if result has valid data (success case)
-			// Data should exist and not contain serverError
-			if (!result.data) {
-				// If we get here, something went wrong but no error was returned
-				clientLogger.error(
-					new Error("Send OTP returned no data and no error"),
-					{
-						message: "Send OTP failed - no data returned",
-						metadata: {
-							phoneNumber: maskPhoneNumber(fullPhoneNumber),
-							result: JSON.stringify(result),
-						},
-						tags: ["auth", "phone-otp", "error"],
-						service: "FormPhoneOtp",
-					},
-				);
-				toastError({
-					description: "Failed to send OTP. Please try again later.",
-				});
-				return;
-			}
-
-			// Check if data contains serverError (error wrapped in data)
-			if (result.data.serverError) {
-				clientLogger.error(new Error(result.data.serverError), {
-					message: "Send OTP server error (in data)",
-					metadata: {
-						phoneNumber: maskPhoneNumber(fullPhoneNumber),
-						serverError: result.data.serverError,
-					},
-					tags: ["auth", "phone-otp", "error"],
-					service: "FormPhoneOtp",
-				});
-				toastError({
-					description: result.data.serverError,
-				});
-				return;
-			}
-
+		if (sendOtpData?.message) {
 			// Store full phone number and move to OTP step
 			setPhoneNumber(fullPhoneNumber);
 			setStep("otp");
 			setResendCountdown(45); // 45 second countdown
+
 			toastSuccess({
 				description:
 					t("otp_sent_successfully") ||
 					"OTP code sent successfully. Please check your phone.",
 			});
-		} catch (error: any) {
-			clientLogger.error(error as Error, {
-				message: "Send OTP failed",
-				metadata: {
-					phoneNumber: maskPhoneNumber(`${countryCode}${data.phoneNumber}`),
-				},
-				tags: ["auth", "phone-otp", "error"],
-				service: "FormPhoneOtp",
-				environment: process.env.NODE_ENV,
-				version: process.env.npm_package_version,
-			});
+		} else {
 			toastError({
 				description:
-					error.message || "Failed to send OTP. Please try again later.",
+					sendOtpError?.message ||
+					"Failed to send OTP. Please try again later.",
 			});
-		} finally {
-			setIsSendingOTP(false);
 		}
+
+		setIsSendingOTP(false);
+		return;
 	}
 
 	async function handleResendOTP() {
@@ -293,51 +262,26 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 
 		setIsSendingOTP(true);
 		try {
-			const result = await sendOTPAction({ phoneNumber });
-
-			// Check for validation errors
-			if (result?.validationErrors) {
-				toastError({
-					description: "Invalid input. Please check your phone number.",
+			const { data: sendOtpData, error: sendOtpError } =
+				await authClient.phoneNumber.sendOtp({
+					phoneNumber,
 				});
-				return;
-			}
 
-			// Check for server errors - check both top level and inside data
-			const serverError =
-				result?.serverError ||
-				result?.data?.serverError ||
-				(result as any)?.error;
-			if (serverError) {
-				toastError({
-					description: String(serverError),
+			if (sendOtpData?.message) {
+				setResendCountdown(45); // Reset countdown
+				otpForm.reset(); // Clear OTP input
+				toastSuccess({
+					description:
+						t("otp_resent_successfully") ||
+						"OTP code resent successfully. Please check your phone.",
 				});
-				return;
-			}
-
-			// Check if result has valid data (success case)
-			if (!result?.data) {
+			} else {
 				toastError({
-					description: "Failed to resend OTP. Please try again later.",
+					description:
+						sendOtpError?.message ||
+						"Failed to resend OTP. Please try again later.",
 				});
-				return;
 			}
-
-			// Check if data contains serverError (error wrapped in data)
-			if (result.data.serverError) {
-				toastError({
-					description: result.data.serverError,
-				});
-				return;
-			}
-
-			setResendCountdown(45); // Reset countdown
-			otpForm.reset(); // Clear OTP input
-			toastSuccess({
-				description:
-					t("otp_resent_successfully") ||
-					"OTP code resent successfully. Please check your phone.",
-			});
 		} catch (error: any) {
 			clientLogger.error(error as Error, {
 				message: "Resend OTP failed",
@@ -359,30 +303,34 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	async function handleVerifyOTP(data: z.infer<typeof otpFormSchema>) {
 		setIsVerifyingOTP(true);
 		try {
-			// signInOrUpPhoneAction handles OTP verification internally via Better Auth
-			const result = await signInOrUpPhoneAction({
+			// Use Better Auth client to verify OTP
+			const result = await authClient.phoneNumber.verify({
 				phoneNumber,
 				code: data.code,
 			});
 
-			if (result?.serverError) {
+			if (result.error) {
 				toastError({
-					description: result.serverError,
+					description:
+						result.error.message ||
+						"OTP verification failed. Please try again.",
 				});
 				return;
 			}
 
-			// Track analytics (use email as method since phone is not in the type)
+			// Track analytics
 			analytics.trackCustomEvent("login", { method: "phone" });
 
-			// Show success message
-			if (result.data && "isNewUser" in result.data && result.data.isNewUser) {
-				toastSuccess({
-					description:
-						t("account_created_and_signed_in") ||
-						"Account created and signed in successfully!",
-				});
-			} else {
+			// check to see if session exists on client side
+			const { data: session, error } = await authClient.getSession();
+
+			if (!session?.user) {
+				return {
+					serverError: "Failed to create session. Please try again.",
+				};
+			}
+			if (session?.user) {
+				// Show success message
 				toastSuccess({
 					description: t("signed_in_successfully") || "Signed in successfully!",
 				});
@@ -429,27 +377,34 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 									<div className="flex gap-2">
 										<PhoneCountryCodeSelector
 											value={countryCode}
-											onValueChange={() => {
-												// Disabled - no-op handler
+											onValueChange={(newCode) => {
+												setCountryCode(newCode);
+												// Clear phone number when country changes
+												setLocalPhoneNumber("");
+												field.onChange("");
 											}}
-											disabled={true}
+											disabled={isSendingOTP}
+											allowedCodes={["+1", "+886"]}
 										/>
 										<Input
 											ref={phoneInputRef}
 											type="tel"
 											placeholder={
-												t("phone_placeholder") || "0912345678 or 912345678"
+												countryCode === "+886"
+													? t("phone_placeholder") || "0912345678 or 912345678"
+													: t("phone_placeholder_us") || "4155551212"
 											}
 											disabled={isSendingOTP}
 											value={localPhoneNumber}
-											maxLength={10}
+											maxLength={countryCode === "+886" ? 10 : 10}
 											onChange={(e) => {
 												const cleaned = e.target.value.replace(
 													/[\s\-\(\)]/g,
 													"",
 												);
-												// Allow 9 or 10 digits for Taiwan mobile numbers (9XXXXXXXX or 09XXXXXXXX)
-												const limited = cleaned.slice(0, 10);
+												// Allow 10 digits for both +1 and +886 (Taiwan can be 9 or 10)
+												const maxLen = countryCode === "+886" ? 10 : 10;
+												const limited = cleaned.slice(0, maxLen);
 												setLocalPhoneNumber(limited);
 												field.onChange(limited);
 											}}

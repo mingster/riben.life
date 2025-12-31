@@ -1123,6 +1123,7 @@
   "resend_otp_in": "{{count}} 秒後才能重新發送",
   "change_phone_number": "更改手機號碼",
   "phone_placeholder": "912345678",
+  "phone_placeholder_us": "4155551212",
   "phone_format_instruction": "請輸入國際格式的手機號碼（例如：+886912345678）",
   "phone_invalid_format": "必須為國際格式（例如：+886912345678）",
   "phone_numbers_only": "只能包含數字",

@@ -2,8 +2,8 @@
 
 **Date:** 2025-01-27  
 **Status:** Active  
-**Version:** 1.2  
-**Last Updated:** 2025-01-28
+**Version:** 1.4  
+**Last Updated:** 2025-01-30
 
 **Related Documents:**
 
@@ -67,11 +67,29 @@ export const [actionName]Action = [actionClient]
 * **Client Components:** Phone input forms, OTP verification forms, authentication flows
 * **Pattern:** Server page → Client component → Server actions → Twilio API
 
-#### 2.2.3 Authentication Flow Architecture
+#### 2.2.3 Authentication Flow Architecture (Current Implementation)
 
-1. **OTP Request:** Client component calls server action → Server action calls Twilio API → OTP sent via SMS → OTP stored in database
-2. **OTP Verification:** Client component calls server action → Server action verifies against database → Better Auth creates session
+**Current Flow (v1.4):**
+
+1. **OTP Request:** 
+   * Client component calls `authClient.phoneNumber.sendOtp()` directly
+   * Better Auth generates OTP and stores it internally
+   * Better Auth calls our `sendOTP` callback (configured in `auth.ts`)
+   * Our callback sends SMS via Twilio (for +1 numbers) or logs OTP (for other countries)
+   
+2. **OTP Verification:**
+   * Client component calls `authClient.phoneNumber.verify()` directly
+   * Better Auth verifies OTP against its internal storage
+   * Better Auth creates session automatically if verification succeeds
+   * Client component checks session with `authClient.getSession()`
+   
 3. **State Updates:** Client components update local state after successful authentication
+
+**Key Changes from Previous Implementation:**
+* Client components use Better Auth client directly (no server actions for send/verify)
+* Better Auth handles OTP storage and verification internally
+* Session creation is automatic after successful verification
+* No need for separate sign-up/sign-in logic - Better Auth's `signUpOnVerification` handles it
 
 #### 2.2.4 Twilio Integration Architecture
 
@@ -296,6 +314,8 @@ Your verification code is: 123456. This code will expire in 10 minutes.
 
 **File:** `src/lib/otp/send-otp.ts`
 
+**Important:** This function is called by Better Auth's `sendOTP` callback. It handles SMS delivery via Twilio, but only for US/Canada (+1) numbers. For other countries (e.g., Taiwan +886), the OTP code is logged only.
+
 ```typescript
 "use server";
 
@@ -354,28 +374,54 @@ export async function sendOTP({
     // Get localized SMS message
     const smsMessage = t("otp_sms_message", { code: otpCode });
 
-    // Send OTP via Twilio SMS
-    const message = await twilioClient.messages.create({
-      body: smsMessage,
-      from: twilioPhoneNumber,
-      to: phoneNumber,
-    });
+    // Check if phone number is +1 (US/Canada) - only send via Twilio for +1
+    const isUSNumber = phoneNumber.startsWith("+1");
 
-    logger.info("OTP sent via Twilio", {
-      metadata: {
-        phoneNumber: maskPhoneNumber(phoneNumber),
-        smsMessage,
-        userId,
-        locale,
-        messageSid: message.sid,
-      },
-      tags: ["twilio", "otp", "send"],
-    });
+    if (isUSNumber) {
+      // Import Twilio client dynamically to avoid bundling issues
+      const { twilioClient } = await import("@/lib/twilio/client");
 
-    return {
-      success: true,
-      messageId: message.sid,
-    };
+      // Send OTP via Twilio SMS for US numbers
+      const message = await twilioClient.messages.create({
+        body: smsMessage,
+        from: twilioPhoneNumber,
+        to: phoneNumber,
+      });
+
+      logger.info("OTP sent via Twilio", {
+        metadata: {
+          phoneNumber: maskPhoneNumber(phoneNumber),
+          smsMessage,
+          userId,
+          locale,
+          messageSid: message.sid,
+        },
+        tags: ["twilio", "otp", "send"],
+      });
+
+      return {
+        success: true,
+        messageId: message.sid,
+      };
+    } else {
+      // For non-US numbers, just log the OTP code (for development/testing)
+      logger.info("OTP code generated (not sent via SMS - non-US number)", {
+        metadata: {
+          phoneNumber: maskPhoneNumber(phoneNumber),
+          otpCode,
+          smsMessage,
+          userId,
+          locale,
+          countryCode: phoneNumber.match(/^\+\d{1,3}/)?.[0] || "unknown",
+        },
+        tags: ["otp", "send", "log-only"],
+      });
+
+      return {
+        success: true,
+        messageId: "log-only",
+      };
+    }
   } catch (error) {
     logger.error("Failed to send OTP via Twilio", {
       metadata: {
@@ -642,34 +688,9 @@ export const auth = betterAuth({
 
 ### 5.2 Better Auth Phone Authentication Methods
 
-Better Auth's `phoneNumber` plugin provides HTTP endpoints for phone authentication. Server actions use these endpoints via HTTP requests:
+Better Auth's `phoneNumber` plugin provides client-side methods for phone authentication. **The current implementation uses the Better Auth client directly from client components.**
 
-* `/api/auth/phone/sign-up` - Sign up with phone number (POST)
-* `/api/auth/phone/sign-in` - Sign in with phone number (POST)
-
-**Note:** The server actions (`signInPhoneAction`, `signUpPhoneAction`) automatically handle both sign-up and sign-in. If a user doesn't exist, the system signs them up first, then signs them in. If the user exists, it just signs them in.
-
-**Server Action Usage:**
-
-```typescript
-"use server";
-
-// Combined sign-in/sign-up action
-import { signInPhoneAction } from "@/actions/auth/phone/sign-in-phone";
-
-// This action works for both new and existing users
-const result = await signInPhoneAction({
-  phoneNumber: "+886912345678",
-  code: "123456",
-});
-
-if (result?.data) {
-  const { isNewUser, user, session } = result.data;
-  // isNewUser indicates if account was just created
-}
-```
-
-**Client-side Usage (Better Auth Client):**
+**Client-side Usage (Current Implementation):**
 
 ```typescript
 "use client";
@@ -677,16 +698,56 @@ if (result?.data) {
 import { authClient } from "@/lib/auth-client";
 
 // Send OTP
-const { data, error } = await authClient.signInPhone.sendOTP({
-  phoneNumber: "+886912345678",
+const { data, error } = await authClient.phoneNumber.sendOtp({
+  phoneNumber: "+886912345678", // E.164 format
 });
 
+if (data?.message) {
+  // OTP sent successfully
+  // Better Auth has stored the OTP internally
+  // Move to OTP verification step
+} else if (error) {
+  // Handle error
+  console.error(error.message);
+}
+
 // Verify OTP and authenticate (sign up if new, sign in if existing)
-const { data: session, error: verifyError } = await authClient.signInPhone.verifyOTP({
+const { data: verifyResult, error: verifyError } = await authClient.phoneNumber.verify({
   phoneNumber: "+886912345678",
   code: "123456",
 });
+
+if (verifyError) {
+  // Handle verification error
+  console.error(verifyError.message);
+  return;
+}
+
+// Check session after verification
+const { data: session } = await authClient.getSession();
+
+if (session?.user) {
+  // User authenticated successfully
+  // Session is automatically created by Better Auth
+  // Better Auth's signUpOnVerification automatically created the user if new
+}
 ```
+
+**HTTP Endpoints (Available but not used in current implementation):**
+
+Better Auth's `phoneNumber` plugin also provides HTTP endpoints:
+
+* `/api/auth/phone/sign-up` - Sign up with phone number (POST)
+* `/api/auth/phone/sign-in` - Sign in with phone number (POST)
+
+**Note:** The current implementation uses the client methods directly. Server actions are available as alternatives but are not used in the main authentication flow.
+
+**Automatic User Creation:**
+
+Better Auth's `signUpOnVerification` configuration automatically creates users if they don't exist when OTP verification succeeds. This means:
+* No need to check if user exists before verification
+* No need to manually create users
+* Seamless sign-up/sign-in experience
 
 ### 5.3 Account Linking
 
@@ -715,9 +776,84 @@ export const auth = betterAuth({
 
 ## 6. Server Actions
 
-### 6.1 Send OTP Action
+### 6.1 Client Component Implementation
+
+**File:** `src/components/auth/form-phone-otp.tsx`
+
+**Current Implementation:** Client components use Better Auth client directly instead of server actions for sending and verifying OTP.
+
+**Send OTP (Client-side):**
+
+```typescript
+"use client";
+
+import { authClient } from "@/lib/auth-client";
+
+async function handleSendOTP(data: { phoneNumber: string }) {
+  // For Taiwan (+886), strip leading "0" if present
+  let phoneNumberToUse = data.phoneNumber;
+  if (countryCode === "+886" && phoneNumberToUse.startsWith("0")) {
+    phoneNumberToUse = phoneNumberToUse.slice(1);
+  }
+  const fullPhoneNumber = `${countryCode}${phoneNumberToUse}`;
+
+  const { data: sendOtpData, error: sendOtpError } = await authClient.phoneNumber.sendOtp({
+    phoneNumber: fullPhoneNumber,
+  });
+
+  if (sendOtpData?.message) {
+    // OTP sent successfully
+    // Store phone number and move to OTP verification step
+  } else {
+    // Handle error
+  }
+}
+```
+
+**Verify OTP (Client-side):**
+
+```typescript
+async function handleVerifyOTP(data: { code: string }) {
+  const result = await authClient.phoneNumber.verify({
+    phoneNumber,
+    code: data.code,
+  });
+
+  if (result.error) {
+    // Handle error
+    return;
+  }
+
+  // Check session after verification
+  const { data: session } = await authClient.getSession();
+  
+  if (session?.user) {
+    // User authenticated successfully
+    // Redirect to callback URL
+  }
+}
+```
+
+**Key Features:**
+
+* **Country Code Support:** Only +1 (US/Canada) and +886 (Taiwan) are supported
+* **Taiwan Number Normalization:** 
+  * Accepts both `09XXXXXXXX` (10 digits) and `9XXXXXXXX` (9 digits)
+  * Schema transform adds leading "0" if missing (9 digits → 09XXXXXXXX)
+  * Before sending OTP, leading "0" is stripped (0912345678 → 912345678)
+  * Final format: `+886912345678` (no leading "0" in local number)
+* **Phone Number Persistence:** Phone number and country code are stored in browser localStorage
+* **Resend Countdown:** 45 seconds between resend attempts
+* **Country-Specific Validation:**
+  * Taiwan (+886): 9-10 digits starting with 9 (accepts both `09XXXXXXXX` and `9XXXXXXXX`)
+  * US/Canada (+1): Exactly 10 digits
+* **Dynamic Placeholders:** Placeholder text changes based on selected country code
+
+### 6.2 Send OTP Action (Legacy/Alternative)
 
 **File:** `src/actions/auth/phone/send-otp.ts`
+
+**Note:** This server action is still available but the client component now uses `authClient.phoneNumber.sendOtp()` directly.
 
 ```typescript
 "use server";
@@ -813,7 +949,7 @@ export const sendOTPAction = baseClient
 * Our `sendOTP` callback (configured in `auth.ts`) is called by Better Auth to send via Twilio
 * Rate limiting is handled by Better Auth (if configured)
 
-### 6.2 Combined Sign In/Sign Up Action
+### 6.3 Combined Sign In/Sign Up Action (Legacy/Alternative)
 
 **File:** `src/actions/auth/phone/sign-in-or-up-phone.ts`
 
@@ -946,7 +1082,13 @@ export const signInOrUpPhoneAction = baseClient
 4. **Response Flag:** Returns `isNewUser` to indicate if account was just created
 5. **HTTP Endpoint:** Uses Better Auth's HTTP endpoint to leverage `signUpOnVerification` feature
 
-### 6.4 Link Phone Number Action
+### 6.4 Verify OTP Action (Legacy/Alternative)
+
+**File:** `src/actions/auth/phone/verify-otp.ts`
+
+**Note:** This server action wraps `verifyOTP` from `lib/otp/verify-otp.ts`, but the client component now uses `authClient.phoneNumber.verify()` directly.
+
+### 6.5 Link Phone Number Action
 
 **File:** `src/actions/auth/phone/link-phone.ts`
 
@@ -1051,7 +1193,7 @@ export const linkPhoneAction = userRequiredActionClient
   });
 ```
 
-### 6.5 Update Phone Number Action
+### 6.6 Update Phone Number Action
 
 **File:** `src/actions/auth/phone/update-phone.ts`
 
@@ -1248,6 +1390,29 @@ export function normalizePhoneNumber(phoneNumber: string): string {
     return phoneNumber;
   }
 }
+```
+
+**Phone Number Normalization for Taiwan (+886):**
+
+In the client component (`form-phone-otp.tsx`), Taiwan numbers are normalized as follows:
+
+1. **Schema Validation:** Accepts both `09XXXXXXXX` (10 digits) and `9XXXXXXXX` (9 digits)
+2. **Schema Transform:** Converts `9XXXXXXXX` to `09XXXXXXXX` (adds leading "0" if missing)
+3. **Before Sending OTP:** Strips the leading "0" before combining with country code `+886`
+4. **Final Format:** Always `+886912345678` (no leading "0" in the local number)
+
+**Example Flow:**
+- User enters: `912345678` (9 digits)
+- Schema transform: `0912345678` (10 digits)
+- Before sending: strips "0" → `912345678`
+- Final phone number: `+886912345678`
+
+- User enters: `0912345678` (10 digits)
+- Schema transform: no change (already has "0")
+- Before sending: strips "0" → `912345678`
+- Final phone number: `+886912345678`
+
+This ensures Taiwan numbers are always stored in the correct E.164 format without the leading "0" in the local number part.
 
 /**
  * Validate phone number format
@@ -1422,35 +1587,34 @@ toastSuccess({ description: "OTP sent successfully!" });
 
 ## 12. Implementation Phases
 
-### Phase 1: Basic Phone Authentication (MVP)
+### Phase 1: Basic Phone Authentication (MVP) - ✅ COMPLETED
 
 **Tasks:**
 
-1. Install Knock SDK: `bun add @knocklabs/node`
-2. Install phone validation library: `bun add libphonenumber-js`
-3. Create Knock client (`src/lib/knock/client.ts`)
-4. Implement `sendOTP` function (`src/lib/knock/send-otp.ts`)
-5. Implement `verifyOTP` function (`src/lib/knock/verify-otp.ts`)
-6. Update Better Auth configuration (`src/lib/auth.ts`)
-7. Create phone number utilities (`src/utils/phone-utils.ts`)
-8. Create server actions:
-   * `send-otp.ts`
-   * `sign-in-phone.ts` (combined sign-in/sign-up logic)
-   * `sign-up-phone.ts` (backward compatibility, uses same logic)
-   * `sign-in-or-up-phone.ts` (explicit combined action)
-9. Create UI components:
-   * Phone input form
-   * OTP verification form
-   * Sign up/sign in pages
-10. Basic error handling
-11. Basic rate limiting
+1. ✅ Install Twilio SDK: `bun add twilio`
+2. ✅ Install phone validation library: `bun add libphonenumber-js`
+3. ✅ Create Twilio client (`src/lib/twilio/client.ts`)
+4. ✅ Implement `sendOTP` function (`src/lib/otp/send-otp.ts`)
+5. ✅ Implement `verifyOTP` function (`src/lib/otp/verify-otp.ts`)
+6. ✅ Update Better Auth configuration (`src/lib/auth.ts`)
+7. ✅ Create phone number utilities (`src/utils/phone-utils.ts`)
+8. ✅ Create UI component (`src/components/auth/form-phone-otp.tsx`)
+9. ✅ Client components use Better Auth client directly (`authClient.phoneNumber.sendOtp()` and `authClient.phoneNumber.verify()`)
+10. ✅ Basic error handling
+11. ✅ Country-specific support (+1 and +886 only)
+12. ✅ Taiwan number normalization (strip leading "0")
+13. ✅ Phone number persistence in localStorage
+14. ✅ SMS only sent for +1 numbers; other countries log OTP only
 
 **Deliverables:**
 
-* Users can authenticate with phone number (automatic sign-up if new, sign-in if existing)
-* Seamless UX - users don't need to know if they're registered
-* OTP codes sent via Knock SMS
-* OTP codes verified against database storage
+* ✅ Users can authenticate with phone number (automatic sign-up if new, sign-in if existing)
+* ✅ Seamless UX - users don't need to know if they're registered
+* ✅ OTP codes sent via Twilio SMS (for +1 numbers only)
+* ✅ OTP codes logged for non-US numbers (Taiwan +886)
+* ✅ Better Auth handles OTP storage and verification
+* ✅ Country-specific phone validation
+* ✅ Phone number persistence
 
 ### Phase 2: Enhanced Features
 
@@ -1635,6 +1799,7 @@ bun add twilio libphonenumber-js
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2025-01-30 | System | Updated client components to use `authClient.phoneNumber.sendOtp()` and `authClient.phoneNumber.verify()` directly instead of server actions. Added Taiwan number normalization (strip leading "0"). Limited country support to +1 (US/Canada) and +886 (Taiwan). SMS only sent via Twilio for +1 numbers; other countries log OTP only. Added phone number persistence in localStorage. Updated resend countdown to 45 seconds. Added country-specific phone validation. |
 | 1.3 | 2025-01-29 | System | Integrated Better Auth for OTP storage and verification. Removed custom OTP database storage. Updated `sendOTP` to accept optional code from Better Auth. Updated `signInOrUpPhoneAction` to use Better Auth's HTTP endpoint with `signUpOnVerification`. Added i18n support for SMS messages. Updated file locations: `lib/knock/` → `lib/otp/` and `lib/twilio/`. Client components should NOT import `verifyOTP` directly - use server actions instead. |
 | 1.2 | 2025-01-28 | System | Replaced Knock with Twilio as SMS/OTP provider. Updated all API integration details, environment variables, and code examples. OTP verification now uses database instead of external API. |
 | 1.1 | 2025-01-27 | System | Combined sign-in and sign-up into single unified flow. Updated server actions to automatically handle both new and existing users. Added `isNewUser` flag to response. |

@@ -1106,6 +1106,7 @@
   "resend_otp_in": "{{count}} seconds later to resend",
   "change_phone_number": "Change Phone Number",
   "phone_placeholder": "912345678",
+  "phone_placeholder_us": "4155551212",
   "phone_format_instruction": "Enter your phone number in international format (e.g., +886912345678)",
   "phone_invalid_format": "must be in international format (e.g., +886912345678)",
   "phone_numbers_only": "must contain only numbers",

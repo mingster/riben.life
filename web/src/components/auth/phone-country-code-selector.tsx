@@ -1,13 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { getCountryCallingCode, getCountries } from "libphonenumber-js";
 import { Button } from "@/components/ui/button";
 import {
 	Command,
-	CommandEmpty,
 	CommandGroup,
-	CommandInput,
 	CommandItem,
 	CommandList,
 } from "@/components/ui/command";
@@ -25,95 +22,37 @@ interface CountryCodeOption {
 	name: string; // Country name
 }
 
-// Get list of countries with dial codes
-function getCountryCodeOptions(): CountryCodeOption[] {
-	const countries = getCountries();
-	const options = countries
-		.map((countryCode): CountryCodeOption | null => {
-			try {
-				const dialCode = getCountryCallingCode(countryCode as any);
-				// Get country name (simplified - you might want to use a proper i18n solution)
-				const countryNames: Record<string, string> = {
-					TW: "Taiwan",
-					US: "United States",
-					CN: "China",
-					JP: "Japan",
-					KR: "South Korea",
-					SG: "Singapore",
-					HK: "Hong Kong",
-					MY: "Malaysia",
-					TH: "Thailand",
-					VN: "Vietnam",
-					PH: "Philippines",
-					ID: "Indonesia",
-					GB: "United Kingdom",
-					AU: "Australia",
-					CA: "Canada",
-					FR: "France",
-					DE: "Germany",
-					IT: "Italy",
-					ES: "Spain",
-					NL: "Netherlands",
-					BE: "Belgium",
-					CH: "Switzerland",
-					AT: "Austria",
-					SE: "Sweden",
-					NO: "Norway",
-					DK: "Denmark",
-					FI: "Finland",
-					PL: "Poland",
-					BR: "Brazil",
-					MX: "Mexico",
-					AR: "Argentina",
-					CL: "Chile",
-					CO: "Colombia",
-					PE: "Peru",
-					IN: "India",
-					PK: "Pakistan",
-					BD: "Bangladesh",
-					LK: "Sri Lanka",
-					NP: "Nepal",
-					MM: "Myanmar",
-					KH: "Cambodia",
-					LA: "Laos",
-					BN: "Brunei",
-					NZ: "New Zealand",
-					FJ: "Fiji",
-					PG: "Papua New Guinea",
-				};
-
-				return {
-					countryCode,
-					dialCode: `+${dialCode}`,
-					name: countryNames[countryCode] || countryCode,
-				};
-			} catch {
-				return null;
-			}
-		})
-		.filter((item): item is CountryCodeOption => item !== null);
-
-	return options.sort((a, b) => {
-		// Sort by dial code (numeric)
-		const aCode = parseInt(a.dialCode.replace("+", ""), 10);
-		const bCode = parseInt(b.dialCode.replace("+", ""), 10);
-		return aCode - bCode;
-	});
-}
-
 interface PhoneCountryCodeSelectorProps {
 	value: string; // Selected country code (e.g., "+886")
 	onValueChange: (value: string) => void;
 	disabled?: boolean;
+	allowedCodes?: string[]; // Optional: filter to only show these codes (e.g., ["+1", "+886"])
 }
 
 export function PhoneCountryCodeSelector({
 	value,
 	onValueChange,
 	disabled = false,
+	allowedCodes,
 }: PhoneCountryCodeSelectorProps) {
 	const [open, setOpen] = useState(false);
-	const countryOptions = useMemo(() => getCountryCodeOptions(), []);
+
+	// Hardcoded list of allowed countries: +1 (US) and +886 (Taiwan)
+	const allowedCountryOptions: CountryCodeOption[] = [
+		{ countryCode: "US", dialCode: "+1", name: "United States" },
+		{ countryCode: "TW", dialCode: "+886", name: "Taiwan" },
+	];
+
+	// If allowedCodes is provided, filter to only show those codes
+	// Otherwise, show all allowed countries
+	const countryOptions = useMemo(() => {
+		if (allowedCodes && allowedCodes.length > 0) {
+			return allowedCountryOptions.filter((opt) =>
+				allowedCodes.includes(opt.dialCode),
+			);
+		}
+		return allowedCountryOptions;
+	}, [allowedCodes]);
 
 	const selectedCountry = countryOptions.find((opt) => opt.dialCode === value);
 
@@ -131,14 +70,9 @@ export function PhoneCountryCodeSelector({
 					<IconChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-[300px] p-0" align="start">
+			<PopoverContent className="w-[200px] p-0" align="start">
 				<Command>
-					<CommandInput
-						placeholder="Search country or code..."
-						className="h-9"
-					/>
 					<CommandList>
-						<CommandEmpty>No country found.</CommandEmpty>
 						<CommandGroup>
 							{countryOptions.map((option) => (
 								<CommandItem
