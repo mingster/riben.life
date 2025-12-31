@@ -3,10 +3,10 @@
 import { z } from "zod";
 import { baseClient } from "@/utils/actions/safe-action";
 import { auth } from "@/lib/auth";
-import { verifyOTP } from "@/lib/knock/verify-otp";
 import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
 import { sqlClient } from "@/lib/prismadb";
 import { headers } from "next/headers";
+import logger from "@/lib/logger";
 
 const signInOrUpPhoneSchema = z.object({
 	phoneNumber: z.string().min(1, "Phone number is required"),
@@ -30,96 +30,70 @@ export const signInOrUpPhoneAction = baseClient
 			};
 		}
 
-		// Verify OTP first (before checking user existence)
-		const verifyResult = await verifyOTP({
-			phoneNumber: normalizedPhone,
-			code,
-		});
-
-		if (!verifyResult.valid) {
-			return {
-				serverError:
-					verifyResult.error || "Invalid OTP code. Please try again.",
-			};
-		}
-
-		// Check if phone number is registered
-		const existingUser = await sqlClient.user.findFirst({
-			where: { phoneNumber: normalizedPhone },
-		});
-
 		const headersList = await headers();
-		const baseURL =
-			process.env.NEXT_PUBLIC_BASE_URL ||
-			process.env.NEXT_PUBLIC_API_URL ||
-			(process.env.NODE_ENV === "production"
-				? "https://riben.life"
-				: "http://localhost:3001");
 
 		try {
-			// If user doesn't exist, sign up first
-			if (!existingUser) {
-				// Make HTTP request to Better Auth's phone sign-up endpoint
-				const signUpResponse = await fetch(
-					`${baseURL}/api/auth/phone/sign-up`,
-					{
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-							Cookie: headersList.get("cookie") || "",
-						},
-						body: JSON.stringify({
-							phoneNumber: normalizedPhone,
-							code,
-						}),
-					},
-				);
-
-				if (!signUpResponse.ok) {
-					const errorData = await signUpResponse.json().catch(() => ({}));
-					return {
-						serverError:
-							errorData.message ||
-							"Failed to create account. Please try again.",
-					};
-				}
-			}
-
-			// Sign in (works for both new and existing users)
-			const signInResponse = await fetch(`${baseURL}/api/auth/phone/sign-in`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Cookie: headersList.get("cookie") || "",
-				},
-				body: JSON.stringify({
-					phoneNumber: normalizedPhone,
-					code,
-				}),
+			// Check if user exists before verification (to determine if it's a new user)
+			const existingUser = await sqlClient.user.findFirst({
+				where: { phoneNumber: normalizedPhone },
 			});
 
-			if (!signInResponse.ok) {
-				const errorData = await signInResponse.json().catch(() => ({}));
+			// Use Better Auth's internal API for phone verification
+			// This is more reliable than HTTP endpoints and works with signUpOnVerification
+			const verifyResult = await auth.api.verifyPhoneNumber({
+				body: {
+					phoneNumber: normalizedPhone,
+					code,
+					disableSession: false, // Create session after verification
+					updatePhoneNumber: true, // Update phone number if session exists
+				},
+				headers: headersList,
+			});
+
+			// Check if verification was successful
+			if (!verifyResult.status || !verifyResult.token) {
+				logger.error("Better Auth phone verification failed", {
+					metadata: {
+						phoneNumber: normalizedPhone.replace(/\d{4}$/, "****"),
+						status: verifyResult.status,
+						hasToken: !!verifyResult.token,
+					},
+					tags: ["auth", "phone-otp", "error"],
+				});
+
 				return {
-					serverError:
-						errorData.message || "Failed to sign in. Please try again.",
+					serverError: "Invalid or expired OTP code. Please try again.",
 				};
 			}
 
-			// Get the session after sign in
+			// Get the session after verification
 			const session = await auth.api.getSession({
 				headers: headersList,
 			});
+
+			if (!session?.user) {
+				return {
+					serverError: "Failed to create session. Please try again.",
+				};
+			}
 
 			return {
 				data: {
 					success: true,
 					isNewUser: !existingUser,
-					user: session?.user,
-					session: session?.session,
+					user: session.user,
+					session: session.session,
 				},
 			};
 		} catch (error) {
+			logger.error("Sign in/up with phone failed", {
+				metadata: {
+					phoneNumber: normalizedPhone.replace(/\d{4}$/, "****"),
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["auth", "phone-otp", "error"],
+			});
+
 			return {
 				serverError:
 					error instanceof Error

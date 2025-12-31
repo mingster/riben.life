@@ -25,7 +25,7 @@ import {
 import { Input } from "../ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
 import { sendOTPAction } from "@/actions/auth/phone/send-otp";
-import { signInPhoneAction } from "@/actions/auth/phone/sign-in-phone";
+import { signInOrUpPhoneAction } from "@/actions/auth/phone/sign-in-or-up-phone";
 import { formatPhoneNumber, maskPhoneNumber } from "@/utils/phone-utils";
 import { PhoneCountryCodeSelector } from "./phone-country-code-selector";
 
@@ -44,6 +44,7 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
 	const [isAnimating, setIsAnimating] = useState(false);
 	const phoneInputRef = useRef<HTMLInputElement>(null);
+	const otpInputRef = useRef<HTMLDivElement>(null);
 
 	// Phone number form schema (local number without country code)
 	// Taiwan mobile numbers: 09XXXXXXXX (10 digits) or 9XXXXXXXX (9 digits, will be normalized to 09XXXXXXXX)
@@ -129,13 +130,27 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	// Auto-focus OTP input when step changes to OTP
 	useEffect(() => {
 		if (step === "otp") {
-			// Focus first OTP input after a short delay
+			// Focus first OTP input after a short delay to ensure it's rendered
 			setTimeout(() => {
-				const firstInput = document.querySelector(
+				// Try to focus the first OTP slot
+				const firstInput = otpInputRef.current?.querySelector(
 					'[data-slot="input-otp-slot"]',
 				) as HTMLElement;
-				firstInput?.focus();
-			}, 100);
+				if (firstInput) {
+					// Click and focus the first slot to activate OTP input
+					firstInput.click();
+					firstInput.focus();
+				} else {
+					// Fallback: try to find any OTP slot in the document
+					const fallbackInput = document.querySelector(
+						'[data-slot="input-otp-slot"]',
+					) as HTMLElement;
+					if (fallbackInput) {
+						fallbackInput.click();
+						fallbackInput.focus();
+					}
+				}
+			}, 150);
 		}
 	}, [step]);
 
@@ -247,7 +262,7 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 			// Store full phone number and move to OTP step
 			setPhoneNumber(fullPhoneNumber);
 			setStep("otp");
-			setResendCountdown(15); // 15 second countdown
+			setResendCountdown(45); // 45 second countdown
 			toastSuccess({
 				description:
 					t("otp_sent_successfully") ||
@@ -316,7 +331,7 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 				return;
 			}
 
-			setResendCountdown(15); // Reset countdown
+			setResendCountdown(45); // Reset countdown
 			otpForm.reset(); // Clear OTP input
 			toastSuccess({
 				description:
@@ -344,7 +359,8 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	async function handleVerifyOTP(data: z.infer<typeof otpFormSchema>) {
 		setIsVerifyingOTP(true);
 		try {
-			const result = await signInPhoneAction({
+			// signInOrUpPhoneAction handles OTP verification internally via Better Auth
+			const result = await signInOrUpPhoneAction({
 				phoneNumber,
 				code: data.code,
 			});
@@ -489,7 +505,7 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 									{t("otp_code") || "OTP Code"}
 								</FormLabel>
 								<FormControl>
-									<div className="flex justify-center">
+									<div ref={otpInputRef} className="flex justify-center">
 										<InputOTP
 											maxLength={6}
 											value={field.value}

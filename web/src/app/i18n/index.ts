@@ -1,7 +1,6 @@
 import { createInstance, type FlatNamespace, type KeyPrefix } from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import resourcesToBackend from "i18next-resources-to-backend";
-import { cookies } from "next/headers";
 import type { FallbackNs } from "react-i18next";
 import { initReactI18next } from "react-i18next/initReactI18next";
 import { cookieName, fallbackLng, getOptions } from "./settings";
@@ -41,7 +40,9 @@ export async function getT<
 	if (!useThisLng) {
 		// check cookie
 		//determine i18n languageId
-		const cookieStore = await cookies();
+		// Import cookies dynamically to avoid issues when this file is imported in client components
+		const { cookies: getCookies } = await import("next/headers");
+		const cookieStore = await getCookies();
 		const cookieLng = cookieStore.get(cookieName)?.value || fallbackLng;
 		//console.log("cookieLng", cookieLng);
 

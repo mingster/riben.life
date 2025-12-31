@@ -2,10 +2,10 @@
 
 import { z } from "zod";
 import { baseClient } from "@/utils/actions/safe-action";
-import { sendOTP } from "@/lib/knock/send-otp";
+import { auth } from "@/lib/auth";
 import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
-import { checkRateLimit } from "@/utils/rate-limit";
 import { headers } from "next/headers";
+import logger from "@/lib/logger";
 
 const sendOTPSchema = z.object({
 	phoneNumber: z.string().min(1, "Phone number is required"),
@@ -29,41 +29,65 @@ export const sendOTPAction = baseClient
 			};
 		}
 
-		// Get IP address from headers for rate limiting
 		const headersList = await headers();
-		const ipAddress =
-			headersList.get("x-forwarded-for")?.split(",")[0] ||
-			headersList.get("x-real-ip") ||
-			"unknown";
 
-		// Check rate limit
-		const rateLimitResult = await checkRateLimit({
-			phoneNumber: normalizedPhone,
-			ipAddress,
-		});
+		try {
+			// Use Better Auth's sendPhoneNumberOTP API
+			// This will:
+			// 1. Generate the OTP code
+			// 2. Store it in Better Auth's system
+			// 3. Call our sendOTP callback (configured in auth.ts) to send via Twilio
+			const result = await auth.api.sendPhoneNumberOTP({
+				body: {
+					phoneNumber: normalizedPhone,
+				},
+				headers: headersList,
+			});
 
-		if (!rateLimitResult.allowed) {
+			// Better Auth returns { message: string } on success
+			// If there's an error, it will throw or return an error object
+			if (!result || (result as any).error) {
+				logger.error("Better Auth sendPhoneNumberOTP failed", {
+					metadata: {
+						phoneNumber: normalizedPhone.replace(/\d{4}$/, "****"),
+						result: result ? JSON.stringify(result) : "null",
+					},
+					tags: ["auth", "phone-otp", "error"],
+				});
+
+				return {
+					serverError: "Failed to send OTP. Please try again later.",
+				};
+			}
+
+			logger.info("OTP code sent successfully", {
+				metadata: {
+					phoneNumber: normalizedPhone.replace(/\d{4}$/, "****"),
+					result: result ? JSON.stringify(result) : "null",
+				},
+				tags: ["auth", "phone-otp", "success", "sendOTPAction"],
+			});
+
+			return {
+				data: {
+					success: true,
+					message: "OTP code sent successfully.",
+				},
+			};
+		} catch (error) {
+			logger.error("Send OTP failed", {
+				metadata: {
+					phoneNumber: normalizedPhone.replace(/\d{4}$/, "****"),
+					error: error instanceof Error ? error.message : String(error),
+				},
+				tags: ["auth", "phone-otp", "error"],
+			});
+
 			return {
 				serverError:
-					rateLimitResult.message ||
-					"Too many requests. Please try again later.",
+					error instanceof Error
+						? error.message
+						: "Failed to send OTP. Please try again later.",
 			};
 		}
-
-		// Send OTP via Knock
-		const result = await sendOTP({ phoneNumber: normalizedPhone });
-
-		if (!result.success) {
-			return {
-				serverError:
-					result.error || "Failed to send OTP. Please try again later.",
-			};
-		}
-
-		return {
-			data: {
-				success: true,
-				message: "OTP code sent successfully.",
-			},
-		};
 	});

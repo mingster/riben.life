@@ -10,6 +10,7 @@ import {
 	magicLinkClient,
 	//multiSessionClient,
 	organizationClient,
+	phoneNumberClient,
 	//passkeyClient,
 	twoFactorClient,
 } from "better-auth/client/plugins";
@@ -38,6 +39,7 @@ export const authClient = createAuthClient({
 		passkeyClient(),
 		genericOAuthClient(),
 		apiKeyClient(),
+		phoneNumberClient(),
 
 		/*
 		emailOTPClient(),

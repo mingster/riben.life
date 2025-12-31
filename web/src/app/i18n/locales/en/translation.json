@@ -1096,6 +1096,7 @@
   "you_are_not_allowed_to_register_this_passkey": "You are not allowed to register this passkey",
   "otp_sent_successfully": "OTP code sent successfully. Please check your phone.",
   "otp_resent_successfully": "OTP code resent successfully. Please check your phone.",
+  "otp_sms_message": "riben.life verification code is: {{code}}.",
   "otp_instruction": "Enter the 6-digit code sent to",
   "otp_code": "OTP Code",
   "otp_code_must_be_6_digits": "OTP code must be 6 digits",

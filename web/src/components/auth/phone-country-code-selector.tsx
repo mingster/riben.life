@@ -1,11 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import {
-	parsePhoneNumber,
-	getCountryCallingCode,
-	getCountries,
-} from "libphonenumber-js";
+import { useState, useMemo } from "react";
+import { getCountryCallingCode, getCountries } from "libphonenumber-js";
 import { Button } from "@/components/ui/button";
 import {
 	Command,
@@ -32,8 +28,8 @@ interface CountryCodeOption {
 // Get list of countries with dial codes
 function getCountryCodeOptions(): CountryCodeOption[] {
 	const countries = getCountries();
-	return countries
-		.map((countryCode) => {
+	const options = countries
+		.map((countryCode): CountryCodeOption | null => {
 			try {
 				const dialCode = getCountryCallingCode(countryCode as any);
 				// Get country name (simplified - you might want to use a proper i18n solution)
@@ -95,13 +91,14 @@ function getCountryCodeOptions(): CountryCodeOption[] {
 				return null;
 			}
 		})
-		.filter((item): item is CountryCodeOption => item !== null)
-		.sort((a, b) => {
-			// Sort by dial code (numeric)
-			const aCode = parseInt(a.dialCode.replace("+", ""), 10);
-			const bCode = parseInt(b.dialCode.replace("+", ""), 10);
-			return aCode - bCode;
-		});
+		.filter((item): item is CountryCodeOption => item !== null);
+
+	return options.sort((a, b) => {
+		// Sort by dial code (numeric)
+		const aCode = parseInt(a.dialCode.replace("+", ""), 10);
+		const bCode = parseInt(b.dialCode.replace("+", ""), 10);
+		return aCode - bCode;
+	});
 }
 
 interface PhoneCountryCodeSelectorProps {
