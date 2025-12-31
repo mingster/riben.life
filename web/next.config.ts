@@ -22,7 +22,14 @@ const nextConfig: NextConfig = {
 		"pino-worker",
 		"pino-file",
 		"pino-pretty",
+		"twilio",
 	],
+	// Build optimizations
+	compiler: {
+		// Remove console.logs in production
+		removeConsole: process.env.NODE_ENV === "production",
+	},
+
 	/*
 	video: {
 		formats: ["video/mp4", "video/webm", "video/ogg"],

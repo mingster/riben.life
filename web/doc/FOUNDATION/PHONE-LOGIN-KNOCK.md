@@ -1,8 +1,9 @@
-# Functional Requirements: Phone Login with Knock
+# Functional Requirements: Phone Login with Twilio
 
 **Date:** 2025-01-27  
 **Status:** Active  
-**Version:** 1.1
+**Version:** 1.4  
+**Last Updated:** 2025-01-30
 
 **Related Documents:**
 
@@ -13,7 +14,7 @@
 
 ## 1. Overview
 
-This document specifies the functional requirements for implementing phone number-based authentication (phone login) using Knock as the SMS/OTP provider. The system enables users to sign in and sign up using their phone number instead of (or in addition to) email addresses.
+This document specifies the functional requirements for implementing phone number-based authentication (phone login) using Twilio as the SMS/OTP provider. The system enables users to sign in and sign up using their phone number instead of (or in addition to) email addresses.
 
 **Key Features:**
 
@@ -24,7 +25,7 @@ This document specifies the functional requirements for implementing phone numbe
 * Support for multiple authentication methods (phone, email, social)
 * Account linking for users with multiple authentication methods
 
-**Provider:** Knock (<https://knock.app>) - SMS/OTP delivery service
+**Provider:** Twilio (<https://www.twilio.com>) - SMS/OTP delivery service
 
 ***
 
@@ -40,7 +41,7 @@ This document specifies the functional requirements for implementing phone numbe
 ### 2.2 System Admin
 
 * Platform administrators
-* Can configure Knock API credentials
+* Can configure Twilio API credentials
 * Can view authentication logs and metrics
 * Can manage phone verification settings
 
@@ -62,7 +63,7 @@ This document specifies the functional requirements for implementing phone numbe
    * User does not need to know if they have an account or not
 
 2. **OTP Verification:**
-   * System sends OTP code to phone number via Knock
+   * System sends OTP code to phone number via Twilio
    * User enters OTP code received via SMS
    * System verifies OTP code (stored in database)
    * OTP code expires after configured time (default: 10 minutes)
@@ -105,11 +106,11 @@ This document specifies the functional requirements for implementing phone numbe
 
 1. **Initiate Verification:**
    * User requests phone number verification (from account settings)
-   * System sends OTP code to phone number via Knock
+   * System sends OTP code to phone number via Twilio
 
 2. **Verify OTP:**
    * User enters OTP code
-   * System verifies OTP code with Knock
+   * System verifies OTP code (stored in database)
    * If valid: `phoneNumberVerified` flag is set to `true`
 
 3. **Verification Status:**
@@ -138,7 +139,7 @@ This document specifies the functional requirements for implementing phone numbe
 
 3. **Verify and Link:**
    * User enters OTP code
-   * System verifies OTP code with Knock
+   * System verifies OTP code (stored in database)
    * If valid: Phone number is linked to user account and marked as verified
 
 **FR-PHONE-012:** The system must support multiple authentication methods per user:
@@ -159,12 +160,14 @@ This document specifies the functional requirements for implementing phone numbe
 * OTP code must be unique per request
 * OTP code must expire after configured time (default: 10 minutes)
 
-**FR-PHONE-014:** The system must send OTP codes via Knock:
+**FR-PHONE-014:** The system must send OTP codes via Twilio:
 
-* Integration with Knock SMS API
-* OTP code is sent to user's phone number
+* Integration with Twilio SMS API
+* **SMS Delivery Rules:**
+  * **United States/Canada (+1):** OTP codes are sent via Twilio SMS
+  * **Taiwan (+886) and other countries:** OTP codes are logged only (not sent via SMS) for development/testing purposes
 * SMS message includes OTP code and brief instructions
-* SMS is sent in user's preferred language (if supported by Knock)
+* SMS is sent in user's preferred language (if configured)
 
 **FR-PHONE-015:** The system must handle OTP delivery failures:
 
@@ -174,11 +177,11 @@ This document specifies the functional requirements for implementing phone numbe
 
 #### 3.2.2 OTP Verification
 
-**FR-PHONE-016:** The system must verify OTP codes with Knock:
+**FR-PHONE-016:** The system must verify OTP codes:
 
-* OTP verification request is sent to Knock API
-* Knock validates OTP code against sent code
-* System receives verification result from Knock
+* OTP verification is performed against stored code in database
+* System validates OTP code against sent code
+* System checks expiration time and attempt limits
 * If valid: User is authenticated or phone number is verified
 * If invalid: System displays error message and allows retry
 
@@ -203,7 +206,7 @@ This document specifies the functional requirements for implementing phone numbe
 * "Resend OTP" button available after initial OTP send
 * Resend is subject to rate limiting (see FR-PHONE-017)
 * New OTP code invalidates previous code
-* Resend countdown timer (e.g., "Resend in 60 seconds")
+* Resend countdown timer: 45 seconds (e.g., "Resend in 45 seconds")
 
 ### 3.3 Phone Number Management
 
@@ -213,14 +216,16 @@ This document specifies the functional requirements for implementing phone numbe
 
 * Format: `+[country code][number]` (e.g., +886912345678)
 * Country code is required
-* Leading zeros are removed
+* **Supported countries:** Only +1 (United States/Canada) and +886 (Taiwan) are supported
+* **Taiwan number handling:** For Taiwan (+886), if the local number starts with "0" (e.g., 0912345678), the leading "0" is automatically stripped before combining with the country code (result: +886912345678)
 * Spaces, dashes, and parentheses are stripped
 
 **FR-PHONE-021:** The system must validate phone number format:
 
 * Phone number must match international format
-* Country code must be valid
-* Number length must be within acceptable range (7-15 digits)
+* **Country-specific validation:**
+  * **Taiwan (+886):** Must be 9-10 digits starting with 9 (e.g., 912345678 or 0912345678, which becomes 912345678)
+  * **United States/Canada (+1):** Must be exactly 10 digits
 * Invalid format displays clear error message
 
 **FR-PHONE-022:** The system must normalize phone numbers:
@@ -356,33 +361,33 @@ This document specifies the functional requirements for implementing phone numbe
 * Phone numbers are collected only with user consent
 * Users can delete their phone number
 * Phone numbers are deleted when account is deleted
-* Phone numbers are not shared with third parties (except Knock for SMS delivery)
+* Phone numbers are not shared with third parties (except Twilio for SMS delivery)
 
 ### 3.6 Integration Requirements
 
-#### 3.6.1 Knock Integration
+#### 3.6.1 Twilio Integration
 
-**FR-PHONE-038:** The system must integrate with Knock API:
+**FR-PHONE-038:** The system must integrate with Twilio API:
 
 * **Authentication:**
-  * API key authentication with Knock
-  * API keys stored securely (environment variables)
-  * API keys are different for development and production
+  * Account SID and Auth Token authentication with Twilio
+  * Credentials stored securely (environment variables)
+  * Credentials are different for development and production
 
 * **SMS Delivery:**
-  * Send OTP codes via Knock SMS API
+  * Send OTP codes via Twilio SMS API
   * Handle SMS delivery status (sent, delivered, failed)
   * Retry failed SMS deliveries (up to 3 attempts)
 
 * **OTP Verification:**
-  * Verify OTP codes via Knock API
+  * Verify OTP codes against stored codes in database
   * Handle verification responses (valid, invalid, expired)
   * Log verification attempts for audit
 
-**FR-PHONE-039:** The system must handle Knock API errors:
+**FR-PHONE-039:** The system must handle Twilio API errors:
 
 * Network errors (retry with exponential backoff)
-* API errors (invalid API key, rate limit, etc.)
+* API errors (invalid credentials, rate limit, etc.)
 * Service unavailability (graceful degradation)
 * Error logging and monitoring
 
@@ -390,11 +395,20 @@ This document specifies the functional requirements for implementing phone numbe
 
 **FR-PHONE-040:** Phone authentication must integrate with Better Auth:
 
-* Use Better Auth `phoneOTP` plugin
-* Implement `sendOTP` callback to send OTP via Knock
-* Implement `verifyOTP` callback to verify OTP via Knock
+* Use Better Auth `phoneNumber` plugin
+* Implement `sendOTP` callback to send OTP via Twilio (receives code from Better Auth)
+* Better Auth handles OTP storage and verification internally (no custom `verifyOTP` callback needed)
+* Use `signUpOnVerification` to automatically create users if they don't exist
 * Store phone number in user's `phoneNumber` field
 * Update `phoneNumberVerified` flag on successful verification
+
+**FR-PHONE-040a:** Client components use Better Auth client directly:
+
+* Client components use `authClient.phoneNumber.sendOtp()` to send OTP codes
+* Client components use `authClient.phoneNumber.verify()` to verify OTP codes and authenticate
+* Better Auth client handles session creation automatically
+* Server-only functions like `verifyOTP` should NOT be imported by client components
+* This prevents build errors and ensures proper server/client separation
 
 **FR-PHONE-041:** Phone authentication must work with existing authentication methods:
 
@@ -414,7 +428,7 @@ This document specifies the functional requirements for implementing phone numbe
 
 #### 3.7.1 SMS Notifications
 
-**FR-PHONE-043:** The system must send SMS notifications via Knock:
+**FR-PHONE-043:** The system must send SMS notifications via Twilio:
 
 * OTP codes for sign up
 * OTP codes for sign in
@@ -590,9 +604,12 @@ Do not share this code with anyone.
 **UI-PHONE-001:** Sign up page must support phone number input:
 
 * Phone number input field with country code selector
-* Format validation with real-time feedback
+* **Country code selector:** Only displays +1 (United States) and +886 (Taiwan) options
+* Format validation with real-time feedback (country-specific validation)
+* **Phone number persistence:** Phone number and country code are remembered in browser localStorage
 * "Send OTP" button
 * Clear instructions and error messages
+* **Placeholder text:** Dynamic based on selected country code (e.g., "0912345678 or 912345678" for Taiwan, "4155551212" for US)
 
 **UI-PHONE-002:** OTP verification page must be user-friendly:
 
@@ -638,33 +655,32 @@ Do not share this code with anyone.
 
 ## 7. Technical Requirements
 
-### 7.1 Knock API Integration
+### 7.1 Twilio API Integration
 
-**TR-PHONE-001:** The system must integrate with Knock API:
+**TR-PHONE-001:** The system must integrate with Twilio API:
 
 * **API Endpoints:**
-  * Send OTP: `POST /v1/users/{user_id}/workflows/{workflow_key}/trigger`
-  * Verify OTP: `POST /v1/users/{user_id}/workflows/{workflow_key}/verify`
-  * (Exact endpoints depend on Knock API version and configuration)
+  * Send SMS: `POST /2010-04-01/Accounts/{AccountSid}/Messages.json`
+  * (OTP verification is handled internally via database)
 
 * **Authentication:**
-  * API key authentication
-  * API keys stored in environment variables
-  * Separate keys for development and production
+  * Account SID and Auth Token authentication
+  * Credentials stored in environment variables
+  * Separate credentials for development and production
 
 * **Request Format:**
-  * JSON request body
+  * Form-encoded or JSON request body
   * Phone number in E.164 format
-  * OTP code (for verification)
+  * SMS message body with OTP code
 
 * **Response Handling:**
-  * Success responses (200 OK)
+  * Success responses (200 OK, 201 Created)
   * Error responses (400, 401, 429, 500, etc.)
   * Retry logic for transient errors
 
-**TR-PHONE-002:** The system must implement Knock API client:
+**TR-PHONE-002:** The system must implement Twilio API client:
 
-* HTTP client for Knock API requests
+* Twilio SDK client for API requests
 * Error handling and retry logic
 * Request/response logging
 * Rate limit handling
@@ -673,8 +689,8 @@ Do not share this code with anyone.
 
 **TR-PHONE-003:** The system must use Better Auth `phoneOTP` plugin:
 
-* Configure `sendOTP` callback to call Knock API
-* Configure `verifyOTP` callback to call Knock API
+* Configure `sendOTP` callback to call Twilio API
+* Configure `verifyOTP` callback to verify against database
 * Store phone number in user's `phoneNumber` field
 * Update `phoneNumberVerified` flag on verification
 
@@ -683,24 +699,24 @@ Do not share this code with anyone.
 ```typescript
 phoneOTP({
   sendOTP: async ({ phoneNumber, code }, ctx) => {
-    // Send OTP via Knock API
-    await knockClient.sendOTP({ phoneNumber, code });
+    // Send OTP via Twilio API
+    await sendOTP({ phoneNumber });
   },
   verifyOTP: async ({ phoneNumber, code }, ctx) => {
-    // Verify OTP via Knock API
-    const isValid = await knockClient.verifyOTP({ phoneNumber, code });
-    return isValid;
+    // Verify OTP against database
+    const result = await verifyOTP({ phoneNumber, code });
+    return result.valid;
   },
 })
 ```
 
 ### 7.3 Environment Variables
 
-**TR-PHONE-005:** The system must use environment variables for Knock configuration:
+**TR-PHONE-005:** The system must use environment variables for Twilio configuration:
 
-* `KNOCK_API_KEY` - Knock API key (required)
-* `KNOCK_WORKFLOW_KEY` - Knock workflow key for OTP (required)
-* `KNOCK_API_URL` - Knock API base URL (optional, defaults to production)
+* `TWILIO_ACCOUNT_SID` - Twilio Account SID (required)
+* `TWILIO_AUTH_TOKEN` - Twilio Auth Token (required)
+* `TWILIO_PHONE_NUMBER` - Twilio phone number for sending SMS (required, E.164 format)
 * `OTP_EXPIRY_MINUTES` - OTP expiration time in minutes (default: 10)
 * `OTP_LENGTH` - OTP code length (default: 6)
 
@@ -708,9 +724,9 @@ phoneOTP({
 
 **TR-PHONE-006:** The system must handle various error scenarios:
 
-* **Knock API Errors:**
+* **Twilio API Errors:**
   * Network errors (retry with exponential backoff)
-  * Invalid API key (log error, disable phone auth)
+  * Invalid credentials (log error, disable phone auth)
   * Rate limit exceeded (return rate limit error to user)
   * Service unavailable (graceful degradation)
 
@@ -728,13 +744,13 @@ phoneOTP({
 
 **TR-PHONE-007:** OTP send must complete within 5 seconds:
 
-* Knock API request: < 2 seconds
+* Twilio API request: < 2 seconds
 * SMS delivery: < 3 seconds (asynchronous, non-blocking)
 * User feedback: Immediate (optimistic UI)
 
 **TR-PHONE-008:** OTP verification must complete within 2 seconds:
 
-* Knock API request: < 1 second
+* Database lookup: < 1 second
 * Database update: < 1 second
 * User feedback: Immediate
 
@@ -773,8 +789,8 @@ phoneOTP({
 
 ### Phase 1: Basic Phone Authentication (MVP)
 
-* Knock API integration
-* OTP send and verify via Knock
+* Twilio API integration
+* OTP send via Twilio and verify via database
 * Sign up with phone number
 * Sign in with phone number
 * Basic error handling
@@ -808,7 +824,7 @@ phoneOTP({
 
 ### 9.2 Integration Tests
 
-* Knock API integration
+* Twilio API integration
 * Better Auth phoneOTP plugin integration
 * OTP send and verify flow
 * Account creation and sign in
@@ -833,10 +849,10 @@ phoneOTP({
 
 ### 10.1 External Services
 
-* **Knock** - SMS/OTP delivery service
+* **Twilio** - SMS/OTP delivery service
   * API access required
   * Account setup required
-  * API keys required
+  * Account SID and Auth Token required
 
 ### 10.2 Internal Systems
 
@@ -851,7 +867,7 @@ phoneOTP({
 
 ### 10.3 Libraries
 
-* Knock SDK or HTTP client for API calls
+* Twilio SDK for API calls
 * Phone number validation library (e.g., `libphonenumber-js`)
 * Encryption library for phone number storage
 
@@ -863,8 +879,8 @@ phoneOTP({
 
 * ✅ Users can sign up with phone number
 * ✅ Users can sign in with phone number
-* ✅ OTP codes are sent via Knock SMS
-* ✅ OTP codes are verified via Knock API
+* ✅ OTP codes are sent via Twilio SMS
+* ✅ OTP codes are verified against database
 * ✅ Phone numbers are stored and verified
 * ✅ Account linking works (phone + email)
 
@@ -884,7 +900,7 @@ phoneOTP({
 
 ### 11.4 Integration
 
-* ✅ Knock API integration works
+* ✅ Twilio API integration works
 * ✅ Better Auth integration works
 * ✅ Multiple authentication methods work together
 * ✅ Session management works correctly
@@ -895,7 +911,7 @@ phoneOTP({
 
 * **OTP**: One-Time Password - A temporary code sent via SMS for verification
 * **E.164**: International phone number format (e.g., +886912345678)
-* **Knock**: SMS/OTP delivery service provider
+* **Twilio**: SMS/OTP delivery service provider
 * **Phone Number Verification**: Process of confirming phone number ownership via OTP
 * **Account Linking**: Associating multiple authentication methods with one user account
 * **Rate Limiting**: Restricting number of requests per time period to prevent abuse
@@ -906,6 +922,9 @@ phoneOTP({
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.4 | 2025-01-30 | System | Updated client components to use Better Auth client directly (`authClient.phoneNumber.sendOtp()` and `authClient.phoneNumber.verify()`). Added Taiwan number normalization (strip leading "0" before combining with +886). Limited country support to +1 (US/Canada) and +886 (Taiwan). SMS only sent via Twilio for +1 numbers; Taiwan and other countries log OTP only. Added phone number and country code persistence in localStorage. Updated resend countdown to 45 seconds. Added country-specific phone validation (Taiwan: 9-10 digits starting with 9, US: 10 digits). |
+| 1.3 | 2025-01-29 | System | Integrated Better Auth for OTP storage and verification. Removed custom OTP database storage. Better Auth now handles OTP lifecycle. Added `signUpOnVerification` for automatic user creation. Added i18n support for SMS messages. Updated file locations: `lib/knock/` → `lib/otp/` and `lib/twilio/`. Added requirement that client components should NOT import server-only functions directly. |
+| 1.2 | 2025-01-28 | System | Replaced Knock with Twilio as SMS/OTP provider. Updated all references, API integration details, and environment variables. OTP verification now uses database instead of external API. |
 | 1.1 | 2025-01-27 | System | Combined sign-in and sign-up into single unified flow. Users no longer need to know if they're registered. System automatically creates account if new, signs in if existing. Removed separate error messages for "already registered" and "not registered" during authentication. |
 | 1.0 | 2025-01-27 | System | Initial functional requirements document for phone login with Knock |
 

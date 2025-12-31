@@ -1,6 +1,7 @@
-import { verifyOTP as verifyStoredOTP } from "./otp-db";
 import logger from "@/lib/logger";
 import { maskPhoneNumber } from "@/utils/utils";
+import { auth } from "../auth";
+import { headers } from "next/headers";
 
 export interface VerifyOTPParams {
 	phoneNumber: string; // E.164 format
@@ -17,16 +18,30 @@ export async function verifyOTP({
 	code,
 }: VerifyOTPParams): Promise<VerifyOTPResult> {
 	try {
-		// Verify OTP against stored code in database
-		const isValid = await verifyStoredOTP(phoneNumber, code);
+		const headersList = await headers();
 
-		if (!isValid) {
+		// Use Better Auth's verifyPhoneNumber API
+		const result = await auth.api.verifyPhoneNumber({
+			body: {
+				phoneNumber: phoneNumber, // required
+				code: code, // required
+				disableSession: false,
+				updatePhoneNumber: true,
+			},
+			headers: headersList,
+		});
+
+		// Check if verification was successful
+		// Better Auth returns: { status: boolean, token: string | null, user: UserWithPhoneNumber }
+		if (!result.status || !result.token) {
 			logger.warn("OTP verification failed", {
 				metadata: {
 					phoneNumber: maskPhoneNumber(phoneNumber),
 					codeLength: code.length,
+					status: result.status,
+					hasToken: !!result.token,
 				},
-				tags: ["knock", "otp", "verify", "failed"],
+				tags: ["otp", "verify", "failed"],
 			});
 
 			return {
@@ -34,13 +49,6 @@ export async function verifyOTP({
 				error: "Invalid or expired OTP code. Please request a new code.",
 			};
 		}
-
-		logger.info("OTP verification successful", {
-			metadata: {
-				phoneNumber: maskPhoneNumber(phoneNumber),
-			},
-			tags: ["knock", "otp", "verify", "success"],
-		});
 
 		return {
 			valid: true,
@@ -51,7 +59,7 @@ export async function verifyOTP({
 				phoneNumber: maskPhoneNumber(phoneNumber),
 				error: error instanceof Error ? error.message : String(error),
 			},
-			tags: ["knock", "otp", "error"],
+			tags: ["otp", "error"],
 		});
 
 		return {

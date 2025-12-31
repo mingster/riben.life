@@ -21,11 +21,34 @@ export const updateUserAction = adminActionClient
 				role,
 				stripeCustomerId,
 				password,
+				phoneNumber,
+				phoneNumberVerified,
+				image,
+				twoFactorEnabled,
+				banned,
+				banReason,
+				banExpires,
 			},
 		}) => {
+			// Convert banExpires ISO string to DateTime if provided
+			const banExpiresDate = banExpires ? new Date(banExpires) : undefined;
+
 			await sqlClient.user.update({
 				where: { id: id },
-				data: { name, locale, timezone, role, stripeCustomerId },
+				data: {
+					name,
+					locale,
+					timezone,
+					role,
+					stripeCustomerId,
+					phoneNumber,
+					phoneNumberVerified,
+					image: image === "" ? null : image,
+					twoFactorEnabled,
+					banned,
+					banReason,
+					banExpires: banExpiresDate,
+				},
 			});
 
 			/*

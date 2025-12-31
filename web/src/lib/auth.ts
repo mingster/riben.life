@@ -20,8 +20,6 @@ import { sendAuthPasswordReset } from "@/actions/mail/send-auth-password-reset";
 import { stripe as stripeClient } from "@/lib/stripe/config";
 import { customSession } from "better-auth/plugins";
 import { sqlClient } from "./prismadb";
-import { verifyOTP } from "./knock/verify-otp";
-import { sendOTP } from "./knock/send-otp";
 
 const prisma = new PrismaClient();
 
@@ -51,8 +49,10 @@ export const auth = betterAuth({
 		cookies: {
 			state: {
 				attributes: {
-					sameSite: "none",
-					secure: true,
+					// In development, use lax to allow cookies on localhost
+					// In production, use none with secure for cross-site OAuth
+					sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+					secure: process.env.NODE_ENV === "production",
 				},
 			},
 		},
@@ -161,16 +161,43 @@ export const auth = betterAuth({
 		}),
 		phoneNumber({
 			sendOTP: async ({ phoneNumber, code }, ctx) => {
-				// Send OTP via Knock
-				const result = await sendOTP({ phoneNumber });
+				// Better Auth provides the OTP code, we use our existing sendOTP function
+				// which handles storing in database and sending via Twilio
+				const { sendOTP } = await import("./otp/send-otp");
+
+				// Get locale from request context if available
+				const locale =
+					ctx?.request?.headers
+						?.get("accept-language")
+						?.split(",")[0]
+						?.split("-")[0] || "tw";
+
+				// Call our existing sendOTP function with the code provided by Better Auth
+				const result = await sendOTP({
+					phoneNumber,
+					locale,
+					code, // Use the code provided by Better Auth
+				});
+
 				if (!result.success) {
 					throw new Error(result.error || "Failed to send OTP");
 				}
 			},
-			verifyOTP: async ({ phoneNumber, code }, ctx) => {
-				// Verify OTP via Knock
-				const result = await verifyOTP({ phoneNumber, code });
-				return result.valid;
+			// No custom verifyOTP callback - Better Auth handles verification internally
+			// When auth.api.verifyPhoneNumber is called, Better Auth will verify
+			// the OTP against its own storage (created when sendPhoneNumberOTP was called)
+			signUpOnVerification: {
+				getTempEmail: (phoneNumber) => {
+					// Generate temporary email for phone-based sign-up
+					return `${phoneNumber.replace(/[^0-9]/g, "")}@phone.riben.life`;
+				},
+				getTempName: (phoneNumber) => {
+					// Use masked phone number as temporary name
+					return phoneNumber.replace(
+						/(\+\d{1,3})(\d{3})(\d{3})(\d+)/,
+						"$1$2***$4",
+					);
+				},
 			},
 		}),
 		twoFactor(),
