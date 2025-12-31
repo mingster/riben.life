@@ -28,7 +28,15 @@ import { formatPhoneNumber, maskPhoneNumber } from "@/utils/phone-utils";
 import { PhoneCountryCodeSelector } from "./phone-country-code-selector";
 import { authClient } from "@/lib/auth-client";
 
-function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
+function FormPhoneOtpInner({
+	callbackUrl = "/",
+	onSuccess,
+	editMode = false,
+}: {
+	callbackUrl?: string;
+	onSuccess?: () => void;
+	editMode?: boolean;
+}) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const isHydrated = useIsHydrated();
@@ -304,22 +312,30 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 		setIsVerifyingOTP(true);
 		try {
 			// Use Better Auth client to verify OTP
-			const result = await authClient.phoneNumber.verify({
+			const isVerified = await authClient.phoneNumber.verify({
 				phoneNumber,
 				code: data.code,
+				// Update phone number only if in edit mode.
+				// otherwise this will create a new user if phone number is not found
+				updatePhoneNumber: editMode,
+				// no need to create session if in edit mode
+				disableSession: !editMode,
 			});
 
-			if (result.error) {
+			if (isVerified.error) {
 				toastError({
 					description:
-						result.error.message ||
+						isVerified.error.message ||
+						t("otp_verification_failed") ||
 						"OTP verification failed. Please try again.",
 				});
 				return;
 			}
 
-			// Track analytics
-			analytics.trackCustomEvent("login", { method: "phone" });
+			// Track analytics only for sign-in (not for edit mode)
+			if (!editMode) {
+				analytics.trackCustomEvent("login", { method: "phone" });
+			}
 
 			// check to see if session exists on client side
 			const { data: session, error } = await authClient.getSession();
@@ -329,27 +345,37 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 					serverError: "Failed to create session. Please try again.",
 				};
 			}
-			if (session?.user) {
-				// Show success message
-				toastSuccess({
-					description: t("signed_in_successfully") || "Signed in successfully!",
-				});
-			}
 
-			// Redirect to callback URL
-			router.push(callbackUrl);
-			router.refresh();
+			// If onSuccess callback is provided, call it instead of redirecting
+			if (onSuccess) {
+				onSuccess();
+			} else {
+				if (session?.user) {
+					// Show success message
+					toastSuccess({
+						description:
+							t("signed_in_successfully") || "Signed in successfully!",
+					});
+				}
+
+				// Redirect to callback URL
+				router.push(callbackUrl);
+				router.refresh();
+			}
 		} catch (error: any) {
 			clientLogger.error(error as Error, {
 				message: "Verify OTP failed",
-				metadata: { phoneNumber: maskPhoneNumber(phoneNumber) },
+				metadata: { phoneNumber: maskPhoneNumber(phoneNumber), editMode },
 				tags: ["auth", "phone-otp", "error"],
 				service: "FormPhoneOtp",
 				environment: process.env.NODE_ENV,
 				version: process.env.npm_package_version,
 			});
 			toastError({
-				description: error.message || "Failed to verify OTP. Please try again.",
+				description:
+					error.message ||
+					t("otp_verification_failed") ||
+					"Failed to verify OTP. Please try again.",
 			});
 		} finally {
 			setIsVerifyingOTP(false);
@@ -361,7 +387,10 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 		return (
 			<Form {...phoneForm}>
 				<form
-					onSubmit={phoneForm.handleSubmit(handleSendOTP)}
+					onSubmit={(e) => {
+						e.stopPropagation();
+						phoneForm.handleSubmit(handleSendOTP)(e);
+					}}
 					noValidate={isHydrated}
 					className="grid w-full gap-4"
 				>
@@ -447,7 +476,10 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 
 			<Form {...otpForm}>
 				<form
-					onSubmit={otpForm.handleSubmit(handleVerifyOTP)}
+					onSubmit={(e) => {
+						e.stopPropagation();
+						otpForm.handleSubmit(handleVerifyOTP)(e);
+					}}
 					noValidate={isHydrated}
 					className="grid w-full gap-4"
 				>
@@ -530,10 +562,23 @@ function FormPhoneOtpInner({ callbackUrl = "/" }: { callbackUrl?: string }) {
 	);
 }
 
+// for user to sign in with phone number using OTP method
+// or for user to update phone number on it's own profile
+//
 export default function FormPhoneOtp({
 	callbackUrl = "/",
+	onSuccess,
+	editMode = false,
 }: {
 	callbackUrl?: string;
+	onSuccess?: () => void;
+	editMode?: boolean;
 }) {
-	return <FormPhoneOtpInner callbackUrl={callbackUrl} />;
+	return (
+		<FormPhoneOtpInner
+			callbackUrl={callbackUrl}
+			onSuccess={onSuccess}
+			editMode={editMode}
+		/>
+	);
 }

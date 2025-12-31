@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPencil, IconPlus, IconKey } from "@tabler/icons-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type { z } from "zod";
 import { createUserAction } from "@/actions/sysAdmin/user/create-user";
 import { updateUserAction } from "@/actions/sysAdmin/user/update-user";
 import {
@@ -45,8 +44,10 @@ import type { User } from "@/types";
 import { UserRoleCombobox } from "./user-role-combobox";
 import { ResetPasswordDialog } from "./reset-password-dialog";
 import logger from "@/lib/logger";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 
-type formValues = z.infer<typeof updateUserSettingsSchema>;
+// type formValues = z.infer<typeof updateUserSettingsSchema>; // Using UpdateUserSettingsInput directly instead
 
 interface props {
 	item: User;
@@ -66,7 +67,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 	async function onSubmit(data: UpdateUserSettingsInput) {
 		setLoading(true);
 
-		let result;
+		let result: { data?: User; serverError?: string } | null;
 		if (isNew) {
 			// create new user from client side
 			const newUser = await authClient.admin.createUser({
@@ -122,6 +123,9 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 	const defaultValues = item
 		? {
 				...item,
+				banExpires: item.banExpires
+					? new Date(item.banExpires).toISOString()
+					: undefined,
 			}
 		: {};
 
@@ -131,12 +135,13 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 		mode: "onChange",
 	});
 
-	const {
-		register,
-		formState: { errors },
-		handleSubmit,
-		clearErrors,
-	} = useForm<formValues>();
+	// Unused form instance - can be removed if not needed
+	// const {
+	// 	register,
+	// 	formState: { errors },
+	// 	handleSubmit,
+	// 	clearErrors,
+	// } = useForm<formValues>();
 
 	//console.log('disabled', loading || form.formState.isSubmitting);
 
@@ -325,12 +330,182 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 													disabled={loading || form.formState.isSubmitting}
 													placeholder="Enter stripeCustomerId"
 													{...field}
+													value={field.value ?? ""}
 												/>
 											</FormControl>
 											<FormMessage />
 										</FormItem>
 									)}
 								/>
+
+								<FormField
+									control={form.control}
+									name="phoneNumber"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>{t("phone") || "Phone"}</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="+886912345678 or +14155551212"
+													type="tel"
+													{...field}
+													value={field.value ?? ""}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="phoneNumberVerified"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Checkbox
+													checked={Boolean(field.value)}
+													onCheckedChange={(checked) =>
+														field.onChange(checked === true)
+													}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>
+													{t("phone_number_verified") ||
+														"Phone Number Verified"}
+												</FormLabel>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="image"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												{t("profile_image") || "Profile Image URL"}
+											</FormLabel>
+											<FormControl>
+												<Input
+													disabled={loading || form.formState.isSubmitting}
+													placeholder="https://example.com/image.jpg"
+													type="url"
+													{...field}
+													value={field.value ?? ""}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="twoFactorEnabled"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Checkbox
+													checked={Boolean(field.value)}
+													onCheckedChange={(checked) =>
+														field.onChange(checked === true)
+													}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>
+													{t("two_factor_enabled") || "Two Factor Enabled"}
+												</FormLabel>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="banned"
+									render={({ field }) => (
+										<FormItem className="flex flex-row items-start space-x-3 space-y-0">
+											<FormControl>
+												<Checkbox
+													checked={Boolean(field.value)}
+													onCheckedChange={(checked) =>
+														field.onChange(checked === true)
+													}
+													disabled={loading || form.formState.isSubmitting}
+												/>
+											</FormControl>
+											<div className="space-y-1 leading-none">
+												<FormLabel>{t("banned") || "Banned"}</FormLabel>
+											</div>
+										</FormItem>
+									)}
+								/>
+
+								{form.watch("banned") && (
+									<>
+										<FormField
+											control={form.control}
+											name="banReason"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>
+														{t("ban_reason") || "Ban Reason"}
+													</FormLabel>
+													<FormControl>
+														<Textarea
+															disabled={loading || form.formState.isSubmitting}
+															placeholder="Enter ban reason"
+															{...field}
+															value={field.value ?? ""}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+
+										<FormField
+											control={form.control}
+											name="banExpires"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>
+														{t("ban_expires") || "Ban Expires"}
+													</FormLabel>
+													<FormControl>
+														<Input
+															disabled={loading || form.formState.isSubmitting}
+															type="datetime-local"
+															{...field}
+															value={
+																field.value
+																	? new Date(field.value)
+																			.toISOString()
+																			.slice(0, 16)
+																	: ""
+															}
+															onChange={(e) => {
+																field.onChange(
+																	e.target.value
+																		? new Date(e.target.value).toISOString()
+																		: "",
+																);
+															}}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</>
+								)}
 
 								<Button
 									type="submit"

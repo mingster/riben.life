@@ -12,7 +12,14 @@ export const updateUserSettingsSchema = z.object({
 	}),
 	timezone: z.string(),
 	role: z.string(),
-	stripeCustomerId: z.string(),
+	stripeCustomerId: z.string().optional(),
+	phoneNumber: z.string().optional(),
+	phoneNumberVerified: z.boolean().optional(),
+	image: z.string().url().optional().or(z.literal("")),
+	twoFactorEnabled: z.boolean().optional(),
+	banned: z.boolean().optional(),
+	banReason: z.string().optional(),
+	banExpires: z.string().optional(), // ISO date string
 });
 
 export type UpdateUserSettingsInput = z.infer<typeof updateUserSettingsSchema>;
