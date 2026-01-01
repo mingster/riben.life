@@ -13,12 +13,12 @@
 
 ## 1. Overview
 
-The Customer Credit system enables customers to pre-purchase credit points that can be used for future purchases at a store. The system supports customer recharges, store operator recharges, bonus credit awards, credit usage for purchases, refunds, manual adjustments, and comprehensive transaction history tracking. The system integrates with the order management system and follows proper accounting standards for unearned revenue tracking.
+The Customer Credit system enables customers to pre-purchase credit points that can be used for future purchases at a store. The system supports customer refills, store operator refills, bonus credit awards, credit usage for purchases, refunds, manual adjustments, and comprehensive transaction history tracking. The system integrates with the order management system and follows proper accounting standards for unearned revenue tracking.
 
 **Key Features:**
 
-- Customer self-service credit recharge through public interface
-- Store operator manual credit recharge (paid and promotional)
+- Customer self-service credit refill through public interface
+- Store operator manual credit refill (paid and promotional)
 - Automatic bonus credit calculation based on configurable rules
 - Credit usage for purchases and orders
 - Credit refunds for cancelled orders
@@ -35,7 +35,7 @@ The Customer Credit system enables customers to pre-purchase credit points that 
 ### 2.1 Customer
 
 - Registered users with accounts
-- Can recharge credit through public interface
+- Can refill credit through public interface
 - Can use credit for purchases
 - Can view credit balance and transaction history
 - Must be authenticated for credit operations
@@ -45,14 +45,14 @@ The Customer Credit system enables customers to pre-purchase credit points that 
 - Store owners
 - Full administrative access to credit system configuration
 - Can manage credit bonus rules
-- Can manually recharge customer credit
+- Can manually refill customer credit
 - Can adjust customer credit balances
 - Can view all customer credit transactions
 
 ### 2.3 Store Staff
 
 - Store employees with operational permissions
-- Can manually recharge customer credit (paid and promotional)
+- Can manually refill customer credit (paid and promotional)
 - Can view customer credit balances and history
 - Limited access to settings (as configured by Store Admin)
 
@@ -70,7 +70,7 @@ Store Staff can:
 
 - View customer credit balances
 - View customer credit transaction history
-- Manually recharge customer credit (paid and promotional)
+- Manually refill customer credit (paid and promotional)
 - View credit bonus rules (but not create/manage)
 
 Store Staff cannot:
@@ -101,7 +101,7 @@ Store Admins have all Store Staff permissions, plus:
 **FR-CREDIT-001:** Store admins must be able to enable/disable customer credit system:
 
 - Toggle `useCustomerCredit` to turn system on/off
-- When disabled, customers cannot recharge or use credit
+- When disabled, customers cannot refill or use credit
 - Existing credit balances remain accessible
 
 **FR-CREDIT-002:** Store admins must be able to configure credit exchange rates:
@@ -112,15 +112,15 @@ Store Admins have all Store Staff permissions, plus:
 
 **FR-CREDIT-003:** Store admins must be able to configure purchase limits:
 
-- `creditMinPurchase`: Minimum credit amount per recharge (default: 0)
-- `creditMaxPurchase`: Maximum credit amount per recharge (default: 0, unlimited)
-- Limits apply only to customer self-service recharges
-- Store operator recharges are not subject to these limits
+- `creditMinPurchase`: Minimum credit amount per refill (default: 0)
+- `creditMaxPurchase`: Maximum credit amount per refill (default: 0, unlimited)
+- Limits apply only to customer self-service refills
+- Store operator refills are not subject to these limits
 
 **FR-CREDIT-004:** Store admins must be able to configure credit expiration:
 
 - `creditExpiration`: Number of days before credit expires (default: 365)
-- Credit expiration is calculated from recharge date
+- Credit expiration is calculated from refill date
 - Expired credit cannot be used for purchases
 - System should warn customers about expiring credit
 
@@ -139,13 +139,13 @@ Store Admins have all Store Staff permissions, plus:
 - `threshold`: Minimum top-up amount to trigger bonus
 - `bonus`: Bonus credit amount awarded
 - System selects highest matching rule when multiple rules apply
-- Bonus is calculated automatically during recharge
+- Bonus is calculated automatically during refill
 
 **FR-CREDIT-007:** Bonus rules must be evaluated in order of threshold (highest first):
 
 - When multiple rules match, the highest threshold rule is applied
-- Only one bonus rule applies per recharge
-- Bonus is added to the recharge amount
+- Only one bonus rule applies per refill
+- Bonus is added to the refill amount
 
 ---
 
@@ -153,18 +153,18 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.2.1 Customer Self-Service Recharge
 
-**FR-CREDIT-008:** Customers must be able to recharge credit through the store's public interface:
+**FR-CREDIT-008:** Customers must be able to refill credit through the store's public interface:
 
-- Navigate to store's credit recharge page (`/{storeId}/recharge`)
+- Navigate to store's credit refill page (`/{storeId}/refill`)
 - Must be authenticated (logged in)
-- Select recharge amount within configured limits
+- Select refill amount within configured limits
 - Complete payment through standard payment methods (Stripe, LINE Pay, etc.)
 
-**FR-CREDIT-009:** Customer recharge flow must follow these steps:
+**FR-CREDIT-009:** Customer refill flow must follow these steps:
 
-1. Customer selects recharge amount
+1. Customer selects refill amount
 2. System validates amount against `creditMinPurchase` and `creditMaxPurchase`
-3. System creates `StoreOrder` for the recharge amount
+3. System creates `StoreOrder` for the refill amount
 4. Customer completes payment through payment gateway
 5. Upon successful payment:
    - System calculates bonus (if applicable)
@@ -175,7 +175,7 @@ Store Admins have all Store Staff permissions, plus:
    - System creates `StoreLedger` entry (type = 2, unearned revenue)
    - System links ledger entries to `StoreOrder` via `referenceId`
 
-**FR-CREDIT-010:** Customer recharge must validate:
+**FR-CREDIT-010:** Customer refill must validate:
 
 - Customer is authenticated
 - Store has `useCustomerCredit` enabled
@@ -183,7 +183,7 @@ Store Admins have all Store Staff permissions, plus:
 - Payment is successfully processed
 - Order is created and marked as paid
 
-**FR-CREDIT-011:** Customer recharge must support standard payment methods:
+**FR-CREDIT-011:** Customer refill must support standard payment methods:
 
 - Stripe payment processing
 - LINE Pay payment processing
@@ -192,14 +192,14 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.2.2 Store Operator Recharge
 
-**FR-CREDIT-012:** Store staff and Store admins must be able to manually recharge customer credit:
+**FR-CREDIT-012:** Store staff and Store admins must be able to manually refill customer credit:
 
 - Navigate to customer management page
 - Select customer
-- Enter recharge amount and optional note
-- Choose recharge type: paid (in-person) or promotional (no payment)
+- Enter refill amount and optional note
+- Choose refill type: paid (in-person) or promotional (no payment)
 
-**FR-CREDIT-013:** Store operator recharge must support two scenarios:
+**FR-CREDIT-013:** Store operator refill must support two scenarios:
 
 **Scenario A: Paid Recharge (In-Person Payment)**
 
@@ -228,7 +228,7 @@ Store Admins have all Store Staff permissions, plus:
 - No `StoreOrder` is created
 - Ledger entries have `referenceId: null`
 
-**FR-CREDIT-014:** Store operator recharge must track creator:
+**FR-CREDIT-014:** Store operator refill must track creator:
 
 - `creatorId` field records the store operator's userId
 - Creator information stored in `CustomerCreditLedger` entries
@@ -392,7 +392,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **FR-CREDIT-028:** System must track credit expiration:
 
-- Calculate expiration date from recharge date + `creditExpiration` days
+- Calculate expiration date from refill date + `creditExpiration` days
 - Store expiration information (if configured)
 - Prevent usage of expired credit
 - Display expiration warnings to customers
@@ -405,7 +405,7 @@ Store Admins have all Store Staff permissions, plus:
 - Expiration warnings (e.g., 30 days before expiration)
 - Display of expiration dates in customer ledger
 
-**Note:** Credit expiration is calculated per transaction. Each recharge has its own expiration date based on when it was added.
+**Note:** Credit expiration is calculated per transaction. Each refill has its own expiration date based on when it was added.
 
 ---
 
@@ -494,9 +494,9 @@ Store Admins have all Store Staff permissions, plus:
 
 **Customer Recharge (TOPUP):**
 
-- `type = 2`: Credit recharge
+- `type = 2`: Credit refill
 - `amount`: Positive (cash received, unearned revenue)
-- `orderId`: Links to `StoreOrder` created for recharge
+- `orderId`: Links to `StoreOrder` created for refill
 - `balance`: Increases by amount minus fees
 
 **Credit Usage (SPEND):**
@@ -509,7 +509,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **Paid In-Person Recharge:**
 
-- `type = 2`: Credit recharge
+- `type = 2`: Credit refill
 - `amount`: Positive (cash received, unearned revenue)
 - `orderId`: Links to `StoreOrder` created for cash payment
 - `balance`: Increases by cash amount
@@ -534,17 +534,17 @@ Store Admins have all Store Staff permissions, plus:
 
 ### 5.1 Recharge Rules
 
-**BR-CREDIT-001:** Customer self-service recharges must be within configured limits (`creditMinPurchase` and `creditMaxPurchase`).
+**BR-CREDIT-001:** Customer self-service refills must be within configured limits (`creditMinPurchase` and `creditMaxPurchase`).
 
-**BR-CREDIT-002:** Store operator recharges are not subject to min/max purchase limits.
+**BR-CREDIT-002:** Store operator refills are not subject to min/max purchase limits.
 
-**BR-CREDIT-003:** Customer recharges require successful payment before credit is added.
+**BR-CREDIT-003:** Customer refills require successful payment before credit is added.
 
-**BR-CREDIT-004:** Bonus credit is calculated automatically based on active bonus rules at time of recharge.
+**BR-CREDIT-004:** Bonus credit is calculated automatically based on active bonus rules at time of refill.
 
-**BR-CREDIT-005:** Only one bonus rule applies per recharge (highest matching threshold).
+**BR-CREDIT-005:** Only one bonus rule applies per refill (highest matching threshold).
 
-**BR-CREDIT-006:** Bonus credit is added to recharge amount and recorded in separate ledger entry.
+**BR-CREDIT-006:** Bonus credit is added to refill amount and recorded in separate ledger entry.
 
 ### 5.2 Credit Usage Rules
 
@@ -580,25 +580,25 @@ Store Admins have all Store Staff permissions, plus:
 
 ### 5.5 Accounting Rules
 
-**BR-CREDIT-020:** Customer credit recharges are recorded as unearned revenue (liability) in `StoreLedger`.
+**BR-CREDIT-020:** Customer credit refills are recorded as unearned revenue (liability) in `StoreLedger`.
 
 **BR-CREDIT-021:** Credit usage is recorded as revenue recognition (income) in `StoreLedger`.
 
 **BR-CREDIT-022:** Credit refunds are recorded as revenue reversal (negative income) in `StoreLedger`.
 
-**BR-CREDIT-023:** Promotional recharges are recorded in `StoreLedger` with `amount = 0` (no revenue impact).
+**BR-CREDIT-023:** Promotional refills are recorded in `StoreLedger` with `amount = 0` (no revenue impact).
 
 **BR-CREDIT-024:** Revenue is recognized when credit is used, not when credit is purchased.
 
 ### 5.6 Expiration Rules
 
-**BR-CREDIT-025:** Credit expiration is calculated from recharge date + `creditExpiration` days.
+**BR-CREDIT-025:** Credit expiration is calculated from refill date + `creditExpiration` days.
 
 **BR-CREDIT-026:** Expired credit cannot be used for purchases.
 
 **BR-CREDIT-027:** Expiration warnings should be displayed to customers (e.g., 30 days before expiration).
 
-**BR-CREDIT-028:** Each recharge has its own expiration date (FIFO or LIFO can be configured).
+**BR-CREDIT-028:** Each refill has its own expiration date (FIFO or LIFO can be configured).
 
 ---
 
@@ -620,13 +620,13 @@ Store Admins have all Store Staff permissions, plus:
 
 ### 6.2 Customer-Facing Interface
 
-**UI-CREDIT-002:** Credit recharge page must be intuitive and mobile-friendly:
+**UI-CREDIT-002:** Credit refill page must be intuitive and mobile-friendly:
 
 - Clear display of current credit balance
 - Easy amount selection (preset amounts or custom input)
 - Clear display of min/max purchase limits
 - Payment method selection
-- Confirmation page after successful recharge
+- Confirmation page after successful refill
 
 **UI-CREDIT-003:** Credit ledger view must be clear and organized:
 
@@ -685,7 +685,7 @@ Store Admins have all Store Staff permissions, plus:
 
 ### 7.1 Response Time
 
-**PERF-CREDIT-001:** Credit recharge must complete within 5 seconds (excluding payment processing).
+**PERF-CREDIT-001:** Credit refill must complete within 5 seconds (excluding payment processing).
 
 **PERF-CREDIT-002:** Credit balance check must respond within 1 second.
 
@@ -713,7 +713,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **SEC-CREDIT-003:** Store Admins have full access to credit settings and bonus rules.
 
-**SEC-CREDIT-004:** Store Staff have limited access (can recharge, cannot adjust or configure).
+**SEC-CREDIT-004:** Store Staff have limited access (can refill, cannot adjust or configure).
 
 **SEC-CREDIT-005:** Credit adjustments require Store Admin access.
 
@@ -749,7 +749,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **ERR-CREDIT-003:** System must prevent credit usage when balance is insufficient.
 
-**ERR-CREDIT-004:** System must prevent credit recharge when amount is outside limits.
+**ERR-CREDIT-004:** System must prevent credit refill when amount is outside limits.
 
 **ERR-CREDIT-005:** System must prevent credit usage when credit has expired.
 
@@ -773,7 +773,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **INT-CREDIT-001:** Credit system must integrate with order management:
 
-- Create `StoreOrder` for customer recharges
+- Create `StoreOrder` for customer refills
 - Link credit usage to orders via `referenceId`
 - Support credit payment method in checkout
 - Handle order refunds and credit refunds
@@ -782,7 +782,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **INT-CREDIT-002:** Credit system must integrate with payment gateways:
 
-- Process payments for customer recharges
+- Process payments for customer refills
 - Handle payment webhooks for confirmation
 - Support Stripe, LINE Pay, and other payment methods
 - Handle payment failures gracefully
@@ -792,7 +792,7 @@ Store Admins have all Store Staff permissions, plus:
 **INT-CREDIT-003:** Credit system must integrate with StoreLedger:
 
 - Create StoreLedger entries for all credit transactions
-- Track unearned revenue (credit recharges)
+- Track unearned revenue (credit refills)
 - Track revenue recognition (credit usage)
 - Track revenue reversal (credit refunds)
 - Maintain proper accounting balance
@@ -829,8 +829,8 @@ Store Admins have all Store Staff permissions, plus:
 
 ### 12.1 Core Functionality
 
-- ✅ Customers can recharge credit through public interface
-- ✅ Store operators can manually recharge customer credit (paid and promotional)
+- ✅ Customers can refill credit through public interface
+- ✅ Store operators can manually refill customer credit (paid and promotional)
 - ✅ Credit can be used for purchases and orders
 - ✅ Credit refunds work correctly
 - ✅ Credit adjustments work correctly (Store Admin only)
@@ -864,12 +864,12 @@ Store Admins have all Store Staff permissions, plus:
 
 - **Credit**: Pre-purchased points that can be used for future purchases
 - **Recharge**: Adding credit to customer account (via payment or manual)
-- **TOPUP**: Transaction type for credit recharge
+- **TOPUP**: Transaction type for credit refill
 - **BONUS**: Transaction type for bonus credit awarded
 - **SPEND**: Transaction type for credit usage
 - **REFUND**: Transaction type for credit refund
 - **ADJUSTMENT**: Transaction type for manual credit adjustment
-- **Unearned Revenue**: Liability account for customer deposits (credit recharges)
+- **Unearned Revenue**: Liability account for customer deposits (credit refills)
 - **Revenue Recognition**: Income account for revenue when credit is used
 - **Credit Expiration**: Number of days before credit expires (if configured)
 - **Bonus Rule**: Configuration that awards bonus credit based on top-up amount
@@ -886,4 +886,3 @@ Store Admins have all Store Staff permissions, plus:
 ---
 
 ## End of Document
-

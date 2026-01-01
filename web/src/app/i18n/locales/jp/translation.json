@@ -37,5 +37,12 @@
   "Role": "役割",
   "phone_number_verified": "電話番号確認済み",
   "profile_image": "プロフィール画像URL",
-  "banned": "禁止"
+  "banned": "禁止",
+  "import": "インポート",
+  "import_customer_descr": "CSVファイルをアップロードして顧客をインポートします。CSV列：name（必須）、email（オプション、提供されていない場合は自動生成）、phoneNumber（オプション、提供されている場合は一意である必要があります）、memberRole（デフォルトは'customer'）、creditPoint（デフォルトは0、値が提供されている場合は元帳エントリを作成）、creditFiat（デフォルトは0、値が提供されている場合は元帳エントリを作成）。提供されている場合はemailまたはphoneNumberでユーザーを照合します。見つかった場合は更新され、見つからない場合は自動生成されたemailで新しいユーザーが作成されます。",
+  "import_failed": "インポート失敗",
+  "imported": "インポート済み",
+  "importing": "インポート中...",
+  "select_file": "ファイルを選択",
+  "cancel": "キャンセル"
 }

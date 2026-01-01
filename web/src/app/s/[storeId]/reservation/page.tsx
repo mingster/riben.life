@@ -220,7 +220,7 @@ export default async function ReservationPage(props: {
 		}
 
 		// Note: Anonymous users can now create pending RSVPs even when prepaid is required
-		// They will be prompted to sign in and recharge after creating the reservation
+		// They will be prompted to sign in and refill after creating the reservation
 
 		// Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
 		// Transform all data once before passing to client

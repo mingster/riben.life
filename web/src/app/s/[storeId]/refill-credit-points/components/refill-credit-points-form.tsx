@@ -19,7 +19,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { createRefillCreditPointsOrderAction } from "@/actions/store/credit/create-recharge-order";
+import { createRefillCreditPointsOrderAction } from "@/actions/store/credit/create-refill-order";
 import {
 	Card,
 	CardContent,

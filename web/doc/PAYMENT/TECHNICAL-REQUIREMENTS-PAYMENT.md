@@ -57,7 +57,7 @@ export const [actionName]Action = [actionClient]
 **Action Client Types:**
 
 - `storeActionClient` - For store admin actions (requires store membership)
-- `userRequiredActionClient` - For authenticated user actions (e.g., credit recharge)
+- `userRequiredActionClient` - For authenticated user actions (e.g., credit refill)
 - `adminActionClient` - For system admin actions (e.g., payment method management)
 - `baseClient` - For public/unauthenticated actions (e.g., payment confirmation webhooks)
 
@@ -116,7 +116,7 @@ model PaymentMethod {
 - `fee`: Fee rate as decimal (e.g., 0.029 = 2.9%)
 - `feeAdditional`: Additional flat fee amount
 - `clearDays`: Number of days until payment is available to store (for revenue recognition timing)
-- `visibleToCustomer`: Boolean flag indicating if the payment method should be displayed to customers. **Only payment methods with `visibleToCustomer=true` are shown to customers** in checkout flows, recharge pages, and other customer-facing payment selection interfaces. Payment methods with `visibleToCustomer=false` are hidden from customers but may still be used internally or by store administrators.
+- `visibleToCustomer`: Boolean flag indicating if the payment method should be displayed to customers. **Only payment methods with `visibleToCustomer=true` are shown to customers** in checkout flows, refill pages, and other customer-facing payment selection interfaces. Payment methods with `visibleToCustomer=false` are hidden from customers but may still be used internally or by store administrators.
 
 #### 3.1.2 StorePaymentMethodMapping
 
@@ -138,10 +138,10 @@ model StorePaymentMethodMapping {
 
 **Purpose:** Maps payment methods to stores, enabling stores to enable/disable specific payment methods.
 
-**Important:** When displaying payment methods to customers (e.g., in checkout flows, recharge pages, or payment selection interfaces), **only payment methods with `PaymentMethod.visibleToCustomer=true` should be shown**. Payment methods with `visibleToCustomer=false` are hidden from customers but may still be used internally or by store administrators. This filtering should be applied in:
+**Important:** When displaying payment methods to customers (e.g., in checkout flows, refill pages, or payment selection interfaces), **only payment methods with `PaymentMethod.visibleToCustomer=true` should be shown**. Payment methods with `visibleToCustomer=false` are hidden from customers but may still be used internally or by store administrators. This filtering should be applied in:
 
 - Checkout pages (`/s/[storeId]/checkout`)
-- Credit recharge pages (`/s/[storeId]/recharge`)
+- Credit refill pages (`/s/[storeId]/refill`)
 - Any customer-facing payment method selection interfaces
 
 **Filtering Pattern:**
@@ -264,7 +264,7 @@ model StoreLedger {
 
 - `type = 0`: PlatformPayment (代收) - Platform payment processing
 - `type = 1`: StorePaymentProvider - Store's own payment provider (if store uses own gateway)
-- `type = 2`: CreditRecharge - Customer credit recharge (unearned revenue - liability)
+- `type = 2`: CreditRecharge - Customer credit refill (unearned revenue - liability)
 - `type = 3`: CreditUsage - Credit usage (revenue recognition)
 
 **Additional Fields:**
@@ -546,14 +546,14 @@ export const markOrderAsPaidAction = storeActionClient
 
 **Location:** `src/actions/store/credit/`
 
-- `create-recharge-order.ts` - Create credit recharge order
+- `create-refill-order.ts` - Create credit refill order
 - `process-credit-topup-after-payment.ts` - Process credit top-up after payment confirmation
 
 **Validation Files:** `[action-name].validation.ts`
 
 **Create Recharge Order Action:**
 
-**Location:** `src/actions/store/credit/create-recharge-order.ts`
+**Location:** `src/actions/store/credit/create-refill-order.ts`
 
 ```typescript
 export const createRechargeOrderAction = userRequiredActionClient
@@ -566,7 +566,7 @@ export const createRechargeOrderAction = userRequiredActionClient
     // Validation: Check credit amount against min/max limits
     // Validation: Validate payment method exists and is enabled for store
     // Calculate dollar amount from credit amount using creditExchangeRate
-    // Create or retrieve special system product for credit recharge
+    // Create or retrieve special system product for credit refill
     // Create StoreOrder with:
     //   - paymentMethodId: Selected payment method ID
     //   - checkoutAttributes: JSON string containing rsvpId (if provided) and creditRecharge flag
@@ -574,7 +574,7 @@ export const createRechargeOrderAction = userRequiredActionClient
     //   - orderStatus: Pending
     //   - isPaid: false
     //   - OrderItems: Create OrderItem entry with:
-    //     * productId: Credit recharge system product ID
+    //     * productId: Credit refill system product ID
     //     * productName: "Credit Recharge: {creditAmount} points"
     //     * quantity: creditAmount (number of credit points)
     //     * unitPrice: creditExchangeRate (dollar amount per credit point)
@@ -596,12 +596,12 @@ export const createRechargeOrderAction = userRequiredActionClient
   - Throws error: "Cash payment is not available for Free-tier stores"
   - Cash payment is only available for Pro (2) or Multi (3) level stores
 - Calculates dollar amount: `dollarAmount = creditAmount * creditExchangeRate`
-- **Creates or retrieves special system product for credit recharge:**
+- **Creates or retrieves special system product for credit refill:**
   - Queries `Product` table for store with name matching "Credit Recharge" pattern
   - If product doesn't exist, creates it with:
     - `storeId`: The store ID
     - `name`: "Credit Recharge" or similar descriptive name
-    - `description`: Description of credit recharge product
+    - `description`: Description of credit refill product
     - `price`: 0 (price is determined by `creditExchangeRate` at time of purchase)
     - `currency`: Store's default currency
     - `status`: Active
@@ -610,19 +610,19 @@ export const createRechargeOrderAction = userRequiredActionClient
   - **Note:** According to FR-PAY-004.1, this product should be created automatically when a store is created. The create-or-retrieve logic here serves as a fallback to ensure the product exists even if it wasn't created during store creation.
 - Stores `rsvpId` in `checkoutAttributes` JSON for later processing
 - Creates order with `paymentStatus = Pending`, `orderStatus = Pending`
-- **Creates `OrderItem` entry for the recharge:**
+- **Creates `OrderItem` entry for the refill:**
   - `orderId`: The created StoreOrder ID
-  - `productId`: System product ID for credit recharge (created/retrieved above)
+  - `productId`: System product ID for credit refill (created/retrieved above)
   - `productName`: "Credit Recharge" or similar descriptive name (e.g., "Credit Recharge: {creditAmount} points")
   - `quantity`: Number of credit points being purchased (the `creditAmount` entered by the customer)
   - `unitPrice`: Calculated dollar amount per credit point (i.e., `creditExchangeRate`)
-  - `unitDiscount`: 0 (no discount for credit recharge)
-  - `variants`: null (no product variants for credit recharge)
+  - `unitDiscount`: 0 (no discount for credit refill)
+  - `variants`: null (no product variants for credit refill)
   - `variantCosts`: null
 - Payment method selection: Customer must select a payment method from available payment methods for the store (only methods with `visibleToCustomer=true` are shown)
 - **Store level restrictions:**
-  - Cash payment method (`payUrl = "cash"`) is filtered out for Free-tier stores on the recharge page
-  - Server-side validation in `create-recharge-order.ts` also prevents cash payment for Free-tier stores
+  - Cash payment method (`payUrl = "cash"`) is filtered out for Free-tier stores on the refill page
+  - Server-side validation in `create-refill-order.ts` also prevents cash payment for Free-tier stores
   - Cash payment is only available for Pro (2) or Multi (3) level stores
 - After order creation, client redirects to: `/checkout/${orderId}/${paymentMethod.payUrl}` (standard payment URL pattern)
 
@@ -673,7 +673,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 - Fee calculation uses PaymentMethod's fee and feeAdditional fields
 - Platform fee (1%) only applies to Free-level stores
 - StoreLedger type is `CreditRecharge` (unearned revenue/liability)
-- If `rsvpId` in checkoutAttributes, automatically processes RSVP prepaid payment after recharge
+- If `rsvpId` in checkoutAttributes, automatically processes RSVP prepaid payment after refill
 
 #### 5.1.3 RSVP Prepaid Payment Actions
 
@@ -1023,7 +1023,7 @@ export default async function StripeConfirmedPage(props: {
 
 **Implementation:**
 
-Credit recharge orders use the same payment processing routes as regular store orders. After order creation:
+Credit refill orders use the same payment processing routes as regular store orders. After order creation:
 
 1. Client redirects to: `/checkout/${orderId}/${paymentMethod.payUrl}` (standard payment URL pattern)
 2. Payment processing follows the same flow as regular orders
@@ -1037,9 +1037,9 @@ Credit recharge orders use the same payment processing routes as regular store o
 
 **Implementation Details:**
 
-- Uses standard checkout payment routes (not recharge-specific routes)
+- Uses standard checkout payment routes (not refill-specific routes)
 - Payment confirmation handled by standard Stripe confirmed page
-- Success page includes RSVP redirect logic for recharge orders linked to reservations
+- Success page includes RSVP redirect logic for refill orders linked to reservations
 - All payment processing uses unified `/checkout/[orderId]/[payUrl]` pattern
 
 **LINE Pay Confirmation:**
@@ -1369,7 +1369,7 @@ export const createOrderAction = userRequiredActionClient
 
 **Standard Payment URL Pattern:**
 
-All payment processing (regular orders, credit recharge, RSVP prepaid) uses the unified URL pattern:
+All payment processing (regular orders, credit refill, RSVP prepaid) uses the unified URL pattern:
 
 ```text
 /checkout/[orderId]/[payUrl]?returnUrl=[optional_custom_url]
@@ -2895,7 +2895,7 @@ CustomerCredit: balance → balance - requiredCredit
    - `currentBalance < requiredCredit`
    - Payment confirmation fails
    - Order remains unpaid
-   - User needs to recharge credit or use different payment method
+   - User needs to refill credit or use different payment method
    - Warning logged with balance details
 
 4. **Credit Exchange Rate Not Configured:**
@@ -2962,7 +2962,7 @@ The cash/in-person payment flow handles payments made with physical cash or in-p
 - Cash payment is only available for Pro (2) or Multi (3) level stores
 - This restriction is enforced in:
   - Client-side: Recharge page filters out cash payment method for Free-tier stores
-  - Server-side: `create-recharge-order.ts` validates and rejects cash payment for Free-tier stores
+  - Server-side: `create-refill-order.ts` validates and rejects cash payment for Free-tier stores
 - Error message: "Cash payment is not available for Free-tier stores"
 
 **Flow Diagram:**
@@ -2986,10 +2986,10 @@ Option 2 (Manual):
 - User clicks "Place Order" button in checkout
 - User selects cash/in-person payment method (`payUrl = "cash"`)
 - **Store level validation:**
-  - For credit recharge orders: `create-recharge-order.ts` validates store level and rejects cash payment for Free-tier stores
+  - For credit refill orders: `create-refill-order.ts` validates store level and rejects cash payment for Free-tier stores
   - For regular orders: Cash payment availability should be validated based on store level (implementation may vary)
 - Client component collects order data
-- Calls API: `POST /api/store/[storeId]/create-order` (or `createRechargeOrderAction` for credit recharge)
+- Calls API: `POST /api/store/[storeId]/create-order` (or `createRechargeOrderAction` for credit refill)
 - Server action creates `StoreOrder` with:
   - `paymentMethodId` = Cash payment method ID
   - `paymentStatus = PaymentStatus.Pending` (default)
@@ -3786,7 +3786,7 @@ const ledgerType = usePlatform
 
 - **`CreditRecharge` (2)**: Customer credit top-up
 
-  - Used for: Credit recharge orders
+  - Used for: Credit refill orders
   - Represents: Unearned revenue (liability)
   - Funds: Held until credit is used
 
@@ -4101,7 +4101,7 @@ await sqlClient.$transaction(async (tx) => {
 - `src/actions/storeAdmin/order/mark-order-as-paid.ts` - Store admin order payment
 - `src/actions/storeAdmin/storeLedger/create-store-ledger.ts` - Manual ledger entry creation
 - `src/actions/store/reservation/process-rsvp-prepaid-payment.ts` - RSVP credit payment
-- `src/actions/store/credit/process-credit-topup-after-payment.ts` - Credit recharge
+- `src/actions/store/credit/process-credit-topup-after-payment.ts` - Credit refill
 - `src/types/enum.ts` - StoreLedgerType enum definition
 - `prisma/schema.prisma` - StoreLedger model definition
 
@@ -4303,7 +4303,7 @@ if (paymentIntent && paymentIntent.status === "succeeded") {
 
 - `src/lib/payment/plugins/stripe-plugin.ts` - Plugin verification method
 - `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx` - Confirmation page
-- `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx` - Payment confirmation (used for all orders including recharge)
+- `src/app/(root)/checkout/[orderId]/stripe/confirmed/page.tsx` - Payment confirmation (used for all orders including refill)
 
 **Testing Checklist:**
 
@@ -4649,7 +4649,7 @@ await sqlClient.$transaction(async (tx) => {
 
 - `src/lib/payment/plugins/credit-plugin.ts` - Plugin verification method
 - `src/actions/store/reservation/process-rsvp-prepaid-payment.ts` - RSVP credit payment
-- `src/actions/store/credit/process-credit-topup-after-payment.ts` - Credit recharge processing
+- `src/actions/store/credit/process-credit-topup-after-payment.ts` - Credit refill processing
 
 **Testing Checklist:**
 

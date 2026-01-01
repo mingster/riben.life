@@ -31,7 +31,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 	.action(async ({ parsedInput }) => {
 		const { orderId } = parsedInput;
 
-		// Get order and verify it's a recharge order
+		// Get order and verify it's a refill order
 		const order = await sqlClient.storeOrder.findUnique({
 			where: { id: orderId },
 			include: {
@@ -226,7 +226,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 				},
 			});
 
-			// Create StoreLedger entry for credit recharge (unearned revenue, type = CreditRecharge)
+			// Create StoreLedger entry for credit refill (unearned revenue, type = CreditRecharge)
 			await tx.storeLedger.create({
 				data: {
 					storeId: order.storeId,
@@ -321,8 +321,8 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 					}
 				}
 			} catch (error) {
-				// Log error but don't fail the recharge process
-				logger.error("Failed to process RSVP prepaid payment after recharge", {
+				// Log error but don't fail the refill process
+				logger.error("Failed to process RSVP prepaid payment after refill", {
 					metadata: {
 						rsvpId,
 						orderId,

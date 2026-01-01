@@ -14,12 +14,12 @@
 
 ## 1. Overview
 
-The Payment System enables customers to complete payments for various transaction types including store orders, credit recharges, reservation prepaid payments, and subscription payments. The system uses a plugin-based architecture where payment methods are installable plugins that can be added, configured, and managed dynamically.
+The Payment System enables customers to complete payments for various transaction types including store orders, credit refills, reservation prepaid payments, and subscription payments. The system uses a plugin-based architecture where payment methods are installable plugins that can be added, configured, and managed dynamically.
 
 The payment system handles:
 
 - Store order payments (product purchases)
-- Credit recharge payments (customer credit top-ups)
+- Credit refill payments (customer credit top-ups)
 - RSVP prepaid payments (reservation deposits)
 - Subscription payments (store subscription renewals)
 - Payment method plugins (installable, configurable payment methods)
@@ -109,16 +109,16 @@ The system includes the following built-in payment method plugins:
 - Store Admins can override default fee structure (if plugin allows)
 - Store-level configuration takes precedence over platform-level configuration
 
-**FR-PAY-004.1:** When a store is created, the system must automatically create a special system product for credit recharge:
+**FR-PAY-004.1:** When a store is created, the system must automatically create a special system product for credit refill:
 
 - **Product Name**: "Credit Recharge" or similar descriptive name
-- **Product Description**: Description of credit recharge product
+- **Product Description**: Description of credit refill product
 - **Price**: 0 (price is determined by `creditExchangeRate` at time of purchase)
 - **Currency**: Store's default currency
 - **Status**: Active
 - **Is Featured**: false
-- **Purpose**: This product is used as the `productId` in `OrderItem` entries for credit recharge orders
-- **Note**: This product should be created during store creation to ensure it's available when customers initiate credit recharges
+- **Purpose**: This product is used as the `productId` in `OrderItem` entries for credit refill orders
+- **Note**: This product should be created during store creation to ensure it's available when customers initiate credit refills
 
 **FR-PAY-005:** Payment method plugins must implement a standard interface:
 
@@ -226,13 +226,14 @@ The system includes the following built-in payment method plugins:
 - Suitable for in-store transactions, order pickup, or delivery scenarios
 
 1. After payment confirmation:
-  - System updates order:
-     - `isPaid`: `true`
-     - `paidDate`: Current timestamp
-     - `paymentStatus`: `Paid`
-     - `orderStatus`: `Confirmed` (or `Processing` based on order type)
-  - System creates `StoreLedger` entry for revenue recognition
-  - System calculates and records fees (payment gateway fees, platform fees)
+
+- System updates order:
+  - `isPaid`: `true`
+  - `paidDate`: Current timestamp
+  - `paymentStatus`: `Paid`
+  - `orderStatus`: `Confirmed` (or `Processing` based on order type)
+- System creates `StoreLedger` entry for revenue recognition
+- System calculates and records fees (payment gateway fees, platform fees)
 
 **FR-PAY-010:** Payment confirmation must be handled by payment method plugins:
 
@@ -283,7 +284,7 @@ The system includes the following built-in payment method plugins:
 
 #### 3.3.1 Credit Recharge Order Creation (點數儲值)
 
-**FR-PAY-009:** The system must support credit recharge payments:
+**FR-PAY-009:** The system must support credit refill payments:
 
 **Preconditions:**
 
@@ -293,50 +294,50 @@ The system includes the following built-in payment method plugins:
 
 **Recharge Order Creation:**
 
-1. Customer navigates to credit recharge page
+1. Customer navigates to credit refill page
 2. Customer enters credit amount (in credit points)
 3. System validates credit amount against store limits:
    - Minimum purchase (`creditMinPurchase`)
    - Maximum purchase (`creditMaxPurchase`)
 4. System calculates dollar amount: `dollarAmount = creditAmount * creditExchangeRate`
 5. Customer selects payment method from available payment methods for the store
-6. System creates `StoreOrder` for recharge with:
+6. System creates `StoreOrder` for refill with:
    - `orderStatus`: `Pending`
    - `paymentStatus`: `Pending`
    - `isPaid`: `false`
    - `paymentMethodId`: Selected payment method ID
    - `orderTotal`: Calculated dollar amount
    - `checkoutAttributes`: JSON string containing `rsvpId` (if provided) and `creditRecharge: true`
-7. System creates or retrieves the special system product for credit recharge:
+7. System creates or retrieves the special system product for credit refill:
    - If the product doesn't exist for the store, create it with:
      - `storeId`: The store ID
      - `name`: "Credit Recharge" or similar descriptive name
-     - `description`: Description of credit recharge product
+     - `description`: Description of credit refill product
      - `price`: 0 (price is determined by `creditExchangeRate` at time of purchase)
      - `currency`: Store's default currency
      - `status`: Active
      - `isFeatured`: false
    - If the product already exists, use the existing product ID
-8. System creates `OrderItem` entry for the recharge:
+8. System creates `OrderItem` entry for the refill:
    - `orderId`: The created StoreOrder ID
-   - `productId`: System product ID for credit recharge (the special system product created/retrieved in step 7)
+   - `productId`: System product ID for credit refill (the special system product created/retrieved in step 7)
    - `productName`: "Credit Recharge" or similar descriptive name (e.g., "Credit Recharge: {creditAmount} points")
    - `quantity`: Number of credit points being purchased (the `creditAmount` entered by the customer)
    - `unitPrice`: Calculated dollar amount per credit point (i.e., `creditExchangeRate`)
-   - `unitDiscount`: 0 (no discount for credit recharge)
-   - `variants`: null (no product variants for credit recharge)
+   - `unitDiscount`: 0 (no discount for credit refill)
+   - `variants`: null (no product variants for credit refill)
    - `variantCosts`: null
 
-**FR-PAY-010:** Credit recharge orders can be linked to RSVP prepaid payments:
+**FR-PAY-010:** Credit refill orders can be linked to RSVP prepaid payments:
 
-- If `rsvpId` is provided during recharge:
+- If `rsvpId` is provided during refill:
   - System stores `rsvpId` in order's `checkoutAttributes`
   - After successful payment, system attempts to process RSVP prepaid payment
   - If RSVP prepaid is processed, customer is redirected to reservation page
 
 #### 3.3.2 Credit Recharge Payment Processing Flow
 
-**FR-PAY-011:** After successful credit recharge payment:
+**FR-PAY-011:** After successful credit refill payment:
 
 1. System processes credit top-up:
    - Calculates credit amount from dollar amount
@@ -352,10 +353,10 @@ The system includes the following built-in payment method plugins:
 3. If `rsvpId` is present:
    - System checks if RSVP exists and is still pending
    - System attempts to process RSVP prepaid payment using customer credit
-   - If successful, updates RSVP: `alreadyPaid = true`, `orderId = recharge order ID`
+   - If successful, updates RSVP: `alreadyPaid = true`, `orderId = refill order ID`
    - Redirects customer to reservation page
 
-**FR-PAY-012:** Credit recharge must be idempotent:
+**FR-PAY-012:** Credit refill must be idempotent:
 
 - System checks for existing credit ledger entry with same `referenceId` (order ID)
 - If credit already processed, only updates order status (if needed)
@@ -393,7 +394,7 @@ The system includes the following built-in payment method plugins:
 - Minimum prepaid percentage is specified in `RsvpSettings.minPrepaidPercentage` (0–100)
 - Required prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`
 - If total reservation cost is missing or zero, prepaid is skipped
-- If customer has insufficient credit, must recharge before completing prepaid payment
+- If customer has insufficient credit, must refill before completing prepaid payment
 
 #### 3.4.2 RSVP Prepaid Payment Processing
 
@@ -411,13 +412,13 @@ The system includes the following built-in payment method plugins:
    - Updates RSVP: `alreadyPaid = true`, `orderId = order ID`, `status = ReadyToConfirm`
    - Creates `StoreLedger` entry for revenue
 4. If insufficient balance:
-   - System redirects customer to credit recharge page
-   - `rsvpId` is passed to recharge flow for automatic processing after recharge
+   - System redirects customer to credit refill page
+   - `rsvpId` is passed to refill flow for automatic processing after refill
 
-**FR-PAY-016:** RSVP prepaid payment after credit recharge:
+**FR-PAY-016:** RSVP prepaid payment after credit refill:
 
-- When credit recharge includes `rsvpId`:
-  - After successful recharge, system checks if RSVP is still pending
+- When credit refill includes `rsvpId`:
+  - After successful refill, system checks if RSVP is still pending
   - System processes prepaid payment using newly added credit
   - Updates RSVP status accordingly
   - Redirects customer to reservation page
@@ -473,11 +474,11 @@ The system includes the following built-in payment method plugins:
 - Platform fee is recorded as negative amount in `StoreLedger`
 - Pro-level stores are not charged platform fees
 
-**FR-PAY-022:** Platform fee calculation for credit recharges:
+**FR-PAY-022:** Platform fee calculation for credit refills:
 
-- Platform fee applies to credit recharge orders for Free-level stores
-- Fee is calculated on dollar amount of recharge
-- Fee is recorded in `StoreLedger` entry for credit recharge
+- Platform fee applies to credit refill orders for Free-level stores
+- Fee is calculated on dollar amount of refill
+- Fee is recorded in `StoreLedger` entry for credit refill
 
 ---
 
@@ -525,14 +526,14 @@ The system includes the following built-in payment method plugins:
 
 **Credit Recharge Success:**
 
-- Displays recharge confirmation
+- Displays refill confirmation
 - Shows credit amount added and new balance
 - If linked to RSVP, redirects to reservation page automatically
 - Provides navigation options (back to store, view credit balance)
 
 **FR-PAY-026:** Success page redirects must handle RSVP prepaid flow:
 
-- If credit recharge was for RSVP prepaid payment:
+- If credit refill was for RSVP prepaid payment:
   - System checks if RSVP prepaid was successfully processed
   - If RSVP is now paid, redirects customer to reservation page
   - Otherwise, shows success page with navigation options
@@ -584,7 +585,7 @@ The system includes the following built-in payment method plugins:
 **FR-PAY-031:** The system must create `StoreLedger` entries for all payments:
 
 - Regular order payments: Create ledger entry with order amount
-- Credit recharges: Create ledger entry as unearned revenue (type: `CreditRecharge`)
+- Credit refills: Create ledger entry as unearned revenue (type: `CreditRecharge`)
 - RSVP prepaid payments: Create ledger entry with prepaid amount
 - Ledger entries must include:
   - Order reference (`orderId`)
@@ -639,7 +640,7 @@ The system includes the following built-in payment method plugins:
 
 ### 4.2 Use Case: Credit Recharge with RSVP Prepaid
 
-**UC-PAY-002:** Customer recharges credit to complete RSVP prepaid payment
+**UC-PAY-002:** Customer refills credit to complete RSVP prepaid payment
 
 **Preconditions:**
 
@@ -649,10 +650,10 @@ The system includes the following built-in payment method plugins:
 
 **Main Flow:**
 
-1. Customer is redirected to credit recharge page with `rsvpId` parameter
-2. Customer enters credit amount to recharge
+1. Customer is redirected to credit refill page with `rsvpId` parameter
+2. Customer enters credit amount to refill
 3. System validates amount against store limits
-4. System creates recharge order with `rsvpId` in `checkoutAttributes`
+4. System creates refill order with `rsvpId` in `checkoutAttributes`
 5. Customer is redirected to Stripe payment page
 6. Customer completes payment
 7. System processes credit top-up after payment confirmation
@@ -858,7 +859,7 @@ The system includes the following built-in payment method plugins:
   - In-store transactions (customer pays at store)
   - Order pickup (customer pays when picking up order)
   - Delivery (customer pays on delivery)
-  - Store operator credit recharges (cash payment for credit top-up)
+  - Store operator credit refills (cash payment for credit top-up)
 
 - **Configuration**:
   - Can be enabled/disabled by Store Admins
@@ -877,7 +878,7 @@ The system includes the following built-in payment method plugins:
 
 **INT-PAY-007:** Credit System Integration:
 
-- Credit recharge payments update customer credit balance
+- Credit refill payments update customer credit balance
 - RSVP prepaid payments deduct customer credit
 - Credit ledger entries reference order IDs
 
@@ -890,7 +891,7 @@ The system includes the following built-in payment method plugins:
 **INT-PAY-009:** RSVP System Integration:
 
 - RSVP prepaid payments link orders to reservations
-- Credit recharge can automatically process RSVP prepaid
+- Credit refill can automatically process RSVP prepaid
 - RSVP status updates based on payment completion
 
 ---
@@ -1014,7 +1015,7 @@ Payment status values (from `PaymentStatus` enum):
 Store ledger entry types (from `StoreLedgerType` enum):
 
 - `Order`: Regular order payment
-- `CreditRecharge`: Credit recharge payment (unearned revenue)
+- `CreditRecharge`: Credit refill payment (unearned revenue)
 - Other types as defined in the system
 
 ---

@@ -58,16 +58,40 @@ export const getCustomersAction = storeActionClient
 			},
 		})) as User[];
 
-		// Map users to include the member role for this organization
+		// Get CustomerCredit records for all users in this store
+		const userIds = users.map((user) => user.id);
+		const customerCredits = await sqlClient.customerCredit.findMany({
+			where: {
+				storeId,
+				userId: {
+					in: userIds,
+				},
+			},
+		});
+
+		// Create a map for quick lookup
+		const creditMap = new Map<string, (typeof customerCredits)[0]>();
+		customerCredits.forEach((credit) => {
+			creditMap.set(credit.userId, credit);
+		});
+
+		// Map users to include the member role and customer credit for this organization
 		const usersWithRole = users.map((user) => {
 			const member = user.members.find(
 				(m: { organizationId: string; role: string }) =>
 					m.organizationId === store.organizationId,
 			);
+			const customerCredit = creditMap.get(user.id);
 			return {
 				...user,
 				memberRole: member?.role || "",
-			} as User & { memberRole: string };
+				customerCreditFiat: customerCredit ? Number(customerCredit.fiat) : 0,
+				customerCreditPoint: customerCredit ? Number(customerCredit.point) : 0,
+			} as User & {
+				memberRole: string;
+				customerCreditFiat: number;
+				customerCreditPoint: number;
+			};
 		});
 
 		transformPrismaDataForJson(usersWithRole);

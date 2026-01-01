@@ -7,14 +7,14 @@ import { Prisma } from "@prisma/client";
 import { ProductStatus } from "@/types/enum";
 
 /**
- * Ensures the special system product for credit recharge exists for a store.
+ * Ensures the special system product for credit refill exists for a store.
  * Creates it if it doesn't exist, or returns the existing product.
- * This product is used as the productId in OrderItem entries for credit recharge orders.
+ * This product is used as the productId in OrderItem entries for credit refill orders.
  *
  * @param storeId - The store ID
- * @returns The credit recharge product (created or existing)
+ * @returns The credit refill product (created or existing)
  */
-export async function ensureCreditRechargeProduct(storeId: string) {
+export async function ensureCreditRefillProduct(storeId: string) {
 	// Check if product already exists
 	const existingProduct = await sqlClient.product.findFirst({
 		where: {
@@ -43,7 +43,7 @@ export async function ensureCreditRechargeProduct(storeId: string) {
 		throw new SafeError("Store not found");
 	}
 
-	// Create the credit recharge product
+	// Create the credit refill product
 	const now = getUtcNowEpoch();
 	const product = await sqlClient.product.create({
 		data: {
@@ -54,7 +54,7 @@ export async function ensureCreditRechargeProduct(storeId: string) {
 			currency: store.defaultCurrency,
 			status: ProductStatus.Published,
 			isFeatured: false,
-			useOption: false, // No product options for credit recharge
+			useOption: false, // No product options for credit refill
 			createdAt: now,
 			updatedAt: now,
 		},

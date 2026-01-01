@@ -15,7 +15,7 @@ import { getT } from "@/app/i18n";
 import { IconAlertCircle } from "@tabler/icons-react";
 
 /**
- * Customer credit points recharge page.
+ * Customer credit points refill page.
  * Implements FR-CREDIT-008 to FR-CREDIT-011 from FUNCTIONAL-REQUIREMENTS-CREDIT.md
  */
 export default async function RefillCreditPointsPage(props: {

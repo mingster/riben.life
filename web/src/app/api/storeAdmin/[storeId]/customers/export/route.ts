@@ -4,8 +4,6 @@ import logger from "@/lib/logger";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { getUtcNow } from "@/utils/datetime-utils";
 import { transformPrismaDataForJson } from "@/utils/utils";
-import { epochToDate } from "@/utils/datetime-utils";
-import { format } from "date-fns";
 
 // Helper function to escape CSV fields
 // Always wrap fields in double quotes and escape any existing quotes
@@ -20,14 +18,12 @@ function escapeCsvField(field: string | null | undefined): string {
 
 // Define CSV columns (shared across the function)
 const CSV_COLUMNS = [
-	"id",
 	"name",
 	"email",
-	"phone",
+	"phoneNumber",
 	"memberRole",
-	"createdAt",
-	"banned",
-	"creditPoints",
+	"creditPoint",
+	"creditFiat",
 ];
 
 // Convert array of objects to CSV string
@@ -43,15 +39,6 @@ function arrayToCsv(data: Array<Record<string, unknown>>): string {
 	const rows = data.map((row) => {
 		return CSV_COLUMNS.map((col) => {
 			let value = row[col];
-			// Format createdAt as ISO string if it's a BigInt
-			if (col === "createdAt" && value) {
-				const date = epochToDate(value as bigint);
-				value = date ? format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") : "";
-			}
-			// Convert boolean to string
-			if (typeof value === "boolean") {
-				value = value ? "true" : "false";
-			}
 			// Convert number to string
 			if (typeof value === "number") {
 				value = String(value);
@@ -133,7 +120,7 @@ export async function POST(
 			},
 		});
 
-		// Map users to include the member role for this organization and credit points
+		// Map users to include the member role for this organization and credit data
 		const usersWithRole = users.map((user) => {
 			const member = user.members.find(
 				(m: { organizationId: string; role: string }) =>
@@ -141,17 +128,16 @@ export async function POST(
 			);
 			// Get CustomerCredit for this store (should be at most one due to unique constraint)
 			const customerCredit = user.CustomerCredits[0];
-			const creditPoints = customerCredit ? Number(customerCredit.point) : 0;
+			const creditPoint = customerCredit ? Number(customerCredit.point) : 0;
+			const creditFiat = customerCredit ? Number(customerCredit.fiat) : 0;
 
 			return {
-				id: user.id,
 				name: user.name || "",
 				email: user.email || "",
-				phone: user.phoneNumber || "",
+				phoneNumber: user.phoneNumber || "",
 				memberRole: member?.role || "",
-				createdAt: user.createdAt,
-				banned: user.banned || false,
-				creditPoints,
+				creditPoint,
+				creditFiat,
 			};
 		});
 

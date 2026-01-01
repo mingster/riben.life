@@ -38,14 +38,14 @@ export async function calculateBonus(
  * Process a credit top-up, calculate bonus, update balance, and log transactions.
  *
  * This function handles both:
- * - Customer recharges (via payment): referenceId should be StoreOrder.id, creatorId should be null
- * - Store operator recharges (manual): referenceId should be null, creatorId should be operator's userId
+ * - Customer refills (via payment): referenceId should be StoreOrder.id, creatorId should be null
+ * - Store operator refills (manual): referenceId should be null, creatorId should be operator's userId
  *
  * @param storeId - Store ID
  * @param userId - Customer user ID
  * @param amount - Top-up amount (must be positive)
- * @param referenceId - Order ID for customer recharge, or null for manual recharge
- * @param creatorId - User ID of operator who created this recharge (null for customer-initiated)
+ * @param referenceId - Order ID for customer refill, or null for manual refill
+ * @param creatorId - User ID of operator who created this refill (null for customer-initiated)
  * @param note - Optional note/description for the transaction
  * @returns Object with amount, bonus, and totalCredit
  */

@@ -103,7 +103,7 @@ export default async function CreditPaymentPage(props: {
 	// Check if customer has sufficient balance
 	if (currentBalance < orderTotal) {
 		throw new SafeError(
-			"Insufficient balance. Please recharge your account or use another payment method.",
+			"Insufficient balance. Please refill your account or use another payment method.",
 		);
 	}
 

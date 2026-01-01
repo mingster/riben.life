@@ -590,7 +590,7 @@ System Admins have all Store Admin permissions, plus:
 - Order created/updated/cancelled
 - Payment received/failed
 - Reservation created/confirmed/cancelled
-- Credit recharged/used/expired
+- Credit refilld/used/expired
 - Account created/updated
 - Password reset requested
 - Email verification required
@@ -969,7 +969,7 @@ System Admins have all Store Admin permissions, plus:
 
 **FR-NOTIF-123:** The notification system must integrate with the Credit system to send:
 
-- Credit recharge confirmations
+- Credit refill confirmations
 - Credit usage notifications
 - Credit expiration warnings
 - Credit bonus award notifications
@@ -1226,7 +1226,7 @@ System Admins have all Store Admin permissions, plus:
 
 ### 11.2 Credit System
 
-- Credit recharge confirmations
+- Credit refill confirmations
 - Credit usage notifications
 - Credit expiration warnings
 

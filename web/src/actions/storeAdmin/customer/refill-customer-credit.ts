@@ -6,20 +6,20 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { processCreditTopUp } from "@/lib/credit-bonus";
-import { rechargeCustomerCreditSchema } from "./recharge-customer-credit.validation";
+import { refillCustomerCreditSchema } from "./refill-customer-credit.validation";
 import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
 import { Prisma } from "@prisma/client";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { getT } from "@/app/i18n";
 
-export const rechargeCustomerCreditAction = storeActionClient
-	.metadata({ name: "rechargeCustomerCredit" })
-	.schema(rechargeCustomerCreditSchema)
+export const refillCustomerCreditAction = storeActionClient
+	.metadata({ name: "refillCustomerCredit" })
+	.schema(refillCustomerCreditSchema)
 	.action(async ({ parsedInput, bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
 		const { userId, creditAmount, cashAmount, isPaid, note } = parsedInput;
 
-		// Get the current user (store operator) who is creating this recharge
+		// Get the current user (store operator) who is creating this refill
 		const session = await auth.api.getSession({
 			headers: await headers(),
 		});
@@ -143,8 +143,8 @@ export const rechargeCustomerCreditAction = storeActionClient
 			creatorId, // Store operator who created this
 			note ||
 				(isPaid
-					? t("in_person_cash_recharge_default_note")
-					: t("promotional_recharge_by_operator_default_note")),
+					? t("in_person_cash_refill_default_note")
+					: t("promotional_refill_by_operator_default_note")),
 		);
 
 		// Create StoreLedger entry
@@ -195,7 +195,7 @@ export const rechargeCustomerCreditAction = storeActionClient
 				},
 			});
 		} else {
-			// Promotional recharge: create a minimal system order for StoreLedger reference
+			// Promotional refill: create a minimal system order for StoreLedger reference
 			//
 			const promoPaymentMethod = await sqlClient.paymentMethod.findFirst({
 				where: {

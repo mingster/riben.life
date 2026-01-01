@@ -86,7 +86,7 @@ export async function markOrderAsPaidCore(
 		throw new SafeError("Payment method ID mismatch");
 	}
 
-	// Check if this is a Store Credit (credit recharge) order
+	// Check if this is a Store Credit (credit refill) order
 	// Store Credit orders should use processCreditTopUpAfterPaymentAction instead
 	if (order.OrderItemView && order.OrderItemView.length > 0) {
 		const isStoreCreditOrder = order.OrderItemView.some(
