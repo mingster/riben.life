@@ -332,11 +332,6 @@ function FormPhoneOtpInner({
 				return;
 			}
 
-			// Track analytics only for sign-in (not for edit mode)
-			if (!editMode) {
-				analytics.trackCustomEvent("login", { method: "phone" });
-			}
-
 			// check to see if session exists on client side
 			const { data: session, error } = await authClient.getSession();
 
@@ -344,6 +339,36 @@ function FormPhoneOtpInner({
 				return {
 					serverError: "Failed to create session. Please try again.",
 				};
+			}
+
+			// Log phone authentication events
+			if (editMode) {
+				// Log phone number update
+				clientLogger.info("Phone number update - succeeded", {
+					metadata: {
+						phoneNumber: maskPhoneNumber(phoneNumber),
+						userId: session.user.id,
+						status: "success",
+					},
+					tags: ["phone-auth", "phone-update"],
+					userId: session.user.id,
+				});
+			} else {
+				// Determine if this is a new user sign-up or existing user sign-in
+				// We can't easily determine this from client-side, so we'll log as sign-in
+				// Better Auth handles user creation internally, and we log it server-side
+				clientLogger.info("Sign in with phone number - succeeded", {
+					metadata: {
+						phoneNumber: maskPhoneNumber(phoneNumber),
+						userId: session.user.id,
+						status: "success",
+					},
+					tags: ["phone-auth", "sign-in"],
+					userId: session.user.id,
+				});
+
+				// Track analytics for sign-in
+				analytics.trackCustomEvent("login", { method: "phone" });
 			}
 
 			// If onSuccess callback is provided, call it instead of redirecting
@@ -454,7 +479,7 @@ function FormPhoneOtpInner({
 						{isSendingOTP ? (
 							<Loader2 className="animate-spin" />
 						) : (
-							t("send_otp") || "Send OTP"
+							t("otp_send_otp") || "Send OTP"
 						)}
 					</Button>
 				</form>
@@ -519,7 +544,7 @@ function FormPhoneOtpInner({
 						{isVerifyingOTP ? (
 							<Loader2 className="animate-spin" />
 						) : (
-							t("verify_and_sign_in") || "Verify & Sign In"
+							t("otp_verify_and_sign_in") || "Verify & Sign In"
 						)}
 					</Button>
 				</form>
@@ -535,10 +560,10 @@ function FormPhoneOtpInner({
 				>
 					{resendCountdown > 0
 						? (
-								t("resend_otp_in", { count: resendCountdown }) ||
+								t("otp_resend_otp_in", { count: resendCountdown }) ||
 								`{{count}} 秒後才能重新發送`
 							).replace(/\{\{count\}\}/g, String(resendCountdown))
-						: t("resend_otp") || "Resend OTP"}
+						: t("otp_resend_otp") || "Resend OTP"}
 				</Button>
 
 				<Button

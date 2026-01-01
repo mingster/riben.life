@@ -76,8 +76,12 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			const stripeMatch =
 				user.stripeCustomerId?.toLowerCase().includes(searchLower) ?? false;
 
-			// Return true if any field matches (name OR email OR stripeCustomerId)
-			return nameMatch || emailMatch || stripeMatch;
+			// Search in phoneNumber (case-insensitive)
+			const phoneMatch =
+				user.phoneNumber?.toLowerCase().includes(searchLower) ?? false;
+
+			// Return true if any field matches (name OR email OR stripeCustomerId OR phoneNumber)
+			return nameMatch || emailMatch || stripeMatch || phoneMatch;
 		});
 	}, [data, searchTerm]);
 
@@ -86,14 +90,19 @@ export const UsersClient: React.FC<UsersClientProps> = ({ serverData }) => {
 			name,
 			email,
 			stripeCustomerId,
+			phoneNumber,
 		}: {
 			name: string;
 			email: string;
 			stripeCustomerId: string;
+			phoneNumber: string;
 		}) => {
 			// Since we're using the same search term for all fields, just use the first non-empty one
 			const newSearchTerm =
-				name.trim() || email.trim() || stripeCustomerId.trim();
+				name.trim() ||
+				email.trim() ||
+				stripeCustomerId.trim() ||
+				phoneNumber.trim();
 			setSearchTerm(newSearchTerm);
 		},
 		[],

@@ -164,6 +164,7 @@ export const auth = betterAuth({
 				// Better Auth provides the OTP code, we use our existing sendOTP function
 				// which handles storing in database and sending via Twilio
 				const { sendOTP } = await import("./otp/send-otp");
+				const { getClientIP } = await import("@/utils/geo-ip");
 
 				// Get locale from request context if available
 				const locale =
@@ -172,11 +173,21 @@ export const auth = betterAuth({
 						?.split(",")[0]
 						?.split("-")[0] || "tw";
 
+				// Extract IP address from request headers for rate limiting
+				const ipAddress = ctx?.request?.headers
+					? (getClientIP(ctx.request.headers) ?? undefined)
+					: undefined;
+
+				// Extract user agent from request headers for logging
+				const userAgent = ctx?.request?.headers?.get("user-agent") || undefined;
+
 				// Call our existing sendOTP function with the code provided by Better Auth
 				const result = await sendOTP({
 					phoneNumber,
 					locale,
 					code, // Use the code provided by Better Auth
+					ipAddress, // Pass IP address for rate limiting
+					userAgent, // Pass user agent for logging
 				});
 
 				if (!result.success) {

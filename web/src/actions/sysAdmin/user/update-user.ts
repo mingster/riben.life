@@ -1,11 +1,9 @@
 "use server";
 
 import { updateUserSettingsSchema } from "@/actions/sysAdmin/user/user.validation";
-import { authClient } from "@/lib/auth-client";
 import { sqlClient } from "@/lib/prismadb";
 import type { User } from "@/types";
 import { adminActionClient } from "@/utils/actions/safe-action";
-import { Role } from "@prisma/client";
 
 export const updateUserAction = adminActionClient
 	.metadata({ name: "updateUser" })
@@ -33,6 +31,9 @@ export const updateUserAction = adminActionClient
 			// Convert banExpires ISO string to DateTime if provided
 			const banExpiresDate = banExpires ? new Date(banExpires) : undefined;
 
+			// Set banReason to null when banned is false
+			const finalBanReason = banned === false ? null : banReason || null;
+
 			await sqlClient.user.update({
 				where: { id: id },
 				data: {
@@ -41,12 +42,12 @@ export const updateUserAction = adminActionClient
 					timezone,
 					role,
 					stripeCustomerId,
-					phoneNumber,
+					phoneNumber: phoneNumber === "" ? null : phoneNumber,
 					phoneNumberVerified,
 					image: image === "" ? null : image,
 					twoFactorEnabled,
 					banned,
-					banReason,
+					banReason: finalBanReason,
 					banExpires: banExpiresDate,
 				},
 			});

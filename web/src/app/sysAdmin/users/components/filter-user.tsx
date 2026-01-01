@@ -11,6 +11,7 @@ interface UserFilterProps {
 		name: string;
 		email: string;
 		stripeCustomerId: string;
+		phoneNumber: string;
 	}) => void;
 }
 
@@ -28,6 +29,7 @@ export const UserFilter: React.FC<UserFilterProps> = ({ onFilterChange }) => {
 				name: trimmedValue,
 				email: trimmedValue,
 				stripeCustomerId: trimmedValue,
+				phoneNumber: trimmedValue,
 			});
 		},
 		[onFilterChange],
@@ -52,7 +54,12 @@ export const UserFilter: React.FC<UserFilterProps> = ({ onFilterChange }) => {
 
 	const handleClearSearch = useCallback(() => {
 		setSearchTerm("");
-		onFilterChange({ name: "", email: "", stripeCustomerId: "" });
+		onFilterChange({
+			name: "",
+			email: "",
+			stripeCustomerId: "",
+			phoneNumber: "",
+		});
 	}, [onFilterChange]);
 
 	return (
@@ -63,7 +70,7 @@ export const UserFilter: React.FC<UserFilterProps> = ({ onFilterChange }) => {
 				value={searchTerm}
 				onChange={handleSearchChange}
 				className="pl-8 pr-8"
-				aria-label="Search users by name, email, or Stripe customer ID"
+				aria-label="Search users by name, email, Stripe customer ID, or phone number"
 			/>
 			{searchTerm && (
 				<button

@@ -316,19 +316,20 @@ Your verification code is: 123456. This code will expire in 10 minutes.
 
 **Important:** This function is called by Better Auth's `sendOTP` callback. It handles SMS delivery via Twilio, but only for US/Canada (+1) numbers. For other countries (e.g., Taiwan +886), the OTP code is logged only.
 
-```typescript
-"use server";
+**Rate Limiting:** Rate limiting is checked at the beginning of this function before OTP code generation or SMS sending. See section 7.2 for details.
 
+```typescript
 import { generateOTPCode, maskPhoneNumber } from "@/utils/utils";
-import { twilioClient } from "@/lib/twilio/client";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
+import { checkRateLimit } from "@/utils/rate-limit";
 
 export interface SendOTPParams {
   phoneNumber: string; // E.164 format
   userId?: string; // Optional, for existing users
   locale?: string; // Optional locale for i18n (e.g., "en", "tw", "jp")
   code?: string; // Optional OTP code (if not provided, will be generated)
+  ipAddress?: string; // Optional IP address for rate limiting
 }
 
 export interface SendOTPResult {
@@ -342,7 +343,31 @@ export async function sendOTP({
   userId,
   locale,
   code: providedCode,
+  ipAddress,
 }: SendOTPParams): Promise<SendOTPResult> {
+  // Check rate limiting before proceeding
+  const rateLimitResult = await checkRateLimit({
+    phoneNumber,
+    ipAddress,
+  });
+
+  if (!rateLimitResult.allowed) {
+    logger.warn("Rate limit exceeded for OTP request", {
+      metadata: {
+        phoneNumber: maskPhoneNumber(phoneNumber),
+        userId,
+        ipAddress,
+        retryAfter: rateLimitResult.retryAfter,
+      },
+      tags: ["rate-limit", "otp", "send"],
+    });
+
+    return {
+      success: false,
+      error: rateLimitResult.message || "Too many requests. Please try again later.",
+    };
+  }
+
   const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 
   if (!twilioPhoneNumber) {
@@ -634,9 +659,20 @@ export const auth = betterAuth({
             ?.split(",")[0]
             ?.split("-")[0] || "tw";
 
+        // Extract IP address from request headers for rate limiting
+        const { getClientIP } = await import("@/utils/geo-ip");
+        const ipAddress = ctx?.request?.headers
+          ? getClientIP(ctx.request.headers) ?? undefined
+          : undefined;
+
         // Call our existing sendOTP function
         const { sendOTP } = await import("./otp/send-otp");
-        const result = await sendOTP({ phoneNumber, code, locale });
+        const result = await sendOTP({ 
+          phoneNumber, 
+          code, 
+          locale,
+          ipAddress, // Pass IP address for rate limiting
+        });
 
         if (!result.success) {
           throw new Error(result.error || "Failed to send OTP");
@@ -682,6 +718,8 @@ export const auth = betterAuth({
 **Key Points:**
 
 * `sendOTP` callback receives the OTP `code` from Better Auth
+* Rate limiting is checked before sending OTP (see section 7.2)
+* IP address is extracted from request headers and passed to `sendOTP` for rate limiting
 * Better Auth stores the OTP in its own system
 * `signUpOnVerification` automatically creates users if they don't exist
 * No custom `verifyOTP` callback needed - Better Auth handles it internally
@@ -947,7 +985,7 @@ export const sendOTPAction = baseClient
 * Uses Better Auth's `sendPhoneNumberOTP` API instead of calling `sendOTP` directly
 * Better Auth handles OTP generation and storage
 * Our `sendOTP` callback (configured in `auth.ts`) is called by Better Auth to send via Twilio
-* Rate limiting is handled by Better Auth (if configured)
+* Rate limiting is implemented in our `sendOTP` function (see section 7.2)
 
 ### 6.3 Combined Sign In/Sign Up Action (Legacy/Alternative)
 
@@ -1219,11 +1257,15 @@ Similar to `linkPhoneAction`, but requires verification of new phone number and 
 
 ### 7.2 Rate Limiting Implementation
 
+Rate limiting is implemented using an in-memory cache and integrated into the OTP sending flow. The rate limiting check is performed before sending OTP codes.
+
+#### 7.2.1 Rate Limiting Utility
+
 **File:** `src/utils/rate-limit.ts`
 
 ```typescript
-import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
+import { maskPhoneNumber } from "@/utils/utils";
 
 interface RateLimitCheck {
   phoneNumber?: string;
@@ -1350,13 +1392,128 @@ function cleanupCache(key: string, requests: number[]): void {
   }
 }
 
-function maskPhoneNumber(phoneNumber: string): string {
-  if (phoneNumber.length <= 4) return "****";
-  return phoneNumber.slice(0, -4) + "****";
+function cleanupCache(key: string, requests: number[]): void {
+  const now = Date.now();
+  const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+  const filtered = requests.filter((timestamp) => now - timestamp < maxAge);
+  
+  if (filtered.length === 0) {
+    rateLimitCache.delete(key);
+  } else {
+    rateLimitCache.set(key, filtered);
+  }
 }
 ```
 
-**Note:** For production, consider using Redis for distributed rate limiting across multiple servers.
+#### 7.2.2 Integration with OTP Sending
+
+Rate limiting is integrated into the `sendOTP` function (`src/lib/otp/send-otp.ts`) and called from the Better Auth `sendOTP` callback.
+
+**File:** `src/lib/otp/send-otp.ts`
+
+```typescript
+import { checkRateLimit } from "@/utils/rate-limit";
+// ... other imports
+
+export interface SendOTPParams {
+  phoneNumber: string; // E.164 format
+  userId?: string; // Optional, for existing users
+  locale?: string; // Optional locale for i18n (e.g., "en", "tw", "jp")
+  code?: string; // Optional OTP code (if not provided, will be generated)
+  ipAddress?: string; // Optional IP address for rate limiting
+}
+
+export async function sendOTP({
+  phoneNumber,
+  userId,
+  locale,
+  code: providedCode,
+  ipAddress,
+}: SendOTPParams): Promise<SendOTPResult> {
+  // Check rate limiting before proceeding
+  const rateLimitResult = await checkRateLimit({
+    phoneNumber,
+    ipAddress,
+  });
+
+  if (!rateLimitResult.allowed) {
+    logger.warn("Rate limit exceeded for OTP request", {
+      metadata: {
+        phoneNumber: maskPhoneNumber(phoneNumber),
+        userId,
+        ipAddress,
+        retryAfter: rateLimitResult.retryAfter,
+      },
+      tags: ["rate-limit", "otp", "send"],
+    });
+
+    return {
+      success: false,
+      error: rateLimitResult.message || "Too many requests. Please try again later.",
+    };
+  }
+
+  // Continue with OTP sending...
+  // ... rest of sendOTP implementation
+}
+```
+
+#### 7.2.3 Better Auth Integration
+
+The IP address is extracted from the Better Auth request context and passed to the `sendOTP` function.
+
+**File:** `src/lib/auth.ts`
+
+```typescript
+phoneNumber({
+  sendOTP: async ({ phoneNumber, code }, ctx) => {
+    const { sendOTP } = await import("./otp/send-otp");
+    const { getClientIP } = await import("@/utils/geo-ip");
+
+    // Get locale from request context if available
+    const locale =
+      ctx?.request?.headers
+        ?.get("accept-language")
+        ?.split(",")[0]
+        ?.split("-")[0] || "tw";
+
+    // Extract IP address from request headers for rate limiting
+    const ipAddress = ctx?.request?.headers
+      ? getClientIP(ctx.request.headers) ?? undefined
+      : undefined;
+
+    // Call our existing sendOTP function with the code provided by Better Auth
+    const result = await sendOTP({
+      phoneNumber,
+      locale,
+      code, // Use the code provided by Better Auth
+      ipAddress, // Pass IP address for rate limiting
+    });
+
+    if (!result.success) {
+      throw new Error(result.error || "Failed to send OTP");
+    }
+  },
+  // ... other configuration
+}),
+```
+
+#### 7.2.4 Rate Limiting Behavior
+
+**When rate limit is exceeded:**
+1. Rate limit check is performed before OTP code generation
+2. Rate limit violation is logged with structured metadata (phone number masked, IP address, retry time)
+3. Error is returned to Better Auth callback, which throws an error
+4. Error is propagated to the client component
+5. User receives error message: "Too many requests. Please try again in X seconds."
+
+**Rate limit tracking:**
+- Uses in-memory Map cache for rate limit tracking
+- Stores timestamps of OTP requests per phone number and IP address
+- Automatically cleans up old entries (older than 24 hours)
+- Rate limit check is performed for both phone number and IP address (if provided)
+
+**Note:** For production with multiple server instances, consider using Redis or a shared cache solution for distributed rate limiting across multiple servers.
 
 ***
 

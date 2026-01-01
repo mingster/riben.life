@@ -1,12 +1,15 @@
 import { generateOTPCode, maskPhoneNumber } from "@/utils/utils";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
+import { checkRateLimit } from "@/utils/rate-limit";
 
 export interface SendOTPParams {
 	phoneNumber: string; // E.164 format
 	userId?: string; // Optional, for existing users
 	locale?: string; // Optional locale for i18n (e.g., "en", "tw", "jp")
 	code?: string; // Optional OTP code (if not provided, will be generated)
+	ipAddress?: string; // Optional IP address for rate limiting
+	userAgent?: string; // Optional user agent for logging
 }
 
 export interface SendOTPResult {
@@ -20,18 +23,55 @@ export async function sendOTP({
 	userId,
 	locale,
 	code: providedCode,
+	ipAddress,
+	userAgent,
 }: SendOTPParams): Promise<SendOTPResult> {
+	// Check rate limiting before proceeding
+	const rateLimitResult = await checkRateLimit({
+		phoneNumber,
+		ipAddress,
+		locale,
+	});
+
+	if (!rateLimitResult.allowed) {
+		// Log rate limit violation to system_logs
+		logger.warn("OTP send request - rate limit exceeded", {
+			metadata: {
+				phoneNumber: maskPhoneNumber(phoneNumber),
+				userId,
+				ipAddress,
+				retryAfter: rateLimitResult.retryAfter,
+				status: "rate-limit-exceeded",
+			},
+			tags: ["phone-auth", "otp-send", "rate-limit"],
+			userId,
+			ip: ipAddress,
+			userAgent,
+		});
+
+		return {
+			success: false,
+			error:
+				rateLimitResult.message || "Too many requests. Please try again later.",
+		};
+	}
+
 	const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 
 	if (!twilioPhoneNumber) {
 		const errorMessage = "TWILIO_PHONE_NUMBER environment variable is required";
-		logger.error("Twilio configuration missing", {
+		// Log OTP send failure to system_logs
+		logger.error("OTP send request - configuration error", {
 			metadata: {
 				phoneNumber: maskPhoneNumber(phoneNumber),
 				userId,
 				error: errorMessage,
+				status: "error",
 			},
-			tags: ["twilio", "otp", "error"],
+			tags: ["phone-auth", "otp-send"],
+			userId,
+			ip: ipAddress,
+			userAgent,
 		});
 		return {
 			success: false,
@@ -66,15 +106,20 @@ export async function sendOTP({
 				to: phoneNumber,
 			});
 
-			logger.info("OTP sent via Twilio", {
+			// Log OTP send request to system_logs
+			logger.info("OTP send request - SMS sent via Twilio", {
 				metadata: {
 					phoneNumber: maskPhoneNumber(phoneNumber),
-					smsMessage,
 					userId,
 					locale,
 					messageSid: message.sid,
+					status: "success",
+					provider: "twilio",
 				},
-				tags: ["twilio", "otp", "send"],
+				tags: ["phone-auth", "otp-send"],
+				userId,
+				ip: ipAddress,
+				userAgent,
 			});
 
 			return {
@@ -83,17 +128,24 @@ export async function sendOTP({
 			};
 		} else {
 			// For non-US numbers, just log the OTP code (for development/testing)
-			logger.info("OTP code generated (not sent via SMS - non-US number)", {
-				metadata: {
-					phoneNumber: maskPhoneNumber(phoneNumber),
-					otpCode,
-					smsMessage,
+			// Log OTP send request to system_logs
+			logger.info(
+				"OTP send request - code generated (non-US number, log only)",
+				{
+					metadata: {
+						phoneNumber: maskPhoneNumber(phoneNumber),
+						userId,
+						locale,
+						countryCode: phoneNumber.match(/^\+\d{1,3}/)?.[0] || "unknown",
+						status: "success",
+						provider: "log-only",
+					},
+					tags: ["phone-auth", "otp-send"],
 					userId,
-					locale,
-					countryCode: phoneNumber.match(/^\+\d{1,3}/)?.[0] || "unknown",
+					ip: ipAddress,
+					userAgent,
 				},
-				tags: ["otp", "send", "log-only"],
-			});
+			);
 
 			return {
 				success: true,
@@ -111,14 +163,19 @@ export async function sendOTP({
 			errorMessage = String(error.message);
 		}
 
-		logger.error("Failed to send OTP via Twilio", {
+		// Log OTP send failure to system_logs
+		logger.error("OTP send request - SMS delivery failed", {
 			metadata: {
 				phoneNumber: maskPhoneNumber(phoneNumber),
 				userId,
 				error: errorMessage,
 				locale,
+				status: "error",
 			},
-			tags: ["twilio", "otp", "error"],
+			tags: ["phone-auth", "otp-send"],
+			userId,
+			ip: ipAddress,
+			userAgent,
 		});
 
 		return {
