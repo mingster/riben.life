@@ -200,7 +200,7 @@ export function RefillCreditPointsForm({
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>{t("credit_recharge")}</CardTitle>
+				<CardTitle>{t("credit_refill")}</CardTitle>
 				<CardDescription></CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -244,7 +244,7 @@ export function RefillCreditPointsForm({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("credit_recharge_amount")}{" "}
+										{t("credit_refill_amount")}{" "}
 										<span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>

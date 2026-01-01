@@ -141,7 +141,7 @@ export function RechargeCreditDialog({
 					: t("customer_credit_promotional_payment") || "Promotional";
 				toastSuccess({
 					title: t("success_title"),
-					description: t("customer_credit_recharged") || "Credit Recharged",
+					description: t("customer_credit_refilld") || "Credit Recharged",
 				});
 			}
 			resetForm();
@@ -158,7 +158,7 @@ export function RechargeCreditDialog({
 	};
 
 	let dialogDescription =
-		t("customer_credit_recharge_description") || "Add credit to {0}'s account";
+		t("customer_credit_refill_description") || "Add credit to {0}'s account";
 	dialogDescription = dialogDescription.replace("{0}", user.name || user.email);
 
 	return (
@@ -167,7 +167,7 @@ export function RechargeCreditDialog({
 			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
-						{t("customer_credit_recharge") || "Recharge Credit"}
+						{t("customer_credit_refill") || "Recharge Credit"}
 					</DialogTitle>
 					<DialogDescription className="text-xs font-mono text-muted-foreground">
 						{dialogDescription}
@@ -300,7 +300,7 @@ export function RechargeCreditDialog({
 												field.onChange(event.target.value || null)
 											}
 											placeholder={
-												t("customer_credit_recharge_note_placeholder") ||
+												t("customer_credit_refill_note_placeholder") ||
 												"Optional note for this recharge"
 											}
 										/>
@@ -319,7 +319,7 @@ export function RechargeCreditDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{t("customer_credit_recharge") || "Recharge"}
+								{t("customer_credit_refill") || "Recharge"}
 							</Button>
 							<Button
 								type="button"

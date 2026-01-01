@@ -134,7 +134,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 			creditAmount,
 			orderId, // referenceId
 			null, // creatorId (null for customer-initiated)
-			t("credit_recharge_customer_ledger_note", {
+			t("credit_refill_customer_ledger_note", {
 				creditAmount,
 				dollarAmount,
 				currency: order.Store.defaultCurrency.toUpperCase(),
@@ -239,7 +239,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 					balance: new Prisma.Decimal(
 						balance + dollarAmount + (fee + feeTax) + platformFee,
 					),
-					description: t("credit_recharge_description_ledger", {
+					description: t("credit_refill_description_ledger", {
 						creditAmount,
 						dollarAmount,
 						currency: order.Store.defaultCurrency.toUpperCase(),
@@ -247,7 +247,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 						bonus: processCreditTopUpResult.bonus,
 						totalCredit: processCreditTopUpResult.totalCredit,
 					}),
-					note: t("credit_recharge_note_ledger", {
+					note: t("credit_refill_note_ledger", {
 						orderId: order.id,
 					}),
 					availability: BigInt(availabilityDate.getTime()),

@@ -486,12 +486,14 @@ The RSVP Account Balance system is integrated into the Customer Credit system, u
    * Facility's `defaultCost` or
    * Applicable `FacilityPricingRule` cost
 3. System checks customer's RSVP account balance:
+
    ```typescript
    const credit = await sqlClient.customerCredit.findUnique({
      where: { storeId_userId: { storeId, userId } },
    });
    const balance = credit ? Number(credit.fiat) : 0;
    ```
+
 4. **If balance is sufficient** (`balance >= facilityCost`):
    * System creates reservation with `alreadyPaid = true`
    * System deducts amount from account balance:
@@ -1234,7 +1236,7 @@ When a customer initiates a recharge:
        userId,
        orderTotal: rechargeAmount,
        currency: store.defaultCurrency,
-       paymentMethodId: "credit_recharge", // Special payment method
+       paymentMethodId: "credit_refill", // Special payment method
        orderStatus: OrderStatus.Pending,
        paymentStatus: PaymentStatus.Pending,
        // ... other order fields

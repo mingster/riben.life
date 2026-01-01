@@ -168,11 +168,11 @@ export const rechargeCustomerCreditAction = storeActionClient
 					currency: store.defaultCurrency,
 					type: StoreLedgerType.CreditRecharge,
 					balance: new Prisma.Decimal(balance + Number(cashAmount)), // Balance increases
-					description: t("in_person_credit_recharge_description_ledger", {
+					description: t("in_person_credit_refill_description_ledger", {
 						totalCredit: result.totalCredit,
 					}),
 					note: note
-						? t("in_person_credit_recharge_note_with_extra", {
+						? t("in_person_credit_refill_note_with_extra", {
 								cashAmount,
 								currency: store.defaultCurrency.toUpperCase(),
 								amount: result.amount,
@@ -181,7 +181,7 @@ export const rechargeCustomerCreditAction = storeActionClient
 								operator: creatorId,
 								note,
 							})
-						: t("in_person_credit_recharge_note_ledger", {
+						: t("in_person_credit_refill_note_ledger", {
 								cashAmount,
 								currency: store.defaultCurrency.toUpperCase(),
 								amount: result.amount,
@@ -236,18 +236,18 @@ export const rechargeCustomerCreditAction = storeActionClient
 					currency: store.defaultCurrency,
 					type: StoreLedgerType.CreditRecharge,
 					balance: new Prisma.Decimal(balance), // Balance unchanged
-					description: t("promotional_credit_recharge_description_ledger", {
+					description: t("promotional_credit_refill_description_ledger", {
 						totalCredit: result.totalCredit,
 					}),
 					note: note
-						? t("promotional_credit_recharge_note_with_extra", {
+						? t("promotional_credit_refill_note_with_extra", {
 								amount: result.amount,
 								bonus: result.bonus,
 								totalCredit: result.totalCredit,
 								operator: creatorId,
 								note,
 							})
-						: t("promotional_credit_recharge_note_ledger", {
+						: t("promotional_credit_refill_note_ledger", {
 								amount: result.amount,
 								bonus: result.bonus,
 								totalCredit: result.totalCredit,

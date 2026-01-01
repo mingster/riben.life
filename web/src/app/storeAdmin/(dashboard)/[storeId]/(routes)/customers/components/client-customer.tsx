@@ -1,32 +1,10 @@
 "use client";
 
-import {
-	IconBan,
-	IconCheck,
-	IconCircleDashedCheck,
-	IconCopy,
-	IconCreditCard,
-	IconDots,
-	IconDownload,
-	IconKey,
-	IconLoader,
-	IconPillOff,
-	IconTrash,
-	IconX,
-} from "@tabler/icons-react";
-import type { ColumnDef } from "@tanstack/react-table";
-import type { AxiosError } from "axios";
-import axios from "axios";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useState, useMemo, useCallback } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Heading } from "@/components/heading";
-import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
-import { Button } from "@/components/ui/button";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -35,6 +13,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -42,16 +21,28 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { authClient } from "@/lib/auth-client";
+import clientLogger from "@/lib/client-logger";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
+import { Role } from "@/types/enum";
 import { formatDateTime } from "@/utils/datetime-utils";
-import clientLogger from "@/lib/client-logger";
+import {
+	IconCheck,
+	IconCopy,
+	IconCreditCard,
+	IconDots,
+	IconDownload,
+	IconLoader,
+	IconX,
+} from "@tabler/icons-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
 import { EditCustomer } from "./edit-customer";
 import { UserFilter } from "./filter-user";
-import { RechargeCreditDialog } from "./recharge-credit-dialog";
 import { ImportCustomerDialog } from "./import-customer-dialog";
-import { Role } from "@/types/enum";
+import { RechargeCreditDialog } from "./recharge-credit-dialog";
 
 interface CustomersClientProps {
 	serverData: User[];
@@ -97,8 +88,12 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 			const stripeMatch =
 				user.stripeCustomerId?.toLowerCase().includes(searchLower) ?? false;
 
-			// Return true if any field matches (name OR email OR stripeCustomerId)
-			return nameMatch || emailMatch || stripeMatch;
+			// Search in phoneNumber (case-insensitive)
+			const phoneMatch =
+				user.phoneNumber?.toLowerCase().includes(searchLower) ?? false;
+
+			// Return true if any field matches (name OR email OR stripeCustomerId OR phoneNumber)
+			return nameMatch || emailMatch || stripeMatch || phoneMatch;
 		});
 	}, [data, searchTerm]);
 
@@ -107,14 +102,19 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 			name,
 			email,
 			stripeCustomerId,
+			phoneNumber,
 		}: {
 			name: string;
 			email: string;
 			stripeCustomerId: string;
+			phoneNumber: string;
 		}) => {
 			// Since we're using the same search term for all fields, just use the first non-empty one
 			const newSearchTerm =
-				name.trim() || email.trim() || stripeCustomerId.trim();
+				name.trim() ||
+				email.trim() ||
+				stripeCustomerId.trim() ||
+				phoneNumber.trim();
 			setSearchTerm(newSearchTerm);
 		},
 		[],
@@ -285,7 +285,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 							}}
 						>
 							<IconCreditCard className="mr-0 size-4" />
-							{t("credit_recharge") || "Recharge Credit"}
+							{t("credit_refill") || "Recharge Credit"}
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>

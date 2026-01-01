@@ -192,7 +192,7 @@ export const createRefillCreditPointsOrderAction = userRequiredActionClient
 				},
 				OrderNotes: {
 					create: {
-						note: t("credit_recharge_order_note", {
+						note: t("credit_refill_order_note", {
 							creditAmount,
 							dollarAmount,
 							currency: store.defaultCurrency.toUpperCase(),
