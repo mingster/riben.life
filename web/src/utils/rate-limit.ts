@@ -1,9 +1,11 @@
 import logger from "@/lib/logger";
 import { maskPhoneNumber } from "@/utils/utils";
+import { getT } from "@/app/i18n";
 
 interface RateLimitCheck {
 	phoneNumber?: string;
 	ipAddress?: string;
+	locale?: string; // Optional locale for i18n (e.g., "en", "tw", "jp")
 }
 
 interface RateLimitResult {
@@ -18,6 +20,7 @@ const rateLimitCache = new Map<string, number[]>();
 export async function checkRateLimit({
 	phoneNumber,
 	ipAddress,
+	locale,
 }: RateLimitCheck): Promise<RateLimitResult> {
 	const now = Date.now();
 	const windows = [
@@ -42,19 +45,30 @@ export async function checkRateLimit({
 					(oldestRequest + window.duration - now) / 1000,
 				);
 
-				logger.warn("Phone number rate limit exceeded", {
+				// Log rate limit violation to system_logs
+				logger.warn("Rate limit violation - phone number", {
 					metadata: {
 						phoneNumber: maskPhoneNumber(phoneNumber),
 						window: `${window.duration}ms`,
 						max: window.max,
 						current: recentRequests.length,
+						retryAfter,
+						status: "rate-limit-exceeded",
 					},
-					tags: ["rate-limit", "phone"],
+					tags: ["phone-auth", "rate-limit"],
+					ip: ipAddress,
+				});
+
+				// Get translation for error message
+				const { t } = await getT(locale || "tw");
+				const message = t("otp_rate_limit_exceeded", {
+					retryAfter,
+					defaultValue: `Too many requests. Please try again in ${retryAfter} seconds.`,
 				});
 
 				return {
 					allowed: false,
-					message: `Too many requests. Please try again in ${retryAfter} seconds.`,
+					message,
 					retryAfter,
 				};
 			}
@@ -89,19 +103,30 @@ export async function checkRateLimit({
 					(oldestRequest + window.duration - now) / 1000,
 				);
 
-				logger.warn("IP address rate limit exceeded", {
+				// Log rate limit violation to system_logs
+				logger.warn("Rate limit violation - IP address", {
 					metadata: {
 						ipAddress,
 						window: `${window.duration}ms`,
 						max: window.max,
 						current: recentRequests.length,
+						retryAfter,
+						status: "rate-limit-exceeded",
 					},
-					tags: ["rate-limit", "ip"],
+					tags: ["phone-auth", "rate-limit"],
+					ip: ipAddress,
+				});
+
+				// Get translation for error message
+				const { t } = await getT(locale || "tw");
+				const message = t("otp_rate_limit_exceeded", {
+					retryAfter,
+					defaultValue: `Too many requests. Please try again in ${retryAfter} seconds.`,
 				});
 
 				return {
 					allowed: false,
-					message: `Too many requests. Please try again in ${retryAfter} seconds.`,
+					message,
 					retryAfter,
 				};
 			}

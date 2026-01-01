@@ -17,7 +17,7 @@ The Customer Credit system allows customers to pre-purchase credit points that c
 * **Customer Recharge**: Customers can purchase credit through the store's public interface
 * **Store Operator Recharge**: Store staff can manually add credit to customer accounts via the store admin interface
 * **Transaction Recording**: All credit transactions are recorded in the `CustomerCreditLedger` for audit and history. RSVP account balance transactions are recorded in `CustomerFiatLedger`
-* **Payment Processing**: Customer recharges create `StoreOrder` records to process payments through standard payment methods
+* **Payment Processing**: Customer refills create `StoreOrder` records to process payments through standard payment methods
 * **Bonus System**: Stores can configure bonus rules that award additional credit based on top-up amounts
 * **Credit Ledger Review**: Customers can review their credit balances and transaction history at their account page (`/account/`)
 * **RSVP Account Balance**: Customers maintain a separate account balance specifically for RSVP facility reservation payments, with automatic payment deduction and refund capabilities
@@ -204,10 +204,10 @@ model CreditBonusRule {
 
 **Flow**:
 
-1. Customer navigates to store's credit recharge page - `{store}/[storeId]/recharge`
-2. Customer selects recharge amount (must be within `creditMinPurchase` and `creditMaxPurchase`)
+1. Customer navigates to store's credit refill page - `{store}/[storeId]/refill`
+2. Customer selects refill amount (must be within `creditMinPurchase` and `creditMaxPurchase`)
 3. System validates amount against store settings
-4. System creates a `StoreOrder` for the recharge amount
+4. System creates a `StoreOrder` for the refill amount
 5. Customer completes payment through standard payment flow (Stripe, LINE Pay, etc.)
 6. Upon successful payment:
    * System calculates bonus (if applicable)
@@ -259,9 +259,9 @@ This use case supports two different scenarios:
    * System calculates bonus (if applicable based on bonus rules)
    * System updates `CustomerCredit` balance (including bonus)
    * System creates `CustomerCreditLedger` entries:
-     * One `TOPUP` entry for the recharge amount:
+     * One `TOPUP` entry for the refill amount:
        * Type: `TOPUP`
-       * Credit amount: recharge amount
+       * Credit amount: refill amount
        * `creatorId`: store operator's userId
        * `note`: optional note from operator
        * `referenceId`: StoreOrder.id (links to the order created)
@@ -274,19 +274,19 @@ This use case supports two different scenarios:
    * System creates `StoreLedger` entry:
      * `amount`: Cash amount received (positive, unearned revenue)
      * `orderId`: StoreOrder.id
-     * `type`: 2 (credit recharge)
+     * `type`: 2 (credit refill)
      * `description`: "In-Person Credit Recharge"
      * `note`: Details about the cash payment and credit given
 6. **If Promotional Recharge**:
    * System calculates bonus (if applicable based on bonus rules)
    * System updates `CustomerCredit` balance (including bonus)
    * System creates `CustomerCreditLedger` entries:
-     * One `TOPUP` entry for the recharge amount:
+     * One `TOPUP` entry for the refill amount:
        * Type: `TOPUP`
-       * Credit amount: recharge amount
+       * Credit amount: refill amount
        * `creatorId`: store operator's userId
        * `note`: optional note from operator
-       * `referenceId`: null (no order for promotional recharge)
+       * `referenceId`: null (no order for promotional refill)
      * One `BONUS` entry if bonus is awarded:
        * Type: `BONUS`
        * Amount: bonus amount
@@ -486,12 +486,14 @@ The RSVP Account Balance system is integrated into the Customer Credit system, u
    * Facility's `defaultCost` or
    * Applicable `FacilityPricingRule` cost
 3. System checks customer's RSVP account balance:
+
    ```typescript
    const credit = await sqlClient.customerCredit.findUnique({
      where: { storeId_userId: { storeId, userId } },
    });
    const balance = credit ? Number(credit.fiat) : 0;
    ```
+
 4. **If balance is sufficient** (`balance >= facilityCost`):
    * System creates reservation with `alreadyPaid = true`
    * System deducts amount from account balance:
@@ -821,8 +823,8 @@ Customer credit follows standard accounting principles for **unearned revenue** 
 
 1. **Bonus Credit**:
    * **No Cash Transaction**: Bonus is awarded without payment
-   * **Accounting Treatment**: Similar to manual recharge - treat as promotion
-   * **StoreLedger Entry**: Included in the same StoreLedger entry as the manual recharge (no separate entry)
+   * **Accounting Treatment**: Similar to manual refill - treat as promotion
+   * **StoreLedger Entry**: Included in the same StoreLedger entry as the manual refill (no separate entry)
 
 ### 4.2 StoreLedger Integration
 
@@ -837,7 +839,7 @@ model StoreLedger {
   fee         Decimal  // Payment processing fees
   platformFee Decimal  // Platform fees
   currency    String   @default("twd")
-  type        Int      @default(0) // 0: 代收 | 1: store's own payment provider | 2: credit recharge | 3: credit usage
+  type        Int      @default(0) // 0: 代收 | 1: store's own payment provider | 2: credit refill | 3: credit usage
   balance     Decimal  // Running balance
   description String
   note        String?
@@ -852,14 +854,14 @@ model StoreLedger {
 
 * `type = 0`: Platform payment processing (代收)
 * `type = 1`: Store's own payment provider
-* `type = 2`: **Customer credit recharge** (unearned revenue - liability)
+* `type = 2`: **Customer credit refill** (unearned revenue - liability)
 * `type = 3`: **Credit usage** (revenue recognition)
 
 ### 4.3 StoreLedger Entries for Credit Transactions
 
 #### 4.3.1 Customer Credit Recharge (TOPUP)
 
-When a customer recharges credit via payment:
+When a customer refills credit via payment:
 
 1. **Create StoreLedger Entry** (after payment is confirmed):
 
@@ -875,25 +877,25 @@ When a customer recharges credit via payment:
 
    // Calculate fees (same as regular order)
    const fee = -Number(
-     Number(rechargeAmount) * Number(paymentMethod.fee) +
+     Number(refillAmount) * Number(paymentMethod.fee) +
      Number(paymentMethod.feeAdditional)
    );
    const feeTax = Number(fee * 0.05);
-   const platformFee = isPro ? 0 : -Number(Number(rechargeAmount) * 0.01);
+   const platformFee = isPro ? 0 : -Number(Number(refillAmount) * 0.01);
 
-   // Create StoreLedger entry for credit recharge
+   // Create StoreLedger entry for credit refill
    await sqlClient.storeLedger.create({
      data: {
        storeId,
-       orderId: order.id, // Link to the StoreOrder created for recharge
-       amount: new Prisma.Decimal(rechargeAmount), // Positive: cash received
+       orderId: order.id, // Link to the StoreOrder created for refill
+       amount: new Prisma.Decimal(refillAmount), // Positive: cash received
        fee: fee + feeTax,
        platformFee: platformFee,
        currency: store.defaultCurrency,
-       type: 2, // Credit recharge type
-       balance: balance + Number(rechargeAmount) + fee + feeTax + platformFee,
+       type: 2, // Credit refill type
+       balance: balance + Number(refillAmount) + fee + feeTax + platformFee,
        description: `Credit Recharge - Order #${order.orderNum}`,
-       note: `Customer credit top-up: ${rechargeAmount} ${store.defaultCurrency}`,
+       note: `Customer credit top-up: ${refillAmount} ${store.defaultCurrency}`,
        availability: availabilityDate, // Based on payment method clear days
      },
    });
@@ -992,7 +994,7 @@ When a customer pays cash in person and store staff credits via admin interface:
 
    const balance = Number(lastLedger ? lastLedger.balance : 0);
 
-   // Create StoreLedger entry for paid recharge
+   // Create StoreLedger entry for paid refill
    await sqlClient.storeLedger.create({
      data: {
        storeId,
@@ -1001,7 +1003,7 @@ When a customer pays cash in person and store staff credits via admin interface:
        fee: new Prisma.Decimal(0), // No payment processing fee for cash
        platformFee: new Prisma.Decimal(0), // No platform fee for cash
        currency: store.defaultCurrency,
-       type: 2, // Credit recharge type
+       type: 2, // Credit refill type
        balance: balance + Number(cashAmount), // Balance increases
        description: `In-Person Credit Recharge - Order #${order.orderNum}`,
        note: `Cash payment: ${cashAmount} ${store.defaultCurrency}. Credit given: ${creditAmount} + bonus ${bonus} = ${totalCredit} points. Operator: ${creatorId}. ${note || ""}`,
@@ -1035,11 +1037,11 @@ When a customer pays cash in person and store staff credits via admin interface:
 
    const balance = Number(lastLedger ? lastLedger.balance : 0);
 
-   // Create StoreLedger entry for manual recharge (amount = 0)
+   // Create StoreLedger entry for manual refill (amount = 0)
    await sqlClient.storeLedger.create({
      data: {
        storeId,
-       orderId: null, // No order for manual recharge
+       orderId: null, // No order for manual refill
        amount: new Prisma.Decimal(0), // Zero amount - no cash transaction
        fee: new Prisma.Decimal(0),
        platformFee: new Prisma.Decimal(0),
@@ -1203,7 +1205,7 @@ WHERE storeId = ?
 SELECT SUM(amount)
 FROM StoreLedger
 WHERE storeId = ?
-  AND type = 2 -- Credit recharges
+  AND type = 2 -- Credit refills
   AND amount > 0;
 ```
 
@@ -1223,7 +1225,7 @@ WHERE storeId = ?
 
 ### 4.1 Order Creation
 
-When a customer initiates a recharge:
+When a customer initiates a refill:
 
 1. **Create StoreOrder**:
 
@@ -1232,9 +1234,9 @@ When a customer initiates a recharge:
      data: {
        storeId,
        userId,
-       orderTotal: rechargeAmount,
+       orderTotal: refillAmount,
        currency: store.defaultCurrency,
-       paymentMethodId: "credit_recharge", // Special payment method
+       paymentMethodId: "credit_refill", // Special payment method
        orderStatus: OrderStatus.Pending,
        paymentStatus: PaymentStatus.Pending,
        // ... other order fields
@@ -1248,10 +1250,10 @@ When a customer initiates a recharge:
    await sqlClient.orderItem.create({
      data: {
        orderId: order.id,
-       productId: null, // No product for credit recharge
+       productId: null, // No product for credit refill
        name: "Credit Recharge",
        quantity: 1,
-       price: rechargeAmount,
+       price: refillAmount,
        // ... other fields
      },
    });
@@ -1330,7 +1332,7 @@ All credit transactions follow this pattern:
 #### TOPUP
 
 * **Amount**: Positive (credit added)
-* **Reference**: `StoreOrder.id` (for customer recharge) or `null` (for manual recharge)
+* **Reference**: `StoreOrder.id` (for customer refill) or `null` (for manual refill)
 * **Creator**: `null` (customer-initiated) or operator `userId` (operator-initiated)
 * **Note**: "Top-up {amount}" or custom note
 
@@ -1396,12 +1398,12 @@ When processing a top-up:
 
 ### 6.1 Customer Recharge (Public)
 
-**Location**: `src/actions/store/[storeId]/credit/recharge.ts`
+**Location**: `src/actions/store/[storeId]/credit/refill.ts`
 
 ```typescript
-export const rechargeCreditAction = userRequiredActionClient
-  .metadata({ name: "rechargeCredit" })
-  .schema(rechargeCreditSchema)
+export const refillCreditAction = userRequiredActionClient
+  .metadata({ name: "refillCredit" })
+  .schema(refillCreditSchema)
   .action(async ({ parsedInput }) => {
     const { storeId, userId, amount } = parsedInput;
 
@@ -1422,7 +1424,7 @@ export const rechargeCreditAction = userRequiredActionClient
 **Schema**:
 
 ```typescript
-const rechargeCreditSchema = z.object({
+const refillCreditSchema = z.object({
   storeId: z.string().min(1),
   userId: z.string().min(1),
   amount: z.coerce.number().positive(),
@@ -1491,16 +1493,16 @@ export const processCreditTopUpAction = baseClient
 
 ### 6.3 Store Operator Recharge
 
-**Location**: `src/actions/storeAdmin/customer/recharge-customer-credit.ts`
+**Location**: `src/actions/storeAdmin/customer/refill-customer-credit.ts`
 
 ```typescript
-export const rechargeCustomerCreditAction = storeActionClient
-  .metadata({ name: "rechargeCustomerCredit" })
-  .schema(rechargeCustomerCreditSchema)
+export const refillCustomerCreditAction = storeActionClient
+  .metadata({ name: "refillCustomerCredit" })
+  .schema(refillCustomerCreditSchema)
   .action(async ({ parsedInput }) => {
     const { storeId, userId, creditAmount, cashAmount, isPaid, note } = parsedInput;
 
-    // Get the current user (store operator) who is creating this recharge
+    // Get the current user (store operator) who is creating this refill
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -1532,7 +1534,7 @@ export const rechargeCustomerCreditAction = storeActionClient
 
     let orderId: string | null = null;
 
-    // If paid recharge, create StoreOrder first
+    // If paid refill, create StoreOrder first
     if (isPaid && cashAmount && cashAmount > 0) {
       const order = await sqlClient.storeOrder.create({
         data: {
@@ -1558,7 +1560,7 @@ export const rechargeCustomerCreditAction = storeActionClient
       creditAmount,
       orderId, // Order ID if paid, null if promotional
       creatorId, // Store operator who created this
-      note || (isPaid ? `In-person cash recharge` : `Promotional recharge by operator`),
+      note || (isPaid ? `In-person cash refill` : `Promotional refill by operator`),
     );
 
     // Create StoreLedger entry
@@ -1571,7 +1573,7 @@ export const rechargeCustomerCreditAction = storeActionClient
     const balance = Number(lastLedger ? lastLedger.balance : 0);
 
     if (isPaid && cashAmount && cashAmount > 0) {
-      // Paid recharge: create StoreLedger entry with cash amount
+      // Paid refill: create StoreLedger entry with cash amount
       await sqlClient.storeLedger.create({
         data: {
           storeId,
@@ -1580,7 +1582,7 @@ export const rechargeCustomerCreditAction = storeActionClient
           fee: new Prisma.Decimal(0), // No payment processing fee for cash
           platformFee: new Prisma.Decimal(0), // No platform fee for cash
           currency: store.defaultCurrency,
-          type: 2, // Credit recharge type
+          type: 2, // Credit refill type
           balance: new Prisma.Decimal(balance + Number(cashAmount)), // Balance increases
           description: `In-Person Credit Recharge - ${result.totalCredit} points`,
           note: `Cash payment: ${cashAmount} ${store.defaultCurrency}. Credit given: ${result.amount} + bonus ${result.bonus} = ${result.totalCredit} points. Operator: ${creatorId}. ${note || ""}`,
@@ -1588,11 +1590,11 @@ export const rechargeCustomerCreditAction = storeActionClient
         },
       });
     } else {
-      // Promotional recharge: create StoreLedger entry with amount = 0
+      // Promotional refill: create StoreLedger entry with amount = 0
       await sqlClient.storeLedger.create({
         data: {
           storeId,
-          orderId: null, // No order for promotional recharge
+          orderId: null, // No order for promotional refill
           amount: new Prisma.Decimal(0), // Zero amount - no cash transaction
           fee: new Prisma.Decimal(0),
           platformFee: new Prisma.Decimal(0),
@@ -1619,7 +1621,7 @@ export const rechargeCustomerCreditAction = storeActionClient
 **Schema**:
 
 ```typescript
-const rechargeCustomerCreditSchema = z.object({
+const refillCustomerCreditSchema = z.object({
   storeId: z.string().min(1),
   userId: z.string().min(1),
   creditAmount: z.coerce.number().int().min(1, "Credit amount must be a positive integer"),
@@ -1907,9 +1909,9 @@ const getCustomerCreditBalancesSchema = z.object({
 ### 7.2 Validation
 
 * **Amount Validation**:
-  * Must be positive for recharges
-  * Must be within `creditMinPurchase` and `creditMaxPurchase` for customer recharges
-  * No limits for store operator recharges (but should be logged)
+  * Must be positive for refills
+  * Must be within `creditMinPurchase` and `creditMaxPurchase` for customer refills
+  * No limits for store operator refills (but should be logged)
 
 * **Balance Validation**:
   * Check sufficient balance before allowing credit usage
@@ -1994,19 +1996,19 @@ await tx.customerCredit.upsert({
 
 ### 9.1 Customer Recharge Flow
 
-* \[ ] Create `rechargeCreditAction` (public action)
+* \[ ] Create `refillCreditAction` (public action)
 * \[x] Create `processCreditTopUpAction` (called after payment) - Implemented as `processCreditTopUp` function in `@/lib/credit-bonus.ts`
-* \[x] Create recharge order creation logic - Implemented in `rechargeCustomerCreditAction` (creates StoreOrder when isPaid)
+* \[x] Create refill order creation logic - Implemented in `refillCustomerCreditAction` (creates StoreOrder when isPaid)
 * \[ ] Integrate with payment gateway webhooks
-* \[ ] Create customer-facing recharge UI
+* \[ ] Create customer-facing refill UI
 * \[ ] Add validation for min/max purchase amounts
 
 ### 9.2 Store Operator Recharge
 
-* \[x] Create `rechargeCustomerCreditAction`
-* \[x] Create store admin UI for manual recharge
+* \[x] Create `refillCustomerCreditAction`
+* \[x] Create store admin UI for manual refill
 * \[x] Add operator authentication/authorization
-* \[x] Add note field for manual recharges
+* \[x] Add note field for manual refills
 
 ### 9.3 Credit Usage
 
@@ -2044,11 +2046,11 @@ await tx.customerCredit.upsert({
 ### 9.7 StoreLedger Integration
 
 * \[x] Update `StoreLedger` schema to support credit transactions (add `type = 2` and `type = 3`)
-* \[x] Create StoreLedger entry when customer recharges credit (after payment confirmation) with positive amount - Implemented in `rechargeCustomerCreditAction` for paid recharges
+* \[x] Create StoreLedger entry when customer refills credit (after payment confirmation) with positive amount - Implemented in `refillCustomerCreditAction` for paid refills
 * \[ ] Create StoreLedger entry when credit is used for purchase (revenue recognition) with positive amount
 * \[ ] Create StoreLedger entry when credit is refunded (revenue reversal) with negative amount
-* \[x] **Create StoreLedger entry for manual operator recharges with `amount = 0`** (audit trail, no revenue impact)
-* \[x] **Include bonus credit in manual recharge StoreLedger entry** (no separate entry needed)
+* \[x] **Create StoreLedger entry for manual operator refills with `amount = 0`** (audit trail, no revenue impact)
+* \[x] **Include bonus credit in manual refill StoreLedger entry** (no separate entry needed)
 * \[ ] Update revenue reporting queries to include credit transactions
 * \[ ] Test accounting accuracy (unearned revenue vs. recognized revenue)
 * \[ ] Verify StoreLedger balance calculations include credit transactions
@@ -2081,11 +2083,11 @@ The system follows GAAP/IFRS accounting standards:
 * **Credit Refund**: Recorded in `StoreLedger` as revenue reversal
 * **Paid In-Person Recharge**: StoreLedger entry with actual cash amount (unearned revenue)
 * **Promotional Recharge**: StoreLedger entry with `amount = 0` (audit trail, no revenue impact)
-* **Bonus Credit**: Included in recharge StoreLedger entry (no separate entry needed)
+* **Bonus Credit**: Included in refill StoreLedger entry (no separate entry needed)
 
 Store owners can now view accurate revenue reports that distinguish between:
 
 * **Earned Revenue**: Revenue from completed orders (including credit usage)
-* **Unearned Revenue**: Customer deposits (credit recharges not yet used)
+* **Unearned Revenue**: Customer deposits (credit refills not yet used)
 
 All credit operations are atomic and recorded in both `CustomerCreditLedger` and `StoreLedger` for complete transparency, auditability, and proper financial reporting.

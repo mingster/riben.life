@@ -15,8 +15,8 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 
+import { MemberRole } from "@/types/enum";
 import { getEnumKeys } from "@/utils/utils";
-import { MemberRole, Role } from "@/types/enum";
 
 import { useState } from "react";
 

@@ -169,17 +169,6 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 				</DialogTrigger>
 				<DialogDescription> </DialogDescription>
 
-				{Object.keys(form.formState.errors).length > 0 && (
-					<div className="text-destructive space-y-2">
-						{Object.entries(form.formState.errors).map(([field, error]) => (
-							<div key={field} className="flex items-center gap-2">
-								<span className="font-medium">{field}:</span>
-								<span>{error.message as string}</span>
-							</div>
-						))}
-					</div>
-				)}
-
 				<DialogContent>
 					<DialogHeader className="gap-1">
 						<DialogTitle>{item.name}</DialogTitle>
@@ -307,7 +296,10 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												Role <span className="text-destructive">*</span>
+												<div>
+													{t("Role") || "Role"}{" "}
+													<span className="text-destructive">*</span>
+												</div>
 											</FormLabel>
 											<FormControl>
 												<UserRoleCombobox
@@ -507,9 +499,51 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									</>
 								)}
 
+								{Object.keys(form.formState.errors).length > 0 && (
+									<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+										<div className="text-sm font-semibold text-destructive">
+											Please fix the following errors:
+										</div>
+										{Object.entries(form.formState.errors).map(
+											([field, error]) => {
+												// Map field names to user-friendly labels
+												const fieldLabels: Record<string, string> = {
+													name: t("name"),
+													email: t("email"),
+													password: t("password"),
+													locale: t("account_tabs_language"),
+													timezone: t("timezone"),
+													role: t("Role"),
+													phoneNumber: t("phone"),
+													image: t("profile_image"),
+													phoneNumberVerified: t("phone_number_verified"),
+													twoFactorEnabled: "Two Factor Enabled",
+													banned: t("banned"),
+													banReason: t("ban_reason") || "Ban Reason",
+													banExpires: t("ban_expires") || "Ban Expires",
+												};
+												const fieldLabel = fieldLabels[field] || field;
+												return (
+													<div
+														key={field}
+														className="text-sm text-destructive flex items-start gap-2"
+													>
+														<span className="font-medium">{fieldLabel}:</span>
+														<span>{error.message as string}</span>
+													</div>
+												);
+											},
+										)}
+									</div>
+								)}
+
 								<Button
 									type="submit"
-									disabled={loading || form.formState.isSubmitting}
+									disabled={
+										loading ||
+										!form.formState.isValid ||
+										form.formState.isSubmitting
+									}
 									className="disabled:opacity-25"
 								>
 									{t("submit")}

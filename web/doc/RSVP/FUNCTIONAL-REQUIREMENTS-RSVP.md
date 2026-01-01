@@ -249,7 +249,7 @@ Store Admins have all Store Staff permissions, plus:
      * If customer selects "credit" payment method:
        * System checks if customer has sufficient credit balance
        * If sufficient: System deducts credit and marks order as paid
-       * If insufficient: Customer must recharge credit or select different payment method
+       * If insufficient: Customer must refill credit or select different payment method
      * If customer selects other payment method (Stripe, LINE Pay, etc.):
        * Customer completes payment through payment provider
        * System marks order as paid after payment confirmation
@@ -340,9 +340,9 @@ Store Admins have all Store Staff permissions, plus:
 
 **Payment Flow (if prepaid required and store uses credit system):**
 
-* Customer can create a pending RSVP first, then be prompted to complete recharge of store credit if his/her credit is not sufficient.
-* When customer's credit is recharged, system deduced needed credit for the RSVP, the `alreadyPaid` flag is set to `true`
-* The transaction is saved to StoreOrder, CreditLedger, and StoreLeger for the recharge and the credit usage.
+* Customer can create a pending RSVP first, then be prompted to complete refill of store credit if his/her credit is not sufficient.
+* When customer's credit is refilld, system deduced needed credit for the RSVP, the `alreadyPaid` flag is set to `true`
+* The transaction is saved to StoreOrder, CreditLedger, and StoreLeger for the refill and the credit usage.
 * The reservation status changes to `ReadyToConfirm (10)`
 * The reservation is linked to the order via `orderId`
 * Store staff notifications are sent only when `alreadyPaid = true` and status is `ReadyToConfirm (10)`

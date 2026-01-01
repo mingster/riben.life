@@ -2,6 +2,7 @@ import logger from "@/lib/logger";
 import { maskPhoneNumber } from "@/utils/utils";
 import { auth } from "../auth";
 import { headers } from "next/headers";
+import { getClientIP } from "@/utils/geo-ip";
 
 export interface VerifyOTPParams {
 	phoneNumber: string; // E.164 format
@@ -20,6 +21,10 @@ export async function verifyOTP({
 	try {
 		const headersList = await headers();
 
+		// Extract IP address and user agent for logging
+		const ipAddress = getClientIP(headersList) ?? undefined;
+		const userAgent = headersList.get("user-agent") || undefined;
+
 		// Use Better Auth's verifyPhoneNumber API
 		const result = await auth.api.verifyPhoneNumber({
 			body: {
@@ -34,14 +39,19 @@ export async function verifyOTP({
 		// Check if verification was successful
 		// Better Auth returns: { status: boolean, token: string | null, user: UserWithPhoneNumber }
 		if (!result.status || !result.token) {
-			logger.warn("OTP verification failed", {
+			// Log failed OTP verification attempt to system_logs
+			logger.warn("OTP verification attempt - failed", {
 				metadata: {
 					phoneNumber: maskPhoneNumber(phoneNumber),
 					codeLength: code.length,
-					status: result.status,
+					resultStatus: result.status,
 					hasToken: !!result.token,
+					status: "failed",
 				},
-				tags: ["otp", "verify", "failed"],
+				tags: ["phone-auth", "otp-verify"],
+				userId: result.user?.id,
+				ip: ipAddress,
+				userAgent,
 			});
 
 			return {
@@ -50,16 +60,43 @@ export async function verifyOTP({
 			};
 		}
 
+		// Log successful OTP verification attempt to system_logs
+		logger.info("OTP verification attempt - succeeded", {
+			metadata: {
+				phoneNumber: maskPhoneNumber(phoneNumber),
+				status: "success",
+			},
+			tags: ["phone-auth", "otp-verify"],
+			userId: result.user?.id,
+			ip: ipAddress,
+			userAgent,
+		});
+
 		return {
 			valid: true,
 		};
 	} catch (error) {
-		logger.error("Failed to verify OTP", {
+		// Extract IP and user agent for logging (reuse headersList if available)
+		let ipAddress: string | undefined;
+		let userAgent: string | undefined;
+		try {
+			const headersList = await headers();
+			ipAddress = getClientIP(headersList) ?? undefined;
+			userAgent = headersList.get("user-agent") || undefined;
+		} catch {
+			// If headers() fails, continue without IP/userAgent
+		}
+
+		// Log OTP verification error to system_logs
+		logger.error("OTP verification attempt - error", {
 			metadata: {
 				phoneNumber: maskPhoneNumber(phoneNumber),
 				error: error instanceof Error ? error.message : String(error),
+				status: "error",
 			},
-			tags: ["otp", "error"],
+			tags: ["phone-auth", "otp-verify"],
+			ip: ipAddress,
+			userAgent,
 		});
 
 		return {

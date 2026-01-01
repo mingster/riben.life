@@ -12,7 +12,7 @@ import { createStoreSchema } from "./create-store.validation";
 import fs from "node:fs";
 import { Role, type Organization } from "@prisma/client";
 import crypto from "crypto";
-import { ensureCreditRechargeProduct } from "@/actions/store/credit/ensure-credit-recharge-product";
+import { ensureCreditRefillProduct } from "@/actions/store/credit/ensure-credit-refill-product";
 import { ensureReservationPrepaidProduct } from "@/actions/store/reservation/ensure-reservation-prepaid-product";
 
 export const createStoreAction = userRequiredActionClient
@@ -309,14 +309,14 @@ export const createStoreAction = userRequiredActionClient
 			},
 		});
 
-		// Create special system product for credit recharge (FR-PAY-004.1)
+		// Create special system product for credit refill (FR-PAY-004.1)
 		try {
-			await ensureCreditRechargeProduct(databaseId);
+			await ensureCreditRefillProduct(databaseId);
 			await ensureReservationPrepaidProduct(databaseId);
 		} catch (error) {
 			// Log but don't fail store creation if product creation fails
 			logger.error(
-				"Failed to create credit recharge product during store creation",
+				"Failed to create credit refill product during store creation",
 				{
 					metadata: {
 						storeId: databaseId,

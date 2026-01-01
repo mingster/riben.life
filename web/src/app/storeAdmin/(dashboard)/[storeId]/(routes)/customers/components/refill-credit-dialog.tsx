@@ -1,10 +1,10 @@
 "use client";
 
-import { rechargeCustomerCreditAction } from "@/actions/storeAdmin/customer/recharge-customer-credit";
+import { refillCustomerCreditAction } from "@/actions/storeAdmin/customer/refill-customer-credit";
 import {
-	rechargeCustomerCreditSchema,
-	type RechargeCustomerCreditInput,
-} from "@/actions/storeAdmin/customer/recharge-customer-credit.validation";
+	refillCustomerCreditSchema,
+	type RefillCustomerCreditInput,
+} from "@/actions/storeAdmin/customer/refill-customer-credit.validation";
 import { useTranslation } from "@/app/i18n/client";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
@@ -37,25 +37,25 @@ import { useCallback, useEffect, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 
-interface RechargeCreditDialogProps {
+interface RefillCreditDialogProps {
 	user: User;
 	trigger?: React.ReactNode;
-	onRecharged?: () => void;
+	onRefilled?: () => void;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 }
 
 /**
- * This dialog is used to recharge credit for a user as described in section 3.2 of
+ * This dialog is used to refill credit for a user as described in section 3.2 of
  * the [CUSTOMER-CREDIT-DESIGN.md](../../../../../doc/CUSTOMER-CREDIT-DESIGN.md) file.
  */
-export function RechargeCreditDialog({
+export function RefillCreditDialog({
 	user,
 	trigger,
-	onRecharged,
+	onRefilled,
 	open,
 	onOpenChange,
-}: RechargeCreditDialogProps) {
+}: RefillCreditDialogProps) {
 	const params = useParams<{ storeId: string }>();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -63,7 +63,7 @@ export function RechargeCreditDialog({
 	const [internalOpen, setInternalOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	const defaultValues: RechargeCustomerCreditInput = {
+	const defaultValues: RefillCustomerCreditInput = {
 		userId: user.id,
 		creditAmount: 0,
 		cashAmount: 0,
@@ -71,10 +71,10 @@ export function RechargeCreditDialog({
 		note: null,
 	};
 
-	const form = useForm<RechargeCustomerCreditInput>({
+	const form = useForm<RefillCustomerCreditInput>({
 		resolver: zodResolver(
-			rechargeCustomerCreditSchema,
-		) as Resolver<RechargeCustomerCreditInput>,
+			refillCustomerCreditSchema,
+		) as Resolver<RefillCustomerCreditInput>,
 		defaultValues,
 		mode: "onChange",
 		reValidateMode: "onChange",
@@ -111,11 +111,11 @@ export function RechargeCreditDialog({
 		}
 	};
 
-	const onSubmit = async (values: RechargeCustomerCreditInput) => {
+	const onSubmit = async (values: RefillCustomerCreditInput) => {
 		try {
 			setLoading(true);
 
-			const result = await rechargeCustomerCreditAction(
+			const result = await refillCustomerCreditAction(
 				String(params.storeId),
 				{
 					userId: user.id,
@@ -136,17 +136,17 @@ export function RechargeCreditDialog({
 
 			if (result?.data) {
 				//const { bonus, totalCredit } = result.data;
-				const rechargeType = values.isPaid
+				const refillType = values.isPaid
 					? t("customer_credit_in_person_payment") || "In-Person Payment"
 					: t("customer_credit_promotional_payment") || "Promotional";
 				toastSuccess({
 					title: t("success_title"),
-					description: t("customer_credit_recharged") || "Credit Recharged",
+					description: t("customer_credit_refilld") || "Credit Recharged",
 				});
 			}
 			resetForm();
 			handleOpenChange(false);
-			onRecharged?.();
+			onRefilled?.();
 		} catch (error: unknown) {
 			toastError({
 				title: t("error_title"),
@@ -158,7 +158,7 @@ export function RechargeCreditDialog({
 	};
 
 	let dialogDescription =
-		t("customer_credit_recharge_description") || "Add credit to {0}'s account";
+		t("customer_credit_refill_description") || "Add credit to {0}'s account";
 	dialogDescription = dialogDescription.replace("{0}", user.name || user.email);
 
 	return (
@@ -167,7 +167,7 @@ export function RechargeCreditDialog({
 			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
 					<DialogTitle>
-						{t("customer_credit_recharge") || "Recharge Credit"}
+						{t("customer_credit_refill") || "Recharge Credit"}
 					</DialogTitle>
 					<DialogDescription className="text-xs font-mono text-muted-foreground">
 						{dialogDescription}
@@ -300,8 +300,8 @@ export function RechargeCreditDialog({
 												field.onChange(event.target.value || null)
 											}
 											placeholder={
-												t("customer_credit_recharge_note_placeholder") ||
-												"Optional note for this recharge"
+												t("customer_credit_refill_note_placeholder") ||
+												"Optional note for this refill"
 											}
 										/>
 									</FormControl>
@@ -319,7 +319,7 @@ export function RechargeCreditDialog({
 									form.formState.isSubmitting
 								}
 							>
-								{t("customer_credit_recharge") || "Recharge"}
+								{t("customer_credit_refill") || "Recharge"}
 							</Button>
 							<Button
 								type="button"

@@ -101,7 +101,7 @@ The system handles:
   - Sets up default payment methods
   - Sets up default shipping methods
   - Creates default privacy policy and terms of service
-  - Initializes credit recharge product (if credit system enabled)
+  - Initializes credit refill product (if credit system enabled)
   - Initializes reservation prepaid product (if RSVP system enabled)
   - Updates user role to `owner` if currently `user`
 
@@ -139,6 +139,7 @@ The system handles:
 **FR-ORDER-004:** Store owners/admins must be able to configure store settings:
 
 **Basic Settings:**
+
 - Store name
 - Default locale
 - Default country
@@ -148,6 +149,7 @@ The system handles:
 - Custom domain (if subscription level supports)
 
 **Order Settings:**
+
 - `autoAcceptOrder`: Automatically accept orders (default: `true`)
 - `acceptAnonymousOrder`: Allow orders from anonymous users (default: `true`)
 - `requireSeating`: Require seating selection (default: `false`)
@@ -156,6 +158,7 @@ The system handles:
 - `useOrderSystem`: Enable order system (default: `false`)
 
 **Credit System Settings** (if enabled):
+
 - `useCustomerCredit`: Enable customer credit system
 - `creditExchangeRate`: 1 credit point = X dollars
 - `creditServiceExchangeRate`: 1 credit point = X minutes of service
@@ -164,24 +167,28 @@ The system handles:
 - `creditExpiration`: Credit expiration period (days)
 
 **Payment & Shipping:**
+
 - Enable/disable payment methods
 - Configure payment method settings
 - Enable/disable shipping methods
 - Configure shipping method settings
 
 **Contact Information:**
+
 - Store address
 - Phone number
 - Email address
 - Social media links
 
 **Bank Account** (for payouts):
+
 - Bank code
 - Bank account number
 - Bank account name
 - Payout schedule
 
 **Privacy & Terms:**
+
 - Privacy policy content
 - Terms of service content
 
@@ -345,21 +352,25 @@ The system handles:
 **FR-ORDER-017:** Customers must be able to complete checkout:
 
 **Step 1: Review Cart**
+
 - Review cart contents
 - Verify quantities and prices
 - Add order notes (optional)
 
 **Step 2: Select Shipping Method**
+
 - View available shipping methods
 - Select shipping method
 - Shipping cost is calculated and added to total
 
 **Step 3: Select Payment Method**
+
 - View available payment methods
 - Select payment method
 - Payment method determines payment flow
 
 **Step 4: Place Order**
+
 - System validates:
   - Cart is not empty
   - All products are still available
@@ -440,6 +451,7 @@ The system handles:
 **FR-ORDER-020:** Order status lifecycle:
 
 **Order Status Enum:**
+
 - `Pending` (10): Order created, awaiting store acceptance
 - `Processing` (20): Order accepted, being prepared
 - `InShipping` (30): Order shipped, in transit
@@ -449,6 +461,7 @@ The system handles:
 - `Voided` (90): Order voided/cancelled
 
 **Status Transitions:**
+
 - `Pending` → `Processing`: Store accepts order (if `autoAcceptOrder` is `false`)
 - `Processing` → `InShipping`: Store marks as shipped (if shipping required)
 - `Processing` → `Completed`: Store marks as completed (if no shipping)
@@ -462,6 +475,7 @@ The system handles:
 **FR-ORDER-021:** Payment status lifecycle:
 
 **Payment Status Enum:**
+
 - `Pending` (10): Payment not yet processed
 - `SelfPickup` (11): Self-pickup payment (cash/in-person)
 - `Authorized` (20): Payment authorized (awaiting capture)
@@ -471,6 +485,7 @@ The system handles:
 - `Voided` (60): Payment voided
 
 **Payment Processing:**
+
 - Payment status is managed by payment method plugins
 - Payment confirmation updates:
   - `isPaid`: `true`
@@ -485,6 +500,7 @@ The system handles:
 **FR-ORDER-022:** Store admins must be able to manage orders:
 
 **View Orders:**
+
 - View all orders
 - Filter by status:
   - Pending orders
@@ -500,6 +516,7 @@ The system handles:
 - Sort by date, status, total
 
 **Order Actions:**
+
 - Accept pending orders (if `autoAcceptOrder` is `false`)
 - Update order status
 - Mark order as paid (for cash/in-person payments)
@@ -586,6 +603,7 @@ The system handles:
 **FR-ORDER-027:** Store admins must be able to manage customers:
 
 **View Customers:**
+
 - View all customers
 - Search customers by:
   - Name
@@ -599,6 +617,7 @@ The system handles:
   - Reservation history (if RSVP enabled)
 
 **Customer Actions:**
+
 - Edit customer information
 - Recharge customer credit (if credit system enabled)
 - View customer orders
@@ -646,6 +665,7 @@ The system handles:
 **FR-ORDER-030:** System admins must be able to manage the platform:
 
 **Store Management:**
+
 - View all stores
 - View store details:
   - Store information
@@ -659,6 +679,7 @@ The system handles:
 - View store statistics
 
 **User Management:**
+
 - View all users
 - Search users
 - Edit user information
@@ -667,17 +688,20 @@ The system handles:
 - View user activity
 
 **Payment Method Management:**
+
 - Create/edit/delete payment methods
 - Configure payment method settings
 - Set default payment methods
 - Manage payment method plugins
 
 **Shipping Method Management:**
+
 - Create/edit/delete shipping methods
 - Configure shipping method settings
 - Set default shipping methods
 
 **System Settings:**
+
 - Configure platform-wide settings
 - Manage system messages
 - Configure email templates
@@ -810,7 +834,7 @@ The system handles:
 
 - Customers can use credit balance for orders (if enabled)
 - Credit is deducted when order is confirmed
-- Credit recharge creates order for credit purchase
+- Credit refill creates order for credit purchase
 - See [FUNCTIONAL-REQUIREMENTS-CREDIT.md](../CREDIT/FUNCTIONAL-REQUIREMENTS-CREDIT.md) for details
 
 ### 10.3 RSVP System Integration
@@ -982,4 +1006,3 @@ This document defines the functional requirements for the ordering system, store
 6. **System Administration**: System admins can manage the entire platform
 
 The system integrates with payment, credit, RSVP, and notification systems to provide a complete e-commerce solution.
-

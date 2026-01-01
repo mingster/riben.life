@@ -11,6 +11,7 @@ interface UserFilterProps {
 		name: string;
 		email: string;
 		stripeCustomerId: string;
+		phoneNumber: string;
 	}) => void;
 }
 
@@ -28,6 +29,7 @@ export const UserFilter: React.FC<UserFilterProps> = ({ onFilterChange }) => {
 				name: trimmedValue,
 				email: trimmedValue,
 				stripeCustomerId: trimmedValue,
+				phoneNumber: trimmedValue,
 			});
 		},
 		[onFilterChange],
@@ -52,27 +54,32 @@ export const UserFilter: React.FC<UserFilterProps> = ({ onFilterChange }) => {
 
 	const handleClearSearch = useCallback(() => {
 		setSearchTerm("");
-		onFilterChange({ name: "", email: "", stripeCustomerId: "" });
+		onFilterChange({
+			name: "",
+			email: "",
+			stripeCustomerId: "",
+			phoneNumber: "",
+		});
 	}, [onFilterChange]);
 
 	return (
-		<div className="relative w-full sm:flex-1 sm:max-w-sm">
-			<IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-4 sm:w-4 text-muted-foreground" />
+		<div className="relative flex-1 max-w-sm">
+			<IconSearch className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
 			<Input
 				placeholder={t("users_search")}
 				value={searchTerm}
 				onChange={handleSearchChange}
-				className="pl-9 sm:pl-8 pr-10 sm:pr-8 h-10 sm:h-9 text-base sm:text-sm"
-				aria-label="Search users by name, email, or Stripe customer ID"
+				className="pl-8 pr-8"
+				aria-label="Search users by name, email, Stripe customer ID, or phone number"
 			/>
 			{searchTerm && (
 				<button
 					onClick={handleClearSearch}
-					className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 sm:h-6 sm:w-6 flex items-center justify-center text-muted-foreground hover:text-foreground active:text-foreground transition-colors"
+					className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
 					aria-label="Clear search"
 					title="Clear search"
 				>
-					<IconX className="h-4 w-4 sm:h-4 sm:w-4" />
+					<IconX className="h-4 w-4" />
 				</button>
 			)}
 		</div>

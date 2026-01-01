@@ -28,7 +28,7 @@ This rule defines mobile optimization guidelines for iPhone 16 and later devices
 ```tsx
 // Button example
 <Button
-  className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation"
+  className="h-10 sm:h-9 sm:min-h-0 touch-manipulation"
   // Mobile: 40px height with 44px minimum
   // Desktop: 36px height, no minimum
 />
@@ -36,7 +36,7 @@ This rule defines mobile optimization guidelines for iPhone 16 and later devices
 // Icon button example
 <Button
   size="icon"
-  className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+  className="h-10 w-10 sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
 />
 ```
 
@@ -118,7 +118,7 @@ Use progressive spacing that increases with screen size:
 <Button
   variant="outline"
   size="sm"
-  className="h-10 min-h-[44px] sm:h-8 sm:min-h-0 touch-manipulation"
+  className="h-10 sm:h-8 sm:min-h-0 touch-manipulation"
 >
   Action
 </Button>
@@ -129,7 +129,7 @@ Use progressive spacing that increases with screen size:
 ```tsx
 <Button
   size="icon"
-  className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 touch-manipulation"
+  className="h-10 w-10 sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0 touch-manipulation"
 >
   <Icon />
 </Button>
@@ -149,7 +149,7 @@ All button variants should include:
 
 ```tsx
 <Input
-  className="h-10 min-h-[44px] text-base sm:text-sm touch-manipulation"
+  className="h-10 text-base sm:text-sm touch-manipulation"
   // Mobile: 16px font size prevents iOS zoom
   // Desktop: 14px font size
 />
@@ -160,14 +160,14 @@ All button variants should include:
 ```tsx
 <input
   type="checkbox"
-  className="h-5 w-5 min-h-[44px] min-w-[44px] sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
+  className="h-5 w-5 sm:h-4 sm:w-4 sm:min-h-0 sm:min-w-0 touch-manipulation"
 />
 ```
 
 ### Select/Dropdown
 
 ```tsx
-<SelectTrigger className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 touch-manipulation">
+<SelectTrigger className="h-10 sm:h-9 sm:min-h-0 touch-manipulation">
   {/* Ensure touch targets */}
 </SelectTrigger>
 ```
@@ -229,7 +229,7 @@ All button variants should include:
 
 ```tsx
 <DialogPrimitive.Close
-  className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-auto sm:w-auto sm:min-h-0 sm:min-w-0 flex items-center justify-center touch-manipulation"
+  className="h-10 w-10 sm:h-auto sm:w-auto sm:min-h-0 sm:min-w-0 flex items-center justify-center touch-manipulation"
 >
   <XIcon />
 </DialogPrimitive.Close>
@@ -252,15 +252,16 @@ Menu items in navigation menus (sidebar menus, sheet menus, etc.) should use fix
   <span>Menu Item</span>
 </Button>
 
-// ❌ WRONG: Don't use min-h-[44px] for menu items
+// ❌ WRONG: Don't use for menu items
 <Button
-  className="h-11 min-h-[44px] w-full sm:h-10 sm:min-h-0"
+  className="h-11 w-full sm:h-10 sm:min-h-0"
 >
   Menu Item
 </Button>
 ```
 
 **Rationale:**
+
 - Menu items are typically in scrollable containers where fixed heights work better
 - `min-h-[44px]` can cause layout issues in flex containers
 - `h-11` (44px) provides the required touch target size directly
@@ -305,7 +306,7 @@ Menu items in navigation menus (sidebar menus, sheet menus, etc.) should use fix
 <div className="flex items-center gap-1.5 sm:gap-2">
   <Button
     size="icon"
-    className="h-10 w-10 min-h-[44px] min-w-[44px] sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
+    className="h-10 w-10 sm:h-9 sm:w-9 sm:min-h-0 sm:min-w-0"
   >
     <Icon />
   </Button>
@@ -385,7 +386,6 @@ Menu items in navigation menus (sidebar menus, sheet menus, etc.) should use fix
 
 When implementing mobile optimizations:
 
-- [ ] All buttons are at least 44x44px on mobile
 - [ ] Touch targets have proper spacing (minimum 8px between)
 - [ ] Text is readable without zooming (16px+ recommended)
 - [ ] Tables scroll horizontally on mobile
@@ -425,7 +425,7 @@ When implementing mobile optimizations:
   variant="outline"
   size="sm"
   onClick={handleClick}
-  className="h-10 min-h-[44px] px-3 sm:h-8 sm:min-h-0 sm:px-3 touch-manipulation"
+  className="h-10 px-3 sm:h-8 sm:min-h-0 sm:px-3 touch-manipulation"
 >
   <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
   <span className="text-sm sm:text-xs">Action</span>
@@ -444,7 +444,7 @@ When implementing mobile optimizations:
       <FormControl>
         <Input
           type="email"
-          className="h-10 min-h-[44px] text-base sm:text-sm touch-manipulation"
+          className="h-10 text-base sm:text-sm touch-manipulation"
           placeholder="Enter email"
           {...field}
         />
@@ -472,11 +472,11 @@ When implementing mobile optimizations:
     <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
       <Button
         variant="outline"
-        className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0"
+        className="w-full sm:w-auto h-10 sm:h-9 sm:min-h-0"
       >
         Cancel
       </Button>
-      <Button className="w-full sm:w-auto h-10 min-h-[44px] sm:h-9 sm:min-h-0">
+      <Button className="w-full sm:w-auto h-10 sm:h-9 sm:min-h-0">
         Save
       </Button>
     </DialogFooter>

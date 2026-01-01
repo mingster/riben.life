@@ -31,7 +31,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 	.action(async ({ parsedInput }) => {
 		const { orderId } = parsedInput;
 
-		// Get order and verify it's a recharge order
+		// Get order and verify it's a refill order
 		const order = await sqlClient.storeOrder.findUnique({
 			where: { id: orderId },
 			include: {
@@ -134,7 +134,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 			creditAmount,
 			orderId, // referenceId
 			null, // creatorId (null for customer-initiated)
-			t("credit_recharge_customer_ledger_note", {
+			t("credit_refill_customer_ledger_note", {
 				creditAmount,
 				dollarAmount,
 				currency: order.Store.defaultCurrency.toUpperCase(),
@@ -226,7 +226,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 				},
 			});
 
-			// Create StoreLedger entry for credit recharge (unearned revenue, type = CreditRecharge)
+			// Create StoreLedger entry for credit refill (unearned revenue, type = CreditRecharge)
 			await tx.storeLedger.create({
 				data: {
 					storeId: order.storeId,
@@ -239,7 +239,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 					balance: new Prisma.Decimal(
 						balance + dollarAmount + (fee + feeTax) + platformFee,
 					),
-					description: t("credit_recharge_description_ledger", {
+					description: t("credit_refill_description_ledger", {
 						creditAmount,
 						dollarAmount,
 						currency: order.Store.defaultCurrency.toUpperCase(),
@@ -247,7 +247,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 						bonus: processCreditTopUpResult.bonus,
 						totalCredit: processCreditTopUpResult.totalCredit,
 					}),
-					note: t("credit_recharge_note_ledger", {
+					note: t("credit_refill_note_ledger", {
 						orderId: order.id,
 					}),
 					availability: BigInt(availabilityDate.getTime()),
@@ -321,8 +321,8 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 					}
 				}
 			} catch (error) {
-				// Log error but don't fail the recharge process
-				logger.error("Failed to process RSVP prepaid payment after recharge", {
+				// Log error but don't fail the refill process
+				logger.error("Failed to process RSVP prepaid payment after refill", {
 					metadata: {
 						rsvpId,
 						orderId,

@@ -6,20 +6,20 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { processCreditTopUp } from "@/lib/credit-bonus";
-import { rechargeCustomerCreditSchema } from "./recharge-customer-credit.validation";
+import { refillCustomerCreditSchema } from "./refill-customer-credit.validation";
 import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
 import { Prisma } from "@prisma/client";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { getT } from "@/app/i18n";
 
-export const rechargeCustomerCreditAction = storeActionClient
-	.metadata({ name: "rechargeCustomerCredit" })
-	.schema(rechargeCustomerCreditSchema)
+export const refillCustomerCreditAction = storeActionClient
+	.metadata({ name: "refillCustomerCredit" })
+	.schema(refillCustomerCreditSchema)
 	.action(async ({ parsedInput, bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
 		const { userId, creditAmount, cashAmount, isPaid, note } = parsedInput;
 
-		// Get the current user (store operator) who is creating this recharge
+		// Get the current user (store operator) who is creating this refill
 		const session = await auth.api.getSession({
 			headers: await headers(),
 		});
@@ -143,8 +143,8 @@ export const rechargeCustomerCreditAction = storeActionClient
 			creatorId, // Store operator who created this
 			note ||
 				(isPaid
-					? t("in_person_cash_recharge_default_note")
-					: t("promotional_recharge_by_operator_default_note")),
+					? t("in_person_cash_refill_default_note")
+					: t("promotional_refill_by_operator_default_note")),
 		);
 
 		// Create StoreLedger entry
@@ -168,11 +168,11 @@ export const rechargeCustomerCreditAction = storeActionClient
 					currency: store.defaultCurrency,
 					type: StoreLedgerType.CreditRecharge,
 					balance: new Prisma.Decimal(balance + Number(cashAmount)), // Balance increases
-					description: t("in_person_credit_recharge_description_ledger", {
+					description: t("in_person_credit_refill_description_ledger", {
 						totalCredit: result.totalCredit,
 					}),
 					note: note
-						? t("in_person_credit_recharge_note_with_extra", {
+						? t("in_person_credit_refill_note_with_extra", {
 								cashAmount,
 								currency: store.defaultCurrency.toUpperCase(),
 								amount: result.amount,
@@ -181,7 +181,7 @@ export const rechargeCustomerCreditAction = storeActionClient
 								operator: creatorId,
 								note,
 							})
-						: t("in_person_credit_recharge_note_ledger", {
+						: t("in_person_credit_refill_note_ledger", {
 								cashAmount,
 								currency: store.defaultCurrency.toUpperCase(),
 								amount: result.amount,
@@ -195,7 +195,7 @@ export const rechargeCustomerCreditAction = storeActionClient
 				},
 			});
 		} else {
-			// Promotional recharge: create a minimal system order for StoreLedger reference
+			// Promotional refill: create a minimal system order for StoreLedger reference
 			//
 			const promoPaymentMethod = await sqlClient.paymentMethod.findFirst({
 				where: {
@@ -236,18 +236,18 @@ export const rechargeCustomerCreditAction = storeActionClient
 					currency: store.defaultCurrency,
 					type: StoreLedgerType.CreditRecharge,
 					balance: new Prisma.Decimal(balance), // Balance unchanged
-					description: t("promotional_credit_recharge_description_ledger", {
+					description: t("promotional_credit_refill_description_ledger", {
 						totalCredit: result.totalCredit,
 					}),
 					note: note
-						? t("promotional_credit_recharge_note_with_extra", {
+						? t("promotional_credit_refill_note_with_extra", {
 								amount: result.amount,
 								bonus: result.bonus,
 								totalCredit: result.totalCredit,
 								operator: creatorId,
 								note,
 							})
-						: t("promotional_credit_recharge_note_ledger", {
+						: t("promotional_credit_refill_note_ledger", {
 								amount: result.amount,
 								bonus: result.bonus,
 								totalCredit: result.totalCredit,

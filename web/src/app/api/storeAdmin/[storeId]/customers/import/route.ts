@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { getUtcNow } from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { Prisma } from "@prisma/client";
+import { CustomerCreditLedgerType } from "@/types/enum";
 import crypto from "crypto";
 
 // Parse CSV string to array of objects
@@ -176,6 +180,15 @@ export async function POST(
 		const fileContent = await file.text();
 		const customers = parseCsv(fileContent);
 
+		log.info("CSV parsed", {
+			metadata: {
+				storeId: params.storeId,
+				totalRows: customers.length,
+				headers: customers.length > 0 ? Object.keys(customers[0]) : [],
+			},
+			tags: ["customer", "import"],
+		});
+
 		if (customers.length === 0) {
 			return NextResponse.json(
 				{ success: false, error: "No data found in CSV file" },
@@ -187,125 +200,571 @@ export async function POST(
 		let errorCount = 0;
 		const errors: string[] = [];
 
+		// Get current user (store operator) for creatorId in ledger entries
+		const headersList = await headers();
+		const session = await auth.api.getSession({
+			headers: headersList,
+		});
+		const creatorId = session?.user?.id || null;
+
+		log.info("Starting import process", {
+			metadata: {
+				storeId: params.storeId,
+				organizationId: store.organizationId,
+				totalCustomers: customers.length,
+				creatorId,
+			},
+			tags: ["customer", "import"],
+		});
+
 		// Process each customer
 		for (let i = 0; i < customers.length; i++) {
 			const customer = customers[i];
 			const rowNum = i + 2; // +2 because row 1 is header, and arrays are 0-indexed
 
+			log.info(`Processing row ${rowNum}`, {
+				metadata: {
+					storeId: params.storeId,
+					rowNum,
+					customerData: customer,
+				},
+				tags: ["customer", "import", "debug"],
+			});
+
 			try {
-				// Validate required fields
-				if (!customer.name || !customer.name.trim()) {
-					errors.push(`Row ${rowNum}: Name is required`);
+				// Validate: name is required
+				const name = customer.name?.trim() || "";
+				if (!name) {
+					const errorMsg = `Row ${rowNum}: Name is required`;
+					errors.push(errorMsg);
 					errorCount++;
+					log.warn(`Row ${rowNum}: Validation failed`, {
+						metadata: {
+							storeId: params.storeId,
+							rowNum,
+							error: errorMsg,
+						},
+						tags: ["customer", "import", "error"],
+					});
 					continue;
 				}
 
-				const name = customer.name.trim();
+				// Email and phoneNumber are optional
+				const email = customer.email?.trim() || "";
+				const phoneNumber = customer.phoneNumber?.trim() || "";
 
-				// Find existing user by email if provided, otherwise by name
-				let existingUser = null;
-				if (customer.email && customer.email.trim()) {
-					const email = customer.email.trim().toLowerCase();
-					existingUser = await sqlClient.user.findUnique({
-						where: {
-							email: email,
-						},
-						include: {
-							members: {
-								where: {
-									organizationId: store.organizationId,
-								},
-							},
-						},
-					});
-				} else {
-					// Find by name - note: names are not unique, so we take the first match
-					// and check if they're already a member of this organization
-					const usersByName = await sqlClient.user.findMany({
-						where: {
-							name: name,
-						},
-						include: {
-							members: {
-								where: {
-									organizationId: store.organizationId,
-								},
-							},
-						},
-					});
+				log.info(`Row ${rowNum}: Parsed values`, {
+					metadata: {
+						storeId: params.storeId,
+						rowNum,
+						name,
+						email,
+						phoneNumber,
+						memberRole: customer.memberRole,
+						creditPoint: customer.creditPoint,
+						creditFiat: customer.creditFiat,
+					},
+					tags: ["customer", "import", "debug"],
+				});
 
-					// Find user who is already a member of this organization
-					existingUser =
-						usersByName.find((u) => u.members.length > 0) ||
-						usersByName[0] ||
-						null;
+				// Generate email if not provided
+				let finalEmail = email;
+				if (!finalEmail) {
+					if (phoneNumber) {
+						// Mock email from phoneNumber if phoneNumber provided (using auth.ts spec)
+						finalEmail = `${phoneNumber.replace(/[^0-9]/g, "")}@phone.riben.life`;
+					} else {
+						// Generate unique email from name + timestamp + random
+						const sanitizedName = name
+							.replace(/[^a-zA-Z0-9]/g, "")
+							.toLowerCase()
+							.substring(0, 20);
+						const timestamp = Date.now();
+						const random = crypto.randomBytes(4).toString("hex");
+						finalEmail = `${sanitizedName}-${timestamp}-${random}@import.riben.life`;
+					}
 				}
 
-				if (existingUser) {
+				// Normalize email to lowercase
+				finalEmail = finalEmail.toLowerCase();
+
+				// Get values with defaults
+				const memberRole = customer.memberRole?.trim() || "customer";
+				let creditPoint = customer.creditPoint
+					? parseFloat(customer.creditPoint)
+					: 0;
+				let creditFiat = customer.creditFiat
+					? parseFloat(customer.creditFiat)
+					: 0;
+
+				// Set invalid credit values to 0 (no point or fiat is ok)
+				if (isNaN(creditPoint) || creditPoint < 0) {
+					creditPoint = 0;
+				}
+
+				if (isNaN(creditFiat) || creditFiat < 0) {
+					creditFiat = 0;
+				}
+
+				// Find existing user by email first (if email was provided or generated)
+				let user: Awaited<
+					ReturnType<
+						typeof sqlClient.user.findUnique<{
+							where: { email: string };
+							include: { members: true };
+						}>
+					>
+				> = null;
+
+				if (finalEmail) {
+					user = await sqlClient.user.findUnique({
+						where: {
+							email: finalEmail,
+						},
+						include: {
+							members: {
+								where: {
+									organizationId: store.organizationId,
+								},
+							},
+						},
+					});
+				}
+
+				log.info(`Row ${rowNum}: User lookup by email`, {
+					metadata: {
+						storeId: params.storeId,
+						rowNum,
+						finalEmail,
+						userFound: !!user,
+						userId: user?.id,
+						existingMembers: user?.members?.length || 0,
+					},
+					tags: ["customer", "import", "debug"],
+				});
+
+				// If phoneNumber is provided, check if it belongs to a different user
+				if (phoneNumber) {
+					const userByPhone: typeof user = await sqlClient.user.findFirst({
+						where: {
+							phoneNumber: phoneNumber,
+						},
+						include: {
+							members: {
+								where: {
+									organizationId: store.organizationId,
+								},
+							},
+						},
+					});
+
+					log.info(`Row ${rowNum}: User lookup by phone`, {
+						metadata: {
+							storeId: params.storeId,
+							rowNum,
+							phoneNumber,
+							userByPhoneFound: !!userByPhone,
+							userByPhoneId: userByPhone?.id,
+							userByPhoneEmail: userByPhone?.email,
+						},
+						tags: ["customer", "import", "debug"],
+					});
+
+					if (userByPhone) {
+						// If we found a user by email and a different user by phone, that's a conflict
+						if (user && user.id !== userByPhone.id) {
+							const errorMsg = `Row ${rowNum}: Phone number ${phoneNumber} already belongs to a different user (${userByPhone.email})`;
+							errors.push(errorMsg);
+							errorCount++;
+							log.warn(`Row ${rowNum}: Phone conflict`, {
+								metadata: {
+									storeId: params.storeId,
+									rowNum,
+									error: errorMsg,
+								},
+								tags: ["customer", "import", "error"],
+							});
+							continue;
+						}
+
+						// If we didn't find by email but found by phone, use that user
+						if (!user) {
+							user = userByPhone;
+							log.info(`Row ${rowNum}: Using user found by phone`, {
+								metadata: {
+									storeId: params.storeId,
+									rowNum,
+									userId: user.id,
+								},
+								tags: ["customer", "import", "debug"],
+							});
+						}
+					}
+				}
+
+				// Check if name already exists - if so, skip this row (don't import or update)
+				const userByName = await sqlClient.user.findFirst({
+					where: {
+						name: name,
+					},
+				});
+
+				log.info(`Row ${rowNum}: User lookup by name`, {
+					metadata: {
+						storeId: params.storeId,
+						rowNum,
+						name,
+						userByNameFound: !!userByName,
+						userByNameId: userByName?.id,
+						userByNameEmail: userByName?.email,
+					},
+					tags: ["customer", "import", "debug"],
+				});
+
+				if (userByName) {
+					// Name already exists - skip this row
+					const errorMsg = `Row ${rowNum}: Name "${name}" already exists for user ${userByName.email || userByName.id}. Skipping import.`;
+					errors.push(errorMsg);
+					errorCount++;
+					log.warn(`Row ${rowNum}: Name already exists, skipping`, {
+						metadata: {
+							storeId: params.storeId,
+							rowNum,
+							name,
+							existingUserId: userByName.id,
+							existingUserEmail: userByName.email,
+							error: errorMsg,
+						},
+						tags: ["customer", "import", "error"],
+					});
+					continue;
+				}
+
+				// Create user if doesn't exist
+				if (!user) {
+					log.info(`Row ${rowNum}: User not found, creating new user`, {
+						metadata: {
+							storeId: params.storeId,
+							rowNum,
+							finalEmail,
+							phoneNumber,
+							name,
+						},
+						tags: ["customer", "import", "debug"],
+					});
+
+					// Verify phone number doesn't already exist before creating (if phoneNumber provided)
+					if (phoneNumber) {
+						const existingPhoneUser = await sqlClient.user.findFirst({
+							where: {
+								phoneNumber: phoneNumber,
+							},
+						});
+
+						if (existingPhoneUser) {
+							const errorMsg = `Row ${rowNum}: Phone number ${phoneNumber} already exists for user ${existingPhoneUser.email}`;
+							errors.push(errorMsg);
+							errorCount++;
+							log.warn(`Row ${rowNum}: Phone already exists`, {
+								metadata: {
+									storeId: params.storeId,
+									rowNum,
+									error: errorMsg,
+								},
+								tags: ["customer", "import", "error"],
+							});
+							continue;
+						}
+					}
+
+					// Verify email doesn't already exist (in case generated email conflicts)
+					if (finalEmail) {
+						const existingEmailUser = await sqlClient.user.findUnique({
+							where: {
+								email: finalEmail,
+							},
+						});
+
+						if (existingEmailUser) {
+							// If email exists, try generating a new one
+							const sanitizedName = name
+								.replace(/[^a-zA-Z0-9]/g, "")
+								.toLowerCase()
+								.substring(0, 20);
+							const timestamp = Date.now();
+							const random = crypto.randomBytes(4).toString("hex");
+							finalEmail = `${sanitizedName}-${timestamp}-${random}@import.riben.life`;
+
+							log.info(`Row ${rowNum}: Email conflict, generated new email`, {
+								metadata: {
+									storeId: params.storeId,
+									rowNum,
+									newEmail: finalEmail,
+								},
+								tags: ["customer", "import", "debug"],
+							});
+						}
+					}
+
+					// Create user directly in Prisma
+					// Note: User will need to reset password via "Forgot Password" to set a password
+					user = await sqlClient.user.create({
+						data: {
+							email: finalEmail || null,
+							name: name,
+							phoneNumber: phoneNumber || null,
+							role: "user",
+							locale: "tw",
+						},
+						include: {
+							members: {
+								where: {
+									organizationId: store.organizationId,
+								},
+							},
+						},
+					});
+
+					log.info(`Row ${rowNum}: User created successfully`, {
+						metadata: {
+							storeId: params.storeId,
+							rowNum,
+							userId: user.id,
+							email: user.email,
+							phoneNumber: user.phoneNumber,
+							name: user.name,
+						},
+						tags: ["customer", "import", "debug"],
+					});
+				} else {
+					log.info(`Row ${rowNum}: User found, updating`, {
+						metadata: {
+							storeId: params.storeId,
+							rowNum,
+							userId: user.id,
+							email: user.email,
+						},
+						tags: ["customer", "import", "debug"],
+					});
+
 					// Update existing user
 					const updateData: {
 						name?: string;
 						phoneNumber?: string | null;
-						banned?: boolean;
 					} = {};
 
-					if (customer.name !== undefined && customer.name !== "") {
-						updateData.name = customer.name.trim();
+					if (name) {
+						updateData.name = name;
 					}
 
-					if (customer.phone !== undefined) {
-						updateData.phoneNumber = customer.phone.trim() || null;
+					if (phoneNumber) {
+						updateData.phoneNumber = phoneNumber;
 					}
 
-					if (customer.banned !== undefined) {
-						updateData.banned = customer.banned.toLowerCase() === "true";
-					}
+					if (Object.keys(updateData).length > 0) {
+						await sqlClient.user.update({
+							where: { id: user.id },
+							data: updateData,
+						});
 
-					await sqlClient.user.update({
-						where: { id: existingUser.id },
-						data: updateData,
-					});
-
-					// Update or create member relationship
-					const existingMember = existingUser.members.find(
-						(m) => m.organizationId === store.organizationId,
-					);
-
-					if (existingMember) {
-						// Update member role if provided
-						if (customer.memberRole && customer.memberRole.trim()) {
-							await sqlClient.member.update({
-								where: { id: existingMember.id },
-								data: { role: customer.memberRole.trim() },
-							});
-						}
-					} else {
-						// Create member relationship
-						await sqlClient.member.create({
-							data: {
-								id: crypto.randomUUID(),
-								userId: existingUser.id,
-								organizationId: store.organizationId,
-								role: customer.memberRole?.trim() || "user",
-								createdAt: getUtcNow(),
+						log.info(`Row ${rowNum}: User updated`, {
+							metadata: {
+								storeId: params.storeId,
+								rowNum,
+								userId: user.id,
+								updateData,
 							},
+							tags: ["customer", "import", "debug"],
 						});
 					}
-
-					successCount++;
-				} else {
-					// Cannot find user
-					if (customer.email && customer.email.trim()) {
-						errors.push(
-							`Row ${rowNum}: User with email ${customer.email.trim()} does not exist. Cannot create new users via CSV import.`,
-						);
-					} else {
-						errors.push(
-							`Row ${rowNum}: User with name "${name}" does not exist. Cannot create new users via CSV import.`,
-						);
-					}
-					errorCount++;
 				}
+
+				// Update or create member relationship
+				const existingMember = user.members?.find(
+					(m: { organizationId: string }) =>
+						m.organizationId === store.organizationId,
+				);
+
+				log.info(`Row ${rowNum}: Member relationship check`, {
+					metadata: {
+						storeId: params.storeId,
+						rowNum,
+						userId: user.id,
+						organizationId: store.organizationId,
+						existingMember: !!existingMember,
+						existingMemberId: existingMember?.id,
+						existingMemberRole: existingMember?.role,
+						newMemberRole: memberRole,
+					},
+					tags: ["customer", "import", "debug"],
+				});
+
+				if (existingMember) {
+					// Update member role
+					await sqlClient.member.update({
+						where: { id: existingMember.id },
+						data: { role: memberRole },
+					});
+
+					log.info(`Row ${rowNum}: Member role updated`, {
+						metadata: {
+							storeId: params.storeId,
+							rowNum,
+							memberId: existingMember.id,
+							oldRole: existingMember.role,
+							newRole: memberRole,
+						},
+						tags: ["customer", "import", "debug"],
+					});
+				} else {
+					// Create member relationship
+					const newMember = await sqlClient.member.create({
+						data: {
+							id: crypto.randomUUID(),
+							userId: user.id,
+							organizationId: store.organizationId,
+							role: memberRole,
+							createdAt: new Date(),
+						},
+					});
+
+					log.info(`Row ${rowNum}: Member relationship created`, {
+						metadata: {
+							storeId: params.storeId,
+							rowNum,
+							memberId: newMember.id,
+							userId: user.id,
+							organizationId: store.organizationId,
+							role: memberRole,
+						},
+						tags: ["customer", "import", "debug"],
+					});
+				}
+
+				// Handle credit point and fiat in a transaction
+				if (creditPoint > 0 || creditFiat > 0) {
+					log.info(`Row ${rowNum}: Processing credits`, {
+						metadata: {
+							storeId: params.storeId,
+							rowNum,
+							userId: user.id,
+							creditPoint,
+							creditFiat,
+						},
+						tags: ["customer", "import", "debug"],
+					});
+
+					await sqlClient.$transaction(async (tx) => {
+						// Handle credit point
+						if (creditPoint > 0) {
+							// Get or create CustomerCredit
+							const customerCredit = await tx.customerCredit.upsert({
+								where: {
+									storeId_userId: {
+										storeId: params.storeId,
+										userId: user.id,
+									},
+								},
+								create: {
+									storeId: params.storeId,
+									userId: user.id,
+									point: new Prisma.Decimal(creditPoint),
+									fiat: new Prisma.Decimal(0),
+									updatedAt: getUtcNowEpoch(),
+								},
+								update: {
+									point: {
+										increment: creditPoint,
+									},
+									updatedAt: getUtcNowEpoch(),
+								},
+							});
+
+							// Create CustomerCreditLedger entry
+							const currentBalance = Number(customerCredit.point);
+							await tx.customerCreditLedger.create({
+								data: {
+									storeId: params.storeId,
+									userId: user.id,
+									amount: new Prisma.Decimal(creditPoint),
+									balance: new Prisma.Decimal(currentBalance),
+									type: CustomerCreditLedgerType.Topup,
+									note: `storeAdmin Import: ${creditPoint} points`,
+									creatorId: creatorId,
+									createdAt: getUtcNowEpoch(),
+								},
+							});
+						}
+
+						// Handle credit fiat
+						if (creditFiat > 0) {
+							// Get or create CustomerCredit
+							const customerCredit = await tx.customerCredit.upsert({
+								where: {
+									storeId_userId: {
+										storeId: params.storeId,
+										userId: user.id,
+									},
+								},
+								create: {
+									storeId: params.storeId,
+									userId: user.id,
+									point: new Prisma.Decimal(0),
+									fiat: new Prisma.Decimal(creditFiat),
+									updatedAt: getUtcNowEpoch(),
+								},
+								update: {
+									fiat: {
+										increment: creditFiat,
+									},
+									updatedAt: getUtcNowEpoch(),
+								},
+							});
+
+							// Create CustomerFiatLedger entry
+							const currentBalance = Number(customerCredit.fiat);
+							await tx.customerFiatLedger.create({
+								data: {
+									storeId: params.storeId,
+									userId: user.id,
+									amount: new Prisma.Decimal(creditFiat),
+									balance: new Prisma.Decimal(currentBalance),
+									type: "TOPUP",
+									note: `storeAdmin import: ${creditFiat} fiat`,
+									creatorId: creatorId,
+									createdAt: getUtcNowEpoch(),
+								},
+							});
+						}
+					});
+
+					log.info(`Row ${rowNum}: Credits processed`, {
+						metadata: {
+							storeId: params.storeId,
+							rowNum,
+							userId: user.id,
+							creditPoint,
+							creditFiat,
+						},
+						tags: ["customer", "import", "debug"],
+					});
+				}
+
+				log.info(`Row ${rowNum}: Processing completed successfully`, {
+					metadata: {
+						storeId: params.storeId,
+						rowNum,
+						userId: user.id,
+						email: user.email,
+						phoneNumber: user.phoneNumber,
+						memberRole,
+						creditPoint,
+						creditFiat,
+					},
+					tags: ["customer", "import", "debug"],
+				});
+
+				successCount++;
 			} catch (err: unknown) {
 				const errorMsg = err instanceof Error ? err.message : String(err);
 				errors.push(`Row ${rowNum}: ${errorMsg}`);
@@ -321,6 +780,17 @@ export async function POST(
 				});
 			}
 		}
+
+		log.info("Import process completed", {
+			metadata: {
+				storeId: params.storeId,
+				totalRows: customers.length,
+				successCount,
+				errorCount,
+				errors: errors.length > 0 ? errors : undefined,
+			},
+			tags: ["customer", "import"],
+		});
 
 		if (errorCount > 0 && successCount === 0) {
 			return NextResponse.json(

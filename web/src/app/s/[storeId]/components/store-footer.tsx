@@ -84,7 +84,7 @@ export const StoreFooter: React.FC<props> = ({
 		pathName.includes("privacy") ||
 		pathName.includes("support") ||
 		pathName.includes("terms") ||
-		pathName.includes("recharge") ||
+		pathName.includes("refill") ||
 		pathName.includes("my-orders") ||
 		pathName.includes("my-credit-ledger") ||
 		pathName.includes("reservation") ||

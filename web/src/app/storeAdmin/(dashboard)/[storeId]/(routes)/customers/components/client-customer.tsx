@@ -1,32 +1,10 @@
 "use client";
 
-import {
-	IconBan,
-	IconCheck,
-	IconCircleDashedCheck,
-	IconCopy,
-	IconCreditCard,
-	IconDots,
-	IconDownload,
-	IconKey,
-	IconLoader,
-	IconPillOff,
-	IconTrash,
-	IconX,
-} from "@tabler/icons-react";
-import type { ColumnDef } from "@tanstack/react-table";
-import type { AxiosError } from "axios";
-import axios from "axios";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useState, useMemo, useCallback } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { Heading } from "@/components/heading";
-import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
-import { Button } from "@/components/ui/button";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -35,6 +13,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -42,19 +21,36 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { authClient } from "@/lib/auth-client";
+import clientLogger from "@/lib/client-logger";
 import { useI18n } from "@/providers/i18n-provider";
 import type { User } from "@/types";
+import { Role } from "@/types/enum";
 import { formatDateTime } from "@/utils/datetime-utils";
-import clientLogger from "@/lib/client-logger";
+import CurrencyComponent from "@/components/currency";
+import {
+	IconCheck,
+	IconCopy,
+	IconCreditCard,
+	IconDots,
+	IconDownload,
+	IconLoader,
+	IconX,
+} from "@tabler/icons-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
 import { EditCustomer } from "./edit-customer";
 import { UserFilter } from "./filter-user";
-import { RechargeCreditDialog } from "./recharge-credit-dialog";
 import { ImportCustomerDialog } from "./import-customer-dialog";
-import { Role } from "@/types/enum";
+import { RefillCreditDialog } from "./refill-credit-dialog";
 
 interface CustomersClientProps {
-	serverData: User[];
+	serverData: (User & {
+		customerCreditFiat: number;
+		customerCreditPoint: number;
+	})[];
+	currency?: string;
 }
 
 interface CellActionProps {
@@ -67,8 +63,9 @@ interface CellActionProps {
 //
 export const CustomersClient: React.FC<CustomersClientProps> = ({
 	serverData,
+	currency = "twd",
 }) => {
-	const [data, setData] = useState<User[]>(serverData);
+	const [data, setData] = useState(serverData);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [exporting, setExporting] = useState(false);
 
@@ -97,8 +94,12 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 			const stripeMatch =
 				user.stripeCustomerId?.toLowerCase().includes(searchLower) ?? false;
 
-			// Return true if any field matches (name OR email OR stripeCustomerId)
-			return nameMatch || emailMatch || stripeMatch;
+			// Search in phoneNumber (case-insensitive)
+			const phoneMatch =
+				user.phoneNumber?.toLowerCase().includes(searchLower) ?? false;
+
+			// Return true if any field matches (name OR email OR stripeCustomerId OR phoneNumber)
+			return nameMatch || emailMatch || stripeMatch || phoneMatch;
 		});
 	}, [data, searchTerm]);
 
@@ -107,14 +108,19 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 			name,
 			email,
 			stripeCustomerId,
+			phoneNumber,
 		}: {
 			name: string;
 			email: string;
 			stripeCustomerId: string;
+			phoneNumber: string;
 		}) => {
 			// Since we're using the same search term for all fields, just use the first non-empty one
 			const newSearchTerm =
-				name.trim() || email.trim() || stripeCustomerId.trim();
+				name.trim() ||
+				email.trim() ||
+				stripeCustomerId.trim() ||
+				phoneNumber.trim();
 			setSearchTerm(newSearchTerm);
 		},
 		[],
@@ -230,7 +236,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 	const CellAction: React.FC<CellActionProps> = ({ item }) => {
 		const [loading, setLoading] = useState(false);
 		const [open, setOpen] = useState(false);
-		const [rechargeDialogOpen, setRechargeDialogOpen] = useState(false);
+		const [refillDialogOpen, setRechargeDialogOpen] = useState(false);
 
 		const router = useRouter();
 
@@ -285,13 +291,13 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 							}}
 						>
 							<IconCreditCard className="mr-0 size-4" />
-							{t("credit_recharge") || "Recharge Credit"}
+							{t("credit_refill") || "Refill Credit"}
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
-				<RechargeCreditDialog
+				<RefillCreditDialog
 					user={item}
-					open={rechargeDialogOpen}
+					open={refillDialogOpen}
 					onOpenChange={setRechargeDialogOpen}
 				/>
 			</>
@@ -306,37 +312,25 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 			},
 			cell: ({ row }) => {
 				return (
-					<div className="flex items-center" title={t("user_edit_basic_info")}>
-						{row.getValue("name")}
+					<div
+						className="flex items-center gap-2"
+						title={t("user_edit_basic_info")}
+					>
+						<div className="flex flex-col">
+							<span>{row.getValue("name")}</span>
+							<Link
+								title="manage user billing"
+								className="cursor-pointer text-sm text-blue-800 dark:text-blue-200 hover:text-gold"
+								href={`/storeAdmin/${storeId}/customers/${row.original.email}`}
+							>
+								{row.original.email}
+							</Link>
+						</div>
 						<EditCustomer item={row.original} onUpdated={handleUpdated} />
 					</div>
 				);
 			},
 			enableHiding: false,
-		},
-		{
-			accessorKey: "email",
-			header: ({ column }) => {
-				return (
-					<DataTableColumnHeader column={column} title={t("user_email")} />
-				);
-			},
-			cell: ({ row }) => {
-				return (
-					<div className="flex items-center">
-						{
-							//link to /sysAdmin/users/[email]
-							<Link
-								title="manage user billing"
-								className="cursor-pointer text-blue-800 dark:text-blue-200 hover:text-gold"
-								href={`/storeAdmin/${storeId}/customers/${row.original.email}`}
-							>
-								{row.original.email}
-							</Link>
-						}
-					</div>
-				);
-			},
 		},
 
 		{
@@ -346,6 +340,30 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 			},
 			cell: ({ row }) => {
 				return <div className="">{row.original.memberRole}</div>;
+			},
+		},
+		{
+			accessorKey: "customerCreditFiat",
+			header: ({ column }) => {
+				return (
+					<DataTableColumnHeader
+						column={column}
+						className="text-right items-end"
+						title={`${t("customer_fiat_amount")} / ${t("customer_credit_amount")}`}
+					/>
+				);
+			},
+			cell: ({ row }) => {
+				const fiat = (row.original as any).customerCreditFiat ?? 0;
+				const point = (row.original as any).customerCreditPoint ?? 0;
+				return (
+					<div className="flex flex-row gap-1">
+						<CurrencyComponent value={fiat} />
+						<span className="text-sm font-mono text-muted-foreground">
+							{Number(point).toFixed(2)} {t("points") || "pts"}
+						</span>
+					</div>
+				);
 			},
 		},
 		{

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const rechargeCustomerCreditSchema = z
+export const refillCustomerCreditSchema = z
 	.object({
 		userId: z.string().min(1, "userId is required"),
 		creditAmount: z.coerce
@@ -31,6 +31,6 @@ export const rechargeCustomerCreditSchema = z
 		},
 	);
 
-export type RechargeCustomerCreditInput = z.infer<
-	typeof rechargeCustomerCreditSchema
+export type RefillCustomerCreditInput = z.infer<
+	typeof refillCustomerCreditSchema
 >;

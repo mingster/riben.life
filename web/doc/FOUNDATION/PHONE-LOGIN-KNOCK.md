@@ -14,7 +14,7 @@
 
 ## 1. Overview
 
-This document specifies the functional requirements for implementing phone number-based authentication (phone login) using Twilio as the SMS/OTP provider. The system enables users to sign in and sign up using their phone number instead of (or in addition to) email addresses.
+This document specifies the functional requirements for implementing phone number-based authentication (phone login) using SMS as validation method. The system enables users to sign in and sign up using their phone number instead of (or in addition to) email addresses.
 
 **Key Features:**
 
@@ -25,7 +25,11 @@ This document specifies the functional requirements for implementing phone numbe
 * Support for multiple authentication methods (phone, email, social)
 * Account linking for users with multiple authentication methods
 
-**Provider:** Twilio (<https://www.twilio.com>) - SMS/OTP delivery service
+**Providers:**
+
+* 三竹簡訊 (Mitsubishi SMS) - SMS/OTP delivery service for Taiwan (+886)
+* Twilio (<https://www.twilio.com>) - SMS/OTP delivery service for United States/Canada (+1)
+* Amazon SNS (<https://aws.amazon.com/sns/>) - SMS/OTP delivery service for rest of world
 
 ***
 
@@ -41,7 +45,7 @@ This document specifies the functional requirements for implementing phone numbe
 ### 2.2 System Admin
 
 * Platform administrators
-* Can configure Twilio API credentials
+* Can configure SMS provider API credentials (三竹簡訊, Twilio, Amazon SNS)
 * Can view authentication logs and metrics
 * Can manage phone verification settings
 
@@ -58,12 +62,15 @@ This document specifies the functional requirements for implementing phone numbe
 **FR-PHONE-002:** The authentication flow must automatically handle both sign-up and sign-in:
 
 1. **Phone Number Input:**
-   * User enters phone number in international format (e.g., +886912345678)
+   * User selects country code from dropdown (e.g., +886 for Taiwan, +1 for US/Canada)
+   * User enters phone number in normal/local format (e.g., "0912345678" for Taiwan, "4155551212" for US)
+   * System combines country code with local number and parses to international format (E.164, e.g., +886912345678)
    * System validates phone number format
+   * System normalizes phone number (e.g., adds leading "0" for Taiwan numbers if needed)
    * User does not need to know if they have an account or not
 
 2. **OTP Verification:**
-   * System sends OTP code to phone number via Twilio
+   * System sends OTP code to phone number via appropriate SMS provider (三竹簡訊 for Taiwan, Twilio for US/Canada, Amazon SNS for others)
    * User enters OTP code received via SMS
    * System verifies OTP code (stored in database)
    * OTP code expires after configured time (default: 10 minutes)
@@ -106,7 +113,7 @@ This document specifies the functional requirements for implementing phone numbe
 
 1. **Initiate Verification:**
    * User requests phone number verification (from account settings)
-   * System sends OTP code to phone number via Twilio
+   * System sends OTP code to phone number via appropriate SMS provider (三竹簡訊 for Taiwan, Twilio for US/Canada, Amazon SNS for others)
 
 2. **Verify OTP:**
    * User enters OTP code
@@ -160,12 +167,12 @@ This document specifies the functional requirements for implementing phone numbe
 * OTP code must be unique per request
 * OTP code must expire after configured time (default: 10 minutes)
 
-**FR-PHONE-014:** The system must send OTP codes via Twilio:
+**FR-PHONE-014:** The system must send OTP codes via appropriate SMS provider based on phone number country code:
 
-* Integration with Twilio SMS API
 * **SMS Delivery Rules:**
+  * **Taiwan (+886):** OTP codes are sent via 三竹簡訊 (Mitsubishi SMS)
   * **United States/Canada (+1):** OTP codes are sent via Twilio SMS
-  * **Taiwan (+886) and other countries:** OTP codes are logged only (not sent via SMS) for development/testing purposes
+  * **Rest of world:** OTP codes are sent via Amazon SNS
 * SMS message includes OTP code and brief instructions
 * SMS is sent in user's preferred language (if configured)
 
@@ -212,26 +219,33 @@ This document specifies the functional requirements for implementing phone numbe
 
 #### 3.3.1 Phone Number Format
 
-**FR-PHONE-020:** The system must accept phone numbers in international format:
+**FR-PHONE-020:** The system must accept phone numbers in normal/local format from users:
 
-* Format: `+[country code][number]` (e.g., +886912345678)
-* Country code is required
-* **Supported countries:** Only +1 (United States/Canada) and +886 (Taiwan) are supported
-* **Taiwan number handling:** For Taiwan (+886), if the local number starts with "0" (e.g., 0912345678), the leading "0" is automatically stripped before combining with the country code (result: +886912345678)
-* Spaces, dashes, and parentheses are stripped
+* Users select country code from dropdown (e.g., +886 for Taiwan, +1 for US/Canada)
+* Users enter phone number in normal format without country code
+* **Taiwan (+886):** Users enter "0912345678" or "912345678" (system normalizes to "0912345678" then strips leading "0" before combining with country code)
+* **United States/Canada (+1):** Users enter "4155551212" (10 digits)
+* System combines country code with local number to create international format (E.164)
+* Spaces, dashes, and parentheses are stripped from user input
+* Examples of user input:
+  * Taiwan: User selects +886, enters "0912345678" → System strips leading "0" → Creates +886912345678
+  * Taiwan: User selects +886, enters "912345678" → System creates +886912345678
+  * United States: User selects +1, enters "4155551212" → System creates +14155551212
 
-**FR-PHONE-021:** The system must validate phone number format:
+**FR-PHONE-021:** The system must validate and normalize phone number format:
 
-* Phone number must match international format
+* System validates local phone number format based on selected country code
+* System normalizes phone numbers (e.g., adds leading "0" for Taiwan if needed, then strips it before combining with country code)
+* System parses and combines country code with local number to create E.164 format
 * **Country-specific validation:**
-  * **Taiwan (+886):** Must be 9-10 digits starting with 9 (e.g., 912345678 or 0912345678, which becomes 912345678)
+  * **Taiwan (+886):** Must be 9-10 digits starting with 9 (e.g., 912345678 or 0912345678)
   * **United States/Canada (+1):** Must be exactly 10 digits
 * Invalid format displays clear error message
 
 **FR-PHONE-022:** The system must normalize phone numbers:
 
-* All phone numbers stored in normalized format (E.164)
-* Phone numbers are normalized before storage and comparison
+* All phone numbers stored in normalized format (E.164) after parsing from user input
+* Phone numbers are normalized and parsed before storage and comparison
 * Display format can differ from storage format (user-friendly display)
 
 #### 3.3.2 Phone Number Uniqueness
@@ -305,7 +319,6 @@ This document specifies the functional requirements for implementing phone numbe
 
 * When user updates phone number, new number must be verified via OTP
 * Old phone number remains verified until new one is verified
-* System sends notification to old phone number (if possible) about change
 
 ### 3.5 Security Requirements
 
@@ -361,30 +374,35 @@ This document specifies the functional requirements for implementing phone numbe
 * Phone numbers are collected only with user consent
 * Users can delete their phone number
 * Phone numbers are deleted when account is deleted
-* Phone numbers are not shared with third parties (except Twilio for SMS delivery)
+* Phone numbers are not shared with third parties (except SMS providers: 三竹簡訊, Twilio, Amazon SNS for SMS delivery)
 
 ### 3.6 Integration Requirements
 
-#### 3.6.1 Twilio Integration
+#### 3.6.1 SMS Provider Integration
 
-**FR-PHONE-038:** The system must integrate with Twilio API:
+**FR-PHONE-038:** The system must integrate with appropriate SMS provider APIs based on phone number country code:
+
+* **Provider Selection:**
+  * Taiwan (+886): 三竹簡訊 (Mitsubishi SMS)
+  * United States/Canada (+1): Twilio
+  * Rest of world: Amazon SNS
 
 * **Authentication:**
-  * Account SID and Auth Token authentication with Twilio
+  * Provider-specific authentication credentials
   * Credentials stored securely (environment variables)
   * Credentials are different for development and production
 
 * **SMS Delivery:**
-  * Send OTP codes via Twilio SMS API
+  * Send OTP codes via appropriate provider's SMS API
   * Handle SMS delivery status (sent, delivered, failed)
   * Retry failed SMS deliveries (up to 3 attempts)
 
 * **OTP Verification:**
-  * Verify OTP codes against stored codes in database
+  * Verify OTP codes against stored codes in database (independent of SMS provider)
   * Handle verification responses (valid, invalid, expired)
   * Log verification attempts for audit
 
-**FR-PHONE-039:** The system must handle Twilio API errors:
+**FR-PHONE-039:** The system must handle SMS provider API errors:
 
 * Network errors (retry with exponential backoff)
 * API errors (invalid credentials, rate limit, etc.)
@@ -396,7 +414,7 @@ This document specifies the functional requirements for implementing phone numbe
 **FR-PHONE-040:** Phone authentication must integrate with Better Auth:
 
 * Use Better Auth `phoneNumber` plugin
-* Implement `sendOTP` callback to send OTP via Twilio (receives code from Better Auth)
+* Implement `sendOTP` callback to send OTP via appropriate SMS provider (receives code from Better Auth)
 * Better Auth handles OTP storage and verification internally (no custom `verifyOTP` callback needed)
 * Use `signUpOnVerification` to automatically create users if they don't exist
 * Store phone number in user's `phoneNumber` field
@@ -512,7 +530,7 @@ Do not share this code with anyone.
 
 **FR-PHONE-052:** Phone number storage requirements:
 
-* Phone numbers stored in normalized format (E.164: +[country code][number])
+* Phone numbers stored in normalized format (E.164: +[country code][number]) after parsing from user's normal format input
 * Phone numbers are encrypted at rest
 * Phone numbers are indexed for fast lookup
 * Phone numbers have unique constraint (one phone number per user)
@@ -553,7 +571,7 @@ Do not share this code with anyone.
 
 ### 5.1 Phone Number Rules
 
-**BR-PHONE-001:** Phone numbers must be in international format (E.164).
+**BR-PHONE-001:** Phone numbers are stored and used internally in international format (E.164), but users enter them in normal/local format which the system then parses and converts.
 
 **BR-PHONE-002:** Phone numbers must be unique per user account.
 
@@ -712,11 +730,14 @@ phoneOTP({
 
 ### 7.3 Environment Variables
 
-**TR-PHONE-005:** The system must use environment variables for Twilio configuration:
+**TR-PHONE-005:** The system must use environment variables for SMS provider configuration:
 
-* `TWILIO_ACCOUNT_SID` - Twilio Account SID (required)
-* `TWILIO_AUTH_TOKEN` - Twilio Auth Token (required)
-* `TWILIO_PHONE_NUMBER` - Twilio phone number for sending SMS (required, E.164 format)
+* **三竹簡訊 (Taiwan):** Provider-specific environment variables (to be configured)
+* **Twilio (US/Canada):**
+  * `TWILIO_ACCOUNT_SID` - Twilio Account SID (required)
+  * `TWILIO_AUTH_TOKEN` - Twilio Auth Token (required)
+  * `TWILIO_PHONE_NUMBER` - Twilio phone number for sending SMS (required, E.164 format)
+* **Amazon SNS (Rest of world):** AWS credentials and region configuration (to be configured)
 * `OTP_EXPIRY_MINUTES` - OTP expiration time in minutes (default: 10)
 * `OTP_LENGTH` - OTP code length (default: 6)
 
@@ -724,7 +745,7 @@ phoneOTP({
 
 **TR-PHONE-006:** The system must handle various error scenarios:
 
-* **Twilio API Errors:**
+* **SMS Provider API Errors:**
   * Network errors (retry with exponential backoff)
   * Invalid credentials (log error, disable phone auth)
   * Rate limit exceeded (return rate limit error to user)
@@ -744,7 +765,7 @@ phoneOTP({
 
 **TR-PHONE-007:** OTP send must complete within 5 seconds:
 
-* Twilio API request: < 2 seconds
+* SMS provider API request: < 2 seconds
 * SMS delivery: < 3 seconds (asynchronous, non-blocking)
 * User feedback: Immediate (optimistic UI)
 
@@ -867,7 +888,7 @@ phoneOTP({
 
 ### 10.3 Libraries
 
-* Twilio SDK for API calls
+* SMS provider SDKs for API calls (三竹簡訊, Twilio, Amazon SNS)
 * Phone number validation library (e.g., `libphonenumber-js`)
 * Encryption library for phone number storage
 
@@ -911,7 +932,9 @@ phoneOTP({
 
 * **OTP**: One-Time Password - A temporary code sent via SMS for verification
 * **E.164**: International phone number format (e.g., +886912345678)
-* **Twilio**: SMS/OTP delivery service provider
+* **三竹簡訊 (Mitsubishi SMS)**: SMS/OTP delivery service provider for Taiwan
+* **Twilio**: SMS/OTP delivery service provider for United States/Canada
+* **Amazon SNS**: SMS/OTP delivery service provider for rest of world
 * **Phone Number Verification**: Process of confirming phone number ownership via OTP
 * **Account Linking**: Associating multiple authentication methods with one user account
 * **Rate Limiting**: Restricting number of requests per time period to prevent abuse
@@ -920,9 +943,10 @@ phoneOTP({
 
 ## 13. Revision History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.4 | 2025-01-30 | System | Updated client components to use Better Auth client directly (`authClient.phoneNumber.sendOtp()` and `authClient.phoneNumber.verify()`). Added Taiwan number normalization (strip leading "0" before combining with +886). Limited country support to +1 (US/Canada) and +886 (Taiwan). SMS only sent via Twilio for +1 numbers; Taiwan and other countries log OTP only. Added phone number and country code persistence in localStorage. Updated resend countdown to 45 seconds. Added country-specific phone validation (Taiwan: 9-10 digits starting with 9, US: 10 digits). |
+| Version | Date       | Author | Changes                                                                                                                                                                                                                                                                    |
+|---------|------------|--------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.5     | 2025-01-30 | System | Updated SMS provider information: 三竹簡訊 (Mitsubishi SMS) for Taiwan (+886), Twilio for United States/Canada (+1), Amazon SNS for rest of world. Updated documentation to reflect multi-provider SMS delivery approach.                                                                                                                |
+| 1.4     | 2025-01-30 | System | Updated client components to use Better Auth client directly (`authClient.phoneNumber.sendOtp()` and `authClient.phoneNumber.verify()`). Added Taiwan number normalization (strip leading "0" before combining with +886). Limited country support to +1 (US/Canada) and +886 (Taiwan). SMS only sent via Twilio for +1 numbers; Taiwan and other countries log OTP only. Added phone number and country code persistence in localStorage. Updated resend countdown to 45 seconds. Added country-specific phone validation (Taiwan: 9-10 digits starting with 9, US: 10 digits). |
 | 1.3 | 2025-01-29 | System | Integrated Better Auth for OTP storage and verification. Removed custom OTP database storage. Better Auth now handles OTP lifecycle. Added `signUpOnVerification` for automatic user creation. Added i18n support for SMS messages. Updated file locations: `lib/knock/` → `lib/otp/` and `lib/twilio/`. Added requirement that client components should NOT import server-only functions directly. |
 | 1.2 | 2025-01-28 | System | Replaced Knock with Twilio as SMS/OTP provider. Updated all references, API integration details, and environment variables. OTP verification now uses database instead of external API. |
 | 1.1 | 2025-01-27 | System | Combined sign-in and sign-up into single unified flow. Users no longer need to know if they're registered. System automatically creates account if new, signs in if existing. Removed separate error messages for "already registered" and "not registered" during authentication. |

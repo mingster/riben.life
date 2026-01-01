@@ -54,6 +54,14 @@ This application follows a modern pattern for managing data (CRUD operations - C
 
 ## Example Reference
 
+**Canonical CRUD Example (Standard Pattern):**
+
+- Edit/Create dialog: @`/sysAdmin/users/components/edit-user.tsx` ⭐ **Use this as the standard reference**
+- Validation schema: @`/actions/sysAdmin/user/user.validation.ts`
+- Server action: @`/actions/sysAdmin/user/update-user.ts`
+
+**Other Examples:**
+
 - Main CRUD page: @`/storeAdmin/[storeId]/tables/page.tsx`
 - Client table: @`/storeAdmin/[storeId]/(routes)/tables/components/client-table.tsx`
 - Edit/Create dialog: @`/storeAdmin/[storeId]/(routes)/tables/components/edit-table-dialog.tsx`
@@ -121,65 +129,248 @@ const handleDeleted = (deletedItem: ItemType) => {
 <ActionCell item={row.original} onDeleted={handleDeleted} />
 ```
 
-### 6. Edit/Create Component Calls Callback After Success
+### 6. Edit/Create Component (Standard Pattern - Use EditUser as Reference)
+
+**Standard Pattern (Based on EditUser):**
 
 ```tsx
-// Import validation schemas from action folders
+// Import validation schema and type from action folder
 import {
-  createFacilitySchema,
-  type CreateFacilityInput,
-} from "@/actions/storeAdmin/facility/create-facility.validation";
-import {
-  updateFacilitySchema,
-  type UpdateFacilityInput,
-} from "@/actions/storeAdmin/facility/update-facility.validation";
+  type UpdateUserSettingsInput,
+  updateUserSettingsSchema,
+} from "@/actions/sysAdmin/user/user.validation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
-// For forms that handle both create and update:
-const isEditMode = Boolean(facility) && !isNew;
+// Prepare default values from item prop
+const defaultValues = item
+  ? {
+      ...item,
+      // Convert date fields to ISO strings for datetime-local inputs
+      banExpires: item.banExpires
+        ? new Date(item.banExpires).toISOString()
+        : undefined,
+    }
+  : {};
 
-// Conditionally select schema based on mode
-const schema = useMemo(
-  () => (isEditMode ? updateFacilitySchema : createFacilitySchema),
-  [isEditMode],
-);
-
-// Form type: Omit fields added in submit handler (e.g., storeId)
-type FormInput = Omit<UpdateFacilityInput, "id" | "storeId"> & { 
-  id?: string;
-  storeId?: string;
-};
-
-const form = useForm<FormInput>({
-  resolver: zodResolver(schema) as Resolver<FormInput>,
+// Use form with direct type import (no need for FormInput type)
+const form = useForm<UpdateUserSettingsInput>({
+  resolver: zodResolver(updateUserSettingsSchema),
   defaultValues,
+  mode: "onChange", // Real-time validation
 });
 
-async function onSubmit(data: FormInput) {
-  const result = await updateItemAction({ 
-    ...data, 
-    storeId: String(params.storeId) 
-  });
-  if (result?.serverError) {
-    toastError({ description: result.serverError });
-    return;
-  }
-  // For create, ensure all required fields are present
-  if (data.id === 'new' || isNew) {
-    const newItem = { ...data, id: result.data.id, createdOn: result.data.createdOn };
-    onCreated?.(newItem);
+async function onSubmit(data: UpdateUserSettingsInput) {
+  setLoading(true);
+  
+  let result: { data?: ItemType; serverError?: string } | null;
+  if (isNew) {
+    // Handle create logic (e.g., create user via auth client first)
+    result = await createItemAction(data);
   } else {
-    onUpdated?.(data as ItemType);
+    result = await updateItemAction(data);
   }
+  
+  if (!result) {
+    toastError({ description: "An error occurred" });
+  } else if (result.serverError) {
+    toastError({ description: result.serverError });
+  } else {
+    toastSuccess({ description: "Profile updated." });
+    if (result.data) {
+      onUpdated?.(result.data as ItemType);
+    }
+  }
+  setLoading(false);
   setIsOpen(false);
 }
 ```
 
 **Key Points:**
 
-- Always import schemas from `@/actions/[domain]/[feature]/[action-name].validation.ts`
-- Use `.omit()` to exclude fields added in submit handler (e.g., `storeId`)
-- For conditional schemas, use `useMemo` to select the appropriate schema
-- Never define local schemas in component files
+- ✅ **Always import schema and type directly** from `@/actions/[domain]/[feature]/[action-name].validation.ts`
+- ✅ **Use the schema type directly** (e.g., `UpdateUserSettingsInput`) - no need for a separate `FormInput` type
+- ✅ **Use `mode: "onChange"`** for real-time validation feedback
+- ✅ **Never define local schemas** in component files
+- ✅ **Use `.refine()` in the schema** for conditional validation (e.g., required field when another field is true)
+
+#### Form Field Patterns
+
+**Standard Input Field:**
+
+```tsx
+<FormField
+  control={form.control}
+  name="name"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>
+        {t("name")} <span className="text-destructive">*</span>
+      </FormLabel>
+      <FormControl>
+        <Input
+          disabled={loading || form.formState.isSubmitting}
+          placeholder="Enter name"
+          {...field}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+**Optional Field (with null handling):**
+
+```tsx
+<FormField
+  control={form.control}
+  name="phoneNumber"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>{t("phone") || "Phone"}</FormLabel>
+      <FormControl>
+        <Input
+          disabled={loading || form.formState.isSubmitting}
+          placeholder="+886912345678 or +14155551212"
+          type="tel"
+          {...field}
+          value={field.value ?? ""} // Handle null/undefined
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+**Checkbox Field:**
+
+```tsx
+<FormField
+  control={form.control}
+  name="banned"
+  render={({ field }) => (
+    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+      <FormControl>
+        <Checkbox
+          checked={Boolean(field.value)}
+          onCheckedChange={(checked) =>
+            field.onChange(checked === true)
+          }
+          disabled={loading || form.formState.isSubmitting}
+        />
+      </FormControl>
+      <div className="space-y-1 leading-none">
+        <FormLabel>{t("banned") || "Banned"}</FormLabel>
+      </div>
+    </FormItem>
+  )}
+/>
+```
+
+**Conditional Field Rendering:**
+
+```tsx
+{form.watch("banned") && (
+  <FormField
+    control={form.control}
+    name="banReason"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>{t("ban_reason") || "Ban Reason"}</FormLabel>
+        <FormControl>
+          <Textarea
+            disabled={loading || form.formState.isSubmitting}
+            placeholder="Enter ban reason"
+            {...field}
+            value={field.value ?? ""}
+          />
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+)}
+```
+
+**Date/Time Field (datetime-local):**
+
+```tsx
+<FormField
+  control={form.control}
+  name="banExpires"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>{t("ban_expires") || "Ban Expires"}</FormLabel>
+      <FormControl>
+        <Input
+          disabled={loading || form.formState.isSubmitting}
+          type="datetime-local"
+          {...field}
+          value={
+            field.value
+              ? new Date(field.value).toISOString().slice(0, 16)
+              : ""
+          }
+          onChange={(e) => {
+            field.onChange(
+              e.target.value ? new Date(e.target.value).toISOString() : ""
+            );
+          }}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+**Validation Error Summary:**
+
+```tsx
+{Object.keys(form.formState.errors).length > 0 && (
+  <div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+    <div className="text-sm font-semibold text-destructive">
+      Please fix the following errors:
+    </div>
+    {Object.entries(form.formState.errors).map(([field, error]) => {
+      // Map field names to user-friendly labels using i18n
+      const fieldLabels: Record<string, string> = {
+        name: t("name"),
+        email: t("email"),
+        // ... map all fields
+      };
+      const fieldLabel = fieldLabels[field] || field;
+      return (
+        <div
+          key={field}
+          className="text-sm text-destructive flex items-start gap-2"
+        >
+          <span className="font-medium">{fieldLabel}:</span>
+          <span>{error.message as string}</span>
+        </div>
+      );
+    })}
+  </div>
+)}
+```
+
+**Submit Button with Validation:**
+
+```tsx
+<Button
+  type="submit"
+  disabled={
+    loading ||
+    !form.formState.isValid || // Disable when form is invalid
+    form.formState.isSubmitting
+  }
+  className="disabled:opacity-25"
+>
+  {t("submit")}
+</Button>
+```
 
 ### Date/Time Handling in CRUD Operations
 

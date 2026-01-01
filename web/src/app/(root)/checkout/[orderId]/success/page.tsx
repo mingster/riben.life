@@ -11,8 +11,8 @@ type Params = Promise<{ orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 /**
- * Generic success page for all order types (regular orders, recharge, RSVP prepaid, etc.)
- * Handles RSVP redirect logic for recharge orders linked to reservations.
+ * Generic success page for all order types (regular orders, refill, RSVP prepaid, etc.)
+ * Handles RSVP redirect logic for refill orders linked to reservations.
  */
 export default async function CheckoutSuccessPage(props: {
 	params: Params;
@@ -33,8 +33,8 @@ export default async function CheckoutSuccessPage(props: {
 	// Determine the redirect URL based on order type and context
 	let finalReturnUrl: string | undefined = returnUrl;
 
-	// Check if this order was for an RSVP prepaid payment (via recharge)
-	// This handles the case where a customer recharges credit to pay for an RSVP
+	// Check if this order was for an RSVP prepaid payment (via refill)
+	// This handles the case where a customer refills credit to pay for an RSVP
 	let rsvpId: string | undefined;
 	try {
 		if (order.checkoutAttributes) {

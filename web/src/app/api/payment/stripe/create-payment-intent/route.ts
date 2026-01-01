@@ -4,7 +4,7 @@ import logger from "@/lib/logger";
 
 /**
  * Create Stripe PaymentIntent API route.
- * Used by checkout and credit recharge flows to create payment intents.
+ * Used by checkout and credit refill flows to create payment intents.
  *
  * Request Body:
  * - total: number (order total in currency units, e.g., 100.00 for $100)

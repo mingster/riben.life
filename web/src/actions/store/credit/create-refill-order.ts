@@ -9,7 +9,7 @@ import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { ensureCreditRechargeProduct } from "./ensure-credit-recharge-product";
+import { ensureCreditRefillProduct } from "./ensure-credit-refill-product";
 import { getT } from "@/app/i18n";
 import { ensureCustomerIsStoreMember } from "@/utils/store-member-utils";
 
@@ -95,7 +95,7 @@ export const createRefillCreditPointsOrderAction = userRequiredActionClient
 		const dollarAmount = creditAmount * creditExchangeRate;
 
 		// Get digital shipping method (required for StoreOrder)
-		// Digital shipping is appropriate for credit recharge orders
+		// Digital shipping is appropriate for credit refill orders
 		let shippingMethod = await sqlClient.shippingMethod.findFirst({
 			where: { identifier: "digital" },
 		});
@@ -146,13 +146,13 @@ export const createRefillCreditPointsOrderAction = userRequiredActionClient
 			throw new SafeError("Cash payment is not available for Free-tier stores");
 		}
 
-		// Ensure credit recharge product exists (create if not found)
-		const creditRechargeProduct = await ensureCreditRechargeProduct(storeId);
+		// Ensure credit refill product exists (create if not found)
+		const creditRefillProduct = await ensureCreditRefillProduct(storeId);
 
 		// Get translation function for order note
 		const { t } = await getT();
 
-		// Create StoreOrder for recharge
+		// Create StoreOrder for refill
 		const now = getUtcNowEpoch();
 
 		// Add customer as store member
@@ -160,8 +160,8 @@ export const createRefillCreditPointsOrderAction = userRequiredActionClient
 
 		// Prepare checkoutAttributes with rsvpId if provided
 		const checkoutAttributes = rsvpId
-			? JSON.stringify({ rsvpId, creditRecharge: true })
-			: JSON.stringify({ creditRecharge: true });
+			? JSON.stringify({ rsvpId, creditRefill: true })
+			: JSON.stringify({ creditRefill: true });
 
 		const order = await sqlClient.storeOrder.create({
 			data: {
@@ -181,7 +181,7 @@ export const createRefillCreditPointsOrderAction = userRequiredActionClient
 				orderStatus: OrderStatus.Pending,
 				OrderItems: {
 					create: {
-						productId: creditRechargeProduct.id,
+						productId: creditRefillProduct.id,
 						productName: t("store_credit"),
 						quantity: creditAmount, // Number of credit points being purchased
 						unitPrice: new Prisma.Decimal(creditExchangeRate), // Dollar amount per credit point
@@ -192,7 +192,7 @@ export const createRefillCreditPointsOrderAction = userRequiredActionClient
 				},
 				OrderNotes: {
 					create: {
-						note: t("credit_recharge_order_note", {
+						note: t("credit_refill_order_note", {
 							creditAmount,
 							dollarAmount,
 							currency: store.defaultCurrency.toUpperCase(),
