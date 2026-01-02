@@ -65,6 +65,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						defaultDuration: rsvpSettings.defaultDuration,
 						requireSignature: rsvpSettings.requireSignature,
 						showCostToCustomer: rsvpSettings.showCostToCustomer,
+						mustHaveServiceStaff: rsvpSettings.mustHaveServiceStaff ?? false,
 						useBusinessHours: rsvpSettings.useBusinessHours,
 						rsvpHours: rsvpSettings.rsvpHours,
 						reminderHours: rsvpSettings.reminderHours,
@@ -86,6 +87,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						defaultDuration: 60,
 						requireSignature: false,
 						showCostToCustomer: false,
+						mustHaveServiceStaff: false,
 						useBusinessHours: true,
 						rsvpHours: null,
 						reminderHours: 24,
@@ -505,6 +507,32 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 											<FormLabel>{t("rsvp_Show_Cost")}</FormLabel>
 											<FormDescription className="text-xs font-mono text-gray-500">
 												{t("rsvp_Show_Cost_descr")}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="mustHaveServiceStaff"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center gap-2 pr-3 rounded-lg shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>
+												{t("rsvp_Can_Select_Service_Staff") ||
+													"Must Have Service Staff"}
+											</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("rsvp_Can_Select_Service_Staff_descr") ||
+													"Customers must select service staff (e.g., beautician, masseur, hairstylist, etc.)"}
 											</FormDescription>
 										</div>
 										<FormControl>

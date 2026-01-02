@@ -17,9 +17,9 @@ export const updateCustomerAction = storeActionClient
 				customerId,
 				name,
 				locale,
-				memberRole,
 				timezone,
 				phone,
+				email,
 			},
 		}) => {
 			// Get organizationId from store
@@ -35,7 +35,13 @@ export const updateCustomerAction = storeActionClient
 			// Update user
 			await sqlClient.user.update({
 				where: { id: customerId },
-				data: { name, locale, timezone, phoneNumber: phone },
+				data: {
+					name,
+					locale,
+					timezone,
+					phoneNumber: phone,
+					email: email && email.trim() !== "" ? email : null,
+				},
 			});
 
 			const organizationId = store.organizationId;
@@ -47,6 +53,9 @@ export const updateCustomerAction = storeActionClient
 					organizationId: organizationId,
 				},
 			});
+
+			// Always set role to "customer" for customers managed in this section
+			const memberRole = "customer";
 
 			if (existingMember) {
 				// Update existing member

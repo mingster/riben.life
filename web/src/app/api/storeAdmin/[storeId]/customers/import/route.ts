@@ -260,7 +260,6 @@ export async function POST(
 						name,
 						email,
 						phoneNumber,
-						memberRole: customer.memberRole,
 						creditPoint: customer.creditPoint,
 						creditFiat: customer.creditFiat,
 					},
@@ -289,7 +288,8 @@ export async function POST(
 				finalEmail = finalEmail.toLowerCase();
 
 				// Get values with defaults
-				const memberRole = customer.memberRole?.trim() || "customer";
+				// Always set memberRole to "customer" for customers managed in this section
+				const memberRole = "customer";
 				let creditPoint = customer.creditPoint
 					? parseFloat(customer.creditPoint)
 					: 0;

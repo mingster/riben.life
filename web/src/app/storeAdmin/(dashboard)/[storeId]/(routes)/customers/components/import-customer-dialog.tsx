@@ -159,7 +159,7 @@ export function ImportCustomerDialog({
 					<DialogTitle>{t("import") || "Import Customers"}</DialogTitle>
 					<DialogDescription>
 						{t("import_customer_descr") ||
-							"Upload a CSV file to import customers. CSV columns: name (required), email (optional, auto-generated if not provided), phoneNumber (optional, must be unique if provided), memberRole (defaults to 'customer'), creditPoint (defaults to 0, creates ledger entry if value provided), creditFiat (defaults to 0, creates ledger entry if value provided). Users are matched by email or phoneNumber if provided. If found, user is updated; if not found, new user is created with auto-generated email."}
+							"Upload a CSV file to import customers. CSV columns: name (required), email (optional, auto-generated if not provided), phoneNumber (optional, must be unique if provided), creditPoint (defaults to 0, creates ledger entry if value provided), creditFiat (defaults to 0, creates ledger entry if value provided). All imported customers will have 'customer' role. Users are matched by email or phoneNumber if provided. If found, user is updated; if not found, new user is created with auto-generated email."}
 					</DialogDescription>
 				</DialogHeader>
 

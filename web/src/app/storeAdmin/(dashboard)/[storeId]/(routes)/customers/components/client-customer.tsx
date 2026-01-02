@@ -334,15 +334,6 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		},
 
 		{
-			accessorKey: "memberRole",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title={t("user_role")} />;
-			},
-			cell: ({ row }) => {
-				return <div className="">{row.original.memberRole}</div>;
-			},
-		},
-		{
 			accessorKey: "customerCreditFiat",
 			header: ({ column }) => {
 				return (
@@ -453,14 +444,14 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
-							<BreadcrumbPage>{t("Customers")}</BreadcrumbPage>
+							<BreadcrumbPage>{t("customers")}</BreadcrumbPage>
 						</BreadcrumbItem>
 					</BreadcrumbList>
 				</Breadcrumb>
 
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<Heading
-						title={t("Customers") || "Customer Management"}
+						title={t("customers") || "Customer Management"}
 						badge={filteredData.length}
 						description={`${t("customers_descr")}${isFiltered ? ` ${filteredData.length} of ${data.length}` : ""}`}
 					/>

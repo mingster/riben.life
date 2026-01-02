@@ -71,6 +71,7 @@ model User {
 
   StoreLedgerCreated      StoreLedger[]
   NotificationPreferences NotificationPreferences[]
+  ServiceStaff            ServiceStaff[]
 
   @@unique([normalizedEmail])
   @@index([email])
@@ -676,6 +677,7 @@ model Store {
   EmailQueues                EmailQueue[]
   StorePaymentMethods        StorePaymentMethodMapping[]
   StoreFacilities            StoreFacility[]
+  ServiceStaffs              ServiceStaff[]
   StoreProductOptionTemplate StoreProductOptionTemplate[]
   Rsvp                       Rsvp[]
   StoreSettings              StoreSettings?
@@ -761,6 +763,8 @@ model RsvpSettings {
   requireSignature   Boolean @default(false) //需要簽名
   showCostToCustomer Boolean @default(false) //顯示預約金額
 
+  mustHaveServiceStaff Boolean @default(false) //必須要選擇服務人員(e.g. 美容師, 按摩師, 髮型師, 等等)
+
   useBusinessHours Boolean @default(true)
   rsvpHours        String? //營業時間：M-F 09:00-18:00
 
@@ -827,7 +831,6 @@ model Rsvp {
   storeId     String
   customerId  String?
   orderId     String?
-  facilityId  String?
   numOfAdult  Int     @default(1)
   numOfChild  Int     @default(0)
   rsvpTime    BigInt
@@ -846,9 +849,14 @@ model Rsvp {
   confirmedByCustomer Boolean @default(false) //客戶已確認預約
 
   // Pricing at time of reservation
-  facilityCost   Decimal? // The cost that was charged
-  facilityCredit Decimal? // The credit that was charged
+  facilityId     String?
+  facilityCost   Decimal? //optional: if the facility is selected, the cost that was charged
+  facilityCredit Decimal? //optional: if the facility is selected, the credit that was charged
   pricingRuleId  String? // Reference to the pricing rule used
+
+  serviceStaffId     String? //optional: if the service staff is selected
+  serviceStaffCost   Decimal? //optional: if the service staff is selected, the cost that was charged
+  serviceStaffCredit Decimal? //optional: if the service staff is selected, the credit that was charged
 
   createdAt           BigInt
   updatedAt           BigInt
@@ -858,6 +866,7 @@ model Rsvp {
   CreatedBy           User?                @relation("RsvpCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   Order               StoreOrder?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   Facility            StoreFacility?       @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  ServiceStaff        ServiceStaff?        @relation(fields: [serviceStaffId], references: [id], onDelete: SetNull)
   FacilityPricingRule FacilityPricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
@@ -865,6 +874,7 @@ model Rsvp {
   @@index([createdBy])
   @@index([orderId])
   @@index([facilityId])
+  @@index([serviceStaffId])
   @@index([pricingRuleId])
   @@index([rsvpTime])
   @@index([arriveTime])
@@ -878,7 +888,7 @@ model StoreFacility {
   id              String  @id @default(uuid())
   storeId         String
   facilityName    String
-  capacity        Int     @default(4)
+  capacity        Int     @default(4) //how many people can use the facility at the same time
   defaultCost     Decimal @default(0) // default cost for using the facility
   defaultCredit   Decimal @default(0) // default credit for using the facility
   defaultDuration Int     @default(60) // default duration for using the facility in minutes
@@ -895,6 +905,28 @@ model StoreFacility {
   @@unique([storeId, facilityName])
   @@index([storeId])
   @@index([facilityName])
+}
+
+model ServiceStaff {
+  id      String @id @default(uuid())
+  storeId String
+  userId  String
+
+  capacity        Int     @default(4) //how many people can use the service staff at the same time
+  defaultCost     Decimal @default(0) // default cost for using the service staff
+  defaultCredit   Decimal @default(0) // default credit for using the service staff
+  defaultDuration Int     @default(60) // default duration for using the service staff in minutes
+  businessHours   String? //when the service staff is available for use
+
+  description String? // description of the service staff
+
+  Store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Rsvp  Rsvp[]
+
+  @@unique([storeId, userId])
+  @@index([storeId])
+  @@index([userId])
 }
 
 model FacilityPricingRule {

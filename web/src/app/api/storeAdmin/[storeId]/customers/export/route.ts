@@ -21,7 +21,6 @@ const CSV_COLUMNS = [
 	"name",
 	"email",
 	"phoneNumber",
-	"memberRole",
 	"creditPoint",
 	"creditFiat",
 ];
@@ -120,12 +119,8 @@ export async function POST(
 			},
 		});
 
-		// Map users to include the member role for this organization and credit data
+		// Map users to include credit data (all customers have "customer" role)
 		const usersWithRole = users.map((user) => {
-			const member = user.members.find(
-				(m: { organizationId: string; role: string }) =>
-					m.organizationId === store.organizationId,
-			);
 			// Get CustomerCredit for this store (should be at most one due to unique constraint)
 			const customerCredit = user.CustomerCredits[0];
 			const creditPoint = customerCredit ? Number(customerCredit.point) : 0;
@@ -135,7 +130,6 @@ export async function POST(
 				name: user.name || "",
 				email: user.email || "",
 				phoneNumber: user.phoneNumber || "",
-				memberRole: member?.role || "",
 				creditPoint,
 				creditFiat,
 			};

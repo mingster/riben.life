@@ -345,6 +345,16 @@ export type StoreFacility = Prisma.StoreFacilityGetPayload<
 	typeof storeFacilityObj
 >;
 
+const serviceStaffObj = Prisma.validator<Prisma.ServiceStaffDefaultArgs>()({
+	include: {
+		Store: true,
+		User: true,
+	},
+});
+export type ServiceStaff = Prisma.ServiceStaffGetPayload<
+	typeof serviceStaffObj
+>;
+
 const rsvpObj = Prisma.validator<Prisma.RsvpDefaultArgs>()({
 	include: {
 		Store: true,
