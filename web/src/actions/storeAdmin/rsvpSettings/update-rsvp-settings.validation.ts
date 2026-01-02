@@ -12,6 +12,7 @@ export const updateRsvpSettingsSchema = z.object({
 	defaultDuration: z.number().int().min(1).optional(),
 	requireSignature: z.boolean().optional(),
 	showCostToCustomer: z.boolean().optional(),
+	mustHaveServiceStaff: z.boolean().optional(),
 	useBusinessHours: z.boolean().optional(),
 	rsvpHours: z.string().nullable().optional(),
 	reminderHours: z.number().int().min(0).optional(),

@@ -41,7 +41,6 @@ import { IconPencil, IconPlus } from "@tabler/icons-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { MemberRoleCombobox } from "./member-role-combobox";
 
 //type formValues = z.infer<typeof updateCustomerSchema>;
 
@@ -72,8 +71,27 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 		let result: { data?: User; serverError?: string } | null;
 		if (isNew) {
 			// create a new user and add to this store from client side
+			// Generate email if not provided (similar to import logic)
+			let finalEmail = data.email?.trim() || "";
+			if (!finalEmail) {
+				const phoneNumber = data.phone?.trim() || "";
+				if (phoneNumber) {
+					// Mock email from phoneNumber if phoneNumber provided
+					finalEmail = `${phoneNumber.replace(/[^0-9]/g, "")}@phone.riben.life`;
+				} else {
+					// Generate unique email from name + timestamp + random
+					const sanitizedName = (data.name || "")
+						.replace(/[^a-zA-Z0-9]/g, "")
+						.toLowerCase()
+						.substring(0, 20);
+					const timestamp = Date.now();
+					const random = Math.random().toString(36).substring(2, 10);
+					finalEmail = `${sanitizedName}-${timestamp}-${random}@import.riben.life`;
+				}
+			}
+
 			const newUser = await authClient.admin.createUser({
-				email: data.email || "",
+				email: finalEmail,
 				name: data.name,
 				//role: data.role as any, // Better Auth accepts any role string
 				password: data.password as string,
@@ -132,7 +150,6 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 		phone: (item as any).phoneNumber ?? "",
 		locale: item.locale || lng,
 		timezone: item.timezone || "Asia/Taipei",
-		memberRole: (item as any).memberRole || "customer", // Default to "customer" if role not found
 		password: undefined,
 	};
 
@@ -217,14 +234,13 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 									name="email"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>
-												{t("email")} <span className="text-destructive">*</span>
-											</FormLabel>
+											<FormLabel>{t("email")}</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
 													placeholder="Enter email"
 													{...field}
+													value={field.value ?? ""}
 												/>
 											</FormControl>
 											<FormMessage />
@@ -317,28 +333,6 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 									)}
 								/>
 
-								<FormField
-									control={form.control}
-									name="memberRole"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>
-												{t("user_role")}{" "}
-												<span className="text-destructive">*</span>
-											</FormLabel>
-											<FormControl>
-												<div>
-													<MemberRoleCombobox
-														defaultValue={field.value || ""}
-														onChange={field.onChange}
-													/>
-												</div>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
 								{Object.keys(form.formState.errors).length > 0 && (
 									<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
 										<div className="text-sm font-semibold text-destructive">
@@ -353,7 +347,6 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 													password: t("password"),
 													locale: t("account_tabs_language"),
 													timezone: t("timezone"),
-													memberRole: t("user_role"),
 													phone: t("phone"),
 												};
 												const fieldLabel = fieldLabels[field] || field;

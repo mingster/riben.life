@@ -77,6 +77,7 @@ export default async function RsvpSettingsPage(props: {
 			defaultDuration: rsvpSettings.defaultDuration,
 			requireSignature: rsvpSettings.requireSignature,
 			showCostToCustomer: rsvpSettings.showCostToCustomer,
+			mustHaveServiceStaff: rsvpSettings.mustHaveServiceStaff ?? false,
 			useBusinessHours: rsvpSettings.useBusinessHours,
 			rsvpHours: rsvpSettings.rsvpHours,
 			reminderHours: rsvpSettings.reminderHours,

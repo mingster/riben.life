@@ -115,16 +115,13 @@ export function RefillCreditDialog({
 		try {
 			setLoading(true);
 
-			const result = await refillCustomerCreditAction(
-				String(params.storeId),
-				{
-					userId: user.id,
-					creditAmount: values.creditAmount,
-					cashAmount: values.cashAmount,
-					isPaid: values.isPaid,
-					note: values.note || null,
-				},
-			);
+			const result = await refillCustomerCreditAction(String(params.storeId), {
+				userId: user.id,
+				creditAmount: values.creditAmount,
+				cashAmount: values.cashAmount,
+				isPaid: values.isPaid,
+				note: values.note || null,
+			});
 
 			if (result?.serverError) {
 				toastError({

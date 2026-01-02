@@ -90,7 +90,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink asChild>
-							<Link href={link_customers}>{t("Customers")}</Link>
+							<Link href={link_customers}>{t("customers")}</Link>
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />

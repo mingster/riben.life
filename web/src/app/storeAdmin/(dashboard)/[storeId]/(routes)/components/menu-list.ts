@@ -27,6 +27,7 @@ import {
 	IconScale,
 	IconSettings,
 	IconTicket,
+	IconUser,
 	IconUsers,
 } from "@tabler/icons-react";
 
@@ -188,13 +189,20 @@ export function GetMenuList(
 			],
 		},
 		{
-			groupLabel: t("Customers"),
+			groupLabel: t("personnel"),
 			menus: [
 				{
 					href: `${nav_prefix}/customers`,
-					label: t("Customers"),
+					label: t("customers"),
 					active: pathname.includes(`${nav_prefix}/customers`),
 					icon: IconUsers,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/service-staff`,
+					label: t("service_staff"),
+					active: pathname.includes(`${nav_prefix}/service-staff`),
+					icon: IconUser,
 					submenus: [],
 				},
 			],
