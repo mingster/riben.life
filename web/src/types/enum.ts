@@ -133,19 +133,11 @@ export enum StoreLedgerType {
 export enum CustomerCreditLedgerType {
 	Topup = "TOPUP", // Customer or store operator adds credit (via payment)
 	Bonus = "BONUS", // Bonus credit awarded based on bonus rules
+	Hold = "HOLD", //TODO: When customer make a reservation, the credit is held. As the reservation completed, the credit is spent.
 	Spend = "SPEND", // Credit used for purchase/order
 	Refund = "REFUND", // Credit refunded (e.g., order cancellation)
 	Adjustment = "ADJUSTMENT", // Manual adjustment by store operator
 }
-
-/*
-export enum ShippingMethod {
-  Digital = 10,
-  SelfPickup = 20,
-  FlatRate = 30,
-  LocalDelivery = 40,
-}
-*/
 
 export enum ShippingStatus {
 	ShippigNotRequired = 0,
@@ -168,8 +160,8 @@ export enum ReturnStatus {
 
 export enum RsvpStatus {
 	Pending = 0, //尚未付款
-	ReadyToConfirm = 10, //
-	Ready = 40, //已入場 ready for service
+	ReadyToConfirm = 10, //待確認
+	Ready = 40, //已就序 ready for service
 	Completed = 50, //已完成 checkout
 	Cancelled = 60, //已取消
 	NoShow = 70, //未到

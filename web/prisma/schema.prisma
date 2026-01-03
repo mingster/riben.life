@@ -917,8 +917,8 @@ model ServiceStaff {
   defaultCredit   Decimal @default(0) // default credit for using the service staff
   defaultDuration Int     @default(60) // default duration for using the service staff in minutes
   businessHours   String? //when the service staff is available for use
-
-  description String? // description of the service staff
+  isDeleted       Boolean @default(false) // if the service staff is deleted
+  description     String? // description of the service staff
 
   Store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
   User  User   @relation(fields: [userId], references: [id], onDelete: Cascade)

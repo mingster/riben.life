@@ -24,9 +24,12 @@ export const getServiceStaffAction = storeActionClient
 			throw new SafeError("Store not found");
 		}
 
-		// Get all service staff for this store with user information
+		// Get all service staff for this store with user information (exclude deleted ones)
 		const serviceStaff = await sqlClient.serviceStaff.findMany({
-			where: { storeId },
+			where: {
+				storeId,
+				isDeleted: false,
+			},
 			include: {
 				User: {
 					select: {
