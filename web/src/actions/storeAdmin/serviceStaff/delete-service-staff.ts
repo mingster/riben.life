@@ -22,9 +22,27 @@ export const deleteServiceStaffAction = storeActionClient
 			throw new SafeError("Service staff not found");
 		}
 
-		await sqlClient.serviceStaff.delete({
-			where: { id },
+		// Check if there are any related Rsvp records
+		const relatedRsvpCount = await sqlClient.rsvp.count({
+			where: {
+				serviceStaffId: id,
+			},
 		});
+
+		if (relatedRsvpCount > 0) {
+			// Soft delete: mark as deleted
+			await sqlClient.serviceStaff.update({
+				where: { id },
+				data: {
+					isDeleted: true,
+				},
+			});
+		} else {
+			// Hard delete: no related data, safe to delete completely
+			await sqlClient.serviceStaff.delete({
+				where: { id },
+			});
+		}
 
 		return { id };
 	});

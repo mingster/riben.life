@@ -95,15 +95,17 @@ export const createServiceStaffAction = storeActionClient
 				},
 			});
 
+			let updatedMember;
 			if (existingMember) {
 				// Update existing member
-				await sqlClient.member.update({
+				updatedMember = await sqlClient.member.update({
 					where: { id: existingMember.id },
 					data: { role: memberRole },
+					select: { role: true },
 				});
 			} else {
 				// Create new member
-				await sqlClient.member.create({
+				updatedMember = await sqlClient.member.create({
 					data: {
 						id: crypto.randomUUID(),
 						userId,
@@ -111,11 +113,18 @@ export const createServiceStaffAction = storeActionClient
 						role: memberRole,
 						createdAt: getUtcNow(),
 					},
+					select: { role: true },
 				});
 			}
 
+			// Add memberRole to serviceStaff object for mapping
+			const serviceStaffWithRole = {
+				...serviceStaff,
+				memberRole: updatedMember.role,
+			};
+
 			return {
-				serviceStaff: mapServiceStaffToColumn(serviceStaff),
+				serviceStaff: mapServiceStaffToColumn(serviceStaffWithRole),
 			};
 		} catch (error: unknown) {
 			if (

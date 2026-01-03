@@ -53,9 +53,29 @@ export const createTableColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("email") || "Email"} />
 			),
-			cell: ({ row }) => (
-				<span>{(row.getValue("userEmail") as string | null) || "-"}</span>
+			cell: ({ row }) => {
+				const email = (row.getValue("userEmail") as string | null) || "-";
+				const phone = row.original.userPhoneNumber || "-";
+				const emailDisplay = email !== "-" ? email.substring(0, 20) : email;
+				return (
+					<div className="flex flex-col">
+						<span>{emailDisplay}</span>
+						<span className="text-sm text-muted-foreground">{phone}</span>
+					</div>
+				);
+			},
+		},
+		{
+			accessorKey: "memberRole",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("Role") || "Role"} />
 			),
+			cell: ({ row }) => (
+				<span>{(row.getValue("memberRole") as string) || "-"}</span>
+			),
+			meta: {
+				className: "hidden sm:table-cell",
+			},
 		},
 		{
 			accessorKey: "capacity",
@@ -66,27 +86,33 @@ export const createTableColumns = (
 				/>
 			),
 			cell: ({ row }) => <span>{row.getValue("capacity") as number}</span>,
+			meta: {
+				className: "hidden sm:table-cell",
+			},
 		},
 		{
 			accessorKey: "defaultCost",
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("service_staff_default_cost") || "Default Cost"}
+					title={`${t("service_staff_default_cost") || "Default Cost"} / ${t("service_staff_default_credit") || "Default Credit"}`}
 				/>
 			),
-			cell: ({ row }) => <span>{row.getValue("defaultCost") as number}</span>,
+			cell: ({ row }) => {
+				const cost = (row.getValue("defaultCost") as number) ?? 0;
+				const credit = row.original.defaultCredit ?? 0;
+				return (
+					<div className="flex flex-row gap-1">
+						<span>{cost.toFixed(2)}</span>
+						<span className="text-sm text-muted-foreground">/</span>
+						<span className="text-sm text-muted-foreground">
+							{credit.toFixed(2)}
+						</span>
+					</div>
+				);
+			},
 		},
-		{
-			accessorKey: "defaultCredit",
-			header: ({ column }) => (
-				<DataTableColumnHeader
-					column={column}
-					title={t("service_staff_default_credit") || "Default Credit"}
-				/>
-			),
-			cell: ({ row }) => <span>{row.getValue("defaultCredit") as number}</span>,
-		},
+
 		{
 			accessorKey: "defaultDuration",
 			header: ({ column }) => (
@@ -98,6 +124,9 @@ export const createTableColumns = (
 			cell: ({ row }) => (
 				<span>{row.getValue("defaultDuration") as number}</span>
 			),
+			meta: {
+				className: "hidden sm:table-cell",
+			},
 		},
 		{
 			id: "actions",
