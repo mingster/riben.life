@@ -62,7 +62,10 @@ export function RsvpCancelPolicyInfo({
 	// Calculate total cost: facility cost + service staff cost (if provided), otherwise use rsvpSettings.defaultCost
 	const facility = facilityCost ?? 0;
 	const staff = serviceStaffCost ?? 0;
-	const totalCost = facility + staff > 0 ? facility + staff : rsvpSettings?.defaultCost ?? null;
+	const totalCost =
+		facility + staff > 0
+			? facility + staff
+			: (rsvpSettings?.defaultCost ?? null);
 
 	return (
 		<div className="mt-2 p-3 rounded-md bg-muted/50 border border-border">

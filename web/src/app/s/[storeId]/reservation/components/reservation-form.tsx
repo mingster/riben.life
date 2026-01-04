@@ -1223,7 +1223,9 @@ export function ReservationForm({
 											{t("rsvp_service_staff_cost") || "Service Staff Cost"}:{" "}
 											{typeof selectedServiceStaff.defaultCost === "number"
 												? selectedServiceStaff.defaultCost.toFixed(2)
-												: Number(selectedServiceStaff.defaultCost).toFixed(2)}{" "}
+												: Number(selectedServiceStaff.defaultCost).toFixed(
+														2,
+													)}{" "}
 											{storeCurrency.toUpperCase()}
 										</div>
 									)}
