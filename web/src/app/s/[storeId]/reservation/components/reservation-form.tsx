@@ -388,6 +388,7 @@ export function ReservationForm({
 	// Watch rsvpTime to filter facilities
 	const rsvpTime = form.watch("rsvpTime");
 	const facilityId = form.watch("facilityId");
+	const serviceStaffId = form.watch("serviceStaffId"); // Watch serviceStaffId for cost calculation
 
 	// Always fetch service staff (not conditional on mustHaveServiceStaff)
 	const mustHaveServiceStaff = rsvpSettings?.mustHaveServiceStaff ?? false;
@@ -705,6 +706,29 @@ export function ReservationForm({
 		}
 		return null;
 	}, [selectedFacility]);
+
+	// Get selected service staff for cost calculation
+	const selectedServiceStaff = useMemo(() => {
+		if (!serviceStaffId) return null;
+		return serviceStaff.find((s) => s.id === serviceStaffId) || null;
+	}, [serviceStaffId, serviceStaff]);
+
+	// Get service staff cost for prepaid calculation
+	const serviceStaffCost = useMemo(() => {
+		if (selectedServiceStaff?.defaultCost) {
+			return typeof selectedServiceStaff.defaultCost === "number"
+				? selectedServiceStaff.defaultCost
+				: Number(selectedServiceStaff.defaultCost);
+		}
+		return null;
+	}, [selectedServiceStaff]);
+
+	// Calculate total cost (facility + service staff)
+	const totalCost = useMemo(() => {
+		const facility = facilityCost ?? 0;
+		const staff = serviceStaffCost ?? 0;
+		return facility + staff;
+	}, [facilityCost, serviceStaffCost]);
 
 	// Calculate cancel policy information (for both create and edit modes when rsvpTime is selected)
 	const cancelPolicyInfo = useMemo(() => {
@@ -1192,14 +1216,24 @@ export function ReservationForm({
 													field.onChange(staff?.id || null);
 												}}
 											/>
-										) : (
-											<div className="text-sm text-destructive">
-												{rsvpTime
-													? t("no_service_staff_available_at_selected_time")
-													: t("no_service_staff_available")}
-											</div>
-										)}
+										) : null}
 									</FormControl>
+									{selectedServiceStaff && selectedServiceStaff.defaultCost && (
+										<div className="text-sm text-muted-foreground">
+											{t("rsvp_service_staff_cost") || "Service Staff Cost"}:{" "}
+											{typeof selectedServiceStaff.defaultCost === "number"
+												? selectedServiceStaff.defaultCost.toFixed(2)
+												: Number(selectedServiceStaff.defaultCost).toFixed(2)}{" "}
+											{storeCurrency.toUpperCase()}
+										</div>
+									)}
+									{availableServiceStaff.length === 0 && (
+										<div className="text-sm text-destructive">
+											{rsvpTime
+												? t("no_service_staff_available_at_selected_time")
+												: t("no_service_staff_available")}
+										</div>
+									)}
 									<FormMessage />
 								</FormItem>
 							);
@@ -1287,6 +1321,7 @@ export function ReservationForm({
 								alreadyPaid={isEditMode ? (rsvp?.alreadyPaid ?? false) : false}
 								rsvpSettings={rsvpSettings}
 								facilityCost={facilityCost}
+								serviceStaffCost={serviceStaffCost}
 								currency={storeCurrency}
 								useCustomerCredit={useCustomerCredit}
 								creditExchangeRate={creditExchangeRate}
@@ -1304,6 +1339,7 @@ export function ReservationForm({
 							!canCreateReservation
 						}
 						className="w-full"
+						autoFocus
 					>
 						{isSubmitting
 							? isEditMode

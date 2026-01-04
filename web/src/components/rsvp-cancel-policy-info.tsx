@@ -15,6 +15,7 @@ interface RsvpCancelPolicyInfoProps {
 		defaultCost?: number | null; // Optional default cost for prepaid calculation
 	} | null;
 	facilityCost?: number | null; // Optional facility cost (used if provided, otherwise falls back to defaultCost)
+	serviceStaffCost?: number | null; // Optional service staff cost
 	currency?: string; // Store currency (e.g., "twd", "usd")
 	useCustomerCredit?: boolean; // Whether store uses customer credit system
 	creditExchangeRate?: number | null; // Credit points to cash conversion rate (1 point = X dollars)
@@ -30,6 +31,7 @@ export function RsvpCancelPolicyInfo({
 	alreadyPaid = false,
 	rsvpSettings,
 	facilityCost,
+	serviceStaffCost,
 	currency = "twd", // Default to TWD if not provided
 	useCustomerCredit = false,
 	creditExchangeRate = null,
@@ -57,8 +59,10 @@ export function RsvpCancelPolicyInfo({
 		return null;
 	}
 
-	// Calculate total cost: use facilityCost if provided, otherwise use rsvpSettings.defaultCost
-	const totalCost = facilityCost ?? rsvpSettings?.defaultCost ?? null;
+	// Calculate total cost: facility cost + service staff cost (if provided), otherwise use rsvpSettings.defaultCost
+	const facility = facilityCost ?? 0;
+	const staff = serviceStaffCost ?? 0;
+	const totalCost = facility + staff > 0 ? facility + staff : rsvpSettings?.defaultCost ?? null;
 
 	return (
 		<div className="mt-2 p-3 rounded-md bg-muted/50 border border-border">
