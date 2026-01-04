@@ -23,13 +23,17 @@ import { useState } from "react";
 type MemberRoleComboboxProps = {
 	defaultValue: string;
 	onChange?: (newRole: string) => void;
+	className?: string;
 };
+
+import { cn } from "@/lib/utils";
 
 // select component for member role
 //
 export const MemberRoleCombobox = ({
 	defaultValue,
 	onChange,
+	className,
 }: MemberRoleComboboxProps) => {
 	const [openRoleBox, setOpenRoleBox] = useState(false);
 
@@ -42,7 +46,10 @@ export const MemberRoleCombobox = ({
 	return (
 		<Popover open={openRoleBox} onOpenChange={setOpenRoleBox}>
 			<PopoverTrigger asChild className="font-mono">
-				<Button variant="outline" className="w-[150px] justify-start">
+				<Button
+					variant="outline"
+					className={cn("w-[150px] justify-start", className)}
+				>
 					{selectedRole ? <>{selectedRole}</> : <>+ Set role</>}
 				</Button>
 			</PopoverTrigger>

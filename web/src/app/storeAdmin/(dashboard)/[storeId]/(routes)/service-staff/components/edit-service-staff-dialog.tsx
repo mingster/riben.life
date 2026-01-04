@@ -43,6 +43,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useI18n } from "@/providers/i18n-provider";
 import type { ServiceStaffColumn } from "../service-staff-column";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { cn } from "@/lib/utils";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -158,6 +160,11 @@ export function EditServiceStaffDialog({
 				defaultDuration: serviceStaff.defaultDuration,
 				businessHours: serviceStaff.businessHours,
 				description: serviceStaff.description,
+				// User creation fields (not used in edit mode)
+				userName: "",
+				userEmail: "",
+				userPhone: "",
+				userPassword: "",
 			}
 		: {
 				id: "",
@@ -169,17 +176,98 @@ export function EditServiceStaffDialog({
 				defaultDuration: 60,
 				businessHours: null,
 				description: null,
+				// User creation fields
+				userName: userCreationData.name,
+				userEmail: userCreationData.email,
+				userPhone: userCreationData.phone,
+				userPassword: userCreationData.password,
 			};
 
 	// Use createServiceStaffSchema when isNew, updateServiceStaffSchema when editing
-	const schema = useMemo(
+	// Extend schema to include user creation fields when needed
+	const baseSchema = useMemo(
 		() => (isEditMode ? updateServiceStaffSchema : createServiceStaffSchema),
 		[isEditMode],
 	);
 
+	// Extend schema with user creation fields
+	// Make userId optional by using omit and extend, then add conditional validation
+	const schema = useMemo(
+		() =>
+			baseSchema
+				.omit({ userId: true })
+				.extend({
+					// Make userId optional (will be validated conditionally)
+					userId: z.string().optional(),
+					userName: z.string().optional(),
+					userEmail: z
+						.string()
+						.email("Invalid email format")
+						.optional()
+						.or(z.literal("")),
+					userPhone: z.string().optional(),
+					userPassword: z.string().optional(),
+				})
+				.refine(
+					(data) => {
+						// If userId is provided, that's valid
+						if (data.userId && data.userId.trim()) {
+							return true;
+						}
+						// If userId is not provided, userName and userPassword are required
+						if (!data.userId || !data.userId.trim()) {
+							const hasUserName = data.userName && data.userName.trim();
+							const hasUserPassword =
+								data.userPassword && data.userPassword.trim();
+							return hasUserName && hasUserPassword;
+						}
+						return true;
+					},
+					{
+						message:
+							"Either select an existing user or provide name and password to create a new user",
+						path: ["userId"], // This will show error on userId field
+					},
+				)
+				.refine(
+					(data) => {
+						// If userId is not provided, userName is required
+						if (!data.userId || !data.userId.trim()) {
+							return data.userName && data.userName.trim();
+						}
+						return true;
+					},
+					{
+						message: "Name is required when creating a new user",
+						path: ["userName"],
+					},
+				)
+				.refine(
+					(data) => {
+						// If userId is not provided, userPassword is required
+						if (!data.userId || !data.userId.trim()) {
+							return data.userPassword && data.userPassword.trim();
+						}
+						return true;
+					},
+					{
+						message: "Password is required when creating a new user",
+						path: ["userPassword"],
+					},
+				),
+		[baseSchema],
+	);
+
 	// Form input type: UpdateServiceStaffInput when editing, CreateServiceStaffInput when creating
 	// Both schemas now include memberRole, so we can use UpdateServiceStaffInput as the base
-	type FormInput = Omit<UpdateServiceStaffInput, "id"> & { id?: string };
+	// Add user creation fields for validation
+	type FormInput = Omit<UpdateServiceStaffInput, "id"> & {
+		id?: string;
+		userName?: string;
+		userEmail?: string;
+		userPhone?: string;
+		userPassword?: string;
+	};
 
 	const form = useForm<FormInput>({
 		resolver: zodResolver(schema) as Resolver<FormInput>,
@@ -189,7 +277,14 @@ export function EditServiceStaffDialog({
 	});
 
 	const resetForm = useCallback(() => {
-		form.reset(defaultValues);
+		const resetValues = {
+			...defaultValues,
+			userName: "",
+			userEmail: "",
+			userPhone: "",
+			userPassword: "",
+		};
+		form.reset(resetValues);
 		setUserMode("select");
 		setUserCreationData({
 			name: "",
@@ -198,6 +293,23 @@ export function EditServiceStaffDialog({
 			password: "",
 		});
 	}, [defaultValues, form]);
+
+	// Trigger validation when userMode changes
+	useEffect(() => {
+		// Clear userId when switching to "create" mode to trigger validation
+		if (userMode === "create") {
+			form.setValue("userId", "");
+			form.trigger(["userId", "userName", "userPassword"]);
+		} else {
+			// Clear user creation fields when switching to "select" mode
+			form.setValue("userName", "");
+			form.setValue("userPassword", "");
+			form.setValue("userEmail", "");
+			form.setValue("userPhone", "");
+			form.clearErrors(["userName", "userPassword", "userEmail", "userPhone"]);
+			form.trigger("userId");
+		}
+	}, [userMode, form]);
 
 	const handleOpenChange = (nextOpen: boolean) => {
 		if (!isControlled) {
@@ -237,7 +349,10 @@ export function EditServiceStaffDialog({
 
 				// If creating a new user, create it first
 				if (userMode === "create") {
-					if (!userCreationData.name || !userCreationData.password) {
+					const userName = values.userName?.trim() || "";
+					const userPassword = values.userPassword?.trim() || "";
+
+					if (!userName || !userPassword) {
 						toastError({
 							title: t("error_title"),
 							description:
@@ -247,13 +362,13 @@ export function EditServiceStaffDialog({
 					}
 
 					// Generate email if not provided (similar to customer import logic)
-					let finalEmail = userCreationData.email?.trim() || "";
+					let finalEmail = values.userEmail?.trim() || "";
 					if (!finalEmail) {
-						const phoneNumber = userCreationData.phone?.trim() || "";
+						const phoneNumber = values.userPhone?.trim() || "";
 						if (phoneNumber) {
 							finalEmail = `${phoneNumber.replace(/[^0-9]/g, "")}@phone.riben.life`;
 						} else {
-							const sanitizedName = (userCreationData.name || "")
+							const sanitizedName = userName
 								.replace(/[^a-zA-Z0-9]/g, "")
 								.toLowerCase()
 								.substring(0, 20);
@@ -265,8 +380,8 @@ export function EditServiceStaffDialog({
 
 					const newUser = await authClient.admin.createUser({
 						email: finalEmail,
-						name: userCreationData.name,
-						password: userCreationData.password,
+						name: userName,
+						password: userPassword,
 					});
 
 					finalUserId = newUser.data?.user.id || "";
@@ -445,8 +560,13 @@ export function EditServiceStaffDialog({
 								<FormField
 									control={form.control}
 									name="userId"
-									render={({ field }) => (
-										<FormItem>
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
 											<FormLabel>
 												{t("user") || "User"}{" "}
 												<span className="text-destructive">*</span>
@@ -457,6 +577,11 @@ export function EditServiceStaffDialog({
 													value={field.value}
 													onValueChange={field.onChange}
 													disabled={loading || form.formState.isSubmitting}
+													className={
+														fieldState.error
+															? "border-destructive focus-visible:ring-destructive"
+															: ""
+													}
 												/>
 											</FormControl>
 											<FormMessage />
@@ -465,82 +590,173 @@ export function EditServiceStaffDialog({
 								/>
 							) : (
 								<>
-									<div className="space-y-2">
-										<Label>
-											{t("name") || "Name"}{" "}
-											<span className="text-destructive">*</span>
-										</Label>
-										<Input
-											disabled={loading || form.formState.isSubmitting}
-											placeholder="Enter name"
-											value={userCreationData.name}
-											onChange={(e) =>
-												setUserCreationData({
-													...userCreationData,
-													name: e.target.value,
-												})
-											}
-											className="h-10 text-base sm:h-9 sm:text-sm"
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label>{t("email") || "Email"}</Label>
-										<Input
-											type="email"
-											disabled={loading || form.formState.isSubmitting}
-											placeholder="Enter email (optional)"
-											value={userCreationData.email}
-											onChange={(e) =>
-												setUserCreationData({
-													...userCreationData,
-													email: e.target.value,
-												})
-											}
-											className="h-10 text-base sm:h-9 sm:text-sm"
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label>{t("phone") || "Phone"}</Label>
-										<Input
-											type="tel"
-											disabled={loading || form.formState.isSubmitting}
-											placeholder="Enter phone number (optional)"
-											value={userCreationData.phone}
-											onChange={(e) =>
-												setUserCreationData({
-													...userCreationData,
-													phone: e.target.value,
-												})
-											}
-											className="h-10 text-base sm:h-9 sm:text-sm"
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label>
-											{t("password") || "Password"}{" "}
-											<span className="text-destructive">*</span>
-										</Label>
-										<Input
-											type="password"
-											disabled={loading || form.formState.isSubmitting}
-											placeholder="Enter password"
-											value={userCreationData.password}
-											onChange={(e) =>
-												setUserCreationData({
-													...userCreationData,
-													password: e.target.value,
-												})
-											}
-											className="h-10 text-base sm:h-9 sm:text-sm"
-										/>
-									</div>
+									<FormField
+										control={form.control}
+										name="userName"
+										render={({ field, fieldState }) => (
+											<FormItem
+												className={cn(
+													fieldState.error &&
+														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+												)}
+											>
+												<FormLabel>
+													{t("name") || "Name"}{" "}
+													<span className="text-destructive">*</span>
+												</FormLabel>
+												<FormControl>
+													<Input
+														disabled={loading || form.formState.isSubmitting}
+														placeholder="Enter name"
+														value={field.value || ""}
+														onChange={(e) => {
+															const value = e.target.value;
+															field.onChange(value);
+															setUserCreationData({
+																...userCreationData,
+																name: value,
+															});
+															// Trigger validation for related fields
+															if (userMode === "create") {
+																form.trigger(["userName", "userId"]);
+															}
+														}}
+														className={cn(
+															"h-10 text-base sm:h-9 sm:text-sm",
+															fieldState.error &&
+																"border-destructive focus-visible:ring-destructive",
+														)}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="userPassword"
+										render={({ field, fieldState }) => (
+											<FormItem
+												className={cn(
+													fieldState.error &&
+														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+												)}
+											>
+												<FormLabel>
+													{t("password") || "Password"}{" "}
+													<span className="text-destructive">*</span>
+												</FormLabel>
+												<FormControl>
+													<Input
+														type="password"
+														disabled={loading || form.formState.isSubmitting}
+														placeholder="Enter password"
+														value={field.value || ""}
+														onChange={(e) => {
+															const value = e.target.value;
+															field.onChange(value);
+															setUserCreationData({
+																...userCreationData,
+																password: value,
+															});
+															// Trigger validation for related fields
+															if (userMode === "create") {
+																form.trigger(["userPassword", "userId"]);
+															}
+														}}
+														className={cn(
+															"h-10 text-base sm:h-9 sm:text-sm",
+															fieldState.error &&
+																"border-destructive focus-visible:ring-destructive",
+														)}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="userEmail"
+										render={({ field, fieldState }) => (
+											<FormItem
+												className={cn(
+													fieldState.error &&
+														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+												)}
+											>
+												<FormLabel>{t("email") || "Email"}</FormLabel>
+												<FormControl>
+													<Input
+														type="email"
+														disabled={loading || form.formState.isSubmitting}
+														placeholder="Enter email (optional)"
+														value={field.value || ""}
+														onChange={(e) => {
+															field.onChange(e.target.value);
+															setUserCreationData({
+																...userCreationData,
+																email: e.target.value,
+															});
+														}}
+														className={cn(
+															"h-10 text-base sm:h-9 sm:text-sm",
+															fieldState.error &&
+																"border-destructive focus-visible:ring-destructive",
+														)}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="userPhone"
+										render={({ field, fieldState }) => (
+											<FormItem
+												className={cn(
+													fieldState.error &&
+														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+												)}
+											>
+												<FormLabel>{t("phone") || "Phone"}</FormLabel>
+												<FormControl>
+													<Input
+														type="tel"
+														disabled={loading || form.formState.isSubmitting}
+														placeholder="Enter phone number (optional)"
+														value={field.value || ""}
+														onChange={(e) => {
+															field.onChange(e.target.value);
+															setUserCreationData({
+																...userCreationData,
+																phone: e.target.value,
+															});
+														}}
+														className={cn(
+															"h-10 text-base sm:h-9 sm:text-sm",
+															fieldState.error &&
+																"border-destructive focus-visible:ring-destructive",
+														)}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
 								</>
 							)}
 							<FormField
 								control={form.control}
 								name="memberRole"
-								render={({ field }) => (
-									<FormItem>
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
 										<FormLabel>
 											{t("Role") || "Role"}{" "}
 											<span className="text-destructive">*</span>
@@ -549,6 +765,11 @@ export function EditServiceStaffDialog({
 											<MemberRoleCombobox
 												defaultValue={field.value || "staff"}
 												onChange={(value) => field.onChange(value)}
+												className={
+													fieldState.error
+														? "border-destructive focus-visible:ring-destructive"
+														: ""
+												}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -559,8 +780,13 @@ export function EditServiceStaffDialog({
 								<FormField
 									control={form.control}
 									name="capacity"
-									render={({ field }) => (
-										<FormItem>
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
 											<FormLabel>
 												{t("service_staff_capacity") || "Capacity"}{" "}
 												<span className="text-destructive">*</span>
@@ -577,7 +803,11 @@ export function EditServiceStaffDialog({
 													onChange={(event) =>
 														field.onChange(event.target.value)
 													}
-													className="h-10 text-base sm:h-9 sm:text-sm"
+													className={cn(
+														"h-10 text-base sm:h-9 sm:text-sm",
+														fieldState.error &&
+															"border-destructive focus-visible:ring-destructive",
+													)}
 												/>
 											</FormControl>
 											<FormMessage />
@@ -588,8 +818,13 @@ export function EditServiceStaffDialog({
 								<FormField
 									control={form.control}
 									name="defaultDuration"
-									render={({ field }) => (
-										<FormItem>
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
 											<FormLabel>
 												{t("service_staff_default_duration") ||
 													"Default Duration (minutes)"}{" "}
@@ -607,7 +842,11 @@ export function EditServiceStaffDialog({
 													onChange={(event) =>
 														field.onChange(event.target.value)
 													}
-													className="h-10 text-base sm:h-9 sm:text-sm"
+													className={cn(
+														"h-10 text-base sm:h-9 sm:text-sm",
+														fieldState.error &&
+															"border-destructive focus-visible:ring-destructive",
+													)}
 												/>
 											</FormControl>
 											<FormMessage />
@@ -619,8 +858,13 @@ export function EditServiceStaffDialog({
 								<FormField
 									control={form.control}
 									name="defaultCredit"
-									render={({ field }) => (
-										<FormItem>
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
 											<FormLabel>
 												{t("service_staff_default_credit") || "Default Credit"}{" "}
 												<span className="text-destructive">*</span>
@@ -637,7 +881,11 @@ export function EditServiceStaffDialog({
 													onChange={(event) =>
 														field.onChange(event.target.value)
 													}
-													className="h-10 text-base sm:h-9 sm:text-sm"
+													className={cn(
+														"h-10 text-base sm:h-9 sm:text-sm",
+														fieldState.error &&
+															"border-destructive focus-visible:ring-destructive",
+													)}
 												/>
 											</FormControl>
 											<FormMessage />
@@ -647,8 +895,13 @@ export function EditServiceStaffDialog({
 								<FormField
 									control={form.control}
 									name="defaultCost"
-									render={({ field }) => (
-										<FormItem>
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
 											<FormLabel>
 												{t("service_staff_default_cost") || "Default Cost"}{" "}
 												<span className="text-destructive">*</span>
@@ -665,7 +918,11 @@ export function EditServiceStaffDialog({
 													onChange={(event) =>
 														field.onChange(event.target.value)
 													}
-													className="h-10 text-base sm:h-9 sm:text-sm"
+													className={cn(
+														"h-10 text-base sm:h-9 sm:text-sm",
+														fieldState.error &&
+															"border-destructive focus-visible:ring-destructive",
+													)}
 												/>
 											</FormControl>
 											<FormMessage />
@@ -677,15 +934,24 @@ export function EditServiceStaffDialog({
 							<FormField
 								control={form.control}
 								name="businessHours"
-								render={({ field }) => (
-									<FormItem>
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
 										<FormLabel>
 											{t("business_hours") || "Business Hours"}
 										</FormLabel>
 										<FormControl>
 											<Textarea
 												disabled={loading || form.formState.isSubmitting}
-												className="font-mono min-h-[100px]"
+												className={cn(
+													"font-mono min-h-[100px]",
+													fieldState.error &&
+														"border-destructive focus-visible:ring-destructive",
+												)}
 												placeholder=""
 												value={field.value ?? ""}
 												onChange={(event) =>
@@ -700,15 +966,24 @@ export function EditServiceStaffDialog({
 							<FormField
 								control={form.control}
 								name="description"
-								render={({ field }) => (
-									<FormItem>
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
 										<FormLabel>
 											{t("service_staff_description") || "Description"}
 										</FormLabel>
 										<FormControl>
 											<Textarea
 												disabled={loading || form.formState.isSubmitting}
-												className="font-mono min-h-[100px]"
+												className={cn(
+													"font-mono min-h-[100px]",
+													fieldState.error &&
+														"border-destructive focus-visible:ring-destructive",
+												)}
 												placeholder=""
 												value={field.value ?? ""}
 												onChange={(event) =>
@@ -798,20 +1073,71 @@ export function EditServiceStaffDialog({
 											userMode === "create" &&
 											(!userCreationData.name ||
 												!userCreationData.password))) && (
-										<TooltipContent>
-											<div className="text-sm max-w-xs">
-												{loading || form.formState.isSubmitting
-													? t("processing") || "Processing..."
-													: !isEditMode &&
-															userMode === "create" &&
-															(!userCreationData.name ||
-																!userCreationData.password)
-														? t("name_and_password_required") ||
-															"Name and password are required to create a new user"
-														: !form.formState.isValid
-															? t("please_fix_validation_errors") ||
-																"Please fix validation errors above"
-															: ""}
+										<TooltipContent className="max-w-xs">
+											<div className="text-xs space-y-1">
+												{loading || form.formState.isSubmitting ? (
+													<div>{t("processing") || "Processing..."}</div>
+												) : !isEditMode &&
+													userMode === "create" &&
+													(!userCreationData.name ||
+														!userCreationData.password) ? (
+													<div>
+														{t("name_and_password_required") ||
+															"Name and password are required to create a new user"}
+													</div>
+												) : !form.formState.isValid &&
+													Object.keys(form.formState.errors).length > 0 ? (
+													<div className="space-y-1">
+														<div className="font-semibold">
+															{t("please_fix_validation_errors") ||
+																"Please fix the following errors:"}
+														</div>
+														{Object.entries(form.formState.errors)
+															.slice(0, 3)
+															.map(([field, error]) => {
+																const fieldLabels: Record<string, string> = {
+																	userId: t("user") || "User",
+																	memberRole: t("Role") || "Role",
+																	capacity:
+																		t("service_staff_capacity") || "Capacity",
+																	defaultCost:
+																		t("service_staff_default_cost") ||
+																		"Default Cost",
+																	defaultCredit:
+																		t("service_staff_default_credit") ||
+																		"Default Credit",
+																	defaultDuration:
+																		t("service_staff_default_duration") ||
+																		"Default Duration",
+																	businessHours:
+																		t("business_hours") || "Business Hours",
+																	description:
+																		t("service_staff_description") ||
+																		"Description",
+																};
+																const fieldLabel = fieldLabels[field] || field;
+																return (
+																	<div key={field} className="text-xs">
+																		<span className="font-medium">
+																			{fieldLabel}:
+																		</span>{" "}
+																		{error?.message as string}
+																	</div>
+																);
+															})}
+														{Object.keys(form.formState.errors).length > 3 && (
+															<div className="text-xs opacity-75">
+																+{Object.keys(form.formState.errors).length - 3}{" "}
+																more error(s)
+															</div>
+														)}
+													</div>
+												) : (
+													<div>
+														{t("please_fix_validation_errors") ||
+															"Please fix validation errors above"}
+													</div>
+												)}
 											</div>
 										</TooltipContent>
 									)}

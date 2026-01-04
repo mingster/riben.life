@@ -4,7 +4,7 @@ import { toastError, toastSuccess } from "@/components/toaster";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useTranslation } from "@/app/i18n/client";
 import {
 	Form,
@@ -40,7 +40,10 @@ export const StoreModal: React.FC = () => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const router = useRouter();
+	const pathname = usePathname();
 	const storeModal = useStoreModal();
+	const isModalOpen = useStoreModal((state) => state.isOpen);
+	const onCloseModal = useStoreModal((state) => state.onClose);
 	const [loading, setLoading] = useState(false);
 	const [checkingSlug, setCheckingSlug] = useState(false);
 	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -58,6 +61,21 @@ export const StoreModal: React.FC = () => {
 	});
 
 	const storeName = form.watch("name");
+
+	// Close modal when navigating to a store admin page (not the root)
+	useEffect(() => {
+		// If we're on a store admin page with a storeId, close the modal
+		// Only close if modal is actually open to prevent infinite loops
+		if (
+			pathname &&
+			pathname.startsWith("/storeAdmin/") &&
+			pathname !== "/storeAdmin" &&
+			isModalOpen
+		) {
+			onCloseModal();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [pathname]);
 
 	const handleCancel = () => {
 		storeModal.onClose();
@@ -170,13 +188,11 @@ export const StoreModal: React.FC = () => {
 				// Close modal first
 				storeModal.onClose();
 
-				// Use setTimeout to ensure modal state update propagates before navigation
-				setTimeout(() => {
-					// Navigate to store settings
-					if (result.data) {
-						router.push(`/storeAdmin/${result.data.storeId}/settings`);
-					}
-				}, 100);
+				// Navigate to store settings
+				// The useEffect will ensure modal stays closed when route changes
+				if (result.data) {
+					router.push(`/storeAdmin/${result.data.storeId}/settings`);
+				}
 			}
 		} catch (error: unknown) {
 			toastError({

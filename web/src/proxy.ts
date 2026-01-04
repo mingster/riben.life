@@ -18,6 +18,7 @@ const CORS_HEADERS = {
 // Pre-compile regex patterns for better performance
 const API_PATH_REGEX = /\/api\//;
 const TRACKER_PATH_REGEX = /\/api\/tracker\//;
+const SESSION_PATH_REGEX = /\/api\/auth\/get-session/;
 
 // Cache allowed origins to avoid parsing on every request
 let cachedAllowedOrigins: Set<string> | null = null;
@@ -111,6 +112,19 @@ export function proxy(req: NextRequest) {
 	const response = NextResponse.next();
 
 	response.headers.set("x-current-path", req.nextUrl.pathname);
+
+	// Add cache headers for session endpoint to reduce repeated calls
+	// Session is long-lived (365 days), so we can cache it aggressively
+	if (SESSION_PATH_REGEX.test(req.url)) {
+		// Cache for 5 minutes on client side
+		// This reduces repeated calls from multiple components
+		response.headers.set(
+			"Cache-Control",
+			"private, max-age=300, stale-while-revalidate=60",
+		);
+		// Prevent proxy/CDN caching (session is user-specific)
+		response.headers.set("Vary", "Cookie, Authorization");
+	}
 
 	// Early return for non-API routes using pre-compiled regex
 	if (!API_PATH_REGEX.test(req.url)) {

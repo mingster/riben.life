@@ -134,6 +134,7 @@ export async function sendOTP({
 				{
 					metadata: {
 						phoneNumber: maskPhoneNumber(phoneNumber),
+						code: otpCode,
 						userId,
 						locale,
 						countryCode: phoneNumber.match(/^\+\d{1,3}/)?.[0] || "unknown",

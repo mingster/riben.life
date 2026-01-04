@@ -492,3 +492,270 @@ export const updateUserSettingsSchema = z
 - ✅ Disable submit button when `!form.formState.isValid`
 - ✅ Use `.refine()` for conditional validation rules
 - ✅ Each `.refine()` should have a clear `path` to the field that fails
+
+## Form Field Error Highlighting
+
+**CRITICAL: All form fields with validation errors must be visually highlighted to clearly indicate which fields need attention.**
+
+### Visual Error Indicators
+
+When a form field has a validation error, it should display:
+
+1. **Red border** around the input/textarea/select component
+2. **Light red background** on the FormItem container
+3. **Red error message** below the field (via FormMessage)
+4. **Red focus ring** when the field is focused
+
+### Standard Pattern
+
+All FormField components must use this pattern for error highlighting:
+
+```tsx
+import { cn } from "@/lib/utils";
+
+<FormField
+  control={form.control}
+  name="fieldName"
+  render={({ field, fieldState }) => (
+    <FormItem
+      className={cn(
+        fieldState.error &&
+          "rounded-md border border-destructive/50 bg-destructive/5 p-2",
+      )}
+    >
+      <FormLabel>
+        {t("Field_Label")} <span className="text-destructive">*</span>
+      </FormLabel>
+      <FormControl>
+        <Input
+          {...field}
+          className={cn(
+            "h-10 text-base sm:h-9 sm:text-sm",
+            fieldState.error &&
+              "border-destructive focus-visible:ring-destructive",
+          )}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+### Error Highlighting Components
+
+#### Input Fields
+
+```tsx
+<FormField
+  control={form.control}
+  name="name"
+  render={({ field, fieldState }) => (
+    <FormItem
+      className={cn(
+        fieldState.error &&
+          "rounded-md border border-destructive/50 bg-destructive/5 p-2",
+      )}
+    >
+      <FormLabel>
+        {t("name")} <span className="text-destructive">*</span>
+      </FormLabel>
+      <FormControl>
+        <Input
+          {...field}
+          className={cn(
+            "h-10 text-base sm:h-9 sm:text-sm",
+            fieldState.error &&
+              "border-destructive focus-visible:ring-destructive",
+          )}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+#### Textarea Fields
+
+```tsx
+<FormField
+  control={form.control}
+  name="description"
+  render={({ field, fieldState }) => (
+    <FormItem
+      className={cn(
+        fieldState.error &&
+          "rounded-md border border-destructive/50 bg-destructive/5 p-2",
+      )}
+    >
+      <FormLabel>
+        {t("Description")} <span className="text-destructive">*</span>
+      </FormLabel>
+      <FormControl>
+        <Textarea
+          {...field}
+          className={cn(
+            "font-mono min-h-[100px]",
+            fieldState.error &&
+              "border-destructive focus-visible:ring-destructive",
+          )}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+#### Select/Combobox Fields
+
+```tsx
+<FormField
+  control={form.control}
+  name="userId"
+  render={({ field, fieldState }) => (
+    <FormItem
+      className={cn(
+        fieldState.error &&
+          "rounded-md border border-destructive/50 bg-destructive/5 p-2",
+      )}
+    >
+      <FormLabel>
+        {t("user")} <span className="text-destructive">*</span>
+      </FormLabel>
+      <FormControl>
+        <UserCombobox
+          value={field.value}
+          onValueChange={field.onChange}
+          className={
+            fieldState.error
+              ? "border-destructive focus-visible:ring-destructive"
+              : ""
+          }
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+**Note:** Custom combobox components must accept a `className` prop to apply error styling.
+
+### Error Styling Classes
+
+#### FormItem Container
+
+```tsx
+className={cn(
+  fieldState.error &&
+    "rounded-md border border-destructive/50 bg-destructive/5 p-2",
+)}
+```
+
+- `rounded-md`: Rounded corners for the container
+- `border border-destructive/50`: Red border at 50% opacity
+- `bg-destructive/5`: Light red background at 5% opacity
+- `p-2`: Padding to create visual space around the field
+
+#### Input/Textarea/Select Components
+
+```tsx
+className={cn(
+  "base-classes",
+  fieldState.error &&
+    "border-destructive focus-visible:ring-destructive",
+)}
+```
+
+- `border-destructive`: Red border on the input
+- `focus-visible:ring-destructive`: Red focus ring when focused
+
+### Dynamic Validation Triggering
+
+For fields that need conditional validation (e.g., required only in certain modes), trigger validation when values change:
+
+```tsx
+<Input
+  {...field}
+  onChange={(e) => {
+    const value = e.target.value;
+    field.onChange(value);
+    // Trigger validation for related fields
+    if (someCondition) {
+      form.trigger(["fieldName", "relatedField"]);
+    }
+  }}
+/>
+```
+
+### Complete Example
+
+```tsx
+import { cn } from "@/lib/utils";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+
+const form = useForm<FormInput>({
+  resolver: zodResolver(schema),
+  defaultValues,
+  mode: "onChange", // Real-time validation
+});
+
+<Form {...form}>
+  <form onSubmit={form.handleSubmit(onSubmit)}>
+    <FormField
+      control={form.control}
+      name="name"
+      render={({ field, fieldState }) => (
+        <FormItem
+          className={cn(
+            fieldState.error &&
+              "rounded-md border border-destructive/50 bg-destructive/5 p-2",
+          )}
+        >
+          <FormLabel>
+            {t("name")} <span className="text-destructive">*</span>
+          </FormLabel>
+          <FormControl>
+            <Input
+              {...field}
+              className={cn(
+                "h-10 text-base sm:h-9 sm:text-sm",
+                fieldState.error &&
+                  "border-destructive focus-visible:ring-destructive",
+              )}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  </form>
+</Form>
+```
+
+### Rules
+
+1. **Always destructure `fieldState`** in FormField render function to access error state
+2. **Always apply error styling** to both FormItem container and input component
+3. **Always use `cn()` utility** for conditional class names
+4. **Always include FormMessage** to display error text below the field
+5. **Use consistent error styling** across all form fields in the application
+
+### Benefits
+
+- **Clear visual feedback**: Users immediately see which fields have errors
+- **Improved UX**: Red highlighting draws attention to problems
+- **Accessibility**: Visual indicators complement error messages
+- **Consistency**: Uniform error styling across the application
