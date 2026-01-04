@@ -7,13 +7,16 @@ import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { auth } from "@/lib/auth";
-import logger from "@/lib/logger";
 import { headers } from "next/headers";
-import { RsvpStatus } from "@/types/enum";
-import { dateToEpoch, convertDateToUtc } from "@/utils/datetime-utils";
+import {
+	dateToEpoch,
+	convertDateToUtc,
+	getUtcNowEpoch,
+} from "@/utils/datetime-utils";
 
 import { updateReservationSchema } from "./update-reservation.validation";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
+import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
 import { validateCancelHoursWindow } from "./validate-cancel-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
@@ -27,6 +30,7 @@ export const updateReservationAction = baseClient
 		const {
 			id,
 			facilityId,
+			serviceStaffId, // Added serviceStaffId
 			numOfAdult,
 			numOfChild,
 			rsvpTime: rsvpTimeInput,
@@ -74,6 +78,7 @@ export const updateReservationAction = baseClient
 				canReserveBefore: true,
 				canReserveAfter: true,
 				singleServiceMode: true,
+				mustHaveServiceStaff: true, // Added mustHaveServiceStaff
 			},
 		});
 
@@ -114,6 +119,41 @@ export const updateReservationAction = baseClient
 		// Set createdBy if it's currently null (for old records)
 		const createdBy = sessionUserId || existingRsvp.createdBy || null;
 
+		// Validate serviceStaffId if mustHaveServiceStaff is true
+		if (rsvpSettingsResult?.mustHaveServiceStaff && !serviceStaffId) {
+			throw new SafeError("Service staff is required");
+		}
+
+		// Get service staff if provided
+		let serviceStaff = null;
+		if (serviceStaffId) {
+			serviceStaff = await sqlClient.serviceStaff.findFirst({
+				where: {
+					id: serviceStaffId,
+					storeId: existingRsvp.storeId,
+					isDeleted: false,
+				},
+				select: {
+					id: true,
+					businessHours: true,
+					defaultCost: true,
+					defaultCredit: true,
+				},
+			});
+
+			if (!serviceStaff) {
+				throw new SafeError("Service staff not found");
+			}
+
+			// Validate service staff business hours
+			validateServiceStaffBusinessHours(
+				serviceStaff.businessHours,
+				rsvpTimeUtc,
+				storeTimezone,
+				serviceStaffId,
+			);
+		}
+
 		// Validate facility (required)
 		if (!facilityId) {
 			throw new SafeError("Facility is required");
@@ -129,6 +169,8 @@ export const updateReservationAction = baseClient
 				storeId: true,
 				facilityName: true,
 				defaultDuration: true,
+				defaultCost: true, // Added defaultCost
+				defaultCredit: true, // Added defaultCredit
 				businessHours: true,
 			},
 		});
@@ -166,17 +208,42 @@ export const updateReservationAction = baseClient
 			);
 		}
 
+		// Calculate costs: facility cost + service staff cost (if applicable)
+		let facilityCost = facility?.defaultCost ? Number(facility.defaultCost) : 0;
+		let facilityCredit = facility?.defaultCredit
+			? Number(facility.defaultCredit)
+			: 0;
+		let serviceStaffCost = serviceStaff?.defaultCost
+			? Number(serviceStaff.defaultCost)
+			: 0;
+		let serviceStaffCredit = serviceStaff?.defaultCredit
+			? Number(serviceStaff.defaultCredit)
+			: 0;
+
 		try {
 			const updated = await sqlClient.rsvp.update({
 				where: { id },
 				data: {
 					facilityId,
+					facilityCost:
+						facilityCost > 0 ? new Prisma.Decimal(facilityCost) : null,
+					facilityCredit:
+						facilityCredit > 0 ? new Prisma.Decimal(facilityCredit) : null,
+					pricingRuleId: null, // Pricing rules are not used in this simple reservation flow
+					serviceStaffId: serviceStaffId || null,
+					serviceStaffCost:
+						serviceStaffCost > 0 ? new Prisma.Decimal(serviceStaffCost) : null,
+					serviceStaffCredit:
+						serviceStaffCredit > 0
+							? new Prisma.Decimal(serviceStaffCredit)
+							: null,
 					numOfAdult,
 					numOfChild,
 					rsvpTime,
 					message: message || null,
 					confirmedByStore: false, // Reset confirmation when reservation is modified
 					createdBy: createdBy || undefined, // Only update if we have a value
+					updatedAt: getUtcNowEpoch(), // Update timestamp
 				},
 				include: {
 					Store: true,

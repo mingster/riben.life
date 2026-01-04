@@ -61,5 +61,8 @@
   "search_user": "ユーザーを検索...",
   "no_user_found": "ユーザーが見つかりません",
   "rsvp_Can_Select_Service_Staff": "サービススタッフを選択可能",
-  "rsvp_Can_Select_Service_Staff_descr": "顧客がサービススタッフを選択できるようにする（例：美容師、マッサージ師、ヘアスタイリストなど）"
+  "rsvp_Can_Select_Service_Staff_descr": "顧客がサービススタッフを選択できるようにする（例：美容師、マッサージ師、ヘアスタイリストなど）",
+  "no_service_staff_available": "サービススタッフが利用できません",
+  "no_service_staff_available_at_selected_time": "選択した時間にサービススタッフが利用できません",
+  "none": "なし"
 }

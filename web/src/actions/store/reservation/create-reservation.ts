@@ -16,6 +16,7 @@ import { headers } from "next/headers";
 
 import { createReservationSchema } from "./create-reservation.validation";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
+import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { createRsvpStoreOrder } from "./create-rsvp-store-order";
@@ -32,9 +33,10 @@ export const createReservationAction = baseClient
 		const {
 			storeId,
 			customerId,
-			email,
+			name,
 			phone,
 			facilityId,
+			serviceStaffId,
 			numOfAdult,
 			numOfChild,
 			rsvpTime: rsvpTimeInput,
@@ -102,11 +104,11 @@ export const createReservationAction = baseClient
 		// Check if user is anonymous (not logged in and no customerId provided)
 		const isAnonymous = !sessionUserId && !customerId;
 
-		// Validate email and phone requirements for anonymous users
+		// Validate name and phone requirements for anonymous users
 		if (isAnonymous) {
-			// Anonymous user - email and phone are required
-			if (!email) {
-				throw new SafeError("Email is required for anonymous reservations");
+			// Anonymous user - name and phone are required
+			if (!name) {
+				throw new SafeError("Name is required for anonymous reservations");
 			}
 			if (!phone) {
 				throw new SafeError(
@@ -135,6 +137,41 @@ export const createReservationAction = baseClient
 			}
 		}
 
+		// Validate serviceStaffId if mustHaveServiceStaff is true
+		if (rsvpSettings?.mustHaveServiceStaff && !serviceStaffId) {
+			throw new SafeError("Service staff is required");
+		}
+
+		// Get service staff if provided
+		let serviceStaff = null;
+		if (serviceStaffId) {
+			serviceStaff = await sqlClient.serviceStaff.findFirst({
+				where: {
+					id: serviceStaffId,
+					storeId,
+					isDeleted: false,
+				},
+				select: {
+					id: true,
+					businessHours: true,
+					defaultCost: true,
+					defaultCredit: true,
+				},
+			});
+
+			if (!serviceStaff) {
+				throw new SafeError("Service staff not found");
+			}
+
+			// Validate service staff business hours
+			validateServiceStaffBusinessHours(
+				serviceStaff.businessHours,
+				rsvpTimeUtc,
+				storeTimezone,
+				serviceStaffId,
+			);
+		}
+
 		// Validate facility (required)
 		if (!facilityId) {
 			throw new SafeError("Facility is required");
@@ -150,6 +187,7 @@ export const createReservationAction = baseClient
 				facilityName: true,
 				businessHours: true,
 				defaultCost: true,
+				defaultCredit: true,
 				defaultDuration: true,
 			},
 		});
@@ -177,12 +215,21 @@ export const createReservationAction = baseClient
 
 		// Check if prepaid is required
 		const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
-		const totalCost = facility?.defaultCost
-			? Number(facility.defaultCost)
-			: null;
 
-		const prepaidRequired =
-			minPrepaidPercentage > 0 && totalCost !== null && totalCost > 0;
+		// Calculate total cost: facility cost + service staff cost (if applicable)
+		let facilityCost = facility?.defaultCost ? Number(facility.defaultCost) : 0;
+		let facilityCredit = facility?.defaultCredit
+			? Number(facility.defaultCredit)
+			: 0;
+		let serviceStaffCost = serviceStaff?.defaultCost
+			? Number(serviceStaff.defaultCost)
+			: 0;
+		let serviceStaffCredit = serviceStaff?.defaultCredit
+			? Number(serviceStaff.defaultCredit)
+			: 0;
+		const totalCost = facilityCost + serviceStaffCost;
+
+		const prepaidRequired = minPrepaidPercentage > 0 && totalCost > 0;
 		const requiredPrepaid = prepaidRequired
 			? Math.ceil(totalCost * (minPrepaidPercentage / 100))
 			: null;
@@ -202,14 +249,32 @@ export const createReservationAction = baseClient
 					data: {
 						storeId,
 						customerId: finalCustomerId,
-						facilityId,
 						numOfAdult,
 						numOfChild,
 						rsvpTime,
+
 						message: message || null,
-						// Store email and phone for anonymous reservations
-						email: finalCustomerId ? null : email || null, // Only store if anonymous
+						// Store name and phone for anonymous reservations
+						name: finalCustomerId ? null : name || null, // Only store if anonymous
 						phone: finalCustomerId ? null : phone || null, // Only store if anonymous
+
+						facilityId,
+						facilityCost:
+							facilityCost > 0 ? new Prisma.Decimal(facilityCost) : null,
+						facilityCredit:
+							facilityCredit > 0 ? new Prisma.Decimal(facilityCredit) : null,
+						pricingRuleId: null, // Pricing rules not used in simple reservation flow
+
+						serviceStaffId: serviceStaffId || null,
+						serviceStaffCost:
+							serviceStaffCost > 0
+								? new Prisma.Decimal(serviceStaffCost)
+								: null,
+						serviceStaffCredit:
+							serviceStaffCredit > 0
+								? new Prisma.Decimal(serviceStaffCredit)
+								: null,
+
 						status: rsvpStatus,
 						alreadyPaid,
 						orderId: null, // Will be updated after order creation

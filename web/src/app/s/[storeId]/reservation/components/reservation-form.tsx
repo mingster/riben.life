@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
+import useSWR from "swr";
 
 import { createReservationAction } from "@/actions/store/reservation/create-reservation";
 import {
@@ -17,8 +18,11 @@ import {
 	updateReservationSchema,
 	type UpdateReservationInput,
 } from "@/actions/store/reservation/update-reservation.validation";
+import { getServiceStaffAction } from "@/actions/store/reservation/get-service-staff";
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import { useTranslation } from "@/app/i18n/client";
 import { FacilityCombobox } from "@/components/combobox-facility";
+import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
 import { toastError, toastSuccess, toastWarning } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -352,14 +356,15 @@ export function ReservationForm({
 			} as UpdateReservationInput;
 		} else {
 			// Create mode: use default values
-			// Only include email and phone for anonymous users (when user is not logged in)
+			// Only include name and phone for anonymous users (when user is not logged in)
 			const isAnonymous = !user;
 			return {
 				storeId,
 				customerId: user?.id || null,
-				email: isAnonymous ? "" : undefined,
+				name: isAnonymous ? "" : undefined,
 				phone: isAnonymous ? "" : undefined,
 				facilityId: facilities.length > 0 ? facilities[0].id : "",
+				serviceStaffId: null, // Default to null for create mode
 				numOfAdult: 1,
 				numOfChild: 0,
 				rsvpTime: defaultRsvpTime || new Date(),
@@ -383,6 +388,138 @@ export function ReservationForm({
 	// Watch rsvpTime to filter facilities
 	const rsvpTime = form.watch("rsvpTime");
 	const facilityId = form.watch("facilityId");
+
+	// Always fetch service staff (not conditional on mustHaveServiceStaff)
+	const mustHaveServiceStaff = rsvpSettings?.mustHaveServiceStaff ?? false;
+	const { data: serviceStaffData } = useSWR(
+		["serviceStaff", storeId],
+		async () => {
+			const result = await getServiceStaffAction({ storeId });
+			return result?.data?.serviceStaff ?? [];
+		},
+	);
+	const serviceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
+
+	// Helper function to check if service staff is available at a given time
+	const isServiceStaffAvailableAtTime = useCallback(
+		(
+			staff: ServiceStaffColumn,
+			checkTime: Date | null | undefined,
+			timezone: string,
+		): boolean => {
+			// If no time selected, show all service staff
+			if (!checkTime || isNaN(checkTime.getTime())) {
+				return true;
+			}
+
+			// If service staff has no business hours, assume it's always available
+			if (!staff.businessHours) {
+				return true;
+			}
+
+			try {
+				// Parse business hours JSON
+				const schedule = JSON.parse(staff.businessHours) as {
+					Monday?: Array<{ from: string; to: string }> | "closed";
+					Tuesday?: Array<{ from: string; to: string }> | "closed";
+					Wednesday?: Array<{ from: string; to: string }> | "closed";
+					Thursday?: Array<{ from: string; to: string }> | "closed";
+					Friday?: Array<{ from: string; to: string }> | "closed";
+					Saturday?: Array<{ from: string; to: string }> | "closed";
+					Sunday?: Array<{ from: string; to: string }> | "closed";
+				};
+
+				// Convert UTC time to store timezone for checking
+				const offsetHours = getOffsetHours(timezone);
+				const timeInStoreTz = getDateInTz(checkTime, offsetHours);
+
+				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+				const dayOfWeek = timeInStoreTz.getDay();
+				const dayNames = [
+					"Sunday",
+					"Monday",
+					"Tuesday",
+					"Wednesday",
+					"Thursday",
+					"Friday",
+					"Saturday",
+				] as const;
+				const dayName = dayNames[dayOfWeek];
+
+				// Get hours for this day
+				const dayHours = schedule[dayName];
+				if (!dayHours || dayHours === "closed") {
+					return false;
+				}
+
+				// Check if time falls within any time range
+				const checkHour = timeInStoreTz.getHours();
+				const checkMinute = timeInStoreTz.getMinutes();
+				const checkTimeMinutes = checkHour * 60 + checkMinute;
+
+				for (const range of dayHours) {
+					const [fromHour, fromMinute] = range.from.split(":").map(Number);
+					const [toHour, toMinute] = range.to.split(":").map(Number);
+
+					const fromMinutes = fromHour * 60 + fromMinute;
+					const toMinutes = toHour * 60 + toMinute;
+
+					// Check if time falls within range
+					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
+						return true;
+					}
+
+					// Handle range spanning midnight (e.g., 22:00 to 02:00)
+					if (fromMinutes > toMinutes) {
+						if (
+							checkTimeMinutes >= fromMinutes ||
+							checkTimeMinutes < toMinutes
+						) {
+							return true;
+						}
+					}
+				}
+
+				return false;
+			} catch {
+				// If parsing fails, assume service staff is available (graceful degradation)
+				return true;
+			}
+		},
+		[],
+	);
+
+	// Filter service staff based on rsvpTime and business hours
+	// When editing, always include the current service staff even if it's not available at the selected time
+	const availableServiceStaff = useMemo(() => {
+		if (!serviceStaff || serviceStaff.length === 0) {
+			return [];
+		}
+
+		// Filter by business hours availability
+		let filtered = serviceStaff.filter((staff: ServiceStaffColumn) =>
+			isServiceStaffAvailableAtTime(staff, rsvpTime, storeTimezone),
+		);
+
+		// When editing, always include the current service staff even if it's not available at the selected time
+		if (isEditMode && rsvp?.serviceStaffId) {
+			const currentStaff = serviceStaff.find(
+				(s) => s.id === rsvp.serviceStaffId,
+			);
+			if (currentStaff && !filtered.find((s) => s.id === currentStaff.id)) {
+				filtered = [currentStaff, ...filtered];
+			}
+		}
+
+		return filtered;
+	}, [
+		serviceStaff,
+		rsvpTime,
+		storeTimezone,
+		isServiceStaffAvailableAtTime,
+		isEditMode,
+		rsvp?.serviceStaffId,
+	]);
 
 	// Filter facilities based on rsvpTime and existing reservations
 	// When editing, always include the current facility even if it's not available at the selected time
@@ -610,6 +747,19 @@ export function ReservationForm({
 			toastError({
 				title: t("Error"),
 				description: t("rsvp_not_currently_accepted"),
+			});
+			return;
+		}
+
+		// Validate service staff is required when mustHaveServiceStaff is true
+		if (mustHaveServiceStaff && !data.serviceStaffId) {
+			toastError({
+				title: t("Error"),
+				description: t("service_staff_required"),
+			});
+			form.setError("serviceStaffId", {
+				type: "manual",
+				message: t("service_staff_required"),
 			});
 			return;
 		}
@@ -1014,21 +1164,63 @@ export function ReservationForm({
 						}}
 					/>
 
+					{/* Service Staff Selection - Always show, required only when mustHaveServiceStaff is true */}
+					<FormField
+						control={form.control}
+						name="serviceStaffId"
+						render={({ field }) => {
+							const selectedServiceStaff = field.value
+								? serviceStaff.find((s) => s.id === field.value) || null
+								: null;
+
+							return (
+								<FormItem>
+									<FormLabel>
+										{t("service_staff")}
+										{mustHaveServiceStaff && (
+											<span className="text-destructive"> *</span>
+										)}
+									</FormLabel>
+									<FormControl>
+										{availableServiceStaff.length > 0 ? (
+											<ServiceStaffCombobox
+												serviceStaff={availableServiceStaff}
+												disabled={isSubmitting || isEditMode}
+												defaultValue={selectedServiceStaff || null}
+												allowEmpty={true}
+												onValueChange={(staff) => {
+													field.onChange(staff?.id || null);
+												}}
+											/>
+										) : (
+											<div className="text-sm text-destructive">
+												{rsvpTime
+													? t("no_service_staff_available_at_selected_time")
+													: t("no_service_staff_available")}
+											</div>
+										)}
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							);
+						}}
+					/>
+
 					{/* Contact Information - Only show for anonymous users (not logged in) */}
 					{!isEditMode && !user && (
 						<div className="space-y-4">
 							<FormField
 								control={form.control}
-								name="email"
+								name="name"
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>
-											{t("email")} <span className="text-destructive">*</span>
+											{t("name") || "Name"}{" "}
+											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
 											<Input
-												type="email"
-												placeholder={t("Enter_your_email")}
+												placeholder={t("name") || "Enter your name"}
 												disabled={isSubmitting}
 												{...field}
 											/>

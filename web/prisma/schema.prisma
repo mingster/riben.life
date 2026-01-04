@@ -842,7 +842,7 @@ model Rsvp {
 
   message String?
   // Contact information for anonymous reservations (when customerId is null)
-  email   String? // Email address (required if not logged in)
+  name    String? // Name (required if not logged in)
   phone   String? // Phone number (required for anonymous reservations)
 
   confirmedByStore    Boolean @default(false) //店家已確認預約
