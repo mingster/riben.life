@@ -94,7 +94,7 @@ export const updateRsvpAction = storeActionClient
 		} | null = null;
 
 		if (facilityId) {
-			facility = await sqlClient.storeFacility.findFirst({
+			const facilityResult = await sqlClient.storeFacility.findFirst({
 				where: {
 					id: facilityId,
 					storeId,
@@ -106,9 +106,20 @@ export const updateRsvpAction = storeActionClient
 				},
 			});
 
-			if (!facility) {
+			if (!facilityResult) {
 				throw new SafeError("Facility not found");
 			}
+
+			// Convert Decimal to number for type compatibility
+			facility = {
+				id: facilityResult.id,
+				defaultDuration: facilityResult.defaultDuration
+					? Number(facilityResult.defaultDuration)
+					: null,
+				defaultCost: facilityResult.defaultCost
+					? Number(facilityResult.defaultCost)
+					: null,
+			};
 		}
 
 		// Convert rsvpTime to UTC Date, then to BigInt epoch

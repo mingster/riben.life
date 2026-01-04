@@ -166,7 +166,7 @@ export const updateReservationAction = baseClient
 		} | null = null;
 
 		if (facilityId) {
-			facility = await sqlClient.storeFacility.findFirst({
+			const facilityResult = await sqlClient.storeFacility.findFirst({
 				where: {
 					id: facilityId,
 					storeId: existingRsvp.storeId,
@@ -182,9 +182,26 @@ export const updateReservationAction = baseClient
 				},
 			});
 
-			if (!facility) {
+			if (!facilityResult) {
 				throw new SafeError("Facility not found");
 			}
+
+			// Convert Decimal to number for type compatibility
+			facility = {
+				id: facilityResult.id,
+				storeId: facilityResult.storeId,
+				facilityName: facilityResult.facilityName,
+				defaultDuration: facilityResult.defaultDuration
+					? Number(facilityResult.defaultDuration)
+					: null,
+				defaultCost: facilityResult.defaultCost
+					? Number(facilityResult.defaultCost)
+					: null,
+				defaultCredit: facilityResult.defaultCredit
+					? Number(facilityResult.defaultCredit)
+					: null,
+				businessHours: facilityResult.businessHours,
+			};
 		}
 
 		// Validate cancelHours window (FR-RSVP-013)

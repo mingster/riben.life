@@ -183,7 +183,7 @@ export const createReservationAction = baseClient
 		} | null = null;
 
 		if (facilityId) {
-			facility = await sqlClient.storeFacility.findFirst({
+			const facilityResult = await sqlClient.storeFacility.findFirst({
 				where: {
 					id: facilityId,
 					storeId,
@@ -198,9 +198,25 @@ export const createReservationAction = baseClient
 				},
 			});
 
-			if (!facility) {
+			if (!facilityResult) {
 				throw new SafeError("Facility not found");
 			}
+
+			// Convert Decimal to number for type compatibility
+			facility = {
+				id: facilityResult.id,
+				facilityName: facilityResult.facilityName,
+				businessHours: facilityResult.businessHours,
+				defaultCost: facilityResult.defaultCost
+					? Number(facilityResult.defaultCost)
+					: null,
+				defaultCredit: facilityResult.defaultCredit
+					? Number(facilityResult.defaultCredit)
+					: null,
+				defaultDuration: facilityResult.defaultDuration
+					? Number(facilityResult.defaultDuration)
+					: null,
+			};
 		}
 
 		// Validate business hours (if facility has business hours) - only if facility exists

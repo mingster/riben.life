@@ -1179,7 +1179,8 @@ export function ReservationForm({
 					</div>
 
 					{/* Facility Selection - Hide if no facilities available (unless editing with existing facility) */}
-					{(availableFacilities.length > 0 || (isEditMode && rsvp?.facilityId)) && (
+					{(availableFacilities.length > 0 ||
+						(isEditMode && rsvp?.facilityId)) && (
 						<FormField
 							control={form.control}
 							name="facilityId"

@@ -77,7 +77,7 @@ export const createRsvpAction = storeActionClient
 		} | null = null;
 
 		if (facilityId) {
-			facility = await sqlClient.storeFacility.findFirst({
+			const facilityResult = await sqlClient.storeFacility.findFirst({
 				where: {
 					id: facilityId,
 					storeId,
@@ -90,9 +90,21 @@ export const createRsvpAction = storeActionClient
 				},
 			});
 
-			if (!facility) {
+			if (!facilityResult) {
 				throw new SafeError("Facility not found");
 			}
+
+			// Convert Decimal to number for type compatibility
+			facility = {
+				id: facilityResult.id,
+				facilityName: facilityResult.facilityName,
+				defaultDuration: facilityResult.defaultDuration
+					? Number(facilityResult.defaultDuration)
+					: null,
+				defaultCost: facilityResult.defaultCost
+					? Number(facilityResult.defaultCost)
+					: null,
+			};
 		}
 
 		// Convert rsvpTime to UTC Date, then to BigInt epoch
@@ -264,7 +276,7 @@ export const createRsvpAction = storeActionClient
 						// Build order note with RSVP details
 						const baseNote = t("rsvp_reservation_payment_note");
 						const facilityName =
-							facility.facilityName || t("facility_name") || "Facility";
+							facility?.facilityName || t("facility_name") || "Facility";
 
 						const orderNote = `${baseNote}\n${t("rsvp_id") || "RSVP ID"}: ${createdRsvp.id}\n${t("facility_name") || "Facility"}: ${facilityName}\n${t("rsvp_time") || "Reservation Time"}: ${formattedRsvpTime}`;
 
@@ -276,7 +288,7 @@ export const createRsvpAction = storeActionClient
 							currency: store.defaultCurrency || "twd",
 							paymentMethodPayUrl: "TBD", // TBD payment method for admin-created orders
 							rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
-							facilityId: facility.id, // Pass facility ID for pickupCode
+							facilityId: facility?.id || null, // Pass facility ID for pickupCode (optional)
 							facilityName, // Pass facility name for product name
 							rsvpTime: createdRsvp.rsvpTime, // Pass RSVP time (BigInt epoch)
 							note: orderNote,

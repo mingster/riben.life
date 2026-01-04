@@ -26,7 +26,7 @@ interface CreateRsvpStoreOrderParams {
 	currency: string;
 	paymentMethodPayUrl: string; // Payment method identifier (e.g., "credit", "TBD")
 	rsvpId: string; // RSVP reservation ID
-	facilityId: string; // Facility ID
+	facilityId: string | null; // Facility ID (optional)
 	facilityName: string; // Facility name for product name
 	rsvpTime: bigint; // RSVP reservation time (BigInt epoch milliseconds)
 	note?: string; // Optional order note
@@ -120,8 +120,10 @@ export async function createRsvpStoreOrder(
 	// Add customer as store member (within transaction)
 	await ensureCustomerIsStoreMember(storeId, customerId, "user", tx);
 
-	// Create pickupCode with RSVP ID and facility ID
-	const pickupCode = `RSVP:${rsvpId}|FACILITY:${facilityId}`;
+	// Create pickupCode with RSVP ID and facility ID (if provided)
+	const pickupCode = facilityId
+		? `RSVP:${rsvpId}|FACILITY:${facilityId}`
+		: `RSVP:${rsvpId}`;
 
 	const { t } = await getT();
 
