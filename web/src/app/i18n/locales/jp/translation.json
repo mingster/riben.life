@@ -64,5 +64,9 @@
   "rsvp_Can_Select_Service_Staff_descr": "顧客がサービススタッフを選択できるようにする（例：美容師、マッサージ師、ヘアスタイリストなど）",
   "no_service_staff_available": "サービススタッフが利用できません",
   "no_service_staff_available_at_selected_time": "選択した時間にサービススタッフが利用できません",
-  "none": "なし"
+  "none": "なし",
+  "rsvp_service_staff_cost": "サービススタッフ費用",
+  "select_service_staff": "サービススタッフを選択",
+  "please_fix_validation_errors": "以下のエラーを修正してください：",
+  "processing": "処理中..."
 }

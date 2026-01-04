@@ -27,7 +27,8 @@ type ComboboxProps = {
 	storeFacilities: StoreFacility[];
 	disabled: boolean;
 	defaultValue: StoreFacility | null;
-	onValueChange?: (newValue: StoreFacility) => void;
+	onValueChange?: (newValue: StoreFacility | null) => void;
+	allowNone?: boolean; // Allow clearing selection (for optional facilities)
 };
 
 export const FacilityCombobox = ({
@@ -35,6 +36,7 @@ export const FacilityCombobox = ({
 	disabled,
 	defaultValue,
 	onValueChange,
+	allowNone = false,
 	...props
 }: ComboboxProps) => {
 	const { lng } = useI18n();
@@ -86,6 +88,24 @@ export const FacilityCombobox = ({
 						<CommandList>
 							<CommandEmpty>{t("no_store_facility_found")}</CommandEmpty>
 							<CommandGroup>
+								{allowNone && (
+									<CommandItem
+										value="--none--"
+										onSelect={() => {
+											setSelected(null);
+											onValueChange?.(null);
+											setOpen(false);
+										}}
+									>
+										{t("none") || "None"}
+										<IconCheck
+											className={cn(
+												"ml-auto h-4 w-4",
+												!selected ? "opacity-100" : "opacity-0",
+											)}
+										/>
+									</CommandItem>
+								)}
 								{storeFacilities.map((obj) => (
 									<CommandItem
 										key={obj.id}

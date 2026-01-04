@@ -6,7 +6,7 @@ export const createReservationSchema = z
 		customerId: z.string().nullable().optional(),
 		name: z.string().min(1, "Name is required").optional(),
 		phone: z.string().min(1, "Phone number is required").optional(),
-		facilityId: z.string().min(1, "Facility is required"),
+		facilityId: z.string().nullable().optional(),
 		serviceStaffId: z.string().nullable().optional(),
 		numOfAdult: z.coerce.number().int().min(1).default(1),
 		numOfChild: z.coerce.number().int().min(0).default(0),

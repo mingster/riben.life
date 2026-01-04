@@ -532,10 +532,17 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 	);
 
 	// Helper function to check if any facilities are available for a time slot
+	// Returns true if facilities are available OR if no facilities exist (allows reservations without facilities)
 	const hasAvailableFacilities = useCallback(
 		(slotTime: Date, existingReservations: Rsvp[]): boolean => {
-			if (!storeFacilities || storeFacilities.length === 0) {
-				return false;
+			// If facilities haven't loaded yet, assume available (to avoid hiding buttons prematurely)
+			if (!storeFacilities) {
+				return true;
+			}
+
+			// If no facilities exist at all, allow reservations without facilities
+			if (storeFacilities.length === 0) {
+				return true;
 			}
 
 			// First filter by business hours availability

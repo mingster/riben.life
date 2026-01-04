@@ -172,46 +172,55 @@ export const createReservationAction = baseClient
 			);
 		}
 
-		// Validate facility (required)
-		if (!facilityId) {
-			throw new SafeError("Facility is required");
+		// Validate facility if provided (optional)
+		let facility: {
+			id: string;
+			facilityName: string;
+			businessHours: string | null;
+			defaultCost: number | null;
+			defaultCredit: number | null;
+			defaultDuration: number | null;
+		} | null = null;
+
+		if (facilityId) {
+			facility = await sqlClient.storeFacility.findFirst({
+				where: {
+					id: facilityId,
+					storeId,
+				},
+				select: {
+					id: true,
+					facilityName: true,
+					businessHours: true,
+					defaultCost: true,
+					defaultCredit: true,
+					defaultDuration: true,
+				},
+			});
+
+			if (!facility) {
+				throw new SafeError("Facility not found");
+			}
 		}
 
-		const facility = await sqlClient.storeFacility.findFirst({
-			where: {
-				id: facilityId,
+		// Validate business hours (if facility has business hours) - only if facility exists
+		if (facility) {
+			validateFacilityBusinessHours(
+				facility.businessHours,
+				rsvpTimeUtc,
+				storeTimezone,
+				facilityId!,
+			);
+
+			// Validate availability based on singleServiceMode - only if facility exists
+			await validateRsvpAvailability(
 				storeId,
-			},
-			select: {
-				id: true,
-				facilityName: true,
-				businessHours: true,
-				defaultCost: true,
-				defaultCredit: true,
-				defaultDuration: true,
-			},
-		});
-
-		if (!facility) {
-			throw new SafeError("Facility not found");
+				rsvpSettings,
+				rsvpTime,
+				facilityId!,
+				facility.defaultDuration ?? rsvpSettings?.defaultDuration ?? 60,
+			);
 		}
-
-		// Validate business hours (if facility has business hours)
-		validateFacilityBusinessHours(
-			facility.businessHours,
-			rsvpTimeUtc,
-			storeTimezone,
-			facilityId,
-		);
-
-		// Validate availability based on singleServiceMode
-		await validateRsvpAvailability(
-			storeId,
-			rsvpSettings,
-			rsvpTime,
-			facilityId,
-			facility.defaultDuration, // Use facility duration if available
-		);
 
 		// Check if prepaid is required
 		const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
@@ -258,7 +267,7 @@ export const createReservationAction = baseClient
 						name: finalCustomerId ? null : name || null, // Only store if anonymous
 						phone: finalCustomerId ? null : phone || null, // Only store if anonymous
 
-						facilityId,
+						facilityId: facilityId || null,
 						facilityCost:
 							facilityCost > 0 ? new Prisma.Decimal(facilityCost) : null,
 						facilityCredit:
@@ -311,8 +320,8 @@ export const createReservationAction = baseClient
 						currency: store.defaultCurrency || "twd",
 						paymentMethodPayUrl,
 						rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
-						facilityId, // Pass facility ID for pickupCode
-						facilityName: facility.facilityName || "Facility", // Pass facility name for product name
+						facilityId: facilityId || null, // Pass facility ID for pickupCode (optional)
+						facilityName: facility?.facilityName || "Reservation", // Pass facility name for product name
 						rsvpTime, // Pass RSVP time (BigInt epoch)
 						note: orderNote,
 						displayToCustomer: false, // Internal note, not displayed to customer

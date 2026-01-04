@@ -44,6 +44,12 @@ export default function DropdownNotification() {
 	const router = useRouter();
 	const { data: session } = authClient.useSession();
 	const [open, setOpen] = useState(false);
+	const [mounted, setMounted] = useState(false);
+
+	// Track mounted state to prevent hydration mismatch
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
 	// Fetch notifications with SWR
 	// Only refresh when popover is open to reduce unnecessary requests
@@ -66,7 +72,8 @@ export default function DropdownNotification() {
 	}, [open, mutate, session?.user]);
 
 	const notifications = data?.notifications || [];
-	const unreadCount = data?.unreadCount || 0;
+	// Use 0 during SSR to prevent hydration mismatch, then use actual value after mount
+	const unreadCount = mounted ? data?.unreadCount || 0 : 0;
 
 	// Handle marking a notification as read with optimistic update
 	const handleMarkAsRead = useCallback(
@@ -153,6 +160,12 @@ export default function DropdownNotification() {
 
 	// Don't render if user is not authenticated
 	if (!session?.user) {
+		return null;
+	}
+
+	// Don't render until mounted to prevent hydration mismatch
+	// The unreadCount from SWR can differ between server and client
+	if (!mounted) {
 		return null;
 	}
 

@@ -68,26 +68,31 @@ export const createRsvpAction = storeActionClient
 
 		const storeTimezone = store.defaultTimezone || "Asia/Taipei";
 
-		// Validate facility (required)
-		if (!facilityId) {
-			throw new SafeError("Facility is required");
-		}
+		// Validate facility if provided (optional)
+		let facility: {
+			id: string;
+			facilityName: string;
+			defaultDuration: number | null;
+			defaultCost: number | null;
+		} | null = null;
 
-		const facility = await sqlClient.storeFacility.findFirst({
-			where: {
-				id: facilityId,
-				storeId,
-			},
-			select: {
-				id: true,
-				facilityName: true,
-				defaultDuration: true,
-				defaultCost: true,
-			},
-		});
+		if (facilityId) {
+			facility = await sqlClient.storeFacility.findFirst({
+				where: {
+					id: facilityId,
+					storeId,
+				},
+				select: {
+					id: true,
+					facilityName: true,
+					defaultDuration: true,
+					defaultCost: true,
+				},
+			});
 
-		if (!facility) {
-			throw new SafeError("Facility not found");
+			if (!facility) {
+				throw new SafeError("Facility not found");
+			}
 		}
 
 		// Convert rsvpTime to UTC Date, then to BigInt epoch
@@ -125,14 +130,16 @@ export const createRsvpAction = storeActionClient
 		// Note: Store admin can still create reservations, but we validate to ensure consistency
 		validateReservationTimeWindow(rsvpSettings, rsvpTime);
 
-		// Validate availability based on singleServiceMode
-		await validateRsvpAvailability(
-			storeId,
-			rsvpSettings,
-			rsvpTime,
-			facilityId,
-			facility.defaultDuration,
-		);
+		// Validate availability based on singleServiceMode (only if facility is provided)
+		if (facilityId && facility) {
+			await validateRsvpAvailability(
+				storeId,
+				rsvpSettings,
+				rsvpTime,
+				facilityId,
+				facility.defaultDuration ?? rsvpSettings?.defaultDuration ?? 60,
+			);
+		}
 
 		// Convert arriveTime to UTC Date, then to BigInt epoch
 		// Same conversion as rsvpTime - interpret as store timezone and convert to UTC
@@ -155,11 +162,11 @@ export const createRsvpAction = storeActionClient
 		});
 		const createdBy = session?.user?.id || null;
 
-		// Calculate total cost: use facilityCost if provided, otherwise use facility.defaultCost
+		// Calculate total cost: use facilityCost if provided, otherwise use facility.defaultCost (if facility exists)
 		const totalCost =
 			facilityCost !== null && facilityCost !== undefined
 				? facilityCost
-				: facility.defaultCost
+				: facility?.defaultCost
 					? Number(facility.defaultCost)
 					: null;
 
@@ -176,7 +183,7 @@ export const createRsvpAction = storeActionClient
 					data: {
 						storeId,
 						customerId: customerId || null,
-						facilityId,
+						facilityId: facilityId || null,
 						numOfAdult,
 						numOfChild,
 						rsvpTime,
@@ -208,10 +215,12 @@ export const createRsvpAction = storeActionClient
 
 				// If status is Completed, not alreadyPaid, and has customerId, deduct customer's credit
 				// Note: This is for service credit usage (after service completion), not prepaid payment
+				// Only process if facility exists (credit deduction requires facility)
 				if (
 					finalStatus === RsvpStatus.Completed &&
 					!finalAlreadyPaid &&
 					customerId &&
+					facility &&
 					store.creditServiceExchangeRate &&
 					Number(store.creditServiceExchangeRate) > 0 &&
 					store.creditExchangeRate &&

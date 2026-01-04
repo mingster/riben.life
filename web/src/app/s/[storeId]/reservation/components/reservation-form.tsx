@@ -35,6 +35,7 @@ import {
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -65,6 +66,12 @@ import { Separator } from "@/components/ui/separator";
 import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
 import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
 import { clientLogger } from "@/lib/client-logger";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface ReservationFormProps {
 	storeId: string;
@@ -347,8 +354,7 @@ export function ReservationForm({
 
 			return {
 				id: rsvp.id,
-				facilityId:
-					rsvp.facilityId || (facilities.length > 0 ? facilities[0].id : ""),
+				facilityId: rsvp.facilityId || null,
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				rsvpTime,
@@ -363,7 +369,7 @@ export function ReservationForm({
 				customerId: user?.id || null,
 				name: isAnonymous ? "" : undefined,
 				phone: isAnonymous ? "" : undefined,
-				facilityId: facilities.length > 0 ? facilities[0].id : "",
+				facilityId: null, // Allow null for reservations without facilities
 				serviceStaffId: null, // Default to null for create mode
 				numOfAdult: 1,
 				numOfChild: 0,
@@ -382,7 +388,7 @@ export function ReservationForm({
 	const form = useForm<FormInput>({
 		resolver: zodResolver(schema) as Resolver<FormInput>,
 		defaultValues,
-		mode: isEditMode ? "onBlur" : "onChange",
+		mode: "onChange", // Real-time validation for better UX
 	});
 
 	// Watch rsvpTime to filter facilities
@@ -989,21 +995,32 @@ export function ReservationForm({
 					<FormField
 						control={form.control}
 						name="rsvpTime"
-						render={({ field }) => {
+						render={({ field, fieldState }) => {
 							// Validate time against store/RSVP hours when it changes
 							const timeValidationError = field.value
 								? validateRsvpTimeAgainstHours(field.value)
 								: null;
 
 							return (
-								<FormItem>
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+									)}
+								>
 									<FormLabel>
 										{t("rsvp_time")} <span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
 										{isEditMode ? (
 											// Edit mode: Use SlotPicker
-											<div className="border rounded-lg p-4">
+											<div
+												className={cn(
+													"border rounded-lg p-4",
+													fieldState.error &&
+														"border-destructive focus-visible:ring-destructive",
+												)}
+											>
 												<SlotPicker
 													existingReservations={existingReservations}
 													rsvpSettings={rsvpSettings}
@@ -1031,7 +1048,13 @@ export function ReservationForm({
 											</div>
 										) : (
 											// Create mode: Display date/time (read-only)
-											<div className="flex h-10 w-full rounded-md px-3 py-2 text-sm ring-offset-background">
+											<div
+												className={cn(
+													"flex h-10 w-full rounded-md px-3 py-2 text-sm ring-offset-background",
+													fieldState.error &&
+														"border border-destructive focus-visible:ring-destructive",
+												)}
+											>
 												{field.value ? (
 													(() => {
 														try {
@@ -1090,8 +1113,13 @@ export function ReservationForm({
 						<FormField
 							control={form.control}
 							name="numOfAdult"
-							render={({ field }) => (
-								<FormItem>
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+									)}
+								>
 									<FormLabel>
 										{t("rsvp_num_of_adult")}{" "}
 										<span className="text-destructive">*</span>
@@ -1105,6 +1133,11 @@ export function ReservationForm({
 											onChange={(e) => {
 												field.onChange(Number.parseInt(e.target.value, 10));
 											}}
+											className={cn(
+												"h-10 text-base sm:h-9 sm:text-sm",
+												fieldState.error &&
+													"border-destructive focus-visible:ring-destructive",
+											)}
 										/>
 									</FormControl>
 									<FormMessage />
@@ -1115,8 +1148,13 @@ export function ReservationForm({
 						<FormField
 							control={form.control}
 							name="numOfChild"
-							render={({ field }) => (
-								<FormItem>
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+									)}
+								>
 									<FormLabel>{t("rsvp_num_of_child")}</FormLabel>
 									<FormControl>
 										<Input
@@ -1127,6 +1165,11 @@ export function ReservationForm({
 											onChange={(e) => {
 												field.onChange(Number.parseInt(e.target.value, 10));
 											}}
+											className={cn(
+												"h-10 text-base sm:h-9 sm:text-sm",
+												fieldState.error &&
+													"border-destructive focus-visible:ring-destructive",
+											)}
 										/>
 									</FormControl>
 									<FormMessage />
@@ -1135,70 +1178,87 @@ export function ReservationForm({
 						/>
 					</div>
 
-					{/* Facility Selection */}
-					<FormField
-						control={form.control}
-						name="facilityId"
-						render={({ field }) => {
-							const selectedFacility = field.value
-								? availableFacilities.find((f) => f.id === field.value) || null
-								: null;
+					{/* Facility Selection - Hide if no facilities available (unless editing with existing facility) */}
+					{(availableFacilities.length > 0 || (isEditMode && rsvp?.facilityId)) && (
+						<FormField
+							control={form.control}
+							name="facilityId"
+							render={({ field, fieldState }) => {
+								const selectedFacility = field.value
+									? availableFacilities.find((f) => f.id === field.value) ||
+										null
+									: null;
 
-							return (
-								<FormItem>
-									<FormLabel>
-										{t("rsvp_facility")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
-									<FormControl>
-										<div className="space-y-2">
-											{availableFacilities.length > 0 ? (
-												<>
-													<FacilityCombobox
-														storeFacilities={availableFacilities}
-														disabled={isSubmitting || isEditMode}
-														defaultValue={selectedFacility}
-														onValueChange={(facility) => {
-															field.onChange(facility?.id || "");
-														}}
-													/>
-													{selectedFacility && selectedFacility.defaultCost && (
-														<div className="text-sm text-muted-foreground">
-															{t("rsvp_facility_cost")}:{" "}
-															{typeof selectedFacility.defaultCost === "number"
-																? selectedFacility.defaultCost.toFixed(2)
-																: Number(selectedFacility.defaultCost).toFixed(
-																		2,
-																	)}
-														</div>
-													)}
-												</>
-											) : (
-												<div className="text-sm text-destructive">
-													{rsvpTime
-														? t("No facilities available at selected time")
-														: t("No facilities available")}
-												</div>
-											)}
-										</div>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							);
-						}}
-					/>
+								return (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
+										<FormLabel>{t("rsvp_facility")}</FormLabel>
+										<FormControl>
+											<div className="space-y-2">
+												{availableFacilities.length > 0 ? (
+													<>
+														<FacilityCombobox
+															storeFacilities={availableFacilities}
+															disabled={isSubmitting || isEditMode}
+															defaultValue={selectedFacility}
+															allowNone={true}
+															onValueChange={(facility) => {
+																field.onChange(facility?.id || null);
+															}}
+														/>
+														{selectedFacility &&
+															selectedFacility.defaultCost && (
+																<div className="text-sm text-muted-foreground">
+																	{t("rsvp_facility_cost")}:{" "}
+																	{typeof selectedFacility.defaultCost ===
+																	"number"
+																		? selectedFacility.defaultCost.toFixed(2)
+																		: Number(
+																				selectedFacility.defaultCost,
+																			).toFixed(2)}
+																</div>
+															)}
+													</>
+												) : (
+													<div className="text-sm text-muted-foreground">
+														{rsvpTime
+															? t("No facilities available at selected time")
+															: t("No facilities available (optional)")}
+													</div>
+												)}
+											</div>
+										</FormControl>
+										<FormDescription className="text-xs font-mono text-gray-500">
+											{t("facility_optional_description") ||
+												"Optional: Select a facility for this reservation"}
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								);
+							}}
+						/>
+					)}
 
 					{/* Service Staff Selection - Always show, required only when mustHaveServiceStaff is true */}
 					<FormField
 						control={form.control}
 						name="serviceStaffId"
-						render={({ field }) => {
+						render={({ field, fieldState }) => {
 							const selectedServiceStaff = field.value
 								? serviceStaff.find((s) => s.id === field.value) || null
 								: null;
 
 							return (
-								<FormItem>
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+									)}
+								>
 									<FormLabel>
 										{t("service_staff")}
 										{mustHaveServiceStaff && (
@@ -1248,8 +1308,13 @@ export function ReservationForm({
 							<FormField
 								control={form.control}
 								name="name"
-								render={({ field }) => (
-									<FormItem>
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
 										<FormLabel>
 											{t("name") || "Name"}{" "}
 											<span className="text-destructive">*</span>
@@ -1259,6 +1324,11 @@ export function ReservationForm({
 												placeholder={t("name") || "Enter your name"}
 												disabled={isSubmitting}
 												{...field}
+												className={cn(
+													"h-10 text-base sm:h-9 sm:text-sm",
+													fieldState.error &&
+														"border-destructive focus-visible:ring-destructive",
+												)}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -1269,8 +1339,13 @@ export function ReservationForm({
 							<FormField
 								control={form.control}
 								name="phone"
-								render={({ field }) => (
-									<FormItem>
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
 										<FormLabel>
 											{t("phone")} <span className="text-destructive">*</span>
 										</FormLabel>
@@ -1280,6 +1355,11 @@ export function ReservationForm({
 												placeholder={t("Enter_your_phone")}
 												disabled={isSubmitting}
 												{...field}
+												className={cn(
+													"h-10 text-base sm:h-9 sm:text-sm",
+													fieldState.error &&
+														"border-destructive focus-visible:ring-destructive",
+												)}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -1293,8 +1373,13 @@ export function ReservationForm({
 					<FormField
 						control={form.control}
 						name="message"
-						render={({ field }) => (
-							<FormItem>
+						render={({ field, fieldState }) => (
+							<FormItem
+								className={cn(
+									fieldState.error &&
+										"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+								)}
+							>
 								<FormLabel>{t("rsvp_message")}</FormLabel>
 								<FormControl>
 									<Textarea
@@ -1302,6 +1387,11 @@ export function ReservationForm({
 										disabled={isSubmitting}
 										{...field}
 										value={field.value || ""}
+										className={cn(
+											"font-mono min-h-[100px]",
+											fieldState.error &&
+												"border-destructive focus-visible:ring-destructive",
+										)}
 									/>
 								</FormControl>
 								<FormMessage />
@@ -1310,6 +1400,42 @@ export function ReservationForm({
 					/>
 
 					<Separator />
+
+					{/* Validation Error Summary */}
+					{Object.keys(form.formState.errors).length > 0 && (
+						<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
+							<div className="text-sm font-semibold text-destructive">
+								{t("please_fix_validation_errors") ||
+									"Please fix the following errors:"}
+							</div>
+							{Object.entries(form.formState.errors).map(([field, error]) => {
+								// Map field names to user-friendly labels using i18n
+								const fieldLabels: Record<string, string> = {
+									storeId: t("store") || "Store",
+									customerId: t("customer") || "Customer",
+									name: t("name") || "Name",
+									phone: t("phone") || "Phone",
+									facilityId: t("rsvp_facility") || "Facility",
+									serviceStaffId: t("service_staff") || "Service Staff",
+									numOfAdult: t("rsvp_num_of_adult") || "Number of Adults",
+									numOfChild: t("rsvp_num_of_child") || "Number of Children",
+									rsvpTime: t("rsvp_time") || "Reservation Time",
+									message: t("rsvp_message") || "Message",
+								};
+								const fieldLabel = fieldLabels[field] || field;
+								return (
+									<div
+										key={field}
+										className="text-sm text-destructive flex items-start gap-2"
+									>
+										<span className="font-medium">{fieldLabel}:</span>
+										<span>{error.message as string}</span>
+									</div>
+								);
+							})}
+						</div>
+					)}
+
 					<div className="space-y-2">
 						<p className="text-sm font-medium">
 							{t("rsvp_rules_and_restrictions")}
@@ -1332,25 +1458,95 @@ export function ReservationForm({
 					</div>
 
 					{/* Submit Button */}
-					<Button
-						type="submit"
-						disabled={
-							isSubmitting ||
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<span className="inline-block w-full">
+								<Button
+									type="submit"
+									disabled={
+										isSubmitting ||
+										requiresLogin ||
+										!canCreateReservation ||
+										!form.formState.isValid
+									}
+									className="w-full disabled:opacity-25"
+									autoFocus
+								>
+									{isSubmitting
+										? isEditMode
+											? t("updating")
+											: t("Submitting")
+										: isEditMode
+											? t("update_reservation")
+											: t("create_Reservation")}
+								</Button>
+							</span>
+						</TooltipTrigger>
+						{(isSubmitting ||
 							requiresLogin ||
-							availableFacilities.length === 0 ||
-							!canCreateReservation
-						}
-						className="w-full"
-						autoFocus
-					>
-						{isSubmitting
-							? isEditMode
-								? t("updating")
-								: t("Submitting")
-							: isEditMode
-								? t("update_reservation")
-								: t("create_Reservation")}
-					</Button>
+							!canCreateReservation ||
+							!form.formState.isValid) && (
+							<TooltipContent className="max-w-xs">
+								<div className="text-xs space-y-1">
+									{isSubmitting ? (
+										<div>{t("processing") || "Processing..."}</div>
+									) : requiresLogin ? (
+										<div>{t("rsvp_please_sign_in") || "Please sign in"}</div>
+									) : !canCreateReservation ? (
+										<div>
+											{t("rsvp_not_currently_accepted") ||
+												"Reservations are not currently accepted"}
+										</div>
+									) : !form.formState.isValid &&
+										Object.keys(form.formState.errors).length > 0 ? (
+										<div className="space-y-1">
+											<div className="font-semibold">
+												{t("please_fix_validation_errors") ||
+													"Please fix the following errors:"}
+											</div>
+											{Object.entries(form.formState.errors)
+												.slice(0, 3)
+												.map(([field, error]) => {
+													const fieldLabels: Record<string, string> = {
+														storeId: t("store") || "Store",
+														customerId: t("customer") || "Customer",
+														name: t("name") || "Name",
+														phone: t("phone") || "Phone",
+														facilityId: t("rsvp_facility") || "Facility",
+														serviceStaffId:
+															t("service_staff") || "Service Staff",
+														numOfAdult:
+															t("rsvp_num_of_adult") || "Number of Adults",
+														numOfChild:
+															t("rsvp_num_of_child") || "Number of Children",
+														rsvpTime: t("rsvp_time") || "Reservation Time",
+														message: t("rsvp_message") || "Message",
+													};
+													const fieldLabel = fieldLabels[field] || field;
+													return (
+														<div key={field} className="text-xs">
+															<span className="font-medium">{fieldLabel}:</span>{" "}
+															{error?.message as string}
+														</div>
+													);
+												})}
+											{Object.keys(form.formState.errors).length > 3 && (
+												<div className="text-xs opacity-75">
+													+{Object.keys(form.formState.errors).length - 3} more
+													error(s)
+												</div>
+											)}
+										</div>
+									) : (
+										<div>
+											{t("please_fix_validation_errors") ||
+												"Please fix validation errors above"}
+										</div>
+									)}
+								</div>
+							</TooltipContent>
+						)}
+					</Tooltip>
 
 					{requiresLogin && (
 						<p className="text-sm text-muted-foreground text-center">
