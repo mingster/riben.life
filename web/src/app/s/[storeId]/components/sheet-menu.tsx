@@ -9,9 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
 	Sheet,
 	SheetContent,
-	SheetDescription,
 	SheetHeader,
-	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
 import type { Store } from "@/types";
@@ -55,22 +53,17 @@ export function SheetMenu({ store }: props) {
 				</Button>
 			</SheetTrigger>
 			<SheetContent
-				className="flex h-full flex-col px-3 sm:px-4 sm:w-72 backdrop-opacity-10 backdrop-invert"
+				className="flex flex-col px-3 sm:px-4 sm:w-72 backdrop-opacity-10 backdrop-invert"
 				side="left"
 			>
-				<SheetHeader className="shrink-0 pb-2">
-					<Button
-						className="flex pb-2 pt-1 h-10 sm:h-auto"
-						variant="link"
-						asChild
-					>
+				<SheetHeader className="shrink-0 pb-1">
+					<Button variant="link" asChild>
 						<Link href={`/s/${store.id}`} className="flex gap-2 items-center">
 							<IconHome className="mr-1 h-6 w-6 sm:size-6" />
 						</Link>
 					</Button>
 				</SheetHeader>
-				<SheetTitle />
-				<SheetDescription />
+
 				<div className="flex-1 min-h-0 overflow-hidden">
 					<StoreMenu store={store} isOpen title="" setIsOpen={setIsOpen} />
 				</div>

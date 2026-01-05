@@ -26,6 +26,7 @@ export const updateRsvpSettingsAction = storeActionClient
 			defaultDuration,
 			requireSignature,
 			showCostToCustomer,
+			mustSelectFacility,
 			mustHaveServiceStaff,
 			useBusinessHours,
 			rsvpHours,
@@ -109,6 +110,9 @@ export const updateRsvpSettingsAction = storeActionClient
 		}
 		if (showCostToCustomer !== undefined) {
 			updateData.showCostToCustomer = showCostToCustomer;
+		}
+		if (mustSelectFacility !== undefined) {
+			updateData.mustSelectFacility = mustSelectFacility;
 		}
 		if (mustHaveServiceStaff !== undefined) {
 			updateData.mustHaveServiceStaff = mustHaveServiceStaff;

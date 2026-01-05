@@ -452,10 +452,13 @@ export const CustomerWeekViewCalendar: React.FC<
 	);
 
 	// Helper function to check if any facilities are available for a time slot
+	// Helper function to check if any facilities are available for a time slot
+	// Returns true if facilities are available OR if no facilities exist (allows reservations without facilities)
 	const hasAvailableFacilities = useCallback(
 		(slotTime: Date, existingReservations: Rsvp[]): boolean => {
+			// If no facilities exist at all, allow reservations without facilities
 			if (!facilities || facilities.length === 0) {
-				return false;
+				return true;
 			}
 
 			// First filter by business hours availability

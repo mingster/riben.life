@@ -16,6 +16,7 @@ import { headers } from "next/headers";
 
 import { createReservationSchema } from "./create-reservation.validation";
 import { validateFacilityBusinessHours } from "./validate-facility-business-hours";
+import { validateServiceStaffBusinessHours } from "./validate-service-staff-business-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { createRsvpStoreOrder } from "./create-rsvp-store-order";
@@ -32,9 +33,10 @@ export const createReservationAction = baseClient
 		const {
 			storeId,
 			customerId,
-			email,
+			name,
 			phone,
 			facilityId,
+			serviceStaffId,
 			numOfAdult,
 			numOfChild,
 			rsvpTime: rsvpTimeInput,
@@ -102,11 +104,11 @@ export const createReservationAction = baseClient
 		// Check if user is anonymous (not logged in and no customerId provided)
 		const isAnonymous = !sessionUserId && !customerId;
 
-		// Validate email and phone requirements for anonymous users
+		// Validate name and phone requirements for anonymous users
 		if (isAnonymous) {
-			// Anonymous user - email and phone are required
-			if (!email) {
-				throw new SafeError("Email is required for anonymous reservations");
+			// Anonymous user - name and phone are required
+			if (!name) {
+				throw new SafeError("Name is required for anonymous reservations");
 			}
 			if (!phone) {
 				throw new SafeError(
@@ -135,54 +137,140 @@ export const createReservationAction = baseClient
 			}
 		}
 
-		// Validate facility (required)
-		if (!facilityId) {
+		// Validate facilityId if mustSelectFacility is true
+		if (rsvpSettings?.mustSelectFacility && !facilityId) {
 			throw new SafeError("Facility is required");
 		}
 
-		const facility = await sqlClient.storeFacility.findFirst({
-			where: {
-				id: facilityId,
-				storeId,
-			},
-			select: {
-				id: true,
-				facilityName: true,
-				businessHours: true,
-				defaultCost: true,
-				defaultDuration: true,
-			},
-		});
-
-		if (!facility) {
-			throw new SafeError("Facility not found");
+		// Validate serviceStaffId if mustHaveServiceStaff is true
+		if (rsvpSettings?.mustHaveServiceStaff && !serviceStaffId) {
+			throw new SafeError("Service staff is required");
 		}
 
-		// Validate business hours (if facility has business hours)
-		validateFacilityBusinessHours(
-			facility.businessHours,
-			rsvpTimeUtc,
-			storeTimezone,
-			facilityId,
-		);
+		// Get service staff if provided
+		let serviceStaff = null;
+		let serviceStaffName: string | null = null;
+		if (serviceStaffId) {
+			serviceStaff = await sqlClient.serviceStaff.findFirst({
+				where: {
+					id: serviceStaffId,
+					storeId,
+					isDeleted: false,
+				},
+				select: {
+					id: true,
+					businessHours: true,
+					defaultCost: true,
+					defaultCredit: true,
+					User: {
+						select: {
+							name: true,
+							email: true,
+						},
+					},
+				},
+			});
 
-		// Validate availability based on singleServiceMode
-		await validateRsvpAvailability(
-			storeId,
-			rsvpSettings,
-			rsvpTime,
-			facilityId,
-			facility.defaultDuration, // Use facility duration if available
-		);
+			if (!serviceStaff) {
+				throw new SafeError("Service staff not found");
+			}
+
+			// Get service staff display name (name || email || id)
+			serviceStaffName =
+				serviceStaff.User?.name || serviceStaff.User?.email || serviceStaffId;
+
+			// Validate service staff business hours
+			validateServiceStaffBusinessHours(
+				serviceStaff.businessHours,
+				rsvpTimeUtc,
+				storeTimezone,
+				serviceStaffId,
+			);
+		}
+
+		// Validate facility if provided (optional)
+		let facility: {
+			id: string;
+			facilityName: string;
+			businessHours: string | null;
+			defaultCost: number | null;
+			defaultCredit: number | null;
+			defaultDuration: number | null;
+		} | null = null;
+
+		if (facilityId) {
+			const facilityResult = await sqlClient.storeFacility.findFirst({
+				where: {
+					id: facilityId,
+					storeId,
+				},
+				select: {
+					id: true,
+					facilityName: true,
+					businessHours: true,
+					defaultCost: true,
+					defaultCredit: true,
+					defaultDuration: true,
+				},
+			});
+
+			if (!facilityResult) {
+				throw new SafeError("Facility not found");
+			}
+
+			// Convert Decimal to number for type compatibility
+			facility = {
+				id: facilityResult.id,
+				facilityName: facilityResult.facilityName,
+				businessHours: facilityResult.businessHours,
+				defaultCost: facilityResult.defaultCost
+					? Number(facilityResult.defaultCost)
+					: null,
+				defaultCredit: facilityResult.defaultCredit
+					? Number(facilityResult.defaultCredit)
+					: null,
+				defaultDuration: facilityResult.defaultDuration
+					? Number(facilityResult.defaultDuration)
+					: null,
+			};
+		}
+
+		// Validate business hours (if facility has business hours) - only if facility exists
+		if (facility) {
+			validateFacilityBusinessHours(
+				facility.businessHours,
+				rsvpTimeUtc,
+				storeTimezone,
+				facilityId!,
+			);
+
+			// Validate availability based on singleServiceMode - only if facility exists
+			await validateRsvpAvailability(
+				storeId,
+				rsvpSettings,
+				rsvpTime,
+				facilityId!,
+				facility.defaultDuration ?? rsvpSettings?.defaultDuration ?? 60,
+			);
+		}
 
 		// Check if prepaid is required
 		const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
-		const totalCost = facility?.defaultCost
-			? Number(facility.defaultCost)
-			: null;
 
-		const prepaidRequired =
-			minPrepaidPercentage > 0 && totalCost !== null && totalCost > 0;
+		// Calculate total cost: facility cost + service staff cost (if applicable)
+		let facilityCost = facility?.defaultCost ? Number(facility.defaultCost) : 0;
+		let facilityCredit = facility?.defaultCredit
+			? Number(facility.defaultCredit)
+			: 0;
+		let serviceStaffCost = serviceStaff?.defaultCost
+			? Number(serviceStaff.defaultCost)
+			: 0;
+		let serviceStaffCredit = serviceStaff?.defaultCredit
+			? Number(serviceStaff.defaultCredit)
+			: 0;
+		const totalCost = facilityCost + serviceStaffCost;
+
+		const prepaidRequired = minPrepaidPercentage > 0 && totalCost > 0;
 		const requiredPrepaid = prepaidRequired
 			? Math.ceil(totalCost * (minPrepaidPercentage / 100))
 			: null;
@@ -202,14 +290,32 @@ export const createReservationAction = baseClient
 					data: {
 						storeId,
 						customerId: finalCustomerId,
-						facilityId,
 						numOfAdult,
 						numOfChild,
 						rsvpTime,
+
 						message: message || null,
-						// Store email and phone for anonymous reservations
-						email: finalCustomerId ? null : email || null, // Only store if anonymous
+						// Store name and phone for anonymous reservations
+						name: finalCustomerId ? null : name || null, // Only store if anonymous
 						phone: finalCustomerId ? null : phone || null, // Only store if anonymous
+
+						facilityId: facilityId || null,
+						facilityCost:
+							facilityCost > 0 ? new Prisma.Decimal(facilityCost) : null,
+						facilityCredit:
+							facilityCredit > 0 ? new Prisma.Decimal(facilityCredit) : null,
+						pricingRuleId: null, // Pricing rules not used in simple reservation flow
+
+						serviceStaffId: serviceStaffId || null,
+						serviceStaffCost:
+							serviceStaffCost > 0
+								? new Prisma.Decimal(serviceStaffCost)
+								: null,
+						serviceStaffCredit:
+							serviceStaffCredit > 0
+								? new Prisma.Decimal(serviceStaffCredit)
+								: null,
+
 						status: rsvpStatus,
 						alreadyPaid,
 						orderId: null, // Will be updated after order creation
@@ -237,17 +343,43 @@ export const createReservationAction = baseClient
 					// Create order note with RSVP ID
 					const orderNote = `${t("rsvp_reservation_payment_note") || "RSVP reservation payment"} (RSVP ID: ${createdRsvp.id})`;
 
+					// Calculate facility and service staff costs for order items
+					const facilityCostForOrder = facilityCost > 0 ? facilityCost : null;
+					const serviceStaffCostForOrder =
+						serviceStaffCost > 0 ? serviceStaffCost : null;
+
+					// Calculate prepaid amounts proportionally if both costs exist
+					let facilityPrepaid: number | null = null;
+					let serviceStaffPrepaid: number | null = null;
+
+					if (facilityCostForOrder && serviceStaffCostForOrder) {
+						// Both costs exist, split prepaid proportionally
+						const facilityRatio = facilityCostForOrder / totalCost;
+						const serviceStaffRatio = serviceStaffCostForOrder / totalCost;
+						facilityPrepaid = Math.ceil(requiredPrepaid * facilityRatio);
+						serviceStaffPrepaid = requiredPrepaid - facilityPrepaid; // Ensure total matches
+					} else if (facilityCostForOrder) {
+						// Only facility cost
+						facilityPrepaid = requiredPrepaid;
+					} else if (serviceStaffCostForOrder) {
+						// Only service staff cost
+						serviceStaffPrepaid = requiredPrepaid;
+					}
+
 					// Create unpaid order (customer will pay at checkout)
 					const createdOrderId = await createRsvpStoreOrder({
 						tx,
 						storeId,
 						customerId: finalCustomerId, // finalCustomerId is guaranteed to be non-null here
-						orderTotal: requiredPrepaid,
+						facilityCost: facilityPrepaid,
+						serviceStaffCost: serviceStaffPrepaid,
 						currency: store.defaultCurrency || "twd",
 						paymentMethodPayUrl,
 						rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
-						facilityId, // Pass facility ID for pickupCode
-						facilityName: facility.facilityName || "Facility", // Pass facility name for product name
+						facilityId: facilityId || null, // Pass facility ID for pickupCode (optional)
+						facilityName: facility?.facilityName || "Reservation", // Pass facility name for product name
+						serviceStaffId: serviceStaffId || null, // Pass service staff ID (optional)
+						serviceStaffName, // Pass service staff name for product name (optional)
 						rsvpTime, // Pass RSVP time (BigInt epoch)
 						note: orderNote,
 						displayToCustomer: false, // Internal note, not displayed to customer

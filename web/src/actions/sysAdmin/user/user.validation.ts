@@ -2,21 +2,26 @@ import { z } from "zod";
 
 export const updateUserSettingsSchema = z
 	.object({
-		id: z.string(),
-		name: z.string().min(5, {
-			error: "name is required",
-		}),
-		email: z.email().optional(),
-		password: z.string().optional(),
-		locale: z.string().min(1, {
-			error: "locale is required",
-		}),
-		timezone: z.string(),
-		role: z.string(),
-		stripeCustomerId: z.string().optional(),
-		phoneNumber: z.string().optional(),
+		id: z.string().min(1, "User ID is required"),
+		name: z.string().min(5, "Name must be at least 5 characters"),
+		email: z
+			.union([z.string().email("Invalid email format"), z.literal("")])
+			.optional(),
+		password: z
+			.union([
+				z.string().min(8, "Password must be at least 8 characters"),
+				z.literal(""),
+			])
+			.optional(),
+		locale: z.string().min(1, "Locale is required"),
+		timezone: z.string().min(1, "Timezone is required"),
+		role: z.string().min(1, "Role is required"),
+		stripeCustomerId: z.union([z.string(), z.literal(""), z.null()]).optional(),
+		phoneNumber: z.string().optional().or(z.literal("")),
 		phoneNumberVerified: z.boolean().optional(),
-		image: z.string().url().optional().or(z.literal("")),
+		image: z
+			.union([z.string().url("Invalid URL format"), z.literal(""), z.null()])
+			.optional(),
 		twoFactorEnabled: z.boolean().optional(),
 		banned: z.boolean().optional(),
 		banReason: z.string().nullable().optional(),

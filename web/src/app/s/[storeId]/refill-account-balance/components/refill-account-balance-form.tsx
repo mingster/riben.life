@@ -19,7 +19,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { createRefillCreditPointsOrderAction } from "@/actions/store/credit/create-refill-order";
+import { createRefillAccountBalanceOrderAction } from "@/actions/store/credit/create-refill-account-balance-order";
 import {
 	Card,
 	CardContent,
@@ -31,52 +31,50 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { Store, StorePaymentMethodMapping } from "@/types";
 
-const refillCreditPointsFormSchema = z.object({
-	creditAmount: z.coerce
+const refillAccountBalanceFormSchema = z.object({
+	fiatAmount: z.coerce
 		.number()
-		.positive("Credit points amount must be positive")
-		.min(1, "Credit points amount must be at least 1 point"),
+		.positive("Fiat amount must be positive")
+		.min(0.01, "Fiat amount must be at least 0.01"),
 	paymentMethodId: z.string().min(1, "Payment method is required"),
 });
 
-type RefillCreditPointsFormValues = z.infer<
-	typeof refillCreditPointsFormSchema
+type RefillAccountBalanceFormValues = z.infer<
+	typeof refillAccountBalanceFormSchema
 >;
 
-interface RefillCreditPointsFormProps {
+interface RefillAccountBalanceFormProps {
 	storeId: string;
 	store: Store & {
 		StorePaymentMethods: StorePaymentMethodMapping[];
 	};
 	rsvpId?: string;
 	returnUrl?: string;
+	unpaidTotal?: number | null;
 }
 
-export function RefillCreditPointsForm({
+export function RefillAccountBalanceForm({
 	storeId,
 	store,
 	rsvpId,
 	returnUrl,
-}: RefillCreditPointsFormProps) {
+	unpaidTotal,
+}: RefillAccountBalanceFormProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const router = useRouter();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const minPurchase = store.creditMinPurchase
-		? Number(store.creditMinPurchase)
-		: 0;
-	const maxPurchase = store.creditMaxPurchase
-		? Number(store.creditMaxPurchase)
-		: 0;
-	const creditExchangeRate = store.creditExchangeRate
-		? Number(store.creditExchangeRate)
-		: 0;
 	const currency = store.defaultCurrency.toUpperCase();
 
-	// Get payment methods
-	const allPaymentMethods =
-		store.StorePaymentMethods as StorePaymentMethodMapping[];
+	// Get payment methods (exclude credit/creditPoint as they can't be used for fiat refill)
+	const allPaymentMethods = (
+		store.StorePaymentMethods as StorePaymentMethodMapping[]
+	).filter(
+		(mapping) =>
+			mapping.PaymentMethod.payUrl !== "credit" &&
+			mapping.PaymentMethod.payUrl !== "creditPoint",
+	);
 
 	// Default to first payment method, or Stripe if available
 	let defaultPaymentMethod = allPaymentMethods.find(
@@ -86,49 +84,23 @@ export function RefillCreditPointsForm({
 		defaultPaymentMethod = allPaymentMethods[0];
 	}
 
-	const form = useForm<RefillCreditPointsFormValues>({
-		resolver: zodResolver(refillCreditPointsFormSchema) as any,
+	const form = useForm<RefillAccountBalanceFormValues>({
+		resolver: zodResolver(refillAccountBalanceFormSchema) as any,
 		defaultValues: {
-			creditAmount: minPurchase > 0 ? minPurchase : 100,
+			fiatAmount: unpaidTotal && unpaidTotal > 0 ? unpaidTotal : 100, // Use unpaid total if available, otherwise default to 100
 			paymentMethodId: defaultPaymentMethod?.methodId || "",
 		},
 	});
 
-	// Calculate dollar amount from credit amount
-	const creditAmount = form.watch("creditAmount");
-	const dollarAmount = useMemo(() => {
-		if (!creditAmount || creditAmount <= 0 || creditExchangeRate <= 0) return 0;
-		return creditAmount * creditExchangeRate;
-	}, [creditAmount, creditExchangeRate]);
-
 	const onSubmit = useCallback(
-		async (data: RefillCreditPointsFormValues) => {
+		async (data: RefillAccountBalanceFormValues) => {
 			try {
 				setIsSubmitting(true);
 
-				// Validate against store limits (in credit points)
-				if (minPurchase > 0 && data.creditAmount < minPurchase) {
-					toastError({
-						description: t("credit_min_purchase_error", {
-							points: minPurchase,
-						}),
-					});
-					return;
-				}
-
-				if (maxPurchase > 0 && data.creditAmount > maxPurchase) {
-					toastError({
-						description: t("credit_max_purchase_error", {
-							points: maxPurchase,
-						}),
-					});
-					return;
-				}
-
-				// Create refill credit points order
-				const result = await createRefillCreditPointsOrderAction({
+				// Create refill account balance order
+				const result = await createRefillAccountBalanceOrderAction({
 					storeId,
-					creditAmount: data.creditAmount,
+					fiatAmount: data.fiatAmount,
 					paymentMethodId: data.paymentMethodId,
 					rsvpId: rsvpId,
 				});
@@ -168,40 +140,36 @@ export function RefillCreditPointsForm({
 					description:
 						error instanceof Error
 							? error.message
-							: "Failed to create refill credit points order",
+							: "Failed to create refill account balance order",
 				});
 			} finally {
 				setIsSubmitting(false);
 			}
 		},
-		[storeId, minPurchase, maxPurchase, currency, router, allPaymentMethods],
+		[storeId, currency, router, allPaymentMethods, rsvpId, returnUrl],
 	);
 
-	// Preset amounts: start with minPurchase, then 3 multiples
+	// Calculate preset amounts based on unpaid total
+	// If unpaid total exists and is > 0, use it as the only preset
+	// Otherwise, use common fiat amounts
 	const presetAmounts = useMemo(() => {
-		if (minPurchase > 0) {
-			// Generate: minPurchase, minPurchase * 2, minPurchase * 3, minPurchase * 4
-			const amounts = [minPurchase, minPurchase * 2, minPurchase * 3].filter(
-				(amount) => {
-					// Filter out amounts that exceed maxPurchase if set
-					if (maxPurchase > 0 && amount > maxPurchase) return false;
-					return true;
-				},
-			);
-			return amounts;
+		if (unpaidTotal && unpaidTotal > 0) {
+			return [unpaidTotal];
 		}
-		// Fallback if no minPurchase: use default values
-		return [20, 40, 60, 80].filter((amount) => {
-			if (maxPurchase > 0 && amount > maxPurchase) return false;
-			return true;
-		});
-	}, [minPurchase, maxPurchase]);
+
+		// Default presets if no unpaid total
+		return [100, 200, 500, 1000, 2000, 5000];
+	}, [unpaidTotal]);
 
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>{t("credit_refill")}</CardTitle>
-				<CardDescription></CardDescription>
+				<CardTitle>
+					{t("refill_account_balance") || "Refill Account Balance"}
+				</CardTitle>
+				<CardDescription>
+					{t("refill_account_balance_description")}
+				</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<Form {...form}>
@@ -209,28 +177,21 @@ export function RefillCreditPointsForm({
 						{presetAmounts.length > 0 && (
 							<div className="space-y-2">
 								<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-									{t("credit_quick_select")}
+									{t("select") || "Select"}
 								</label>
 								<div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
 									{presetAmounts.map((amount) => {
-										const dollarAmount =
-											creditExchangeRate > 0 ? amount * creditExchangeRate : 0;
 										return (
 											<Button
 												key={amount}
 												type="button"
 												variant="outline"
-												onClick={() => form.setValue("creditAmount", amount)}
+												onClick={() => form.setValue("fiatAmount", amount)}
 												className="h-10 sm:h-9 flex flex-row"
 											>
 												<span className="font-semibold">
-													{amount} {t("points")}
+													{amount.toLocaleString()} {currency}
 												</span>
-												{creditExchangeRate > 0 && (
-													<span className="text-xs text-muted-foreground">
-														{dollarAmount.toLocaleString()} {currency}
-													</span>
-												)}
 											</Button>
 										);
 									})}
@@ -240,17 +201,19 @@ export function RefillCreditPointsForm({
 
 						<FormField
 							control={form.control}
-							name="creditAmount"
+							name="fiatAmount"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("credit_refill_amount")}{" "}
+										{t("amount") || "Amount"}{" "}
 										<span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
 										<Input
 											type="number"
-											placeholder={t("credit_enter_points")}
+											step="0.01"
+											min="0.01"
+											placeholder={t("enter_amount") || "Enter amount"}
 											className="h-10 text-base sm:text-sm"
 											{...field}
 											onChange={(e) => {
@@ -259,12 +222,9 @@ export function RefillCreditPointsForm({
 											}}
 										/>
 									</FormControl>
-									{dollarAmount > 0 && (
-										<p className="text-sm text-muted-foreground">
-											{t("credit_total_amount")}:{" "}
-											{dollarAmount.toLocaleString()} {currency}
-										</p>
-									)}
+									<p className="text-sm text-muted-foreground">
+										{t("currency") || "Currency"}: {currency}
+									</p>
 									<FormMessage />
 								</FormItem>
 							)}
@@ -277,7 +237,7 @@ export function RefillCreditPointsForm({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel className="pb-2">
-											{t("checkout_paymentMethod")}{" "}
+											{t("checkout_paymentMethod") || "Payment Method"}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
@@ -316,7 +276,9 @@ export function RefillCreditPointsForm({
 							disabled={isSubmitting}
 							className="w-full h-10 sm:h-9"
 						>
-							{isSubmitting ? t("processing") : t("continue_to_payment")}
+							{isSubmitting
+								? t("processing") || "Processing..."
+								: t("continue_to_payment") || "Continue to Payment"}
 						</Button>
 					</form>
 				</Form>

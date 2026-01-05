@@ -150,3 +150,97 @@ export async function processCreditTopUp(
 
 	return { success: true, amount, bonus, totalCredit };
 }
+
+/**
+ * Process a fiat top-up, update balance, and log transaction.
+ *
+ * This function handles both:
+ * - Customer refills (via payment): referenceId should be StoreOrder.id, creatorId should be null
+ * - Store operator refills (manual): referenceId should be null, creatorId should be operator's userId
+ *
+ * @param storeId - Store ID
+ * @param userId - Customer user ID
+ * @param amount - Top-up amount (must be positive)
+ * @param referenceId - Order ID for customer refill, or null for manual refill
+ * @param creatorId - User ID of operator who created this refill (null for customer-initiated)
+ * @param note - Optional note/description for the transaction
+ * @returns Object with success status and amount
+ */
+export async function processFiatTopUp(
+	storeId: string,
+	userId: string,
+	amount: number,
+	referenceId?: string | null,
+	creatorId?: string | null,
+	note?: string | null,
+): Promise<{
+	success: boolean;
+	amount: number;
+}> {
+	if (amount <= 0) {
+		return { success: false, amount: 0 };
+	}
+
+	await sqlClient.$transaction(async (tx) => {
+		// 1. Get current balance (before update)
+		const existingCredit = await tx.customerCredit.findUnique({
+			where: {
+				storeId_userId: {
+					storeId,
+					userId,
+				},
+			},
+		});
+
+		const currentBalance = existingCredit ? Number(existingCredit.fiat) : 0;
+		const newBalance = currentBalance + amount;
+
+		// 2. Update CustomerCredit (fiat field)
+		const customerCredit = await tx.customerCredit.upsert({
+			where: {
+				storeId_userId: {
+					storeId,
+					userId,
+				},
+			},
+			update: {
+				fiat: {
+					increment: amount,
+				},
+				updatedAt: getUtcNowEpoch(),
+			},
+			create: {
+				storeId,
+				userId,
+				fiat: new Prisma.Decimal(amount),
+				point: new Prisma.Decimal(0), // Ensure point is set
+				updatedAt: getUtcNowEpoch(),
+			},
+		});
+
+		// Verify the balance matches our calculation
+		const actualBalance = Number(customerCredit.fiat);
+		if (Math.abs(actualBalance - newBalance) > 0.01) {
+			throw new Error(
+				`Balance mismatch: expected ${newBalance}, got ${actualBalance}`,
+			);
+		}
+
+		// 3. Create CustomerFiatLedger Entry for Top-up
+		await tx.customerFiatLedger.create({
+			data: {
+				storeId,
+				userId,
+				amount: new Prisma.Decimal(amount),
+				balance: new Prisma.Decimal(newBalance),
+				type: "TOPUP",
+				referenceId: referenceId || null,
+				note: note || `Top-up ${amount}`,
+				creatorId: creatorId || null,
+				createdAt: getUtcNowEpoch(),
+			},
+		});
+	});
+
+	return { success: true, amount };
+}

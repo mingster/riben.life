@@ -35,6 +35,7 @@ export type RsvpSettingsData = {
 	defaultDuration: number;
 	requireSignature: boolean;
 	showCostToCustomer: boolean;
+	mustSelectFacility: boolean;
 	mustHaveServiceStaff: boolean;
 	useBusinessHours: boolean;
 	rsvpHours: string | null;

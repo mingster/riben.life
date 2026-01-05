@@ -130,7 +130,7 @@ export function CheckoutPaymentMethods({
 					>
 						{isProcessing
 							? t("checkout_processing") || "Processing..."
-							: t("checkout_continue_to_payment") || "Continue to Payment"}
+							: t("continue_to_payment") || "Continue to Payment"}
 					</Button>
 					<Button
 						type="button"

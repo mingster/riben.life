@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IconPencil, IconPlus, IconKey } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { createUserAction } from "@/actions/sysAdmin/user/create-user";
 import { updateUserAction } from "@/actions/sysAdmin/user/update-user";
@@ -135,6 +135,13 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 		mode: "onChange",
 	});
 
+	// Trigger validation on mount and when dialog opens to populate errors
+	useEffect(() => {
+		if (isOpen) {
+			form.trigger(); // Validate all fields when dialog opens
+		}
+	}, [isOpen, form]);
+
 	// Unused form instance - can be removed if not needed
 	// const {
 	// 	register,
@@ -181,6 +188,60 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 								onSubmit={form.handleSubmit(onSubmit)}
 								className="max-w-sm space-y-2.5"
 							>
+								{(!form.formState.isValid ||
+									Object.keys(form.formState.errors).length > 0) && (
+									<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
+										<div className="text-sm font-semibold text-destructive">
+											{Object.keys(form.formState.errors).length > 0
+												? "Please fix the following errors:"
+												: "Form is invalid. Please check all required fields."}
+										</div>
+										{Object.keys(form.formState.errors).length > 0 ? (
+											Object.entries(form.formState.errors).map(
+												([field, error]) => {
+													// Map field names to user-friendly labels
+													const fieldLabels: Record<string, string> = {
+														id: "User ID",
+														name: t("name"),
+														email: t("email"),
+														password: t("password"),
+														locale: t("account_tabs_language"),
+														timezone: t("timezone"),
+														role: t("Role"),
+														phoneNumber: t("phone"),
+														image: t("profile_image"),
+														phoneNumberVerified: t("phone_number_verified"),
+														twoFactorEnabled: "Two Factor Enabled",
+														banned: t("banned"),
+														banReason: t("ban_reason") || "Ban Reason",
+														banExpires: t("ban_expires") || "Ban Expires",
+													};
+													const fieldLabel = fieldLabels[field] || field;
+													return (
+														<div
+															key={field}
+															className="text-sm text-destructive flex items-start gap-2"
+														>
+															<span className="font-medium">{fieldLabel}:</span>
+															<span>{error?.message as string}</span>
+														</div>
+													);
+												},
+											)
+										) : (
+											<div className="text-sm text-destructive space-y-1">
+												<div>
+													The submit button is disabled because the form is
+													invalid.
+												</div>
+												<div className="text-xs opacity-75 mt-1">
+													Please fill in all required fields (marked with *) and
+													ensure all values are valid.
+												</div>
+											</div>
+										)}
+									</div>
+								)}
 								<FormField
 									control={form.control}
 									name="name"
@@ -499,55 +560,26 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									</>
 								)}
 
-								{Object.keys(form.formState.errors).length > 0 && (
-									<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
-										<div className="text-sm font-semibold text-destructive">
-											Please fix the following errors:
-										</div>
-										{Object.entries(form.formState.errors).map(
-											([field, error]) => {
-												// Map field names to user-friendly labels
-												const fieldLabels: Record<string, string> = {
-													name: t("name"),
-													email: t("email"),
-													password: t("password"),
-													locale: t("account_tabs_language"),
-													timezone: t("timezone"),
-													role: t("Role"),
-													phoneNumber: t("phone"),
-													image: t("profile_image"),
-													phoneNumberVerified: t("phone_number_verified"),
-													twoFactorEnabled: "Two Factor Enabled",
-													banned: t("banned"),
-													banReason: t("ban_reason") || "Ban Reason",
-													banExpires: t("ban_expires") || "Ban Expires",
-												};
-												const fieldLabel = fieldLabels[field] || field;
-												return (
-													<div
-														key={field}
-														className="text-sm text-destructive flex items-start gap-2"
-													>
-														<span className="font-medium">{fieldLabel}:</span>
-														<span>{error.message as string}</span>
-													</div>
-												);
-											},
-										)}
-									</div>
-								)}
-
-								<Button
-									type="submit"
-									disabled={
-										loading ||
-										!form.formState.isValid ||
-										form.formState.isSubmitting
-									}
-									className="disabled:opacity-25"
-								>
-									{t("submit")}
-								</Button>
+								<div className="relative">
+									<Button
+										type="submit"
+										disabled={
+											loading ||
+											!form.formState.isValid ||
+											form.formState.isSubmitting
+										}
+										className="disabled:opacity-25"
+										title={
+											!form.formState.isValid
+												? Object.keys(form.formState.errors).length > 0
+													? `${Object.keys(form.formState.errors).length} validation error(s) - see error summary above`
+													: "Form is invalid - please fill in all required fields"
+												: undefined
+										}
+									>
+										{t("submit")}
+									</Button>
+								</div>
 							</form>
 						</Form>
 					</div>

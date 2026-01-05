@@ -67,8 +67,6 @@ export type MessageTemplateLocalized =
 
 const emailQueueObj = Prisma.validator<Prisma.EmailQueueDefaultArgs>()({});
 export type EmailQueue = Prisma.EmailQueueGetPayload<typeof emailQueueObj>;
-// EmailQueue type definition
-export type EmailQueue = Prisma.EmailQueueGetPayload<{}>;
 
 export enum CartProductStatus {
 	InProgress = 0, // customization is work-in-progress

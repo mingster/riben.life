@@ -68,26 +68,43 @@ export const createRsvpAction = storeActionClient
 
 		const storeTimezone = store.defaultTimezone || "Asia/Taipei";
 
-		// Validate facility (required)
-		if (!facilityId) {
-			throw new SafeError("Facility is required");
-		}
+		// Validate facility if provided (optional)
+		let facility: {
+			id: string;
+			facilityName: string;
+			defaultDuration: number | null;
+			defaultCost: number | null;
+		} | null = null;
 
-		const facility = await sqlClient.storeFacility.findFirst({
-			where: {
-				id: facilityId,
-				storeId,
-			},
-			select: {
-				id: true,
-				facilityName: true,
-				defaultDuration: true,
-				defaultCost: true,
-			},
-		});
+		if (facilityId) {
+			const facilityResult = await sqlClient.storeFacility.findFirst({
+				where: {
+					id: facilityId,
+					storeId,
+				},
+				select: {
+					id: true,
+					facilityName: true,
+					defaultDuration: true,
+					defaultCost: true,
+				},
+			});
 
-		if (!facility) {
-			throw new SafeError("Facility not found");
+			if (!facilityResult) {
+				throw new SafeError("Facility not found");
+			}
+
+			// Convert Decimal to number for type compatibility
+			facility = {
+				id: facilityResult.id,
+				facilityName: facilityResult.facilityName,
+				defaultDuration: facilityResult.defaultDuration
+					? Number(facilityResult.defaultDuration)
+					: null,
+				defaultCost: facilityResult.defaultCost
+					? Number(facilityResult.defaultCost)
+					: null,
+			};
 		}
 
 		// Convert rsvpTime to UTC Date, then to BigInt epoch
@@ -125,14 +142,16 @@ export const createRsvpAction = storeActionClient
 		// Note: Store admin can still create reservations, but we validate to ensure consistency
 		validateReservationTimeWindow(rsvpSettings, rsvpTime);
 
-		// Validate availability based on singleServiceMode
-		await validateRsvpAvailability(
-			storeId,
-			rsvpSettings,
-			rsvpTime,
-			facilityId,
-			facility.defaultDuration,
-		);
+		// Validate availability based on singleServiceMode (only if facility is provided)
+		if (facilityId && facility) {
+			await validateRsvpAvailability(
+				storeId,
+				rsvpSettings,
+				rsvpTime,
+				facilityId,
+				facility.defaultDuration ?? rsvpSettings?.defaultDuration ?? 60,
+			);
+		}
 
 		// Convert arriveTime to UTC Date, then to BigInt epoch
 		// Same conversion as rsvpTime - interpret as store timezone and convert to UTC
@@ -155,11 +174,11 @@ export const createRsvpAction = storeActionClient
 		});
 		const createdBy = session?.user?.id || null;
 
-		// Calculate total cost: use facilityCost if provided, otherwise use facility.defaultCost
+		// Calculate total cost: use facilityCost if provided, otherwise use facility.defaultCost (if facility exists)
 		const totalCost =
 			facilityCost !== null && facilityCost !== undefined
 				? facilityCost
-				: facility.defaultCost
+				: facility?.defaultCost
 					? Number(facility.defaultCost)
 					: null;
 
@@ -176,7 +195,7 @@ export const createRsvpAction = storeActionClient
 					data: {
 						storeId,
 						customerId: customerId || null,
-						facilityId,
+						facilityId: facilityId || null,
 						numOfAdult,
 						numOfChild,
 						rsvpTime,
@@ -208,10 +227,12 @@ export const createRsvpAction = storeActionClient
 
 				// If status is Completed, not alreadyPaid, and has customerId, deduct customer's credit
 				// Note: This is for service credit usage (after service completion), not prepaid payment
+				// Only process if facility exists (credit deduction requires facility)
 				if (
 					finalStatus === RsvpStatus.Completed &&
 					!finalAlreadyPaid &&
 					customerId &&
+					facility &&
 					store.creditServiceExchangeRate &&
 					Number(store.creditServiceExchangeRate) > 0 &&
 					store.creditExchangeRate &&
@@ -255,7 +276,7 @@ export const createRsvpAction = storeActionClient
 						// Build order note with RSVP details
 						const baseNote = t("rsvp_reservation_payment_note");
 						const facilityName =
-							facility.facilityName || t("facility_name") || "Facility";
+							facility?.facilityName || t("facility_name") || "Facility";
 
 						const orderNote = `${baseNote}\n${t("rsvp_id") || "RSVP ID"}: ${createdRsvp.id}\n${t("facility_name") || "Facility"}: ${facilityName}\n${t("rsvp_time") || "Reservation Time"}: ${formattedRsvpTime}`;
 
@@ -263,12 +284,15 @@ export const createRsvpAction = storeActionClient
 							tx,
 							storeId,
 							customerId,
-							orderTotal: totalCost,
+							facilityCost: totalCost !== null ? totalCost : null, // Only facility cost for admin-created RSVP
+							serviceStaffCost: null, // No service staff cost for admin-created RSVP
 							currency: store.defaultCurrency || "twd",
 							paymentMethodPayUrl: "TBD", // TBD payment method for admin-created orders
 							rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
-							facilityId: facility.id, // Pass facility ID for pickupCode
+							facilityId: facility?.id || null, // Pass facility ID for pickupCode (optional)
 							facilityName, // Pass facility name for product name
+							serviceStaffId: null, // No service staff for admin-created RSVP
+							serviceStaffName: null, // No service staff name for admin-created RSVP
 							rsvpTime: createdRsvp.rsvpTime, // Pass RSVP time (BigInt epoch)
 							note: orderNote,
 							displayToCustomer: false, // Internal note, not displayed to customer

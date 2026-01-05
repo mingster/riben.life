@@ -20,7 +20,7 @@ import { NotificationCard } from "./notification-card";
 import { IconLoader } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import useSWR from "swr";
 
 // SWR fetcher function
@@ -44,42 +44,96 @@ export default function DropdownNotification() {
 	const router = useRouter();
 	const { data: session } = authClient.useSession();
 	const [open, setOpen] = useState(false);
+	const [mounted, setMounted] = useState(false);
 
-	// Fetch notifications with SWR (auto-refresh every 30 seconds)
+	// Track mounted state to prevent hydration mismatch
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	// Fetch notifications with SWR
+	// Only refresh when popover is open to reduce unnecessary requests
 	const { data, error, mutate, isLoading } = useSWR(
 		session?.user ? "user-notifications" : null,
 		fetcher,
 		{
-			refreshInterval: 30000, // Refresh every 30 seconds
-			revalidateOnFocus: true,
+			refreshInterval: open ? 60000 : 0, // Refresh every 60 seconds only when open
+			revalidateOnFocus: false, // Disable focus revalidation to reduce refreshes
+			revalidateOnReconnect: true, // Still revalidate on reconnect
+			dedupingInterval: 5000, // Dedupe requests within 5 seconds
 		},
 	);
 
-	const notifications = data?.notifications || [];
-	const unreadCount = data?.unreadCount || 0;
+	// Revalidate when popover opens
+	useEffect(() => {
+		if (open && session?.user) {
+			mutate();
+		}
+	}, [open, mutate, session?.user]);
 
-	// Handle marking a notification as read
+	const notifications = data?.notifications || [];
+	// Use 0 during SSR to prevent hydration mismatch, then use actual value after mount
+	const unreadCount = mounted ? data?.unreadCount || 0 : 0;
+
+	// Handle marking a notification as read with optimistic update
 	const handleMarkAsRead = useCallback(
 		async (notificationId: string) => {
+			// Optimistic update: immediately update UI
+			mutate(
+				(currentData) => {
+					if (!currentData) return currentData;
+					return {
+						...currentData,
+						notifications: currentData.notifications.map((n) =>
+							n.id === notificationId ? { ...n, isRead: true } : n,
+						),
+						unreadCount: Math.max(0, currentData.unreadCount - 1),
+					};
+				},
+				{ revalidate: false }, // Don't revalidate immediately
+			);
+
+			// Then update on server
 			const result = await markNotificationReadAction({ notificationId });
 			if (result?.serverError) {
 				toastError({ description: result.serverError });
+				// Revert optimistic update on error
+				mutate();
 			} else {
-				// Refresh the notifications list
+				// Revalidate to ensure consistency
 				mutate();
 			}
 		},
 		[mutate],
 	);
 
-	// Handle marking all notifications as read
+	// Handle marking all notifications as read with optimistic update
 	const handleMarkAllAsRead = useCallback(async () => {
+		// Optimistic update: immediately update UI
+		mutate(
+			(currentData) => {
+				if (!currentData) return currentData;
+				return {
+					...currentData,
+					notifications: currentData.notifications.map((n) => ({
+						...n,
+						isRead: true,
+					})),
+					unreadCount: 0,
+				};
+			},
+			{ revalidate: false }, // Don't revalidate immediately
+		);
+
+		// Then update on server
 		const result = await markAllNotificationsReadAction();
 		if (result?.serverError) {
 			toastError({ description: result.serverError });
+			// Revert optimistic update on error
+			mutate();
 		} else {
 			toastSuccess({ description: t("all_notifications_marked_read") });
-			// Refresh the notifications list
+			// Revalidate to ensure consistency
 			mutate();
 		}
 	}, [mutate, t]);
@@ -106,6 +160,12 @@ export default function DropdownNotification() {
 
 	// Don't render if user is not authenticated
 	if (!session?.user) {
+		return null;
+	}
+
+	// Don't render until mounted to prevent hydration mismatch
+	// The unreadCount from SWR can differ between server and client
+	if (!mounted) {
 		return null;
 	}
 

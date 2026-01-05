@@ -401,7 +401,7 @@ export function AdminEditRsvpDialog({
 				storeId: rsvp.storeId,
 				id: rsvp.id,
 				customerId: rsvp.customerId,
-				facilityId: rsvp.facilityId || "",
+				facilityId: rsvp.facilityId || null,
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				rsvpTime:
@@ -442,10 +442,7 @@ export function AdminEditRsvpDialog({
 				storeId: String(params.storeId),
 				id: "",
 				customerId: null,
-				facilityId:
-					storeFacilities && storeFacilities.length > 0
-						? storeFacilities[0].id
-						: "",
+				facilityId: null, // Allow null for reservations without facilities
 				numOfAdult: 1,
 				numOfChild: 0,
 				rsvpTime: defaultRsvpTime || getUtcNow(),
@@ -773,7 +770,7 @@ export function AdminEditRsvpDialog({
 			if (!isEditMode) {
 				const result = await createRsvpAction(String(params.storeId), {
 					customerId: values.customerId || null,
-					facilityId: values.facilityId,
+					facilityId: values.facilityId || null,
 					numOfAdult: values.numOfAdult,
 					numOfChild: values.numOfChild,
 					rsvpTime: values.rsvpTime, //should be still in store timezone. server action will convert to UTC.
@@ -811,7 +808,7 @@ export function AdminEditRsvpDialog({
 				const result = await updateRsvpAction(String(params.storeId), {
 					id: rsvpId,
 					customerId: values.customerId || null,
-					facilityId: values.facilityId,
+					facilityId: values.facilityId || null,
 					numOfAdult: values.numOfAdult,
 					numOfChild: values.numOfChild,
 					rsvpTime: values.rsvpTime,
@@ -1054,10 +1051,7 @@ export function AdminEditRsvpDialog({
 							name="facilityId"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>
-										{t("rsvp_facility")}{" "}
-										<span className="text-destructive">*</span>
-									</FormLabel>
+									<FormLabel>{t("rsvp_facility")}</FormLabel>
 									<FormControl>
 										{availableFacilities.length > 0 ? (
 											<FacilityCombobox
@@ -1075,8 +1069,9 @@ export function AdminEditRsvpDialog({
 															) || null
 														: null
 												}
+												allowNone={true}
 												onValueChange={(facility) => {
-													field.onChange(facility?.id || "");
+													field.onChange(facility?.id || null);
 												}}
 											/>
 										) : (
@@ -1096,10 +1091,14 @@ export function AdminEditRsvpDialog({
 														})()
 													: rsvpTime
 														? t("No facilities available at selected time")
-														: t("No facilities available")}
+														: t("No facilities available (optional)")}
 											</div>
 										)}
 									</FormControl>
+									<FormDescription className="text-xs font-mono text-gray-500">
+										{t("facility_optional_description") ||
+											"Optional: Select a facility for this reservation"}
+									</FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}

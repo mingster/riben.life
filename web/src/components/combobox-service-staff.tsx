@@ -20,23 +20,23 @@ import { useState, useEffect } from "react";
 import { NotMountSkeleton } from "@/components/not-mount-skeleton";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import type { StoreFacility } from "@/types";
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 
-// a combo box to select a store facility
+// a combo box to select a service staff
 type ComboboxProps = {
-	storeFacilities: StoreFacility[];
+	serviceStaff: ServiceStaffColumn[];
 	disabled: boolean;
-	defaultValue: StoreFacility | null;
-	onValueChange?: (newValue: StoreFacility | null) => void;
-	allowNone?: boolean; // Allow clearing selection (for optional facilities)
+	defaultValue: ServiceStaffColumn | null;
+	onValueChange?: (newValue: ServiceStaffColumn | null) => void; // Allow null for empty selection
+	allowEmpty?: boolean; // Allow empty selection
 };
 
-export const FacilityCombobox = ({
-	storeFacilities,
+export const ServiceStaffCombobox = ({
+	serviceStaff,
 	disabled,
 	defaultValue,
 	onValueChange,
-	allowNone = false,
+	allowEmpty = true, // Default to allowing empty selection
 	...props
 }: ComboboxProps) => {
 	const { lng } = useI18n();
@@ -44,7 +44,7 @@ export const FacilityCombobox = ({
 
 	const [mounted, setMounted] = useState(false);
 	const [open, setOpen] = useState(false);
-	const [selected, setSelected] = useState<StoreFacility | null>(
+	const [selected, setSelected] = useState<ServiceStaffColumn | null>(
 		defaultValue || null,
 	);
 
@@ -60,8 +60,9 @@ export const FacilityCombobox = ({
 	if (!mounted) return <NotMountSkeleton />;
 
 	if (mounted) {
-		//if (data && !isLoading && !error) {
-		//console.log('selected', selected, 'defaultValue', defaultValue);
+		const displayName = selected
+			? selected.userName || selected.userEmail || selected.id
+			: `+ ${t("select_service_staff") || "Select service staff"}`;
 
 		return (
 			<Popover open={open} onOpenChange={setOpen}>
@@ -72,32 +73,33 @@ export const FacilityCombobox = ({
 						disabled={disabled}
 						{...props}
 					>
-						{selected ? (
-							<>{selected.facilityName}</>
-						) : (
-							<>+ {t("select_store_facility")}</>
-						)}
+						{displayName}
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="p-0" side="bottom" align="start">
 					<Command className="rounded-lg border shadow-md">
 						<CommandInput
-							placeholder={t("select_store_facility")}
+							placeholder={t("select_service_staff") || "Select service staff"}
 							className="h-9"
 						/>
 						<CommandList>
-							<CommandEmpty>{t("no_store_facility_found")}</CommandEmpty>
+							<CommandEmpty>
+								{t("no_service_staff_found") || "No service staff found"}
+							</CommandEmpty>
 							<CommandGroup>
-								{allowNone && (
+								{/* Empty selection option */}
+								{allowEmpty && (
 									<CommandItem
-										value="--none--"
+										value="__empty__"
 										onSelect={() => {
 											setSelected(null);
 											onValueChange?.(null);
 											setOpen(false);
 										}}
 									>
-										{t("none") || "None"}
+										<div className="flex flex-col">
+											<span className="font-medium">{t("none") || "None"}</span>
+										</div>
 										<IconCheck
 											className={cn(
 												"ml-auto h-4 w-4",
@@ -106,23 +108,25 @@ export const FacilityCombobox = ({
 										/>
 									</CommandItem>
 								)}
-								{storeFacilities.map((obj) => (
+								{serviceStaff.map((staff) => (
 									<CommandItem
-										key={obj.id}
-										value={obj.facilityName || obj.id} //value needs to be the keyword for command search
-										onSelect={(value) => {
-											//console.log(`onSelect: ${value}`);
-											setSelected(obj as StoreFacility);
-											//return value to parent component
-											onValueChange?.(obj as StoreFacility);
+										key={staff.id}
+										value={`${staff.userName || ""} ${staff.userEmail || ""} ${staff.id}`}
+										onSelect={() => {
+											setSelected(staff);
+											onValueChange?.(staff);
 											setOpen(false);
 										}}
 									>
-										{obj.facilityName || obj.id}
+										<div className="flex flex-col">
+											<span className="font-medium">
+												{staff.userName || staff.userEmail || staff.id}
+											</span>
+										</div>
 										<IconCheck
 											className={cn(
 												"ml-auto h-4 w-4",
-												selected?.id === obj.id ? "opacity-100" : "opacity-0",
+												selected?.id === staff.id ? "opacity-100" : "opacity-0",
 											)}
 										/>
 									</CommandItem>

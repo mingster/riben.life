@@ -5,14 +5,7 @@ SELECT
   quantity,
   "unitDiscount",
   "unitPrice",
-  (
-    SELECT
-      p.name
-    FROM
-      "Product" p
-    WHERE
-      (p.id = item."productId")
-  ) AS name,
+  "productName" AS name,
   (
     SELECT
       pi.url

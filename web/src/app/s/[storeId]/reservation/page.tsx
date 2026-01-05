@@ -33,11 +33,13 @@ export default async function ReservationPage(props: {
 		headers: await headers(),
 	});
 
+	/*
 	// Require sign-in for reservations
 	if (!session?.user?.id) {
 		const callbackUrl = `/s/${params.storeId}/reservation`;
 		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
 	}
+	*/
 
 	// Get RSVPs for a wider range (current week ± 2 weeks) to support navigation
 	// Use UTC to ensure server-independent time calculations

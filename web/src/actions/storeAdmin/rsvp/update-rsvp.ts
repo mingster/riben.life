@@ -86,25 +86,40 @@ export const updateRsvpAction = storeActionClient
 
 		const storeTimezone = store.defaultTimezone || "Asia/Taipei";
 
-		// Validate facility (required)
-		if (!facilityId) {
-			throw new SafeError("Facility is required");
-		}
+		// Validate facility if provided (optional)
+		let facility: {
+			id: string;
+			defaultDuration: number | null;
+			defaultCost: number | null;
+		} | null = null;
 
-		const facility = await sqlClient.storeFacility.findFirst({
-			where: {
-				id: facilityId,
-				storeId,
-			},
-			select: {
-				id: true,
-				defaultDuration: true,
-				defaultCost: true,
-			},
-		});
+		if (facilityId) {
+			const facilityResult = await sqlClient.storeFacility.findFirst({
+				where: {
+					id: facilityId,
+					storeId,
+				},
+				select: {
+					id: true,
+					defaultDuration: true,
+					defaultCost: true,
+				},
+			});
 
-		if (!facility) {
-			throw new SafeError("Facility not found");
+			if (!facilityResult) {
+				throw new SafeError("Facility not found");
+			}
+
+			// Convert Decimal to number for type compatibility
+			facility = {
+				id: facilityResult.id,
+				defaultDuration: facilityResult.defaultDuration
+					? Number(facilityResult.defaultDuration)
+					: null,
+				defaultCost: facilityResult.defaultCost
+					? Number(facilityResult.defaultCost)
+					: null,
+			};
 		}
 
 		// Convert rsvpTime to UTC Date, then to BigInt epoch
@@ -149,26 +164,29 @@ export const updateRsvpAction = storeActionClient
 			select: { rsvpTime: true },
 		});
 
-		if (existingRsvpTime && existingRsvpTime.rsvpTime !== rsvpTime) {
-			// Time changed, validate availability
-			await validateRsvpAvailability(
-				storeId,
-				rsvpSettings,
-				rsvpTime,
-				facilityId,
-				facility.defaultDuration,
-				id, // Exclude current reservation from conflict check
-			);
-		} else if (!existingRsvpTime) {
-			// New reservation or time definitely changed
-			await validateRsvpAvailability(
-				storeId,
-				rsvpSettings,
-				rsvpTime,
-				facilityId,
-				facility.defaultDuration,
-				id, // Exclude current reservation from conflict check
-			);
+		// Validate availability only if facility is provided and time changed
+		if (facilityId && facility) {
+			if (existingRsvpTime && existingRsvpTime.rsvpTime !== rsvpTime) {
+				// Time changed, validate availability
+				await validateRsvpAvailability(
+					storeId,
+					rsvpSettings,
+					rsvpTime,
+					facilityId,
+					facility.defaultDuration ?? rsvpSettings?.defaultDuration ?? 60,
+					id, // Exclude current reservation from conflict check
+				);
+			} else if (!existingRsvpTime) {
+				// New reservation or time definitely changed
+				await validateRsvpAvailability(
+					storeId,
+					rsvpSettings,
+					rsvpTime,
+					facilityId,
+					facility.defaultDuration ?? rsvpSettings?.defaultDuration ?? 60,
+					id, // Exclude current reservation from conflict check
+				);
+			}
 		}
 
 		// Convert arriveTime to UTC Date, then to BigInt epoch (or null)
@@ -186,11 +204,11 @@ export const updateRsvpAction = storeActionClient
 					})()
 				: null;
 
-		// Calculate total cost: use facilityCost if provided, otherwise use facility.defaultCost
+		// Calculate total cost: use facilityCost if provided, otherwise use facility.defaultCost (if facility exists)
 		const totalCost =
 			facilityCost !== null && facilityCost !== undefined
 				? facilityCost
-				: facility.defaultCost
+				: facility?.defaultCost
 					? Number(facility.defaultCost)
 					: null;
 
@@ -210,7 +228,12 @@ export const updateRsvpAction = storeActionClient
 		};
 
 		// Only process prepaid payment if customerId is provided, no existing order, and store uses credit
-		if (customerId && !rsvp.orderId && store.useCustomerCredit === true) {
+		if (
+			customerId &&
+			!rsvp.orderId &&
+			store.useCustomerCredit === true &&
+			facility
+		) {
 			prepaidResult = await processRsvpPrepaidPaymentUsingCredit({
 				storeId,
 				customerId,
@@ -245,7 +268,7 @@ export const updateRsvpAction = storeActionClient
 					where: { id },
 					data: {
 						customerId: customerId || null,
-						facilityId,
+						facilityId: facilityId || null,
 						numOfAdult,
 						numOfChild,
 						rsvpTime,
@@ -276,11 +299,13 @@ export const updateRsvpAction = storeActionClient
 
 				// If status is Completed, not alreadyPaid, and wasn't previously Completed, deduct customer's credit
 				// Note: This is for service credit usage (after service completion), not prepaid payment
+				// Only process if facility exists (credit deduction requires facility)
 				if (
 					finalStatus === RsvpStatus.Completed &&
 					!finalAlreadyPaid &&
 					!wasCompleted &&
 					customerId &&
+					facility &&
 					store.creditServiceExchangeRate &&
 					Number(store.creditServiceExchangeRate) > 0 &&
 					store.creditExchangeRate &&

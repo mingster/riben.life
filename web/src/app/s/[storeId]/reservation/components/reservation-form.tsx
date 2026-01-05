@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
+import useSWR from "swr";
 
 import { createReservationAction } from "@/actions/store/reservation/create-reservation";
 import {
@@ -17,8 +18,11 @@ import {
 	updateReservationSchema,
 	type UpdateReservationInput,
 } from "@/actions/store/reservation/update-reservation.validation";
+import { getServiceStaffAction } from "@/actions/store/reservation/get-service-staff";
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import { useTranslation } from "@/app/i18n/client";
 import { FacilityCombobox } from "@/components/combobox-facility";
+import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
 import { toastError, toastSuccess, toastWarning } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,6 +65,12 @@ import { Separator } from "@/components/ui/separator";
 import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
 import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
 import { clientLogger } from "@/lib/client-logger";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface ReservationFormProps {
 	storeId: string;
@@ -343,8 +353,7 @@ export function ReservationForm({
 
 			return {
 				id: rsvp.id,
-				facilityId:
-					rsvp.facilityId || (facilities.length > 0 ? facilities[0].id : ""),
+				facilityId: rsvp.facilityId || null,
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				rsvpTime,
@@ -352,14 +361,15 @@ export function ReservationForm({
 			} as UpdateReservationInput;
 		} else {
 			// Create mode: use default values
-			// Only include email and phone for anonymous users (when user is not logged in)
+			// Only include name and phone for anonymous users (when user is not logged in)
 			const isAnonymous = !user;
 			return {
 				storeId,
 				customerId: user?.id || null,
-				email: isAnonymous ? "" : undefined,
+				name: isAnonymous ? "" : undefined,
 				phone: isAnonymous ? "" : undefined,
-				facilityId: facilities.length > 0 ? facilities[0].id : "",
+				facilityId: null, // Allow null for reservations without facilities
+				serviceStaffId: null, // Default to null for create mode
 				numOfAdult: 1,
 				numOfChild: 0,
 				rsvpTime: defaultRsvpTime || new Date(),
@@ -369,20 +379,156 @@ export function ReservationForm({
 	}, [isEditMode, rsvp, storeId, user, defaultRsvpTime, facilities]);
 
 	// Use appropriate schema based on mode
-	const schema = isEditMode ? updateReservationSchema : createReservationSchema;
+	const baseSchema = isEditMode
+		? updateReservationSchema
+		: createReservationSchema;
 
 	// Form type: union of both input types
 	type FormInput = CreateReservationInput | UpdateReservationInput;
 
 	const form = useForm<FormInput>({
-		resolver: zodResolver(schema) as Resolver<FormInput>,
+		resolver: zodResolver(baseSchema) as Resolver<FormInput>,
 		defaultValues,
-		mode: isEditMode ? "onBlur" : "onChange",
+		mode: "onChange", // Real-time validation for better UX
 	});
 
 	// Watch rsvpTime to filter facilities
 	const rsvpTime = form.watch("rsvpTime");
 	const facilityId = form.watch("facilityId");
+	const serviceStaffId = form.watch("serviceStaffId"); // Watch serviceStaffId for cost calculation
+
+	// Always fetch service staff (not conditional on mustHaveServiceStaff)
+	const mustHaveServiceStaff = rsvpSettings?.mustHaveServiceStaff ?? false;
+	const mustSelectFacility = rsvpSettings?.mustSelectFacility ?? false;
+	const { data: serviceStaffData } = useSWR(
+		["serviceStaff", storeId],
+		async () => {
+			const result = await getServiceStaffAction({ storeId });
+			return result?.data?.serviceStaff ?? [];
+		},
+	);
+	const serviceStaff: ServiceStaffColumn[] = serviceStaffData ?? [];
+
+	// Helper function to check if service staff is available at a given time
+	const isServiceStaffAvailableAtTime = useCallback(
+		(
+			staff: ServiceStaffColumn,
+			checkTime: Date | null | undefined,
+			timezone: string,
+		): boolean => {
+			// If no time selected, show all service staff
+			if (!checkTime || isNaN(checkTime.getTime())) {
+				return true;
+			}
+
+			// If service staff has no business hours, assume it's always available
+			if (!staff.businessHours) {
+				return true;
+			}
+
+			try {
+				// Parse business hours JSON
+				const schedule = JSON.parse(staff.businessHours) as {
+					Monday?: Array<{ from: string; to: string }> | "closed";
+					Tuesday?: Array<{ from: string; to: string }> | "closed";
+					Wednesday?: Array<{ from: string; to: string }> | "closed";
+					Thursday?: Array<{ from: string; to: string }> | "closed";
+					Friday?: Array<{ from: string; to: string }> | "closed";
+					Saturday?: Array<{ from: string; to: string }> | "closed";
+					Sunday?: Array<{ from: string; to: string }> | "closed";
+				};
+
+				// Convert UTC time to store timezone for checking
+				const offsetHours = getOffsetHours(timezone);
+				const timeInStoreTz = getDateInTz(checkTime, offsetHours);
+
+				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+				const dayOfWeek = timeInStoreTz.getDay();
+				const dayNames = [
+					"Sunday",
+					"Monday",
+					"Tuesday",
+					"Wednesday",
+					"Thursday",
+					"Friday",
+					"Saturday",
+				] as const;
+				const dayName = dayNames[dayOfWeek];
+
+				// Get hours for this day
+				const dayHours = schedule[dayName];
+				if (!dayHours || dayHours === "closed") {
+					return false;
+				}
+
+				// Check if time falls within any time range
+				const checkHour = timeInStoreTz.getHours();
+				const checkMinute = timeInStoreTz.getMinutes();
+				const checkTimeMinutes = checkHour * 60 + checkMinute;
+
+				for (const range of dayHours) {
+					const [fromHour, fromMinute] = range.from.split(":").map(Number);
+					const [toHour, toMinute] = range.to.split(":").map(Number);
+
+					const fromMinutes = fromHour * 60 + fromMinute;
+					const toMinutes = toHour * 60 + toMinute;
+
+					// Check if time falls within range
+					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
+						return true;
+					}
+
+					// Handle range spanning midnight (e.g., 22:00 to 02:00)
+					if (fromMinutes > toMinutes) {
+						if (
+							checkTimeMinutes >= fromMinutes ||
+							checkTimeMinutes < toMinutes
+						) {
+							return true;
+						}
+					}
+				}
+
+				return false;
+			} catch {
+				// If parsing fails, assume service staff is available (graceful degradation)
+				return true;
+			}
+		},
+		[],
+	);
+
+	// Filter service staff based on rsvpTime and business hours
+	// When editing, always include the current service staff even if it's not available at the selected time
+	const availableServiceStaff = useMemo(() => {
+		if (!serviceStaff || serviceStaff.length === 0) {
+			return [];
+		}
+
+		// Filter by business hours availability
+		let filtered = serviceStaff.filter((staff: ServiceStaffColumn) =>
+			isServiceStaffAvailableAtTime(staff, rsvpTime, storeTimezone),
+		);
+
+		// When editing, always include the current service staff even if it's not available at the selected time
+		if (isEditMode && rsvp?.serviceStaffId) {
+			const currentStaff = serviceStaff.find(
+				(s) => s.id === rsvp.serviceStaffId,
+			);
+			if (currentStaff && !filtered.find((s) => s.id === currentStaff.id)) {
+				filtered = [currentStaff, ...filtered];
+			}
+		}
+
+		return filtered;
+	}, [
+		serviceStaff,
+		rsvpTime,
+		storeTimezone,
+		isServiceStaffAvailableAtTime,
+		isEditMode,
+		rsvp?.serviceStaffId,
+	]);
 
 	// Filter facilities based on rsvpTime and existing reservations
 	// When editing, always include the current facility even if it's not available at the selected time
@@ -553,6 +699,34 @@ export function ReservationForm({
 		rsvpSettings?.defaultDuration,
 		existingReservations,
 	]);
+
+	// Trigger validation when mustSelectFacility or availableFacilities change
+	useEffect(() => {
+		if (mustSelectFacility && availableFacilities.length > 0) {
+			form.trigger("facilityId");
+		} else {
+			form.clearErrors("facilityId");
+		}
+	}, [mustSelectFacility, availableFacilities.length, form]);
+
+	// Trigger validation when mustHaveServiceStaff changes
+	useEffect(() => {
+		if (mustHaveServiceStaff) {
+			form.trigger("serviceStaffId");
+		} else {
+			form.clearErrors("serviceStaffId");
+		}
+	}, [mustHaveServiceStaff, form]);
+
+	// Trigger validation for facilityId when mustSelectFacility changes or facilityId changes
+	useEffect(() => {
+		if (mustSelectFacility && availableFacilities.length > 0) {
+			form.trigger("facilityId");
+		} else if (!mustSelectFacility || availableFacilities.length === 0) {
+			form.clearErrors("facilityId");
+		}
+	}, [mustSelectFacility, availableFacilities.length, facilityId, form]);
+
 	// Get selected facility for cost calculation
 	const selectedFacility = useMemo(() => {
 		if (!facilityId) return null;
@@ -568,6 +742,29 @@ export function ReservationForm({
 		}
 		return null;
 	}, [selectedFacility]);
+
+	// Get selected service staff for cost calculation
+	const selectedServiceStaff = useMemo(() => {
+		if (!serviceStaffId) return null;
+		return serviceStaff.find((s) => s.id === serviceStaffId) || null;
+	}, [serviceStaffId, serviceStaff]);
+
+	// Get service staff cost for prepaid calculation
+	const serviceStaffCost = useMemo(() => {
+		if (selectedServiceStaff?.defaultCost) {
+			return typeof selectedServiceStaff.defaultCost === "number"
+				? selectedServiceStaff.defaultCost
+				: Number(selectedServiceStaff.defaultCost);
+		}
+		return null;
+	}, [selectedServiceStaff]);
+
+	// Calculate total cost (facility + service staff)
+	const totalCost = useMemo(() => {
+		const facility = facilityCost ?? 0;
+		const staff = serviceStaffCost ?? 0;
+		return facility + staff;
+	}, [facilityCost, serviceStaffCost]);
 
 	// Calculate cancel policy information (for both create and edit modes when rsvpTime is selected)
 	const cancelPolicyInfo = useMemo(() => {
@@ -610,6 +807,36 @@ export function ReservationForm({
 			toastError({
 				title: t("Error"),
 				description: t("rsvp_not_currently_accepted"),
+			});
+			return;
+		}
+
+		// Validate facility is required when mustSelectFacility is true and facilities are available
+		if (
+			mustSelectFacility &&
+			availableFacilities.length > 0 &&
+			!data.facilityId
+		) {
+			toastError({
+				title: t("Error"),
+				description: t("facility_required"),
+			});
+			form.setError("facilityId", {
+				type: "manual",
+				message: t("facility_required"),
+			});
+			return;
+		}
+
+		// Validate service staff is required when mustHaveServiceStaff is true
+		if (mustHaveServiceStaff && !data.serviceStaffId) {
+			toastError({
+				title: t("Error"),
+				description: t("service_staff_required"),
+			});
+			form.setError("serviceStaffId", {
+				type: "manual",
+				message: t("service_staff_required"),
 			});
 			return;
 		}
@@ -815,21 +1042,32 @@ export function ReservationForm({
 					<FormField
 						control={form.control}
 						name="rsvpTime"
-						render={({ field }) => {
+						render={({ field, fieldState }) => {
 							// Validate time against store/RSVP hours when it changes
 							const timeValidationError = field.value
 								? validateRsvpTimeAgainstHours(field.value)
 								: null;
 
 							return (
-								<FormItem>
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+									)}
+								>
 									<FormLabel>
 										{t("rsvp_time")} <span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
 										{isEditMode ? (
 											// Edit mode: Use SlotPicker
-											<div className="border rounded-lg p-4">
+											<div
+												className={cn(
+													"border rounded-lg p-4",
+													fieldState.error &&
+														"border-destructive focus-visible:ring-destructive",
+												)}
+											>
 												<SlotPicker
 													existingReservations={existingReservations}
 													rsvpSettings={rsvpSettings}
@@ -857,7 +1095,13 @@ export function ReservationForm({
 											</div>
 										) : (
 											// Create mode: Display date/time (read-only)
-											<div className="flex h-10 w-full rounded-md px-3 py-2 text-sm ring-offset-background">
+											<div
+												className={cn(
+													"flex h-10 w-full rounded-md px-3 py-2 text-sm ring-offset-background",
+													fieldState.error &&
+														"border border-destructive focus-visible:ring-destructive",
+												)}
+											>
 												{field.value ? (
 													(() => {
 														try {
@@ -916,8 +1160,13 @@ export function ReservationForm({
 						<FormField
 							control={form.control}
 							name="numOfAdult"
-							render={({ field }) => (
-								<FormItem>
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+									)}
+								>
 									<FormLabel>
 										{t("rsvp_num_of_adult")}{" "}
 										<span className="text-destructive">*</span>
@@ -931,6 +1180,11 @@ export function ReservationForm({
 											onChange={(e) => {
 												field.onChange(Number.parseInt(e.target.value, 10));
 											}}
+											className={cn(
+												"h-10 text-base sm:h-9 sm:text-sm",
+												fieldState.error &&
+													"border-destructive focus-visible:ring-destructive",
+											)}
 										/>
 									</FormControl>
 									<FormMessage />
@@ -941,8 +1195,13 @@ export function ReservationForm({
 						<FormField
 							control={form.control}
 							name="numOfChild"
-							render={({ field }) => (
-								<FormItem>
+							render={({ field, fieldState }) => (
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+									)}
+								>
 									<FormLabel>{t("rsvp_num_of_child")}</FormLabel>
 									<FormControl>
 										<Input
@@ -953,6 +1212,11 @@ export function ReservationForm({
 											onChange={(e) => {
 												field.onChange(Number.parseInt(e.target.value, 10));
 											}}
+											className={cn(
+												"h-10 text-base sm:h-9 sm:text-sm",
+												fieldState.error &&
+													"border-destructive focus-visible:ring-destructive",
+											)}
 										/>
 									</FormControl>
 									<FormMessage />
@@ -961,53 +1225,122 @@ export function ReservationForm({
 						/>
 					</div>
 
-					{/* Facility Selection */}
+					{/* Facility Selection - Always show if mustSelectFacility is true, otherwise hide if no facilities available (unless editing with existing facility) */}
+					{(mustSelectFacility ||
+						availableFacilities.length > 0 ||
+						(isEditMode && rsvp?.facilityId)) && (
+						<FormField
+							control={form.control}
+							name="facilityId"
+							render={({ field, fieldState }) => {
+								const selectedFacility = field.value
+									? availableFacilities.find((f) => f.id === field.value) ||
+										null
+									: null;
+
+								return (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
+										<FormLabel>
+											{t("rsvp_facility")}
+											{mustSelectFacility && availableFacilities.length > 0 && (
+												<span className="text-destructive"> *</span>
+											)}
+										</FormLabel>
+										<FormControl>
+											{availableFacilities.length > 0 ? (
+												<FacilityCombobox
+													storeFacilities={availableFacilities}
+													disabled={isSubmitting || isEditMode}
+													defaultValue={selectedFacility}
+													allowNone={false}
+													onValueChange={(facility: StoreFacility | null) => {
+														field.onChange(facility?.id || null);
+													}}
+												/>
+											) : null}
+										</FormControl>
+										{selectedFacility && selectedFacility.defaultCost && (
+											<div className="text-sm text-muted-foreground">
+												{t("rsvp_facility_cost")}:{" "}
+												{typeof selectedFacility.defaultCost === "number"
+													? selectedFacility.defaultCost.toFixed(2)
+													: Number(selectedFacility.defaultCost).toFixed(2)}
+											</div>
+										)}
+										{availableFacilities.length === 0 && mustSelectFacility && (
+											<div className="text-sm text-destructive">
+												{rsvpTime
+													? t("facility_required") ||
+														"Facility is required but no facilities are available at selected time"
+													: t("facility_required") ||
+														"Facility is required but no facilities are available"}
+											</div>
+										)}
+										<FormMessage />
+									</FormItem>
+								);
+							}}
+						/>
+					)}
+
+					{/* Service Staff Selection - Always show, required only when mustHaveServiceStaff is true */}
 					<FormField
 						control={form.control}
-						name="facilityId"
-						render={({ field }) => {
-							const selectedFacility = field.value
-								? availableFacilities.find((f) => f.id === field.value) || null
+						name="serviceStaffId"
+						render={({ field, fieldState }) => {
+							const selectedServiceStaff = field.value
+								? serviceStaff.find((s) => s.id === field.value) || null
 								: null;
 
 							return (
-								<FormItem>
+								<FormItem
+									className={cn(
+										fieldState.error &&
+											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+									)}
+								>
 									<FormLabel>
-										{t("rsvp_facility")}{" "}
-										<span className="text-destructive">*</span>
+										{t("service_staff")}
+										{mustHaveServiceStaff && (
+											<span className="text-destructive"> *</span>
+										)}
 									</FormLabel>
 									<FormControl>
-										<div className="space-y-2">
-											{availableFacilities.length > 0 ? (
-												<>
-													<FacilityCombobox
-														storeFacilities={availableFacilities}
-														disabled={isSubmitting || isEditMode}
-														defaultValue={selectedFacility}
-														onValueChange={(facility) => {
-															field.onChange(facility?.id || "");
-														}}
-													/>
-													{selectedFacility && selectedFacility.defaultCost && (
-														<div className="text-sm text-muted-foreground">
-															{t("rsvp_facility_cost")}:{" "}
-															{typeof selectedFacility.defaultCost === "number"
-																? selectedFacility.defaultCost.toFixed(2)
-																: Number(selectedFacility.defaultCost).toFixed(
-																		2,
-																	)}
-														</div>
-													)}
-												</>
-											) : (
-												<div className="text-sm text-destructive">
-													{rsvpTime
-														? t("No facilities available at selected time")
-														: t("No facilities available")}
-												</div>
-											)}
-										</div>
+										{availableServiceStaff.length > 0 ? (
+											<ServiceStaffCombobox
+												serviceStaff={availableServiceStaff}
+												disabled={isSubmitting || isEditMode}
+												defaultValue={selectedServiceStaff || null}
+												allowEmpty={true}
+												onValueChange={(staff) => {
+													field.onChange(staff?.id || null);
+												}}
+											/>
+										) : null}
 									</FormControl>
+									{selectedServiceStaff && selectedServiceStaff.defaultCost && (
+										<div className="text-sm text-muted-foreground">
+											{t("rsvp_service_staff_cost") || "Service Staff Cost"}:{" "}
+											{typeof selectedServiceStaff.defaultCost === "number"
+												? selectedServiceStaff.defaultCost.toFixed(0)
+												: Number(selectedServiceStaff.defaultCost).toFixed(
+														0,
+													)}{" "}
+											{storeCurrency.toUpperCase()}
+										</div>
+									)}
+									{availableServiceStaff.length === 0 && (
+										<div className="text-sm text-destructive">
+											{rsvpTime
+												? t("no_service_staff_available_at_selected_time")
+												: t("no_service_staff_available")}
+										</div>
+									)}
 									<FormMessage />
 								</FormItem>
 							);
@@ -1019,18 +1352,28 @@ export function ReservationForm({
 						<div className="space-y-4">
 							<FormField
 								control={form.control}
-								name="email"
-								render={({ field }) => (
-									<FormItem>
+								name="name"
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
 										<FormLabel>
-											{t("email")} <span className="text-destructive">*</span>
+											{t("name") || "Name"}{" "}
+											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
 											<Input
-												type="email"
-												placeholder={t("Enter_your_email")}
+												placeholder={t("name") || "Enter your name"}
 												disabled={isSubmitting}
 												{...field}
+												className={cn(
+													"h-10 text-base sm:h-9 sm:text-sm",
+													fieldState.error &&
+														"border-destructive focus-visible:ring-destructive",
+												)}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -1041,8 +1384,13 @@ export function ReservationForm({
 							<FormField
 								control={form.control}
 								name="phone"
-								render={({ field }) => (
-									<FormItem>
+								render={({ field, fieldState }) => (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+										)}
+									>
 										<FormLabel>
 											{t("phone")} <span className="text-destructive">*</span>
 										</FormLabel>
@@ -1052,6 +1400,11 @@ export function ReservationForm({
 												placeholder={t("Enter_your_phone")}
 												disabled={isSubmitting}
 												{...field}
+												className={cn(
+													"h-10 text-base sm:h-9 sm:text-sm",
+													fieldState.error &&
+														"border-destructive focus-visible:ring-destructive",
+												)}
 											/>
 										</FormControl>
 										<FormMessage />
@@ -1065,8 +1418,13 @@ export function ReservationForm({
 					<FormField
 						control={form.control}
 						name="message"
-						render={({ field }) => (
-							<FormItem>
+						render={({ field, fieldState }) => (
+							<FormItem
+								className={cn(
+									fieldState.error &&
+										"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+								)}
+							>
 								<FormLabel>{t("rsvp_message")}</FormLabel>
 								<FormControl>
 									<Textarea
@@ -1074,6 +1432,11 @@ export function ReservationForm({
 										disabled={isSubmitting}
 										{...field}
 										value={field.value || ""}
+										className={cn(
+											"font-mono min-h-[100px]",
+											fieldState.error &&
+												"border-destructive focus-visible:ring-destructive",
+										)}
 									/>
 								</FormControl>
 								<FormMessage />
@@ -1082,6 +1445,42 @@ export function ReservationForm({
 					/>
 
 					<Separator />
+
+					{/* Validation Error Summary */}
+					{Object.keys(form.formState.errors).length > 0 && (
+						<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
+							<div className="text-sm font-semibold text-destructive">
+								{t("please_fix_validation_errors") ||
+									"Please fix the following errors:"}
+							</div>
+							{Object.entries(form.formState.errors).map(([field, error]) => {
+								// Map field names to user-friendly labels using i18n
+								const fieldLabels: Record<string, string> = {
+									storeId: t("store") || "Store",
+									customerId: t("customer") || "Customer",
+									name: t("name") || "Name",
+									phone: t("phone") || "Phone",
+									facilityId: t("rsvp_facility") || "Facility",
+									serviceStaffId: t("service_staff") || "Service Staff",
+									numOfAdult: t("rsvp_num_of_adult") || "Number of Adults",
+									numOfChild: t("rsvp_num_of_child") || "Number of Children",
+									rsvpTime: t("rsvp_time") || "Reservation Time",
+									message: t("rsvp_message") || "Message",
+								};
+								const fieldLabel = fieldLabels[field] || field;
+								return (
+									<div
+										key={field}
+										className="text-sm text-destructive flex items-start gap-2"
+									>
+										<span className="font-medium">{fieldLabel}:</span>
+										<span>{error.message as string}</span>
+									</div>
+								);
+							})}
+						</div>
+					)}
+
 					<div className="space-y-2">
 						<p className="text-sm font-medium">
 							{t("rsvp_rules_and_restrictions")}
@@ -1095,6 +1494,7 @@ export function ReservationForm({
 								alreadyPaid={isEditMode ? (rsvp?.alreadyPaid ?? false) : false}
 								rsvpSettings={rsvpSettings}
 								facilityCost={facilityCost}
+								serviceStaffCost={serviceStaffCost}
 								currency={storeCurrency}
 								useCustomerCredit={useCustomerCredit}
 								creditExchangeRate={creditExchangeRate}
@@ -1103,24 +1503,95 @@ export function ReservationForm({
 					</div>
 
 					{/* Submit Button */}
-					<Button
-						type="submit"
-						disabled={
-							isSubmitting ||
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<span className="inline-block w-full">
+								<Button
+									type="submit"
+									disabled={
+										isSubmitting ||
+										requiresLogin ||
+										!canCreateReservation ||
+										!form.formState.isValid
+									}
+									className="w-full disabled:opacity-25"
+									autoFocus
+								>
+									{isSubmitting
+										? isEditMode
+											? t("updating")
+											: t("Submitting")
+										: isEditMode
+											? t("update_reservation")
+											: t("create_Reservation")}
+								</Button>
+							</span>
+						</TooltipTrigger>
+						{(isSubmitting ||
 							requiresLogin ||
-							availableFacilities.length === 0 ||
-							!canCreateReservation
-						}
-						className="w-full"
-					>
-						{isSubmitting
-							? isEditMode
-								? t("updating")
-								: t("Submitting")
-							: isEditMode
-								? t("update_reservation")
-								: t("create_Reservation")}
-					</Button>
+							!canCreateReservation ||
+							!form.formState.isValid) && (
+							<TooltipContent className="max-w-xs">
+								<div className="text-xs space-y-1">
+									{isSubmitting ? (
+										<div>{t("processing") || "Processing..."}</div>
+									) : requiresLogin ? (
+										<div>{t("rsvp_please_sign_in") || "Please sign in"}</div>
+									) : !canCreateReservation ? (
+										<div>
+											{t("rsvp_not_currently_accepted") ||
+												"Reservations are not currently accepted"}
+										</div>
+									) : !form.formState.isValid &&
+										Object.keys(form.formState.errors).length > 0 ? (
+										<div className="space-y-1">
+											<div className="font-semibold">
+												{t("please_fix_validation_errors") ||
+													"Please fix the following errors:"}
+											</div>
+											{Object.entries(form.formState.errors)
+												.slice(0, 3)
+												.map(([field, error]) => {
+													const fieldLabels: Record<string, string> = {
+														storeId: t("store") || "Store",
+														customerId: t("customer") || "Customer",
+														name: t("name") || "Name",
+														phone: t("phone") || "Phone",
+														facilityId: t("rsvp_facility") || "Facility",
+														serviceStaffId:
+															t("service_staff") || "Service Staff",
+														numOfAdult:
+															t("rsvp_num_of_adult") || "Number of Adults",
+														numOfChild:
+															t("rsvp_num_of_child") || "Number of Children",
+														rsvpTime: t("rsvp_time") || "Reservation Time",
+														message: t("rsvp_message") || "Message",
+													};
+													const fieldLabel = fieldLabels[field] || field;
+													return (
+														<div key={field} className="text-xs">
+															<span className="font-medium">{fieldLabel}:</span>{" "}
+															{error?.message as string}
+														</div>
+													);
+												})}
+											{Object.keys(form.formState.errors).length > 3 && (
+												<div className="text-xs opacity-75">
+													+{Object.keys(form.formState.errors).length - 3} more
+													error(s)
+												</div>
+											)}
+										</div>
+									) : (
+										<div>
+											{t("please_fix_validation_errors") ||
+												"Please fix validation errors above"}
+										</div>
+									)}
+								</div>
+							</TooltipContent>
+						)}
+					</Tooltip>
 
 					{requiresLogin && (
 						<p className="text-sm text-muted-foreground text-center">

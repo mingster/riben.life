@@ -85,9 +85,9 @@ export function StoreMenu({ store, isOpen, title, setIsOpen }: MenuProps) {
 
 	return (
 		<ScrollArea className="[&>div>div[style]]:block!">
-			<nav className="mt-4 sm:mt-8 size-full">
+			<nav className="mt-0 size-full">
 				{isOpen && (
-					<div className="space-y-1 px-2 sm:px-2 mb-2 sm:mb-0">
+					<div className="space-y-1 px-2 sm:px-2 mb-1 sm:mb-0">
 						{title && (
 							<p className="text-sm sm:text-base font-semibold text-foreground">
 								{title}
