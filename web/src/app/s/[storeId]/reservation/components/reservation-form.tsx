@@ -35,7 +35,6 @@ import {
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -380,13 +379,15 @@ export function ReservationForm({
 	}, [isEditMode, rsvp, storeId, user, defaultRsvpTime, facilities]);
 
 	// Use appropriate schema based on mode
-	const schema = isEditMode ? updateReservationSchema : createReservationSchema;
+	const baseSchema = isEditMode
+		? updateReservationSchema
+		: createReservationSchema;
 
 	// Form type: union of both input types
 	type FormInput = CreateReservationInput | UpdateReservationInput;
 
 	const form = useForm<FormInput>({
-		resolver: zodResolver(schema) as Resolver<FormInput>,
+		resolver: zodResolver(baseSchema) as Resolver<FormInput>,
 		defaultValues,
 		mode: "onChange", // Real-time validation for better UX
 	});
@@ -398,6 +399,7 @@ export function ReservationForm({
 
 	// Always fetch service staff (not conditional on mustHaveServiceStaff)
 	const mustHaveServiceStaff = rsvpSettings?.mustHaveServiceStaff ?? false;
+	const mustSelectFacility = rsvpSettings?.mustSelectFacility ?? false;
 	const { data: serviceStaffData } = useSWR(
 		["serviceStaff", storeId],
 		async () => {
@@ -697,6 +699,34 @@ export function ReservationForm({
 		rsvpSettings?.defaultDuration,
 		existingReservations,
 	]);
+
+	// Trigger validation when mustSelectFacility or availableFacilities change
+	useEffect(() => {
+		if (mustSelectFacility && availableFacilities.length > 0) {
+			form.trigger("facilityId");
+		} else {
+			form.clearErrors("facilityId");
+		}
+	}, [mustSelectFacility, availableFacilities.length, form]);
+
+	// Trigger validation when mustHaveServiceStaff changes
+	useEffect(() => {
+		if (mustHaveServiceStaff) {
+			form.trigger("serviceStaffId");
+		} else {
+			form.clearErrors("serviceStaffId");
+		}
+	}, [mustHaveServiceStaff, form]);
+
+	// Trigger validation for facilityId when mustSelectFacility changes or facilityId changes
+	useEffect(() => {
+		if (mustSelectFacility && availableFacilities.length > 0) {
+			form.trigger("facilityId");
+		} else if (!mustSelectFacility || availableFacilities.length === 0) {
+			form.clearErrors("facilityId");
+		}
+	}, [mustSelectFacility, availableFacilities.length, facilityId, form]);
+
 	// Get selected facility for cost calculation
 	const selectedFacility = useMemo(() => {
 		if (!facilityId) return null;
@@ -777,6 +807,23 @@ export function ReservationForm({
 			toastError({
 				title: t("Error"),
 				description: t("rsvp_not_currently_accepted"),
+			});
+			return;
+		}
+
+		// Validate facility is required when mustSelectFacility is true and facilities are available
+		if (
+			mustSelectFacility &&
+			availableFacilities.length > 0 &&
+			!data.facilityId
+		) {
+			toastError({
+				title: t("Error"),
+				description: t("facility_required"),
+			});
+			form.setError("facilityId", {
+				type: "manual",
+				message: t("facility_required"),
 			});
 			return;
 		}
@@ -1178,8 +1225,9 @@ export function ReservationForm({
 						/>
 					</div>
 
-					{/* Facility Selection - Hide if no facilities available (unless editing with existing facility) */}
-					{(availableFacilities.length > 0 ||
+					{/* Facility Selection - Always show if mustSelectFacility is true, otherwise hide if no facilities available (unless editing with existing facility) */}
+					{(mustSelectFacility ||
+						availableFacilities.length > 0 ||
 						(isEditMode && rsvp?.facilityId)) && (
 						<FormField
 							control={form.control}
@@ -1197,46 +1245,42 @@ export function ReservationForm({
 												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
 										)}
 									>
-										<FormLabel>{t("rsvp_facility")}</FormLabel>
+										<FormLabel>
+											{t("rsvp_facility")}
+											{mustSelectFacility && availableFacilities.length > 0 && (
+												<span className="text-destructive"> *</span>
+											)}
+										</FormLabel>
 										<FormControl>
-											<div className="space-y-2">
-												{availableFacilities.length > 0 ? (
-													<>
-														<FacilityCombobox
-															storeFacilities={availableFacilities}
-															disabled={isSubmitting || isEditMode}
-															defaultValue={selectedFacility}
-															allowNone={true}
-															onValueChange={(facility) => {
-																field.onChange(facility?.id || null);
-															}}
-														/>
-														{selectedFacility &&
-															selectedFacility.defaultCost && (
-																<div className="text-sm text-muted-foreground">
-																	{t("rsvp_facility_cost")}:{" "}
-																	{typeof selectedFacility.defaultCost ===
-																	"number"
-																		? selectedFacility.defaultCost.toFixed(2)
-																		: Number(
-																				selectedFacility.defaultCost,
-																			).toFixed(2)}
-																</div>
-															)}
-													</>
-												) : (
-													<div className="text-sm text-muted-foreground">
-														{rsvpTime
-															? t("No facilities available at selected time")
-															: t("No facilities available (optional)")}
-													</div>
-												)}
-											</div>
+											{availableFacilities.length > 0 ? (
+												<FacilityCombobox
+													storeFacilities={availableFacilities}
+													disabled={isSubmitting || isEditMode}
+													defaultValue={selectedFacility}
+													allowNone={false}
+													onValueChange={(facility: StoreFacility | null) => {
+														field.onChange(facility?.id || null);
+													}}
+												/>
+											) : null}
 										</FormControl>
-										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("facility_optional_description") ||
-												"Optional: Select a facility for this reservation"}
-										</FormDescription>
+										{selectedFacility && selectedFacility.defaultCost && (
+											<div className="text-sm text-muted-foreground">
+												{t("rsvp_facility_cost")}:{" "}
+												{typeof selectedFacility.defaultCost === "number"
+													? selectedFacility.defaultCost.toFixed(2)
+													: Number(selectedFacility.defaultCost).toFixed(2)}
+											</div>
+										)}
+										{availableFacilities.length === 0 && mustSelectFacility && (
+											<div className="text-sm text-destructive">
+												{rsvpTime
+													? t("facility_required") ||
+														"Facility is required but no facilities are available at selected time"
+													: t("facility_required") ||
+														"Facility is required but no facilities are available"}
+											</div>
+										)}
 										<FormMessage />
 									</FormItem>
 								);
@@ -1283,9 +1327,9 @@ export function ReservationForm({
 										<div className="text-sm text-muted-foreground">
 											{t("rsvp_service_staff_cost") || "Service Staff Cost"}:{" "}
 											{typeof selectedServiceStaff.defaultCost === "number"
-												? selectedServiceStaff.defaultCost.toFixed(2)
+												? selectedServiceStaff.defaultCost.toFixed(0)
 												: Number(selectedServiceStaff.defaultCost).toFixed(
-														2,
+														0,
 													)}{" "}
 											{storeCurrency.toUpperCase()}
 										</div>

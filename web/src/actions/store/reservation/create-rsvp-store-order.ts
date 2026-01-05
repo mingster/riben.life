@@ -22,12 +22,15 @@ interface CreateRsvpStoreOrderParams {
 	>;
 	storeId: string;
 	customerId: string;
-	orderTotal: number; // Cash value in store currency
+	facilityCost: number | null; // Facility cost (optional)
+	serviceStaffCost: number | null; // Service staff cost (optional)
 	currency: string;
 	paymentMethodPayUrl: string; // Payment method identifier (e.g., "credit", "TBD")
 	rsvpId: string; // RSVP reservation ID
 	facilityId: string | null; // Facility ID (optional)
 	facilityName: string; // Facility name for product name
+	serviceStaffId: string | null; // Service staff ID (optional)
+	serviceStaffName: string | null; // Service staff name for product name (optional)
 	rsvpTime: bigint; // RSVP reservation time (BigInt epoch milliseconds)
 	note?: string; // Optional order note
 	displayToCustomer?: boolean; // Whether to display note to customer (default: true)
@@ -50,17 +53,28 @@ export async function createRsvpStoreOrder(
 		tx,
 		storeId,
 		customerId,
-		orderTotal,
+		facilityCost,
+		serviceStaffCost,
 		currency,
 		paymentMethodPayUrl,
 		rsvpId,
 		facilityId,
 		facilityName,
+		serviceStaffId,
+		serviceStaffName,
 		rsvpTime,
 		note,
 		displayToCustomer = false, // Default to true for customer-visible notes
 		isPaid = false, // Default to false for checkout flow
 	} = params;
+
+	// Calculate total cost from facility and service staff costs
+	const orderTotal = (facilityCost ?? 0) + (serviceStaffCost ?? 0);
+
+	// Ensure at least one cost is provided
+	if (orderTotal <= 0) {
+		throw new SafeError("Order total must be greater than 0");
+	}
 
 	// Find "digital" shipping method for reservation orders (preferred)
 	const digitalShippingMethod = await tx.shippingMethod.findFirst({
@@ -143,11 +157,50 @@ export async function createRsvpStoreOrder(
 		formattedRsvpTime = format(storeDate, "yyyy/MM/dd HH:mm");
 	}
 
-	// Build product name using i18n key: 預約{{facilityName}} - {{rsvpTime}}
-	const productName = t("rsvp_order_product_name", {
-		facilityName,
-		rsvpTime: formattedRsvpTime || "",
-	});
+	// Build order items array
+	const orderItems: Array<{
+		productId: string;
+		productName: string;
+		quantity: number;
+		unitPrice: Prisma.Decimal;
+		unitDiscount: Prisma.Decimal;
+		variants: null;
+		variantCosts: null;
+	}> = [];
+
+	// Add facility order item if facilityCost is provided
+	if (facilityCost !== null && facilityCost > 0) {
+		const facilityProductName = t("rsvp_order_product_name", {
+			facilityName,
+			rsvpTime: formattedRsvpTime || "",
+		});
+		orderItems.push({
+			productId: reservationPrepaidProduct.id,
+			productName: facilityProductName,
+			quantity: 1,
+			unitPrice: new Prisma.Decimal(facilityCost),
+			unitDiscount: new Prisma.Decimal(0),
+			variants: null,
+			variantCosts: null,
+		});
+	}
+
+	// Add service staff order item if serviceStaffCost is provided
+	if (serviceStaffCost !== null && serviceStaffCost > 0 && serviceStaffName) {
+		const serviceStaffProductName = t("rsvp_order_service_staff_product_name", {
+			serviceStaffName,
+			rsvpTime: formattedRsvpTime || "",
+		});
+		orderItems.push({
+			productId: reservationPrepaidProduct.id,
+			productName: serviceStaffProductName,
+			quantity: 1,
+			unitPrice: new Prisma.Decimal(serviceStaffCost),
+			unitDiscount: new Prisma.Decimal(0),
+			variants: null,
+			variantCosts: null,
+		});
+	}
 
 	// Create the store order
 	const storeOrder = await tx.storeOrder.create({
@@ -171,15 +224,7 @@ export async function createRsvpStoreOrder(
 			createdAt: now,
 			updatedAt: now,
 			OrderItems: {
-				create: {
-					productId: reservationPrepaidProduct.id,
-					productName, // Format: 預約{{facilityName}} - {{formattedRsvpTime}}
-					quantity: 1, // Single prepaid payment
-					unitPrice: new Prisma.Decimal(orderTotal), // Prepaid amount
-					unitDiscount: new Prisma.Decimal(0),
-					variants: null,
-					variantCosts: null,
-				},
+				create: orderItems,
 			},
 			...(note && {
 				OrderNotes: {

@@ -20,6 +20,7 @@ import { transformPrismaDataForJson } from "@/utils/utils";
 import logger from "@/lib/logger";
 import type { StoreOrder } from "@/types";
 import { processCreditTopUpAfterPaymentAction } from "@/actions/store/credit/process-credit-topup-after-payment";
+import { processFiatTopUpAfterPaymentAction } from "@/actions/store/credit/process-fiat-topup-after-payment";
 import { getT } from "@/app/i18n";
 
 interface MarkOrderAsPaidCoreParams {
@@ -85,6 +86,98 @@ export async function markOrderAsPaidCore(
 	if (paymentMethod.id !== paymentMethodId) {
 		throw new SafeError("Payment method ID mismatch");
 	}
+
+	//#region account balance refill order
+
+	// Handle account fiat refill order from /s/refill-account-balance
+	// Check if this is an Account Balance (fiat refill) order by checking checkoutAttributes
+	// Account Balance orders should use processFiatTopUpAfterPaymentAction instead
+	const isAccountBalanceOrder = (() => {
+		// Check checkoutAttributes for fiatRefill flag (most reliable method)
+		const attributes = checkoutAttributes || order.checkoutAttributes;
+		if (attributes) {
+			try {
+				const parsed = JSON.parse(attributes);
+				if (parsed.fiatRefill === true) {
+					return true;
+				}
+			} catch {
+				// If parsing fails, fall back to product name check
+			}
+		}
+
+		// Fallback: Check OrderItemView product name (less reliable, but works for legacy orders)
+		if (order.OrderItemView && order.OrderItemView.length > 0) {
+			return order.OrderItemView.some(
+				(item: { id: string; name: string }) =>
+					item.name === "Account Balance" ||
+					item.name.toLowerCase().includes("account balance"),
+			);
+		}
+
+		return false;
+	})();
+
+	if (isAccountBalanceOrder) {
+		// For Account Balance orders, use the fiat top-up processing action
+		// This will handle both marking as paid AND processing fiat top-up
+		logger.info("Processing Account Balance order via fiat top-up action", {
+			metadata: {
+				orderId: order.id,
+				storeId: order.storeId,
+			},
+			tags: ["order", "payment", "fiat", ...logTags],
+		});
+
+		const fiatResult = await processFiatTopUpAfterPaymentAction({
+			orderId: order.id,
+		});
+
+		if (fiatResult?.serverError) {
+			logger.error("Failed to process fiat top-up for Account Balance order", {
+				metadata: {
+					orderId: order.id,
+					storeId: order.storeId,
+					error: fiatResult.serverError,
+				},
+				tags: ["order", "payment", "fiat", "error", ...logTags],
+			});
+			throw new SafeError(
+				fiatResult.serverError || "Failed to process fiat top-up",
+			);
+		}
+
+		// Fetch updated order with all relations
+		const updatedOrder = await sqlClient.storeOrder.findUnique({
+			where: { id: order.id },
+			include: {
+				Store: true,
+				OrderNotes: true,
+				OrderItemView: true,
+				User: true,
+				ShippingMethod: true,
+				PaymentMethod: true,
+			},
+		});
+
+		if (!updatedOrder) {
+			throw new SafeError("Failed to retrieve updated order");
+		}
+
+		transformPrismaDataForJson(updatedOrder);
+
+		logger.info("Account Balance order processed successfully", {
+			metadata: {
+				orderId: order.id,
+				storeId: order.storeId,
+				fiatAmount: fiatResult.data?.fiatAmount,
+			},
+			tags: ["order", "payment", "fiat", ...logTags],
+		});
+
+		return updatedOrder;
+	}
+	//#endregion
 
 	// Check if this is a Store Credit (credit refill) order
 	// Store Credit orders should use processCreditTopUpAfterPaymentAction instead

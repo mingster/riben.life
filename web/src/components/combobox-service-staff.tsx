@@ -122,11 +122,6 @@ export const ServiceStaffCombobox = ({
 											<span className="font-medium">
 												{staff.userName || staff.userEmail || staff.id}
 											</span>
-											{staff.userEmail && staff.userName && (
-												<span className="text-xs text-muted-foreground">
-													{staff.userEmail}
-												</span>
-											)}
 										</div>
 										<IconCheck
 											className={cn(

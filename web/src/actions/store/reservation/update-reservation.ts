@@ -78,6 +78,7 @@ export const updateReservationAction = baseClient
 				canReserveBefore: true,
 				canReserveAfter: true,
 				singleServiceMode: true,
+				mustSelectFacility: true, // Added mustSelectFacility
 				mustHaveServiceStaff: true, // Added mustHaveServiceStaff
 			},
 		});
@@ -118,6 +119,11 @@ export const updateReservationAction = baseClient
 
 		// Set createdBy if it's currently null (for old records)
 		const createdBy = sessionUserId || existingRsvp.createdBy || null;
+
+		// Validate facilityId if mustSelectFacility is true
+		if (rsvpSettingsResult?.mustSelectFacility && !facilityId) {
+			throw new SafeError("Facility is required");
+		}
 
 		// Validate serviceStaffId if mustHaveServiceStaff is true
 		if (rsvpSettingsResult?.mustHaveServiceStaff && !serviceStaffId) {

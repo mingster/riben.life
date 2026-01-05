@@ -49,150 +49,142 @@ export function GetMenuList(
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	const storeFixedMenu = [
+	return [
 		...(store.rsvpSettings?.acceptReservation === true
 			? [
 					{
-						href: `${nav_prefix}/reservation`,
-						label: t("reservation"),
-						active: pathname === `${nav_prefix}/reservation`,
-						icon: IconCalendarCheck,
-						submenus: [],
-					},
-				]
-			: []),
-
-		...(store.useOrderSystem
-			? [
-					{
-						href: `${nav_prefix}/menu`,
-						label: t("online_order"),
-						active: pathname.includes(`${nav_prefix}/menu`),
-						icon: IconShoppingCart,
-						submenus: [],
-					},
-					{
-						href: `${nav_prefix}/my-orders`,
-						label: t("store_linkToOrder"),
-						active: pathname.includes(`${nav_prefix}/my-orders`),
-						icon: IconShoppingCart,
-						submenus: [],
-					},
-					{
-						href: `${nav_prefix}/waiting-list`,
-						label: t("Waiting_List"),
-						active: pathname.includes(`${nav_prefix}/waiting-list`),
-						icon: IconClock,
-						submenus: [],
-					},
-				]
-			: []),
-
-		...(store.useCustomerCredit
-			? [
-					{
-						href: `${nav_prefix}/refill-credit-points`,
-						label: t("credit_refill_points"),
-						active: pathname.includes(`${nav_prefix}/refill-credit-points`),
-						icon: IconCoin,
-						submenus: [],
-					},
-				]
-			: []),
-
-		...(store.rsvpSettings?.acceptReservation === true
-			? [
-					{
-						href: `${nav_prefix}/reservation/history`,
-						label: t("rsvp_history"),
-						active:
-							pathname === `${nav_prefix}/reservation/history` ||
-							pathname.startsWith(`${nav_prefix}/reservation/history/`),
-						icon: IconHistory,
-						submenus: [],
-					},
-				]
-			: []),
-
-		...(store.useCustomerCredit
-			? [
-					{
-						href: `${nav_prefix}/my-credit-ledger`,
-						label: t("my_credit_ledger"),
-						active: pathname.includes(`${nav_prefix}/my-credit-ledger`),
-						icon: IconCreditCard,
-						submenus: [],
+						groupLabel: t("menu_order_reservation"),
+						menus: [
+							{
+								href: `${nav_prefix}/reservation`,
+								label: t("reservation"),
+								active: pathname === `${nav_prefix}/reservation`,
+								icon: IconCalendarCheck,
+								submenus: [],
+							},
+							{
+								href: `${nav_prefix}/reservation/history`,
+								label: t("rsvp_history"),
+								active:
+									pathname === `${nav_prefix}/reservation/history` ||
+									pathname.startsWith(`${nav_prefix}/reservation/history/`),
+								icon: IconHistory,
+								submenus: [],
+							},
+						],
 					},
 				]
 			: []),
 		{
-			href: `${nav_prefix}/my-fiat-ledger`,
-			label: t("my_fiat_ledger"),
-			active: pathname.includes(`${nav_prefix}/my-fiat-ledger`),
-			icon: IconCoin,
-			submenus: [],
-			badge:
-				fiatBalance !== undefined && fiatBalance !== null && fiatBalance > 0
-					? new Intl.NumberFormat("en-US", {
-							style: "currency",
-							currency: (fiatCurrency || "twd").toUpperCase(),
-							minimumFractionDigits: 0,
-							maximumFractionDigits: 0,
-						}).format(fiatBalance)
-					: undefined,
-		},
-		{
-			href: `${nav_prefix}/faq`,
-			label: t("FAQ"),
-			active: pathname.includes(`${nav_prefix}/faq`),
-			icon: MessageCircleQuestion,
-			submenus: [],
-		},
-		{
-			href: `${nav_prefix}/privacy`,
-			label: t("privacy_policy"),
-			active: pathname.includes(`${nav_prefix}/privacy`),
-			icon: Siren,
-			submenus: [],
-		},
-		{
-			href: `${nav_prefix}/terms`,
-			label: t("terms_of_service"),
-			active: pathname.includes(`${nav_prefix}/terms`),
-			icon: Handshake,
-			submenus: [],
-		},
-		{
-			href: `${nav_prefix}/support`,
-			label: t("support"),
-			active: pathname.includes(`${nav_prefix}/support`),
-			icon: HandHelping,
-			submenus: [],
-		},
-	] as Menu[];
+			groupLabel: t("menu_order_related"),
+			menus: [
+				...(store.useOrderSystem
+					? [
+							{
+								href: `${nav_prefix}/menu`,
+								label: t("online_order"),
+								active: pathname.includes(`${nav_prefix}/menu`),
+								icon: IconShoppingCart,
+								submenus: [],
+							},
 
-	const result = [
-		/*
-  const categoryMenu = store.Categories.map((category) => ({
-	href: `${nav_prefix}#${category.id}`,
-	label: category.name,
-	active: pathname.includes(`${category.id}`),
-	icon: Briefcase,
-	submenus: [],
-  }));
-
-
-	{
-	  groupLabel: t("categories"),
-	  menus: categoryMenu,
-	},
-*/
+							{
+								href: `${nav_prefix}/waiting-list`,
+								label: t("Waiting_List"),
+								active: pathname.includes(`${nav_prefix}/waiting-list`),
+								icon: IconClock,
+								submenus: [],
+							},
+						]
+					: []),
+			],
+		},
+		{
+			groupLabel: t("menu_account_financial"),
+			menus: [
+				{
+					href: `${nav_prefix}/my-orders`,
+					label: t("store_linkToOrder"),
+					active: pathname.includes(`${nav_prefix}/my-orders`),
+					icon: IconShoppingCart,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/refill-account-balance`,
+					label: t("refill_account_balance"),
+					active: pathname.includes(`${nav_prefix}/refill-account-balance`),
+					icon: IconCoin,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/my-fiat-ledger`,
+					label: t("my_fiat_ledger"),
+					active: pathname.includes(`${nav_prefix}/my-fiat-ledger`),
+					icon: IconCoin,
+					submenus: [],
+					badge:
+						fiatBalance !== undefined && fiatBalance !== null && fiatBalance > 0
+							? new Intl.NumberFormat("en-US", {
+									style: "currency",
+									currency: (fiatCurrency || "twd").toUpperCase(),
+									minimumFractionDigits: 0,
+									maximumFractionDigits: 0,
+								}).format(fiatBalance)
+							: undefined,
+				},
+				...(store.useCustomerCredit
+					? [
+							{
+								href: `${nav_prefix}/my-credit-ledger`,
+								label: t("my_credit_ledger"),
+								active: pathname.includes(`${nav_prefix}/my-credit-ledger`),
+								icon: IconCreditCard,
+								submenus: [],
+							},
+							{
+								href: `${nav_prefix}/refill-credit-points`,
+								label: t("credit_refill_points"),
+								active: pathname.includes(`${nav_prefix}/refill-credit-points`),
+								icon: IconCoin,
+								submenus: [],
+							},
+						]
+					: []),
+			],
+		},
 
 		{
-			groupLabel: t("menu"),
-			menus: storeFixedMenu,
+			groupLabel: t("menu_store_related"),
+			menus: [
+				{
+					href: `${nav_prefix}/faq`,
+					label: t("FAQ"),
+					active: pathname.includes(`${nav_prefix}/faq`),
+					icon: MessageCircleQuestion,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/privacy`,
+					label: t("privacy_policy"),
+					active: pathname.includes(`${nav_prefix}/privacy`),
+					icon: Siren,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/terms`,
+					label: t("terms_of_service"),
+					active: pathname.includes(`${nav_prefix}/terms`),
+					icon: Handshake,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/support`,
+					label: t("support"),
+					active: pathname.includes(`${nav_prefix}/support`),
+					icon: HandHelping,
+					submenus: [],
+				},
+			],
 		},
 	] as Group[];
-
-	return result;
 }

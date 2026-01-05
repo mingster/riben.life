@@ -284,12 +284,15 @@ export const createRsvpAction = storeActionClient
 							tx,
 							storeId,
 							customerId,
-							orderTotal: totalCost,
+							facilityCost: totalCost !== null ? totalCost : null, // Only facility cost for admin-created RSVP
+							serviceStaffCost: null, // No service staff cost for admin-created RSVP
 							currency: store.defaultCurrency || "twd",
 							paymentMethodPayUrl: "TBD", // TBD payment method for admin-created orders
 							rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
 							facilityId: facility?.id || null, // Pass facility ID for pickupCode (optional)
 							facilityName, // Pass facility name for product name
+							serviceStaffId: null, // No service staff for admin-created RSVP
+							serviceStaffName: null, // No service staff name for admin-created RSVP
 							rsvpTime: createdRsvp.rsvpTime, // Pass RSVP time (BigInt epoch)
 							note: orderNote,
 							displayToCustomer: false, // Internal note, not displayed to customer
