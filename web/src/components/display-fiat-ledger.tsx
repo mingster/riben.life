@@ -34,7 +34,7 @@ export const DisplayFiatLedger = ({
 				{ledger.map((item) => (
 					<div
 						key={item.id}
-						className="rounded-lg border bg-card p-3 sm:p-4 space-y-2 text-xs"
+						className="rounded-lg border bg-card p-3 sm:p-4 space-y-2 "
 					>
 						<div className="flex items-start justify-between gap-2">
 							<div className="flex-1 min-w-0">
@@ -130,25 +130,17 @@ export const DisplayFiatLedger = ({
 					<table className="w-full border-collapse min-w-full">
 						<thead>
 							<tr className="bg-muted/50">
-								<th className="text-left px-3 py-2 text-xs font-medium">
-									{t("created_at")}
-								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
-									{t("store_name")}
-								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 ">{t("created_at")}</th>
+								<th className="text-left px-3 py-2 ">{t("store_name")}</th>
+								<th className="text-left px-3 py-2 ">
 									{t("customer_fiat_type") || "Type"}
 								</th>
-								<th className="text-right px-3 py-2 text-xs font-medium">
+								<th className="text-right px-3 py-2 ">
 									{t("customer_fiat_amount") || "Amount"}
 								</th>
-								<th className="text-right px-3 py-2 text-xs font-medium">
-									{t("balance")}
-								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
-									{t("note")}
-								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-right px-3 py-2 ">{t("balance")}</th>
+								<th className="text-left px-3 py-2 ">{t("note")}</th>
+								<th className="text-left px-3 py-2 ">
 									{t("customer_fiat_creator") || "Creator"}
 								</th>
 							</tr>
@@ -156,10 +148,10 @@ export const DisplayFiatLedger = ({
 						<tbody>
 							{ledger.map((item) => (
 								<tr key={item.id} className="border-b last:border-b-0">
-									<td className="px-3 py-2 text-xs font-mono">
+									<td className="px-3 py-2 font-mono">
 										{format(item.createdAt, datetimeFormat)}
 									</td>
-									<td className="px-3 py-2 text-xs">
+									<td className="px-3 py-2 ">
 										{item.Store?.id ? (
 											<Link
 												href={`/s/${item.Store.id}`}
@@ -173,7 +165,7 @@ export const DisplayFiatLedger = ({
 											</span>
 										)}
 									</td>
-									<td className="px-3 py-2 text-xs">
+									<td className="px-3 py-2 ">
 										<span
 											className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
 												item.type === "TOPUP"
@@ -192,7 +184,7 @@ export const DisplayFiatLedger = ({
 									</td>
 									<td
 										className={cn(
-											"px-3 py-2 text-xs font-semibold font-mono text-right",
+											"px-3 py-2 font-semibold font-mono text-right",
 											Number(item.amount) >= 0
 												? "text-green-600 dark:text-green-400"
 												: "text-red-600 dark:text-red-400",
@@ -201,15 +193,13 @@ export const DisplayFiatLedger = ({
 										{Number(item.amount) > 0 ? "+" : ""}
 										{Number(item.amount).toFixed(2)} {currency}
 									</td>
-									<td className="px-3 py-2 text-xs font-semibold font-mono text-right">
+									<td className="px-3 py-2 font-semibold font-mono text-right">
 										{Number(item.balance).toFixed(2)} {currency}
 									</td>
-									<td className="px-3 py-2 text-xs max-w-[200px] truncate">
+									<td className="px-3 py-2 max-w-[200px] truncate">
 										{item.note || "-"}
 									</td>
-									<td className="px-3 py-2 text-xs">
-										{item.Creator?.name || "-"}
-									</td>
+									<td className="px-3 py-2 ">{item.Creator?.name || "-"}</td>
 								</tr>
 							))}
 						</tbody>

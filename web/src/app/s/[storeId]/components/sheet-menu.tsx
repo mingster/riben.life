@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import {
 	Sheet,
 	SheetContent,
+	SheetTitle,
+	SheetDescription,
 	SheetHeader,
 	SheetTrigger,
 } from "@/components/ui/sheet";
@@ -56,6 +58,9 @@ export function SheetMenu({ store }: props) {
 				className="flex flex-col px-3 sm:px-4 sm:w-72 backdrop-opacity-10 backdrop-invert"
 				side="left"
 			>
+				<SheetTitle className="hidden"></SheetTitle>
+				<SheetDescription className="hidden"></SheetDescription>
+
 				<SheetHeader className="shrink-0 pb-1">
 					<Button variant="link" asChild>
 						<Link href={`/s/${store.id}`} className="flex gap-2 items-center">
