@@ -7,6 +7,7 @@ import {
 	IconCoin,
 	IconCreditCard,
 	IconHistory,
+	IconPlus,
 	IconShoppingCart,
 } from "@tabler/icons-react";
 import {
@@ -109,13 +110,7 @@ export function GetMenuList(
 					icon: IconShoppingCart,
 					submenus: [],
 				},
-				{
-					href: `${nav_prefix}/refill-account-balance`,
-					label: t("refill_account_balance"),
-					active: pathname.includes(`${nav_prefix}/refill-account-balance`),
-					icon: IconCoin,
-					submenus: [],
-				},
+
 				{
 					href: `${nav_prefix}/my-fiat-ledger`,
 					label: t("my_fiat_ledger"),
@@ -131,6 +126,13 @@ export function GetMenuList(
 									maximumFractionDigits: 0,
 								}).format(fiatBalance)
 							: undefined,
+				},
+				{
+					href: `${nav_prefix}/refill-account-balance`,
+					label: t("refill_account_balance"),
+					active: pathname.includes(`${nav_prefix}/refill-account-balance`),
+					icon: IconPlus,
+					submenus: [],
 				},
 				...(store.useCustomerCredit
 					? [

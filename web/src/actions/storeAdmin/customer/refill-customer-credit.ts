@@ -236,18 +236,18 @@ export const refillCustomerCreditAction = storeActionClient
 					currency: store.defaultCurrency,
 					type: StoreLedgerType.CreditRecharge,
 					balance: new Prisma.Decimal(balance), // Balance unchanged
-					description: t("promotional_credit_refill_description_ledger", {
+					description: t("refill_credit_description_ledger", {
 						totalCredit: result.totalCredit,
 					}),
 					note: note
-						? t("promotional_credit_refill_note_with_extra", {
+						? t("refill_credit_note_with_extra", {
 								amount: result.amount,
 								bonus: result.bonus,
 								totalCredit: result.totalCredit,
 								operator: creatorId,
 								note,
 							})
-						: t("promotional_credit_refill_note_ledger", {
+						: t("refill_credit_note_ledger", {
 								amount: result.amount,
 								bonus: result.bonus,
 								totalCredit: result.totalCredit,

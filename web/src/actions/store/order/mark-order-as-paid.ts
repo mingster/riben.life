@@ -35,6 +35,7 @@ export const markOrderAsPaidAction = baseClient
 				OrderItemView: {
 					select: {
 						id: true,
+						productId: true,
 						name: true,
 					},
 				},

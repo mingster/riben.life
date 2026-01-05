@@ -10,6 +10,7 @@ import { Prisma } from "@prisma/client";
 import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
+import { ensureFiatRefillProduct } from "./ensure-fiat-refill-product";
 
 /**
  * Process fiat top-up after payment is confirmed.
@@ -52,6 +53,7 @@ export const processFiatTopUpAfterPaymentAction = baseClient
 				OrderItemView: {
 					select: {
 						id: true,
+						productId: true,
 						name: true,
 					},
 				},
@@ -66,14 +68,50 @@ export const processFiatTopUpAfterPaymentAction = baseClient
 			throw new SafeError("Order must have a user ID");
 		}
 
-		// Verify this is a fiat refill order by checking checkoutAttributes
-		// This is more reliable than checking product names
-		const isFiatRefillOrder = (() => {
-			// Check checkoutAttributes for fiatRefill flag (most reliable method)
+		// Verify this is a fiat refill order
+		// Primary check: productId matches fiatRefillProduct.id (most reliable)
+		// Fallback checks: checkoutAttributes and product name (for legacy orders or when productId unavailable)
+		const isFiatRefillOrder = await (async () => {
+			// Primary check: Check if any OrderItem has productId matching fiatRefillProduct.id
+			// This is the most reliable method since productId is stable and doesn't change
+			if (order.OrderItemView && order.OrderItemView.length > 0) {
+				try {
+					const fiatRefillProduct = await ensureFiatRefillProduct(
+						order.storeId,
+					);
+					const hasFiatRefillProduct = order.OrderItemView.some(
+						(item: { id: string; productId: string; name: string }) =>
+							item.productId === fiatRefillProduct.id,
+					);
+					if (hasFiatRefillProduct) {
+						return true;
+					}
+				} catch (error) {
+					logger.warn(
+						"Failed to get fiat refill product, falling back to other checks",
+						{
+							metadata: {
+								orderId: order.id,
+								storeId: order.storeId,
+								error: error instanceof Error ? error.message : String(error),
+							},
+							tags: ["fiat", "refill", "error"],
+						},
+					);
+				}
+			}
+
+			// Fallback 1: Check checkoutAttributes for fiatRefill flag
+			// This is reliable when checkoutAttributes hasn't been modified by payment processors
 			if (order.checkoutAttributes) {
 				try {
 					const parsed = JSON.parse(order.checkoutAttributes);
-					if (parsed.fiatRefill === true) {
+					// Check if parsed is an object and has fiatRefill property set to true
+					if (
+						typeof parsed === "object" &&
+						parsed !== null &&
+						parsed.fiatRefill === true
+					) {
 						return true;
 					}
 				} catch {
@@ -81,10 +119,12 @@ export const processFiatTopUpAfterPaymentAction = baseClient
 				}
 			}
 
-			// Fallback: Check OrderItemView product name (less reliable, but works for legacy orders)
+			// Fallback 2: Check OrderItemView product name (least reliable, but works for legacy orders
+			// or when checkoutAttributes has been modified by payment processors like Stripe)
 			if (order.OrderItemView && order.OrderItemView.length > 0) {
 				return order.OrderItemView.some(
-					(item: { id: string; name: string }) =>
+					(item: { id: string; productId: string; name: string }) =>
+						item.name === "Refill Account Balance" ||
 						item.name === "Account Balance" ||
 						item.name.toLowerCase().includes("account balance"),
 				);
@@ -144,14 +184,17 @@ export const processFiatTopUpAfterPaymentAction = baseClient
 			throw new SafeError("Invalid fiat amount");
 		}
 
+		// Get translation function
+		const { t } = await getT();
+
 		// Process fiat top-up
 		const processFiatTopUpResult = await processFiatTopUp(
 			order.storeId,
 			order.User.id,
 			fiatAmount,
 			orderId, // Reference ID is the order ID
-			null, // Creator ID is null for customer-initiated refills
-			`Fiat refill via order ${orderId}`,
+			order.User.id, // Creator ID is the creator of the order
+			t("credit_refill_note_ledger", { orderId }),
 		);
 
 		if (!processFiatTopUpResult.success) {
@@ -192,9 +235,6 @@ export const processFiatTopUpAfterPaymentAction = baseClient
 		const clearDays = paymentMethod?.clearDays || 0;
 		const availabilityDate = new Date();
 		availabilityDate.setDate(availabilityDate.getDate() + clearDays);
-
-		// Get translation function
-		const { t } = await getT();
 
 		// Mark order as paid and completed. Also create StoreLedger entry in a transaction
 		await sqlClient.$transaction(async (tx) => {

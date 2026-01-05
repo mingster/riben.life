@@ -21,6 +21,7 @@ import logger from "@/lib/logger";
 import type { StoreOrder } from "@/types";
 import { processCreditTopUpAfterPaymentAction } from "@/actions/store/credit/process-credit-topup-after-payment";
 import { processFiatTopUpAfterPaymentAction } from "@/actions/store/credit/process-fiat-topup-after-payment";
+import { ensureFiatRefillProduct } from "@/actions/store/credit/ensure-fiat-refill-product";
 import { getT } from "@/app/i18n";
 
 interface MarkOrderAsPaidCoreParams {
@@ -40,6 +41,7 @@ interface MarkOrderAsPaidCoreParams {
 		} | null;
 		OrderItemView?: Array<{
 			id: string;
+			productId: string;
 			name: string;
 		}>;
 	};
@@ -87,32 +89,94 @@ export async function markOrderAsPaidCore(
 		throw new SafeError("Payment method ID mismatch");
 	}
 
+	// Debug logging
+	logger.info("the order", {
+		metadata: {
+			orderId: order.id,
+			storeId: order.storeId,
+			checkoutAttributes: order.checkoutAttributes,
+			orderItemView: order.OrderItemView.map(
+				(item: { id: string; productId: string; name: string }) => ({
+					id: item.id,
+					productId: item.productId,
+					name: item.name,
+				}),
+			),
+		},
+		tags: ["order", "payment", "fiat", "debug", ...logTags],
+	});
+
 	//#region account balance refill order
 
 	// Handle account fiat refill order from /s/refill-account-balance
-	// Check if this is an Account Balance (fiat refill) order by checking checkoutAttributes
+	// Check if this is an Account Balance (fiat refill) order
 	// Account Balance orders should use processFiatTopUpAfterPaymentAction instead
-	const isAccountBalanceOrder = (() => {
-		// Check checkoutAttributes for fiatRefill flag (most reliable method)
-		const attributes = checkoutAttributes || order.checkoutAttributes;
-		if (attributes) {
+	// Primary check: productId matches fiatRefillProduct.id (most reliable)
+	// Fallback checks: checkoutAttributes and product name (for legacy orders or when productId unavailable)
+	const isAccountBalanceOrder = await (async () => {
+		// Primary check: Check if any OrderItem has productId matching fiatRefillProduct.id
+		// This is the most reliable method since productId is stable and doesn't change
+		if (order.OrderItemView && order.OrderItemView.length > 0) {
 			try {
-				const parsed = JSON.parse(attributes);
-				if (parsed.fiatRefill === true) {
+				const fiatRefillProduct = await ensureFiatRefillProduct(order.storeId);
+
+				// Debug logging
+				logger.info("Checking if order is fiat refill order", {
+					metadata: {
+						orderId: order.id,
+						storeId: order.storeId,
+						fiatRefillProductId: fiatRefillProduct.id,
+						checkoutAttributes: order.checkoutAttributes,
+						orderItemView: order.OrderItemView.map(
+							(item: { id: string; productId: string; name: string }) => ({
+								id: item.id,
+								productId: item.productId,
+								name: item.name,
+							}),
+						),
+					},
+					tags: ["order", "payment", "fiat", "debug", ...logTags],
+				});
+
+				const hasFiatRefillProduct = order.OrderItemView.some(
+					(item: { id: string; productId: string; name: string }) =>
+						item.productId === fiatRefillProduct.id,
+				);
+
+				if (hasFiatRefillProduct) {
+					logger.info("Order identified as fiat refill order", {
+						metadata: {
+							orderId: order.id,
+							storeId: order.storeId,
+							fiatRefillProductId: fiatRefillProduct.id,
+						},
+						tags: ["order", "payment", "fiat", ...logTags],
+					});
 					return true;
 				}
-			} catch {
-				// If parsing fails, fall back to product name check
+			} catch (error) {
+				logger.warn(
+					"Failed to get fiat refill product, falling back to other checks",
+					{
+						metadata: {
+							orderId: order.id,
+							storeId: order.storeId,
+							error: error instanceof Error ? error.message : String(error),
+						},
+						tags: ["order", "payment", "fiat", ...logTags],
+					},
+				);
 			}
-		}
-
-		// Fallback: Check OrderItemView product name (less reliable, but works for legacy orders)
-		if (order.OrderItemView && order.OrderItemView.length > 0) {
-			return order.OrderItemView.some(
-				(item: { id: string; name: string }) =>
-					item.name === "Account Balance" ||
-					item.name.toLowerCase().includes("account balance"),
-			);
+		} else {
+			logger.warn("Order has no OrderItemView items", {
+				metadata: {
+					orderId: order.id,
+					storeId: order.storeId,
+					hasOrderItemView: !!order.OrderItemView,
+					orderItemViewLength: order.OrderItemView?.length ?? 0,
+				},
+				tags: ["order", "payment", "fiat", "debug", ...logTags],
+			});
 		}
 
 		return false;
@@ -233,17 +297,6 @@ export async function markOrderAsPaidCore(
 			}
 
 			transformPrismaDataForJson(updatedOrder);
-
-			logger.info("Store Credit order processed successfully", {
-				metadata: {
-					orderId: order.id,
-					storeId: order.storeId,
-					creditAmount: creditResult.data?.amount,
-					bonus: creditResult.data?.bonus,
-					totalCredit: creditResult.data?.totalCredit,
-				},
-				tags: ["order", "payment", "credit", ...logTags],
-			});
 
 			return updatedOrder;
 		}

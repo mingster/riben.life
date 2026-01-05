@@ -9,14 +9,13 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 
-import { slideIn } from "@/lib/motion";
 import type { Store, StoreSettings } from "@prisma/client";
-import { motion } from "framer-motion";
 import { BellIcon, FacebookIcon, InstagramIcon } from "lucide-react";
 import Link from "next/link";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { HTMLMotionProps, motion } from "framer-motion";
 
 export interface props {
 	store: Store;
@@ -33,92 +32,91 @@ export const StoreContactCard: React.FC<props> = ({ store, storeSettings }) => {
 	//supports-[backdrop-filter]:bg-background/60
 	return (
 		<motion.section
-			initial="hidden"
-			whileInView="show"
-			viewport={{ once: true, amount: 0.25 }}
-			//className="w-full relative z-0"
+			{...({
+				initial: { opacity: 0, y: 20 },
+				whileInView: { opacity: 1, y: 0 },
+				viewport: { once: true, amount: 0.25 },
+				transition: { duration: 0.5, ease: "easeOut" },
+			} as HTMLMotionProps<"section">)}
+			className="px-3 sm:px-1 w-full mx-auto relative z-0"
+			aria-label="Contact form and social media links"
 		>
-			<motion.div
-				//variants={slideIn("left", "tween", 0.2, 1)}
-				className="w-full relative z-0"
-			>
-				<Card className="">
-					<CardHeader>
-						<CardTitle>{t("nav_contact")}</CardTitle>
-						<CardDescription />
-					</CardHeader>
-					<CardContent className="grid gap-2">
-						<div className="flex items-center space-x-4 rounded-md border p-2">
-							<BellIcon />
-							<div className="flex-1 space-y-1">
-								{storeSettings.aboutUs && (
-									<div className="text-sm font-medium leading-none">
-										<div
-											dangerouslySetInnerHTML={{
-												__html: storeSettings.aboutUs,
-											}}
-										/>
-									</div>
-								)}
-								{storeSettings.supportPhoneNumber && (
-									<div className="text-sm text-muted-foreground">
-										{storeSettings.supportPhoneNumber}
-									</div>
-								)}
+			<Card className="">
+				<CardHeader>
+					<CardTitle>{t("nav_contact")}</CardTitle>
+					<CardDescription />
+				</CardHeader>
+				<CardContent className="grid gap-2">
+					<div className="flex items-center space-x-4 rounded-md border p-2">
+						<BellIcon />
+						<div className="flex-1 space-y-1">
+							{storeSettings.aboutUs && (
+								<div className="text-sm font-medium leading-none">
+									<div
+										dangerouslySetInnerHTML={{
+											__html: storeSettings.aboutUs,
+										}}
+									/>
+								</div>
+							)}
+							{storeSettings.supportPhoneNumber && (
+								<div className="text-sm text-muted-foreground">
+									{storeSettings.supportPhoneNumber}
+								</div>
+							)}
+						</div>
+					</div>
+
+					<div className="">
+						{storeSettings.facebookUrl && (
+							<div className="text-sm pb-2 flex">
+								<FacebookIcon className="size-4" />
+								<Link className="pl-1" href={storeSettings.facebookUrl}>
+									Facebook
+								</Link>
 							</div>
-						</div>
+						)}
+						{storeSettings.igUrl && (
+							<div className="text-sm pb-2 flex">
+								<InstagramIcon className="size-4" />
+								<Link className="pl-1" href={storeSettings.igUrl}>
+									IG
+								</Link>
+							</div>
+						)}
+						{storeSettings.lineId && (
+							<div className="text-sm pb-2 text-muted-foreground">
+								Line Id: {storeSettings.lineId}
+							</div>
+						)}
 
-						<div className="">
-							{storeSettings.facebookUrl && (
-								<div className="text-sm pb-2 flex">
-									<FacebookIcon className="size-4" />
-									<Link className="pl-1" href={storeSettings.facebookUrl}>
-										Facebook
-									</Link>
-								</div>
-							)}
-							{storeSettings.igUrl && (
-								<div className="text-sm pb-2 flex">
-									<InstagramIcon className="size-4" />
-									<Link className="pl-1" href={storeSettings.igUrl}>
-										IG
-									</Link>
-								</div>
-							)}
-							{storeSettings.lineId && (
-								<div className="text-sm pb-2 text-muted-foreground">
-									Line Id: {storeSettings.lineId}
-								</div>
-							)}
+						{storeSettings.telegramId && (
+							<div className="text-sm pb-2 text-muted-foreground">
+								telegram: {storeSettings.telegramId}
+							</div>
+						)}
 
-							{storeSettings.telegramId && (
-								<div className="text-sm pb-2 text-muted-foreground">
-									telegram: {storeSettings.telegramId}
-								</div>
-							)}
+						{storeSettings.twitterId && (
+							<div className="text-sm pb-2 text-muted-foreground">
+								twitter: {storeSettings.twitterId}
+							</div>
+						)}
 
-							{storeSettings.twitterId && (
-								<div className="text-sm pb-2 text-muted-foreground">
-									twitter: {storeSettings.twitterId}
-								</div>
-							)}
+						{storeSettings.whatsappId && (
+							<div className="text-sm pb-2 text-muted-foreground">
+								whatsapp: {storeSettings.whatsappId}
+							</div>
+						)}
 
-							{storeSettings.whatsappId && (
-								<div className="text-sm pb-2 text-muted-foreground">
-									whatsapp: {storeSettings.whatsappId}
-								</div>
-							)}
-
-							{storeSettings.wechatId && (
-								<div className="text-sm pb-2 text-muted-foreground">
-									WeChat: {storeSettings.wechatId}
-								</div>
-							)}
-						</div>
-					</CardContent>
-					<CardFooter />
-				</Card>
-			</motion.div>
+						{storeSettings.wechatId && (
+							<div className="text-sm pb-2 text-muted-foreground">
+								WeChat: {storeSettings.wechatId}
+							</div>
+						)}
+					</div>
+				</CardContent>
+				<CardFooter />
+			</Card>
 		</motion.section>
 	);
 };
