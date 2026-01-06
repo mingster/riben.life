@@ -48,6 +48,7 @@ import { formatPhoneNumber } from "@/utils/phone-utils";
 import type { User } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCookies } from "next-client-cookies";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
@@ -61,6 +62,7 @@ export default function EditUser({ serverData }: props) {
 	const [loading, setLoading] = useState(false);
 	const [dbUser, setDbUser] = useState(serverData);
 	const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
+	const router = useRouter();
 
 	const { i18n } = useTranslation();
 	const [activeLng, setActiveLng] = useState(i18n.resolvedLanguage);
@@ -124,6 +126,16 @@ export default function EditUser({ serverData }: props) {
 					setLoading(false);
 					return;
 				}
+
+				// Update local state immediately
+				setDbUser((prev: User | null | undefined) =>
+					prev ? { ...prev, name: data.name } : prev,
+				);
+
+				// Refresh router to update session in all components (including dropdown user)
+				// Better Auth's useSession hook should automatically update, but router.refresh()
+				// ensures server components and session data are refreshed
+				router.refresh();
 			}
 
 			// For other fields (locale, timezone, phone), use API endpoint
@@ -355,6 +367,35 @@ export default function EditUser({ serverData }: props) {
 							)}
 						/>
 
+						{/* Validation Error Summary */}
+						{Object.keys(form.formState.errors).length > 0 && (
+							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+								<div className="text-sm font-semibold text-destructive">
+									{t("please_fix_validation_errors") ||
+										"Please fix the following errors:"}
+								</div>
+								{Object.entries(form.formState.errors).map(([field, error]) => {
+									// Map field names to user-friendly labels using i18n
+									const fieldLabels: Record<string, string> = {
+										name: t("account_tab_name") || "Name",
+										phone: t("account_tab_phone") || "Phone",
+										locale: t("account_tabs_language") || "Language",
+										timezone: t("account_tab_timezone") || "Timezone",
+									};
+									const fieldLabel = fieldLabels[field] || field;
+									return (
+										<div
+											key={field}
+											className="text-sm text-destructive flex items-start gap-2"
+										>
+											<span className="font-medium">{fieldLabel}:</span>
+											<span>{error.message as string}</span>
+										</div>
+									);
+								})}
+							</div>
+						)}
+
 						<Button
 							type="submit"
 							disabled={
@@ -362,6 +403,7 @@ export default function EditUser({ serverData }: props) {
 								!form.formState.isValid ||
 								form.formState.isSubmitting
 							}
+							className="disabled:opacity-25"
 						>
 							{t("account_tab_submit")}
 						</Button>
