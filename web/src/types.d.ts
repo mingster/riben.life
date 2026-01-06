@@ -248,6 +248,15 @@ const userObj = Prisma.validator<Prisma.UserDefaultArgs>()({
 });
 export type User = Prisma.UserGetPayload<typeof userObj>;
 
+const customerInviteObj = Prisma.validator<Prisma.CustomerInviteDefaultArgs>()({
+	include: {
+		User: true,
+		Store: true,
+		Inviter: true,
+	},
+});
+export type CustomerInvite = Prisma.CustomerInviteGetPayload<typeof customerInviteObj>;
+
 const sysmsgObj = Prisma.validator<Prisma.SystemMessageDefaultArgs>()({});
 export type SystemMessage = Prisma.SystemMessageGetPayload<typeof sysmsgObj>;
 
