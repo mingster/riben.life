@@ -409,7 +409,42 @@ function ChannelConfigSection({
 									t("test_connection")
 								)}
 							</Button>
-							<Button type="submit" disabled={saving || loading}>
+
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels
+											const fieldLabel = field || "Field";
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
+							<Button
+								type="submit"
+								disabled={
+									saving ||
+									loading ||
+									!form.formState.isValid ||
+									form.formState.isSubmitting
+								}
+								className="disabled:opacity-25"
+							>
 								{saving ? (
 									<>
 										<IconLoader className="mr-2 h-4 w-4 animate-spin" />

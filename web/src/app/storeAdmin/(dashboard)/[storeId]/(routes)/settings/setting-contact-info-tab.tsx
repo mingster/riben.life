@@ -376,6 +376,47 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 									</FormItem>
 								)}
 							/>
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels using i18n
+											const fieldLabels: Record<string, string> = {
+												orderNoteToCustomer:
+													t("Order_Note_To_Customer") ||
+													"Order Note to Customer",
+												aboutUs: t("About_Us") || "About Us",
+												supportEmail: t("Support_Email") || "Support Email",
+												supportPhoneNumber:
+													t("Support_Phone_Number") || "Support Phone Number",
+												facebookUrl: t("Facebook_URL") || "Facebook URL",
+												igUrl: t("Instagram_URL") || "Instagram URL",
+												lineId: t("LINE_ID") || "LINE ID",
+												telegramId: t("Telegram_ID") || "Telegram ID",
+												twitterId: t("Twitter_ID") || "Twitter ID",
+												whatsappId: t("WhatsApp_ID") || "WhatsApp ID",
+												wechatId: t("WeChat_ID") || "WeChat ID",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
 							<Button
 								disabled={
 									loading ||

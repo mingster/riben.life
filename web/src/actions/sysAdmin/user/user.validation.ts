@@ -3,7 +3,7 @@ import { z } from "zod";
 export const updateUserSettingsSchema = z
 	.object({
 		id: z.string().min(1, "User ID is required"),
-		name: z.string().min(5, "Name must be at least 5 characters"),
+		name: z.string().min(1, "Name is required"),
 		email: z
 			.union([z.string().email("Invalid email format"), z.literal("")])
 			.optional(),

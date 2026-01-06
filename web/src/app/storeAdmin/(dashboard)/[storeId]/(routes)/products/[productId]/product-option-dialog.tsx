@@ -405,7 +405,50 @@ export const AddProductOptionDialog: React.FC<props> = ({
 						/>
 
 						<div className="flex w-full items-center justify-end space-x-2 pt-6">
-							<Button disabled={form.formState.isSubmitting} type="submit">
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels using i18n
+											const fieldLabels: Record<string, string> = {
+												optionName: t("Option_Name") || "Option Name",
+												isRequired: t("Is_Required") || "Is Required",
+												isMultiple: t("Is_Multiple") || "Is Multiple",
+												minSelection: t("Min_Selection") || "Min Selection",
+												maxSelection: t("Max_Selection") || "Max Selection",
+												allowQuantity: t("Allow_Quantity") || "Allow Quantity",
+												minQuantity: t("Min_Quantity") || "Min Quantity",
+												maxQuantity: t("Max_Quantity") || "Max Quantity",
+												selections: t("Selections") || "Selections",
+												sortOrder: t("Sort_Order") || "Sort Order",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
+							<Button
+								disabled={
+									form.formState.isSubmitting || !form.formState.isValid
+								}
+								className="disabled:opacity-25"
+								type="submit"
+							>
 								{action === "Create" ? t("create") : t("update")}
 							</Button>
 

@@ -494,6 +494,39 @@ export function EditFacilityPricingRuleDialog({
 							)}
 						/>
 
+						{/* Validation Error Summary */}
+						{Object.keys(form.formState.errors).length > 0 && (
+							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+								<div className="text-sm font-semibold text-destructive">
+									{t("please_fix_validation_errors") ||
+										"Please fix the following errors:"}
+								</div>
+								{Object.entries(form.formState.errors).map(([field, error]) => {
+									// Map field names to user-friendly labels using i18n
+									const fieldLabels: Record<string, string> = {
+										facilityId: t("Facility") || "Facility",
+										dayOfWeek: t("Day_of_Week") || "Day of Week",
+										startTime: t("Start_Time") || "Start Time",
+										endTime: t("End_Time") || "End Time",
+										cost: t("Cost") || "Cost",
+										credit: t("Credit") || "Credit",
+										priority: t("Priority") || "Priority",
+										isActive: t("Active") || "Active",
+									};
+									const fieldLabel = fieldLabels[field] || field;
+									return (
+										<div
+											key={field}
+											className="text-sm text-destructive flex items-start gap-2"
+										>
+											<span className="font-medium">{fieldLabel}:</span>
+											<span>{error.message as string}</span>
+										</div>
+									);
+								})}
+							</div>
+						)}
+
 						<DialogFooter className="flex w-full justify-end space-x-2">
 							<Button
 								type="submit"
@@ -502,6 +535,7 @@ export function EditFacilityPricingRuleDialog({
 									!form.formState.isValid ||
 									form.formState.isSubmitting
 								}
+								className="disabled:opacity-25"
 							>
 								{isEditMode ? t("edit") : t("create")}
 							</Button>

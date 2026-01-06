@@ -161,6 +161,15 @@ export const auth = betterAuth({
 		}),
 		phoneNumber({
 			sendOTP: async ({ phoneNumber, code }, ctx) => {
+				// Normalize phone number format before sending SMS
+				// Convert Taiwan numbers starting with +8860 to +886 (remove leading 0 after country code)
+				// This ensures consistency between OTP storage and SMS sending
+				let normalizedPhoneNumber = phoneNumber;
+				if (normalizedPhoneNumber.startsWith("+8860")) {
+					// Remove the leading 0 after +886 (e.g., +8860912345678 -> +886912345678)
+					normalizedPhoneNumber = "+886" + normalizedPhoneNumber.slice(5);
+				}
+
 				// Better Auth provides the OTP code, we use our existing sendOTP function
 				// which handles storing in database and sending via Twilio
 				const { sendOTP } = await import("./otp/send-otp");
@@ -181,9 +190,11 @@ export const auth = betterAuth({
 				// Extract user agent from request headers for logging
 				const userAgent = ctx?.request?.headers?.get("user-agent") || undefined;
 
-				// Call our existing sendOTP function with the code provided by Better Auth
+				// Call our existing sendOTP function with the normalized phone number
+				// Note: Better Auth has already stored the OTP with the original phoneNumber format
+				// So we need to ensure the frontend also normalizes before calling sendPhoneNumberOTP
 				const result = await sendOTP({
-					phoneNumber,
+					phoneNumber: normalizedPhoneNumber,
 					locale,
 					code, // Use the code provided by Better Auth
 					ipAddress, // Pass IP address for rate limiting

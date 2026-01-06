@@ -370,6 +370,42 @@ export const StoreEditBasicTab: React.FC<SettingsFormProps> = ({
 								</div>
 							</div>
 
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels using i18n
+											const fieldLabels: Record<string, string> = {
+												name: t("Store_name") || "Store Name",
+												customDomain: t("Custom_Domain") || "Custom Domain",
+												defaultLocale: t("Default_Locale") || "Default Locale",
+												defaultCountry:
+													t("Default_Country") || "Default Country",
+												defaultCurrency:
+													t("Default_Currency") || "Default Currency",
+												logo: t("Logo") || "Logo",
+												logoPublicId: t("Logo_Public_ID") || "Logo Public ID",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
 							<Button
 								disabled={
 									loading ||

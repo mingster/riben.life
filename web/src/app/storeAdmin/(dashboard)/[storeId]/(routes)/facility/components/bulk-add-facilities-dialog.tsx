@@ -329,6 +329,41 @@ export function BulkAddFacilitiesDialog({
 							)}
 						/>
 
+						{/* Validation Error Summary */}
+						{Object.keys(form.formState.errors).length > 0 && (
+							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+								<div className="text-sm font-semibold text-destructive">
+									{t("please_fix_validation_errors") ||
+										"Please fix the following errors:"}
+								</div>
+								{Object.entries(form.formState.errors).map(([field, error]) => {
+									// Map field names to user-friendly labels using i18n
+									const fieldLabels: Record<string, string> = {
+										prefix: t("Prefix") || "Prefix",
+										numOfFacilities:
+											t("Number_of_Facilities") || "Number of Facilities",
+										capacity: t("Facility_Seats") || "Capacity",
+										defaultCost: t("Facility_Default_Cost") || "Default Cost",
+										defaultCredit:
+											t("Facility_Default_Credit") || "Default Credit",
+										defaultDuration:
+											t("Facility_Default_Duration") || "Default Duration",
+										businessHours: t("business_hours") || "Business Hours",
+									};
+									const fieldLabel = fieldLabels[field] || field;
+									return (
+										<div
+											key={field}
+											className="text-sm text-destructive flex items-start gap-2"
+										>
+											<span className="font-medium">{fieldLabel}:</span>
+											<span>{error.message as string}</span>
+										</div>
+									);
+								})}
+							</div>
+						)}
+
 						<div className="flex w-full items-center justify-end space-x-2 pt-2">
 							<Button
 								type="submit"
