@@ -243,6 +243,38 @@ class ClientLogger {
 	}
 }
 
+// Filter out Fast Refresh messages from console
+if (typeof window !== "undefined") {
+	const originalConsoleLog = console.log;
+	const originalConsoleInfo = console.info;
+
+	// Filter function to check if message contains Fast Refresh
+	const shouldFilter = (...args: any[]): boolean => {
+		const message = args
+			.map((arg) => {
+				if (typeof arg === "string") return arg;
+				if (arg?.toString) return arg.toString();
+				return JSON.stringify(arg);
+			})
+			.join(" ");
+		return /\[Fast Refresh\]/i.test(message);
+	};
+
+	// Override console.log
+	console.log = (...args: any[]) => {
+		if (!shouldFilter(...args)) {
+			originalConsoleLog.apply(console, args);
+		}
+	};
+
+	// Override console.info
+	console.info = (...args: any[]) => {
+		if (!shouldFilter(...args)) {
+			originalConsoleInfo.apply(console, args);
+		}
+	};
+}
+
 // Create default client logger instance
 export const clientLogger = new ClientLogger({
 	service: "client",
