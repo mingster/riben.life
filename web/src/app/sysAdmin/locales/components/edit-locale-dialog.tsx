@@ -257,6 +257,36 @@ export function EditLocaleDialog({
 								</FormItem>
 							)}
 						/>
+						{/* Validation Error Summary */}
+						{Object.keys(form.formState.errors).length > 0 && (
+							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+								<div className="text-sm font-semibold text-destructive">
+									{t("please_fix_validation_errors") ||
+										"Please fix the following errors:"}
+								</div>
+								{Object.entries(form.formState.errors).map(([field, error]) => {
+									// Map field names to user-friendly labels
+									const fieldLabels: Record<string, string> = {
+										id: t("ID") || "ID",
+										name: t("Name") || "Name",
+										lng: t("Language") || "Language",
+										defaultCurrencyId:
+											t("Default_Currency") || "Default Currency",
+									};
+									const fieldLabel = fieldLabels[field] || field;
+									return (
+										<div
+											key={field}
+											className="text-sm text-destructive flex items-start gap-2"
+										>
+											<span className="font-medium">{fieldLabel}:</span>
+											<span>{error.message as string}</span>
+										</div>
+									);
+								})}
+							</div>
+						)}
+
 						<DialogFooter>
 							<Button
 								type="button"
@@ -268,7 +298,12 @@ export function EditLocaleDialog({
 							</Button>
 							<Button
 								type="submit"
-								disabled={loading || form.formState.isSubmitting}
+								disabled={
+									loading ||
+									!form.formState.isValid ||
+									form.formState.isSubmitting
+								}
+								className="disabled:opacity-25"
 							>
 								{isEditMode ? "Update" : "Create"}
 							</Button>

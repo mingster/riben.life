@@ -675,6 +675,71 @@ export const ProductEditAttributeTab = ({
 								/>
 							</div>
 
+							{/* Validation Error Summary */}
+							{Object.keys(form.formState.errors).length > 0 && (
+								<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
+									<div className="text-sm font-semibold text-destructive">
+										{t("please_fix_validation_errors") ||
+											"Please fix the following errors:"}
+									</div>
+									{Object.entries(form.formState.errors).map(
+										([field, error]) => {
+											// Map field names to user-friendly labels using i18n
+											const fieldLabels: Record<string, string> = {
+												isRecurring: t("Is_Recurring") || "Is Recurring",
+												isBrandNew: t("Is_Brand_New") || "Is Brand New",
+												interval: t("Interval") || "Interval",
+												intervalCount: t("Interval_Count") || "Interval Count",
+												trialPeriodDays:
+													t("Trial_Period_Days") || "Trial Period Days",
+												isShipRequired:
+													t("Is_Ship_Required") || "Is Ship Required",
+												isFreeShipping:
+													t("Is_Free_Shipping") || "Is Free Shipping",
+												additionalShipCost:
+													t("Additional_Ship_Cost") || "Additional Ship Cost",
+												stock: t("Stock") || "Stock",
+												displayStockAvailability:
+													t("Display_Stock_Availability") ||
+													"Display Stock Availability",
+												displayStockQuantity:
+													t("Display_Stock_Quantity") ||
+													"Display Stock Quantity",
+												allowBackOrder:
+													t("Allow_Back_Order") || "Allow Back Order",
+												disableBuyButton:
+													t("Disable_Buy_Button") || "Disable Buy Button",
+												orderMinQuantity:
+													t("Order_Min_Quantity") || "Order Min Quantity",
+												orderMaxQuantity:
+													t("Order_Max_Quantity") || "Order Max Quantity",
+												weight: t("Weight") || "Weight",
+												height: t("Height") || "Height",
+												width: t("Width") || "Width",
+												availableStartDate:
+													t("Available_Start_Date") || "Available Start Date",
+												availableEndDate:
+													t("Available_End_Date") || "Available End Date",
+												stripePriceId:
+													t("Stripe_Price_ID") || "Stripe Price ID",
+												mfgPartNumber:
+													t("MFG_Part_Number") || "MFG Part Number",
+											};
+											const fieldLabel = fieldLabels[field] || field;
+											return (
+												<div
+													key={field}
+													className="text-sm text-destructive flex items-start gap-2"
+												>
+													<span className="font-medium">{fieldLabel}:</span>
+													<span>{error.message as string}</span>
+												</div>
+											);
+										},
+									)}
+								</div>
+							)}
+
 							<Button
 								disabled={
 									loading ||

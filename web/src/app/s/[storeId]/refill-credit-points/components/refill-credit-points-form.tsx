@@ -311,10 +311,41 @@ export function RefillCreditPointsForm({
 							/>
 						)}
 
+						{/* Validation Error Summary */}
+						{Object.keys(form.formState.errors).length > 0 && (
+							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
+								<div className="text-sm font-semibold text-destructive">
+									{t("please_fix_validation_errors") ||
+										"Please fix the following errors:"}
+								</div>
+								{Object.entries(form.formState.errors).map(([field, error]) => {
+									// Map field names to user-friendly labels using i18n
+									const fieldLabels: Record<string, string> = {
+										creditAmount: t("Credit_Amount") || "Credit Amount",
+										paymentMethodId: t("Payment_Method") || "Payment Method",
+									};
+									const fieldLabel = fieldLabels[field] || field;
+									return (
+										<div
+											key={field}
+											className="text-sm text-destructive flex items-start gap-2"
+										>
+											<span className="font-medium">{fieldLabel}:</span>
+											<span>{error.message as string}</span>
+										</div>
+									);
+								})}
+							</div>
+						)}
+
 						<Button
 							type="submit"
-							disabled={isSubmitting}
-							className="w-full h-10 sm:h-9"
+							disabled={
+								isSubmitting ||
+								!form.formState.isValid ||
+								form.formState.isSubmitting
+							}
+							className="w-full h-10 sm:h-9 disabled:opacity-25"
 						>
 							{isSubmitting ? t("processing") : t("continue_to_payment")}
 						</Button>

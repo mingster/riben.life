@@ -718,6 +718,72 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 							</div>
 						</div>
 
+						{/* Validation Error Summary */}
+						{Object.keys(form.formState.errors).length > 0 && (
+							<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
+								<div className="text-sm font-semibold text-destructive">
+									{t("please_fix_validation_errors") ||
+										"Please fix the following errors:"}
+								</div>
+								{Object.entries(form.formState.errors).map(([field, error]) => {
+									// Map field names to user-friendly labels using i18n
+									const fieldLabels: Record<string, string> = {
+										acceptReservation:
+											t("RSVP_Accept_Reservation") || "Accept Reservation",
+										singleServiceMode:
+											t("RSVP_Single_Service_Mode") || "Single Service Mode",
+										minPrepaidPercentage:
+											t("RSVP_Min_Prepaid_Percentage") ||
+											"Min Prepaid Percentage",
+										noNeedToConfirm:
+											t("RSVP_No_Need_To_Confirm") || "No Need To Confirm",
+										canCancel: t("RSVP_Can_Cancel") || "Can Cancel",
+										cancelHours: t("RSVP_Cancel_Hours") || "Cancel Hours",
+										canReserveBefore:
+											t("RSVP_Can_Reserve_Before") || "Can Reserve Before",
+										canReserveAfter:
+											t("RSVP_Can_Reserve_After") || "Can Reserve After",
+										defaultDuration:
+											t("RSVP_Default_Duration") || "Default Duration",
+										requireSignature:
+											t("RSVP_Require_Signature") || "Require Signature",
+										showCostToCustomer:
+											t("RSVP_Show_Cost_To_Customer") ||
+											"Show Cost To Customer",
+										mustSelectFacility:
+											t("RSVP_Must_Select_Facility") || "Must Select Facility",
+										mustHaveServiceStaff:
+											t("RSVP_Must_Have_Service_Staff") ||
+											"Must Have Service Staff",
+										useBusinessHours:
+											t("RSVP_Use_Business_Hours") || "Use Business Hours",
+										rsvpHours: t("RSVP_Hours") || "RSVP Hours",
+										reminderHours: t("RSVP_Reminder_Hours") || "Reminder Hours",
+										useReminderSMS:
+											t("RSVP_Use_Reminder_SMS") || "Use Reminder SMS",
+										useReminderLine:
+											t("RSVP_Use_Reminder_Line") || "Use Reminder Line",
+										useReminderEmail:
+											t("RSVP_Use_Reminder_Email") || "Use Reminder Email",
+										syncWithGoogle:
+											t("RSVP_Sync_With_Google") || "Sync With Google",
+										syncWithApple:
+											t("RSVP_Sync_With_Apple") || "Sync With Apple",
+									};
+									const fieldLabel = fieldLabels[field] || field;
+									return (
+										<div
+											key={field}
+											className="text-sm text-destructive flex items-start gap-2"
+										>
+											<span className="font-medium">{fieldLabel}:</span>
+											<span>{error.message as string}</span>
+										</div>
+									);
+								})}
+							</div>
+						)}
+
 						<div className="flex space-x-2 pt-4">
 							<Button
 								type="submit"
