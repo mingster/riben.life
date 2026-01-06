@@ -1,14 +1,13 @@
 "use client";
 
-import type { Store } from "@/types";
-import { useCallback, useEffect, useState } from "react";
-
-import { Loader } from "@/components/loader";
+import type { Store, StoreOrder } from "@/types";
 import { StoreLevel } from "@/types/enum";
 import { formatDateTime, getUtcNow } from "@/utils/datetime-utils";
 import type { StoreFacility } from "@prisma/client";
 import { OrderUnpaid } from "./order-unpaid";
-import logger from "@/lib/logger";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useIsHydrated } from "@/hooks/use-hydrated";
+import useSWR from "swr";
 
 export interface props {
 	store: Store;
@@ -16,83 +15,73 @@ export interface props {
 }
 
 // store admin home page.
-// it checks for new orders every 10 seconds.
+// it checks for new orders every 5 seconds.
 export const CashCashier: React.FC<props> = ({ store, facilities }) => {
-	//const { lng } = useI18n();
-	//const { t } = useTranslation(lng);
-	const [mounted, setMounted] = useState(false);
-	const [loading, setLoading] = useState(false);
-
+	const isHydrated = useIsHydrated();
 	const date = getUtcNow();
-	const [unpaidOrders, setUnpaidOrders] = useState([]);
 
-	const fetchData = useCallback(() => {
-		setLoading(true);
+	// Conditional URL - only fetch if store is not free level and hydrated
+	const url =
+		store.level !== StoreLevel.Free && store.id && isHydrated
+			? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-unpaid-orders`
+			: null;
 
-		// get pending and processing orders in the store.
-		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-unpaid-orders`;
-		fetch(url)
-			.then((data) => {
-				return data.json();
-			})
-			.then((data) => {
-				//console.log("data", JSON.stringify(data));
-				setUnpaidOrders(data);
-			})
-			.catch((error) => {
-				logger.error("Error:", {
-					metadata: {
-						error: error instanceof Error ? error.message : String(error),
-					},
-					tags: ["error"],
-				});
-				throw error;
-			});
+	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
+	const {
+		data: unpaidOrders,
+		error,
+		isLoading,
+	} = useSWR<StoreOrder[]>(url, fetcher, {
+		refreshInterval: 5000, // Poll every 5 seconds
+		revalidateOnFocus: true,
+		revalidateOnReconnect: true,
+	});
 
-		setLoading(false);
-	}, [store.id]);
-
-	const IntervaledContent = () => {
-		useEffect(() => {
-			//Implementing the setInterval method
-			const interval = setInterval(() => {
-				fetchData();
-			}, 5000); // do every 10 sec.
-
-			//Clearing the interval
-			return () => clearInterval(interval);
-		}, []);
-
-		return <></>;
-	};
-
-	// useEffect only runs on the client, so now we can safely show the UI
-	useEffect(() => {
-		// fetch data as soon as page is mounted
-		if (!mounted) fetchData();
-		setMounted(true);
-	}, [mounted, fetchData]);
-
-	if (!mounted) {
+	// Early return if store is free level
+	if (store.level === StoreLevel.Free) {
 		return null;
 	}
 
-	if (loading) return <Loader />;
-
-	if (store.level !== StoreLevel.Free) {
+	// Don't render until hydrated to prevent hydration mismatch
+	if (!isHydrated) {
 		return (
 			<section className="relative w-full">
-				<IntervaledContent />
 				<div className="flex flex-col gap-1">
-					<OrderUnpaid
-						store={store}
-						facilities={facilities}
-						orders={unpaidOrders}
-						parentLoading={loading}
-					/>
-					<div className="text-xs">{formatDateTime(date)}</div>
+					<Skeleton className="h-64 w-full" />
+					<Skeleton className="h-4 w-32" />
 				</div>
 			</section>
 		);
 	}
+
+	// Show loading state
+	if (isLoading) {
+		return (
+			<section className="relative w-full">
+				<div className="flex flex-col gap-1">
+					<Skeleton className="h-64 w-full" />
+					<Skeleton className="h-4 w-32" />
+				</div>
+			</section>
+		);
+	}
+
+	// Show error state (silent fail - don't show error UI)
+	if (error || !unpaidOrders) {
+		return null;
+	}
+
+	return (
+		<section className="relative w-full">
+			<div className="flex flex-col gap-1">
+				<OrderUnpaid
+					store={store}
+					facilities={facilities}
+					orders={unpaidOrders}
+					parentLoading={isLoading}
+				/>
+				<div className="text-xs">{formatDateTime(date)}</div>
+			</div>
+		</section>
+	);
 };

@@ -1,0 +1,478 @@
+# Client Component with useSWR Pattern
+
+This rule defines the standard pattern for client components that use `useSWR` for data fetching, including proper hydration handling, loading states, and error handling.
+
+## Core Pattern
+
+When creating client components that fetch data using `useSWR`, follow this standard pattern:
+
+1. **Use `useIsHydrated` hook** to prevent hydration mismatches
+2. **Check `isHydrated`** before rendering or fetching data
+3. **Handle `isLoading` state** with Skeleton components
+4. **Handle error state** appropriately
+5. **Conditional URL** - set URL to `null` when conditions aren't met
+
+## Standard Structure
+
+```tsx
+"use client";
+
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useIsHydrated } from "@/hooks/use-hydrated";
+import useSWR from "swr";
+import { useParams } from "next/navigation";
+
+interface ComponentProps {
+  // Props
+}
+
+interface DataType {
+  // Data structure
+}
+
+export function Component({ props }: ComponentProps) {
+  const params = useParams<{ storeId: string }>();
+  const { lng } = useI18n();
+  const { t } = useTranslation(lng);
+  const isHydrated = useIsHydrated();
+
+  // Conditional URL - set to null when conditions aren't met
+  const url =
+    someCondition && params.storeId && isHydrated
+      ? `${process.env.NEXT_PUBLIC_API_URL}/api/endpoint`
+      : null;
+
+  const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
+  const { data, error, isLoading } = useSWR<DataType>(url, fetcher);
+
+  // Early return if feature is disabled
+  if (!someCondition) {
+    return null;
+  }
+
+  // Don't render until hydrated to prevent hydration mismatch
+  if (!isHydrated) {
+    return (
+      <div>
+        {/* Skeleton loading state */}
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-4 w-24" />
+        ))}
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div>
+        {/* Skeleton loading state */}
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-4 w-24" />
+        ))}
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error || !data) {
+    return null; // Or show error UI
+  }
+
+  // Render actual content
+  return (
+    <div>
+      {/* Component content */}
+    </div>
+  );
+}
+```
+
+## Key Components
+
+### 1. useIsHydrated Hook
+
+**Always import and use:**
+
+```tsx
+import { useIsHydrated } from "@/hooks/use-hydrated";
+
+const isHydrated = useIsHydrated();
+```
+
+**Purpose:**
+
+- Prevents hydration mismatches between server and client
+- Ensures client-only code runs only after hydration
+- Required for any component using browser APIs or conditional rendering
+
+### 2. Conditional URL
+
+**Pattern:**
+
+```tsx
+const url =
+  condition && params.storeId && isHydrated
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api/endpoint`
+    : null;
+```
+
+**Rules:**
+
+- Set URL to `null` when conditions aren't met
+- Always check `isHydrated` in the condition
+- Check for required params (e.g., `params.storeId`)
+- Check for feature flags or settings
+
+**Why `null`?**
+
+- `useSWR` won't fetch when URL is `null`
+- Prevents unnecessary API calls
+- Prevents errors from invalid URLs
+
+### 3. Fetcher Function
+
+**Standard pattern:**
+
+```tsx
+const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
+```
+
+**Alternative (with error handling):**
+
+```tsx
+const fetcher = async (url: RequestInfo) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+  }
+  return res.json();
+};
+```
+
+### 4. Early Returns
+
+**Order of checks:**
+
+1. **Feature disabled check** (return `null` if feature is off)
+2. **Hydration check** (return skeleton if not hydrated)
+3. **Loading check** (return skeleton if loading)
+4. **Error check** (return error UI or `null` if error)
+5. **Render content** (only if all checks pass)
+
+### 5. Loading States
+
+**Use Skeleton components:**
+
+```tsx
+if (!isHydrated || isLoading) {
+  return (
+    <div>
+      {[1, 2, 3].map((i) => (
+        <Skeleton key={i} className="h-4 w-24" />
+      ))}
+    </div>
+  );
+}
+```
+
+**Best Practices:**
+
+- Match skeleton structure to actual content
+- Use appropriate skeleton sizes
+- Show same number of skeleton items as content items
+- Use consistent skeleton styling
+
+### 6. Error Handling
+
+**Options:**
+
+```tsx
+// Option 1: Silent fail (don't show error UI)
+if (error || !data) {
+  return null;
+}
+
+// Option 2: Show error message
+if (error) {
+  return (
+    <div className="text-destructive">
+      {t("error_loading_data") || "Failed to load data"}
+    </div>
+  );
+}
+
+// Option 3: Show error with retry
+if (error) {
+  return (
+    <div>
+      <p>{t("error_loading_data")}</p>
+      <Button onClick={() => mutate()}>Retry</Button>
+    </div>
+  );
+}
+```
+
+## Complete Example
+
+Based on `rsvp-stats.tsx`:
+
+```tsx
+"use client";
+
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
+import { IconCalendar } from "@tabler/icons-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import useSWR from "swr";
+import { useIsHydrated } from "@/hooks/use-hydrated";
+
+interface StatsProps {
+  settings: Settings | null;
+}
+
+interface StatsData {
+  count: number;
+}
+
+export function Stats({ settings }: StatsProps) {
+  const params = useParams<{ storeId: string }>();
+  const { lng } = useI18n();
+  const { t } = useTranslation(lng);
+  const isHydrated = useIsHydrated();
+
+  // Conditional URL
+  const url =
+    settings?.enabled && params.storeId && isHydrated
+      ? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/stats`
+      : null;
+
+  const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
+  const { data, error, isLoading } = useSWR<StatsData>(url, fetcher);
+
+  // Early return if feature disabled
+  if (!settings?.enabled) {
+    return null;
+  }
+
+  // Don't render until hydrated
+  if (!isHydrated) {
+    return (
+      <div className="grid grid-cols-1 gap-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i}>
+            <CardHeader>
+              <CardDescription>
+                <Skeleton className="h-4 w-24" />
+              </CardDescription>
+              <CardTitle>
+                <Skeleton className="h-8 w-16" />
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i}>
+            <CardHeader>
+              <CardDescription>
+                <Skeleton className="h-4 w-24" />
+              </CardDescription>
+              <CardTitle>
+                <Skeleton className="h-8 w-16" />
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error || !data) {
+    return null; // Silent fail
+  }
+
+  // Render content
+  return (
+    <div className="grid grid-cols-1 gap-4">
+      <Card>
+        <CardHeader>
+          <CardDescription>{t("stats_title")}</CardDescription>
+          <CardTitle>{data.count}</CardTitle>
+        </CardHeader>
+      </Card>
+    </div>
+  );
+}
+```
+
+## Rules
+
+### ✅ DO
+
+1. **Always use `useIsHydrated`** for client components with `useSWR`
+2. **Check `isHydrated` in URL condition** before fetching
+3. **Return skeleton** when `!isHydrated` or `isLoading`
+4. **Set URL to `null`** when conditions aren't met
+5. **Handle errors** appropriately (silent fail or error UI)
+6. **Use consistent skeleton structure** matching actual content
+7. **Early return** for disabled features
+
+### ❌ DON'T
+
+1. **Don't fetch before hydration** - always check `isHydrated`
+2. **Don't use `useSWR` without `useIsHydrated`** in client components
+3. **Don't render content** before checking `isHydrated` and `isLoading`
+4. **Don't use invalid URLs** - set to `null` when conditions aren't met
+5. **Don't ignore errors** - handle them explicitly
+6. **Don't use different skeleton structure** than actual content
+
+## Common Patterns
+
+### Pattern 1: Feature Flag Check
+
+```tsx
+const url =
+  featureEnabled && params.storeId && isHydrated
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api/endpoint`
+    : null;
+
+if (!featureEnabled) {
+  return null;
+}
+```
+
+### Pattern 2: Multiple Conditions
+
+```tsx
+const url =
+  settings?.enabled &&
+  params.storeId &&
+  params.otherId &&
+  isHydrated
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api/endpoint`
+    : null;
+```
+
+### Pattern 3: Error with Retry
+
+```tsx
+const { data, error, isLoading, mutate } = useSWR<DataType>(url, fetcher);
+
+if (error) {
+  return (
+    <div>
+      <p>{t("error_loading")}</p>
+      <Button onClick={() => mutate()}>{t("retry")}</Button>
+    </div>
+  );
+}
+```
+
+### Pattern 4: Conditional Rendering Based on Data
+
+```tsx
+if (!data || data.length === 0) {
+  return (
+    <div>
+      <p>{t("no_data")}</p>
+    </div>
+  );
+}
+```
+
+## Integration with Other Patterns
+
+### With DataTable
+
+```tsx
+const { data, error, isLoading } = useSWR<DataType[]>(url, fetcher);
+
+if (!isHydrated || isLoading) {
+  return <Skeleton className="h-64 w-full" />;
+}
+
+if (error || !data) {
+  return null;
+}
+
+return <DataTable columns={columns} data={data} />;
+```
+
+### With Forms
+
+```tsx
+const { data, error, isLoading } = useSWR<FormData>(url, fetcher);
+
+if (!isHydrated || isLoading) {
+  return <Skeleton className="h-96 w-full" />;
+}
+
+if (error || !data) {
+  return <ErrorMessage />;
+}
+
+return <Form defaultValues={data} />;
+```
+
+## Performance Considerations
+
+### Revalidation
+
+```tsx
+// Auto-revalidate on focus
+const { data } = useSWR(url, fetcher, {
+  revalidateOnFocus: true,
+  revalidateOnReconnect: true,
+});
+```
+
+### Polling
+
+```tsx
+// Poll every 30 seconds
+const { data } = useSWR(url, fetcher, {
+  refreshInterval: 30000,
+});
+```
+
+### Deduplication
+
+SWR automatically deduplicates requests with the same URL, so multiple components using the same URL will share the same request.
+
+## Summary
+
+**Standard Pattern Checklist:**
+
+- [ ] Import `useIsHydrated` hook
+- [ ] Call `useIsHydrated()` to get `isHydrated`
+- [ ] Set URL to `null` when conditions aren't met (include `isHydrated` check)
+- [ ] Use standard fetcher function
+- [ ] Check feature enabled → return `null` if disabled
+- [ ] Check `!isHydrated` → return skeleton
+- [ ] Check `isLoading` → return skeleton
+- [ ] Check `error || !data` → return error UI or `null`
+- [ ] Render content only after all checks pass
+- [ ] Use Skeleton components matching actual content structure
+
+Following this pattern ensures consistent, reliable client-side data fetching with proper hydration handling and loading states.

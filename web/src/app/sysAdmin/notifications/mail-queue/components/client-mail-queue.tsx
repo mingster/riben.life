@@ -18,13 +18,15 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { EmailQueue } from "@/types";
 import { formatDateTime, getUtcNow } from "@/utils/datetime-utils";
 import { EditMailQueue } from "./edit-mail-queue";
-import { Loader } from "@/components/loader";
 import { format } from "date-fns";
 import Link from "next/link";
 import logger from "@/lib/logger";
+import { useIsHydrated } from "@/hooks/use-hydrated";
+import useSWR from "swr";
 
 // MailQueueAdminPage provides the following features:
 // 1. review the mail queue in the table
@@ -41,11 +43,34 @@ export default function MailQueueAdminClient({
 	stores?: Array<{ id: string; name: string | null }>;
 	messageTemplates?: Array<{ id: string; name: string }>;
 }) {
-	const [mailQueueData, setMailQueueData] = useState<EmailQueue[]>([]);
-
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const isHydrated = useIsHydrated();
 	const [currentTime, setCurrentTime] = useState(() => getUtcNow());
+
+	// Conditional URL - only fetch if hydrated
+	const url = isHydrated ? "/api/sysAdmin/emailQueue" : null;
+
+	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
+	const {
+		data: mailQueueData,
+		error,
+		isLoading,
+		mutate,
+	} = useSWR<EmailQueue[]>(url, fetcher, {
+		refreshInterval: 10000, // Poll every 10 seconds
+		revalidateOnFocus: true,
+		revalidateOnReconnect: true,
+	});
+
+	// Update current time every 10 seconds
+	useEffect(() => {
+		if (!isHydrated) return;
+
+		const timerId = setInterval(() => {
+			setCurrentTime(getUtcNow());
+		}, 10000);
+
+		return () => clearInterval(timerId);
+	}, [isHydrated]);
 
 	const [openDeleteSelectedMails, setOpenDeleteSelectedMails] = useState(false);
 
@@ -56,26 +81,37 @@ export default function MailQueueAdminClient({
 		[],
 	);
 
-	//console.log("selectedMailQueueIds", selectedMailQueueIds.length, selectedMailQueueIds);
 	const handleUpdated = (updatedVal: EmailQueue) => {
-		setMailQueueData((prev) =>
-			prev.map((obj) =>
-				obj.id === updatedVal.id
-					? ({
-							...updatedVal,
-							cc: updatedVal.cc ?? "",
-							bcc: updatedVal.bcc ?? "",
-							sendTries: updatedVal.sendTries ?? 0,
-							sentOn: updatedVal.sentOn ?? null,
-						} as EmailQueue)
-					: obj,
-			),
+		// Update SWR cache optimistically
+		mutate(
+			(currentData) => {
+				if (!currentData) return currentData;
+				return currentData.map((obj) =>
+					obj.id === updatedVal.id
+						? ({
+								...updatedVal,
+								cc: updatedVal.cc ?? "",
+								bcc: updatedVal.bcc ?? "",
+								sendTries: updatedVal.sendTries ?? 0,
+								sentOn: updatedVal.sentOn ?? null,
+							} as EmailQueue)
+						: obj,
+				);
+			},
+			{ revalidate: false },
 		);
 		logger.info("handleUpdated");
 	};
 
 	const handleDeleted = (deletedVal: EmailQueue) => {
-		setMailQueueData((prev) => prev.filter((obj) => obj.id !== deletedVal.id));
+		// Update SWR cache optimistically
+		mutate(
+			(currentData) => {
+				if (!currentData) return currentData;
+				return currentData.filter((obj) => obj.id !== deletedVal.id);
+			},
+			{ revalidate: false },
+		);
 		logger.info("handleDeleted");
 	};
 
@@ -113,13 +149,10 @@ export default function MailQueueAdminClient({
 					onCheckedChange={(isChecked) => {
 						row.toggleSelected(!!isChecked);
 						if (isChecked) {
-							setSelectedMailQueueIds([
-								...selectedMailQueueIds,
-								row.original.id,
-							]);
+							setSelectedMailQueueIds((prev) => [...prev, row.original.id]);
 						} else {
-							setSelectedMailQueueIds(
-								selectedMailQueueIds.filter((id) => id !== row.original.id),
+							setSelectedMailQueueIds((prev) =>
+								prev.filter((id) => id !== row.original.id),
 							);
 						}
 					}}
@@ -353,9 +386,13 @@ export default function MailQueueAdminClient({
 		logger.info("success");
 		logger.info("failed");
 
-		// update mailQueueData
-		setMailQueueData((prev) =>
-			prev.filter((obj) => !mailsSent.includes(obj.id)),
+		// Update SWR cache optimistically
+		mutate(
+			(currentData) => {
+				if (!currentData) return currentData;
+				return currentData.filter((obj) => !mailsSent.includes(obj.id));
+			},
+			{ revalidate: true },
 		);
 
 		toastSuccess({
@@ -425,45 +462,30 @@ export default function MailQueueAdminClient({
 		}
 	}, [selectedRows]);
 
-	// call /api/sysAdmin/emailQueue to get the mail queue data and refresh every 30 seconds.
+	// Don't render until hydrated to prevent hydration mismatch
+	if (!isHydrated) {
+		return (
+			<div className="space-y-4">
+				<Skeleton className="h-10 w-full" />
+				<Skeleton className="h-64 w-full" />
+			</div>
+		);
+	}
 
-	useEffect(() => {
-		const fetchMailQueue = async () => {
-			try {
-				const response = await fetch("/api/sysAdmin/emailQueue");
-				const data = await response.json();
-				setMailQueueData(data);
-				setLoading(false);
-			} catch (error) {
-				setError(error as string);
-				setLoading(false);
-			}
-		};
+	// Show loading state
+	if (isLoading) {
+		return (
+			<div className="space-y-4">
+				<Skeleton className="h-10 w-full" />
+				<Skeleton className="h-64 w-full" />
+			</div>
+		);
+	}
 
-		setLoading(true);
-		setError(null);
-
-		// Emit immediately and then every 10 seconds
-		//socket.emit("online_peers");
-		const interval = setInterval(() => {
-			//socket.emit("online_peers");
-			fetchMailQueue();
-		}, 10000);
-
-		// Update current time every 10 second
-		const timerId = setInterval(() => {
-			setCurrentTime(getUtcNow());
-		}, 10000);
-
-		return () => {
-			//socket.off("online_peers", handlePeers);
-			clearInterval(interval);
-			clearInterval(timerId);
-		};
-	}, []);
-
-	if (loading) return <Loader />;
-	if (error) return <div className="text-red-500">{error}</div>;
+	// Show error state (silent fail - don't show error UI)
+	if (error || !mailQueueData) {
+		return null;
+	}
 
 	return (
 		<>
@@ -527,7 +549,7 @@ export default function MailQueueAdminClient({
 
 			<DataTableCheckbox
 				columns={columns}
-				data={mailQueueData}
+				data={mailQueueData || []}
 				initiallySelected={{}}
 				disabled={false}
 				onRowSelectionChange={setSelectedRows}

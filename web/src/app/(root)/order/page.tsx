@@ -1,13 +1,10 @@
 import getStoreById from "@/actions/get-store-by_id";
 import { GlobalNavbar } from "@/components/global-navbar";
-import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
-import { sqlClient } from "@/lib/prismadb";
+import Container from "@/components/ui/container";
 import type { Store } from "@/types";
-import { transformPrismaDataForJson } from "@/utils/utils";
 import { Suspense } from "react";
 import { DisplayStoreOrdersToday } from "./display-order-today";
-import logger from "@/lib/logger";
 
 // 點餐記錄 - show order history from local storage.
 //NOTE - why local storage?  because we allow anonymous user to place order.

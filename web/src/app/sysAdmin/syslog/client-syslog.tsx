@@ -5,25 +5,46 @@ import { Heading } from "@/components/heading";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { IconAlertCircle, IconCheck, IconX } from "@tabler/icons-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
 
-import { Loader } from "@/components/loader";
 import { Separator } from "@/components/ui/separator";
 import type { SystemLog } from "@/types";
 import { formatDateTime, getUtcNow } from "@/utils/datetime-utils";
 import { format } from "date-fns";
 import logger from "@/lib/logger";
+import { useIsHydrated } from "@/hooks/use-hydrated";
+import useSWR from "swr";
 
 export const SystemLogClient: React.FC = () => {
-	const [data, setData] = useState<SystemLog[]>();
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const isHydrated = useIsHydrated();
 	const [currentTime, setCurrentTime] = useState(() => getUtcNow());
 	const [openDeleteAll, setOpenDeleteAll] = useState(false);
 	//const { lng } = useI18n();
 	//const { t } = useTranslation(lng);
+
+	// Conditional URL - only fetch if hydrated
+	const url = isHydrated ? "/api/sysAdmin/syslog" : null;
+
+	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
+	const { data, error, isLoading, mutate } = useSWR<SystemLog[]>(url, fetcher, {
+		refreshInterval: 10000, // Poll every 10 seconds
+		revalidateOnFocus: true,
+		revalidateOnReconnect: true,
+	});
+
+	// Update current time every 10 seconds
+	useEffect(() => {
+		if (!isHydrated) return;
+
+		const timerId = setInterval(() => {
+			setCurrentTime(getUtcNow());
+		}, 10000);
+
+		return () => clearInterval(timerId);
+	}, [isHydrated]);
 
 	/* #region maintain data array on client side */
 
@@ -105,39 +126,6 @@ export const SystemLogClient: React.FC = () => {
 		},
 	];
 
-	useEffect(() => {
-		const fetchSystemLogs = async () => {
-			try {
-				const response = await fetch("/api/sysAdmin/syslog");
-				const data = await response.json();
-				setData(data);
-				setLoading(false);
-			} catch (error) {
-				setError(error as string);
-				setLoading(false);
-			}
-		};
-
-		setLoading(true);
-		setError(null);
-
-		// Emit immediately and then every 10 seconds
-		const interval = setInterval(() => {
-			fetchSystemLogs();
-		}, 10000);
-
-		// Update current time every 10 second
-		const timerId = setInterval(() => {
-			setCurrentTime(getUtcNow());
-		}, 10000);
-
-		return () => {
-			//socket.off("online_peers", handlePeers);
-			clearInterval(interval);
-			clearInterval(timerId);
-		};
-	}, []);
-
 	const handleDeleteAll = async () => {
 		try {
 			const response = await fetch("/api/sysAdmin/syslog", {
@@ -151,7 +139,8 @@ export const SystemLogClient: React.FC = () => {
 				description: data.message,
 			});
 			setOpenDeleteAll(false);
-			setData([]);
+			// Update SWR cache to empty array
+			mutate([], { revalidate: false });
 		} catch (error) {
 			toastError({
 				title: "Error",
@@ -160,8 +149,30 @@ export const SystemLogClient: React.FC = () => {
 		}
 	};
 
-	if (loading) return <Loader />;
-	if (error) return <div className="text-red-500">{error}</div>;
+	// Don't render until hydrated to prevent hydration mismatch
+	if (!isHydrated) {
+		return (
+			<div className="space-y-4">
+				<Skeleton className="h-10 w-full" />
+				<Skeleton className="h-64 w-full" />
+			</div>
+		);
+	}
+
+	// Show loading state
+	if (isLoading) {
+		return (
+			<div className="space-y-4">
+				<Skeleton className="h-10 w-full" />
+				<Skeleton className="h-64 w-full" />
+			</div>
+		);
+	}
+
+	// Show error state (silent fail - don't show error UI)
+	if (error || !data) {
+		return null;
+	}
 
 	return (
 		<>

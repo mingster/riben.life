@@ -1,12 +1,12 @@
 "use client";
 
-import type { Store } from "@/types";
-import { useCallback, useEffect, useState } from "react";
-
-import { Loader } from "@/components/loader";
+import type { Store, StoreOrder } from "@/types";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateTime } from "@/utils/datetime-utils";
+import { getUtcNow } from "@/utils/datetime-utils";
 import { OrderInProgress } from "../../components/order-inprogress";
-import logger from "@/lib/logger";
+import { useIsHydrated } from "@/hooks/use-hydrated";
+import useSWR from "swr";
 
 export interface props {
 	store: Store;
@@ -15,113 +15,64 @@ export interface props {
 // Awaiting4ProcessingClient
 // it checks for new orders every 5 seconds.
 export const Awaiting4ProcessingClient: React.FC<props> = ({ store }) => {
-	//const { lng } = useI18n();
-	//const { t } = useTranslation(lng);
+	const isHydrated = useIsHydrated();
+	const date = getUtcNow();
 
-	const [mounted, setMounted] = useState(false);
-	const [loading, setLoading] = useState(false);
+	// Conditional URL - only fetch if storeId exists and hydrated
+	const url =
+		store.id && isHydrated
+			? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-for-process`
+			: null;
 
-	const date = new Date();
-	const [awaiting4ProcessingOrders, setAwaiting4ProcessingOrders] = useState(
-		[],
-	);
+	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
+	const {
+		data: awaiting4ProcessingOrders,
+		error,
+		isLoading,
+	} = useSWR<StoreOrder[]>(url, fetcher, {
+		refreshInterval: 5000, // Poll every 5 seconds
+		revalidateOnFocus: true,
+		revalidateOnReconnect: true,
+	});
 
-	const fetchData = useCallback(() => {
-		setLoading(true);
+	// Don't render until hydrated to prevent hydration mismatch
+	if (!isHydrated) {
+		return (
+			<section className="relative w-full">
+				<div className="flex flex-col gap-1">
+					<Skeleton className="h-64 w-full" />
+					<Skeleton className="h-4 w-32" />
+				</div>
+			</section>
+		);
+	}
 
-		// get processing orders in the store.
-		const url = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${store.id}/orders/get-awaiting-for-process`;
-		fetch(url)
-			.then((data) => {
-				return data.json();
-			})
-			.then((data) => {
-				//console.log("data", JSON.stringify(data));
-				setAwaiting4ProcessingOrders(data);
+	// Show loading state
+	if (isLoading) {
+		return (
+			<section className="relative w-full">
+				<div className="flex flex-col gap-1">
+					<Skeleton className="h-64 w-full" />
+					<Skeleton className="h-4 w-32" />
+				</div>
+			</section>
+		);
+	}
 
-				/*
-        if (store.requirePrepaid) {
-          const prepayOrders = data.filter((order: StoreOrder) => order.isPaid);
-          setPendingOrders(
-            prepayOrders.filter(
-              (order: StoreOrder) =>
-                order.orderStatus === OrderStatus.Pending ||
-                order.orderStatus === OrderStatus.InShipping,
-            ),
-          );
-          setAwaiting4ProcessingOrders(
-            prepayOrders.filter(
-              (order: StoreOrder) =>
-                order.orderStatus === OrderStatus.Processing,
-            ),
-          );
-        } else {
-          setPendingOrders(
-            data.filter(
-              (order: StoreOrder) =>
-                order.orderStatus === OrderStatus.Pending ||
-                order.orderStatus === OrderStatus.InShipping,
-            ),
-          );
-          setAwaiting4ProcessingOrders(
-            data.filter(
-              (order: StoreOrder) =>
-                order.orderStatus === OrderStatus.Processing,
-            ),
-          );
-        }
-        */
-			})
-			.catch((error) => {
-				logger.error("Error:", {
-					metadata: {
-						error: error instanceof Error ? error.message : String(error),
-					},
-					tags: ["error"],
-				});
-				throw error;
-			});
-
-		setLoading(false);
-	}, [store.id]);
-
-	const IntervaledContent = () => {
-		useEffect(() => {
-			//Implementing the setInterval method
-			const interval = setInterval(() => {
-				fetchData();
-			}, 5000); // do every 5 sec.
-
-			//Clearing the interval
-			return () => clearInterval(interval);
-		}, []);
-
-		return <></>;
-	};
-
-	// useEffect only runs on the client, so now we can safely show the UI
-	useEffect(() => {
-		// fetch data as soon as page is mounted
-		if (!mounted) fetchData();
-		setMounted(true);
-	}, [mounted, fetchData]);
-
-	if (!mounted) {
+	// Show error state (silent fail - don't show error UI)
+	if (error || !awaiting4ProcessingOrders) {
 		return null;
 	}
 
-	if (loading) return <Loader />;
-
 	return (
 		<section className="relative w-full">
-			<IntervaledContent />
 			<div className="flex flex-col gap-1">
 				<OrderInProgress
 					store={store}
 					requirePrepaid={store.requirePrepaid}
 					autoAcceptOrder={store.autoAcceptOrder}
 					orders={awaiting4ProcessingOrders}
-					parentLoading={loading}
+					parentLoading={isLoading}
 				/>
 
 				<div className="text-xs">{formatDateTime(date)}</div>
