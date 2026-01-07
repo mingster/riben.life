@@ -108,32 +108,32 @@ This document designs a customer invite workflow that allows imported or existin
 
 ```prisma
 model CustomerInvite {
-  id            String   @id @default(cuid())
-  token         String   @unique // Unique 6-character alphanumeric invite code
-  userId        String   // User ID of imported/existing customer
-  storeId       String   // Store that sent the invite
-  organizationId String   // Organization ID (for member relationship)
-  
+  id             String @id @default(cuid())
+  token          String @unique // Unique 6-character alphanumeric invite code
+  userId         String // User ID of imported/existing customer
+  storeId        String // Store that sent the invite
+  organizationId String // Organization ID (for member relationship)
+
   // Invite metadata
-  invitedBy     String   // User ID of store admin who created invite
-  invitedAt     BigInt   // Epoch timestamp when invite was created
-  expiresAt     BigInt   // Epoch timestamp when invite expires
-  usedAt        BigInt?  // Epoch timestamp when invite was used (null if unused)
-  
+  invitedBy String // User ID of store admin who created invite
+  invitedAt BigInt // Epoch timestamp when invite was created
+  expiresAt BigInt // Epoch timestamp when invite expires
+  usedAt    BigInt? // Epoch timestamp when invite was used (null if unused)
+
   // Usage tracking
-  accessedAt    BigInt?  // First time invite URL was accessed
-  accessCount   Int      @default(0) // Number of times invite URL was accessed
-  
+  accessedAt  BigInt? // First time invite URL was accessed
+  accessCount Int     @default(0) // Number of times invite URL was accessed
+
   // Relations
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  store         Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  inviter       User     @relation("Inviter", fields: [invitedBy], references: [id])
-  
+  User    User  @relation("UserCustomerInvite", fields: [userId], references: [id], onDelete: Cascade)
+  Store   Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Inviter User  @relation("CustomerInviter", fields: [invitedBy], references: [id], onDelete: Cascade)
+
   @@index([token])
   @@index([userId])
   @@index([storeId])
   @@index([expiresAt])
-  @@map("customer_invite")
+  @@map("CustomerInvite")
 }
 ```
 

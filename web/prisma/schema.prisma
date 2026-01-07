@@ -73,6 +73,9 @@ model User {
   NotificationPreferences NotificationPreferences[]
   ServiceStaff            ServiceStaff[]
 
+  Invitee         CustomerInvite[] @relation("UserCustomerInvite")
+  CustomerInviter CustomerInvite[] @relation("CustomerInviter")
+
   @@unique([normalizedEmail])
   @@index([email])
   @@index([createdAt])
@@ -254,6 +257,35 @@ model Subscription {
   seats                Int?
   trialStart           DateTime?
   trialEnd             DateTime?
+}
+
+model CustomerInvite {
+  id             String @id @default(cuid())
+  token          String @unique // Unique 6-character alphanumeric invite code
+  userId         String // User ID of imported/existing customer
+  storeId        String // Store that sent the invite
+  organizationId String // Organization ID (for member relationship)
+
+  // Invite metadata
+  invitedBy String // User ID of store admin who created invite
+  invitedAt BigInt // Epoch timestamp when invite was created
+  expiresAt BigInt // Epoch timestamp when invite expires
+  usedAt    BigInt? // Epoch timestamp when invite was used (null if unused)
+
+  // Usage tracking
+  accessedAt  BigInt? // First time invite URL was accessed
+  accessCount Int     @default(0) // Number of times invite URL was accessed
+
+  // Relations
+  User    User  @relation("UserCustomerInvite", fields: [userId], references: [id], onDelete: Cascade)
+  Store   Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Inviter User  @relation("CustomerInviter", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([storeId])
+  @@index([expiresAt])
+  @@map("CustomerInvite")
 }
 
 /// Next.js application logs for log drain functionality
@@ -689,6 +721,7 @@ model Store {
   CustomerCreditLogs         CustomerCreditLedger[]
   CustomerFiatLedgers        CustomerFiatLedger[]
   FacilityPricingRules       FacilityPricingRule[]
+  customerInvites            CustomerInvite[]
 
   @@index([ownerId])
   @@index([organizationId])
