@@ -1361,12 +1361,12 @@ export function ReservationForm({
 										)}
 									>
 										<FormLabel>
-											{t("name") || "Name"}{" "}
+											{t("your_name") || "Your Name"}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
 											<Input
-												placeholder={t("name") || "Enter your name"}
+												placeholder={t("your_name") || "Enter your name"}
 												disabled={isSubmitting}
 												{...field}
 												className={cn(
@@ -1458,7 +1458,7 @@ export function ReservationForm({
 								const fieldLabels: Record<string, string> = {
 									storeId: t("store") || "Store",
 									customerId: t("customer") || "Customer",
-									name: t("name") || "Name",
+									name: t("your_name") || "Your Name",
 									phone: t("phone") || "Phone",
 									facilityId: t("rsvp_facility") || "Facility",
 									serviceStaffId: t("service_staff") || "Service Staff",
@@ -1555,7 +1555,7 @@ export function ReservationForm({
 													const fieldLabels: Record<string, string> = {
 														storeId: t("store") || "Store",
 														customerId: t("customer") || "Customer",
-														name: t("name") || "Name",
+														name: t("your_name") || "Your Name",
 														phone: t("phone") || "Phone",
 														facilityId: t("rsvp_facility") || "Facility",
 														serviceStaffId:

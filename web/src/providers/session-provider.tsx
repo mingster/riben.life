@@ -93,7 +93,7 @@ export function SessionWrapper({ children }: { children: ReactNode }) {
 				DELETE: t("delete"),
 
 				EXPIRES: t("expires"),
-				NAME: t("name"),
+				NAME: t("your_name"),
 				EMAIL: t("email"),
 				EMAIL_DESCRIPTION: t("email_description"),
 				EMAIL_INSTRUCTIONS: t("email_instructions"),

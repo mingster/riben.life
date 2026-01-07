@@ -205,7 +205,6 @@
   "credit_quick_select": "Quick Select",
   "credit_refill": "Refill Credit",
   "credit_refill_amount": "Amount",
-  "refill_customer_ledger_note": "Credit refill: {{creditAmount}} points ({{dollarAmount}} {{currency}})",
   "credit_refill_description": "Top up your credit balance to use for future purchases",
   "credit_refill_description_ledger": "Credit refill: {{creditAmount}} points. Cash value: {{dollarAmount}} {{currency}}. Amount: {{amount}} points. Bonus: {{bonus}} points. Total credit: {{totalCredit}} points.",
   "credit_refill_note_ledger": "Order # {{orderId}}",
@@ -678,9 +677,6 @@
   "ProductStatus_Draft": "Draft",
   "ProductStatus_Published": "Published",
   "profile_image": "Profile Image URL",
-  "refill_credit_description_ledger": "Promotional Credit Recharge - {{totalCredit}} points",
-  "refill_credit_note_ledger": "Promotional credit: {{amount}} + bonus {{bonus}} = {{totalCredit}} points. Operator: {{operator}}.",
-  "refill_credit_note_with_extra": "Promotional credit: {{amount}} + bonus {{bonus}} = {{totalCredit}} points. Operator: {{operator}}. {{note}}",
   "promotional_refill_by_operator_default_note": "Promotional refill by operator",
   "providers": "Third-party login",
   "providers_description": "Use third-party login providers to log in.",
@@ -701,6 +697,10 @@
   "refill_account_balance": "Refill Account Balance",
   "refill_account_balance_description": "Add funds to your account balance.",
   "refill_account_balance_order_note": "Deposit {{fiatAmount}} {{currency}} to store's account.",
+  "refill_credit_description_ledger": "Promotional Credit Recharge - {{totalCredit}} points",
+  "refill_credit_note_ledger": "Promotional credit: {{amount}} + bonus {{bonus}} = {{totalCredit}} points. Operator: {{operator}}.",
+  "refill_credit_note_with_extra": "Promotional credit: {{amount}} + bonus {{bonus}} = {{totalCredit}} points. Operator: {{operator}}. {{note}}",
+  "refill_customer_ledger_note": "Credit refill: {{creditAmount}} points ({{dollarAmount}} {{currency}})",
   "refund": "Refund",
   "refund_all": "Refund Entire Order",
   "remove": "Remove",
@@ -1168,5 +1168,6 @@
   "weekday_Wednesday": "Wednesday",
   "weekly_digest": "Weekly Digest",
   "yes": "Yes",
-  "you_are_not_allowed_to_register_this_passkey": "You are not allowed to register this passkey"
+  "you_are_not_allowed_to_register_this_passkey": "You are not allowed to register this passkey",
+  "your_name": "First/Last Name"
 }

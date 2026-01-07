@@ -308,7 +308,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		{
 			accessorKey: "name",
 			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title={t("name")} />;
+				return <DataTableColumnHeader column={column} title={t("your_name")} />;
 			},
 			cell: ({ row }) => {
 				return (

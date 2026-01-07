@@ -601,13 +601,13 @@ export function EditServiceStaffDialog({
 												)}
 											>
 												<FormLabel>
-													{t("name") || "Name"}{" "}
+													{t("your_name") || "Your Name"}{" "}
 													<span className="text-destructive">*</span>
 												</FormLabel>
 												<FormControl>
 													<Input
 														disabled={loading || form.formState.isSubmitting}
-														placeholder="Enter name"
+														placeholder={t("your_name") || "Enter your name"}
 														value={field.value || ""}
 														onChange={(e) => {
 															const value = e.target.value;

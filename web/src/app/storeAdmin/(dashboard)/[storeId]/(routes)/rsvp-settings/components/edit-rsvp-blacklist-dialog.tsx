@@ -269,7 +269,7 @@ export function EditRsvpBlacklistDialog({
 							<div className="text-sm text-muted-foreground">
 								{selectedUser.name && (
 									<div>
-										{t("name") || "Name"}: {selectedUser.name}
+										{t("your_name") || "Your Name"}: {selectedUser.name}
 									</div>
 								)}
 								{selectedUser.email && (
