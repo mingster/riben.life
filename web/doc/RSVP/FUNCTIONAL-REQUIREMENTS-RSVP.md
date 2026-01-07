@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27
 **Status:** Active
-**Version:** 2.0
+**Version:** 2.1
 
 **Related Documents:**
 
@@ -104,10 +104,14 @@ Store Admins have all Store Staff permissions, plus:
 * Number of adults (numOfAdult, default: 1)
 * Number of children (numOfChild, default: 0)
 * Customer contact information:
-  * If logged in, (optional), keep User ID and Email address in the reservation record
-  * Phone number (required for anonymous users)
+  * If logged in: (optional) User ID and Email address are kept in the reservation record
+  * **If anonymous (not logged in):**
+    * **Name is required** - Customer must provide their name
+    * **Phone number is required** - Customer must provide their phone number
+    * Both name and phone are validated and stored in the reservation record
 * Special requests or notes (message, optional)
-* Facility preference (facilityId, optional)
+* Facility preference (facilityId, optional, required if `mustSelectFacility = true`)
+* Service staff preference (serviceStaffId, optional, required if `mustHaveServiceStaff = true`)
 
 **FR-RSVP-003:** The system must validate reservation availability based on:
 
@@ -120,6 +124,15 @@ Store Admins have all Store Staff permissions, plus:
   * **If `RsvpSettings.useBusinessHours = false` AND `Store.useBusinessHours = true`:** Validate `rsvpTime` against `StoreSettings.businessHours`
   * **If `RsvpSettings.useBusinessHours = false` AND `Store.useBusinessHours = false`:** No business hours validation (all times allowed)
   * Validation occurs both in the UI (real-time feedback) and on form submission
+* **Facility business hours validation:**
+  * If a facility has its own business hours configured, validate `rsvpTime` against facility's business hours
+  * Facility business hours take precedence over store/RSVP business hours when facility is selected
+* **Service staff business hours validation:**
+  * If a service staff is selected and has business hours configured, validate `rsvpTime` against service staff's business hours
+  * Service staff business hours are checked in addition to facility/store business hours
+* **Required field validation:**
+  * If `mustSelectFacility = true`, facility selection is required
+  * If `mustHaveServiceStaff = true`, service staff selection is required
 * Facility capacity and availability
 * **UI Facility Filtering:**
   * The reservation form dynamically filters available facilities based on the selected time slot
@@ -128,15 +141,26 @@ Store Admins have all Store Staff permissions, plus:
   * **If `singleServiceMode` is `true`:** If any reservation exists for the time slot on the same calendar day, all facilities are filtered out
   * **If `singleServiceMode` is `false` (default):** Only facilities with existing reservations on the same calendar day are filtered out
   * When editing an existing reservation, the current facility is always included even if it would normally be filtered out
+* **Service staff availability:**
+  * Service staff capacity is checked (how many concurrent reservations a service staff can handle)
+  * Service staff business hours are validated if configured
 * Existing reservations for the requested time slot
 * **If `singleServiceMode` is `true`:** Only one reservation is allowed per time slot across all facilities (personal shop mode)
-* **If `singleServiceMode` is `false` (default):** Multiple reservations can exist on the same time slot as long as they use different facilities
+* **If `singleServiceMode` is `false` (default):** Multiple reservations can exist on the same time slot as long as they use different facilities or service staff
 
 **FR-RSVP-004:** The system must support prepaid reservations when enabled:
 
 * If `minPrepaidPercentage > 0`:
   * Anonymous users can create reservations without signing in
+  * **Anonymous Reservation Local Storage:**
+    * When an anonymous user creates a reservation, the reservation data (including name, phone, reservation details) is saved to browser local storage
+    * Local storage allows anonymous users to view their reservation history even without an account
+    * Local storage is keyed by store ID to support multiple stores
   * When a customer creates a reservation with prepaid required:
+    * System calculates total reservation cost:
+      * Total cost = facility cost + service staff cost (if applicable)
+      * Facility cost and credit are determined from facility's `defaultCost` and `defaultCredit`, or from pricing rules if applicable
+      * Service staff cost and credit are determined from service staff's `defaultCost` and `defaultCredit`
     * System creates a store order with the prepaid amount
     * Prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`; if total cost is missing or zero, prepaid is skipped
     * **Currency Handling:** Order currency is set to the store's `defaultCurrency` to ensure consistency across order creation and payment processing.
@@ -147,6 +171,10 @@ Store Admins have all Store Staff permissions, plus:
     * Order is created as unpaid (`isPaid = false`) for customer to complete payment at checkout
     * Customer is redirected to `/checkout/[orderId]` to select payment method and complete payment
     * **Checkout Success:** After successful payment, a brief success message is displayed before redirecting to the appropriate page (RSVP page, custom return URL, or order page).
+    * **Anonymous User Phone Confirmation:**
+      * After checkout completion, if the customer is anonymous (not logged in), the order confirmation page prompts the user to confirm their phone number
+      * This ensures the phone number used for the reservation matches the phone number associated with the order
+      * The confirmed phone number is used for order tracking and customer communication
   * Payment can be made using:
     * Customer credit (if `useCustomerCredit = true` and customer selects "credit" payment method)
     * Other payment methods (Stripe, LINE Pay, cash, etc.) available at checkout
@@ -154,6 +182,7 @@ Store Admins have all Store Staff permissions, plus:
 * Reservation linked to order via `orderId` when prepaid
 * Customer credit balance is deducted only when customer completes payment using credit at checkout
 * **Store Membership:** When customers create orders (including RSVP prepaid orders), they are automatically added as store members with "user" role in the store's organization, ensuring they can access store-specific features and services.
+* **Cost Display:** If `showCostToCustomer = true`, reservation costs (facility cost, service staff cost, total cost) are displayed to customers in the reservation form
 
 **FR-RSVP-005:** The system must assign a reservation status:
 
@@ -161,7 +190,7 @@ Store Admins have all Store Staff permissions, plus:
 
 * Status values (RsvpStatus enum):
   * `0` = Pending (待確認/尚未付款) - Initial status when reservation is created
-  * `10` = ReadyToConfirm - if store doesn't require prepaid, reservation status is ReadyToConfirm; otherwise reservation is ReadyToConfirm once user completed payment.
+  * `10` = ReadyToConfirm - if store doesn't require prepaid, reservation status is ReadyToConfirm; otherwise reservation is ReadyToConfirm once user completed payment. If `noNeedToConfirm = true` and `alreadyPaid = true`, reservation automatically transitions to Ready (40) without requiring store confirmation.
   * `40` = Ready (已入場) - Customer has arrived and is ready for service
   * `50` = Completed (已完成) - Reservation/service has been completed
   * `60` = Cancelled (已取消) - Reservation has been cancelled
@@ -169,7 +198,7 @@ Store Admins have all Store Staff permissions, plus:
 
 * Additional fields track payment and confirmation status separately:
   * `alreadyPaid` (Boolean) - Payment has been received
-  * `confirmedByStore` (Boolean) - Store has confirmed the reservation
+  * `confirmedByStore` (Boolean) - Store has confirmed the reservation (automatically set to `true` if `noNeedToConfirm = true` and `alreadyPaid = true`)
   * `confirmedByCustomer` (Boolean) - Customer has confirmed the reservation
 
 **FR-RSVP-006:** The system must support dual confirmation:
@@ -211,7 +240,10 @@ Store Admins have all Store Staff permissions, plus:
      * Number of children (numOfChild, default: 0)
    * Customer provides contact information:
      * If logged in: (optional) User ID and Email address are kept in the reservation record
-     * If anonymous: Phone number required
+     * **If anonymous:**
+       * **Name is required** - Customer must provide their name
+       * **Phone number is required** - Customer must provide their phone number
+       * Both fields are validated before form submission
    * Customer optionally selects facility preference (facilityId)
    * Customer optionally adds special requests or notes (message)
 
@@ -220,7 +252,9 @@ Store Admins have all Store Staff permissions, plus:
    * System validates:
      * Selected time is within business hours
      * Selected time slot is available
-     * Required fields are filled (phone number required for anonymous users, email optional)
+     * Required fields are filled:
+       * **For anonymous users:** Both name and phone number are required
+       * **For logged-in users:** Contact information is optional
      * Party size is valid (at least 1 adult)
 
 5. **Reservation Creation:**
@@ -233,6 +267,10 @@ Store Admins have all Store Staff permissions, plus:
      * `confirmedByCustomer`: `false`
      * No order is created (no `orderId`) (initially)
    * Reservation is saved to database
+   * **For anonymous users:**
+     * Reservation data (including name, phone, reservation details) is saved to browser local storage
+     * Local storage is keyed by store ID: `rsvp-${storeId}`
+     * This allows anonymous users to view their reservation history later without signing in
 
    **If `rsvpSettings.minPrepaidPercentage > 0`:**
 
@@ -257,6 +295,11 @@ Store Admins have all Store Staff permissions, plus:
      * System updates reservation `alreadyPaid` to `true`
      * System updates reservation `status` to `ReadyToConfirm`
      * System creates `storeLedger` entry to record the transaction (if applicable)
+     * **For anonymous users:**
+       * Customer is redirected to order confirmation page
+       * Order confirmation page prompts anonymous user to confirm their phone number
+       * This ensures the phone number used for the reservation matches the phone number associated with the order
+       * Confirmed phone number is used for order tracking and customer communication
      * Flow continues to step 6
 
 6. **Store Staff Notification:**
@@ -505,6 +548,10 @@ Completed (50) [when service is finished]
 * Facility name (facilityName, unique)
 * Facility capacity (capacity, default: 2)
 * Link facilities to store (storeId)
+* Default cost (defaultCost, optional) - Default cost for using this facility
+* Default credit (defaultCredit, optional) - Default credit cost for using this facility
+* Default duration (defaultDuration, optional) - Default reservation duration in minutes (overrides RSVP settings defaultDuration)
+* Business hours (businessHours, optional) - Facility-specific business hours in JSON format (overrides store/RSVP business hours when facility is selected)
 
 **FR-RSVP-023:** Store staff and Store admins must be able to view resource status:
 
@@ -538,6 +585,32 @@ Completed (50) [when service is finished]
 * Store staff and Store admins can manually assign specific resources
 * Override automatic assignment when needed
 
+#### 3.3.3 Service Staff Management
+
+**FR-RSVP-026a:** Store admins must be able to create and manage service staff:
+
+* Link service staff to store (storeId) and user (userId)
+* Service staff capacity (capacity, default: 4) - How many concurrent reservations a service staff can handle
+* Default cost (defaultCost, optional) - Default cost for using this service staff
+* Default credit (defaultCredit, optional) - Default credit cost for using this service staff
+* Default duration (defaultDuration, optional) - Default reservation duration in minutes (overrides facility and RSVP settings defaultDuration)
+* Business hours (businessHours, optional) - Service staff-specific business hours in JSON format
+* Description (description, optional) - Description of the service staff
+
+**FR-RSVP-026b:** The system must validate service staff availability:
+
+* Check service staff capacity (number of concurrent reservations)
+* Validate service staff business hours if configured
+* Filter available service staff based on selected time slot and existing reservations
+* Service staff availability is checked in addition to facility availability
+
+**FR-RSVP-026c:** Store staff and Store admins must be able to assign service staff to reservations:
+
+* Select service staff during reservation creation (customer-facing or admin)
+* Assign service staff to existing reservations
+* View service staff assignments in reservation list
+* Service staff assignment is optional unless `mustHaveServiceStaff = true`
+
 ***
 
 ### 3.4 RSVP Settings
@@ -554,6 +627,8 @@ Completed (50) [when service is finished]
 * Use store's general business hours (`useBusinessHours = true`)
 * Set custom RSVP hours (`rsvpHours`, format: "09:00-18:00")
 * Define available reservation time slots
+* Default duration (`defaultDuration`, default: 60 minutes) - Default reservation duration in minutes
+* **Note:** Default duration can be overridden by facility `defaultDuration` or service staff `defaultDuration` if specified
 
 #### 3.4.2 Prepaid Settings
 
@@ -562,8 +637,11 @@ Completed (50) [when service is finished]
 * Configure minimum prepaid percentage (`minPrepaidPercentage`, 0–100)
 * Prepaid is required iff `minPrepaidPercentage > 0`
 * Required prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`
+* Total reservation cost = facility cost + service staff cost (if applicable)
 * If total reservation cost is missing or zero, prepaid is skipped
 * When prepaid is required, a pending RSVP creates a store order with the prepaid amount and must be paid before confirmation
+* **No Need To Confirm (`noNeedToConfirm`):** If `noNeedToConfirm = true` and `alreadyPaid = true`, reservation automatically transitions to Ready (40) without requiring store confirmation (`confirmedByStore` is automatically set to `true`)
+* **Show Cost To Customer (`showCostToCustomer`):** If `showCostToCustomer = true`, reservation costs (facility cost, service staff cost, total cost) are displayed to customers in the reservation form
 
 #### 3.4.3 Cancellation Settings
 
@@ -611,6 +689,13 @@ Completed (50) [when service is finished]
 * Require signature before reservation confirmation
 * Require signature at check-in/arrival
 * Store signature data securely with reservation record
+
+#### 3.4.9 Selection Requirements
+
+**FR-RSVP-034a:** Store admins must be able to configure selection requirements:
+
+* **Must Select Facility (`mustSelectFacility`):** If enabled, customers must select a facility when creating a reservation. Facility selection becomes a required field in the reservation form.
+* **Must Have Service Staff (`mustHaveServiceStaff`):** If enabled, customers must select a service staff when creating a reservation. Service staff selection becomes a required field in the reservation form.
 
 ***
 
@@ -827,11 +912,59 @@ Completed (50) [when service is finished]
 
 ***
 
-### 3.10 Reporting and Analytics (Store Admin Only)
+### 3.10 Customer Reservation History
 
-#### 3.10.1 Reservation Statistics
+#### 3.10.1 Customer-Facing Reservation History
 
-**FR-RSVP-056:** Store admins must be able to view reservation statistics (Store Staff access not permitted):
+**FR-RSVP-056:** Customers must be able to view their reservation history:
+
+* **Logged-in Users:**
+  * Customers can access `/s/[storeId]/reservation/history` to view all their reservations for the store
+  * Reservations are fetched from the database based on the customer's user ID
+  * Reservations are displayed in reverse chronological order (most recent first)
+  * Customers can view reservation details including:
+    * Reservation date and time
+    * Facility and service staff (if assigned)
+    * Party size (adults and children)
+    * Reservation status
+    * Payment status
+    * Order information (if prepaid)
+
+* **Anonymous Users:**
+  * Anonymous users can access `/s/[storeId]/reservation/history` without authentication
+  * The page displays reservations stored in browser local storage for the specific store
+  * Local storage is keyed by store ID to support multiple stores
+  * Only reservations created by the anonymous user on the same browser/device are displayed
+  * If no reservations are found in local storage, the page displays an empty state
+  * Anonymous users can view the same reservation details as logged-in users
+  * **Note:** Anonymous users are not redirected to sign-in when accessing the history page
+
+* **Reservation Data in Local Storage:**
+  * When an anonymous user creates a reservation, the following data is saved to local storage:
+    * Reservation ID
+    * Store ID
+    * Name and phone number (as provided during reservation creation)
+    * Reservation date and time
+    * Facility and service staff (if selected)
+    * Party size
+    * Reservation status
+    * Payment status
+    * Order ID (if prepaid)
+  * Local storage entries are organized by store ID to prevent conflicts across multiple stores
+
+* **Data Persistence:**
+  * Local storage persists across browser sessions
+  * Users can view their anonymous reservations even after closing and reopening the browser
+  * Local storage is cleared only when:
+    * User explicitly clears browser data
+    * User clears local storage for the domain
+    * Browser storage quota is exceeded (browser-dependent behavior)
+
+### 3.11 Reporting and Analytics (Store Admin Only)
+
+#### 3.11.1 Reservation Statistics
+
+**FR-RSVP-057:** Store admins must be able to view reservation statistics (Store Staff access not permitted):
 
 * Total reservations by date range
 * Reservations by status
@@ -839,18 +972,18 @@ Completed (50) [when service is finished]
 * No-show rate
 * Cancellation rate
 
-#### 3.10.2 Customer Analytics
+#### 3.11.2 Customer Analytics
 
-**FR-RSVP-057:** Store admins must be able to view customer history (Store Staff access not permitted):
+**FR-RSVP-058:** Store admins must be able to view customer history (Store Staff access not permitted):
 
 * Reservation history per customer
 * Frequency of visits
 * Average party size
 * Preferred times/dates
 
-#### 3.10.3 Resource Utilization
+#### 3.11.3 Resource Utilization
 
-**FR-RSVP-058:** Store admins must be able to view resource utilization (Store Staff access not permitted):
+**FR-RSVP-059:** Store admins must be able to view resource utilization (Store Staff access not permitted):
 
 * Resource occupancy rates
 * Most/least used resources
@@ -862,13 +995,17 @@ Completed (50) [when service is finished]
 
 ### 4.1 Reservation Data Model
 
-**FR-RSVP-059:** The system must store the following reservation data:
+**FR-RSVP-060:** The system must store the following reservation data:
 
 * Unique reservation ID
 * Store ID
 * User ID (optional, for logged-in users)
+* **Name and phone number (for anonymous users):**
+  * Name (name, optional) - Required for anonymous reservations, stored in reservation record
+  * Phone number (phone, optional) - Required for anonymous reservations, stored in reservation record
 * Order ID (if prepaid)
 * Facility ID (if assigned)
+* Service Staff ID (serviceStaffId, optional, if service staff is assigned)
 * Number of adults
 * Number of children
 * Reservation date/time (rsvpTime)
@@ -880,42 +1017,89 @@ Completed (50) [when service is finished]
 * Payment method (credit, alternative payment)
 * Customer signature (if provided, stored as image/data)
 * Signature timestamp (when signature was captured)
+* **Pricing information (snapshot at time of reservation):**
+  * Facility cost (facilityCost, optional) - Cost charged for facility
+  * Facility credit (facilityCredit, optional) - Credit charged for facility
+  * Service staff cost (serviceStaffCost, optional) - Cost charged for service staff
+  * Service staff credit (serviceStaffCredit, optional) - Credit charged for service staff
+  * Pricing rule ID (pricingRuleId, optional) - Reference to pricing rule used (if applicable)
 * Creation and update timestamps
+* Created by (createdBy, optional) - User ID who created the reservation
 
 **Note:** When customer credit is used for prepaid reservation, the system must reference the `CustomerCredit` table to check balance and deduct amount.
 
 ### 4.2 Settings Data Model
 
-**FR-RSVP-060:** The system must store RSVP settings per store:
+**FR-RSVP-061:** The system must store RSVP settings per store:
 
 * `singleServiceMode` (Boolean, default: `false`) - When enabled, only ONE reservation per time slot is allowed across all facilities. This is designed for personal shops where the service provider can only handle one reservation at a time. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities.
 
-* Accept reservation flag
+* Accept reservation flag (`acceptReservation`)
 
-* Prepaid requirements and amount (can be dollar amount or CustomerCredit amount)
+* Prepaid requirements and amount (can be dollar amount or CustomerCredit amount):
+  * `minPrepaidPercentage` (Int, 0-100) - Minimum prepaid percentage
+  * `noNeedToConfirm` (Boolean, default: `false`) - If `true` and `alreadyPaid = true`, reservation automatically transitions to Ready (40) without requiring store confirmation
 
-* Cancellation policy (enabled, hours)
+* Cancellation policy (enabled, hours):
+  * `canCancel` (Boolean) - Enable/disable customer cancellations
+  * `cancelHours` (Int, default: 24) - Cancellation window in hours
 
-* Business hours configuration
+* Business hours configuration:
+  * `useBusinessHours` (Boolean) - Use store's general business hours or custom RSVP hours
+  * `rsvpHours` (String, optional) - Custom RSVP hours format: "09:00-18:00"
+  * `defaultDuration` (Int, default: 60) - Default reservation duration in minutes
 
-* Reminder settings (hours, channels)
+* Selection requirements:
+  * `mustSelectFacility` (Boolean, default: `false`) - Require facility selection
+  * `mustHaveServiceStaff` (Boolean, default: `false`) - Require service staff selection
 
-* Calendar sync preferences
+* Display settings:
+  * `showCostToCustomer` (Boolean, default: `false`) - Display reservation costs to customers
+
+* Reminder settings (hours, channels):
+  * `reminderHours` (Int, default: 24) - Reminder time in hours before reservation
+  * `useReminderSMS` (Boolean) - Enable SMS reminders
+  * `useReminderLine` (Boolean) - Enable LINE reminders
+  * `useReminderEmail` (Boolean) - Enable email reminders
+
+* Calendar sync preferences:
+  * `syncWithGoogle` (Boolean) - Enable Google Calendar sync
+  * `syncWithApple` (Boolean) - Enable Apple Calendar sync
 
 * Reserve with Google integration settings (enabled/disabled, API credentials, Google Business Profile connection, sync status)
 
-* Signature requirements (enabled, required before confirmation, required at check-in)
+* Signature requirements:
+  * `requireSignature` (Boolean, default: `false`) - Require signature for reservations
 
 ### 4.3 Resource Data Model (Facilities/Appointment Slots)
 
-**FR-RSVP-061:** The system must store resource information (facilities/appointment slots):
+**FR-RSVP-062:** The system must store resource information (facilities/appointment slots):
 
 * Unique resource ID
 * Store ID
 * Resource name (unique, stored as facilityName in database)
-* capacity (number of people/seats or service capacity)
+* Capacity (capacity, number of people/seats or service capacity, default: 2)
+* Default cost (defaultCost, optional) - Default cost for using this facility
+* Default credit (defaultCredit, optional) - Default credit cost for using this facility
+* Default duration (defaultDuration, optional) - Default reservation duration in minutes (overrides RSVP settings defaultDuration)
+* Business hours (businessHours, optional) - Facility-specific business hours in JSON format
 
-### 4.4 Customer Credit Data Model
+### 4.4 Service Staff Data Model
+
+**FR-RSVP-062a:** The system must store service staff information:
+
+* Unique service staff ID
+* Store ID
+* User ID (links to User table)
+* Capacity (capacity, default: 4) - How many concurrent reservations a service staff can handle
+* Default cost (defaultCost, optional) - Default cost for using this service staff
+* Default credit (defaultCredit, optional) - Default credit cost for using this service staff
+* Default duration (defaultDuration, optional) - Default reservation duration in minutes (overrides facility and RSVP settings defaultDuration)
+* Business hours (businessHours, optional) - Service staff-specific business hours in JSON format
+* Description (description, optional) - Description of the service staff
+* Is deleted (isDeleted, Boolean, default: `false`) - Soft delete flag
+
+### 4.5 Customer Credit Data Model
 
 **FR-RSVP-062:** The system must store customer credit information:
 
@@ -936,6 +1120,8 @@ Completed (50) [when service is finished]
 
 **BR-RSVP-001:** Reservations can only be created during configured business hours. The business hours validation follows this priority:
 
+* **If facility is selected and has business hours:** Validate `rsvpTime` against facility's business hours (highest priority)
+* **If service staff is selected and has business hours:** Validate `rsvpTime` against service staff's business hours (in addition to facility hours)
 * **If `RsvpSettings.useBusinessHours = true`:** Validate `rsvpTime` against `RsvpSettings.rsvpHours`
 * **If `RsvpSettings.useBusinessHours = false` AND `Store.useBusinessHours = true`:** Validate `rsvpTime` against `StoreSettings.businessHours`
 * **If `RsvpSettings.useBusinessHours = false` AND `Store.useBusinessHours = false`:** No business hours validation (all times allowed)
@@ -949,7 +1135,13 @@ Completed (50) [when service is finished]
 
 **BR-RSVP-004a:** When `singleServiceMode` is `true` in `RsvpSettings`, only ONE reservation is allowed per time slot across all facilities. This mode is designed for personal shops where the service provider can only handle one reservation at a time, regardless of which facility is used.
 
-**BR-RSVP-004b:** When `singleServiceMode` is `false` (default), multiple reservations can exist on the same time slot as long as they use different facilities. This allows multiple concurrent reservations when different resources are available.
+**BR-RSVP-004b:** When `singleServiceMode` is `false` (default), multiple reservations can exist on the same time slot as long as they use different facilities or service staff. This allows multiple concurrent reservations when different resources are available.
+
+**BR-RSVP-004c:** Service staff capacity must be respected. A service staff can handle up to `capacity` concurrent reservations. If a service staff is already at capacity for a time slot, no additional reservations can be assigned to that service staff for that time slot.
+
+**BR-RSVP-004d:** If `mustSelectFacility = true`, facility selection is required when creating a reservation. The reservation form will not allow submission without a facility selection.
+
+**BR-RSVP-004e:** If `mustHaveServiceStaff = true`, service staff selection is required when creating a reservation. The reservation form will not allow submission without a service staff selection.
 
 ### 5.2 Cancellation Rules
 
@@ -965,7 +1157,11 @@ Completed (50) [when service is finished]
 
 **BR-RSVP-009:** If `minPrepaidPercentage > 0`, when a customer creates a pending RSVP, a store order is automatically created with the prepaid amount (percentage of total). Reservation is not confirmed until payment is received.
 
-**BR-RSVP-010:** Required prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`. If total cost is missing/0, prepaid is skipped. Prepaid must be paid before reservation time.
+**BR-RSVP-010:** Required prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`. Total reservation cost = facility cost + service staff cost (if applicable). If total cost is missing/0, prepaid is skipped. Prepaid must be paid before reservation time.
+
+**BR-RSVP-010d:** If `noNeedToConfirm = true` and `alreadyPaid = true`, reservation automatically transitions to Ready (40) status and `confirmedByStore` is set to `true` without requiring manual store confirmation.
+
+**BR-RSVP-010e:** If `showCostToCustomer = true`, reservation costs (facility cost, service staff cost, total cost) are displayed to customers in the reservation form. Costs are calculated from facility and service staff default costs, or from pricing rules if applicable.
 
 **BR-RSVP-010a:** Customers can pay prepaid amount using existing credit from `CustomerCredit` table.
 
@@ -1231,6 +1427,7 @@ Completed (50) [when service is finished]
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 2.1 | 2025-01-XX | System | Updated RSVP functional requirements from current store implementation: (1) Added service staff management (FR-RSVP-026a, FR-RSVP-026b, FR-RSVP-026c) - service staff selection, assignment, capacity, business hours, and cost tracking. (2) Added selection requirements (FR-RSVP-034a) - `mustSelectFacility` and `mustHaveServiceStaff` settings. (3) Enhanced prepaid settings (FR-RSVP-029) - added `noNeedToConfirm` and `showCostToCustomer` settings. (4) Enhanced facility configuration (FR-RSVP-022) - added default cost, credit, duration, and business hours. (5) Enhanced reservation data model (FR-RSVP-059) - added service staff fields, pricing information snapshot, and created by field. (6) Enhanced settings data model (FR-RSVP-060) - added all new settings fields. (7) Added service staff data model (FR-RSVP-061a). (8) Updated business rules (BR-RSVP-001, BR-RSVP-004c, BR-RSVP-004d, BR-RSVP-004e, BR-RSVP-010d, BR-RSVP-010e) - added service staff capacity, selection requirements, and cost display rules. (9) Updated validation requirements (FR-RSVP-003) - added facility and service staff business hours validation, and required field validation. |
 | 2.0 | 2025-01-27 | System | Updated authentication requirements: (1) Clarified that no sign-in is required to create reservations - anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`). (2) Updated FR-RSVP-001, FR-RSVP-002, FR-RSVP-004, and BR-RSVP-008 to reflect that anonymous users can create reservations regardless of prepaid requirements. |
 | 1.9 | 2025-01-27 | System | Enhanced reservation system with authentication, timezone fixes, and UI improvements: (1) Added sign-in requirement for reservation page access - customers must authenticate before creating reservations. (2) Fixed facility filtering to only filter facilities on the same calendar day (in store timezone) as the selected time slot, preventing incorrect filtering across different days. (3) Fixed timezone handling in date/time selection - resolved one-day-off issue by ensuring date components are extracted in store timezone rather than UTC. (4) Improved payment method handling - payment methods are now explicitly specified and updated during order payment and refund processes. (5) Currency consistency - orders use store's `defaultCurrency` or order's `currency` consistently across creation and refund processes. (6) Auto store membership - customers are automatically added as store members (user role) when they create orders. (7) Order notes display - added option to display order notes in order detail views (default: hidden). (8) Fiat balance badge - added fiat balance badge to customer menu for quick balance visibility. (9) Checkout success UX - brief success message displayed before redirect on checkout success page. (10) Unpaid RSVP redirect - in edit mode, unpaid reservations automatically redirect to checkout page. (11) Date/time display - changed datetime-local input to display-only field in reservation form for better timezone handling. Updated FR-RSVP-001, FR-RSVP-003, FR-RSVP-004, and FR-RSVP-013 to reflect these enhancements. |
 | 1.8 | 2025-01-27 | System | Updated customer-facing RSVP creation flow with checkout integration: (1) Changed prepaid payment flow - when prepaid is required, system now creates an unpaid store order and redirects customer to checkout page (`/checkout/[orderId]`) instead of processing payment immediately. (2) Payment method selection: Orders are created with "credit" payment method if `store.useCustomerCredit = true`, otherwise "TBD" payment method. Customer selects payment method at checkout. (3) Credit deduction: Customer credit is no longer deducted at reservation creation time; it's deducted only when customer completes payment using credit at checkout. (4) Updated FR-RSVP-004 and UC-RSVP-001 to reflect new checkout-based payment flow. |

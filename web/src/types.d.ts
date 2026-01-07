@@ -255,7 +255,9 @@ const customerInviteObj = Prisma.validator<Prisma.CustomerInviteDefaultArgs>()({
 		Inviter: true,
 	},
 });
-export type CustomerInvite = Prisma.CustomerInviteGetPayload<typeof customerInviteObj>;
+export type CustomerInvite = Prisma.CustomerInviteGetPayload<
+	typeof customerInviteObj
+>;
 
 const sysmsgObj = Prisma.validator<Prisma.SystemMessageDefaultArgs>()({});
 export type SystemMessage = Prisma.SystemMessageGetPayload<typeof sysmsgObj>;

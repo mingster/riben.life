@@ -6,7 +6,6 @@ import { useTimer } from "react-timer-hook";
 import logger from "@/lib/logger";
 import { StoreOrder } from "@/types";
 import { Suspense } from "react";
-import { DisplayOrder } from "./display-order";
 import { Loader } from "./loader";
 
 type paymentProps = {
@@ -103,17 +102,9 @@ function MyTimer({
 					<h2 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl dark:text-white">
 						{t("success_title")}
 					</h2>
-					{t("order_success_descr")}
-					{order && (
-						<DisplayOrder
-							order={order}
-							showPickupCode={false}
-							hidePaymentMethod={true}
-							hideOrderStatus={true}
-							hideContactSeller={true}
-							showOrderNotes={false}
-						/>
-					)}
+					<p className="text-center text-lg text-muted-foreground">
+						{t("order_success_descr")}
+					</p>
 				</section>
 				<div className="relative flex w-full justify-center"> </div>
 			</div>

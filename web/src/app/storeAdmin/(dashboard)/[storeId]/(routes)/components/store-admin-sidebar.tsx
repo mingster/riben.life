@@ -37,6 +37,7 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { useI18n } from "@/providers/i18n-provider";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -53,6 +54,7 @@ export function StoreAdminSidebar() {
 	const { open } = useSidebar();
 	const { store, supportTicketCount } = useStoreAdminContext();
 	const params = useParams<{ storeId: string }>();
+	const isHydrated = useIsHydrated();
 
 	const pathname = usePathname();
 
@@ -331,39 +333,45 @@ export function StoreAdminSidebar() {
 			<SidebarFooter>
 				<SidebarMenu>
 					<SidebarMenuItem>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<SidebarMenuButton>
-									<IconChevronUp className="ml-auto" />
-								</SidebarMenuButton>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent
-								side="top"
-								className="w-[--radix-popper-anchor-width]"
-							>
-								<DropdownMenuItem asChild>
-									<Link
-										className="flex items-center gap-1"
-										title={t("back_to_store")}
-										href={`/s/${store.id}`}
-									>
-										<IconHome />
-										{store.name}
-									</Link>
-								</DropdownMenuItem>
-								<DropdownMenuItem asChild>
-									<div className="flex">
-										<IconHelp />
-										<Link className="flex items-center gap-1" href={"/help"}>
-											{t("Help")}
+						{isHydrated ? (
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<SidebarMenuButton>
+										<IconChevronUp className="ml-auto" />
+									</SidebarMenuButton>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent
+									side="top"
+									className="w-[--radix-popper-anchor-width]"
+								>
+									<DropdownMenuItem asChild>
+										<Link
+											className="flex items-center gap-1"
+											title={t("back_to_store")}
+											href={`/s/${store.id}`}
+										>
+											<IconHome />
+											{store.name}
 										</Link>
-									</div>
-								</DropdownMenuItem>
-								<DropdownMenuItem>
-									<SignOutButton />
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
+									</DropdownMenuItem>
+									<DropdownMenuItem asChild>
+										<div className="flex">
+											<IconHelp />
+											<Link className="flex items-center gap-1" href={"/help"}>
+												{t("Help")}
+											</Link>
+										</div>
+									</DropdownMenuItem>
+									<DropdownMenuItem>
+										<SignOutButton />
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						) : (
+							<SidebarMenuButton>
+								<IconChevronUp className="ml-auto" />
+							</SidebarMenuButton>
+						)}
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarFooter>

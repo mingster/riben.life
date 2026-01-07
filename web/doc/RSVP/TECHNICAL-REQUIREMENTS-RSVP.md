@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27\
 **Status:** Active\
-**Version:** 2.0\
+**Version:** 2.1\
 **Related Documents:**
 
 * [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -66,6 +66,7 @@ export const [actionName]Action = [actionClient]
 2. **Client Components:** Manage local state, handle user interactions
 3. **Server Actions:** Process mutations, return results
 4. **State Updates:** Client components update local state after successful mutations
+5. **Local Storage (Anonymous Users):** Client components save reservation data to browser local storage for anonymous users to enable reservation history viewing without authentication
 
 ***
 
@@ -136,7 +137,7 @@ model Rsvp {
   referenceId       String?   // reference to the StoreOrder id or CustomerCreditLedger id
   paidAt            BigInt?   // Epoch milliseconds. The time when the reservation was paid
   message           String?
-  email             String?   // Email address (required if not logged in)
+  name              String?   // Name (required for anonymous reservations)
   phone             String?   // Phone number (required for anonymous reservations)
   confirmedByStore  Boolean   @default(false) //店家已確認預約
   confirmedByCustomer Boolean @default(false) //客戶已確認預約
@@ -287,10 +288,15 @@ model RsvpTag {
 
 The `create-reservation.ts` action handles customer-facing reservation creation with the following technical requirements:
 
-* **Authentication:** 
+* **Authentication:**
   * **No sign-in required:** Anonymous users can create reservations without authentication
   * **No sign-in required even for prepaid:** Anonymous users can create reservations with prepaid requirements (`minPrepaidPercentage > 0`) without signing in
 * **Validation:**
+  * **Anonymous User Requirements:**
+    * **Name is required:** Anonymous users must provide their name (validated with Zod schema)
+    * **Phone number is required:** Anonymous users must provide their phone number (validated with Zod schema)
+    * Both fields are validated using `.refine()` in the Zod schema to ensure non-empty strings after trimming
+    * Validation errors are displayed per field with i18n error messages
   * Reservation time window (`canReserveBefore`, `canReserveAfter`)
   * Business hours validation (priority: `RsvpSettings.rsvpHours` > `StoreSettings.businessHours`)
   * Facility availability (respects `singleServiceMode`)
@@ -318,6 +324,26 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
   * Customer selects payment method at checkout page
   * Payment processing handled by checkout flow (credit, Stripe, LINE Pay, etc.)
   * After payment completion, reservation `alreadyPaid` and `status` are updated
+  * **Anonymous User Phone Confirmation:**
+    * After successful payment, anonymous users are redirected to order confirmation page
+    * Order confirmation page prompts anonymous user to confirm their phone number
+    * This ensures phone number consistency between reservation and order records
+    * Confirmed phone number is used for order tracking and customer communication
+  * **Local Storage (Anonymous Users):**
+  * When an anonymous user creates a reservation, reservation data is saved to browser local storage
+  * **Storage Key:** `rsvp-${storeId}` - Keyed by store ID to support multiple stores
+  * **Stored Data:**
+    * Reservation ID
+    * Store ID
+    * Name and phone number (as provided during reservation creation)
+    * Reservation date and time
+    * Facility and service staff (if selected)
+    * Party size (adults and children)
+    * Reservation status
+    * Payment status
+    * Order ID (if prepaid)
+  * **Implementation:** Client-side code in `reservation-form.tsx` saves reservation data to `localStorage` after successful creation
+  * **Persistence:** Local storage persists across browser sessions, allowing anonymous users to view their reservation history later
 * **Shared Utilities:**
   * `create-rsvp-store-order.ts` - Creates store order for RSVP prepaid
   * `validate-rsvp-availability.ts` - Validates time slot availability
@@ -467,6 +493,50 @@ The `update-reservation.ts` action allows customers to modify their reservations
 
 * **Response:** Returns cancelled reservation object with all relations (including updated Order if refunded)
 
+**Reservation History (Anonymous Users):**
+
+* **Location:** `src/app/s/[storeId]/reservation/history/page.tsx`
+* **Access:** Public (no authentication required for anonymous users)
+* **Implementation:**
+  * **Logged-in Users:**
+    * Server component fetches reservations from database based on `customerId`
+    * Uses Prisma query: `sqlClient.rsvp.findMany({ where: { storeId, customerId } })`
+    * Data is transformed using `transformPrismaDataForJson()` before passing to client component
+  * **Anonymous Users:**
+    * Server component does not redirect to sign-in (unlike previous implementation)
+    * Client component (`CustomerReservationHistoryClient`) reads reservations from browser local storage
+    * **Storage Key:** `rsvp-${storeId}` - Keyed by store ID to support multiple stores
+    * **Data Format:** JSON array of reservation objects stored in local storage
+    * If no reservations found in local storage, displays empty state
+    * **No redirect to sign-in:** Anonymous users are not redirected to sign-in when accessing the history page
+* **Client Component:** `CustomerReservationHistoryClient` handles both logged-in and anonymous user flows
+* **Data Source:**
+  * **Logged-in:** Server component fetches from database via Prisma, passes to client as `serverData` prop
+  * **Anonymous:** Client component reads from `localStorage.getItem('rsvp-${storeId}')` and parses JSON
+
+* **Local Storage Structure:**
+
+```typescript
+// Stored as JSON array in localStorage
+[
+  {
+    id: string;              // Reservation ID
+    storeId: string;          // Store ID
+    name: string | null;      // Customer name (anonymous)
+    phone: string | null;     // Phone number (anonymous)
+    rsvpTime: number;         // Epoch milliseconds
+    facilityId: string | null;
+    serviceStaffId: string | null;
+    numOfAdult: number;
+    numOfChild: number;
+    status: number;           // RsvpStatus enum value
+    alreadyPaid: boolean;
+    orderId: string | null;   // Order ID if prepaid
+    // ... other reservation fields
+  }
+]
+```
+
 #### 4.2.2 Store Admin API Routes
 
 **Location:** `src/app/api/storeAdmin/[storeId]/rsvp/`
@@ -598,6 +668,11 @@ All server actions return:
 * **Store Staff Actions:** Must verify store access and staff permissions
 * **Customer Actions:** Must verify user authentication for prepaid reservations
 * **Public Actions:** No authentication required for basic reservation creation
+* **Anonymous Reservations:**
+  * No authentication required for reservation creation (even with prepaid)
+  * Name and phone number are required and validated for anonymous users
+  * Reservation data is stored in browser local storage for anonymous users
+  * Reservation history page allows anonymous access to view local storage data
 
 ### 5.2 Data Validation
 
@@ -1228,7 +1303,14 @@ src/
 │       ├── rsvpTag/           # Tag actions
 │       └── reserveWithGoogle/ # Reserve with Google integration actions
 ├── app/
-│   ├── s/[storeId]/rsvp/           # Public RSVP page
+│   ├── s/[storeId]/
+│   │   ├── reservation/             # Public reservation page
+│   │   │   ├── page.tsx             # Reservation creation page
+│   │   │   ├── history/
+│   │   │   │   └── page.tsx         # Reservation history (supports anonymous users)
+│   │   │   └── components/
+│   │   │       ├── reservation-form.tsx  # Reservation form (saves to local storage for anonymous)
+│   │   │       └── customer-reservation-history-client.tsx  # History client (reads local storage)
 │   ├── storeAdmin/[storeId]/(routes)/
 │   │   ├── rsvp/                    # Reservation management
 │   │   ├── rsvp-settings/           # Settings page
@@ -1314,6 +1396,7 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 2.1 | 2025-01-27 | System | Added anonymous reservation workflow technical requirements: (1) **Name and Phone Validation** - Anonymous users must provide both name and phone number (validated with Zod schema using `.refine()`). Updated Rsvp model schema to include `name` field. (2) **Local Storage Implementation** - Anonymous reservation data saved to browser local storage (key: `rsvp-${storeId}`) after successful creation. Stored data includes reservation ID, store ID, name, phone, reservation details, status, and payment information. (3) **Checkout Flow for Anonymous Users** - After payment completion, anonymous users are redirected to order confirmation page which prompts phone number confirmation. (4) **Reservation History for Anonymous Users** - `/s/[storeId]/reservation/history` page allows anonymous access and displays reservations from local storage. No redirect to sign-in for anonymous users. Updated Sections 3.1.2 (Rsvp model), 4.1.1 (Customer Reservation Creation), and 4.2.1 (Public API Routes) to document these features. |
 | 2.0 | 2025-01-27 | System | Updated authentication requirements and enhanced reservation system: (1) Clarified that no sign-in is required to create reservations - anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`). (2) Fixed facility filtering - facilities are only filtered if existing reservations fall on the same calendar day (in store timezone) as the selected time slot, preventing incorrect filtering across different days. Updated `dayAndTimeSlotToUtc()` to extract date components in store timezone using `Intl.DateTimeFormat` instead of UTC methods, fixing one-day-off issue. (3) Improved payment method handling - `markOrderAsPaidCore` now explicitly uses provided `paymentMethodId` parameter, ensuring correct payment method tracking. Payment methods are fetched by `payUrl` identifier in all payment flows (Stripe, LINE Pay, credit, cash). (4) Currency consistency - orders use store's `defaultCurrency` consistently across creation and refund processes. Refund processing uses order's `currency` field instead of store's default currency. (5) Auto store membership - `ensureCustomerIsStoreMember()` utility automatically adds customers as store members (user role) when they create orders. (6) Order notes display - `DisplayOrder` component now supports `showOrderNotes` prop (default: false) to conditionally display order notes. (7) Fiat balance badge - customer menu displays fiat balance badge when balance > 0. (8) Checkout success UX - `SuccessAndRedirect` component displays brief success message before redirecting. (9) Unpaid RSVP redirect - reservation form redirects to checkout page when editing unpaid reservations. (10) Date/time display - reservation form uses display-only field for `rsvpTime` in create mode, formatted using `formatUtcDateToDateTimeLocal()` for correct timezone display. Updated Sections 4.1.1, 8.1.2, and 8.3.1 to reflect these enhancements. |
 | 1.9 | 2025-01-27 | System | Updated customer-facing RSVP creation flow with checkout integration: (1) Modified `create-reservation.ts` to create unpaid store orders and redirect to checkout instead of processing payment immediately. (2) Updated `create-rsvp-store-order.ts` to accept `paymentMethodPayUrl` parameter ("credit" or "TBD") instead of hardcoding payment method. (3) Payment method selection: Orders created with "credit" if `store.useCustomerCredit = true`, otherwise "TBD". (4) Customer credit deduction: No longer deducted at reservation creation; only deducted when customer completes payment using credit at checkout. (5) Added documentation for customer reservation creation flow and checkout integration in Section 4.1.1. (6) Added `createRsvpStoreOrder()` utility function documentation in Section 8.3.1. (7) Updated payment integration section (7.3) to document unified checkout flow. |
 | 1.8 | 2025-01-27 | System | Enhanced reservation validation and UI improvements: (1) Added detailed business hours validation logic with priority rules (RsvpSettings.useBusinessHours vs Store.useBusinessHours) - validation occurs both client-side (real-time UI feedback) and server-side (form submission). Updated Section 8.1.1 to document the new validation function and priority rules. (2) Implemented dynamic facility filtering in reservation forms (both customer-facing and admin) - facilities already booked at the selected time slot are automatically filtered out from the dropdown, with special handling for singleServiceMode and edit mode. Added Section 8.1.2 to document facility availability filtering. |

@@ -1,3 +1,4 @@
+import { AskUserToSignIn } from "@/components/auth/ask-user-to-signIn";
 import Container from "@/components/ui/container";
 
 type Params = Promise<{ storeId: string }>;
@@ -21,7 +22,7 @@ export default async function WaitingListPage(props: {
 
 	return (
 		<Container>
-			<div>Waiting List - Coming Soon</div>
+			<AskUserToSignIn />
 		</Container>
 	);
 }

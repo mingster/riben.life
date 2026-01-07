@@ -15,11 +15,46 @@ export const deleteServiceStaffAction = storeActionClient
 
 		const serviceStaff = await sqlClient.serviceStaff.findUnique({
 			where: { id },
-			select: { id: true, storeId: true },
+			select: { id: true, storeId: true, userId: true },
 		});
 
 		if (!serviceStaff || serviceStaff.storeId !== storeId) {
 			throw new SafeError("Service staff not found");
+		}
+
+		// Get store to find organizationId
+		const store = await sqlClient.store.findUnique({
+			where: { id: storeId },
+			select: { organizationId: true },
+		});
+
+		if (!store || !store.organizationId) {
+			throw new SafeError("Store not found");
+		}
+
+		// Check if this user is an owner
+		const member = await sqlClient.member.findFirst({
+			where: {
+				userId: serviceStaff.userId,
+				organizationId: store.organizationId,
+				role: "owner",
+			},
+		});
+
+		// If this user is an owner, check if they are the last owner
+		if (member) {
+			const ownerCount = await sqlClient.member.count({
+				where: {
+					organizationId: store.organizationId,
+					role: "owner",
+				},
+			});
+
+			if (ownerCount <= 1) {
+				throw new SafeError(
+					"Cannot delete the last owner. Please assign another owner before deleting.",
+				);
+			}
 		}
 
 		// Check if there are any related Rsvp records

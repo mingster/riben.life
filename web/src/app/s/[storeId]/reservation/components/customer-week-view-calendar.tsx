@@ -18,11 +18,14 @@ import {
 import { enUS } from "date-fns/locale/en-US";
 import { zhTW } from "date-fns/locale/zh-TW";
 import { ja } from "date-fns/locale/ja";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
+import { claimReservationAction } from "@/actions/store/reservation/claim-reservation";
+import { clientLogger } from "@/lib/client-logger";
+import { normalizePhoneNumber } from "@/utils/phone-utils";
 import type {
 	Rsvp,
 	RsvpSettings,
@@ -340,7 +343,125 @@ export const CustomerWeekViewCalendar: React.FC<
 		() => startOfDay(getDateInTz(todayUtc, getOffsetHours(storeTimezone))),
 		[todayUtc, storeTimezone],
 	);
-	const [rsvps, setRsvps] = useState<Rsvp[]>(existingReservations);
+	// Load local storage reservations for anonymous users
+	const [localStorageReservations, setLocalStorageReservations] = useState<
+		Rsvp[]
+	>([]);
+
+	// Load local storage reservations on mount and when storeId changes
+	useEffect(() => {
+		if (!storeId) return;
+
+		const storageKey = `rsvp-${storeId}`;
+		try {
+			const storedData = localStorage.getItem(storageKey);
+			if (storedData) {
+				const parsed: Rsvp[] = JSON.parse(storedData);
+				if (Array.isArray(parsed) && parsed.length > 0) {
+					/*
+					console.log(
+						"[RSVP Local Storage] Loaded reservations from local storage",
+						{
+							storageKey,
+							count: parsed.length,
+							reservationIds: parsed.map((r) => r.id),
+							reservations: parsed.map((r) => ({
+								id: r.id,
+								name: r.name,
+								phone: r.phone,
+								rsvpTime: r.rsvpTime,
+							})),
+						},
+					);
+					*/
+					setLocalStorageReservations(parsed);
+				}
+			} else {
+				console.log("[RSVP Local Storage] No reservations in local storage", {
+					storageKey,
+				});
+			}
+		} catch (error) {
+			console.error("[RSVP Local Storage] Error loading from local storage", {
+				storageKey,
+				error: error instanceof Error ? error.message : String(error),
+			});
+		}
+	}, [storeId]);
+
+	// Merge server reservations with local storage reservations
+	// For anonymous users, only show server reservations (local storage is for persistence only)
+	// Local storage reservations that don't exist on server will be cleaned up in useEffect
+	const [rsvps, setRsvps] = useState<Rsvp[]>(() => {
+		// Always start with server reservations only
+		// Local storage cleanup happens in useEffect after local storage is loaded
+		return [...existingReservations];
+	});
+
+	// Update rsvps when localStorageReservations or existingReservations change
+	// Also clean up local storage if reservations were deleted from server side
+	useEffect(() => {
+		if (!user && localStorageReservations.length > 0) {
+			const serverIds = new Set(existingReservations.map((r) => r.id));
+
+			// Check if any local storage reservations were deleted from server
+			// (exist in local storage but not in server data)
+			const deletedFromServer = localStorageReservations.filter(
+				(r) => !serverIds.has(r.id),
+			);
+
+			// If reservations were deleted from server, remove them from local storage
+			if (deletedFromServer.length > 0 && storeId) {
+				const storageKey = `rsvp-${storeId}`;
+				try {
+					const storedData = localStorage.getItem(storageKey);
+					if (storedData) {
+						const localReservations: Rsvp[] = JSON.parse(storedData);
+						// Keep only reservations that exist on server
+						const updatedLocal = localReservations.filter((r) =>
+							serverIds.has(r.id),
+						);
+
+						if (updatedLocal.length > 0) {
+							localStorage.setItem(storageKey, JSON.stringify(updatedLocal));
+						} else {
+							localStorage.removeItem(storageKey);
+						}
+
+						setLocalStorageReservations(updatedLocal);
+
+						console.log(
+							"[RSVP Local Storage] Removed reservations deleted from server",
+							{
+								storageKey,
+								deletedCount: deletedFromServer.length,
+								deletedIds: deletedFromServer.map((r) => r.id),
+								remainingCount: updatedLocal.length,
+							},
+						);
+					}
+				} catch (error) {
+					console.error(
+						"[RSVP Local Storage] Error cleaning up deleted reservations",
+						{
+							storageKey: `rsvp-${storeId}`,
+							error: error instanceof Error ? error.message : String(error),
+						},
+					);
+				}
+			}
+
+			// Update rsvps state - only show server reservations (local storage cleanup already handled above)
+			setRsvps(existingReservations);
+		} else if (!user && localStorageReservations.length === 0) {
+			// If local storage is empty, only show server reservations
+			setRsvps(existingReservations);
+		} else {
+			// If user is logged in, only show server reservations
+			setRsvps(existingReservations);
+		}
+	}, [localStorageReservations, existingReservations, user, storeId]);
+
 	const [currentDay, setCurrentDay] = useState(() => {
 		// Always start with today as the first day
 		// Use UTC for consistency, then convert to store timezone for display
@@ -352,6 +473,228 @@ export const CustomerWeekViewCalendar: React.FC<
 	);
 	const [isCancelling, setIsCancelling] = useState(false);
 	const [openEditDialogId, setOpenEditDialogId] = useState<string | null>(null);
+	const [isClaiming, setIsClaiming] = useState(false);
+
+	// Claim reservations from local storage when user signs in
+	useEffect(() => {
+		// Only claim if user is signed in and storeId is available
+		if (!user?.id || !storeId || isClaiming) {
+			return;
+		}
+
+		const claimLocalStorageReservations = async () => {
+			try {
+				const storageKey = `rsvp-${storeId}`;
+
+				const storedData = localStorage.getItem(storageKey);
+				if (!storedData) {
+					console.log("[RSVP Claim] No reservations found in local storage", {
+						storageKey,
+					});
+					return; // No reservations in local storage
+				}
+
+				console.log("[RSVP Claim] Found data in local storage", {
+					storageKey,
+					dataLength: storedData.length,
+				});
+
+				const localReservations: Rsvp[] = JSON.parse(storedData);
+				if (
+					!Array.isArray(localReservations) ||
+					localReservations.length === 0
+				) {
+					console.log("[RSVP Claim] No valid reservations in local storage", {
+						storageKey,
+						isArray: Array.isArray(localReservations),
+						length: localReservations?.length || 0,
+					});
+					return; // No valid reservations
+				}
+
+				console.log("[RSVP Claim] Found reservations to claim", {
+					storageKey,
+					count: localReservations.length,
+					reservationIds: localReservations.map((r) => r.id),
+				});
+
+				setIsClaiming(true);
+				const claimedIds: string[] = [];
+				const failedIds: string[] = [];
+
+				// Claim each reservation
+				for (const reservation of localReservations) {
+					if (!reservation.id) {
+						console.warn("[RSVP Claim] Skipping reservation without ID", {
+							reservation,
+						});
+						continue; // Skip invalid reservations
+					}
+
+					console.log("[RSVP Claim] Attempting to claim reservation", {
+						reservationId: reservation.id,
+						userId: user.id,
+					});
+
+					try {
+						const result = await claimReservationAction({
+							id: reservation.id,
+						});
+
+						if (result?.serverError) {
+							console.error("[RSVP Claim] Failed to claim reservation", {
+								reservationId: reservation.id,
+								error: result.serverError,
+							});
+							clientLogger.warn("Failed to claim reservation", {
+								metadata: {
+									reservationId: reservation.id,
+									error: result.serverError,
+								},
+							});
+							failedIds.push(reservation.id);
+						} else {
+							// Successfully claimed
+							console.log("[RSVP Claim] Successfully claimed reservation", {
+								reservationId: reservation.id,
+								userId: user.id,
+								alreadyClaimed: result?.data?.alreadyClaimed || false,
+							});
+							claimedIds.push(reservation.id);
+							clientLogger.info("Reservation claimed from local storage", {
+								metadata: {
+									reservationId: reservation.id,
+									userId: user.id,
+								},
+							});
+						}
+					} catch (error) {
+						console.error("[RSVP Claim] Error claiming reservation", {
+							reservationId: reservation.id,
+							error: error instanceof Error ? error.message : String(error),
+							errorObject: error,
+						});
+						clientLogger.error("Error claiming reservation", {
+							metadata: {
+								reservationId: reservation.id,
+								error: error instanceof Error ? error.message : String(error),
+							},
+						});
+						failedIds.push(reservation.id);
+					}
+				}
+
+				console.log("[RSVP Claim] Claim process completed", {
+					total: localReservations.length,
+					claimed: claimedIds.length,
+					failed: failedIds.length,
+					claimedIds,
+					failedIds,
+				});
+
+				// Remove successfully claimed reservations from local storage
+				if (claimedIds.length > 0) {
+					const remainingReservations = localReservations.filter(
+						(r) => !claimedIds.includes(r.id),
+					);
+
+					console.log("[RSVP Claim] Updating local storage", {
+						storageKey,
+						claimedCount: claimedIds.length,
+						remainingCount: remainingReservations.length,
+					});
+
+					if (remainingReservations.length > 0) {
+						localStorage.setItem(
+							storageKey,
+							JSON.stringify(remainingReservations),
+						);
+						console.log(
+							"[RSVP Claim] Updated local storage with remaining reservations",
+							{
+								storageKey,
+								remainingCount: remainingReservations.length,
+							},
+						);
+					} else {
+						// No more reservations, remove the key
+						localStorage.removeItem(storageKey);
+						console.log(
+							"[RSVP Claim] Removed local storage key (no remaining reservations)",
+							{
+								storageKey,
+							},
+						);
+					}
+
+					// Show success message
+					if (claimedIds.length === 1) {
+						toastSuccess({
+							description:
+								t("rsvp_reservation_claimed") ||
+								"Reservation linked to your account",
+						});
+					} else {
+						const message =
+							t("rsvp_reservations_claimed") ||
+							`${claimedIds.length} reservations linked to your account`;
+						toastSuccess({
+							description: message.replace(
+								"{{count}}",
+								String(claimedIds.length),
+							),
+						});
+					}
+
+					// Refresh the reservations list by triggering a re-fetch
+					// The parent component should refetch reservations after claiming
+					// For now, we'll just update local state if the claimed reservation is in the list
+					setRsvps((prev) => {
+						// The claimed reservations should now appear in the server data
+						// We'll keep the local state as is, and the parent should refetch
+						return prev;
+					});
+				}
+
+				// Show error message for failed claims
+				if (failedIds.length > 0) {
+					console.warn("[RSVP Claim] Some reservations could not be claimed", {
+						failedCount: failedIds.length,
+						failedIds,
+					});
+					clientLogger.warn("Some reservations could not be claimed", {
+						metadata: {
+							failedCount: failedIds.length,
+							failedIds,
+						},
+					});
+				}
+			} catch (error) {
+				console.error(
+					"[RSVP Claim] Error processing local storage reservations",
+					{
+						error: error instanceof Error ? error.message : String(error),
+						errorObject: error,
+						storeId,
+						userId: user.id,
+					},
+				);
+				clientLogger.error("Error claiming reservations from local storage", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+				});
+			} finally {
+				setIsClaiming(false);
+				console.log("[RSVP Claim] Claim process finished", {
+					storeId,
+					userId: user.id,
+				});
+			}
+		};
+
+		claimLocalStorageReservations();
+	}, [user?.id, storeId, isClaiming, t]);
 
 	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
@@ -673,25 +1016,54 @@ export const CustomerWeekViewCalendar: React.FC<
 	);
 
 	// Helper to check if a reservation belongs to the current user
+	// For logged-in users: matches by customerId or email
+	// For anonymous users: matches by phone number with local storage reservations
 	const isUserReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
-			if (!user) return false;
-			// Match by customerId if both exist
-			if (user.id && rsvp.customerId) {
-				return rsvp.customerId === user.id;
+			// If user is logged in, use existing logic
+			if (user?.id) {
+				// Match by customerId if both exist
+				if (user.id && rsvp.customerId) {
+					return rsvp.customerId === user.id;
+				}
+				// Match by email if customerId doesn't match or is missing
+				if (user.email && rsvp.Customer?.email) {
+					return rsvp.Customer.email.toLowerCase() === user.email.toLowerCase();
+				}
+				return false;
 			}
-			// Match by email if customerId doesn't match or is missing
-			if (user.email && rsvp.Customer?.email) {
-				return rsvp.Customer.email.toLowerCase() === user.email.toLowerCase();
+
+			// For anonymous users, check if reservation matches local storage by phone number
+			if (!user && localStorageReservations.length > 0 && rsvp.phone) {
+				// Find matching reservation in local storage by ID and phone
+				const matchingLocal = localStorageReservations.find(
+					(localRsvp: Rsvp) => {
+						if (localRsvp.id !== rsvp.id) return false;
+						if (!localRsvp.phone || !rsvp.phone) return false;
+						// Normalize and compare phone numbers
+						const localPhoneNormalized = normalizePhoneNumber(localRsvp.phone);
+						const rsvpPhoneNormalized = normalizePhoneNumber(rsvp.phone);
+						return localPhoneNormalized === rsvpPhoneNormalized;
+					},
+				);
+
+				if (matchingLocal) {
+					console.log("[RSVP Anonymous] Reservation matches local storage", {
+						reservationId: rsvp.id,
+						phone: rsvp.phone,
+					});
+					return true;
+				}
 			}
+
 			return false;
 		},
-		[user],
+		[user, localStorageReservations],
 	);
 
 	// Check if reservation can be edited based on rsvpSettings
 	// Edit button only appears if:
-	// Reservation belongs to the current user
+	// Reservation belongs to the current user (logged in or anonymous via local storage)
 	// Reservation status is Pending or alreadyPaid is true
 	// canCancel is enabled in rsvpSettings
 	// Reservation is more than cancelHours away from now
@@ -819,31 +1191,87 @@ export const CustomerWeekViewCalendar: React.FC<
 		[onReservationCreated],
 	);
 
-	const handleReservationUpdated = useCallback((updatedRsvp: Rsvp) => {
-		if (!updatedRsvp) return;
-		setRsvps((prev) => {
-			// Ensure rsvpTime is properly formatted as Date if it's a string
-			const normalizedRsvp: Rsvp = {
-				...updatedRsvp,
-				rsvpTime:
-					updatedRsvp.rsvpTime instanceof Date
-						? updatedRsvp.rsvpTime
-						: typeof updatedRsvp.rsvpTime === "string"
-							? parseISO(updatedRsvp.rsvpTime)
-							: new Date(updatedRsvp.rsvpTime),
-			};
+	const handleReservationUpdated = useCallback(
+		(updatedRsvp: Rsvp) => {
+			if (!updatedRsvp) return;
+			setRsvps((prev) => {
+				// Ensure rsvpTime is properly formatted as Date if it's a string
+				const normalizedRsvp: Rsvp = {
+					...updatedRsvp,
+					rsvpTime:
+						updatedRsvp.rsvpTime instanceof Date
+							? updatedRsvp.rsvpTime
+							: typeof updatedRsvp.rsvpTime === "string"
+								? parseISO(updatedRsvp.rsvpTime)
+								: new Date(updatedRsvp.rsvpTime),
+				};
 
-			const index = prev.findIndex((item) => item.id === normalizedRsvp.id);
-			if (index === -1) {
-				// If not found, add it (shouldn't happen, but handle gracefully)
-				return [...prev, normalizedRsvp];
+				const index = prev.findIndex((item) => item.id === normalizedRsvp.id);
+				if (index === -1) {
+					// If not found, add it (shouldn't happen, but handle gracefully)
+					return [...prev, normalizedRsvp];
+				}
+				// Replace the existing RSVP with the updated one
+				return prev.map((item) =>
+					item.id === normalizedRsvp.id ? normalizedRsvp : item,
+				);
+			});
+
+			// If user is anonymous, also update local storage
+			if (!user && storeId) {
+				const storageKey = `rsvp-${storeId}`;
+				try {
+					const storedData = localStorage.getItem(storageKey);
+					if (storedData) {
+						const localReservations: Rsvp[] = JSON.parse(storedData);
+						const updatedLocal = localReservations.map((r) =>
+							r.id === updatedRsvp.id
+								? {
+										...updatedRsvp,
+										// Transform BigInt to number for local storage
+										rsvpTime:
+											typeof updatedRsvp.rsvpTime === "number"
+												? updatedRsvp.rsvpTime
+												: updatedRsvp.rsvpTime instanceof Date
+													? updatedRsvp.rsvpTime.getTime()
+													: typeof updatedRsvp.rsvpTime === "bigint"
+														? Number(updatedRsvp.rsvpTime)
+														: null,
+										createdAt:
+											typeof updatedRsvp.createdAt === "number"
+												? updatedRsvp.createdAt
+												: typeof updatedRsvp.createdAt === "bigint"
+													? Number(updatedRsvp.createdAt)
+													: null,
+										updatedAt:
+											typeof updatedRsvp.updatedAt === "number"
+												? updatedRsvp.updatedAt
+												: typeof updatedRsvp.updatedAt === "bigint"
+													? Number(updatedRsvp.updatedAt)
+													: null,
+									}
+								: r,
+						);
+						localStorage.setItem(storageKey, JSON.stringify(updatedLocal));
+						setLocalStorageReservations(updatedLocal);
+						console.log(
+							"[RSVP Local Storage] Updated reservation in local storage",
+							{
+								storageKey,
+								reservationId: updatedRsvp.id,
+							},
+						);
+					}
+				} catch (error) {
+					console.error("[RSVP Local Storage] Error updating local storage", {
+						storageKey,
+						error: error instanceof Error ? error.message : String(error),
+					});
+				}
 			}
-			// Replace the existing RSVP with the updated one
-			return prev.map((item) =>
-				item.id === normalizedRsvp.id ? normalizedRsvp : item,
-			);
-		});
-	}, []);
+		},
+		[user, storeId],
+	);
 
 	// Use shared status color classes function
 	const getStatusColorClasses = useCallback(
@@ -922,6 +1350,44 @@ export const CustomerWeekViewCalendar: React.FC<
 					setRsvps((prev) =>
 						prev.filter((r) => r.id !== reservationToCancel.id),
 					);
+
+					// If user is anonymous, also remove from local storage
+					if (!user && storeId) {
+						const storageKey = `rsvp-${storeId}`;
+						try {
+							const storedData = localStorage.getItem(storageKey);
+							if (storedData) {
+								const localReservations: Rsvp[] = JSON.parse(storedData);
+								const updatedLocal = localReservations.filter(
+									(r) => r.id !== reservationToCancel.id,
+								);
+								if (updatedLocal.length > 0) {
+									localStorage.setItem(
+										storageKey,
+										JSON.stringify(updatedLocal),
+									);
+								} else {
+									localStorage.removeItem(storageKey);
+								}
+								setLocalStorageReservations(updatedLocal);
+								console.log(
+									"[RSVP Local Storage] Removed reservation from local storage",
+									{
+										storageKey,
+										reservationId: reservationToCancel.id,
+									},
+								);
+							}
+						} catch (error) {
+							console.error(
+								"[RSVP Local Storage] Error removing from local storage",
+								{
+									storageKey,
+									error: error instanceof Error ? error.message : String(error),
+								},
+							);
+						}
+					}
 				}
 			} else {
 				if (!storeId) {
@@ -954,6 +1420,45 @@ export const CustomerWeekViewCalendar: React.FC<
 						setRsvps((prev) =>
 							prev.filter((r) => r.id !== reservationToCancel.id),
 						);
+
+						// If user is anonymous, also remove from local storage
+						if (!user && storeId) {
+							const storageKey = `rsvp-${storeId}`;
+							try {
+								const storedData = localStorage.getItem(storageKey);
+								if (storedData) {
+									const localReservations: Rsvp[] = JSON.parse(storedData);
+									const updatedLocal = localReservations.filter(
+										(r) => r.id !== reservationToCancel.id,
+									);
+									if (updatedLocal.length > 0) {
+										localStorage.setItem(
+											storageKey,
+											JSON.stringify(updatedLocal),
+										);
+									} else {
+										localStorage.removeItem(storageKey);
+									}
+									setLocalStorageReservations(updatedLocal);
+									console.log(
+										"[RSVP Local Storage] Removed cancelled reservation from local storage",
+										{
+											storageKey,
+											reservationId: reservationToCancel.id,
+										},
+									);
+								}
+							} catch (error) {
+								console.error(
+									"[RSVP Local Storage] Error removing from local storage",
+									{
+										storageKey,
+										error:
+											error instanceof Error ? error.message : String(error),
+									},
+								);
+							}
+						}
 					}
 				}
 			}
@@ -967,7 +1472,7 @@ export const CustomerWeekViewCalendar: React.FC<
 			setCancelDialogOpen(false);
 			setReservationToCancel(null);
 		}
-	}, [reservationToCancel, storeId, t, handleReservationUpdated]);
+	}, [reservationToCancel, storeId, t, handleReservationUpdated, user]);
 
 	return (
 		<div className="flex flex-col gap-3 sm:gap-4">

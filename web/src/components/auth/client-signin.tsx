@@ -80,7 +80,7 @@ export default function ClientSignIn({
 					{/* More options toggle button */}
 					<Button
 						variant="ghost"
-						className="text-xs"
+						className="text-xs text-primary"
 						onClick={() => setShowMoreOptions(!showMoreOptions)}
 					>
 						{showMoreOptions ? (

@@ -11,7 +11,7 @@
   ```
 
   ``` bash
-  psql -h mx2.mingster.com -d pstv_web -U pstv_user
+  psql -h miniu -d riben_life -U pstv_user
   ```
 
 1. copy & paste in the sql statement

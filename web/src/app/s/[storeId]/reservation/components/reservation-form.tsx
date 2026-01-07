@@ -35,6 +35,7 @@ import {
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -71,6 +72,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { PhoneCountryCodeSelector } from "@/components/auth/phone-country-code-selector";
 
 interface ReservationFormProps {
 	storeId: string;
@@ -119,6 +121,7 @@ export function ReservationForm({
 	creditServiceExchangeRate = null,
 }: ReservationFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [phoneCountryCode, setPhoneCountryCode] = useState<string>("+886"); // Default to Taiwan
 	const params = useParams();
 	const router = useRouter();
 	const { lng } = useI18n();
@@ -924,6 +927,86 @@ export function ReservationForm({
 						const orderId = data.orderId;
 						const requiresSignIn = data.requiresSignIn ?? false;
 
+						// Save reservation to local storage for anonymous users
+						if (!user) {
+							try {
+								const storageKey = `rsvp-${storeId}`;
+								const existingData = localStorage.getItem(storageKey);
+								const existingReservations: Rsvp[] = existingData
+									? JSON.parse(existingData)
+									: [];
+
+								// Transform reservation data for localStorage (convert BigInt to number)
+								// Match the transformation order from CustomerWeekViewCalendar
+								const reservationForStorage = {
+									...data.rsvp,
+									rsvpTime:
+										typeof data.rsvp.rsvpTime === "number"
+											? data.rsvp.rsvpTime
+											: data.rsvp.rsvpTime instanceof Date
+												? data.rsvp.rsvpTime.getTime()
+												: typeof data.rsvp.rsvpTime === "bigint"
+													? Number(data.rsvp.rsvpTime)
+													: null,
+									createdAt:
+										typeof data.rsvp.createdAt === "number"
+											? data.rsvp.createdAt
+											: data.rsvp.createdAt instanceof Date
+												? data.rsvp.createdAt.getTime()
+												: typeof data.rsvp.createdAt === "bigint"
+													? Number(data.rsvp.createdAt)
+													: null,
+									updatedAt:
+										typeof data.rsvp.updatedAt === "number"
+											? data.rsvp.updatedAt
+											: data.rsvp.updatedAt instanceof Date
+												? data.rsvp.updatedAt.getTime()
+												: typeof data.rsvp.updatedAt === "bigint"
+													? Number(data.rsvp.updatedAt)
+													: null,
+								};
+
+								// Append new reservation to existing array
+								const updatedReservations = [
+									...existingReservations,
+									reservationForStorage,
+								];
+
+								// Save back to localStorage
+								localStorage.setItem(
+									storageKey,
+									JSON.stringify(updatedReservations),
+								);
+
+								// Match logging style from CustomerWeekViewCalendar
+								console.log(
+									"[RSVP Local Storage] Saved reservation to local storage",
+									{
+										storageKey,
+										reservationId: data.rsvp.id,
+										name: data.rsvp.name,
+										phone: data.rsvp.phone,
+										orderId: orderId || null,
+										hasName: !!data.rsvp.name,
+										hasPhone: !!data.rsvp.phone,
+										totalInStorage: updatedReservations.length,
+									},
+								);
+							} catch (error) {
+								// Log error but don't block the flow
+								// Match error logging style from CustomerWeekViewCalendar
+								console.error(
+									"[RSVP Local Storage] Error saving reservation to local storage",
+									{
+										storageKey: `rsvp-${storeId}`,
+										reservationId: data.rsvp.id,
+										error:
+											error instanceof Error ? error.message : String(error),
+									},
+								);
+							}
+						}
+
 						if (orderId) {
 							// Prepaid required: redirect to checkout page
 							if (requiresSignIn) {
@@ -1288,64 +1371,71 @@ export function ReservationForm({
 						/>
 					)}
 
-					{/* Service Staff Selection - Always show, required only when mustHaveServiceStaff is true */}
-					<FormField
-						control={form.control}
-						name="serviceStaffId"
-						render={({ field, fieldState }) => {
-							const selectedServiceStaff = field.value
-								? serviceStaff.find((s) => s.id === field.value) || null
-								: null;
+					{/* Service Staff Selection - Show only when staff is available or required */}
+					{(mustHaveServiceStaff ||
+						availableServiceStaff.length > 0 ||
+						(isEditMode && rsvp?.serviceStaffId)) && (
+						<FormField
+							control={form.control}
+							name="serviceStaffId"
+							render={({ field, fieldState }) => {
+								const selectedServiceStaff = field.value
+									? serviceStaff.find((s) => s.id === field.value) || null
+									: null;
 
-							return (
-								<FormItem
-									className={cn(
-										fieldState.error &&
-											"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-									)}
-								>
-									<FormLabel>
-										{t("service_staff")}
-										{mustHaveServiceStaff && (
-											<span className="text-destructive"> *</span>
+								return (
+									<FormItem
+										className={cn(
+											fieldState.error &&
+												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
 										)}
-									</FormLabel>
-									<FormControl>
-										{availableServiceStaff.length > 0 ? (
-											<ServiceStaffCombobox
-												serviceStaff={availableServiceStaff}
-												disabled={isSubmitting || isEditMode}
-												defaultValue={selectedServiceStaff || null}
-												allowEmpty={true}
-												onValueChange={(staff) => {
-													field.onChange(staff?.id || null);
-												}}
-											/>
-										) : null}
-									</FormControl>
-									{selectedServiceStaff && selectedServiceStaff.defaultCost && (
-										<div className="text-sm text-muted-foreground">
-											{t("rsvp_service_staff_cost") || "Service Staff Cost"}:{" "}
-											{typeof selectedServiceStaff.defaultCost === "number"
-												? selectedServiceStaff.defaultCost.toFixed(0)
-												: Number(selectedServiceStaff.defaultCost).toFixed(
-														0,
-													)}{" "}
-											{storeCurrency.toUpperCase()}
-										</div>
-									)}
-									{availableServiceStaff.length === 0 && (
-										<div className="text-sm text-destructive">
-											{rsvpTime
-												? t("no_service_staff_available_at_selected_time")
-												: t("no_service_staff_available")}
-										</div>
-									)}
-									<FormMessage />
-								</FormItem>
-							);
-						}}
-					/>
+									>
+										<FormLabel>
+											{t("service_staff")}
+											{mustHaveServiceStaff && (
+												<span className="text-destructive"> *</span>
+											)}
+										</FormLabel>
+										<FormControl>
+											{availableServiceStaff.length > 0 ? (
+												<ServiceStaffCombobox
+													serviceStaff={availableServiceStaff}
+													disabled={isSubmitting || isEditMode}
+													defaultValue={selectedServiceStaff || null}
+													allowEmpty={true}
+													onValueChange={(staff) => {
+														field.onChange(staff?.id || null);
+													}}
+												/>
+											) : null}
+										</FormControl>
+										{selectedServiceStaff &&
+											selectedServiceStaff.defaultCost && (
+												<div className="text-sm text-muted-foreground">
+													{t("rsvp_service_staff_cost") || "Service Staff Cost"}
+													:{" "}
+													{typeof selectedServiceStaff.defaultCost === "number"
+														? selectedServiceStaff.defaultCost.toFixed(0)
+														: Number(selectedServiceStaff.defaultCost).toFixed(
+																0,
+															)}{" "}
+													{storeCurrency.toUpperCase()}
+												</div>
+											)}
+										{availableServiceStaff.length === 0 &&
+											mustHaveServiceStaff && (
+												<div className="text-sm text-destructive">
+													{rsvpTime
+														? t("no_service_staff_available_at_selected_time")
+														: t("no_service_staff_available")}
+												</div>
+											)}
+										<FormMessage />
+									</FormItem>
+								);
+							}}
+						/>
+					)}
 
 					{/* Contact Information - Only show for anonymous users (not logged in) */}
 					{!isEditMode && !user && (
@@ -1361,14 +1451,25 @@ export function ReservationForm({
 										)}
 									>
 										<FormLabel>
-											{t("name") || "Name"}{" "}
+											{t("your_name") || "Your Name"}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
 											<Input
-												placeholder={t("name") || "Enter your name"}
+												placeholder={t("your_name") || "Enter your name"}
 												disabled={isSubmitting}
 												{...field}
+												onChange={(e) => {
+													field.onChange(e);
+													// Clear errors and trigger re-validation when user types
+													if (fieldState.error) {
+														form.clearErrors("name");
+													}
+													// Trigger validation for both name and phone to re-check the refine condition
+													if (e.target.value.trim().length > 0) {
+														form.trigger(["name", "phone"]);
+													}
+												}}
 												className={cn(
 													"h-10 text-base sm:h-9 sm:text-sm",
 													fieldState.error &&
@@ -1384,32 +1485,124 @@ export function ReservationForm({
 							<FormField
 								control={form.control}
 								name="phone"
-								render={({ field, fieldState }) => (
-									<FormItem
-										className={cn(
-											fieldState.error &&
-												"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-										)}
-									>
-										<FormLabel>
-											{t("phone")} <span className="text-destructive">*</span>
-										</FormLabel>
-										<FormControl>
-											<Input
-												type="tel"
-												placeholder={t("Enter_your_phone")}
-												disabled={isSubmitting}
-												{...field}
-												className={cn(
-													"h-10 text-base sm:h-9 sm:text-sm",
-													fieldState.error &&
-														"border-destructive focus-visible:ring-destructive",
-												)}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
+								render={({ field, fieldState }) => {
+									// Parse full phone number to extract country code and local number
+									const fullPhone = field.value || "";
+									let currentCountryCode = phoneCountryCode;
+									let localPhoneNumber = "";
+
+									// Extract country code and local number from full phone
+									if (fullPhone.startsWith("+886")) {
+										currentCountryCode = "+886";
+										localPhoneNumber = fullPhone.replace("+886", "");
+									} else if (fullPhone.startsWith("+1")) {
+										currentCountryCode = "+1";
+										localPhoneNumber = fullPhone.replace("+1", "");
+									} else if (fullPhone.startsWith("+")) {
+										// Other country code - try to extract
+										const match = fullPhone.match(/^(\+\d{1,3})(.+)$/);
+										if (match) {
+											currentCountryCode = match[1];
+											localPhoneNumber = match[2];
+										}
+									} else if (fullPhone) {
+										// No country code, assume it's local number for current country code
+										localPhoneNumber = fullPhone;
+									}
+
+									// Update country code state if it changed
+									if (currentCountryCode !== phoneCountryCode) {
+										setPhoneCountryCode(currentCountryCode);
+									}
+
+									// Helper to combine country code + local number and update form field
+									const updateFullPhone = (
+										countryCode: string,
+										localNumber: string,
+									) => {
+										// Strip non-numeric characters from local number
+										const cleaned = localNumber.replace(/\D/g, "");
+										if (!cleaned) {
+											field.onChange("");
+											return;
+										}
+
+										// For Taiwan, strip leading 0 if present before combining
+										let numberToCombine = cleaned;
+										if (countryCode === "+886" && cleaned.startsWith("0")) {
+											numberToCombine = cleaned.slice(1);
+										}
+
+										const fullPhoneNumber = `${countryCode}${numberToCombine}`;
+										field.onChange(fullPhoneNumber);
+
+										// Clear errors and trigger re-validation
+										if (fieldState.error) {
+											form.clearErrors("phone");
+										}
+										if (cleaned.length > 0) {
+											form.trigger(["name", "phone"]);
+										}
+									};
+
+									return (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
+											<FormLabel>
+												{t("phone")} <span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<div className="flex gap-2">
+													<PhoneCountryCodeSelector
+														value={phoneCountryCode}
+														onValueChange={(newCode) => {
+															setPhoneCountryCode(newCode);
+															// Clear local number when country changes
+															updateFullPhone(newCode, "");
+														}}
+														disabled={isSubmitting}
+														allowedCodes={["+1", "+886"]}
+													/>
+													<Input
+														type="tel"
+														placeholder={
+															phoneCountryCode === "+886"
+																? t("phone_placeholder") ||
+																	"0917-321-893 or 912345678"
+																: t("phone_placeholder_us") || "4155551212"
+														}
+														disabled={isSubmitting}
+														value={localPhoneNumber}
+														maxLength={phoneCountryCode === "+886" ? 10 : 10}
+														onChange={(e) => {
+															// Strip all non-numeric characters (allow only digits)
+															const cleaned = e.target.value.replace(/\D/g, "");
+															// Allow 10 digits for both +1 and +886 (Taiwan can be 9 or 10)
+															const maxLen =
+																phoneCountryCode === "+886" ? 10 : 10;
+															const limited = cleaned.slice(0, maxLen);
+															updateFullPhone(phoneCountryCode, limited);
+														}}
+														className={cn(
+															"flex-1 h-10 text-base sm:h-9 sm:text-sm",
+															fieldState.error &&
+																"border-destructive focus-visible:ring-destructive",
+														)}
+													/>
+												</div>
+											</FormControl>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("phone_format_instruction") ||
+													"Enter your mobile number starting with 9 or 09 (Taiwan +886)"}
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									);
+								}}
 							/>
 						</div>
 					)}
@@ -1458,7 +1651,7 @@ export function ReservationForm({
 								const fieldLabels: Record<string, string> = {
 									storeId: t("store") || "Store",
 									customerId: t("customer") || "Customer",
-									name: t("name") || "Name",
+									name: t("your_name") || "Your Name",
 									phone: t("phone") || "Phone",
 									facilityId: t("rsvp_facility") || "Facility",
 									serviceStaffId: t("service_staff") || "Service Staff",
@@ -1555,7 +1748,7 @@ export function ReservationForm({
 													const fieldLabels: Record<string, string> = {
 														storeId: t("store") || "Store",
 														customerId: t("customer") || "Customer",
-														name: t("name") || "Name",
+														name: t("your_name") || "Your Name",
 														phone: t("phone") || "Phone",
 														facilityId: t("rsvp_facility") || "Facility",
 														serviceStaffId:

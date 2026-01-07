@@ -39,7 +39,7 @@ interface CreateRsvpStoreOrderParams {
 
 /**
  * Creates a store order for an RSVP reservation.
- * Uses "digital" shipping method if available, otherwise falls back to default shipping method.
+ * Uses "reserve" shipping method if available, otherwise falls back to default shipping method.
  * Uses the specified payment method (e.g., "credit" or "TBD").
  *
  * @param params - Parameters for creating the order
@@ -76,17 +76,17 @@ export async function createRsvpStoreOrder(
 		throw new SafeError("Order total must be greater than 0");
 	}
 
-	// Find "digital" shipping method for reservation orders (preferred)
-	const digitalShippingMethod = await tx.shippingMethod.findFirst({
+	// Find "reserve" shipping method for reservation orders (preferred)
+	const reserveShippingMethod = await tx.shippingMethod.findFirst({
 		where: {
-			identifier: "digital",
+			identifier: "reserve",
 			isDeleted: false,
 		},
 	});
 
-	// Fall back to default shipping method if "digital" not found
-	const defaultShippingMethod = digitalShippingMethod
-		? digitalShippingMethod
+	// Fall back to default shipping method if "reserve" not found
+	const defaultShippingMethod = reserveShippingMethod
+		? reserveShippingMethod
 		: await tx.shippingMethod.findFirst({
 				where: { isDefault: true, isDeleted: false },
 			});

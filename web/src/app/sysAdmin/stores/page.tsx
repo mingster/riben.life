@@ -1,6 +1,7 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import { formatDateTime, epochToDate } from "@/utils/datetime-utils";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { redirect } from "next/navigation";
 import type { StoreColumn } from "./components/columns";
 import { StoresClient } from "./components/stores-client";
@@ -55,6 +56,9 @@ export default async function StoreAdminPage(props: {
 	creditByStore.forEach((row) => {
 		creditMap.set(row.storeId, Number(row._sum.point ?? 0));
 	});
+
+	// Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
+	transformPrismaDataForJson(stores);
 
 	const levelLabel = (level: number | null | undefined) => {
 		switch (level) {

@@ -18,14 +18,49 @@ export const createReservationSchema = z
 	.refine(
 		(data) => {
 			// If customerId is not provided (anonymous user), name and phone are required
-			if (!data.customerId) {
-				return !!(data.name && data.phone);
+			// Check for null, undefined, or empty string
+			const hasCustomerId =
+				data.customerId !== null &&
+				data.customerId !== undefined &&
+				data.customerId !== "";
+			if (!hasCustomerId) {
+				// Check that both name and phone are non-empty strings (after trimming)
+				const name =
+					data.name !== null && data.name !== undefined
+						? String(data.name).trim()
+						: "";
+				const phone =
+					data.phone !== null && data.phone !== undefined
+						? String(data.phone).trim()
+						: "";
+				return name.length > 0 && phone.length > 0;
 			}
 			return true;
 		},
 		{
-			message: "Name and phone are required for anonymous reservations",
+			message: "rsvp_name_and_phone_required_for_anonymous",
 			path: ["name"], // Show error on name field
+		},
+	)
+	.refine(
+		(data) => {
+			// If customerId is not provided (anonymous user), phone is also required
+			const hasCustomerId =
+				data.customerId !== null &&
+				data.customerId !== undefined &&
+				data.customerId !== "";
+			if (!hasCustomerId) {
+				const phone =
+					data.phone !== null && data.phone !== undefined
+						? String(data.phone).trim()
+						: "";
+				return phone.length > 0;
+			}
+			return true;
+		},
+		{
+			message: "rsvp_phone_required_for_anonymous",
+			path: ["phone"], // Show error on phone field
 		},
 	);
 

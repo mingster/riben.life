@@ -202,7 +202,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 													// Map field names to user-friendly labels
 													const fieldLabels: Record<string, string> = {
 														id: "User ID",
-														name: t("name"),
+														name: t("your_name"),
 														email: t("email"),
 														password: t("password"),
 														locale: t("account_tabs_language"),
@@ -248,12 +248,13 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("name")} <span className="text-destructive">*</span>
+												{t("your_name")}{" "}
+												<span className="text-destructive">*</span>
 											</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
-													placeholder="Enter name"
+													placeholder={t("your_name") || "Enter your name"}
 													{...field}
 												/>
 											</FormControl>

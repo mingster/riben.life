@@ -56,6 +56,5 @@ export default async function StoreTermsPage(props: {
 				</Container>
 			</div>
 		</Suspense>
-
 	);
 }

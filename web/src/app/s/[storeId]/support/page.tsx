@@ -5,6 +5,7 @@ import type { SupportTicket, User } from "@/types";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { sqlClient } from "@/lib/prismadb";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { ClientSupport } from "./client-support";
 import { Suspense } from "react";
 import { Loader } from "@/components/loader";
@@ -54,6 +55,12 @@ export default async function SupportHomePage(props: {
 			},
 		}),
 	]);
+
+	// Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
+	if (user) {
+		transformPrismaDataForJson(user);
+	}
+	transformPrismaDataForJson(tickets);
 
 	//const title = t("page_title_support");
 

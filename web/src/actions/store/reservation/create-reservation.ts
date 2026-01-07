@@ -22,6 +22,8 @@ import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { createRsvpStoreOrder } from "./create-rsvp-store-order";
 import { RsvpStatus } from "@/types/enum";
 import { getT } from "@/app/i18n";
+import { normalizePhoneNumber } from "@/utils/phone-utils";
+import logger from "@/lib/logger";
 
 // create a reservation by the customer.
 // this action will create a reservation record, store order, and related ledger records in the database,
@@ -102,7 +104,8 @@ export const createReservationAction = baseClient
 		validateReservationTimeWindow(rsvpSettings, rsvpTime);
 
 		// Check if user is anonymous (not logged in and no customerId provided)
-		const isAnonymous = !sessionUserId && !customerId;
+		let isAnonymous = !sessionUserId && !customerId;
+		let foundCustomerIdByPhone: string | null = null;
 
 		// Validate name and phone requirements for anonymous users
 		if (isAnonymous) {
@@ -115,13 +118,68 @@ export const createReservationAction = baseClient
 					"Phone number is required for anonymous reservations",
 				);
 			}
+
+			// Try to locate user from phone number
+			try {
+				const normalizedPhone = normalizePhoneNumber(phone);
+				const userByPhone = await sqlClient.user.findFirst({
+					where: {
+						phoneNumber: normalizedPhone,
+					},
+					select: {
+						id: true,
+						email: true,
+						name: true,
+					},
+				});
+
+				if (userByPhone) {
+					// Found existing user with this phone number
+					logger.info("Found user by phone number for anonymous reservation", {
+						metadata: {
+							storeId,
+							userId: userByPhone.id,
+							phoneNumber: normalizedPhone,
+							reservationName: name,
+						},
+						tags: ["rsvp", "user-lookup", "phone"],
+					});
+
+					// Store found user's ID
+					foundCustomerIdByPhone = userByPhone.id;
+					isAnonymous = false; // No longer anonymous since we found a user
+				} else {
+					logger.info(
+						"No user found by phone number for anonymous reservation",
+						{
+							metadata: {
+								storeId,
+								phoneNumber: normalizedPhone,
+								reservationName: name,
+							},
+							tags: ["rsvp", "user-lookup", "phone", "anonymous"],
+						},
+					);
+				}
+			} catch (error) {
+				// Log error but don't block reservation creation
+				logger.error("Failed to lookup user by phone number", {
+					metadata: {
+						storeId,
+						phone,
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["rsvp", "user-lookup", "error"],
+				});
+			}
 		}
 
-		// Use session userId if available, otherwise use provided customerId
-		const finalCustomerId = sessionUserId || customerId || null;
+		// Use session userId if available, otherwise use provided customerId or found customerId by phone
+		const finalCustomerId =
+			sessionUserId || customerId || foundCustomerIdByPhone || null;
 
-		// Get current user ID for createdBy field (if logged in)
-		const createdBy = sessionUserId || null;
+		// Get current user ID for createdBy field (if logged in or found by phone)
+		const createdBy = sessionUserId || foundCustomerIdByPhone || null;
 
 		// Check if user is blacklisted (only for logged-in users)
 		if (finalCustomerId) {

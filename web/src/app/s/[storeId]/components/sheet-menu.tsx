@@ -23,6 +23,7 @@ import DropdownUser from "@/components/auth/dropdown-user";
 import { LanguageToggler } from "@/components/language-toggler";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 import pkg from "../../../../../package.json";
 
 const appVersion = pkg.version;
@@ -39,59 +40,76 @@ export function SheetMenu({ store }: props) {
 	const [isOpen, setIsOpen] = useState(false); // true off by default
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const isHydrated = useIsHydrated();
 
 	const { data: session } = authClient.useSession();
 	const user = session?.user;
 
 	return (
-		<Sheet open={isOpen} onOpenChange={setIsOpen}>
-			<SheetTrigger asChild>
+		<>
+			{isHydrated ? (
+				<Sheet open={isOpen} onOpenChange={setIsOpen}>
+					<SheetTrigger asChild>
+						<Button
+							className="h-10 w-10 border-gray/20 bg-stroke/20 hover:text-meta-1 active:bg-stroke/30 sm:h-8 sm:w-8"
+							variant="outline"
+							size="icon"
+						>
+							<IconMenu2 className="h-5 w-5 sm:h-4 sm:w-4" />
+						</Button>
+					</SheetTrigger>
+					<SheetContent
+						className="flex flex-col px-3 sm:px-4 sm:w-72 backdrop-opacity-10 backdrop-invert"
+						side="left"
+					>
+						<SheetTitle className="hidden"></SheetTitle>
+						<SheetDescription className="hidden"></SheetDescription>
+
+						<SheetHeader className="shrink-0 pb-1">
+							<Button variant="link" asChild>
+								<Link
+									href={`/s/${store.id}`}
+									className="flex gap-2 items-center"
+								>
+									<IconHome className="mr-1 h-6 w-6 sm:size-6" />
+								</Link>
+							</Button>
+						</SheetHeader>
+
+						<div className="flex-1 min-h-0 overflow-hidden">
+							<StoreMenu store={store} isOpen title="" setIsOpen={setIsOpen} />
+						</div>
+						<div className="shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2 flex-wrap">
+							<ThemeToggler />
+							<DropdownUser />
+							<LanguageToggler />
+							{store.useOrderSystem && <DropdownCart />}
+						</div>
+						<div className="shrink-0 pt-1 pb-1 sm:pb-0 items-center justify-center w-full font-mono text-sm flex flex-col">
+							<Link href="/unv" className="w-full sm:w-auto">
+								<Button
+									variant="link"
+									className="w-full text-xs font-mono dark:text-white h-10 sm:w-auto sm:h-9"
+								>
+									{t("system_provider")}
+								</Button>
+							</Link>
+							<span className="text-xs text-muted-foreground font-mono shrink-0">
+								{appVersion ? `v${appVersion}` : null}
+							</span>
+						</div>
+					</SheetContent>
+				</Sheet>
+			) : (
 				<Button
 					className="h-10 w-10 border-gray/20 bg-stroke/20 hover:text-meta-1 active:bg-stroke/30 sm:h-8 sm:w-8"
 					variant="outline"
 					size="icon"
+					disabled
 				>
 					<IconMenu2 className="h-5 w-5 sm:h-4 sm:w-4" />
 				</Button>
-			</SheetTrigger>
-			<SheetContent
-				className="flex flex-col px-3 sm:px-4 sm:w-72 backdrop-opacity-10 backdrop-invert"
-				side="left"
-			>
-				<SheetTitle className="hidden"></SheetTitle>
-				<SheetDescription className="hidden"></SheetDescription>
-
-				<SheetHeader className="shrink-0 pb-1">
-					<Button variant="link" asChild>
-						<Link href={`/s/${store.id}`} className="flex gap-2 items-center">
-							<IconHome className="mr-1 h-6 w-6 sm:size-6" />
-						</Link>
-					</Button>
-				</SheetHeader>
-
-				<div className="flex-1 min-h-0 overflow-hidden">
-					<StoreMenu store={store} isOpen title="" setIsOpen={setIsOpen} />
-				</div>
-				<div className="shrink-0 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2 flex-wrap">
-					<ThemeToggler />
-					<DropdownUser />
-					<LanguageToggler />
-					{store.useOrderSystem && <DropdownCart />}
-				</div>
-				<div className="shrink-0 pt-1 pb-1 sm:pb-0 items-center justify-center w-full font-mono text-sm flex flex-col">
-					<Link href="/unv" className="w-full sm:w-auto">
-						<Button
-							variant="link"
-							className="w-full text-xs font-mono dark:text-white h-10 sm:w-auto sm:h-9"
-						>
-							{t("system_provider")}
-						</Button>
-					</Link>
-					<span className="text-xs text-muted-foreground font-mono shrink-0">
-						{appVersion ? `v${appVersion}` : null}
-					</span>
-				</div>
-			</SheetContent>
-		</Sheet>
+			)}
+		</>
 	);
 }

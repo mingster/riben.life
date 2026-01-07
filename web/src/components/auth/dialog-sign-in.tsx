@@ -13,6 +13,8 @@ import {
 import { useI18n } from "@/providers/i18n-provider";
 import ClientSignIn from "./client-signin";
 
+// a dialog for sign in
+//
 export default function DialogSignIn({
 	callbackUrl = "/",
 }: {
@@ -21,13 +23,6 @@ export default function DialogSignIn({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	/*
-	<span>
-						{t("signin")}
-						{t("or")}
-						{t("signUp")}
-					</span>
-	*/
 	return (
 		<Dialog>
 			<DialogTrigger asChild>
