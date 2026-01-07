@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27
 **Status:** Active
-**Version:** 2.0
+**Version:** 2.1
 
 **Related Documents:**
 
@@ -104,8 +104,11 @@ Store Admins have all Store Staff permissions, plus:
 * Number of adults (numOfAdult, default: 1)
 * Number of children (numOfChild, default: 0)
 * Customer contact information:
-  * If logged in, (optional), keep User ID and Email address in the reservation record
-  * Phone number (required for anonymous users)
+  * If logged in: (optional) User ID and Email address are kept in the reservation record
+  * **If anonymous (not logged in):**
+    * **Name is required** - Customer must provide their name
+    * **Phone number is required** - Customer must provide their phone number
+    * Both name and phone are validated and stored in the reservation record
 * Special requests or notes (message, optional)
 * Facility preference (facilityId, optional, required if `mustSelectFacility = true`)
 * Service staff preference (serviceStaffId, optional, required if `mustHaveServiceStaff = true`)
@@ -149,6 +152,10 @@ Store Admins have all Store Staff permissions, plus:
 
 * If `minPrepaidPercentage > 0`:
   * Anonymous users can create reservations without signing in
+  * **Anonymous Reservation Local Storage:**
+    * When an anonymous user creates a reservation, the reservation data (including name, phone, reservation details) is saved to browser local storage
+    * Local storage allows anonymous users to view their reservation history even without an account
+    * Local storage is keyed by store ID to support multiple stores
   * When a customer creates a reservation with prepaid required:
     * System calculates total reservation cost:
       * Total cost = facility cost + service staff cost (if applicable)
@@ -164,6 +171,10 @@ Store Admins have all Store Staff permissions, plus:
     * Order is created as unpaid (`isPaid = false`) for customer to complete payment at checkout
     * Customer is redirected to `/checkout/[orderId]` to select payment method and complete payment
     * **Checkout Success:** After successful payment, a brief success message is displayed before redirecting to the appropriate page (RSVP page, custom return URL, or order page).
+    * **Anonymous User Phone Confirmation:**
+      * After checkout completion, if the customer is anonymous (not logged in), the order confirmation page prompts the user to confirm their phone number
+      * This ensures the phone number used for the reservation matches the phone number associated with the order
+      * The confirmed phone number is used for order tracking and customer communication
   * Payment can be made using:
     * Customer credit (if `useCustomerCredit = true` and customer selects "credit" payment method)
     * Other payment methods (Stripe, LINE Pay, cash, etc.) available at checkout
@@ -229,7 +240,10 @@ Store Admins have all Store Staff permissions, plus:
      * Number of children (numOfChild, default: 0)
    * Customer provides contact information:
      * If logged in: (optional) User ID and Email address are kept in the reservation record
-     * If anonymous: Phone number required
+     * **If anonymous:**
+       * **Name is required** - Customer must provide their name
+       * **Phone number is required** - Customer must provide their phone number
+       * Both fields are validated before form submission
    * Customer optionally selects facility preference (facilityId)
    * Customer optionally adds special requests or notes (message)
 
@@ -238,7 +252,9 @@ Store Admins have all Store Staff permissions, plus:
    * System validates:
      * Selected time is within business hours
      * Selected time slot is available
-     * Required fields are filled (phone number required for anonymous users, email optional)
+     * Required fields are filled:
+       * **For anonymous users:** Both name and phone number are required
+       * **For logged-in users:** Contact information is optional
      * Party size is valid (at least 1 adult)
 
 5. **Reservation Creation:**
@@ -251,6 +267,10 @@ Store Admins have all Store Staff permissions, plus:
      * `confirmedByCustomer`: `false`
      * No order is created (no `orderId`) (initially)
    * Reservation is saved to database
+   * **For anonymous users:**
+     * Reservation data (including name, phone, reservation details) is saved to browser local storage
+     * Local storage is keyed by store ID: `rsvp-${storeId}`
+     * This allows anonymous users to view their reservation history later without signing in
 
    **If `rsvpSettings.minPrepaidPercentage > 0`:**
 
@@ -275,6 +295,11 @@ Store Admins have all Store Staff permissions, plus:
      * System updates reservation `alreadyPaid` to `true`
      * System updates reservation `status` to `ReadyToConfirm`
      * System creates `storeLedger` entry to record the transaction (if applicable)
+     * **For anonymous users:**
+       * Customer is redirected to order confirmation page
+       * Order confirmation page prompts anonymous user to confirm their phone number
+       * This ensures the phone number used for the reservation matches the phone number associated with the order
+       * Confirmed phone number is used for order tracking and customer communication
      * Flow continues to step 6
 
 6. **Store Staff Notification:**
@@ -887,11 +912,59 @@ Completed (50) [when service is finished]
 
 ***
 
-### 3.10 Reporting and Analytics (Store Admin Only)
+### 3.10 Customer Reservation History
 
-#### 3.10.1 Reservation Statistics
+#### 3.10.1 Customer-Facing Reservation History
 
-**FR-RSVP-056:** Store admins must be able to view reservation statistics (Store Staff access not permitted):
+**FR-RSVP-056:** Customers must be able to view their reservation history:
+
+* **Logged-in Users:**
+  * Customers can access `/s/[storeId]/reservation/history` to view all their reservations for the store
+  * Reservations are fetched from the database based on the customer's user ID
+  * Reservations are displayed in reverse chronological order (most recent first)
+  * Customers can view reservation details including:
+    * Reservation date and time
+    * Facility and service staff (if assigned)
+    * Party size (adults and children)
+    * Reservation status
+    * Payment status
+    * Order information (if prepaid)
+
+* **Anonymous Users:**
+  * Anonymous users can access `/s/[storeId]/reservation/history` without authentication
+  * The page displays reservations stored in browser local storage for the specific store
+  * Local storage is keyed by store ID to support multiple stores
+  * Only reservations created by the anonymous user on the same browser/device are displayed
+  * If no reservations are found in local storage, the page displays an empty state
+  * Anonymous users can view the same reservation details as logged-in users
+  * **Note:** Anonymous users are not redirected to sign-in when accessing the history page
+
+* **Reservation Data in Local Storage:**
+  * When an anonymous user creates a reservation, the following data is saved to local storage:
+    * Reservation ID
+    * Store ID
+    * Name and phone number (as provided during reservation creation)
+    * Reservation date and time
+    * Facility and service staff (if selected)
+    * Party size
+    * Reservation status
+    * Payment status
+    * Order ID (if prepaid)
+  * Local storage entries are organized by store ID to prevent conflicts across multiple stores
+
+* **Data Persistence:**
+  * Local storage persists across browser sessions
+  * Users can view their anonymous reservations even after closing and reopening the browser
+  * Local storage is cleared only when:
+    * User explicitly clears browser data
+    * User clears local storage for the domain
+    * Browser storage quota is exceeded (browser-dependent behavior)
+
+### 3.11 Reporting and Analytics (Store Admin Only)
+
+#### 3.11.1 Reservation Statistics
+
+**FR-RSVP-057:** Store admins must be able to view reservation statistics (Store Staff access not permitted):
 
 * Total reservations by date range
 * Reservations by status
@@ -899,18 +972,18 @@ Completed (50) [when service is finished]
 * No-show rate
 * Cancellation rate
 
-#### 3.10.2 Customer Analytics
+#### 3.11.2 Customer Analytics
 
-**FR-RSVP-057:** Store admins must be able to view customer history (Store Staff access not permitted):
+**FR-RSVP-058:** Store admins must be able to view customer history (Store Staff access not permitted):
 
 * Reservation history per customer
 * Frequency of visits
 * Average party size
 * Preferred times/dates
 
-#### 3.10.3 Resource Utilization
+#### 3.11.3 Resource Utilization
 
-**FR-RSVP-058:** Store admins must be able to view resource utilization (Store Staff access not permitted):
+**FR-RSVP-059:** Store admins must be able to view resource utilization (Store Staff access not permitted):
 
 * Resource occupancy rates
 * Most/least used resources
@@ -922,11 +995,14 @@ Completed (50) [when service is finished]
 
 ### 4.1 Reservation Data Model
 
-**FR-RSVP-059:** The system must store the following reservation data:
+**FR-RSVP-060:** The system must store the following reservation data:
 
 * Unique reservation ID
 * Store ID
 * User ID (optional, for logged-in users)
+* **Name and phone number (for anonymous users):**
+  * Name (name, optional) - Required for anonymous reservations, stored in reservation record
+  * Phone number (phone, optional) - Required for anonymous reservations, stored in reservation record
 * Order ID (if prepaid)
 * Facility ID (if assigned)
 * Service Staff ID (serviceStaffId, optional, if service staff is assigned)
@@ -954,7 +1030,7 @@ Completed (50) [when service is finished]
 
 ### 4.2 Settings Data Model
 
-**FR-RSVP-060:** The system must store RSVP settings per store:
+**FR-RSVP-061:** The system must store RSVP settings per store:
 
 * `singleServiceMode` (Boolean, default: `false`) - When enabled, only ONE reservation per time slot is allowed across all facilities. This is designed for personal shops where the service provider can only handle one reservation at a time. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities.
 
@@ -997,7 +1073,7 @@ Completed (50) [when service is finished]
 
 ### 4.3 Resource Data Model (Facilities/Appointment Slots)
 
-**FR-RSVP-061:** The system must store resource information (facilities/appointment slots):
+**FR-RSVP-062:** The system must store resource information (facilities/appointment slots):
 
 * Unique resource ID
 * Store ID
@@ -1010,7 +1086,7 @@ Completed (50) [when service is finished]
 
 ### 4.4 Service Staff Data Model
 
-**FR-RSVP-061a:** The system must store service staff information:
+**FR-RSVP-062a:** The system must store service staff information:
 
 * Unique service staff ID
 * Store ID

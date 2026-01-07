@@ -216,7 +216,8 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("your_name")} <span className="text-destructive">*</span>
+												{t("your_name")}{" "}
+												<span className="text-destructive">*</span>
 											</FormLabel>
 											<FormControl>
 												<Input

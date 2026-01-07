@@ -40,6 +40,15 @@ export const CellAction: React.FC<CellActionProps> = ({
 	const { t } = useTranslation(lng);
 
 	const onConfirm = async () => {
+		// Prevent deleting owner entry (synthetic ID)
+		if (data.id.startsWith("owner-")) {
+			toastError({
+				title: t("error_title"),
+				description: t("cannot_delete_owner") || "Cannot delete store owner",
+			});
+			return;
+		}
+
 		try {
 			setLoading(true);
 			const result = await deleteServiceStaffAction(String(params.storeId), {
@@ -79,6 +88,9 @@ export const CellAction: React.FC<CellActionProps> = ({
 		});
 	};
 
+	// Check if this is an owner entry (synthetic ID)
+	const isOwnerEntry = data.id.startsWith("owner-");
+
 	return (
 		<>
 			<AlertModal
@@ -112,16 +124,18 @@ export const CellAction: React.FC<CellActionProps> = ({
 					>
 						<IconEdit className="mr-0 size-4" /> {t("edit")}
 					</DropdownMenuItem>
-					<DropdownMenuItem
-						className="cursor-pointer"
-						onClick={() => setOpen(true)}
-					>
-						<IconTrash className="mr-0 size-4" /> {t("delete")}
-					</DropdownMenuItem>
+					{!isOwnerEntry && (
+						<DropdownMenuItem
+							className="cursor-pointer"
+							onClick={() => setOpen(true)}
+						>
+							<IconTrash className="mr-0 size-4" /> {t("delete")}
+						</DropdownMenuItem>
+					)}
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<EditServiceStaffDialog
-				isNew={false}
+				isNew={data.id.startsWith("owner-")} // Treat owner entry as new to create real ServiceStaff entry
 				serviceStaff={data}
 				onUpdated={onUpdated}
 				open={isEditOpen}

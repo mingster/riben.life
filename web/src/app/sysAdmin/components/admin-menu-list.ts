@@ -5,9 +5,7 @@ import {
 	IconClock,
 	IconCurrencyDollar,
 	IconLanguage,
-	IconMail,
 	IconMapPin,
-	IconMessageCircle,
 	IconMoneybag,
 	IconSettings,
 	IconTag,
@@ -158,6 +156,14 @@ export function GetMenuList(pathname: string): Group[] {
 							label: "System Messages",
 							active: pathname.includes(`${nav_prefix}/notifications/sysmsg`),
 						},
+
+						{
+							href: `${nav_prefix}/notifications/mail-templates`,
+							label: "Mail Templates",
+							active: pathname.includes(
+								`${nav_prefix}/notifications/mail-templates`,
+							),
+						},
 					],
 				},
 
@@ -221,13 +227,6 @@ export function GetMenuList(pathname: string): Group[] {
 					label: "Currencies",
 					active: pathname.includes(`${nav_prefix}/currencies`),
 					icon: IconCurrencyDollar,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/mail-templates`,
-					label: "Mail Templates",
-					active: pathname.includes(`${nav_prefix}/mail-templates`),
-					icon: IconMail,
 					submenus: [],
 				},
 			],

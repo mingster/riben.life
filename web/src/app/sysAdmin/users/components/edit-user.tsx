@@ -248,7 +248,8 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("your_name")} <span className="text-destructive">*</span>
+												{t("your_name")}{" "}
+												<span className="text-destructive">*</span>
 											</FormLabel>
 											<FormControl>
 												<Input

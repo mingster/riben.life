@@ -32,6 +32,8 @@ interface UserButtonProps {
 	db_user?: User | undefined | null;
 }
 
+// a dropdown menu for signed-in user
+//
 export default function DropdownUser({ db_user }: UserButtonProps) {
 	const [mounted, setMounted] = useState(false);
 	const { lng } = useI18n();

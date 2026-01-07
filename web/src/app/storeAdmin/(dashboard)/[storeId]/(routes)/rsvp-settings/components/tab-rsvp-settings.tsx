@@ -56,7 +56,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 				? {
 						acceptReservation: rsvpSettings.acceptReservation,
 						singleServiceMode: rsvpSettings.singleServiceMode ?? false,
-						minPrepaidPercentage: rsvpSettings.minPrepaidPercentage ?? 0,
+						minPrepaidPercentage: rsvpSettings.minPrepaidPercentage ?? 100,
 						noNeedToConfirm: rsvpSettings.noNeedToConfirm ?? false,
 						canCancel: rsvpSettings.canCancel,
 						cancelHours: rsvpSettings.cancelHours,
@@ -79,7 +79,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 				: {
 						acceptReservation: true,
 						singleServiceMode: false,
-						minPrepaidPercentage: 0,
+						minPrepaidPercentage: 100,
 						noNeedToConfirm: false,
 						canCancel: true,
 						cancelHours: 24,
@@ -87,15 +87,15 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						canReserveAfter: 2190,
 						defaultDuration: 60,
 						requireSignature: false,
-						showCostToCustomer: false,
+						showCostToCustomer: true,
 						mustSelectFacility: false,
 						mustHaveServiceStaff: false,
 						useBusinessHours: true,
 						rsvpHours: null,
 						reminderHours: 24,
 						useReminderSMS: false,
-						useReminderLine: false,
-						useReminderEmail: false,
+						useReminderLine: true,
+						useReminderEmail: true,
 						syncWithGoogle: false,
 						syncWithApple: false,
 					},
@@ -351,7 +351,58 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								)}
 							/>
 						</div>
-
+						<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
+							<FormField
+								control={form.control}
+								name="mustSelectFacility"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>
+												{t("rsvp_Must_Select_Facility") ||
+													"Must Select Facility"}
+											</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("rsvp_Must_Select_Facility_descr") ||
+													"Customers must select a facility for their reservation"}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="mustHaveServiceStaff"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
+										<div className="space-y-0.5">
+											<FormLabel>
+												{t("rsvp_Can_Select_Service_Staff") ||
+													"Must Have Service Staff"}
+											</FormLabel>
+											<FormDescription className="text-xs font-mono text-gray-500">
+												{t("rsvp_Can_Select_Service_Staff_descr") ||
+													"Customers must select service staff (e.g., beautician, masseur, hairstylist, etc.)"}
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+												disabled={loading || form.formState.isSubmitting}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+						</div>
 						<Separator />
 
 						{/* Prepaid Settings */}
@@ -522,66 +573,16 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 						<Separator />
 
 						{/* Display & Signature Settings */}
+						{/*
 						<div className="space-y-4">
 							<h3 className="text-lg font-semibold">
 								{t("rsvp_Display_Settings")}
 							</h3>
-							<div className="grid grid-flow-row-dense grid-cols-2 gap-1">
-								<FormField
-									control={form.control}
-									name="mustSelectFacility"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-											<div className="space-y-0.5">
-												<FormLabel>
-													{t("rsvp_Must_Select_Facility") ||
-														"Must Select Facility"}
-												</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("rsvp_Must_Select_Facility_descr") ||
-														"Customers must select a facility for their reservation"}
-												</FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="mustHaveServiceStaff"
-									render={({ field }) => (
-										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
-											<div className="space-y-0.5">
-												<FormLabel>
-													{t("rsvp_Can_Select_Service_Staff") ||
-														"Must Have Service Staff"}
-												</FormLabel>
-												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("rsvp_Can_Select_Service_Staff_descr") ||
-														"Customers must select service staff (e.g., beautician, masseur, hairstylist, etc.)"}
-												</FormDescription>
-											</div>
-											<FormControl>
-												<Switch
-													checked={field.value}
-													onCheckedChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
-												/>
-											</FormControl>
-										</FormItem>
-									)}
-								/>
-							</div>
+							
 						</div>
 
 						<Separator />
-
+ */}
 						{/* Reminder Settings */}
 						<div className="space-y-4">
 							<h3 className="text-lg font-semibold">

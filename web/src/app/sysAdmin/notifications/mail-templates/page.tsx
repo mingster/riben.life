@@ -2,6 +2,7 @@
 import Container from "@/components/ui/container";
 import { sqlClient } from "@/lib/prismadb";
 import type { MessageTemplate, MessageTemplateLocalized } from "@prisma/client";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { MessageTemplateClient } from "./components/client-message-template";
 
 export default async function MailTemplateAdminPage() {
@@ -40,6 +41,13 @@ export default async function MailTemplateAdminPage() {
 				},
 			}),
 		]);
+
+	// Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
+	// This prevents hydration mismatches when passing data to client components
+	transformPrismaDataForJson(messageTemplates);
+	transformPrismaDataForJson(messageTemplateLocalized);
+	transformPrismaDataForJson(locales);
+	transformPrismaDataForJson(stores);
 
 	return (
 		<Container>

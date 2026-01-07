@@ -5,6 +5,7 @@ import { SafeError } from "@/utils/error";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { Prisma } from "@prisma/client";
 
 const getServiceStaffSchema = z.object({});
 
@@ -14,10 +15,10 @@ export const getServiceStaffAction = storeActionClient
 	.action(async ({ bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
 
-		// Verify store exists and user has access
+		// Verify store exists and user has access, also get ownerId
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
-			select: { id: true, organizationId: true },
+			select: { id: true, organizationId: true, ownerId: true },
 		});
 
 		if (!store) {
@@ -50,12 +51,17 @@ export const getServiceStaffAction = storeActionClient
 			},
 		});
 
-		// Get member roles for all service staff users
+		// Get member roles for all service staff users and owner
 		const userIds = serviceStaff.map((ss) => ss.userId);
+		// Include ownerId if not already in the list
+		const allUserIds = store.ownerId
+			? [...new Set([...userIds, store.ownerId])]
+			: userIds;
+
 		const members = store.organizationId
 			? await sqlClient.member.findMany({
 					where: {
-						userId: { in: userIds },
+						userId: { in: allUserIds },
 						organizationId: store.organizationId,
 					},
 					select: {
@@ -76,6 +82,49 @@ export const getServiceStaffAction = storeActionClient
 			...ss,
 			memberRole: memberRoleMap.get(ss.userId) || "",
 		}));
+
+		// Check if owner is already in the service staff list
+		const ownerInServiceStaff = store.ownerId
+			? serviceStaffWithRole.some((ss) => ss.userId === store.ownerId)
+			: false;
+
+		// If owner is not in service staff list, add them
+		if (store.ownerId && !ownerInServiceStaff) {
+			// Fetch owner user information
+			const owner = await sqlClient.user.findUnique({
+				where: { id: store.ownerId },
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					phoneNumber: true,
+					locale: true,
+					timezone: true,
+					role: true,
+				},
+			});
+
+			if (owner) {
+				// Create synthetic service staff entry for owner
+				const ownerServiceStaff = {
+					id: `owner-${store.ownerId}`, // Synthetic ID to identify owner
+					storeId: storeId,
+					userId: store.ownerId,
+					capacity: 0, // Default value
+					defaultCost: new Prisma.Decimal(0), // Default value
+					defaultCredit: new Prisma.Decimal(0), // Default value
+					defaultDuration: 60, // Default value
+					businessHours: null,
+					description: null,
+					isDeleted: false,
+					User: owner,
+					memberRole: memberRoleMap.get(store.ownerId) || "owner",
+				};
+
+				// Add owner to the list
+				serviceStaffWithRole.push(ownerServiceStaff);
+			}
+		}
 
 		transformPrismaDataForJson(serviceStaffWithRole);
 

@@ -93,7 +93,10 @@ export function EditServiceStaffDialog({
 		password: "",
 	});
 
-	const isEditMode = Boolean(serviceStaff) && !isNew;
+	// If serviceStaff has a synthetic ID (starts with "owner-"), treat as new entry
+	// This allows creating a real ServiceStaff entry for the owner
+	const isOwnerSyntheticEntry = serviceStaff?.id?.startsWith("owner-") ?? false;
+	const isEditMode = Boolean(serviceStaff) && !isNew && !isOwnerSyntheticEntry;
 
 	const isControlled = typeof open === "boolean";
 	const dialogOpen = isControlled ? open : internalOpen;
