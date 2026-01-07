@@ -1,7 +1,19 @@
 
-line pay
+##line pay
 
 商店ID：riben.life@line.pay
 密碼：ryjtP1q!
 
-riben.life@line.pay
+
+##藍新
+09702642
+newebpay_ACCOUNT=tsai960
+newebpay_AUTH_TOKEN=zefsij-dydJij-6jeqky
+
+
+Riben.Life
+
+
+KNAWABXbk1fU9IMlxImOrfBbJogSIjLc
+
+PBsoAbK8dvQa2gaC
