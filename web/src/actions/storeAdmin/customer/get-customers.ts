@@ -6,6 +6,7 @@ import { storeActionClient } from "@/utils/actions/safe-action";
 import type { User } from "@/types";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { getCustomersSchema } from "./get-customers.validation";
+import { MemberRole } from "@/types/enum";
 
 // consume storeActionClient to ensure user is a member of the store
 export const getCustomersAction = storeActionClient
@@ -37,6 +38,7 @@ export const getCustomersAction = storeActionClient
 		const members = await sqlClient.member.findMany({
 			where: {
 				organizationId: store.organizationId,
+				role: MemberRole.customer,
 			},
 		});
 

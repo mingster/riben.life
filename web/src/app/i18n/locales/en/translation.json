@@ -1160,7 +1160,7 @@
   "user_profile_subscription": "Subscription",
   "user_role": "Role",
   "user_signed_in_banned": "Signed-in/banned?",
-  "users_search": "Search users by name or email...",
+  "users_search": "Search users by name, phone or email...",
   "variable_copied_to_clipboard": "Variable {{variable}} copied to clipboard",
   "view": "View",
   "view_all": "View All",

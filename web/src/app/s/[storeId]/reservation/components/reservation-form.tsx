@@ -127,6 +127,57 @@ export function ReservationForm({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
+	// Load saved name and phone from local storage for anonymous users
+	const [savedContactInfo, setSavedContactInfo] = useState<{
+		name?: string;
+		phone?: string;
+		phoneCountryCode?: string;
+	} | null>(null);
+
+	// Load saved contact info from local storage on mount
+	useEffect(() => {
+		if (!user && storeId) {
+			const storageKey = `rsvp-contact-${storeId}`;
+			try {
+				const stored = localStorage.getItem(storageKey);
+				if (stored) {
+					const parsed = JSON.parse(stored);
+					if (parsed && (parsed.name || parsed.phone)) {
+						setSavedContactInfo(parsed);
+						if (parsed.phoneCountryCode) {
+							setPhoneCountryCode(parsed.phoneCountryCode);
+						}
+					}
+				}
+			} catch (error) {
+				// Silently handle errors loading from local storage
+			}
+		}
+	}, [user, storeId]);
+
+	// Save contact info to local storage when name or phone changes
+	const saveContactInfo = useCallback(
+		(name?: string, phone?: string) => {
+			if (!user && storeId) {
+				const storageKey = `rsvp-contact-${storeId}`;
+				try {
+					const contactInfo = {
+						name: name || savedContactInfo?.name || "",
+						phone: phone || savedContactInfo?.phone || "",
+						phoneCountryCode: phoneCountryCode,
+					};
+					if (contactInfo.name || contactInfo.phone) {
+						localStorage.setItem(storageKey, JSON.stringify(contactInfo));
+						setSavedContactInfo(contactInfo);
+					}
+				} catch (error) {
+					// Silently handle errors saving to local storage
+				}
+			}
+		},
+		[user, storeId, phoneCountryCode, savedContactInfo],
+	);
+
 	// Determine if we're in edit mode
 	const isEditMode = Boolean(rsvp);
 
@@ -368,8 +419,8 @@ export function ReservationForm({
 			return {
 				storeId,
 				customerId: user?.id || null,
-				name: isAnonymous ? "" : undefined,
-				phone: isAnonymous ? "" : undefined,
+				name: isAnonymous ? savedContactInfo?.name || "" : undefined,
+				phone: isAnonymous ? savedContactInfo?.phone || "" : undefined,
 				facilityId: null, // Allow null for reservations without facilities
 				serviceStaffId: null, // Default to null for create mode
 				numOfAdult: 1,
@@ -378,7 +429,15 @@ export function ReservationForm({
 				message: "",
 			} as CreateReservationInput;
 		}
-	}, [isEditMode, rsvp, storeId, user, defaultRsvpTime, facilities]);
+	}, [
+		isEditMode,
+		rsvp,
+		storeId,
+		user,
+		defaultRsvpTime,
+		facilities,
+		savedContactInfo,
+	]);
 
 	// Use appropriate schema based on mode
 	const baseSchema = isEditMode
@@ -393,6 +452,17 @@ export function ReservationForm({
 		defaultValues,
 		mode: "onChange", // Real-time validation for better UX
 	});
+
+	// Update form when saved contact info loads (for anonymous users)
+	useEffect(() => {
+		if (!isEditMode && !user && savedContactInfo) {
+			// Only update name and phone fields if they exist in savedContactInfo
+			if (savedContactInfo.name || savedContactInfo.phone) {
+				form.setValue("name", savedContactInfo.name || "");
+				form.setValue("phone", savedContactInfo.phone || "");
+			}
+		}
+	}, [savedContactInfo, isEditMode, user, form]);
 
 	// Watch rsvpTime to filter facilities
 	const rsvpTime = form.watch("rsvpTime");
@@ -1434,13 +1504,16 @@ export function ReservationForm({
 												disabled={isSubmitting}
 												{...field}
 												onChange={(e) => {
-													field.onChange(e);
+													const value = e.target.value;
+													field.onChange(value);
+													// Save to local storage
+													saveContactInfo(value, form.getValues("phone"));
 													// Clear errors and trigger re-validation when user types
 													if (fieldState.error) {
 														form.clearErrors("name");
 													}
 													// Trigger validation for both name and phone to re-check the refine condition
-													if (e.target.value.trim().length > 0) {
+													if (value.trim().length > 0) {
 														form.trigger(["name", "phone"]);
 													}
 												}}
@@ -1498,6 +1571,8 @@ export function ReservationForm({
 										const cleaned = localNumber.replace(/\D/g, "");
 										if (!cleaned) {
 											field.onChange("");
+											// Save empty phone to local storage
+											saveContactInfo(form.getValues("name"), "");
 											return;
 										}
 
@@ -1509,6 +1584,9 @@ export function ReservationForm({
 
 										const fullPhoneNumber = `${countryCode}${numberToCombine}`;
 										field.onChange(fullPhoneNumber);
+
+										// Save to local storage
+										saveContactInfo(form.getValues("name"), fullPhoneNumber);
 
 										// Clear errors and trigger re-validation
 										if (fieldState.error) {
@@ -1535,6 +1613,11 @@ export function ReservationForm({
 														value={phoneCountryCode}
 														onValueChange={(newCode) => {
 															setPhoneCountryCode(newCode);
+															// Save country code to local storage
+															saveContactInfo(
+																form.getValues("name"),
+																form.getValues("phone"),
+															);
 															// Clear local number when country changes
 															updateFullPhone(newCode, "");
 														}}
@@ -1560,6 +1643,12 @@ export function ReservationForm({
 																phoneCountryCode === "+886" ? 10 : 10;
 															const limited = cleaned.slice(0, maxLen);
 															updateFullPhone(phoneCountryCode, limited);
+															// Save to local storage after updating
+															const fullPhone = `${phoneCountryCode}${limited}`;
+															saveContactInfo(
+																form.getValues("name"),
+																fullPhone,
+															);
 														}}
 														className={cn(
 															"flex-1 h-10 text-base sm:h-9 sm:text-sm",

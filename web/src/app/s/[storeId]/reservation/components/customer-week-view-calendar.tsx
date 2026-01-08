@@ -18,7 +18,7 @@ import {
 import { enUS } from "date-fns/locale/en-US";
 import { zhTW } from "date-fns/locale/zh-TW";
 import { ja } from "date-fns/locale/ja";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
@@ -1546,10 +1546,8 @@ export const CustomerWeekViewCalendar: React.FC<
 															// Render dialog for editable RSVPs or non-editable button for others
 															if (canEdit) {
 																return (
-																	<>
-																		{JSON.stringify(rsvp.customerId)}
+																	<React.Fragment key={rsvp.id}>
 																		<ReservationDialog
-																			key={rsvp.id}
 																			storeId={storeId || ""}
 																			rsvpSettings={rsvpSettings}
 																			storeSettings={storeSettings}
@@ -1637,7 +1635,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																				</div>
 																			}
 																		/>
-																	</>
+																	</React.Fragment>
 																);
 															}
 
