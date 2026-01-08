@@ -317,7 +317,6 @@ export function ReservationForm({
 				return errorMessage;
 			} catch (error) {
 				// If parsing fails, allow the time (graceful degradation)
-				console.error("Failed to parse hours JSON:", error);
 				return null;
 			}
 		},
@@ -977,33 +976,8 @@ export function ReservationForm({
 									storageKey,
 									JSON.stringify(updatedReservations),
 								);
-
-								// Match logging style from CustomerWeekViewCalendar
-								console.log(
-									"[RSVP Local Storage] Saved reservation to local storage",
-									{
-										storageKey,
-										reservationId: data.rsvp.id,
-										name: data.rsvp.name,
-										phone: data.rsvp.phone,
-										orderId: orderId || null,
-										hasName: !!data.rsvp.name,
-										hasPhone: !!data.rsvp.phone,
-										totalInStorage: updatedReservations.length,
-									},
-								);
 							} catch (error) {
-								// Log error but don't block the flow
-								// Match error logging style from CustomerWeekViewCalendar
-								console.error(
-									"[RSVP Local Storage] Error saving reservation to local storage",
-									{
-										storageKey: `rsvp-${storeId}`,
-										reservationId: data.rsvp.id,
-										error:
-											error instanceof Error ? error.message : String(error),
-									},
-								);
+								// Silently handle errors saving to local storage
 							}
 						}
 
@@ -1639,41 +1613,6 @@ export function ReservationForm({
 
 					<Separator />
 
-					{/* Validation Error Summary */}
-					{Object.keys(form.formState.errors).length > 0 && (
-						<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
-							<div className="text-sm font-semibold text-destructive">
-								{t("please_fix_validation_errors") ||
-									"Please fix the following errors:"}
-							</div>
-							{Object.entries(form.formState.errors).map(([field, error]) => {
-								// Map field names to user-friendly labels using i18n
-								const fieldLabels: Record<string, string> = {
-									storeId: t("store") || "Store",
-									customerId: t("customer") || "Customer",
-									name: t("your_name") || "Your Name",
-									phone: t("phone") || "Phone",
-									facilityId: t("rsvp_facility") || "Facility",
-									serviceStaffId: t("service_staff") || "Service Staff",
-									numOfAdult: t("rsvp_num_of_adult") || "Number of Adults",
-									numOfChild: t("rsvp_num_of_child") || "Number of Children",
-									rsvpTime: t("rsvp_time") || "Reservation Time",
-									message: t("rsvp_message") || "Message",
-								};
-								const fieldLabel = fieldLabels[field] || field;
-								return (
-									<div
-										key={field}
-										className="text-sm text-destructive flex items-start gap-2"
-									>
-										<span className="font-medium">{fieldLabel}:</span>
-										<span>{error.message as string}</span>
-									</div>
-								);
-							})}
-						</div>
-					)}
-
 					<div className="space-y-2">
 						<p className="text-sm font-medium">
 							{t("rsvp_rules_and_restrictions")}
@@ -1696,6 +1635,56 @@ export function ReservationForm({
 					</div>
 
 					{/* Submit Button */}
+
+					{/* Validation Error Summary */}
+					{Object.keys(form.formState.errors).length > 0 && (
+						<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
+							<div className="text-sm font-semibold text-destructive">
+								{t("please_fix_validation_errors") ||
+									"Please fix the following errors:"}
+							</div>
+							{Object.entries(form.formState.errors).map(([field, error]) => {
+								// Map field names to user-friendly labels using i18n
+								const fieldLabels: Record<string, string> = {
+									storeId: t("store") || "Store",
+									customerId: t("customer") || "Customer",
+									name: t("your_name") || "Your Name",
+									phone: t("phone") || "Phone",
+									facilityId: t("rsvp_facility") || "Facility",
+									serviceStaffId: t("service_staff") || "Service Staff",
+									numOfAdult: t("rsvp_num_of_adult") || "Number of Adults",
+									numOfChild: t("rsvp_num_of_child") || "Number of Children",
+									rsvpTime: t("rsvp_time") || "Reservation Time",
+									message: t("rsvp_message") || "Message",
+								};
+								const fieldLabel = fieldLabels[field] || field;
+
+								// Translate error message if it's an i18n key, otherwise use as-is
+								const errorMessage = error.message as string;
+								// List of known i18n keys used in validation
+								const i18nErrorKeys = [
+									"rsvp_name_required_for_anonymous",
+									"rsvp_phone_required_for_anonymous",
+									"rsvp_name_and_phone_required_for_anonymous",
+									"phone_number_required",
+									"phone_number_invalid_format",
+								];
+								const translatedMessage = i18nErrorKeys.includes(errorMessage)
+									? t(errorMessage)
+									: errorMessage;
+
+								return (
+									<div
+										key={field}
+										className="text-sm text-destructive flex items-start gap-2"
+									>
+										<span className="font-medium">{fieldLabel}:</span>
+										<span>{translatedMessage}</span>
+									</div>
+								);
+							})}
+						</div>
+					)}
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<span className="inline-block w-full">
@@ -1761,10 +1750,27 @@ export function ReservationForm({
 														message: t("rsvp_message") || "Message",
 													};
 													const fieldLabel = fieldLabels[field] || field;
+
+													// Translate error message if it's an i18n key, otherwise use as-is
+													const errorMessage = error?.message as string;
+													// List of known i18n keys used in validation
+													const i18nErrorKeys = [
+														"rsvp_name_required_for_anonymous",
+														"rsvp_phone_required_for_anonymous",
+														"rsvp_name_and_phone_required_for_anonymous",
+														"phone_number_required",
+														"phone_number_invalid_format",
+													];
+													const translatedMessage = i18nErrorKeys.includes(
+														errorMessage,
+													)
+														? t(errorMessage)
+														: errorMessage;
+
 													return (
 														<div key={field} className="text-xs">
 															<span className="font-medium">{fieldLabel}:</span>{" "}
-															{error?.message as string}
+															{translatedMessage}
 														</div>
 													);
 												})}

@@ -20,15 +20,12 @@ export default async function ReservationHistoryPage(props: {
 }) {
 	const params = await props.params;
 
-	// Get session to check if user is logged in
+	// Get session to check if user is logged in (optional for anonymous users)
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});
 
-	if (!session?.user?.id) {
-		const callbackUrl = `/s/${params.storeId}/reservation/history`;
-		redirect(`/signIn?callbackUrl=${encodeURIComponent(callbackUrl)}`);
-	}
+	const sessionUserId = session?.user?.id;
 
 	// Find store by ID (UUID) or name
 	const isUuid = isValidGuid(params.storeId);
@@ -36,10 +33,8 @@ export default async function ReservationHistoryPage(props: {
 		where: isUuid
 			? { id: params.storeId }
 			: { name: { equals: params.storeId, mode: "insensitive" } },
-		select: {
-			id: true,
-			name: true,
-			defaultTimezone: true,
+		include: {
+			StoreSettings: true,
 		},
 	});
 
@@ -55,12 +50,19 @@ export default async function ReservationHistoryPage(props: {
 	const actualStoreId = store.id;
 
 	// Fetch reservations for the current user in this store
+	// If user is logged in, fetch their reservations
+	// If anonymous, fetch all anonymous reservations (client will filter by local storage)
 	const [rsvps, rsvpSettings] = await Promise.all([
 		sqlClient.rsvp.findMany({
-			where: {
-				storeId: actualStoreId,
-				customerId: session.user.id,
-			},
+			where: sessionUserId
+				? {
+						storeId: actualStoreId,
+						customerId: sessionUserId,
+					}
+				: {
+						storeId: actualStoreId,
+						customerId: null, // Anonymous reservations
+					},
 			include: {
 				Store: true,
 				Customer: true,
@@ -93,6 +95,15 @@ export default async function ReservationHistoryPage(props: {
 					serverData={formattedData}
 					storeTimezone={store.defaultTimezone || "Asia/Taipei"}
 					rsvpSettings={rsvpSettings}
+					storeId={actualStoreId}
+					user={session?.user || null}
+					storeCurrency={store.defaultCurrency || "twd"}
+					useCustomerCredit={store.useCustomerCredit || false}
+					creditExchangeRate={
+						store.StoreSettings?.creditExchangeRate
+							? Number(store.StoreSettings.creditExchangeRate)
+							: null
+					}
 				/>
 			</Suspense>
 		</Container>

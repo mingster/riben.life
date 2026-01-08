@@ -22,8 +22,16 @@ import { useI18n } from "@/providers/i18n-provider";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { claimReservationAction } from "@/actions/store/reservation/claim-reservation";
+import { clientLogger } from "@/lib/client-logger";
+import { toastSuccess, toastError } from "@/components/toaster";
+import { useRouter } from "next/navigation";
+import { RsvpCancelDeleteDialog } from "../../components/rsvp-cancel-delete-dialog";
+import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
+import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
+import { RsvpStatus } from "@/types/enum";
 
-import type { Rsvp } from "@/types";
+import type { Rsvp, User } from "@/types";
 import {
 	dateToEpoch,
 	convertToUtc,
@@ -40,18 +48,288 @@ interface CustomerReservationHistoryClientProps {
 	storeTimezone: string;
 	rsvpSettings?: {
 		minPrepaidPercentage?: number | null;
+		canCancel?: boolean | null;
+		cancelHours?: number | null;
 	} | null;
+	storeId: string;
+	user: User | null;
+	storeCurrency?: string;
+	useCustomerCredit?: boolean;
+	creditExchangeRate?: number | null;
 }
 
 type PeriodType = "week" | "month" | "year" | "custom";
 
 export const CustomerReservationHistoryClient: React.FC<
 	CustomerReservationHistoryClientProps
-> = ({ serverData, storeTimezone, rsvpSettings }) => {
+> = ({
+	serverData,
+	storeTimezone,
+	rsvpSettings,
+	storeId,
+	user,
+	storeCurrency = "twd",
+	useCustomerCredit = false,
+	creditExchangeRate = null,
+}) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const router = useRouter();
 
-	const [allData, setAllData] = useState<Rsvp[]>(serverData);
+	// State for claiming reservations
+	const [isClaiming, setIsClaiming] = useState(false);
+
+	// State for cancel/delete dialog
+	const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+	const [reservationToCancel, setReservationToCancel] = useState<Rsvp | null>(
+		null,
+	);
+	const [isCancelling, setIsCancelling] = useState(false);
+
+	// Load local storage reservations for anonymous users
+	const [localStorageReservations, setLocalStorageReservations] = useState<
+		Rsvp[]
+	>([]);
+
+	// Load local storage reservations on mount and when storeId changes
+	useEffect(() => {
+		if (!storeId) return;
+
+		const storageKey = `rsvp-${storeId}`;
+		try {
+			const storedData = localStorage.getItem(storageKey);
+			if (storedData) {
+				const parsed: Rsvp[] = JSON.parse(storedData);
+				if (Array.isArray(parsed) && parsed.length > 0) {
+					setLocalStorageReservations(parsed);
+				}
+			}
+		} catch (error) {
+			// Silently handle errors loading from local storage
+		}
+	}, [storeId]);
+
+	// Merge server data with local storage for anonymous users
+	const [allData, setAllData] = useState<Rsvp[]>(() => {
+		// Start with server data
+		return [...serverData];
+	});
+
+	// Update allData when localStorageReservations or serverData change
+	useEffect(() => {
+		if (!user && localStorageReservations.length > 0) {
+			const serverIds = new Set(serverData.map((r) => r.id));
+
+			// Get current local storage reservations
+			let currentLocalReservations = localStorageReservations;
+
+			// Check if any local storage reservations were deleted from server
+			const deletedFromServer = localStorageReservations.filter(
+				(r) => !serverIds.has(r.id),
+			);
+
+			// If reservations were deleted from server, remove them from local storage
+			if (deletedFromServer.length > 0 && storeId) {
+				const storageKey = `rsvp-${storeId}`;
+				try {
+					const storedData = localStorage.getItem(storageKey);
+					if (storedData) {
+						const localReservations: Rsvp[] = JSON.parse(storedData);
+						// Keep only reservations that exist on server
+						const updatedLocal = localReservations.filter((r) =>
+							serverIds.has(r.id),
+						);
+
+						if (updatedLocal.length > 0) {
+							localStorage.setItem(storageKey, JSON.stringify(updatedLocal));
+						} else {
+							localStorage.removeItem(storageKey);
+						}
+
+						// Use the cleaned-up version for merging
+						currentLocalReservations = updatedLocal;
+						setLocalStorageReservations(updatedLocal);
+					}
+				} catch (error) {
+					// Silently handle errors cleaning up deleted reservations
+				}
+			}
+
+			// For anonymous users, only show reservations that exist in local storage
+			// This ensures they only see their own reservations
+			const serverIdsSet = new Set(serverData.map((r) => r.id));
+			const localOnlyReservations = currentLocalReservations.filter(
+				(localRsvp) => !serverIdsSet.has(localRsvp.id),
+			);
+
+			// For reservations that exist on both server and local storage, preserve name/phone from local storage
+			const serverReservationsWithLocalData = serverData
+				.filter((serverRsvp) => {
+					// Only include server reservations that exist in local storage
+					return currentLocalReservations.some((r) => r.id === serverRsvp.id);
+				})
+				.map((serverRsvp) => {
+					const localRsvp = currentLocalReservations.find(
+						(r) => r.id === serverRsvp.id,
+					);
+					if (localRsvp && localRsvp.name && localRsvp.phone) {
+						// Preserve name and phone from local storage for anonymous reservations
+						return {
+							...serverRsvp,
+							name: localRsvp.name,
+							phone: localRsvp.phone,
+						};
+					}
+					return serverRsvp;
+				});
+
+			const mergedRsvps = [
+				...serverReservationsWithLocalData,
+				...localOnlyReservations,
+			];
+			setAllData(mergedRsvps);
+		} else if (!user && localStorageReservations.length === 0) {
+			// If local storage is empty, show empty list (no anonymous reservations)
+			setAllData([]);
+		} else {
+			// If user is logged in, only show server reservations
+			setAllData(serverData);
+		}
+	}, [localStorageReservations, serverData, user, storeId]);
+
+	// Claim reservations from local storage when user signs in
+	useEffect(() => {
+		// Only claim if user is signed in and storeId is available
+		if (!user?.id || !storeId || isClaiming) {
+			return;
+		}
+
+		const claimLocalStorageReservations = async () => {
+			try {
+				const storageKey = `rsvp-${storeId}`;
+
+				const storedData = localStorage.getItem(storageKey);
+				if (!storedData) {
+					return; // No reservations in local storage
+				}
+
+				const localReservations: Rsvp[] = JSON.parse(storedData);
+				if (
+					!Array.isArray(localReservations) ||
+					localReservations.length === 0
+				) {
+					return; // No valid reservations
+				}
+
+				setIsClaiming(true);
+				const claimedIds: string[] = [];
+				const failedIds: string[] = [];
+
+				// Claim each reservation
+				for (const reservation of localReservations) {
+					if (!reservation.id) {
+						continue; // Skip invalid reservations
+					}
+
+					try {
+						const result = await claimReservationAction({
+							id: reservation.id,
+						});
+
+						if (result?.serverError) {
+							clientLogger.warn("Failed to claim reservation", {
+								metadata: {
+									reservationId: reservation.id,
+									error: result.serverError,
+								},
+							});
+							failedIds.push(reservation.id);
+						} else {
+							// Successfully claimed
+							claimedIds.push(reservation.id);
+							clientLogger.info("Reservation claimed from local storage", {
+								metadata: {
+									reservationId: reservation.id,
+									userId: user.id,
+								},
+							});
+						}
+					} catch (error) {
+						clientLogger.error("Error claiming reservation", {
+							metadata: {
+								reservationId: reservation.id,
+								error: error instanceof Error ? error.message : String(error),
+							},
+						});
+						failedIds.push(reservation.id);
+					}
+				}
+
+				// Remove successfully claimed reservations from local storage
+				if (claimedIds.length > 0) {
+					const remainingReservations = localReservations.filter(
+						(r) => !claimedIds.includes(r.id),
+					);
+
+					if (remainingReservations.length > 0) {
+						localStorage.setItem(
+							storageKey,
+							JSON.stringify(remainingReservations),
+						);
+					} else {
+						// No more reservations, remove the key
+						localStorage.removeItem(storageKey);
+					}
+
+					// Update local storage state
+					setLocalStorageReservations(remainingReservations);
+
+					// Show success message
+					if (claimedIds.length === 1) {
+						toastSuccess({
+							description:
+								t("rsvp_reservation_claimed") ||
+								"Reservation linked to your account",
+						});
+					} else {
+						const message =
+							t("rsvp_reservations_claimed") ||
+							`${claimedIds.length} reservations linked to your account`;
+						toastSuccess({
+							description: message.replace(
+								"{{count}}",
+								String(claimedIds.length),
+							),
+						});
+					}
+
+					// Refresh the page to show updated reservations
+					router.refresh();
+				}
+
+				// Show error message for failed claims
+				if (failedIds.length > 0) {
+					clientLogger.warn("Some reservations could not be claimed", {
+						metadata: {
+							failedCount: failedIds.length,
+							failedIds,
+						},
+					});
+				}
+			} catch (error) {
+				clientLogger.error("Error claiming reservations from local storage", {
+					metadata: {
+						error: error instanceof Error ? error.message : String(error),
+					},
+				});
+			} finally {
+				setIsClaiming(false);
+			}
+		};
+
+		claimLocalStorageReservations();
+	}, [user?.id, storeId, isClaiming, t, router]);
+
 	const [periodType, setPeriodType] = useState<PeriodType>("custom");
 	const [startDate, setStartDate] = useState<Date | null>(null);
 	const [endDate, setEndDate] = useState<Date | null>(null);
@@ -218,11 +496,6 @@ export const CustomerReservationHistoryClient: React.FC<
 		[storeTimezone],
 	);
 
-	const columns = useMemo(
-		() => createCustomerRsvpColumns(t, { storeTimezone }),
-		[t, storeTimezone],
-	);
-
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 
 	// Helper to format RSVP time
@@ -296,6 +569,267 @@ export const CustomerReservationHistoryClient: React.FC<
 
 		return storeName || facilityName || "-";
 	}, []);
+
+	// Check if reservation belongs to current user
+	const isUserReservation = useCallback(
+		(rsvp: Rsvp): boolean => {
+			if (user?.id) {
+				// Logged-in user: check customerId
+				return rsvp.customerId === user.id;
+			} else {
+				// Anonymous user: check if reservation exists in local storage
+				return localStorageReservations.some((r) => r.id === rsvp.id);
+			}
+		},
+		[user, localStorageReservations],
+	);
+
+	// Check if reservation can be cancelled/deleted
+	const canCancelReservation = useCallback(
+		(rsvp: Rsvp): boolean => {
+			if (!isUserReservation(rsvp)) {
+				return false;
+			}
+
+			// Pending reservations can always be deleted regardless of other conditions
+			if (
+				rsvp.status === RsvpStatus.Pending ||
+				rsvp.status === RsvpStatus.ReadyToConfirm
+			) {
+				return true;
+			}
+
+			// For non-Pending reservations, only allow cancel/delete if alreadyPaid
+			if (!rsvp.alreadyPaid) {
+				return false;
+			}
+
+			// If rsvpSettings is not available, assume cancellation is not allowed
+			if (!rsvpSettings) {
+				return false;
+			}
+
+			// RSVP owners can always cancel if canCancel is enabled
+			if (rsvpSettings.canCancel) {
+				return true;
+			}
+
+			return false;
+		},
+		[isUserReservation, rsvpSettings],
+	);
+
+	// Remove reservation from local storage
+	const removeReservationFromLocalStorage = useCallback(
+		(reservationId: string) => {
+			if (!storeId) return;
+
+			const storageKey = `rsvp-${storeId}`;
+			try {
+				const storedData = localStorage.getItem(storageKey);
+				if (storedData) {
+					const localReservations: Rsvp[] = JSON.parse(storedData);
+					const updated = localReservations.filter(
+						(r) => r.id !== reservationId,
+					);
+					if (updated.length > 0) {
+						localStorage.setItem(storageKey, JSON.stringify(updated));
+					} else {
+						localStorage.removeItem(storageKey);
+					}
+					setLocalStorageReservations(updated);
+				}
+			} catch (error) {
+				// Silently handle errors
+			}
+		},
+		[storeId],
+	);
+
+	// Handle reservation updated (for cancelled reservations)
+	const handleReservationUpdated = useCallback(
+		(updatedRsvp: Rsvp) => {
+			setAllData((prev) => {
+				const normalizedRsvp = {
+					...updatedRsvp,
+					rsvpTime:
+						typeof updatedRsvp.rsvpTime === "number"
+							? BigInt(updatedRsvp.rsvpTime)
+							: updatedRsvp.rsvpTime instanceof Date
+								? BigInt(updatedRsvp.rsvpTime.getTime())
+								: updatedRsvp.rsvpTime,
+					createdAt:
+						typeof updatedRsvp.createdAt === "number"
+							? BigInt(updatedRsvp.createdAt)
+							: updatedRsvp.createdAt instanceof Date
+								? BigInt(updatedRsvp.createdAt.getTime())
+								: updatedRsvp.createdAt,
+					updatedAt:
+						typeof updatedRsvp.updatedAt === "number"
+							? BigInt(updatedRsvp.updatedAt)
+							: updatedRsvp.updatedAt instanceof Date
+								? BigInt(updatedRsvp.updatedAt.getTime())
+								: updatedRsvp.updatedAt,
+				};
+
+				const existingIndex = prev.findIndex((r) => r.id === normalizedRsvp.id);
+				if (existingIndex === -1) {
+					return [...prev, normalizedRsvp];
+				}
+				return prev.map((item) =>
+					item.id === normalizedRsvp.id ? normalizedRsvp : item,
+				);
+			});
+
+			// If user is anonymous, also update local storage
+			if (!user && storeId) {
+				const storageKey = `rsvp-${storeId}`;
+				try {
+					const storedData = localStorage.getItem(storageKey);
+					if (storedData) {
+						const localReservations: Rsvp[] = JSON.parse(storedData);
+						const updatedLocal = localReservations.map((r) =>
+							r.id === updatedRsvp.id
+								? {
+										...updatedRsvp,
+										rsvpTime:
+											typeof updatedRsvp.rsvpTime === "number"
+												? updatedRsvp.rsvpTime
+												: updatedRsvp.rsvpTime instanceof Date
+													? updatedRsvp.rsvpTime.getTime()
+													: typeof updatedRsvp.rsvpTime === "bigint"
+														? Number(updatedRsvp.rsvpTime)
+														: null,
+										createdAt:
+											typeof updatedRsvp.createdAt === "number"
+												? updatedRsvp.createdAt
+												: typeof updatedRsvp.createdAt === "bigint"
+													? Number(updatedRsvp.createdAt)
+													: null,
+										updatedAt:
+											typeof updatedRsvp.updatedAt === "number"
+												? updatedRsvp.updatedAt
+												: typeof updatedRsvp.updatedAt === "bigint"
+													? Number(updatedRsvp.updatedAt)
+													: null,
+									}
+								: r,
+						);
+						localStorage.setItem(storageKey, JSON.stringify(updatedLocal));
+						setLocalStorageReservations(updatedLocal);
+					}
+				} catch (error) {
+					// Silently handle errors updating local storage
+				}
+			}
+		},
+		[user, storeId],
+	);
+
+	// Handle cancel click
+	const handleCancelClick = useCallback((e: React.MouseEvent, rsvp: Rsvp) => {
+		e.stopPropagation();
+		setReservationToCancel(rsvp);
+		setCancelDialogOpen(true);
+	}, []);
+
+	// Handle cancel/delete confirm
+	const handleCancelConfirm = useCallback(async () => {
+		if (!reservationToCancel) return;
+
+		setIsCancelling(true);
+		try {
+			// If status is Pending, delete it (hard delete)
+			// Otherwise, cancel it (change status to Cancelled)
+			if (
+				reservationToCancel.status === RsvpStatus.Pending ||
+				reservationToCancel.status === RsvpStatus.ReadyToConfirm
+			) {
+				const result = await deleteReservationAction({
+					id: reservationToCancel.id,
+				});
+
+				if (result?.serverError) {
+					toastError({
+						title: t("Error"),
+						description: result.serverError,
+					});
+				} else {
+					toastSuccess({
+						description: t("reservation_deleted"),
+					});
+					// Remove from local state
+					setAllData((prev) =>
+						prev.filter((r) => r.id !== reservationToCancel.id),
+					);
+
+					// Remove from local storage for anonymous users
+					removeReservationFromLocalStorage(reservationToCancel.id);
+				}
+			} else {
+				if (!storeId) {
+					toastError({
+						title: t("Error"),
+						description: "Store ID is required",
+					});
+					return;
+				}
+
+				const result = await cancelReservationAction({
+					id: reservationToCancel.id,
+					storeId: storeId,
+				});
+
+				if (result?.serverError) {
+					toastError({
+						title: t("Error"),
+						description: result.serverError,
+					});
+				} else {
+					toastSuccess({
+						description: t("reservation_cancelled"),
+					});
+					// Update local state with cancelled reservation
+					if (result?.data?.rsvp) {
+						handleReservationUpdated(result.data.rsvp);
+					} else {
+						// If no data returned, remove from list
+						setAllData((prev) =>
+							prev.filter((r) => r.id !== reservationToCancel.id),
+						);
+
+						// Remove from local storage for anonymous users
+						removeReservationFromLocalStorage(reservationToCancel.id);
+					}
+				}
+			}
+		} catch (error) {
+			toastError({
+				title: t("Error"),
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setIsCancelling(false);
+			setCancelDialogOpen(false);
+			setReservationToCancel(null);
+		}
+	}, [
+		reservationToCancel,
+		storeId,
+		t,
+		handleReservationUpdated,
+		removeReservationFromLocalStorage,
+	]);
+
+	const columns = useMemo(
+		() =>
+			createCustomerRsvpColumns(t, {
+				storeTimezone,
+				onStatusClick: handleCancelClick,
+				canCancelReservation,
+			}),
+		[t, storeTimezone, handleCancelClick, canCancelReservation],
+	);
 
 	if (!data || data.length === 0) {
 		return (
@@ -428,9 +962,16 @@ export const CustomerReservationHistoryClient: React.FC<
 								</div>
 								<div className="shrink-0 flex items-center gap-1.5">
 									<span
+										onClick={(e) => {
+											if (canCancelReservation(rsvp)) {
+												handleCancelClick(e, rsvp);
+											}
+										}}
 										className={cn(
 											"inline-flex items-center px-2 py-1 rounded text-[10px] font-mono",
 											getRsvpStatusColorClasses(status, false),
+											canCancelReservation(rsvp) &&
+												"cursor-pointer hover:opacity-80 transition-opacity",
 										)}
 									>
 										<span className="font-medium">
@@ -495,6 +1036,20 @@ export const CustomerReservationHistoryClient: React.FC<
 			<div className="mt-4">
 				<RsvpStatusLegend t={t} />
 			</div>
+
+			{/* Cancel/Delete Confirmation Dialog */}
+			<RsvpCancelDeleteDialog
+				open={cancelDialogOpen}
+				onOpenChange={setCancelDialogOpen}
+				reservation={reservationToCancel}
+				onConfirm={handleCancelConfirm}
+				isLoading={isCancelling}
+				rsvpSettings={rsvpSettings}
+				storeCurrency={storeCurrency}
+				useCustomerCredit={useCustomerCredit}
+				creditExchangeRate={creditExchangeRate}
+				t={t}
+			/>
 		</>
 	);
 };

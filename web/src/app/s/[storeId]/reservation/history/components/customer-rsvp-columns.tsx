@@ -17,13 +17,19 @@ import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 
 interface CreateCustomerRsvpColumnsOptions {
 	storeTimezone?: string;
+	onStatusClick?: (e: React.MouseEvent, rsvp: Rsvp) => void;
+	canCancelReservation?: (rsvp: Rsvp) => boolean;
 }
 
 export const createCustomerRsvpColumns = (
 	t: TFunction,
 	options: CreateCustomerRsvpColumnsOptions = {},
 ): ColumnDef<Rsvp>[] => {
-	const { storeTimezone = "Asia/Taipei" } = options;
+	const {
+		storeTimezone = "Asia/Taipei",
+		onStatusClick,
+		canCancelReservation,
+	} = options;
 
 	return [
 		{
@@ -123,11 +129,18 @@ export const createCustomerRsvpColumns = (
 			cell: ({ row }) => {
 				const rsvp = row.original;
 				const status = rsvp.status;
+				const canCancel = canCancelReservation?.(rsvp) ?? false;
 				return (
 					<span
+						onClick={(e) => {
+							if (canCancel && onStatusClick) {
+								onStatusClick(e, rsvp);
+							}
+						}}
 						className={cn(
 							"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded text-[10px] sm:text-xs font-mono",
 							getRsvpStatusColorClasses(status, false),
+							canCancel && "cursor-pointer hover:opacity-80 transition-opacity",
 						)}
 					>
 						<span className="font-medium">{t(`rsvp_status_${status}`)}</span>

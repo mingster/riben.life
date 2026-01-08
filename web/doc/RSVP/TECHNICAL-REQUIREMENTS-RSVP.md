@@ -153,6 +153,7 @@ model Rsvp {
   CreatedBy           User?                @relation("RsvpCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   Order               StoreOrder?          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   Facility            StoreFacility?       @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  ServiceStaff        ServiceStaff?        @relation(fields: [serviceStaffId], references: [id], onDelete: SetNull)
   FacilityPricingRule FacilityPricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: Cascade)
   
   @@index([storeId])
@@ -160,7 +161,14 @@ model Rsvp {
   @@index([createdBy])
   @@index([orderId])
   @@index([facilityId])
+  @@index([serviceStaffId])
   @@index([pricingRuleId])
+  @@index([rsvpTime])
+  @@index([arriveTime])
+  @@index([createdAt])
+  @@index([updatedAt])
+  // Composite indexes for common query patterns
+  @@index([storeId, rsvpTime, status]) // For date range queries with status
 }
 ```
 
@@ -171,13 +179,19 @@ model StoreFacility {
   id              String  @id @default(uuid())
   storeId         String
   facilityName    String
-  capacity        Int     @default(4)
-  defaultCost     Decimal @default(0)
-  defaultCredit   Decimal @default(0)
-  defaultDuration Int     @default(60)
+  capacity        Int     @default(4) //how many people can use the facility at the same time
+  defaultCost     Decimal @default(0) // default cost for using the facility
+  defaultCredit   Decimal @default(0) // default credit for using the facility
+  defaultDuration Int     @default(60) // default duration for using the facility in minutes
+  businessHours   String? //when the facility is available for use
   
-  Store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  Rsvp  Rsvp[]
+  description String? // description of the facility
+  location    String? // location of the facility
+  travelInfo  String? // travel information of the facility
+  
+  Store                Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Rsvp                 Rsvp[]
+  FacilityPricingRules FacilityPricingRule[]
   
   @@unique([storeId, facilityName])
   @@index([storeId])
@@ -185,7 +199,33 @@ model StoreFacility {
 }
 ```
 
-#### 3.1.4 CustomerCredit
+#### 3.1.4 ServiceStaff
+
+```prisma
+model ServiceStaff {
+  id      String @id @default(uuid())
+  storeId String
+  userId  String
+
+  capacity        Int     @default(4) //how many people can use the service staff at the same time
+  defaultCost     Decimal @default(0) // default cost for using the service staff
+  defaultCredit   Decimal @default(0) // default credit for using the service staff
+  defaultDuration Int     @default(60) // default duration for using the service staff in minutes
+  businessHours   String? //when the service staff is available for use
+  isDeleted       Boolean @default(false) // if the service staff is deleted
+  description     String? // description of the service staff
+
+  Store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  User  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Rsvp  Rsvp[]
+
+  @@unique([storeId, userId])
+  @@index([storeId])
+  @@index([userId])
+}
+```
+
+#### 3.1.5 CustomerCredit
 
 ```prisma
 model CustomerCredit {
@@ -204,7 +244,7 @@ model CustomerCredit {
 }
 ```
 
-#### 3.1.5 RsvpBlacklist
+#### 3.1.6 RsvpBlacklist
 
 ```prisma
 model RsvpBlacklist {
@@ -222,7 +262,7 @@ model RsvpBlacklist {
 }
 ```
 
-#### 3.1.6 RsvpTag
+#### 3.1.7 RsvpTag
 
 ```prisma
 model RsvpTag {
@@ -243,17 +283,22 @@ model RsvpTag {
 * **Unique Constraints:**
   * `RsvpSettings.storeId` - One settings record per store
   * `StoreFacility.storeId + facilityName` - Unique facility names per store
+  * `ServiceStaff.storeId + userId` - One service staff record per user per store
   * `CustomerCredit.storeId + userId` - One credit record per customer per store
-  * `RsvpTag.storeId + name` - Unique tag names per store
+  * `RsvpTag.storeId + tagName` - Unique tag names per store
 
 * **Indexes:**
   * All foreign keys indexed for query performance
-  * `Rsvp.rsvpTime` indexed for date range queries
+  * `Rsvp.rsvpTime`, `Rsvp.arriveTime`, `Rsvp.createdAt`, `Rsvp.updatedAt` indexed for date range queries
+  * Composite index `[storeId, rsvpTime, status]` for common query patterns
   * `StoreFacility.facilityName` indexed for search
+  * `ServiceStaff.storeId` and `ServiceStaff.userId` indexed for lookups
 
 * **Cascade Deletes:**
   * All related records cascade delete when store is deleted
   * User deletion cascades to reservations and credits
+  * Service staff deletion uses soft delete (`isDeleted = true`) instead of hard delete
+  * Service staff relation in Rsvp uses `onDelete: SetNull` to preserve reservation history
 
 ***
 
@@ -400,6 +445,15 @@ The `update-reservation.ts` action allows customers to modify their reservations
 * `create-facilities.ts` - Bulk create facilities
 * `update-facility.ts` - Update facility
 * `delete-facility.ts` - Delete facility
+
+#### 4.1.3a Service Staff Management Actions
+
+**Location:** `src/actions/storeAdmin/serviceStaff/`
+
+* `create-service-staff.ts` - Create new service staff
+* `update-service-staff.ts` - Update service staff
+* `delete-service-staff.ts` - Delete service staff (soft delete)
+* `get-service-staff.ts` - Get service staff list for store
 
 #### 4.1.4 Blacklist Actions
 
@@ -1396,6 +1450,7 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 2.2 | 2025-01-27 | System | Updated database schema documentation: (1) **ServiceStaff Model** - Added complete ServiceStaff model schema documentation (Section 3.1.4) with all fields including capacity, defaultCost, defaultCredit, defaultDuration, businessHours, isDeleted, and description. (2) **StoreFacility Model** - Updated to include businessHours, description, location, and travelInfo fields, plus FacilityPricingRules relation. (3) **Rsvp Model** - Updated to include ServiceStaff relation and all indexes (rsvpTime, arriveTime, createdAt, updatedAt, and composite index [storeId, rsvpTime, status]). (4) **Service Staff Actions** - Added service staff management actions section (4.1.3a) documenting create, update, delete, and get actions. (5) **Database Constraints** - Updated to include ServiceStaff unique constraint and soft delete behavior. (6) **Service Staff Availability** - Enhanced documentation of service staff filtering and validation in reservation creation flow. |
 | 2.1 | 2025-01-27 | System | Added anonymous reservation workflow technical requirements: (1) **Name and Phone Validation** - Anonymous users must provide both name and phone number (validated with Zod schema using `.refine()`). Updated Rsvp model schema to include `name` field. (2) **Local Storage Implementation** - Anonymous reservation data saved to browser local storage (key: `rsvp-${storeId}`) after successful creation. Stored data includes reservation ID, store ID, name, phone, reservation details, status, and payment information. (3) **Checkout Flow for Anonymous Users** - After payment completion, anonymous users are redirected to order confirmation page which prompts phone number confirmation. (4) **Reservation History for Anonymous Users** - `/s/[storeId]/reservation/history` page allows anonymous access and displays reservations from local storage. No redirect to sign-in for anonymous users. Updated Sections 3.1.2 (Rsvp model), 4.1.1 (Customer Reservation Creation), and 4.2.1 (Public API Routes) to document these features. |
 | 2.0 | 2025-01-27 | System | Updated authentication requirements and enhanced reservation system: (1) Clarified that no sign-in is required to create reservations - anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`). (2) Fixed facility filtering - facilities are only filtered if existing reservations fall on the same calendar day (in store timezone) as the selected time slot, preventing incorrect filtering across different days. Updated `dayAndTimeSlotToUtc()` to extract date components in store timezone using `Intl.DateTimeFormat` instead of UTC methods, fixing one-day-off issue. (3) Improved payment method handling - `markOrderAsPaidCore` now explicitly uses provided `paymentMethodId` parameter, ensuring correct payment method tracking. Payment methods are fetched by `payUrl` identifier in all payment flows (Stripe, LINE Pay, credit, cash). (4) Currency consistency - orders use store's `defaultCurrency` consistently across creation and refund processes. Refund processing uses order's `currency` field instead of store's default currency. (5) Auto store membership - `ensureCustomerIsStoreMember()` utility automatically adds customers as store members (user role) when they create orders. (6) Order notes display - `DisplayOrder` component now supports `showOrderNotes` prop (default: false) to conditionally display order notes. (7) Fiat balance badge - customer menu displays fiat balance badge when balance > 0. (8) Checkout success UX - `SuccessAndRedirect` component displays brief success message before redirecting. (9) Unpaid RSVP redirect - reservation form redirects to checkout page when editing unpaid reservations. (10) Date/time display - reservation form uses display-only field for `rsvpTime` in create mode, formatted using `formatUtcDateToDateTimeLocal()` for correct timezone display. Updated Sections 4.1.1, 8.1.2, and 8.3.1 to reflect these enhancements. |
 | 1.9 | 2025-01-27 | System | Updated customer-facing RSVP creation flow with checkout integration: (1) Modified `create-reservation.ts` to create unpaid store orders and redirect to checkout instead of processing payment immediately. (2) Updated `create-rsvp-store-order.ts` to accept `paymentMethodPayUrl` parameter ("credit" or "TBD") instead of hardcoding payment method. (3) Payment method selection: Orders created with "credit" if `store.useCustomerCredit = true`, otherwise "TBD". (4) Customer credit deduction: No longer deducted at reservation creation; only deducted when customer completes payment using credit at checkout. (5) Added documentation for customer reservation creation flow and checkout integration in Section 4.1.1. (6) Added `createRsvpStoreOrder()` utility function documentation in Section 8.3.1. (7) Updated payment integration section (7.3) to document unified checkout flow. |

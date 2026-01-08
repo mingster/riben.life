@@ -109,14 +109,15 @@ export const createReservationAction = baseClient
 
 		// Validate name and phone requirements for anonymous users
 		if (isAnonymous) {
+			// Get translation function for error messages
+			const { t } = await getT();
+
 			// Anonymous user - name and phone are required
 			if (!name) {
-				throw new SafeError("Name is required for anonymous reservations");
+				throw new SafeError(t("rsvp_name_and_phone_required_for_anonymous"));
 			}
 			if (!phone) {
-				throw new SafeError(
-					"Phone number is required for anonymous reservations",
-				);
+				throw new SafeError(t("rsvp_phone_required_for_anonymous"));
 			}
 
 			// Try to locate user from phone number
