@@ -452,6 +452,12 @@
   "notification_type_preferences_description": "選擇您想要接收的通知類型",
   "notifications": "通知",
   "notifications_deleted": "已刪除 {{count}} 則通知",
+
+  "notifications_rsvp_await_to_confim": "您有 {{count}} 筆待確認預約。",
+  "notifications_rsvp_confimed": "店家已確認您的預約。",
+  "notifications_rsvp_cancelled": "店家已取消您的預約。",
+  "notifications_rsvp_cancelled_by_customer": "您已取消預約。",
+
   "ok": "確定",
   "online_order": "線上訂購",
   "onsite_always_enabled": "站內通知始終啟用",

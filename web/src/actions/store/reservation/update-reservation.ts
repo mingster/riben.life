@@ -20,6 +20,7 @@ import { validateServiceStaffBusinessHours } from "./validate-service-staff-busi
 import { validateCancelHoursWindow } from "./validate-cancel-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
+import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 
 // implement FR-RSVP-013
 //
@@ -289,6 +290,26 @@ export const updateReservationAction = baseClient
 
 			const transformedRsvp = { ...updated } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
+
+			// Send notification for reservation update
+			const notificationRouter = getRsvpNotificationRouter();
+			await notificationRouter.routeNotification({
+				rsvpId: updated.id,
+				storeId: updated.storeId,
+				eventType: "updated",
+				customerId: updated.customerId,
+				customerName: updated.Customer?.name || updated.name || null,
+				customerEmail: updated.Customer?.email || null,
+				customerPhone: updated.Customer?.phoneNumber || updated.phone || null,
+				storeName: updated.Store?.name || null,
+				rsvpTime: updated.rsvpTime,
+				status: updated.status,
+				facilityName: updated.Facility?.facilityName || null,
+				numOfAdult: updated.numOfAdult,
+				numOfChild: updated.numOfChild,
+				message: updated.message || null,
+				actionUrl: `/storeAdmin/${updated.storeId}/rsvp`,
+			});
 
 			return {
 				rsvp: transformedRsvp,

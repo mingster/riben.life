@@ -19,6 +19,7 @@ import { deduceCustomerCredit } from "./deduce-customer-credit";
 import { validateReservationTimeWindow } from "@/actions/store/reservation/validate-reservation-time-window";
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
 import { processRsvpPrepaidPaymentUsingCredit } from "@/actions/store/reservation/process-rsvp-prepaid-payment-using-credit";
+import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 
 export const updateRsvpAction = storeActionClient
 	.metadata({ name: "updateRsvp" })
@@ -50,6 +51,7 @@ export const updateRsvpAction = storeActionClient
 				createdBy: true,
 				status: true,
 				alreadyPaid: true,
+				confirmedByStore: true,
 				customerId: true,
 				orderId: true,
 			},
@@ -60,6 +62,9 @@ export const updateRsvpAction = storeActionClient
 		}
 
 		const wasCompleted = rsvp.status === RsvpStatus.Completed;
+		const previousStatus = rsvp.status;
+		const previousAlreadyPaid = rsvp.alreadyPaid;
+		const previousConfirmedByStore = rsvp.confirmedByStore;
 
 		// Get current user ID for createdBy field (only set if currently null)
 		const session = await auth.api.getSession({
@@ -294,6 +299,16 @@ export const updateRsvpAction = storeActionClient
 						Order: true,
 						Facility: true,
 						FacilityPricingRule: true,
+						ServiceStaff: {
+							include: {
+								User: {
+									select: {
+										name: true,
+										email: true,
+									},
+								},
+							},
+						},
 					},
 				});
 
@@ -333,6 +348,66 @@ export const updateRsvpAction = storeActionClient
 				}
 
 				return updatedRsvp;
+			});
+
+			// Determine event type based on what changed
+			let eventType:
+				| "updated"
+				| "status_changed"
+				| "confirmed_by_store"
+				| "payment_received"
+				| "ready"
+				| "completed"
+				| "no_show" = "updated";
+
+			if (previousStatus !== undefined && previousStatus !== finalStatus) {
+				eventType = "status_changed";
+				// Check for specific status transitions
+				if (finalStatus === RsvpStatus.Ready) {
+					eventType = "ready";
+				} else if (finalStatus === RsvpStatus.Completed) {
+					eventType = "completed";
+				} else if (finalStatus === RsvpStatus.NoShow) {
+					eventType = "no_show";
+				}
+			} else if (
+				confirmedByStore !== undefined &&
+				confirmedByStore &&
+				!previousConfirmedByStore
+			) {
+				eventType = "confirmed_by_store";
+			} else if (
+				alreadyPaid !== undefined &&
+				alreadyPaid &&
+				!previousAlreadyPaid
+			) {
+				eventType = "payment_received";
+			}
+
+			// Send notification for reservation update
+			const notificationRouter = getRsvpNotificationRouter();
+			await notificationRouter.routeNotification({
+				rsvpId: updated.id,
+				storeId: updated.storeId,
+				eventType,
+				customerId: updated.customerId,
+				customerName: updated.Customer?.name || updated.name || null,
+				customerEmail: updated.Customer?.email || null,
+				customerPhone: updated.Customer?.phoneNumber || updated.phone || null,
+				storeName: updated.Store?.name || null,
+				rsvpTime: updated.rsvpTime,
+				arriveTime: updated.arriveTime,
+				status: updated.status,
+				previousStatus: previousStatus,
+				facilityName: updated.Facility?.facilityName || null,
+				serviceStaffName:
+					updated.ServiceStaff?.User?.name ||
+					updated.ServiceStaff?.User?.email ||
+					null,
+				numOfAdult: updated.numOfAdult,
+				numOfChild: updated.numOfChild,
+				message: updated.message || null,
+				actionUrl: `/storeAdmin/${updated.storeId}/rsvp`,
 			});
 
 			const transformedRsvp = { ...updated } as Rsvp;

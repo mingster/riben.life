@@ -9,6 +9,7 @@ import { headers } from "next/headers";
 import { RsvpStatus } from "@/types/enum";
 
 import { deleteReservationSchema } from "./delete-reservation.validation";
+import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 
 export const deleteReservationAction = baseClient
 	.metadata({ name: "deleteReservation" })
@@ -78,6 +79,23 @@ export const deleteReservationAction = baseClient
 		}
 
 		try {
+			// Send notification before deletion
+			const notificationRouter = getRsvpNotificationRouter();
+			await notificationRouter.routeNotification({
+				rsvpId: existingRsvp.id,
+				storeId: existingRsvp.storeId,
+				eventType: "deleted",
+				customerId: existingRsvp.customerId,
+				customerName: existingRsvp.Customer?.name || existingRsvp.name || null,
+				customerEmail: existingRsvp.Customer?.email || null,
+				customerPhone:
+					existingRsvp.Customer?.phoneNumber || existingRsvp.phone || null,
+				storeName: existingRsvp.Store?.name || null,
+				rsvpTime: existingRsvp.rsvpTime,
+				status: existingRsvp.status,
+				actionUrl: `/storeAdmin/${existingRsvp.storeId}/rsvp`,
+			});
+
 			// Hard delete from database
 			await sqlClient.rsvp.delete({
 				where: { id },

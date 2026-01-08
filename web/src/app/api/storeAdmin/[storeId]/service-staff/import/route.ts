@@ -175,14 +175,17 @@ export async function POST(
 							normalizedPhoneNumber = null;
 						}
 					} catch (error) {
-						log.warn("Failed to normalize phone number in service staff import", {
-							metadata: {
-								storeId: params.storeId,
-								phoneNumber: userInfo.phoneNumber,
-								error: error instanceof Error ? error.message : String(error),
+						log.warn(
+							"Failed to normalize phone number in service staff import",
+							{
+								metadata: {
+									storeId: params.storeId,
+									phoneNumber: userInfo.phoneNumber,
+									error: error instanceof Error ? error.message : String(error),
+								},
+								tags: ["service-staff", "import", "warning"],
 							},
-							tags: ["service-staff", "import", "warning"],
-						});
+						);
 						normalizedPhoneNumber = null;
 					}
 				}

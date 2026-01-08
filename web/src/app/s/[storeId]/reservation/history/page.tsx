@@ -33,8 +33,13 @@ export default async function ReservationHistoryPage(props: {
 		where: isUuid
 			? { id: params.storeId }
 			: { name: { equals: params.storeId, mode: "insensitive" } },
-		include: {
-			StoreSettings: true,
+		select: {
+			id: true,
+			name: true,
+			defaultTimezone: true,
+			defaultCurrency: true,
+			useCustomerCredit: true,
+			creditExchangeRate: true,
 		},
 	});
 
@@ -100,8 +105,8 @@ export default async function ReservationHistoryPage(props: {
 					storeCurrency={store.defaultCurrency || "twd"}
 					useCustomerCredit={store.useCustomerCredit || false}
 					creditExchangeRate={
-						store.StoreSettings?.creditExchangeRate
-							? Number(store.StoreSettings.creditExchangeRate)
+						store.creditExchangeRate
+							? Number(store.creditExchangeRate)
 							: null
 					}
 				/>

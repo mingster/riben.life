@@ -1174,6 +1174,7 @@
   "weekday_Tuesday": "Tuesday",
   "weekday_Wednesday": "Wednesday",
   "weekly_digest": "Weekly Digest",
+  "notifications_rsvp_await_to_confim": "You have {{count}} reservation awaiting to confirm",
   "yes": "Yes",
   "you_are_not_allowed_to_register_this_passkey": "You are not allowed to register this passkey",
   "your_name": "First/Last Name"
