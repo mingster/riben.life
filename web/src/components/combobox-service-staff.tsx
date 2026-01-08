@@ -29,6 +29,7 @@ type ComboboxProps = {
 	defaultValue: ServiceStaffColumn | null;
 	onValueChange?: (newValue: ServiceStaffColumn | null) => void; // Allow null for empty selection
 	allowEmpty?: boolean; // Allow empty selection
+	storeCurrency?: string; // Store currency code for formatting cost (e.g., "twd", "usd")
 };
 
 export const ServiceStaffCombobox = ({
@@ -37,6 +38,7 @@ export const ServiceStaffCombobox = ({
 	defaultValue,
 	onValueChange,
 	allowEmpty = true, // Default to allowing empty selection
+	storeCurrency = "TWD", // Default to TWD if not provided
 	...props
 }: ComboboxProps) => {
 	const { lng } = useI18n();
@@ -108,29 +110,47 @@ export const ServiceStaffCombobox = ({
 										/>
 									</CommandItem>
 								)}
-								{serviceStaff.map((staff) => (
-									<CommandItem
-										key={staff.id}
-										value={`${staff.userName || ""} ${staff.userEmail || ""} ${staff.id}`}
-										onSelect={() => {
-											setSelected(staff);
-											onValueChange?.(staff);
-											setOpen(false);
-										}}
-									>
-										<div className="flex flex-col">
-											<span className="font-medium">
-												{staff.userName || staff.userEmail || staff.id}
-											</span>
-										</div>
-										<IconCheck
-											className={cn(
-												"ml-auto h-4 w-4",
-												selected?.id === staff.id ? "opacity-100" : "opacity-0",
-											)}
-										/>
-									</CommandItem>
-								))}
+								{serviceStaff.map((staff) => {
+									const staffName =
+										staff.userName || staff.userEmail || staff.id;
+									const costValue = staff.defaultCost;
+									const displayText =
+										costValue > 0
+											? (() => {
+													const formatter = new Intl.NumberFormat("en-US", {
+														style: "currency",
+														currency: storeCurrency.toUpperCase(),
+														maximumFractionDigits: 0,
+														minimumFractionDigits: 0,
+													});
+													return `${staffName} (${formatter.format(costValue)})`;
+												})()
+											: staffName;
+
+									return (
+										<CommandItem
+											key={staff.id}
+											value={`${staff.userName || ""} ${staff.userEmail || ""} ${staff.id}`}
+											onSelect={() => {
+												setSelected(staff);
+												onValueChange?.(staff);
+												setOpen(false);
+											}}
+										>
+											<div className="flex flex-col">
+												<span className="font-medium">{displayText}</span>
+											</div>
+											<IconCheck
+												className={cn(
+													"ml-auto h-4 w-4",
+													selected?.id === staff.id
+														? "opacity-100"
+														: "opacity-0",
+												)}
+											/>
+										</CommandItem>
+									);
+								})}
 							</CommandGroup>
 						</CommandList>
 					</Command>

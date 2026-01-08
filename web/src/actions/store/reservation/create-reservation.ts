@@ -24,6 +24,7 @@ import { RsvpStatus } from "@/types/enum";
 import { getT } from "@/app/i18n";
 import { normalizePhoneNumber } from "@/utils/phone-utils";
 import logger from "@/lib/logger";
+import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 
 // create a reservation by the customer.
 // this action will create a reservation record, store order, and related ledger records in the database,
@@ -109,14 +110,15 @@ export const createReservationAction = baseClient
 
 		// Validate name and phone requirements for anonymous users
 		if (isAnonymous) {
+			// Get translation function for error messages
+			const { t } = await getT();
+
 			// Anonymous user - name and phone are required
 			if (!name) {
-				throw new SafeError("Name is required for anonymous reservations");
+				throw new SafeError(t("rsvp_name_and_phone_required_for_anonymous"));
 			}
 			if (!phone) {
-				throw new SafeError(
-					"Phone number is required for anonymous reservations",
-				);
+				throw new SafeError(t("rsvp_phone_required_for_anonymous"));
 			}
 
 			// Try to locate user from phone number
@@ -472,6 +474,28 @@ export const createReservationAction = baseClient
 
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
+
+			// Send notification for reservation creation
+			const notificationRouter = getRsvpNotificationRouter();
+			await notificationRouter.routeNotification({
+				rsvpId: rsvp.id,
+				storeId: rsvp.storeId,
+				eventType: "created",
+				customerId: rsvp.customerId,
+				customerName: rsvp.Customer?.name || rsvp.name || null,
+				customerEmail: rsvp.Customer?.email || null,
+				customerPhone: rsvp.Customer?.phoneNumber || rsvp.phone || null,
+				storeName: rsvp.Store?.name || store.name || null,
+				rsvpTime: rsvp.rsvpTime,
+				status: rsvp.status,
+				facilityName:
+					rsvp.Facility?.facilityName || facility?.facilityName || null,
+				serviceStaffName: serviceStaffName,
+				numOfAdult: rsvp.numOfAdult,
+				numOfChild: rsvp.numOfChild,
+				message: rsvp.message || null,
+				actionUrl: `/storeAdmin/${rsvp.storeId}/rsvp`,
+			});
 
 			return {
 				rsvp: transformedRsvp,

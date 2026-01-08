@@ -15,16 +15,41 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 import { NotificationBell } from "./notification-bell";
 import { NotificationCard } from "./notification-card";
 import { IconLoader } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import useSWR from "swr";
 
+interface NotificationData {
+	notifications: Array<{
+		id: string;
+		subject: string;
+		message: string;
+		notificationType: string | null;
+		actionUrl: string | null;
+		createdAt: number | bigint;
+		isRead: boolean;
+		Sender: {
+			id: string;
+			name: string | null;
+			email: string | null;
+			image: string | null;
+		} | null;
+		Store: {
+			id: string;
+			name: string | null;
+		} | null;
+	}>;
+	totalCount: number;
+	unreadCount: number;
+}
+
 // SWR fetcher function
-const fetcher = async () => {
+const fetcher = async (): Promise<NotificationData> => {
 	const result = await getUserNotificationsAction({ limit: 20, offset: 0 });
 	if (!result) {
 		throw new Error("Failed to fetch notifications");
@@ -35,7 +60,14 @@ const fetcher = async () => {
 	if (!result.data) {
 		throw new Error("No data returned");
 	}
-	return result.data;
+	// Filter out notifications with missing required fields
+	const data = result.data;
+	if (data.notifications) {
+		data.notifications = data.notifications.filter(
+			(n) => n && n.id && (n.subject || n.message),
+		);
+	}
+	return data;
 };
 
 export default function DropdownNotification() {
@@ -43,18 +75,18 @@ export default function DropdownNotification() {
 	const { t } = useTranslation(lng);
 	const router = useRouter();
 	const { data: session } = authClient.useSession();
+	const isHydrated = useIsHydrated();
 	const [open, setOpen] = useState(false);
-	const [mounted, setMounted] = useState(false);
 
-	// Track mounted state to prevent hydration mismatch
-	useEffect(() => {
-		setMounted(true);
-	}, []);
+	// Conditional key - set to null when conditions aren't met
+	const swrKey =
+		session?.user && isHydrated
+			? ["user-notifications", session.user.id]
+			: null;
 
 	// Fetch notifications with SWR
-	// Only refresh when popover is open to reduce unnecessary requests
-	const { data, error, mutate, isLoading } = useSWR(
-		session?.user ? "user-notifications" : null,
+	const { data, error, mutate, isLoading } = useSWR<NotificationData>(
+		swrKey,
 		fetcher,
 		{
 			refreshInterval: open ? 60000 : 0, // Refresh every 60 seconds only when open
@@ -65,15 +97,19 @@ export default function DropdownNotification() {
 	);
 
 	// Revalidate when popover opens
-	useEffect(() => {
-		if (open && session?.user) {
-			mutate();
-		}
-	}, [open, mutate, session?.user]);
+	const handleOpenChange = useCallback(
+		(newOpen: boolean) => {
+			setOpen(newOpen);
+			if (newOpen && swrKey) {
+				mutate();
+			}
+			console.log("handleOpenChange", newOpen);
+		},
+		[mutate, swrKey],
+	);
 
 	const notifications = data?.notifications || [];
-	// Use 0 during SSR to prevent hydration mismatch, then use actual value after mount
-	const unreadCount = mounted ? data?.unreadCount || 0 : 0;
+	const unreadCount = data?.unreadCount || 0;
 
 	// Handle marking a notification as read with optimistic update
 	const handleMarkAsRead = useCallback(
@@ -163,19 +199,15 @@ export default function DropdownNotification() {
 		return null;
 	}
 
-	// Don't render until mounted to prevent hydration mismatch
-	// The unreadCount from SWR can differ between server and client
-	if (!mounted) {
+	// Don't render until hydrated to prevent hydration mismatch
+	if (!isHydrated) {
 		return null;
 	}
 
 	return (
-		<Popover open={open} onOpenChange={setOpen}>
+		<Popover open={open} onOpenChange={handleOpenChange}>
 			<PopoverTrigger asChild>
-				<NotificationBell
-					unreadCount={unreadCount}
-					onOpen={() => setOpen(true)}
-				/>
+				<NotificationBell unreadCount={unreadCount} />
 			</PopoverTrigger>
 			<PopoverContent
 				className="w-[calc(100vw-2rem)] sm:w-[400px] p-0"
@@ -199,35 +231,55 @@ export default function DropdownNotification() {
 				) : error ? (
 					<div className="px-4 py-8 text-center text-sm text-muted-foreground">
 						{t("failed_to_load_notifications")}
+						{process.env.NODE_ENV === "development" && (
+							<div className="mt-2 text-xs text-destructive">
+								{error instanceof Error ? error.message : String(error)}
+							</div>
+						)}
 					</div>
 				) : notifications.length === 0 ? (
 					<div className="px-4 py-8 text-center text-sm text-muted-foreground">
 						{t("no_notifications")}
+						{process.env.NODE_ENV === "development" && unreadCount > 0 && (
+							<div className="mt-2 text-xs text-destructive">
+								Debug: unreadCount={unreadCount} but notifications.length=0
+							</div>
+						)}
 					</div>
 				) : (
 					<>
 						<ScrollArea className="h-[400px]">
 							<div className="divide-y">
-								{notifications.map((notification) => (
-									<div key={notification.id} className="px-2 py-2">
-										<NotificationCard
-											notification={{
-												id: notification.id,
-												subject: notification.subject,
-												message: notification.message,
-												notificationType: notification.notificationType,
-												actionUrl: notification.actionUrl,
-												createdAt: notification.createdAt,
-												isRead: notification.isRead,
-												Sender: notification.Sender,
-												Store: notification.Store,
-											}}
-											onMarkAsRead={handleMarkAsRead}
-											showActions={false}
-											className="border-0 shadow-none"
-										/>
-									</div>
-								))}
+								{notifications.map((notification) => {
+									// Ensure createdAt is properly formatted (number or bigint)
+									const createdAt =
+										typeof notification.createdAt === "bigint"
+											? notification.createdAt
+											: typeof notification.createdAt === "number"
+												? notification.createdAt
+												: Number(notification.createdAt) || 0;
+
+									return (
+										<div key={notification.id} className="px-2 py-2">
+											<NotificationCard
+												notification={{
+													id: notification.id,
+													subject: notification.subject || "",
+													message: notification.message || "",
+													notificationType: notification.notificationType,
+													actionUrl: notification.actionUrl,
+													createdAt,
+													isRead: notification.isRead || false,
+													Sender: notification.Sender || null,
+													Store: notification.Store || null,
+												}}
+												onMarkAsRead={handleMarkAsRead}
+												showActions={false}
+												className="border-0 shadow-none"
+											/>
+										</div>
+									);
+								})}
 							</div>
 						</ScrollArea>
 

@@ -8,7 +8,17 @@ import { parsePhoneNumber, isValidPhoneNumber } from "libphonenumber-js";
 export function normalizePhoneNumber(phoneNumber: string): string {
 	try {
 		// Remove spaces, dashes, parentheses
-		const cleaned = phoneNumber.replace(/[\s\-\(\)]/g, "");
+		let cleaned = phoneNumber.replace(/[\s\-\(\)]/g, "");
+
+		// Handle Taiwan numbers that start with 0 (e.g., 0988000123 -> +886988000123)
+		// Taiwan local format: 09XXXXXXXX (10 digits) or 9XXXXXXXX (9 digits)
+		if (/^09\d{8}$/.test(cleaned)) {
+			// Remove leading 0 and add +886 country code
+			cleaned = "+886" + cleaned.slice(1);
+		} else if (/^9\d{8}$/.test(cleaned)) {
+			// Add +886 country code for 9-digit Taiwan numbers
+			cleaned = "+886" + cleaned;
+		}
 
 		// Parse and normalize to E.164
 		const parsed = parsePhoneNumber(cleaned);

@@ -1,7 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconCalendarCheck } from "@tabler/icons-react";
+import {
+	IconCalendarCheck,
+	IconCalendar,
+	IconClock,
+} from "@tabler/icons-react";
+import { format, type Locale } from "date-fns";
+import { zhTW } from "date-fns/locale/zh-TW";
+import { enUS } from "date-fns/locale/en-US";
+import { ja } from "date-fns/locale/ja";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -55,7 +63,6 @@ import type {
 import {
 	dateToEpoch,
 	epochToDate,
-	formatUtcDateToDateTimeLocal,
 	getDateInTz,
 	getOffsetHours,
 	getUtcNow,
@@ -126,6 +133,94 @@ export function ReservationForm({
 	const router = useRouter();
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+
+	// Map i18n language codes to date-fns locales
+	const dateLocale = useMemo((): Locale => {
+		const localeMap: Record<string, Locale> = {
+			tw: zhTW,
+			en: enUS,
+			jp: ja,
+		};
+		return localeMap[lng || "tw"] || zhTW;
+	}, [lng]);
+
+	// Load saved name and phone from local storage for anonymous users
+	const [savedContactInfo, setSavedContactInfo] = useState<{
+		name?: string;
+	} | null>(null);
+
+	// Load saved contact info from local storage on mount
+	useEffect(() => {
+		if (typeof window !== "undefined" && !user && storeId) {
+			try {
+				// Load name from rsvp-contact-${storeId}
+				const storageKey = `rsvp-contact-${storeId}`;
+				const stored = localStorage.getItem(storageKey);
+				if (stored) {
+					const parsed = JSON.parse(stored);
+					if (parsed?.name) {
+						setSavedContactInfo({ name: parsed.name });
+					}
+				}
+
+				// Load phone country code and local number using same keys as FormPhoneOtpInner
+				const savedCountryCode = localStorage.getItem("phone_country_code");
+				const savedPhoneNumber = localStorage.getItem("phone_local_number");
+
+				if (
+					savedCountryCode &&
+					(savedCountryCode === "+1" || savedCountryCode === "+886")
+				) {
+					setPhoneCountryCode(savedCountryCode);
+				}
+				// Note: savedPhoneNumber will be used in the phone field's default value
+			} catch (error) {
+				// Silently handle errors loading from local storage
+			}
+		}
+	}, [user, storeId]);
+
+	// Save contact info to local storage when name or phone changes
+	const saveContactInfo = useCallback(
+		(name?: string, phone?: string) => {
+			if (typeof window !== "undefined" && !user && storeId) {
+				try {
+					// Save name to rsvp-contact-${storeId}
+					const storageKey = `rsvp-contact-${storeId}`;
+					const nameToSave = name || savedContactInfo?.name || "";
+					if (nameToSave) {
+						localStorage.setItem(
+							storageKey,
+							JSON.stringify({ name: nameToSave }),
+						);
+						setSavedContactInfo({ name: nameToSave });
+					}
+
+					// Save phone country code and local number using same keys as FormPhoneOtpInner
+					// Extract country code and local number from full phone number
+					if (phone) {
+						const match = phone.match(/^(\+\d{1,3})(.+)$/);
+						if (match) {
+							const countryCode = match[1];
+							let localNumber = match[2];
+							// For Taiwan, ensure we store with leading 0 if it was stripped
+							if (countryCode === "+886" && !localNumber.startsWith("0")) {
+								// Check if it should have leading 0 (9 digits -> 09XXXXXXXX)
+								if (localNumber.length === 9) {
+									localNumber = `0${localNumber}`;
+								}
+							}
+							localStorage.setItem("phone_country_code", countryCode);
+							localStorage.setItem("phone_local_number", localNumber);
+						}
+					}
+				} catch (error) {
+					// Silently handle errors saving to local storage
+				}
+			}
+		},
+		[user, storeId, savedContactInfo],
+	);
 
 	// Determine if we're in edit mode
 	const isEditMode = Boolean(rsvp);
@@ -317,7 +412,6 @@ export function ReservationForm({
 				return errorMessage;
 			} catch (error) {
 				// If parsing fails, allow the time (graceful degradation)
-				console.error("Failed to parse hours JSON:", error);
 				return null;
 			}
 		},
@@ -366,11 +460,29 @@ export function ReservationForm({
 			// Create mode: use default values
 			// Only include name and phone for anonymous users (when user is not logged in)
 			const isAnonymous = !user;
+			// Load phone from localStorage using same keys as FormPhoneOtpInner
+			let defaultPhone = "";
+			if (isAnonymous && typeof window !== "undefined") {
+				const savedCountryCode = localStorage.getItem("phone_country_code");
+				const savedPhoneNumber = localStorage.getItem("phone_local_number");
+				if (savedCountryCode && savedPhoneNumber) {
+					// Combine country code and local number
+					let localNumber = savedPhoneNumber;
+					// For Taiwan, ensure we handle leading 0 correctly
+					if (savedCountryCode === "+886") {
+						// If stored without leading 0, add it back for display
+						if (!localNumber.startsWith("0") && localNumber.length === 9) {
+							localNumber = `0${localNumber}`;
+						}
+					}
+					defaultPhone = `${savedCountryCode}${localNumber}`;
+				}
+			}
 			return {
 				storeId,
 				customerId: user?.id || null,
-				name: isAnonymous ? "" : undefined,
-				phone: isAnonymous ? "" : undefined,
+				name: isAnonymous ? savedContactInfo?.name || "" : undefined,
+				phone: isAnonymous ? defaultPhone : undefined,
 				facilityId: null, // Allow null for reservations without facilities
 				serviceStaffId: null, // Default to null for create mode
 				numOfAdult: 1,
@@ -379,7 +491,15 @@ export function ReservationForm({
 				message: "",
 			} as CreateReservationInput;
 		}
-	}, [isEditMode, rsvp, storeId, user, defaultRsvpTime, facilities]);
+	}, [
+		isEditMode,
+		rsvp,
+		storeId,
+		user,
+		defaultRsvpTime,
+		facilities,
+		savedContactInfo,
+	]);
 
 	// Use appropriate schema based on mode
 	const baseSchema = isEditMode
@@ -394,6 +514,34 @@ export function ReservationForm({
 		defaultValues,
 		mode: "onChange", // Real-time validation for better UX
 	});
+
+	// Update form when saved contact info loads (for anonymous users)
+	useEffect(() => {
+		if (!isEditMode && !user) {
+			// Update name field if it exists in savedContactInfo
+			if (savedContactInfo?.name) {
+				form.setValue("name", savedContactInfo.name);
+			}
+			// Load phone from localStorage using same keys as FormPhoneOtpInner
+			if (typeof window !== "undefined") {
+				const savedCountryCode = localStorage.getItem("phone_country_code");
+				const savedPhoneNumber = localStorage.getItem("phone_local_number");
+				if (savedCountryCode && savedPhoneNumber) {
+					// Combine country code and local number
+					let localNumber = savedPhoneNumber;
+					// For Taiwan, ensure we handle leading 0 correctly
+					if (savedCountryCode === "+886") {
+						// If stored without leading 0, add it back for display
+						if (!localNumber.startsWith("0") && localNumber.length === 9) {
+							localNumber = `0${localNumber}`;
+						}
+					}
+					const fullPhone = `${savedCountryCode}${localNumber}`;
+					form.setValue("phone", fullPhone);
+				}
+			}
+		}
+	}, [savedContactInfo, isEditMode, user, form]);
 
 	// Watch rsvpTime to filter facilities
 	const rsvpTime = form.watch("rsvpTime");
@@ -888,18 +1036,66 @@ export function ReservationForm({
 				});
 			} else {
 				if (isEditMode) {
-					toastSuccess({
-						description: t("reservation_updated"),
-					});
+					// Always call onReservationUpdated to update client state
+					// This ensures the calendar component updates its state immediately
 					if (result?.data?.rsvp) {
-						onReservationUpdated?.(result.data.rsvp as Rsvp);
+						const updatedRsvp = result.data.rsvp as Rsvp;
+
+						// Call callback immediately to update client state
+						onReservationUpdated?.(updatedRsvp);
+
+						// Update local storage for anonymous users
+						if (!user && storeId) {
+							try {
+								const storageKey = `rsvp-${storeId}`;
+								const storedData = localStorage.getItem(storageKey);
+								if (storedData) {
+									const localReservations: Rsvp[] = JSON.parse(storedData);
+									const updatedLocal = localReservations.map((r) =>
+										r.id === updatedRsvp.id
+											? {
+													...updatedRsvp,
+													// Transform BigInt to number for local storage
+													rsvpTime:
+														typeof updatedRsvp.rsvpTime === "number"
+															? updatedRsvp.rsvpTime
+															: updatedRsvp.rsvpTime instanceof Date
+																? updatedRsvp.rsvpTime.getTime()
+																: typeof updatedRsvp.rsvpTime === "bigint"
+																	? Number(updatedRsvp.rsvpTime)
+																	: null,
+													createdAt:
+														typeof updatedRsvp.createdAt === "number"
+															? updatedRsvp.createdAt
+															: typeof updatedRsvp.createdAt === "bigint"
+																? Number(updatedRsvp.createdAt)
+																: null,
+													updatedAt:
+														typeof updatedRsvp.updatedAt === "number"
+															? updatedRsvp.updatedAt
+															: typeof updatedRsvp.updatedAt === "bigint"
+																? Number(updatedRsvp.updatedAt)
+																: null,
+												}
+											: r,
+									);
+									localStorage.setItem(
+										storageKey,
+										JSON.stringify(updatedLocal),
+									);
+								}
+							} catch (error) {
+								// Silently handle errors updating local storage
+							}
+						}
+
+						toastSuccess({
+							description: t("reservation_updated"),
+						});
 
 						// if associated order is still unpaid, bring user to checkout page
-						if (
-							result?.data?.rsvp?.orderId &&
-							!result?.data?.rsvp?.alreadyPaid
-						) {
-							router.push(`/checkout/${result?.data?.rsvp?.orderId}`);
+						if (updatedRsvp.orderId && !updatedRsvp.alreadyPaid) {
+							router.push(`/checkout/${updatedRsvp.orderId}`);
 						}
 					} else {
 						//something went wrong??
@@ -927,7 +1123,13 @@ export function ReservationForm({
 						const orderId = data.orderId;
 						const requiresSignIn = data.requiresSignIn ?? false;
 
+						// Always call onReservationCreated to update client state
+						// This ensures the calendar component updates its state immediately
+						onReservationCreated?.(data.rsvp);
+
 						// Save reservation to local storage for anonymous users
+						// Note: This is also handled by handleReservationCreated in the calendar,
+						// but we do it here too for immediate persistence
 						if (!user) {
 							try {
 								const storageKey = `rsvp-${storeId}`;
@@ -936,74 +1138,56 @@ export function ReservationForm({
 									? JSON.parse(existingData)
 									: [];
 
-								// Transform reservation data for localStorage (convert BigInt to number)
-								// Match the transformation order from CustomerWeekViewCalendar
-								const reservationForStorage = {
-									...data.rsvp,
-									rsvpTime:
-										typeof data.rsvp.rsvpTime === "number"
-											? data.rsvp.rsvpTime
-											: data.rsvp.rsvpTime instanceof Date
-												? data.rsvp.rsvpTime.getTime()
-												: typeof data.rsvp.rsvpTime === "bigint"
-													? Number(data.rsvp.rsvpTime)
-													: null,
-									createdAt:
-										typeof data.rsvp.createdAt === "number"
-											? data.rsvp.createdAt
-											: data.rsvp.createdAt instanceof Date
-												? data.rsvp.createdAt.getTime()
-												: typeof data.rsvp.createdAt === "bigint"
-													? Number(data.rsvp.createdAt)
-													: null,
-									updatedAt:
-										typeof data.rsvp.updatedAt === "number"
-											? data.rsvp.updatedAt
-											: data.rsvp.updatedAt instanceof Date
-												? data.rsvp.updatedAt.getTime()
-												: typeof data.rsvp.updatedAt === "bigint"
-													? Number(data.rsvp.updatedAt)
-													: null,
-								};
-
-								// Append new reservation to existing array
-								const updatedReservations = [
-									...existingReservations,
-									reservationForStorage,
-								];
-
-								// Save back to localStorage
-								localStorage.setItem(
-									storageKey,
-									JSON.stringify(updatedReservations),
+								// Check if reservation already exists in local storage
+								const existsInStorage = existingReservations.some(
+									(r) => r.id === data.rsvp.id,
 								);
 
-								// Match logging style from CustomerWeekViewCalendar
-								console.log(
-									"[RSVP Local Storage] Saved reservation to local storage",
-									{
+								if (!existsInStorage) {
+									// Transform reservation data for localStorage (convert BigInt to number)
+									// Match the transformation order from CustomerWeekViewCalendar
+									const reservationForStorage = {
+										...data.rsvp,
+										rsvpTime:
+											typeof data.rsvp.rsvpTime === "number"
+												? data.rsvp.rsvpTime
+												: data.rsvp.rsvpTime instanceof Date
+													? data.rsvp.rsvpTime.getTime()
+													: typeof data.rsvp.rsvpTime === "bigint"
+														? Number(data.rsvp.rsvpTime)
+														: null,
+										createdAt:
+											typeof data.rsvp.createdAt === "number"
+												? data.rsvp.createdAt
+												: data.rsvp.createdAt instanceof Date
+													? data.rsvp.createdAt.getTime()
+													: typeof data.rsvp.createdAt === "bigint"
+														? Number(data.rsvp.createdAt)
+														: null,
+										updatedAt:
+											typeof data.rsvp.updatedAt === "number"
+												? data.rsvp.updatedAt
+												: data.rsvp.updatedAt instanceof Date
+													? data.rsvp.updatedAt.getTime()
+													: typeof data.rsvp.updatedAt === "bigint"
+														? Number(data.rsvp.updatedAt)
+														: null,
+									};
+
+									// Append new reservation to existing array
+									const updatedReservations = [
+										...existingReservations,
+										reservationForStorage,
+									];
+
+									// Save back to localStorage
+									localStorage.setItem(
 										storageKey,
-										reservationId: data.rsvp.id,
-										name: data.rsvp.name,
-										phone: data.rsvp.phone,
-										orderId: orderId || null,
-										hasName: !!data.rsvp.name,
-										hasPhone: !!data.rsvp.phone,
-										totalInStorage: updatedReservations.length,
-									},
-								);
+										JSON.stringify(updatedReservations),
+									);
+								}
 							} catch (error) {
-								// Log error but don't block the flow
-								// Match error logging style from CustomerWeekViewCalendar
-								console.error(
-									"[RSVP Local Storage] Error saving reservation to local storage",
-									{
-										storageKey: `rsvp-${storeId}`,
-										reservationId: data.rsvp.id,
-										error:
-											error instanceof Error ? error.message : String(error),
-									},
-								);
+								// Silently handle errors saving to local storage
 							}
 						}
 
@@ -1068,7 +1252,6 @@ export function ReservationForm({
 
 							// Reset form after successful submission
 							form.reset(defaultValues as CreateReservationInput);
-							onReservationCreated?.(data.rsvp);
 						}
 					} else {
 						// Fallback: show success message even if no RSVP data
@@ -1180,7 +1363,7 @@ export function ReservationForm({
 											// Create mode: Display date/time (read-only)
 											<div
 												className={cn(
-													"flex h-10 w-full rounded-md px-3 py-2 text-sm ring-offset-background",
+													"flex h-10 w-full items-center gap-2 rounded-md px-0 py-2 font-semibold text-xl ring-offset-background",
 													fieldState.error &&
 														"border border-destructive focus-visible:ring-destructive",
 												)}
@@ -1203,13 +1386,35 @@ export function ReservationForm({
 																);
 															}
 
-															// Format UTC date in store timezone for display
-															const formatted = formatUtcDateToDateTimeLocal(
+															// Convert UTC date to store timezone
+															const storeDate = getDateInTz(
 																utcDate,
-																storeTimezone,
+																getOffsetHours(storeTimezone),
 															);
+
+															// Format date: "2026年1月8日 週四" (or equivalent in other locales)
+															const dateFormatted = format(
+																storeDate,
+																"yyyy年M月d日 EEEE",
+																{ locale: dateLocale },
+															);
+
+															// Format time: "下午8:30" (or equivalent in other locales)
+															const timeFormatted = format(storeDate, "ah:mm", {
+																locale: dateLocale,
+															});
+
 															return (
-																<span>{formatted || "No date selected"}</span>
+																<div className="flex items-center gap-2">
+																	<div className="flex items-center gap-1.5">
+																		<IconCalendar className="h-4 w-4 text-muted-foreground" />
+																		<span>{dateFormatted}</span>
+																	</div>
+																	<div className="flex items-center gap-1.5">
+																		<IconClock className="h-4 w-4 text-muted-foreground" />
+																		<span>{timeFormatted}</span>
+																	</div>
+																</div>
 															);
 														} catch {
 															return (
@@ -1403,6 +1608,7 @@ export function ReservationForm({
 													disabled={isSubmitting || isEditMode}
 													defaultValue={selectedServiceStaff || null}
 													allowEmpty={true}
+													storeCurrency={storeCurrency}
 													onValueChange={(staff) => {
 														field.onChange(staff?.id || null);
 													}}
@@ -1410,18 +1616,29 @@ export function ReservationForm({
 											) : null}
 										</FormControl>
 										{selectedServiceStaff &&
-											selectedServiceStaff.defaultCost && (
-												<div className="text-sm text-muted-foreground">
-													{t("rsvp_service_staff_cost") || "Service Staff Cost"}
-													:{" "}
-													{typeof selectedServiceStaff.defaultCost === "number"
-														? selectedServiceStaff.defaultCost.toFixed(0)
-														: Number(selectedServiceStaff.defaultCost).toFixed(
-																0,
-															)}{" "}
-													{storeCurrency.toUpperCase()}
-												</div>
-											)}
+											selectedServiceStaff.defaultCost &&
+											(() => {
+												const costValue =
+													typeof selectedServiceStaff.defaultCost === "number"
+														? selectedServiceStaff.defaultCost
+														: Number(selectedServiceStaff.defaultCost);
+												if (costValue > 0) {
+													const formatter = new Intl.NumberFormat("en-US", {
+														style: "currency",
+														currency: storeCurrency.toUpperCase(),
+														maximumFractionDigits: 0,
+														minimumFractionDigits: 0,
+													});
+													return (
+														<div className="text-sm text-muted-foreground">
+															{t("rsvp_service_staff_cost") ||
+																"Service Staff Cost"}
+															: {formatter.format(costValue)}
+														</div>
+													);
+												}
+												return null;
+											})()}
 										{availableServiceStaff.length === 0 &&
 											mustHaveServiceStaff && (
 												<div className="text-sm text-destructive">
@@ -1460,13 +1677,16 @@ export function ReservationForm({
 												disabled={isSubmitting}
 												{...field}
 												onChange={(e) => {
-													field.onChange(e);
+													const value = e.target.value;
+													field.onChange(value);
+													// Save to local storage
+													saveContactInfo(value, form.getValues("phone"));
 													// Clear errors and trigger re-validation when user types
 													if (fieldState.error) {
 														form.clearErrors("name");
 													}
 													// Trigger validation for both name and phone to re-check the refine condition
-													if (e.target.value.trim().length > 0) {
+													if (value.trim().length > 0) {
 														form.trigger(["name", "phone"]);
 													}
 												}}
@@ -1524,6 +1744,8 @@ export function ReservationForm({
 										const cleaned = localNumber.replace(/\D/g, "");
 										if (!cleaned) {
 											field.onChange("");
+											// Save empty phone to local storage
+											saveContactInfo(form.getValues("name"), "");
 											return;
 										}
 
@@ -1535,6 +1757,9 @@ export function ReservationForm({
 
 										const fullPhoneNumber = `${countryCode}${numberToCombine}`;
 										field.onChange(fullPhoneNumber);
+
+										// Save to local storage
+										saveContactInfo(form.getValues("name"), fullPhoneNumber);
 
 										// Clear errors and trigger re-validation
 										if (fieldState.error) {
@@ -1561,6 +1786,11 @@ export function ReservationForm({
 														value={phoneCountryCode}
 														onValueChange={(newCode) => {
 															setPhoneCountryCode(newCode);
+															// Save country code to local storage
+															saveContactInfo(
+																form.getValues("name"),
+																form.getValues("phone"),
+															);
 															// Clear local number when country changes
 															updateFullPhone(newCode, "");
 														}}
@@ -1586,6 +1816,12 @@ export function ReservationForm({
 																phoneCountryCode === "+886" ? 10 : 10;
 															const limited = cleaned.slice(0, maxLen);
 															updateFullPhone(phoneCountryCode, limited);
+															// Save to local storage after updating
+															const fullPhone = `${phoneCountryCode}${limited}`;
+															saveContactInfo(
+																form.getValues("name"),
+																fullPhone,
+															);
 														}}
 														className={cn(
 															"flex-1 h-10 text-base sm:h-9 sm:text-sm",
@@ -1639,41 +1875,6 @@ export function ReservationForm({
 
 					<Separator />
 
-					{/* Validation Error Summary */}
-					{Object.keys(form.formState.errors).length > 0 && (
-						<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
-							<div className="text-sm font-semibold text-destructive">
-								{t("please_fix_validation_errors") ||
-									"Please fix the following errors:"}
-							</div>
-							{Object.entries(form.formState.errors).map(([field, error]) => {
-								// Map field names to user-friendly labels using i18n
-								const fieldLabels: Record<string, string> = {
-									storeId: t("store") || "Store",
-									customerId: t("customer") || "Customer",
-									name: t("your_name") || "Your Name",
-									phone: t("phone") || "Phone",
-									facilityId: t("rsvp_facility") || "Facility",
-									serviceStaffId: t("service_staff") || "Service Staff",
-									numOfAdult: t("rsvp_num_of_adult") || "Number of Adults",
-									numOfChild: t("rsvp_num_of_child") || "Number of Children",
-									rsvpTime: t("rsvp_time") || "Reservation Time",
-									message: t("rsvp_message") || "Message",
-								};
-								const fieldLabel = fieldLabels[field] || field;
-								return (
-									<div
-										key={field}
-										className="text-sm text-destructive flex items-start gap-2"
-									>
-										<span className="font-medium">{fieldLabel}:</span>
-										<span>{error.message as string}</span>
-									</div>
-								);
-							})}
-						</div>
-					)}
-
 					<div className="space-y-2">
 						<p className="text-sm font-medium">
 							{t("rsvp_rules_and_restrictions")}
@@ -1696,6 +1897,56 @@ export function ReservationForm({
 					</div>
 
 					{/* Submit Button */}
+
+					{/* Validation Error Summary */}
+					{Object.keys(form.formState.errors).length > 0 && (
+						<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5 mb-4">
+							<div className="text-sm font-semibold text-destructive">
+								{t("please_fix_validation_errors") ||
+									"Please fix the following errors:"}
+							</div>
+							{Object.entries(form.formState.errors).map(([field, error]) => {
+								// Map field names to user-friendly labels using i18n
+								const fieldLabels: Record<string, string> = {
+									storeId: t("store") || "Store",
+									customerId: t("customer") || "Customer",
+									name: t("your_name") || "Your Name",
+									phone: t("phone") || "Phone",
+									facilityId: t("rsvp_facility") || "Facility",
+									serviceStaffId: t("service_staff") || "Service Staff",
+									numOfAdult: t("rsvp_num_of_adult") || "Number of Adults",
+									numOfChild: t("rsvp_num_of_child") || "Number of Children",
+									rsvpTime: t("rsvp_time") || "Reservation Time",
+									message: t("rsvp_message") || "Message",
+								};
+								const fieldLabel = fieldLabels[field] || field;
+
+								// Translate error message if it's an i18n key, otherwise use as-is
+								const errorMessage = error.message as string;
+								// List of known i18n keys used in validation
+								const i18nErrorKeys = [
+									"rsvp_name_required_for_anonymous",
+									"rsvp_phone_required_for_anonymous",
+									"rsvp_name_and_phone_required_for_anonymous",
+									"phone_number_required",
+									"phone_number_invalid_format",
+								];
+								const translatedMessage = i18nErrorKeys.includes(errorMessage)
+									? t(errorMessage)
+									: errorMessage;
+
+								return (
+									<div
+										key={field}
+										className="text-sm text-destructive flex items-start gap-2"
+									>
+										<span className="font-medium">{fieldLabel}:</span>
+										<span>{translatedMessage}</span>
+									</div>
+								);
+							})}
+						</div>
+					)}
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<span className="inline-block w-full">
@@ -1761,10 +2012,27 @@ export function ReservationForm({
 														message: t("rsvp_message") || "Message",
 													};
 													const fieldLabel = fieldLabels[field] || field;
+
+													// Translate error message if it's an i18n key, otherwise use as-is
+													const errorMessage = error?.message as string;
+													// List of known i18n keys used in validation
+													const i18nErrorKeys = [
+														"rsvp_name_required_for_anonymous",
+														"rsvp_phone_required_for_anonymous",
+														"rsvp_name_and_phone_required_for_anonymous",
+														"phone_number_required",
+														"phone_number_invalid_format",
+													];
+													const translatedMessage = i18nErrorKeys.includes(
+														errorMessage,
+													)
+														? t(errorMessage)
+														: errorMessage;
+
 													return (
 														<div key={field} className="text-xs">
 															<span className="font-medium">{fieldLabel}:</span>{" "}
-															{error?.message as string}
+															{translatedMessage}
 														</div>
 													);
 												})}

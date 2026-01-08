@@ -17,6 +17,7 @@ import { processRsvpCreditPointsRefund } from "./process-rsvp-refund-credit-poin
 import { processRsvpFiatRefund } from "./process-rsvp-refund-fiat";
 import { getT } from "@/app/i18n";
 import logger from "@/lib/logger";
+import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 
 // customer can cancel their reservation at any time if canCancel is true in rsvpSettings.
 // when cancel OUTSIDE cancelHours window, refund to either credit or fiat depending on how the reservation was paid.
@@ -92,6 +93,7 @@ export const cancelReservationAction = baseClient
 
 		// Track if refund was needed and if it completed successfully
 		let refundCompleted = false;
+		let refundAmount: number | null = null;
 		// Refund is needed when cancellation is OUTSIDE the cancelHours window (!isWithinCancelHours)
 		const refundNeeded = !isWithinCancelHours;
 
@@ -146,6 +148,7 @@ export const cancelReservationAction = baseClient
 						refundReason: t("reservation_cancelled_by_customer"),
 					});
 					refundCompleted = refundResult.refunded;
+					refundAmount = refundResult.refundAmount ?? null;
 				} else if (paymentMethod === "fiat") {
 					const refundResult = await processRsvpFiatRefund({
 						rsvpId: id,
@@ -155,6 +158,7 @@ export const cancelReservationAction = baseClient
 						refundReason: t("reservation_cancelled_by_customer"),
 					});
 					refundCompleted = refundResult.refunded;
+					refundAmount = refundResult.refundAmount ?? null;
 				} else {
 					// No credit or fiat payment found - might be paid through other method (Stripe, LINE Pay, etc.)
 					logger.warn(
@@ -171,6 +175,7 @@ export const cancelReservationAction = baseClient
 						},
 					);
 					refundCompleted = false;
+					refundAmount = null;
 				}
 
 				// If refund was needed but didn't complete, log warning
@@ -225,6 +230,28 @@ export const cancelReservationAction = baseClient
 
 			const transformedRsvp = { ...updated } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
+
+			// Send notification for reservation cancellation
+			const notificationRouter = getRsvpNotificationRouter();
+			await notificationRouter.routeNotification({
+				rsvpId: updated.id,
+				storeId: updated.storeId,
+				eventType: "cancelled",
+				customerId: updated.customerId,
+				customerName: updated.Customer?.name || updated.name || null,
+				customerEmail: updated.Customer?.email || null,
+				customerPhone: updated.Customer?.phoneNumber || updated.phone || null,
+				storeName: updated.Store?.name || null,
+				rsvpTime: updated.rsvpTime,
+				status: updated.status,
+				facilityName: updated.Facility?.facilityName || null,
+				numOfAdult: updated.numOfAdult,
+				numOfChild: updated.numOfChild,
+				refundAmount:
+					refundCompleted && refundAmount !== null ? refundAmount : null,
+				refundCurrency: existingRsvp.Store?.defaultCurrency || null,
+				actionUrl: `/s/${updated.storeId}/reservation/history`,
+			});
 
 			return {
 				rsvp: transformedRsvp,

@@ -1,6 +1,11 @@
 "use client";
 
-import { IconPlus } from "@tabler/icons-react";
+import {
+	IconDownload,
+	IconLoader,
+	IconPlus,
+	IconUpload,
+} from "@tabler/icons-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useTranslation } from "@/app/i18n/client";
@@ -10,11 +15,13 @@ import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import { useParams } from "next/navigation";
+import { toastError, toastSuccess } from "@/components/toaster";
 
 import type { ServiceStaffColumn } from "../service-staff-column";
 
 import { createTableColumns } from "./columns";
 import { EditServiceStaffDialog } from "./edit-service-staff-dialog";
+import { ImportServiceStaffDialog } from "./import-service-staff-dialog";
 
 interface ServiceStaffClientProps {
 	serverData: ServiceStaffColumn[];
@@ -75,6 +82,90 @@ export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 		[sortServiceStaff],
 	);
 
+	const [exporting, setExporting] = useState(false);
+
+	const handleExport = useCallback(async () => {
+		setExporting(true);
+		try {
+			const res = await fetch(
+				`/api/storeAdmin/${params.storeId}/service-staff/export`,
+				{
+					method: "POST",
+				},
+			);
+
+			// Check if response is an error by status code
+			if (!res.ok) {
+				// Only parse as JSON if status indicates error
+				const contentType = res.headers.get("content-type");
+				if (contentType?.includes("application/json")) {
+					const errorData = await res.json();
+					toastError({
+						title: t("export_failed") || "Export failed",
+						description: errorData.error || "Unknown error",
+					});
+				} else {
+					const text = await res.text();
+					toastError({
+						title: t("export_failed") || "Export failed",
+						description: text || `HTTP ${res.status}`,
+					});
+				}
+				return;
+			}
+
+			// Get filename from Content-Disposition header or use default
+			const contentDisposition = res.headers.get("content-disposition");
+			let fileName = `service-staff-backup-${params.storeId}.json`;
+			if (contentDisposition) {
+				const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+				if (fileNameMatch) {
+					fileName = fileNameMatch[1];
+				}
+			}
+
+			// Create blob and download
+			const blob = await res.blob();
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = fileName;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(url);
+
+			toastSuccess({
+				title: t("exported") || "Exported",
+				description: fileName,
+			});
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				toastError({
+					title: t("export_failed") || "Export failed",
+					description: err.message,
+				});
+			}
+		} finally {
+			setExporting(false);
+		}
+	}, [params.storeId, t]);
+
+	const handleImported = useCallback(async () => {
+		try {
+			// Refresh the page to get updated service staff from server
+			window.location.reload();
+		} catch (error) {
+			toastError({
+				title: t("error_title"),
+				description:
+					error instanceof Error
+						? error.message
+						: "Failed to refresh service staff after import",
+			});
+		}
+	}, [t]);
+
 	const columns = useMemo(
 		() =>
 			createTableColumns(t, {
@@ -93,6 +184,29 @@ export const ServiceStaffClient: React.FC<ServiceStaffClientProps> = ({
 					description=""
 				/>
 				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
+					<Button
+						onClick={handleExport}
+						disabled={exporting}
+						variant="outline"
+						className="h-10 sm:h-9"
+					>
+						{exporting ? (
+							<>
+								<IconLoader className="mr-2 h-4 w-4 animate-spin" />
+								<span className="text-sm sm:text-xs">
+									{t("exporting") || "Exporting..."}
+								</span>
+							</>
+						) : (
+							<>
+								<IconDownload className="mr-2 h-4 w-4" />
+								<span className="text-sm sm:text-xs">
+									{t("export") || "Export"}
+								</span>
+							</>
+						)}
+					</Button>
+					<ImportServiceStaffDialog onImported={handleImported} />
 					<EditServiceStaffDialog
 						isNew
 						onCreated={handleCreated}

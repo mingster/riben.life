@@ -94,7 +94,7 @@
 		"fee": 0,
 		"feeAdditional": 0,
 		"clearDays": 0,
-		"isDefault": true,
+		"isDefault": false,
 		"canDelete": false,
 		"visibleToCustomer": true
 	}

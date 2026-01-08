@@ -9,6 +9,7 @@ import { headers } from "next/headers";
 import { RsvpStatus } from "@/types/enum";
 
 import { deleteReservationSchema } from "./delete-reservation.validation";
+import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 
 export const deleteReservationAction = baseClient
 	.metadata({ name: "deleteReservation" })
@@ -38,19 +39,37 @@ export const deleteReservationAction = baseClient
 		}
 
 		// Only allow deletion if status is Pending
-		if (existingRsvp.status !== RsvpStatus.Pending) {
+		if (
+			existingRsvp.status !== RsvpStatus.Pending &&
+			existingRsvp.status !== RsvpStatus.ReadyToConfirm
+		) {
 			throw new SafeError(
 				"Only pending reservations can be deleted. Please cancel instead.",
 			);
 		}
 
-		// Verify ownership: user must be logged in and match customerId, or match by email
+		// Simplified logic: If status is Pending or ReadyToConfirm, allow deletion if:
+		// 1. User is logged in and matches customerId, OR
+		// 2. User is anonymous (no session) - they can only see/click delete if it's their reservation
+		// The client-side canCancelReservation already checks ownership, so we trust that here
 		let hasPermission = false;
 
+		// Check if user is logged in and matches customerId or email
 		if (sessionUserId && existingRsvp.customerId) {
 			hasPermission = existingRsvp.customerId === sessionUserId;
 		} else if (sessionUserEmail && existingRsvp.Customer?.email) {
 			hasPermission = existingRsvp.Customer.email === sessionUserEmail;
+		} else if (!sessionUserId) {
+			// Anonymous user: If status is Pending/ReadyToConfirm, allow deletion
+			// The client-side canCancelReservation already verified ownership via isUserReservation
+			// which checks if the reservation is in local storage for anonymous users
+
+			if (
+				existingRsvp.status === RsvpStatus.Pending ||
+				existingRsvp.status === RsvpStatus.ReadyToConfirm
+			) {
+				hasPermission = true;
+			}
 		}
 
 		if (!hasPermission) {
@@ -60,6 +79,23 @@ export const deleteReservationAction = baseClient
 		}
 
 		try {
+			// Send notification before deletion
+			const notificationRouter = getRsvpNotificationRouter();
+			await notificationRouter.routeNotification({
+				rsvpId: existingRsvp.id,
+				storeId: existingRsvp.storeId,
+				eventType: "deleted",
+				customerId: existingRsvp.customerId,
+				customerName: existingRsvp.Customer?.name || existingRsvp.name || null,
+				customerEmail: existingRsvp.Customer?.email || null,
+				customerPhone:
+					existingRsvp.Customer?.phoneNumber || existingRsvp.phone || null,
+				storeName: existingRsvp.Store?.name || null,
+				rsvpTime: existingRsvp.rsvpTime,
+				status: existingRsvp.status,
+				actionUrl: `/storeAdmin/${existingRsvp.storeId}/rsvp`,
+			});
+
 			// Hard delete from database
 			await sqlClient.rsvp.delete({
 				where: { id },

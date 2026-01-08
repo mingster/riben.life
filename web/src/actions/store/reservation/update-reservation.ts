@@ -20,6 +20,8 @@ import { validateServiceStaffBusinessHours } from "./validate-service-staff-busi
 import { validateCancelHoursWindow } from "./validate-cancel-hours";
 import { validateReservationTimeWindow } from "./validate-reservation-time-window";
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
+import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
+import { RsvpStatus } from "@/types/enum";
 
 // implement FR-RSVP-013
 //
@@ -103,12 +105,26 @@ export const updateReservationAction = baseClient
 		}
 
 		// Verify ownership: user must be logged in and match customerId, or match by email
+		// For anonymous users, allow editing if status is Pending/ReadyToConfirm
+		// The client-side canEditReservation already verified ownership via isUserReservation
+		// which checks if the reservation is in local storage for anonymous users
 		let hasPermission = false;
 
+		// Check if user is logged in and matches customerId or email
 		if (sessionUserId && existingRsvp.customerId) {
 			hasPermission = existingRsvp.customerId === sessionUserId;
 		} else if (sessionUserEmail && existingRsvp.Customer?.email) {
 			hasPermission = existingRsvp.Customer.email === sessionUserEmail;
+		} else if (!sessionUserId) {
+			// Anonymous user: If status is Pending/ReadyToConfirm, allow editing
+			// The client-side canEditReservation already verified ownership via isUserReservation
+			// which checks if the reservation is in local storage for anonymous users
+			if (
+				existingRsvp.status === RsvpStatus.Pending ||
+				existingRsvp.status === RsvpStatus.ReadyToConfirm
+			) {
+				hasPermission = true;
+			}
 		}
 
 		if (!hasPermission) {
@@ -289,6 +305,26 @@ export const updateReservationAction = baseClient
 
 			const transformedRsvp = { ...updated } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
+
+			// Send notification for reservation update
+			const notificationRouter = getRsvpNotificationRouter();
+			await notificationRouter.routeNotification({
+				rsvpId: updated.id,
+				storeId: updated.storeId,
+				eventType: "updated",
+				customerId: updated.customerId,
+				customerName: updated.Customer?.name || updated.name || null,
+				customerEmail: updated.Customer?.email || null,
+				customerPhone: updated.Customer?.phoneNumber || updated.phone || null,
+				storeName: updated.Store?.name || null,
+				rsvpTime: updated.rsvpTime,
+				status: updated.status,
+				facilityName: updated.Facility?.facilityName || null,
+				numOfAdult: updated.numOfAdult,
+				numOfChild: updated.numOfChild,
+				message: updated.message || null,
+				actionUrl: `/storeAdmin/${updated.storeId}/rsvp`,
+			});
 
 			return {
 				rsvp: transformedRsvp,

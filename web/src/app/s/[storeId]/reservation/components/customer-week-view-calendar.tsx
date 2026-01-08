@@ -18,14 +18,13 @@ import {
 import { enUS } from "date-fns/locale/en-US";
 import { zhTW } from "date-fns/locale/zh-TW";
 import { ja } from "date-fns/locale/ja";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { claimReservationAction } from "@/actions/store/reservation/claim-reservation";
 import { clientLogger } from "@/lib/client-logger";
-import { normalizePhoneNumber } from "@/utils/phone-utils";
 import type {
 	Rsvp,
 	RsvpSettings,
@@ -36,9 +35,14 @@ import type {
 import { RsvpStatus } from "@/types/enum";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import {
+	isUserReservation as isUserReservationUtil,
+	canEditReservation as canEditReservationUtil,
+	canCancelReservation as canCancelReservationUtil,
+	removeReservationFromLocalStorage as removeReservationFromLocalStorageUtil,
+} from "@/utils/rsvp-utils";
 import { ReservationDialog } from "./reservation-dialog";
-import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
-import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
+import { RsvpCancelDeleteDialog } from "./rsvp-cancel-delete-dialog";
 import {
 	getDateInTz,
 	getUtcNow,
@@ -48,16 +52,6 @@ import {
 	dateToEpoch,
 	convertToUtc,
 } from "@/utils/datetime-utils";
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
 import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -347,6 +341,10 @@ export const CustomerWeekViewCalendar: React.FC<
 	const [localStorageReservations, setLocalStorageReservations] = useState<
 		Rsvp[]
 	>([]);
+	// Track deleted reservation IDs to prevent them from being re-added from server
+	const [deletedReservationIds, setDeletedReservationIds] = useState<
+		Set<string>
+	>(new Set());
 
 	// Load local storage reservations on mount and when storeId changes
 	useEffect(() => {
@@ -358,34 +356,11 @@ export const CustomerWeekViewCalendar: React.FC<
 			if (storedData) {
 				const parsed: Rsvp[] = JSON.parse(storedData);
 				if (Array.isArray(parsed) && parsed.length > 0) {
-					/*
-					console.log(
-						"[RSVP Local Storage] Loaded reservations from local storage",
-						{
-							storageKey,
-							count: parsed.length,
-							reservationIds: parsed.map((r) => r.id),
-							reservations: parsed.map((r) => ({
-								id: r.id,
-								name: r.name,
-								phone: r.phone,
-								rsvpTime: r.rsvpTime,
-							})),
-						},
-					);
-					*/
 					setLocalStorageReservations(parsed);
 				}
-			} else {
-				console.log("[RSVP Local Storage] No reservations in local storage", {
-					storageKey,
-				});
 			}
 		} catch (error) {
-			console.error("[RSVP Local Storage] Error loading from local storage", {
-				storageKey,
-				error: error instanceof Error ? error.message : String(error),
-			});
+			// Silently handle errors loading from local storage
 		}
 	}, [storeId]);
 
@@ -399,68 +374,71 @@ export const CustomerWeekViewCalendar: React.FC<
 	});
 
 	// Update rsvps when localStorageReservations or existingReservations change
-	// Also clean up local storage if reservations were deleted from server side
+	// 1. only clean up local storage reservations why click delete dialog confirmation button
+	// 2. newly created reservations should be displayed immediately
+	// This is because users might sign out and back in, and we want to preserve local storage as backup
 	useEffect(() => {
 		if (!user && localStorageReservations.length > 0) {
-			const serverIds = new Set(existingReservations.map((r) => r.id));
+			// Get current local storage reservations (no cleanup - keep all)
+			const currentLocalReservations = localStorageReservations;
 
-			// Check if any local storage reservations were deleted from server
-			// (exist in local storage but not in server data)
-			const deletedFromServer = localStorageReservations.filter(
-				(r) => !serverIds.has(r.id),
+			// Filter out deleted reservations from server data
+			const filteredServerReservations = existingReservations.filter(
+				(r) => !deletedReservationIds.has(r.id),
 			);
 
-			// If reservations were deleted from server, remove them from local storage
-			if (deletedFromServer.length > 0 && storeId) {
-				const storageKey = `rsvp-${storeId}`;
-				try {
-					const storedData = localStorage.getItem(storageKey);
-					if (storedData) {
-						const localReservations: Rsvp[] = JSON.parse(storedData);
-						// Keep only reservations that exist on server
-						const updatedLocal = localReservations.filter((r) =>
-							serverIds.has(r.id),
-						);
+			// Merge local storage reservations with server reservations for anonymous users
+			// Local-only reservations (not on server yet) should also be displayed
+			// For reservations that exist on both server and local storage, preserve name/phone from local storage
+			const serverIdsSet = new Set(filteredServerReservations.map((r) => r.id));
+			const localOnlyReservations = currentLocalReservations.filter(
+				(localRsvp) => !serverIdsSet.has(localRsvp.id),
+			);
 
-						if (updatedLocal.length > 0) {
-							localStorage.setItem(storageKey, JSON.stringify(updatedLocal));
-						} else {
-							localStorage.removeItem(storageKey);
-						}
-
-						setLocalStorageReservations(updatedLocal);
-
-						console.log(
-							"[RSVP Local Storage] Removed reservations deleted from server",
-							{
-								storageKey,
-								deletedCount: deletedFromServer.length,
-								deletedIds: deletedFromServer.map((r) => r.id),
-								remainingCount: updatedLocal.length,
-							},
-						);
-					}
-				} catch (error) {
-					console.error(
-						"[RSVP Local Storage] Error cleaning up deleted reservations",
-						{
-							storageKey: `rsvp-${storeId}`,
-							error: error instanceof Error ? error.message : String(error),
-						},
+			// For anonymous users, preserve name/phone from local storage for reservations that exist on server
+			// This ensures we can delete/edit reservations even if server data doesn't have name/phone
+			const serverReservationsWithLocalData = filteredServerReservations.map(
+				(serverRsvp) => {
+					const localRsvp = currentLocalReservations.find(
+						(r) => r.id === serverRsvp.id,
 					);
-				}
-			}
+					if (localRsvp && localRsvp.name && localRsvp.phone) {
+						// Preserve name and phone from local storage for anonymous reservations
+						return {
+							...serverRsvp,
+							name: localRsvp.name,
+							phone: localRsvp.phone,
+						};
+					}
+					return serverRsvp;
+				},
+			);
 
-			// Update rsvps state - only show server reservations (local storage cleanup already handled above)
-			setRsvps(existingReservations);
+			const mergedRsvps = [
+				...serverReservationsWithLocalData,
+				...localOnlyReservations,
+			];
+			setRsvps(mergedRsvps);
 		} else if (!user && localStorageReservations.length === 0) {
-			// If local storage is empty, only show server reservations
-			setRsvps(existingReservations);
+			// If local storage is empty, only show server reservations (excluding deleted ones)
+			const filteredServerReservations = existingReservations.filter(
+				(r) => !deletedReservationIds.has(r.id),
+			);
+			setRsvps(filteredServerReservations);
 		} else {
-			// If user is logged in, only show server reservations
-			setRsvps(existingReservations);
+			// If user is logged in, only show server reservations (excluding deleted ones)
+			const filteredServerReservations = existingReservations.filter(
+				(r) => !deletedReservationIds.has(r.id),
+			);
+			setRsvps(filteredServerReservations);
 		}
-	}, [localStorageReservations, existingReservations, user, storeId]);
+	}, [
+		localStorageReservations,
+		existingReservations,
+		user,
+		storeId,
+		deletedReservationIds,
+	]);
 
 	const [currentDay, setCurrentDay] = useState(() => {
 		// Always start with today as the first day
@@ -488,35 +466,16 @@ export const CustomerWeekViewCalendar: React.FC<
 
 				const storedData = localStorage.getItem(storageKey);
 				if (!storedData) {
-					console.log("[RSVP Claim] No reservations found in local storage", {
-						storageKey,
-					});
 					return; // No reservations in local storage
 				}
-
-				console.log("[RSVP Claim] Found data in local storage", {
-					storageKey,
-					dataLength: storedData.length,
-				});
 
 				const localReservations: Rsvp[] = JSON.parse(storedData);
 				if (
 					!Array.isArray(localReservations) ||
 					localReservations.length === 0
 				) {
-					console.log("[RSVP Claim] No valid reservations in local storage", {
-						storageKey,
-						isArray: Array.isArray(localReservations),
-						length: localReservations?.length || 0,
-					});
 					return; // No valid reservations
 				}
-
-				console.log("[RSVP Claim] Found reservations to claim", {
-					storageKey,
-					count: localReservations.length,
-					reservationIds: localReservations.map((r) => r.id),
-				});
 
 				setIsClaiming(true);
 				const claimedIds: string[] = [];
@@ -525,16 +484,8 @@ export const CustomerWeekViewCalendar: React.FC<
 				// Claim each reservation
 				for (const reservation of localReservations) {
 					if (!reservation.id) {
-						console.warn("[RSVP Claim] Skipping reservation without ID", {
-							reservation,
-						});
 						continue; // Skip invalid reservations
 					}
-
-					console.log("[RSVP Claim] Attempting to claim reservation", {
-						reservationId: reservation.id,
-						userId: user.id,
-					});
 
 					try {
 						const result = await claimReservationAction({
@@ -542,10 +493,6 @@ export const CustomerWeekViewCalendar: React.FC<
 						});
 
 						if (result?.serverError) {
-							console.error("[RSVP Claim] Failed to claim reservation", {
-								reservationId: reservation.id,
-								error: result.serverError,
-							});
 							clientLogger.warn("Failed to claim reservation", {
 								metadata: {
 									reservationId: reservation.id,
@@ -555,11 +502,6 @@ export const CustomerWeekViewCalendar: React.FC<
 							failedIds.push(reservation.id);
 						} else {
 							// Successfully claimed
-							console.log("[RSVP Claim] Successfully claimed reservation", {
-								reservationId: reservation.id,
-								userId: user.id,
-								alreadyClaimed: result?.data?.alreadyClaimed || false,
-							});
 							claimedIds.push(reservation.id);
 							clientLogger.info("Reservation claimed from local storage", {
 								metadata: {
@@ -569,11 +511,6 @@ export const CustomerWeekViewCalendar: React.FC<
 							});
 						}
 					} catch (error) {
-						console.error("[RSVP Claim] Error claiming reservation", {
-							reservationId: reservation.id,
-							error: error instanceof Error ? error.message : String(error),
-							errorObject: error,
-						});
 						clientLogger.error("Error claiming reservation", {
 							metadata: {
 								reservationId: reservation.id,
@@ -584,49 +521,8 @@ export const CustomerWeekViewCalendar: React.FC<
 					}
 				}
 
-				console.log("[RSVP Claim] Claim process completed", {
-					total: localReservations.length,
-					claimed: claimedIds.length,
-					failed: failedIds.length,
-					claimedIds,
-					failedIds,
-				});
-
-				// Remove successfully claimed reservations from local storage
+				// Show success message for successfully claimed reservations
 				if (claimedIds.length > 0) {
-					const remainingReservations = localReservations.filter(
-						(r) => !claimedIds.includes(r.id),
-					);
-
-					console.log("[RSVP Claim] Updating local storage", {
-						storageKey,
-						claimedCount: claimedIds.length,
-						remainingCount: remainingReservations.length,
-					});
-
-					if (remainingReservations.length > 0) {
-						localStorage.setItem(
-							storageKey,
-							JSON.stringify(remainingReservations),
-						);
-						console.log(
-							"[RSVP Claim] Updated local storage with remaining reservations",
-							{
-								storageKey,
-								remainingCount: remainingReservations.length,
-							},
-						);
-					} else {
-						// No more reservations, remove the key
-						localStorage.removeItem(storageKey);
-						console.log(
-							"[RSVP Claim] Removed local storage key (no remaining reservations)",
-							{
-								storageKey,
-							},
-						);
-					}
-
 					// Show success message
 					if (claimedIds.length === 1) {
 						toastSuccess({
@@ -656,12 +552,12 @@ export const CustomerWeekViewCalendar: React.FC<
 					});
 				}
 
+				// Note: We do NOT remove claimed reservations from local storage
+				// because the user might sign out and sign in again, and we want to preserve
+				// the local storage as a backup for anonymous reservations
+
 				// Show error message for failed claims
 				if (failedIds.length > 0) {
-					console.warn("[RSVP Claim] Some reservations could not be claimed", {
-						failedCount: failedIds.length,
-						failedIds,
-					});
 					clientLogger.warn("Some reservations could not be claimed", {
 						metadata: {
 							failedCount: failedIds.length,
@@ -670,15 +566,6 @@ export const CustomerWeekViewCalendar: React.FC<
 					});
 				}
 			} catch (error) {
-				console.error(
-					"[RSVP Claim] Error processing local storage reservations",
-					{
-						error: error instanceof Error ? error.message : String(error),
-						errorObject: error,
-						storeId,
-						userId: user.id,
-					},
-				);
 				clientLogger.error("Error claiming reservations from local storage", {
 					metadata: {
 						error: error instanceof Error ? error.message : String(error),
@@ -686,10 +573,6 @@ export const CustomerWeekViewCalendar: React.FC<
 				});
 			} finally {
 				setIsClaiming(false);
-				console.log("[RSVP Claim] Claim process finished", {
-					storeId,
-					userId: user.id,
-				});
 			}
 		};
 
@@ -787,7 +670,6 @@ export const CustomerWeekViewCalendar: React.FC<
 				return false;
 			} catch (error) {
 				// If parsing fails, assume facility is available
-				console.error("Failed to parse facility business hours:", error);
 				return true;
 			}
 		},
@@ -1016,127 +898,27 @@ export const CustomerWeekViewCalendar: React.FC<
 	);
 
 	// Helper to check if a reservation belongs to the current user
-	// For logged-in users: matches by customerId or email
-	// For anonymous users: matches by phone number with local storage reservations
 	const isUserReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
-			// If user is logged in, use existing logic
-			if (user?.id) {
-				// Match by customerId if both exist
-				if (user.id && rsvp.customerId) {
-					return rsvp.customerId === user.id;
-				}
-				// Match by email if customerId doesn't match or is missing
-				if (user.email && rsvp.Customer?.email) {
-					return rsvp.Customer.email.toLowerCase() === user.email.toLowerCase();
-				}
-				return false;
-			}
-
-			// For anonymous users, check if reservation matches local storage by phone number
-			if (!user && localStorageReservations.length > 0 && rsvp.phone) {
-				// Find matching reservation in local storage by ID and phone
-				const matchingLocal = localStorageReservations.find(
-					(localRsvp: Rsvp) => {
-						if (localRsvp.id !== rsvp.id) return false;
-						if (!localRsvp.phone || !rsvp.phone) return false;
-						// Normalize and compare phone numbers
-						const localPhoneNormalized = normalizePhoneNumber(localRsvp.phone);
-						const rsvpPhoneNormalized = normalizePhoneNumber(rsvp.phone);
-						return localPhoneNormalized === rsvpPhoneNormalized;
-					},
-				);
-
-				if (matchingLocal) {
-					console.log("[RSVP Anonymous] Reservation matches local storage", {
-						reservationId: rsvp.id,
-						phone: rsvp.phone,
-					});
-					return true;
-				}
-			}
-
-			return false;
+			return isUserReservationUtil(rsvp, user, localStorageReservations);
 		},
 		[user, localStorageReservations],
 	);
 
 	// Check if reservation can be edited based on rsvpSettings
-	// Edit button only appears if:
-	// Reservation belongs to the current user (logged in or anonymous via local storage)
-	// Reservation status is Pending or alreadyPaid is true
-	// canCancel is enabled in rsvpSettings
-	// Reservation is more than cancelHours away from now
 	const canEditReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
-			if (!isUserReservation(rsvp)) {
-				return false;
-			}
-
-			// If rsvpSettings is not available, assume editing is not allowed
-			if (!rsvpSettings) {
-				return false;
-			}
-
-			// Check if canCancel is enabled - if cancellation is disabled, editing is also disabled
-			if (!rsvpSettings.canCancel) {
-				return false;
-			}
-
-			// Check cancelHours window - don't allow editing if within the cancellation window
-			const cancelHours = rsvpSettings.cancelHours ?? 24;
-			const now = getUtcNow();
-			const rsvpTimeDate = epochToDate(
-				typeof rsvp.rsvpTime === "number"
-					? BigInt(rsvp.rsvpTime)
-					: rsvp.rsvpTime instanceof Date
-						? BigInt(rsvp.rsvpTime.getTime())
-						: rsvp.rsvpTime,
-			);
-
-			if (!rsvpTimeDate) {
-				return false;
-			}
-
-			// Calculate hours until reservation
-			const hoursUntilReservation =
-				(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-			// Can edit if reservation is more than cancelHours away
-			return hoursUntilReservation >= cancelHours;
+			return canEditReservationUtil(rsvp, rsvpSettings, isUserReservation);
 		},
-		[isUserReservation, rsvpSettings],
+		[rsvpSettings, isUserReservation],
 	);
 
 	// Check if reservation can be cancelled/deleted based on rsvpSettings
-	// Cancel/Delete button only appears if:
-	// All the same conditions as edit, plus: canCancel is enabled in rsvpSettings
-	// Both buttons are hidden if the reservation is within the cancelHours window, preventing last-minute changes.
 	const canCancelReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
-			if (!isUserReservation(rsvp)) {
-				return false;
-			}
-
-			// Only allow cancel/delete for Pending status or if alreadyPaid
-			if (rsvp.status !== RsvpStatus.Pending && !rsvp.alreadyPaid) {
-				return false;
-			}
-
-			// If rsvpSettings is not available, assume cancellation is not allowed
-			if (!rsvpSettings) {
-				return false;
-			}
-
-			// RSVP owners can always cancel if canCancel is enabled
-			// (refund/no-refund logic is handled in the cancel action based on time window)
-			if (rsvpSettings.canCancel) {
-				return true;
-			}
-
-			return false;
+			return canCancelReservationUtil(rsvp, rsvpSettings, isUserReservation);
 		},
-		[isUserReservation, rsvpSettings],
+		[rsvpSettings, isUserReservation],
 	);
 
 	const handlePreviousWeek = useCallback(() => {
@@ -1181,14 +963,107 @@ export const CustomerWeekViewCalendar: React.FC<
 	const handleReservationCreated = useCallback(
 		(newRsvp: Rsvp) => {
 			if (!newRsvp) return;
-			setRsvps((prev) => {
-				const exists = prev.some((item) => item.id === newRsvp.id);
-				if (exists) return prev;
-				return [newRsvp, ...prev];
-			});
+
+			// For anonymous users, update local storage first so it's recognized as owned
+			if (!user && storeId) {
+				try {
+					const storageKey = `rsvp-${storeId}`;
+					const storedData = localStorage.getItem(storageKey);
+					const existingReservations: Rsvp[] = storedData
+						? JSON.parse(storedData)
+						: [];
+
+					// Check if reservation already exists in local storage
+					const existsInStorage = existingReservations.some(
+						(r) => r.id === newRsvp.id,
+					);
+
+					if (!existsInStorage) {
+						// Transform reservation data for localStorage (convert BigInt/Date to number)
+						const reservationForStorage = {
+							...newRsvp,
+							rsvpTime:
+								typeof newRsvp.rsvpTime === "number"
+									? newRsvp.rsvpTime
+									: newRsvp.rsvpTime instanceof Date
+										? newRsvp.rsvpTime.getTime()
+										: typeof newRsvp.rsvpTime === "bigint"
+											? Number(newRsvp.rsvpTime)
+											: null,
+							createdAt:
+								typeof newRsvp.createdAt === "number"
+									? newRsvp.createdAt
+									: typeof newRsvp.createdAt === "bigint"
+										? Number(newRsvp.createdAt)
+										: newRsvp.createdAt instanceof Date
+											? newRsvp.createdAt.getTime()
+											: null,
+							updatedAt:
+								typeof newRsvp.updatedAt === "number"
+									? newRsvp.updatedAt
+									: typeof newRsvp.updatedAt === "bigint"
+										? Number(newRsvp.updatedAt)
+										: newRsvp.updatedAt instanceof Date
+											? newRsvp.updatedAt.getTime()
+											: null,
+						};
+
+						const updatedReservations = [
+							...existingReservations,
+							reservationForStorage,
+						];
+
+						// Update localStorage
+						localStorage.setItem(
+							storageKey,
+							JSON.stringify(updatedReservations),
+						);
+
+						// Update local storage state - this will trigger the useEffect to merge properly
+						setLocalStorageReservations(updatedReservations);
+
+						// Also immediately update display state to show the new reservation
+						// Use the transformed reservation format to match what's in local storage
+						// The reservation won't be in existingReservations (server data) yet, so it's a local-only reservation
+						setRsvps((prev) => {
+							const exists = prev.some((item) => item.id === newRsvp.id);
+							if (exists) return prev;
+							// Add the new reservation to the display list using the transformed format
+							// It will be properly merged when the useEffect runs
+							return [reservationForStorage as Rsvp, ...prev];
+						});
+					}
+				} catch (error) {
+					// Silently handle errors updating local storage
+				}
+			} else {
+				// For signed-in users, just update display reservations
+				setRsvps((prev) => {
+					const exists = prev.some((item) => item.id === newRsvp.id);
+					if (exists) return prev;
+					return [newRsvp, ...prev];
+				});
+			}
+
 			onReservationCreated?.(newRsvp);
 		},
-		[onReservationCreated],
+		[onReservationCreated, user, storeId],
+	);
+
+	// Helper function to remove reservation from local storage
+	const removeReservationFromLocalStorage = useCallback(
+		(reservationId: string) => {
+			if (!user && storeId) {
+				removeReservationFromLocalStorageUtil(
+					storeId,
+					reservationId,
+					(updated) => {
+						setLocalStorageReservations(updated);
+					},
+				);
+			}
+		},
+		[user, storeId],
 	);
 
 	const handleReservationUpdated = useCallback(
@@ -1254,19 +1129,9 @@ export const CustomerWeekViewCalendar: React.FC<
 						);
 						localStorage.setItem(storageKey, JSON.stringify(updatedLocal));
 						setLocalStorageReservations(updatedLocal);
-						console.log(
-							"[RSVP Local Storage] Updated reservation in local storage",
-							{
-								storageKey,
-								reservationId: updatedRsvp.id,
-							},
-						);
 					}
 				} catch (error) {
-					console.error("[RSVP Local Storage] Error updating local storage", {
-						storageKey,
-						error: error instanceof Error ? error.message : String(error),
-					});
+					// Silently handle errors updating local storage
 				}
 			}
 		},
@@ -1290,41 +1155,6 @@ export const CustomerWeekViewCalendar: React.FC<
 		setCancelDialogOpen(true);
 	}, []);
 
-	// Calculate cancel policy info for the reservation being cancelled
-	const cancelPolicyInfo = useMemo(() => {
-		if (!reservationToCancel) return null;
-
-		const rsvpTimeDate = reservationToCancel.rsvpTime
-			? epochToDate(
-					typeof reservationToCancel.rsvpTime === "number"
-						? BigInt(reservationToCancel.rsvpTime)
-						: reservationToCancel.rsvpTime instanceof Date
-							? BigInt(reservationToCancel.rsvpTime.getTime())
-							: reservationToCancel.rsvpTime,
-				)
-			: null;
-
-		return calculateCancelPolicyInfo(
-			rsvpSettings,
-			rsvpTimeDate,
-			reservationToCancel.alreadyPaid ?? false,
-		);
-	}, [reservationToCancel, rsvpSettings]);
-
-	const reservationRsvpTime = useMemo(() => {
-		if (!reservationToCancel) return null;
-
-		return reservationToCancel.rsvpTime
-			? epochToDate(
-					typeof reservationToCancel.rsvpTime === "number"
-						? BigInt(reservationToCancel.rsvpTime)
-						: reservationToCancel.rsvpTime instanceof Date
-							? BigInt(reservationToCancel.rsvpTime.getTime())
-							: reservationToCancel.rsvpTime,
-				)
-			: null;
-	}, [reservationToCancel]);
-
 	const handleCancelConfirm = useCallback(async () => {
 		if (!reservationToCancel) return;
 
@@ -1332,7 +1162,12 @@ export const CustomerWeekViewCalendar: React.FC<
 		try {
 			// If status is Pending, delete it (hard delete)
 			// Otherwise, cancel it (change status to Cancelled)
-			if (reservationToCancel.status === RsvpStatus.Pending) {
+			if (
+				reservationToCancel.status === RsvpStatus.Pending ||
+				reservationToCancel.status === RsvpStatus.ReadyToConfirm
+			) {
+				// Simplified: If user can click delete (canCancelReservation returns true),
+				// they have permission - no need to send name/phone for verification
 				const result = await deleteReservationAction({
 					id: reservationToCancel.id,
 				});
@@ -1346,48 +1181,19 @@ export const CustomerWeekViewCalendar: React.FC<
 					toastSuccess({
 						description: t("reservation_deleted"),
 					});
+					// Mark as deleted to prevent it from being re-added from server
+					setDeletedReservationIds((prev) => {
+						const updated = new Set(prev);
+						updated.add(reservationToCancel.id);
+						return updated;
+					});
 					// Remove from local state
 					setRsvps((prev) =>
 						prev.filter((r) => r.id !== reservationToCancel.id),
 					);
 
-					// If user is anonymous, also remove from local storage
-					if (!user && storeId) {
-						const storageKey = `rsvp-${storeId}`;
-						try {
-							const storedData = localStorage.getItem(storageKey);
-							if (storedData) {
-								const localReservations: Rsvp[] = JSON.parse(storedData);
-								const updatedLocal = localReservations.filter(
-									(r) => r.id !== reservationToCancel.id,
-								);
-								if (updatedLocal.length > 0) {
-									localStorage.setItem(
-										storageKey,
-										JSON.stringify(updatedLocal),
-									);
-								} else {
-									localStorage.removeItem(storageKey);
-								}
-								setLocalStorageReservations(updatedLocal);
-								console.log(
-									"[RSVP Local Storage] Removed reservation from local storage",
-									{
-										storageKey,
-										reservationId: reservationToCancel.id,
-									},
-								);
-							}
-						} catch (error) {
-							console.error(
-								"[RSVP Local Storage] Error removing from local storage",
-								{
-									storageKey,
-									error: error instanceof Error ? error.message : String(error),
-								},
-							);
-						}
-					}
+					// Remove from local storage for anonymous users
+					removeReservationFromLocalStorage(reservationToCancel.id);
 				}
 			} else {
 				if (!storeId) {
@@ -1416,49 +1222,18 @@ export const CustomerWeekViewCalendar: React.FC<
 					if (result?.data?.rsvp) {
 						handleReservationUpdated(result.data.rsvp);
 					} else {
-						// If no data returned, remove from list
+						// If no data returned, mark as deleted and remove from list
+						setDeletedReservationIds((prev) => {
+							const updated = new Set(prev);
+							updated.add(reservationToCancel.id);
+							return updated;
+						});
 						setRsvps((prev) =>
 							prev.filter((r) => r.id !== reservationToCancel.id),
 						);
 
-						// If user is anonymous, also remove from local storage
-						if (!user && storeId) {
-							const storageKey = `rsvp-${storeId}`;
-							try {
-								const storedData = localStorage.getItem(storageKey);
-								if (storedData) {
-									const localReservations: Rsvp[] = JSON.parse(storedData);
-									const updatedLocal = localReservations.filter(
-										(r) => r.id !== reservationToCancel.id,
-									);
-									if (updatedLocal.length > 0) {
-										localStorage.setItem(
-											storageKey,
-											JSON.stringify(updatedLocal),
-										);
-									} else {
-										localStorage.removeItem(storageKey);
-									}
-									setLocalStorageReservations(updatedLocal);
-									console.log(
-										"[RSVP Local Storage] Removed cancelled reservation from local storage",
-										{
-											storageKey,
-											reservationId: reservationToCancel.id,
-										},
-									);
-								}
-							} catch (error) {
-								console.error(
-									"[RSVP Local Storage] Error removing from local storage",
-									{
-										storageKey,
-										error:
-											error instanceof Error ? error.message : String(error),
-									},
-								);
-							}
-						}
+						// Remove from local storage for anonymous users
+						removeReservationFromLocalStorage(reservationToCancel.id);
 					}
 				}
 			}
@@ -1472,7 +1247,14 @@ export const CustomerWeekViewCalendar: React.FC<
 			setCancelDialogOpen(false);
 			setReservationToCancel(null);
 		}
-	}, [reservationToCancel, storeId, t, handleReservationUpdated, user]);
+	}, [
+		reservationToCancel,
+		storeId,
+		t,
+		handleReservationUpdated,
+		user,
+		removeReservationFromLocalStorage,
+	]);
 
 	return (
 		<div className="flex flex-col gap-3 sm:gap-4">
@@ -1584,16 +1366,18 @@ export const CustomerWeekViewCalendar: React.FC<
 												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
 													{activeRsvps.length > 0 &&
 														activeRsvps.map((rsvp) => {
+															// Check if this reservation belongs to the current user
+															const isUserRsvp = isUserReservation(rsvp);
 															// Disable editing if slot is in the past
 															const canEdit =
 																!isPast && canEditReservation(rsvp) && storeId;
-															const canCancel =
-																!isPast && canCancelReservation(rsvp);
+															// Allow cancel/delete even if in the past, as long as canCancelReservation returns true
+															const canCancel = canCancelReservation(rsvp);
 															const isCompleted =
 																rsvp.status === RsvpStatus.Completed;
 
-															// If not store owner, show as "booked" without details
-															if (!isStoreOwner) {
+															// If not store owner AND not user's reservation, show as "booked" without details
+															if (!isStoreOwner && !isUserRsvp) {
 																return (
 																	<button
 																		key={rsvp.id}
@@ -1627,17 +1411,20 @@ export const CustomerWeekViewCalendar: React.FC<
 																		)}
 																	>
 																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																			{rsvp.Customer?.name
-																				? rsvp.Customer.name
-																				: rsvp.Customer?.email
-																					? rsvp.Customer.email
-																					: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																							rsvp.numOfAdult +
-																								rsvp.numOfChild ===
-																							1
-																								? "guest"
-																								: "guests"
-																						}`}
+																			{/* For anonymous users, show name from reservation; for logged-in, show Customer name */}
+																			{rsvp.name
+																				? rsvp.name
+																				: rsvp.Customer?.name
+																					? rsvp.Customer.name
+																					: rsvp.Customer?.email
+																						? rsvp.Customer.email
+																						: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																								rsvp.numOfAdult +
+																									rsvp.numOfChild ===
+																								1
+																									? "guest"
+																									: "guests"
+																							}`}
 																		</div>
 																		{rsvp.Facility?.facilityName && (
 																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
@@ -1656,128 +1443,160 @@ export const CustomerWeekViewCalendar: React.FC<
 															// Render dialog for editable RSVPs or non-editable button for others
 															if (canEdit) {
 																return (
-																	<ReservationDialog
-																		key={rsvp.id}
-																		storeId={storeId || ""}
-																		rsvpSettings={rsvpSettings}
-																		storeSettings={storeSettings}
-																		facilities={facilities}
-																		user={user}
-																		rsvp={rsvp}
-																		existingReservations={rsvps}
-																		storeTimezone={storeTimezone}
-																		storeCurrency={storeCurrency}
-																		storeUseBusinessHours={
-																			storeUseBusinessHours
-																		}
-																		open={openEditDialogId === rsvp.id}
-																		onOpenChange={(open) => {
-																			setOpenEditDialogId(
-																				open ? rsvp.id : null,
-																			);
-																		}}
-																		onReservationUpdated={(updated) => {
-																			setOpenEditDialogId(null);
-																			handleReservationUpdated(updated);
-																		}}
-																		trigger={
-																			<div className="relative">
-																				{canCancel && (
-																					<Button
-																						variant="ghost"
-																						size="icon"
-																						className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 text-destructive hover:text-destructive p-0 z-10"
+																	<React.Fragment key={rsvp.id}>
+																		<ReservationDialog
+																			storeId={storeId || ""}
+																			rsvpSettings={rsvpSettings}
+																			storeSettings={storeSettings}
+																			facilities={facilities}
+																			user={user}
+																			rsvp={rsvp}
+																			existingReservations={rsvps}
+																			storeTimezone={storeTimezone}
+																			storeCurrency={storeCurrency}
+																			storeUseBusinessHours={
+																				storeUseBusinessHours
+																			}
+																			open={openEditDialogId === rsvp.id}
+																			onOpenChange={(open) => {
+																				setOpenEditDialogId(
+																					open ? rsvp.id : null,
+																				);
+																			}}
+																			onReservationUpdated={(updated) => {
+																				setOpenEditDialogId(null);
+																				handleReservationUpdated(updated);
+																			}}
+																			trigger={
+																				<div className="relative">
+																					{canCancel && (
+																						<Button
+																							variant="ghost"
+																							size="icon"
+																							className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 text-destructive hover:text-destructive p-0 z-10"
+																							onClick={(e) => {
+																								e.stopPropagation();
+																								handleCancelClick(e, rsvp);
+																							}}
+																							title={
+																								rsvp.status ===
+																								RsvpStatus.Pending
+																									? t("rsvp_delete_reservation")
+																									: t("rsvp_cancel_reservation")
+																							}
+																						>
+																							<IconTrash className="h-3 w-3 sm:h-4 sm:w-4" />
+																						</Button>
+																					)}
+																					<button
+																						type="button"
 																						onClick={(e) => {
 																							e.stopPropagation();
-																							handleCancelClick(e, rsvp);
+																							setOpenEditDialogId(rsvp.id);
 																						}}
-																						title={
-																							rsvp.status === RsvpStatus.Pending
-																								? t("rsvp_delete_reservation")
-																								: t("rsvp_cancel_reservation")
-																						}
+																						className={cn(
+																							"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full",
+																							getStatusColorClasses(
+																								rsvp.status,
+																							),
+																							canCancel && "pr-6",
+																						)}
 																					>
-																						<IconTrash className="h-3 w-3 sm:h-4 sm:w-4" />
-																					</Button>
-																				)}
-																				<button
-																					type="button"
-																					onClick={(e) => {
-																						e.stopPropagation();
-																						setOpenEditDialogId(rsvp.id);
-																					}}
-																					className={cn(
-																						"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full",
-																						getStatusColorClasses(rsvp.status),
-																						canCancel && "pr-6",
-																					)}
-																				>
-																					<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																						{rsvp.Customer?.name
-																							? rsvp.Customer.name
-																							: rsvp.Customer?.email
-																								? rsvp.Customer.email
-																								: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																										rsvp.numOfAdult +
-																											rsvp.numOfChild ===
-																										1
-																											? "guest"
-																											: "guests"
-																									}`}
-																					</div>
-																					{rsvp.Facility?.facilityName && (
-																						<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																							{rsvp.Facility.facilityName}
+																						<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																							{/* For anonymous users, show name from reservation; for logged-in, show Customer name */}
+																							{rsvp.name
+																								? rsvp.name
+																								: rsvp.Customer?.name
+																									? rsvp.Customer.name
+																									: rsvp.Customer?.email
+																										? rsvp.Customer.email
+																										: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																												rsvp.numOfAdult +
+																													rsvp.numOfChild ===
+																												1
+																													? "guest"
+																													: "guests"
+																											}`}
 																						</div>
-																					)}
-																					{rsvp.message && (
-																						<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																							{rsvp.message}
-																						</div>
-																					)}
-																				</button>
-																			</div>
-																		}
-																	/>
+																						{rsvp.Facility?.facilityName && (
+																							<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																								{rsvp.Facility.facilityName}
+																							</div>
+																						)}
+																						{rsvp.message && (
+																							<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																								{rsvp.message}
+																							</div>
+																						)}
+																					</button>
+																				</div>
+																			}
+																		/>
+																	</React.Fragment>
 																);
 															}
 
 															// Render non-editable button for other RSVPs (only visible to owner)
+															// But still show delete button if user owns it and can cancel
 															return (
-																<button
-																	key={rsvp.id}
-																	type="button"
-																	disabled
-																	className={cn(
-																		"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
-																		getStatusColorClasses(rsvp.status, false),
-																		isPast && "opacity-50",
+																<div className="relative">
+																	{canCancel && (
+																		<Button
+																			variant="ghost"
+																			size="icon"
+																			className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 text-destructive hover:text-destructive p-0 z-10"
+																			onClick={(e) => {
+																				e.stopPropagation();
+																				handleCancelClick(e, rsvp);
+																			}}
+																			title={
+																				rsvp.status === RsvpStatus.Pending
+																					? t("rsvp_delete_reservation")
+																					: t("rsvp_cancel_reservation")
+																			}
+																		>
+																			<IconTrash className="h-3 w-3 sm:h-4 sm:w-4" />
+																		</Button>
 																	)}
-																>
-																	<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																		{rsvp.Customer?.name
-																			? rsvp.Customer.name
-																			: rsvp.Customer?.email
-																				? rsvp.Customer.email
-																				: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																						rsvp.numOfAdult +
-																							rsvp.numOfChild ===
-																						1
-																							? "guest"
-																							: "guests"
-																					}`}
-																	</div>
-																	{rsvp.Facility?.facilityName && (
-																		<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																			{rsvp.Facility.facilityName}
+																	<button
+																		key={rsvp.id}
+																		type="button"
+																		disabled
+																		className={cn(
+																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
+																			getStatusColorClasses(rsvp.status, false),
+																			isPast && "opacity-50",
+																			canCancel && "pr-6",
+																		)}
+																	>
+																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																			{/* For anonymous users, show name from reservation; for logged-in, show Customer name */}
+																			{rsvp.name
+																				? rsvp.name
+																				: rsvp.Customer?.name
+																					? rsvp.Customer.name
+																					: rsvp.Customer?.email
+																						? rsvp.Customer.email
+																						: `${rsvp.numOfAdult + rsvp.numOfChild} ${
+																								rsvp.numOfAdult +
+																									rsvp.numOfChild ===
+																								1
+																									? "guest"
+																									: "guests"
+																							}`}
 																		</div>
-																	)}
-																	{rsvp.message && (
-																		<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																			{rsvp.message}
-																		</div>
-																	)}
-																</button>
+																		{rsvp.Facility?.facilityName && (
+																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																				{rsvp.Facility.facilityName}
+																			</div>
+																		)}
+																		{rsvp.message && (
+																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																				{rsvp.message}
+																			</div>
+																		)}
+																	</button>
+																</div>
 															);
 														})}
 
@@ -1871,56 +1690,18 @@ export const CustomerWeekViewCalendar: React.FC<
 			<RsvpStatusLegend t={t} />
 
 			{/* Cancel/Delete Confirmation Dialog */}
-			<AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>
-							{reservationToCancel?.status === RsvpStatus.Pending
-								? t("rsvp_delete_reservation")
-								: t("rsvp_cancel_reservation")}
-						</AlertDialogTitle>
-						<AlertDialogDescription>
-							{reservationToCancel?.status === RsvpStatus.Pending
-								? t("rsvp_delete_reservation_confirmation")
-								: t("rsvp_cancel_reservation_confirmation")}
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					{reservationToCancel && (
-						<RsvpCancelPolicyInfo
-							cancelPolicyInfo={cancelPolicyInfo}
-							rsvpTime={reservationRsvpTime}
-							alreadyPaid={reservationToCancel.alreadyPaid ?? false}
-							rsvpSettings={rsvpSettings}
-							facilityCost={
-								reservationToCancel.facilityCost
-									? Number(reservationToCancel.facilityCost)
-									: null
-							}
-							currency={storeCurrency}
-							useCustomerCredit={useCustomerCredit}
-							creditExchangeRate={creditExchangeRate}
-						/>
-					)}
-					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isCancelling}>
-							{t("cancel")}
-						</AlertDialogCancel>
-						<AlertDialogAction
-							onClick={handleCancelConfirm}
-							disabled={isCancelling}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-						>
-							{isCancelling
-								? reservationToCancel?.status === RsvpStatus.Pending
-									? t("deleting")
-									: t("cancelling")
-								: reservationToCancel?.status === RsvpStatus.Pending
-									? t("confirm")
-									: t("confirm")}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+			<RsvpCancelDeleteDialog
+				open={cancelDialogOpen}
+				onOpenChange={setCancelDialogOpen}
+				reservation={reservationToCancel}
+				onConfirm={handleCancelConfirm}
+				isLoading={isCancelling}
+				rsvpSettings={rsvpSettings}
+				storeCurrency={storeCurrency}
+				useCustomerCredit={useCustomerCredit}
+				creditExchangeRate={creditExchangeRate}
+				t={t}
+			/>
 		</div>
 	);
 };

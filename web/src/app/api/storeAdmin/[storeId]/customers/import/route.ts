@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { getUtcNowEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { Prisma } from "@prisma/client";
-import { CustomerCreditLedgerType } from "@/types/enum";
+import { CustomerCreditLedgerType, MemberRole } from "@/types/enum";
+import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
 import crypto from "crypto";
 
 // Parse CSV string to array of objects
@@ -251,7 +252,50 @@ export async function POST(
 
 				// Email and phoneNumber are optional
 				const email = customer.email?.trim() || "";
-				const phoneNumber = customer.phoneNumber?.trim() || "";
+				let phoneNumber = customer.phoneNumber?.trim() || "";
+				let normalizedPhoneNumber: string | null = null;
+
+				// Normalize and validate phone number if provided
+				if (phoneNumber) {
+					try {
+						normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
+						if (!validatePhoneNumber(normalizedPhoneNumber)) {
+							const errorMsg = `Row ${rowNum}: Invalid phone number format: ${phoneNumber}`;
+							errors.push(errorMsg);
+							errorCount++;
+							log.warn(`Row ${rowNum}: Invalid phone number`, {
+								metadata: {
+									storeId: params.storeId,
+									rowNum,
+									phoneNumber,
+									error: errorMsg,
+								},
+								tags: ["customer", "import", "error"],
+							});
+							// Continue processing but don't use phone number
+							phoneNumber = "";
+							normalizedPhoneNumber = null;
+						} else {
+							phoneNumber = normalizedPhoneNumber;
+						}
+					} catch (error) {
+						const errorMsg = `Row ${rowNum}: Failed to normalize phone number: ${phoneNumber}`;
+						errors.push(errorMsg);
+						errorCount++;
+						log.warn(`Row ${rowNum}: Phone normalization failed`, {
+							metadata: {
+								storeId: params.storeId,
+								rowNum,
+								phoneNumber,
+								error: error instanceof Error ? error.message : String(error),
+							},
+							tags: ["customer", "import", "error"],
+						});
+						// Continue processing but don't use phone number
+						phoneNumber = "";
+						normalizedPhoneNumber = null;
+					}
+				}
 
 				log.info(`Row ${rowNum}: Parsed values`, {
 					metadata: {
@@ -260,6 +304,7 @@ export async function POST(
 						name,
 						email,
 						phoneNumber,
+						normalizedPhoneNumber,
 						creditPoint: customer.creditPoint,
 						creditFiat: customer.creditFiat,
 					},
@@ -269,9 +314,10 @@ export async function POST(
 				// Generate email if not provided
 				let finalEmail = email;
 				if (!finalEmail) {
-					if (phoneNumber) {
-						// Mock email from phoneNumber if phoneNumber provided (using auth.ts spec)
-						finalEmail = `${phoneNumber.replace(/[^0-9]/g, "")}@phone.riben.life`;
+					if (normalizedPhoneNumber) {
+						// Mock email from normalized phone number (using E.164 format without +)
+						// Remove + and non-digit characters for email generation
+						finalEmail = `${normalizedPhoneNumber.replace(/[^0-9]/g, "")}@phone.riben.life`;
 					} else {
 						// Generate unique email from name + timestamp + random
 						const sanitizedName = name
@@ -289,7 +335,7 @@ export async function POST(
 
 				// Get values with defaults
 				// Always set memberRole to "customer" for customers managed in this section
-				const memberRole = "customer";
+				const memberRole = MemberRole.customer;
 				let creditPoint = customer.creditPoint
 					? parseFloat(customer.creditPoint)
 					: 0;
@@ -343,11 +389,11 @@ export async function POST(
 					tags: ["customer", "import", "debug"],
 				});
 
-				// If phoneNumber is provided, check if it belongs to a different user
-				if (phoneNumber) {
+				// If phoneNumber is provided, check if it belongs to a different user (use normalized)
+				if (normalizedPhoneNumber) {
 					const userByPhone: typeof user = await sqlClient.user.findFirst({
 						where: {
-							phoneNumber: phoneNumber,
+							phoneNumber: normalizedPhoneNumber,
 						},
 						include: {
 							members: {
@@ -362,7 +408,7 @@ export async function POST(
 						metadata: {
 							storeId: params.storeId,
 							rowNum,
-							phoneNumber,
+							phoneNumber: normalizedPhoneNumber,
 							userByPhoneFound: !!userByPhone,
 							userByPhoneId: userByPhone?.id,
 							userByPhoneEmail: userByPhone?.email,
@@ -373,7 +419,7 @@ export async function POST(
 					if (userByPhone) {
 						// If we found a user by email and a different user by phone, that's a conflict
 						if (user && user.id !== userByPhone.id) {
-							const errorMsg = `Row ${rowNum}: Phone number ${phoneNumber} already belongs to a different user (${userByPhone.email})`;
+							const errorMsg = `Row ${rowNum}: Phone number ${normalizedPhoneNumber} already belongs to a different user (${userByPhone.email})`;
 							errors.push(errorMsg);
 							errorCount++;
 							log.warn(`Row ${rowNum}: Phone conflict`, {
@@ -402,42 +448,46 @@ export async function POST(
 					}
 				}
 
-				// Check if name already exists - if so, skip this row (don't import or update)
-				const userByName = await sqlClient.user.findFirst({
-					where: {
-						name: name,
-					},
-				});
+				// Check if name already exists - if we don't have a user yet, try to use the one with this name
+				if (!user) {
+					const userByName = await sqlClient.user.findFirst({
+						where: {
+							name: name,
+						},
+						include: {
+							members: {
+								where: {
+									organizationId: store.organizationId,
+								},
+							},
+						},
+					});
 
-				log.info(`Row ${rowNum}: User lookup by name`, {
-					metadata: {
-						storeId: params.storeId,
-						rowNum,
-						name,
-						userByNameFound: !!userByName,
-						userByNameId: userByName?.id,
-						userByNameEmail: userByName?.email,
-					},
-					tags: ["customer", "import", "debug"],
-				});
-
-				if (userByName) {
-					// Name already exists - skip this row
-					const errorMsg = `Row ${rowNum}: Name "${name}" already exists for user ${userByName.email || userByName.id}. Skipping import.`;
-					errors.push(errorMsg);
-					errorCount++;
-					log.warn(`Row ${rowNum}: Name already exists, skipping`, {
+					log.info(`Row ${rowNum}: User lookup by name`, {
 						metadata: {
 							storeId: params.storeId,
 							rowNum,
 							name,
-							existingUserId: userByName.id,
-							existingUserEmail: userByName.email,
-							error: errorMsg,
+							userByNameFound: !!userByName,
+							userByNameId: userByName?.id,
+							userByNameEmail: userByName?.email,
 						},
-						tags: ["customer", "import", "error"],
+						tags: ["customer", "import", "debug"],
 					});
-					continue;
+
+					if (userByName) {
+						// Use the existing user with this name
+						user = userByName;
+						log.info(`Row ${rowNum}: Using existing user found by name`, {
+							metadata: {
+								storeId: params.storeId,
+								rowNum,
+								userId: user.id,
+								email: user.email,
+							},
+							tags: ["customer", "import", "debug"],
+						});
+					}
 				}
 
 				// Create user if doesn't exist
@@ -453,16 +503,16 @@ export async function POST(
 						tags: ["customer", "import", "debug"],
 					});
 
-					// Verify phone number doesn't already exist before creating (if phoneNumber provided)
-					if (phoneNumber) {
+					// Verify phone number doesn't already exist before creating (if normalized phoneNumber provided)
+					if (normalizedPhoneNumber) {
 						const existingPhoneUser = await sqlClient.user.findFirst({
 							where: {
-								phoneNumber: phoneNumber,
+								phoneNumber: normalizedPhoneNumber,
 							},
 						});
 
 						if (existingPhoneUser) {
-							const errorMsg = `Row ${rowNum}: Phone number ${phoneNumber} already exists for user ${existingPhoneUser.email}`;
+							const errorMsg = `Row ${rowNum}: Phone number ${normalizedPhoneNumber} already exists for user ${existingPhoneUser.email}`;
 							errors.push(errorMsg);
 							errorCount++;
 							log.warn(`Row ${rowNum}: Phone already exists`, {
@@ -512,7 +562,7 @@ export async function POST(
 						data: {
 							email: finalEmail || null,
 							name: name,
-							phoneNumber: phoneNumber || null,
+							phoneNumber: normalizedPhoneNumber || null,
 							role: "user",
 							locale: "tw",
 						},
@@ -557,8 +607,8 @@ export async function POST(
 						updateData.name = name;
 					}
 
-					if (phoneNumber) {
-						updateData.phoneNumber = phoneNumber;
+					if (normalizedPhoneNumber) {
+						updateData.phoneNumber = normalizedPhoneNumber;
 					}
 
 					if (Object.keys(updateData).length > 0) {
@@ -576,6 +626,33 @@ export async function POST(
 							},
 							tags: ["customer", "import", "debug"],
 						});
+					}
+
+					// Re-fetch user with members to ensure we have the latest member relationship
+					user = await sqlClient.user.findUnique({
+						where: { id: user.id },
+						include: {
+							members: {
+								where: {
+									organizationId: store.organizationId,
+								},
+							},
+						},
+					});
+
+					if (!user) {
+						const errorMsg = `Row ${rowNum}: User not found after update`;
+						errors.push(errorMsg);
+						errorCount++;
+						log.error(`Row ${rowNum}: User not found after update`, {
+							metadata: {
+								storeId: params.storeId,
+								rowNum,
+								error: errorMsg,
+							},
+							tags: ["customer", "import", "error"],
+						});
+						continue;
 					}
 				}
 
@@ -624,7 +701,7 @@ export async function POST(
 							userId: user.id,
 							organizationId: store.organizationId,
 							role: memberRole,
-							createdAt: new Date(),
+							createdAt: getUtcNow(),
 						},
 					});
 

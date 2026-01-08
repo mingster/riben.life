@@ -25,6 +25,7 @@ import { validateReservationTimeWindow } from "@/actions/store/reservation/valid
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
 import { createRsvpStoreOrder } from "@/actions/store/reservation/create-rsvp-store-order";
 import { getT } from "@/app/i18n";
+import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 
 // Create RSVP by admin or store staff
 //
@@ -305,6 +306,59 @@ export const createRsvpAction = storeActionClient
 
 				return createdRsvp;
 			});
+
+			// Fetch RSVP with all relations for notification
+			const rsvpWithRelations = await sqlClient.rsvp.findUnique({
+				where: { id: rsvp.id },
+				include: {
+					Store: true,
+					Customer: true,
+					Facility: true,
+					ServiceStaff: {
+						include: {
+							User: {
+								select: {
+									name: true,
+									email: true,
+								},
+							},
+						},
+					},
+				},
+			});
+
+			// Send notification for reservation creation
+			if (rsvpWithRelations) {
+				const notificationRouter = getRsvpNotificationRouter();
+				await notificationRouter.routeNotification({
+					rsvpId: rsvpWithRelations.id,
+					storeId: rsvpWithRelations.storeId,
+					eventType: "created",
+					customerId: rsvpWithRelations.customerId,
+					customerName:
+						rsvpWithRelations.Customer?.name || rsvpWithRelations.name || null,
+					customerEmail: rsvpWithRelations.Customer?.email || null,
+					customerPhone:
+						rsvpWithRelations.Customer?.phoneNumber ||
+						rsvpWithRelations.phone ||
+						null,
+					storeName: rsvpWithRelations.Store?.name || null,
+					rsvpTime: rsvpWithRelations.rsvpTime,
+					status: rsvpWithRelations.status,
+					facilityName:
+						rsvpWithRelations.Facility?.facilityName ||
+						facility?.facilityName ||
+						null,
+					serviceStaffName:
+						rsvpWithRelations.ServiceStaff?.User?.name ||
+						rsvpWithRelations.ServiceStaff?.User?.email ||
+						null,
+					numOfAdult: rsvpWithRelations.numOfAdult,
+					numOfChild: rsvpWithRelations.numOfChild,
+					message: rsvpWithRelations.message || null,
+					actionUrl: `/storeAdmin/${rsvpWithRelations.storeId}/rsvp`,
+				});
+			}
 
 			const transformedRsvp = { ...rsvp } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
