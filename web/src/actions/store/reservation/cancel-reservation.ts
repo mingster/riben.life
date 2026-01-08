@@ -247,7 +247,8 @@ export const cancelReservationAction = baseClient
 				facilityName: updated.Facility?.facilityName || null,
 				numOfAdult: updated.numOfAdult,
 				numOfChild: updated.numOfChild,
-				refundAmount: refundCompleted && refundAmount !== null ? refundAmount : null,
+				refundAmount:
+					refundCompleted && refundAmount !== null ? refundAmount : null,
 				refundCurrency: existingRsvp.Store?.defaultCurrency || null,
 				actionUrl: `/s/${updated.storeId}/reservation/history`,
 			});

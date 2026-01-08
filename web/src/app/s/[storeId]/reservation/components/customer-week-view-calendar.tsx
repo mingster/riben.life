@@ -35,6 +35,12 @@ import type {
 import { RsvpStatus } from "@/types/enum";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import {
+	isUserReservation as isUserReservationUtil,
+	canEditReservation as canEditReservationUtil,
+	canCancelReservation as canCancelReservationUtil,
+	removeReservationFromLocalStorage as removeReservationFromLocalStorageUtil,
+} from "@/utils/rsvp-utils";
 import { ReservationDialog } from "./reservation-dialog";
 import { RsvpCancelDeleteDialog } from "./rsvp-cancel-delete-dialog";
 import {
@@ -914,125 +920,27 @@ export const CustomerWeekViewCalendar: React.FC<
 	);
 
 	// Helper to check if a reservation belongs to the current user
-	// For logged-in users: matches by customerId or email
-	// For anonymous users: if reservation exists in local storage, it's theirs (they created it)
 	const isUserReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
-			// If user is logged in, use existing logic
-			if (user?.id) {
-				// Match by customerId if both exist
-				if (user.id && rsvp.customerId) {
-					return rsvp.customerId === user.id;
-				}
-				// Match by email if customerId doesn't match or is missing
-				if (user.email && rsvp.Customer?.email) {
-					return rsvp.Customer.email.toLowerCase() === user.email.toLowerCase();
-				}
-				return false;
-			}
-
-			// For anonymous users: if reservation exists in local storage, it belongs to them
-			// Local storage is the source of truth for anonymous user ownership
-			if (!user && localStorageReservations.length > 0) {
-				const isInLocalStorage = localStorageReservations.some(
-					(localRsvp: Rsvp) => localRsvp.id === rsvp.id,
-				);
-
-				if (isInLocalStorage) {
-					return true;
-				}
-			}
-
-			return false;
+			return isUserReservationUtil(rsvp, user, localStorageReservations);
 		},
 		[user, localStorageReservations],
 	);
 
 	// Check if reservation can be edited based on rsvpSettings
-	// Edit button only appears if:
-	// Reservation belongs to the current user (logged in or anonymous via local storage)
-	// Reservation status is Pending or alreadyPaid is true
-	// canCancel is enabled in rsvpSettings
-	// Reservation is more than cancelHours away from now
 	const canEditReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
-			if (!isUserReservation(rsvp)) {
-				return false;
-			}
-
-			// If rsvpSettings is not available, assume editing is not allowed
-			if (!rsvpSettings) {
-				return false;
-			}
-
-			// Check if canCancel is enabled - if cancellation is disabled, editing is also disabled
-			if (!rsvpSettings.canCancel) {
-				return false;
-			}
-
-			// Check cancelHours window - don't allow editing if within the cancellation window
-			const cancelHours = rsvpSettings.cancelHours ?? 24;
-			const now = getUtcNow();
-			const rsvpTimeDate = epochToDate(
-				typeof rsvp.rsvpTime === "number"
-					? BigInt(rsvp.rsvpTime)
-					: rsvp.rsvpTime instanceof Date
-						? BigInt(rsvp.rsvpTime.getTime())
-						: rsvp.rsvpTime,
-			);
-
-			if (!rsvpTimeDate) {
-				return false;
-			}
-
-			// Calculate hours until reservation
-			const hoursUntilReservation =
-				(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-			// Can edit if reservation is more than cancelHours away
-			return hoursUntilReservation >= cancelHours;
+			return canEditReservationUtil(rsvp, rsvpSettings, isUserReservation);
 		},
-		[isUserReservation, rsvpSettings],
+		[rsvpSettings, isUserReservation],
 	);
 
 	// Check if reservation can be cancelled/deleted based on rsvpSettings
-	// Cancel/Delete button only appears if:
-	// All the same conditions as edit, plus: canCancel is enabled in rsvpSettings
-	// Both buttons are hidden if the reservation is within the cancelHours window, preventing last-minute changes.
-	// Pending reservations can always be deleted regardless of other conditions
 	const canCancelReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
-			if (!isUserReservation(rsvp)) {
-				return false;
-			}
-
-			// Pending reservations can always be deleted regardless of other conditions
-			if (
-				rsvp.status === RsvpStatus.Pending ||
-				rsvp.status === RsvpStatus.ReadyToConfirm
-			) {
-				return true;
-			}
-
-			// For non-Pending reservations, only allow cancel/delete if alreadyPaid
-			if (!rsvp.alreadyPaid) {
-				return false;
-			}
-
-			// If rsvpSettings is not available, assume cancellation is not allowed
-			if (!rsvpSettings) {
-				return false;
-			}
-
-			// RSVP owners can always cancel if canCancel is enabled
-			// (refund/no-refund logic is handled in the cancel action based on time window)
-			if (rsvpSettings.canCancel) {
-				return true;
-			}
-
-			return false;
+			return canCancelReservationUtil(rsvp, rsvpSettings, isUserReservation);
 		},
-		[isUserReservation, rsvpSettings],
+		[rsvpSettings, isUserReservation],
 	);
 
 	const handlePreviousWeek = useCallback(() => {
@@ -1157,24 +1065,13 @@ export const CustomerWeekViewCalendar: React.FC<
 	const removeReservationFromLocalStorage = useCallback(
 		(reservationId: string) => {
 			if (!user && storeId) {
-				const storageKey = `rsvp-${storeId}`;
-				try {
-					const storedData = localStorage.getItem(storageKey);
-					if (storedData) {
-						const localReservations: Rsvp[] = JSON.parse(storedData);
-						const updatedLocal = localReservations.filter(
-							(r) => r.id !== reservationId,
-						);
-						if (updatedLocal.length > 0) {
-							localStorage.setItem(storageKey, JSON.stringify(updatedLocal));
-						} else {
-							localStorage.removeItem(storageKey);
-						}
-						setLocalStorageReservations(updatedLocal);
-					}
-				} catch (error) {
-					// Silently handle errors removing from local storage
-				}
+				removeReservationFromLocalStorageUtil(
+					storeId,
+					reservationId,
+					(updated) => {
+						setLocalStorageReservations(updated);
+					},
+				);
 			}
 		},
 		[user, storeId],

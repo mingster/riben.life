@@ -21,7 +21,6 @@ import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 import { claimReservationAction } from "@/actions/store/reservation/claim-reservation";
 import { clientLogger } from "@/lib/client-logger";
 import { toastSuccess, toastError } from "@/components/toaster";
@@ -36,12 +35,19 @@ import {
 	dateToEpoch,
 	convertToUtc,
 	formatUtcDateToDateTimeLocal,
-	epochToDate,
-	getDateInTz,
-	getOffsetHours,
 } from "@/utils/datetime-utils";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import {
+	isUserReservation as isUserReservationUtil,
+	canEditReservation as canEditReservationUtil,
+	canCancelReservation as canCancelReservationUtil,
+	removeReservationFromLocalStorage as removeReservationFromLocalStorageUtil,
+	formatRsvpTime as formatRsvpTimeUtil,
+	formatCreatedAt as formatCreatedAtUtil,
+	getFacilityName as getFacilityNameUtil,
+} from "@/utils/rsvp-utils";
 import { createCustomerRsvpColumns } from "./customer-rsvp-columns";
+import { IconX } from "@tabler/icons-react";
 
 interface CustomerReservationHistoryClientProps {
 	serverData: Rsvp[];
@@ -501,27 +507,11 @@ export const CustomerReservationHistoryClient: React.FC<
 	// Helper to format RSVP time
 	const formatRsvpTime = useCallback(
 		(rsvp: Rsvp): string => {
-			const rsvpTime = rsvp.rsvpTime;
-			if (!rsvpTime) return "-";
-
-			const rsvpTimeEpoch =
-				typeof rsvpTime === "number"
-					? BigInt(rsvpTime)
-					: rsvpTime instanceof Date
-						? BigInt(rsvpTime.getTime())
-						: rsvpTime;
-
-			const utcDate = epochToDate(rsvpTimeEpoch);
-			if (!utcDate) return "-";
-
-			const storeDate = getDateInTz(
-				utcDate,
-				getOffsetHours(
-					rsvp.Store?.defaultTimezone ?? storeTimezone ?? "Asia/Taipei",
-				),
+			return formatRsvpTimeUtil(
+				rsvp,
+				datetimeFormat,
+				storeTimezone ?? "Asia/Taipei",
 			);
-
-			return format(storeDate, `${datetimeFormat} HH:mm`);
 		},
 		[storeTimezone, datetimeFormat],
 	);
@@ -529,119 +519,54 @@ export const CustomerReservationHistoryClient: React.FC<
 	// Helper to format created at
 	const formatCreatedAt = useCallback(
 		(rsvp: Rsvp): string => {
-			const createdAt = rsvp.createdAt;
-			if (!createdAt) return "-";
-
-			const createdAtEpoch =
-				typeof createdAt === "number"
-					? BigInt(createdAt)
-					: createdAt instanceof Date
-						? BigInt(createdAt.getTime())
-						: createdAt;
-
-			const utcDate = epochToDate(createdAtEpoch);
-			if (!utcDate) return "-";
-
-			const storeDate = getDateInTz(
-				utcDate,
-				getOffsetHours(
-					rsvp.Store?.defaultTimezone ?? storeTimezone ?? "Asia/Taipei",
-				),
+			return formatCreatedAtUtil(
+				rsvp,
+				datetimeFormat,
+				storeTimezone ?? "Asia/Taipei",
 			);
-
-			return format(storeDate, `${datetimeFormat} HH:mm`);
 		},
 		[storeTimezone, datetimeFormat],
 	);
 
 	// Helper to get facility name
 	const getFacilityName = useCallback((rsvp: Rsvp): string => {
-		const storeName = rsvp.Store?.name;
-		const facilityName = rsvp.Facility?.facilityName;
-
-		if (!storeName && !facilityName) {
-			return "-";
-		}
-
-		if (storeName && facilityName) {
-			return `${storeName} - ${facilityName}`;
-		}
-
-		return storeName || facilityName || "-";
+		return getFacilityNameUtil(rsvp);
 	}, []);
 
 	// Check if reservation belongs to current user
 	const isUserReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
-			if (user?.id) {
-				// Logged-in user: check customerId
-				return rsvp.customerId === user.id;
-			} else {
-				// Anonymous user: check if reservation exists in local storage
-				return localStorageReservations.some((r) => r.id === rsvp.id);
-			}
+			return isUserReservationUtil(rsvp, user, localStorageReservations);
 		},
 		[user, localStorageReservations],
+	);
+
+	// Check if reservation can be edited based on rsvpSettings
+	const canEditReservation = useCallback(
+		(rsvp: Rsvp): boolean => {
+			return canEditReservationUtil(rsvp, rsvpSettings, isUserReservation);
+		},
+		[rsvpSettings, isUserReservation],
 	);
 
 	// Check if reservation can be cancelled/deleted
 	const canCancelReservation = useCallback(
 		(rsvp: Rsvp): boolean => {
-			if (!isUserReservation(rsvp)) {
-				return false;
-			}
-
-			// Pending reservations can always be deleted regardless of other conditions
-			if (
-				rsvp.status === RsvpStatus.Pending ||
-				rsvp.status === RsvpStatus.ReadyToConfirm
-			) {
-				return true;
-			}
-
-			// For non-Pending reservations, only allow cancel/delete if alreadyPaid
-			if (!rsvp.alreadyPaid) {
-				return false;
-			}
-
-			// If rsvpSettings is not available, assume cancellation is not allowed
-			if (!rsvpSettings) {
-				return false;
-			}
-
-			// RSVP owners can always cancel if canCancel is enabled
-			if (rsvpSettings.canCancel) {
-				return true;
-			}
-
-			return false;
+			return canCancelReservationUtil(rsvp, rsvpSettings, isUserReservation);
 		},
-		[isUserReservation, rsvpSettings],
+		[rsvpSettings, isUserReservation],
 	);
 
 	// Remove reservation from local storage
 	const removeReservationFromLocalStorage = useCallback(
 		(reservationId: string) => {
-			if (!storeId) return;
-
-			const storageKey = `rsvp-${storeId}`;
-			try {
-				const storedData = localStorage.getItem(storageKey);
-				if (storedData) {
-					const localReservations: Rsvp[] = JSON.parse(storedData);
-					const updated = localReservations.filter(
-						(r) => r.id !== reservationId,
-					);
-					if (updated.length > 0) {
-						localStorage.setItem(storageKey, JSON.stringify(updated));
-					} else {
-						localStorage.removeItem(storageKey);
-					}
+			removeReservationFromLocalStorageUtil(
+				storeId,
+				reservationId,
+				(updated) => {
 					setLocalStorageReservations(updated);
-				}
-			} catch (error) {
-				// Silently handle errors
-			}
+				},
+			);
 		},
 		[storeId],
 	);
@@ -821,14 +746,39 @@ export const CustomerReservationHistoryClient: React.FC<
 		removeReservationFromLocalStorage,
 	]);
 
+	const handleEditClick = useCallback(
+		(rsvp: Rsvp) => {
+			router.push(`/s/${storeId}/reservation?edit=${rsvp.id}`);
+		},
+		[router, storeId],
+	);
+
+	const handleCheckoutClick = useCallback(
+		(orderId: string) => {
+			router.push(`/checkout/${orderId}`);
+		},
+		[router],
+	);
+
 	const columns = useMemo(
 		() =>
 			createCustomerRsvpColumns(t, {
 				storeTimezone,
 				onStatusClick: handleCancelClick,
 				canCancelReservation,
+				canEditReservation,
+				onEditClick: handleEditClick,
+				onCheckoutClick: handleCheckoutClick,
 			}),
-		[t, storeTimezone, handleCancelClick, canCancelReservation],
+		[
+			t,
+			storeTimezone,
+			handleCancelClick,
+			canCancelReservation,
+			canEditReservation,
+			handleEditClick,
+			handleCheckoutClick,
+		],
 	);
 
 	if (!data || data.length === 0) {
@@ -946,6 +896,21 @@ export const CustomerReservationHistoryClient: React.FC<
 					const status = rsvp.status;
 					const alreadyPaid = rsvp.alreadyPaid || false;
 
+					// Calculate total cost
+					const facilityCost = rsvp.facilityCost
+						? Number(rsvp.facilityCost)
+						: 0;
+					const serviceStaffCost = rsvp.serviceStaffCost
+						? Number(rsvp.serviceStaffCost)
+						: 0;
+					const total = facilityCost + serviceStaffCost;
+
+					// Show green if already paid OR if total <= 0 (nothing to pay)
+					const isPaid = alreadyPaid || total <= 0;
+
+					// Check if clickable (not paid, has orderId, and total > 0)
+					const isCheckoutClickable = !isPaid && rsvp.orderId && total > 0;
+
 					return (
 						<div
 							key={rsvp.id}
@@ -963,14 +928,23 @@ export const CustomerReservationHistoryClient: React.FC<
 								<div className="shrink-0 flex items-center gap-1.5">
 									<span
 										onClick={(e) => {
-											if (canCancelReservation(rsvp)) {
-												handleCancelClick(e, rsvp);
+											e.stopPropagation();
+											if (canEditReservation(rsvp)) {
+												// Navigate to edit page
+												router.push(
+													`/s/${storeId}/reservation?edit=${rsvp.id}`,
+												);
 											}
 										}}
+										title={
+											canEditReservation(rsvp)
+												? t("edit_reservation") || "Edit reservation"
+												: undefined
+										}
 										className={cn(
 											"inline-flex items-center px-2 py-1 rounded text-[10px] font-mono",
 											getRsvpStatusColorClasses(status, false),
-											canCancelReservation(rsvp) &&
+											canEditReservation(rsvp) &&
 												"cursor-pointer hover:opacity-80 transition-opacity",
 										)}
 									>
@@ -979,10 +953,35 @@ export const CustomerReservationHistoryClient: React.FC<
 										</span>
 									</span>
 									<span
-										className={`h-2 w-2 rounded-full ${
-											alreadyPaid ? "bg-green-500" : "bg-red-500"
-										}`}
+										onClick={(e) => {
+											if (isCheckoutClickable && rsvp.orderId) {
+												e.stopPropagation();
+												router.push(`/checkout/${rsvp.orderId}`);
+											}
+										}}
+										title={
+											isCheckoutClickable
+												? t("navigate_to_payment_page") ||
+													"Navigate to payment page"
+												: undefined
+										}
+										className={cn(
+											"h-2 w-2 rounded-full",
+											isPaid ? "bg-green-500" : "bg-red-500",
+											isCheckoutClickable &&
+												"cursor-pointer hover:opacity-80 transition-opacity",
+										)}
 									/>
+									{canCancelReservation(rsvp) && (
+										<IconX
+											className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity bg-red-500"
+											onClick={(e) => {
+												e.stopPropagation();
+												handleCancelClick(e, rsvp);
+											}}
+											title={t("cancel_reservation") || "Cancel reservation"}
+										/>
+									)}
 								</div>
 							</div>
 

@@ -3,6 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
 import { format } from "date-fns";
+import { IconX } from "@tabler/icons-react";
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,9 @@ interface CreateCustomerRsvpColumnsOptions {
 	storeTimezone?: string;
 	onStatusClick?: (e: React.MouseEvent, rsvp: Rsvp) => void;
 	canCancelReservation?: (rsvp: Rsvp) => boolean;
+	canEditReservation?: (rsvp: Rsvp) => boolean;
+	onEditClick?: (rsvp: Rsvp) => void;
+	onCheckoutClick?: (orderId: string) => void;
 }
 
 export const createCustomerRsvpColumns = (
@@ -29,6 +33,9 @@ export const createCustomerRsvpColumns = (
 		storeTimezone = "Asia/Taipei",
 		onStatusClick,
 		canCancelReservation,
+		canEditReservation,
+		onEditClick,
+		onCheckoutClick,
 	} = options;
 
 	return [
@@ -129,22 +136,43 @@ export const createCustomerRsvpColumns = (
 			cell: ({ row }) => {
 				const rsvp = row.original;
 				const status = rsvp.status;
+				const canEdit = canEditReservation?.(rsvp) ?? false;
 				const canCancel = canCancelReservation?.(rsvp) ?? false;
+				const isClickable = canEdit && onEditClick;
 				return (
-					<span
-						onClick={(e) => {
-							if (canCancel && onStatusClick) {
-								onStatusClick(e, rsvp);
+					<div className="flex items-center gap-1.5">
+						<span
+							onClick={(e) => {
+								e.stopPropagation();
+								if (isClickable) {
+									onEditClick(rsvp);
+								}
+							}}
+							title={
+								isClickable
+									? t("edit_reservation") || "Edit reservation"
+									: undefined
 							}
-						}}
-						className={cn(
-							"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded text-[10px] sm:text-xs font-mono",
-							getRsvpStatusColorClasses(status, false),
-							canCancel && "cursor-pointer hover:opacity-80 transition-opacity",
+							className={cn(
+								"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded text-[10px] sm:text-xs font-mono",
+								getRsvpStatusColorClasses(status, false),
+								isClickable &&
+									"cursor-pointer hover:opacity-80 transition-opacity",
+							)}
+						>
+							<span className="font-medium">{t(`rsvp_status_${status}`)}</span>
+						</span>
+						{canCancel && onStatusClick && (
+							<IconX
+								className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity bg-red-500"
+								onClick={(e) => {
+									e.stopPropagation();
+									onStatusClick(e, rsvp);
+								}}
+								title={t("cancel_reservation") || "Cancel reservation"}
+							/>
 						)}
-					>
-						<span className="font-medium">{t(`rsvp_status_${status}`)}</span>
-					</span>
+					</div>
 				);
 			},
 		},
@@ -171,13 +199,43 @@ export const createCustomerRsvpColumns = (
 				<DataTableColumnHeader column={column} title={t("rsvp_already_paid")} />
 			),
 			cell: ({ row }) => {
+				const rsvp = row.original;
 				const paid = row.getValue("alreadyPaid") as boolean;
+
+				// Calculate total cost
+				const facilityCost = rsvp.facilityCost ? Number(rsvp.facilityCost) : 0;
+				const serviceStaffCost = rsvp.serviceStaffCost
+					? Number(rsvp.serviceStaffCost)
+					: 0;
+				const total = facilityCost + serviceStaffCost;
+
+				// Show green if already paid OR if total <= 0 (nothing to pay)
+				const isPaid = paid || total <= 0;
+
+				// Check if clickable (not paid, has orderId, and total > 0)
+				const isClickable =
+					!isPaid && rsvp.orderId && total > 0 && onCheckoutClick;
+
 				return (
 					<span className="flex items-center justify-center">
 						<span
-							className={`h-2 w-2 rounded-full ${
-								paid ? "bg-green-500" : "bg-red-500"
-							}`}
+							onClick={(e) => {
+								if (isClickable && rsvp.orderId) {
+									e.stopPropagation();
+									onCheckoutClick(rsvp.orderId);
+								}
+							}}
+							title={
+								isClickable
+									? t("navigate_to_payment_page") || "Navigate to payment page"
+									: undefined
+							}
+							className={cn(
+								"h-2 w-2 rounded-full",
+								isPaid ? "bg-green-500" : "bg-red-500",
+								isClickable &&
+									"cursor-pointer hover:opacity-80 transition-opacity",
+							)}
 						/>
 					</span>
 				);

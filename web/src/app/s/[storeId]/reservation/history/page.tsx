@@ -105,9 +105,7 @@ export default async function ReservationHistoryPage(props: {
 					storeCurrency={store.defaultCurrency || "twd"}
 					useCustomerCredit={store.useCustomerCredit || false}
 					creditExchangeRate={
-						store.creditExchangeRate
-							? Number(store.creditExchangeRate)
-							: null
+						store.creditExchangeRate ? Number(store.creditExchangeRate) : null
 					}
 				/>
 			</Suspense>

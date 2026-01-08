@@ -4,30 +4,39 @@ import { IconBell } from "@tabler/icons-react";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { cn } from "@/lib/utils";
+import { forwardRef } from "react";
 
-export interface NotificationBellProps {
+export interface NotificationBellProps
+	extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	unreadCount: number;
 	onOpen?: () => void;
-	className?: string;
 }
 
-export function NotificationBell({
-	unreadCount,
-	onOpen,
-	className,
-}: NotificationBellProps) {
+export const NotificationBell = forwardRef<
+	HTMLButtonElement,
+	NotificationBellProps
+>(({ unreadCount, onOpen, className, onClick, ...props }, ref) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
+	const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+		// Call onOpen if provided (for standalone use)
+		onOpen?.();
+		// Call onClick from props (for PopoverTrigger asChild)
+		onClick?.(e);
+	};
+
 	return (
 		<button
-			onClick={onOpen}
+			ref={ref}
+			onClick={handleClick}
 			className={cn(
 				"relative inline-flex items-center justify-center rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
 				"h-10 w-10 sm:h-9 sm:w-9",
 				className,
 			)}
 			aria-label={t("notifications")}
+			{...props}
 		>
 			<IconBell className="h-5 w-5" />
 			{unreadCount > 0 && (
@@ -49,4 +58,6 @@ export function NotificationBell({
 			<span className="sr-only">{t("notifications")}</span>
 		</button>
 	);
-}
+});
+
+NotificationBell.displayName = "NotificationBell";
