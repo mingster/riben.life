@@ -1,6 +1,8 @@
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
-import type { Store } from "@/types";
+import { sqlClient } from "@/lib/prismadb";
+import type { Store, Rsvp } from "@/types";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { DisplayClient } from "./client";
 
 type Params = Promise<{ storeId: string; orderId: string }>;
@@ -22,5 +24,21 @@ export default async function StoreOrderStatusPage(props: {
 	// Fetch store after we have the storeId
 	const store = (await getStoreById(order.storeId)) as Store;
 
-	return <DisplayClient store={store} order={order} />;
+	// Check if this is an RSVP order and fetch RSVP if it exists
+	let rsvp: Rsvp | null = null;
+	if (order.pickupCode?.startsWith("RSVP:")) {
+		const foundRsvp = await sqlClient.rsvp.findFirst({
+			where: { orderId: order.id },
+			include: {
+				Store: true,
+			},
+		});
+
+		if (foundRsvp) {
+			transformPrismaDataForJson(foundRsvp);
+			rsvp = foundRsvp as Rsvp;
+		}
+	}
+
+	return <DisplayClient store={store} order={order} rsvp={rsvp} />;
 }

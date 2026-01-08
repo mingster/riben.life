@@ -9,22 +9,30 @@ import { Button } from "@/components/ui/button";
 import Container from "@/components/ui/container";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
-import type { Store, StoreOrder } from "@/types";
+import type { Store, StoreOrder, Rsvp } from "@/types";
 import Link from "next/link";
 
 export interface props {
 	store: Store;
 	order: StoreOrder;
+	rsvp?: Rsvp | null;
 }
 
 // display the given order in whole page if user is signed in.
 // If no login session, show the order on the left, and ask user to sign in panel on the right.
 // view order page (購物明細)
-export const DisplayClient: React.FC<props> = ({ store, order }) => {
+export const DisplayClient: React.FC<props> = ({ store, order, rsvp }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const { data: session } = authClient.useSession();
 	const isSignedIn = Boolean(session?.user);
+
+	// Determine the "Keep Shopping" link destination
+	// For RSVP orders that are paid, redirect to reservation history
+	const keepShoppingHref =
+		rsvp && order.isPaid
+			? `/s/${store.id}/reservation/history`
+			: `/s/${store.id}`;
 
 	//console.log("order", JSON.stringify(order));
 
@@ -50,7 +58,7 @@ export const DisplayClient: React.FC<props> = ({ store, order }) => {
 							hideContactSeller={false}
 						/>
 
-						<Link href={`/s/${store.id}`} className="">
+						<Link href={keepShoppingHref} className="">
 							<Button className="w-full">
 								{t("cart_summary_keepShopping")}
 							</Button>
@@ -69,7 +77,7 @@ export const DisplayClient: React.FC<props> = ({ store, order }) => {
 								hideContactSeller={false}
 							/>
 
-							<Link href={`/s/${store.id}`} className="">
+							<Link href={keepShoppingHref} className="">
 								<Button className="w-full">
 									{t("cart_summary_keepShopping")}
 								</Button>
@@ -77,6 +85,9 @@ export const DisplayClient: React.FC<props> = ({ store, order }) => {
 						</div>
 
 						<div className="space-y-4">
+							<div className="text-xl md:text-2xl font-light leading-relaxed text-foreground/80">
+								{t("order_sign_in_benefits")}
+							</div>
 							<ClientSignIn />
 						</div>
 					</div>

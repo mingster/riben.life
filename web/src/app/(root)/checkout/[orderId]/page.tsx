@@ -95,7 +95,23 @@ const CheckoutHomePage = async (props: {
 		(mapping) => mapping.PaymentMethod.payUrl !== "TBD",
 	);
 
-	// First, remove credit payment method from the list (we'll add it back if customer has balance)
+	// Get store to check useCustomerCredit and creditExchangeRate
+	const store = await sqlClient.store.findUnique({
+		where: { id: storeId },
+		select: {
+			useCustomerCredit: true,
+			creditExchangeRate: true,
+		},
+	});
+
+	// Remove creditPoint payment method if store's useCustomerCredit is false
+	if (!store?.useCustomerCredit) {
+		paymentMethods = paymentMethods.filter(
+			(mapping) => mapping.PaymentMethod.payUrl !== "creditPoint",
+		);
+	}
+
+	// Remove credit payment method from the list (we'll add it back if customer has balance)
 	paymentMethods = paymentMethods.filter(
 		(mapping) => mapping.PaymentMethod.payUrl !== "credit",
 	);
@@ -170,6 +186,81 @@ const CheckoutHomePage = async (props: {
 						PaymentMethod: creditPaymentMethod,
 						disabled: !hasEnoughBalance,
 					} as StorePaymentMethodMapping & { disabled?: boolean });
+				}
+			}
+		}
+
+		// Add creditPoint payment method if:
+		// 1. Store has useCustomerCredit enabled
+		// 2. Customer has credit points balance
+		if (store?.useCustomerCredit) {
+			const creditPointsBalance = customerCredit
+				? Number(customerCredit.point)
+				: 0;
+			const creditExchangeRate = Number(store.creditExchangeRate) || 1;
+
+			if (creditExchangeRate > 0 && creditPointsBalance > 0) {
+				// Convert order total to credit points
+				const requiredCreditPoints = orderTotal / creditExchangeRate;
+				const hasEnoughPoints = creditPointsBalance >= requiredCreditPoints;
+
+				// Find creditPoint payment method (try "creditPoint" first, fall back to "credit")
+				let creditPointPaymentMethod = await sqlClient.paymentMethod.findFirst({
+					where: {
+						payUrl: "creditPoint",
+						isDeleted: false,
+						visibleToCustomer: true,
+					},
+				});
+
+				if (!creditPointPaymentMethod) {
+					creditPointPaymentMethod = await sqlClient.paymentMethod.findFirst({
+						where: {
+							payUrl: "credit",
+							isDeleted: false,
+							visibleToCustomer: true,
+						},
+					});
+				}
+
+				if (creditPointPaymentMethod) {
+					// Format credit points for display
+					const formattedPoints =
+						Math.floor(creditPointsBalance).toLocaleString();
+
+					// Check if store has a mapping for creditPoint payment method
+					const storeCreditPointMapping =
+						await sqlClient.storePaymentMethodMapping.findFirst({
+							where: {
+								storeId,
+								methodId: creditPointPaymentMethod.id,
+							},
+							include: {
+								PaymentMethod: true,
+							},
+						});
+
+					if (storeCreditPointMapping) {
+						// Use store mapping if it exists, but override display name to include points
+						const baseName =
+							storeCreditPointMapping.paymentDisplayName ||
+							creditPointPaymentMethod.name;
+						paymentMethods.push({
+							...storeCreditPointMapping,
+							paymentDisplayName: `${baseName} (${formattedPoints} points)`,
+							disabled: !hasEnoughPoints,
+						} as StorePaymentMethodMapping & { disabled?: boolean });
+					} else {
+						// Add creditPoint payment method without store mapping, include points in display name
+						paymentMethods.push({
+							id: "",
+							storeId,
+							methodId: creditPointPaymentMethod.id,
+							paymentDisplayName: `${creditPointPaymentMethod.name} (${formattedPoints} points)`,
+							PaymentMethod: creditPointPaymentMethod,
+							disabled: !hasEnoughPoints,
+						} as StorePaymentMethodMapping & { disabled?: boolean });
+					}
 				}
 			}
 		}

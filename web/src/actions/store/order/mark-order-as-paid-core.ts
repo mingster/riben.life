@@ -416,165 +416,172 @@ export async function markOrderAsPaidCore(
 		orderUpdatedDate.getTime() + clearDays * 24 * 60 * 60 * 1000,
 	);
 
+	// Get translation function outside transaction to avoid timeout
+	const { t } = await getT();
+
 	// Mark order as paid and create ledger entry in transaction
-	await sqlClient.$transaction(async (tx) => {
-		// Check if this order is for an RSVP reservation
-		const rsvp = await tx.rsvp.findFirst({
-			where: { orderId: order.id },
-		});
-
-		// For RSVP orders, set status to Completed when payment is successful
-		// For regular orders, set status to Processing
-		const newOrderStatus = rsvp
-			? OrderStatus.Completed
-			: OrderStatus.Processing;
-
-		// Get translation function for order note
-		const { t } = await getT();
-
-		// Mark order as paid and update payment method
-		await tx.storeOrder.update({
-			where: { id: order.id },
-			data: {
-				isPaid: true,
-				paidDate: getUtcNowEpoch(),
-				orderStatus: newOrderStatus,
-				paymentStatus: PaymentStatus.Paid,
-				paymentMethodId: paymentMethodId, // Update to the actual payment method used
-				paymentCost:
-					fee.toNumber() + feeTax.toNumber() + platformFee.toNumber(),
-				checkoutAttributes:
-					checkoutAttributes || order.checkoutAttributes || "",
-				updatedAt: getUtcNowEpoch(),
-			},
-		});
-
-		// Create order note: "payment" + "PaymentStatus_Completed"
-		const now = getUtcNowEpoch();
-		await tx.orderNote.create({
-			data: {
-				orderId: order.id,
-				note: `${t("payment")} ${t("PaymentStatus_Completed")}`,
-				displayToCustomer: true,
-				createdAt: now,
-				updatedAt: now,
-			},
-		});
-
-		if (rsvp) {
-			const now = getUtcNowEpoch();
-
-			// Check if noNeedToConfirm is enabled in RSVP settings
-			// If enabled, auto-confirm the reservation since the order is being marked as paid
-			const rsvpSettings = await tx.rsvpSettings.findFirst({
-				where: { storeId: rsvp.storeId },
-				select: { noNeedToConfirm: true },
+	// Increase timeout to 10 seconds to handle complex operations
+	await sqlClient.$transaction(
+		async (tx) => {
+			// Check if this order is for an RSVP reservation
+			const rsvp = await tx.rsvp.findFirst({
+				where: { orderId: order.id },
 			});
 
-			// If noNeedToConfirm is enabled, auto-confirm the reservation (order is being marked as paid)
-			const shouldAutoConfirm = rsvpSettings?.noNeedToConfirm === true;
+			// For RSVP orders, set status to Completed when payment is successful
+			// For regular orders, set status to Processing
+			const newOrderStatus = rsvp
+				? OrderStatus.Completed
+				: OrderStatus.Processing;
 
-			// Determine new status based on current status and noNeedToConfirm setting
-			// If noNeedToConfirm is enabled and status is Pending, set to Ready (auto-confirmed)
-			// If noNeedToConfirm is disabled and status is Pending, set to ReadyToConfirm (needs confirmation)
-			// Otherwise, keep the current status
-			let newStatus = rsvp.status;
-			if (rsvp.status === RsvpStatus.Pending) {
-				newStatus = shouldAutoConfirm
-					? RsvpStatus.Ready
-					: RsvpStatus.ReadyToConfirm;
-			}
-
-			// Update RSVP status and mark as already paid
-			await tx.rsvp.update({
-				where: { id: rsvp.id },
+			// Mark order as paid and update payment method
+			await tx.storeOrder.update({
+				where: { id: order.id },
 				data: {
-					alreadyPaid: true,
-					paidAt: now,
-					status: newStatus,
-					confirmedByStore: shouldAutoConfirm ? true : rsvp.confirmedByStore,
+					isPaid: true,
+					paidDate: getUtcNowEpoch(),
+					orderStatus: newOrderStatus,
+					paymentStatus: PaymentStatus.Paid,
+					paymentMethodId: paymentMethodId, // Update to the actual payment method used
+					paymentCost:
+						fee.toNumber() + feeTax.toNumber() + platformFee.toNumber(),
+					checkoutAttributes:
+						checkoutAttributes || order.checkoutAttributes || "",
+					updatedAt: getUtcNowEpoch(),
+				},
+			});
+
+			// Create order note: "payment" + "PaymentStatus_Completed"
+			const now = getUtcNowEpoch();
+			await tx.orderNote.create({
+				data: {
+					orderId: order.id,
+					note: `${t("payment")} ${t("PaymentStatus_Completed")}`,
+					displayToCustomer: true,
+					createdAt: now,
 					updatedAt: now,
 				},
 			});
 
-			// TODO: 1. send notification to customer to confirm the reservation
-			// TODO: 2. send notification to store staff to confirm the reservation
+			if (rsvp) {
+				const now = getUtcNowEpoch();
 
-			logger.info("RSVP updated after order payment", {
-				metadata: {
-					rsvpId: rsvp.id,
-					orderId: order.id,
-					previousStatus: rsvp.status,
-					newStatus: newStatus,
-					noNeedToConfirm: rsvpSettings?.noNeedToConfirm ?? false,
-					autoConfirmed: shouldAutoConfirm,
-				},
-				tags: ["rsvp", "payment", "order", ...logTags],
-			});
-		}
-		// Prepare ledger note - use RSVP format if it's an RSVP order
-		let ledgerNote = `${paymentMethod.name || "Unknown"}, ${t("order")}:${order.orderNum || order.id}`;
+				// Check if noNeedToConfirm is enabled in RSVP settings
+				// If enabled, auto-confirm the reservation since the order is being marked as paid
+				const rsvpSettings = await tx.rsvpSettings.findFirst({
+					where: { storeId: rsvp.storeId },
+					select: { noNeedToConfirm: true },
+				});
 
-		if (rsvp && rsvp.rsvpTime) {
-			// Format: `${paymentMethod.name || "Unknown"}, ${t("rsvp")}:format(${rsvp.rsvpTime},'yyyy/MM/dd HH:mm') for ${user.name}`
-			// Fetch store and user for the note
-			const store = await tx.store.findUnique({
-				where: { id: order.storeId },
-				select: { defaultTimezone: true },
-			});
+				// If noNeedToConfirm is enabled, auto-confirm the reservation (order is being marked as paid)
+				const shouldAutoConfirm = rsvpSettings?.noNeedToConfirm === true;
 
-			const user = await tx.user.findUnique({
-				where: { id: order.userId },
-				select: { name: true },
-			});
+				// Determine new status based on current status and noNeedToConfirm setting
+				// If noNeedToConfirm is enabled and status is Pending, set to Ready (auto-confirmed)
+				// If noNeedToConfirm is disabled and status is Pending, set to ReadyToConfirm (needs confirmation)
+				// Otherwise, keep the current status
+				let newStatus = rsvp.status;
+				if (rsvp.status === RsvpStatus.Pending) {
+					newStatus = shouldAutoConfirm
+						? RsvpStatus.Ready
+						: RsvpStatus.ReadyToConfirm;
+				}
 
-			if (store && user) {
-				// Convert RSVP time (BigInt epoch) to Date
-				const rsvpTimeDate = epochToDate(rsvp.rsvpTime);
-				if (rsvpTimeDate) {
-					// Format date in store timezone as "yyyy/MM/dd HH:mm"
-					const formattedRsvpTime = format(
-						getDateInTz(
-							rsvpTimeDate,
-							getOffsetHours(store.defaultTimezone || "Asia/Taipei"),
-						),
-						"yyyy/MM/dd HH:mm",
-					);
+				// Update RSVP status and mark as already paid
+				await tx.rsvp.update({
+					where: { id: rsvp.id },
+					data: {
+						alreadyPaid: true,
+						paidAt: now,
+						status: newStatus,
+						confirmedByStore: shouldAutoConfirm ? true : rsvp.confirmedByStore,
+						updatedAt: now,
+					},
+				});
 
-					// Create RSVP format ledger note
-					ledgerNote = `${paymentMethod.name || "Unknown"}, ${t("rsvp")}:${formattedRsvpTime} for ${user.name}`;
+				// TODO: 1. send notification to customer to confirm the reservation
+				// TODO: 2. send notification to store staff to confirm the reservation
+
+				logger.info("RSVP updated after order payment", {
+					metadata: {
+						rsvpId: rsvp.id,
+						orderId: order.id,
+						previousStatus: rsvp.status,
+						newStatus: newStatus,
+						noNeedToConfirm: rsvpSettings?.noNeedToConfirm ?? false,
+						autoConfirmed: shouldAutoConfirm,
+					},
+					tags: ["rsvp", "payment", "order", ...logTags],
+				});
+			}
+			// Prepare ledger note - use RSVP format if it's an RSVP order
+			let ledgerNote = `${paymentMethod.name || "Unknown"}, ${t("order")}:${order.orderNum || order.id}`;
+
+			if (rsvp && rsvp.rsvpTime) {
+				// Format: `${paymentMethod.name || "Unknown"}, ${t("rsvp")}:format(${rsvp.rsvpTime},'yyyy/MM/dd HH:mm') for ${user.name}`
+				// Fetch store and user for the note
+				const store = await tx.store.findUnique({
+					where: { id: order.storeId },
+					select: { defaultTimezone: true },
+				});
+
+				const user = await tx.user.findUnique({
+					where: { id: order.userId },
+					select: { name: true },
+				});
+
+				if (store && user) {
+					// Convert RSVP time (BigInt epoch) to Date
+					const rsvpTimeDate = epochToDate(rsvp.rsvpTime);
+					if (rsvpTimeDate) {
+						// Format date in store timezone as "yyyy/MM/dd HH:mm"
+						const formattedRsvpTime = format(
+							getDateInTz(
+								rsvpTimeDate,
+								getOffsetHours(store.defaultTimezone || "Asia/Taipei"),
+							),
+							"yyyy/MM/dd HH:mm",
+						);
+
+						// Create RSVP format ledger note
+						ledgerNote = `${paymentMethod.name || "Unknown"}, ${t("rsvp")}:${formattedRsvpTime} for ${user.name}`;
+					}
 				}
 			}
-		}
 
-		// Create StoreLedger entry
-		const ledgerType = usePlatform
-			? StoreLedgerType.PlatformPayment // 0: 代收 (platform payment processing)
-			: StoreLedgerType.StorePaymentProvider; // 1: Store's own payment provider
+			// Create StoreLedger entry
+			const ledgerType = usePlatform
+				? StoreLedgerType.PlatformPayment // 0: 代收 (platform payment processing)
+				: StoreLedgerType.StorePaymentProvider; // 1: Store's own payment provider
 
-		await tx.storeLedger.create({
-			data: {
-				orderId: order.id,
-				storeId: order.storeId,
-				amount: order.orderTotal,
-				fee,
-				platformFee,
-				currency: order.currency,
-				type: ledgerType,
-				description: `order # ${order.orderNum || order.id}`,
-				note: ledgerNote,
-				availability: BigInt(availabilityDate.getTime()),
-				balance: new Prisma.Decimal(
-					balance +
-						Number(order.orderTotal) +
-						fee.toNumber() +
-						feeTax.toNumber() +
-						platformFee.toNumber(),
-				),
-				createdAt: getUtcNowEpoch(),
-			},
-		});
-	});
+			await tx.storeLedger.create({
+				data: {
+					orderId: order.id,
+					storeId: order.storeId,
+					amount: order.orderTotal,
+					fee,
+					platformFee,
+					currency: order.currency,
+					type: ledgerType,
+					description: `order # ${order.orderNum || order.id}`,
+					note: ledgerNote,
+					availability: BigInt(availabilityDate.getTime()),
+					balance: new Prisma.Decimal(
+						balance +
+							Number(order.orderTotal) +
+							fee.toNumber() +
+							feeTax.toNumber() +
+							platformFee.toNumber(),
+					),
+					createdAt: getUtcNowEpoch(),
+				},
+			});
+		},
+		{
+			maxWait: 10000, // Maximum time to wait to acquire a transaction (10 seconds)
+			timeout: 10000, // Maximum time the transaction can run (10 seconds)
+		},
+	);
 
 	// Fetch updated order with all relations
 	const updatedOrder = await sqlClient.storeOrder.findUnique({

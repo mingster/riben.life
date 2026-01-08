@@ -20,11 +20,12 @@ import { IconAlertCircle } from "@tabler/icons-react";
  */
 export default async function RefillCreditPointsPage(props: {
 	params: Promise<{ storeId: string }>;
-	searchParams: Promise<{ rsvpId?: string }>;
+	searchParams: Promise<{ rsvpId?: string; returnUrl?: string }>;
 }) {
 	const params = await props.params;
 	const searchParams = await props.searchParams;
 	const rsvpId = searchParams?.rsvpId;
+	const returnUrl = searchParams?.returnUrl;
 
 	// Check authentication
 	const session = await auth.api.getSession({
@@ -116,8 +117,8 @@ export default async function RefillCreditPointsPage(props: {
 
 	transformPrismaDataForJson(store);
 
-	// Default returnUrl to credit ledger page
-	const returnUrl = `/s/${params.storeId}/my-credit-ledger`;
+	// Default returnUrl to credit ledger page if not provided
+	const finalReturnUrl = returnUrl || `/s/${params.storeId}/my-credit-ledger`;
 
 	return (
 		<Container className="bg-transparent">
@@ -131,7 +132,7 @@ export default async function RefillCreditPointsPage(props: {
 							}
 						}
 						rsvpId={rsvpId}
-						returnUrl={returnUrl}
+						returnUrl={finalReturnUrl}
 					/>
 				</Suspense>
 			</div>

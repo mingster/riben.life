@@ -341,6 +341,10 @@ export const CustomerWeekViewCalendar: React.FC<
 	const [localStorageReservations, setLocalStorageReservations] = useState<
 		Rsvp[]
 	>([]);
+	// Track deleted reservation IDs to prevent them from being re-added from server
+	const [deletedReservationIds, setDeletedReservationIds] = useState<
+		Set<string>
+	>(new Set());
 
 	// Load local storage reservations on mount and when storeId changes
 	useEffect(() => {
@@ -370,58 +374,30 @@ export const CustomerWeekViewCalendar: React.FC<
 	});
 
 	// Update rsvps when localStorageReservations or existingReservations change
-	// Also clean up local storage if reservations were deleted from server side
+	// 1. only clean up local storage reservations why click delete dialog confirmation button
+	// 2. newly created reservations should be displayed immediately
+	// This is because users might sign out and back in, and we want to preserve local storage as backup
 	useEffect(() => {
 		if (!user && localStorageReservations.length > 0) {
-			const serverIds = new Set(existingReservations.map((r) => r.id));
+			// Get current local storage reservations (no cleanup - keep all)
+			const currentLocalReservations = localStorageReservations;
 
-			// Get current local storage reservations (may be updated during cleanup)
-			let currentLocalReservations = localStorageReservations;
-
-			// Check if any local storage reservations were deleted from server
-			// (exist in local storage but not in server data)
-			const deletedFromServer = localStorageReservations.filter(
-				(r) => !serverIds.has(r.id),
+			// Filter out deleted reservations from server data
+			const filteredServerReservations = existingReservations.filter(
+				(r) => !deletedReservationIds.has(r.id),
 			);
-
-			// If reservations were deleted from server, remove them from local storage
-			if (deletedFromServer.length > 0 && storeId) {
-				const storageKey = `rsvp-${storeId}`;
-				try {
-					const storedData = localStorage.getItem(storageKey);
-					if (storedData) {
-						const localReservations: Rsvp[] = JSON.parse(storedData);
-						// Keep only reservations that exist on server
-						const updatedLocal = localReservations.filter((r) =>
-							serverIds.has(r.id),
-						);
-
-						if (updatedLocal.length > 0) {
-							localStorage.setItem(storageKey, JSON.stringify(updatedLocal));
-						} else {
-							localStorage.removeItem(storageKey);
-						}
-
-						// Use the cleaned-up version for merging
-						currentLocalReservations = updatedLocal;
-						setLocalStorageReservations(updatedLocal);
-					}
-				} catch (error) {
-					// Silently handle errors cleaning up deleted reservations
-				}
-			}
 
 			// Merge local storage reservations with server reservations for anonymous users
 			// Local-only reservations (not on server yet) should also be displayed
 			// For reservations that exist on both server and local storage, preserve name/phone from local storage
-			const serverIdsSet = new Set(existingReservations.map((r) => r.id));
+			const serverIdsSet = new Set(filteredServerReservations.map((r) => r.id));
 			const localOnlyReservations = currentLocalReservations.filter(
 				(localRsvp) => !serverIdsSet.has(localRsvp.id),
 			);
 
 			// For anonymous users, preserve name/phone from local storage for reservations that exist on server
 			// This ensures we can delete/edit reservations even if server data doesn't have name/phone
-			const serverReservationsWithLocalData = existingReservations.map(
+			const serverReservationsWithLocalData = filteredServerReservations.map(
 				(serverRsvp) => {
 					const localRsvp = currentLocalReservations.find(
 						(r) => r.id === serverRsvp.id,
@@ -444,13 +420,25 @@ export const CustomerWeekViewCalendar: React.FC<
 			];
 			setRsvps(mergedRsvps);
 		} else if (!user && localStorageReservations.length === 0) {
-			// If local storage is empty, only show server reservations
-			setRsvps(existingReservations);
+			// If local storage is empty, only show server reservations (excluding deleted ones)
+			const filteredServerReservations = existingReservations.filter(
+				(r) => !deletedReservationIds.has(r.id),
+			);
+			setRsvps(filteredServerReservations);
 		} else {
-			// If user is logged in, only show server reservations
-			setRsvps(existingReservations);
+			// If user is logged in, only show server reservations (excluding deleted ones)
+			const filteredServerReservations = existingReservations.filter(
+				(r) => !deletedReservationIds.has(r.id),
+			);
+			setRsvps(filteredServerReservations);
 		}
-	}, [localStorageReservations, existingReservations, user, storeId]);
+	}, [
+		localStorageReservations,
+		existingReservations,
+		user,
+		storeId,
+		deletedReservationIds,
+	]);
 
 	const [currentDay, setCurrentDay] = useState(() => {
 		// Always start with today as the first day
@@ -533,22 +521,8 @@ export const CustomerWeekViewCalendar: React.FC<
 					}
 				}
 
-				// Remove successfully claimed reservations from local storage
+				// Show success message for successfully claimed reservations
 				if (claimedIds.length > 0) {
-					const remainingReservations = localReservations.filter(
-						(r) => !claimedIds.includes(r.id),
-					);
-
-					if (remainingReservations.length > 0) {
-						localStorage.setItem(
-							storageKey,
-							JSON.stringify(remainingReservations),
-						);
-					} else {
-						// No more reservations, remove the key
-						localStorage.removeItem(storageKey);
-					}
-
 					// Show success message
 					if (claimedIds.length === 1) {
 						toastSuccess({
@@ -577,6 +551,10 @@ export const CustomerWeekViewCalendar: React.FC<
 						return prev;
 					});
 				}
+
+				// Note: We do NOT remove claimed reservations from local storage
+				// because the user might sign out and sign in again, and we want to preserve
+				// the local storage as a backup for anonymous reservations
 
 				// Show error message for failed claims
 				if (failedIds.length > 0) {
@@ -986,14 +964,7 @@ export const CustomerWeekViewCalendar: React.FC<
 		(newRsvp: Rsvp) => {
 			if (!newRsvp) return;
 
-			// Update display reservations
-			setRsvps((prev) => {
-				const exists = prev.some((item) => item.id === newRsvp.id);
-				if (exists) return prev;
-				return [newRsvp, ...prev];
-			});
-
-			// For anonymous users, also update local storage state
+			// For anonymous users, update local storage first so it's recognized as owned
 			if (!user && storeId) {
 				try {
 					const storageKey = `rsvp-${storeId}`;
@@ -1048,12 +1019,30 @@ export const CustomerWeekViewCalendar: React.FC<
 							JSON.stringify(updatedReservations),
 						);
 
-						// Update local storage state
+						// Update local storage state - this will trigger the useEffect to merge properly
 						setLocalStorageReservations(updatedReservations);
+
+						// Also immediately update display state to show the new reservation
+						// Use the transformed reservation format to match what's in local storage
+						// The reservation won't be in existingReservations (server data) yet, so it's a local-only reservation
+						setRsvps((prev) => {
+							const exists = prev.some((item) => item.id === newRsvp.id);
+							if (exists) return prev;
+							// Add the new reservation to the display list using the transformed format
+							// It will be properly merged when the useEffect runs
+							return [reservationForStorage as Rsvp, ...prev];
+						});
 					}
 				} catch (error) {
 					// Silently handle errors updating local storage
 				}
+			} else {
+				// For signed-in users, just update display reservations
+				setRsvps((prev) => {
+					const exists = prev.some((item) => item.id === newRsvp.id);
+					if (exists) return prev;
+					return [newRsvp, ...prev];
+				});
 			}
 
 			onReservationCreated?.(newRsvp);
@@ -1192,6 +1181,12 @@ export const CustomerWeekViewCalendar: React.FC<
 					toastSuccess({
 						description: t("reservation_deleted"),
 					});
+					// Mark as deleted to prevent it from being re-added from server
+					setDeletedReservationIds((prev) => {
+						const updated = new Set(prev);
+						updated.add(reservationToCancel.id);
+						return updated;
+					});
 					// Remove from local state
 					setRsvps((prev) =>
 						prev.filter((r) => r.id !== reservationToCancel.id),
@@ -1227,7 +1222,12 @@ export const CustomerWeekViewCalendar: React.FC<
 					if (result?.data?.rsvp) {
 						handleReservationUpdated(result.data.rsvp);
 					} else {
-						// If no data returned, remove from list
+						// If no data returned, mark as deleted and remove from list
+						setDeletedReservationIds((prev) => {
+							const updated = new Set(prev);
+							updated.add(reservationToCancel.id);
+							return updated;
+						});
 						setRsvps((prev) =>
 							prev.filter((r) => r.id !== reservationToCancel.id),
 						);

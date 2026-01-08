@@ -12,15 +12,16 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { StoreOrder } from "@/types";
 import logger from "@/lib/logger";
+import { CustomerCreditLedgerType } from "@/types/enum";
 
 type Params = Promise<{ orderId: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 /**
- * Credit payment page for checkout.
- * Deducts order total from customer's fiat balance and marks order as paid.
+ * Credit points payment page for checkout.
+ * Deducts order total from customer's credit points balance and marks order as paid.
  */
-export default async function CreditPaymentPage(props: {
+export default async function CreditPointPaymentPage(props: {
 	params: Params;
 	searchParams: SearchParams;
 }) {
@@ -42,6 +43,7 @@ export default async function CreditPaymentPage(props: {
 			level: number | null;
 			LINE_PAY_ID: string | null;
 			STRIPE_SECRET_KEY: string | null;
+			creditExchangeRate: number | Prisma.Decimal | null;
 		};
 		PaymentMethod: {
 			id: string;
@@ -82,12 +84,32 @@ export default async function CreditPaymentPage(props: {
 		);
 	}
 
-	// Validate that order has a userId (required for credit payment)
+	// Validate that order has a userId (required for credit points payment)
 	if (!order.userId) {
-		throw new SafeError("Credit payment requires a logged-in user");
+		throw new SafeError("Credit points payment requires a logged-in user");
 	}
 
-	// Get customer credit balance
+	// Get store for credit exchange rate
+	const store = await sqlClient.store.findUnique({
+		where: { id: order.storeId },
+		select: {
+			level: true,
+			defaultCurrency: true,
+			creditExchangeRate: true,
+		},
+	});
+
+	if (!store) {
+		throw new SafeError("Store not found");
+	}
+
+	// Get credit exchange rate
+	const creditExchangeRate = Number(store.creditExchangeRate) || 1;
+	if (creditExchangeRate <= 0) {
+		throw new SafeError("Credit exchange rate is not configured");
+	}
+
+	// Get customer credit balance (points)
 	const customerCredit = await sqlClient.customerCredit.findUnique({
 		where: {
 			storeId_userId: {
@@ -97,39 +119,28 @@ export default async function CreditPaymentPage(props: {
 		},
 	});
 
-	const currentBalance = customerCredit ? Number(customerCredit.fiat) : 0;
 	const orderTotal = Number(order.orderTotal) || 0;
+	// Convert order total (in currency) to credit points
+	const requiredCreditPoints = orderTotal / creditExchangeRate;
+	const currentBalance = customerCredit ? Number(customerCredit.point) : 0;
 
 	// Check if customer has sufficient balance
-	if (currentBalance < orderTotal) {
-		// Redirect to refill account balance page
-		const checkoutUrl = `/checkout/${order.id}/credit${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`;
-		const refillUrl = `/s/${order.storeId}/refill-account-balance?returnUrl=${encodeURIComponent(checkoutUrl)}`;
+	if (currentBalance < requiredCreditPoints) {
+		// Redirect to refill credit points page
+		const checkoutUrl = `/checkout/${order.id}/creditPoint${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ""}`;
+		const refillUrl = `/s/${order.storeId}/refill-credit-points?returnUrl=${encodeURIComponent(checkoutUrl)}`;
 		redirect(refillUrl);
-	}
-
-	// Get store for currency
-	const store = await sqlClient.store.findUnique({
-		where: { id: order.storeId },
-		select: {
-			level: true,
-			defaultCurrency: true,
-		},
-	});
-
-	if (!store) {
-		throw new SafeError("Store not found");
 	}
 
 	// Get translation function
 	const { t } = await getT();
 
 	// Calculate new balance after deduction
-	const newBalance = currentBalance - orderTotal;
+	const newBalance = currentBalance - requiredCreditPoints;
 
 	// Process payment in transaction
 	await sqlClient.$transaction(async (tx) => {
-		// 1. Update customer fiat balance
+		// 1. Update customer credit points balance
 		await tx.customerCredit.upsert({
 			where: {
 				storeId_userId: {
@@ -140,59 +151,73 @@ export default async function CreditPaymentPage(props: {
 			create: {
 				storeId: order.storeId,
 				userId: order.userId,
-				fiat: new Prisma.Decimal(newBalance),
-				point: new Prisma.Decimal(0), // Ensure point is set
+				point: new Prisma.Decimal(newBalance),
+				fiat: new Prisma.Decimal(0), // Ensure fiat is set
 				updatedAt: getUtcNowEpoch(),
 			},
 			update: {
-				fiat: new Prisma.Decimal(newBalance),
+				point: new Prisma.Decimal(newBalance),
 				updatedAt: getUtcNowEpoch(),
 			},
 		});
 
-		// 2. Create CustomerFiatLedger entry for payment
-		await tx.customerFiatLedger.create({
+		// 2. Create CustomerCreditLedger entry for payment
+		await tx.customerCreditLedger.create({
 			data: {
 				storeId: order.storeId,
 				userId: order.userId,
-				amount: new Prisma.Decimal(-orderTotal), // Negative for payment deduction
+				amount: new Prisma.Decimal(-requiredCreditPoints), // Negative for payment deduction
 				balance: new Prisma.Decimal(newBalance),
-				type: "PAYMENT", // CustomerFiatLedgerType.Payment
+				type: CustomerCreditLedgerType.Spend, // Credit points payment
 				referenceId: order.id, // Link to order
 				note:
-					t("order_payment_fiat_note", {
+					t("order_payment_credit_point_note", {
 						orderId: order.id,
+						points: requiredCreditPoints,
 						amount: orderTotal,
 						currency: (store.defaultCurrency || "twd").toUpperCase(),
-					}) || `Order payment: ${order.id}`,
+					}) || `Order payment: ${order.id} (${requiredCreditPoints} points)`,
 				creatorId: order.userId, // Customer initiated payment
 				createdAt: getUtcNowEpoch(),
 			},
 		});
 	});
 
-	logger.info("Credit payment processed successfully", {
+	logger.info("Credit points payment processed successfully", {
 		metadata: {
 			orderId: order.id,
 			storeId: order.storeId,
 			userId: order.userId,
 			amount: orderTotal,
+			creditPoints: requiredCreditPoints,
 			balanceBefore: currentBalance,
 			balanceAfter: newBalance,
+			creditExchangeRate,
 		},
-		tags: ["payment", "credit", "fiat", "success"],
+		tags: ["payment", "credit", "points", "success"],
 	});
 
-	// 3. Find credit payment method
-	const creditPaymentMethod = await sqlClient.paymentMethod.findFirst({
+	// 3. Find credit points payment method
+	// Try "creditPoint" first, fall back to "credit" if not found
+	let creditPointPaymentMethod = await sqlClient.paymentMethod.findFirst({
 		where: {
-			payUrl: "credit",
+			payUrl: "creditPoint",
 			isDeleted: false,
 		},
 	});
 
-	if (!creditPaymentMethod) {
-		throw new SafeError("Credit payment method not found");
+	// If not found, try "credit" as fallback
+	if (!creditPointPaymentMethod) {
+		creditPointPaymentMethod = await sqlClient.paymentMethod.findFirst({
+			where: {
+				payUrl: "credit",
+				isDeleted: false,
+			},
+		});
+	}
+
+	if (!creditPointPaymentMethod) {
+		throw new SafeError("Credit points payment method not found");
 	}
 
 	// 4. Mark order as paid using markOrderAsPaidCore
@@ -200,9 +225,9 @@ export default async function CreditPaymentPage(props: {
 	const isPro = store.level === 2 || store.level === 3; // Pro or Multi level
 	const updatedOrder = await markOrderAsPaidCore({
 		order,
-		paymentMethodId: creditPaymentMethod.id,
+		paymentMethodId: creditPointPaymentMethod.id,
 		isPro,
-		logTags: ["credit", "fiat"],
+		logTags: ["credit", "points"],
 	});
 
 	// Determine return URL

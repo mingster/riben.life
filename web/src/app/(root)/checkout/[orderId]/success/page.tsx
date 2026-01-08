@@ -68,6 +68,27 @@ export default async function CheckoutSuccessPage(props: {
 		finalReturnUrl = `/s/${order.storeId}/reservation`;
 	}
 
+	// Fetch RSVP if order is for RSVP (to update localStorage for anonymous users)
+	let rsvp = null;
+	if (order.isPaid && order.pickupCode?.startsWith("RSVP:")) {
+		// Find RSVP by orderId
+		const foundRsvp = await sqlClient.rsvp.findFirst({
+			where: { orderId: order.id },
+			include: {
+				Store: true,
+				Customer: true,
+				CreatedBy: true,
+				Facility: true,
+				Order: true,
+			},
+		});
+
+		if (foundRsvp) {
+			transformPrismaDataForJson(foundRsvp);
+			rsvp = foundRsvp;
+		}
+	}
+
 	transformPrismaDataForJson(order);
 
 	// Show success message briefly, then redirect
@@ -75,7 +96,11 @@ export default async function CheckoutSuccessPage(props: {
 	return (
 		<Suspense fallback={<Loader />}>
 			<Container>
-				<SuccessAndRedirect order={order} returnUrl={finalReturnUrl} />
+				<SuccessAndRedirect
+					order={order}
+					returnUrl={finalReturnUrl}
+					rsvp={rsvp}
+				/>
 			</Container>
 		</Suspense>
 	);

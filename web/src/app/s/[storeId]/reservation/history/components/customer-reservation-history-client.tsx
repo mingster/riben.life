@@ -122,44 +122,15 @@ export const CustomerReservationHistoryClient: React.FC<
 	});
 
 	// Update allData when localStorageReservations or serverData change
+	// Note: We do NOT clean up local storage reservations even if they don't exist on server
+	// This is because:
+	// 1. Claimed reservations will exist on server but we want to keep them in local storage
+	// 2. Users might sign out and back in, and we want to preserve local storage as backup
+	// 3. Local storage serves as a backup for anonymous reservations
 	useEffect(() => {
 		if (!user && localStorageReservations.length > 0) {
-			const serverIds = new Set(serverData.map((r) => r.id));
-
-			// Get current local storage reservations
-			let currentLocalReservations = localStorageReservations;
-
-			// Check if any local storage reservations were deleted from server
-			const deletedFromServer = localStorageReservations.filter(
-				(r) => !serverIds.has(r.id),
-			);
-
-			// If reservations were deleted from server, remove them from local storage
-			if (deletedFromServer.length > 0 && storeId) {
-				const storageKey = `rsvp-${storeId}`;
-				try {
-					const storedData = localStorage.getItem(storageKey);
-					if (storedData) {
-						const localReservations: Rsvp[] = JSON.parse(storedData);
-						// Keep only reservations that exist on server
-						const updatedLocal = localReservations.filter((r) =>
-							serverIds.has(r.id),
-						);
-
-						if (updatedLocal.length > 0) {
-							localStorage.setItem(storageKey, JSON.stringify(updatedLocal));
-						} else {
-							localStorage.removeItem(storageKey);
-						}
-
-						// Use the cleaned-up version for merging
-						currentLocalReservations = updatedLocal;
-						setLocalStorageReservations(updatedLocal);
-					}
-				} catch (error) {
-					// Silently handle errors cleaning up deleted reservations
-				}
-			}
+			// Get current local storage reservations (no cleanup - keep all)
+			const currentLocalReservations = localStorageReservations;
 
 			// For anonymous users, only show reservations that exist in local storage
 			// This ensures they only see their own reservations
@@ -271,25 +242,8 @@ export const CustomerReservationHistoryClient: React.FC<
 					}
 				}
 
-				// Remove successfully claimed reservations from local storage
+				// Show success message for successfully claimed reservations
 				if (claimedIds.length > 0) {
-					const remainingReservations = localReservations.filter(
-						(r) => !claimedIds.includes(r.id),
-					);
-
-					if (remainingReservations.length > 0) {
-						localStorage.setItem(
-							storageKey,
-							JSON.stringify(remainingReservations),
-						);
-					} else {
-						// No more reservations, remove the key
-						localStorage.removeItem(storageKey);
-					}
-
-					// Update local storage state
-					setLocalStorageReservations(remainingReservations);
-
 					// Show success message
 					if (claimedIds.length === 1) {
 						toastSuccess({
@@ -308,6 +262,10 @@ export const CustomerReservationHistoryClient: React.FC<
 							),
 						});
 					}
+
+					// Note: We do NOT remove claimed reservations from local storage
+					// because the user might sign out and sign in again, and we want to preserve
+					// the local storage as a backup for anonymous reservations
 
 					// Refresh the page to show updated reservations
 					router.refresh();
@@ -557,18 +515,22 @@ export const CustomerReservationHistoryClient: React.FC<
 		[rsvpSettings, isUserReservation],
 	);
 
-	// Remove reservation from local storage
+	// Remove reservation from local storage (only for anonymous users)
 	const removeReservationFromLocalStorage = useCallback(
 		(reservationId: string) => {
-			removeReservationFromLocalStorageUtil(
-				storeId,
-				reservationId,
-				(updated) => {
-					setLocalStorageReservations(updated);
-				},
-			);
+			// Only remove from local storage for anonymous users
+			// Signed-in users should keep reservations in local storage even after claiming
+			if (!user && storeId) {
+				removeReservationFromLocalStorageUtil(
+					storeId,
+					reservationId,
+					(updated) => {
+						setLocalStorageReservations(updated);
+					},
+				);
+			}
 		},
-		[storeId],
+		[user, storeId],
 	);
 
 	// Handle reservation updated (for cancelled reservations)
