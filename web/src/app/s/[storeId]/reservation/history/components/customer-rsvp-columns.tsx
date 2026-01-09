@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
 import { format } from "date-fns";
-import { IconX } from "@tabler/icons-react";
+import { IconEdit, IconPencil, IconX } from "@tabler/icons-react";
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { cn } from "@/lib/utils";
@@ -162,16 +162,6 @@ export const createCustomerRsvpColumns = (
 						>
 							<span className="font-medium">{t(`rsvp_status_${status}`)}</span>
 						</span>
-						{canCancel && onStatusClick && (
-							<IconX
-								className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity bg-red-500"
-								onClick={(e) => {
-									e.stopPropagation();
-									onStatusClick(e, rsvp);
-								}}
-								title={t("cancel_reservation") || "Cancel reservation"}
-							/>
-						)}
 					</div>
 				);
 			},
@@ -277,6 +267,42 @@ export const createCustomerRsvpColumns = (
 			},
 			meta: {
 				className: "hidden sm:table-cell",
+			},
+		},
+		{
+			id: "actions",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("actions")} />
+			),
+			cell: ({ row }) => {
+				const rsvp = row.original;
+				const canEdit = canEditReservation?.(rsvp) ?? false;
+				const canCancel = canCancelReservation?.(rsvp) ?? false;
+				const isClickable = canEdit && onEditClick;
+				return (
+					<div className="flex items-center gap-1.5">
+						{canEdit && onEditClick && (
+							<IconPencil
+								className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-blue-500"
+								onClick={(e) => {
+									e.stopPropagation();
+									onEditClick(rsvp);
+								}}
+								title={t("edit_reservation") || "Edit reservation"}
+							/>
+						)}
+						{canCancel && onStatusClick && (
+							<IconX
+								className="h-4 w-4 cursor-pointer hover:opacity-80 transition-opacity text-red-500"
+								onClick={(e) => {
+									e.stopPropagation();
+									onStatusClick(e, rsvp);
+								}}
+								title={t("cancel_reservation") || "Cancel reservation"}
+							/>
+						)}
+					</div>
+				);
 			},
 		},
 	];

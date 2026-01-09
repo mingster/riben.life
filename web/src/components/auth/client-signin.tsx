@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import {
 	IconBrandMeta,
 	IconChevronDown,
@@ -32,9 +33,13 @@ import LineLoginButton from "./button-line-login";
 export default function ClientSignIn({
 	callbackUrl = "/",
 	noTitle = false,
+	title,
+	className,
 }: {
 	callbackUrl?: string;
 	noTitle?: boolean;
+	title?: string;
+	className?: string;
 }) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -47,11 +52,16 @@ export default function ClientSignIn({
 		callbackUrl = `/s/${storeId}`;
 	}
 
+	// Use provided title or fall back to default
+	const displayTitle = title ?? t("signin_title");
+
 	return (
-		<Card className="w-full max-w-lg max-h-lg p-2">
+		<Card className={cn("w-full max-w-lg max-h-lg", className)}>
 			{!noTitle && (
 				<CardHeader>
-					<CardTitle className="text-lg pt-2">{t("signin_title")}</CardTitle>
+					<CardTitle className="text-lg pt-2 md:text-2xl font-light leading-relaxed text-foreground/80">
+						{displayTitle}
+					</CardTitle>
 				</CardHeader>
 			)}
 

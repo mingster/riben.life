@@ -512,7 +512,7 @@
   "Order_unpaid_descr": "請勾選來確認：1.已收現金、2.訂單內容。",
   "Order_unpaid_title": "現金結帳/確認訂單",
   "order_view_title": "購物明細",
-  "order_sign_in_benefits": "登入來賺取這組訂位的積分，並在您其他的設備取得訂位等資訊。",
+  "order_sign_in_benefits": "登入後，能您更方便在各項設備上取回資訊。",
   "ordered_at": "訂購時間",
   "Orders": "訂單管理",
   "OrderStatus_Cancelled": "已取消",

@@ -6,6 +6,8 @@ import { DisplayOrder } from "@/components/display-order";
 import { GlobalNavbar } from "@/components/global-navbar";
 import StoreRequirePrepaidPrompt from "@/components/store-require-prepaid-prompt";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import Container from "@/components/ui/container";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/providers/i18n-provider";
@@ -40,8 +42,6 @@ export const DisplayClient: React.FC<props> = ({ store, order, rsvp }) => {
 		<div className="bg-no-repeat bg-[url('/img/beams/hero@75.jpg')] dark:bg-[url('/img/beams/hero-dark@90.jpg')]">
 			<GlobalNavbar title="" />
 			<Container>
-				<h1 className="text-4xl sm:text-xl pb-2">{t("order_view_title")}</h1>
-
 				{store.requirePrepaid && order.isPaid === false && (
 					<StoreRequirePrepaidPrompt />
 				)}
@@ -49,6 +49,10 @@ export const DisplayClient: React.FC<props> = ({ store, order, rsvp }) => {
 				{isSignedIn ? (
 					// Signed in: show order in full width
 					<>
+						<h1 className="text-4xl sm:text-xl pb-2">
+							{t("order_view_title")}
+						</h1>
+
 						<DisplayOrder
 							order={order}
 							showOrderNotes={true}
@@ -66,29 +70,38 @@ export const DisplayClient: React.FC<props> = ({ store, order, rsvp }) => {
 					</>
 				) : (
 					// Not signed in: two-column layout (order on left, sign-in on right)
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-						<div className="space-y-4">
-							<DisplayOrder
-								order={order}
-								showOrderNotes={true}
-								showPickupCode={false}
-								hidePaymentMethod={true}
-								hideOrderStatus={false}
-								hideContactSeller={false}
-							/>
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-1 items-stretch justify-center w-full">
+						<div className="space-y-4 h-full">
+							<Card className="h-full">
+								<CardHeader>
+									<CardTitle className="text-lg pt-2 md:text-2xl font-light leading-relaxed text-foreground/80">
+										{t("order_view_title")}
+									</CardTitle>
+								</CardHeader>
+								<CardContent>
+									<DisplayOrder
+										order={order}
+										showOrderNotes={true}
+										showPickupCode={false}
+										hidePaymentMethod={true}
+										hideOrderStatus={false}
+										hideContactSeller={false}
+									/>
 
-							<Link href={keepShoppingHref} className="">
-								<Button className="w-full">
-									{t("cart_summary_keepShopping")}
-								</Button>
-							</Link>
+									<Link href={keepShoppingHref} className="">
+										<Button className="w-full">
+											{t("cart_summary_keepShopping")}
+										</Button>
+									</Link>
+								</CardContent>
+							</Card>
 						</div>
 
-						<div className="space-y-4">
-							<div className="text-xl md:text-2xl font-light leading-relaxed text-foreground/80">
-								{t("order_sign_in_benefits")}
-							</div>
-							<ClientSignIn />
+						<div className="space-y-4 h-full">
+							<ClientSignIn
+								title={t("order_sign_in_benefits")}
+								className="h-full max-h-none"
+							/>
 						</div>
 					</div>
 				)}
