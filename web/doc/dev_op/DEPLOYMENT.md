@@ -124,14 +124,6 @@ sudo install lazygit -D -t /usr/local/bin/
 
 ```bash
 bun install -g pm2
-
-#mkdir -p /var/www/riben.life
-#cd /var/www/riben.life/web
-#pm2 start bun --name "riben.life" -- start -- -p 3001
-
-pm2 startup systemd
-pm2 save
-pm2 status
 ```
 
 #### ufw
@@ -237,15 +229,39 @@ cd /var/www
 sudo  git clone https://github.com/mingster/riben.life.git
 ```
 
+### .env 
+
+copy or edit .env over to production
+
 ### build
 
 ```bash
-cd riben.life/web
+cd riben.life/web/bin
 
-nano .env
+sh deploy.sh
 
-bun install
-bun run build
+#bun install
+#bun run build
+```
+
+### pm2
+
+```bash
+
+#mkdir -p /var/www/riben.life
+cd /var/www/riben.life/web
+#pm2 start bun --name "riben.life" -- start -- -p 3001
+
+# 6. Restart PM2 (without the duplicate -p flag)
+#pm2 delete riben.life
+pm2 start bun --name "riben.life" -- start
+
+pm2 startup systemd
+pm2 save
+pm2 status
+
+# 7. Check the logs
+pm2 logs riben.life --lines 50
 ```
 
 ## Cron jobs

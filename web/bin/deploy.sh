@@ -104,6 +104,10 @@ build_app() {
     
     cd "${WEB_DIR}"
     
+    # Set Node.js memory limit to prevent build failures
+    export NODE_OPTIONS="--max-old-space-size=4096"
+    log "Node.js memory limit set to 4GB"
+    
     # Use production build for production environment, standard build for others
     if [ "${ENVIRONMENT}" = "production" ]; then
         log "Using production build configuration..."
