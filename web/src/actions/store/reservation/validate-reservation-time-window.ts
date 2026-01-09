@@ -1,5 +1,6 @@
 import { SafeError } from "@/utils/error";
 import { getUtcNow, epochToDate } from "@/utils/datetime-utils";
+import { getT } from "@/app/i18n";
 
 interface RsvpSettingsForTimeWindow {
 	canReserveBefore?: number | null;
@@ -12,10 +13,10 @@ interface RsvpSettingsForTimeWindow {
  * @param rsvpTime - BigInt epoch time (milliseconds) representing the reservation time
  * @throws SafeError if reservation time is outside the allowed window
  */
-export function validateReservationTimeWindow(
+export async function validateReservationTimeWindow(
 	rsvpSettings: RsvpSettingsForTimeWindow | null | undefined,
 	rsvpTime: bigint,
-): void {
+): Promise<void> {
 	// If settings are not available, skip validation (graceful degradation)
 	if (!rsvpSettings) {
 		return;
@@ -28,7 +29,10 @@ export function validateReservationTimeWindow(
 	const rsvpTimeDate = epochToDate(rsvpTime);
 
 	if (!rsvpTimeDate) {
-		throw new SafeError("Invalid reservation time");
+		const { t } = await getT();
+		throw new SafeError(
+			t("rsvp_invalid_reservation_time") || "Invalid reservation time",
+		);
 	}
 
 	const hoursUntilReservation =
@@ -36,16 +40,25 @@ export function validateReservationTimeWindow(
 
 	// Check minimum hours in advance (canReserveBefore)
 	if (hoursUntilReservation < canReserveBefore) {
+		const { t } = await getT();
 		throw new SafeError(
-			`Reservations must be made at least ${canReserveBefore} hours in advance. The selected time is too soon.`,
+			t("rsvp_reservations_must_be_made_hours_in_advance", {
+				hours: canReserveBefore,
+			}) ||
+				`Reservations must be made at least ${canReserveBefore} hours in advance. The selected time is too soon.`,
 		);
 	}
 
 	// Check maximum hours in future (canReserveAfter)
 	if (hoursUntilReservation > canReserveAfter) {
 		const months = Math.round(canReserveAfter / 730);
+		const { t } = await getT();
 		throw new SafeError(
-			`Reservations can only be made up to ${canReserveAfter} hours (approximately ${months} months) in advance. The selected time is too far in the future.`,
+			t("rsvp_reservations_can_only_be_made_hours_in_advance", {
+				hours: canReserveAfter,
+				months,
+			}) ||
+				`Reservations can only be made up to ${canReserveAfter} hours (approximately ${months} months) in advance. The selected time is too far in the future.`,
 		);
 	}
 }

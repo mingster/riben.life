@@ -1,6 +1,7 @@
 import { SafeError } from "@/utils/error";
 import logger from "@/lib/logger";
 import { getOffsetHours, getDateInTz } from "@/utils/datetime-utils";
+import { getT } from "@/app/i18n";
 
 interface BusinessHoursSchedule {
 	Monday?: Array<{ from: string; to: string }> | "closed";
@@ -20,12 +21,12 @@ interface BusinessHoursSchedule {
  * @param facilityId - Facility ID for logging purposes
  * @throws SafeError if time is outside business hours
  */
-export function validateFacilityBusinessHours(
+export async function validateFacilityBusinessHours(
 	businessHours: string | null | undefined,
 	rsvpTimeUtc: Date,
 	storeTimezone: string,
 	facilityId?: string,
-): void {
+): Promise<void> {
 	// If no business hours, assume facility is always available
 	if (!businessHours) {
 		return;
@@ -54,8 +55,10 @@ export function validateFacilityBusinessHours(
 		// Get hours for this day
 		const dayHours = schedule[dayName];
 		if (!dayHours || dayHours === "closed") {
+			const { t } = await getT();
 			throw new SafeError(
-				"The selected time is outside business hours for this facility",
+				t("rsvp_time_outside_business_hours_facility") ||
+					"The selected time is outside business hours for this facility",
 			);
 		}
 
@@ -88,8 +91,10 @@ export function validateFacilityBusinessHours(
 		}
 
 		if (!isWithinHours) {
+			const { t } = await getT();
 			throw new SafeError(
-				"The selected time is outside business hours for this facility",
+				t("rsvp_time_outside_business_hours_facility") ||
+					"The selected time is outside business hours for this facility",
 			);
 		}
 	} catch (error) {

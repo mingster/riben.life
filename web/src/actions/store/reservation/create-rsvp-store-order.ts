@@ -73,7 +73,11 @@ export async function createRsvpStoreOrder(
 
 	// Ensure at least one cost is provided
 	if (orderTotal <= 0) {
-		throw new SafeError("Order total must be greater than 0");
+		const { t } = await getT();
+		throw new SafeError(
+			t("rsvp_order_total_must_be_greater_than_zero") ||
+				"Order total must be greater than 0",
+		);
 	}
 
 	// Find "reserve" shipping method for reservation orders (preferred)
@@ -92,7 +96,10 @@ export async function createRsvpStoreOrder(
 			});
 
 	if (!defaultShippingMethod) {
-		throw new SafeError("No shipping method available");
+		const { t } = await getT();
+		throw new SafeError(
+			t("rsvp_no_shipping_method_available") || "No shipping method available",
+		);
 	}
 
 	// Find payment method by payUrl identifier
@@ -104,8 +111,11 @@ export async function createRsvpStoreOrder(
 	});
 
 	if (!paymentMethod) {
+		const { t } = await getT();
 		throw new SafeError(
-			`Payment method with identifier "${paymentMethodPayUrl}" not found`,
+			t("rsvp_payment_method_not_found", {
+				payUrl: paymentMethodPayUrl,
+			}) || `Payment method with identifier "${paymentMethodPayUrl}" not found`,
 		);
 	}
 
@@ -113,7 +123,11 @@ export async function createRsvpStoreOrder(
 		await ensureReservationPrepaidProduct(storeId);
 
 	if (!reservationPrepaidProduct) {
-		throw new SafeError("Reservation prepaid product not found");
+		const { t } = await getT();
+		throw new SafeError(
+			t("rsvp_reservation_prepaid_product_not_found") ||
+				"Reservation prepaid product not found",
+		);
 	}
 
 	// Fetch store to get defaultCurrency and timezone at the time of creation
@@ -126,7 +140,8 @@ export async function createRsvpStoreOrder(
 	});
 
 	if (!store) {
-		throw new SafeError("Store not found");
+		const { t } = await getT();
+		throw new SafeError(t("rsvp_store_not_found") || "Store not found");
 	}
 
 	const now = getUtcNowEpoch();

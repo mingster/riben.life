@@ -67,6 +67,11 @@ import {
 	getOffsetHours,
 	getUtcNow,
 } from "@/utils/datetime-utils";
+import {
+	checkTimeAgainstBusinessHours,
+	rsvpTimeToEpoch,
+	transformReservationForStorage,
+} from "@/utils/rsvp-utils";
 import { RsvpStatus } from "@/types/enum";
 import { SlotPicker } from "./slot-picker";
 import { Separator } from "@/components/ui/separator";
@@ -225,6 +230,33 @@ export function ReservationForm({
 	// Determine if we're in edit mode
 	const isEditMode = Boolean(rsvp);
 
+	// Helper: Get field labels for error messages
+	const getFieldLabels = useCallback((): Record<string, string> => {
+		return {
+			storeId: t("store") || "Store",
+			customerId: t("customer") || "Customer",
+			name: t("your_name") || "Your Name",
+			phone: t("phone") || "Phone",
+			facilityId: t("rsvp_facility") || "Facility",
+			serviceStaffId: t("service_staff") || "Service Staff",
+			numOfAdult: t("rsvp_num_of_adult") || "Number of Adults",
+			numOfChild: t("rsvp_num_of_child") || "Number of Children",
+			rsvpTime: t("rsvp_time") || "Reservation Time",
+			message: t("rsvp_message") || "Message",
+		};
+	}, [t]);
+
+	// Helper: Get i18n error keys list
+	const getI18nErrorKeys = useCallback((): string[] => {
+		return [
+			"rsvp_name_required_for_anonymous",
+			"rsvp_phone_required_for_anonymous",
+			"rsvp_name_and_phone_required_for_anonymous",
+			"phone_number_required",
+			"phone_number_invalid_format",
+		];
+	}, []);
+
 	// Helper function to check if a facility is available at a given time
 	const isFacilityAvailableAtTime = useCallback(
 		(
@@ -242,76 +274,14 @@ export function ReservationForm({
 				return true;
 			}
 
-			try {
-				// Parse business hours JSON
-				const schedule = JSON.parse(facility.businessHours) as {
-					Monday?: Array<{ from: string; to: string }> | "closed";
-					Tuesday?: Array<{ from: string; to: string }> | "closed";
-					Wednesday?: Array<{ from: string; to: string }> | "closed";
-					Thursday?: Array<{ from: string; to: string }> | "closed";
-					Friday?: Array<{ from: string; to: string }> | "closed";
-					Saturday?: Array<{ from: string; to: string }> | "closed";
-					Sunday?: Array<{ from: string; to: string }> | "closed";
-				};
-
-				// Convert UTC time to store timezone for checking
-				const offsetHours = getOffsetHours(timezone);
-				const timeInStoreTz = getDateInTz(checkTime, offsetHours);
-
-				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-				const dayOfWeek = timeInStoreTz.getDay();
-				const dayNames = [
-					"Sunday",
-					"Monday",
-					"Tuesday",
-					"Wednesday",
-					"Thursday",
-					"Friday",
-					"Saturday",
-				] as const;
-				const dayName = dayNames[dayOfWeek];
-
-				// Get hours for this day
-				const dayHours = schedule[dayName];
-				if (!dayHours || dayHours === "closed") {
-					return false;
-				}
-
-				// Check if time falls within any time range
-				const checkHour = timeInStoreTz.getHours();
-				const checkMinute = timeInStoreTz.getMinutes();
-				const checkTimeMinutes = checkHour * 60 + checkMinute;
-
-				for (const range of dayHours) {
-					const [fromHour, fromMinute] = range.from.split(":").map(Number);
-					const [toHour, toMinute] = range.to.split(":").map(Number);
-
-					const fromMinutes = fromHour * 60 + fromMinute;
-					const toMinutes = toHour * 60 + toMinute;
-
-					// Check if time falls within range
-					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
-						return true;
-					}
-
-					// Handle range spanning midnight (e.g., 22:00 to 02:00)
-					if (fromMinutes > toMinutes) {
-						if (
-							checkTimeMinutes >= fromMinutes ||
-							checkTimeMinutes < toMinutes
-						) {
-							return true;
-						}
-					}
-				}
-
-				return false;
-			} catch {
-				// If parsing fails, assume facility is available
-				return true;
-			}
+			const result = checkTimeAgainstBusinessHours(
+				facility.businessHours,
+				checkTime,
+				timezone,
+			);
+			return result.isValid;
 		},
-		[storeTimezone],
+		[],
 	);
 
 	// Helper function to validate rsvpTime against store business hours or RSVP hours
@@ -346,74 +316,12 @@ export function ReservationForm({
 				return null;
 			}
 
-			try {
-				const schedule = JSON.parse(hoursJson) as {
-					Monday?: Array<{ from: string; to: string }> | "closed";
-					Tuesday?: Array<{ from: string; to: string }> | "closed";
-					Wednesday?: Array<{ from: string; to: string }> | "closed";
-					Thursday?: Array<{ from: string; to: string }> | "closed";
-					Friday?: Array<{ from: string; to: string }> | "closed";
-					Saturday?: Array<{ from: string; to: string }> | "closed";
-					Sunday?: Array<{ from: string; to: string }> | "closed";
-				};
-
-				// Convert UTC time to store timezone for checking
-				const offsetHours = getOffsetHours(storeTimezone);
-				const timeInStoreTz = getDateInTz(rsvpTime, offsetHours);
-
-				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-				const dayOfWeek = timeInStoreTz.getDay();
-				const dayNames = [
-					"Sunday",
-					"Monday",
-					"Tuesday",
-					"Wednesday",
-					"Thursday",
-					"Friday",
-					"Saturday",
-				] as const;
-				const dayName = dayNames[dayOfWeek];
-
-				// Get hours for this day
-				const dayHours = schedule[dayName];
-				if (!dayHours || dayHours === "closed") {
-					return errorMessage;
-				}
-
-				// Check if time falls within any time range
-				const checkHour = timeInStoreTz.getHours();
-				const checkMinute = timeInStoreTz.getMinutes();
-				const checkTimeMinutes = checkHour * 60 + checkMinute;
-
-				for (const range of dayHours) {
-					const [fromHour, fromMinute] = range.from.split(":").map(Number);
-					const [toHour, toMinute] = range.to.split(":").map(Number);
-
-					const fromMinutes = fromHour * 60 + fromMinute;
-					const toMinutes = toHour * 60 + toMinute;
-
-					// Check if time falls within range
-					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
-						return null; // Valid time
-					}
-
-					// Handle range spanning midnight (e.g., 22:00 to 02:00)
-					if (fromMinutes > toMinutes) {
-						if (
-							checkTimeMinutes >= fromMinutes ||
-							checkTimeMinutes < toMinutes
-						) {
-							return null; // Valid time
-						}
-					}
-				}
-
-				// Time is not within any range
-				return errorMessage;
-			} catch (error) {
-				// If parsing fails, allow the time (graceful degradation)
-				return null;
-			}
+			const result = checkTimeAgainstBusinessHours(
+				hoursJson,
+				rsvpTime,
+				storeTimezone,
+			);
+			return result.isValid ? null : errorMessage;
 		},
 		[
 			rsvpSettings?.useBusinessHours,
@@ -431,21 +339,15 @@ export function ReservationForm({
 			let rsvpTime: Date;
 			if (rsvp.rsvpTime instanceof Date) {
 				rsvpTime = rsvp.rsvpTime;
-			} else if (rsvp.rsvpTime) {
-				// Convert BigInt epoch or number epoch to Date
-				const epochValue =
-					typeof rsvp.rsvpTime === "number"
-						? BigInt(rsvp.rsvpTime)
-						: typeof rsvp.rsvpTime === "bigint"
-							? rsvp.rsvpTime
-							: BigInt(rsvp.rsvpTime);
-				rsvpTime = epochToDate(epochValue) ?? new Date();
+			} else {
+				const epochValue = rsvpTimeToEpoch(rsvp.rsvpTime);
+				rsvpTime = epochValue
+					? (epochToDate(epochValue) ?? new Date())
+					: new Date();
 				// Validate date
 				if (Number.isNaN(rsvpTime.getTime())) {
 					rsvpTime = new Date();
 				}
-			} else {
-				rsvpTime = new Date();
 			}
 
 			return {
@@ -577,74 +479,12 @@ export function ReservationForm({
 				return true;
 			}
 
-			try {
-				// Parse business hours JSON
-				const schedule = JSON.parse(staff.businessHours) as {
-					Monday?: Array<{ from: string; to: string }> | "closed";
-					Tuesday?: Array<{ from: string; to: string }> | "closed";
-					Wednesday?: Array<{ from: string; to: string }> | "closed";
-					Thursday?: Array<{ from: string; to: string }> | "closed";
-					Friday?: Array<{ from: string; to: string }> | "closed";
-					Saturday?: Array<{ from: string; to: string }> | "closed";
-					Sunday?: Array<{ from: string; to: string }> | "closed";
-				};
-
-				// Convert UTC time to store timezone for checking
-				const offsetHours = getOffsetHours(timezone);
-				const timeInStoreTz = getDateInTz(checkTime, offsetHours);
-
-				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-				const dayOfWeek = timeInStoreTz.getDay();
-				const dayNames = [
-					"Sunday",
-					"Monday",
-					"Tuesday",
-					"Wednesday",
-					"Thursday",
-					"Friday",
-					"Saturday",
-				] as const;
-				const dayName = dayNames[dayOfWeek];
-
-				// Get hours for this day
-				const dayHours = schedule[dayName];
-				if (!dayHours || dayHours === "closed") {
-					return false;
-				}
-
-				// Check if time falls within any time range
-				const checkHour = timeInStoreTz.getHours();
-				const checkMinute = timeInStoreTz.getMinutes();
-				const checkTimeMinutes = checkHour * 60 + checkMinute;
-
-				for (const range of dayHours) {
-					const [fromHour, fromMinute] = range.from.split(":").map(Number);
-					const [toHour, toMinute] = range.to.split(":").map(Number);
-
-					const fromMinutes = fromHour * 60 + fromMinute;
-					const toMinutes = toHour * 60 + toMinute;
-
-					// Check if time falls within range
-					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
-						return true;
-					}
-
-					// Handle range spanning midnight (e.g., 22:00 to 02:00)
-					if (fromMinutes > toMinutes) {
-						if (
-							checkTimeMinutes >= fromMinutes ||
-							checkTimeMinutes < toMinutes
-						) {
-							return true;
-						}
-					}
-				}
-
-				return false;
-			} catch {
-				// If parsing fails, assume service staff is available (graceful degradation)
-				return true;
-			}
+			const result = checkTimeAgainstBusinessHours(
+				staff.businessHours,
+				checkTime,
+				timezone,
+			);
+			return result.isValid;
 		},
 		[],
 	);
@@ -729,14 +569,8 @@ export function ReservationForm({
 					}
 
 					// Check if reservation is in the same time slot
-					let existingRsvpTime: bigint;
-					if (r.rsvpTime instanceof Date) {
-						existingRsvpTime = BigInt(r.rsvpTime.getTime());
-					} else if (typeof r.rsvpTime === "number") {
-						existingRsvpTime = BigInt(r.rsvpTime);
-					} else if (typeof r.rsvpTime === "bigint") {
-						existingRsvpTime = r.rsvpTime;
-					} else {
+					const existingRsvpTime = rsvpTimeToEpoch(r.rsvpTime);
+					if (!existingRsvpTime) {
 						return false;
 					}
 
@@ -780,14 +614,8 @@ export function ReservationForm({
 				}
 
 				// Convert existing reservation time to epoch
-				let existingRsvpTime: bigint;
-				if (existingRsvp.rsvpTime instanceof Date) {
-					existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
-				} else if (typeof existingRsvp.rsvpTime === "number") {
-					existingRsvpTime = BigInt(existingRsvp.rsvpTime);
-				} else if (typeof existingRsvp.rsvpTime === "bigint") {
-					existingRsvpTime = existingRsvp.rsvpTime;
-				} else {
+				const existingRsvpTime = rsvpTimeToEpoch(existingRsvp.rsvpTime);
+				if (!existingRsvpTime) {
 					return false;
 				}
 
@@ -851,15 +679,6 @@ export function ReservationForm({
 		existingReservations,
 	]);
 
-	// Trigger validation when mustSelectFacility or availableFacilities change
-	useEffect(() => {
-		if (mustSelectFacility && availableFacilities.length > 0) {
-			form.trigger("facilityId");
-		} else {
-			form.clearErrors("facilityId");
-		}
-	}, [mustSelectFacility, availableFacilities.length, form]);
-
 	// Trigger validation when mustHaveServiceStaff changes
 	useEffect(() => {
 		if (mustHaveServiceStaff) {
@@ -873,7 +692,7 @@ export function ReservationForm({
 	useEffect(() => {
 		if (mustSelectFacility && availableFacilities.length > 0) {
 			form.trigger("facilityId");
-		} else if (!mustSelectFacility || availableFacilities.length === 0) {
+		} else {
 			form.clearErrors("facilityId");
 		}
 	}, [mustSelectFacility, availableFacilities.length, facilityId, form]);
@@ -1053,30 +872,7 @@ export function ReservationForm({
 									const localReservations: Rsvp[] = JSON.parse(storedData);
 									const updatedLocal = localReservations.map((r) =>
 										r.id === updatedRsvp.id
-											? {
-													...updatedRsvp,
-													// Transform BigInt to number for local storage
-													rsvpTime:
-														typeof updatedRsvp.rsvpTime === "number"
-															? updatedRsvp.rsvpTime
-															: updatedRsvp.rsvpTime instanceof Date
-																? updatedRsvp.rsvpTime.getTime()
-																: typeof updatedRsvp.rsvpTime === "bigint"
-																	? Number(updatedRsvp.rsvpTime)
-																	: null,
-													createdAt:
-														typeof updatedRsvp.createdAt === "number"
-															? updatedRsvp.createdAt
-															: typeof updatedRsvp.createdAt === "bigint"
-																? Number(updatedRsvp.createdAt)
-																: null,
-													updatedAt:
-														typeof updatedRsvp.updatedAt === "number"
-															? updatedRsvp.updatedAt
-															: typeof updatedRsvp.updatedAt === "bigint"
-																? Number(updatedRsvp.updatedAt)
-																: null,
-												}
+											? transformReservationForStorage(updatedRsvp)
 											: r,
 									);
 									localStorage.setItem(
@@ -1145,34 +941,9 @@ export function ReservationForm({
 
 								if (!existsInStorage) {
 									// Transform reservation data for localStorage (convert BigInt to number)
-									// Match the transformation order from CustomerWeekViewCalendar
-									const reservationForStorage = {
-										...data.rsvp,
-										rsvpTime:
-											typeof data.rsvp.rsvpTime === "number"
-												? data.rsvp.rsvpTime
-												: data.rsvp.rsvpTime instanceof Date
-													? data.rsvp.rsvpTime.getTime()
-													: typeof data.rsvp.rsvpTime === "bigint"
-														? Number(data.rsvp.rsvpTime)
-														: null,
-										createdAt:
-											typeof data.rsvp.createdAt === "number"
-												? data.rsvp.createdAt
-												: data.rsvp.createdAt instanceof Date
-													? data.rsvp.createdAt.getTime()
-													: typeof data.rsvp.createdAt === "bigint"
-														? Number(data.rsvp.createdAt)
-														: null,
-										updatedAt:
-											typeof data.rsvp.updatedAt === "number"
-												? data.rsvp.updatedAt
-												: data.rsvp.updatedAt instanceof Date
-													? data.rsvp.updatedAt.getTime()
-													: typeof data.rsvp.updatedAt === "bigint"
-														? Number(data.rsvp.updatedAt)
-														: null,
-									};
+									const reservationForStorage = transformReservationForStorage(
+										data.rsvp,
+									);
 
 									// Append new reservation to existing array
 									const updatedReservations = [
@@ -1224,14 +995,9 @@ export function ReservationForm({
 							) {
 								const cancelHours = rsvpSettings.cancelHours ?? 24;
 								const now = getUtcNow();
-								const rsvpTimeDate = data.rsvp.rsvpTime
-									? epochToDate(
-											typeof data.rsvp.rsvpTime === "number"
-												? BigInt(data.rsvp.rsvpTime)
-												: data.rsvp.rsvpTime instanceof Date
-													? BigInt(data.rsvp.rsvpTime.getTime())
-													: data.rsvp.rsvpTime,
-										)
+								const rsvpTimeEpoch = rsvpTimeToEpoch(data.rsvp.rsvpTime);
+								const rsvpTimeDate = rsvpTimeEpoch
+									? epochToDate(rsvpTimeEpoch)
 									: null;
 
 								if (rsvpTimeDate) {
@@ -1906,31 +1672,10 @@ export function ReservationForm({
 									"Please fix the following errors:"}
 							</div>
 							{Object.entries(form.formState.errors).map(([field, error]) => {
-								// Map field names to user-friendly labels using i18n
-								const fieldLabels: Record<string, string> = {
-									storeId: t("store") || "Store",
-									customerId: t("customer") || "Customer",
-									name: t("your_name") || "Your Name",
-									phone: t("phone") || "Phone",
-									facilityId: t("rsvp_facility") || "Facility",
-									serviceStaffId: t("service_staff") || "Service Staff",
-									numOfAdult: t("rsvp_num_of_adult") || "Number of Adults",
-									numOfChild: t("rsvp_num_of_child") || "Number of Children",
-									rsvpTime: t("rsvp_time") || "Reservation Time",
-									message: t("rsvp_message") || "Message",
-								};
+								const fieldLabels = getFieldLabels();
 								const fieldLabel = fieldLabels[field] || field;
-
-								// Translate error message if it's an i18n key, otherwise use as-is
 								const errorMessage = error.message as string;
-								// List of known i18n keys used in validation
-								const i18nErrorKeys = [
-									"rsvp_name_required_for_anonymous",
-									"rsvp_phone_required_for_anonymous",
-									"rsvp_name_and_phone_required_for_anonymous",
-									"phone_number_required",
-									"phone_number_invalid_format",
-								];
+								const i18nErrorKeys = getI18nErrorKeys();
 								const translatedMessage = i18nErrorKeys.includes(errorMessage)
 									? t(errorMessage)
 									: errorMessage;
@@ -1996,33 +1741,10 @@ export function ReservationForm({
 											{Object.entries(form.formState.errors)
 												.slice(0, 3)
 												.map(([field, error]) => {
-													const fieldLabels: Record<string, string> = {
-														storeId: t("store") || "Store",
-														customerId: t("customer") || "Customer",
-														name: t("your_name") || "Your Name",
-														phone: t("phone") || "Phone",
-														facilityId: t("rsvp_facility") || "Facility",
-														serviceStaffId:
-															t("service_staff") || "Service Staff",
-														numOfAdult:
-															t("rsvp_num_of_adult") || "Number of Adults",
-														numOfChild:
-															t("rsvp_num_of_child") || "Number of Children",
-														rsvpTime: t("rsvp_time") || "Reservation Time",
-														message: t("rsvp_message") || "Message",
-													};
+													const fieldLabels = getFieldLabels();
 													const fieldLabel = fieldLabels[field] || field;
-
-													// Translate error message if it's an i18n key, otherwise use as-is
 													const errorMessage = error?.message as string;
-													// List of known i18n keys used in validation
-													const i18nErrorKeys = [
-														"rsvp_name_required_for_anonymous",
-														"rsvp_phone_required_for_anonymous",
-														"rsvp_name_and_phone_required_for_anonymous",
-														"phone_number_required",
-														"phone_number_invalid_format",
-													];
+													const i18nErrorKeys = getI18nErrorKeys();
 													const translatedMessage = i18nErrorKeys.includes(
 														errorMessage,
 													)

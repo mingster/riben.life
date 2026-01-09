@@ -10,6 +10,7 @@ import { RsvpStatus } from "@/types/enum";
 
 import { deleteReservationSchema } from "./delete-reservation.validation";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
+import { getT } from "@/app/i18n";
 
 export const deleteReservationAction = baseClient
 	.metadata({ name: "deleteReservation" })
@@ -35,7 +36,8 @@ export const deleteReservationAction = baseClient
 		});
 
 		if (!existingRsvp) {
-			throw new SafeError("Reservation not found");
+			const { t } = await getT();
+			throw new SafeError(t("rsvp_not_found") || "Reservation not found");
 		}
 
 		// Only allow deletion if status is Pending
@@ -43,8 +45,10 @@ export const deleteReservationAction = baseClient
 			existingRsvp.status !== RsvpStatus.Pending &&
 			existingRsvp.status !== RsvpStatus.ReadyToConfirm
 		) {
+			const { t } = await getT();
 			throw new SafeError(
-				"Only pending reservations can be deleted. Please cancel instead.",
+				t("rsvp_only_pending_can_delete") ||
+					"Only pending reservations can be deleted. Please cancel instead.",
 			);
 		}
 
@@ -73,8 +77,10 @@ export const deleteReservationAction = baseClient
 		}
 
 		if (!hasPermission) {
+			const { t } = await getT();
 			throw new SafeError(
-				"You do not have permission to delete this reservation",
+				t("rsvp_no_permission_to_delete") ||
+					"You do not have permission to delete this reservation",
 			);
 		}
 
@@ -107,7 +113,10 @@ export const deleteReservationAction = baseClient
 				error instanceof Prisma.PrismaClientKnownRequestError &&
 				error.code === "P2002"
 			) {
-				throw new SafeError("Reservation deletion failed.");
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_deletion_failed") || "Reservation deletion failed.",
+				);
 			}
 
 			throw error;

@@ -113,7 +113,8 @@ export async function processRsvpCreditPointsRefund(
 	});
 
 	if (!store) {
-		throw new SafeError("Store not found");
+		const { t } = await getT();
+		throw new SafeError(t("rsvp_store_not_found") || "Store not found");
 	}
 
 	const creditExchangeRate = Number(store.creditExchangeRate) || 1;

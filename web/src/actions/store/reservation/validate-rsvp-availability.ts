@@ -3,6 +3,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { SafeError } from "@/utils/error";
 import { RsvpStatus } from "@/types/enum";
+import { getT } from "@/app/i18n";
 
 interface RsvpSettingsForAvailability {
 	singleServiceMode?: boolean | null;
@@ -73,8 +74,10 @@ export async function validateRsvpAvailability(
 
 			// Check if slots overlap (they overlap if one starts before the other ends)
 			if (rsvpTimeNumber < existingSlotEnd && slotEnd > existingSlotStart) {
+				const { t } = await getT();
 				throw new SafeError(
-					"This time slot is already booked. Only one reservation is allowed per time slot in single service mode.",
+					t("rsvp_time_slot_already_booked_single_service") ||
+						"This time slot is already booked. Only one reservation is allowed per time slot in single service mode.",
 				);
 			}
 		}
@@ -114,8 +117,10 @@ export async function validateRsvpAvailability(
 
 			// Check if slots overlap (they overlap if one starts before the other ends)
 			if (rsvpTimeNumber < existingSlotEnd && slotEnd > existingSlotStart) {
+				const { t } = await getT();
 				throw new SafeError(
-					"This time slot is already booked for this facility. Please select a different time.",
+					t("rsvp_time_slot_already_booked_facility") ||
+						"This time slot is already booked for this facility. Please select a different time.",
 				);
 			}
 		}

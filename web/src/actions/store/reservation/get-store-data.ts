@@ -5,6 +5,7 @@ import { SafeError } from "@/utils/error";
 import { baseClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
 import { transformPrismaDataForJson } from "@/utils/utils";
+import { getT } from "@/app/i18n";
 
 const getStoreDataSchema = z.object({
 	storeId: z.string().min(1, "Store ID is required"),
@@ -23,7 +24,8 @@ export const getStoreDataAction = baseClient
 		});
 
 		if (!store) {
-			throw new SafeError("Store not found");
+			const { t } = await getT();
+			throw new SafeError(t("rsvp_store_not_found") || "Store not found");
 		}
 
 		// Fetch all required data in parallel
