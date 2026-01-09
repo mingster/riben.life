@@ -236,8 +236,53 @@ async function build(configName = "optimized") {
 			cwd: process.cwd(),
 		});
 
+		// Verify build output
+		const buildDir = path.join(process.cwd(), ".next");
+		if (!fs.existsSync(buildDir)) {
+			console.error("❌ Build failed: .next directory not found");
+			process.exit(1);
+		}
+
+		// Verify critical build files
+		const requiredFiles = [
+			"prerender-manifest.json",
+			"build-manifest.json",
+			"routes-manifest.json",
+		];
+
+		const missingFiles = [];
+		for (const file of requiredFiles) {
+			const filePath = path.join(buildDir, file);
+			if (!fs.existsSync(filePath)) {
+				missingFiles.push(file);
+			}
+		}
+
+		if (missingFiles.length > 0) {
+			console.error("❌ Build incomplete: Missing required files:");
+			missingFiles.forEach((file) => console.error(`   - ${file}`));
+			console.error("\n📋 Build directory contents:");
+			try {
+				const files = fs.readdirSync(buildDir);
+				files.forEach((file) => {
+					const filePath = path.join(buildDir, file);
+					const stats = fs.statSync(filePath);
+					console.error(`   ${stats.isDirectory() ? "📁" : "📄"} ${file}`);
+				});
+			} catch (err) {
+				console.error(`   Error reading directory: ${err.message}`);
+			}
+			console.error("\n💡 Possible causes:");
+			console.error("   - Build process was interrupted");
+			console.error("   - Insufficient memory during build");
+			console.error("   - Next.js configuration issues");
+			console.error("   - Missing dependencies or environment variables");
+			process.exit(1);
+		}
+
 		monitor.end();
 		console.log("✅ Build completed successfully!");
+		console.log("✅ All required build artifacts verified");
 	} catch (error) {
 		console.error("❌ Build failed:", error.message);
 		process.exit(1);
