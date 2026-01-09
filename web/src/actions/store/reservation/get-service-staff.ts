@@ -6,6 +6,7 @@ import { baseClient } from "@/utils/actions/safe-action";
 import { z } from "zod";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { mapServiceStaffToColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
+import { getT } from "@/app/i18n";
 
 const getServiceStaffSchema = z.object({
 	storeId: z.string().min(1, "Store ID is required"),
@@ -24,7 +25,8 @@ export const getServiceStaffAction = baseClient
 		});
 
 		if (!store) {
-			throw new SafeError("Store not found");
+			const { t } = await getT();
+			throw new SafeError(t("rsvp_store_not_found") || "Store not found");
 		}
 
 		// Get all service staff for this store with user information (exclude deleted ones)

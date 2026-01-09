@@ -51,13 +51,34 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install wget ca-certificates curl nano unzip ufw
 ```
 
-#### postgres/psql
+#### postgres/psql (optional)
+
+this is just so we can use psql on the box.
 
 ```bash
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
 
 sudo apt install postgresql postgresql-contrib
+```
+
+##### config db access
+
+On the db box,
+
+```bash
+sudo nano /etc/postgresql/18/main/pg_hba.conf
+```
+
+```text
+# tc2
+hostssl    all     all     59.126.30.241/32       scram-sha-256
+```
+
+##### check db access
+
+```bash
+
 ```
 
 #### Install Node.js and npm
@@ -69,7 +90,7 @@ For latest version, visit the Node.js official documentation page.
 sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
 
 # download and install Node.js (you may need to restart the terminal)
-nvm install 24
+nvm install 24.12.0
 # verifies the right Node.js version is in the environment
 node -v # should print `v24.xxx`
 
@@ -99,25 +120,17 @@ tar xf lazygit.tar.gz lazygit
 sudo install lazygit -D -t /usr/local/bin/
 ```
 
-#### postgres
-
-```bash
-sudo apt install postgresql postgresql-contrib
-```
-
 #### PM2
 
 ```bash
 bun install -g pm2
 
-cd /var/www/riben.life/web
-
-pm2 start bun --name "riben.life" -- start -- -p 3001
-
+#mkdir -p /var/www/riben.life
+#cd /var/www/riben.life/web
+#pm2 start bun --name "riben.life" -- start -- -p 3001
 
 pm2 startup systemd
 pm2 save
-
 pm2 status
 ```
 

@@ -52,12 +52,19 @@ export const cancelReservationAction = baseClient
 		});
 
 		if (!existingRsvp) {
-			throw new SafeError("Reservation not found");
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_reservation_not_found") || "Reservation not found",
+			);
 		}
 
 		// Validate store context: ensure reservation belongs to the specified store
 		if (existingRsvp.storeId !== storeId) {
-			throw new SafeError("Reservation does not belong to the specified store");
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_reservation_not_belong_to_store") ||
+					"Reservation does not belong to the specified store",
+			);
 		}
 
 		// Fetch RsvpSettings for refund determination
@@ -79,8 +86,10 @@ export const cancelReservationAction = baseClient
 		}
 
 		if (!hasPermission) {
+			const { t } = await getT();
 			throw new SafeError(
-				"You do not have permission to cancel this reservation",
+				t("rsvp_no_permission_to_cancel") ||
+					"You do not have permission to cancel this reservation",
 			);
 		}
 
@@ -261,7 +270,10 @@ export const cancelReservationAction = baseClient
 				error instanceof Prisma.PrismaClientKnownRequestError &&
 				error.code === "P2002"
 			) {
-				throw new SafeError("Reservation cancellation failed.");
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_cancellation_failed") || "Reservation cancellation failed.",
+				);
 			}
 
 			throw error;

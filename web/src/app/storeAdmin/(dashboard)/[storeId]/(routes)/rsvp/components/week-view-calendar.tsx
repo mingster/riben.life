@@ -37,6 +37,12 @@ import {
 	dateToEpoch,
 } from "@/utils/datetime-utils";
 import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
+import {
+	checkTimeAgainstBusinessHours,
+	extractHoursFromSchedule,
+	generateTimeSlots,
+	groupRsvpsByDayAndTime,
+} from "@/utils/rsvp-utils";
 import { useI18n } from "@/providers/i18n-provider";
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
@@ -141,144 +147,6 @@ interface WeekViewCalendarProps {
 	creditExchangeRate?: number | null;
 }
 
-interface TimeRange {
-	from: string;
-	to: string;
-}
-
-interface WeeklySchedule {
-	Monday: TimeRange[] | "closed";
-	Tuesday: TimeRange[] | "closed";
-	Wednesday: TimeRange[] | "closed";
-	Thursday: TimeRange[] | "closed";
-	Friday: TimeRange[] | "closed";
-	Saturday: TimeRange[] | "closed";
-	Sunday: TimeRange[] | "closed";
-	holidays?: string[];
-	timeZone?: string;
-}
-
-// Extract all unique hours from businessHours or rsvpHours JSON format
-const extractHoursFromSchedule = (hoursJson: string | null): number[] => {
-	if (!hoursJson) {
-		// Default to 8-22 if no hours specified
-		return Array.from({ length: 14 }, (_, i) => i + 8);
-	}
-
-	try {
-		const schedule = JSON.parse(hoursJson) as WeeklySchedule;
-		const hours = new Set<number>();
-
-		const days = [
-			"Monday",
-			"Tuesday",
-			"Wednesday",
-			"Thursday",
-			"Friday",
-			"Saturday",
-			"Sunday",
-		] as const;
-
-		days.forEach((day) => {
-			const dayHours = schedule[day];
-			if (dayHours !== "closed" && Array.isArray(dayHours)) {
-				dayHours.forEach((range: TimeRange) => {
-					// Parse from time (e.g., "10:00" -> 10)
-					let fromHour = parseInt(range.from.split(":")[0], 10);
-					let toHour = parseInt(range.to.split(":")[0], 10);
-					const toMinutes = parseInt(range.to.split(":")[1] || "0", 10);
-
-					// Handle 24:00 as 23:00 (since hour 24 doesn't exist)
-					if (toHour === 24) {
-						toHour = 23;
-					}
-					if (fromHour === 24) {
-						fromHour = 23;
-					}
-
-					// Include all hours from start (inclusive) to end
-					// If end time has minutes (e.g., "13:30"), include the end hour
-					// If end time is exact hour (e.g., "13:00"), don't include it (open until but not including)
-					const endHour = toMinutes > 0 ? toHour : toHour - 1;
-
-					for (let hour = fromHour; hour <= endHour && hour < 24; hour++) {
-						hours.add(hour);
-					}
-				});
-			}
-		});
-
-		// If no hours found, default to 8-22
-		if (hours.size === 0) {
-			return Array.from({ length: 14 }, (_, i) => i + 8);
-		}
-
-		return Array.from(hours).sort((a, b) => a - b);
-	} catch (error) {
-		// If parsing fails, default to 8-22
-		console.error("Failed to parse hours JSON:", error);
-		return Array.from({ length: 14 }, (_, i) => i + 8);
-	}
-};
-
-// Generate time slots based on rsvpSettings and storeSettings
-// Slots are generated at intervals based on defaultDuration (in minutes)
-const generateTimeSlots = (
-	useBusinessHours: boolean,
-	rsvpHours: string | null,
-	businessHours: string | null,
-	defaultDuration: number = 60, // Default to 60 minutes (1 hour)
-): string[] => {
-	const hoursJson = useBusinessHours ? businessHours : rsvpHours;
-	const hours = extractHoursFromSchedule(hoursJson);
-
-	if (hours.length === 0) {
-		return [];
-	}
-
-	const slots: string[] = [];
-	const slotIntervalMinutes = defaultDuration;
-
-	// Get the range of hours (from first to last hour)
-	const minHour = Math.min(...hours);
-	const maxHour = Math.max(...hours);
-
-	// Generate slots starting from minHour:00, incrementing by defaultDuration
-	// Continue until we've covered all hours in the range
-	let currentMinutes = minHour * 60; // Start at minHour:00
-	const maxMinutes = (maxHour + 1) * 60; // Go up to maxHour:59
-
-	while (currentMinutes < maxMinutes) {
-		const slotHour = Math.floor(currentMinutes / 60);
-		const slotMin = currentMinutes % 60;
-
-		// Only add slot if the hour is in our hours list
-		// For slots that span multiple hours, check if any hour in the range is in our list
-		const slotEndMinutes = currentMinutes + slotIntervalMinutes;
-		const slotEndHour = Math.floor(slotEndMinutes / 60);
-
-		// Check if this slot overlaps with any hour in our hours list
-		const slotOverlaps = hours.some((h) => h >= slotHour && h <= slotEndHour);
-
-		if (slotOverlaps && slotHour < 24) {
-			slots.push(
-				`${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`,
-			);
-		}
-
-		// Move to next slot
-		currentMinutes += slotIntervalMinutes;
-	}
-
-	// Remove duplicates and sort
-	return Array.from(new Set(slots)).sort((a, b) => {
-		const [aHour, aMin] = a.split(":").map(Number);
-		const [bHour, bMin] = b.split(":").map(Number);
-		if (aHour !== bHour) return aHour - bHour;
-		return aMin - bMin;
-	});
-};
-
 // Get day name abbreviation using i18n
 const getDayName = (date: Date, t: (key: string) => string): string => {
 	const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
@@ -309,70 +177,6 @@ const isToday = (date: Date): boolean => {
 // Group RSVPs by day and time slot
 // RSVP times are in UTC epoch, convert to store timezone for display and grouping
 // Match RSVPs to slots based on defaultDuration
-const groupRsvpsByDayAndTime = (
-	rsvps: Rsvp[],
-	weekStart: Date,
-	weekEnd: Date,
-	storeTimezone: string,
-	defaultDuration: number = 60, // Default to 60 minutes
-) => {
-	const grouped: Record<string, Rsvp[]> = {};
-	// Convert IANA timezone string to offset hours
-	const offsetHours = getOffsetHours(storeTimezone);
-
-	rsvps.forEach((rsvp) => {
-		if (!rsvp.rsvpTime) return;
-
-		let rsvpDateUtc: Date;
-		try {
-			if (rsvp.rsvpTime instanceof Date) {
-				rsvpDateUtc = rsvp.rsvpTime;
-			} else if (typeof rsvp.rsvpTime === "bigint") {
-				// BigInt epoch (milliseconds)
-				rsvpDateUtc = epochToDate(rsvp.rsvpTime) ?? new Date();
-			} else if (typeof rsvp.rsvpTime === "number") {
-				// Number epoch (milliseconds) - after transformPrismaDataForJson
-				rsvpDateUtc = epochToDate(BigInt(rsvp.rsvpTime)) ?? new Date();
-			} else if (typeof rsvp.rsvpTime === "string") {
-				rsvpDateUtc = parseISO(rsvp.rsvpTime);
-			} else {
-				rsvpDateUtc = parseISO(String(rsvp.rsvpTime));
-			}
-
-			// Validate the date
-			if (isNaN(rsvpDateUtc.getTime())) {
-				console.warn("Invalid RSVP date:", rsvp.rsvpTime, rsvp.id);
-				return;
-			}
-		} catch (error) {
-			console.warn("Error parsing RSVP date:", rsvp.rsvpTime, rsvp.id, error);
-			return;
-		}
-
-		// Convert UTC date to store timezone for display and grouping
-		const rsvpDate = getDateInTz(rsvpDateUtc, offsetHours);
-
-		// Check if RSVP is within the week (inclusive of boundaries)
-		if (rsvpDate >= weekStart && rsvpDate <= weekEnd) {
-			const dayKey = format(rsvpDate, "yyyy-MM-dd");
-			// Round to nearest slot based on defaultDuration
-			const totalMinutes = rsvpDate.getHours() * 60 + rsvpDate.getMinutes();
-			const slotMinutes =
-				Math.floor(totalMinutes / defaultDuration) * defaultDuration;
-			const slotHour = Math.floor(slotMinutes / 60);
-			const slotMin = slotMinutes % 60;
-			const timeKey = `${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`;
-			const key = `${dayKey}-${timeKey}`;
-
-			if (!grouped[key]) {
-				grouped[key] = [];
-			}
-			grouped[key].push(rsvp);
-		}
-	});
-
-	return grouped;
-};
 
 // admin view of WeekViewCalendar
 export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
@@ -458,75 +262,12 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 				return true;
 			}
 
-			try {
-				// Parse business hours JSON
-				const schedule = JSON.parse(facility.businessHours) as {
-					Monday?: Array<{ from: string; to: string }> | "closed";
-					Tuesday?: Array<{ from: string; to: string }> | "closed";
-					Wednesday?: Array<{ from: string; to: string }> | "closed";
-					Thursday?: Array<{ from: string; to: string }> | "closed";
-					Friday?: Array<{ from: string; to: string }> | "closed";
-					Saturday?: Array<{ from: string; to: string }> | "closed";
-					Sunday?: Array<{ from: string; to: string }> | "closed";
-				};
-
-				// Convert UTC time to store timezone for checking
-				const offsetHours = getOffsetHours(timezone);
-				const timeInStoreTz = getDateInTz(checkTime, offsetHours);
-
-				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-				const dayOfWeek = timeInStoreTz.getDay();
-				const dayNames = [
-					"Sunday",
-					"Monday",
-					"Tuesday",
-					"Wednesday",
-					"Thursday",
-					"Friday",
-					"Saturday",
-				] as const;
-				const dayName = dayNames[dayOfWeek];
-
-				// Get hours for this day
-				const dayHours = schedule[dayName];
-				if (!dayHours || dayHours === "closed") {
-					return false;
-				}
-
-				// Check if time falls within any time range
-				const checkHour = timeInStoreTz.getHours();
-				const checkMinute = timeInStoreTz.getMinutes();
-				const checkTimeMinutes = checkHour * 60 + checkMinute;
-
-				for (const range of dayHours) {
-					const [fromHour, fromMinute] = range.from.split(":").map(Number);
-					const [toHour, toMinute] = range.to.split(":").map(Number);
-
-					const fromMinutes = fromHour * 60 + fromMinute;
-					const toMinutes = toHour * 60 + toMinute;
-
-					// Check if time falls within range
-					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
-						return true;
-					}
-
-					// Handle range spanning midnight (e.g., 22:00 to 02:00)
-					if (fromMinutes > toMinutes) {
-						if (
-							checkTimeMinutes >= fromMinutes ||
-							checkTimeMinutes < toMinutes
-						) {
-							return true;
-						}
-					}
-				}
-
-				return false;
-			} catch (error) {
-				// If parsing fails, assume facility is available
-				console.error("Failed to parse facility business hours:", error);
-				return true;
-			}
+			const result = checkTimeAgainstBusinessHours(
+				facility.businessHours,
+				checkTime,
+				timezone,
+			);
+			return result.isValid;
 		},
 		[],
 	);

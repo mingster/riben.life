@@ -73,13 +73,18 @@ export const createReservationAction = baseClient
 		]);
 
 		if (!store) {
-			throw new SafeError("Store not found");
+			const { t } = await getT();
+			throw new SafeError(t("rsvp_store_not_found") || "Store not found");
 		}
 
 		const storeTimezone = store.defaultTimezone || "Asia/Taipei";
 
 		if (!rsvpSettings || !rsvpSettings.acceptReservation) {
-			throw new SafeError("Reservations are not currently accepted");
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_not_currently_accepted") ||
+					"Reservations are not currently accepted",
+			);
 		}
 
 		// Convert rsvpTime to UTC Date, then to BigInt epoch
@@ -89,20 +94,26 @@ export const createReservationAction = baseClient
 		try {
 			rsvpTimeUtc = convertDateToUtc(rsvpTimeInput, storeTimezone);
 		} catch (error) {
+			const { t } = await getT();
 			throw new SafeError(
 				error instanceof Error
 					? error.message
-					: "Failed to convert rsvpTime to UTC",
+					: t("rsvp_failed_convert_rsvp_time_utc") ||
+							"Failed to convert rsvpTime to UTC",
 			);
 		}
 
 		const rsvpTime = dateToEpoch(rsvpTimeUtc);
 		if (!rsvpTime) {
-			throw new SafeError("Failed to convert rsvpTime to epoch");
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_failed_convert_rsvp_time_epoch") ||
+					"Failed to convert rsvpTime to epoch",
+			);
 		}
 
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
-		validateReservationTimeWindow(rsvpSettings, rsvpTime);
+		await validateReservationTimeWindow(rsvpSettings, rsvpTime);
 
 		// Check if user is anonymous (not logged in and no customerId provided)
 		let isAnonymous = !sessionUserId && !customerId;
@@ -193,18 +204,28 @@ export const createReservationAction = baseClient
 			});
 
 			if (isBlacklisted) {
-				throw new SafeError("You are not allowed to create reservations");
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_not_allowed_to_create") ||
+						"You are not allowed to create reservations",
+				);
 			}
 		}
 
 		// Validate facilityId if mustSelectFacility is true
 		if (rsvpSettings?.mustSelectFacility && !facilityId) {
-			throw new SafeError("Facility is required");
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_facility_required") || "Facility is required",
+			);
 		}
 
 		// Validate serviceStaffId if mustHaveServiceStaff is true
 		if (rsvpSettings?.mustHaveServiceStaff && !serviceStaffId) {
-			throw new SafeError("Service staff is required");
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_service_staff_required") || "Service staff is required",
+			);
 		}
 
 		// Get service staff if provided
@@ -232,7 +253,10 @@ export const createReservationAction = baseClient
 			});
 
 			if (!serviceStaff) {
-				throw new SafeError("Service staff not found");
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_service_staff_not_found") || "Service staff not found",
+				);
 			}
 
 			// Get service staff display name (name || email || id)
@@ -240,7 +264,7 @@ export const createReservationAction = baseClient
 				serviceStaff.User?.name || serviceStaff.User?.email || serviceStaffId;
 
 			// Validate service staff business hours
-			validateServiceStaffBusinessHours(
+			await validateServiceStaffBusinessHours(
 				serviceStaff.businessHours,
 				rsvpTimeUtc,
 				storeTimezone,
@@ -275,7 +299,10 @@ export const createReservationAction = baseClient
 			});
 
 			if (!facilityResult) {
-				throw new SafeError("Facility not found");
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_facility_not_found") || "Facility not found",
+				);
 			}
 
 			// Convert Decimal to number for type compatibility
@@ -297,7 +324,7 @@ export const createReservationAction = baseClient
 
 		// Validate business hours (if facility has business hours) - only if facility exists
 		if (facility) {
-			validateFacilityBusinessHours(
+			await validateFacilityBusinessHours(
 				facility.businessHours,
 				rsvpTimeUtc,
 				storeTimezone,
@@ -469,7 +496,10 @@ export const createReservationAction = baseClient
 			});
 
 			if (!rsvp) {
-				throw new SafeError("Failed to create reservation");
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_failed_to_create") || "Failed to create reservation",
+				);
 			}
 
 			const transformedRsvp = { ...rsvp } as Rsvp;
@@ -508,7 +538,10 @@ export const createReservationAction = baseClient
 				error instanceof Prisma.PrismaClientKnownRequestError &&
 				error.code === "P2002"
 			) {
-				throw new SafeError("Reservation already exists.");
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_already_exists") || "Reservation already exists.",
+				);
 			}
 
 			throw error;

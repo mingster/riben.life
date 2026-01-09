@@ -58,6 +58,10 @@ import { useEffect } from "react";
 import { RsvpStatus } from "@/types/enum";
 import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
 import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
+import {
+	checkTimeAgainstBusinessHours,
+	rsvpTimeToEpoch,
+} from "@/utils/rsvp-utils";
 
 interface EditRsvpDialogProps {
 	rsvp?: Rsvp | null;
@@ -227,75 +231,12 @@ export function AdminEditRsvpDialog({
 				return null;
 			}
 
-			try {
-				const schedule = JSON.parse(hoursJson) as {
-					Monday?: Array<{ from: string; to: string }> | "closed";
-					Tuesday?: Array<{ from: string; to: string }> | "closed";
-					Wednesday?: Array<{ from: string; to: string }> | "closed";
-					Thursday?: Array<{ from: string; to: string }> | "closed";
-					Friday?: Array<{ from: string; to: string }> | "closed";
-					Saturday?: Array<{ from: string; to: string }> | "closed";
-					Sunday?: Array<{ from: string; to: string }> | "closed";
-				};
-
-				// Convert UTC time to store timezone for checking
-				const offsetHours = getOffsetHours(storeTimezone);
-				const timeInStoreTz = getDateInTz(rsvpTime, offsetHours);
-
-				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-				const dayOfWeek = timeInStoreTz.getDay();
-				const dayNames = [
-					"Sunday",
-					"Monday",
-					"Tuesday",
-					"Wednesday",
-					"Thursday",
-					"Friday",
-					"Saturday",
-				] as const;
-				const dayName = dayNames[dayOfWeek];
-
-				// Get hours for this day
-				const dayHours = schedule[dayName];
-				if (!dayHours || dayHours === "closed") {
-					return errorMessage;
-				}
-
-				// Check if time falls within any time range
-				const checkHour = timeInStoreTz.getHours();
-				const checkMinute = timeInStoreTz.getMinutes();
-				const checkTimeMinutes = checkHour * 60 + checkMinute;
-
-				for (const range of dayHours) {
-					const [fromHour, fromMinute] = range.from.split(":").map(Number);
-					const [toHour, toMinute] = range.to.split(":").map(Number);
-
-					const fromMinutes = fromHour * 60 + fromMinute;
-					const toMinutes = toHour * 60 + toMinute;
-
-					// Check if time falls within range
-					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
-						return null; // Valid time
-					}
-
-					// Handle range spanning midnight (e.g., 22:00 to 02:00)
-					if (fromMinutes > toMinutes) {
-						if (
-							checkTimeMinutes >= fromMinutes ||
-							checkTimeMinutes < toMinutes
-						) {
-							return null; // Valid time
-						}
-					}
-				}
-
-				// Time is not within any range
-				return errorMessage;
-			} catch (error) {
-				// If parsing fails, allow the time (graceful degradation)
-				console.error("Failed to parse hours JSON:", error);
-				return null;
-			}
+			const result = checkTimeAgainstBusinessHours(
+				hoursJson,
+				rsvpTime,
+				storeTimezone,
+			);
+			return result.isValid ? null : errorMessage;
 		},
 		[
 			rsvpSettings?.useBusinessHours,
@@ -323,75 +264,12 @@ export function AdminEditRsvpDialog({
 				return true;
 			}
 
-			try {
-				// Parse business hours JSON
-				const schedule = JSON.parse(facility.businessHours) as {
-					Monday?: Array<{ from: string; to: string }> | "closed";
-					Tuesday?: Array<{ from: string; to: string }> | "closed";
-					Wednesday?: Array<{ from: string; to: string }> | "closed";
-					Thursday?: Array<{ from: string; to: string }> | "closed";
-					Friday?: Array<{ from: string; to: string }> | "closed";
-					Saturday?: Array<{ from: string; to: string }> | "closed";
-					Sunday?: Array<{ from: string; to: string }> | "closed";
-				};
-
-				// Convert UTC time to store timezone for checking
-				const offsetHours = getOffsetHours(timezone);
-				const timeInStoreTz = getDateInTz(checkTime, offsetHours);
-
-				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-				const dayOfWeek = timeInStoreTz.getDay();
-				const dayNames = [
-					"Sunday",
-					"Monday",
-					"Tuesday",
-					"Wednesday",
-					"Thursday",
-					"Friday",
-					"Saturday",
-				] as const;
-				const dayName = dayNames[dayOfWeek];
-
-				// Get hours for this day
-				const dayHours = schedule[dayName];
-				if (!dayHours || dayHours === "closed") {
-					return false;
-				}
-
-				// Check if time falls within any time range
-				const checkHour = timeInStoreTz.getHours();
-				const checkMinute = timeInStoreTz.getMinutes();
-				const checkTimeMinutes = checkHour * 60 + checkMinute;
-
-				for (const range of dayHours) {
-					const [fromHour, fromMinute] = range.from.split(":").map(Number);
-					const [toHour, toMinute] = range.to.split(":").map(Number);
-
-					const fromMinutes = fromHour * 60 + fromMinute;
-					const toMinutes = toHour * 60 + toMinute;
-
-					// Check if time falls within range
-					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
-						return true;
-					}
-
-					// Handle range spanning midnight (e.g., 22:00 to 02:00)
-					if (fromMinutes > toMinutes) {
-						if (
-							checkTimeMinutes >= fromMinutes ||
-							checkTimeMinutes < toMinutes
-						) {
-							return true;
-						}
-					}
-				}
-
-				return false;
-			} catch (error) {
-				// If parsing fails, assume facility is available
-				console.error("Failed to parse facility business hours:", error);
-				return true;
-			}
+			const result = checkTimeAgainstBusinessHours(
+				facility.businessHours,
+				checkTime,
+				timezone,
+			);
+			return result.isValid;
 		},
 		[],
 	);
@@ -569,14 +447,8 @@ export function AdminEditRsvpDialog({
 				}
 
 				// Convert existing reservation time to epoch
-				let existingRsvpTime: bigint;
-				if (existingRsvp.rsvpTime instanceof Date) {
-					existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
-				} else if (typeof existingRsvp.rsvpTime === "number") {
-					existingRsvpTime = BigInt(existingRsvp.rsvpTime);
-				} else if (typeof existingRsvp.rsvpTime === "bigint") {
-					existingRsvpTime = existingRsvp.rsvpTime;
-				} else {
+				const existingRsvpTime = rsvpTimeToEpoch(existingRsvp.rsvpTime);
+				if (!existingRsvpTime) {
 					return false;
 				}
 

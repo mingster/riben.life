@@ -5,6 +5,7 @@ import { SafeError } from "@/utils/error";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
 import { ProductStatus } from "@/types/enum";
+import { getT } from "@/app/i18n";
 
 /**
  * Ensures the special system product for reservation prepaid exists for a store.
@@ -40,7 +41,8 @@ export async function ensureReservationPrepaidProduct(storeId: string) {
 	});
 
 	if (!store) {
-		throw new SafeError("Store not found");
+		const { t } = await getT();
+		throw new SafeError(t("rsvp_store_not_found") || "Store not found");
 	}
 
 	// Create the reservation prepaid product

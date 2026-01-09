@@ -21,7 +21,6 @@ import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 import { cn } from "@/lib/utils";
-import { claimReservationAction } from "@/actions/store/reservation/claim-reservation";
 import { clientLogger } from "@/lib/client-logger";
 import { toastSuccess, toastError } from "@/components/toaster";
 import { useRouter } from "next/navigation";
@@ -82,9 +81,6 @@ export const CustomerReservationHistoryClient: React.FC<
 	const { t } = useTranslation(lng);
 	const router = useRouter();
 
-	// State for claiming reservations
-	const [isClaiming, setIsClaiming] = useState(false);
-
 	// State for cancel/delete dialog
 	const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 	const [reservationToCancel, setReservationToCancel] = useState<Rsvp | null>(
@@ -124,7 +120,7 @@ export const CustomerReservationHistoryClient: React.FC<
 	// Update allData when localStorageReservations or serverData change
 	// Note: We do NOT clean up local storage reservations even if they don't exist on server
 	// This is because:
-	// 1. Claimed reservations will exist on server but we want to keep them in local storage
+	// 1. Reservations will exist on server but we want to keep them in local storage
 	// 2. Users might sign out and back in, and we want to preserve local storage as backup
 	// 3. Local storage serves as a backup for anonymous reservations
 	useEffect(() => {
@@ -173,126 +169,6 @@ export const CustomerReservationHistoryClient: React.FC<
 			setAllData(serverData);
 		}
 	}, [localStorageReservations, serverData, user, storeId]);
-
-	// Claim reservations from local storage when user signs in
-	useEffect(() => {
-		// Only claim if user is signed in and storeId is available
-		if (!user?.id || !storeId || isClaiming) {
-			return;
-		}
-
-		const claimLocalStorageReservations = async () => {
-			try {
-				const storageKey = `rsvp-${storeId}`;
-
-				const storedData = localStorage.getItem(storageKey);
-				if (!storedData) {
-					return; // No reservations in local storage
-				}
-
-				const localReservations: Rsvp[] = JSON.parse(storedData);
-				if (
-					!Array.isArray(localReservations) ||
-					localReservations.length === 0
-				) {
-					return; // No valid reservations
-				}
-
-				setIsClaiming(true);
-				const claimedIds: string[] = [];
-				const failedIds: string[] = [];
-
-				// Claim each reservation
-				for (const reservation of localReservations) {
-					if (!reservation.id) {
-						continue; // Skip invalid reservations
-					}
-
-					try {
-						const result = await claimReservationAction({
-							id: reservation.id,
-						});
-
-						if (result?.serverError) {
-							clientLogger.warn("Failed to claim reservation", {
-								metadata: {
-									reservationId: reservation.id,
-									error: result.serverError,
-								},
-							});
-							failedIds.push(reservation.id);
-						} else {
-							// Successfully claimed
-							claimedIds.push(reservation.id);
-							clientLogger.info("Reservation claimed from local storage", {
-								metadata: {
-									reservationId: reservation.id,
-									userId: user.id,
-								},
-							});
-						}
-					} catch (error) {
-						clientLogger.error("Error claiming reservation", {
-							metadata: {
-								reservationId: reservation.id,
-								error: error instanceof Error ? error.message : String(error),
-							},
-						});
-						failedIds.push(reservation.id);
-					}
-				}
-
-				// Show success message for successfully claimed reservations
-				if (claimedIds.length > 0) {
-					// Show success message
-					if (claimedIds.length === 1) {
-						toastSuccess({
-							description:
-								t("rsvp_reservation_claimed") ||
-								"Reservation linked to your account",
-						});
-					} else {
-						const message =
-							t("rsvp_reservations_claimed") ||
-							`${claimedIds.length} reservations linked to your account`;
-						toastSuccess({
-							description: message.replace(
-								"{{count}}",
-								String(claimedIds.length),
-							),
-						});
-					}
-
-					// Note: We do NOT remove claimed reservations from local storage
-					// because the user might sign out and sign in again, and we want to preserve
-					// the local storage as a backup for anonymous reservations
-
-					// Refresh the page to show updated reservations
-					router.refresh();
-				}
-
-				// Show error message for failed claims
-				if (failedIds.length > 0) {
-					clientLogger.warn("Some reservations could not be claimed", {
-						metadata: {
-							failedCount: failedIds.length,
-							failedIds,
-						},
-					});
-				}
-			} catch (error) {
-				clientLogger.error("Error claiming reservations from local storage", {
-					metadata: {
-						error: error instanceof Error ? error.message : String(error),
-					},
-				});
-			} finally {
-				setIsClaiming(false);
-			}
-		};
-
-		claimLocalStorageReservations();
-	}, [user?.id, storeId, isClaiming, t, router]);
 
 	const [periodType, setPeriodType] = useState<PeriodType>("custom");
 	const [startDate, setStartDate] = useState<Date | null>(null);
@@ -519,7 +395,7 @@ export const CustomerReservationHistoryClient: React.FC<
 	const removeReservationFromLocalStorage = useCallback(
 		(reservationId: string) => {
 			// Only remove from local storage for anonymous users
-			// Signed-in users should keep reservations in local storage even after claiming
+			// Signed-in users should keep reservations in local storage
 			if (!user && storeId) {
 				removeReservationFromLocalStorageUtil(
 					storeId,

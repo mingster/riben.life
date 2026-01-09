@@ -22,6 +22,7 @@ import { validateReservationTimeWindow } from "./validate-reservation-time-windo
 import { validateRsvpAvailability } from "./validate-rsvp-availability";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { RsvpStatus } from "@/types/enum";
+import { getT } from "@/app/i18n";
 
 // implement FR-RSVP-013
 //
@@ -64,7 +65,10 @@ export const updateReservationAction = baseClient
 		});
 
 		if (!existingRsvp) {
-			throw new SafeError("Reservation not found");
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_reservation_not_found") || "Reservation not found",
+			);
 		}
 
 		const storeId = existingRsvp.storeId;
@@ -92,16 +96,22 @@ export const updateReservationAction = baseClient
 		try {
 			rsvpTimeUtc = convertDateToUtc(rsvpTimeInput, storeTimezone);
 		} catch (error) {
+			const { t } = await getT();
 			throw new SafeError(
 				error instanceof Error
 					? error.message
-					: "Failed to convert rsvpTime to UTC",
+					: t("rsvp_failed_convert_rsvp_time_utc") ||
+							"Failed to convert rsvpTime to UTC",
 			);
 		}
 
 		const rsvpTime = dateToEpoch(rsvpTimeUtc);
 		if (!rsvpTime) {
-			throw new SafeError("Failed to convert rsvpTime to epoch");
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_failed_convert_rsvp_time_epoch") ||
+					"Failed to convert rsvpTime to epoch",
+			);
 		}
 
 		// Verify ownership: user must be logged in and match customerId, or match by email
@@ -128,8 +138,10 @@ export const updateReservationAction = baseClient
 		}
 
 		if (!hasPermission) {
+			const { t } = await getT();
 			throw new SafeError(
-				"You do not have permission to edit this reservation",
+				t("rsvp_no_permission_to_edit") ||
+					"You do not have permission to edit this reservation",
 			);
 		}
 
@@ -138,12 +150,18 @@ export const updateReservationAction = baseClient
 
 		// Validate facilityId if mustSelectFacility is true
 		if (rsvpSettingsResult?.mustSelectFacility && !facilityId) {
-			throw new SafeError("Facility is required");
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_facility_required") || "Facility is required",
+			);
 		}
 
 		// Validate serviceStaffId if mustHaveServiceStaff is true
 		if (rsvpSettingsResult?.mustHaveServiceStaff && !serviceStaffId) {
-			throw new SafeError("Service staff is required");
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_service_staff_required") || "Service staff is required",
+			);
 		}
 
 		// Get service staff if provided
@@ -164,11 +182,14 @@ export const updateReservationAction = baseClient
 			});
 
 			if (!serviceStaff) {
-				throw new SafeError("Service staff not found");
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_service_staff_not_found") || "Service staff not found",
+				);
 			}
 
 			// Validate service staff business hours
-			validateServiceStaffBusinessHours(
+			await validateServiceStaffBusinessHours(
 				serviceStaff.businessHours,
 				rsvpTimeUtc,
 				storeTimezone,
@@ -205,7 +226,10 @@ export const updateReservationAction = baseClient
 			});
 
 			if (!facilityResult) {
-				throw new SafeError("Facility not found");
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_facility_not_found") || "Facility not found",
+				);
 			}
 
 			// Convert Decimal to number for type compatibility
@@ -227,14 +251,14 @@ export const updateReservationAction = baseClient
 		}
 
 		// Validate cancelHours window (FR-RSVP-013)
-		validateCancelHoursWindow(rsvpSettingsResult, rsvpTime, "modify");
+		await validateCancelHoursWindow(rsvpSettingsResult, rsvpTime, "modify");
 
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
-		validateReservationTimeWindow(rsvpSettingsResult, rsvpTime);
+		await validateReservationTimeWindow(rsvpSettingsResult, rsvpTime);
 
 		// Validate business hours (if facility has business hours) - only if facility exists
 		if (facility) {
-			validateFacilityBusinessHours(
+			await validateFacilityBusinessHours(
 				facility.businessHours,
 				rsvpTimeUtc,
 				storeTimezone,
@@ -334,7 +358,10 @@ export const updateReservationAction = baseClient
 				error instanceof Prisma.PrismaClientKnownRequestError &&
 				error.code === "P2002"
 			) {
-				throw new SafeError("Reservation update failed.");
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_update_failed") || "Reservation update failed.",
+				);
 			}
 
 			throw error;

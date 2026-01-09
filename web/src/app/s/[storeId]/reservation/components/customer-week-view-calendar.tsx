@@ -23,8 +23,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import { claimReservationAction } from "@/actions/store/reservation/claim-reservation";
-import { clientLogger } from "@/lib/client-logger";
 import type {
 	Rsvp,
 	RsvpSettings,
@@ -40,6 +38,11 @@ import {
 	canEditReservation as canEditReservationUtil,
 	canCancelReservation as canCancelReservationUtil,
 	removeReservationFromLocalStorage as removeReservationFromLocalStorageUtil,
+	generateTimeSlots,
+	getReservationDisplayName,
+	groupRsvpsByDayAndTime,
+	transformReservationForStorage,
+	checkTimeAgainstBusinessHours,
 } from "@/utils/rsvp-utils";
 import { ReservationDialog } from "./reservation-dialog";
 import { RsvpCancelDeleteDialog } from "./rsvp-cancel-delete-dialog";
@@ -52,6 +55,7 @@ import {
 	dateToEpoch,
 	convertToUtc,
 } from "@/utils/datetime-utils";
+import type { Rsvp as RsvpType } from "@/types";
 import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
 import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
 import { toastError, toastSuccess } from "@/components/toaster";
@@ -75,143 +79,6 @@ interface CustomerWeekViewCalendarProps {
 	creditExchangeRate?: number | null;
 	creditServiceExchangeRate?: number | null;
 }
-
-interface TimeRange {
-	from: string;
-	to: string;
-}
-
-interface WeeklySchedule {
-	Monday: TimeRange[] | "closed";
-	Tuesday: TimeRange[] | "closed";
-	Wednesday: TimeRange[] | "closed";
-	Thursday: TimeRange[] | "closed";
-	Friday: TimeRange[] | "closed";
-	Saturday: TimeRange[] | "closed";
-	Sunday: TimeRange[] | "closed";
-	holidays?: string[];
-	timeZone?: string;
-}
-
-// Extract all unique hours from businessHours or rsvpHours JSON format
-const extractHoursFromSchedule = (hoursJson: string | null): number[] => {
-	if (!hoursJson) {
-		// Default to 8-22 if no hours specified
-		return Array.from({ length: 14 }, (_, i) => i + 8);
-	}
-
-	try {
-		const schedule = JSON.parse(hoursJson) as WeeklySchedule;
-		const hours = new Set<number>();
-
-		const days = [
-			"Monday",
-			"Tuesday",
-			"Wednesday",
-			"Thursday",
-			"Friday",
-			"Saturday",
-			"Sunday",
-		] as const;
-
-		days.forEach((day) => {
-			const dayHours = schedule[day];
-			if (dayHours !== "closed" && Array.isArray(dayHours)) {
-				dayHours.forEach((range: TimeRange) => {
-					// Parse from time (e.g., "10:00" -> 10)
-					let fromHour = parseInt(range.from.split(":")[0], 10);
-					let toHour = parseInt(range.to.split(":")[0], 10);
-					const toMinutes = parseInt(range.to.split(":")[1] || "0", 10);
-
-					// Handle 24:00 as 23:00 (since hour 24 doesn't exist)
-					if (toHour === 24) {
-						toHour = 23;
-					}
-					if (fromHour === 24) {
-						fromHour = 23;
-					}
-
-					// Include all hours from start (inclusive) to end
-					// If end time has minutes (e.g., "13:30"), include the end hour
-					// If end time is exact hour (e.g., "13:00"), don't include it (open until but not including)
-					const endHour = toMinutes > 0 ? toHour : toHour - 1;
-
-					for (let hour = fromHour; hour <= endHour && hour < 24; hour++) {
-						hours.add(hour);
-					}
-				});
-			}
-		});
-
-		// If no hours found, default to 8-22
-		if (hours.size === 0) {
-			return Array.from({ length: 14 }, (_, i) => i + 8);
-		}
-
-		return Array.from(hours).sort((a, b) => a - b);
-	} catch {
-		// If parsing fails, default to 8-22
-		return Array.from({ length: 14 }, (_, i) => i + 8);
-	}
-};
-
-// Generate time slots based on rsvpSettings and storeSettings
-// Slots are generated at intervals based on defaultDuration (in minutes)
-const generateTimeSlots = (
-	useBusinessHours: boolean,
-	rsvpHours: string | null,
-	businessHours: string | null,
-	defaultDuration: number = 60, // Default to 60 minutes (1 hour)
-): string[] => {
-	const hoursJson = useBusinessHours ? businessHours : rsvpHours;
-	const hours = extractHoursFromSchedule(hoursJson);
-
-	if (hours.length === 0) {
-		return [];
-	}
-
-	const slots: string[] = [];
-	const slotIntervalMinutes = defaultDuration;
-
-	// Get the range of hours (from first to last hour)
-	const minHour = Math.min(...hours);
-	const maxHour = Math.max(...hours);
-
-	// Generate slots starting from minHour:00, incrementing by defaultDuration
-	// Continue until we've covered all hours in the range
-	let currentMinutes = minHour * 60; // Start at minHour:00
-	const maxMinutes = (maxHour + 1) * 60; // Go up to maxHour:59
-
-	while (currentMinutes < maxMinutes) {
-		const slotHour = Math.floor(currentMinutes / 60);
-		const slotMin = currentMinutes % 60;
-
-		// Only add slot if the hour is in our hours list
-		// For slots that span multiple hours, check if any hour in the range is in our list
-		const slotEndMinutes = currentMinutes + slotIntervalMinutes;
-		const slotEndHour = Math.floor(slotEndMinutes / 60);
-
-		// Check if this slot overlaps with any hour in our hours list
-		const slotOverlaps = hours.some((h) => h >= slotHour && h <= slotEndHour);
-
-		if (slotOverlaps && slotHour < 24) {
-			slots.push(
-				`${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`,
-			);
-		}
-
-		// Move to next slot
-		currentMinutes += slotIntervalMinutes;
-	}
-
-	// Remove duplicates and sort
-	return Array.from(new Set(slots)).sort((a, b) => {
-		const [aHour, aMin] = a.split(":").map(Number);
-		const [bHour, bMin] = b.split(":").map(Number);
-		if (aHour !== bHour) return aHour - bHour;
-		return aMin - bMin;
-	});
-};
 
 // Get day name abbreviation using i18n
 const getDayName = (date: Date, t: (key: string) => string): string => {
@@ -240,72 +107,6 @@ const isToday = (date: Date, storeTimezone: string): boolean => {
 		getOffsetHours(storeTimezone),
 	);
 	return isSameDay(date, todayInStoreTz);
-};
-
-// Group RSVPs by day and time slot
-// RSVP dates are in UTC, convert to store timezone for display and grouping
-// Match RSVPs to slots based on defaultDuration
-const groupRsvpsByDayAndTime = (
-	rsvps: Rsvp[],
-	weekStart: Date,
-	weekEnd: Date,
-	storeTimezone: string,
-	defaultDuration: number = 60, // Default to 60 minutes
-) => {
-	const grouped: Record<string, Rsvp[]> = {};
-	// Convert IANA timezone string to offset hours
-	const offsetHours = getOffsetHours(storeTimezone);
-
-	rsvps.forEach((rsvp) => {
-		if (!rsvp.rsvpTime) return;
-
-		let rsvpDateUtc: Date;
-		try {
-			if (rsvp.rsvpTime instanceof Date) {
-				rsvpDateUtc = rsvp.rsvpTime;
-			} else if (typeof rsvp.rsvpTime === "bigint") {
-				// BigInt epoch (milliseconds)
-				rsvpDateUtc = epochToDate(rsvp.rsvpTime) ?? new Date();
-			} else if (typeof rsvp.rsvpTime === "number") {
-				// Number epoch (milliseconds) - after transformPrismaDataForJson
-				rsvpDateUtc = epochToDate(BigInt(rsvp.rsvpTime)) ?? new Date();
-			} else if (typeof rsvp.rsvpTime === "string") {
-				rsvpDateUtc = parseISO(rsvp.rsvpTime);
-			} else {
-				rsvpDateUtc = parseISO(String(rsvp.rsvpTime));
-			}
-
-			// Validate the date
-			if (isNaN(rsvpDateUtc.getTime())) {
-				return;
-			}
-		} catch {
-			return;
-		}
-
-		// Convert UTC date to store timezone for display and grouping
-		const rsvpDate = getDateInTz(rsvpDateUtc, offsetHours);
-
-		// Check if RSVP is within the week (inclusive of boundaries)
-		if (rsvpDate >= weekStart && rsvpDate <= weekEnd) {
-			const dayKey = format(rsvpDate, "yyyy-MM-dd");
-			// Round to nearest slot based on defaultDuration
-			const totalMinutes = rsvpDate.getHours() * 60 + rsvpDate.getMinutes();
-			const slotMinutes =
-				Math.floor(totalMinutes / defaultDuration) * defaultDuration;
-			const slotHour = Math.floor(slotMinutes / 60);
-			const slotMin = slotMinutes % 60;
-			const timeKey = `${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`;
-			const key = `${dayKey}-${timeKey}`;
-
-			if (!grouped[key]) {
-				grouped[key] = [];
-			}
-			grouped[key].push(rsvp);
-		}
-	});
-
-	return grouped;
 };
 
 export const CustomerWeekViewCalendar: React.FC<
@@ -345,6 +146,10 @@ export const CustomerWeekViewCalendar: React.FC<
 	const [deletedReservationIds, setDeletedReservationIds] = useState<
 		Set<string>
 	>(new Set());
+	// Track updated reservations to use in merge logic instead of stale server data
+	const [updatedReservations, setUpdatedReservations] = useState<
+		Map<string, Rsvp>
+	>(new Map());
 
 	// Load local storage reservations on mount and when storeId changes
 	useEffect(() => {
@@ -365,45 +170,37 @@ export const CustomerWeekViewCalendar: React.FC<
 	}, [storeId]);
 
 	// Merge server reservations with local storage reservations
-	// For anonymous users, only show server reservations (local storage is for persistence only)
-	// Local storage reservations that don't exist on server will be cleaned up in useEffect
 	const [rsvps, setRsvps] = useState<Rsvp[]>(() => {
-		// Always start with server reservations only
-		// Local storage cleanup happens in useEffect after local storage is loaded
 		return [...existingReservations];
 	});
 
 	// Update rsvps when localStorageReservations or existingReservations change
-	// 1. only clean up local storage reservations why click delete dialog confirmation button
-	// 2. newly created reservations should be displayed immediately
-	// This is because users might sign out and back in, and we want to preserve local storage as backup
+	// Preserve local storage as backup even after user signs in/out
 	useEffect(() => {
+		// Apply updated reservations to server data
+		const applyUpdatedReservations = (reservations: Rsvp[]): Rsvp[] => {
+			return reservations.map((r) => updatedReservations.get(r.id) || r);
+		};
+
+		// Filter out deleted reservations and apply updates
+		const filteredServerReservations = existingReservations
+			.filter((r) => !deletedReservationIds.has(r.id))
+			.map((r) => updatedReservations.get(r.id) || r);
+
+		// For anonymous users with local storage, merge with server data
 		if (!user && localStorageReservations.length > 0) {
-			// Get current local storage reservations (no cleanup - keep all)
-			const currentLocalReservations = localStorageReservations;
-
-			// Filter out deleted reservations from server data
-			const filteredServerReservations = existingReservations.filter(
-				(r) => !deletedReservationIds.has(r.id),
-			);
-
-			// Merge local storage reservations with server reservations for anonymous users
-			// Local-only reservations (not on server yet) should also be displayed
-			// For reservations that exist on both server and local storage, preserve name/phone from local storage
 			const serverIdsSet = new Set(filteredServerReservations.map((r) => r.id));
-			const localOnlyReservations = currentLocalReservations.filter(
+			const localOnlyReservations = localStorageReservations.filter(
 				(localRsvp) => !serverIdsSet.has(localRsvp.id),
 			);
 
-			// For anonymous users, preserve name/phone from local storage for reservations that exist on server
-			// This ensures we can delete/edit reservations even if server data doesn't have name/phone
+			// Preserve name/phone from local storage for reservations that exist on server
 			const serverReservationsWithLocalData = filteredServerReservations.map(
 				(serverRsvp) => {
-					const localRsvp = currentLocalReservations.find(
+					const localRsvp = localStorageReservations.find(
 						(r) => r.id === serverRsvp.id,
 					);
-					if (localRsvp && localRsvp.name && localRsvp.phone) {
-						// Preserve name and phone from local storage for anonymous reservations
+					if (localRsvp?.name && localRsvp?.phone) {
 						return {
 							...serverRsvp,
 							name: localRsvp.name,
@@ -414,30 +211,17 @@ export const CustomerWeekViewCalendar: React.FC<
 				},
 			);
 
-			const mergedRsvps = [
-				...serverReservationsWithLocalData,
-				...localOnlyReservations,
-			];
-			setRsvps(mergedRsvps);
-		} else if (!user && localStorageReservations.length === 0) {
-			// If local storage is empty, only show server reservations (excluding deleted ones)
-			const filteredServerReservations = existingReservations.filter(
-				(r) => !deletedReservationIds.has(r.id),
-			);
-			setRsvps(filteredServerReservations);
+			setRsvps([...serverReservationsWithLocalData, ...localOnlyReservations]);
 		} else {
-			// If user is logged in, only show server reservations (excluding deleted ones)
-			const filteredServerReservations = existingReservations.filter(
-				(r) => !deletedReservationIds.has(r.id),
-			);
+			// For logged-in users or anonymous users without local storage
 			setRsvps(filteredServerReservations);
 		}
 	}, [
 		localStorageReservations,
 		existingReservations,
 		user,
-		storeId,
 		deletedReservationIds,
+		updatedReservations,
 	]);
 
 	const [currentDay, setCurrentDay] = useState(() => {
@@ -451,133 +235,6 @@ export const CustomerWeekViewCalendar: React.FC<
 	);
 	const [isCancelling, setIsCancelling] = useState(false);
 	const [openEditDialogId, setOpenEditDialogId] = useState<string | null>(null);
-	const [isClaiming, setIsClaiming] = useState(false);
-
-	// Claim reservations from local storage when user signs in
-	useEffect(() => {
-		// Only claim if user is signed in and storeId is available
-		if (!user?.id || !storeId || isClaiming) {
-			return;
-		}
-
-		const claimLocalStorageReservations = async () => {
-			try {
-				const storageKey = `rsvp-${storeId}`;
-
-				const storedData = localStorage.getItem(storageKey);
-				if (!storedData) {
-					return; // No reservations in local storage
-				}
-
-				const localReservations: Rsvp[] = JSON.parse(storedData);
-				if (
-					!Array.isArray(localReservations) ||
-					localReservations.length === 0
-				) {
-					return; // No valid reservations
-				}
-
-				setIsClaiming(true);
-				const claimedIds: string[] = [];
-				const failedIds: string[] = [];
-
-				// Claim each reservation
-				for (const reservation of localReservations) {
-					if (!reservation.id) {
-						continue; // Skip invalid reservations
-					}
-
-					try {
-						const result = await claimReservationAction({
-							id: reservation.id,
-						});
-
-						if (result?.serverError) {
-							clientLogger.warn("Failed to claim reservation", {
-								metadata: {
-									reservationId: reservation.id,
-									error: result.serverError,
-								},
-							});
-							failedIds.push(reservation.id);
-						} else {
-							// Successfully claimed
-							claimedIds.push(reservation.id);
-							clientLogger.info("Reservation claimed from local storage", {
-								metadata: {
-									reservationId: reservation.id,
-									userId: user.id,
-								},
-							});
-						}
-					} catch (error) {
-						clientLogger.error("Error claiming reservation", {
-							metadata: {
-								reservationId: reservation.id,
-								error: error instanceof Error ? error.message : String(error),
-							},
-						});
-						failedIds.push(reservation.id);
-					}
-				}
-
-				// Show success message for successfully claimed reservations
-				if (claimedIds.length > 0) {
-					// Show success message
-					if (claimedIds.length === 1) {
-						toastSuccess({
-							description:
-								t("rsvp_reservation_claimed") ||
-								"Reservation linked to your account",
-						});
-					} else {
-						const message =
-							t("rsvp_reservations_claimed") ||
-							`${claimedIds.length} reservations linked to your account`;
-						toastSuccess({
-							description: message.replace(
-								"{{count}}",
-								String(claimedIds.length),
-							),
-						});
-					}
-
-					// Refresh the reservations list by triggering a re-fetch
-					// The parent component should refetch reservations after claiming
-					// For now, we'll just update local state if the claimed reservation is in the list
-					setRsvps((prev) => {
-						// The claimed reservations should now appear in the server data
-						// We'll keep the local state as is, and the parent should refetch
-						return prev;
-					});
-				}
-
-				// Note: We do NOT remove claimed reservations from local storage
-				// because the user might sign out and sign in again, and we want to preserve
-				// the local storage as a backup for anonymous reservations
-
-				// Show error message for failed claims
-				if (failedIds.length > 0) {
-					clientLogger.warn("Some reservations could not be claimed", {
-						metadata: {
-							failedCount: failedIds.length,
-							failedIds,
-						},
-					});
-				}
-			} catch (error) {
-				clientLogger.error("Error claiming reservations from local storage", {
-					metadata: {
-						error: error instanceof Error ? error.message : String(error),
-					},
-				});
-			} finally {
-				setIsClaiming(false);
-			}
-		};
-
-		claimLocalStorageReservations();
-	}, [user?.id, storeId, isClaiming, t]);
 
 	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
@@ -604,79 +261,16 @@ export const CustomerWeekViewCalendar: React.FC<
 				return true;
 			}
 
-			try {
-				// Parse business hours JSON
-				const schedule = JSON.parse(facility.businessHours) as {
-					Monday?: Array<{ from: string; to: string }> | "closed";
-					Tuesday?: Array<{ from: string; to: string }> | "closed";
-					Wednesday?: Array<{ from: string; to: string }> | "closed";
-					Thursday?: Array<{ from: string; to: string }> | "closed";
-					Friday?: Array<{ from: string; to: string }> | "closed";
-					Saturday?: Array<{ from: string; to: string }> | "closed";
-					Sunday?: Array<{ from: string; to: string }> | "closed";
-				};
-
-				// Convert UTC time to store timezone for checking
-				const offsetHours = getOffsetHours(timezone);
-				const timeInStoreTz = getDateInTz(checkTime, offsetHours);
-
-				// Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-				const dayOfWeek = timeInStoreTz.getDay();
-				const dayNames = [
-					"Sunday",
-					"Monday",
-					"Tuesday",
-					"Wednesday",
-					"Thursday",
-					"Friday",
-					"Saturday",
-				] as const;
-				const dayName = dayNames[dayOfWeek];
-
-				// Get hours for this day
-				const dayHours = schedule[dayName];
-				if (!dayHours || dayHours === "closed") {
-					return false;
-				}
-
-				// Check if time falls within any time range
-				const checkHour = timeInStoreTz.getHours();
-				const checkMinute = timeInStoreTz.getMinutes();
-				const checkTimeMinutes = checkHour * 60 + checkMinute;
-
-				for (const range of dayHours) {
-					const [fromHour, fromMinute] = range.from.split(":").map(Number);
-					const [toHour, toMinute] = range.to.split(":").map(Number);
-
-					const fromMinutes = fromHour * 60 + fromMinute;
-					const toMinutes = toHour * 60 + toMinute;
-
-					// Check if time falls within range
-					if (checkTimeMinutes >= fromMinutes && checkTimeMinutes < toMinutes) {
-						return true;
-					}
-
-					// Handle range spanning midnight (e.g., 22:00 to 02:00)
-					if (fromMinutes > toMinutes) {
-						if (
-							checkTimeMinutes >= fromMinutes ||
-							checkTimeMinutes < toMinutes
-						) {
-							return true;
-						}
-					}
-				}
-
-				return false;
-			} catch (error) {
-				// If parsing fails, assume facility is available
-				return true;
-			}
+			const result = checkTimeAgainstBusinessHours(
+				facility.businessHours,
+				checkTime,
+				timezone,
+			);
+			return result.isValid;
 		},
 		[],
 	);
 
-	// Helper function to check if any facilities are available for a time slot
 	// Helper function to check if any facilities are available for a time slot
 	// Returns true if facilities are available OR if no facilities exist (allows reservations without facilities)
 	const hasAvailableFacilities = useCallback(
@@ -767,10 +361,8 @@ export const CustomerWeekViewCalendar: React.FC<
 		],
 	);
 
-	//Time slots are generated at intervals matching defaultDuration
-	//RSVPs are grouped into the correct slots based on defaultDuration
-	//Works with any defaultDuration value (30, 60, 90, 120 minutes, etc.)
-	//Maintains backward compatibility (defaults to 60 minutes if defaultDuration is not set)
+	// Time slots are generated at intervals matching defaultDuration
+	// RSVPs are grouped into the correct slots based on defaultDuration
 	const timeSlots = useMemo(
 		() =>
 			generateTimeSlots(
@@ -842,8 +434,6 @@ export const CustomerWeekViewCalendar: React.FC<
 
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 
-	// Show all RSVPs so users can see availability
-	// User's own reservations will be editable via ReservationDialog
 	// Group RSVPs by day and time (convert UTC to store timezone)
 	const groupedRsvps = useMemo(
 		() =>
@@ -857,11 +447,12 @@ export const CustomerWeekViewCalendar: React.FC<
 		[rsvps, weekStart, weekEnd, storeTimezone, defaultDuration],
 	);
 
-	// Pre-compute which slots are in the past or too soon (less than 1 hour advance booking)
+	// Pre-compute which slots are in the past or too soon (based on canReserveBefore setting)
 	const pastSlots = useMemo(() => {
 		const past = new Set<string>();
 		const now = getUtcNow();
-		const minAdvanceHours = 1; // Minimum 1 hour advance booking required
+		// Use rsvpSettings.canReserveBefore (default: 2 hours) to match server-side validation
+		const minAdvanceHours = rsvpSettings?.canReserveBefore ?? 2;
 		const minAdvanceMs = minAdvanceHours * 60 * 60 * 1000; // Convert to milliseconds
 		weekDays.forEach((day) => {
 			timeSlots.forEach((timeSlot) => {
@@ -871,14 +462,14 @@ export const CustomerWeekViewCalendar: React.FC<
 					storeTimezone || "Asia/Taipei",
 				);
 				const timeUntilSlot = slotDateTimeUtc.getTime() - now.getTime();
-				// Mark as past if slot is in the past OR less than 1 hour from now
+				// Mark as past if slot is in the past OR less than minAdvanceHours from now
 				if (timeUntilSlot < minAdvanceMs) {
 					past.add(`${day.toISOString()}-${timeSlot}`);
 				}
 			});
 		});
 		return past;
-	}, [weekDays, timeSlots, storeTimezone]);
+	}, [weekDays, timeSlots, storeTimezone, rsvpSettings?.canReserveBefore]);
 
 	// Pre-compute which days are today to avoid repeated date calculations
 	const todayDays = useMemo(() => {
@@ -980,33 +571,9 @@ export const CustomerWeekViewCalendar: React.FC<
 
 					if (!existsInStorage) {
 						// Transform reservation data for localStorage (convert BigInt/Date to number)
-						const reservationForStorage = {
-							...newRsvp,
-							rsvpTime:
-								typeof newRsvp.rsvpTime === "number"
-									? newRsvp.rsvpTime
-									: newRsvp.rsvpTime instanceof Date
-										? newRsvp.rsvpTime.getTime()
-										: typeof newRsvp.rsvpTime === "bigint"
-											? Number(newRsvp.rsvpTime)
-											: null,
-							createdAt:
-								typeof newRsvp.createdAt === "number"
-									? newRsvp.createdAt
-									: typeof newRsvp.createdAt === "bigint"
-										? Number(newRsvp.createdAt)
-										: newRsvp.createdAt instanceof Date
-											? newRsvp.createdAt.getTime()
-											: null,
-							updatedAt:
-								typeof newRsvp.updatedAt === "number"
-									? newRsvp.updatedAt
-									: typeof newRsvp.updatedAt === "bigint"
-										? Number(newRsvp.updatedAt)
-										: newRsvp.updatedAt instanceof Date
-											? newRsvp.updatedAt.getTime()
-											: null,
-						};
+						const reservationForStorage = transformReservationForStorage(
+							newRsvp,
+						) as RsvpType;
 
 						const updatedReservations = [
 							...existingReservations,
@@ -1069,18 +636,31 @@ export const CustomerWeekViewCalendar: React.FC<
 	const handleReservationUpdated = useCallback(
 		(updatedRsvp: Rsvp) => {
 			if (!updatedRsvp) return;
-			setRsvps((prev) => {
-				// Ensure rsvpTime is properly formatted as Date if it's a string
-				const normalizedRsvp: Rsvp = {
-					...updatedRsvp,
-					rsvpTime:
-						updatedRsvp.rsvpTime instanceof Date
-							? updatedRsvp.rsvpTime
-							: typeof updatedRsvp.rsvpTime === "string"
-								? parseISO(updatedRsvp.rsvpTime)
-								: new Date(updatedRsvp.rsvpTime),
-				};
 
+			// Ensure rsvpTime is properly formatted as Date if it's a string
+			const normalizedRsvp: Rsvp = {
+				...updatedRsvp,
+				rsvpTime:
+					updatedRsvp.rsvpTime instanceof Date
+						? updatedRsvp.rsvpTime
+						: typeof updatedRsvp.rsvpTime === "string"
+							? parseISO(updatedRsvp.rsvpTime)
+							: typeof updatedRsvp.rsvpTime === "bigint"
+								? epochToDate(updatedRsvp.rsvpTime)
+								: typeof updatedRsvp.rsvpTime === "number"
+									? epochToDate(BigInt(updatedRsvp.rsvpTime))
+									: updatedRsvp.rsvpTime,
+			};
+
+			// Store updated reservation so merge logic uses it instead of stale server data
+			setUpdatedReservations((prev) => {
+				const updated = new Map(prev);
+				updated.set(normalizedRsvp.id, normalizedRsvp);
+				return updated;
+			});
+
+			// Update display state immediately
+			setRsvps((prev) => {
 				const index = prev.findIndex((item) => item.id === normalizedRsvp.id);
 				if (index === -1) {
 					// If not found, add it (shouldn't happen, but handle gracefully)
@@ -1101,30 +681,7 @@ export const CustomerWeekViewCalendar: React.FC<
 						const localReservations: Rsvp[] = JSON.parse(storedData);
 						const updatedLocal = localReservations.map((r) =>
 							r.id === updatedRsvp.id
-								? {
-										...updatedRsvp,
-										// Transform BigInt to number for local storage
-										rsvpTime:
-											typeof updatedRsvp.rsvpTime === "number"
-												? updatedRsvp.rsvpTime
-												: updatedRsvp.rsvpTime instanceof Date
-													? updatedRsvp.rsvpTime.getTime()
-													: typeof updatedRsvp.rsvpTime === "bigint"
-														? Number(updatedRsvp.rsvpTime)
-														: null,
-										createdAt:
-											typeof updatedRsvp.createdAt === "number"
-												? updatedRsvp.createdAt
-												: typeof updatedRsvp.createdAt === "bigint"
-													? Number(updatedRsvp.createdAt)
-													: null,
-										updatedAt:
-											typeof updatedRsvp.updatedAt === "number"
-												? updatedRsvp.updatedAt
-												: typeof updatedRsvp.updatedAt === "bigint"
-													? Number(updatedRsvp.updatedAt)
-													: null,
-									}
+								? transformReservationForStorage(normalizedRsvp)
 								: r,
 						);
 						localStorage.setItem(storageKey, JSON.stringify(updatedLocal));
@@ -1256,11 +813,38 @@ export const CustomerWeekViewCalendar: React.FC<
 		removeReservationFromLocalStorage,
 	]);
 
+	// Render cancel button component
+	const renderCancelButton = useCallback(
+		(rsvp: Rsvp) => {
+			if (!canCancelReservation(rsvp)) return null;
+
+			return (
+				<Button
+					variant="ghost"
+					size="icon"
+					className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 text-destructive hover:text-destructive p-0 z-10"
+					onClick={(e) => {
+						e.stopPropagation();
+						handleCancelClick(e, rsvp);
+					}}
+					title={
+						rsvp.status === RsvpStatus.Pending
+							? t("rsvp_delete_reservation")
+							: t("rsvp_cancel_reservation")
+					}
+				>
+					<IconTrash className="h-3 w-3 sm:h-4 sm:w-4" />
+				</Button>
+			);
+		},
+		[t, handleCancelClick, canCancelReservation],
+	);
+
 	return (
 		<div className="flex flex-col gap-3 sm:gap-4">
 			{/* Week Navigation */}
-			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex items-center gap-1.5 sm:gap-2 font-mono text-sm flex-wrap">
+			<div className="flex flex-col gap-0 sm:flex-row sm:items-center sm:justify-between">
+				<div className="flex items-center gap-0.5 sm:gap-1 font-mono text-sm flex-wrap">
 					<Button
 						variant="outline"
 						size="icon"
@@ -1287,12 +871,12 @@ export const CustomerWeekViewCalendar: React.FC<
 					</Button>
 					<span className="ml-2 text-base font-semibold sm:ml-4 sm:text-lg">
 						<span className="hidden sm:inline">
-							{format(weekStart, "MMMd", { locale: calendarLocale })} -{" "}
+							{format(weekStart, "MMMdd", { locale: calendarLocale })} -{" "}
 							{format(weekEnd, datetimeFormat, { locale: calendarLocale })}
 						</span>
 						<span className="sm:hidden">
-							{format(weekStart, "MMM d", { locale: calendarLocale })} -{" "}
-							{format(weekEnd, "MMM d", { locale: calendarLocale })}
+							{format(weekStart, "MMM dd", { locale: calendarLocale })} -{" "}
+							{format(weekEnd, "MMM dd", { locale: calendarLocale })}
 						</span>
 					</span>
 				</div>
@@ -1304,7 +888,7 @@ export const CustomerWeekViewCalendar: React.FC<
 					<table className="w-full border-collapse min-w-[390px] sm:min-w-full">
 						<thead>
 							<tr>
-								<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-right text-[10px] sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
+								<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-right text-base sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
 									{t("time")}
 								</th>
 								{weekDays.map((day) => {
@@ -1348,11 +932,9 @@ export const CustomerWeekViewCalendar: React.FC<
 										const activeRsvps = slotRsvps.filter(
 											(rsvp) => rsvp.status !== RsvpStatus.Cancelled,
 										);
-										const isAvailable = activeRsvps.length === 0;
 										// Check if this day/time slot is in the past using pre-computed map
 										const slotKey = `${day.toISOString()}-${timeSlot}`;
 										const isPast = pastSlots.has(slotKey);
-										const canSelect = isAvailable && !isPast;
 										const isDayToday = todayDays.has(day.toISOString());
 										return (
 											<td
@@ -1366,15 +948,14 @@ export const CustomerWeekViewCalendar: React.FC<
 												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
 													{activeRsvps.length > 0 &&
 														activeRsvps.map((rsvp) => {
-															// Check if this reservation belongs to the current user
 															const isUserRsvp = isUserReservation(rsvp);
-															// Disable editing if slot is in the past
 															const canEdit =
 																!isPast && canEditReservation(rsvp) && storeId;
-															// Allow cancel/delete even if in the past, as long as canCancelReservation returns true
 															const canCancel = canCancelReservation(rsvp);
 															const isCompleted =
 																rsvp.status === RsvpStatus.Completed;
+															const displayName =
+																getReservationDisplayName(rsvp);
 
 															// If not store owner AND not user's reservation, show as "booked" without details
 															if (!isStoreOwner && !isUserRsvp) {
@@ -1398,7 +979,6 @@ export const CustomerWeekViewCalendar: React.FC<
 
 															// Render as non-clickable for completed RSVPs
 															if (isCompleted) {
-																// Render as non-clickable button (display only, not clickable)
 																return (
 																	<button
 																		key={rsvp.id}
@@ -1411,20 +991,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																		)}
 																	>
 																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																			{/* For anonymous users, show name from reservation; for logged-in, show Customer name */}
-																			{rsvp.name
-																				? rsvp.name
-																				: rsvp.Customer?.name
-																					? rsvp.Customer.name
-																					: rsvp.Customer?.email
-																						? rsvp.Customer.email
-																						: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																								rsvp.numOfAdult +
-																									rsvp.numOfChild ===
-																								1
-																									? "guest"
-																									: "guests"
-																							}`}
+																			{displayName}
 																		</div>
 																		{rsvp.Facility?.facilityName && (
 																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
@@ -1469,25 +1036,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																			}}
 																			trigger={
 																				<div className="relative">
-																					{canCancel && (
-																						<Button
-																							variant="ghost"
-																							size="icon"
-																							className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 text-destructive hover:text-destructive p-0 z-10"
-																							onClick={(e) => {
-																								e.stopPropagation();
-																								handleCancelClick(e, rsvp);
-																							}}
-																							title={
-																								rsvp.status ===
-																								RsvpStatus.Pending
-																									? t("rsvp_delete_reservation")
-																									: t("rsvp_cancel_reservation")
-																							}
-																						>
-																							<IconTrash className="h-3 w-3 sm:h-4 sm:w-4" />
-																						</Button>
-																					)}
+																					{renderCancelButton(rsvp)}
 																					<button
 																						type="button"
 																						onClick={(e) => {
@@ -1503,20 +1052,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																						)}
 																					>
 																						<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																							{/* For anonymous users, show name from reservation; for logged-in, show Customer name */}
-																							{rsvp.name
-																								? rsvp.name
-																								: rsvp.Customer?.name
-																									? rsvp.Customer.name
-																									: rsvp.Customer?.email
-																										? rsvp.Customer.email
-																										: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																												rsvp.numOfAdult +
-																													rsvp.numOfChild ===
-																												1
-																													? "guest"
-																													: "guests"
-																											}`}
+																							{displayName}
 																						</div>
 																						{rsvp.Facility?.facilityName && (
 																							<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
@@ -1539,7 +1075,7 @@ export const CustomerWeekViewCalendar: React.FC<
 															// Render non-editable button for other RSVPs (only visible to owner)
 															// But still show delete button if user owns it and can cancel
 															return (
-																<div className="relative">
+																<div key={rsvp.id} className="relative">
 																	{canCancel && (
 																		<Button
 																			variant="ghost"
@@ -1559,7 +1095,6 @@ export const CustomerWeekViewCalendar: React.FC<
 																		</Button>
 																	)}
 																	<button
-																		key={rsvp.id}
 																		type="button"
 																		disabled
 																		className={cn(
@@ -1570,20 +1105,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																		)}
 																	>
 																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																			{/* For anonymous users, show name from reservation; for logged-in, show Customer name */}
-																			{rsvp.name
-																				? rsvp.name
-																				: rsvp.Customer?.name
-																					? rsvp.Customer.name
-																					: rsvp.Customer?.email
-																						? rsvp.Customer.email
-																						: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																								rsvp.numOfAdult +
-																									rsvp.numOfChild ===
-																								1
-																									? "guest"
-																									: "guests"
-																							}`}
+																			{displayName}
 																		</div>
 																		{rsvp.Facility?.facilityName && (
 																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
@@ -1600,35 +1122,37 @@ export const CustomerWeekViewCalendar: React.FC<
 															);
 														})}
 
-													{/* Show "+" button if:
-														1. No reservations exist, OR
-														2. singleServiceMode is false (multiple reservations allowed per time slot)
-														3. AND there are available facilities for this time slot
-													*/}
+													{/* Show "+" button if slot is available and facilities exist */}
 													{(() => {
 														const canAddMore =
 															activeRsvps.length === 0 || !singleServiceMode;
+														if (!canAddMore || isPast) return null;
 
-														if (!canAddMore) {
-															return null;
-														}
-
-														// Check if there are any available facilities for this time slot
 														const slotTimeUtc = dayAndTimeSlotToUtc(
 															day,
 															timeSlot,
 															storeTimezone || "Asia/Taipei",
 														);
-														const hasFacilities = hasAvailableFacilities(
-															slotTimeUtc,
-															rsvps,
-														);
-
-														if (!hasFacilities) {
+														if (!hasAvailableFacilities(slotTimeUtc, rsvps)) {
 															return null;
 														}
 
-														return canCreateReservation && storeId ? (
+														if (!canCreateReservation) return null;
+
+														const addButton = (
+															<button
+																type="button"
+																disabled={isPast}
+																className={cn(
+																	"w-full h-full sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground flex items-center justify-center",
+																	isPast && "cursor-not-allowed opacity-50",
+																)}
+															>
+																+
+															</button>
+														);
+
+														return storeId ? (
 															<ReservationDialog
 																storeId={storeId}
 																rsvpSettings={rsvpSettings}
@@ -1646,20 +1170,9 @@ export const CustomerWeekViewCalendar: React.FC<
 																creditServiceExchangeRate={
 																	creditServiceExchangeRate
 																}
-																trigger={
-																	<button
-																		type="button"
-																		disabled={isPast}
-																		className={cn(
-																			"w-full h-full sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground flex items-center justify-center",
-																			isPast && "cursor-not-allowed opacity-50",
-																		)}
-																	>
-																		{isPast ? null : "+"}
-																	</button>
-																}
+																trigger={addButton}
 															/>
-														) : canCreateReservation ? (
+														) : (
 															<button
 																type="button"
 																onClick={() =>
@@ -1671,9 +1184,9 @@ export const CustomerWeekViewCalendar: React.FC<
 																	isPast && "cursor-not-allowed opacity-50",
 																)}
 															>
-																{isPast ? null : "+"}
+																+
 															</button>
-														) : null;
+														);
 													})()}
 												</div>
 											</td>

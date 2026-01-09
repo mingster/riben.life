@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import {
 	IconBrandMeta,
 	IconChevronDown,
@@ -32,9 +33,13 @@ import LineLoginButton from "./button-line-login";
 export default function ClientSignIn({
 	callbackUrl = "/",
 	noTitle = false,
+	title,
+	className,
 }: {
 	callbackUrl?: string;
 	noTitle?: boolean;
+	title?: string;
+	className?: string;
 }) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -47,15 +52,22 @@ export default function ClientSignIn({
 		callbackUrl = `/s/${storeId}`;
 	}
 
+	// Use provided title or fall back to default
+	const displayTitle = title ?? t("signin_title");
+
+	const isFullHeight = className?.includes("h-full");
+	
 	return (
-		<Card className="w-full max-w-lg max-h-lg p-2">
+		<Card className={cn("w-full max-w-lg", isFullHeight && "h-full flex flex-col", !isFullHeight && "max-h-lg", className)}>
 			{!noTitle && (
 				<CardHeader>
-					<CardTitle className="text-lg pt-2">{t("signin_title")}</CardTitle>
+					<CardTitle className="text-lg pt-2 md:text-2xl font-light leading-relaxed text-foreground/80">
+						{displayTitle}
+					</CardTitle>
 				</CardHeader>
 			)}
 
-			<CardContent className="flex flex-col gap-10">
+			<CardContent className={cn("flex flex-col gap-10", isFullHeight && "flex-1 overflow-auto")}>
 				{/* Phone OTP form - shown by default */}
 				<FormPhoneOtp callbackUrl={callbackUrl} />
 
