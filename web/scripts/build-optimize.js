@@ -158,15 +158,26 @@ function optimizeCache() {
 
 // Prisma optimization
 function optimizePrisma() {
-	console.log("🔧 Optimizing Prisma generation...");
+	console.log("🔧 Generating Prisma client...");
 
-	// Run Prisma generation in parallel
+	// Only generate for schemas that actually exist
 	const prismaSchemas = [
+		"./prisma/schema.prisma",
 		"./prisma-pstv/schema.prisma",
 		"./prisma-epg/schema.prisma",
 		"./prisma-enterprise/schema.prisma",
 		"./prisma-viewLog/schema.prisma",
-	];
+	].filter((schema) => {
+		const schemaPath = path.join(process.cwd(), schema);
+		return fs.existsSync(schemaPath);
+	});
+
+	if (prismaSchemas.length === 0) {
+		console.warn("⚠️  No Prisma schemas found, skipping Prisma generation");
+		return Promise.resolve();
+	}
+
+	console.log(`📦 Found ${prismaSchemas.length} Prisma schema(s)`);
 
 	const generatePromises = prismaSchemas.map((schema) => {
 		return new Promise((resolve, reject) => {
@@ -175,8 +186,10 @@ function optimizePrisma() {
 					stdio: "inherit",
 					env: { ...process.env, PRISMA_GENERATE_SKIP_AUTOINSTALL: "true" },
 				});
+				console.log(`✅ Generated Prisma client for ${schema}`);
 				resolve();
 			} catch (error) {
+				console.error(`❌ Failed to generate Prisma client for ${schema}:`, error.message);
 				reject(error);
 			}
 		});
@@ -198,11 +211,19 @@ async function build(configName = "optimized") {
 	monitor.start();
 
 	try {
+		// Clean build directory for production builds to avoid Turbopack artifacts
+		if (configName === "production") {
+			const buildDir = path.join(process.cwd(), ".next");
+			if (fs.existsSync(buildDir)) {
+				console.log("🧹 Cleaning .next directory for clean production build...");
+				fs.rmSync(buildDir, { recursive: true, force: true });
+			}
+		}
+
 		// Optimize cache
 		optimizeCache();
 
-		// Optimize Prisma generation
-		console.log("📦 Generating Prisma clients...");
+		// Generate Prisma client
 		await optimizePrisma();
 
 		// Set environment variables
