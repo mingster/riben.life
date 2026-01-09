@@ -23,8 +23,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import { claimReservationAction } from "@/actions/store/reservation/claim-reservation";
-import { clientLogger } from "@/lib/client-logger";
 import type {
 	Rsvp,
 	RsvpSettings,
@@ -451,133 +449,6 @@ export const CustomerWeekViewCalendar: React.FC<
 	);
 	const [isCancelling, setIsCancelling] = useState(false);
 	const [openEditDialogId, setOpenEditDialogId] = useState<string | null>(null);
-	const [isClaiming, setIsClaiming] = useState(false);
-
-	// Claim reservations from local storage when user signs in
-	useEffect(() => {
-		// Only claim if user is signed in and storeId is available
-		if (!user?.id || !storeId || isClaiming) {
-			return;
-		}
-
-		const claimLocalStorageReservations = async () => {
-			try {
-				const storageKey = `rsvp-${storeId}`;
-
-				const storedData = localStorage.getItem(storageKey);
-				if (!storedData) {
-					return; // No reservations in local storage
-				}
-
-				const localReservations: Rsvp[] = JSON.parse(storedData);
-				if (
-					!Array.isArray(localReservations) ||
-					localReservations.length === 0
-				) {
-					return; // No valid reservations
-				}
-
-				setIsClaiming(true);
-				const claimedIds: string[] = [];
-				const failedIds: string[] = [];
-
-				// Claim each reservation
-				for (const reservation of localReservations) {
-					if (!reservation.id) {
-						continue; // Skip invalid reservations
-					}
-
-					try {
-						const result = await claimReservationAction({
-							id: reservation.id,
-						});
-
-						if (result?.serverError) {
-							clientLogger.warn("Failed to claim reservation", {
-								metadata: {
-									reservationId: reservation.id,
-									error: result.serverError,
-								},
-							});
-							failedIds.push(reservation.id);
-						} else {
-							// Successfully claimed
-							claimedIds.push(reservation.id);
-							clientLogger.info("Reservation claimed from local storage", {
-								metadata: {
-									reservationId: reservation.id,
-									userId: user.id,
-								},
-							});
-						}
-					} catch (error) {
-						clientLogger.error("Error claiming reservation", {
-							metadata: {
-								reservationId: reservation.id,
-								error: error instanceof Error ? error.message : String(error),
-							},
-						});
-						failedIds.push(reservation.id);
-					}
-				}
-
-				// Show success message for successfully claimed reservations
-				if (claimedIds.length > 0) {
-					// Show success message
-					if (claimedIds.length === 1) {
-						toastSuccess({
-							description:
-								t("rsvp_reservation_claimed") ||
-								"Reservation linked to your account",
-						});
-					} else {
-						const message =
-							t("rsvp_reservations_claimed") ||
-							`${claimedIds.length} reservations linked to your account`;
-						toastSuccess({
-							description: message.replace(
-								"{{count}}",
-								String(claimedIds.length),
-							),
-						});
-					}
-
-					// Refresh the reservations list by triggering a re-fetch
-					// The parent component should refetch reservations after claiming
-					// For now, we'll just update local state if the claimed reservation is in the list
-					setRsvps((prev) => {
-						// The claimed reservations should now appear in the server data
-						// We'll keep the local state as is, and the parent should refetch
-						return prev;
-					});
-				}
-
-				// Note: We do NOT remove claimed reservations from local storage
-				// because the user might sign out and sign in again, and we want to preserve
-				// the local storage as a backup for anonymous reservations
-
-				// Show error message for failed claims
-				if (failedIds.length > 0) {
-					clientLogger.warn("Some reservations could not be claimed", {
-						metadata: {
-							failedCount: failedIds.length,
-							failedIds,
-						},
-					});
-				}
-			} catch (error) {
-				clientLogger.error("Error claiming reservations from local storage", {
-					metadata: {
-						error: error instanceof Error ? error.message : String(error),
-					},
-				});
-			} finally {
-				setIsClaiming(false);
-			}
-		};
-
-		claimLocalStorageReservations();
-	}, [user?.id, storeId, isClaiming, t]);
 
 	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
@@ -857,11 +728,12 @@ export const CustomerWeekViewCalendar: React.FC<
 		[rsvps, weekStart, weekEnd, storeTimezone, defaultDuration],
 	);
 
-	// Pre-compute which slots are in the past or too soon (less than 1 hour advance booking)
+	// Pre-compute which slots are in the past or too soon (based on canReserveBefore setting)
 	const pastSlots = useMemo(() => {
 		const past = new Set<string>();
 		const now = getUtcNow();
-		const minAdvanceHours = 1; // Minimum 1 hour advance booking required
+		// Use rsvpSettings.canReserveBefore (default: 2 hours) to match server-side validation
+		const minAdvanceHours = rsvpSettings?.canReserveBefore ?? 2;
 		const minAdvanceMs = minAdvanceHours * 60 * 60 * 1000; // Convert to milliseconds
 		weekDays.forEach((day) => {
 			timeSlots.forEach((timeSlot) => {
@@ -871,14 +743,14 @@ export const CustomerWeekViewCalendar: React.FC<
 					storeTimezone || "Asia/Taipei",
 				);
 				const timeUntilSlot = slotDateTimeUtc.getTime() - now.getTime();
-				// Mark as past if slot is in the past OR less than 1 hour from now
+				// Mark as past if slot is in the past OR less than minAdvanceHours from now
 				if (timeUntilSlot < minAdvanceMs) {
 					past.add(`${day.toISOString()}-${timeSlot}`);
 				}
 			});
 		});
 		return past;
-	}, [weekDays, timeSlots, storeTimezone]);
+	}, [weekDays, timeSlots, storeTimezone, rsvpSettings?.canReserveBefore]);
 
 	// Pre-compute which days are today to avoid repeated date calculations
 	const todayDays = useMemo(() => {
@@ -1259,8 +1131,8 @@ export const CustomerWeekViewCalendar: React.FC<
 	return (
 		<div className="flex flex-col gap-3 sm:gap-4">
 			{/* Week Navigation */}
-			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex items-center gap-1.5 sm:gap-2 font-mono text-sm flex-wrap">
+			<div className="flex flex-col gap-0 sm:flex-row sm:items-center sm:justify-between">
+				<div className="flex items-center gap-0.5 sm:gap-1 font-mono text-sm flex-wrap">
 					<Button
 						variant="outline"
 						size="icon"
@@ -1287,12 +1159,12 @@ export const CustomerWeekViewCalendar: React.FC<
 					</Button>
 					<span className="ml-2 text-base font-semibold sm:ml-4 sm:text-lg">
 						<span className="hidden sm:inline">
-							{format(weekStart, "MMMd", { locale: calendarLocale })} -{" "}
+							{format(weekStart, "MMMdd", { locale: calendarLocale })} -{" "}
 							{format(weekEnd, datetimeFormat, { locale: calendarLocale })}
 						</span>
 						<span className="sm:hidden">
-							{format(weekStart, "MMM d", { locale: calendarLocale })} -{" "}
-							{format(weekEnd, "MMM d", { locale: calendarLocale })}
+							{format(weekStart, "MMM dd", { locale: calendarLocale })} -{" "}
+							{format(weekEnd, "MMM dd", { locale: calendarLocale })}
 						</span>
 					</span>
 				</div>
@@ -1304,7 +1176,7 @@ export const CustomerWeekViewCalendar: React.FC<
 					<table className="w-full border-collapse min-w-[390px] sm:min-w-full">
 						<thead>
 							<tr>
-								<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-right text-[10px] sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
+								<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-right text-base sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
 									{t("time")}
 								</th>
 								{weekDays.map((day) => {
@@ -1539,7 +1411,7 @@ export const CustomerWeekViewCalendar: React.FC<
 															// Render non-editable button for other RSVPs (only visible to owner)
 															// But still show delete button if user owns it and can cancel
 															return (
-																<div className="relative">
+																<div key={rsvp.id} className="relative">
 																	{canCancel && (
 																		<Button
 																			variant="ghost"
@@ -1559,7 +1431,6 @@ export const CustomerWeekViewCalendar: React.FC<
 																		</Button>
 																	)}
 																	<button
-																		key={rsvp.id}
 																		type="button"
 																		disabled
 																		className={cn(

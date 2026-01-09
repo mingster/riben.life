@@ -67,6 +67,9 @@ export function RsvpCancelPolicyInfo({
 			? facility + staff
 			: (rsvpSettings?.defaultCost ?? null);
 
+	// Calculate total for refund warning check (use 0 if no cost)
+	const totalForRefund = (facilityCost ?? 0) + (serviceStaffCost ?? 0);
+
 	return (
 		<div className="mt-2 p-3 rounded-md bg-muted/50 border border-border">
 			<div className="text-xs font-medium mb-1">
@@ -174,7 +177,8 @@ export function RsvpCancelPolicyInfo({
 					)}
 				</ol>
 
-				{alreadyPaid && (
+				{/* Only show refund messages if already paid AND total cost > 0 (no point showing refund info for free reservations) */}
+				{alreadyPaid && totalForRefund > 0 && (
 					<div
 						className={
 							cancelPolicyInfo.wouldRefund
