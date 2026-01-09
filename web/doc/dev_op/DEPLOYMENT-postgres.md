@@ -191,7 +191,7 @@
 
     ``` text
     # tc2
-    hostssl    all     all     59.126.30.241/32       scram-sha-256
+    hostssl    all     all     34.80.131.137/32       scram-sha-256
 
     # mx2
     hostssl    all     all     64.186.50.230/32       scram-sha-256
@@ -214,7 +214,7 @@
 
     ``` bash
     # allow only certain client(s)
-    sudo ufw allow proto tcp from 59.126.30.241 to any port 5432
+    sudo ufw allow proto tcp from 34.80.131.137 to any port 5432
     ```
 
 1. Verify Remote Access
