@@ -129,30 +129,44 @@ class BuildPerformanceMonitor {
 }
 
 // Cache optimization
-function optimizeCache() {
-	console.log("🧹 Optimizing build cache...");
-
-	const cacheDir = path.join(process.cwd(), ".next", "cache");
-	if (fs.existsSync(cacheDir)) {
-		// Clean old cache files (older than 7 days)
-		const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-
-		function cleanOldFiles(dir) {
-			const files = fs.readdirSync(dir);
-			files.forEach((file) => {
-				const filePath = path.join(dir, file);
-				const stats = fs.statSync(filePath);
-
-				if (stats.isDirectory()) {
-					cleanOldFiles(filePath);
-				} else if (stats.mtime.getTime() < sevenDaysAgo) {
-					fs.unlinkSync(filePath);
-					console.log(`🗑️  Removed old cache file: ${file}`);
-				}
+function optimizeCache(useFullOptimization = false) {
+	if (useFullOptimization) {
+		// Use the comprehensive cache optimization script for production builds
+		console.log("🧹 Running comprehensive cache optimization...");
+		try {
+			execSync("node scripts/cache-optimize.js", {
+				stdio: "inherit",
+				cwd: process.cwd(),
 			});
+		} catch (error) {
+			console.warn("⚠️  Cache optimization had issues, but continuing with build...");
 		}
+	} else {
+		// Basic cache cleanup for non-production builds
+		console.log("🧹 Optimizing build cache...");
 
-		cleanOldFiles(cacheDir);
+		const cacheDir = path.join(process.cwd(), ".next", "cache");
+		if (fs.existsSync(cacheDir)) {
+			// Clean old cache files (older than 7 days)
+			const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+			function cleanOldFiles(dir) {
+				const files = fs.readdirSync(dir);
+				files.forEach((file) => {
+					const filePath = path.join(dir, file);
+					const stats = fs.statSync(filePath);
+
+					if (stats.isDirectory()) {
+						cleanOldFiles(filePath);
+					} else if (stats.mtime.getTime() < sevenDaysAgo) {
+						fs.unlinkSync(filePath);
+						console.log(`🗑️  Removed old cache file: ${file}`);
+					}
+				});
+			}
+
+			cleanOldFiles(cacheDir);
+		}
 	}
 }
 
@@ -160,42 +174,25 @@ function optimizeCache() {
 function optimizePrisma() {
 	console.log("🔧 Generating Prisma client...");
 
-	// Only generate for schemas that actually exist
-	const prismaSchemas = [
-		"./prisma/schema.prisma",
-		"./prisma-pstv/schema.prisma",
-		"./prisma-epg/schema.prisma",
-		"./prisma-enterprise/schema.prisma",
-		"./prisma-viewLog/schema.prisma",
-	].filter((schema) => {
-		const schemaPath = path.join(process.cwd(), schema);
-		return fs.existsSync(schemaPath);
-	});
+	const schemaPath = "./prisma/schema.prisma";
+	const fullPath = path.join(process.cwd(), schemaPath);
 
-	if (prismaSchemas.length === 0) {
-		console.warn("⚠️  No Prisma schemas found, skipping Prisma generation");
+	if (!fs.existsSync(fullPath)) {
+		console.warn("⚠️  Prisma schema not found, skipping Prisma generation");
 		return Promise.resolve();
 	}
 
-	console.log(`📦 Found ${prismaSchemas.length} Prisma schema(s)`);
-
-	const generatePromises = prismaSchemas.map((schema) => {
-		return new Promise((resolve, reject) => {
-			try {
-				execSync(`bunx prisma generate --schema ${schema}`, {
-					stdio: "inherit",
-					env: { ...process.env, PRISMA_GENERATE_SKIP_AUTOINSTALL: "true" },
-				});
-				console.log(`✅ Generated Prisma client for ${schema}`);
-				resolve();
-			} catch (error) {
-				console.error(`❌ Failed to generate Prisma client for ${schema}:`, error.message);
-				reject(error);
-			}
+	try {
+		execSync("bunx prisma generate", {
+			stdio: "inherit",
+			env: { ...process.env, PRISMA_GENERATE_SKIP_AUTOINSTALL: "true" },
 		});
-	});
-
-	return Promise.all(generatePromises);
+		console.log("✅ Prisma client generated");
+		return Promise.resolve();
+	} catch (error) {
+		console.error("❌ Prisma generation failed:", error.message);
+		return Promise.reject(error);
+	}
 }
 
 // Main build function
@@ -220,8 +217,8 @@ async function build(configName = "optimized") {
 			}
 		}
 
-		// Optimize cache
-		optimizeCache();
+		// Optimize cache (use full optimization for production)
+		optimizeCache(configName === "production");
 
 		// Generate Prisma client
 		await optimizePrisma();

@@ -104,10 +104,31 @@ build_app() {
     
     cd "${WEB_DIR}"
     
-    # Run build
-    bun run build
+    # Use production build for production environment, standard build for others
+    if [ "${ENVIRONMENT}" = "production" ]; then
+        log "Using production build configuration..."
+        bun run build:production
+    else
+        log "Using standard build configuration..."
+        bun run build
+    fi
+    
+    # Verify build output exists
+    if [ ! -d "${WEB_DIR}/.next" ]; then
+        error "Build failed: .next directory not found"
+        error "Please check the build logs above for errors"
+        return 1
+    fi
+    
+    # Verify critical build files exist
+    if [ ! -f "${WEB_DIR}/.next/prerender-manifest.json" ]; then
+        error "Build incomplete: prerender-manifest.json not found"
+        error "Please check the build logs above for errors"
+        return 1
+    fi
     
     log "Build completed successfully"
+    log "Build output verified: .next directory exists"
 }
 
 # Restart PM2 process
@@ -116,13 +137,21 @@ restart_pm2() {
     
     cd "${WEB_DIR}"
     
+    # Verify build exists before starting
+    if [ ! -d "${WEB_DIR}/.next" ]; then
+        error "Cannot start PM2: .next directory not found"
+        error "Please run the build step first"
+        return 1
+    fi
+    
     # Check if PM2 process exists
     if pm2 list | grep -q "${PM2_NAME}"; then
         log "Restarting existing PM2 process: ${PM2_NAME}"
         pm2 restart "${PM2_NAME}"
     else
         log "Starting new PM2 process: ${PM2_NAME}"
-        pm2 start bun --name "${PM2_NAME}" -- start -- -p ${PORT}
+        # Note: start script already includes -p 3001, so we don't need to pass it again
+        pm2 start bun --name "${PM2_NAME}" -- start
         pm2 save
     fi
     
