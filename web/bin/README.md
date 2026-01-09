@@ -106,6 +106,76 @@ Remote deployment script. Run this from your local machine to deploy to a remote
 - Remote server must have: bun, pm2, git installed
 - App must be cloned to `/var/www/riben.life` on remote server
 
+### deploy-pm2-minimal.sh
+
+Minimal deployment script that deploys only necessary files to a PM2 host. This script is optimized for faster deployments by transferring only build output, configuration files, and dependencies metadata.
+
+**Usage:**
+```bash
+# Full deployment with build (default values)
+./bin/deploy-pm2-minimal.sh
+
+# Custom host and path
+./bin/deploy-pm2-minimal.sh mx2.mingster.com root /var/www/riben.life/web riben.life 3001
+
+# Deploy without building (use existing build)
+./bin/deploy-pm2-minimal.sh mx2.mingster.com root /var/www/riben.life/web riben.life 3001 .next true
+
+# Or use environment variable
+SKIP_BUILD=true ./bin/deploy-pm2-minimal.sh
+```
+
+**Arguments:**
+- `host` - Remote hostname or IP (default: mx2.mingster.com)
+- `user` - SSH user (default: root)
+- `remote_path` - Remote deployment path (default: /var/www/riben.life/web)
+- `pm2_name` - PM2 process name (default: riben.life)
+- `port` - Application port (default: 3001)
+- `build_dir` - Build directory (default: .next)
+- `skip_build` - Skip build step (default: false, set to 'true' to skip)
+
+**What it does:**
+1. Checks prerequisites (rsync, SSH, bun)
+2. Builds the application (unless SKIP_BUILD=true)
+3. Creates deployment package with only necessary files:
+   - `.next/standalone/` - Next.js standalone build
+   - `.next/static/` - Static assets
+   - `public/` - Public assets
+   - `package.json`, `bun.lock` - Dependencies metadata
+   - `prisma/` - Prisma schema
+   - Configuration files (next.config.ts, tsconfig.json, etc.)
+4. Syncs files to remote server using rsync
+5. Installs production dependencies on server
+6. Generates Prisma client on server
+7. Restarts PM2 process
+8. Performs health check
+
+**What it does NOT deploy:**
+- Source code (`src/`)
+- Development dependencies
+- `.env` files (handle separately for security)
+- Git repository
+- Build artifacts not needed for runtime
+- Documentation files
+
+**Prerequisites:**
+- `rsync` installed locally
+- SSH access to remote server (key-based authentication recommended)
+- `bun` installed locally (for build, unless SKIP_BUILD=true)
+- `bun` and `pm2` installed on remote server
+- Next.js configured with `output: "standalone"` in `next.config.ts`
+
+**Benefits:**
+- Faster deployments (only necessary files)
+- Smaller transfer size
+- Cleaner server environment
+- Reduced security surface (no source code on server)
+
+**Notes:**
+- `.env` files must be managed separately on the server
+- First deployment may take longer (full build + dependency installation)
+- Subsequent deployments are faster (can skip build if unchanged)
+
 ## Other Scripts
 
 - `pg_backup*.sh` - PostgreSQL backup scripts

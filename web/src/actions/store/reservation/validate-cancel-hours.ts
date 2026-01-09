@@ -75,7 +75,7 @@ export async function validateCancelHoursWindow(
 			t("rsvp_reservation_can_only_be_modified_hours_before", {
 				hours: cancelHours,
 			}) ||
-				`Reservation can only be modified more than ${cancelHours} hours before the reservation time`,
+			`Reservation can only be modified more than ${cancelHours} hours before the reservation time`,
 		);
 	}
 }

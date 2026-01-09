@@ -70,25 +70,27 @@ export const DisplayClient: React.FC<props> = ({ store, order, rsvp }) => {
 					</>
 				) : (
 					// Not signed in: two-column layout (order on left, sign-in on right)
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-1 items-stretch justify-center w-full">
-						<div className="space-y-4 h-full">
-							<Card className="h-full">
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch w-full">
+						<div className="flex h-full">
+							<Card className="w-full h-full flex flex-col">
 								<CardHeader>
 									<CardTitle className="text-lg pt-2 md:text-2xl font-light leading-relaxed text-foreground/80">
 										{t("order_view_title")}
 									</CardTitle>
 								</CardHeader>
-								<CardContent>
-									<DisplayOrder
-										order={order}
-										showOrderNotes={true}
-										showPickupCode={false}
-										hidePaymentMethod={true}
-										hideOrderStatus={false}
-										hideContactSeller={false}
-									/>
+								<CardContent className="flex-1 flex flex-col">
+									<div className="flex-1">
+										<DisplayOrder
+											order={order}
+											showOrderNotes={true}
+											showPickupCode={false}
+											hidePaymentMethod={true}
+											hideOrderStatus={false}
+											hideContactSeller={false}
+										/>
+									</div>
 
-									<Link href={keepShoppingHref} className="">
+									<Link href={keepShoppingHref} className="mt-4">
 										<Button className="w-full">
 											{t("cart_summary_keepShopping")}
 										</Button>
@@ -97,10 +99,10 @@ export const DisplayClient: React.FC<props> = ({ store, order, rsvp }) => {
 							</Card>
 						</div>
 
-						<div className="space-y-4 h-full">
+						<div className="flex h-full">
 							<ClientSignIn
 								title={t("order_sign_in_benefits")}
-								className="h-full max-h-none"
+								className="w-full h-full"
 							/>
 						</div>
 					</div>
