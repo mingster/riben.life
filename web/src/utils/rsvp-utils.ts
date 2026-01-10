@@ -233,6 +233,15 @@ export function canEditReservation(
 		return false;
 	}
 
+	// Cannot edit if already completed, cancelled, or no-show
+	if (
+		rsvp.status === RsvpStatus.Completed ||
+		rsvp.status === RsvpStatus.Cancelled ||
+		rsvp.status === RsvpStatus.NoShow
+	) {
+		return false;
+	}
+
 	// If rsvpSettings is not available, assume editing is not allowed
 	if (!rsvpSettings) {
 		return false;
@@ -292,8 +301,9 @@ export function canCancelReservation(
 		return false;
 	}
 
-	// Cannot cancel if already cancelled or no-show
+	// Cannot cancel if already completed, cancelled, or no-show
 	if (
+		rsvp.status === RsvpStatus.Completed ||
 		rsvp.status === RsvpStatus.Cancelled ||
 		rsvp.status === RsvpStatus.NoShow
 	) {

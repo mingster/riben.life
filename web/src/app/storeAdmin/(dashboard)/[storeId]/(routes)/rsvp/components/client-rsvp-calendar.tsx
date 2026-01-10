@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 import type { Rsvp } from "@/types";
 import { WeekViewCalendar } from "./week-view-calendar";
@@ -48,6 +48,7 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const router = useRouter();
+	const params = useParams<{ storeId: string }>();
 
 	const [data, setData] = useState<Rsvp[]>(serverData);
 
@@ -87,12 +88,12 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 				/>
 				<div className="flex gap-1.5 sm:gap-2">
 					<AdminEditRsvpDialog
-						isNew
-						onCreated={handleCreated}
+						storeId={String(params.storeId)}
+						rsvpSettings={rsvpSettings}
+						storeSettings={storeSettings || null}
+						onReservationCreated={handleCreated}
 						storeTimezone={storeTimezone}
 						storeCurrency={storeCurrency}
-						rsvpSettings={rsvpSettings}
-						storeSettings={storeSettings}
 						storeUseBusinessHours={storeUseBusinessHours}
 						useCustomerCredit={useCustomerCredit}
 						creditExchangeRate={creditExchangeRate}

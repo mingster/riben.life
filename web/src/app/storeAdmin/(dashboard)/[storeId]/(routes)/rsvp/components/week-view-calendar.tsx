@@ -3,126 +3,49 @@
 import {
 	IconChevronLeft,
 	IconChevronRight,
-	IconCalendar,
 } from "@tabler/icons-react";
 import {
 	format,
-	startOfWeek,
-	endOfWeek,
-	addWeeks,
-	subWeeks,
+	addDays,
+	subDays,
 	isSameDay,
-	parseISO,
 	Locale,
+	isBefore,
+	startOfDay,
 } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { zhTW } from "date-fns/locale/zh-TW";
 import { ja } from "date-fns/locale/ja";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
+import { useI18n } from "@/providers/i18n-provider";
+import type {
+	Rsvp,
+	StoreFacility,
+} from "@/types";
+import { RsvpStatus } from "@/types/enum";
+import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
+import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 import {
-	getUtcNow,
-	epochToDate,
+	generateTimeSlots,
+	getReservationDisplayName,
+	groupRsvpsByDayAndTime,
+	checkTimeAgainstBusinessHours,
+} from "@/utils/rsvp-utils";
+import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
+import {
 	getDateInTz,
+	getUtcNow,
 	getOffsetHours,
 	dayAndTimeSlotToUtc,
 	dateToEpoch,
+	convertToUtc,
 } from "@/utils/datetime-utils";
 import { isWithinReservationTimeWindow } from "@/utils/rsvp-time-window-utils";
-import {
-	checkTimeAgainstBusinessHours,
-	extractHoursFromSchedule,
-	generateTimeSlots,
-	groupRsvpsByDayAndTime,
-} from "@/utils/rsvp-utils";
-import { useI18n } from "@/providers/i18n-provider";
-import type { Rsvp } from "@/types";
-import { RsvpStatus } from "@/types/enum";
-import { AdminEditRsvpDialog } from "./admin-edit-rsvp-dialog";
-import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
-import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 import useSWR from "swr";
-import type { StoreFacility } from "@/types";
 import { useParams } from "next/navigation";
-
-// Component for creating RSVP at specific time slot
-interface CreateRsvpButtonProps {
-	day: Date;
-	timeSlot: string;
-	onCreated?: (rsvp: Rsvp) => void;
-	storeTimezone: string;
-	storeCurrency?: string;
-	rsvpSettings?: {
-		minPrepaidPercentage?: number | null;
-		canCancel?: boolean | null;
-		cancelHours?: number | null;
-		canReserveBefore?: number | null;
-		canReserveAfter?: number | null;
-		singleServiceMode?: boolean | null;
-		defaultDuration?: number | null;
-		useBusinessHours?: boolean | null;
-		rsvpHours?: string | null;
-	} | null;
-	storeSettings?: {
-		businessHours?: string | null;
-	} | null;
-	storeUseBusinessHours?: boolean | null;
-	existingReservations?: Rsvp[];
-	useCustomerCredit?: boolean;
-	creditExchangeRate?: number | null;
-}
-
-const CreateRsvpButton: React.FC<CreateRsvpButtonProps> = ({
-	day,
-	timeSlot,
-	onCreated,
-	storeTimezone,
-	storeCurrency = "twd",
-	rsvpSettings,
-	storeSettings,
-	storeUseBusinessHours,
-	existingReservations = [],
-	useCustomerCredit = false,
-	creditExchangeRate = null,
-}) => {
-	const [slotTime] = useState(() => {
-		// day is already in store timezone (from getDateInTz)
-		// Convert day + timeSlot to UTC Date using store timezone
-		return dayAndTimeSlotToUtc(day, timeSlot, storeTimezone);
-	});
-
-	return (
-		<AdminEditRsvpDialog
-			isNew
-			defaultRsvpTime={slotTime}
-			onCreated={onCreated}
-			storeTimezone={storeTimezone}
-			storeCurrency={storeCurrency}
-			rsvpSettings={rsvpSettings}
-			storeSettings={storeSettings}
-			storeUseBusinessHours={storeUseBusinessHours}
-			existingReservations={existingReservations}
-			useCustomerCredit={useCustomerCredit}
-			creditExchangeRate={creditExchangeRate}
-			trigger={
-				<button
-					type="button"
-					className="w-full h-full sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground flex items-center justify-center"
-				>
-					+
-				</button>
-			}
-		/>
-	);
-};
 
 interface WeekViewCalendarProps {
 	reservations: Rsvp[];
@@ -167,16 +90,14 @@ const getDayNumber = (date: Date): string => {
 	return format(date, "d");
 };
 
-// Check if a date is today
-// Note: This is for display comparison only, not for saving timestamps
-const isToday = (date: Date): boolean => {
-	// Use getUtcNow() for consistency, though this is just for comparison
-	return isSameDay(date, getUtcNow());
+// Check if a date is today (in store timezone)
+const isToday = (date: Date, storeTimezone: string): boolean => {
+	const todayInStoreTz = getDateInTz(
+		getUtcNow(),
+		getOffsetHours(storeTimezone),
+	);
+	return isSameDay(date, todayInStoreTz);
 };
-
-// Group RSVPs by day and time slot
-// RSVP times are in UTC epoch, convert to store timezone for display and grouping
-// Match RSVPs to slots based on defaultDuration
 
 // admin view of WeekViewCalendar
 export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
@@ -194,11 +115,14 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const params = useParams();
-	const [currentWeek, setCurrentWeek] = useState(() => {
-		// Always start on Sunday
-		const now = getUtcNow();
-		return startOfWeek(now, { weekStartsOn: 0 });
-	});
+
+	// Convert UTC today to store timezone for display
+	const todayUtc = useMemo(() => getUtcNow(), []);
+	const today = useMemo(
+		() => startOfDay(getDateInTz(todayUtc, getOffsetHours(storeTimezone))),
+		[todayUtc, storeTimezone],
+	);
+
 	const [rsvps, setRsvps] = useState<Rsvp[]>(reservations);
 
 	// Fetch facilities for availability checking
@@ -238,6 +162,13 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		},
 		[onRsvpCreated],
 	);
+
+	const [currentDay, setCurrentDay] = useState(() => {
+		// Always start with today as the first day
+		// Use UTC for consistency, then convert to store timezone for display
+		return getUtcNow();
+	});
+	const [openEditDialogId, setOpenEditDialogId] = useState<string | null>(null);
 
 	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
@@ -307,6 +238,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 			const slotEnd = slotStart + durationMs;
 
 			// Find existing reservations that overlap with this time slot
+			// Filter out cancelled reservations when determining availability
 			const conflictingReservations = existingReservations.filter(
 				(existingRsvp) => {
 					// Exclude cancelled reservations
@@ -367,6 +299,8 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		],
 	);
 
+	// Time slots are generated at intervals matching defaultDuration
+	// RSVPs are grouped into the correct slots based on defaultDuration
 	const timeSlots = useMemo(
 		() =>
 			generateTimeSlots(
@@ -388,39 +322,57 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		return localeMap[lng || "tw"] || zhTW;
 	}, [lng]);
 
-	const weekStart = useMemo(
-		() => startOfWeek(currentWeek, { weekStartsOn: 0 }), // Sunday
-		[currentWeek],
-	);
-	const weekEnd = useMemo(
-		() => endOfWeek(currentWeek, { weekStartsOn: 0 }), // Saturday
-		[currentWeek],
+	// Convert currentDay (which is in local time) to store timezone for day calculations
+	const currentDayInStoreTz = useMemo(
+		() => getDateInTz(currentDay, getOffsetHours(storeTimezone)),
+		[currentDay, storeTimezone],
 	);
 
-	// Generate days of the week using UTC methods for server timezone independence
+	// Always start with today (or the selected day) as the first day
+	const weekStart = useMemo(
+		() => startOfDay(currentDayInStoreTz),
+		[currentDayInStoreTz],
+	);
+	// Week end is 6 days after week start (7 days total starting from today)
+	const weekEnd = useMemo(() => startOfDay(addDays(weekStart, 6)), [weekStart]);
+
+	// Check if current day is before today
+	const isDayInPast = useMemo(
+		() => isBefore(startOfDay(currentDayInStoreTz), today),
+		[currentDayInStoreTz, today],
+	);
+
+	// Generate days of the week
 	const weekDays = useMemo(() => {
 		const days: Date[] = [];
+		// Extract date components from weekStart in store timezone
+		const formatter = new Intl.DateTimeFormat("en-CA", {
+			timeZone: storeTimezone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+		});
+		const weekStartStr = formatter.format(weekStart);
+		const [startYear, startMonth, startDay] = weekStartStr
+			.split("-")
+			.map(Number);
+
+		// Create day objects at 00:00 in store timezone, then convert to UTC
+		// This ensures each day represents the correct calendar day in store timezone
 		for (let i = 0; i < 7; i++) {
-			// Use UTC methods to ensure consistent behavior regardless of server timezone
-			const date = new Date(
-				Date.UTC(
-					weekStart.getUTCFullYear(),
-					weekStart.getUTCMonth(),
-					weekStart.getUTCDate() + i,
-					0,
-					0,
-					0,
-					0,
-				),
-			);
-			days.push(date);
+			const dayOfMonth = startDay + i;
+			// Create datetime-local string for the day at 00:00 in store timezone
+			const datetimeLocalString = `${startYear}-${String(startMonth).padStart(2, "0")}-${String(dayOfMonth).padStart(2, "0")}T00:00`;
+			// Convert to UTC Date using convertToUtc
+			const dayUtc = convertToUtc(datetimeLocalString, storeTimezone);
+			days.push(dayUtc);
 		}
 		return days;
-	}, [weekStart]);
+	}, [weekStart, storeTimezone]);
 
 	const datetimeFormat = useMemo(() => t("datetime_format"), [t]);
 
-	// Group RSVPs by day and time
+	// Group RSVPs by day and time (convert UTC to store timezone)
 	const groupedRsvps = useMemo(
 		() =>
 			groupRsvpsByDayAndTime(
@@ -433,32 +385,72 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		[rsvps, weekStart, weekEnd, storeTimezone, defaultDuration],
 	);
 
+	// Pre-compute which slots are in the past or too soon (based on canReserveBefore setting)
+	const pastSlots = useMemo(() => {
+		const past = new Set<string>();
+		const now = getUtcNow();
+		// Use rsvpSettings.canReserveBefore (default: 2 hours) to match server-side validation
+		const minAdvanceHours = rsvpSettings?.canReserveBefore ?? 2;
+		const minAdvanceMs = minAdvanceHours * 60 * 60 * 1000; // Convert to milliseconds
+		weekDays.forEach((day) => {
+			timeSlots.forEach((timeSlot) => {
+				const slotDateTimeUtc = dayAndTimeSlotToUtc(
+					day,
+					timeSlot,
+					storeTimezone || "Asia/Taipei",
+				);
+				const timeUntilSlot = slotDateTimeUtc.getTime() - now.getTime();
+				// Mark as past if slot is in the past OR less than minAdvanceHours from now
+				if (timeUntilSlot < minAdvanceMs) {
+					past.add(`${day.toISOString()}-${timeSlot}`);
+				}
+			});
+		});
+		return past;
+	}, [weekDays, timeSlots, storeTimezone, rsvpSettings?.canReserveBefore]);
+
+	// Pre-compute which days are today to avoid repeated date calculations
+	const todayDays = useMemo(() => {
+		const todaySet = new Set<string>();
+		weekDays.forEach((day) => {
+			if (isToday(day, storeTimezone)) {
+				todaySet.add(day.toISOString());
+			}
+		});
+		return todaySet;
+	}, [weekDays, storeTimezone]);
+
 	const handlePreviousWeek = useCallback(() => {
-		setCurrentWeek((prev) => subWeeks(prev, 1));
-	}, []);
+		setCurrentDay((prev) => {
+			const newDay = subDays(prev, 1);
+			const newDayInStoreTz = getDateInTz(
+				newDay,
+				getOffsetHours(storeTimezone),
+			);
+			// Don't allow navigation to past days
+			if (isBefore(startOfDay(newDayInStoreTz), today)) {
+				return prev; // Stay on current day
+			}
+			return newDay;
+		});
+	}, [today, storeTimezone]);
 
 	const handleNextWeek = useCallback(() => {
-		setCurrentWeek((prev) => addWeeks(prev, 1));
+		setCurrentDay((prev) => addDays(prev, 1));
 	}, []);
 
 	const handleToday = useCallback(() => {
-		// Always start on Sunday
-		const now = getUtcNow();
-		setCurrentWeek(startOfWeek(now, { weekStartsOn: 0 }));
+		setCurrentDay(getUtcNow());
 	}, []);
 
-	const handleDateSelect = useCallback((date: Date | undefined) => {
-		if (date) {
-			// Always start on Sunday
-			setCurrentWeek(startOfWeek(date, { weekStartsOn: 0 }));
-		}
-	}, []);
-
-	const getRsvpsForSlot = (day: Date, timeSlot: string): Rsvp[] => {
-		const dayKey = format(day, "yyyy-MM-dd");
-		const key = `${dayKey}-${timeSlot}`;
-		return groupedRsvps[key] || [];
-	};
+	const getRsvpsForSlot = useCallback(
+		(day: Date, timeSlot: string): Rsvp[] => {
+			const dayKey = format(day, "yyyy-MM-dd");
+			const key = `${dayKey}-${timeSlot}`;
+			return groupedRsvps[key] || [];
+		},
+		[groupedRsvps],
+	);
 
 	// Use shared status color classes function
 	const getStatusColorClasses = useCallback(
@@ -470,55 +462,22 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 		},
 		[],
 	);
-	const [dropdown, setDropdown] =
-		useState<React.ComponentProps<typeof Calendar>["captionLayout"]>(
-			"dropdown",
-		);
+
 	return (
 		<div className="flex flex-col gap-3 sm:gap-4">
 			{/* Week Navigation */}
-			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex items-center gap-1.5 sm:gap-2 font-mono text-sm flex-wrap">
-					<Popover>
-						<PopoverTrigger asChild>
-							<Button
-								variant="outline"
-								size="icon"
-								className={cn(
-									"h-10 w-10 sm:h-9 sm:w-9",
-									!currentWeek && "text-muted-foreground",
-								)}
-							>
-								<IconCalendar className="h-4 w-4 sm:h-5 sm:w-5" />
-							</Button>
-						</PopoverTrigger>
-						<PopoverContent
-							className="w-[280px] sm:w-[320px] p-3"
-							align="start"
-						>
-							<Calendar
-								mode="single"
-								selected={currentWeek}
-								onSelect={handleDateSelect}
-								captionLayout={dropdown}
-								locale={calendarLocale}
-								className="w-full rounded-lg shadow-sm"
-								weekStartsOn={0}
-							/>
-						</PopoverContent>
-					</Popover>
-
+			<div className="flex flex-col gap-0 sm:flex-row sm:items-center sm:justify-between">
+				<div className="flex items-center gap-0.5 sm:gap-1 font-mono text-sm flex-wrap">
 					<Button
-						type="button"
 						variant="outline"
 						size="icon"
 						onClick={handlePreviousWeek}
+						disabled={isDayInPast}
 						className="h-10 w-10 sm:h-9 sm:w-9"
 					>
 						<IconChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
 					</Button>
 					<Button
-						type="button"
 						variant="outline"
 						onClick={handleToday}
 						className="h-10 px-3 text-sm sm:h-9"
@@ -526,7 +485,6 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						{t("today")}
 					</Button>
 					<Button
-						type="button"
 						variant="outline"
 						size="icon"
 						onClick={handleNextWeek}
@@ -536,12 +494,12 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 					</Button>
 					<span className="ml-2 text-base font-semibold sm:ml-4 sm:text-lg">
 						<span className="hidden sm:inline">
-							{format(weekStart, "MMMd", { locale: calendarLocale })} -{" "}
+							{format(weekStart, "MMMdd", { locale: calendarLocale })} -{" "}
 							{format(weekEnd, datetimeFormat, { locale: calendarLocale })}
 						</span>
 						<span className="sm:hidden">
-							{format(weekStart, "MMM d", { locale: calendarLocale })} -{" "}
-							{format(weekEnd, "MMM d", { locale: calendarLocale })}
+							{format(weekStart, "MMM dd", { locale: calendarLocale })} -{" "}
+							{format(weekEnd, "MMM dd", { locale: calendarLocale })}
 						</span>
 					</span>
 				</div>
@@ -553,33 +511,36 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 					<table className="w-full border-collapse min-w-[390px] sm:min-w-full">
 						<thead>
 							<tr>
-								<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-right text-[10px] sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
+								<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-right text-base sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
 									{t("time")}
 								</th>
-								{weekDays.map((day) => (
-									<th
-										key={day.toISOString()}
-										className={cn(
-											"border-b border-r p-0.5 sm:p-2 text-center text-[10px] sm:text-sm font-medium w-[48px] sm:min-w-[110px]",
-											isToday(day) && "bg-primary/10",
-											"last:border-r-0",
-										)}
-									>
-										<div className="flex flex-col">
-											<span className="text-[9px] sm:text-xs text-muted-foreground">
-												{getDayName(day, t)}
-											</span>
-											<span
-												className={cn(
-													"text-xs sm:text-lg font-semibold",
-													isToday(day) && "text-primary",
-												)}
-											>
-												{getDayNumber(day)}
-											</span>
-										</div>
-									</th>
-								))}
+								{weekDays.map((day) => {
+									const isDayToday = todayDays.has(day.toISOString());
+									return (
+										<th
+											key={day.toISOString()}
+											className={cn(
+												"border-b border-r p-0.5 sm:p-2 text-center text-[10px] sm:text-sm font-medium w-[48px] sm:min-w-[110px]",
+												isDayToday && "bg-primary/10",
+												"last:border-r-0",
+											)}
+										>
+											<div className="flex flex-col">
+												<span className="text-[9px] sm:text-xs text-muted-foreground">
+													{getDayName(day, t)}
+												</span>
+												<span
+													className={cn(
+														"text-xs sm:text-lg font-semibold",
+														isDayToday && "text-primary",
+													)}
+												>
+													{getDayNumber(day)}
+												</span>
+											</div>
+										</th>
+									);
+								})}
 							</tr>
 						</thead>
 						<tbody>
@@ -590,23 +551,33 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 									</td>
 									{weekDays.map((day) => {
 										const slotRsvps = getRsvpsForSlot(day, timeSlot);
+										// Filter out cancelled RSVPs when determining availability
+										const activeRsvps = slotRsvps.filter(
+											(rsvp) => rsvp.status !== RsvpStatus.Cancelled,
+										);
+										// Check if this day/time slot is in the past using pre-computed map
+										const slotKey = `${day.toISOString()}-${timeSlot}`;
+										const isPast = pastSlots.has(slotKey);
+										const isDayToday = todayDays.has(day.toISOString());
 										return (
 											<td
 												key={`${day.toISOString()}-${timeSlot}`}
 												className={cn(
 													"border-b border-r p-0.5 sm:p-1 w-[48px] sm:min-w-[120px] align-top",
-													isToday(day) && "bg-primary/5",
+													isDayToday && "bg-primary/5",
 													"last:border-r-0",
 												)}
 											>
 												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
-													{slotRsvps.length > 0 &&
-														slotRsvps.map((rsvp) => {
+													{activeRsvps.length > 0 &&
+														activeRsvps.map((rsvp) => {
 															const isCompleted =
 																rsvp.status === RsvpStatus.Completed;
+															const displayName =
+																getReservationDisplayName(rsvp);
 
+															// Render as non-clickable for completed RSVPs
 															if (isCompleted) {
-																// Render as non-clickable button for completed RSVPs
 																return (
 																	<button
 																		key={rsvp.id}
@@ -615,20 +586,11 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																		className={cn(
 																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
 																			getStatusColorClasses(rsvp.status, false),
+																			isPast && "opacity-50",
 																		)}
 																	>
 																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																			{rsvp.Customer?.name
-																				? rsvp.Customer.name
-																				: rsvp.Customer?.email
-																					? rsvp.Customer.email
-																					: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																							rsvp.numOfAdult +
-																								rsvp.numOfChild ===
-																							1
-																								? "guest"
-																								: "guests"
-																						}`}
+																			{displayName}
 																		</div>
 																		{rsvp.Facility?.facilityName && (
 																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
@@ -644,76 +606,78 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																);
 															}
 
-															// Render dialog for non-completed RSVPs
+															// Render dialog for editable RSVPs
 															return (
-																<AdminEditRsvpDialog
-																	key={rsvp.id}
-																	rsvp={rsvp}
-																	onUpdated={handleRsvpUpdated}
-																	storeTimezone={storeTimezone}
-																	storeCurrency={storeCurrency}
-																	rsvpSettings={rsvpSettings}
-																	storeSettings={storeSettings}
-																	storeUseBusinessHours={storeUseBusinessHours}
-																	existingReservations={rsvps}
-																	useCustomerCredit={useCustomerCredit}
-																	creditExchangeRate={creditExchangeRate}
-																	trigger={
-																		<button
-																			type="button"
-																			className={cn(
-																				"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors",
-																				getStatusColorClasses(rsvp.status),
-																			)}
-																		>
-																			<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																				{rsvp.Customer?.name
-																					? rsvp.Customer.name
-																					: rsvp.Customer?.email
-																						? rsvp.Customer.email
-																						: `${rsvp.numOfAdult + rsvp.numOfChild} ${
-																								rsvp.numOfAdult +
-																									rsvp.numOfChild ===
-																								1
-																									? "guest"
-																									: "guests"
-																							}`}
+																<React.Fragment key={rsvp.id}>
+																	<AdminEditRsvpDialog
+																		storeId={String(params.storeId)}
+																		rsvpSettings={rsvpSettings}
+																		storeSettings={storeSettings || null}
+																		rsvp={rsvp}
+																		existingReservations={rsvps}
+																		onReservationUpdated={(updated) => {
+																			setOpenEditDialogId(null);
+																			handleRsvpUpdated(updated);
+																		}}
+																		storeTimezone={storeTimezone}
+																		storeCurrency={storeCurrency}
+																		storeUseBusinessHours={storeUseBusinessHours}
+																		useCustomerCredit={useCustomerCredit}
+																		creditExchangeRate={creditExchangeRate}
+																		open={openEditDialogId === rsvp.id}
+																		onOpenChange={(open) => {
+																			setOpenEditDialogId(open ? rsvp.id : null);
+																		}}
+																		trigger={
+																			<div className="relative">
+																				<button
+																					type="button"
+																					onClick={(e) => {
+																						e.stopPropagation();
+																						setOpenEditDialogId(rsvp.id);
+																					}}
+																					className={cn(
+																						"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full",
+																						getStatusColorClasses(rsvp.status),
+																					)}
+																				>
+																					<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																						{displayName}
+																					</div>
+																					{rsvp.Facility?.facilityName && (
+																						<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																							{rsvp.Facility.facilityName}
+																						</div>
+																					)}
+																					{rsvp.message && (
+																						<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																							{rsvp.message}
+																						</div>
+																					)}
+																				</button>
 																			</div>
-																			{rsvp.Facility?.facilityName && (
-																				<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																					{rsvp.Facility.facilityName}
-																				</div>
-																			)}
-																			{rsvp.message && (
-																				<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
-																					{rsvp.message}
-																				</div>
-																			)}
-																		</button>
-																	}
-																/>
+																		}
+																	/>
+																</React.Fragment>
 															);
 														})}
 
-													{/* Show "+" button if:
-														1. No reservations exist, OR
-														2. singleServiceMode is false (multiple reservations allowed per time slot)
-														3. AND there are available facilities for this time slot
-													*/}
+													{/* Show "+" button if slot is available and facilities exist */}
 													{(() => {
 														const canAddMore =
-															slotRsvps.length === 0 || !singleServiceMode;
+															activeRsvps.length === 0 || !singleServiceMode;
+														if (!canAddMore || isPast) return null;
 
-														if (!canAddMore) {
+														const slotTimeUtc = dayAndTimeSlotToUtc(
+															day,
+															timeSlot,
+															storeTimezone || "Asia/Taipei",
+														);
+														if (!hasAvailableFacilities(slotTimeUtc, rsvps)) {
 															return null;
 														}
 
 														// Check if this time slot is within the reservation window
-														const slotTimeUtc = dayAndTimeSlotToUtc(
-															day,
-															timeSlot,
-															storeTimezone,
-														);
 														const isWithinWindow =
 															isWithinReservationTimeWindow(
 																rsvpSettings,
@@ -735,24 +699,33 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 															);
 														}
 
-														// Check if there are any available facilities for this time slot
-														if (!hasAvailableFacilities(slotTimeUtc, rsvps)) {
-															return null;
-														}
+														const addButton = (
+															<button
+																type="button"
+																disabled={isPast}
+																className={cn(
+																	"w-full h-full sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground flex items-center justify-center",
+																	isPast && "cursor-not-allowed opacity-50",
+																)}
+															>
+																+
+															</button>
+														);
 
 														return (
-															<CreateRsvpButton
-																day={day}
-																timeSlot={timeSlot}
-																onCreated={handleRsvpCreated}
+															<AdminEditRsvpDialog
+																storeId={String(params.storeId)}
+																rsvpSettings={rsvpSettings}
+																storeSettings={storeSettings || null}
+																defaultRsvpTime={slotTimeUtc}
+																onReservationCreated={handleRsvpCreated}
+																existingReservations={rsvps}
 																storeTimezone={storeTimezone}
 																storeCurrency={storeCurrency}
-																rsvpSettings={rsvpSettings}
-																storeSettings={storeSettings}
 																storeUseBusinessHours={storeUseBusinessHours}
-																existingReservations={rsvps}
 																useCustomerCredit={useCustomerCredit}
 																creditExchangeRate={creditExchangeRate}
+																trigger={addButton}
 															/>
 														);
 													})()}
