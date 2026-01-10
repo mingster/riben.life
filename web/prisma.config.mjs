@@ -9,7 +9,7 @@ export default defineConfig({
   },
   datasource: {
     // Prefer DIRECT TCP via DATABASE_URL
-    url: env('POSTGRES_PRISMA_URL'),
+    url: env('POSTGRES_URL'),
     // Optionally support shadow DB if present:
     // shadowDatabaseUrl: env('SHADOW_DATABASE_URL'),
   },

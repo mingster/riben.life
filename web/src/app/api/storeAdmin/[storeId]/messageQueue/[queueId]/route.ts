@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import logger from "@/lib/logger";
@@ -51,7 +51,7 @@ export async function DELETE(
 		return NextResponse.json(obj);
 	} catch (error) {
 		if (
-			error instanceof PrismaClientKnownRequestError &&
+			error instanceof Prisma.PrismaClientKnownRequestError &&
 			error.code === "P2025"
 		) {
 			return new NextResponse("Message queue item not found", { status: 404 });

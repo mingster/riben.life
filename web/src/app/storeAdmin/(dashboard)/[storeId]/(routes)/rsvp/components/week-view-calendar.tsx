@@ -1,9 +1,6 @@
 "use client";
 
-import {
-	IconChevronLeft,
-	IconChevronRight,
-} from "@tabler/icons-react";
+import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import {
 	format,
 	addDays,
@@ -21,10 +18,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
-import type {
-	Rsvp,
-	StoreFacility,
-} from "@/types";
+import type { Rsvp, StoreFacility } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
@@ -621,12 +615,16 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																		}}
 																		storeTimezone={storeTimezone}
 																		storeCurrency={storeCurrency}
-																		storeUseBusinessHours={storeUseBusinessHours}
+																		storeUseBusinessHours={
+																			storeUseBusinessHours
+																		}
 																		useCustomerCredit={useCustomerCredit}
 																		creditExchangeRate={creditExchangeRate}
 																		open={openEditDialogId === rsvp.id}
 																		onOpenChange={(open) => {
-																			setOpenEditDialogId(open ? rsvp.id : null);
+																			setOpenEditDialogId(
+																				open ? rsvp.id : null,
+																			);
 																		}}
 																		trigger={
 																			<div className="relative">

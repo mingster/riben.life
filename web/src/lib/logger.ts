@@ -1,60 +1,30 @@
+import pino from "pino";
 import {
 	transformBigIntToNumbers,
 	transformDecimalsToNumbers,
 } from "@/utils/edge-utils";
-import pino from "pino";
+import { getUtcNowEpoch, dateToEpoch } from "@/utils/datetime-utils";
 import { analytics } from "./analytics";
-import { sqlClient } from "./prismadb";
-import { dateToEpoch, getUtcNowEpoch } from "@/utils/datetime-utils";
-import packageJson from "../../package.json";
-
-// Read version from package.json at build time
-const APP_VERSION: string | undefined = packageJson.version;
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// Fix MaxListenersExceededWarning for pino-pretty in development
-// pino-pretty writes to stdout/stderr, and hot reloading can add multiple listeners
-// Check if process.stdout/stderr exist (may be undefined in edge runtime or certain contexts)
-if (!isProduction && typeof process !== "undefined") {
-	if (process.stdout && typeof process.stdout.setMaxListeners === "function") {
-		process.stdout.setMaxListeners(20);
-	}
-	if (process.stderr && typeof process.stderr.setMaxListeners === "function") {
-		process.stderr.setMaxListeners(20);
-	}
-}
-
-// Singleton pattern for Pino logger
-// Store instance in global to persist across hot reloads in development
-const globalForPino = globalThis as unknown as {
-	pinoLogger?: ReturnType<typeof pino>;
-};
-
-function getPinoLogger() {
-	if (!globalForPino.pinoLogger) {
-		globalForPino.pinoLogger = isProduction
-			? pino({
-					level: process.env.LOG_LEVEL || "info",
-				})
-			: pino({
-					transport: {
-						target: "pino-pretty",
-						options: {
-							colorize: true, // Enables colored output
-							colorizeObjects: true, //--colorizeObjects
-							translateTime: true, // Adds timestamps
-							ignore: "pid,hostname", // Removes unnecessary fields
-						},
-					},
-					level: "debug", // Default level for development
-				});
-	}
-	return globalForPino.pinoLogger;
-}
-
-// Create Pino logger singleton instance
-const pinoLogger = getPinoLogger();
+// Create Pino logger with conditional configuration
+const pinoLogger = isProduction
+	? pino({
+			level: process.env.LOG_LEVEL || "info",
+		})
+	: pino({
+			transport: {
+				target: "pino-pretty",
+				options: {
+					colorize: true, // Enables colored output
+					colorizeObjects: true, //--colorizeObjects
+					translateTime: true, // Adds timestamps
+					ignore: "pid,hostname", // Removes unnecessary fields
+				},
+			},
+			level: "debug", // Default level for development
+		});
 
 interface LogEntry {
 	level: "error" | "warn" | "info" | "debug";
@@ -86,9 +56,8 @@ class Logger {
 	private service: string;
 	private environment: string;
 	private version?: string;
-	private static instance: Logger | null = null;
 
-	private constructor(
+	constructor(
 		options: {
 			service?: string;
 			environment?: string;
@@ -98,32 +67,28 @@ class Logger {
 		this.service = options.service || "web";
 		this.environment =
 			options.environment || process.env.NODE_ENV || "development";
-		this.version =
-			options.version ||
-			process.env.npm_package_version ||
-			process.env.NEXT_PUBLIC_APP_VERSION ||
-			APP_VERSION;
-	}
-
-	// Static method to get singleton instance
-	static getInstance(options?: {
-		service?: string;
-		environment?: string;
-		version?: string;
-	}): Logger {
-		if (!Logger.instance) {
-			Logger.instance = new Logger(options);
-		}
-		return Logger.instance;
+		this.version = options.version || process.env.npm_package_version;
 	}
 
 	private async logToDatabase(entry: LogEntry): Promise<void> {
+		if (typeof window !== "undefined") {
+			return;
+		}
 		try {
+			const { sqlClient } = await import("./prismadb");
+			// Convert timestamp to BigInt epoch milliseconds
+			let timestamp: bigint;
+			if (entry.timestamp) {
+				const parsedDate = new Date(entry.timestamp);
+				const epoch = dateToEpoch(parsedDate);
+				timestamp = epoch ?? getUtcNowEpoch();
+			} else {
+				timestamp = getUtcNowEpoch();
+			}
+
 			await sqlClient.system_logs.create({
 				data: {
-					timestamp: entry.timestamp
-						? (dateToEpoch(new Date(entry.timestamp)) ?? getUtcNowEpoch())
-						: getUtcNowEpoch(),
+					timestamp,
 					createdAt: getUtcNowEpoch(),
 					level: entry.level,
 					message: entry.message,
@@ -189,7 +154,7 @@ class Logger {
 			try {
 				logMessage = JSON.stringify(message);
 				logMetadata = { ...metadata, metadata: message };
-			} catch (error) {
+			} catch (_error) {
 				transformBigIntToNumbers(message);
 				transformDecimalsToNumbers(message);
 				logMessage = JSON.stringify(message);
@@ -333,14 +298,12 @@ class Logger {
 	}
 
 	// Create a child logger with additional context
-	// Note: Child loggers are not singletons - they're lightweight wrappers
 	child(context: Partial<LogEntry> & Record<string, any>): Logger {
-		// Create a new instance for child logger (not singleton)
-		// This allows multiple child loggers with different contexts
-		const childLogger = Object.create(Logger.prototype) as Logger;
-		childLogger.service = this.service;
-		childLogger.environment = this.environment;
-		childLogger.version = this.version;
+		const childLogger = new Logger({
+			service: this.service,
+			environment: this.environment,
+			version: this.version,
+		});
 
 		// Override the logToDatabase method to include context
 		const originalLogToDatabase = childLogger.logToDatabase.bind(childLogger);
@@ -413,27 +376,11 @@ class Logger {
 	}
 }
 
-// Singleton pattern for Logger instance
-// Store instance in global to persist across hot reloads in development
-const globalForLogger = globalThis as unknown as {
-	logger?: Logger;
-};
-
-function getLogger(): Logger {
-	if (!globalForLogger.logger) {
-		globalForLogger.logger = Logger.getInstance({
-			service: "web",
-			environment: process.env.NODE_ENV,
-			version:
-				process.env.npm_package_version ||
-				process.env.NEXT_PUBLIC_APP_VERSION ||
-				APP_VERSION,
-		});
-	}
-	return globalForLogger.logger;
-}
-
-// Create default logger singleton instance
-const logger = getLogger();
+// Create default logger instance
+const logger = new Logger({
+	service: "web",
+	environment: process.env.NODE_ENV,
+	version: process.env.npm_package_version,
+});
 
 export default logger;

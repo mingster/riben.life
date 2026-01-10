@@ -1,4 +1,4 @@
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../api_helper";
 import { sqlClient } from "@/lib/prismadb";
@@ -28,7 +28,7 @@ export async function DELETE(
 		return NextResponse.json(obj);
 	} catch (error) {
 		if (
-			error instanceof PrismaClientKnownRequestError &&
+			error instanceof Prisma.PrismaClientKnownRequestError &&
 			error.code === "P2025"
 		) {
 			return new NextResponse("Message template localized not found", {
