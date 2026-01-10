@@ -230,13 +230,15 @@ export const CellAction: React.FC<CellActionProps> = ({
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<AdminEditRsvpDialog
-				isNew={false}
+				storeId={String(params.storeId)}
+				rsvpSettings={rsvpSettings || null}
+				storeSettings={null}
 				rsvp={data}
-				onUpdated={onUpdated}
+				onReservationUpdated={onUpdated}
 				open={isEditOpen}
 				onOpenChange={setIsEditOpen}
 				storeTimezone={storeTimezone}
-				rsvpSettings={rsvpSettings}
+				storeUseBusinessHours={null}
 			/>
 		</>
 	);
