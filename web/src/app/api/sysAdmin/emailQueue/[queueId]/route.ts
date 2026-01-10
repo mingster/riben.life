@@ -1,5 +1,5 @@
 import { sqlClient } from "@/lib/prismadb";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckAdminApiAccess } from "../../api_helper";
@@ -30,7 +30,7 @@ export async function DELETE(
 		return NextResponse.json(obj, { status: 200 });
 	} catch (error) {
 		if (
-			error instanceof PrismaClientKnownRequestError &&
+			error instanceof Prisma.PrismaClientKnownRequestError &&
 			error.code === "P2025"
 		) {
 			return new NextResponse("Email not found", { status: 404 });

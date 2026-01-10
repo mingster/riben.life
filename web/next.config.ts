@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
 		"pino-file",
 		"pino-pretty",
 		"twilio",
+		"pg",
+		"prisma",
+		"@prisma/client",
+		"@prisma/adapter-pg",
 	],
 	// Build optimizations
 	compiler: {

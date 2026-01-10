@@ -56,9 +56,16 @@ export default function ClientSignIn({
 	const displayTitle = title ?? t("signin_title");
 
 	const isFullHeight = className?.includes("h-full");
-	
+
 	return (
-		<Card className={cn("w-full max-w-lg", isFullHeight && "h-full flex flex-col", !isFullHeight && "max-h-lg", className)}>
+		<Card
+			className={cn(
+				"w-full max-w-lg",
+				isFullHeight && "h-full flex flex-col",
+				!isFullHeight && "max-h-lg",
+				className,
+			)}
+		>
 			{!noTitle && (
 				<CardHeader>
 					<CardTitle className="text-lg pt-2 md:text-2xl font-light leading-relaxed text-foreground/80">
@@ -67,7 +74,12 @@ export default function ClientSignIn({
 				</CardHeader>
 			)}
 
-			<CardContent className={cn("flex flex-col gap-10", isFullHeight && "flex-1 overflow-auto")}>
+			<CardContent
+				className={cn(
+					"flex flex-col gap-10",
+					isFullHeight && "flex-1 overflow-auto",
+				)}
+			>
 				{/* Phone OTP form - shown by default */}
 				<FormPhoneOtp callbackUrl={callbackUrl} />
 

@@ -693,9 +693,7 @@ export function AdminReservationForm({
 										form.formState.isSubmitting ||
 										isLoadingStoreMembers
 									}
-									defaultValue={
-										field.value ? String(field.value) : undefined
-									}
+									defaultValue={field.value ? String(field.value) : undefined}
 									onValueChange={(user) => {
 										field.onChange(user?.id || null);
 									}}
@@ -725,14 +723,10 @@ export function AdminReservationForm({
 											form.formState.isSubmitting
 										}
 										value={
-											field.value !== undefined
-												? field.value.toString()
-												: ""
+											field.value !== undefined ? field.value.toString() : ""
 										}
 										onChange={(event) =>
-											field.onChange(
-												Number.parseInt(event.target.value) || 1,
-											)
+											field.onChange(Number.parseInt(event.target.value) || 1)
 										}
 									/>
 								</FormControl>
@@ -755,14 +749,10 @@ export function AdminReservationForm({
 											form.formState.isSubmitting
 										}
 										value={
-											field.value !== undefined
-												? field.value.toString()
-												: ""
+											field.value !== undefined ? field.value.toString() : ""
 										}
 										onChange={(event) =>
-											field.onChange(
-												Number.parseInt(event.target.value) || 0,
-											)
+											field.onChange(Number.parseInt(event.target.value) || 0)
 										}
 									/>
 								</FormControl>
@@ -785,8 +775,7 @@ export function AdminReservationForm({
 						return (
 							<FormItem>
 								<FormLabel>
-									{t("rsvp_time")}{" "}
-									<span className="text-destructive">*</span>
+									{t("rsvp_time")} <span className="text-destructive">*</span>
 								</FormLabel>
 								<FormControl>
 									<Input
@@ -796,9 +785,7 @@ export function AdminReservationForm({
 											loading ||
 											form.formState.isSubmitting
 										}
-										value={
-											field.value ? formatDateTimeLocal(field.value) : ""
-										}
+										value={field.value ? formatDateTimeLocal(field.value) : ""}
 										onChange={(event) => {
 											const value = event.target.value;
 											if (value) {
@@ -826,9 +813,7 @@ export function AdminReservationForm({
 							<FormControl>
 								<Textarea
 									disabled={
-										!canEditCompleted ||
-										loading ||
-										form.formState.isSubmitting
+										!canEditCompleted || loading || form.formState.isSubmitting
 									}
 									value={field.value ?? ""}
 									onChange={(event) =>
@@ -883,9 +868,7 @@ export function AdminReservationForm({
 													return selectedFacility
 														? selectedFacility.name
 														: rsvpTime
-															? t(
-																	"No facilities available at selected time",
-																)
+															? t("No facilities available at selected time")
 															: t("No facilities available");
 												})()
 											: rsvpTime
@@ -913,9 +896,7 @@ export function AdminReservationForm({
 									type="number"
 									step="0.01"
 									disabled={
-										!canEditCompleted ||
-										loading ||
-										form.formState.isSubmitting
+										!canEditCompleted || loading || form.formState.isSubmitting
 									}
 									value={
 										field.value !== null && field.value !== undefined
@@ -939,8 +920,7 @@ export function AdminReservationForm({
 						control={form.control}
 						name="alreadyPaid"
 						render={({ field }) => {
-							const isCancelled =
-								form.watch("status") === RsvpStatus.Cancelled;
+							const isCancelled = form.watch("status") === RsvpStatus.Cancelled;
 							const isNoShow = form.watch("status") === RsvpStatus.NoShow;
 							const isDisabled = isCancelled || isNoShow;
 							return (
@@ -982,8 +962,7 @@ export function AdminReservationForm({
 					control={form.control}
 					name="confirmedByStore"
 					render={({ field }) => {
-						const isCancelled =
-							form.watch("status") === RsvpStatus.Cancelled;
+						const isCancelled = form.watch("status") === RsvpStatus.Cancelled;
 						const isNoShow = form.watch("status") === RsvpStatus.NoShow;
 						const isDisabled = isCancelled || isNoShow;
 						return (
@@ -1045,9 +1024,7 @@ export function AdminReservationForm({
 											loading ||
 											form.formState.isSubmitting
 										}
-										value={
-											field.value ? formatDateTimeLocal(field.value) : ""
-										}
+										value={field.value ? formatDateTimeLocal(field.value) : ""}
 										onChange={(event) => {
 											const value = event.target.value;
 											if (value) {
@@ -1068,8 +1045,7 @@ export function AdminReservationForm({
 					control={form.control}
 					name="confirmedByCustomer"
 					render={({ field }) => {
-						const isCancelled =
-							form.watch("status") === RsvpStatus.Cancelled;
+						const isCancelled = form.watch("status") === RsvpStatus.Cancelled;
 						const isNoShow = form.watch("status") === RsvpStatus.NoShow;
 						const isDisabled = isCancelled || isNoShow;
 						return (
@@ -1252,9 +1228,7 @@ export function AdminReservationForm({
 				<Button
 					type="submit"
 					disabled={
-						loading ||
-						!form.formState.isValid ||
-						form.formState.isSubmitting
+						loading || !form.formState.isValid || form.formState.isSubmitting
 					}
 					className="w-full disabled:opacity-25"
 					autoFocus

@@ -21,8 +21,6 @@ import { stripe as stripeClient } from "@/lib/stripe/config";
 import { customSession } from "better-auth/plugins";
 import { sqlClient } from "./prismadb";
 
-const prisma = new PrismaClient();
-
 const options = {
 	//...config options
 	plugins: [],
@@ -35,7 +33,7 @@ export const auth = betterAuth({
 		(process.env.NODE_ENV === "production"
 			? "https://riben.life"
 			: "http://localhost:3001"),
-	database: prismaAdapter(prisma, {
+	database: prismaAdapter(sqlClient, {
 		provider: "postgresql", // or "mysql", "postgresql", ...etc
 	}),
 	roles: [
@@ -76,14 +74,14 @@ export const auth = betterAuth({
 				enabled: true,
 			},
 		},
-		sendResetPassword: async ({ user, url, token }, request) => {
+		sendResetPassword: async ({ user, url, token }, _request) => {
 			await sendAuthPasswordReset(user.email, url);
 		},
 	},
 	/* 
 	emailVerification: {
 		sendOnSignUp: true,
-		sendVerificationEmail: async ({ user, url, token }, request) => {
+		sendVerificationEmail: async ({ user, url, token }, _request) => {
 			await sendAuthEmailValidation(user.email, url);
 		},
 	},
@@ -224,7 +222,7 @@ export const auth = betterAuth({
 		}),
 		twoFactor(),
 		magicLink({
-			sendMagicLink: async ({ email, url, token }, request) => {
+			sendMagicLink: async ({ email, url, token }, _request) => {
 				await sendAuthMagicLink(email, url);
 			},
 			expiresIn: 60 * 60 * 24, // 24 hours
