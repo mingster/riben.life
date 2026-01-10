@@ -98,6 +98,60 @@ Store Admins have all Store Staff permissions, plus:
 
 **Note:** No sign-in is required to create reservations. Anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`).
 
+**FR-RSVP-001a:** Customers must be able to create weekly recurring reservations with the following capabilities:
+
+**Recurring Pattern:**
+
+* **Weekly:** Repeat same day of week and time slot every week for N weeks
+* Example: "Every Monday at 2:00 PM for 10 weeks"
+
+**Recurring Parameters:**
+
+* **Repeat Count:** Number of occurrences to create (e.g., "Repeat 10 times" = 10 weeks)
+* **End Date:** Optional end date for the series (alternative to repeat count)
+* **Same Time:** All occurrences use the same time slot
+* **Same Day of Week:** All occurrences use the same day of week (e.g., every Monday)
+
+**Validation and Conflict Handling:**
+
+* System must validate all occurrences before creating the series
+* System must check business hours for each occurrence
+* System must check facility/service staff availability for each occurrence
+* System must check time window constraints (`canReserveBefore`, `canReserveAfter`) for each occurrence
+* If some occurrences are invalid, system must show which ones failed and why
+* Customer must be able to review all occurrences before confirming
+* Customer must be able to exclude specific occurrences from the series
+* System must show preview of all occurrences with their dates/times
+* Store admin must be able to configure conflict handling mode: "skip" (create only valid), "reject" (reject entire series), or "notify" (create all, mark conflicts for manual resolution)
+
+**Payment for Recurring Series:**
+
+* If prepaid is required, customer must be able to choose:
+  * **Per Occurrence:** Pay for each occurrence separately (each occurrence creates its own order)
+  * **Series Upfront:** Pay for entire series upfront (one order for series, individual orders for tracking)
+* If paying upfront, system must calculate total cost for all occurrences
+* If paying per occurrence, each occurrence creates its own order and requires separate payment
+* Store admin must be able to configure payment mode: "per_occurrence" or "series_upfront"
+
+**Confirmation for Recurring Series:**
+
+* Each occurrence requires separate confirmation (unless `noNeedToConfirm = true`)
+* Store can confirm entire series or individual occurrences
+* Customer can see confirmation status for each occurrence
+* System must support bulk confirmation for store admins
+
+**Series Management:**
+
+* All occurrences in a series must be linked by `seriesId`
+* Each occurrence is a separate `Rsvp` record with its own status, payment, and confirmation
+* Series metadata (pattern, interval, count, end date) must be stored
+* Customer must be able to view series grouped together in reservation history
+* Customer must be able to edit entire series (changes apply to all future occurrences)
+* Customer must be able to edit individual occurrences (only that occurrence is modified)
+* Customer must be able to cancel entire series (all future occurrences cancelled)
+* Customer must be able to cancel individual occurrences (only that occurrence cancelled)
+* Store admin must be able to view and manage series with bulk operations
+
 **FR-RSVP-002:** The reservation form must collect the following information:
 
 * Date and time of reservation (rsvpTime)
@@ -425,7 +479,454 @@ Store Admins have all Store Staff permissions, plus:
 * **Refund Policy:** When cancelled, customer credit or payment will be refunded only if cancellation occurs OUTSIDE the `cancelHours` window (i.e., cancelled more than `cancelHours` hours before the reservation time). If cancellation occurs WITHIN the `cancelHours` window (i.e., less than `cancelHours` hours before the reservation time), no refund is given.
 * If the customer does not show up for the reservation, store staff can mark status as `NoShow (70)`
 * Once in `Cancelled` or `NoShow` status, the reservation cannot transition to active states.
-* Customer can delete the RSVP when it still pending.
+* Customer can delete the RSVP when it is still pending (`Pending (0)` or `ReadyToConfirm (10)`).
+* **Status Restrictions:** Reservations with status `Completed (50)`, `Cancelled (60)`, or `NoShow (70)` cannot be deleted. Only `Pending (0)` or `ReadyToConfirm (10)` reservations can be deleted.
+
+#### 3.4.4 Recurring Reservation Use Cases
+
+**UC-RSVP-REC-001: Weekly Recurring Reservation (Same Time, Same Day of Week)**
+
+**Scenario:** Customer wants to book the same time slot every Monday for 10 weeks.
+
+**Preconditions:**
+
+* Store has recurring reservations enabled
+* Customer is on the reservation form
+* Customer has selected a time slot (e.g., Monday 2:00 PM)
+
+**Main Flow:**
+
+1. Customer selects "Recurring" option in reservation form
+2. Customer selects "Weekly" pattern
+3. Customer enters repeat count: 10
+4. System validates all 10 occurrences:
+   * Checks business hours for each Monday
+   * Checks facility/service staff availability for each Monday
+   * Checks time window constraints for each occurrence
+5. System displays preview of all 10 occurrences with dates
+6. If all valid: Customer confirms and system creates 10 separate Rsvp records linked by seriesId
+7. If some invalid: System shows which occurrences failed and allows customer to exclude them or adjust
+8. Customer completes payment (if prepaid required)
+9. System sends confirmation for each occurrence (or series-level confirmation if configured)
+
+**Postconditions:**
+
+* 10 separate Rsvp records created with same seriesId
+* Each occurrence has its own status, payment, and confirmation
+* Customer can view all occurrences grouped together in reservation history
+
+**UC-RSVP-REC-002: Weekly Recurring Reservation with Conflicts**
+
+**Scenario:** Customer creates weekly recurring reservation, but some weeks have conflicts.
+
+**Preconditions:**
+
+* Store has recurring reservations enabled
+* Some time slots in the series are already booked
+* Store has configured conflict handling mode
+
+**Main Flow:**
+
+1. Customer creates weekly recurring reservation for 10 weeks
+2. System validates all 10 occurrences
+3. System detects that weeks 3, 5, and 7 have conflicts (facility already booked)
+4. **If conflict handling = "skip":**
+   * System creates only valid occurrences (weeks 1, 2, 4, 6, 8, 9, 10)
+   * System notifies customer which occurrences were skipped and why
+5. **If conflict handling = "reject":**
+   * System rejects entire series and asks customer to choose different time
+6. **If conflict handling = "notify":**
+   * System creates all occurrences but marks conflicting ones as "needs attention"
+   * Store admin is notified to manually resolve conflicts
+
+**Postconditions:**
+
+* Valid occurrences are created
+* Conflicting occurrences are handled according to store configuration
+* Customer and store admin are notified of conflicts
+
+**UC-RSVP-REC-003: Payment for Weekly Recurring Series (Per Occurrence)**
+
+**Scenario:** Customer creates weekly recurring reservation with prepaid required, paying per occurrence.
+
+**Preconditions:**
+
+* Store requires prepaid (`minPrepaidPercentage > 0`)
+* Store has configured payment mode: "per_occurrence"
+* Customer creates weekly recurring reservation for 10 weeks (every Monday at 2:00 PM)
+
+**Main Flow:**
+
+1. Customer creates weekly recurring reservation series (10 occurrences)
+2. System creates 10 separate Rsvp records, all with status `Pending (0)`
+3. System creates 10 separate StoreOrder records (one per occurrence, one per week)
+4. Customer must pay for each occurrence separately
+5. When customer pays for occurrence #1 (first Monday), only that occurrence's `alreadyPaid` is set to `true`
+6. Other occurrences (weeks 2-10) remain unpaid until customer pays for them
+7. Each occurrence can be confirmed independently after payment
+
+**Postconditions:**
+
+* 10 separate Rsvp records created (one for each Monday)
+* 10 separate StoreOrder records created (one per week)
+* Each occurrence has independent payment status
+* Customer can pay for occurrences individually (pay as each week approaches)
+
+**UC-RSVP-REC-004: Payment for Weekly Recurring Series (Series Upfront)**
+
+**Scenario:** Customer creates recurring reservation with prepaid required, paying for entire series upfront.
+
+**Preconditions:**
+
+* Store requires prepaid (`minPrepaidPercentage > 0`)
+* Store has configured payment mode: "series_upfront"
+* Customer creates weekly recurring reservation for 10 weeks
+* Total cost per occurrence: $100, prepaid percentage: 50%
+
+**Main Flow:**
+
+1. Customer creates recurring reservation series (10 occurrences)
+2. System calculates total prepaid amount: 10 × $100 × 50% = $500
+3. System creates 1 StoreOrder for the entire series prepayment
+4. Customer pays $500 upfront
+5. System marks all 10 occurrences as `alreadyPaid = true`
+6. System creates individual StoreOrder records for each occurrence (for tracking)
+7. All occurrences can be confirmed (if `noNeedToConfirm = true`) or require store confirmation
+
+**Postconditions:**
+
+* 10 separate Rsvp records created, all marked as paid
+* 1 main StoreOrder for series prepayment
+* 10 individual StoreOrder records for tracking
+* All occurrences are ready for confirmation
+
+**UC-RSVP-REC-005: Cancelling Individual Occurrence in Weekly Series**
+
+**Scenario:** Customer wants to cancel one occurrence in a weekly recurring series.
+
+**Preconditions:**
+
+* Customer has an active weekly recurring series with 10 occurrences (every Monday at 2:00 PM)
+* Occurrence #5 (5th Monday) is next week
+* Customer wants to cancel only occurrence #5
+
+**Main Flow:**
+
+1. Customer views reservation history and sees weekly recurring series grouped together
+2. Customer expands series to see individual occurrences (all Mondays)
+3. Customer selects occurrence #5 (5th Monday) and clicks "Cancel"
+4. System applies cancellation policy to occurrence #5 (check `cancelHours`, refund policy)
+5. System cancels only occurrence #5 (status changes to `Cancelled (60)`)
+6. Other occurrences (Mondays 1-4, 6-10) remain active
+7. If refund is due, system processes refund for occurrence #5 only
+8. System sends cancellation notification for occurrence #5
+
+**Postconditions:**
+
+* Occurrence #5 (5th Monday) is cancelled
+* Other occurrences (remaining Mondays) remain active
+* Refund processed for occurrence #5 only (if applicable)
+
+**UC-RSVP-REC-006: Cancelling Entire Weekly Recurring Series**
+
+**Scenario:** Customer wants to cancel all future occurrences in a recurring series.
+
+**Preconditions:**
+
+* Customer has an active recurring series with 10 occurrences
+* Occurrences 1-3 are in the past (Completed)
+* Occurrences 4-10 are in the future
+* Customer wants to cancel the entire series
+
+**Main Flow:**
+
+1. Customer views recurring series in reservation history
+2. Customer clicks "Cancel Series" option
+3. System shows confirmation dialog: "Cancel all future occurrences? Past occurrences will remain unchanged."
+4. Customer confirms cancellation
+5. System cancels all future occurrences (4-10), status changes to `Cancelled (60)`
+6. Past occurrences (1-3) remain unchanged (status stays as `Completed (50)`)
+7. System processes refunds for all cancelled occurrences (if applicable, based on `cancelHours`)
+8. System sends cancellation notifications for all cancelled occurrences
+
+**Postconditions:**
+
+* Future occurrences (4-10) are cancelled
+* Past occurrences (1-3) remain unchanged
+* Refunds processed for all cancelled occurrences (if applicable)
+* Series is marked as inactive
+
+**UC-RSVP-REC-007: Editing Entire Weekly Recurring Series**
+
+**Scenario:** Customer wants to change the time for all future occurrences in a weekly series.
+
+**Preconditions:**
+
+* Customer has an active weekly recurring series with 10 occurrences (every Monday)
+* Occurrences 1-2 (first 2 Mondays) are in the past
+* Occurrences 3-10 (remaining Mondays) are in the future
+* Customer wants to change time from 2:00 PM to 3:00 PM for all future occurrences
+
+**Main Flow:**
+
+1. Customer views weekly recurring series in reservation history
+2. Customer clicks "Edit Series" option
+3. System shows edit form with current series settings (day of week: Monday, time: 2:00 PM)
+4. Customer changes time from 2:00 PM to 3:00 PM (day of week remains Monday)
+5. System validates all future occurrences (Mondays 3-10) with new time:
+   * Checks business hours for new time on each Monday
+   * Checks facility/service staff availability for new time on each Monday
+   * Checks time window constraints for each Monday
+6. If all valid: System updates all future occurrences (Mondays 3-10) with new time (3:00 PM)
+7. If some invalid: System shows which Mondays failed and allows customer to exclude them
+8. Past occurrences (Mondays 1-2) remain unchanged (still at 2:00 PM)
+9. System sends update notifications for all modified occurrences
+
+**Postconditions:**
+
+* Future occurrences (Mondays 3-10) are updated with new time (3:00 PM)
+* Past occurrences (Mondays 1-2) remain unchanged (2:00 PM)
+* Series metadata is updated (timeSlot changed to 3:00 PM)
+* Notifications sent for all modified occurrences
+
+**UC-RSVP-REC-008: Editing Individual Occurrence in Weekly Series**
+
+**Scenario:** Customer wants to change only one occurrence in a recurring series.
+
+**Preconditions:**
+
+* Customer has an active recurring series with 10 occurrences
+* Customer wants to change occurrence #5 to a different time
+
+**Main Flow:**
+
+1. Customer views recurring series and expands to see individual occurrences
+2. Customer selects occurrence #5 and clicks "Edit"
+3. System shows edit form for occurrence #5 only
+4. Customer changes time for occurrence #5
+5. System validates new time for occurrence #5
+6. If valid: System updates only occurrence #5
+7. Other occurrences remain unchanged
+8. System sends update notification for occurrence #5
+
+**Postconditions:**
+
+* Only occurrence #5 is updated
+* Other occurrences remain unchanged
+* Series relationship is maintained (occurrence #5 still linked to series)
+
+**UC-RSVP-REC-009: Business Hours Change During Weekly Recurring Series**
+
+**Scenario:** Store changes business hours mid-series, making some future occurrences invalid.
+
+**Preconditions:**
+
+* Customer has an active weekly recurring series (every Monday at 2:00 PM, 10 occurrences)
+* Store admin changes business hours (e.g., closes on Mondays)
+* Occurrences 1-3 (first 3 Mondays) are in the past
+* Occurrences 4-10 (remaining Mondays) are in the future, all fall on Mondays
+
+**Main Flow:**
+
+1. Store admin updates business hours (closes on Mondays)
+2. System detects weekly recurring series with future occurrences (all on Mondays)
+3. System re-validates all future occurrences (Mondays 4-10) against new business hours
+4. System identifies that all future occurrences fall on Mondays (now invalid due to store being closed)
+5. **If conflict handling = "skip":**
+   * System automatically cancels all invalid occurrences (Mondays 4-10)
+   * System notifies customer and store admin
+6. **If conflict handling = "notify":**
+   * System marks all invalid occurrences (Mondays 4-10) as "needs attention"
+   * System notifies store admin to manually resolve
+   * Store admin can manually adjust (change to different day) or cancel invalid occurrences
+
+**Postconditions:**
+
+* Invalid occurrences (Mondays 4-10) are handled according to store configuration
+* Customer and store admin are notified
+* Past occurrences (Mondays 1-3) remain unchanged
+
+**UC-RSVP-REC-010: Resource Unavailability During Weekly Recurring Series**
+
+**Scenario:** Facility or service staff becomes unavailable (deleted, disabled, or has conflicts) during a recurring series.
+
+**Preconditions:**
+
+* Customer has an active recurring series with specific facility/service staff
+* Store admin disables the facility or service staff
+* Or facility/service staff has conflicting reservations for some occurrences
+
+**Main Flow:**
+
+1. Store admin disables facility or service staff
+2. System detects recurring series using that resource
+3. System identifies all future occurrences using that resource
+4. **If resource is disabled:**
+   * System marks affected occurrences as "needs attention"
+   * System notifies customer and store admin
+   * Store admin can manually reassign resource or cancel occurrences
+5. **If resource has conflicts:**
+   * System applies conflict handling rules (skip, reject, notify)
+   * Affected occurrences are handled accordingly
+
+**Postconditions:**
+
+* Affected occurrences are handled according to store configuration
+* Customer and store admin are notified
+* Store admin can manually resolve conflicts
+
+**UC-RSVP-REC-011: Store Confirmation for Weekly Recurring Series**
+
+**Scenario:** Store admin wants to confirm all future occurrences in a weekly recurring series at once.
+
+**Preconditions:**
+
+* Customer has an active weekly recurring series with 10 occurrences (every Monday at 2:00 PM)
+* Store admin is viewing the series in admin interface
+* Store has not enabled `noNeedToConfirm`
+
+**Main Flow:**
+
+1. Store admin views weekly recurring series in admin interface
+2. Store admin sees all occurrences grouped together (all Mondays)
+3. Store admin clicks "Confirm All Future Occurrences"
+4. System shows confirmation dialog: "Confirm all future occurrences? Past occurrences will remain unchanged."
+5. Store admin confirms
+6. System sets `confirmedByStore = true` for all future occurrences (all future Mondays)
+7. System sends confirmation notifications for all confirmed occurrences
+8. Past occurrences (past Mondays) remain unchanged
+
+**Postconditions:**
+
+* All future occurrences (future Mondays) are confirmed
+* Past occurrences (past Mondays) remain unchanged
+* Notifications sent for all confirmed occurrences
+
+**UC-RSVP-REC-012: Anonymous User Weekly Recurring Reservation**
+
+**Scenario:** Anonymous user (not logged in) creates a recurring reservation series.
+
+**Preconditions:**
+
+* Store allows anonymous reservations
+* Anonymous user is on the reservation form
+* Anonymous user provides name and phone number
+
+**Main Flow:**
+
+1. Anonymous user creates recurring reservation series
+2. System creates series with `customerId = null`
+3. System stores name and phone in each occurrence record
+4. System saves series information to local storage (for anonymous user history)
+5. Each occurrence is saved to local storage with seriesId
+6. Anonymous user can view series in reservation history (from local storage)
+7. If anonymous user later signs in, system can link series to their account
+
+**Postconditions:**
+
+* Recurring series created with anonymous user information
+* Series saved to local storage
+* Each occurrence has name and phone stored
+* Series can be linked to account if user signs in later
+
+**UC-RSVP-REC-013: Weekly Recurring Reservation with End Date**
+
+**Scenario:** Customer creates weekly recurring reservation with end date instead of repeat count.
+
+**Preconditions:**
+
+* Store has recurring reservations enabled
+* Customer wants to book "Every Monday at 2:00 PM" until a specific end date (e.g., 3 months from now)
+
+**Main Flow:**
+
+1. Customer selects "Recurring" option
+2. System shows weekly recurring options (day of week is determined from selected date)
+3. Customer selects end date (e.g., 3 months from now)
+4. System calculates number of Mondays between start date and end date (e.g., 12 Mondays)
+5. System validates all calculated occurrences (all 12 Mondays)
+6. System displays preview of all occurrences (all 12 Mondays with dates)
+7. Customer confirms and system creates all occurrences (12 separate Rsvp records)
+
+**Postconditions:**
+
+* All occurrences between start and end date are created (all Mondays in the range)
+* Series automatically stops at end date
+* No occurrences are created after end date
+
+**UC-RSVP-REC-014: Weekly Recurring Reservation Limit Enforcement**
+
+**Scenario:** Customer tries to create more recurring series than allowed.
+
+**Preconditions:**
+
+* Store has configured `maxActiveRecurringSeries = 5`
+* Customer already has 5 active recurring series
+* Customer tries to create a 6th series
+
+**Main Flow:**
+
+1. Customer attempts to create new recurring series
+2. System checks customer's active recurring series count
+3. System detects customer already has 5 active series
+4. System shows error: "Maximum number of active recurring series reached. Please cancel an existing series first."
+5. System prevents creation of new series
+
+**Postconditions:**
+
+* New series is not created
+* Customer is informed of the limit
+* Customer must cancel an existing series before creating a new one
+
+**UC-RSVP-REC-015: Weekly Recurring Reservation Maximum Occurrences Enforcement**
+
+**Scenario:** Customer tries to create weekly recurring series with more occurrences than allowed.
+
+**Preconditions:**
+
+* Store has configured `maxRecurringOccurrences = 52` (max 52 weeks = 1 year)
+* Customer tries to create weekly recurring series with 100 occurrences (100 weeks)
+
+**Main Flow:**
+
+1. Customer selects "Recurring" option
+2. System shows weekly recurring options
+3. Customer enters repeat count: 100 (100 weeks)
+4. System validates repeat count against `maxRecurringOccurrences`
+5. System shows error: "Maximum number of occurrences per series is 52 weeks. Please reduce the repeat count."
+6. System prevents creation of series with too many occurrences
+
+**Postconditions:**
+
+* Weekly series is not created
+* Customer is informed of the limit (max 52 weeks)
+* Customer must reduce repeat count to create series
+
+**UC-RSVP-REC-016: Weekly Recurring Reservation Beyond Time Window**
+
+**Scenario:** Customer tries to create recurring series that extends beyond `canReserveAfter` time window.
+
+**Preconditions:**
+
+* Store has `canReserveAfter = 2190` (3 months)
+* Customer tries to create weekly recurring series for 1 year (52 weeks)
+
+**Main Flow:**
+
+1. Customer selects "Recurring" option
+2. Customer selects "Weekly" pattern
+3. Customer enters repeat count: 52
+4. System calculates that occurrence #52 would be beyond 3-month window
+5. System shows warning: "Some occurrences extend beyond the allowed reservation window. Only occurrences within 3 months will be created."
+6. System calculates valid occurrences (only those within 3 months)
+7. System displays preview of valid occurrences only
+8. Customer can confirm to create only valid occurrences, or cancel
+
+**Postconditions:**
+
+* Only occurrences within time window are created
+* Customer is informed of limitations
+* Series stops at time window boundary
 
 **Status Transition Rules:**
 
@@ -474,12 +975,15 @@ Completed (50) [when service is finished]
 * Modify within the allowed cancellation window (`cancelHours`)
 * When modified, `ConfirmedByStore` is set to false again.
 * **Unpaid Reservation Redirect:** When editing an unpaid reservation (where `orderId` exists and `alreadyPaid = false`), the system automatically redirects the customer to the checkout page (`/checkout/[orderId]`) to complete payment before allowing modifications.
+* **Status Restrictions:** Reservations with status `Completed (50)`, `Cancelled (60)`, or `NoShow (70)` cannot be modified. Only `Pending (0)`, `ReadyToConfirm (10)`, or `Ready (40)` reservations can be edited.
 
 **FR-RSVP-014:** Customers must be able to cancel reservations:
 
 * Self-service cancellation if within `cancelHours` before reservation time
 * Cancellation blocked if outside the allowed window (when `canCancel` is true and time limit applies)
 * Cancellation confirmation sent via configured notification channels
+* **Status Restrictions:** Reservations with status `Completed (50)`, `Cancelled (60)`, or `NoShow (70)` cannot be cancelled. Only `Pending (0)`, `ReadyToConfirm (10)`, or `Ready (40)` reservations can be cancelled.
+* **Status Restrictions:** Reservations with status `Completed (50)`, `Cancelled (60)`, or `NoShow (70)` cannot be cancelled. Only `Pending (0)`, `ReadyToConfirm (10)`, or `Ready (40)` reservations can be cancelled.
 
 **FR-RSVP-015:** Customers must be able to confirm their reservations:
 
@@ -1112,6 +1616,46 @@ Completed (50) [when service is finished]
 
 **Note:** Customer credit is store-specific. Each customer can have separate credit balances at different stores.
 
+### 4.6 Recurring Reservation Data Model
+
+**FR-RSVP-063:** The system must store recurring reservation series information:
+
+**Series Metadata (stored in RsvpSettings or new RsvpSeries table):**
+
+* `seriesId` (String, UUID) - Unique identifier for the recurring series
+* `storeId` (String) - Store that owns the series
+* `customerId` (String, nullable) - Customer who created the series (null for anonymous)
+* `pattern` (String, enum, fixed: "weekly") - Recurring pattern (always "weekly")
+* `repeatCount` (Int, nullable) - Number of occurrences to create (e.g., 10 = 10 weeks)
+* `endDate` (BigInt, nullable) - End date for the series in epoch milliseconds (if using date-based, alternative to repeatCount)
+* `dayOfWeek` (Int, 0-6) - Day of week for all occurrences (0=Sunday, 1=Monday, ..., 6=Saturday)
+* `timeSlot` (String) - Time slot for all occurrences (e.g., "14:00" for 2:00 PM)
+* `createdAt` (BigInt) - Series creation timestamp
+* `updatedAt` (BigInt) - Series last update timestamp
+* `isActive` (Boolean, default: true) - Whether the series is still active
+
+**Individual Occurrence (stored in Rsvp table):**
+
+* `seriesId` (String, nullable) - Reference to the series this occurrence belongs to
+* `occurrenceIndex` (Int, nullable) - Index of this occurrence in the series (0-based)
+* `isSeriesOccurrence` (Boolean, default: false) - Flag indicating this is part of a series
+* All other Rsvp fields remain the same (status, payment, confirmation, etc.)
+
+**Series Relationships:**
+
+* One series can have many occurrences (one-to-many)
+* Each occurrence is a separate Rsvp record
+* Occurrences can be managed independently (status, payment, confirmation)
+* Series metadata is shared across all occurrences
+
+**Series Configuration (in RsvpSettings):**
+
+* `allowRecurringReservations` (Boolean, default: false) - Enable/disable weekly recurring reservations
+* `maxRecurringOccurrences` (Int, default: 52) - Maximum number of occurrences per weekly series (e.g., max 52 weeks = 1 year)
+* `maxActiveRecurringSeries` (Int, default: 5) - Maximum number of active weekly series per customer
+* `recurringConflictHandling` (String, enum) - How to handle conflicts: "skip" (create only valid), "reject" (reject entire series), "notify" (create all, mark conflicts)
+* `recurringPaymentMode` (String, enum) - Payment mode: "per_occurrence" (pay each week separately), "series_upfront" (pay for entire series upfront)
+
 ***
 
 ## 5. Business Rules
@@ -1150,6 +1694,10 @@ Completed (50) [when service is finished]
 **BR-RSVP-006:** If `canCancel` is false, customers cannot self-cancel (store staff or store admin must cancel).
 
 **BR-RSVP-007:** Store staff and Store admins can always cancel reservations regardless of cancellation policy.
+
+**BR-RSVP-007a:** Reservations with status `Completed (50)`, `Cancelled (60)`, or `NoShow (70)` cannot be edited, cancelled, or deleted by customers or store staff. These statuses represent final states that should not be modified to maintain data integrity and reservation history.
+
+**BR-RSVP-007b:** Only reservations with status `Pending (0)`, `ReadyToConfirm (10)`, or `Ready (40)` can be edited, cancelled, or deleted, subject to other business rules (e.g., cancellation time windows, permission checks).
 
 ### 5.3 Prepaid Rules
 
@@ -1213,6 +1761,106 @@ Completed (50) [when service is finished]
 
 **BR-RSVP-028:** The system must handle Reserve with Google connection failures gracefully and provide clear error messages to store admins.
 
+### 5.6 Recurring Reservation Rules
+
+**BR-RSVP-029:** The system must support recurring/repeated reservations, allowing customers to create multiple reservations with the same or similar patterns.
+
+**BR-RSVP-030:** Recurring reservations must support weekly pattern only:
+
+* **Weekly:** Same day of week and time slot repeated every week for N weeks
+* Example: "Every Monday at 2:00 PM for 10 weeks" creates 10 separate reservations, one for each Monday
+
+**BR-RSVP-031:** Each occurrence in a recurring series must be validated independently:
+
+* Business hours validation must be checked for each occurrence
+* Facility/service staff availability must be checked for each occurrence
+* Time window validation (`canReserveBefore`, `canReserveAfter`) must be checked for each occurrence
+* If any occurrence fails validation, the system must indicate which occurrences are invalid
+
+**BR-RSVP-032:** When creating a recurring series, if some occurrences conflict with existing reservations or are invalid:
+
+* Option 1 (Recommended): System creates only valid occurrences and skips invalid ones, with clear notification to customer about which occurrences were skipped and why
+* Option 2: System rejects the entire series if any occurrence is invalid (strict mode)
+* Store admin must be able to configure which behavior to use
+
+**BR-RSVP-033:** Recurring reservations must be linked as a series:
+
+* All occurrences in a series share a common `seriesId` or `parentRsvpId`
+* Each occurrence is a separate `Rsvp` record with its own status, payment, and confirmation
+* Series metadata (pattern, interval, count, end date) must be stored
+
+**BR-RSVP-034:** Payment handling for recurring reservations:
+
+* If `minPrepaidPercentage > 0`, payment can be handled per occurrence or for the entire series upfront
+* If paying per occurrence: Each occurrence requires payment before confirmation
+* If paying for entire series: All occurrences are marked as paid, but individual orders may still be created per occurrence
+* Store admin must be able to configure payment behavior (per occurrence vs. series payment)
+
+**BR-RSVP-035:** Cancellation policy for recurring reservations:
+
+* Customers can cancel individual occurrences or the entire series
+* Cancellation policy (`canCancel`, `cancelHours`) applies to each occurrence independently
+* If cancelling entire series: All future occurrences are cancelled, past occurrences remain unchanged
+* If cancelling individual occurrence: Only that occurrence is cancelled, others remain active
+* Refund policy applies per occurrence based on when that specific occurrence is cancelled
+
+**BR-RSVP-036:** Store confirmation for recurring reservations:
+
+* Each occurrence requires separate confirmation (unless `noNeedToConfirm = true`)
+* Store can confirm individual occurrences or the entire series
+* If confirming entire series: All future occurrences are confirmed, past occurrences remain unchanged
+
+**BR-RSVP-037:** Editing recurring reservations:
+
+* **Edit entire series:** Changes apply to all future occurrences (e.g., change time, facility, party size)
+* **Edit individual occurrence:** Only that occurrence is modified, others remain unchanged
+* Past occurrences cannot be edited (same as regular reservations)
+* If editing series would invalidate some occurrences, system must handle conflicts (see BR-RSVP-032)
+
+**BR-RSVP-038:** Deleting recurring reservations:
+
+* **Delete entire series:** All future occurrences are deleted, past occurrences remain in history
+* **Delete individual occurrence:** Only that occurrence is deleted, others remain active
+* Only `Pending (0)` or `ReadyToConfirm (10)` occurrences can be deleted (same as regular reservations)
+* `Completed (50)`, `Cancelled (60)`, or `NoShow (70)` occurrences cannot be deleted
+
+**BR-RSVP-039:** Notifications for recurring reservations:
+
+* Each occurrence can have its own reminder notification (based on `reminderHours`)
+* Series-level notifications can be sent when series is created, modified, or cancelled
+* Store admins must be notified if any occurrence in a series fails validation or conflicts
+
+**BR-RSVP-040:** Recurring series expiration:
+
+* Series must have an end date or occurrence count limit
+* System must prevent creating series that extend beyond `canReserveAfter` time window
+* If series end date is reached, no new occurrences are created automatically
+
+**BR-RSVP-041:** Business hours changes during recurring series:
+
+* If business hours change mid-series, future occurrences must be re-validated
+* System should notify customer and store admin if any future occurrences become invalid due to business hours changes
+* Store admin can manually adjust or cancel invalid occurrences
+
+**BR-RSVP-042:** Resource availability for recurring series:
+
+* If facility or service staff becomes unavailable (deleted, disabled, or has conflicting reservations), affected occurrences must be handled:
+  * Option 1: Occurrence is automatically cancelled with notification
+  * Option 2: Occurrence remains but marked as "needs attention" for store admin
+  * Store admin must be able to configure behavior
+
+**BR-RSVP-043:** Recurring reservation display and management:
+
+* Customer reservation history must show recurring series grouped together with expand/collapse
+* Store admin interface must show series relationships and allow bulk operations
+* Individual occurrences can be viewed and managed independently
+
+**BR-RSVP-044:** Recurring reservation limits:
+
+* Store admin must be able to configure maximum number of occurrences per weekly series (e.g., max 52 weeks = 1 year)
+* Store admin must be able to configure maximum number of active recurring series per customer
+* System must prevent abuse (e.g., creating too many recurring series)
+
 ***
 
 ## 6. User Interface Requirements
@@ -1240,7 +1888,21 @@ Completed (50) [when service is finished]
 
 **UI-RSVP-005:** Reservation management page must allow easy modification and cancellation (optimized for phone display).
 
-**UI-RSVP-005a:** Signature interface must be user-friendly and accessible:
+**UI-RSVP-005a:** Weekly recurring reservation interface must be intuitive and mobile-friendly:
+
+* **Recurring Option Toggle:** Clear toggle/checkbox to enable weekly recurring mode in reservation form
+* **Day of Week Display:** Clear indication of which day of week will be repeated (e.g., "Every Monday")
+* **Repeat Count Input:** Number input for repeat count with clear label (e.g., "Repeat 10 times" = 10 weeks)
+* **End Date Input:** Optional date picker for end date (alternative to repeat count)
+* **Time Slot Display:** Clear indication of which time slot will be repeated (e.g., "2:00 PM")
+* **Occurrence Preview:** Expandable preview showing all weekly occurrences with dates/times before confirmation
+* **Conflict Indicators:** Clear visual indicators for invalid occurrences (e.g., red highlight, warning icon)
+* **Series Grouping:** Weekly recurring series grouped together in reservation history with expand/collapse
+* **Bulk Actions:** Easy access to bulk operations (cancel all, confirm all, edit all) for store admins
+* **Individual Occurrence Management:** Each weekly occurrence can be viewed and managed independently
+* **Mobile Optimization:** All recurring features must be touch-friendly and optimized for phone screens
+
+**UI-RSVP-005b:** Signature interface must be user-friendly and accessible:
 
 * Support touch screen input (primary for phones)
 * Provide clear signature area with appropriate size for phone screens
@@ -1264,7 +1926,7 @@ Completed (50) [when service is finished]
 **UI-RSVP-013:** The staff interface must provide a recurring reservation creation feature that allows Store Staff and Store Admins to specify:
 
 * Base reservation details (customer, party size, facility preference, etc.)
-* Recurrence pattern (e.g., weekly, bi-weekly, monthly)
+* Recurrence pattern (weekly only)
 * Day of week and time
 * Number of occurrences or end date
 * All recurring reservations must be created as individual reservation records (optimized for tablets and phones).
