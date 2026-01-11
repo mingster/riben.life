@@ -37,6 +37,7 @@ export const createRsvpAction = storeActionClient
 		const {
 			customerId,
 			facilityId,
+			serviceStaffId,
 			numOfAdult,
 			numOfChild,
 			rsvpTime: rsvpTimeInput,
@@ -108,6 +109,49 @@ export const createRsvpAction = storeActionClient
 			};
 		}
 
+		// Validate service staff if provided (optional)
+		let serviceStaff: {
+			id: string;
+			userId: string;
+			userName: string | null;
+			userEmail: string | null;
+			defaultCost: number | null;
+		} | null = null;
+
+		if (serviceStaffId) {
+			const serviceStaffResult = await sqlClient.serviceStaff.findFirst({
+				where: {
+					id: serviceStaffId,
+					storeId,
+					isDeleted: false,
+				},
+				include: {
+					User: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+						},
+					},
+				},
+			});
+
+			if (!serviceStaffResult) {
+				throw new SafeError("Service staff not found");
+			}
+
+			// Convert Decimal to number for type compatibility
+			serviceStaff = {
+				id: serviceStaffResult.id,
+				userId: serviceStaffResult.userId,
+				userName: serviceStaffResult.User.name,
+				userEmail: serviceStaffResult.User.email,
+				defaultCost: serviceStaffResult.defaultCost
+					? Number(serviceStaffResult.defaultCost)
+					: null,
+			};
+		}
+
 		// Convert rsvpTime to UTC Date, then to BigInt epoch
 		// The Date object from datetime-local input represents a time in the browser's local timezone
 		// We need to interpret it as store timezone time and convert to UTC
@@ -136,8 +180,38 @@ export const createRsvpAction = storeActionClient
 				singleServiceMode: true,
 				defaultDuration: true,
 				minPrepaidPercentage: true,
+				mustSelectFacility: true,
+				mustHaveServiceStaff: true,
 			},
 		});
+
+		// Validate facility is required when mustSelectFacility is true
+		// Check if any facilities exist for this store before requiring selection
+		if (rsvpSettings?.mustSelectFacility && !facilityId) {
+			const facilitiesCount = await sqlClient.storeFacility.count({
+				where: { storeId },
+			});
+			if (facilitiesCount > 0) {
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_facility_required") || "Facility is required",
+				);
+			}
+		}
+
+		// Validate service staff is required when mustHaveServiceStaff is true
+		// Check if any service staff exist for this store before requiring selection
+		if (rsvpSettings?.mustHaveServiceStaff && !serviceStaffId) {
+			const serviceStaffCount = await sqlClient.serviceStaff.count({
+				where: { storeId, isDeleted: false },
+			});
+			if (serviceStaffCount > 0) {
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_service_staff_required") || "Service staff is required",
+				);
+			}
+		}
 
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
 		// Note: Store admin can still create reservations, but we validate to ensure consistency
@@ -197,6 +271,7 @@ export const createRsvpAction = storeActionClient
 						storeId,
 						customerId: customerId || null,
 						facilityId: facilityId || null,
+						serviceStaffId: serviceStaffId || null,
 						numOfAdult,
 						numOfChild,
 						rsvpTime,
@@ -279,7 +354,9 @@ export const createRsvpAction = storeActionClient
 						const facilityName =
 							facility?.facilityName || t("facility_name") || "Facility";
 
-						const orderNote = `${baseNote}\n${t("rsvp_id") || "RSVP ID"}: ${createdRsvp.id}\n${t("facility_name") || "Facility"}: ${facilityName}\n${t("rsvp_time") || "Reservation Time"}: ${formattedRsvpTime}`;
+						const serviceStaffName =
+							serviceStaff?.userName || serviceStaff?.userEmail || null;
+						const orderNote = `${baseNote}\n${t("rsvp_id") || "RSVP ID"}: ${createdRsvp.id}\n${t("facility_name") || "Facility"}: ${facilityName}${serviceStaffName ? `\n${t("Service_Staff") || "Service Staff"}: ${serviceStaffName}` : ""}\n${t("rsvp_time") || "Reservation Time"}: ${formattedRsvpTime}`;
 
 						finalOrderId = await createRsvpStoreOrder({
 							tx,
@@ -292,8 +369,8 @@ export const createRsvpAction = storeActionClient
 							rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
 							facilityId: facility?.id || null, // Pass facility ID for pickupCode (optional)
 							facilityName, // Pass facility name for product name
-							serviceStaffId: null, // No service staff for admin-created RSVP
-							serviceStaffName: null, // No service staff name for admin-created RSVP
+							serviceStaffId: serviceStaffId || null, // Service staff ID if provided
+							serviceStaffName, // Service staff name if provided
 							rsvpTime: createdRsvp.rsvpTime, // Pass RSVP time (BigInt epoch)
 							note: orderNote,
 							displayToCustomer: false, // Internal note, not displayed to customer

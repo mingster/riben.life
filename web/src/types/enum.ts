@@ -72,6 +72,11 @@ export const PayoutSchedule: GeneralNVType[] = [
 	},
 ];
 
+export enum PageAction {
+	Create = "Create",
+	Modify = "Modify",
+	Delete = "Delete",
+}
 export type SubscriptionForUI = {
 	id: string;
 	customer: string;
@@ -165,12 +170,6 @@ export enum RsvpStatus {
 	Completed = 50, //已完成 checkout
 	Cancelled = 60, //已取消
 	NoShow = 70, //未到
-}
-
-export enum PageAction {
-	Create = "Create",
-	Modify = "Modify",
-	Delete = "Delete",
 }
 
 export const MemberRole = {

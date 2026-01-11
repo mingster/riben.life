@@ -95,12 +95,14 @@ export function AdminEditRsvpDialog({
 			<DialogContent className={dialogClassName}>
 				<DialogHeader>
 					<DialogTitle>
-						{isEditMode ? t("edit_reservation") : t("create_Reservation")}
+						{isEditMode
+							? t("rsvp_admin_edit_reservation")
+							: t("rsvp_admin_create_Reservation")}
 					</DialogTitle>
 					<DialogDescription>
 						{isEditMode
-							? t("edit_reservation_description")
-							: t("create_Reservation_description")}
+							? t("rsvp_admin_edit_reservation_description")
+							: t("rsvp_admin_create_Reservation_description")}
 					</DialogDescription>
 				</DialogHeader>
 				<div className="mt-4">

@@ -30,6 +30,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { StoreMembersCombobox } from "../../customers/components/combobox-store-members";
 import { FacilityCombobox } from "@/components/combobox-facility";
+import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
 import useSWR from "swr";
 import type { User } from "@/types";
 import { authClient } from "@/lib/auth-client";
@@ -42,9 +43,8 @@ import {
 	dateToEpoch,
 } from "@/utils/datetime-utils";
 import type { StoreFacility } from "@/types";
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 import { RsvpStatus } from "@/types/enum";
-import { calculateCancelPolicyInfo } from "@/utils/rsvp-cancel-policy-utils";
-import { RsvpCancelPolicyInfo } from "@/components/rsvp-cancel-policy-info";
 import {
 	checkTimeAgainstBusinessHours,
 	rsvpTimeToEpoch,
@@ -60,6 +60,8 @@ interface AdminReservationFormProps {
 		defaultDuration?: number | null;
 		useBusinessHours?: boolean | null;
 		rsvpHours?: string | null;
+		mustSelectFacility?: boolean | null;
+		mustHaveServiceStaff?: boolean | null;
 	} | null;
 	storeSettings: {
 		businessHours?: string | null;
@@ -165,6 +167,16 @@ export function AdminReservationForm({
 		isLoading: isLoadingStoreFacilities,
 	} = useSWR<StoreFacility[]>(facilitiesUrl, facilitiesFetcher);
 
+	// Fetch service staff for serviceStaffId selection
+	const serviceStaffUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/service-staff`;
+	const serviceStaffFetcher = (url: RequestInfo) =>
+		fetch(url).then((res) => res.json());
+	const {
+		data: storeServiceStaff,
+		error: storeServiceStaffError,
+		isLoading: isLoadingServiceStaff,
+	} = useSWR<ServiceStaffColumn[]>(serviceStaffUrl, serviceStaffFetcher);
+
 	// Helper function to validate rsvpTime against store business hours or RSVP hours
 	const validateRsvpTimeAgainstHours = useCallback(
 		(rsvpTime: Date | null | undefined): string | null => {
@@ -246,6 +258,7 @@ export function AdminReservationForm({
 				id: rsvp.id,
 				customerId: rsvp.customerId,
 				facilityId: rsvp.facilityId || null,
+				serviceStaffId: rsvp.serviceStaffId || null,
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				rsvpTime:
@@ -287,6 +300,7 @@ export function AdminReservationForm({
 				id: "",
 				customerId: null,
 				facilityId: null, // Allow null for reservations without facilities
+				serviceStaffId: null,
 				numOfAdult: 1,
 				numOfChild: 0,
 				rsvpTime: defaultRsvpTime || getUtcNow(),
@@ -294,7 +308,7 @@ export function AdminReservationForm({
 				status: RsvpStatus.Pending,
 				message: null,
 				alreadyPaid: false,
-				confirmedByStore: false,
+				confirmedByStore: true,
 				confirmedByCustomer: false,
 				facilityCost: null,
 				pricingRuleId: null,
@@ -346,15 +360,12 @@ export function AdminReservationForm({
 		return null;
 	}, [selectedFacility]);
 
-	// Calculate cancel policy information
-	const cancelPolicyInfo = useMemo(
-		() => calculateCancelPolicyInfo(rsvpSettings, rsvpTime, alreadyPaid),
-		[rsvpSettings, rsvpTime, alreadyPaid],
-	);
-
 	// Get current user session to check admin role
 	const { data: session } = authClient.useSession();
 	const isAdmin = session?.user?.role === Role.admin;
+	const isOwner = session?.user?.role === Role.owner;
+	const isStoreAdmin = session?.user?.role === Role.storeAdmin;
+	const canEditFacilityCost = isOwner || isStoreAdmin;
 
 	// Only allow editing completed RSVPs if user is admin
 	const canEditCompleted = !isCompleted || isAdmin;
@@ -564,6 +575,45 @@ export function AdminReservationForm({
 				return;
 			}
 
+			// Validate facility is required when mustSelectFacility is true and facilities are available
+			if (
+				rsvpSettings?.mustSelectFacility &&
+				availableFacilities.length > 0 &&
+				!values.facilityId
+			) {
+				toastError({
+					title: t("error_title"),
+					description: t("facility_required") || "Facility is required",
+				});
+				form.setError("facilityId", {
+					type: "manual",
+					message: t("facility_required") || "Facility is required",
+				});
+				setLoading(false);
+				return;
+			}
+
+			// Validate service staff is required when mustHaveServiceStaff is true and service staff are available
+			if (
+				rsvpSettings?.mustHaveServiceStaff &&
+				storeServiceStaff &&
+				storeServiceStaff.length > 0 &&
+				!values.serviceStaffId
+			) {
+				toastError({
+					title: t("error_title"),
+					description:
+						t("rsvp_service_staff_required") || "Service staff is required",
+				});
+				form.setError("serviceStaffId", {
+					type: "manual",
+					message:
+						t("rsvp_service_staff_required") || "Service staff is required",
+				});
+				setLoading(false);
+				return;
+			}
+
 			// Check if cancelled or no-show first (highest priority)
 			if (values.status === RsvpStatus.Cancelled) {
 				// Status already set to Cancelled, keep it
@@ -579,6 +629,7 @@ export function AdminReservationForm({
 				const result = await createRsvpAction(storeId, {
 					customerId: values.customerId || null,
 					facilityId: values.facilityId || null,
+					serviceStaffId: values.serviceStaffId || null,
 					numOfAdult: values.numOfAdult,
 					numOfChild: values.numOfChild,
 					rsvpTime: values.rsvpTime, //should be still in store timezone. server action will convert to UTC.
@@ -621,6 +672,7 @@ export function AdminReservationForm({
 					id: rsvpId,
 					customerId: values.customerId || null,
 					facilityId: values.facilityId || null,
+					serviceStaffId: values.serviceStaffId || null,
 					numOfAdult: values.numOfAdult,
 					numOfChild: values.numOfChild,
 					rsvpTime: values.rsvpTime,
@@ -833,86 +885,175 @@ export function AdminReservationForm({
 				<FormField
 					control={form.control}
 					name="facilityId"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>{t("rsvp_facility")}</FormLabel>
-							<FormControl>
-								{availableFacilities.length > 0 ? (
-									<FacilityCombobox
-										storeFacilities={availableFacilities}
-										disabled={
-											!canEditCompleted ||
-											loading ||
-											form.formState.isSubmitting ||
-											isLoadingStoreFacilities
-										}
-										defaultValue={
-											field.value
-												? availableFacilities.find(
-														(f: StoreFacility) => f.id === field.value,
-													) || null
-												: null
-										}
-										allowNone={true}
-										onValueChange={(facility) => {
-											field.onChange(facility?.id || null);
-										}}
-									/>
-								) : (
-									<div className="text-sm text-muted-foreground">
-										{isEditMode && field.value
-											? (() => {
-													const selectedFacility = storeFacilities?.find(
-														(f: StoreFacility) => f.id === field.value,
-													);
-													return selectedFacility
-														? selectedFacility.name
-														: rsvpTime
-															? t("No facilities available at selected time")
-															: t("No facilities available");
-												})()
-											: rsvpTime
-												? t("No facilities available at selected time")
-												: t("No facilities available (optional)")}
-									</div>
-								)}
-							</FormControl>
-							<FormDescription className="text-xs font-mono text-gray-500">
-								{t("facility_optional_description") ||
-									"Optional: Select a facility for this reservation"}
-							</FormDescription>
-							<FormMessage />
-						</FormItem>
-					)}
+					render={({ field }) => {
+						const isRequired =
+							rsvpSettings?.mustSelectFacility &&
+							availableFacilities.length > 0;
+						return (
+							<FormItem>
+								<FormLabel>
+									{t("rsvp_facility")}
+									{isRequired && <span className="text-destructive"> *</span>}
+								</FormLabel>
+								<FormControl>
+									{availableFacilities.length > 0 ? (
+										<FacilityCombobox
+											storeFacilities={availableFacilities}
+											disabled={
+												!canEditCompleted ||
+												loading ||
+												form.formState.isSubmitting ||
+												isLoadingStoreFacilities
+											}
+											defaultValue={
+												field.value
+													? availableFacilities.find(
+															(f: StoreFacility) => f.id === field.value,
+														) || null
+													: null
+											}
+											allowNone={!isRequired}
+											onValueChange={(facility) => {
+												field.onChange(facility?.id || null);
+											}}
+										/>
+									) : (
+										<div className="text-sm text-muted-foreground">
+											{isEditMode && field.value
+												? (() => {
+														const selectedFacility = storeFacilities?.find(
+															(f: StoreFacility) => f.id === field.value,
+														);
+														return selectedFacility
+															? selectedFacility.name
+															: rsvpTime
+																? t(
+																		"rsvp_no_facilities_available_at_selected_time",
+																	) ||
+																	"No facilities available at selected time"
+																: t("rsvp_no_facilities_available") ||
+																	"No facilities available";
+													})()
+												: rsvpTime
+													? t(
+															"rsvp_no_facilities_available_at_selected_time",
+														) || "No facilities available at selected time"
+													: isRequired
+														? t("rsvp_no_facilities_available") ||
+															"No facilities available"
+														: t("rsvp_no_facilities_available_optional") ||
+															"No facilities available (optional)"}
+										</div>
+									)}
+								</FormControl>
+								<FormDescription className="text-xs font-mono text-gray-500">
+									{isRequired
+										? t("rsvp_facility_required") ||
+											"Required: Select a facility for this reservation"
+										: t("rsvp_facility_optional_description") ||
+											"Optional: Select a facility for this reservation"}
+								</FormDescription>
+								<FormMessage />
+							</FormItem>
+						);
+					}}
 				/>
+
 				<FormField
 					control={form.control}
-					name="facilityCost"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>{t("rsvp_facility_cost")}</FormLabel>
-							<FormControl>
-								<Input
-									type="number"
-									step="0.01"
-									disabled={
-										!canEditCompleted || loading || form.formState.isSubmitting
-									}
-									value={
-										field.value !== null && field.value !== undefined
-											? field.value.toString()
-											: ""
-									}
-									onChange={(event) => {
-										const value = event.target.value;
-										field.onChange(value ? Number.parseFloat(value) : null);
-									}}
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
+					name="serviceStaffId"
+					render={({ field }) => {
+						const isRequired =
+							rsvpSettings?.mustHaveServiceStaff &&
+							storeServiceStaff &&
+							storeServiceStaff.length > 0;
+						return (
+							<FormItem>
+								<FormLabel>
+									{t("Service_Staff") || "Service Staff"}
+									{isRequired && <span className="text-destructive"> *</span>}
+								</FormLabel>
+								<FormControl>
+									{storeServiceStaff && storeServiceStaff.length > 0 ? (
+										<ServiceStaffCombobox
+											serviceStaff={storeServiceStaff}
+											disabled={
+												!canEditCompleted ||
+												loading ||
+												form.formState.isSubmitting ||
+												isLoadingServiceStaff
+											}
+											defaultValue={
+												field.value
+													? storeServiceStaff.find(
+															(ss: ServiceStaffColumn) => ss.id === field.value,
+														) || null
+													: null
+											}
+											allowEmpty={!isRequired}
+											storeCurrency={storeCurrency?.toUpperCase() || "TWD"}
+											onValueChange={(staff) => {
+												field.onChange(staff?.id || null);
+											}}
+										/>
+									) : (
+										<div className="text-sm text-muted-foreground">
+											{isLoadingServiceStaff
+												? t("loading") || "Loading..."
+												: isRequired
+													? t("no_service_staff_found") ||
+														"No service staff found (required)"
+													: t("no_service_staff_found") ||
+														"No service staff found"}
+										</div>
+									)}
+								</FormControl>
+								<FormDescription className="text-xs font-mono text-gray-500">
+									{isRequired
+										? t("rsvp_service_staff_required") ||
+											"Required: Select a service staff member for this reservation"
+										: t("select_service_staff") ||
+											"Optional: Select a service staff member for this reservation"}
+								</FormDescription>
+								<FormMessage />
+							</FormItem>
+						);
+					}}
 				/>
+
+				{facilityId && (
+					<FormField
+						control={form.control}
+						name="facilityCost"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>{t("rsvp_facility_cost")}</FormLabel>
+								<FormControl>
+									<Input
+										type="number"
+										step="0.01"
+										disabled={
+											!canEditCompleted ||
+											!canEditFacilityCost ||
+											loading ||
+											form.formState.isSubmitting
+										}
+										value={
+											field.value !== null && field.value !== undefined
+												? field.value.toString()
+												: ""
+										}
+										onChange={(event) => {
+											const value = event.target.value;
+											field.onChange(value ? Number.parseFloat(value) : null);
+										}}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				)}
 
 				{/** Already Paid */}
 				<div className="grid grid-cols-2 gap-4">
@@ -958,236 +1099,47 @@ export function AdminReservationForm({
 
 				<Separator />
 
-				<FormField
-					control={form.control}
-					name="confirmedByStore"
-					render={({ field }) => {
-						const isCancelled = form.watch("status") === RsvpStatus.Cancelled;
-						const isNoShow = form.watch("status") === RsvpStatus.NoShow;
-						const isDisabled = isCancelled || isNoShow;
-						return (
-							<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-								<FormControl>
-									<input
-										type="checkbox"
-										checked={field.value}
-										onChange={(e) => {
-											field.onChange(e.target.checked);
-											// Uncheck cancelled/no-show when other status is set
-											if (e.target.checked && (isCancelled || isNoShow)) {
-												form.setValue("status", RsvpStatus.Pending);
-											}
-										}}
-										disabled={
-											!canEditCompleted ||
-											loading ||
-											form.formState.isSubmitting ||
-											isDisabled
-										}
-										className="h-5 w-5 sm:h-4 sm:w-4"
-									/>
-								</FormControl>
-								<FormLabel>{t("rsvp_confirmed_by_store")}</FormLabel>
-								<FormMessage />
-								<FormDescription className="text-xs font-mono text-gray-500">
-									{t("rsvp_confirmed_by_store_descr")}
-								</FormDescription>
-							</FormItem>
-						);
-					}}
-				/>
+				{isEditMode && (
+					<>
+						<div className="text-xs text-muted-foreground font-mono">
+							{t("rsvp_section_completed")}
+						</div>
 
-				{form.watch("confirmedByStore") && (
-					<div className="text-xs text-muted-foreground font-mono">
-						{t("rsvp_section_notification")}
-					</div>
-				)}
-
-				<Separator />
-
-				<div className="text-xs text-muted-foreground font-mono">
-					{t("rsvp_section_completed")}
-				</div>
-
-				<div className="grid grid-cols-2 gap-4">
-					<FormField
-						control={form.control}
-						name="arriveTime"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>{t("rsvp_arrival_time")}</FormLabel>
-								<FormControl>
-									<Input
-										type="datetime-local"
-										disabled={
-											!canEditCompleted ||
-											loading ||
-											form.formState.isSubmitting
-										}
-										value={field.value ? formatDateTimeLocal(field.value) : ""}
-										onChange={(event) => {
-											const value = event.target.value;
-											if (value) {
-												field.onChange(parseDateTimeLocal(value));
-											} else {
-												field.onChange(null);
-											}
-										}}
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				</div>
-
-				<FormField
-					control={form.control}
-					name="confirmedByCustomer"
-					render={({ field }) => {
-						const isCancelled = form.watch("status") === RsvpStatus.Cancelled;
-						const isNoShow = form.watch("status") === RsvpStatus.NoShow;
-						const isDisabled = isCancelled || isNoShow;
-						return (
-							<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-								<FormControl>
-									<input
-										type="checkbox"
-										checked={field.value}
-										onChange={(e) => {
-											const checked = e.target.checked;
-											field.onChange(checked);
-
-											if (checked) {
-												// When confirmed by customer:
-												// 1. Set arriveTime to now
-												form.setValue("arriveTime", getUtcNow());
-												// 2. Set status to Completed
-												form.setValue("status", RsvpStatus.Completed);
-											} else {
-												// When unchecked, clear arriveTime
-												form.setValue("arriveTime", null);
-											}
-										}}
-										disabled={
-											!canEditCompleted ||
-											loading ||
-											form.formState.isSubmitting ||
-											isDisabled
-										}
-										className="h-5 w-5 sm:h-4 sm:w-4"
-									/>
-								</FormControl>
-								<FormLabel>{t("rsvp_confirmed_by_customer")}</FormLabel>
-								<FormMessage />
-								<FormDescription className="text-xs font-mono text-gray-500">
-									{t("rsvp_confirmed_by_customer_descr")}
-								</FormDescription>
-							</FormItem>
-						);
-					}}
-				/>
-
-				<Separator />
-
-				<FormField
-					control={form.control}
-					name="status"
-					render={({ field }) => {
-						const isCancelled = field.value === RsvpStatus.Cancelled;
-						const isNoShow = field.value === RsvpStatus.NoShow;
-						return (
-							<FormItem className="flex flex-col space-y-2">
-								<div className="flex flex-row items-center space-x-3 space-y-0">
-									<FormControl>
-										<input
-											type="checkbox"
-											checked={isCancelled}
-											onChange={(e) => {
-												if (e.target.checked) {
-													// Set status to Cancelled and uncheck other status checkboxes
-													field.onChange(RsvpStatus.Cancelled);
-													form.setValue("alreadyPaid", false);
-													form.setValue("confirmedByStore", false);
-													form.setValue("confirmedByCustomer", false);
-												} else {
-													// Uncheck cancelled, reset to Pending
-													field.onChange(RsvpStatus.Pending);
+						<div className="grid grid-cols-2 gap-4">
+							<FormField
+								control={form.control}
+								name="arriveTime"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{t("rsvp_arrival_time")}</FormLabel>
+										<FormControl>
+											<Input
+												type="datetime-local"
+												disabled={
+													!canEditCompleted ||
+													loading ||
+													form.formState.isSubmitting
 												}
-											}}
-											disabled={
-												!canEditCompleted ||
-												loading ||
-												form.formState.isSubmitting ||
-												isNoShow
-											}
-											className="h-5 w-5 sm:h-4 sm:w-4"
-										/>
-									</FormControl>
-									<FormLabel>{t("rsvp_cancelled")}</FormLabel>
-								</div>
-								<FormMessage />
-								<FormDescription className="text-xs font-mono text-gray-500">
-									{t("rsvp_cancelled_descr")}
-								</FormDescription>
-								{/* Cancel Policy Information */}
-								<RsvpCancelPolicyInfo
-									cancelPolicyInfo={cancelPolicyInfo}
-									rsvpTime={rsvpTime}
-									alreadyPaid={alreadyPaid}
-									rsvpSettings={rsvpSettings}
-									facilityCost={facilityCost}
-									currency={storeCurrency}
-									useCustomerCredit={useCustomerCredit}
-									creditExchangeRate={creditExchangeRate}
-								/>
-							</FormItem>
-						);
-					}}
-				/>
-
-				<FormField
-					control={form.control}
-					name="status"
-					render={({ field }) => {
-						const isCancelled = field.value === RsvpStatus.Cancelled;
-						const isNoShow = field.value === RsvpStatus.NoShow;
-						return (
-							<FormItem className="flex flex-row items-center space-x-3 space-y-0">
-								<FormControl>
-									<input
-										type="checkbox"
-										checked={isNoShow}
-										onChange={(e) => {
-											if (e.target.checked) {
-												// Set status to NoShow and uncheck other status checkboxes
-												field.onChange(RsvpStatus.NoShow);
-												form.setValue("alreadyPaid", false);
-												form.setValue("confirmedByStore", false);
-												form.setValue("confirmedByCustomer", false);
-											} else {
-												// Uncheck no-show, reset to Pending
-												field.onChange(RsvpStatus.Pending);
-											}
-										}}
-										disabled={
-											!canEditCompleted ||
-											loading ||
-											form.formState.isSubmitting ||
-											isCancelled
-										}
-										className="h-5 w-5 sm:h-4 sm:w-4"
-									/>
-								</FormControl>
-								<FormLabel>{t("rsvp_no_show")}</FormLabel>
-								<FormMessage />
-								<FormDescription className="text-xs font-mono text-gray-500">
-									{t("rsvp_no_show_descr")}
-								</FormDescription>
-							</FormItem>
-						);
-					}}
-				/>
+												value={
+													field.value ? formatDateTimeLocal(field.value) : ""
+												}
+												onChange={(event) => {
+													const value = event.target.value;
+													if (value) {
+														field.onChange(parseDateTimeLocal(value));
+													} else {
+														field.onChange(null);
+													}
+												}}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+					</>
+				)}
 
 				{/* Validation Error Summary */}
 				{Object.keys(form.formState.errors).length > 0 && (

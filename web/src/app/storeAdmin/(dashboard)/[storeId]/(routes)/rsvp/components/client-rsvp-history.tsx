@@ -11,6 +11,8 @@ import {
 	subDays,
 	addDays,
 } from "date-fns";
+import { useParams } from "next/navigation";
+import { IconCheck } from "@tabler/icons-react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
@@ -20,14 +22,19 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
+import { toastSuccess, toastError } from "@/components/toaster";
 
 import type { Rsvp } from "@/types";
+import { RsvpStatus } from "@/types/enum";
 import {
 	dateToEpoch,
 	convertToUtc,
 	formatUtcDateToDateTimeLocal,
+	epochToDate,
 } from "@/utils/datetime-utils";
 import { createRsvpColumns } from "./columns";
+import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
+import { completeRsvpsAction } from "@/actions/storeAdmin/rsvp/complete-rsvps";
 
 interface RsvpHistoryClientProps {
 	serverData: Rsvp[];
@@ -48,11 +55,17 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
+	const params = useParams<{ storeId: string }>();
 
 	const [allData, setAllData] = useState<Rsvp[]>(serverData);
 	const [periodType, setPeriodType] = useState<PeriodType>("custom");
 	const [startDate, setStartDate] = useState<Date | null>(null);
 	const [endDate, setEndDate] = useState<Date | null>(null);
+	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>([
+		RsvpStatus.ReadyToConfirm,
+	]);
+	const [confirmingAll, setConfirmingAll] = useState(false);
+	const [completingAll, setCompletingAll] = useState(false);
 
 	// Helper to get current date/time in store timezone
 	const getNowInStoreTimezone = useCallback((): Date => {
@@ -165,32 +178,40 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 		[storeTimezone, getNowInStoreTimezone],
 	);
 
-	// Filter data based on date range
+	// Filter data based on date range and status
 	const data = useMemo(() => {
-		if (!startDate || !endDate) {
-			return allData;
+		let filtered = allData;
+
+		// Filter by date range
+		if (startDate && endDate) {
+			const startEpoch = dateToEpoch(startDate);
+			const endEpoch = dateToEpoch(endDate);
+
+			if (startEpoch && endEpoch) {
+				filtered = filtered.filter((rsvp) => {
+					const rsvpTime = rsvp.rsvpTime;
+					if (!rsvpTime) return false;
+
+					// rsvpTime is BigInt epoch milliseconds
+					const rsvpTimeBigInt =
+						typeof rsvpTime === "bigint" ? rsvpTime : BigInt(rsvpTime);
+					const startBigInt = startEpoch;
+					const endBigInt = endEpoch;
+
+					return rsvpTimeBigInt >= startBigInt && rsvpTimeBigInt <= endBigInt;
+				});
+			}
 		}
 
-		const startEpoch = dateToEpoch(startDate);
-		const endEpoch = dateToEpoch(endDate);
-
-		if (!startEpoch || !endEpoch) {
-			return allData;
+		// Filter by selected statuses
+		if (selectedStatuses.length > 0) {
+			filtered = filtered.filter((rsvp) =>
+				selectedStatuses.includes(rsvp.status),
+			);
 		}
 
-		return allData.filter((rsvp) => {
-			const rsvpTime = rsvp.rsvpTime;
-			if (!rsvpTime) return false;
-
-			// rsvpTime is BigInt epoch milliseconds
-			const rsvpTimeBigInt =
-				typeof rsvpTime === "bigint" ? rsvpTime : BigInt(rsvpTime);
-			const startBigInt = startEpoch;
-			const endBigInt = endEpoch;
-
-			return rsvpTimeBigInt >= startBigInt && rsvpTimeBigInt <= endBigInt;
-		});
-	}, [allData, startDate, endDate]);
+		return filtered;
+	}, [allData, startDate, endDate, selectedStatuses]);
 
 	const handleDeleted = useCallback((rsvpId: string) => {
 		setAllData((prev) => prev.filter((item) => item.id !== rsvpId));
@@ -202,6 +223,219 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 			prev.map((item) => (item.id === updated.id ? updated : item)),
 		);
 	}, []);
+
+	// Handle status filter toggle
+	const handleStatusClick = useCallback((status: RsvpStatus) => {
+		setSelectedStatuses((prev) => {
+			if (prev.includes(status)) {
+				// Remove status if already selected
+				return prev.filter((s) => s !== status);
+			} else {
+				// Add status if not selected
+				return [...prev, status];
+			}
+		});
+	}, []);
+
+	// Handle confirm all visible RSVPs with ReadyToConfirm status
+	const handleConfirmAll = useCallback(async () => {
+		// Get all visible RSVPs with ReadyToConfirm status
+		const rsvpsToConfirm = data.filter(
+			(rsvp) => rsvp.status === RsvpStatus.ReadyToConfirm,
+		);
+
+		if (rsvpsToConfirm.length === 0) {
+			toastError({
+				title: t("error_title") || "Error",
+				description: t("no_rsvps_to_confirm") || "No reservations to confirm",
+			});
+			return;
+		}
+
+		setConfirmingAll(true);
+
+		try {
+			let successCount = 0;
+			let errorCount = 0;
+
+			// Confirm all RSVPs sequentially to avoid overwhelming the server
+			for (const rsvp of rsvpsToConfirm) {
+				try {
+					// Convert rsvpTime from epoch to Date
+					const rsvpTimeEpoch =
+						typeof rsvp.rsvpTime === "number"
+							? BigInt(rsvp.rsvpTime)
+							: rsvp.rsvpTime instanceof Date
+								? BigInt(rsvp.rsvpTime.getTime())
+								: rsvp.rsvpTime;
+					const rsvpTimeDate = epochToDate(rsvpTimeEpoch);
+
+					if (!rsvpTimeDate) {
+						errorCount++;
+						continue;
+					}
+
+					// Convert arriveTime if it exists
+					let arriveTimeDate: Date | null = null;
+					if (rsvp.arriveTime) {
+						const arriveTimeEpoch =
+							typeof rsvp.arriveTime === "number"
+								? BigInt(rsvp.arriveTime)
+								: rsvp.arriveTime instanceof Date
+									? BigInt(rsvp.arriveTime.getTime())
+									: rsvp.arriveTime;
+						arriveTimeDate = epochToDate(arriveTimeEpoch);
+					}
+
+					const result = await updateRsvpAction(String(params.storeId), {
+						id: rsvp.id,
+						customerId: rsvp.customerId || null,
+						facilityId: rsvp.facilityId || "",
+						numOfAdult: rsvp.numOfAdult || 1,
+						numOfChild: rsvp.numOfChild || 0,
+						rsvpTime: rsvpTimeDate,
+						arriveTime: arriveTimeDate,
+						status: RsvpStatus.Ready,
+						message: rsvp.message || null,
+						alreadyPaid: rsvp.alreadyPaid || false,
+						confirmedByStore: true,
+						confirmedByCustomer: rsvp.confirmedByCustomer || false,
+						facilityCost: rsvp.facilityCost ? Number(rsvp.facilityCost) : null,
+						pricingRuleId: rsvp.pricingRuleId || null,
+					});
+
+					if (result?.serverError) {
+						errorCount++;
+					} else if (result?.data?.rsvp) {
+						successCount++;
+						// Update local state
+						handleUpdated(result.data.rsvp);
+					} else {
+						errorCount++;
+					}
+				} catch (error) {
+					errorCount++;
+				}
+			}
+
+			if (successCount > 0) {
+				toastSuccess({
+					title: t("rsvp_confirmed_by_store") || "Reservation Confirmed",
+					description:
+						successCount === rsvpsToConfirm.length
+							? t("all_rsvps_confirmed", { count: successCount }) ||
+								`All ${successCount} reservations confirmed`
+							: t("rsvps_confirmed", {
+									success: successCount,
+									total: rsvpsToConfirm.length,
+								}) ||
+								`${successCount} of ${rsvpsToConfirm.length} reservations confirmed`,
+				});
+			}
+
+			if (errorCount > 0) {
+				toastError({
+					title: t("error_title") || "Error",
+					description:
+						t("rsvps_confirmation_failed", { count: errorCount }) ||
+						`Failed to confirm ${errorCount} reservation(s)`,
+				});
+			}
+		} catch (error) {
+			toastError({
+				title: t("error_title") || "Error",
+				description:
+					error instanceof Error
+						? error.message
+						: t("failed_to_confirm_rsvps") || "Failed to confirm reservations",
+			});
+		} finally {
+			setConfirmingAll(false);
+		}
+	}, [data, params.storeId, t, handleUpdated]);
+
+	// Handle complete all visible RSVPs with Ready status
+	const handleCompleteAll = useCallback(async () => {
+		// Get all visible RSVPs with Ready status
+		const rsvpsToComplete = data.filter(
+			(rsvp) => rsvp.status === RsvpStatus.Ready,
+		);
+
+		if (rsvpsToComplete.length === 0) {
+			toastError({
+				title: t("error_title") || "Error",
+				description: t("no_rsvps_to_complete") || "No reservations to complete",
+			});
+			return;
+		}
+
+		setCompletingAll(true);
+
+		try {
+			// Use bulk completion action
+			const rsvpIds = rsvpsToComplete.map((rsvp) => rsvp.id);
+			const result = await completeRsvpsAction(String(params.storeId), {
+				rsvpIds,
+			});
+
+			if (result?.serverError) {
+				toastError({
+					title: t("error_title") || "Error",
+					description: result.serverError,
+				});
+				return;
+			}
+
+			if (result?.data) {
+				const { rsvps, completedCount, requestedCount } = result.data;
+
+				// Update local state for all completed RSVPs
+				if (rsvps && rsvps.length > 0) {
+					for (const completedRsvp of rsvps) {
+						handleUpdated(completedRsvp);
+					}
+				}
+
+				// Show success message
+				if (completedCount > 0) {
+					toastSuccess({
+						title: t("rsvp_completed") || "Reservation Completed",
+						description:
+							completedCount === requestedCount
+								? t("all_rsvps_completed", { count: completedCount }) ||
+									`All ${completedCount} reservations completed`
+								: t("rsvps_completed", {
+										success: completedCount,
+										total: requestedCount,
+									}) ||
+									`${completedCount} of ${requestedCount} reservations completed`,
+					});
+				}
+
+				// Show error message if some failed
+				if (completedCount < requestedCount) {
+					const failedCount = requestedCount - completedCount;
+					toastError({
+						title: t("error_title") || "Error",
+						description:
+							t("rsvps_completion_failed", { count: failedCount }) ||
+							`Failed to complete ${failedCount} reservation(s)`,
+					});
+				}
+			}
+		} catch (error) {
+			toastError({
+				title: t("error_title") || "Error",
+				description:
+					error instanceof Error
+						? error.message
+						: t("failed_to_complete_rsvps") ||
+							"Failed to complete reservations",
+			});
+		} finally {
+			setCompletingAll(false);
+		}
+	}, [data, params.storeId, t, handleUpdated]);
 
 	// Format date for datetime-local input (display in store timezone)
 	const formatDateForInput = useCallback(
@@ -275,6 +509,37 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 					>
 						{t("this_year") || "This Year"}
 					</Button>
+					{selectedStatuses.includes(RsvpStatus.ReadyToConfirm) && (
+						<Button
+							variant="default"
+							size="sm"
+							onClick={handleConfirmAll}
+							disabled={
+								confirmingAll ||
+								data.filter((r) => r.status === RsvpStatus.ReadyToConfirm)
+									.length === 0
+							}
+							className="h-10 sm:h-9"
+						>
+							<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+							{t("rsvp_confirm_all") || "Confirm All"}
+						</Button>
+					)}
+					{selectedStatuses.includes(RsvpStatus.Ready) && (
+						<Button
+							variant="default"
+							size="sm"
+							onClick={handleCompleteAll}
+							disabled={
+								completingAll ||
+								data.filter((r) => r.status === RsvpStatus.Ready).length === 0
+							}
+							className="h-10 sm:h-9"
+						>
+							<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+							{t("rsvp_complete_all") || "Complete All"}
+						</Button>
+					)}
 				</div>
 
 				{/* Date Range Inputs */}
@@ -329,7 +594,11 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 				data={data}
 				searchKey="message"
 			/>
-			<RsvpStatusLegend t={t} />
+			<RsvpStatusLegend
+				t={t}
+				selectedStatuses={selectedStatuses}
+				onStatusClick={handleStatusClick}
+			/>
 		</>
 	);
 };

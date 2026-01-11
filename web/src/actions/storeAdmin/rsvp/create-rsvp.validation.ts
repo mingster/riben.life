@@ -3,6 +3,7 @@ import { z } from "zod";
 export const createRsvpSchema = z.object({
 	customerId: z.string().nullable().optional(),
 	facilityId: z.string().nullable().optional(),
+	serviceStaffId: z.string().nullable().optional(),
 	numOfAdult: z.coerce.number().int().min(1).default(1),
 	numOfChild: z.coerce.number().int().min(0).default(0),
 	rsvpTime: z.coerce.date(),
