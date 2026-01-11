@@ -56,17 +56,17 @@ export const [actionName]Action = [actionClient]
 
 #### 2.2.2 Component Architecture
 
-* **Server Components (default):** Data fetching, initial page rendering
+* **Server Components (default):** Data fetching, initial rendering
 * **Client Components:** Interactive UI, forms, state management
 * **Pattern:** Server page → Client component → Server actions
 
 #### 2.2.3 Data Flow
 
-1. **Server Components:** Fetch initial data from database
-2. **Client Components:** Manage local state, handle user interactions
-3. **Server Actions:** Process mutations, return results
-4. **State Updates:** Client components update local state after successful mutations
-5. **Local Storage (Anonymous Users):** Client components save reservation data to browser local storage for anonymous users to enable reservation history viewing without authentication
+1. Server Components fetch initial data
+2. Client Components manage local state and handle interactions
+3. Server Actions process mutations
+4. Client Components update local state after successful mutations
+5. Anonymous users: Local storage for reservation history
 
 ***
 
@@ -131,7 +131,7 @@ model Rsvp {
   numOfAdult        Int       @default(1)
   numOfChild        Int       @default(0)
   rsvpTime          BigInt    // Epoch milliseconds, not DateTime
-  arriveTime        BigInt?   // Epoch milliseconds, not DateTime. The time should be set when status is set to Ready
+  arriveTime        BigInt?   // Epoch milliseconds, not DateTime. Can be set during creation or when status changes to Ready
   status            Int       @default(0) // RsvpStatus enum: 0=Pending, 10=ReadyToConfirm, 40=Ready, 50=Completed, 60=Cancelled, 70=NoShow
   alreadyPaid       Boolean   @default(false) //已付款
   referenceId       String?   // reference to the StoreOrder id or CustomerCreditLedger id
@@ -144,6 +144,11 @@ model Rsvp {
   facilityCost      Decimal?  // The cost that was charged
   facilityCredit    Decimal?  // The credit that was charged
   pricingRuleId     String?   // Reference to the pricing rule used
+
+  serviceStaffId     String?   //optional: if the service staff is selected
+  serviceStaffCost   Decimal?  //optional: if the service staff is selected, the cost that was charged
+  serviceStaffCredit Decimal?  //optional: if the service staff is selected, the credit that was charged
+
   createdAt         BigInt    // Epoch milliseconds, not DateTime
   updatedAt         BigInt    // Epoch milliseconds, not DateTime
   createdBy         String?   // userId who created this reservation

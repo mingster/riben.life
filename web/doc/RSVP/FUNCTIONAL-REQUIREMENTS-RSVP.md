@@ -30,15 +30,11 @@ The RSVP (Reservation/Appointment) system enables any business to accept, manage
 
 ### 2.2 Store Admin
 
-* Store owners
-* Full administrative access to store settings and configuration
-* Can manage all aspects of the RSVP system
+* Store owners with full administrative access
 
 ### 2.3 Store Staff
 
-* Store employees with operational permissions
-* Can manage reservations and customer interactions
-* Limited access to settings (as configured by Store Admin)
+* Store employees with operational permissions (limited settings access)
 
 ### 2.4 System Admin
 
@@ -98,7 +94,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **Note:** No sign-in is required to create reservations. Anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`).
 
-**FR-RSVP-001a:** Customers must be able to create weekly recurring reservations with the following capabilities:
+**FR-RSVP-001a (NOT YET IMPLEMENTED):** Customers must be able to create weekly recurring reservations. **Note:** Recurring reservations are not yet implemented (no `seriesId` in schema). Documented for future implementation.
 
 **Recurring Pattern:**
 
@@ -244,8 +240,8 @@ Store Admins have all Store Staff permissions, plus:
 
 * Status values (RsvpStatus enum):
   * `0` = Pending (待確認/尚未付款) - Initial status when reservation is created
-  * `10` = ReadyToConfirm - if store doesn't require prepaid, reservation status is ReadyToConfirm; otherwise reservation is ReadyToConfirm once user completed payment. If `noNeedToConfirm = true` and `alreadyPaid = true`, reservation automatically transitions to Ready (40) without requiring store confirmation.
-  * `40` = Ready (已入場) - Customer has arrived and is ready for service
+  * `10` = ReadyToConfirm - If no prepaid required, status is ReadyToConfirm; otherwise ReadyToConfirm after payment. Auto-transitions to Ready (40) if `noNeedToConfirm = true` and `alreadyPaid = true`.
+  * `40` = Ready (已就序) - Customer has arrived and is ready for service. Only RSVPs in Ready status can be completed.
   * `50` = Completed (已完成) - Reservation/service has been completed
   * `60` = Cancelled (已取消) - Reservation has been cancelled
   * `70` = NoShow (未到) - Customer did not show up for the reservation
@@ -469,8 +465,9 @@ Store Admins have all Store Staff permissions, plus:
 
 **Service Flow:**
 
-* When the customer arrives and service is completed, store staff marks status as `Completed (50)`
-* The `arriveTime` field is recorded as the status changes.
+* When the customer arrives, store staff marks status as `Ready (40)` (can set `arriveTime` at this time)
+* When service is completed, store staff completes the reservation (status `Completed (50)`) - **Only RSVPs in Ready status can be completed**
+* The `arriveTime` field can be set when status changes to Ready or during reservation creation
 
 **Termination States:**
 
@@ -482,7 +479,9 @@ Store Admins have all Store Staff permissions, plus:
 * Customer can delete the RSVP when it is still pending (`Pending (0)` or `ReadyToConfirm (10)`).
 * **Status Restrictions:** Reservations with status `Completed (50)`, `Cancelled (60)`, or `NoShow (70)` cannot be deleted. Only `Pending (0)` or `ReadyToConfirm (10)` reservations can be deleted.
 
-#### 3.4.4 Recurring Reservation Use Cases
+#### 3.4.4 Recurring Reservation Use Cases (NOT YET IMPLEMENTED)
+
+**Note:** Recurring reservations are not yet implemented (no `seriesId` in schema). Documented for future implementation.
 
 **UC-RSVP-REC-001: Weekly Recurring Reservation (Same Time, Same Day of Week)**
 
@@ -1022,7 +1021,8 @@ Completed (50) [when service is finished]
 
 **FR-RSVP-019:** Store staff and Store admins must be able to mark reservation status:
 
-* Mark as "completed" when customers arrive (`arriveTime` recorded)
+* Mark reservations as "ready" (status `Ready (40)`) when customers arrive (can set `arriveTime` at this time)
+* Complete reservations (status `Completed (50)`) - **Only RSVPs in Ready status can be completed**
 * Mark as "no-show" if customers don't arrive
 * Cancel reservations (with reason tracking)
 * View customer signature if provided
@@ -1616,7 +1616,9 @@ Completed (50) [when service is finished]
 
 **Note:** Customer credit is store-specific. Each customer can have separate credit balances at different stores.
 
-### 4.6 Recurring Reservation Data Model
+### 4.6 Recurring Reservation Data Model (NOT YET IMPLEMENTED)
+
+**Note:** Recurring reservations are not yet implemented (no `seriesId` in schema). Documented for future implementation.
 
 **FR-RSVP-063:** The system must store recurring reservation series information:
 
@@ -1765,7 +1767,7 @@ Completed (50) [when service is finished]
 
 **BR-RSVP-029:** The system must support recurring/repeated reservations, allowing customers to create multiple reservations with the same or similar patterns.
 
-**BR-RSVP-030:** Recurring reservations must support weekly pattern only:
+**BR-RSVP-030 (NOT YET IMPLEMENTED):** Recurring reservations must support weekly pattern only. **Note:** Not yet implemented (no `seriesId` in schema).
 
 * **Weekly:** Same day of week and time slot repeated every week for N weeks
 * Example: "Every Monday at 2:00 PM for 10 weeks" creates 10 separate reservations, one for each Monday
