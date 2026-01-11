@@ -794,7 +794,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 								{t("save")}
 							</Button>
 
-							{action === PageAction.Modify && (
+							{action === PageAction.modify && (
 								<Button
 									type="button"
 									disabled={loading || form.formState.isSubmitting}

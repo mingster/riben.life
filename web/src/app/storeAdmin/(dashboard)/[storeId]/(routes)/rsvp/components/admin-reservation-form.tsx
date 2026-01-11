@@ -970,7 +970,7 @@ export function AdminReservationForm({
 						return (
 							<FormItem>
 								<FormLabel>
-									{t("Service_Staff") || "Service Staff"}
+									{t("service_staff")}
 									{isRequired && <span className="text-destructive"> *</span>}
 								</FormLabel>
 								<FormControl>

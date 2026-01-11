@@ -30,9 +30,12 @@ export default async function OrderEditPage(props: {
 
 	//console.log('order', JSON.stringify(order));
 
-	let action = PageAction.Modify;
+	let action;
 	if (order === null) {
-		action = PageAction.Create;
+		action = PageAction.create;
+	}
+	else {
+		action = PageAction.modify;
 	}
 
 	return (

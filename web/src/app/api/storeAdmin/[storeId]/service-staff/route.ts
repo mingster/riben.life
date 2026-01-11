@@ -13,6 +13,15 @@ export async function GET(
 ) {
 	const params = await props.params;
 	try {
+		// Check access at route boundary (consistent with other storeAdmin API routes)
+		const accessCheck = await CheckStoreAdminApiAccess(params.storeId);
+		if (accessCheck instanceof NextResponse) {
+			return accessCheck;
+		}
+		if (accessCheck !== true) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+		}
+
 		// Use server action which handles access control via storeActionClient
 		const result = await getServiceStaffAction(params.storeId, {});
 

@@ -72,11 +72,12 @@ export const PayoutSchedule: GeneralNVType[] = [
 	},
 ];
 
-export enum PageAction {
-	Create = "Create",
-	Modify = "Modify",
-	Delete = "Delete",
-}
+export const PageAction = {
+	create: "Create",
+	modify: "Modify",
+	delete: "Delete",
+} as const;
+
 export type SubscriptionForUI = {
 	id: string;
 	customer: string;
