@@ -14,15 +14,16 @@ export async function GET(
 	const endEpochParam = searchParams.get("endEpoch");
 
 	// Validate period type
-	const validPeriod = ["week", "month", "year"].includes(period)
-		? (period as "week" | "month" | "year")
+	const validPeriod = ["week", "month", "year", "all"].includes(period)
+		? (period as "week" | "month" | "year" | "all")
 		: "month";
 
-	// Parse epoch timestamps (BigInt strings)
+	// Parse epoch timestamps (BigInt strings) - optional for "all" period
 	const startEpoch = startEpochParam ? BigInt(startEpochParam) : null;
 	const endEpoch = endEpochParam ? BigInt(endEpochParam) : null;
 
-	if (!startEpoch || !endEpoch) {
+	// For "all" period, date range is not required
+	if (validPeriod !== "all" && (!startEpoch || !endEpoch)) {
 		return NextResponse.json({ error: "Invalid date range" }, { status: 400 });
 	}
 
@@ -30,8 +31,9 @@ export async function GET(
 		// Use server action which handles access control via storeActionClient
 		const result = await getRsvpStatsAction(String(params.storeId), {
 			period: validPeriod,
-			startEpoch,
-			endEpoch,
+			...(validPeriod !== "all" && startEpoch && endEpoch
+				? { startEpoch, endEpoch }
+				: {}),
 		});
 
 		if (result?.serverError) {

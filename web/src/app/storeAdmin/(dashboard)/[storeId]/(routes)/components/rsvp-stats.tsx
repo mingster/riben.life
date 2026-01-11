@@ -37,7 +37,7 @@ import {
 	dateToEpoch,
 } from "@/utils/datetime-utils";
 
-type PeriodType = "week" | "month" | "year";
+type PeriodType = "week" | "month" | "year" | "all";
 
 interface RsvpStatsProps {
 	rsvpSettings: RsvpSettings | null;
@@ -128,6 +128,9 @@ export function RsvpStats({
 				periodStart = startOfYear(storeDate);
 				periodEnd = endOfYear(storeDate);
 				break;
+			case "all":
+				// For "all", return null to indicate no date filtering
+				return { startEpoch: null, endEpoch: null };
 			default:
 				periodStart = startOfMonth(storeDate);
 				periodEnd = endOfMonth(storeDate);
@@ -147,14 +150,16 @@ export function RsvpStats({
 	}, [periodType, storeTimezone, getNowInStoreTimezone]);
 
 	// Build URL with period query parameter
-	// Only fetch if RSVP is enabled and date range is valid
+	// Only fetch if RSVP is enabled
+	// For "all" period, skip date range; for other periods, require valid date range
 	const url =
 		rsvpSettings?.acceptReservation &&
 		params.storeId &&
 		isHydrated &&
-		dateRange.startEpoch &&
-		dateRange.endEpoch
-			? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=${periodType}&startEpoch=${dateRange.startEpoch}&endEpoch=${dateRange.endEpoch}`
+		(periodType === "all" || (dateRange.startEpoch && dateRange.endEpoch))
+			? periodType === "all"
+				? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=all`
+				: `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=${periodType}&startEpoch=${dateRange.startEpoch}&endEpoch=${dateRange.endEpoch}`
 			: null;
 
 	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
@@ -286,7 +291,9 @@ export function RsvpStats({
 					? t("rsvp_completed_this_week") || "Completed This Week"
 					: periodType === "month"
 						? t("rsvp_completed_this_month") || "Completed This Month"
-						: t("rsvp_completed_this_year") || "Completed This Year",
+						: periodType === "year"
+							? t("rsvp_completed_this_year") || "Completed This Year"
+							: t("rsvp_completed_all") || "Completed (All Time)",
 			value: completedCount,
 			subValues: [
 				{
@@ -352,6 +359,14 @@ export function RsvpStats({
 					className="h-10 sm:h-9"
 				>
 					{t("this_year") || "This Year"}
+				</Button>
+				<Button
+					variant={periodType === "all" ? "default" : "outline"}
+					size="sm"
+					onClick={() => handlePeriodChange("all")}
+					className="h-10 sm:h-9"
+				>
+					{t("all") || "All"}
 				</Button>
 			</div>
 			<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-3 mt-2">

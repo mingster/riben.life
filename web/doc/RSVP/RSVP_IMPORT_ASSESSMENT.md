@@ -46,14 +46,14 @@ The input format consists of text blocks, each representing a customer's reserva
    - `{name1}`: Customer first name (may be empty)
    - `{name2}`: Customer last/full name
    - `{product name}`: Product/service name (e.g., "網球課10H")
-   - `{paid date}`: Payment date in format `（MM/DD YYYY）` (optional, indicates all reservations are paid)
+   - `{paid date}`: Payment date in format `（MM/DD YYYY）` (optional)
 
 2. **Following Lines**: Each line represents one reservation
-   - Format: `{number}- {date} {time}～{time}`
-   - `{number}`: Sequential number (1, 2, 3, ...)
+   - Format: `{number}- {date} {time}～{time}` or `{number}-` (empty slot)
+   - `{number}`: Sequential number (1, 2, 3, ...) - **indicates customer has paid for all RSVPs in the block** - **indicates customer has paid for all RSVPs in the block**
    - `{date}`: Date in format `MM/DD` or `M/DD` (year changes when "YYYY" line appears)
    - `{time}～{time}`: Time range in format `HH:MM～HH:MM`
-   - Empty lines (e.g., `6-`) indicate unused slots
+   - Empty slots (e.g., `6-`) indicate recurring reservations to be created in the future
 
 3. **Year Markers**: Lines like `2026` indicate year change for subsequent dates
 
@@ -85,26 +85,27 @@ The input format consists of text blocks, each representing a customer's reserva
 
 ### 2. Service Staff Resolution
 
-**Requirement**: Use the current user (importer) as service staff
+**Requirement**: Use the current signed-in user as service staff
 
 **Approach**:
 
 - Get current user from session: `await auth.api.getSession({ headers: await headers() })`
 - Find service staff record where `userId = session.user.id` and `storeId = current store`
-- If service staff doesn't exist, create one:
-  - `userId`: Current user ID
-  - `storeId`: Current store ID
-  - `defaultCost`: Use existing default (represents cost for `defaultDuration` minutes)
-  - `defaultDuration`: Use existing default (typically 60 minutes)
+- **If service staff doesn't exist, throw an error**: Current user must be a service staff member
+- **Validate default cost**: Service staff must have `defaultCost > 0` configured, otherwise throw an error
+- Calculate cost using service staff's `defaultCost` and `defaultDuration`:
+  - `defaultCost`: Total cost for `defaultDuration` minutes (stored as `Decimal` in Prisma)
+  - `defaultDuration`: Duration in minutes (typically 60)
+  - Cost for reservation: `(defaultCost / defaultDuration) * reservationDuration` (in minutes)
 
 **Technical Notes**:
 
 - Service staff model: `ServiceStaff` table with `userId`, `storeId`, `defaultCost`, `defaultDuration`
 - Use `sqlClient.serviceStaff.findFirst()` to find existing service staff
+- **Error handling**: If service staff doesn't exist, return 400 error: "Current user is not a service staff"
+- **Error handling**: If `defaultCost <= 0`, return 400 error: "Service staff default cost is not configured"
 - Service staff `defaultCost` is stored as `Decimal` in Prisma
-- Cost calculation: Calculate cost per hour from `defaultCost` and `defaultDuration`:
-  - Cost per hour = `(defaultCost / defaultDuration) * 60`
-  - Then calculate cost for reservation: `(costPerHour / 60) * reservationDuration` (in minutes)
+- Cost calculation formula: `serviceStaffCost = (defaultCost / defaultDuration) * reservationDuration`
 - No facility cost (use service staff cost only)
 
 ### 3. Facility Resolution
@@ -134,10 +135,13 @@ No facility required
         - Type: StoreLedgerType.CreditUsage
         - Balance: Calculate from last ledger balance + amount
         - Link to StoreOrder: Use orderId from RSVP's linked order
-  - **If no arrive time** (time range not provided or empty line):
-    - Set `arriveTime` to `null`
-    - Set RSVP status to `RsvpStatus.Ready`
-    - Make reservation recurring in the same time slot (weekly recurrence pattern)
+  - **If no arrive time** (empty slot with just sequential number, e.g., "6-"):
+    - Create recurring RSVPs weekly in the upcoming future
+    - Use the time slot pattern from the last valid reservation in the block
+    - Use the same day of week as the last valid reservation
+    - Create 10 weeks of recurring RSVPs starting from next week
+    - Set `arriveTime` to `null` for all recurring RSVPs
+    - Set RSVP status to `RsvpStatus.Ready` for all recurring RSVPs
     - Status `Ready` indicates the reservation is ready to be confirmed/completed when customer arrives
 
 **Technical Notes**:
@@ -152,14 +156,21 @@ No facility required
 
 ### 5. Payment Status and Order/Ledger Creation (HOLD Payment Flow)
 
-**Requirement**: Mark reservations as paid if paid date exists, and create StoreOrder and ledger entries accordingly using the HOLD payment flow.
+**Requirement**: Mark reservations as paid if sequential numbers exist, and create StoreOrder and ledger entries accordingly using the HOLD payment flow.
 
-**Important**: If a paid date is present in the first line, it indicates that the customer has already paid for all reservations in that block (e.g., "10H" = 10 hours = 10 reservations). All reservations in that block should be marked as paid.
+**Important**: The presence of sequential numbers (1-, 2-, 3-, etc.) indicates that the customer has already paid for **all** reservations in that block, regardless of whether they are completed or ready status. This includes:
+
+- Regular RSVPs with date/time
+- Recurring RSVPs from empty slots (e.g., "6-")
+- All RSVPs in the block should be marked as `alreadyPaid = true`
 
 **Approach** (HOLD Payment Flow):
 
-- Parse paid date from first line: `（MM/DD YYYY）`
-- If paid date exists:
+- **Payment Detection**: If there are any sequential numbers (reservations) in the block, all RSVPs are considered paid
+  - Sequential numbers (1-, 2-, 3-, etc.) indicate the customer has paid for the entire package
+  - This applies to all RSVPs in the block, including recurring ones from empty slots
+- Parse paid date from first line: `（MM/DD YYYY）` (optional, for record-keeping)
+- If sequential numbers exist (block has reservations):
   - Set `alreadyPaid = true` for all reservations in the block
   - Create `StoreOrder` with `isPaid = true` for each reservation (if customerId exists and cost > 0)
     - Use `createRsvpStoreOrder()` function from `@/actions/store/reservation/create-rsvp-store-order`
@@ -183,11 +194,8 @@ No facility required
       - **No `StoreLedger` entry is created at this stage** (revenue not yet recognized)
       - RSVP status is set to `RsvpStatus.Ready (40)` (ready when credit is held)
     - If insufficient credit: Handle error appropriately
-- If no paid date:
-  - Set `alreadyPaid = false`
-  - Create `StoreOrder` with `isPaid = false` (if customerId exists and cost > 0)
-    - This allows customer to pay later
-    - Same structure as paid orders, but `isPaid = false` and no paidDate
+- **Note**: Since sequential numbers indicate payment, there should always be `alreadyPaid = true` when reservations exist
+  - If no sequential numbers exist (empty block), no RSVPs are created
 
 **Revenue Recognition (when RSVP is completed)**:
 
@@ -210,7 +218,8 @@ No facility required
 
 **Technical Notes**:
 
-- **Paid Date**: If paid date is present, it means customer has paid for ALL reservations in that block (e.g., "10H" = 10 hours = 10 reservations). All reservations should be marked as `alreadyPaid = true`.
+- **Sequential Numbers**: The presence of sequential numbers (1-, 2-, 3-, etc.) indicates that the customer has paid for ALL reservations in that block, regardless of completion status. All reservations should be marked as `alreadyPaid = true`.
+- **Paid Date**: Paid date in the first line is optional and used for record-keeping only. Payment status is determined by the presence of sequential numbers.
 - **HOLD Payment Flow**: Prepaid RSVPs with customer credit use a two-phase payment model (HOLD → SPEND):
   - **Phase 1 (Payment)**: Credit is held when RSVP is created (`CustomerCreditLedger` type `HOLD`, no `StoreLedger` entry)
   - **Phase 2 (Completion)**: Credit is spent when RSVP is completed (`CustomerCreditLedger` type `SPEND`, `StoreLedger` entry for revenue recognition)
@@ -233,10 +242,13 @@ No facility required
       - This will automatically create `StoreLedger` entry for credit usage
       - StoreLedger type: `StoreLedgerType.CreditUsage`
       - Amount: Cash value of credit points used
-  - If no `arriveTime` (empty line or no time range), it indicates a recurring reservation
-    - Set RSVP status to `RsvpStatus.Ready`
-    - Set `arriveTime` to `null`
-    - Make reservation recurring in the same time slot (weekly recurrence pattern)
+  - If no `arriveTime` (empty slot with just sequential number, e.g., "6-"), it indicates a recurring reservation
+    - Create recurring RSVPs weekly in the upcoming future
+    - Use the time slot pattern from the last valid reservation in the block
+    - Use the same day of week as the last valid reservation
+    - Create 10 weeks of recurring RSVPs starting from next week
+    - Set RSVP status to `RsvpStatus.Ready` for all recurring RSVPs
+    - Set `arriveTime` to `null` for all recurring RSVPs
     - Status `Ready` indicates the reservation is ready to be confirmed/completed when the customer arrives
     - Credit remains in HOLD status until RSVP is completed
 - All operations should be within the same transaction to ensure atomicity
@@ -624,7 +636,7 @@ interface ImportResult {
          - If no `arriveTime`: `RsvpStatus.Ready` (recurring reservation)
        - arriveTime:
          - If time range is provided: Set to same as rsvpTime (start time)
-         - If no time range or empty line: Set to `null`
+         - If empty slot (just sequential number): Create recurring RSVPs weekly in upcoming future, set to `null`
      - Note: `createRsvpAction` will automatically create StoreOrder if `customerId` exists and cost > 0
      - Note: For prepaid RSVPs with `alreadyPaid = true` and customer credit enabled:
        - Use `processRsvpPrepaidPaymentUsingCredit()` function to handle HOLD payment flow

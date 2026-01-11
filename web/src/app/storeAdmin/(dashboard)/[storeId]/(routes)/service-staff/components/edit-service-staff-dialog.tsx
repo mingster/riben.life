@@ -93,11 +93,7 @@ export function EditServiceStaffDialog({
 		password: "",
 	});
 
-	// If serviceStaff has a synthetic ID (starts with "owner-"), treat as new entry
-	// This allows creating a real ServiceStaff entry for the owner
-	const isOwnerSyntheticEntry = serviceStaff?.id?.startsWith("owner-") ?? false;
-	const isEditMode = Boolean(serviceStaff) && !isNew && !isOwnerSyntheticEntry;
-
+	const isEditMode = Boolean(serviceStaff) && !isNew;
 	const isControlled = typeof open === "boolean";
 	const dialogOpen = isControlled ? open : internalOpen;
 
@@ -440,8 +436,67 @@ export function EditServiceStaffDialog({
 					return;
 				}
 
+				// If serviceStaff has a synthetic ID (starts with "owner-"), find the actual ServiceStaff record
+				const isSyntheticEntry = serviceStaffId.startsWith("owner-");
+				let actualServiceStaffId = serviceStaffId;
+
+				if (isSyntheticEntry) {
+					// Find the actual ServiceStaff record by userId and storeId
+					const userId = serviceStaff?.userId;
+					if (!userId) {
+						toastError({
+							title: t("error_title"),
+							description: "User ID not found.",
+						});
+						return;
+					}
+
+					// Fetch service staff list and find the actual record
+					const serviceStaffList = await getServiceStaffAction(
+						String(params.storeId),
+						{},
+					);
+					const actualServiceStaff = serviceStaffList?.data?.serviceStaff?.find(
+						(ss) => ss.userId === userId && !ss.id.startsWith("owner-"),
+					);
+
+					if (actualServiceStaff) {
+						actualServiceStaffId = actualServiceStaff.id;
+					} else {
+						// If no actual ServiceStaff exists, create one
+						const createResult = await createServiceStaffAction(
+							String(params.storeId),
+							{
+								userId: userId,
+								memberRole: values.memberRole,
+								capacity: values.capacity,
+								defaultCost: values.defaultCost,
+								defaultCredit: values.defaultCredit,
+								defaultDuration: values.defaultDuration,
+								businessHours: values.businessHours || null,
+								description: values.description || null,
+							},
+						);
+
+						if (createResult?.serverError) {
+							toastError({
+								title: t("error_title"),
+								description: createResult.serverError,
+							});
+							return;
+						}
+
+						if (createResult?.data?.serviceStaff) {
+							handleSuccess(createResult.data.serviceStaff);
+							return;
+						}
+						return;
+					}
+				}
+
+				// Update existing ServiceStaff entry
 				const result = await updateServiceStaffAction(String(params.storeId), {
-					id: serviceStaffId,
+					id: actualServiceStaffId,
 					userId: values.userId,
 					memberRole: values.memberRole,
 					capacity: values.capacity,

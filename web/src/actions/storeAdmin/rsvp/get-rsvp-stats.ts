@@ -8,9 +8,9 @@ import { z } from "zod";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
 const getRsvpStatsSchema = z.object({
-	period: z.enum(["week", "month", "year"]).optional().default("month"),
-	startEpoch: z.bigint(),
-	endEpoch: z.bigint(),
+	period: z.enum(["week", "month", "year", "all"]).optional().default("month"),
+	startEpoch: z.bigint().optional(),
+	endEpoch: z.bigint().optional(),
 });
 
 export const getRsvpStatsAction = storeActionClient
@@ -20,6 +20,9 @@ export const getRsvpStatsAction = storeActionClient
 		const storeId = bindArgsClientInputs[0] as string;
 		const { period = "month", startEpoch, endEpoch } = parsedInput;
 		const now = getUtcNowEpoch();
+
+		// For "all" period, skip date filtering for completed RSVPs
+		const isAllPeriod = period === "all";
 
 		// Get store to get creditExchangeRate
 		const store = await sqlClient.store.findUnique({
@@ -84,10 +87,14 @@ export const getRsvpStatsAction = storeActionClient
 					where: {
 						storeId,
 						status: RsvpStatus.Completed,
-						rsvpTime: {
-							gte: startEpoch,
-							lte: endEpoch,
-						},
+						...(isAllPeriod
+							? {}
+							: {
+									rsvpTime: {
+										gte: startEpoch!,
+										lte: endEpoch!,
+									},
+								}),
 					},
 					select: {
 						facilityCost: true,

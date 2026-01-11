@@ -321,10 +321,16 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 							title="click to edit"
 						>
 							<EditCustomer item={row.original} onUpdated={handleUpdated} />
-							<span>{row.getValue("name")}</span>
+							<Link
+								title="manage user"
+								className="cursor-pointer text-sm text-blue-800 dark:text-blue-200 hover:text-gold"
+								href={`/storeAdmin/${storeId}/customers/${row.original.email}`}
+							>
+								{row.getValue("name")}
+							</Link>
 						</div>
 						<Link
-							title="manage user billing"
+							title="manage user"
 							className="cursor-pointer text-sm text-blue-800 dark:text-blue-200 hover:text-gold"
 							href={`/storeAdmin/${storeId}/customers/${row.original.email}`}
 						>

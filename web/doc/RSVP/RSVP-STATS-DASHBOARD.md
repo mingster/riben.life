@@ -1,7 +1,7 @@
 # RSVP Statistics Dashboard
 
 **Created:** 2025-01-27  
-**Last Updated:** 2025-01-27  
+**Last Updated:** 2025-01-28  
 **Status:** Active  
 **Related:** [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
 
@@ -68,27 +68,33 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 
 **Period Toggle:**
 
-- Component: Button group with three options
-- Options: "This Week", "This Month", "This Year"
+- Component: Button group with four options
+- Options: "This Week", "This Month", "This Year", "All"
 - Default: "This Month"
 - State managed in client component with `useState`
-- Updates date range calculation when selection changes
+- Updates date range calculation when selection changes (except for "All" which has no date filtering)
 - SWR automatically refetches data when period changes
 - Date range calculation matches `RsvpHistoryClient` behavior (store timezone-based)
+- "All" period: Shows all completed RSVPs regardless of date (no date filtering applied)
 
 **Data Fetching:**
 
 - Uses SWR for client-side data fetching
-- API endpoint: `/api/storeAdmin/[storeId]/rsvp/stats?period={period}&startEpoch={startEpoch}&endEpoch={endEpoch}`
+- API endpoint:
+  - For "all" period: `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/[storeId]/rsvp/stats?period=all`
+  - For other periods: `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/[storeId]/rsvp/stats?period={period}&startEpoch={startEpoch}&endEpoch={endEpoch}`
 - Query parameters:
-  - `period`: `"week" | "month" | "year"` (default: "month")
-  - `startEpoch`: BigInt epoch timestamp (start of period in store timezone, converted to UTC)
-  - `endEpoch`: BigInt epoch timestamp (end of period in store timezone, converted to UTC)
+  - `period`: `"week" | "month" | "year" | "all"` (default: "month")
+  - `startEpoch`: BigInt epoch timestamp (start of period in store timezone, converted to UTC) - optional for "all" period
+  - `endEpoch`: BigInt epoch timestamp (end of period in store timezone, converted to UTC) - optional for "all" period
 - Only fetches when:
   - RSVP is enabled (`rsvpSettings?.acceptReservation`)
   - `storeId` is available
   - Component is hydrated (prevents SSR/CSR mismatch)
-  - Date range is valid (`startEpoch` and `endEpoch` are available)
+  - For "all" period: No date range required
+  - For other periods: Date range is valid (`startEpoch` and `endEpoch` are available)
+- Uses `useIsHydrated()` hook to prevent hydration mismatches
+- SWR automatically refetches when period changes (via URL change)
 
 **UI States:**
 
@@ -112,20 +118,18 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 
 **Input Parameters:**
 
-- `period`: Optional enum `"week" | "month" | "year"` (default: `"month"`)
-- `startEpoch`: BigInt epoch timestamp (start of period in UTC)
-- `endEpoch`: BigInt epoch timestamp (end of period in UTC)
+- `period`: Optional enum `"week" | "month" | "year" | "all"` (default: `"month"`)
+- `startEpoch`: BigInt epoch timestamp (start of period in UTC) - optional, required for non-"all" periods
+- `endEpoch`: BigInt epoch timestamp (end of period in UTC) - optional, required for non-"all" periods
 
 **Statistics Calculated:**
 
 1. **Upcoming Count** (`upcomingCount`)
    - Count of RSVPs where:
-     - `rsvpTime >= now` (future reservations)
-     - Status is `Pending` or `Ready`, OR
-     - `alreadyPaid = true`, OR
-     - `confirmedByStore = true`, OR
-     - `confirmedByCustomer = true`
-     - Status is NOT `Completed`, `Cancelled`, or `NoShow`
+     - `rsvpTime >= now` (future reservations, using `getUtcNowEpoch()`)
+     - AND (Status is `Pending` or `Ready`, OR `alreadyPaid = true`, OR `confirmedByStore = true`, OR `confirmedByCustomer = true`)
+     - AND Status is NOT `Completed`, `Cancelled`, or `NoShow`
+   - Uses Prisma `AND` with `OR` conditions for flexible matching
 
 2. **Upcoming Revenue** (`upcomingTotalRevenue`, `upcomingFacilityCost`, `upcomingServiceStaffCost`)
    - Calculated directly from upcoming RSVP records (`facilityCost` and `serviceStaffCost` fields)
@@ -136,10 +140,13 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 3. **Completed Count** (`completedCount`)
    - Count of RSVPs where:
      - Status is `Completed`
-     - `rsvpTime` is within the selected period (`startEpoch` to `endEpoch`)
+     - For "all" period: No date filtering (all completed RSVPs)
+     - For other periods: `rsvpTime` is within the selected period (`startEpoch` to `endEpoch`)
 
 4. **Completed Revenue** (`completedTotalRevenue`, `completedFacilityCost`, `completedServiceStaffCost`)
    - Calculated directly from completed RSVP records (`facilityCost` and `serviceStaffCost` fields)
+   - For "all" period: Includes all completed RSVPs regardless of date
+   - For other periods: Includes only completed RSVPs within the selected period
    - `completedTotalRevenue`: Sum of `facilityCost + serviceStaffCost`
    - `completedFacilityCost`: Sum of `facilityCost` only
    - `completedServiceStaffCost`: Sum of `serviceStaffCost` only
@@ -152,17 +159,27 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 
 - All timestamps use BigInt epoch milliseconds
 - **Period calculation uses store timezone** (matching `RsvpHistoryClient` behavior)
-- Client component calculates period boundaries in store timezone, then converts to UTC for database queries
+- Client component calculates period boundaries in store timezone using `date-fns` functions:
+  - `startOfWeek`, `endOfWeek` (with `weekStartsOn: 0` for Sunday)
+  - `startOfMonth`, `endOfMonth`
+  - `startOfYear`, `endOfYear`
+- Uses `formatUtcDateToDateTimeLocal` and `convertToUtc` from `@/utils/datetime-utils` for timezone conversion
+- Period boundaries are converted to UTC epoch timestamps using `dateToEpoch` before sending to API
 - Server action receives UTC epoch timestamps for database queries
 - Period boundaries:
   - Week: Start of week (Sunday 00:00:00) to end of week (Saturday 23:59:59) in store timezone
   - Month: Start of month (1st day 00:00:00) to end of month (last day 23:59:59) in store timezone
   - Year: Start of year (January 1st 00:00:00) to end of year (December 31st 23:59:59) in store timezone
+  - All: No date filtering (returns `null` for `startEpoch` and `endEpoch`)
 
 **Performance:**
 
-- Uses `Promise.all()` to fetch multiple statistics in parallel
+- Uses `Promise.all()` to fetch three statistics in parallel:
+  1. Upcoming RSVPs (with facilityCost and serviceStaffCost)
+  2. Completed RSVPs (with facilityCost and serviceStaffCost)
+  3. Unused credit (count and sum in nested Promise.all)
 - Minimizes database queries by batching operations
+- Only selects required fields (`facilityCost`, `serviceStaffCost`, `point`) to reduce data transfer
 
 #### 3. API Route (`stats/route.ts`)
 
@@ -177,17 +194,18 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 - Calls `getRsvpStatsAction` server action
 - Handles access control (via server action)
 - Extracts query parameters from URL:
-  - `period`: `"week" | "month" | "year"` (default: "month")
-  - `startEpoch`: BigInt string (start of period)
-  - `endEpoch`: BigInt string (end of period)
-- Validates period type and date range
-- Passes parameters to server action
+  - `period`: `"week" | "month" | "year" | "all"` (default: "month")
+  - `startEpoch`: BigInt string (start of period) - optional for "all" period
+  - `endEpoch`: BigInt string (end of period) - optional for "all" period
+- Validates period type
+- Validates date range (only for non-"all" periods)
+- Passes parameters to server action (conditionally includes date range)
 - Transforms Prisma data (BigInt/Decimal) for JSON serialization
 - Returns JSON response with statistics
 
 **Error Handling:**
 
-- Returns 400 if date range is invalid
+- Returns 400 if date range is invalid (only for non-"all" periods)
 - Returns 403 if access denied
 - Returns 500 if internal error occurs
 - Logs errors with context (storeId, error message)
@@ -241,15 +259,22 @@ The RSVP stats component is conditionally rendered on the store admin home page:
 
 A reservation is considered "upcoming" if it meets ALL of the following criteria:
 
-1. **Time:** `rsvpTime >= now` (reservation is in the future)
+1. **Time:** `rsvpTime >= now` (reservation is in the future, using `getUtcNowEpoch()`)
 
-2. **Status:** Must be active (not completed/cancelled/no-show)
+2. **Active Status:** Status is NOT `Completed`, `Cancelled`, or `NoShow`
 
 3. **Confirmation State:** Must have at least one of:
-   - Status is `Pending` or `Ready`
-   - `alreadyPaid = true`
-   - `confirmedByStore = true`
+   - Status is `Pending` or `Ready`, OR
+   - `alreadyPaid = true`, OR
+   - `confirmedByStore = true`, OR
    - `confirmedByCustomer = true`
+
+**Query Logic:**
+
+Uses Prisma `AND` with two conditions:
+
+1. `OR` condition: status in `[Pending, Ready]` OR `alreadyPaid = true` OR `confirmedByStore = true` OR `confirmedByCustomer = true`
+2. Status NOT IN `[Completed, Cancelled, NoShow]`
 
 ### Revenue Calculation
 
@@ -282,31 +307,38 @@ Unused credit represents customer credit that has not been consumed:
 
 ### Layout
 
-- **Mobile (< 640px):** 1 column grid
-- **Tablet (640px - 1024px):** 2 column grid (`@xl/main:grid-cols-2`)
-- **Desktop (>= 1920px):** 3 column grid (`@5xl/main:grid-cols-3`)
+- **Mobile (< 1024px):** 1 column grid (default)
+- **Tablet/Desktop (>= 1024px):** 2 column grid (`@xl/main:grid-cols-2`)
+- **Large Desktop (>= 1920px):** 3 column grid (`@5xl/main:grid-cols-3`)
+- **Container:** Wrapped in a bordered container with padding (`mt-4 p-2 sm:p-4 border rounded-lg bg-muted/30`)
 
 ### Period Toggle
 
-**Component:** Button group with three buttons
+**Component:** Button group with three buttons, positioned above the statistics cards
+
+**Location:** Above the statistics grid, within the same container
 
 **Features:**
 
 - Three buttons: "This Week", "This Month", "This Year"
 - Active button uses `variant="default"`, inactive buttons use `variant="outline"`
-- Responsive design (touch-friendly on mobile)
-- Updates completed statistics when selection changes
-- Date range calculation matches `RsvpHistoryClient` behavior
+- Button size: `size="sm"` with responsive height (`h-10 sm:h-9`)
+- Responsive spacing: `gap-1.5 sm:gap-2` with flex-wrap layout
+- Updates completed statistics when selection changes (SWR automatically refetches)
+- Date range calculation matches `RsvpHistoryClient` behavior (store timezone-based)
+- Uses `useState` to manage period selection (default: "month")
 
 ### Cards
 
 Each statistics card displays:
 
 - **Header:** Badge with icon and title
-- **Main Value:** Large, prominent number (tabular font for alignment)
+- **Main Value:** Large, prominent number (tabular font for alignment, responsive: `text-2xl @[250px]/card:text-3xl`)
 - **Sub-values (if applicable):** List of revenue breakdown items (Total Revenue, Facility Cost, Service Staff Cost)
 - **Footer:** "Click to view" instruction text
-- **Interaction:** Entire card is clickable link to relevant page
+- **Interaction:** Entire card is clickable link to relevant page (wrapped in `Link` component)
+- **Styling:** Uses container queries (`@container/card`) for responsive typography
+- **Hover Effect:** `hover:shadow-md transition-shadow` for visual feedback
 
 ### Loading States
 
@@ -330,6 +362,7 @@ Each statistics card displays:
 - `rsvp_completed_this_week` - "Completed This Week"
 - `rsvp_completed_this_month` - "Completed This Month"
 - `rsvp_completed_this_year` - "Completed This Year"
+- `rsvp_completed_all` - "Completed (All Time)"
 - `rsvp_total_revenue` - "Total Revenue"
 - `rsvp_facility_cost` - "Facility Cost"
 - `rsvp_service_staff_cost` - "Service Staff Cost"
@@ -342,6 +375,7 @@ Each statistics card displays:
 - `this_week` - "This Week"
 - `this_month` - "This Month"
 - `this_year` - "This Year"
+- `all` - "All"
 
 ### Currency Formatting
 
@@ -474,7 +508,7 @@ The dashboard displays three key statistics:
 
 **Key Features:**
 
-- **Period Selection:** Toggle between viewing completed reservations for the current week, month, or year
+- **Period Selection:** Toggle between viewing completed reservations for the current week, month, year, or all time
 - **Store Timezone-Based Periods:** Period boundaries are calculated based on store timezone (matching `RsvpHistoryClient`), not UTC
 - **Revenue Breakdown:** All revenue statistics show breakdown by facility cost and service staff cost
 - **Direct Revenue Calculation:** Revenue is calculated from RSVP records (`facilityCost` and `serviceStaffCost`) rather than from `StoreLedger` entries

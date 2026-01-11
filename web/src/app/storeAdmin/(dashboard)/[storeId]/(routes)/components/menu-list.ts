@@ -27,6 +27,7 @@ import {
 	IconScale,
 	IconSettings,
 	IconTicket,
+	IconUpload,
 	IconUser,
 	IconUsers,
 } from "@tabler/icons-react";
@@ -172,9 +173,17 @@ export function GetMenuList(
 					active:
 						pathname.includes(`${nav_prefix}/rsvp`) &&
 						!pathname.includes(`${nav_prefix}/rsvp-settings`) &&
-						!pathname.includes(`${nav_prefix}/rsvp/history`),
+						!pathname.includes(`${nav_prefix}/rsvp/history`) &&
+						!pathname.includes(`${nav_prefix}/rsvp/import`),
 
 					icon: IconCalendarCheck,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/rsvp/import`,
+					label: t("rsvp_import"),
+					active: pathname.includes(`${nav_prefix}/rsvp/import`),
+					icon: IconUpload,
 					submenus: [],
 				},
 
