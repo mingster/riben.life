@@ -2,143 +2,182 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
-import { RsvpStatus } from "@/types/enum";
+import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
 import {
 	getUtcNowEpoch,
-	epochToDate,
-	dateToEpoch,
 } from "@/utils/datetime-utils";
 import { z } from "zod";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
 const getRsvpStatsSchema = z.object({
-	// No input needed - storeId comes from bindArgsClientInputs
+	period: z.enum(["week", "month", "year"]).optional().default("month"),
+	startEpoch: z.bigint(),
+	endEpoch: z.bigint(),
 });
 
 export const getRsvpStatsAction = storeActionClient
 	.metadata({ name: "getRsvpStats" })
 	.schema(getRsvpStatsSchema)
-	.action(async ({ bindArgsClientInputs }) => {
+	.action(async ({ parsedInput, bindArgsClientInputs }) => {
 		const storeId = bindArgsClientInputs[0] as string;
+		const { period = "month", startEpoch, endEpoch } = parsedInput;
 		const now = getUtcNowEpoch();
 
-		// Get start of current month (UTC)
-		const nowDate = epochToDate(now);
-		if (!nowDate) {
-			throw new Error("Invalid date");
-		}
-		const startOfMonth = new Date(
-			Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth(), 1),
-		);
-		const startOfMonthEpoch = dateToEpoch(startOfMonth);
-		if (!startOfMonthEpoch) {
-			throw new Error("Failed to convert start of month to epoch");
-		}
+		// Get store to get creditExchangeRate
+		const store = await sqlClient.store.findUnique({
+			where: { id: storeId },
+			select: {
+				creditExchangeRate: true,
+			},
+		});
 
-		// Get end of current month (UTC)
-		const endOfMonth = new Date(
-			Date.UTC(
-				nowDate.getUTCFullYear(),
-				nowDate.getUTCMonth() + 1,
-				0,
-				23,
-				59,
-				59,
-				999,
-			),
-		);
-		const endOfMonthEpoch = dateToEpoch(endOfMonth);
-		if (!endOfMonthEpoch) {
-			throw new Error("Failed to convert end of month to epoch");
-		}
+		const creditExchangeRate = store?.creditExchangeRate
+			? Number(store.creditExchangeRate)
+			: 1;
 
 		// Fetch stats in parallel
-		const [upcomingCount, completedThisMonthCount, unusedCreditResult] =
-			await Promise.all([
-				// Upcoming reservations: active statuses (Pending, Ready) or (alreadyPaid, confirmedByStore, or confirmedByCustomer) and rsvpTime >= now
-				sqlClient.rsvp.count({
-					where: {
-						storeId,
-						rsvpTime: {
-							gte: now,
+		const [
+			upcomingRsvps,
+			completedRsvps,
+			unusedCreditResult,
+		] = await Promise.all([
+			// Get upcoming reservations: active statuses (Pending, Ready) or (alreadyPaid, confirmedByStore, or confirmedByCustomer) and rsvpTime >= now
+			sqlClient.rsvp.findMany({
+				where: {
+					storeId,
+					rsvpTime: {
+						gte: now,
+					},
+					AND: [
+						{
+							OR: [
+								{
+									status: {
+										in: [RsvpStatus.Pending, RsvpStatus.Ready],
+									},
+								},
+								{
+									alreadyPaid: true,
+								},
+								{
+									confirmedByStore: true,
+								},
+								{
+									confirmedByCustomer: true,
+								},
+							],
 						},
-						AND: [
-							{
-								OR: [
-									{
-										status: {
-											in: [RsvpStatus.Pending, RsvpStatus.Ready],
-										},
-									},
-									{
-										alreadyPaid: true,
-									},
-									{
-										confirmedByStore: true,
-									},
-									{
-										confirmedByCustomer: true,
-									},
+						{
+							status: {
+								notIn: [
+									RsvpStatus.Completed,
+									RsvpStatus.Cancelled,
+									RsvpStatus.NoShow,
 								],
 							},
-							{
-								status: {
-									notIn: [
-										RsvpStatus.Completed,
-										RsvpStatus.Cancelled,
-										RsvpStatus.NoShow,
-									],
-								},
-							},
-						],
-					},
-				}),
+						},
+					],
+				},
+				select: {
+					facilityCost: true,
+					serviceStaffCost: true,
+				},
+			}),
 
-				// Completed reservations this month
-				sqlClient.rsvp.count({
+			// Get completed RSVPs in the selected period
+			sqlClient.rsvp.findMany({
+				where: {
+					storeId,
+					status: RsvpStatus.Completed,
+					rsvpTime: {
+						gte: startEpoch,
+						lte: endEpoch,
+					},
+				},
+				select: {
+					facilityCost: true,
+					serviceStaffCost: true,
+				},
+			}),
+
+			// Count and sum of unused credit (point > 0)
+			Promise.all([
+				sqlClient.customerCredit.count({
 					where: {
 						storeId,
-						status: RsvpStatus.Completed,
-						rsvpTime: {
-							gte: startOfMonthEpoch,
-							lte: endOfMonthEpoch,
+						point: {
+							gt: 0,
 						},
 					},
 				}),
-
-				// Count and sum of unused credit (point > 0)
-				Promise.all([
-					sqlClient.customerCredit.count({
-						where: {
-							storeId,
-							point: {
-								gt: 0,
-							},
+				sqlClient.customerCredit.aggregate({
+					where: {
+						storeId,
+						point: {
+							gt: 0,
 						},
-					}),
-					sqlClient.customerCredit.aggregate({
-						where: {
-							storeId,
-							point: {
-								gt: 0,
-							},
-						},
-						_sum: {
-							point: true,
-						},
-					}),
-				]),
-			]);
+					},
+					_sum: {
+						point: true,
+					},
+				}),
+			]),
+		]);
 
 		const [unusedCreditCount, unusedCreditSum] = unusedCreditResult;
 		const totalUnusedCredit = unusedCreditSum._sum.point
 			? Number(unusedCreditSum._sum.point)
 			: 0;
 
+		// Calculate upcoming RSVP statistics
+		const upcomingCount = upcomingRsvps.length;
+		let upcomingTotalRevenue = 0;
+		let upcomingFacilityCost = 0;
+		let upcomingServiceStaffCost = 0;
+
+		upcomingRsvps.forEach((rsvp) => {
+			const facilityCost = rsvp.facilityCost ? Number(rsvp.facilityCost) : 0;
+			const serviceStaffCost = rsvp.serviceStaffCost
+				? Number(rsvp.serviceStaffCost)
+				: 0;
+
+			upcomingFacilityCost += facilityCost;
+			upcomingServiceStaffCost += serviceStaffCost;
+			upcomingTotalRevenue += facilityCost + serviceStaffCost;
+		});
+
+		// Calculate completed RSVP statistics
+		const completedCount = completedRsvps.length;
+		let completedTotalRevenue = 0;
+		let completedFacilityCost = 0;
+		let completedServiceStaffCost = 0;
+
+		completedRsvps.forEach((rsvp) => {
+			const facilityCost = rsvp.facilityCost ? Number(rsvp.facilityCost) : 0;
+			const serviceStaffCost = rsvp.serviceStaffCost
+				? Number(rsvp.serviceStaffCost)
+				: 0;
+
+			completedFacilityCost += facilityCost;
+			completedServiceStaffCost += serviceStaffCost;
+			completedTotalRevenue += facilityCost + serviceStaffCost;
+		});
+
 		return {
+			// Upcoming RSVPs
 			upcomingCount,
-			completedThisMonthCount,
-			unusedCreditCount,
+			upcomingTotalRevenue,
+			upcomingFacilityCost,
+			upcomingServiceStaffCost,
+
+			// Completed RSVPs
+			completedCount,
+			completedTotalRevenue,
+			completedFacilityCost,
+			completedServiceStaffCost,
+
+			// Customers
+			customerCount: unusedCreditCount,
 			totalUnusedCredit,
 		};
 	});

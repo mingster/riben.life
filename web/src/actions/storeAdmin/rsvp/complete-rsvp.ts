@@ -22,7 +22,7 @@ export const completeRsvpAction = storeActionClient
 		const storeId = bindArgsClientInputs[0] as string;
 		const { id } = parsedInput;
 
-		// Get the existing RSVP with Facility included
+		// Get the existing RSVP with Facility and Order included
 		const existingRsvp = await sqlClient.rsvp.findUnique({
 			where: { id },
 			include: {
@@ -32,6 +32,16 @@ export const completeRsvpAction = storeActionClient
 					select: {
 						id: true,
 						defaultDuration: true,
+					},
+				},
+				Order: {
+					select: {
+						id: true,
+						PaymentMethod: {
+							select: {
+								payUrl: true,
+							},
+						},
 					},
 				},
 			},
@@ -110,8 +120,10 @@ export const completeRsvpAction = storeActionClient
 						alreadyPaid: existingRsvp.alreadyPaid,
 						customerId: existingRsvp.customerId,
 						facilityId: existingRsvp.facilityId,
+						orderId: existingRsvp.orderId,
 						createdBy: existingRsvp.createdBy,
 						Facility: existingRsvp.Facility,
+						Order: existingRsvp.Order,
 					},
 					store: {
 						id: store.id,

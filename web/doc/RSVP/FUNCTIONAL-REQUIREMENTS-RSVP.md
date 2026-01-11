@@ -1,4 +1,4 @@
-# Functional Requirements: RSVP System
+ # Functional Requirements: RSVP System
 
 **Date:** 2025-01-27
 **Status:** Active
@@ -434,11 +434,15 @@ Store Admins have all Store Staff permissions, plus:
 **Payment Flow (if prepaid required and store uses credit system):**
 
 * Customer can create a pending RSVP first, then be prompted to complete refill of store credit if his/her credit is not sufficient.
-* When customer's credit is refilld, system deduced needed credit for the RSVP, the `alreadyPaid` flag is set to `true`
-* The transaction is saved to StoreOrder, CreditLedger, and StoreLeger for the refill and the credit usage.
-* The reservation status changes to `ReadyToConfirm (10)`
-* The reservation is linked to the order via `orderId`
-* Store staff notifications are sent only when `alreadyPaid = true` and status is `ReadyToConfirm (10)`
+* When customer's credit is refilled and RSVP is paid for:
+  * Store order is created with credit payment method
+  * Customer credit is held (not spent yet) - credit balance is reduced
+  * `CustomerCreditLedger` entry is created with type `HOLD` (negative amount)
+  * **No `StoreLedger` entry is created** at this stage (revenue not yet recognized)
+  * The `alreadyPaid` flag is set to `true`
+  * The reservation status changes to `Ready (40)` (not `ReadyToConfirm`)
+  * The reservation is linked to the order via `orderId`
+* Store staff notifications are sent when `alreadyPaid = true` and status is `Ready (40)`
 
 **Payment Flow (if prepaid required and store do not use credit system):**
 
@@ -467,6 +471,15 @@ Store Admins have all Store Staff permissions, plus:
 
 * When the customer arrives, store staff marks status as `Ready (40)` (can set `arriveTime` at this time)
 * When service is completed, store staff completes the reservation (status `Completed (50)`) - **Only RSVPs in Ready status can be completed**
+  * If RSVP was prepaid with credit (`alreadyPaid = true` and payment method is "credit"):
+    * Held credit is converted to spent credit
+    * New `CustomerCreditLedger` entry is created with type `SPEND` (negative amount)
+    * `StoreLedger` entry is created with type `CreditUsage` (positive amount, revenue recognition)
+    * Store receives the credit (revenue is recognized)
+  * If RSVP was not prepaid (`alreadyPaid = false`):
+    * Customer credit is deducted (if credit service exchange rate is configured)
+    * `CustomerCreditLedger` entry is created with type `SPEND` (negative amount)
+    * `StoreLedger` entry is created with type `CreditUsage` (positive amount, revenue recognition)
 * The `arriveTime` field can be set when status changes to Ready or during reservation creation
 
 **Termination States:**
@@ -474,6 +487,14 @@ Store Admins have all Store Staff permissions, plus:
 * Customer can cancel RSVP without time restriction if `RSVPSettings.canCancel = true`.
 * If the reservation is cancelled (by customer or store), status changes to `Cancelled (60)`
 * **Refund Policy:** When cancelled, customer credit or payment will be refunded only if cancellation occurs OUTSIDE the `cancelHours` window (i.e., cancelled more than `cancelHours` hours before the reservation time). If cancellation occurs WITHIN the `cancelHours` window (i.e., less than `cancelHours` hours before the reservation time), no refund is given.
+* **Credit Refund Process (if prepaid with credit):**
+  * If cancellation is outside the cancelHours window:
+    * Held credit is refunded to customer
+    * Customer credit balance is restored
+    * `CustomerCreditLedger` entry is created with type `REFUND` (positive amount)
+    * Store order status is updated to `Refunded`
+  * If cancellation is within the cancelHours window:
+    * No refund is given (held credit remains deducted)
 * If the customer does not show up for the reservation, store staff can mark status as `NoShow (70)`
 * Once in `Cancelled` or `NoShow` status, the reservation cannot transition to active states.
 * Customer can delete the RSVP when it is still pending (`Pending (0)` or `ReadyToConfirm (10)`).
@@ -1475,6 +1496,8 @@ Completed (50) [when service is finished]
 * Utilization rate (ready vs confirmed)
 * No-show rate
 * Cancellation rate
+
+**Note:** Current implementation of the RSVP Statistics Dashboard is documented in [RSVP-STATS-DASHBOARD.md](./RSVP-STATS-DASHBOARD.md). The dashboard provides real-time overview metrics including upcoming reservations, ready status counts, completed reservations for the current month, and customer credit information.
 
 #### 3.11.2 Customer Analytics
 

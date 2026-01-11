@@ -542,10 +542,10 @@ The `update-reservation.ts` action allows customers to modify their reservations
     * **Credit Refund:** If payment method is "credit" and cancellation is outside the cancelHours window, credit is automatically refunded to customer
     * **Refund Process:**
       1. Checks if cancellation is within cancelHours window using `isCancellationWithinCancelHours()` helper
-      2. If outside window, finds original SPEND ledger entry to determine refund amount
+      2. If outside window, finds original HOLD ledger entry (by `orderId`) to determine refund amount
       3. Restores credit to customer balance (`CustomerCredit`)
       4. Creates `CustomerCreditLedger` entry (type: "REFUND", positive amount)
-      5. Creates `StoreLedger` entry (revenue reversal, negative amount, type: `CreditUsage`)
+      5. **No `StoreLedger` entry is created** (since no revenue was recognized during hold phase)
       6. Updates `StoreOrder` status to `Refunded` (both `orderStatus` and `paymentStatus`)
     * **Refund Function:** `processRsvpCreditRefund()` - Shared utility function located in `src/actions/store/reservation/process-rsvp-refund.ts`
     * **Transaction Safety:** All refund operations are performed within a database transaction
@@ -1233,23 +1233,19 @@ For Google Actions Center Appointments Redirect integration:
   * No SPEND ledger entry found (might not have been paid with credit)
 
 * **Refund Process (if conditions met):**
-  1. Finds original SPEND ledger entry by `orderId` to determine refund amount
-  2. Calculates refund amount (absolute value of SPEND entry amount)
+  1. Finds original HOLD ledger entry by `orderId` to determine refund amount
+  2. Calculates refund amount (absolute value of HOLD entry amount)
   3. Gets current customer credit balance
   4. Calculates new balance (current + refund amount)
   5. Gets store credit exchange rate for cash value calculation
   6. **Transaction Processing:**
-     * Updates `CustomerCredit` balance (adds refund amount)
+     * Updates `CustomerCredit` balance (adds refund amount, restores held credit)
      * Creates `CustomerCreditLedger` entry:
        * Type: "REFUND"
        * Amount: positive (credit restored)
        * `referenceId`: original order ID
        * `note`: refund reason or default message
-     * Creates `StoreLedger` entry:
-       * Type: `CreditUsage` (same as original credit usage)
-       * Amount: negative (revenue reversal)
-       * `orderId`: original order ID
-       * `balance`: decreases by refund cash amount
+     * **No `StoreLedger` entry is created** (since no revenue was recognized during hold phase)
      * Updates `StoreOrder`:
        * `refundAmount`: cash value of refund
        * `orderStatus`: `Refunded`

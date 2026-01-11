@@ -7,6 +7,7 @@ import {
 	PaymentStatus,
 	StoreLedgerType,
 	RsvpStatus,
+	CustomerCreditLedgerType,
 } from "@/types/enum";
 import {
 	getUtcNowEpoch,
@@ -499,8 +500,7 @@ export async function markOrderAsPaidCore(
 					},
 				});
 
-				// TODO: 1. send notification to customer to confirm the reservation
-				// TODO: 2. send notification to store staff to confirm the reservation
+				// TODO: send notification to store staff when reservation is ready to confirm
 
 				logger.info("RSVP updated after order payment", {
 					metadata: {
@@ -513,7 +513,192 @@ export async function markOrderAsPaidCore(
 					},
 					tags: ["rsvp", "payment", "order", ...logTags],
 				});
+
+				// HOLD design: For RSVP orders, credit the amount to customer's balance and do NOT create StoreLedger entry.
+				// Revenue will be recognized when RSVP is completed.
+				// - If paid with credit points: credit to CustomerCredit.point (CustomerCreditLedger type HOLD)
+				// - If paid with external payment: credit to CustomerCredit.fiat (CustomerFiatLedger type TOPUP)
+				if (order.userId !== null) {
+					const storeForRsvp = await tx.store.findUnique({
+						where: { id: order.storeId },
+						select: {
+							defaultTimezone: true,
+							creditExchangeRate: true,
+							useCustomerCredit: true,
+						},
+					});
+
+					if (!storeForRsvp) {
+						throw new SafeError("Store not found");
+					}
+
+					// Prepare ledger note for RSVP format
+					let rsvpLedgerNote = `${paymentMethod.name || "Unknown"}, ${t("order")}:${order.orderNum || order.id}`;
+
+					const userForNote = await tx.user.findUnique({
+						where: { id: order.userId! },
+						select: { name: true },
+					});
+
+					if (storeForRsvp && userForNote && rsvp.rsvpTime) {
+						const rsvpTimeDate = epochToDate(rsvp.rsvpTime);
+						if (rsvpTimeDate) {
+							const formattedRsvpTime = format(
+								getDateInTz(
+									rsvpTimeDate,
+									getOffsetHours(storeForRsvp.defaultTimezone || "Asia/Taipei"),
+								),
+								"yyyy/MM/dd HH:mm",
+							);
+							rsvpLedgerNote = `${paymentMethod.name || "Unknown"}, ${t("rsvp")}:${formattedRsvpTime} for ${userForNote.name}`;
+						}
+					}
+
+					if (paymentMethod.payUrl === "credit") {
+						// RSVP paid with credit points: Use HOLD design with CustomerCreditLedger
+						if (
+							!storeForRsvp.useCustomerCredit ||
+							!storeForRsvp.creditExchangeRate
+						) {
+							throw new SafeError("Store does not have credit system enabled");
+						}
+
+						const fiatAmount = Number(order.orderTotal);
+						const creditExchangeRate = Number(storeForRsvp.creditExchangeRate);
+						if (creditExchangeRate <= 0) {
+							throw new SafeError("Invalid credit exchange rate");
+						}
+
+						// Calculate credit points from fiat amount
+						const requiredCredit = fiatAmount / creditExchangeRate;
+
+						// Get current customer credit balance
+						const customerCredit = await tx.customerCredit.findUnique({
+							where: {
+								storeId_userId: {
+									storeId: order.storeId,
+									userId: order.userId!,
+								},
+							},
+						});
+
+						const currentBalance = customerCredit
+							? Number(customerCredit.point)
+							: 0;
+						const newBalance = currentBalance - requiredCredit; // Decrease balance (HOLD)
+
+						if (newBalance < 0) {
+							throw new SafeError("Insufficient credit balance");
+						}
+
+						// Update CustomerCredit (point field) - decrease balance (HOLD)
+						await tx.customerCredit.upsert({
+							where: {
+								storeId_userId: {
+									storeId: order.storeId,
+									userId: order.userId!,
+								},
+							},
+							update: {
+								point: {
+									decrement: requiredCredit,
+								},
+								updatedAt: getUtcNowEpoch(),
+							},
+							create: {
+								storeId: order.storeId,
+								userId: order.userId!,
+								point: new Prisma.Decimal(-requiredCredit),
+								fiat: new Prisma.Decimal(0),
+								updatedAt: getUtcNowEpoch(),
+							},
+						});
+
+						// Create CustomerCreditLedger entry with HOLD type (HOLD design)
+						await tx.customerCreditLedger.create({
+							data: {
+								storeId: order.storeId,
+								userId: order.userId!,
+								amount: new Prisma.Decimal(-requiredCredit), // Negative for hold
+								balance: new Prisma.Decimal(newBalance),
+								type: CustomerCreditLedgerType.Hold, // HOLD type
+								referenceId: order.id, // Link to order (which links to RSVP)
+								note: rsvpLedgerNote,
+								creatorId: order.userId!, // Customer initiated payment
+								createdAt: getUtcNowEpoch(),
+							},
+						});
+
+						// No StoreLedger entry is created at this stage (HOLD design)
+						// Revenue will be recognized when RSVP is completed
+					} else {
+						// RSVP paid with external payment: Use HOLD design with CustomerFiatLedger
+						const fiatAmount = Number(order.orderTotal);
+
+						// Get current customer fiat balance
+						const customerCredit = await tx.customerCredit.findUnique({
+							where: {
+								storeId_userId: {
+									storeId: order.storeId,
+									userId: order.userId!,
+								},
+							},
+						});
+
+						const currentBalance = customerCredit
+							? Number(customerCredit.fiat)
+							: 0;
+						const newBalance = currentBalance + fiatAmount;
+
+						// Update CustomerCredit (fiat field)
+						await tx.customerCredit.upsert({
+							where: {
+								storeId_userId: {
+									storeId: order.storeId,
+									userId: order.userId!,
+								},
+							},
+							update: {
+								fiat: {
+									increment: fiatAmount,
+								},
+								updatedAt: getUtcNowEpoch(),
+							},
+							create: {
+								storeId: order.storeId,
+								userId: order.userId!,
+								fiat: new Prisma.Decimal(fiatAmount),
+								point: new Prisma.Decimal(0),
+								updatedAt: getUtcNowEpoch(),
+							},
+						});
+
+						// Create CustomerFiatLedger entry with TOPUP type (HOLD design)
+						// Note: Using TOPUP type for now since CustomerFiatLedger doesn't have HOLD type yet
+						// This will be treated as "held" until RSVP is completed
+						await tx.customerFiatLedger.create({
+							data: {
+								storeId: order.storeId,
+								userId: order.userId!,
+								amount: new Prisma.Decimal(fiatAmount), // Positive for credit
+								balance: new Prisma.Decimal(newBalance),
+								type: "TOPUP", // Using TOPUP for now (HOLD design)
+								referenceId: order.id, // Link to order (which links to RSVP)
+								note: rsvpLedgerNote,
+								creatorId: order.userId!, // Customer initiated payment
+								createdAt: getUtcNowEpoch(),
+							},
+						});
+
+						// No StoreLedger entry is created at this stage (HOLD design)
+						// Revenue will be recognized when RSVP is completed
+					}
+
+					// Skip StoreLedger creation for all RSVP orders (HOLD design)
+					return;
+				}
 			}
+
 			// Prepare ledger note - use RSVP format if it's an RSVP order
 			let ledgerNote = `${paymentMethod.name || "Unknown"}, ${t("order")}:${order.orderNum || order.id}`;
 
@@ -549,33 +734,36 @@ export async function markOrderAsPaidCore(
 				}
 			}
 
-			// Create StoreLedger entry
-			const ledgerType = usePlatform
-				? StoreLedgerType.PlatformPayment // 0: 代收 (platform payment processing)
-				: StoreLedgerType.StorePaymentProvider; // 1: Store's own payment provider
+			// Create StoreLedger entry (for non-RSVP orders only)
+			// Skip StoreLedger for all RSVP orders (HOLD design - revenue recognized on completion)
+			if (!rsvp) {
+				const ledgerType = usePlatform
+					? StoreLedgerType.PlatformPayment // 0: 代收 (platform payment processing)
+					: StoreLedgerType.StorePaymentProvider; // 1: Store's own payment provider
 
-			await tx.storeLedger.create({
-				data: {
-					orderId: order.id,
-					storeId: order.storeId,
-					amount: order.orderTotal,
-					fee,
-					platformFee,
-					currency: order.currency,
-					type: ledgerType,
-					description: `order # ${order.orderNum || order.id}`,
-					note: ledgerNote,
-					availability: BigInt(availabilityDate.getTime()),
-					balance: new Prisma.Decimal(
-						balance +
-							Number(order.orderTotal) +
-							fee.toNumber() +
-							feeTax.toNumber() +
-							platformFee.toNumber(),
-					),
-					createdAt: getUtcNowEpoch(),
-				},
-			});
+				await tx.storeLedger.create({
+					data: {
+						orderId: order.id,
+						storeId: order.storeId,
+						amount: order.orderTotal,
+						fee,
+						platformFee,
+						currency: order.currency,
+						type: ledgerType,
+						description: `order # ${order.orderNum || order.id}`,
+						note: ledgerNote,
+						availability: BigInt(availabilityDate.getTime()),
+						balance: new Prisma.Decimal(
+							balance +
+								Number(order.orderTotal) +
+								fee.toNumber() +
+								feeTax.toNumber() +
+								platformFee.toNumber(),
+						),
+						createdAt: getUtcNowEpoch(),
+					},
+				});
+			}
 		},
 		{
 			maxWait: 10000, // Maximum time to wait to acquire a transaction (10 seconds)

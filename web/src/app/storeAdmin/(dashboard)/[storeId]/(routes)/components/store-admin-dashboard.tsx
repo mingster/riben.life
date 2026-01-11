@@ -48,7 +48,11 @@ export const StoreAdminDashboard: React.FC<props> = ({
 					</>
 				)}
 				{rsvpSettings?.acceptReservation && (
-					<RsvpStats rsvpSettings={rsvpSettings} />
+					<RsvpStats
+						rsvpSettings={rsvpSettings}
+						defaultCurrency={store.defaultCurrency}
+						storeTimezone={store.defaultTimezone || "Asia/Taipei"}
+					/>
 				)}
 			</Container>
 		</section>

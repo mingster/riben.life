@@ -59,6 +59,16 @@ export const completeRsvpsAction = storeActionClient
 						phoneNumber: true,
 					},
 				},
+				Order: {
+					select: {
+						id: true,
+						PaymentMethod: {
+							select: {
+								payUrl: true,
+							},
+						},
+					},
+				},
 			},
 		});
 
@@ -101,8 +111,10 @@ export const completeRsvpsAction = storeActionClient
 							alreadyPaid: rsvp.alreadyPaid,
 							customerId: rsvp.customerId,
 							facilityId: rsvp.facilityId,
+							orderId: rsvp.orderId,
 							createdBy: rsvp.createdBy,
 							Facility: rsvp.Facility,
+							Order: rsvp.Order,
 						},
 						store: {
 							id: store.id,

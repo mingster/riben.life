@@ -276,13 +276,59 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.3.2 Credit Usage for RSVP Prepaid
 
-**FR-CREDIT-019:** Credit can be used for RSVP prepaid reservations:
+**FR-CREDIT-019:** Credit can be used for RSVP prepaid reservations using a two-phase payment model (HOLD → SPEND):
+
+**Phase 1: Payment and Credit Hold (RSVP Creation)**
 
 - When `minPrepaidPercentage > 0` in RSVP settings and total cost > 0
 - Customer can use credit to pay the required prepaid amount (`ceil(totalCost * minPrepaidPercentage / 100)`)
-- Credit is deducted when the `alreadyPaid` flag is set to `true` on the reservation
-- Reservation is linked to order via `orderId`
-- Credit usage follows same flow as regular purchase
+- When RSVP is created and paid for:
+  - Store order is created with credit payment method
+  - RSVP status is set to `Ready (40)`
+  - Customer credit balance is reduced (credit is held, not spent yet)
+  - `CustomerCreditLedger` entry is created:
+    - Type: `HOLD`
+    - Amount: negative (credit held from customer balance)
+    - `referenceId`: order ID
+    - `note`: RSVP prepaid payment description
+  - **No `StoreLedger` entry is created** (revenue not yet recognized)
+  - Reservation is linked to order via `orderId`
+  - `alreadyPaid` flag is set to `true`
+
+**Phase 2: Service Completion and Revenue Recognition (RSVP Completed)**
+
+- When RSVP status changes to `Completed (50)`:
+  - Held credit is converted to spent credit
+  - Customer credit balance remains the same (already reduced during hold phase)
+  - New `CustomerCreditLedger` entry is created:
+    - Type: `SPEND`
+    - Amount: negative (credit spent)
+    - `referenceId`: RSVP ID
+    - `note`: RSVP completion description
+  - `StoreLedger` entry is created:
+    - Type: `CreditUsage` (revenue recognition)
+    - Amount: positive (revenue recognized)
+    - `orderId`: original order ID
+    - `balance`: increases by credit amount used
+
+**Phase 3: Cancellation and Refund (RSVP Cancelled)**
+
+- When RSVP is cancelled (if within refund window):
+  - Held credit is refunded to customer
+  - Customer credit balance is restored
+  - `CustomerCreditLedger` entry is created:
+    - Type: `REFUND`
+    - Amount: positive (credit refunded)
+    - `referenceId`: original order ID
+    - `note`: cancellation refund description
+  - Store order status is updated to `Refunded`
+
+**Key Differences from Regular Credit Usage:**
+
+- Regular purchases use `SPEND` type immediately (one-phase)
+- RSVP prepaid uses `HOLD` type initially, then `SPEND` on completion (two-phase)
+- Store ledger is created only on RSVP completion (revenue recognition), not on payment
+- HOLD ensures credit is reserved but revenue is not recognized until service is delivered
 
 ---
 

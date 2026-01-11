@@ -10,7 +10,12 @@ import {
 	getOffsetHours,
 } from "@/utils/datetime-utils";
 import { format } from "date-fns";
-import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
+import {
+	OrderStatus,
+	PaymentStatus,
+	StoreLedgerType,
+	CustomerCreditLedgerType,
+} from "@/types/enum";
 import { getT } from "@/app/i18n";
 
 interface ProcessRsvpCreditPointsRefundParams {
@@ -80,26 +85,46 @@ export async function processRsvpCreditPointsRefund(
 		return { refunded: false };
 	}
 
-	// Find the original SPEND ledger entry to get the credit amount
-	const spendEntry = await sqlClient.customerCreditLedger.findFirst({
+	// Find the original ledger entry (HOLD for prepaid RSVPs, SPEND for legacy/non-prepaid)
+	// HOLD design: Prepaid RSVPs use HOLD type (no revenue recognized yet)
+	// Legacy/Non-prepaid: Use SPEND type (revenue was recognized, needs reversal)
+	const holdEntry = await sqlClient.customerCreditLedger.findFirst({
 		where: {
 			storeId,
 			userId: customerId,
 			referenceId: orderId,
-			type: "SPEND", // CustomerCreditLedgerType.Spend
+			type: CustomerCreditLedgerType.Hold,
 		},
 		orderBy: {
-			createdAt: "desc", // Get the most recent SPEND entry for this order
+			createdAt: "desc", // Get the most recent HOLD entry for this order
 		},
 	});
 
-	if (!spendEntry) {
-		// No SPEND entry found - might not have been paid with credit, skip refund
+	const isHoldRefund = !!holdEntry;
+
+	// If no HOLD entry, try SPEND entry (legacy or non-prepaid RSVPs)
+	const spendEntry = !holdEntry
+		? await sqlClient.customerCreditLedger.findFirst({
+				where: {
+					storeId,
+					userId: customerId,
+					referenceId: orderId,
+					type: CustomerCreditLedgerType.Spend,
+				},
+				orderBy: {
+					createdAt: "desc", // Get the most recent SPEND entry for this order
+				},
+			})
+		: null;
+
+	if (!holdEntry && !spendEntry) {
+		// No ledger entry found - might not have been paid with credit, skip refund
 		return { refunded: false };
 	}
 
-	// Get absolute value of amount (it's negative for SPEND)
-	const refundCreditAmount = Math.abs(Number(spendEntry.amount));
+	// Get absolute value of amount (it's negative for both HOLD and SPEND)
+	const ledgerEntry = holdEntry || spendEntry;
+	const refundCreditAmount = Math.abs(Number(ledgerEntry!.amount));
 
 	// Use order's currency
 	const orderCurrency = (order.currency || "twd").toLowerCase();
@@ -178,74 +203,78 @@ export async function processRsvpCreditPointsRefund(
 			},
 		});
 
-		// 4. Create StoreLedger entry for revenue reversal
-		const lastLedger = await tx.storeLedger.findFirst({
-			where: { storeId },
-			orderBy: { createdAt: "desc" },
-			take: 1,
-		});
-
-		const storeBalance = Number(lastLedger ? lastLedger.balance : 0);
-		const newStoreBalance = storeBalance - refundCashAmount; // Decrease balance
-
-		// Prepare ledger note - use RSVP format if RSVP data is available
-		let ledgerNote = `${order.PaymentMethod?.name || "Unknown"}, ${t("order")}:${order.orderNum || order.id}`;
-
-		// Fetch RSVP, store, and user data for RSVP format
-		const rsvp = await tx.rsvp.findUnique({
-			where: { id: rsvpId },
-			select: { rsvpTime: true },
-		});
-
-		if (rsvp && rsvp.rsvpTime) {
-			// Fetch store and user for the note
-			const storeForNote = await tx.store.findUnique({
-				where: { id: storeId },
-				select: { defaultTimezone: true },
+		// 4. Create StoreLedger entry for revenue reversal (only for SPEND refunds, not HOLD)
+		// HOLD design: No StoreLedger entry is created for HOLD refunds (no revenue was recognized)
+		// Legacy/Non-prepaid: StoreLedger entry is created to reverse recognized revenue
+		if (!isHoldRefund) {
+			const lastLedger = await tx.storeLedger.findFirst({
+				where: { storeId },
+				orderBy: { createdAt: "desc" },
+				take: 1,
 			});
 
-			const user = await tx.user.findUnique({
-				where: { id: customerId },
-				select: { name: true },
+			const storeBalance = Number(lastLedger ? lastLedger.balance : 0);
+			const newStoreBalance = storeBalance - refundCashAmount; // Decrease balance
+
+			// Prepare ledger note - use RSVP format if RSVP data is available
+			let ledgerNote = `${order.PaymentMethod?.name || "Unknown"}, ${t("order")}:${order.orderNum || order.id}`;
+
+			// Fetch RSVP, store, and user data for RSVP format
+			const rsvp = await tx.rsvp.findUnique({
+				where: { id: rsvpId },
+				select: { rsvpTime: true },
 			});
 
-			if (storeForNote && user) {
-				// Convert RSVP time (BigInt epoch) to Date
-				const rsvpTimeDate = epochToDate(rsvp.rsvpTime);
-				if (rsvpTimeDate) {
-					// Format date in store timezone as "yyyy/MM/dd HH:mm"
-					const formattedRsvpTime = format(
-						getDateInTz(
-							rsvpTimeDate,
-							getOffsetHours(storeForNote.defaultTimezone || "Asia/Taipei"),
-						),
-						"yyyy/MM/dd HH:mm",
-					);
+			if (rsvp && rsvp.rsvpTime) {
+				// Fetch store and user for the note
+				const storeForNote = await tx.store.findUnique({
+					where: { id: storeId },
+					select: { defaultTimezone: true },
+				});
 
-					// Create RSVP format ledger note
-					ledgerNote = `${order.PaymentMethod?.name || "Unknown"}, ${t("rsvp")}:${formattedRsvpTime} for ${user.name}`;
+				const user = await tx.user.findUnique({
+					where: { id: customerId },
+					select: { name: true },
+				});
+
+				if (storeForNote && user) {
+					// Convert RSVP time (BigInt epoch) to Date
+					const rsvpTimeDate = epochToDate(rsvp.rsvpTime);
+					if (rsvpTimeDate) {
+						// Format date in store timezone as "yyyy/MM/dd HH:mm"
+						const formattedRsvpTime = format(
+							getDateInTz(
+								rsvpTimeDate,
+								getOffsetHours(storeForNote.defaultTimezone || "Asia/Taipei"),
+							),
+							"yyyy/MM/dd HH:mm",
+						);
+
+						// Create RSVP format ledger note
+						ledgerNote = `${order.PaymentMethod?.name || "Unknown"}, ${t("rsvp")}:${formattedRsvpTime} for ${user.name}`;
+					}
 				}
 			}
-		}
 
-		await tx.storeLedger.create({
-			data: {
-				storeId,
-				orderId: orderId,
-				amount: new Prisma.Decimal(-refundCashAmount), // Negative: revenue reversal
-				fee: new Prisma.Decimal(0), // No fee for credit refunds
-				platformFee: new Prisma.Decimal(0), // No platform fee for credit refunds
-				currency: orderCurrency,
-				type: StoreLedgerType.CreditUsage, // Same type as credit usage (revenue-related)
-				balance: new Prisma.Decimal(newStoreBalance),
-				description: t("rsvp_cancellation_refund_description", {
-					points: refundCreditAmount,
-				}),
-				note: refundReason || ledgerNote,
-				availability: getUtcNowEpoch(), // Immediate availability for refunds
-				createdAt: getUtcNowEpoch(),
-			},
-		});
+			await tx.storeLedger.create({
+				data: {
+					storeId,
+					orderId: orderId,
+					amount: new Prisma.Decimal(-refundCashAmount), // Negative: revenue reversal
+					fee: new Prisma.Decimal(0), // No fee for credit refunds
+					platformFee: new Prisma.Decimal(0), // No platform fee for credit refunds
+					currency: orderCurrency,
+					type: StoreLedgerType.CreditUsage, // Same type as credit usage (revenue-related)
+					balance: new Prisma.Decimal(newStoreBalance),
+					description: t("rsvp_cancellation_refund_description", {
+						points: refundCreditAmount,
+					}),
+					note: refundReason || ledgerNote,
+					availability: getUtcNowEpoch(), // Immediate availability for refunds
+					createdAt: getUtcNowEpoch(),
+				},
+			});
+		}
 
 		// 5. Update order status to Refunded
 		await tx.storeOrder.update({

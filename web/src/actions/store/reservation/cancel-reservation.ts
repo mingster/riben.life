@@ -114,25 +114,59 @@ export const cancelReservationAction = baseClient
 				const { t } = await getT();
 
 				// Determine payment method: check for credit points first, then fiat
+				// HOLD design: Prepaid RSVPs use HOLD (credit) or TOPUP (fiat) entries
 				let paymentMethod: "credit" | "fiat" | null = null;
 
-				// Check for credit points payment
-				const spendEntry = await sqlClient.customerCreditLedger.findFirst({
+				// Check for credit points payment (HOLD design: look for HOLD entry first)
+				const holdEntry = await sqlClient.customerCreditLedger.findFirst({
 					where: {
 						storeId: existingRsvp.storeId,
 						userId: existingRsvp.customerId,
 						referenceId: existingRsvp.orderId,
-						type: CustomerCreditLedgerType.Spend,
+						type: CustomerCreditLedgerType.Hold,
 					},
 					orderBy: {
 						createdAt: "desc",
 					},
 				});
 
-				if (spendEntry) {
+				// Also check for SPEND entry (legacy/non-prepaid RSVPs)
+				const spendEntry = !holdEntry
+					? await sqlClient.customerCreditLedger.findFirst({
+							where: {
+								storeId: existingRsvp.storeId,
+								userId: existingRsvp.customerId,
+								referenceId: existingRsvp.orderId,
+								type: CustomerCreditLedgerType.Spend,
+							},
+							orderBy: {
+								createdAt: "desc",
+							},
+						})
+					: null;
+
+				if (holdEntry || spendEntry) {
 					paymentMethod = "credit";
 				} else {
-					paymentMethod = "fiat";
+					// Check for fiat payment (HOLD design: look for TOPUP entry)
+					const topupEntry = await sqlClient.customerFiatLedger.findFirst({
+						where: {
+							storeId: existingRsvp.storeId,
+							userId: existingRsvp.customerId,
+							referenceId: existingRsvp.orderId,
+							type: "TOPUP",
+						},
+						orderBy: {
+							createdAt: "desc",
+						},
+					});
+
+					if (topupEntry) {
+						paymentMethod = "fiat";
+					} else {
+						// No credit or fiat payment found - might be paid through other method (Stripe, LINE Pay, etc.)
+						paymentMethod = null;
+					}
 				}
 
 				logger.info("Processing refund for paid order", {
