@@ -3,9 +3,7 @@
 import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
-import {
-	getUtcNowEpoch,
-} from "@/utils/datetime-utils";
+import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { z } from "zod";
 import { transformPrismaDataForJson } from "@/utils/utils";
 
@@ -36,93 +34,90 @@ export const getRsvpStatsAction = storeActionClient
 			: 1;
 
 		// Fetch stats in parallel
-		const [
-			upcomingRsvps,
-			completedRsvps,
-			unusedCreditResult,
-		] = await Promise.all([
-			// Get upcoming reservations: active statuses (Pending, Ready) or (alreadyPaid, confirmedByStore, or confirmedByCustomer) and rsvpTime >= now
-			sqlClient.rsvp.findMany({
-				where: {
-					storeId,
-					rsvpTime: {
-						gte: now,
-					},
-					AND: [
-						{
-							OR: [
-								{
-									status: {
-										in: [RsvpStatus.Pending, RsvpStatus.Ready],
-									},
-								},
-								{
-									alreadyPaid: true,
-								},
-								{
-									confirmedByStore: true,
-								},
-								{
-									confirmedByCustomer: true,
-								},
-							],
+		const [upcomingRsvps, completedRsvps, unusedCreditResult] =
+			await Promise.all([
+				// Get upcoming reservations: active statuses (Pending, Ready) or (alreadyPaid, confirmedByStore, or confirmedByCustomer) and rsvpTime >= now
+				sqlClient.rsvp.findMany({
+					where: {
+						storeId,
+						rsvpTime: {
+							gte: now,
 						},
-						{
-							status: {
-								notIn: [
-									RsvpStatus.Completed,
-									RsvpStatus.Cancelled,
-									RsvpStatus.NoShow,
+						AND: [
+							{
+								OR: [
+									{
+										status: {
+											in: [RsvpStatus.Pending, RsvpStatus.Ready],
+										},
+									},
+									{
+										alreadyPaid: true,
+									},
+									{
+										confirmedByStore: true,
+									},
+									{
+										confirmedByCustomer: true,
+									},
 								],
 							},
-						},
-					],
-				},
-				select: {
-					facilityCost: true,
-					serviceStaffCost: true,
-				},
-			}),
-
-			// Get completed RSVPs in the selected period
-			sqlClient.rsvp.findMany({
-				where: {
-					storeId,
-					status: RsvpStatus.Completed,
-					rsvpTime: {
-						gte: startEpoch,
-						lte: endEpoch,
+							{
+								status: {
+									notIn: [
+										RsvpStatus.Completed,
+										RsvpStatus.Cancelled,
+										RsvpStatus.NoShow,
+									],
+								},
+							},
+						],
 					},
-				},
-				select: {
-					facilityCost: true,
-					serviceStaffCost: true,
-				},
-			}),
-
-			// Count and sum of unused credit (point > 0)
-			Promise.all([
-				sqlClient.customerCredit.count({
-					where: {
-						storeId,
-						point: {
-							gt: 0,
-						},
+					select: {
+						facilityCost: true,
+						serviceStaffCost: true,
 					},
 				}),
-				sqlClient.customerCredit.aggregate({
+
+				// Get completed RSVPs in the selected period
+				sqlClient.rsvp.findMany({
 					where: {
 						storeId,
-						point: {
-							gt: 0,
+						status: RsvpStatus.Completed,
+						rsvpTime: {
+							gte: startEpoch,
+							lte: endEpoch,
 						},
 					},
-					_sum: {
-						point: true,
+					select: {
+						facilityCost: true,
+						serviceStaffCost: true,
 					},
 				}),
-			]),
-		]);
+
+				// Count and sum of unused credit (point > 0)
+				Promise.all([
+					sqlClient.customerCredit.count({
+						where: {
+							storeId,
+							point: {
+								gt: 0,
+							},
+						},
+					}),
+					sqlClient.customerCredit.aggregate({
+						where: {
+							storeId,
+							point: {
+								gt: 0,
+							},
+						},
+						_sum: {
+							point: true,
+						},
+					}),
+				]),
+			]);
 
 		const [unusedCreditCount, unusedCreditSum] = unusedCreditResult;
 		const totalUnusedCredit = unusedCreditSum._sum.point

@@ -160,14 +160,19 @@ model CustomerFiatLedger {
 ```prisma
 model Store {
   // ... other fields
-  useCustomerCredit         Boolean @default(false) // Enable/disable credit system
-  creditExchangeRate        Decimal @default(0)     // 1 point = ?? dollars
-  creditServiceExchangeRate Decimal @default(0)     // 1 point = ?? minutes of service
+  useCustomerCredit         Boolean @default(false) // Enable/disable credit POINT system (CustomerCredit.point)
+  creditExchangeRate        Decimal @default(0)     // 1 point = ?? dollars (used with CustomerCredit.point)
+  creditServiceExchangeRate Decimal @default(0)     // 1 point = ?? minutes of service (used with CustomerCredit.point)
   creditMaxPurchase         Decimal @default(0)     // Maximum credit per purchase
   creditMinPurchase         Decimal @default(0)     // Minimum credit per purchase
   creditExpiration          Int     @default(365)   // Credit expiration in days
 }
 ```
+
+**Important**: 
+- `useCustomerCredit` only controls the **credit point system** (`CustomerCredit.point` field and `creditExchangeRate`/`creditServiceExchangeRate`)
+- `CustomerCredit.fiat` (RSVP account balance) is **always available** and operates independently of `useCustomerCredit`
+- The fiat account balance system does not require `useCustomerCredit` to be enabled
 
 ### 2.4 CreditBonusRule Model
 
@@ -198,7 +203,7 @@ model CreditBonusRule {
 **Actor**: Customer\
 **Preconditions**:
 
-* Store has `useCustomerCredit` enabled
+* Store has `useCustomerCredit` enabled (controls credit point system only)
 * Customer is authenticated
 * Customer has valid payment method
 
@@ -467,7 +472,13 @@ The RSVP Account Balance system is integrated into the Customer Credit system, u
 **Key Difference from General Credit Points**:
 
 * **`point` field**: General-purpose credit points for all store purchases (products, services, etc.)
+  * Controlled by `store.useCustomerCredit` setting
+  * Uses `creditExchangeRate` and `creditServiceExchangeRate` for conversions
+  * Transactions recorded in `CustomerCreditLedger`
 * **`fiat` field**: Specialized account balance specifically for RSVP facility reservation payments (in store's currency, e.g., TWD, USD)
+  * **Always available** (not controlled by `useCustomerCredit` setting)
+  * Operates independently of credit point system
+  * Transactions recorded in `CustomerFiatLedger`
 
 ### 4.2 Reservation Creation with Payment (Account Balance Check)
 
@@ -478,6 +489,7 @@ The RSVP Account Balance system is integrated into the Customer Credit system, u
 * Facility requires payment (`facilityCost > 0` or `facility.defaultCost > 0`)
 * Customer is authenticated (required for account balance)
 * Customer is creating a reservation for a facility that requires payment
+* **Note**: `useCustomerCredit` setting does NOT affect fiat account balance - fiat is always available
 
 **Flow**:
 

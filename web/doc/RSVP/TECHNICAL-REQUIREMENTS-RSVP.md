@@ -360,8 +360,9 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
     * Creates unpaid `StoreOrder` with prepaid amount
     * **Currency Handling:** Order currency is set to store's `defaultCurrency` using `store.defaultCurrency` field
     * Payment method selection:
-      * If `store.useCustomerCredit = true`: Order created with "credit" payment method
+      * If `store.useCustomerCredit = true`: Order created with "credit" payment method (uses `CustomerCredit.point` with `creditExchangeRate`)
       * If `store.useCustomerCredit = false`: Order created with "TBD" payment method
+      * **Note**: `CustomerCredit.fiat` (RSVP account balance) is always available regardless of `useCustomerCredit` setting
     * **Payment Method Updates:** When marking orders as paid (via `markOrderAsPaidCore`), the system explicitly uses the provided `paymentMethodId` parameter to ensure correct payment method tracking. Payment methods are fetched by `payUrl` identifier and passed to payment processing functions.
     * Shipping method: "digital" (for reservation orders)
     * Order status: `Pending` (unpaid)

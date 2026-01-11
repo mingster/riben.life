@@ -41,9 +41,7 @@ export function RsvpRevenueTypeToggle({
 	];
 
 	return (
-		<div
-			className={cn("mt-2", className)}
-		>
+		<div className={cn("mt-2", className)}>
 			<div className="text-xs mb-2 sm:mb-3">
 				{t("rsvp_revenue_type") || "Revenue Type"}
 			</div>

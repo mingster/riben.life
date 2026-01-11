@@ -23,10 +23,7 @@ export async function GET(
 	const endEpoch = endEpochParam ? BigInt(endEpochParam) : null;
 
 	if (!startEpoch || !endEpoch) {
-		return NextResponse.json(
-			{ error: "Invalid date range" },
-			{ status: 400 },
-		);
+		return NextResponse.json({ error: "Invalid date range" }, { status: 400 });
 	}
 
 	try {

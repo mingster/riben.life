@@ -7,9 +7,9 @@
 
 ## Overview
 
-The RSVP Statistics Dashboard provides store administrators with real-time overview metrics for reservation management. The dashboard displays key statistics including upcoming reservations, ready status counts, completed reservations for the current month, and customer credit information.
+The RSVP Statistics Dashboard provides store administrators with real-time overview metrics for reservation management. The dashboard displays key statistics including upcoming reservations, completed reservations for the selected period (week/month/year), and customer credit information.
 
-The dashboard includes a revenue type filter toggle that allows viewing revenue by facility cost, service staff cost, or both combined. The "current month" period is calculated based on the store's timezone (matching `RsvpHistoryClient` behavior) rather than UTC.
+The dashboard includes a period toggle that allows viewing completed reservations for the current week, month, or year. The period calculation is based on the store's timezone (matching `RsvpHistoryClient` behavior) rather than UTC.
 
 The dashboard component is displayed on the store admin home page (`/storeAdmin/[storeId]`) when RSVP functionality is enabled for the store.
 
@@ -30,63 +30,69 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 - Fetches data using SWR from API endpoint
 - Handles hydration to prevent SSR/CSR mismatches
 - Displays loading skeleton states
-- Responsive grid layout (1 column on mobile, 2 on tablet, 4 on desktop)
+- Responsive grid layout (1 column on mobile, 2 on tablet, 3 on desktop)
 - Clickable cards that navigate to relevant pages
 - Currency formatting for monetary values
 - Conditional rendering (only shows when RSVP is enabled)
-- **Revenue type toggle** - Filter revenue by facility, service staff, or both (similar to `RsvpStatusLegend`)
+- **Period toggle** - Filter completed reservations by week, month, or year
 
 **Statistics Displayed:**
 
 1. **Upcoming Reservations**
    - Icon: Calendar (`IconCalendar`)
    - Value: Count of upcoming reservations
+   - Sub-values:
+     - Total Revenue (formatted currency)
+     - Facility Cost (formatted currency)
+     - Service Staff Cost (formatted currency)
    - Link: `/storeAdmin/[storeId]/rsvp`
    - Color: Blue
 
-2. **Ready Status**
-   - Icon: Coins (`IconCoins`)
-   - Value: Count of RSVPs in Ready status
-   - Sub-value: Total amount in hold (formatted currency)
-   - Link: `/storeAdmin/[storeId]/rsvp`
-   - Color: Orange
-
-3. **Completed This Month**
+2. **Completed This Week/Month/Year**
    - Icon: Currency Dollar (`IconCurrencyDollar`)
-   - Value: Count of completed RSVPs this month
-   - Sub-value: Total revenue earned (formatted currency)
+   - Value: Count of completed RSVPs for the selected period
+   - Title: Dynamically changes based on period selection ("Completed This Week", "Completed This Month", or "Completed This Year")
+   - Sub-values:
+     - Total Revenue (formatted currency)
+     - Facility Cost (formatted currency)
+     - Service Staff Cost (formatted currency)
    - Link: `/storeAdmin/[storeId]/rsvp`
    - Color: Green
 
-4. **Customers with Credit**
+3. **Customers with Credit**
    - Icon: Credit Card (`IconCreditCard`)
    - Value: Count of customers with unused credit
    - Sub-value: Total unused credit points (formatted number)
    - Link: `/storeAdmin/[storeId]/customers`
    - Color: Purple
 
-**Revenue Type Toggle:**
+**Period Toggle:**
 
-- Component: `RsvpRevenueTypeToggle` (similar design to `RsvpStatusLegend`)
-- Options: "All", "Facility", "Service Staff"
-- Colors match `RsvpStatusLegend` style (left border accent, gray text, colored backgrounds)
+- Component: Button group with three options
+- Options: "This Week", "This Month", "This Year"
+- Default: "This Month"
 - State managed in client component with `useState`
-- Updates API URL query parameter when selection changes
-- SWR automatically refetches data when toggle changes
+- Updates date range calculation when selection changes
+- SWR automatically refetches data when period changes
+- Date range calculation matches `RsvpHistoryClient` behavior (store timezone-based)
 
 **Data Fetching:**
 
 - Uses SWR for client-side data fetching
-- API endpoint: `/api/storeAdmin/[storeId]/rsvp/stats?revenueType={type}`
-- Query parameter: `revenueType` (default: "all")
+- API endpoint: `/api/storeAdmin/[storeId]/rsvp/stats?period={period}&startEpoch={startEpoch}&endEpoch={endEpoch}`
+- Query parameters:
+  - `period`: `"week" | "month" | "year"` (default: "month")
+  - `startEpoch`: BigInt epoch timestamp (start of period in store timezone, converted to UTC)
+  - `endEpoch`: BigInt epoch timestamp (end of period in store timezone, converted to UTC)
 - Only fetches when:
   - RSVP is enabled (`rsvpSettings?.acceptReservation`)
   - `storeId` is available
   - Component is hydrated (prevents SSR/CSR mismatch)
+  - Date range is valid (`startEpoch` and `endEpoch` are available)
 
 **UI States:**
 
-- Loading: Skeleton cards with placeholder content
+- Loading: Skeleton cards with placeholder content (shows 3 skeleton cards)
 - Error: Silently fails (returns `null`)
 - Success: Displays statistics cards with actual data
 
@@ -106,10 +112,9 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 
 **Input Parameters:**
 
-- `revenueType`: Optional enum `"all" | "facility" | "service_staff"` (default: `"all"`)
-  - `"all"`: Sum of facility cost + service staff cost
-  - `"facility"`: Only facility cost
-  - `"service_staff"`: Only service staff cost
+- `period`: Optional enum `"week" | "month" | "year"` (default: `"month"`)
+- `startEpoch`: BigInt epoch timestamp (start of period in UTC)
+- `endEpoch`: BigInt epoch timestamp (end of period in UTC)
 
 **Statistics Calculated:**
 
@@ -122,44 +127,37 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
      - `confirmedByCustomer = true`
      - Status is NOT `Completed`, `Cancelled`, or `NoShow`
 
-2. **Completed This Month** (`completedThisMonthCount`)
+2. **Upcoming Revenue** (`upcomingTotalRevenue`, `upcomingFacilityCost`, `upcomingServiceStaffCost`)
+   - Calculated directly from upcoming RSVP records (`facilityCost` and `serviceStaffCost` fields)
+   - `upcomingTotalRevenue`: Sum of `facilityCost + serviceStaffCost`
+   - `upcomingFacilityCost`: Sum of `facilityCost` only
+   - `upcomingServiceStaffCost`: Sum of `serviceStaffCost` only
+
+3. **Completed Count** (`completedCount`)
    - Count of RSVPs where:
      - Status is `Completed`
-     - `rsvpTime` is within current month (store timezone)
+     - `rsvpTime` is within the selected period (`startEpoch` to `endEpoch`)
 
-3. **Unused Credit** (`unusedCreditCount`, `totalUnusedCredit`)
+4. **Completed Revenue** (`completedTotalRevenue`, `completedFacilityCost`, `completedServiceStaffCost`)
+   - Calculated directly from completed RSVP records (`facilityCost` and `serviceStaffCost` fields)
+   - `completedTotalRevenue`: Sum of `facilityCost + serviceStaffCost`
+   - `completedFacilityCost`: Sum of `facilityCost` only
+   - `completedServiceStaffCost`: Sum of `serviceStaffCost` only
+
+5. **Unused Credit** (`customerCount`, `totalUnusedCredit`)
    - Count of customers with `point > 0` in `CustomerCredit` table
    - Sum of all unused credit points
-
-4. **Ready Status** (`readyCount`, `totalHoldAmount`)
-   - Count of RSVPs with status `Ready` and `orderId IS NOT NULL`
-   - Calculates total HOLD amount by:
-     - Finding all `CustomerCreditLedger` entries with:
-       - Type: `Hold`
-       - `referenceId` in list of Ready RSVP order IDs
-     - Summing absolute values of HOLD amounts
-     - Converting credit points to cash using store's `creditExchangeRate`
-
-5. **Revenue Earned This Month** (`totalRevenueEarned`)
-   - Calculated directly from RSVP records (`facilityCost` and `serviceStaffCost` fields)
-   - Sum of completed RSVPs in current month (store timezone)
-   - Filtered by `revenueType`:
-     - `"all"`: `facilityCost + serviceStaffCost`
-     - `"facility"`: `facilityCost` only
-     - `"service_staff"`: `serviceStaffCost` only
 
 **Date Handling:**
 
 - All timestamps use BigInt epoch milliseconds
-- **Current month calculation uses store timezone** (matching `RsvpHistoryClient` behavior)
-- Calculation process:
-  1. Get current date/time in store timezone using `Intl.DateTimeFormat`
-  2. Extract date components (year, month, day) in store timezone
-  3. Use `startOfMonth()` and `endOfMonth()` from `date-fns` with store timezone date
-  4. Convert month boundaries to UTC using `convertToUtc()` for database queries
-  5. Start of month: 1st day at 00:00:00 in store timezone (converted to UTC)
-  6. End of month: Last day at 23:59:59 in store timezone (converted to UTC)
-- **This ensures "current month" matches what users see in RsvpHistoryClient when filtering by "This Month"**
+- **Period calculation uses store timezone** (matching `RsvpHistoryClient` behavior)
+- Client component calculates period boundaries in store timezone, then converts to UTC for database queries
+- Server action receives UTC epoch timestamps for database queries
+- Period boundaries:
+  - Week: Start of week (Sunday 00:00:00) to end of week (Saturday 23:59:59) in store timezone
+  - Month: Start of month (1st day 00:00:00) to end of month (last day 23:59:59) in store timezone
+  - Year: Start of year (January 1st 00:00:00) to end of year (December 31st 23:59:59) in store timezone
 
 **Performance:**
 
@@ -178,13 +176,18 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 
 - Calls `getRsvpStatsAction` server action
 - Handles access control (via server action)
-- Extracts `revenueType` query parameter from URL (default: "all")
-- Passes `revenueType` to server action
+- Extracts query parameters from URL:
+  - `period`: `"week" | "month" | "year"` (default: "month")
+  - `startEpoch`: BigInt string (start of period)
+  - `endEpoch`: BigInt string (end of period)
+- Validates period type and date range
+- Passes parameters to server action
 - Transforms Prisma data (BigInt/Decimal) for JSON serialization
 - Returns JSON response with statistics
 
 **Error Handling:**
 
+- Returns 400 if date range is invalid
 - Returns 403 if access denied
 - Returns 500 if internal error occurs
 - Logs errors with context (storeId, error message)
@@ -202,6 +205,7 @@ The RSVP stats component is conditionally rendered on the store admin home page:
   <RsvpStats
     rsvpSettings={rsvpSettings}
     defaultCurrency={store.defaultCurrency}
+    storeTimezone={store.defaultTimezone || "Asia/Taipei"}
   />
 )}
 ```
@@ -212,33 +216,24 @@ The RSVP stats component is conditionally rendered on the store admin home page:
 - Component receives:
   - `rsvpSettings`: RSVP configuration for the store
   - `defaultCurrency`: Store's default currency for formatting
+  - `storeTimezone`: Store's default timezone for period calculation
 
 ## Data Model
 
 ### Database Tables Used
 
 1. **Rsvp Table**
-   - Fields: `id`, `storeId`, `rsvpTime`, `status`, `orderId`, `alreadyPaid`, `confirmedByStore`, `confirmedByCustomer`, `facilityCost`, `serviceStaffCost` (used for revenue calculation)
+   - Fields: `id`, `storeId`, `rsvpTime`, `status`, `alreadyPaid`, `confirmedByStore`, `confirmedByCustomer`, `facilityCost`, `serviceStaffCost` (used for revenue calculation)
 
 2. **CustomerCredit Table**
    - Fields: `storeId`, `point` (aggregated for unused credit stats)
 
-3. **CustomerCreditLedger Table**
-   - Fields: `storeId`, `type`, `referenceId`, `amount` (used for HOLD amount calculation)
-
-4. **Store Table**
-   - Fields: `creditExchangeRate`, `defaultCurrency`, `defaultTimezone` (for currency conversion, formatting, and timezone-based month calculation)
+3. **Store Table**
+   - Fields: `creditExchangeRate`, `defaultCurrency`, `defaultTimezone` (for formatting and timezone-based period calculation)
 
 ### Enums Used
 
 - `RsvpStatus`: `Pending`, `Ready`, `Completed`, `Cancelled`, `NoShow`
-- `CustomerCreditLedgerType`: `Hold`
-
-### Revenue Type
-
-- `"all"`: Sum of facility and service staff costs
-- `"facility"`: Only facility costs
-- `"service_staff"`: Only service staff costs
 
 ## Business Logic
 
@@ -256,40 +251,23 @@ A reservation is considered "upcoming" if it meets ALL of the following criteria
    - `confirmedByStore = true`
    - `confirmedByCustomer = true`
 
-### HOLD Amount Calculation
+### Revenue Calculation
 
-The HOLD amount represents money that has been paid by customers but not yet recognized as revenue (because RSVP is not completed):
+Revenue is calculated directly from RSVP records (not from `StoreLedger`):
 
-1. Find all RSVPs with status `Ready` and `orderId IS NOT NULL`
-2. Get corresponding `CustomerCreditLedger` entries:
-   - Type: `Hold`
-   - `referenceId` matches the RSVP's `orderId`
-3. Sum the absolute values of HOLD amounts (they're stored as negative values)
-4. Convert credit points to cash: `totalHoldAmount = creditPoints * creditExchangeRate`
-
-**Note:** HOLD entries are created when prepaid reservations are made using customer credit. The HOLD is released when:
-
-- RSVP is completed (converted to revenue via `StoreLedger` entry)
-- RSVP is cancelled/refunded (HOLD entry is reversed)
-
-### Revenue Earned Calculation
-
-Revenue is calculated directly from completed RSVP records (not from `StoreLedger`):
-
-1. Find all RSVPs with status `Completed` in the current month (store timezone)
-2. For each RSVP, extract:
-   - `facilityCost`: Cost charged for facility (if applicable)
-   - `serviceStaffCost`: Cost charged for service staff (if applicable)
-3. Sum revenue based on `revenueType` filter:
-   - `"all"`: Sum of `facilityCost + serviceStaffCost`
-   - `"facility"`: Sum of `facilityCost` only
-   - `"service_staff"`: Sum of `serviceStaffCost` only
+1. For upcoming RSVPs: Extract `facilityCost` and `serviceStaffCost` from all upcoming RSVP records
+2. For completed RSVPs: Extract `facilityCost` and `serviceStaffCost` from completed RSVPs in the selected period
+3. Calculate totals:
+   - `totalRevenue`: Sum of `facilityCost + serviceStaffCost`
+   - `facilityCost`: Sum of `facilityCost` only
+   - `serviceStaffCost`: Sum of `serviceStaffCost` only
 
 **Note:**
 
-- Revenue is only recognized when RSVP is marked as `Completed`. Prepaid reservations that haven't been completed don't count as revenue.
+- Revenue is only recognized when RSVP is marked as `Completed`. Prepaid reservations that haven't been completed don't count as revenue for completed statistics.
+- Revenue breakdown (facility vs service staff) is always shown for both upcoming and completed statistics.
 - Revenue is calculated directly from RSVP records (`facilityCost` and `serviceStaffCost` fields) rather than from `StoreLedger` entries.
-- This approach allows filtering by revenue type (facility vs service staff) and matches the actual cost breakdown stored in RSVP records.
+- This approach matches the actual cost breakdown stored in RSVP records.
 
 ### Unused Credit Calculation
 
@@ -298,39 +276,27 @@ Unused credit represents customer credit that has not been consumed:
 1. Count customers with `point > 0` in `CustomerCredit` table
 2. Sum all unused credit points
 
-**Note:** This includes credit that may be on HOLD for Ready RSVPs. The distinction is:
-
-- **HOLD amount**: Credit reserved for specific Ready RSVPs (shown separately)
-- **Unused credit**: Total credit balance across all customers (includes HOLD)
+**Note:** This includes credit that may be on HOLD for Ready RSVPs. The total unused credit represents the sum of all customer credit balances.
 
 ## UI/UX Design
 
 ### Layout
 
 - **Mobile (< 640px):** 1 column grid
-- **Tablet (640px - 1024px):** 2 column grid
-- **Desktop (>= 1024px):** 4 column grid
+- **Tablet (640px - 1024px):** 2 column grid (`@xl/main:grid-cols-2`)
+- **Desktop (>= 1920px):** 3 column grid (`@5xl/main:grid-cols-3`)
 
-### Revenue Type Toggle
+### Period Toggle
 
-**Component:** `RsvpRevenueTypeToggle`
-
-**Location:** `src/components/rsvp-revenue-type-toggle.tsx`
-
-**Design:** Similar to `RsvpStatusLegend` with matching color scheme
+**Component:** Button group with three buttons
 
 **Features:**
 
-- Three toggle buttons: "All", "Facility", "Service Staff"
-- Color-coded buttons with left border accent (matching `RsvpStatusLegend` style)
-- Selection indicator with check icon
+- Three buttons: "This Week", "This Month", "This Year"
+- Active button uses `variant="default"`, inactive buttons use `variant="outline"`
 - Responsive design (touch-friendly on mobile)
-- Updates revenue statistics when selection changes
-
-**Styling:**
-
-- Uses same color pattern as `RsvpStatusLegend`: left border (`border-l-2`), gray text (`text-gray-700`), colored backgrounds
-- Colors: Blue for "All", Green for "Facility", Purple for "Service Staff"
+- Updates completed statistics when selection changes
+- Date range calculation matches `RsvpHistoryClient` behavior
 
 ### Cards
 
@@ -338,7 +304,7 @@ Each statistics card displays:
 
 - **Header:** Badge with icon and title
 - **Main Value:** Large, prominent number (tabular font for alignment)
-- **Sub-value (if applicable):** Smaller text below main value (revenue amounts are filtered by selected revenue type)
+- **Sub-values (if applicable):** List of revenue breakdown items (Total Revenue, Facility Cost, Service Staff Cost)
 - **Footer:** "Click to view" instruction text
 - **Interaction:** Entire card is clickable link to relevant page
 
@@ -361,20 +327,21 @@ Each statistics card displays:
 **Statistics Labels:**
 
 - `rsvp_upcoming_reservations` - "Upcoming Reservations"
-- `rsvp_ready_status` - "Ready Status"
-- `rsvp_total_amount_in_hold` - "Total amount in hold"
+- `rsvp_completed_this_week` - "Completed This Week"
 - `rsvp_completed_this_month` - "Completed This Month"
-- `rsvp_total_revenue_earned` - "Total revenue earned"
-- `rsvp_unused_customer_credit` - "Customers with Credit"
-- `rsvp_total_unused_credit` - "Total unused credit"
+- `rsvp_completed_this_year` - "Completed This Year"
+- `rsvp_total_revenue` - "Total Revenue"
+- `rsvp_facility_cost` - "Facility Cost"
+- `rsvp_service_staff_cost` - "Service Staff Cost"
+- `rsvp_customers_with_credit` - "Customers with Credit"
+- `rsvp_total_unused_credit` - "Total Unused Credit"
 - `rsvp_stats_click_to_view` - "Click to view details"
 
-**Revenue Type Toggle:**
+**Period Toggle:**
 
-- `rsvp_revenue_type` - "Revenue Type"
-- `rsvp_revenue_type_all` - "All"
-- `rsvp_revenue_type_facility` - "Facility"
-- `rsvp_revenue_type_service_staff` - "Service Staff"
+- `this_week` - "This Week"
+- `this_month` - "This Month"
+- `this_year` - "This Year"
 
 ### Currency Formatting
 
@@ -420,13 +387,14 @@ Each statistics card displays:
 
 Potential improvements that are not currently implemented:
 
-1. **Date Range Filtering:** Allow admins to select custom date ranges instead of just current month
+1. **Custom Date Range Filtering:** Allow admins to select custom date ranges instead of just predefined periods
 2. **Historical Trends:** Show statistics over time (weekly, monthly trends)
 3. **Export Functionality:** Download statistics as CSV/Excel
 4. **Drill-Down Views:** Click statistics to see detailed breakdowns
-5. **Comparison Views:** Compare current month with previous month
+5. **Comparison Views:** Compare current period with previous period
 6. **Advanced Analytics:** Utilization rates, peak time analysis, resource occupancy rates
 7. **Real-Time Updates:** WebSocket integration for live statistics updates
+8. **Ready Status Statistics:** Add statistics for Ready status RSVPs with HOLD amounts
 
 ## Related Requirements
 
@@ -460,8 +428,6 @@ src/
 │                   │   ├── rsvp-stats.tsx  # Client component
 │                   │   └── store-admin-dashboard.tsx  # Integration point
 │                   └── page.tsx            # Store admin home page
-├── components/
-│   └── rsvp-revenue-type-toggle.tsx        # Revenue type filter toggle component
 ```
 
 ## Testing Considerations
@@ -470,8 +436,7 @@ src/
 
 - Test statistics calculations in server action
 - Test edge cases (no data, null values, boundary dates)
-- Test date calculations (start/end of month, store timezone handling)
-- Test revenue type filtering (all, facility, service_staff)
+- Test date calculations (start/end of period, store timezone handling)
 - Test revenue calculation from RSVP records (facilityCost, serviceStaffCost)
 
 ### Integration Tests
@@ -479,6 +444,7 @@ src/
 - Test API endpoint returns correct data
 - Test access control (unauthorized users cannot access)
 - Test data transformation (BigInt/Decimal serialization)
+- Test period parameter validation
 
 ### UI Tests
 
@@ -487,9 +453,8 @@ src/
 - Test error handling
 - Test responsive layout
 - Test navigation links
-- Test revenue type toggle functionality
-- Test toggle updates statistics when selection changes
-- Test toggle matches `RsvpStatusLegend` styling
+- Test period toggle functionality
+- Test period toggle updates statistics when selection changes
 
 ### Performance Tests
 
@@ -501,17 +466,17 @@ src/
 
 The RSVP Statistics Dashboard provides store administrators with a quick overview of key reservation metrics. The implementation uses a client-server architecture with SWR for efficient data fetching, parallel database queries for performance, and responsive UI design for mobile and desktop devices.
 
-The dashboard displays four key statistics:
+The dashboard displays three key statistics:
 
-1. Upcoming reservations count
-2. Ready status count with HOLD amount
-3. Completed reservations this month with revenue earned (filterable by revenue type)
-4. Customers with unused credit count and total
+1. Upcoming reservations count with revenue breakdown (total, facility, service staff)
+2. Completed reservations for the selected period (week/month/year) with revenue breakdown
+3. Customers with unused credit count and total
 
 **Key Features:**
 
-- **Revenue Type Filtering:** Toggle between viewing all revenue, facility-only revenue, or service staff-only revenue
-- **Store Timezone-Based Periods:** "Current month" is calculated based on store timezone (matching `RsvpHistoryClient`), not UTC
+- **Period Selection:** Toggle between viewing completed reservations for the current week, month, or year
+- **Store Timezone-Based Periods:** Period boundaries are calculated based on store timezone (matching `RsvpHistoryClient`), not UTC
+- **Revenue Breakdown:** All revenue statistics show breakdown by facility cost and service staff cost
 - **Direct Revenue Calculation:** Revenue is calculated from RSVP records (`facilityCost` and `serviceStaffCost`) rather than from `StoreLedger` entries
 
 All statistics are calculated server-side with proper access control, and displayed client-side with loading states and error handling.

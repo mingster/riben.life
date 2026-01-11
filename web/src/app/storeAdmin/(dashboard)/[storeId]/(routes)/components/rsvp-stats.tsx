@@ -83,12 +83,9 @@ export function RsvpStats({
 	}, [storeTimezone]);
 
 	// Handle period change (same logic as RsvpHistoryClient)
-	const handlePeriodChange = useCallback(
-		(period: PeriodType) => {
-			setPeriodType(period);
-		},
-		[],
-	);
+	const handlePeriodChange = useCallback((period: PeriodType) => {
+		setPeriodType(period);
+	}, []);
 
 	// Calculate date range based on period (same logic as RsvpHistoryClient)
 	const dateRange = useMemo(() => {

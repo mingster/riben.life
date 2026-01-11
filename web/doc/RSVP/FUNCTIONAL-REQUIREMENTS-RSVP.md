@@ -215,8 +215,9 @@ Store Admins have all Store Staff permissions, plus:
     * Prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`; if total cost is missing or zero, prepaid is skipped
     * **Currency Handling:** Order currency is set to the store's `defaultCurrency` to ensure consistency across order creation and payment processing.
     * Payment method is determined based on store settings:
-      * If `store.useCustomerCredit = true`: Order is created with "credit" payment method
+      * If `store.useCustomerCredit = true`: Order is created with "credit" payment method (uses `CustomerCredit.point` with `creditExchangeRate`)
       * If `store.useCustomerCredit = false`: Order is created with "TBD" (To Be Determined) payment method
+      * **Note**: `CustomerCredit.fiat` (RSVP account balance) is always available regardless of `useCustomerCredit` setting
     * **Payment Method Updates:** When marking orders as paid, the system explicitly uses the provided payment method ID to ensure correct payment method tracking. Payment methods are correctly specified during order payment and refund processes.
     * Order is created as unpaid (`isPaid = false`) for customer to complete payment at checkout
     * Customer is redirected to `/checkout/[orderId]` to select payment method and complete payment
@@ -226,7 +227,7 @@ Store Admins have all Store Staff permissions, plus:
       * This ensures the phone number used for the reservation matches the phone number associated with the order
       * The confirmed phone number is used for order tracking and customer communication
   * Payment can be made using:
-    * Customer credit (if `useCustomerCredit = true` and customer selects "credit" payment method)
+    * Customer credit points (if `useCustomerCredit = true` and customer selects "credit" payment method - uses `CustomerCredit.point`)
     * Other payment methods (Stripe, LINE Pay, cash, etc.) available at checkout
 * Payment status tracked via `alreadyPaid` flag (updated after payment completion)
 * Reservation linked to order via `orderId` when prepaid
@@ -325,7 +326,7 @@ Store Admins have all Store Staff permissions, plus:
    **If `rsvpSettings.minPrepaidPercentage > 0`:**
 
    * System creates `storeOrder` for the prepaid amount with:
-     * Payment method: "credit" if `store.useCustomerCredit = true`, otherwise "TBD"
+     * Payment method: "credit" if `store.useCustomerCredit = true` (uses `CustomerCredit.point`), otherwise "TBD"
      * Order status: `Pending` (unpaid)
      * Shipping method: "digital"
    * Reservation `orderId` is set to the created order ID

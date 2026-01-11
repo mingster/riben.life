@@ -150,71 +150,98 @@ No facility required
 - **If no arrive time**: Status should be `RsvpStatus.Ready` (40) - indicates recurring reservation ready for service
 - **If arrive time present**: Status should be `RsvpStatus.Completed` (50) - indicates completed reservation
 
-### 5. Payment Status and Order/Ledger Creation
+### 5. Payment Status and Order/Ledger Creation (HOLD Payment Flow)
 
-**Requirement**: Mark reservations as paid if paid date exists, and create StoreOrder and StoreLedger accordingly
+**Requirement**: Mark reservations as paid if paid date exists, and create StoreOrder and ledger entries accordingly using the HOLD payment flow.
 
 **Important**: If a paid date is present in the first line, it indicates that the customer has already paid for all reservations in that block (e.g., "10H" = 10 hours = 10 reservations). All reservations in that block should be marked as paid.
 
-**Approach**:
+**Approach** (HOLD Payment Flow):
 
 - Parse paid date from first line: `（MM/DD YYYY）`
 - If paid date exists:
   - Set `alreadyPaid = true` for all reservations in the block
   - Create `StoreOrder` with `isPaid = true` for each reservation (if customerId exists and cost > 0)
     - Use `createRsvpStoreOrder()` function from `@/actions/store/reservation/create-rsvp-store-order`
-    - Payment method: Use "TBD" payment method (for admin-created orders)
+    - Payment method: Use "credit" payment method (customer credit payment for prepaid RSVPs)
     - Order total: Service staff cost (calculated from defaultCost)
     - Currency: Store's default currency
     - Order status: Confirmed
     - Payment status: Paid
     - Paid date: Use parsed paid date converted to UTC epoch
-  - Create `StoreLedger` entry for revenue recognition (if order is paid)
-    - Amount: Order total (positive for revenue)
-    - Fee: 0 (no payment processing fee for admin-created orders)
-    - Platform fee: 0
-    - Currency: Store's default currency
-    - Type: StoreLedgerType.Revenue (or appropriate type for paid orders)
-    - Balance: Calculate from last ledger balance + amount
-    - Description: Include RSVP ID and details
-    - Link to StoreOrder: Use orderId from created StoreOrder
+  - Process prepaid payment using customer credit points (HOLD design):
+    - **Note**: Uses `CustomerCredit.point` and requires `store.useCustomerCredit = true`
+    - Check if customer has sufficient credit point balance
+    - If sufficient credit points:
+      - Reduce customer credit balance (credit is held, not spent yet)
+      - Create `CustomerCreditLedger` entry:
+        - Type: `CustomerCreditLedgerType.Hold` (HOLD type - credit is held, not spent)
+        - Amount: Negative (credit held from customer balance)
+        - Balance: Updated customer credit balance after hold
+        - `referenceId`: Order ID (link to the StoreOrder)
+        - `note`: RSVP prepaid payment description
+      - **No `StoreLedger` entry is created at this stage** (revenue not yet recognized)
+      - RSVP status is set to `RsvpStatus.Ready (40)` (ready when credit is held)
+    - If insufficient credit: Handle error appropriately
 - If no paid date:
   - Set `alreadyPaid = false`
   - Create `StoreOrder` with `isPaid = false` (if customerId exists and cost > 0)
     - This allows customer to pay later
     - Same structure as paid orders, but `isPaid = false` and no paidDate
 
+**Revenue Recognition (when RSVP is completed)**:
+
+- When RSVP status changes to `Completed (50)`:
+  - Held credit is converted to spent credit
+  - Customer credit balance remains the same (already reduced during hold phase)
+  - New `CustomerCreditLedger` entry is created:
+    - Type: `CustomerCreditLedgerType.Spend`
+    - Amount: Negative (credit spent)
+    - `referenceId`: RSVP ID (link to RSVP, not order)
+    - `note`: RSVP completion description
+  - `StoreLedger` entry is created for revenue recognition:
+    - Type: `StoreLedgerType.CreditUsage` (revenue recognition)
+    - Amount: Positive (revenue recognized)
+    - `orderId`: Original order ID
+    - `balance`: Increases by cash value of credit used
+    - `description`: RSVP completion description
+    - `fee`: 0 (no payment processing fee for credit usage)
+    - `platformFee`: 0 (no platform fee for credit usage)
+
 **Technical Notes**:
 
 - **Paid Date**: If paid date is present, it means customer has paid for ALL reservations in that block (e.g., "10H" = 10 hours = 10 reservations). All reservations should be marked as `alreadyPaid = true`.
+- **HOLD Payment Flow**: Prepaid RSVPs with customer credit use a two-phase payment model (HOLD → SPEND):
+  - **Phase 1 (Payment)**: Credit is held when RSVP is created (`CustomerCreditLedger` type `HOLD`, no `StoreLedger` entry)
+  - **Phase 2 (Completion)**: Credit is spent when RSVP is completed (`CustomerCreditLedger` type `SPEND`, `StoreLedger` entry for revenue recognition)
 - RSVP `alreadyPaid` field is `boolean`
 - StoreOrder must be created if `customerId` exists and `serviceStaffCost > 0`
 - StoreOrder creation uses `createRsvpStoreOrder()` function
   - Requires shipping method (uses "reserve" if available, otherwise default)
-  - Requires payment method (uses payment method with `payUrl = "TBD"` for admin-created orders)
+  - Requires payment method (uses payment method with `payUrl = "credit"` for customer credit payment)
   - Requires reservation prepaid product (ensured by `ensureReservationPrepaidProduct()`)
   - Links RSVP to order via `orderId` field
-- StoreLedger must be created if order is paid (`isPaid = true`)
-  - StoreLedger entries require `orderId` (link to StoreOrder)
-  - Balance calculation: Get last ledger balance, add amount, update balance
-  - Description should include RSVP ID for reference
-  - Type should reflect the payment method (revenue recognition)
+- Customer credit balance is reduced when credit is held (HOLD phase)
+- Customer credit balance remains the same when HOLD is converted to SPEND (already reduced during HOLD phase)
+- **No `StoreLedger` entry is created at payment stage** (HOLD design - revenue not yet recognized)
+- `StoreLedger` entry is created only when RSVP is completed (revenue recognition)
 - **Completion Status**:
   - If `arriveTime` is present, it indicates the RSVP is completed
     - Set RSVP status to `RsvpStatus.Completed`
-    - If `alreadyPaid = false` and customer credit is enabled, process credit deduction
-    - Credit deduction will automatically create StoreLedger entry via `deduceCustomerCredit()` function
-    - StoreLedger entry for completed RSVP:
+    - If `alreadyPaid = true` and payment method is "credit": Convert HOLD to SPEND and create `StoreLedger` entry
+    - If `alreadyPaid = false` and customer credit is enabled: Process credit deduction via `deduceCustomerCredit()` function
+      - This will automatically create `StoreLedger` entry for credit usage
+      - StoreLedger type: `StoreLedgerType.CreditUsage`
       - Amount: Cash value of credit points used
-      - Type: StoreLedgerType.CreditUsage
-      - Created when credit is deducted for service
   - If no `arriveTime` (empty line or no time range), it indicates a recurring reservation
     - Set RSVP status to `RsvpStatus.Ready`
     - Set `arriveTime` to `null`
     - Make reservation recurring in the same time slot (weekly recurrence pattern)
     - Status `Ready` indicates the reservation is ready to be confirmed/completed when the customer arrives
+    - Credit remains in HOLD status until RSVP is completed
 - All operations should be within the same transaction to ensure atomicity
 - Use store's default currency from `store.defaultCurrency`
+- Use `processRsvpPrepaidPaymentUsingCredit()` function for processing prepaid payment with credit (HOLD design)
 
 ### 6. Cost Calculation
 
@@ -261,31 +288,36 @@ No facility required
      - Calculate cost
      - Create RSVP using `createRsvpAction` (or batch create)
      - If `alreadyPaid = true` and `customerId` exists and cost > 0:
-       - Create StoreOrder (via `createRsvpStoreOrder()`)
-       - Create StoreLedger entry (within same transaction)
+       - Create StoreOrder with `isPaid = true` (via `createRsvpStoreOrder()`)
+       - Process prepaid payment using customer credit (HOLD design):
+         - Reduce customer credit balance (credit is held, not spent yet)
+         - Create `CustomerCreditLedger` entry with type `HOLD`
+         - **No `StoreLedger` entry is created at this stage** (revenue not yet recognized)
+         - RSVP status is set to `RsvpStatus.Ready (40)`
 
 **Technical Notes**:
 
 - Can use `createRsvpAction` individually for each RSVP (simpler, but slower)
   - `createRsvpAction` creates StoreOrder if `customerId` exists and cost > 0
-  - StoreLedger creation must be handled separately after RSVP creation if `alreadyPaid = true`
+  - For prepaid RSVPs with customer credit: Use `processRsvpPrepaidPaymentUsingCredit()` function to handle HOLD payment flow
+  - HOLD payment flow: Creates `CustomerCreditLedger` entry with type `HOLD`, no `StoreLedger` entry at payment stage
 - Or create bulk action similar to `create-products-bulk.ts` pattern:
   - Parse all data first
   - Validate all entries
   - Create in transaction using `sqlClient.$transaction()`:
     - Create RSVP
     - Create StoreOrder (if needed)
-    - Create StoreLedger (if order is paid)
+    - Process prepaid payment using customer credit (HOLD design) if `alreadyPaid = true`
+      - Create `CustomerCreditLedger` entry with type `HOLD`
+      - **No `StoreLedger` entry is created at payment stage**
 - Use `createRsvpAction` if validation/notification logic is needed
 - Use direct Prisma create if performance is critical and validation can be skipped
-- **Important**: StoreOrder and StoreLedger creation must be atomic with RSVP creation
-- StoreLedger requires:
-  - `orderId`: Link to created StoreOrder
-  - `balance`: Calculated from last ledger entry + amount
-  - `amount`: Order total (positive for revenue)
-  - `currency`: Store's default currency
-  - `type`: StoreLedgerType (appropriate for payment method)
-  - `description`: Include RSVP ID and reservation details
+- **Important**: StoreOrder and customer credit processing must be atomic with RSVP creation
+- For prepaid RSVPs with customer credit (HOLD design):
+  - `CustomerCreditLedger` entry with type `HOLD` is created at payment stage
+  - `CustomerCreditLedger` entry with type `SPEND` is created when RSVP is completed
+  - `StoreLedger` entry with type `CreditUsage` is created when RSVP is completed (revenue recognition)
+  - Revenue recognition happens when RSVP status changes to `Completed`, not at payment stage
 
 ## Implementation Approach
 
@@ -594,11 +626,14 @@ interface ImportResult {
          - If time range is provided: Set to same as rsvpTime (start time)
          - If no time range or empty line: Set to `null`
      - Note: `createRsvpAction` will automatically create StoreOrder if `customerId` exists and cost > 0
-     - Note: StoreLedger for payment should be created separately after RSVP creation if `alreadyPaid = true`:
-       - Create StoreLedger entry with orderId from created StoreOrder
-       - Calculate balance from last ledger entry
-       - Set appropriate ledger type (revenue recognition)
-       - Include RSVP ID in description
+     - Note: For prepaid RSVPs with `alreadyPaid = true` and customer credit enabled:
+       - Use `processRsvpPrepaidPaymentUsingCredit()` function to handle HOLD payment flow
+       - Creates `CustomerCreditLedger` entry with type `HOLD` at payment stage
+       - **No `StoreLedger` entry is created at payment stage** (revenue not yet recognized)
+       - Revenue recognition happens when RSVP is completed (converting HOLD to SPEND)
+     - Note: If `arriveTime` is present (RSVP is completed) and `alreadyPaid = true` and payment method is "credit":
+       - Convert HOLD to SPEND: Create `CustomerCreditLedger` entry with type `SPEND`
+       - Create `StoreLedger` entry with type `CreditUsage` for revenue recognition
      - Note: If `arriveTime` is present (RSVP is completed) and `alreadyPaid = false`:
        - Process credit deduction via `completeRsvpCore()` or equivalent
        - This will automatically create StoreLedger entry for credit usage

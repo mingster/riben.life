@@ -98,17 +98,19 @@ Store Admins have all Store Staff permissions, plus:
 
 #### 3.1.1 Basic Settings
 
-**FR-CREDIT-001:** Store admins must be able to enable/disable customer credit system:
+**FR-CREDIT-001:** Store admins must be able to enable/disable the credit **point** system:
 
-- Toggle `useCustomerCredit` to turn system on/off
-- When disabled, customers cannot refill or use credit
-- Existing credit balances remain accessible
+- Toggle `useCustomerCredit` to turn credit point system on/off (controls `CustomerCredit.point` only)
+- When disabled, customers cannot refill or use credit points
+- Existing credit point balances remain accessible
+- **Important**: `CustomerCredit.fiat` (RSVP account balance) is always available and operates independently
 
-**FR-CREDIT-002:** Store admins must be able to configure credit exchange rates:
+**FR-CREDIT-002:** Store admins must be able to configure credit exchange rates (for credit point system only):
 
-- `creditExchangeRate`: 1 credit point = X dollars (e.g., 1 point = $1.00)
-- `creditServiceExchangeRate`: 1 credit point = X minutes of service (optional, for service-based businesses)
-- Exchange rates are used for display and conversion purposes
+- `creditExchangeRate`: 1 credit point = X dollars (e.g., 1 point = $1.00) - used with `CustomerCredit.point`
+- `creditServiceExchangeRate`: 1 credit point = X minutes of service (optional, for service-based businesses) - used with `CustomerCredit.point`
+- Exchange rates are used for display and conversion of credit points only
+- **Note**: Fiat account balance (`CustomerCredit.fiat`) uses store currency directly and does not use exchange rates
 
 **FR-CREDIT-003:** Store admins must be able to configure purchase limits:
 
@@ -178,7 +180,7 @@ Store Admins have all Store Staff permissions, plus:
 **FR-CREDIT-010:** Customer refill must validate:
 
 - Customer is authenticated
-- Store has `useCustomerCredit` enabled
+- Store has `useCustomerCredit` enabled (for credit point system)
 - Recharge amount is within min/max limits
 - Payment is successfully processed
 - Order is created and marked as paid
@@ -251,11 +253,11 @@ Store Admins have all Store Staff permissions, plus:
 
 1. Customer selects "Use Credit" payment method
 2. System validates:
-   - Customer has sufficient credit balance
-   - Credit is not expired (if expiration is configured)
-   - Store has `useCustomerCredit` enabled
+   - Customer has sufficient credit point balance
+   - Credit points are not expired (if expiration is configured)
+   - Store has `useCustomerCredit` enabled (for credit point system)
 3. System creates `StoreOrder` with payment status
-4. System deducts credit from `CustomerCredit` balance
+4. System deducts credit points from `CustomerCredit.point` balance
 5. System creates `CustomerCreditLedger` entry:
    - Type: `SPEND`
    - Amount: negative (debit)
@@ -471,7 +473,8 @@ Store Admins have all Store Staff permissions, plus:
 **Key Points:**
 
 - One record per customer per store
-- `point` field stores current balance
+- `point` field stores current credit point balance (controlled by `useCustomerCredit` setting)
+- `fiat` field stores RSVP account balance (always available, independent of `useCustomerCredit`)
 - Automatically updated when transactions occur
 - Balance can be negative (for adjustments)
 
@@ -527,9 +530,10 @@ Store Admins have all Store Staff permissions, plus:
 
 **FR-CREDIT-033:** The system must store the following credit settings per store:
 
-- `useCustomerCredit` (Boolean): Enable/disable credit system
-- `creditExchangeRate` (Decimal): 1 point = X dollars
-- `creditServiceExchangeRate` (Decimal): 1 point = X minutes of service
+- `useCustomerCredit` (Boolean): Enable/disable credit **point** system (controls `CustomerCredit.point` only)
+- `creditExchangeRate` (Decimal): 1 point = X dollars (used with `CustomerCredit.point`)
+- `creditServiceExchangeRate` (Decimal): 1 point = X minutes of service (used with `CustomerCredit.point`)
+- **Note**: `CustomerCredit.fiat` is always available and does not depend on `useCustomerCredit`
 - `creditMaxPurchase` (Decimal): Maximum credit per purchase
 - `creditMinPurchase` (Decimal): Minimum credit per purchase
 - `creditExpiration` (Int): Credit expiration in days (default: 365)

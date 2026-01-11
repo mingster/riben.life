@@ -8,6 +8,7 @@ import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import type { ServiceStaffColumn } from "../service-staff-column";
 import { CellAction } from "./cell-action";
 import { EditServiceStaffDialog } from "./edit-service-staff-dialog";
+import { IconPencil } from "@tabler/icons-react";
 
 interface CreateTableColumnsOptions {
 	onDeleted?: (id: string) => void;
@@ -30,37 +31,22 @@ export const createTableColumns = (
 			cell: ({ row }) => {
 				const userName = row.getValue("userName") as string | null;
 				const userEmail = row.original.userEmail;
+				const userPhone = row.original.userPhoneNumber;
 				return (
-					<div className="flex items-center gap-2" title="click to edit">
+					<div className="flex items-center gap-1" title="click to edit">
 						<EditServiceStaffDialog
 							serviceStaff={row.original}
 							onUpdated={onUpdated}
 							trigger={
 								<button
 									type="button"
-									className="text-left hover:underline cursor-pointer font-medium"
+									className="text-left hover:underline cursor-pointer font-medium flex items-center gap-1"
 								>
-									{userName || userEmail || row.original.userId}
+									<IconPencil className="size-4" />{" "}
+									{userName || userPhone || userEmail || row.original.userId}
 								</button>
 							}
 						/>
-					</div>
-				);
-			},
-		},
-		{
-			accessorKey: "userEmail",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("email") || "Email"} />
-			),
-			cell: ({ row }) => {
-				const email = (row.getValue("userEmail") as string | null) || "-";
-				const phone = row.original.userPhoneNumber || "-";
-				const emailDisplay = email !== "-" ? email.substring(0, 20) : email;
-				return (
-					<div className="flex flex-col">
-						<span>{emailDisplay}</span>
-						<span className="text-sm text-muted-foreground">{phone}</span>
 					</div>
 				);
 			},
