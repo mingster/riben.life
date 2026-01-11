@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient, Prisma } from "@prisma/client";
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
@@ -27,8 +27,8 @@ interface CompleteRsvpCoreParams {
 	};
 	store: {
 		id: string;
-		creditServiceExchangeRate: any;
-		creditExchangeRate: any;
+		creditServiceExchangeRate: Prisma.Decimal | null;
+		creditExchangeRate: Prisma.Decimal | null;
 		defaultCurrency: string | null;
 		useCustomerCredit: boolean | null;
 	};
@@ -63,7 +63,12 @@ export async function completeRsvpCore(
 
 	// CRITICAL: Deduct credit BEFORE updating status to ensure atomicity
 	// If credit deduction fails, the status update will not happen (transaction rollback)
-	if (needsCreditDeduction && existingRsvp.Facility && existingRsvp.customerId && existingRsvp.facilityId) {
+	if (
+		needsCreditDeduction &&
+		existingRsvp.Facility &&
+		existingRsvp.customerId &&
+		existingRsvp.facilityId
+	) {
 		const duration = existingRsvp.Facility.defaultDuration || 60; // Default to 60 minutes if not set
 		const creditServiceExchangeRate = Number(store.creditServiceExchangeRate);
 		const creditExchangeRate = Number(store.creditExchangeRate);

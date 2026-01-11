@@ -33,8 +33,7 @@ export default async function OrderEditPage(props: {
 	let action;
 	if (order === null) {
 		action = PageAction.create;
-	}
-	else {
+	} else {
 		action = PageAction.modify;
 	}
 
