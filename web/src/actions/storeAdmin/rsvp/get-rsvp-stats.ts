@@ -2,15 +2,14 @@
 
 import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
-import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import { RsvpStatus, MemberRole } from "@/types/enum";
+import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
 import { z } from "zod";
-import { transformPrismaDataForJson } from "@/utils/utils";
 
 const getRsvpStatsSchema = z.object({
-	period: z.enum(["week", "month", "year"]).optional().default("month"),
-	startEpoch: z.bigint(),
-	endEpoch: z.bigint(),
+	period: z.enum(["week", "month", "year", "all"]).optional().default("month"),
+	startEpoch: z.bigint().nullable().optional(),
+	endEpoch: z.bigint().nullable().optional(),
 });
 
 export const getRsvpStatsAction = storeActionClient
@@ -21,11 +20,22 @@ export const getRsvpStatsAction = storeActionClient
 		const { period = "month", startEpoch, endEpoch } = parsedInput;
 		const now = getUtcNowEpoch();
 
-		// Get store to get creditExchangeRate
+		// For "all" period, don't filter by date range
+		const isAllPeriod = period === "all";
+
+		// Validate that date range is provided for non-"all" periods
+		if (!isAllPeriod && (!startEpoch || !endEpoch)) {
+			throw new Error(
+				"startEpoch and endEpoch are required for non-all periods",
+			);
+		}
+
+		// Get store to get creditExchangeRate and organizationId
 		const store = await sqlClient.store.findUnique({
 			where: { id: storeId },
 			select: {
 				creditExchangeRate: true,
+				organizationId: true,
 			},
 		});
 
@@ -33,95 +43,141 @@ export const getRsvpStatsAction = storeActionClient
 			? Number(store.creditExchangeRate)
 			: 1;
 
+		// Convert epoch timestamps to Date for DateTime field queries (Member.createdAt)
+		const startDate = startEpoch ? epochToDate(startEpoch) : null;
+		const endDate = endEpoch ? epochToDate(endEpoch) : null;
+
 		// Fetch stats in parallel
-		const [upcomingRsvps, completedRsvps, unusedCreditResult] =
-			await Promise.all([
-				// Get upcoming reservations: active statuses (Pending, Ready) or (alreadyPaid, confirmedByStore, or confirmedByCustomer) and rsvpTime >= now
-				sqlClient.rsvp.findMany({
-					where: {
-						storeId,
-						rsvpTime: {
-							gte: now,
+		const [
+			upcomingRsvps,
+			completedRsvps,
+			unusedCreditResult,
+			totalCustomerCount,
+			newCustomerCount,
+		] = await Promise.all([
+			// Get upcoming reservations: active statuses (Pending, Ready) or (alreadyPaid, confirmedByStore, or confirmedByCustomer) and rsvpTime >= now
+			sqlClient.rsvp.findMany({
+				where: {
+					storeId,
+					rsvpTime: {
+						gte: now,
+					},
+					AND: [
+						{
+							OR: [
+								{
+									status: {
+										in: [RsvpStatus.Pending, RsvpStatus.Ready],
+									},
+								},
+								{
+									alreadyPaid: true,
+								},
+								{
+									confirmedByStore: true,
+								},
+								{
+									confirmedByCustomer: true,
+								},
+							],
 						},
-						AND: [
-							{
-								OR: [
-									{
-										status: {
-											in: [RsvpStatus.Pending, RsvpStatus.Ready],
-										},
-									},
-									{
-										alreadyPaid: true,
-									},
-									{
-										confirmedByStore: true,
-									},
-									{
-										confirmedByCustomer: true,
-									},
+						{
+							status: {
+								notIn: [
+									RsvpStatus.Completed,
+									RsvpStatus.Cancelled,
+									RsvpStatus.NoShow,
 								],
 							},
-							{
-								status: {
-									notIn: [
-										RsvpStatus.Completed,
-										RsvpStatus.Cancelled,
-										RsvpStatus.NoShow,
-									],
-								},
-							},
-						],
-					},
-					select: {
-						facilityCost: true,
-						serviceStaffCost: true,
-					},
-				}),
+						},
+					],
+				},
+				select: {
+					facilityCost: true,
+					serviceStaffCost: true,
+				},
+			}),
 
-				// Get completed RSVPs in the selected period
-				sqlClient.rsvp.findMany({
+			// Get completed RSVPs in the selected period
+			// For "all" period, don't filter by date range
+			sqlClient.rsvp.findMany({
+				where: {
+					storeId,
+					status: RsvpStatus.Completed,
+					...(isAllPeriod
+						? {}
+						: startEpoch && endEpoch
+							? {
+									rsvpTime: {
+										gte: startEpoch,
+										lte: endEpoch,
+									},
+								}
+							: {}),
+				},
+				select: {
+					facilityCost: true,
+					serviceStaffCost: true,
+				},
+			}),
+
+			// Count and sum of unused fiat balance (fiat > 0)
+			Promise.all([
+				sqlClient.customerCredit.count({
 					where: {
 						storeId,
-						status: RsvpStatus.Completed,
-						rsvpTime: {
-							gte: startEpoch,
-							lte: endEpoch,
+						fiat: {
+							gt: 0,
 						},
-					},
-					select: {
-						facilityCost: true,
-						serviceStaffCost: true,
 					},
 				}),
+				sqlClient.customerCredit.aggregate({
+					where: {
+						storeId,
+						fiat: {
+							gt: 0,
+						},
+					},
+					_sum: {
+						fiat: true,
+					},
+				}),
+			]),
 
-				// Count and sum of unused credit (point > 0)
-				Promise.all([
-					sqlClient.customerCredit.count({
+			// Count total customers in this store (all members with customer role in the organization)
+			store?.organizationId
+				? sqlClient.member.count({
 						where: {
-							storeId,
-							point: {
-								gt: 0,
-							},
+							organizationId: store.organizationId,
+							role: MemberRole.customer,
 						},
-					}),
-					sqlClient.customerCredit.aggregate({
+					})
+				: Promise.resolve(0),
+
+			// Count new customers created in the selected period
+			store?.organizationId
+				? sqlClient.member.count({
 						where: {
-							storeId,
-							point: {
-								gt: 0,
-							},
+							organizationId: store.organizationId,
+							role: MemberRole.customer,
+							...(isAllPeriod
+								? {}
+								: startDate && endDate
+									? {
+											createdAt: {
+												gte: startDate,
+												lte: endDate,
+											},
+										}
+									: {}),
 						},
-						_sum: {
-							point: true,
-						},
-					}),
-				]),
-			]);
+					})
+				: Promise.resolve(0),
+		]);
 
 		const [unusedCreditCount, unusedCreditSum] = unusedCreditResult;
-		const totalUnusedCredit = unusedCreditSum._sum.point
-			? Number(unusedCreditSum._sum.point)
+		const totalUnusedCredit = unusedCreditSum._sum.fiat
+			? Number(unusedCreditSum._sum.fiat)
 			: 0;
 
 		// Calculate upcoming RSVP statistics
@@ -174,5 +230,7 @@ export const getRsvpStatsAction = storeActionClient
 			// Customers
 			customerCount: unusedCreditCount,
 			totalUnusedCredit,
+			totalCustomerCount,
+			newCustomerCount,
 		};
 	});
