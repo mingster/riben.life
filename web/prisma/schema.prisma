@@ -670,7 +670,7 @@ model Store {
 
   useOrderSystem Boolean @default(false) //使用訂單系統
 
-  useCustomerCredit         Boolean @default(false) //使用儲值系統
+  useCustomerCredit         Boolean @default(false) //使用儲值系統 use CustomerCredit.point
   creditExchangeRate        Decimal @default(0) // 1點 = ??元
   creditServiceExchangeRate Decimal @default(0) // 1點 = ??分鍾的服務
   creditMaxPurchase         Decimal @default(0) // 最多一次可購買的點數

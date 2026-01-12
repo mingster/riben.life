@@ -313,20 +313,29 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 			cell: ({ row }) => {
 				return (
 					<div
-						className="flex items-center gap-2"
+						className="flex flex-col gap-0"
 						title={t("user_edit_basic_info")}
 					>
-						<div className="flex flex-col">
-							<span>{row.getValue("name")}</span>
+						<div
+							className="flex flex-row items-center gap-0"
+							title="click to edit"
+						>
+							<EditCustomer item={row.original} onUpdated={handleUpdated} />
 							<Link
-								title="manage user billing"
+								title="manage user"
 								className="cursor-pointer text-sm text-blue-800 dark:text-blue-200 hover:text-gold"
 								href={`/storeAdmin/${storeId}/customers/${row.original.email}`}
 							>
-								{row.original.email}
+								{row.getValue("name")}
 							</Link>
 						</div>
-						<EditCustomer item={row.original} onUpdated={handleUpdated} />
+						<Link
+							title="manage user"
+							className="cursor-pointer text-sm text-blue-800 dark:text-blue-200 hover:text-gold"
+							href={`/storeAdmin/${storeId}/customers/${row.original.email}`}
+						>
+							{row.original.phoneNumber ? ` (${row.original.phoneNumber})` : ""}
+						</Link>
 					</div>
 				);
 			},
@@ -351,7 +360,8 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 					<div className="flex flex-row gap-1">
 						<CurrencyComponent value={fiat} />
 						<span className="text-sm font-mono text-muted-foreground">
-							{Number(point).toFixed(2)} {t("points") || "pts"}
+							{Number(point).toFixed(0)}
+							{t("points") || "pts"}
 						</span>
 					</div>
 				);

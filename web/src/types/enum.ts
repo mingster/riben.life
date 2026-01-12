@@ -72,6 +72,12 @@ export const PayoutSchedule: GeneralNVType[] = [
 	},
 ];
 
+export const PageAction = {
+	create: "Create",
+	modify: "Modify",
+	delete: "Delete",
+} as const;
+
 export type SubscriptionForUI = {
 	id: string;
 	customer: string;
@@ -133,7 +139,7 @@ export enum StoreLedgerType {
 export enum CustomerCreditLedgerType {
 	Topup = "TOPUP", // Customer or store operator adds credit (via payment)
 	Bonus = "BONUS", // Bonus credit awarded based on bonus rules
-	Hold = "HOLD", //TODO: When customer make a reservation, the credit is held. As the reservation completed, the credit is spent.
+	Hold = "HOLD", // When customer make a reservation, the credit is held. As the reservation completed, the credit is spent.
 	Spend = "SPEND", // Credit used for purchase/order
 	Refund = "REFUND", // Credit refunded (e.g., order cancellation)
 	Adjustment = "ADJUSTMENT", // Manual adjustment by store operator
@@ -165,12 +171,6 @@ export enum RsvpStatus {
 	Completed = 50, //已完成 checkout
 	Cancelled = 60, //已取消
 	NoShow = 70, //未到
-}
-
-export enum PageAction {
-	Create = "Create",
-	Modify = "Modify",
-	Delete = "Delete",
 }
 
 export const MemberRole = {

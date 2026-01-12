@@ -39,7 +39,7 @@ export default async function StoreAdminHomePage(props: {
 			isPro(params.storeId),
 			sqlClient.category.count({ where: { storeId: params.storeId } }),
 			sqlClient.product.count({ where: { storeId: params.storeId } }),
-			sqlClient.rsvpSettings.findUnique({ where: { storeId: params.storeId } }),
+			sqlClient.rsvpSettings.findFirst({ where: { storeId: params.storeId } }),
 		]);
 
 	if (!storeResult) {

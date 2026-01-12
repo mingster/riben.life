@@ -27,6 +27,7 @@ import {
 	IconScale,
 	IconSettings,
 	IconTicket,
+	IconUpload,
 	IconUser,
 	IconUsers,
 } from "@tabler/icons-react";
@@ -41,7 +42,6 @@ type Menu = {
 	href: string;
 	label: string;
 	active: boolean;
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	icon: any;
 	submenus: Submenu[];
 	badge?: number;
@@ -158,17 +158,7 @@ export function GetMenuList(
 							},
 						]
 					: []),
-				{
-					href: `${nav_prefix}/rsvp`,
-					label: t("Rsvp_List"),
-					active:
-						pathname.includes(`${nav_prefix}/rsvp`) &&
-						!pathname.includes(`${nav_prefix}/rsvp-settings`) &&
-						!pathname.includes(`${nav_prefix}/rsvp/history`),
 
-					icon: IconCalendarCheck,
-					submenus: [],
-				},
 				{
 					href: `${nav_prefix}/rsvp/history`,
 					label: t("rsvp_history"),
@@ -178,8 +168,28 @@ export function GetMenuList(
 					badge: options?.readyToConfirmRsvpCount,
 				},
 				{
+					href: `${nav_prefix}/rsvp`,
+					label: t("rsvp_list_add"),
+					active:
+						pathname.includes(`${nav_prefix}/rsvp`) &&
+						!pathname.includes(`${nav_prefix}/rsvp-settings`) &&
+						!pathname.includes(`${nav_prefix}/rsvp/history`) &&
+						!pathname.includes(`${nav_prefix}/rsvp/import`),
+
+					icon: IconCalendarCheck,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/rsvp/import`,
+					label: t("rsvp_import"),
+					active: pathname.includes(`${nav_prefix}/rsvp/import`),
+					icon: IconUpload,
+					submenus: [],
+				},
+
+				{
 					href: `${nav_prefix}/waiting-list`,
-					label: t("Waiting_List"),
+					label: t("waiting_list"),
 					active:
 						pathname.includes(`${nav_prefix}/waiting-list`) &&
 						!pathname.includes(`${nav_prefix}/waiting-list-settings`),

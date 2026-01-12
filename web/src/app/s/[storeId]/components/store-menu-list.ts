@@ -91,7 +91,7 @@ export function GetMenuList(
 
 							{
 								href: `${nav_prefix}/waiting-list`,
-								label: t("Waiting_List"),
+								label: t("waiting_list"),
 								active: pathname.includes(`${nav_prefix}/waiting-list`),
 								icon: IconClock,
 								submenus: [],

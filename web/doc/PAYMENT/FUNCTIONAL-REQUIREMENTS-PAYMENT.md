@@ -398,7 +398,7 @@ The system includes the following built-in payment method plugins:
 
 #### 3.4.2 RSVP Prepaid Payment Processing
 
-**FR-PAY-015:** When processing RSVP prepaid payment with credit:
+**FR-PAY-015:** When processing RSVP prepaid payment with credit (using two-phase HOLD model):
 
 1. System checks customer credit balance
 2. System calculates required prepaid amount:
@@ -407,6 +407,14 @@ The system includes the following built-in payment method plugins:
    - If totalCost is missing/0, prepaid is skipped
 3. If sufficient balance:
    - Creates `StoreOrder` with credit payment method
+   - Reduces customer credit balance (credit is held, not spent)
+   - Creates `CustomerCreditLedger` entry:
+     - Type: `HOLD` (not `SPEND`)
+     - Amount: negative (credit held from customer balance)
+     - `referenceId`: order ID
+   - **Does NOT create `StoreLedger` entry** (revenue not recognized until completion)
+   - Sets RSVP status to `Ready (40)` (not `ReadyToConfirm`)
+   - Sets `alreadyPaid = true`
    - Deducts credit from customer balance
    - Creates `CustomerCreditLedger` entry for deduction
    - Updates RSVP: `alreadyPaid = true`, `orderId = order ID`, `status = ReadyToConfirm`

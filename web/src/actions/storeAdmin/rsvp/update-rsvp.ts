@@ -20,6 +20,7 @@ import { validateReservationTimeWindow } from "@/actions/store/reservation/valid
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
 import { processRsvpPrepaidPaymentUsingCredit } from "@/actions/store/reservation/process-rsvp-prepaid-payment-using-credit";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
+import { getT } from "@/app/i18n";
 
 export const updateRsvpAction = storeActionClient
 	.metadata({ name: "updateRsvp" })
@@ -30,6 +31,7 @@ export const updateRsvpAction = storeActionClient
 			id,
 			customerId,
 			facilityId,
+			serviceStaffId,
 			numOfAdult,
 			numOfChild,
 			rsvpTime: rsvpTimeInput,
@@ -127,6 +129,44 @@ export const updateRsvpAction = storeActionClient
 			};
 		}
 
+		// Validate service staff if provided (optional)
+		let serviceStaff: {
+			id: string;
+			userId: string;
+			userName: string | null;
+			userEmail: string | null;
+		} | null = null;
+
+		if (serviceStaffId) {
+			const serviceStaffResult = await sqlClient.serviceStaff.findFirst({
+				where: {
+					id: serviceStaffId,
+					storeId,
+					isDeleted: false,
+				},
+				include: {
+					User: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+						},
+					},
+				},
+			});
+
+			if (!serviceStaffResult) {
+				throw new SafeError("Service staff not found");
+			}
+
+			serviceStaff = {
+				id: serviceStaffResult.id,
+				userId: serviceStaffResult.userId,
+				userName: serviceStaffResult.User.name,
+				userEmail: serviceStaffResult.User.email,
+			};
+		}
+
 		// Convert rsvpTime to UTC Date, then to BigInt epoch
 		// The Date object from datetime-local input represents a time in the browser's local timezone
 		// We need to interpret it as store timezone time and convert to UTC
@@ -155,8 +195,38 @@ export const updateRsvpAction = storeActionClient
 				singleServiceMode: true,
 				defaultDuration: true,
 				minPrepaidPercentage: true,
+				mustSelectFacility: true,
+				mustHaveServiceStaff: true,
 			},
 		});
+
+		// Validate facility is required when mustSelectFacility is true
+		// Check if any facilities exist for this store before requiring selection
+		if (rsvpSettings?.mustSelectFacility && !facilityId) {
+			const facilitiesCount = await sqlClient.storeFacility.count({
+				where: { storeId },
+			});
+			if (facilitiesCount > 0) {
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_facility_required") || "Facility is required",
+				);
+			}
+		}
+
+		// Validate service staff is required when mustHaveServiceStaff is true
+		// Check if any service staff exist for this store before requiring selection
+		if (rsvpSettings?.mustHaveServiceStaff && !serviceStaffId) {
+			const serviceStaffCount = await sqlClient.serviceStaff.count({
+				where: { storeId, isDeleted: false },
+			});
+			if (serviceStaffCount > 0) {
+				const { t } = await getT();
+				throw new SafeError(
+					t("rsvp_service_staff_required") || "Service staff is required",
+				);
+			}
+		}
 
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
 		// Note: Store admin can still update reservations, but we validate to ensure consistency
@@ -274,6 +344,7 @@ export const updateRsvpAction = storeActionClient
 					data: {
 						customerId: customerId || null,
 						facilityId: facilityId || null,
+						serviceStaffId: serviceStaffId || null,
 						numOfAdult,
 						numOfChild,
 						rsvpTime,

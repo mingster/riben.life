@@ -8,7 +8,7 @@ import {
 	getDateInTz,
 	getOffsetHours,
 } from "@/utils/datetime-utils";
-import { RsvpStatus, StoreLedgerType } from "@/types/enum";
+import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
 import { getT } from "@/app/i18n";
 import { format } from "date-fns";
 import { createRsvpStoreOrder } from "./create-rsvp-store-order";
@@ -65,7 +65,7 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 	// Determine initial status and payment status:
 	// - If prepaid is NOT required: status = ReadyToConfirm (immediately ready for confirmation)
 	// - If prepaid IS required: check if customer has enough credit
-	//   - If yes: deduct credit, set status = ReadyToConfirm, alreadyPaid = true
+	//   - If yes: hold credit, set status = Ready, alreadyPaid = true (HOLD design)
 	//   - If no: status = Pending (will be updated to ReadyToConfirm after payment)
 	let initialStatus = prepaidRequired
 		? Number(RsvpStatus.Pending)
@@ -190,14 +190,15 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 					},
 				});
 
-				// Create CustomerCreditLedger entry with orderId reference
+				// Create CustomerCreditLedger entry with HOLD type (HOLD design)
+				// Credit is held, not spent yet - revenue will be recognized when RSVP is completed
 				await tx.customerCreditLedger.create({
 					data: {
 						storeId,
 						userId: customerId,
-						amount: new Prisma.Decimal(-requiredCredit), // Negative for deduction
+						amount: new Prisma.Decimal(-requiredCredit), // Negative for hold
 						balance: new Prisma.Decimal(newBalance),
-						type: "SPEND",
+						type: CustomerCreditLedgerType.Hold, // HOLD type - credit is held, not spent
 						referenceId: orderId, // Link to the order
 						note: t("rsvp_prepaid_payment_credit_note", {
 							points: requiredCredit,
@@ -208,40 +209,12 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 					},
 				});
 
-				// Create StoreLedger entry for credit usage (revenue recognition)
-				const lastLedger = await tx.storeLedger.findFirst({
-					where: { storeId },
-					orderBy: { createdAt: "desc" },
-					take: 1,
-				});
-
-				const balance = Number(lastLedger ? lastLedger.balance : 0);
-				const newStoreBalance = balance + cashValue;
-
-				await tx.storeLedger.create({
-					data: {
-						storeId,
-						orderId: orderId,
-						amount: new Prisma.Decimal(cashValue), // Positive for revenue
-						fee: new Prisma.Decimal(0), // No payment processing fee for credit usage
-						platformFee: new Prisma.Decimal(0), // No platform fee for credit usage
-						currency: (store.defaultCurrency || "twd").toLowerCase(),
-						type: StoreLedgerType.CreditUsage, // Credit usage (revenue recognition)
-						balance: new Prisma.Decimal(newStoreBalance),
-						description: t("rsvp_prepaid_payment_note", {
-							points: requiredCredit,
-							cashValue,
-							currency: (store.defaultCurrency || "twd").toUpperCase(),
-						}),
-						note: "",
-						availability: getUtcNowEpoch(), // Immediate availability for credit usage
-						createdAt: getUtcNowEpoch(),
-					},
-				});
+				// No StoreLedger entry is created at this stage (HOLD design)
+				// Revenue will be recognized when RSVP is completed (converting HOLD to SPEND)
 			});
 
-			// Update status and payment flag
-			initialStatus = Number(RsvpStatus.ReadyToConfirm);
+			// Update status and payment flag (HOLD design: status = Ready when credit is held)
+			initialStatus = Number(RsvpStatus.Ready);
 			alreadyPaid = true;
 		}
 	}

@@ -30,15 +30,11 @@ The RSVP (Reservation/Appointment) system enables any business to accept, manage
 
 ### 2.2 Store Admin
 
-* Store owners
-* Full administrative access to store settings and configuration
-* Can manage all aspects of the RSVP system
+* Store owners with full administrative access
 
 ### 2.3 Store Staff
 
-* Store employees with operational permissions
-* Can manage reservations and customer interactions
-* Limited access to settings (as configured by Store Admin)
+* Store employees with operational permissions (limited settings access)
 
 ### 2.4 System Admin
 
@@ -98,7 +94,7 @@ Store Admins have all Store Staff permissions, plus:
 
 **Note:** No sign-in is required to create reservations. Anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`).
 
-**FR-RSVP-001a:** Customers must be able to create weekly recurring reservations with the following capabilities:
+**FR-RSVP-001a (NOT YET IMPLEMENTED):** Customers must be able to create weekly recurring reservations. **Note:** Recurring reservations are not yet implemented (no `seriesId` in schema). Documented for future implementation.
 
 **Recurring Pattern:**
 
@@ -219,8 +215,9 @@ Store Admins have all Store Staff permissions, plus:
     * Prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`; if total cost is missing or zero, prepaid is skipped
     * **Currency Handling:** Order currency is set to the store's `defaultCurrency` to ensure consistency across order creation and payment processing.
     * Payment method is determined based on store settings:
-      * If `store.useCustomerCredit = true`: Order is created with "credit" payment method
+      * If `store.useCustomerCredit = true`: Order is created with "credit" payment method (uses `CustomerCredit.point` with `creditExchangeRate`)
       * If `store.useCustomerCredit = false`: Order is created with "TBD" (To Be Determined) payment method
+      * **Note**: `CustomerCredit.fiat` (RSVP account balance) is always available regardless of `useCustomerCredit` setting
     * **Payment Method Updates:** When marking orders as paid, the system explicitly uses the provided payment method ID to ensure correct payment method tracking. Payment methods are correctly specified during order payment and refund processes.
     * Order is created as unpaid (`isPaid = false`) for customer to complete payment at checkout
     * Customer is redirected to `/checkout/[orderId]` to select payment method and complete payment
@@ -230,7 +227,7 @@ Store Admins have all Store Staff permissions, plus:
       * This ensures the phone number used for the reservation matches the phone number associated with the order
       * The confirmed phone number is used for order tracking and customer communication
   * Payment can be made using:
-    * Customer credit (if `useCustomerCredit = true` and customer selects "credit" payment method)
+    * Customer credit points (if `useCustomerCredit = true` and customer selects "credit" payment method - uses `CustomerCredit.point`)
     * Other payment methods (Stripe, LINE Pay, cash, etc.) available at checkout
 * Payment status tracked via `alreadyPaid` flag (updated after payment completion)
 * Reservation linked to order via `orderId` when prepaid
@@ -244,8 +241,8 @@ Store Admins have all Store Staff permissions, plus:
 
 * Status values (RsvpStatus enum):
   * `0` = Pending (待確認/尚未付款) - Initial status when reservation is created
-  * `10` = ReadyToConfirm - if store doesn't require prepaid, reservation status is ReadyToConfirm; otherwise reservation is ReadyToConfirm once user completed payment. If `noNeedToConfirm = true` and `alreadyPaid = true`, reservation automatically transitions to Ready (40) without requiring store confirmation.
-  * `40` = Ready (已入場) - Customer has arrived and is ready for service
+  * `10` = ReadyToConfirm - If no prepaid required, status is ReadyToConfirm; otherwise ReadyToConfirm after payment. Auto-transitions to Ready (40) if `noNeedToConfirm = true` and `alreadyPaid = true`.
+  * `40` = Ready (已就序) - Customer has arrived and is ready for service. Only RSVPs in Ready status can be completed.
   * `50` = Completed (已完成) - Reservation/service has been completed
   * `60` = Cancelled (已取消) - Reservation has been cancelled
   * `70` = NoShow (未到) - Customer did not show up for the reservation
@@ -329,7 +326,7 @@ Store Admins have all Store Staff permissions, plus:
    **If `rsvpSettings.minPrepaidPercentage > 0`:**
 
    * System creates `storeOrder` for the prepaid amount with:
-     * Payment method: "credit" if `store.useCustomerCredit = true`, otherwise "TBD"
+     * Payment method: "credit" if `store.useCustomerCredit = true` (uses `CustomerCredit.point`), otherwise "TBD"
      * Order status: `Pending` (unpaid)
      * Shipping method: "digital"
    * Reservation `orderId` is set to the created order ID
@@ -438,11 +435,15 @@ Store Admins have all Store Staff permissions, plus:
 **Payment Flow (if prepaid required and store uses credit system):**
 
 * Customer can create a pending RSVP first, then be prompted to complete refill of store credit if his/her credit is not sufficient.
-* When customer's credit is refilld, system deduced needed credit for the RSVP, the `alreadyPaid` flag is set to `true`
-* The transaction is saved to StoreOrder, CreditLedger, and StoreLeger for the refill and the credit usage.
-* The reservation status changes to `ReadyToConfirm (10)`
+* When customer's credit is refilled and RSVP is paid for:
+  * Store order is created with credit payment method
+  * Customer credit is held (not spent yet) - credit balance is reduced
+  * `CustomerCreditLedger` entry is created with type `HOLD` (negative amount)
+  * **No `StoreLedger` entry is created** at this stage (revenue not yet recognized)
+  * The `alreadyPaid` flag is set to `true`
+  * The reservation status changes to `Ready (40)` (not `ReadyToConfirm`)
 * The reservation is linked to the order via `orderId`
-* Store staff notifications are sent only when `alreadyPaid = true` and status is `ReadyToConfirm (10)`
+* Store staff notifications are sent when `alreadyPaid = true` and status is `Ready (40)`
 
 **Payment Flow (if prepaid required and store do not use credit system):**
 
@@ -469,20 +470,40 @@ Store Admins have all Store Staff permissions, plus:
 
 **Service Flow:**
 
-* When the customer arrives and service is completed, store staff marks status as `Completed (50)`
-* The `arriveTime` field is recorded as the status changes.
+* When the customer arrives, store staff marks status as `Ready (40)` (can set `arriveTime` at this time)
+* When service is completed, store staff completes the reservation (status `Completed (50)`) - **Only RSVPs in Ready status can be completed**
+  * If RSVP was prepaid with credit (`alreadyPaid = true` and payment method is "credit"):
+    * Held credit is converted to spent credit
+    * New `CustomerCreditLedger` entry is created with type `SPEND` (negative amount)
+    * `StoreLedger` entry is created with type `CreditUsage` (positive amount, revenue recognition)
+    * Store receives the credit (revenue is recognized)
+  * If RSVP was not prepaid (`alreadyPaid = false`):
+    * Customer credit is deducted (if credit service exchange rate is configured)
+    * `CustomerCreditLedger` entry is created with type `SPEND` (negative amount)
+    * `StoreLedger` entry is created with type `CreditUsage` (positive amount, revenue recognition)
+* The `arriveTime` field can be set when status changes to Ready or during reservation creation
 
 **Termination States:**
 
 * Customer can cancel RSVP without time restriction if `RSVPSettings.canCancel = true`.
 * If the reservation is cancelled (by customer or store), status changes to `Cancelled (60)`
 * **Refund Policy:** When cancelled, customer credit or payment will be refunded only if cancellation occurs OUTSIDE the `cancelHours` window (i.e., cancelled more than `cancelHours` hours before the reservation time). If cancellation occurs WITHIN the `cancelHours` window (i.e., less than `cancelHours` hours before the reservation time), no refund is given.
+* **Credit Refund Process (if prepaid with credit):**
+  * If cancellation is outside the cancelHours window:
+    * Held credit is refunded to customer
+    * Customer credit balance is restored
+    * `CustomerCreditLedger` entry is created with type `REFUND` (positive amount)
+    * Store order status is updated to `Refunded`
+  * If cancellation is within the cancelHours window:
+    * No refund is given (held credit remains deducted)
 * If the customer does not show up for the reservation, store staff can mark status as `NoShow (70)`
 * Once in `Cancelled` or `NoShow` status, the reservation cannot transition to active states.
 * Customer can delete the RSVP when it is still pending (`Pending (0)` or `ReadyToConfirm (10)`).
 * **Status Restrictions:** Reservations with status `Completed (50)`, `Cancelled (60)`, or `NoShow (70)` cannot be deleted. Only `Pending (0)` or `ReadyToConfirm (10)` reservations can be deleted.
 
-#### 3.4.4 Recurring Reservation Use Cases
+#### 3.4.4 Recurring Reservation Use Cases (NOT YET IMPLEMENTED)
+
+**Note:** Recurring reservations are not yet implemented (no `seriesId` in schema). Documented for future implementation.
 
 **UC-RSVP-REC-001: Weekly Recurring Reservation (Same Time, Same Day of Week)**
 
@@ -1022,7 +1043,8 @@ Completed (50) [when service is finished]
 
 **FR-RSVP-019:** Store staff and Store admins must be able to mark reservation status:
 
-* Mark as "completed" when customers arrive (`arriveTime` recorded)
+* Mark reservations as "ready" (status `Ready (40)`) when customers arrive (can set `arriveTime` at this time)
+* Complete reservations (status `Completed (50)`) - **Only RSVPs in Ready status can be completed**
 * Mark as "no-show" if customers don't arrive
 * Cancel reservations (with reason tracking)
 * View customer signature if provided
@@ -1476,6 +1498,8 @@ Completed (50) [when service is finished]
 * No-show rate
 * Cancellation rate
 
+**Note:** Current implementation of the RSVP Statistics Dashboard is documented in [RSVP-STATS-DASHBOARD.md](./RSVP-STATS-DASHBOARD.md). The dashboard provides real-time overview metrics including upcoming reservations, ready status counts, completed reservations for the current month, and customer credit information.
+
 #### 3.11.2 Customer Analytics
 
 **FR-RSVP-058:** Store admins must be able to view customer history (Store Staff access not permitted):
@@ -1616,7 +1640,9 @@ Completed (50) [when service is finished]
 
 **Note:** Customer credit is store-specific. Each customer can have separate credit balances at different stores.
 
-### 4.6 Recurring Reservation Data Model
+### 4.6 Recurring Reservation Data Model (NOT YET IMPLEMENTED)
+
+**Note:** Recurring reservations are not yet implemented (no `seriesId` in schema). Documented for future implementation.
 
 **FR-RSVP-063:** The system must store recurring reservation series information:
 
@@ -1765,7 +1791,7 @@ Completed (50) [when service is finished]
 
 **BR-RSVP-029:** The system must support recurring/repeated reservations, allowing customers to create multiple reservations with the same or similar patterns.
 
-**BR-RSVP-030:** Recurring reservations must support weekly pattern only:
+**BR-RSVP-030 (NOT YET IMPLEMENTED):** Recurring reservations must support weekly pattern only. **Note:** Not yet implemented (no `seriesId` in schema).
 
 * **Weekly:** Same day of week and time slot repeated every week for N weeks
 * Example: "Every Monday at 2:00 PM for 10 weeks" creates 10 separate reservations, one for each Monday

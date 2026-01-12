@@ -56,17 +56,17 @@ export const [actionName]Action = [actionClient]
 
 #### 2.2.2 Component Architecture
 
-* **Server Components (default):** Data fetching, initial page rendering
+* **Server Components (default):** Data fetching, initial rendering
 * **Client Components:** Interactive UI, forms, state management
 * **Pattern:** Server page → Client component → Server actions
 
 #### 2.2.3 Data Flow
 
-1. **Server Components:** Fetch initial data from database
-2. **Client Components:** Manage local state, handle user interactions
-3. **Server Actions:** Process mutations, return results
-4. **State Updates:** Client components update local state after successful mutations
-5. **Local Storage (Anonymous Users):** Client components save reservation data to browser local storage for anonymous users to enable reservation history viewing without authentication
+1. Server Components fetch initial data
+2. Client Components manage local state and handle interactions
+3. Server Actions process mutations
+4. Client Components update local state after successful mutations
+5. Anonymous users: Local storage for reservation history
 
 ***
 
@@ -131,7 +131,7 @@ model Rsvp {
   numOfAdult        Int       @default(1)
   numOfChild        Int       @default(0)
   rsvpTime          BigInt    // Epoch milliseconds, not DateTime
-  arriveTime        BigInt?   // Epoch milliseconds, not DateTime. The time should be set when status is set to Ready
+  arriveTime        BigInt?   // Epoch milliseconds, not DateTime. Can be set during creation or when status changes to Ready
   status            Int       @default(0) // RsvpStatus enum: 0=Pending, 10=ReadyToConfirm, 40=Ready, 50=Completed, 60=Cancelled, 70=NoShow
   alreadyPaid       Boolean   @default(false) //已付款
   referenceId       String?   // reference to the StoreOrder id or CustomerCreditLedger id
@@ -144,6 +144,11 @@ model Rsvp {
   facilityCost      Decimal?  // The cost that was charged
   facilityCredit    Decimal?  // The credit that was charged
   pricingRuleId     String?   // Reference to the pricing rule used
+
+  serviceStaffId     String?   //optional: if the service staff is selected
+  serviceStaffCost   Decimal?  //optional: if the service staff is selected, the cost that was charged
+  serviceStaffCredit Decimal?  //optional: if the service staff is selected, the credit that was charged
+
   createdAt         BigInt    // Epoch milliseconds, not DateTime
   updatedAt         BigInt    // Epoch milliseconds, not DateTime
   createdBy         String?   // userId who created this reservation
@@ -355,8 +360,9 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
     * Creates unpaid `StoreOrder` with prepaid amount
     * **Currency Handling:** Order currency is set to store's `defaultCurrency` using `store.defaultCurrency` field
     * Payment method selection:
-      * If `store.useCustomerCredit = true`: Order created with "credit" payment method
+      * If `store.useCustomerCredit = true`: Order created with "credit" payment method (uses `CustomerCredit.point` with `creditExchangeRate`)
       * If `store.useCustomerCredit = false`: Order created with "TBD" payment method
+      * **Note**: `CustomerCredit.fiat` (RSVP account balance) is always available regardless of `useCustomerCredit` setting
     * **Payment Method Updates:** When marking orders as paid (via `markOrderAsPaidCore`), the system explicitly uses the provided `paymentMethodId` parameter to ensure correct payment method tracking. Payment methods are fetched by `payUrl` identifier and passed to payment processing functions.
     * Shipping method: "digital" (for reservation orders)
     * Order status: `Pending` (unpaid)
@@ -537,10 +543,10 @@ The `update-reservation.ts` action allows customers to modify their reservations
     * **Credit Refund:** If payment method is "credit" and cancellation is outside the cancelHours window, credit is automatically refunded to customer
     * **Refund Process:**
       1. Checks if cancellation is within cancelHours window using `isCancellationWithinCancelHours()` helper
-      2. If outside window, finds original SPEND ledger entry to determine refund amount
+      2. If outside window, finds original HOLD ledger entry (by `orderId`) to determine refund amount
       3. Restores credit to customer balance (`CustomerCredit`)
       4. Creates `CustomerCreditLedger` entry (type: "REFUND", positive amount)
-      5. Creates `StoreLedger` entry (revenue reversal, negative amount, type: `CreditUsage`)
+      5. **No `StoreLedger` entry is created** (since no revenue was recognized during hold phase)
       6. Updates `StoreOrder` status to `Refunded` (both `orderStatus` and `paymentStatus`)
     * **Refund Function:** `processRsvpCreditRefund()` - Shared utility function located in `src/actions/store/reservation/process-rsvp-refund.ts`
     * **Transaction Safety:** All refund operations are performed within a database transaction
@@ -1228,23 +1234,19 @@ For Google Actions Center Appointments Redirect integration:
   * No SPEND ledger entry found (might not have been paid with credit)
 
 * **Refund Process (if conditions met):**
-  1. Finds original SPEND ledger entry by `orderId` to determine refund amount
-  2. Calculates refund amount (absolute value of SPEND entry amount)
+  1. Finds original HOLD ledger entry by `orderId` to determine refund amount
+  2. Calculates refund amount (absolute value of HOLD entry amount)
   3. Gets current customer credit balance
   4. Calculates new balance (current + refund amount)
   5. Gets store credit exchange rate for cash value calculation
   6. **Transaction Processing:**
-     * Updates `CustomerCredit` balance (adds refund amount)
+     * Updates `CustomerCredit` balance (adds refund amount, restores held credit)
      * Creates `CustomerCreditLedger` entry:
        * Type: "REFUND"
        * Amount: positive (credit restored)
        * `referenceId`: original order ID
        * `note`: refund reason or default message
-     * Creates `StoreLedger` entry:
-       * Type: `CreditUsage` (same as original credit usage)
-       * Amount: negative (revenue reversal)
-       * `orderId`: original order ID
-       * `balance`: decreases by refund cash amount
+     * **No `StoreLedger` entry is created** (since no revenue was recognized during hold phase)
      * Updates `StoreOrder`:
        * `refundAmount`: cash value of refund
        * `orderStatus`: `Refunded`
