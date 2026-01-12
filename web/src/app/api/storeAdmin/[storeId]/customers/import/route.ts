@@ -3,8 +3,6 @@ import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { getUtcNowEpoch, getUtcNow } from "@/utils/datetime-utils";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { CustomerCreditLedgerType, MemberRole } from "@/types/enum";
 import { normalizePhoneNumber, validatePhoneNumber } from "@/utils/phone-utils";
@@ -76,7 +74,7 @@ export async function POST(
 		if (accessCheck instanceof NextResponse) {
 			return accessCheck;
 		}
-		if (accessCheck !== true) {
+		if (!accessCheck.success) {
 			return NextResponse.json(
 				{ success: false, error: "Unauthorized" },
 				{ status: 403 },
@@ -202,11 +200,8 @@ export async function POST(
 		const errors: string[] = [];
 
 		// Get current user (store operator) for creatorId in ledger entries
-		const headersList = await headers();
-		const session = await auth.api.getSession({
-			headers: headersList,
-		});
-		const creatorId = session?.user?.id || null;
+		// Use userId from accessCheck to avoid duplicate auth import
+		const creatorId = accessCheck.userId;
 
 		log.info("Starting import process", {
 			metadata: {

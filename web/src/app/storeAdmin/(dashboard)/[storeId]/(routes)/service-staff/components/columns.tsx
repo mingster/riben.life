@@ -90,10 +90,8 @@ export const createTableColumns = (
 				return (
 					<div className="flex flex-row gap-1">
 						<span>{cost.toFixed(2)}</span>
-						<span className="text-sm text-muted-foreground">/</span>
-						<span className="text-sm text-muted-foreground">
-							{credit.toFixed(2)}
-						</span>
+						<span className=" text-muted-foreground">/</span>
+						<span className=" text-muted-foreground">{credit.toFixed(2)}</span>
 					</div>
 				);
 			},

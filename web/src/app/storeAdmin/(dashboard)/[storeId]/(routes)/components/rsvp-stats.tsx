@@ -155,13 +155,10 @@ export function RsvpStats({
 	// Only fetch if RSVP is enabled
 	// For "all" period, don't send startEpoch/endEpoch
 	const url =
-		rsvpSettings?.acceptReservation &&
-		params.storeId &&
-		isHydrated
+		rsvpSettings?.acceptReservation && params.storeId && isHydrated
 			? periodType === "all"
 				? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=${periodType}`
-				: dateRange.startEpoch &&
-						dateRange.endEpoch
+				: dateRange.startEpoch && dateRange.endEpoch
 					? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=${periodType}&startEpoch=${dateRange.startEpoch}&endEpoch=${dateRange.endEpoch}`
 					: null
 			: null;

@@ -161,7 +161,7 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 					paymentMethodPayUrl: "credit", // Credit payment for prepaid
 					rsvpId, // Pass RSVP ID for pickupCode
 					facilityId, // Pass facility ID for pickupCode
-					facilityName, // Pass facility name for product name
+					productName: facilityName, // Pass facility name for product name
 					serviceStaffId: null, // No service staff for this function
 					serviceStaffName: null, // No service staff name for this function
 					rsvpTime: rsvpTimeEpoch, // Pass RSVP time (BigInt epoch)

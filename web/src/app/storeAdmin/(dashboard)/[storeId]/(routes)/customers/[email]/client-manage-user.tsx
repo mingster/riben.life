@@ -24,6 +24,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EditCustomer } from "../components/edit-customer";
+import { DisplayReservations } from "@/components/display-reservations";
 
 export interface iUserTabProps {
 	user: User | null;
@@ -118,9 +119,6 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 					<TabsTrigger value="rsvp" className="px-5 lg:min-w-40">
 						{t("customer_mgmt_tabs_rsvp")}
 					</TabsTrigger>
-					<TabsTrigger value="stats" className="px-5 lg:min-w-40">
-						{t("customer_mgmt_tabs_stats")}
-					</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="info" className="space-y-4">
@@ -137,7 +135,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 						<CardContent className="space-y-4">
 							<div className="flex flex-col gap-1">
 								{user.createdAt && (
-									<span className="text-sm text-muted-foreground">
+									<span className=" text-muted-foreground">
 										{t("customer_mgmt_member_since").replace(
 											"{0}",
 											format(
@@ -152,8 +150,9 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 									</span>
 								)}
 
-								{user.createdAt && (
-									<span className="text-sm text-muted-foreground">
+								{/*
+								user.createdAt && (
+									<span className=" text-muted-foreground">
 										{t("subscription_service_expiration").replace("{0}", "")}
 										{format(
 											typeof user.createdAt === "number"
@@ -164,7 +163,8 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 											datetimeFormat,
 										)}
 									</span>
-								)}
+								)
+								*/}
 							</div>
 						</CardContent>
 					</Card>
@@ -183,8 +183,8 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 
 				<TabsContent value="credits">
 					<Card>
-						<CardHeader></CardHeader>
 						<CardContent className="space-y-4">
+							<CardHeader></CardHeader>
 							<div className="flex flex-col gap-1">
 								{user.CustomerCredits &&
 									user.CustomerCredits.length > 0 &&
@@ -192,17 +192,25 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 										<div className="flex items-center gap-1">
 											{t("customer_credit_balance")}:{" "}
 											<span className="font-semibold">
-												{Number(user.CustomerCredits[0].point) || 0}
+												{Number(user.CustomerCredits[0].fiat) || 0}
 											</span>
 										</div>
 									)}
-								<DisplayCreditLedger ledger={user.CustomerCreditLedger} />
+								<DisplayCreditLedger ledger={user.CustomerFiatLedger} />
 							</div>
 						</CardContent>
 					</Card>
 				</TabsContent>
-				<TabsContent value="stats">
-					<div className="grid grid-cols-2 text-xs gap-1 pb-4"></div>
+				<TabsContent value="rsvp">
+					<Card>
+						<CardContent className="space-y-4">
+							<CardHeader></CardHeader>
+							<DisplayReservations
+								reservations={user.Reservations}
+								hideActions={true}
+							/>
+						</CardContent>
+					</Card>
 				</TabsContent>
 			</Tabs>
 		</div>

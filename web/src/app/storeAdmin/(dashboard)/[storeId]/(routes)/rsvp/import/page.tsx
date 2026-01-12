@@ -75,8 +75,6 @@ export default async function RsvpImportPage(props: {
 		<Container>
 			<Suspense fallback={<Loader />}>
 				<div className="space-y-4">
-					
-
 					<ClientImportRsvp
 						storeTimezone={storeTimezone}
 						storeCurrency={storeCurrency}

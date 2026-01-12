@@ -264,7 +264,7 @@ export async function processRsvpCreditPointsRefund(
 					fee: new Prisma.Decimal(0), // No fee for credit refunds
 					platformFee: new Prisma.Decimal(0), // No platform fee for credit refunds
 					currency: orderCurrency,
-					type: StoreLedgerType.CreditUsage, // Same type as credit usage (revenue-related)
+					type: StoreLedgerType.Revenue, // Same type as credit usage (revenue-related)
 					balance: new Prisma.Decimal(newStoreBalance),
 					description: t("rsvp_cancellation_refund_description", {
 						points: refundCreditAmount,

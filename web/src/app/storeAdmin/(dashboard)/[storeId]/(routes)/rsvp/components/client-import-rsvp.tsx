@@ -86,6 +86,7 @@ interface ClientImportRsvpProps {
 
 interface ParsedRsvpPreview {
 	customerName: string;
+	productName: string; // Product name from import (e.g., "網球課10H")
 	rsvpTime: Date | null;
 	arriveTime: Date | null; // Same as rsvpTime from imported text
 	duration: number;
@@ -232,6 +233,7 @@ export function ClientImportRsvp({
 									// No valid time slot found yet, skip this recurring RSVP
 									preview.push({
 										customerName: block.customerName,
+										productName: block.productName,
 										rsvpTime: null,
 										arriveTime: null,
 										duration: 0,
@@ -325,6 +327,7 @@ export function ClientImportRsvp({
 
 								preview.push({
 									customerName: block.customerName,
+									productName: block.productName,
 									rsvpTime: nextDateUtc, // Future date calculated from last valid time slot
 									arriveTime: null, // Recurring RSVPs don't have arriveTime
 									duration: lastValidTimeSlot.duration,
@@ -343,6 +346,7 @@ export function ClientImportRsvp({
 							// Invalid date/time format
 							preview.push({
 								customerName: block.customerName,
+								productName: block.productName,
 								rsvpTime: null,
 								arriveTime: null,
 								duration: 0,
@@ -409,6 +413,7 @@ export function ClientImportRsvp({
 
 						preview.push({
 							customerName: block.customerName,
+							productName: block.productName,
 							rsvpTime: rsvpTimeDate,
 							arriveTime: arriveTimeDate,
 							duration: dateTimeResult.duration,
@@ -423,6 +428,7 @@ export function ClientImportRsvp({
 					} catch (error) {
 						preview.push({
 							customerName: block.customerName,
+							productName: block.productName,
 							rsvpTime: null,
 							arriveTime: null,
 							duration: 0,
@@ -476,6 +482,7 @@ export function ClientImportRsvp({
 			// Send parsed preview data with pre-calculated rsvpTime and arriveTime
 			const importData = parsedRsvps.map((rsvp) => ({
 				customerName: rsvp.customerName,
+				productName: rsvp.productName,
 				rsvpTime: rsvp.rsvpTime ? rsvp.rsvpTime.toISOString() : null,
 				arriveTime: rsvp.arriveTime ? rsvp.arriveTime.toISOString() : null,
 				duration: rsvp.duration,
@@ -509,9 +516,11 @@ export function ClientImportRsvp({
 			}
 
 			toastSuccess({
-				description: t("rsvp_import_success", {
-					count: result.createdReservations,
-				}) || `Successfully imported ${result.createdReservations} reservation(s)`,
+				description:
+					t("rsvp_import_success", {
+						count: result.createdReservations,
+					}) ||
+					`Successfully imported ${result.createdReservations} reservation(s)`,
 			});
 
 			// Reset form and state

@@ -133,7 +133,7 @@ export enum StoreLedgerType {
 	PlatformPayment = 0, // 代收 - Platform payment processing
 	StorePaymentProvider = 1, // Store's own payment provider
 	CreditRecharge = 2, // Customer credit refill (unearned revenue - liability)
-	CreditUsage = 3, // Credit usage (revenue recognition)
+	Revenue = 3, // revenue recognition
 }
 
 export enum CustomerCreditLedgerType {

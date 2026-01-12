@@ -28,7 +28,7 @@ interface CreateRsvpStoreOrderParams {
 	paymentMethodPayUrl: string; // Payment method identifier (e.g., "credit", "TBD")
 	rsvpId: string; // RSVP reservation ID
 	facilityId: string | null; // Facility ID (optional)
-	facilityName: string; // Facility name for product name
+	productName: string; // Product name for product name
 	serviceStaffId: string | null; // Service staff ID (optional)
 	serviceStaffName: string | null; // Service staff name for product name (optional)
 	rsvpTime: bigint; // RSVP reservation time (BigInt epoch milliseconds)
@@ -59,7 +59,7 @@ export async function createRsvpStoreOrder(
 		paymentMethodPayUrl,
 		rsvpId,
 		facilityId,
-		facilityName,
+		productName: facilityName,
 		serviceStaffId,
 		serviceStaffName,
 		rsvpTime,
