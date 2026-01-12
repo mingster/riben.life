@@ -196,13 +196,11 @@ export function ClientImportRsvp({
 					rsvpTimeDate: Date; // Store as Date for pattern calculation
 				} | null = null;
 
-				// Track first and second valid RSVP times to calculate base pattern
-				let firstValidRsvpTime: Date | null = null;
-				let secondValidRsvpTime: Date | null = null;
+				// Track previous valid RSVP time to calculate incremental pattern
+				let previousValidRsvpTime: Date | null = null;
 
-				// Track the base time difference pattern from first two valid RSVPs
-				// This will be used for all recurring RSVPs
-				let baseTimeDifferenceMs: number | null = null;
+				// Track the time difference pattern between consecutive valid RSVPs
+				let timeDifferenceMs: number | null = null;
 
 				// Track recurring RSVP count for sequential numbers
 				let recurringRsvpCount = 0;
@@ -252,28 +250,31 @@ export function ClientImportRsvp({
 								// Increment recurring RSVP count for sequential numbers
 								recurringRsvpCount++;
 
-								// Calculate future date based on base pattern from first two valid RSVPs
+								// Calculate future date based on incremental pattern from imported data
 								let nextDateUtc: Date;
 
 								if (
-									baseTimeDifferenceMs !== null &&
+									timeDifferenceMs !== null &&
+									timeDifferenceMs > 0 &&
 									lastValidTimeSlot.rsvpTimeDate
 								) {
-									// Use the base time difference pattern from first two valid RSVPs
-									// Add the base time difference multiplied by the recurring count
+									// Use the calculated time difference pattern from the last two consecutive valid RSVPs
+									// Base date is the last valid RSVP's date (e.g., #5 = Jan 2)
+									// timeDifferenceMs is the actual time gap between the last two valid RSVPs
+									// (e.g., #4 = Dec 31, #5 = Jan 2 → gap = 2 days = 48 hours)
+									// For recurring RSVPs, add the time difference multiplied by the recurring count
 									const baseDate = lastValidTimeSlot.rsvpTimeDate;
-									const totalOffsetMs =
-										baseTimeDifferenceMs * recurringRsvpCount;
+									const totalOffsetMs = timeDifferenceMs * recurringRsvpCount;
 									nextDateUtc = addMilliseconds(baseDate, totalOffsetMs);
 
 									// Ensure the date is in the future
 									if (nextDateUtc <= nowInStoreTz) {
 										// If calculated date is in the past, find next future occurrence
-										// Keep adding the base time difference until we get a future date
+										// Keep adding the time difference until we get a future date
 										while (nextDateUtc <= nowInStoreTz) {
 											nextDateUtc = addMilliseconds(
 												nextDateUtc,
-												baseTimeDifferenceMs,
+												timeDifferenceMs,
 											);
 										}
 									}
@@ -371,16 +372,18 @@ export function ClientImportRsvp({
 
 						const dayOfWeek = getDateInTz(rsvpTimeDate, offsetHours).getDay();
 
-						// Track first and second valid RSVP times to calculate base pattern
-						if (firstValidRsvpTime === null) {
-							// This is the first valid RSVP
-							firstValidRsvpTime = rsvpTimeDate;
-						} else if (secondValidRsvpTime === null) {
-							// This is the second valid RSVP - calculate base pattern
-							secondValidRsvpTime = rsvpTimeDate;
-							baseTimeDifferenceMs =
-								secondValidRsvpTime.getTime() - firstValidRsvpTime.getTime();
+						// Calculate time difference pattern from consecutive valid RSVPs
+						// This tracks the gap between the last two consecutive valid RSVPs
+						// For example, if #4 = Dec 31 and #5 = Jan 2, timeDifferenceMs = 2 days (48 hours)
+						if (previousValidRsvpTime !== null) {
+							// Calculate the time difference between this and the previous valid RSVP
+							// This gives us the incremental pattern to use for recurring RSVPs
+							timeDifferenceMs =
+								rsvpTimeDate.getTime() - previousValidRsvpTime.getTime();
 						}
+
+						// Update previous valid RSVP time for next iteration
+						previousValidRsvpTime = rsvpTimeDate;
 
 						lastValidTimeSlot = {
 							startTime: reservation.startTime!,
@@ -448,9 +451,10 @@ export function ClientImportRsvp({
 					description: `${preview.filter((p) => p.status === "error").length} reservation(s) have errors`,
 				});
 			} else {
+				/*
 				toastSuccess({
 					description: `Successfully parsed ${preview.length} reservation(s)`,
-				});
+				});*/
 			}
 		} catch (error) {
 			toastError({
@@ -505,7 +509,9 @@ export function ClientImportRsvp({
 			}
 
 			toastSuccess({
-				description: `Successfully imported ${result.createdReservations} reservation(s)`,
+				description: t("rsvp_import_success", {
+					count: result.createdReservations,
+				}) || `Successfully imported ${result.createdReservations} reservation(s)`,
 			});
 
 			// Reset form and state
@@ -598,13 +604,17 @@ export function ClientImportRsvp({
 			},
 			{
 				accessorKey: "alreadyPaid",
-				header: t("payment_status") || "Payment Status",
+				header: t("Order_isPaid") || "Payment Status",
 				cell: ({ row }) => {
 					const paid = row.getValue("alreadyPaid") as boolean;
 					return (
-						<Badge variant={paid ? "default" : "secondary"}>
-							{paid ? t("paid") || "Paid" : t("unpaid") || "Unpaid"}
-						</Badge>
+						<span className="flex items-center justify-center">
+							<span
+								className={`h-2 w-2 rounded-full ${
+									paid ? "bg-green-500" : "bg-red-500"
+								}`}
+							/>
+						</span>
 					);
 				},
 				meta: {
@@ -624,14 +634,14 @@ export function ClientImportRsvp({
 					const statusLabel =
 						t(`rsvp_status_${rsvpStatus}`) || `Status ${rsvpStatus}`;
 					return (
-						<Badge
+						<span
 							className={cn(
-								"font-mono text-xs",
+								"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs font-mono",
 								getRsvpStatusColorClasses(rsvpStatus, false),
 							)}
 						>
-							{statusLabel}
-						</Badge>
+							<span className="font-medium">{statusLabel}</span>
+						</span>
 					);
 				},
 			},
@@ -733,7 +743,7 @@ export function ClientImportRsvp({
 									<span className="ml-2">{t("parsing") || "Parsing..."}</span>
 								</>
 							) : (
-								t("parse_preview") || "Parse & Preview"
+								t("preview") || "Parse & Preview"
 							)}
 						</Button>
 					</div>
@@ -786,7 +796,7 @@ export function ClientImportRsvp({
 							) : (
 								<>
 									<IconUpload className="mr-2 h-4 w-4" />
-									{t("import_rsvps") || "Import RSVPs"} ({parsedRsvps.length})
+									{t("import") || "Import RSVPs"} ({parsedRsvps.length})
 								</>
 							)}
 						</Button>
@@ -887,7 +897,7 @@ export function ClientImportRsvp({
 								<Input
 									type="number"
 									min="0"
-									step="0.01"
+									step="1"
 									value={editFormData.cost || 0}
 									onChange={(e) =>
 										setEditFormData({
@@ -940,7 +950,7 @@ export function ClientImportRsvp({
 									htmlFor="alreadyPaid"
 									className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 								>
-									{t("already_paid") || "Already Paid"}
+									{t("rsvp_already_paid") || "Already Paid"}
 								</label>
 							</div>
 						</div>

@@ -111,6 +111,11 @@ export function RsvpStats({
 		const hour = getValue("hour");
 		const minute = getValue("minute");
 
+		// For "all" period, return null epoch values (no date filtering)
+		if (periodType === "all") {
+			return { startEpoch: null, endEpoch: null };
+		}
+
 		const storeDate = new Date(year, month, day, hour, minute);
 		let periodStart: Date;
 		let periodEnd: Date;
@@ -128,9 +133,6 @@ export function RsvpStats({
 				periodStart = startOfYear(storeDate);
 				periodEnd = endOfYear(storeDate);
 				break;
-			case "all":
-				// For "all", return null to indicate no date filtering
-				return { startEpoch: null, endEpoch: null };
 			default:
 				periodStart = startOfMonth(storeDate);
 				periodEnd = endOfMonth(storeDate);
@@ -151,15 +153,17 @@ export function RsvpStats({
 
 	// Build URL with period query parameter
 	// Only fetch if RSVP is enabled
-	// For "all" period, skip date range; for other periods, require valid date range
+	// For "all" period, don't send startEpoch/endEpoch
 	const url =
 		rsvpSettings?.acceptReservation &&
 		params.storeId &&
-		isHydrated &&
-		(periodType === "all" || (dateRange.startEpoch && dateRange.endEpoch))
+		isHydrated
 			? periodType === "all"
-				? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=all`
-				: `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=${periodType}&startEpoch=${dateRange.startEpoch}&endEpoch=${dateRange.endEpoch}`
+				? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=${periodType}`
+				: dateRange.startEpoch &&
+						dateRange.endEpoch
+					? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=${periodType}&startEpoch=${dateRange.startEpoch}&endEpoch=${dateRange.endEpoch}`
+					: null
 			: null;
 
 	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
@@ -293,7 +297,7 @@ export function RsvpStats({
 						? t("rsvp_completed_this_month") || "Completed This Month"
 						: periodType === "year"
 							? t("rsvp_completed_this_year") || "Completed This Year"
-							: t("rsvp_completed_all") || "Completed (All Time)",
+							: t("rsvp_completed_all") || "Completed (All)",
 			value: completedCount,
 			subValues: [
 				{

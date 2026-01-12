@@ -75,12 +75,7 @@ export default async function RsvpImportPage(props: {
 		<Container>
 			<Suspense fallback={<Loader />}>
 				<div className="space-y-4">
-					<div>
-						<h1 className="text-2xl font-bold">Import RSVPs</h1>
-						<p className="text-sm text-muted-foreground mt-1">
-							Import reservation data from text format
-						</p>
-					</div>
+					
 
 					<ClientImportRsvp
 						storeTimezone={storeTimezone}

@@ -6,7 +6,7 @@ import { getUtcNowEpoch, dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { Prisma } from "@prisma/client";
-import { RsvpStatus, MemberRole, StoreLedgerType } from "@/types/enum";
+import { RsvpStatus, CustomerCreditLedgerType, MemberRole } from "@/types/enum";
 import crypto from "crypto";
 import { createRsvpStoreOrder } from "@/actions/store/reservation/create-rsvp-store-order";
 import { getT } from "@/app/i18n";
@@ -381,11 +381,22 @@ export async function POST(
 									data: { orderId },
 								});
 
-								// Process prepaid payment using fiat credit (always available, not controlled by useCustomerCredit)
-								if (alreadyPaid && orderId && serviceStaffCost > 0) {
-									const fiatAmount = serviceStaffCost;
+								// Process prepaid payment if alreadyPaid and customer credit enabled
+								if (
+									alreadyPaid &&
+									store.useCustomerCredit &&
+									store.creditExchangeRate &&
+									Number(store.creditExchangeRate) > 0 &&
+									orderId
+								) {
+									// Calculate required credit
+									const creditExchangeRate = Number(store.creditExchangeRate);
+									const requiredCredit =
+										creditExchangeRate > 0
+											? serviceStaffCost / creditExchangeRate
+											: serviceStaffCost;
 
-									// Get customer fiat balance
+									// Get customer credit balance
 									const customerCredit = await tx.customerCredit.findUnique({
 										where: {
 											storeId_userId: {
@@ -396,58 +407,71 @@ export async function POST(
 									});
 
 									const currentBalance = customerCredit
-										? Number(customerCredit.fiat)
+										? Number(customerCredit.point)
 										: 0;
 
-									if (currentBalance >= fiatAmount) {
-										// If RSVP is completed (has arriveTime), deduct fiat and create StoreLedger immediately
+									if (currentBalance >= requiredCredit) {
+										// Customer has enough credit - hold it
+										const newBalance = currentBalance - requiredCredit;
+
+										// Update customer credit balance
+										await tx.customerCredit.upsert({
+											where: {
+												storeId_userId: {
+													storeId: params.storeId,
+													userId: customerId,
+												},
+											},
+											create: {
+												storeId: params.storeId,
+												userId: customerId,
+												point: new Prisma.Decimal(newBalance),
+												updatedAt: getUtcNowEpoch(),
+											},
+											update: {
+												point: new Prisma.Decimal(newBalance),
+												updatedAt: getUtcNowEpoch(),
+											},
+										});
+
+										// Create CustomerCreditLedger entry with HOLD type
+										await tx.customerCreditLedger.create({
+											data: {
+												storeId: params.storeId,
+												userId: customerId,
+												amount: new Prisma.Decimal(-requiredCredit),
+												balance: new Prisma.Decimal(newBalance),
+												type: CustomerCreditLedgerType.Hold,
+												referenceId: orderId,
+												note: `${t("rsvp_prepaid_payment_credit_note") || "RSVP prepaid payment"}: ${requiredCredit.toFixed(2)} points`,
+												creatorId: customerId,
+												createdAt: getUtcNowEpoch(),
+											},
+										});
+
+										// If RSVP is completed (has arriveTime), convert HOLD to SPEND and create StoreLedger
 										if (
 											finalStatus === RsvpStatus.Completed &&
 											finalArriveTime !== null
 										) {
-											// Deduct fiat from customer balance
-											const newBalance = currentBalance - fiatAmount;
-
-											// Update customer fiat balance
-											await tx.customerCredit.update({
-												where: {
-													storeId_userId: {
-														storeId: params.storeId,
-														userId: customerId,
-													},
-												},
-												data: {
-													fiat: {
-														decrement: fiatAmount,
-													},
-													updatedAt: getUtcNowEpoch(),
-												},
-											});
-
-											// Create CustomerFiatLedger entry with PAYMENT type (completed RSVP)
+											// Convert HOLD to SPEND
 											const { t: t2 } = await getT();
-											await tx.customerFiatLedger.create({
+											await tx.customerCreditLedger.create({
 												data: {
 													storeId: params.storeId,
 													userId: customerId,
-													amount: new Prisma.Decimal(-fiatAmount), // Negative for payment
+													amount: new Prisma.Decimal(-requiredCredit),
 													balance: new Prisma.Decimal(newBalance),
-													type: "PAYMENT", // PAYMENT type for completed RSVP
-													referenceId: createdRsvp.id, // Link to RSVP
-													note:
-														t2("rsvp_completion_fiat_payment_note", {
-															amount: fiatAmount,
-															currency: (
-																store.defaultCurrency || "twd"
-															).toUpperCase(),
-														}) ||
-														`RSVP completion: ${fiatAmount} ${(store.defaultCurrency || "twd").toUpperCase()}`,
+													type: CustomerCreditLedgerType.Spend,
+													referenceId: createdRsvp.id,
+													note: `${t2("rsvp_credit_deduction_note") || "RSVP credit deduction"}: ${requiredCredit.toFixed(2)} points`,
 													creatorId: currentUserId,
 													createdAt: getUtcNowEpoch(),
 												},
 											});
 
 											// Create StoreLedger entry for revenue recognition
+											const cashValue = requiredCredit * creditExchangeRate;
 											const lastLedger = await tx.storeLedger.findFirst({
 												where: { storeId: params.storeId },
 												orderBy: { createdAt: "desc" },
@@ -457,75 +481,38 @@ export async function POST(
 											const balance = Number(
 												lastLedger ? lastLedger.balance : 0,
 											);
-											const newStoreBalance = balance + fiatAmount;
+											const newStoreBalance = balance + cashValue;
 
 											await tx.storeLedger.create({
 												data: {
 													storeId: params.storeId,
 													orderId,
-													amount: new Prisma.Decimal(fiatAmount), // Positive for revenue
+													amount: new Prisma.Decimal(cashValue),
 													fee: new Prisma.Decimal(0),
 													platformFee: new Prisma.Decimal(0),
 													currency: (
 														store.defaultCurrency || "twd"
 													).toLowerCase(),
-													type: StoreLedgerType.CreditUsage, // Revenue recognition
+													type: 3, // StoreLedgerType.CreditUsage
 													balance: new Prisma.Decimal(newStoreBalance),
-													description:
-														t2("rsvp_completion_revenue_note_fiat", {
-															amount: fiatAmount,
-															currency: (
-																store.defaultCurrency || "twd"
-															).toUpperCase(),
-														}) ||
-														`RSVP completion revenue: ${fiatAmount} ${(store.defaultCurrency || "twd").toUpperCase()}`,
+													description: `${t2("rsvp_prepaid_payment_note") || "RSVP prepaid payment"}: ${requiredCredit.toFixed(2)} points = ${cashValue.toFixed(2)} ${(store.defaultCurrency || "twd").toUpperCase()}`,
 													note: "",
 													createdBy: currentUserId,
 													availability: getUtcNowEpoch(),
 													createdAt: getUtcNowEpoch(),
 												},
 											});
-										} else {
-											// RSVP is Ready (not completed) - create TOPUP ledger entry (HOLD design)
-											// For Ready RSVPs, we don't deduct fiat yet - we create a TOPUP entry to track the hold
-											// The fiat balance remains unchanged (already in account from user's initial topup)
-											// When RSVP is completed, TOPUP will be converted to PAYMENT (deducting fiat and creating StoreLedger)
-
-											// Create CustomerFiatLedger entry with TOPUP type (HOLD design for Ready RSVPs)
-											await tx.customerFiatLedger.create({
-												data: {
-													storeId: params.storeId,
-													userId: customerId,
-													amount: new Prisma.Decimal(fiatAmount), // Positive for TOPUP (hold)
-													balance: new Prisma.Decimal(currentBalance), // Balance unchanged (fiat already in account)
-													type: "TOPUP", // TOPUP type (HOLD design for Ready RSVPs)
-													referenceId: orderId, // Link to order
-													note:
-														t("rsvp_prepaid_payment_fiat_note", {
-															amount: fiatAmount,
-															currency: (
-																store.defaultCurrency || "twd"
-															).toUpperCase(),
-														}) ||
-														`RSVP prepaid payment (hold): ${fiatAmount} ${(store.defaultCurrency || "twd").toUpperCase()}`,
-													creatorId: customerId,
-													createdAt: getUtcNowEpoch(),
-												},
-											});
-
-											// No StoreLedger entry is created at this stage (HOLD design)
-											// Revenue will be recognized when RSVP is completed (converting TOPUP to PAYMENT)
 										}
 									} else {
-										// Insufficient fiat credit - mark as error
+										// Insufficient credit - mark as error
 										result.errors.push({
 											blockIndex,
 											customerName,
 											reservationNumber: rsvpData.reservationNumber,
-											error: `Insufficient fiat credit balance. Required: ${fiatAmount.toFixed(2)} ${(store.defaultCurrency || "twd").toUpperCase()}, Available: ${currentBalance.toFixed(2)} ${(store.defaultCurrency || "twd").toUpperCase()}`,
+											error: `Insufficient credit balance. Required: ${requiredCredit.toFixed(2)}, Available: ${currentBalance.toFixed(2)}`,
 										});
 										throw new Error(
-											`Insufficient fiat credit balance for customer ${customerName}`,
+											`Insufficient credit balance for customer ${customerName}`,
 										);
 									}
 								} else if (

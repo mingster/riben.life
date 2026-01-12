@@ -1,4 +1,4 @@
- # Functional Requirements: RSVP System
+# Functional Requirements: RSVP System
 
 **Date:** 2025-01-27
 **Status:** Active
@@ -442,7 +442,7 @@ Store Admins have all Store Staff permissions, plus:
   * **No `StoreLedger` entry is created** at this stage (revenue not yet recognized)
   * The `alreadyPaid` flag is set to `true`
   * The reservation status changes to `Ready (40)` (not `ReadyToConfirm`)
-  * The reservation is linked to the order via `orderId`
+* The reservation is linked to the order via `orderId`
 * Store staff notifications are sent when `alreadyPaid = true` and status is `Ready (40)`
 
 **Payment Flow (if prepaid required and store do not use credit system):**
