@@ -6,11 +6,15 @@ import { getUtcNowEpoch, dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { Prisma } from "@prisma/client";
-import { RsvpStatus, CustomerCreditLedgerType, MemberRole } from "@/types/enum";
+import {
+	RsvpStatus,
+	MemberRole,
+	StoreLedgerType,
+	CustomerCreditLedgerType,
+} from "@/types/enum";
 import crypto from "crypto";
 import { createRsvpStoreOrder } from "@/actions/store/reservation/create-rsvp-store-order";
 import { getT } from "@/app/i18n";
-import { format } from "date-fns";
 
 interface ImportResult {
 	success: boolean;
@@ -156,20 +160,22 @@ export async function POST(
 			warnings: [],
 		};
 
-		// Group RSVPs by customer name to process in blocks
-		const rsvpsByCustomer = new Map<string, typeof rsvps>();
+		// Group RSVPs by blockIndex to process in blocks
+		const rsvpsByBlock = new Map<number, typeof rsvps>();
 		for (const rsvp of rsvps) {
-			if (!rsvpsByCustomer.has(rsvp.customerName)) {
-				rsvpsByCustomer.set(rsvp.customerName, []);
+			const blockIdx = rsvp.blockIndex ?? 0;
+			if (!rsvpsByBlock.has(blockIdx)) {
+				rsvpsByBlock.set(blockIdx, []);
 			}
-			rsvpsByCustomer.get(rsvp.customerName)!.push(rsvp);
+			rsvpsByBlock.get(blockIdx)!.push(rsvp);
 		}
 
-		result.totalBlocks = rsvpsByCustomer.size;
+		result.totalBlocks = rsvpsByBlock.size;
 
-		// Process each customer block
-		for (const [customerName, customerRsvps] of rsvpsByCustomer.entries()) {
-			const blockIndex = result.totalBlocks - rsvpsByCustomer.size;
+		// Process each block
+		for (const [blockIdx, blockRsvps] of rsvpsByBlock.entries()) {
+			const blockIndex = blockIdx;
+			const customerName = blockRsvps[0]?.customerName || "Unknown";
 
 			try {
 				// Get organizationId from store
@@ -254,8 +260,150 @@ export async function POST(
 				// Use user.id as customerId
 				const customerId = user.id;
 
+				// Filter valid RSVPs (skip errors)
+				const validRsvps = blockRsvps.filter(
+					(rsvp) => rsvp.status !== "error" && rsvp.rsvpTime,
+				);
+
+				if (validRsvps.length === 0) {
+					result.errors.push({
+						blockIndex,
+						customerName,
+						error: "No valid RSVPs in block",
+					});
+					continue;
+				}
+
+				// Calculate total block amount (sum of all RSVP costs)
+				const totalBlockAmount = validRsvps.reduce(
+					(sum, rsvp) => sum + (rsvp.cost || 0),
+					0,
+				);
+
+				// Check if block is paid (all RSVPs have alreadyPaid = true)
+				const isBlockPaid = validRsvps.every((rsvp) => rsvp.alreadyPaid);
+
+				// Store block order ID for use in RSVP processing
+				let blockOrderId: string | null = null;
+
+				// Process block: Create TOPUP, update fiat balance, create StoreOrder
+				if (isBlockPaid && totalBlockAmount > 0) {
+					blockOrderId = await sqlClient.$transaction(async (tx) => {
+						const { t } = await getT();
+
+						// Get current customer fiat balance
+						const customerCredit = await tx.customerCredit.findUnique({
+							where: {
+								storeId_userId: {
+									storeId: params.storeId,
+									userId: customerId,
+								},
+							},
+						});
+
+						const currentFiatBalance = customerCredit
+							? Number(customerCredit.fiat)
+							: 0;
+						const newFiatBalance = currentFiatBalance + totalBlockAmount;
+
+						// Update CustomerCredit.fiat
+						await tx.customerCredit.upsert({
+							where: {
+								storeId_userId: {
+									storeId: params.storeId,
+									userId: customerId,
+								},
+							},
+							create: {
+								storeId: params.storeId,
+								userId: customerId,
+								fiat: new Prisma.Decimal(newFiatBalance),
+								point: new Prisma.Decimal(0),
+								updatedAt: getUtcNowEpoch(),
+							},
+							update: {
+								fiat: new Prisma.Decimal(newFiatBalance),
+								updatedAt: getUtcNowEpoch(),
+							},
+						});
+
+						// Create CustomerFiatLedger TOPUP entry
+						const topupOrderId = crypto.randomUUID(); // Temporary order ID for TOPUP
+						await tx.customerFiatLedger.create({
+							data: {
+								storeId: params.storeId,
+								userId: customerId,
+								amount: new Prisma.Decimal(totalBlockAmount), // Positive for TOPUP
+								balance: new Prisma.Decimal(newFiatBalance),
+								type: CustomerCreditLedgerType.Topup,
+								referenceId: topupOrderId, // Will be updated with actual order ID
+								note:
+									t("rsvp_import_block_topup_note", {
+										amount: totalBlockAmount,
+										currency: (store.defaultCurrency || "twd").toUpperCase(),
+										count: validRsvps.length,
+									}) ||
+									`RSVP import block top-up: ${totalBlockAmount} ${(store.defaultCurrency || "twd").toUpperCase()} for ${validRsvps.length} reservation(s)`,
+								creatorId: currentUserId,
+								createdAt: getUtcNowEpoch(),
+							},
+						});
+
+						// Create ONE StoreOrder for the entire block
+						const serviceStaffName =
+							serviceStaff.User.name ||
+							serviceStaff.User.email ||
+							t("service_staff") ||
+							"Service Staff";
+
+						const blockOrderNote = `${
+							t("rsvp_import_block_order_note") || "RSVP Import Block"
+						}\n${t("customer") || "Customer"}: ${customerName}\n${
+							t("service_staff") || "Service Staff"
+						}: ${serviceStaffName}\n${
+							t("total_reservations") || "Total Reservations"
+						}: ${validRsvps.length}`;
+
+						// Use a placeholder RSVP ID for block order (since it's for the entire block)
+						const blockRsvpId = crypto.randomUUID();
+						const blockOrderId = await createRsvpStoreOrder({
+							tx,
+							storeId: params.storeId,
+							customerId: customerId,
+							facilityCost: null,
+							serviceStaffCost: totalBlockAmount,
+							currency: store.defaultCurrency || "twd",
+							paymentMethodPayUrl: "cash", // Cash payment method for import
+							rsvpId: blockRsvpId, // Placeholder RSVP ID for block order
+							facilityId: null,
+							facilityName: "",
+							serviceStaffId: null,
+							serviceStaffName: null,
+							rsvpTime: getUtcNowEpoch(), // Use current time for block order
+							note: blockOrderNote,
+							displayToCustomer: false,
+							isPaid: true, // Block order is paid
+						});
+
+						// Update TOPUP ledger entry with actual order ID
+						await tx.customerFiatLedger.updateMany({
+							where: {
+								storeId: params.storeId,
+								userId: customerId,
+								referenceId: topupOrderId,
+								type: CustomerCreditLedgerType.Topup,
+							},
+							data: {
+								referenceId: blockOrderId,
+							},
+						});
+
+						return blockOrderId;
+					});
+				}
+
 				// Process each RSVP (rsvpTime is already calculated in client)
-				for (const rsvpData of customerRsvps) {
+				for (const rsvpData of blockRsvps) {
 					try {
 						// Skip invalid RSVPs
 						if (rsvpData.status === "error") {
@@ -309,9 +457,11 @@ export async function POST(
 							finalArriveTime = dateToEpoch(arriveTimeDate);
 						}
 
+						// Use block order ID (created earlier for paid blocks)
+
 						// Create RSVP in transaction
 						await sqlClient.$transaction(async (tx) => {
-							// Create RSVP
+							// Create RSVP (link to block order)
 							const createdRsvp = await tx.rsvp.create({
 								data: {
 									storeId: params.storeId,
@@ -325,213 +475,150 @@ export async function POST(
 									status: finalStatus,
 									message: null,
 									alreadyPaid,
-									confirmedByStore: false,
-									confirmedByCustomer: false,
+									confirmedByStore: true,
+									confirmedByCustomer: true,
 									facilityCost: null, // No facility cost
 									serviceStaffCost:
 										serviceStaffCost > 0 ? serviceStaffCost : null,
 									pricingRuleId: null,
+									orderId: blockOrderId || null, // Link to block order
 									createdBy: currentUserId,
 									createdAt: getUtcNowEpoch(),
 									updatedAt: getUtcNowEpoch(),
 								},
 							});
 
-							let orderId: string | null = null;
-
-							// Create StoreOrder if customer exists and cost > 0
-							if (customerId && serviceStaffCost > 0) {
-								const { t } = await getT();
-
-								// Format RSVP time for order note
-								const formattedRsvpTime = rsvpTimeDate
-									? format(rsvpTimeDate, "yyyy-MM-dd HH:mm")
-									: "";
-
-								const serviceStaffName =
-									serviceStaff.User.name ||
-									serviceStaff.User.email ||
-									t("service_staff") ||
-									"Service Staff";
-
-								const orderNote = `${t("rsvp_reservation_payment_note") || "RSVP Reservation"}\n${t("rsvp_id") || "RSVP ID"}: ${createdRsvp.id}\n${t("Service_Staff") || "Service Staff"}: ${serviceStaffName}\n${t("rsvp_time") || "Reservation Time"}: ${formattedRsvpTime}`;
-
-								orderId = await createRsvpStoreOrder({
-									tx,
-									storeId: params.storeId,
-									customerId: customerId,
-									facilityCost: null, // No facility cost for import
-									serviceStaffCost: serviceStaffCost,
-									currency: store.defaultCurrency || "twd",
-									paymentMethodPayUrl: alreadyPaid ? "credit" : "TBD", // Credit for prepaid, TBD for unpaid
-									rsvpId: createdRsvp.id,
-									facilityId: null, // No facility for import
-									facilityName: "Service", // Placeholder facility name
-									serviceStaffId: serviceStaff.id,
-									serviceStaffName,
-									rsvpTime: rsvpTimeEpoch,
-									note: orderNote,
-									displayToCustomer: false,
-									isPaid: alreadyPaid,
+							// Process fiat payment based on RSVP status
+							// Only process if block is paid (blockOrderId exists)
+							if (alreadyPaid && serviceStaffCost > 0 && blockOrderId) {
+								// Get current customer fiat balance
+								const customerCredit = await tx.customerCredit.findUnique({
+									where: {
+										storeId_userId: {
+											storeId: params.storeId,
+											userId: customerId,
+										},
+									},
 								});
 
-								// Update RSVP with orderId
-								await tx.rsvp.update({
-									where: { id: createdRsvp.id },
-									data: { orderId },
-								});
+								const currentFiatBalance = customerCredit
+									? Number(customerCredit.fiat)
+									: 0;
 
-								// Process prepaid payment if alreadyPaid and customer credit enabled
-								if (
-									alreadyPaid &&
-									store.useCustomerCredit &&
-									store.creditExchangeRate &&
-									Number(store.creditExchangeRate) > 0 &&
-									orderId
-								) {
-									// Calculate required credit
-									const creditExchangeRate = Number(store.creditExchangeRate);
-									const requiredCredit =
-										creditExchangeRate > 0
-											? serviceStaffCost / creditExchangeRate
-											: serviceStaffCost;
+								if (finalStatus === RsvpStatus.Completed) {
+									// Completed RSVP: Create PAYMENT + StoreLedger (Revenue)
+									const { t: t2 } = await getT();
+									const newFiatBalance = currentFiatBalance - serviceStaffCost;
 
-									// Get customer credit balance
-									const customerCredit = await tx.customerCredit.findUnique({
+									// Update CustomerCredit.fiat (deduct)
+									await tx.customerCredit.update({
 										where: {
 											storeId_userId: {
 												storeId: params.storeId,
 												userId: customerId,
 											},
 										},
+										data: {
+											fiat: new Prisma.Decimal(newFiatBalance),
+											updatedAt: getUtcNowEpoch(),
+										},
 									});
 
-									const currentBalance = customerCredit
-										? Number(customerCredit.point)
-										: 0;
-
-									if (currentBalance >= requiredCredit) {
-										// Customer has enough credit - hold it
-										const newBalance = currentBalance - requiredCredit;
-
-										// Update customer credit balance
-										await tx.customerCredit.upsert({
-											where: {
-												storeId_userId: {
-													storeId: params.storeId,
-													userId: customerId,
-												},
-											},
-											create: {
-												storeId: params.storeId,
-												userId: customerId,
-												point: new Prisma.Decimal(newBalance),
-												updatedAt: getUtcNowEpoch(),
-											},
-											update: {
-												point: new Prisma.Decimal(newBalance),
-												updatedAt: getUtcNowEpoch(),
-											},
-										});
-
-										// Create CustomerCreditLedger entry with HOLD type
-										await tx.customerCreditLedger.create({
-											data: {
-												storeId: params.storeId,
-												userId: customerId,
-												amount: new Prisma.Decimal(-requiredCredit),
-												balance: new Prisma.Decimal(newBalance),
-												type: CustomerCreditLedgerType.Hold,
-												referenceId: orderId,
-												note: `${t("rsvp_prepaid_payment_credit_note") || "RSVP prepaid payment"}: ${requiredCredit.toFixed(2)} points`,
-												creatorId: customerId,
-												createdAt: getUtcNowEpoch(),
-											},
-										});
-
-										// If RSVP is completed (has arriveTime), convert HOLD to SPEND and create StoreLedger
-										if (
-											finalStatus === RsvpStatus.Completed &&
-											finalArriveTime !== null
-										) {
-											// Convert HOLD to SPEND
-											const { t: t2 } = await getT();
-											await tx.customerCreditLedger.create({
-												data: {
-													storeId: params.storeId,
-													userId: customerId,
-													amount: new Prisma.Decimal(-requiredCredit),
-													balance: new Prisma.Decimal(newBalance),
-													type: CustomerCreditLedgerType.Spend,
-													referenceId: createdRsvp.id,
-													note: `${t2("rsvp_credit_deduction_note") || "RSVP credit deduction"}: ${requiredCredit.toFixed(2)} points`,
-													creatorId: currentUserId,
-													createdAt: getUtcNowEpoch(),
-												},
-											});
-
-											// Create StoreLedger entry for revenue recognition
-											const cashValue = requiredCredit * creditExchangeRate;
-											const lastLedger = await tx.storeLedger.findFirst({
-												where: { storeId: params.storeId },
-												orderBy: { createdAt: "desc" },
-												take: 1,
-											});
-
-											const balance = Number(
-												lastLedger ? lastLedger.balance : 0,
-											);
-											const newStoreBalance = balance + cashValue;
-
-											await tx.storeLedger.create({
-												data: {
-													storeId: params.storeId,
-													orderId,
-													amount: new Prisma.Decimal(cashValue),
-													fee: new Prisma.Decimal(0),
-													platformFee: new Prisma.Decimal(0),
+									// Create CustomerFiatLedger Spend entry
+									await tx.customerFiatLedger.create({
+										data: {
+											storeId: params.storeId,
+											userId: customerId,
+											amount: new Prisma.Decimal(-serviceStaffCost), // Negative for payment
+											balance: new Prisma.Decimal(newFiatBalance),
+											type: CustomerCreditLedgerType.Spend,
+											referenceId: createdRsvp.id, // Link to RSVP
+											note:
+												t2("rsvp_completion_fiat_payment_note", {
+													amount: serviceStaffCost,
 													currency: (
 														store.defaultCurrency || "twd"
-													).toLowerCase(),
-													type: 3, // StoreLedgerType.CreditUsage
-													balance: new Prisma.Decimal(newStoreBalance),
-													description: `${t2("rsvp_prepaid_payment_note") || "RSVP prepaid payment"}: ${requiredCredit.toFixed(2)} points = ${cashValue.toFixed(2)} ${(store.defaultCurrency || "twd").toUpperCase()}`,
-													note: "",
-													createdBy: currentUserId,
-													availability: getUtcNowEpoch(),
-													createdAt: getUtcNowEpoch(),
-												},
-											});
-										}
-									} else {
-										// Insufficient credit - mark as error
-										result.errors.push({
-											blockIndex,
-											customerName,
-											reservationNumber: rsvpData.reservationNumber,
-											error: `Insufficient credit balance. Required: ${requiredCredit.toFixed(2)}, Available: ${currentBalance.toFixed(2)}`,
-										});
-										throw new Error(
-											`Insufficient credit balance for customer ${customerName}`,
-										);
-									}
-								} else if (
-									finalStatus === RsvpStatus.Completed &&
-									!alreadyPaid &&
-									store.useCustomerCredit &&
-									store.creditServiceExchangeRate &&
-									Number(store.creditServiceExchangeRate) > 0 &&
-									store.creditExchangeRate &&
-									Number(store.creditExchangeRate) > 0
-								) {
-									// RSVP is completed but not prepaid - deduct credit for service usage
-									// Note: This requires a facility, but import doesn't have facilities
-									// We'll skip credit deduction for completed non-prepaid RSVPs in import
-									// They can be processed manually later or facility can be added
-									result.warnings.push({
-										blockIndex,
-										customerName,
-										message: `RSVP is completed but not prepaid. Credit deduction requires facility and will be skipped.`,
+													).toUpperCase(),
+												}) ||
+												`RSVP completion: ${serviceStaffCost} ${(store.defaultCurrency || "twd").toUpperCase()}`,
+											creatorId: currentUserId,
+											createdAt: getUtcNowEpoch(),
+										},
+									});
+
+									// Create StoreLedger entry for revenue recognition
+									const lastLedger = await tx.storeLedger.findFirst({
+										where: { storeId: params.storeId },
+										orderBy: { createdAt: "desc" },
+										take: 1,
+									});
+
+									const balance = Number(lastLedger ? lastLedger.balance : 0);
+									const newStoreBalance = balance + serviceStaffCost;
+
+									await tx.storeLedger.create({
+										data: {
+											storeId: params.storeId,
+											orderId: blockOrderId, // Use block order ID
+											amount: new Prisma.Decimal(serviceStaffCost),
+											fee: new Prisma.Decimal(0),
+											platformFee: new Prisma.Decimal(0),
+											currency: (store.defaultCurrency || "twd").toLowerCase(),
+											type: StoreLedgerType.Revenue, // Revenue recognition
+											balance: new Prisma.Decimal(newStoreBalance),
+											description:
+												t2("rsvp_completion_revenue_note_fiat", {
+													amount: serviceStaffCost,
+													currency: (
+														store.defaultCurrency || "twd"
+													).toUpperCase(),
+												}) ||
+												`RSVP completion revenue: ${serviceStaffCost} ${(store.defaultCurrency || "twd").toUpperCase()}`,
+											note: "",
+											createdBy: currentUserId,
+											availability: getUtcNowEpoch(),
+											createdAt: getUtcNowEpoch(),
+										},
+									});
+								} else if (finalStatus === RsvpStatus.Ready) {
+									// Ready RSVP: Create HOLD (no StoreLedger yet)
+									const { t: t3 } = await getT();
+									const newFiatBalance = currentFiatBalance - serviceStaffCost;
+
+									// Update CustomerCredit.fiat (deduct)
+									await tx.customerCredit.update({
+										where: {
+											storeId_userId: {
+												storeId: params.storeId,
+												userId: customerId,
+											},
+										},
+										data: {
+											fiat: new Prisma.Decimal(newFiatBalance),
+											updatedAt: getUtcNowEpoch(),
+										},
+									});
+
+									// Create CustomerFiatLedger HOLD entry
+									await tx.customerFiatLedger.create({
+										data: {
+											storeId: params.storeId,
+											userId: customerId,
+											amount: new Prisma.Decimal(-serviceStaffCost), // Negative for hold
+											balance: new Prisma.Decimal(newFiatBalance),
+											type: CustomerCreditLedgerType.Hold,
+											referenceId: createdRsvp.id, // Link to RSVP
+											note:
+												t3("rsvp_hold_fiat_payment_note", {
+													amount: serviceStaffCost,
+													currency: (
+														store.defaultCurrency || "twd"
+													).toUpperCase(),
+												}) ||
+												`RSVP hold: ${serviceStaffCost} ${(store.defaultCurrency || "twd").toUpperCase()}`,
+											creatorId: currentUserId,
+											createdAt: getUtcNowEpoch(),
+										},
 									});
 								}
 							}

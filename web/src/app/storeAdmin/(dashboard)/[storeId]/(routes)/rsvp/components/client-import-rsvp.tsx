@@ -509,9 +509,11 @@ export function ClientImportRsvp({
 			}
 
 			toastSuccess({
-				description: t("rsvp_import_success", {
-					count: result.createdReservations,
-				}) || `Successfully imported ${result.createdReservations} reservation(s)`,
+				description:
+					t("rsvp_import_success", {
+						count: result.createdReservations,
+					}) ||
+					`Successfully imported ${result.createdReservations} reservation(s)`,
 			});
 
 			// Reset form and state
