@@ -79,9 +79,11 @@ The input format consists of text blocks, each representing a customer's reserva
 
 **Technical Notes**:
 
-- Customer model: `Customer` table with `name`, `storeId`
-- Use `sqlClient.customer.findFirst()` to search by name and storeId
-- Use `sqlClient.customer.create()` to create new customer if not found
+- Customer model: `User` table with `Member` relationship to `Organization`
+- Use `sqlClient.user.findFirst()` to search by name
+- Ensure `Member` record exists with `MemberRole.customer` for the store's organization
+- Use `user.id` as `customerId` for RSVP creation
+- If user not found, create new `User` with generated email and ensure `Member` relationship exists
 
 ### 2. Service Staff Resolution
 
@@ -154,106 +156,97 @@ No facility required
 - **If no arrive time**: Status should be `RsvpStatus.Ready` (40) - indicates recurring reservation ready for service
 - **If arrive time present**: Status should be `RsvpStatus.Completed` (50) - indicates completed reservation
 
-### 5. Payment Status and Order/Ledger Creation (HOLD Payment Flow)
+### 5. Payment Status and Order/Ledger Creation (Fiat Payment Flow)
 
-**Requirement**: Mark reservations as paid if sequential numbers exist, and create StoreOrder and ledger entries accordingly using the HOLD payment flow.
+**Requirement**: Process fiat payments for paid RSVPs, creating block-level TOPUP and StoreOrder, then individual RSVP-level ledger entries.
 
-**Important**: The presence of sequential numbers (1-, 2-, 3-, etc.) indicates that the customer has already paid for **all** reservations in that block, regardless of whether they are completed or ready status. This includes:
+**Important**: Individual RSVPs can have different payment statuses (`alreadyPaid = true` or `false`). The system processes payments per block for paid RSVPs only.
 
-- Regular RSVPs with date/time
-- Recurring RSVPs from empty slots (e.g., "6-")
-- All RSVPs in the block should be marked as `alreadyPaid = true`
+**Approach** (Fiat Payment Flow):
 
-**Approach** (HOLD Payment Flow):
+**Block-Level Processing (for paid RSVPs only)**:
 
-- **Payment Detection**: If there are any sequential numbers (reservations) in the block, all RSVPs are considered paid
-  - Sequential numbers (1-, 2-, 3-, etc.) indicate the customer has paid for the entire package
-  - This applies to all RSVPs in the block, including recurring ones from empty slots
-- Parse paid date from first line: `（MM/DD YYYY）` (optional, for record-keeping)
-- If sequential numbers exist (block has reservations):
-  - Set `alreadyPaid = true` for all reservations in the block
-  - Create `StoreOrder` with `isPaid = true` for each reservation (if customerId exists and cost > 0)
-    - Use `createRsvpStoreOrder()` function from `@/actions/store/reservation/create-rsvp-store-order`
-    - Payment method: Use "credit" payment method (customer credit payment for prepaid RSVPs)
-    - Order total: Service staff cost (calculated from defaultCost)
-    - Currency: Store's default currency
-    - Order status: Confirmed
-    - Payment status: Paid
-    - Paid date: Use parsed paid date converted to UTC epoch
-  - Process prepaid payment using customer credit points (HOLD design):
-    - **Note**: Uses `CustomerCredit.point` and requires `store.useCustomerCredit = true`
-    - Check if customer has sufficient credit point balance
-    - If sufficient credit points:
-      - Reduce customer credit balance (credit is held, not spent yet)
-      - Create `CustomerCreditLedger` entry:
-        - Type: `CustomerCreditLedgerType.Hold` (HOLD type - credit is held, not spent)
-        - Amount: Negative (credit held from customer balance)
-        - Balance: Updated customer credit balance after hold
-        - `referenceId`: Order ID (link to the StoreOrder)
-        - `note`: RSVP prepaid payment description
-      - **No `StoreLedger` entry is created at this stage** (revenue not yet recognized)
-      - RSVP status is set to `RsvpStatus.Ready (40)` (ready when credit is held)
-    - If insufficient credit: Handle error appropriately
-- **Note**: Since sequential numbers indicate payment, there should always be `alreadyPaid = true` when reservations exist
-  - If no sequential numbers exist (empty block), no RSVPs are created
+1. **Filter paid RSVPs**: Calculate total amount only for RSVPs with `alreadyPaid = true`
+2. **Create block TOPUP and StoreOrder** (if there are any paid RSVPs):
+   - Calculate `totalBlockAmount` = sum of costs for all paid RSVPs in the block
+   - Create `CustomerFiatLedger` entry:
+     - Type: `CustomerCreditLedgerType.Topup`
+     - Amount: Positive (`totalBlockAmount`)
+     - Balance: Updated `CustomerCredit.fiat` balance (+`totalBlockAmount`)
+     - `referenceId`: Temporary UUID (updated with actual order ID after StoreOrder creation)
+     - `note`: Block top-up description with amount, currency, and count
+   - Update `CustomerCredit.fiat` balance (+`totalBlockAmount`)
+   - Create ONE `StoreOrder` for the entire block:
+     - `serviceStaffCost`: `totalBlockAmount` (sum of all paid RSVPs)
+     - `paymentMethodPayUrl`: "cash"
+     - `isPaid`: `true`
+     - `facilityId`: `null`
+     - `facilityName`: `""`
+     - `serviceStaffId`: `null`
+     - `serviceStaffName`: `null`
+     - `rsvpId`: Placeholder UUID (block order, not linked to specific RSVP)
+     - `note`: Block order description with customer name, service staff, and total reservations count
+   - Update TOPUP ledger entry `referenceId` with actual `blockOrderId`
+   - Return `blockOrderId` for linking to individual RSVPs
 
-**Revenue Recognition (when RSVP is completed)**:
+**Individual RSVP Processing**:
 
-- When RSVP status changes to `Completed (50)`:
-  - Held credit is converted to spent credit
-  - Customer credit balance remains the same (already reduced during hold phase)
-  - New `CustomerCreditLedger` entry is created:
-    - Type: `CustomerCreditLedgerType.Spend`
-    - Amount: Negative (credit spent)
-    - `referenceId`: RSVP ID (link to RSVP, not order)
-    - `note`: RSVP completion description
-  - `StoreLedger` entry is created for revenue recognition:
-    - Type: `StoreLedgerType.CreditUsage` (revenue recognition)
-    - Amount: Positive (revenue recognized)
-    - `orderId`: Original order ID
-    - `balance`: Increases by cash value of credit used
-    - `description`: RSVP completion description
-    - `fee`: 0 (no payment processing fee for credit usage)
-    - `platformFee`: 0 (no platform fee for credit usage)
+For each RSVP in the block:
+
+1. **Create RSVP record**:
+   - Link to `blockOrderId` (if block order exists)
+   - Set `alreadyPaid` from parsed data
+   - Set `confirmedByStore`: `true`
+   - Set `confirmedByCustomer`: `true`
+
+2. **Process fiat payment** (only if `alreadyPaid = true` and `blockOrderId` exists):
+
+   **If RSVP status is `Completed`**:
+   - Deduct `serviceStaffCost` from `CustomerCredit.fiat`
+   - Create `CustomerFiatLedger` entry:
+     - Type: `CustomerCreditLedgerType.Spend`
+     - Amount: Negative (`-serviceStaffCost`)
+     - Balance: Updated `CustomerCredit.fiat` balance (after deduction)
+     - `referenceId`: RSVP ID
+     - `note`: RSVP completion payment description
+   - Create `StoreLedger` entry for revenue recognition:
+     - Type: `StoreLedgerType.Revenue`
+     - Amount: Positive (`serviceStaffCost`)
+     - `orderId`: `blockOrderId` (link to block order)
+     - `balance`: Updated store ledger balance
+     - `description`: RSVP completion revenue description
+     - `fee`: 0
+     - `platformFee`: 0
+
+   **If RSVP status is `Ready`**:
+   - Deduct `serviceStaffCost` from `CustomerCredit.fiat`
+   - Create `CustomerFiatLedger` entry:
+     - Type: `CustomerCreditLedgerType.Hold`
+     - Amount: Negative (`-serviceStaffCost`)
+     - Balance: Updated `CustomerCredit.fiat` balance (after deduction)
+     - `referenceId`: RSVP ID
+     - `note`: RSVP hold payment description
+   - **No `StoreLedger` entry** (revenue not yet recognized - will be created when RSVP is completed)
 
 **Technical Notes**:
 
-- **Sequential Numbers**: The presence of sequential numbers (1-, 2-, 3-, etc.) indicates that the customer has paid for ALL reservations in that block, regardless of completion status. All reservations should be marked as `alreadyPaid = true`.
-- **Paid Date**: Paid date in the first line is optional and used for record-keeping only. Payment status is determined by the presence of sequential numbers.
-- **HOLD Payment Flow**: Prepaid RSVPs with customer credit use a two-phase payment model (HOLD → SPEND):
-  - **Phase 1 (Payment)**: Credit is held when RSVP is created (`CustomerCreditLedger` type `HOLD`, no `StoreLedger` entry)
-  - **Phase 2 (Completion)**: Credit is spent when RSVP is completed (`CustomerCreditLedger` type `SPEND`, `StoreLedger` entry for revenue recognition)
-- RSVP `alreadyPaid` field is `boolean`
-- StoreOrder must be created if `customerId` exists and `serviceStaffCost > 0`
-- StoreOrder creation uses `createRsvpStoreOrder()` function
-  - Requires shipping method (uses "reserve" if available, otherwise default)
-  - Requires payment method (uses payment method with `payUrl = "credit"` for customer credit payment)
-  - Requires reservation prepaid product (ensured by `ensureReservationPrepaidProduct()`)
-  - Links RSVP to order via `orderId` field
-- Customer credit balance is reduced when credit is held (HOLD phase)
-- Customer credit balance remains the same when HOLD is converted to SPEND (already reduced during HOLD phase)
-- **No `StoreLedger` entry is created at payment stage** (HOLD design - revenue not yet recognized)
-- `StoreLedger` entry is created only when RSVP is completed (revenue recognition)
-- **Completion Status**:
-  - If `arriveTime` is present, it indicates the RSVP is completed
-    - Set RSVP status to `RsvpStatus.Completed`
-    - If `alreadyPaid = true` and payment method is "credit": Convert HOLD to SPEND and create `StoreLedger` entry
-    - If `alreadyPaid = false` and customer credit is enabled: Process credit deduction via `deduceCustomerCredit()` function
-      - This will automatically create `StoreLedger` entry for credit usage
-      - StoreLedger type: `StoreLedgerType.CreditUsage`
-      - Amount: Cash value of credit points used
-  - If no `arriveTime` (empty slot with just sequential number, e.g., "6-"), it indicates a recurring reservation
-    - Create recurring RSVPs weekly in the upcoming future
-    - Use the time slot pattern from the last valid reservation in the block
-    - Use the same day of week as the last valid reservation
-    - Create 10 weeks of recurring RSVPs starting from next week
-    - Set RSVP status to `RsvpStatus.Ready` for all recurring RSVPs
-    - Set `arriveTime` to `null` for all recurring RSVPs
-    - Status `Ready` indicates the reservation is ready to be confirmed/completed when the customer arrives
-    - Credit remains in HOLD status until RSVP is completed
-- All operations should be within the same transaction to ensure atomicity
-- Use store's default currency from `store.defaultCurrency`
-- Use `processRsvpPrepaidPaymentUsingCredit()` function for processing prepaid payment with credit (HOLD design)
+- **Mixed Paid/Unpaid Blocks**: The system correctly handles blocks with mixed payment statuses:
+  - Block order is created if there are **any** paid RSVPs (not requiring all to be paid)
+  - Only paid RSVPs process payment (deduct fiat, create ledger entries)
+  - Unpaid RSVPs are created without payment processing
+- **Block Order**: One `StoreOrder` is created per block for the total amount of paid RSVPs
+- **Individual RSVP Orders**: Individual RSVPs link to the block order via `orderId` field
+- **Fiat Balance**: Uses `CustomerCredit.fiat` (always available, not controlled by `useCustomerCredit`)
+- **Payment Method**: Uses "cash" payment method for import
+- **Revenue Recognition**:
+  - `StoreLedger` entry with type `StoreLedgerType.Revenue` is created only for completed RSVPs
+  - Ready RSVPs create HOLD entries but no revenue recognition until completion
+- **Transaction Atomicity**: Block-level operations (TOPUP, StoreOrder) are in one transaction; individual RSVP operations are in separate transactions
+- **StoreLedger Type**: Uses `StoreLedgerType.Revenue` (not `CreditUsage`) for revenue recognition
+- **CustomerFiatLedger Types**:
+  - `Topup`: Block-level top-up (positive amount)
+  - `Spend`: Completed RSVP payment (negative amount)
+  - `Hold`: Ready RSVP hold (negative amount, no revenue recognition)
 
 ### 6. Cost Calculation
 
@@ -284,52 +277,56 @@ No facility required
 
 ### 7. Bulk Creation
 
-**Requirement**: Create multiple RSVPs efficiently
+**Requirement**: Create multiple RSVPs efficiently with block-level payment processing
 
 **Approach**:
 
-- Parse entire text block to extract all reservations
-- Group reservations by customer (each text block = one customer)
-- For each customer block:
-  1. Resolve customer (find or create)
-  2. Resolve service staff (current user)
-  3. Resolve facility (optional)
-  4. For each reservation line:
-     - Skip empty lines (`6-` with no date/time)
-     - Parse date/time
-     - Calculate cost
-     - Create RSVP using `createRsvpAction` (or batch create)
-     - If `alreadyPaid = true` and `customerId` exists and cost > 0:
-       - Create StoreOrder with `isPaid = true` (via `createRsvpStoreOrder()`)
-       - Process prepaid payment using customer credit (HOLD design):
-         - Reduce customer credit balance (credit is held, not spent yet)
-         - Create `CustomerCreditLedger` entry with type `HOLD`
-         - **No `StoreLedger` entry is created at this stage** (revenue not yet recognized)
-         - RSVP status is set to `RsvpStatus.Ready (40)`
+- Parse entire text block to extract all reservations (client-side)
+- Group reservations by `blockIndex` (each text block = one customer block)
+- For each block:
+  1. Resolve customer (find or create using `User` model and `Member` relationship)
+  2. Resolve service staff (current signed-in user, must have `defaultCost` configured)
+  3. Filter valid RSVPs (skip errors)
+  4. **Block-level payment processing** (if there are any paid RSVPs):
+     - Calculate `totalBlockAmount` = sum of costs for paid RSVPs only
+     - Create `CustomerFiatLedger` TOPUP entry (+`totalBlockAmount`)
+     - Update `CustomerCredit.fiat` balance (+`totalBlockAmount`)
+     - Create ONE `StoreOrder` for the entire block (total amount, "cash" payment method)
+     - Store `blockOrderId` for linking to individual RSVPs
+  5. **Individual RSVP processing**:
+     - For each RSVP in the block:
+       - Create RSVP record (link to `blockOrderId` if exists)
+       - If `alreadyPaid = true` and `blockOrderId` exists:
+         - **If status is `Completed`**:
+           - Deduct `serviceStaffCost` from `CustomerCredit.fiat`
+           - Create `CustomerFiatLedger` SPEND entry
+           - Create `StoreLedger` REVENUE entry (revenue recognition)
+         - **If status is `Ready`**:
+           - Deduct `serviceStaffCost` from `CustomerCredit.fiat`
+           - Create `CustomerFiatLedger` HOLD entry
+           - No `StoreLedger` entry (revenue not yet recognized)
 
 **Technical Notes**:
 
-- Can use `createRsvpAction` individually for each RSVP (simpler, but slower)
-  - `createRsvpAction` creates StoreOrder if `customerId` exists and cost > 0
-  - For prepaid RSVPs with customer credit: Use `processRsvpPrepaidPaymentUsingCredit()` function to handle HOLD payment flow
-  - HOLD payment flow: Creates `CustomerCreditLedger` entry with type `HOLD`, no `StoreLedger` entry at payment stage
-- Or create bulk action similar to `create-products-bulk.ts` pattern:
-  - Parse all data first
-  - Validate all entries
-  - Create in transaction using `sqlClient.$transaction()`:
-    - Create RSVP
-    - Create StoreOrder (if needed)
-    - Process prepaid payment using customer credit (HOLD design) if `alreadyPaid = true`
-      - Create `CustomerCreditLedger` entry with type `HOLD`
-      - **No `StoreLedger` entry is created at payment stage**
-- Use `createRsvpAction` if validation/notification logic is needed
-- Use direct Prisma create if performance is critical and validation can be skipped
-- **Important**: StoreOrder and customer credit processing must be atomic with RSVP creation
-- For prepaid RSVPs with customer credit (HOLD design):
-  - `CustomerCreditLedger` entry with type `HOLD` is created at payment stage
-  - `CustomerCreditLedger` entry with type `SPEND` is created when RSVP is completed
-  - `StoreLedger` entry with type `CreditUsage` is created when RSVP is completed (revenue recognition)
-  - Revenue recognition happens when RSVP status changes to `Completed`, not at payment stage
+- **Implementation**: Uses API route (`/api/storeAdmin/[storeId]/rsvp/import/route.ts`) with direct Prisma operations
+- **Client-side parsing**: RSVP data is parsed and pre-calculated on the client (rsvpTime, cost, status, etc.)
+- **Block-level transactions**: Block TOPUP and StoreOrder creation are in one transaction
+- **Individual RSVP transactions**: Each RSVP creation and payment processing is in a separate transaction
+- **Payment processing**: Only processes payment for RSVPs with `alreadyPaid = true` and when `blockOrderId` exists
+- **Mixed payment statuses**: Correctly handles blocks with both paid and unpaid RSVPs:
+  - Block order is created if there are any paid RSVPs (not requiring all to be paid)
+  - Only paid RSVPs process payment
+  - Unpaid RSVPs are created without payment processing
+- **Fiat payment flow**:
+  - Uses `CustomerCredit.fiat` (always available, not controlled by `useCustomerCredit`)
+  - Block-level TOPUP adds fiat balance
+  - Individual RSVP payments deduct from fiat balance
+  - Revenue recognition (`StoreLedger`) only for completed RSVPs
+- **StoreLedger type**: Uses `StoreLedgerType.Revenue` (not `CreditUsage`)
+- **CustomerFiatLedger types**:
+  - `Topup`: Block-level top-up (positive amount, linked to block order)
+  - `Spend`: Completed RSVP payment (negative amount, linked to RSVP)
+  - `Hold`: Ready RSVP hold (negative amount, linked to RSVP, no revenue recognition)
 
 ## Implementation Approach
 
@@ -343,13 +340,15 @@ No facility required
 
 **Flow**:
 
-1. Accept POST request with text file or text content
-2. Parse text format into structured data
-3. Validate parsed data
-4. For each customer block:
-   - Resolve customer/service staff/facility
-   - Create RSVPs (use `createRsvpAction` or batch)
-5. Return results (success count, errors, etc.)
+1. Accept POST request with JSON array of pre-parsed RSVP data (parsed on client-side)
+2. Group RSVPs by `blockIndex` to process in blocks
+3. For each block:
+   - Resolve customer (find or create `User` with `Member` relationship)
+   - Resolve service staff (current signed-in user, validate `defaultCost`)
+   - Filter valid RSVPs (skip errors)
+   - Process block-level payment (TOPUP, StoreOrder) if there are any paid RSVPs
+   - Process individual RSVPs (create RSVP, process payment if paid)
+4. Return results (success count, errors, etc.)
 
 **Advantages**:
 
@@ -619,38 +618,58 @@ interface ImportResult {
    - Reservation 1 (60 minutes): (1000 / 60) * 60 = 1000 TWD
    - Reservation 2 (60 minutes): (1000 / 60) * 60 = 1000 TWD
 
-7. **Create RSVPs**:
-   - For each reservation:
-     - Call `createRsvpAction` with:
-       - customerId
-       - serviceStaffId
-       - facilityId (or null)
-       - rsvpTime (BigInt epoch)
-       - arriveTime (same as rsvpTime, or null)
-       - numOfAdult: 1 (default)
-       - numOfChild: 0 (default)
-       - alreadyPaid: true (because paid date exists)
-       - serviceStaffCost: calculated cost
-       - status:
-         - If `arriveTime` is present: `RsvpStatus.Completed`
-         - If no `arriveTime`: `RsvpStatus.Ready` (recurring reservation)
-       - arriveTime:
-         - If time range is provided: Set to same as rsvpTime (start time)
-         - If empty slot (just sequential number): Create recurring RSVPs weekly in upcoming future, set to `null`
-     - Note: `createRsvpAction` will automatically create StoreOrder if `customerId` exists and cost > 0
-     - Note: For prepaid RSVPs with `alreadyPaid = true` and customer credit enabled:
-       - Use `processRsvpPrepaidPaymentUsingCredit()` function to handle HOLD payment flow
-       - Creates `CustomerCreditLedger` entry with type `HOLD` at payment stage
-       - **No `StoreLedger` entry is created at payment stage** (revenue not yet recognized)
-       - Revenue recognition happens when RSVP is completed (converting HOLD to SPEND)
-     - Note: If `arriveTime` is present (RSVP is completed) and `alreadyPaid = true` and payment method is "credit":
-       - Convert HOLD to SPEND: Create `CustomerCreditLedger` entry with type `SPEND`
-       - Create `StoreLedger` entry with type `CreditUsage` for revenue recognition
-     - Note: If `arriveTime` is present (RSVP is completed) and `alreadyPaid = false`:
-       - Process credit deduction via `completeRsvpCore()` or equivalent
-       - This will automatically create StoreLedger entry for credit usage
-       - StoreLedger type: StoreLedgerType.CreditUsage
-       - Amount: Cash value of credit points used
+7. **Block-level payment processing** (if there are any paid RSVPs):
+   - Calculate `totalBlockAmount` = sum of costs for paid RSVPs (e.g., 2 paid RSVPs × 1000 = 2000)
+   - Create `CustomerFiatLedger` TOPUP entry:
+     - Type: `CustomerCreditLedgerType.Topup`
+     - Amount: +2000 (positive)
+     - Balance: Updated `CustomerCredit.fiat` (+2000)
+     - `referenceId`: Temporary UUID (updated after StoreOrder creation)
+   - Update `CustomerCredit.fiat` balance (+2000)
+   - Create ONE `StoreOrder` for the entire block:
+     - `serviceStaffCost`: 2000 (total block amount)
+     - `paymentMethodPayUrl`: "cash"
+     - `isPaid`: `true`
+     - `facilityId`: `null`
+     - `serviceStaffId`: `null`
+     - `rsvpId`: Placeholder UUID
+   - Update TOPUP ledger `referenceId` with actual `blockOrderId`
+   - Store `blockOrderId` for linking to individual RSVPs
+
+8. **Create RSVPs** (for each reservation):
+   - Create RSVP record:
+     - `customerId`: Resolved customer ID
+     - `serviceStaffId`: Current user's service staff ID
+     - `facilityId`: `null`
+     - `rsvpTime`: Pre-calculated from client (BigInt epoch)
+     - `arriveTime`: Pre-calculated from client (BigInt epoch or null)
+     - `status`: Pre-calculated from client (`Completed` if arriveTime exists, `Ready` otherwise)
+     - `alreadyPaid`: From parsed data
+     - `serviceStaffCost`: Pre-calculated from client
+     - `orderId`: `blockOrderId` (if block order exists)
+     - `confirmedByStore`: `true`
+     - `confirmedByCustomer`: `true`
+   - **If `alreadyPaid = true` and `blockOrderId` exists**:
+     - **If status is `Completed`**:
+       - Deduct `serviceStaffCost` from `CustomerCredit.fiat` (e.g., -1000)
+       - Create `CustomerFiatLedger` SPEND entry:
+         - Type: `CustomerCreditLedgerType.Spend`
+         - Amount: -1000 (negative)
+         - Balance: Updated `CustomerCredit.fiat` (after deduction)
+         - `referenceId`: RSVP ID
+       - Create `StoreLedger` REVENUE entry:
+         - Type: `StoreLedgerType.Revenue`
+         - Amount: +1000 (positive)
+         - `orderId`: `blockOrderId`
+         - Balance: Updated store ledger balance
+     - **If status is `Ready`**:
+       - Deduct `serviceStaffCost` from `CustomerCredit.fiat` (e.g., -1000)
+       - Create `CustomerFiatLedger` HOLD entry:
+         - Type: `CustomerCreditLedgerType.Hold`
+         - Amount: -1000 (negative)
+         - Balance: Updated `CustomerCredit.fiat` (after deduction)
+         - `referenceId`: RSVP ID
+       - No `StoreLedger` entry (revenue not yet recognized)
 
 ## UI Specification
 

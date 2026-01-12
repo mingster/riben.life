@@ -17,7 +17,7 @@ export async function POST(
 		if (accessCheck instanceof NextResponse) {
 			return accessCheck;
 		}
-		if (accessCheck !== true) {
+		if (!accessCheck.success) {
 			return NextResponse.json(
 				{ success: false, error: "Unauthorized" },
 				{ status: 403 },

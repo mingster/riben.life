@@ -38,6 +38,7 @@ export default async function UsersBillingAdminPage(props: {
 					},
 					ShippingMethod: true,
 					PaymentMethod: true,
+					Store: true,
 				},
 				orderBy: {
 					updatedAt: "desc",
@@ -46,6 +47,13 @@ export default async function UsersBillingAdminPage(props: {
 			Reservations: {
 				where: {
 					storeId: params.storeId,
+				},
+				include: {
+					Store: true,
+					Facility: true,
+					FacilityPricingRule: true,
+					Customer: true,
+					CreatedBy: true,
 				},
 				orderBy: {
 					rsvpTime: "desc",
@@ -56,6 +64,20 @@ export default async function UsersBillingAdminPage(props: {
 					storeId: params.storeId,
 				},
 			},
+			CustomerFiatLedger: {
+				where: {
+					storeId: params.storeId,
+				},
+				orderBy: {
+					createdAt: "desc",
+				},
+				include: {
+					Creator: true,
+					//StoreOrder: true,
+					Store: true,
+				},
+			},
+			/*
 			CustomerCreditLedger: {
 				where: {
 					storeId: params.storeId,
@@ -67,7 +89,7 @@ export default async function UsersBillingAdminPage(props: {
 				orderBy: {
 					createdAt: "desc",
 				},
-			},
+			},*/
 		},
 	})) as User;
 	transformPrismaDataForJson(user);

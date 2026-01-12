@@ -149,7 +149,12 @@ export const DisplayOrder: React.FC<orderProps> = ({
 						{t("orderTotal_label")}
 					</span>
 					<span className="font-bold text-base sm:text-lg capitalize">
-						{Number(order.orderTotal)} {order.currency.toUpperCase()}
+						{new Intl.NumberFormat("en-US", {
+							style: "currency",
+							currency: (order.currency || "TWD").toUpperCase(),
+							maximumFractionDigits: 2,
+							minimumFractionDigits: 0,
+						}).format(Number(order.orderTotal))}
 					</span>
 				</div>
 				{/* Order notes (only display notes marked for customer) */}

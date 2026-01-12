@@ -3,8 +3,6 @@ import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import { getUtcNowEpoch, dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { Prisma } from "@prisma/client";
 import {
 	RsvpStatus,
@@ -43,17 +41,18 @@ export async function POST(
 	const log = logger.child({ module: "rsvp-import" });
 
 	try {
-		// Check access first
+		// Check access first and get user ID (avoids duplicate auth import)
 		const accessCheck = await CheckStoreAdminApiAccess(params.storeId);
 		if (accessCheck instanceof NextResponse) {
 			return accessCheck;
 		}
-		if (accessCheck !== true) {
+		if (!accessCheck.success) {
 			return NextResponse.json(
 				{ success: false, error: "Unauthorized" },
 				{ status: 403 },
 			);
 		}
+		const currentUserId = accessCheck.userId;
 
 		// Get request body - expect parsed RSVP data with pre-calculated rsvpTime
 		const body = await req.json();
@@ -65,19 +64,6 @@ export async function POST(
 				{ status: 400 },
 			);
 		}
-
-		// Get current user from session
-		const headersList = await headers();
-		const session = await auth.api.getSession({
-			headers: headersList,
-		});
-		if (!session?.user?.id) {
-			return NextResponse.json(
-				{ success: false, error: "Unauthenticated" },
-				{ status: 401 },
-			);
-		}
-		const currentUserId = session.user.id;
 
 		// Get store and settings
 		const store = await sqlClient.store.findUnique({
@@ -176,6 +162,7 @@ export async function POST(
 		for (const [blockIdx, blockRsvps] of rsvpsByBlock.entries()) {
 			const blockIndex = blockIdx;
 			const customerName = blockRsvps[0]?.customerName || "Unknown";
+			const productName = blockRsvps[0]?.productName || "RSVP Import";
 
 			try {
 				// Get organizationId from store
@@ -274,20 +261,22 @@ export async function POST(
 					continue;
 				}
 
-				// Calculate total block amount (sum of all RSVP costs)
-				const totalBlockAmount = validRsvps.reduce(
+				// Calculate total block amount for PAID RSVPs only
+				const paidRsvps = validRsvps.filter((rsvp) => rsvp.alreadyPaid);
+				const totalBlockAmount = paidRsvps.reduce(
 					(sum, rsvp) => sum + (rsvp.cost || 0),
 					0,
 				);
 
-				// Check if block is paid (all RSVPs have alreadyPaid = true)
-				const isBlockPaid = validRsvps.every((rsvp) => rsvp.alreadyPaid);
+				// Check if there are any paid RSVPs in the block
+				const hasPaidRsvps = paidRsvps.length > 0;
 
 				// Store block order ID for use in RSVP processing
 				let blockOrderId: string | null = null;
 
 				// Process block: Create TOPUP, update fiat balance, create StoreOrder
-				if (isBlockPaid && totalBlockAmount > 0) {
+				// Create block order if there are any paid RSVPs (not requiring all to be paid)
+				if (hasPaidRsvps && totalBlockAmount > 0) {
 					blockOrderId = await sqlClient.$transaction(async (tx) => {
 						const { t } = await getT();
 
@@ -341,9 +330,9 @@ export async function POST(
 									t("rsvp_import_block_topup_note", {
 										amount: totalBlockAmount,
 										currency: (store.defaultCurrency || "twd").toUpperCase(),
-										count: validRsvps.length,
+										count: paidRsvps.length,
 									}) ||
-									`RSVP import block top-up: ${totalBlockAmount} ${(store.defaultCurrency || "twd").toUpperCase()} for ${validRsvps.length} reservation(s)`,
+									`RSVP import block top-up: ${totalBlockAmount} ${(store.defaultCurrency || "twd").toUpperCase()} for ${paidRsvps.length} reservation(s)`,
 								creatorId: currentUserId,
 								createdAt: getUtcNowEpoch(),
 							},
@@ -362,7 +351,7 @@ export async function POST(
 							t("service_staff") || "Service Staff"
 						}: ${serviceStaffName}\n${
 							t("total_reservations") || "Total Reservations"
-						}: ${validRsvps.length}`;
+						}: ${paidRsvps.length}`;
 
 						// Use a placeholder RSVP ID for block order (since it's for the entire block)
 						const blockRsvpId = crypto.randomUUID();
@@ -376,7 +365,7 @@ export async function POST(
 							paymentMethodPayUrl: "cash", // Cash payment method for import
 							rsvpId: blockRsvpId, // Placeholder RSVP ID for block order
 							facilityId: null,
-							facilityName: "",
+							productName: productName, // Product name from imported data
 							serviceStaffId: null,
 							serviceStaffName: null,
 							rsvpTime: getUtcNowEpoch(), // Use current time for block order
@@ -489,7 +478,8 @@ export async function POST(
 							});
 
 							// Process fiat payment based on RSVP status
-							// Only process if block is paid (blockOrderId exists)
+							// Process if RSVP is paid and block order exists (for paid RSVPs)
+							// Note: blockOrderId exists only if there are paid RSVPs in the block
 							if (alreadyPaid && serviceStaffCost > 0 && blockOrderId) {
 								// Get current customer fiat balance
 								const customerCredit = await tx.customerCredit.findUnique({

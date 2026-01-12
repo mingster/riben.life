@@ -12,7 +12,13 @@ export const DisplayOrders = ({ orders }: orderTabProps) => {
 				<div className="flex-1 p-1 space-y-1">
 					{orders.map((order: StoreOrder) => (
 						<div key={order.id}>
-							<DisplayOrder order={order} />
+							<DisplayOrder
+								order={order}
+								hidePaymentMethod={false}
+								hideOrderStatus={false}
+								hideContactSeller={false}
+								showPickupCode={false}
+							/>
 						</div>
 					))}
 				</div>

@@ -5,7 +5,10 @@ import { NextResponse } from "next/server";
 import logger from "@/lib/logger";
 
 // gate keeper for store admin api access
-export async function CheckStoreAdminApiAccess(storeId: string) {
+// Returns { success: true, userId: string } on success, or NextResponse on failure
+export async function CheckStoreAdminApiAccess(
+	storeId: string,
+): Promise<{ success: true; userId: string } | NextResponse> {
 	try {
 		const session = await auth.api.getSession({
 			headers: await headers(), // you need to pass the headers object.
@@ -32,7 +35,7 @@ export async function CheckStoreAdminApiAccess(storeId: string) {
 			return new NextResponse("Unauthenticated", { status: 402 });
 		}
 
-		return true;
+		return { success: true, userId };
 	} catch (error) {
 		logger.error("checkaccess", {
 			metadata: {
@@ -41,6 +44,6 @@ export async function CheckStoreAdminApiAccess(storeId: string) {
 			tags: ["api", "error"],
 		});
 
-		return false;
+		return new NextResponse("Unauthorized", { status: 403 });
 	}
 }

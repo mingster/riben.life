@@ -18,7 +18,7 @@ export async function GET(
 		if (accessCheck instanceof NextResponse) {
 			return accessCheck;
 		}
-		if (accessCheck !== true) {
+		if (!accessCheck.success) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 		}
 

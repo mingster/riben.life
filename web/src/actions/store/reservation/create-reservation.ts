@@ -464,7 +464,7 @@ export const createReservationAction = baseClient
 						paymentMethodPayUrl,
 						rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
 						facilityId: facilityId || null, // Pass facility ID for pickupCode (optional)
-						facilityName: facility?.facilityName || "Reservation", // Pass facility name for product name
+						productName: facility?.facilityName || "Reservation", // Pass facility name for product name
 						serviceStaffId: serviceStaffId || null, // Pass service staff ID (optional)
 						serviceStaffName, // Pass service staff name for product name (optional)
 						rsvpTime, // Pass RSVP time (BigInt epoch)

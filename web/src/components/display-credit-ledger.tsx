@@ -26,11 +26,11 @@ export const DisplayCreditLedger = ({
 				{ledger.map((item) => (
 					<div
 						key={item.id}
-						className="rounded-lg border bg-card p-3 sm:p-4 space-y-2 text-xs"
+						className="rounded-lg border bg-card p-3 sm:p-4 space-y-2"
 					>
 						<div className="flex items-start justify-between gap-2">
 							<div className="flex-1 min-w-0">
-								<div className="font-medium text-sm sm:text-base truncate">
+								<div className="sm:text-base truncate">
 									{item.Store?.id ? (
 										<Link
 											href={`/s/${item.Store.id}`}
@@ -44,13 +44,13 @@ export const DisplayCreditLedger = ({
 										</span>
 									)}
 								</div>
-								<div className="text-muted-foreground text-[10px]">
+								<div className="text-muted-foreground">
 									{format(item.createdAt, datetimeFormat)}
 								</div>
 							</div>
 							<div className="shrink-0">
 								<span
-									className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
+									className={`inline-flex items-center rounded-full px-2 py-1 ${
 										item.type === "TOPUP"
 											? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
 											: item.type === "BONUS"
@@ -70,7 +70,7 @@ export const DisplayCreditLedger = ({
 						<div className="flex items-center justify-between pt-2 border-t">
 							<div className="space-y-1">
 								<div className="text-[10px] text-muted-foreground">
-									{t("customer_credit_amount")}
+									{t("customer_fiat_amount")}
 								</div>
 								<div
 									className={cn(
@@ -80,8 +80,15 @@ export const DisplayCreditLedger = ({
 											: "text-red-600 dark:text-red-400",
 									)}
 								>
-									{Number(item.amount) > 0 ? "+" : ""}
-									{item.amount.toString()}
+									{new Intl.NumberFormat("en-US", {
+										style: "currency",
+										currency: (
+											item.Store?.defaultCurrency || "TWD"
+										).toUpperCase(),
+										maximumFractionDigits: 2,
+										minimumFractionDigits: 0,
+										signDisplay: "exceptZero",
+									}).format(Number(item.amount))}
 								</div>
 							</div>
 
@@ -90,16 +97,21 @@ export const DisplayCreditLedger = ({
 									{t("balance")}
 								</div>
 								<div className="font-semibold text-base font-mono">
-									{item.balance.toString()}
+									{new Intl.NumberFormat("en-US", {
+										style: "currency",
+										currency: (
+											item.Store?.defaultCurrency || "TWD"
+										).toUpperCase(),
+										maximumFractionDigits: 2,
+										minimumFractionDigits: 0,
+									}).format(Number(item.balance))}
 								</div>
 							</div>
 						</div>
 
 						{item.note && (
 							<div className="text-[10px] pt-2 border-t">
-								<span className="font-medium text-muted-foreground">
-									{t("note")}:
-								</span>{" "}
+								<span className="text-muted-foreground">{t("note")}:</span>{" "}
 								<span className="text-foreground">{item.note}</span>
 							</div>
 						)}
@@ -122,25 +134,23 @@ export const DisplayCreditLedger = ({
 					<table className="w-full border-collapse min-w-full">
 						<thead>
 							<tr className="bg-muted/50">
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 font-medium">
 									{t("created_at")}
 								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 font-medium">
 									{t("store_name")}
 								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 font-medium">
 									{t("customer_credit_type")}
 								</th>
-								<th className="text-right px-3 py-2 text-xs font-medium">
+								<th className="text-right px-3 py-2 font-medium">
 									{t("customer_credit_amount")}
 								</th>
-								<th className="text-right px-3 py-2 text-xs font-medium">
+								<th className="text-right px-3 py-2 font-medium">
 									{t("balance")}
 								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
-									{t("note")}
-								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 font-medium">{t("note")}</th>
+								<th className="text-left px-3 py-2 font-medium">
 									{t("customer_credit_creator")}
 								</th>
 							</tr>
@@ -148,10 +158,10 @@ export const DisplayCreditLedger = ({
 						<tbody>
 							{ledger.map((item) => (
 								<tr key={item.id} className="border-b last:border-b-0">
-									<td className="px-3 py-2 text-xs font-mono">
+									<td className="px-3 py-2 font-mono">
 										{format(item.createdAt, datetimeFormat)}
 									</td>
-									<td className="px-3 py-2 text-xs">
+									<td className="px-3 py-2">
 										{item.Store?.id ? (
 											<Link
 												href={`/s/${item.Store.id}`}
@@ -165,9 +175,9 @@ export const DisplayCreditLedger = ({
 											</span>
 										)}
 									</td>
-									<td className="px-3 py-2 text-xs">
+									<td className="px-3 py-2">
 										<span
-											className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
+											className={`inline-flex items-center rounded-full px-2 py-1 ${
 												item.type === "TOPUP"
 													? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
 													: item.type === "BONUS"
@@ -184,24 +194,36 @@ export const DisplayCreditLedger = ({
 									</td>
 									<td
 										className={cn(
-											"px-3 py-2 text-xs font-semibold font-mono text-right",
+											"px-3 py-2 font-semibold font-mono text-right",
 											Number(item.amount) >= 0
 												? "text-green-600 dark:text-green-400"
 												: "text-red-600 dark:text-red-400",
 										)}
 									>
-										{Number(item.amount) > 0 ? "+" : ""}
-										{item.amount.toString()}
+										{new Intl.NumberFormat("en-US", {
+											style: "currency",
+											currency: (
+												item.Store?.defaultCurrency || "TWD"
+											).toUpperCase(),
+											maximumFractionDigits: 2,
+											minimumFractionDigits: 0,
+											signDisplay: "exceptZero",
+										}).format(Number(item.amount))}
 									</td>
-									<td className="px-3 py-2 text-xs font-semibold font-mono text-right">
-										{item.balance.toString()}
+									<td className="px-3 py-2 font-semibold font-mono text-right">
+										{new Intl.NumberFormat("en-US", {
+											style: "currency",
+											currency: (
+												item.Store?.defaultCurrency || "TWD"
+											).toUpperCase(),
+											maximumFractionDigits: 2,
+											minimumFractionDigits: 0,
+										}).format(Number(item.balance))}
 									</td>
-									<td className="px-3 py-2 text-xs max-w-[200px] truncate">
+									<td className="px-3 py-2 max-w-[200px] truncate">
 										{item.note || "-"}
 									</td>
-									<td className="px-3 py-2 text-xs">
-										{item.Creator?.name || "-"}
-									</td>
+									<td className="px-3 py-2">{item.Creator?.name || "-"}</td>
 								</tr>
 							))}
 						</tbody>

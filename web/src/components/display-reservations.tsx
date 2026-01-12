@@ -44,9 +44,11 @@ import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 export const DisplayReservations = ({
 	reservations,
 	user,
+	hideActions = false,
 }: {
 	reservations: Rsvp[];
 	user?: User | null;
+	hideActions?: boolean;
 }) => {
 	if (!reservations || reservations.length === 0) return null;
 
@@ -469,7 +471,7 @@ export const DisplayReservations = ({
 					<div
 						key={item.id}
 						className={cn(
-							"rounded-lg border bg-card p-3 space-y-2 text-xs",
+							"rounded-lg border bg-card p-3 space-y-2",
 							getStatusColorClasses(item.status, false),
 						)}
 					>
@@ -558,7 +560,7 @@ export const DisplayReservations = ({
 									datetimeFormat,
 								)}
 							</div>
-							{canEditReservation(item) && (
+							{!hideActions && canEditReservation(item) && (
 								<div className="flex items-center gap-1">
 									<Button
 										variant="ghost"
@@ -598,36 +600,38 @@ export const DisplayReservations = ({
 					<table className="w-full border-collapse min-w-full">
 						<thead>
 							<tr className="bg-muted/50">
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 font-medium">
 									{t("rsvp_time")}
 								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 font-medium">
 									{t("rsvp_status")}
 								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 font-medium">
 									{t("store_name")}
 								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 font-medium">
 									{t("rsvp_facility")}
 								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 font-medium">
 									{t("rsvp_message")}
 								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 font-medium">
 									{t("rsvp_creator")}
 								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
+								<th className="text-left px-3 py-2 font-medium">
 									{t("created_at")}
 								</th>
-								<th className="text-left px-3 py-2 text-xs font-medium">
-									{t("actions")}
-								</th>
+								{!hideActions && (
+									<th className="text-left px-3 py-2 font-medium">
+										{t("actions")}
+									</th>
+								)}
 							</tr>
 						</thead>
 						<tbody>
 							{sortedReservations.map((item) => (
 								<tr key={item.id} className="border-b last:border-b-0">
-									<td className="px-3 py-2 text-xs font-mono">
+									<td className="px-3 py-2 font-mono">
 										{format(
 											getDateInTz(
 												epochToDate(
@@ -644,7 +648,7 @@ export const DisplayReservations = ({
 											`${datetimeFormat} HH:mm`,
 										)}
 									</td>
-									<td className="px-3 py-2 text-xs">
+									<td className="px-3 py-2">
 										<span
 											className={cn(
 												"inline-flex items-center px-2 py-1 text-[10px] font-medium rounded",
@@ -654,7 +658,7 @@ export const DisplayReservations = ({
 											{t(`rsvp_status_${item.status}`)}
 										</span>
 									</td>
-									<td className="px-3 py-2 text-xs">
+									<td className="px-3 py-2">
 										{item.Store?.id ? (
 											<Link
 												href={`/s/${item.Store.id}/reservation`}
@@ -666,17 +670,15 @@ export const DisplayReservations = ({
 											item.Store?.name
 										)}
 									</td>
-									<td className="px-3 py-2 text-xs">
+									<td className="px-3 py-2">
 										{item.Facility?.facilityName || "-"}
 									</td>
-									<td className="px-3 py-2 text-xs max-w-[200px] truncate">
+									<td className="px-3 py-2 max-w-[200px] truncate">
 										{item.message || "-"}
 									</td>
-									<td className="px-3 py-2 text-xs">
-										{item.CreatedBy?.name || "-"}
-									</td>
+									<td className="px-3 py-2">{item.CreatedBy?.name || "-"}</td>
 									{/*created at*/}
-									<td className="px-3 py-2 text-xs font-mono">
+									<td className="px-3 py-2 font-mono">
 										{format(
 											getDateInTz(
 												item.createdAt,
@@ -687,37 +689,39 @@ export const DisplayReservations = ({
 											datetimeFormat,
 										)}
 									</td>
-									<td className="px-3 py-2 text-xs">
-										{canEditReservation(item) && (
-											<div className="flex items-center gap-1">
-												<Button
-													variant="ghost"
-													size="icon"
-													className="h-8 w-8 sm:h-7 sm:w-7"
-													onClick={() => handleEditClick(item)}
-													title={t("edit_reservation")}
-													disabled={isLoadingStoreData}
-												>
-													<IconEdit className="h-4 w-4" />
-												</Button>
-												{canCancelReservation(item) && (
+									{!hideActions && (
+										<td className="px-3 py-2">
+											{canEditReservation(item) && (
+												<div className="flex items-center gap-1">
 													<Button
 														variant="ghost"
 														size="icon"
-														className="h-8 w-8 sm:h-7 sm:w-7 text-destructive hover:text-destructive"
-														onClick={() => handleCancelClick(item)}
-														title={
-															item.status === RsvpStatus.Pending
-																? t("rsvp_delete_reservation")
-																: t("rsvp_cancel_reservation")
-														}
+														className="h-8 w-8 sm:h-7 sm:w-7"
+														onClick={() => handleEditClick(item)}
+														title={t("edit_reservation")}
+														disabled={isLoadingStoreData}
 													>
-														<IconTrash className="h-4 w-4" />
+														<IconEdit className="h-4 w-4" />
 													</Button>
-												)}
-											</div>
-										)}
-									</td>
+													{canCancelReservation(item) && (
+														<Button
+															variant="ghost"
+															size="icon"
+															className="h-8 w-8 sm:h-7 sm:w-7 text-destructive hover:text-destructive"
+															onClick={() => handleCancelClick(item)}
+															title={
+																item.status === RsvpStatus.Pending
+																	? t("rsvp_delete_reservation")
+																	: t("rsvp_cancel_reservation")
+															}
+														>
+															<IconTrash className="h-4 w-4" />
+														</Button>
+													)}
+												</div>
+											)}
+										</td>
+									)}
 								</tr>
 							))}
 						</tbody>
