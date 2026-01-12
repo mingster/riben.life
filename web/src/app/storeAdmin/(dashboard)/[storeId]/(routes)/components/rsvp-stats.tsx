@@ -3,7 +3,6 @@
 import {
 	Card,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
@@ -61,6 +60,8 @@ interface RsvpStatsData {
 	// Customers
 	customerCount: number;
 	totalUnusedCredit: number;
+	totalCustomerCount: number;
+	newCustomerCount: number;
 }
 
 export function RsvpStats({
@@ -87,8 +88,8 @@ export function RsvpStats({
 		setPeriodType(period);
 	}, []);
 
-	// Calculate date range based on period (same logic as RsvpHistoryClient)
-	const dateRange = useMemo(() => {
+	// Pre-calculate date ranges for all periods
+	const allPeriodRanges = useMemo(() => {
 		const nowInTz = getNowInStoreTimezone();
 
 		// Extract date components in store timezone
@@ -111,60 +112,113 @@ export function RsvpStats({
 		const hour = getValue("hour");
 		const minute = getValue("minute");
 
-		// For "all" period, return null epoch values (no date filtering)
-		if (periodType === "all") {
-			return { startEpoch: null, endEpoch: null };
-		}
-
 		const storeDate = new Date(year, month, day, hour, minute);
-		let periodStart: Date;
-		let periodEnd: Date;
 
+		// Helper to calculate date range for a period
+		const calculateRange = (period: PeriodType) => {
+			if (period === "all") {
+				return { startEpoch: null, endEpoch: null };
+			}
+
+			let periodStart: Date;
+			let periodEnd: Date;
+
+			switch (period) {
+				case "week":
+					periodStart = startOfWeek(storeDate, { weekStartsOn: 0 });
+					periodEnd = endOfWeek(storeDate, { weekStartsOn: 0 });
+					break;
+				case "month":
+					periodStart = startOfMonth(storeDate);
+					periodEnd = endOfMonth(storeDate);
+					break;
+				case "year":
+					periodStart = startOfYear(storeDate);
+					periodEnd = endOfYear(storeDate);
+					break;
+				default:
+					periodStart = startOfMonth(storeDate);
+					periodEnd = endOfMonth(storeDate);
+			}
+
+			// Convert period boundaries to UTC (interpret as store timezone)
+			const startStr = `${periodStart.getFullYear()}-${String(periodStart.getMonth() + 1).padStart(2, "0")}-${String(periodStart.getDate()).padStart(2, "0")}T00:00`;
+			const endStr = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, "0")}-${String(periodEnd.getDate()).padStart(2, "0")}T23:59`;
+
+			const startDate = convertToUtc(startStr, storeTimezone);
+			const endDate = convertToUtc(endStr, storeTimezone);
+
+			const startEpoch = dateToEpoch(startDate);
+			const endEpoch = dateToEpoch(endDate);
+
+			return { startEpoch, endEpoch };
+		};
+
+		return {
+			week: calculateRange("week"),
+			month: calculateRange("month"),
+			year: calculateRange("year"),
+			all: calculateRange("all"),
+		};
+	}, [storeTimezone, getNowInStoreTimezone]);
+
+	// Helper to build URL for a period
+	const buildUrl = useCallback(
+		(period: PeriodType) => {
+			if (!rsvpSettings?.acceptReservation || !params.storeId || !isHydrated) {
+				return null;
+			}
+
+			const range = allPeriodRanges[period];
+			if (period === "all") {
+				return `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=${period}`;
+			}
+
+			if (range.startEpoch && range.endEpoch) {
+				return `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=${period}&startEpoch=${range.startEpoch}&endEpoch=${range.endEpoch}`;
+			}
+
+			return null;
+		},
+		[
+			rsvpSettings?.acceptReservation,
+			params.storeId,
+			isHydrated,
+			allPeriodRanges,
+		],
+	);
+
+	// Pre-fetch all periods in parallel
+	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
+
+	const weekUrl = buildUrl("week");
+	const monthUrl = buildUrl("month");
+	const yearUrl = buildUrl("year");
+	const allUrl = buildUrl("all");
+
+	const { data: weekData } = useSWR<RsvpStatsData>(weekUrl, fetcher);
+	const { data: monthData } = useSWR<RsvpStatsData>(monthUrl, fetcher);
+	const { data: yearData } = useSWR<RsvpStatsData>(yearUrl, fetcher);
+	const { data: allData } = useSWR<RsvpStatsData>(allUrl, fetcher);
+
+	// Get data for current period (instant switch)
+	const data = useMemo(() => {
 		switch (periodType) {
 			case "week":
-				periodStart = startOfWeek(storeDate, { weekStartsOn: 0 });
-				periodEnd = endOfWeek(storeDate, { weekStartsOn: 0 });
-				break;
+				return weekData;
 			case "month":
-				periodStart = startOfMonth(storeDate);
-				periodEnd = endOfMonth(storeDate);
-				break;
+				return monthData;
 			case "year":
-				periodStart = startOfYear(storeDate);
-				periodEnd = endOfYear(storeDate);
-				break;
+				return yearData;
+			case "all":
+				return allData;
 			default:
-				periodStart = startOfMonth(storeDate);
-				periodEnd = endOfMonth(storeDate);
+				return monthData;
 		}
+	}, [periodType, weekData, monthData, yearData, allData]);
 
-		// Convert period boundaries to UTC (interpret as store timezone)
-		const startStr = `${periodStart.getFullYear()}-${String(periodStart.getMonth() + 1).padStart(2, "0")}-${String(periodStart.getDate()).padStart(2, "0")}T00:00`;
-		const endStr = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, "0")}-${String(periodEnd.getDate()).padStart(2, "0")}T23:59`;
-
-		const startDate = convertToUtc(startStr, storeTimezone);
-		const endDate = convertToUtc(endStr, storeTimezone);
-
-		const startEpoch = dateToEpoch(startDate);
-		const endEpoch = dateToEpoch(endDate);
-
-		return { startEpoch, endEpoch };
-	}, [periodType, storeTimezone, getNowInStoreTimezone]);
-
-	// Build URL with period query parameter
-	// Only fetch if RSVP is enabled
-	// For "all" period, don't send startEpoch/endEpoch
-	const url =
-		rsvpSettings?.acceptReservation && params.storeId && isHydrated
-			? periodType === "all"
-				? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=${periodType}`
-				: dateRange.startEpoch && dateRange.endEpoch
-					? `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${params.storeId}/rsvp/stats?period=${periodType}&startEpoch=${dateRange.startEpoch}&endEpoch=${dateRange.endEpoch}`
-					: null
-			: null;
-
-	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
-	const { data, error, isLoading } = useSWR<RsvpStatsData>(url, fetcher);
+	// Check if any period is still loading
+	const isLoading = !weekData || !monthData || !yearData || !allData;
 
 	// Don't render if RSVP is not enabled
 	if (!rsvpSettings?.acceptReservation) {
@@ -188,10 +242,6 @@ export function RsvpStats({
 								<Skeleton className="h-4 w-4 rounded-full" />
 							</Badge>
 						</CardHeader>
-						<CardFooter className="flex-col items-start gap-1.5 text-sm">
-							<Skeleton className="h-4 w-32" />
-							<Skeleton className="h-4 w-24" />
-						</CardFooter>
 					</Card>
 				))}
 			</div>
@@ -215,18 +265,14 @@ export function RsvpStats({
 								<Skeleton className="h-4 w-4 rounded-full" />
 							</Badge>
 						</CardHeader>
-						<CardFooter className="flex-col items-start gap-1.5 text-sm">
-							<Skeleton className="h-4 w-32" />
-							<Skeleton className="h-4 w-24" />
-						</CardFooter>
 					</Card>
 				))}
 			</div>
 		);
 	}
 
-	// Show error state
-	if (error || !data) {
+	// Show error state (only if current period data is missing)
+	if (!data) {
 		return null; // Silently fail - don't show error UI
 	}
 
@@ -241,6 +287,8 @@ export function RsvpStats({
 		completedServiceStaffCost,
 		customerCount,
 		totalUnusedCredit,
+		totalCustomerCount,
+		newCustomerCount,
 	} = data;
 
 	// Format currency amounts
@@ -319,12 +367,24 @@ export function RsvpStats({
 		},
 		{
 			title: t("rsvp_customers_with_credit") || "Customers with Credit",
-			value: customerCount,
+			value: totalCustomerCount,
 			subValues: [
 				{
-					label: t("rsvp_total_unused_credit") || "Total Unused Credit",
-					value: totalUnusedCredit,
+					label: t("rsvp_new_customers") || "New Customers",
+					value: newCustomerCount,
 					isCurrency: false,
+				},
+				{
+					label: t("rsvp_unused_account_balance") || "Unused Account Balance",
+					value: totalUnusedCredit,
+					isCurrency: true,
+				},
+				{
+					label:
+						t("rsvp_completed_reservation_count") ||
+						"Completed Reservation Revenue",
+					value: completedTotalRevenue,
+					isCurrency: true,
 				},
 			],
 			icon: IconCreditCard,
@@ -399,11 +459,6 @@ export function RsvpStats({
 										</div>
 									)}
 								</CardHeader>
-								<CardFooter className="flex-col items-start gap-1.5 text-sm">
-									<div className="text-muted-foreground">
-										{t("rsvp_stats_click_to_view")}
-									</div>
-								</CardFooter>
 							</Card>
 						</Link>
 					);
