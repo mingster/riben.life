@@ -81,6 +81,9 @@ export function EditServiceStaffDialog({
 	const [loading, setLoading] = useState(false);
 	const [users, setUsers] = useState<User[]>([]);
 	const [loadingUsers, setLoadingUsers] = useState(true);
+	const [existingServiceStaffNames, setExistingServiceStaffNames] = useState<
+		Set<string>
+	>(new Set());
 	const [userMode, setUserMode] = useState<"select" | "create">("select");
 	const [userCreationData, setUserCreationData] = useState<{
 		name: string;
@@ -133,6 +136,20 @@ export function EditServiceStaffDialog({
 
 					setUsers(allUsers);
 				}
+
+				// Store existing service staff names for duplicate name checking
+				if (serviceStaffResult?.data?.serviceStaff) {
+					const names = new Set(
+						serviceStaffResult.data.serviceStaff
+							.map((ss: any) => {
+								// Access userName from ServiceStaffColumn or User.name from raw data
+								const name = ss.userName || ss.User?.name;
+								return name?.toLowerCase().trim();
+							})
+							.filter((name): name is string => Boolean(name)),
+					);
+					setExistingServiceStaffNames(names);
+				}
 			} catch (error) {
 				toastError({
 					title: t("error_title"),
@@ -149,56 +166,53 @@ export function EditServiceStaffDialog({
 		}
 	}, [params.storeId, dialogOpen, t, isEditMode, serviceStaff?.userId]);
 
-	const defaultValues = serviceStaff
-		? {
-				id: serviceStaff.id,
-				userId: serviceStaff.userId,
-				memberRole: serviceStaff.memberRole || "staff",
-				capacity: serviceStaff.capacity,
-				defaultCost: serviceStaff.defaultCost,
-				defaultCredit: serviceStaff.defaultCredit,
-				defaultDuration: serviceStaff.defaultDuration,
-				businessHours: serviceStaff.businessHours,
-				description: serviceStaff.description,
-				// User property fields (for editing user properties)
-				userName: serviceStaff.userName || "",
-				userEmail: serviceStaff.userEmail || "",
-				userPhone: serviceStaff.userPhoneNumber || "",
-				userPassword: "", // Password is not editable
-			}
-		: {
-				id: "",
-				userId: "",
-				memberRole: "staff",
-				capacity: 1,
-				defaultCost: 0,
-				defaultCredit: 0,
-				defaultDuration: 60,
-				businessHours: null,
-				description: null,
-				// User creation fields
-				userName: userCreationData.name,
-				userEmail: userCreationData.email,
-				userPhone: userCreationData.phone,
-				userPassword: userCreationData.password,
-			};
-
-	// Use createServiceStaffSchema when isNew, updateServiceStaffSchema when editing
-	// Extend schema to include user creation fields when needed
-	const baseSchema = useMemo(
-		() => (isEditMode ? updateServiceStaffSchema : createServiceStaffSchema),
-		[isEditMode],
+	const defaultValues = useMemo(
+		() =>
+			serviceStaff
+				? {
+						id: serviceStaff.id,
+						userId: serviceStaff.userId,
+						memberRole: serviceStaff.memberRole || "staff",
+						capacity: serviceStaff.capacity,
+						defaultCost: serviceStaff.defaultCost,
+						defaultCredit: serviceStaff.defaultCredit,
+						defaultDuration: serviceStaff.defaultDuration,
+						businessHours: serviceStaff.businessHours,
+						description: serviceStaff.description,
+						// User property fields (for editing user properties)
+						userName: serviceStaff.userName || "",
+						userEmail: serviceStaff.userEmail || "",
+						userPhone: serviceStaff.userPhoneNumber || "",
+						userPassword: "", // Password is not editable
+					}
+				: {
+						id: "",
+						userId: "",
+						memberRole: "staff",
+						capacity: 1,
+						defaultCost: 0,
+						defaultCredit: 0,
+						defaultDuration: 60,
+						businessHours: null,
+						description: null,
+						// User creation fields
+						userName: userCreationData.name,
+						userEmail: userCreationData.email,
+						userPhone: userCreationData.phone,
+						userPassword: userCreationData.password,
+					},
+		[serviceStaff, userCreationData],
 	);
 
-	// Extend schema with user creation fields
-	// Make userId optional by using omit and extend, then add conditional validation
-	const schema = useMemo(
-		() =>
-			baseSchema
-				.omit({ userId: true })
+	// Build schema based on edit/create mode
+	// When editing: updateServiceStaffSchema (doesn't have userId - foreign key is not editable)
+	// When creating: createServiceStaffSchema (has userId, but we make it optional for user creation flow)
+	const schema = useMemo(() => {
+		if (isEditMode) {
+			// Edit mode: extend updateServiceStaffSchema with user fields (userId is optional, read-only)
+			return updateServiceStaffSchema
 				.extend({
-					// Make userId optional (will be validated conditionally)
-					userId: z.string().optional(),
+					userId: z.string().optional(), // For display only, not editable
 					userName: z.string().optional(),
 					userEmail: z
 						.string()
@@ -209,7 +223,39 @@ export function EditServiceStaffDialog({
 					userPassword: z.string().optional(),
 				})
 				.refine(
-					(data) => {
+					(data: { userId?: string; userName?: string }) => {
+						// When editing, userName is required if userId is provided (for user properties update)
+						if (data.userId && data.userId.trim()) {
+							return data.userName && data.userName.trim();
+						}
+						return true;
+					},
+					{
+						message: "Name is required",
+						path: ["userName"],
+					},
+				);
+		} else {
+			// Create mode: omit userId from createServiceStaffSchema, then extend with optional userId
+			return createServiceStaffSchema
+				.omit({ userId: true })
+				.extend({
+					userId: z.string().optional(), // Will be validated conditionally
+					userName: z.string().optional(),
+					userEmail: z
+						.string()
+						.email("Invalid email format")
+						.optional()
+						.or(z.literal("")),
+					userPhone: z.string().optional(),
+					userPassword: z.string().optional(),
+				})
+				.refine(
+					(data: {
+						userId?: string;
+						userName?: string;
+						userPassword?: string;
+					}) => {
 						// If userId is provided, that's valid
 						if (data.userId && data.userId.trim()) {
 							return true;
@@ -226,11 +272,11 @@ export function EditServiceStaffDialog({
 					{
 						message:
 							"Either select an existing user or provide name and password to create a new user",
-						path: ["userId"], // This will show error on userId field
+						path: ["userId"],
 					},
 				)
 				.refine(
-					(data) => {
+					(data: { userId?: string; userName?: string }) => {
 						// If userId is not provided, userName is required
 						if (!data.userId || !data.userId.trim()) {
 							return data.userName && data.userName.trim();
@@ -243,7 +289,7 @@ export function EditServiceStaffDialog({
 					},
 				)
 				.refine(
-					(data) => {
+					(data: { userId?: string; userPassword?: string }) => {
 						// If userId is not provided, userPassword is required
 						if (!data.userId || !data.userId.trim()) {
 							return data.userPassword && data.userPassword.trim();
@@ -254,28 +300,15 @@ export function EditServiceStaffDialog({
 						message: "Password is required when creating a new user",
 						path: ["userPassword"],
 					},
-				)
-				.refine(
-					(data) => {
-						// When editing, userName is required if userId is provided
-						if (isEditMode && data.userId && data.userId.trim()) {
-							return data.userName && data.userName.trim();
-						}
-						return true;
-					},
-					{
-						message: "Name is required",
-						path: ["userName"],
-					},
-				),
-		[baseSchema, isEditMode],
-	);
+				);
+		}
+	}, [isEditMode]);
 
 	// Form input type: UpdateServiceStaffInput when editing, CreateServiceStaffInput when creating
-	// Both schemas now include memberRole, so we can use UpdateServiceStaffInput as the base
-	// Add user creation fields for validation
+	// Add userId and user creation fields for form handling
 	type FormInput = Omit<UpdateServiceStaffInput, "id"> & {
 		id?: string;
+		userId?: string; // Optional, used for display in edit mode and selection in create mode
 		userName?: string;
 		userEmail?: string;
 		userPhone?: string;
@@ -288,6 +321,11 @@ export function EditServiceStaffDialog({
 		mode: "onChange",
 		reValidateMode: "onChange",
 	});
+
+	// Reset form when defaultValues changes (when serviceStaff changes)
+	useEffect(() => {
+		form.reset(defaultValues);
+	}, [defaultValues, form]);
 
 	const resetForm = useCallback(() => {
 		const resetValues = {
@@ -530,9 +568,9 @@ export function EditServiceStaffDialog({
 				}
 
 				// Update existing ServiceStaff entry
+				// Note: userId is not editable (foreign key), so it's not included in the update
 				const result = await updateServiceStaffAction(String(params.storeId), {
 					id: actualServiceStaffId,
-					userId: values.userId,
 					memberRole: values.memberRole,
 					capacity: values.capacity,
 					defaultCost: values.defaultCost,
@@ -649,11 +687,46 @@ export function EditServiceStaffDialog({
 									</RadioGroup>
 								</div>
 							)}
-							{userMode === "select" || isEditMode ? (
+							{/* User selection field (only shown when creating and selecting existing user) */}
+							{userMode === "select" && !isEditMode && (
+								<FormField
+									control={form.control}
+									name="userId"
+									render={({ field, fieldState }) => (
+										<FormItem
+											className={cn(
+												fieldState.error &&
+													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+											)}
+										>
+											<FormLabel>
+												{t("user") || "User"}{" "}
+												<span className="text-destructive">*</span>
+											</FormLabel>
+											<FormControl>
+												<UserCombobox
+													users={users}
+													value={field.value}
+													onValueChange={field.onChange}
+													disabled={loading || form.formState.isSubmitting}
+													className={
+														fieldState.error
+															? "border-destructive focus-visible:ring-destructive"
+															: ""
+													}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							)}
+							{/* User property fields (only shown when editing) */}
+							{isEditMode && (
 								<>
 									<FormField
 										control={form.control}
-										name="userId"
+										name="userName"
 										render={({ field, fieldState }) => (
 											<FormItem
 												className={cn(
@@ -662,130 +735,88 @@ export function EditServiceStaffDialog({
 												)}
 											>
 												<FormLabel>
-													{t("user") || "User"}{" "}
+													{t("your_name") || "Your Name"}{" "}
 													<span className="text-destructive">*</span>
 												</FormLabel>
 												<FormControl>
-													<UserCombobox
-														users={users}
-														value={field.value}
-														onValueChange={field.onChange}
+													<Input
 														disabled={loading || form.formState.isSubmitting}
-														className={
-															fieldState.error
-																? "border-destructive focus-visible:ring-destructive"
-																: ""
-														}
+														placeholder={t("your_name") || "Enter your name"}
+														value={field.value || ""}
+														onChange={field.onChange}
+														className={cn(
+															"h-10 text-base sm:h-9 sm:text-sm",
+															fieldState.error &&
+																"border-destructive focus-visible:ring-destructive",
+														)}
 													/>
 												</FormControl>
 												<FormMessage />
 											</FormItem>
 										)}
 									/>
-									{/* User property fields (only shown when editing) */}
-									{isEditMode && (
-										<>
-											<FormField
-												control={form.control}
-												name="userName"
-												render={({ field, fieldState }) => (
-													<FormItem
-														className={cn(
-															fieldState.error &&
-																"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-														)}
-													>
-														<FormLabel>
-															{t("your_name") || "Your Name"}{" "}
-															<span className="text-destructive">*</span>
-														</FormLabel>
-														<FormControl>
-															<Input
-																disabled={
-																	loading || form.formState.isSubmitting
-																}
-																placeholder={
-																	t("your_name") || "Enter your name"
-																}
-																value={field.value || ""}
-																onChange={field.onChange}
-																className={cn(
-																	"h-10 text-base sm:h-9 sm:text-sm",
-																	fieldState.error &&
-																		"border-destructive focus-visible:ring-destructive",
-																)}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
+									<FormField
+										control={form.control}
+										name="userEmail"
+										render={({ field, fieldState }) => (
+											<FormItem
+												className={cn(
+													fieldState.error &&
+														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
 												)}
-											/>
-											<FormField
-												control={form.control}
-												name="userEmail"
-												render={({ field, fieldState }) => (
-													<FormItem
+											>
+												<FormLabel>{t("email") || "Email"}</FormLabel>
+												<FormControl>
+													<Input
+														type="email"
+														disabled={loading || form.formState.isSubmitting}
+														placeholder="Enter email (optional)"
+														value={field.value || ""}
+														onChange={field.onChange}
 														className={cn(
+															"h-10 text-base sm:h-9 sm:text-sm",
 															fieldState.error &&
-																"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+																"border-destructive focus-visible:ring-destructive",
 														)}
-													>
-														<FormLabel>{t("email") || "Email"}</FormLabel>
-														<FormControl>
-															<Input
-																type="email"
-																disabled={
-																	loading || form.formState.isSubmitting
-																}
-																placeholder="Enter email (optional)"
-																value={field.value || ""}
-																onChange={field.onChange}
-																className={cn(
-																	"h-10 text-base sm:h-9 sm:text-sm",
-																	fieldState.error &&
-																		"border-destructive focus-visible:ring-destructive",
-																)}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="userPhone"
+										render={({ field, fieldState }) => (
+											<FormItem
+												className={cn(
+													fieldState.error &&
+														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
 												)}
-											/>
-											<FormField
-												control={form.control}
-												name="userPhone"
-												render={({ field, fieldState }) => (
-													<FormItem
+											>
+												<FormLabel>{t("phone") || "Phone"}</FormLabel>
+												<FormControl>
+													<Input
+														type="tel"
+														disabled={loading || form.formState.isSubmitting}
+														placeholder="Enter phone number (optional)"
+														value={field.value || ""}
+														onChange={field.onChange}
 														className={cn(
+															"h-10 text-base sm:h-9 sm:text-sm",
 															fieldState.error &&
-																"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+																"border-destructive focus-visible:ring-destructive",
 														)}
-													>
-														<FormLabel>{t("phone") || "Phone"}</FormLabel>
-														<FormControl>
-															<Input
-																type="tel"
-																disabled={
-																	loading || form.formState.isSubmitting
-																}
-																placeholder="Enter phone number (optional)"
-																value={field.value || ""}
-																onChange={field.onChange}
-																className={cn(
-																	"h-10 text-base sm:h-9 sm:text-sm",
-																	fieldState.error &&
-																		"border-destructive focus-visible:ring-destructive",
-																)}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
-												)}
-											/>
-										</>
-									)}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
 								</>
-							) : (
+							)}
+							{/* Create new user fields (only shown when creating and userMode is "create") */}
+							{userMode === "create" && !isEditMode && (
 								<>
 									<FormField
 										control={form.control}

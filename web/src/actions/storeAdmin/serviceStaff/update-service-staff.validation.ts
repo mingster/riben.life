@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const updateServiceStaffSchema = z.object({
 	id: z.string().min(1, "ServiceStaff ID is required"),
-	userId: z.string().min(1, "User is required"),
 	memberRole: z.string().min(1, "Member role is required"),
 	capacity: z.coerce.number().int().min(1, "Capacity is required"),
 	defaultCost: z.coerce.number().min(0, "Default Cost is required"),

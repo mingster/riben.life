@@ -1,9 +1,9 @@
 {
   "name": "riben.life",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "private": true,
   "scripts": {
-    "dev": "bun --bun next dev --turbo -p 3001",
+    "dev": "NEXT_TELEMETRY_DISABLED=1 bun --bun next dev --turbo -p 3001",
     "dev:node": "next dev --turbo -p 3001",
     "debugdev": "bun run postinstall; NODE_OPTIONS='--inspect' bun --bun next dev --turbo -p 3001",
     "dev:webpack": "bun --bun next dev -p 3001",

@@ -77,6 +77,8 @@ export const deleteServiceStaffAction = storeActionClient
 			await sqlClient.serviceStaff.delete({
 				where: { id },
 			});
+
+			// Delete the user
 		}
 
 		return { id };

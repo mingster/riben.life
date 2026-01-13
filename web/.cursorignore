@@ -1,2 +1,6 @@
 # Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
-.next/
+# Next.js build output
+.next
+
+# Dependency directories
+node_modules/

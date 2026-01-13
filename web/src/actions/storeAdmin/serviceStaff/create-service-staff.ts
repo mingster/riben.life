@@ -50,6 +50,22 @@ export const createServiceStaffAction = storeActionClient
 			throw new SafeError("User not found");
 		}
 
+		// Check if user is already assigned as service staff for this store
+		const existingServiceStaff = await sqlClient.serviceStaff.findFirst({
+			where: {
+				storeId,
+				userId,
+				isDeleted: false,
+			},
+			select: { id: true },
+		});
+
+		if (existingServiceStaff) {
+			throw new SafeError(
+				"This user is already assigned as service staff for this store.",
+			);
+		}
+
 		// Validate businessHours JSON when provided
 		if (businessHours && businessHours.trim().length > 0) {
 			try {

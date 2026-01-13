@@ -17,7 +17,6 @@ export const updateServiceStaffAction = storeActionClient
 		const storeId = bindArgsClientInputs[0] as string;
 		const {
 			id,
-			userId,
 			memberRole,
 			capacity,
 			defaultCost,
@@ -29,12 +28,15 @@ export const updateServiceStaffAction = storeActionClient
 
 		const serviceStaff = await sqlClient.serviceStaff.findUnique({
 			where: { id },
-			select: { id: true, storeId: true },
+			select: { id: true, storeId: true, userId: true },
 		});
 
 		if (!serviceStaff || serviceStaff.storeId !== storeId) {
 			throw new SafeError("Service staff not found");
 		}
+
+		// Get userId from existing record (foreign key, not editable)
+		const userId = serviceStaff.userId;
 
 		// Get store to get organizationId
 		const store = await sqlClient.store.findUnique({
@@ -44,16 +46,6 @@ export const updateServiceStaffAction = storeActionClient
 
 		if (!store || !store.organizationId) {
 			throw new SafeError("Store organization not found");
-		}
-
-		// Verify user exists
-		const user = await sqlClient.user.findUnique({
-			where: { id: userId },
-			select: { id: true },
-		});
-
-		if (!user) {
-			throw new SafeError("User not found");
 		}
 
 		// Validate businessHours JSON when provided
@@ -73,7 +65,6 @@ export const updateServiceStaffAction = storeActionClient
 			const updated = await sqlClient.serviceStaff.update({
 				where: { id },
 				data: {
-					userId,
 					capacity,
 					defaultCost,
 					defaultCredit,
