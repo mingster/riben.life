@@ -93,12 +93,49 @@ export function GetMenuList(
 
 	return [
 		{
-			groupLabel: t("sales"),
+			groupLabel: t("operation"),
 			menus: [
+				{
+					href: `${nav_prefix}/rsvp`,
+					label: t("rsvp_week_view"),
+					active:
+						pathname.includes(`${nav_prefix}/rsvp`) &&
+						!pathname.includes(`${nav_prefix}/rsvp-settings`) &&
+						!pathname.includes(`${nav_prefix}/rsvp/history`) &&
+						!pathname.includes(`${nav_prefix}/rsvp/import`),
+
+					icon: IconCalendarCheck,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/rsvp/history`,
+					label: t("rsvp_history"),
+					active: pathname.startsWith(`${nav_prefix}/rsvp/history`),
+					icon: IconHistory,
+					submenus: [],
+					badge: options?.readyToConfirmRsvpCount,
+				},
+				{
+					href: `${nav_prefix}/rsvp/import`,
+					label: t("rsvp_import"),
+					active: pathname.includes(`${nav_prefix}/rsvp/import`),
+					icon: IconUpload,
+					submenus: [],
+				},
+
+				{
+					href: `${nav_prefix}/waiting-list`,
+					label: t("waiting_list"),
+					active:
+						pathname.includes(`${nav_prefix}/waiting-list`) &&
+						!pathname.includes(`${nav_prefix}/waiting-list-settings`),
+					icon: IconClock,
+					submenus: [],
+				},
+
 				//...(store.autoAcceptOrder ? [] : [orderConfirmation]),
 				// add cash (現金結帳) menu if store level is not free
 				// otherwise display orderConfirmation
-
 				...(store.level !== StoreLevel.Free ? [cash] : []),
 
 				// show order ready to ship menu only when useOrderSystem is true
@@ -115,32 +152,7 @@ export function GetMenuList(
 							},
 						]
 					: []),
-				{
-					href: `${nav_prefix}/transactions`,
-					label: t("transactions"),
-					active: pathname.includes(`${nav_prefix}/transactions`),
-					icon: IconCurrencyDollar,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/balances`,
-					label: t("balances"),
-					active: pathname.includes(`${nav_prefix}/balances`),
-					icon: IconCurrencyDollar,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/dashboard`,
-					label: t("sales_reports"),
-					active: pathname.includes(`${nav_prefix}/dashboard`),
-					icon: IconHttpOptions,
-					submenus: [],
-				},
-			],
-		},
-		{
-			groupLabel: t("operation"),
-			menus: [
+
 				// for not pro stores, if autoAcceptOrder is true, show orderConfirmation menu
 				...(!store.autoAcceptOrder ? [orderConfirmation] : []),
 
@@ -158,42 +170,30 @@ export function GetMenuList(
 							},
 						]
 					: []),
-
+			],
+		},
+		{
+			groupLabel: t("sales"),
+			menus: [
 				{
-					href: `${nav_prefix}/rsvp/history`,
-					label: t("rsvp_history"),
-					active: pathname.startsWith(`${nav_prefix}/rsvp/history`),
-					icon: IconHistory,
-					submenus: [],
-					badge: options?.readyToConfirmRsvpCount,
-				},
-				{
-					href: `${nav_prefix}/rsvp`,
-					label: t("rsvp_week_view"),
-					active:
-						pathname.includes(`${nav_prefix}/rsvp`) &&
-						!pathname.includes(`${nav_prefix}/rsvp-settings`) &&
-						!pathname.includes(`${nav_prefix}/rsvp/history`) &&
-						!pathname.includes(`${nav_prefix}/rsvp/import`),
-
-					icon: IconCalendarCheck,
+					href: `${nav_prefix}/dashboard`,
+					label: t("sales_reports"),
+					active: pathname.includes(`${nav_prefix}/dashboard`),
+					icon: IconHttpOptions,
 					submenus: [],
 				},
 				{
-					href: `${nav_prefix}/rsvp/import`,
-					label: t("rsvp_import"),
-					active: pathname.includes(`${nav_prefix}/rsvp/import`),
-					icon: IconUpload,
+					href: `${nav_prefix}/transactions`,
+					label: t("transactions"),
+					active: pathname.includes(`${nav_prefix}/transactions`),
+					icon: IconCurrencyDollar,
 					submenus: [],
 				},
-
 				{
-					href: `${nav_prefix}/waiting-list`,
-					label: t("waiting_list"),
-					active:
-						pathname.includes(`${nav_prefix}/waiting-list`) &&
-						!pathname.includes(`${nav_prefix}/waiting-list-settings`),
-					icon: IconClock,
+					href: `${nav_prefix}/balances`,
+					label: t("balances"),
+					active: pathname.includes(`${nav_prefix}/balances`),
+					icon: IconCurrencyDollar,
 					submenus: [],
 				},
 			],
