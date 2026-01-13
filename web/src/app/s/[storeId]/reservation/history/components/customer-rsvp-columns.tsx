@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
 import { format } from "date-fns";
-import { IconEdit, IconPencil, IconX } from "@tabler/icons-react";
+import { IconPencil, IconX } from "@tabler/icons-react";
 
 import { DataTableColumnHeader } from "@/components/dataTable-column-header";
 import { cn } from "@/lib/utils";
@@ -68,7 +68,7 @@ export const createCustomerRsvpColumns = (
 				);
 
 				return (
-					<span className="font-mono text-xs sm:text-sm">
+					<span className="font-mono sm:text-sm">
 						{format(storeDate, `${datetimeFormat} HH:mm`)}
 					</span>
 				);
@@ -85,22 +85,18 @@ export const createCustomerRsvpColumns = (
 				const facilityName = rsvp.Facility?.facilityName;
 
 				if (!storeName && !facilityName) {
-					return <span className="text-xs sm:text-sm">-</span>;
+					return <span className="sm:text-sm">-</span>;
 				}
 
 				if (storeName && facilityName) {
 					return (
-						<span className="text-xs sm:text-sm">
+						<span className="sm:text-sm">
 							{storeName} - {facilityName}
 						</span>
 					);
 				}
 
-				return (
-					<span className="text-xs sm:text-sm">
-						{storeName || facilityName}
-					</span>
-				);
+				return <span className="sm:text-sm">{storeName || facilityName}</span>;
 			},
 			meta: {
 				className: "hidden sm:table-cell",
@@ -116,7 +112,7 @@ export const createCustomerRsvpColumns = (
 				const numOfAdult = rsvp.numOfAdult || 0;
 				const numOfChild = rsvp.numOfChild || 0;
 				return (
-					<span className="text-xs sm:text-sm">
+					<span className="sm:text-sm">
 						{t("rsvp_num_of_guest_val", {
 							adult: numOfAdult,
 							child: numOfChild,
@@ -154,7 +150,7 @@ export const createCustomerRsvpColumns = (
 									: undefined
 							}
 							className={cn(
-								"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded text-[10px] sm:text-xs font-mono",
+								"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded sm:font-mono",
 								getRsvpStatusColorClasses(status, false),
 								isClickable &&
 									"cursor-pointer hover:opacity-80 transition-opacity",
@@ -174,7 +170,7 @@ export const createCustomerRsvpColumns = (
 			cell: ({ row }) => {
 				const message = row.getValue("message") as string | null;
 				return (
-					<span className="max-w-[200px] truncate text-xs sm:text-sm">
+					<span className="max-w-[200px] truncate sm:text-sm">
 						{message || "-"}
 					</span>
 				);
@@ -260,7 +256,7 @@ export const createCustomerRsvpColumns = (
 				);
 
 				return (
-					<span className="font-mono text-xs sm:text-sm">
+					<span className="font-mono sm:text-sm">
 						{format(storeDate, `${datetimeFormat} HH:mm`)}
 					</span>
 				);

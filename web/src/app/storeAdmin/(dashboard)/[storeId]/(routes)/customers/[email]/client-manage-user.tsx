@@ -186,16 +186,14 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 						<CardContent className="space-y-4">
 							<CardHeader></CardHeader>
 							<div className="flex flex-col gap-1">
-								{user.CustomerCredits &&
-									user.CustomerCredits.length > 0 &&
-									user.CustomerCredits[0] && (
-										<div className="flex items-center gap-1">
-											{t("customer_credit_balance")}:{" "}
-											<span className="font-semibold">
-												{Number(user.CustomerCredits[0].fiat) || 0}
-											</span>
-										</div>
-									)}
+								{user.CustomerCredit && (
+									<div className="flex items-center gap-1">
+										{t("customer_credit_balance")}:{" "}
+										<span className="font-semibold">
+											{Number(user.CustomerCredit.fiat) || 0}
+										</span>
+									</div>
+								)}
 								<DisplayCreditLedger ledger={user.CustomerFiatLedger} />
 							</div>
 						</CardContent>

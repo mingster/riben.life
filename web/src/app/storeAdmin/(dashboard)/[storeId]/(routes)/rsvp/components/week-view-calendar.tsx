@@ -514,7 +514,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 										<th
 											key={day.toISOString()}
 											className={cn(
-												"border-b border-r p-0.5 sm:p-2 text-center text-[10px] sm:text-sm font-medium w-[48px] sm:min-w-[110px]",
+												"border-b border-r p-0.5 sm:p-2 text-center sm:text-sm font-medium w-[48px] sm:min-w-[110px]",
 												isDayToday && "bg-primary/10",
 												"last:border-r-0",
 											)}
@@ -540,7 +540,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 						<tbody>
 							{timeSlots.map((timeSlot) => (
 								<tr key={timeSlot}>
-									<td className="border-b border-r p-1 sm:p-2 text-right text-[10px] sm:text-sm text-muted-foreground sticky left-0 bg-background z-10 whitespace-nowrap">
+									<td className="border-b border-r p-1 sm:p-2 text-right sm:text-sm text-muted-foreground sticky left-0 bg-background z-10 whitespace-nowrap">
 										{timeSlot}
 									</td>
 									{weekDays.map((day) => {
@@ -578,7 +578,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																		type="button"
 																		disabled
 																		className={cn(
-																			"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full cursor-default",
+																			"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full cursor-default",
 																			getStatusColorClasses(rsvp.status, false),
 																			isPast && "opacity-50",
 																		)}
@@ -587,17 +587,17 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																			{displayName}
 																		</div>
 																		{rsvp.Facility?.facilityName && (
-																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																			<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
 																				{rsvp.Facility.facilityName}
 																			</div>
 																		)}
 																		{rsvp.ServiceStaff?.User?.name && (
-																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																			<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
 																				{rsvp.ServiceStaff.User.name}
 																			</div>
 																		)}
 																		{rsvp.message && (
-																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																			<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
 																				{rsvp.message}
 																			</div>
 																		)}
@@ -640,7 +640,7 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																						setOpenEditDialogId(rsvp.id);
 																					}}
 																					className={cn(
-																						"text-left p-1.5 sm:p-2 rounded text-[10px] sm:text-xs transition-colors w-full",
+																						"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full",
 																						getStatusColorClasses(rsvp.status),
 																					)}
 																				>
@@ -648,17 +648,17 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																						{displayName}
 																					</div>
 																					{rsvp.Facility?.facilityName && (
-																						<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																						<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
 																							{rsvp.Facility.facilityName}
 																						</div>
 																					)}
 																					{rsvp.ServiceStaff?.User?.name && (
-																						<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																						<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
 																							{rsvp.ServiceStaff.User.name}
 																						</div>
 																					)}
 																					{rsvp.message && (
-																						<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																						<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
 																							{rsvp.message}
 																						</div>
 																					)}

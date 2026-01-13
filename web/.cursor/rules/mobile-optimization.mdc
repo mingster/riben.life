@@ -98,7 +98,7 @@ Use progressive spacing that increases with screen size:
 </p>
 
 // Small text
-<span className="text-[10px] sm:text-xs">
+<span className="sm:text-xs">
   Helper text
 </span>
 ```

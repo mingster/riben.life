@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useMemo } from "react";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 
 export const DisplayFiatLedger = ({
 	ledger,
@@ -38,11 +39,11 @@ export const DisplayFiatLedger = ({
 					>
 						<div className="flex items-start justify-between gap-2">
 							<div className="flex-1 min-w-0">
-								<div className="font-medium text-sm sm:text-base truncate">
+								<div className="truncate">
 									{item.Store?.id ? (
 										<Link
 											href={`/s/${item.Store.id}`}
-											className="hover:underline text-primary"
+											className="hover:underline text-primary text-xl"
 										>
 											{item.Store.name}
 										</Link>
@@ -52,32 +53,32 @@ export const DisplayFiatLedger = ({
 										</span>
 									)}
 								</div>
-								<div className="text-muted-foreground text-[10px]">
+								<div className="text-muted-foreground">
 									{format(item.createdAt, datetimeFormat)}
 								</div>
 							</div>
 							<div className="shrink-0">
-								<span
-									className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
+								<Badge
+									className={
 										item.type === "TOPUP"
-											? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
+											? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400 border-green-200 dark:border-green-950/40"
 											: item.type === "PAYMENT"
-												? "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
+												? "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400 border-orange-200 dark:border-orange-950/40"
 												: item.type === "REFUND"
-													? "bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400"
+													? "bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400 border-purple-200 dark:border-purple-950/40"
 													: item.type === "ADJUSTMENT"
-														? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-														: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
-									}`}
+														? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 border-blue-200 dark:border-blue-950/40"
+														: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400 border-gray-200 dark:border-gray-950/40"
+									}
 								>
 									{t(`customer_fiat_type_${item.type}`) || item.type}
-								</span>
+								</Badge>
 							</div>
 						</div>
 
 						<div className="flex items-center justify-between pt-2 border-t">
 							<div className="space-y-1">
-								<div className="text-[10px] text-muted-foreground">
+								<div className="text-muted-foreground">
 									{t("customer_fiat_amount") || "Amount"}
 								</div>
 								<div
@@ -88,32 +89,38 @@ export const DisplayFiatLedger = ({
 											: "text-red-600 dark:text-red-400",
 									)}
 								>
-									{Number(item.amount) > 0 ? "+" : ""}
-									{Number(item.amount).toFixed(2)} {currency}
+									{new Intl.NumberFormat("en-US", {
+										style: "currency",
+										currency: (currency || "TWD").toUpperCase(),
+										maximumFractionDigits: 2,
+										minimumFractionDigits: 0,
+										signDisplay: "exceptZero",
+									}).format(Number(item.amount))}
 								</div>
 							</div>
 
 							<div className="space-y-1 text-right">
-								<div className="text-[10px] text-muted-foreground">
-									{t("balance")}
-								</div>
+								<div className="text-muted-foreground">{t("balance")}</div>
 								<div className="font-semibold text-base font-mono">
-									{Number(item.balance).toFixed(2)} {currency}
+									{new Intl.NumberFormat("en-US", {
+										style: "currency",
+										currency: (currency || "TWD").toUpperCase(),
+										maximumFractionDigits: 2,
+										minimumFractionDigits: 0,
+									}).format(Number(item.balance))}
 								</div>
 							</div>
 						</div>
 
 						{item.note && (
-							<div className="text-[10px] pt-2 border-t">
-								<span className="font-medium text-muted-foreground">
-									{t("note")}:
-								</span>{" "}
+							<div className="pt-2 border-t">
+								<span className="text-muted-foreground">{t("note")}:</span>{" "}
 								<span className="text-foreground">{item.note}</span>
 							</div>
 						)}
 
 						{item.Creator?.name && (
-							<div className="text-[10px] text-muted-foreground">
+							<div className="text-muted-foreground">
 								<span className="font-medium">
 									{t("customer_fiat_creator") || "Creator"}:
 								</span>{" "}
@@ -166,21 +173,21 @@ export const DisplayFiatLedger = ({
 										)}
 									</td>
 									<td className="px-3 py-2 ">
-										<span
-											className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ${
+										<Badge
+											className={
 												item.type === "TOPUP"
-													? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400"
+													? "bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400 border-green-200 dark:border-green-950/40"
 													: item.type === "PAYMENT"
-														? "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400"
+														? "bg-orange-50 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400 border-orange-200 dark:border-orange-950/40"
 														: item.type === "REFUND"
-															? "bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400"
+															? "bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400 border-purple-200 dark:border-purple-950/40"
 															: item.type === "ADJUSTMENT"
-																? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
-																: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400"
-											}`}
+																? "bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 border-blue-200 dark:border-blue-950/40"
+																: "bg-gray-50 text-gray-700 dark:bg-gray-950/20 dark:text-gray-400 border-gray-200 dark:border-gray-950/40"
+											}
 										>
 											{t(`customer_fiat_type_${item.type}`) || item.type}
-										</span>
+										</Badge>
 									</td>
 									<td
 										className={cn(
@@ -190,11 +197,21 @@ export const DisplayFiatLedger = ({
 												: "text-red-600 dark:text-red-400",
 										)}
 									>
-										{Number(item.amount) > 0 ? "+" : ""}
-										{Number(item.amount).toFixed(2)} {currency}
+										{new Intl.NumberFormat("en-US", {
+											style: "currency",
+											currency: (currency || "TWD").toUpperCase(),
+											maximumFractionDigits: 2,
+											minimumFractionDigits: 0,
+											signDisplay: "exceptZero",
+										}).format(Number(item.amount))}
 									</td>
 									<td className="px-3 py-2 font-semibold font-mono text-right">
-										{Number(item.balance).toFixed(2)} {currency}
+										{new Intl.NumberFormat("en-US", {
+											style: "currency",
+											currency: (currency || "TWD").toUpperCase(),
+											maximumFractionDigits: 2,
+											minimumFractionDigits: 0,
+										}).format(Number(item.balance))}
 									</td>
 									<td className="px-3 py-2 max-w-[200px] truncate">
 										{item.note || "-"}

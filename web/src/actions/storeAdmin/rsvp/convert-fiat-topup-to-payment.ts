@@ -71,10 +71,7 @@ export async function convertFiatTopupToPayment(
 	// Get current customer fiat balance (should already be credited from TOPUP)
 	const customerCredit = await tx.customerCredit.findUnique({
 		where: {
-			storeId_userId: {
-				storeId,
-				userId: customerId,
-			},
+			userId: customerId,
 		},
 	});
 
@@ -87,10 +84,7 @@ export async function convertFiatTopupToPayment(
 	// Update CustomerCredit (fiat field) - deduct the amount
 	await tx.customerCredit.update({
 		where: {
-			storeId_userId: {
-				storeId,
-				userId: customerId,
-			},
+			userId: customerId,
 		},
 		data: {
 			fiat: {

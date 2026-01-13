@@ -30,10 +30,7 @@ export async function GET(
 		// Get customer fiat balance
 		const customerCredit = await sqlClient.customerCredit.findUnique({
 			where: {
-				storeId_userId: {
-					storeId: params.storeId,
-					userId,
-				},
+				userId,
 			},
 			select: {
 				fiat: true,

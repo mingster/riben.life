@@ -40,6 +40,7 @@ export default async function ReservationHistoryPage(props: {
 			defaultCurrency: true,
 			useCustomerCredit: true,
 			creditExchangeRate: true,
+			creditServiceExchangeRate: true,
 		},
 	});
 
@@ -57,7 +58,7 @@ export default async function ReservationHistoryPage(props: {
 	// Fetch reservations for the current user in this store
 	// If user is logged in, fetch their reservations
 	// If anonymous, fetch all anonymous reservations (client will filter by local storage)
-	const [rsvps, rsvpSettings] = await Promise.all([
+	const [rsvps, rsvpSettings, facilities, storeSettings] = await Promise.all([
 		sqlClient.rsvp.findMany({
 			where: sessionUserId
 				? {
@@ -80,6 +81,13 @@ export default async function ReservationHistoryPage(props: {
 		sqlClient.rsvpSettings.findFirst({
 			where: { storeId: actualStoreId },
 		}),
+		sqlClient.storeFacility.findMany({
+			where: { storeId: actualStoreId },
+			orderBy: { facilityName: "asc" },
+		}),
+		sqlClient.storeSettings.findFirst({
+			where: { storeId: actualStoreId },
+		}),
 	]);
 
 	// Transform Decimal objects to numbers for client components
@@ -91,6 +99,12 @@ export default async function ReservationHistoryPage(props: {
 
 	if (rsvpSettings) {
 		transformPrismaDataForJson(rsvpSettings);
+	}
+	if (facilities.length > 0) {
+		transformPrismaDataForJson(facilities);
+	}
+	if (storeSettings) {
+		transformPrismaDataForJson(storeSettings);
 	}
 
 	return (
@@ -107,6 +121,13 @@ export default async function ReservationHistoryPage(props: {
 					creditExchangeRate={
 						store.creditExchangeRate ? Number(store.creditExchangeRate) : null
 					}
+					creditServiceExchangeRate={
+						store.creditServiceExchangeRate
+							? Number(store.creditServiceExchangeRate)
+							: null
+					}
+					facilities={facilities}
+					storeSettings={storeSettings}
 				/>
 			</Suspense>
 		</Container>

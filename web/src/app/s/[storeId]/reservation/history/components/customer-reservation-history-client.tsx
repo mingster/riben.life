@@ -1,66 +1,71 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-	startOfWeek,
-	endOfWeek,
-	startOfMonth,
-	endOfMonth,
-	startOfYear,
-	endOfYear,
-	subDays,
 	addDays,
+	endOfMonth,
+	endOfWeek,
+	endOfYear,
+	startOfMonth,
+	startOfWeek,
+	startOfYear,
+	subDays,
 } from "date-fns";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
+import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
+import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
+import { toastError, toastSuccess } from "@/components/toaster";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { useI18n } from "@/providers/i18n-provider";
-import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
 import { cn } from "@/lib/utils";
-import { clientLogger } from "@/lib/client-logger";
-import { toastSuccess, toastError } from "@/components/toaster";
-import { useRouter } from "next/navigation";
-import { RsvpCancelDeleteDialog } from "../../components/rsvp-cancel-delete-dialog";
-import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
-import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
+import { useI18n } from "@/providers/i18n-provider";
 import { RsvpStatus } from "@/types/enum";
+import { useRouter } from "next/navigation";
+import { ReservationDialog } from "../../components/reservation-dialog";
+import { RsvpCancelDeleteDialog } from "../../components/rsvp-cancel-delete-dialog";
 
-import type { Rsvp, User } from "@/types";
+import type {
+	Rsvp,
+	RsvpSettings,
+	StoreFacility,
+	StoreSettings,
+	User,
+} from "@/types";
 import {
-	dateToEpoch,
 	convertToUtc,
+	dateToEpoch,
 	formatUtcDateToDateTimeLocal,
 } from "@/utils/datetime-utils";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
 import {
-	isUserReservation as isUserReservationUtil,
-	canEditReservation as canEditReservationUtil,
 	canCancelReservation as canCancelReservationUtil,
-	removeReservationFromLocalStorage as removeReservationFromLocalStorageUtil,
-	formatRsvpTime as formatRsvpTimeUtil,
+	canEditReservation as canEditReservationUtil,
 	formatCreatedAt as formatCreatedAtUtil,
+	formatRsvpTime as formatRsvpTimeUtil,
 	getFacilityName as getFacilityNameUtil,
+	isUserReservation as isUserReservationUtil,
+	removeReservationFromLocalStorage as removeReservationFromLocalStorageUtil,
 } from "@/utils/rsvp-utils";
-import { createCustomerRsvpColumns } from "./customer-rsvp-columns";
 import { IconX } from "@tabler/icons-react";
+import { createCustomerRsvpColumns } from "./customer-rsvp-columns";
 
 interface CustomerReservationHistoryClientProps {
 	serverData: Rsvp[];
 	storeTimezone: string;
-	rsvpSettings?: {
-		minPrepaidPercentage?: number | null;
-		canCancel?: boolean | null;
-		cancelHours?: number | null;
-	} | null;
+	rsvpSettings?: RsvpSettings | null;
 	storeId: string;
 	user: User | null;
 	storeCurrency?: string;
 	useCustomerCredit?: boolean;
 	creditExchangeRate?: number | null;
+	creditServiceExchangeRate?: number | null;
+	facilities?: StoreFacility[];
+	storeSettings?: StoreSettings | null;
 }
 
 type PeriodType = "week" | "month" | "year" | "custom";
@@ -76,6 +81,9 @@ export const CustomerReservationHistoryClient: React.FC<
 	storeCurrency = "twd",
 	useCustomerCredit = false,
 	creditExchangeRate = null,
+	creditServiceExchangeRate = null,
+	facilities = [],
+	storeSettings = null,
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -87,6 +95,10 @@ export const CustomerReservationHistoryClient: React.FC<
 		null,
 	);
 	const [isCancelling, setIsCancelling] = useState(false);
+
+	// State for edit dialog
+	const [editRsvp, setEditRsvp] = useState<Rsvp | null>(null);
+	const [editDialogOpen, setEditDialogOpen] = useState(false);
 
 	// Load local storage reservations for anonymous users
 	const [localStorageReservations, setLocalStorageReservations] = useState<
@@ -118,31 +130,42 @@ export const CustomerReservationHistoryClient: React.FC<
 	});
 
 	// Update allData when localStorageReservations or serverData change
-	// Note: We do NOT clean up local storage reservations even if they don't exist on server
-	// This is because:
-	// 1. Reservations will exist on server but we want to keep them in local storage
-	// 2. Users might sign out and back in, and we want to preserve local storage as backup
-	// 3. Local storage serves as a backup for anonymous reservations
+	// Remove reservations from local storage if they are deleted on the server
 	useEffect(() => {
 		if (!user && localStorageReservations.length > 0) {
-			// Get current local storage reservations (no cleanup - keep all)
-			const currentLocalReservations = localStorageReservations;
-
-			// For anonymous users, only show reservations that exist in local storage
-			// This ensures they only see their own reservations
+			const storageKey = `rsvp-${storeId}`;
 			const serverIdsSet = new Set(serverData.map((r) => r.id));
-			const localOnlyReservations = currentLocalReservations.filter(
-				(localRsvp) => !serverIdsSet.has(localRsvp.id),
+
+			// Filter out reservations that don't exist on the server (deleted reservations)
+			const validLocalReservations = localStorageReservations.filter(
+				(localRsvp) => serverIdsSet.has(localRsvp.id),
 			);
+
+			// Update local storage to remove deleted reservations
+			if (validLocalReservations.length !== localStorageReservations.length) {
+				try {
+					if (validLocalReservations.length > 0) {
+						localStorage.setItem(
+							storageKey,
+							JSON.stringify(validLocalReservations),
+						);
+					} else {
+						localStorage.removeItem(storageKey);
+					}
+					setLocalStorageReservations(validLocalReservations);
+				} catch (error) {
+					// Silently handle errors updating local storage
+				}
+			}
 
 			// For reservations that exist on both server and local storage, preserve name/phone from local storage
 			const serverReservationsWithLocalData = serverData
 				.filter((serverRsvp) => {
 					// Only include server reservations that exist in local storage
-					return currentLocalReservations.some((r) => r.id === serverRsvp.id);
+					return validLocalReservations.some((r) => r.id === serverRsvp.id);
 				})
 				.map((serverRsvp) => {
-					const localRsvp = currentLocalReservations.find(
+					const localRsvp = validLocalReservations.find(
 						(r) => r.id === serverRsvp.id,
 					);
 					if (localRsvp && localRsvp.name && localRsvp.phone) {
@@ -156,11 +179,7 @@ export const CustomerReservationHistoryClient: React.FC<
 					return serverRsvp;
 				});
 
-			const mergedRsvps = [
-				...serverReservationsWithLocalData,
-				...localOnlyReservations,
-			];
-			setAllData(mergedRsvps);
+			setAllData(serverReservationsWithLocalData);
 		} else if (!user && localStorageReservations.length === 0) {
 			// If local storage is empty, show empty list (no anonymous reservations)
 			setAllData([]);
@@ -584,11 +603,99 @@ export const CustomerReservationHistoryClient: React.FC<
 		removeReservationFromLocalStorage,
 	]);
 
-	const handleEditClick = useCallback(
-		(rsvp: Rsvp) => {
-			router.push(`/s/${storeId}/reservation?edit=${rsvp.id}`);
+	const handleEditClick = useCallback((rsvp: Rsvp) => {
+		// Open edit dialog instead of redirecting to week view page
+		setEditRsvp(rsvp);
+		setEditDialogOpen(true);
+	}, []);
+
+	const handleEditDialogClose = useCallback(() => {
+		// Close edit dialog and stay on history page
+		setEditDialogOpen(false);
+		setEditRsvp(null);
+	}, []);
+
+	const handleEditReservationUpdated = useCallback(
+		(updatedRsvp: Rsvp) => {
+			// Close edit dialog after update
+			setEditDialogOpen(false);
+			setEditRsvp(null);
+			// Update local state with the updated reservation (using existing handleReservationUpdated)
+			setAllData((prev) => {
+				const normalizedRsvp = {
+					...updatedRsvp,
+					rsvpTime:
+						typeof updatedRsvp.rsvpTime === "number"
+							? BigInt(updatedRsvp.rsvpTime)
+							: updatedRsvp.rsvpTime instanceof Date
+								? BigInt(updatedRsvp.rsvpTime.getTime())
+								: updatedRsvp.rsvpTime,
+					createdAt:
+						typeof updatedRsvp.createdAt === "number"
+							? BigInt(updatedRsvp.createdAt)
+							: updatedRsvp.createdAt instanceof Date
+								? BigInt(updatedRsvp.createdAt.getTime())
+								: updatedRsvp.createdAt,
+					updatedAt:
+						typeof updatedRsvp.updatedAt === "number"
+							? BigInt(updatedRsvp.updatedAt)
+							: updatedRsvp.updatedAt instanceof Date
+								? BigInt(updatedRsvp.updatedAt.getTime())
+								: updatedRsvp.updatedAt,
+				};
+
+				const existingIndex = prev.findIndex((r) => r.id === normalizedRsvp.id);
+				if (existingIndex === -1) {
+					return [...prev, normalizedRsvp];
+				}
+				return prev.map((item) =>
+					item.id === normalizedRsvp.id ? normalizedRsvp : item,
+				);
+			});
+
+			// If user is anonymous, also update local storage
+			if (!user && storeId) {
+				const storageKey = `rsvp-${storeId}`;
+				try {
+					const storedData = localStorage.getItem(storageKey);
+					if (storedData) {
+						const localReservations: Rsvp[] = JSON.parse(storedData);
+						const updatedLocal = localReservations.map((r) =>
+							r.id === updatedRsvp.id
+								? {
+										...updatedRsvp,
+										rsvpTime:
+											typeof updatedRsvp.rsvpTime === "number"
+												? updatedRsvp.rsvpTime
+												: updatedRsvp.rsvpTime instanceof Date
+													? updatedRsvp.rsvpTime.getTime()
+													: typeof updatedRsvp.rsvpTime === "bigint"
+														? Number(updatedRsvp.rsvpTime)
+														: null,
+										createdAt:
+											typeof updatedRsvp.createdAt === "number"
+												? updatedRsvp.createdAt
+												: typeof updatedRsvp.createdAt === "bigint"
+													? Number(updatedRsvp.createdAt)
+													: null,
+										updatedAt:
+											typeof updatedRsvp.updatedAt === "number"
+												? updatedRsvp.updatedAt
+												: typeof updatedRsvp.updatedAt === "bigint"
+													? Number(updatedRsvp.updatedAt)
+													: null,
+									}
+								: r,
+						);
+						localStorage.setItem(storageKey, JSON.stringify(updatedLocal));
+						setLocalStorageReservations(updatedLocal);
+					}
+				} catch (error) {
+					// Silently handle errors updating local storage
+				}
+			}
 		},
-		[router, storeId],
+		[user, storeId],
 	);
 
 	const handleCheckoutClick = useCallback(
@@ -759,9 +866,9 @@ export const CustomerReservationHistoryClient: React.FC<
 									<div className="font-medium text-sm sm:text-base truncate">
 										{getFacilityName(rsvp)}
 									</div>
-									<div className="text-muted-foreground text-[10px] font-mono">
+									<span className="font-mono text-xs sm:text-sm">
 										{formatRsvpTime(rsvp)}
-									</div>
+									</span>
 								</div>
 								<div className="shrink-0 flex items-center gap-1.5">
 									<span
@@ -780,7 +887,7 @@ export const CustomerReservationHistoryClient: React.FC<
 												: undefined
 										}
 										className={cn(
-											"inline-flex items-center px-2 py-1 rounded text-[10px] font-mono",
+											"inline-flex items-center px-2 py-1 rounded font-mono",
 											getRsvpStatusColorClasses(status, false),
 											canEditReservation(rsvp) &&
 												"cursor-pointer hover:opacity-80 transition-opacity",
@@ -825,7 +932,7 @@ export const CustomerReservationHistoryClient: React.FC<
 
 							<div className="flex items-center justify-between pt-2 border-t">
 								<div className="space-y-1">
-									<div className="text-[10px] text-muted-foreground">
+									<div className="text-muted-foreground">
 										{t("rsvp_num_of_guest") || "Guests"}
 									</div>
 									<div className="font-semibold text-base">
@@ -837,17 +944,15 @@ export const CustomerReservationHistoryClient: React.FC<
 								</div>
 
 								<div className="space-y-1 text-right">
-									<div className="text-[10px] text-muted-foreground">
-										{t("created_at")}
-									</div>
-									<div className="font-mono text-xs">
+									<div className="text-muted-foreground">{t("created_at")}</div>
+									<span className="font-mono text-xs sm:text-sm">
 										{formatCreatedAt(rsvp)}
-									</div>
+									</span>
 								</div>
 							</div>
 
 							{rsvp.message && (
-								<div className="text-[10px] pt-2 border-t">
+								<div className="pt-2 border-t">
 									<span className="font-medium text-muted-foreground">
 										{t("rsvp_message")}:
 									</span>{" "}
@@ -887,6 +992,27 @@ export const CustomerReservationHistoryClient: React.FC<
 				creditExchangeRate={creditExchangeRate}
 				t={t}
 			/>
+
+			{/* Edit Reservation Dialog */}
+			{editRsvp && (
+				<ReservationDialog
+					storeId={storeId}
+					rsvpSettings={rsvpSettings}
+					storeSettings={storeSettings}
+					facilities={facilities}
+					user={user}
+					rsvp={editRsvp}
+					existingReservations={data}
+					storeTimezone={storeTimezone}
+					storeCurrency={storeCurrency}
+					open={editDialogOpen}
+					onOpenChange={handleEditDialogClose}
+					onReservationUpdated={handleEditReservationUpdated}
+					useCustomerCredit={useCustomerCredit}
+					creditExchangeRate={creditExchangeRate}
+					creditServiceExchangeRate={creditServiceExchangeRate}
+				/>
+			)}
 		</>
 	);
 };

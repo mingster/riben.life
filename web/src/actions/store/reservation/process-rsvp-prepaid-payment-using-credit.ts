@@ -84,10 +84,7 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 		// Get customer credit balance
 		const customerCredit = await sqlClient.customerCredit.findUnique({
 			where: {
-				storeId_userId: {
-					storeId,
-					userId: customerId,
-				},
+				userId: customerId,
 			},
 		});
 
@@ -173,13 +170,9 @@ export async function processRsvpPrepaidPaymentUsingCredit(
 				const newBalance = currentBalance - requiredCredit;
 				await tx.customerCredit.upsert({
 					where: {
-						storeId_userId: {
-							storeId,
-							userId: customerId,
-						},
+						userId: customerId,
 					},
 					create: {
-						storeId,
 						userId: customerId,
 						point: new Prisma.Decimal(newBalance),
 						updatedAt: getUtcNowEpoch(),

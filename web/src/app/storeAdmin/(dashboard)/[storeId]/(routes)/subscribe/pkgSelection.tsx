@@ -406,8 +406,13 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 					<StripeCheckoutForm order={order} />
 
 					<div>
-						{t("payment_stripe_pay_amount")}
-						{Number(order.amount)} {order.currency.toUpperCase()}
+						{t("payment_stripe_pay_amount")}{" "}
+						{new Intl.NumberFormat("en-US", {
+							style: "currency",
+							currency: (order.currency || "TWD").toUpperCase(),
+							maximumFractionDigits: 2,
+							minimumFractionDigits: 0,
+						}).format(Number(order.amount))}
 					</div>
 				</div>
 			</Elements>

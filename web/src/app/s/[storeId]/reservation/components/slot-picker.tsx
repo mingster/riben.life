@@ -216,6 +216,9 @@ export function SlotPicker({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
+	console.log(currentRsvpId);
+	console.log(JSON.stringify(existingReservations));
+
 	const todayUtc = useMemo(() => getUtcNow(), []);
 	const today = useMemo(
 		() => startOfDay(getDateInTz(todayUtc, getOffsetHours(storeTimezone))),
@@ -409,12 +412,12 @@ export function SlotPicker({
 										)}
 									>
 										<div className="flex flex-col">
-											<span className="text-[8px] sm:text-[10px] text-muted-foreground">
+											<span className="text-[8px] sm:text-muted-foreground">
 												{getDayName(day, t)}
 											</span>
 											<span
 												className={cn(
-													"text-[10px] sm:text-sm font-semibold",
+													"sm:text-sm font-semibold",
 													isToday(day, storeTimezone) && "text-primary",
 												)}
 											>
@@ -480,7 +483,7 @@ export function SlotPicker({
 														type="button"
 														onClick={() => handleSlotClick(day, timeSlot)}
 														className={cn(
-															"w-full h-full min-h-[32px] sm:min-h-[36px] rounded hover:bg-primary/10 active:bg-primary/20 transition-colors text-[10px] sm:text-xs flex items-center justify-center",
+															"w-full h-full min-h-[32px] sm:min-h-[36px] rounded hover:bg-primary/10 active:bg-primary/20 transition-colors sm:text-xs flex items-center justify-center",
 															isSelected &&
 																"bg-primary text-primary-foreground ring-1 ring-primary",
 														)}
@@ -488,7 +491,7 @@ export function SlotPicker({
 														{isSelected ? "✓" : "+"}
 													</button>
 												) : (
-													<div className="w-full h-full min-h-[32px] sm:min-h-[36px] flex items-center justify-center text-muted-foreground/50 text-[10px]">
+													<div className="w-full h-full min-h-[32px] sm:min-h-[36px] flex items-center justify-center text-muted-foreground/50">
 														{isPast ? "" : "×"}
 													</div>
 												)}

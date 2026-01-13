@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27\
 **Status:** Active\
-**Version:** 2.1\
+**Version:** 2.3\
 **Related Documents:**
 
 * [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -339,8 +339,10 @@ model RsvpTag {
 The `create-reservation.ts` action handles customer-facing reservation creation with the following technical requirements:
 
 * **Authentication:**
-  * **No sign-in required:** Anonymous users can create reservations without authentication
-  * **No sign-in required even for prepaid:** Anonymous users can create reservations with prepaid requirements (`minPrepaidPercentage > 0`) without signing in
+  * **Better Auth Anonymous Plugin:** Anonymous users are authenticated via Better Auth anonymous plugin, which creates guest user accounts with emails like `guest-{id}@riben.life`
+  * **Session-Based:** Anonymous users have active sessions and user IDs (guest users), allowing them to create reservations, manage credit, and edit/delete reservations
+  * **Automatic Session Creation:** Client-side code creates anonymous sessions using `authClient.signIn.anonymous()` when anonymous users create reservations
+  * **Phone Number Lookup:** If a user with the provided phone number exists, the reservation is linked to that user instead of creating a new anonymous session
 * **Validation:**
   * **Anonymous User Requirements:**
     * **Name is required:** Anonymous users must provide their name (validated with Zod schema)
@@ -360,9 +362,9 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
     * Creates unpaid `StoreOrder` with prepaid amount
     * **Currency Handling:** Order currency is set to store's `defaultCurrency` using `store.defaultCurrency` field
     * Payment method selection:
-      * If `store.useCustomerCredit = true`: Order created with "credit" payment method (uses `CustomerCredit.point` with `creditExchangeRate`)
+      * If `store.useCustomerCredit = true`: Order created with "creditPoint" payment method (uses `CustomerCredit.point` with `creditExchangeRate`)
       * If `store.useCustomerCredit = false`: Order created with "TBD" payment method
-      * **Note**: `CustomerCredit.fiat` (RSVP account balance) is always available regardless of `useCustomerCredit` setting
+      * **Note**: `CustomerCredit.fiat` (customer's account balance) is always available regardless of `useCustomerCredit` setting
     * **Payment Method Updates:** When marking orders as paid (via `markOrderAsPaidCore`), the system explicitly uses the provided `paymentMethodId` parameter to ensure correct payment method tracking. Payment methods are fetched by `payUrl` identifier and passed to payment processing functions.
     * Shipping method: "digital" (for reservation orders)
     * Order status: `Pending` (unpaid)
@@ -374,27 +376,41 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
   * Frontend redirects to `/checkout/[orderId]` when `orderId` is returned
   * Customer selects payment method at checkout page
   * Payment processing handled by checkout flow (credit, Stripe, LINE Pay, etc.)
-  * After payment completion, reservation `alreadyPaid` and `status` are updated
-  * **Anonymous User Phone Confirmation:**
-    * After successful payment, anonymous users are redirected to order confirmation page
-    * Order confirmation page prompts anonymous user to confirm their phone number
-    * This ensures phone number consistency between reservation and order records
-    * Confirmed phone number is used for order tracking and customer communication
-  * **Local Storage (Anonymous Users):**
-  * When an anonymous user creates a reservation, reservation data is saved to browser local storage
-  * **Storage Key:** `rsvp-${storeId}` - Keyed by store ID to support multiple stores
-  * **Stored Data:**
-    * Reservation ID
-    * Store ID
-    * Name and phone number (as provided during reservation creation)
-    * Reservation date and time
-    * Facility and service staff (if selected)
-    * Party size (adults and children)
-    * Reservation status
-    * Payment status
-    * Order ID (if prepaid)
-  * **Implementation:** Client-side code in `reservation-form.tsx` saves reservation data to `localStorage` after successful creation
-  * **Persistence:** Local storage persists across browser sessions, allowing anonymous users to view their reservation history later
+  * After payment completion, reservation `alreadyPaid` and `status` are updated.
+  * Frontend redirects to `/order/[OrderId]`. Customer can review the result of the payment and its order details.
+  * **Account Linking (Anonymous → Registered User):**
+    * When an anonymous user chooses to sign-in/up, Better Auth's anonymous plugin automatically calls the `onLinkAccount` callback
+    * The callback receives `anonymousUser` (guest user) and `newUser` (newly registered/authenticated user) parameters
+    * **Implementation Location:** `src/lib/auth.ts` - `anonymous` plugin configuration's `onLinkAccount` callback
+    * **Data Migration Steps (within transaction):**
+      1. **Reservations (Rsvp):** Update all reservations where `customerId = anonymousUser.id` to `customerId = newUser.id`
+         * Also set `isAnonymous = false` for linked reservations
+         * Preserves reservation history and ownership
+      2. **Store Orders (StoreOrder):** Update all orders where `userId = anonymousUser.id` to `userId = newUser.id`
+         * Ensures order history is transferred to the new account
+      3. **Customer Credit (CustomerCredit):** Merge credit accounts
+         * If anonymous user has credit account: transfer `point` and `fiat` balances to new user's account (create if doesn't exist, increment if exists)
+         * Delete anonymous user's credit account after transfer
+         * Uses `upsert` to handle cases where new user already has a credit account
+      4. **Credit Ledgers (CustomerCreditLedger, CustomerFiatLedger):** Update all ledger entries where `userId = anonymousUser.id` to `userId = newUser.id`
+         * Preserves transaction history and audit trail
+         * Maintains referential integrity for historical records
+      5. **Addresses (Address):** Update all addresses where `userId = anonymousUser.id` to `userId = newUser.id`
+         * Transfers saved shipping/billing addresses
+      6. **Store Memberships (Member):** Update all memberships where `userId = anonymousUser.id` to `userId = newUser.id`
+         * Preserves store membership and role assignments
+         * Ensures user retains access to stores they were members of as anonymous user
+      7. **Sessions:** Better Auth automatically handles session migration (no manual update needed)
+    * **Transaction Safety:** All updates must be performed within a database transaction to ensure atomicity
+    * **Error Handling:** If any step fails, the entire transaction should roll back to prevent partial data migration
+    * **Logging:** Log the account linking operation for audit purposes (anonymous user ID, new user ID, records migrated)
+  * **Database Storage (Anonymous Users):**
+    * Reservations are stored in the database and linked to guest user accounts via `customerId`
+    * Anonymous users (guest users) have user IDs and can own reservations, credit accounts, and orders
+    * **Reservation Ownership:** Reservations created by anonymous users are linked to their guest user ID via `customerId` field
+    * **Name and Phone Storage:** Reservation `name` and `phone` fields store the user-provided information for anonymous reservations
+    * **Session Persistence:** Anonymous user sessions persist across browser sessions via Better Auth session management
+    * **Cross-Device Access:** Anonymous users can access their reservations from different devices if they use the same browser (session cookie-based)
 * **Shared Utilities:**
   * `create-rsvp-store-order.ts` - Creates store order for RSVP prepaid
   * `validate-rsvp-availability.ts` - Validates time slot availability
@@ -417,8 +433,11 @@ The `update-reservation.ts` action allows customers to modify their reservations
   * Availability validation must check for conflicts with existing reservations
   * Facility availability must be verified for the new date/time
   * Store timezone must be considered when converting date/time inputs
-* **Authentication:** Requires user authentication (can modify own reservations only)
-* **Authorization:** Customers can only modify reservations where `customerId` matches their user ID
+* **Authentication:** Requires user authentication (logged-in users or anonymous users with guest sessions)
+* **Authorization:**
+  * Customers can only modify reservations where `customerId` matches their session user ID
+  * Anonymous users (guest users) can modify reservations linked to their guest user ID
+  * Authorization is verified by matching session `userId` to reservation `customerId`
 
 #### 4.1.2 Settings Actions
 
@@ -524,9 +543,12 @@ The `update-reservation.ts` action allows customers to modify their reservations
 
 * **Endpoint:** `POST /api/store/[storeId]/rsvp/[rsvpId]/cancel` (via Server Action: `cancel-reservation.ts`)
 
-* **Authentication:** Required (user must be authenticated)
+* **Authentication:** Required (logged-in users or anonymous users with guest sessions)
 
-* **Authorization:** Customer can only cancel their own reservations (verified by `customerId` or email match)
+* **Authorization:**
+  * Customer can only cancel their own reservations (verified by `customerId` matching session `userId` or email match)
+  * Anonymous users (guest users) can cancel reservations linked to their guest user ID
+  * Authorization is verified by matching session `userId` to reservation `customerId`
 
 * **Request Body:**
 
@@ -556,46 +578,21 @@ The `update-reservation.ts` action allows customers to modify their reservations
 **Reservation History (Anonymous Users):**
 
 * **Location:** `src/app/s/[storeId]/reservation/history/page.tsx`
-* **Access:** Public (no authentication required for anonymous users)
+* **Access:** Requires authentication (logged-in users or anonymous users with guest sessions)
 * **Implementation:**
-  * **Logged-in Users:**
-    * Server component fetches reservations from database based on `customerId`
-    * Uses Prisma query: `sqlClient.rsvp.findMany({ where: { storeId, customerId } })`
+  * **All Users (Including Anonymous):**
+    * Server component fetches reservations from database based on session `customerId` (guest user ID for anonymous users)
+    * Uses Prisma query: `sqlClient.rsvp.findMany({ where: { storeId, customerId: sessionUserId } })`
+    * For anonymous users, `sessionUserId` is the guest user ID created by Better Auth anonymous plugin
     * Data is transformed using `transformPrismaDataForJson()` before passing to client component
-  * **Anonymous Users:**
-    * Server component does not redirect to sign-in (unlike previous implementation)
-    * Client component (`CustomerReservationHistoryClient`) reads reservations from browser local storage
-    * **Storage Key:** `rsvp-${storeId}` - Keyed by store ID to support multiple stores
-    * **Data Format:** JSON array of reservation objects stored in local storage
-    * If no reservations found in local storage, displays empty state
-    * **No redirect to sign-in:** Anonymous users are not redirected to sign-in when accessing the history page
+    * If no session exists, displays empty state (no reservations)
+  * **No Local Storage:** Reservations are stored in the database and linked to guest user accounts, not local storage
+  * **Session-Based Access:** Anonymous users access their reservations via their guest session (session cookie-based)
 * **Client Component:** `CustomerReservationHistoryClient` handles both logged-in and anonymous user flows
 * **Data Source:**
-  * **Logged-in:** Server component fetches from database via Prisma, passes to client as `serverData` prop
-  * **Anonymous:** Client component reads from `localStorage.getItem('rsvp-${storeId}')` and parses JSON
-
-* **Local Storage Structure:**
-
-```typescript
-// Stored as JSON array in localStorage
-[
-  {
-    id: string;              // Reservation ID
-    storeId: string;          // Store ID
-    name: string | null;      // Customer name (anonymous)
-    phone: string | null;     // Phone number (anonymous)
-    rsvpTime: number;         // Epoch milliseconds
-    facilityId: string | null;
-    serviceStaffId: string | null;
-    numOfAdult: number;
-    numOfChild: number;
-    status: number;           // RsvpStatus enum value
-    alreadyPaid: boolean;
-    orderId: string | null;   // Order ID if prepaid
-    // ... other reservation fields
-  }
-]
-```
+  * **All Users:** Server component fetches from database via Prisma based on session `userId`, passes to client as `serverData` prop
+  * **Anonymous Users:** Same database query as logged-in users, filtered by guest user ID (`customerId`)
+  * **Cross-Device:** Anonymous users can access reservations from different devices if session cookies are shared (same browser/device only)
 
 #### 4.2.2 Store Admin API Routes
 
@@ -726,13 +723,15 @@ All server actions return:
 
 * **Store Admin Actions:** Must verify store membership via `storeActionClient` (requires `storeId` in schema and user must be a member of the store's organization)
 * **Store Staff Actions:** Must verify store access and staff permissions
-* **Customer Actions:** Must verify user authentication for prepaid reservations
-* **Public Actions:** No authentication required for basic reservation creation
-* **Anonymous Reservations:**
-  * No authentication required for reservation creation (even with prepaid)
-  * Name and phone number are required and validated for anonymous users
-  * Reservation data is stored in browser local storage for anonymous users
-  * Reservation history page allows anonymous access to view local storage data
+* **Customer Actions:** Must verify user authentication (logged-in users or anonymous users with guest sessions)
+* **Anonymous Reservations (Better Auth Anonymous Plugin):**
+  * **Authentication:** Anonymous users are authenticated via Better Auth anonymous plugin, which creates guest user accounts with emails like `guest-{id}@riben.life`
+  * **Session-Based:** Anonymous users have active sessions and user IDs (guest users), allowing them to create reservations, manage credit, and edit/delete reservations
+  * **Reservation Ownership:** Reservations are stored in the database and linked to guest user accounts via `customerId` field
+  * **Credit Accounts:** Anonymous users can have credit accounts (`CustomerCredit`) linked to their guest user ID
+  * **Authorization:** Anonymous users can edit, delete, and cancel reservations linked to their guest user ID (verified by matching session `userId` to reservation `customerId`)
+  * **Name and Phone:** Name and phone number are required and validated for anonymous users, stored in reservation `name` and `phone` fields
+  * **Session Persistence:** Anonymous user sessions persist across browser sessions via Better Auth session management (session cookie-based)
 
 ### 5.2 Data Validation
 
@@ -1154,7 +1153,7 @@ For Google Actions Center Appointments Redirect integration:
 * `customerId` - Customer user ID
 * `orderTotal` - Prepaid amount (cash value in store currency)
 * `currency` - Store currency code (fetched from `store.defaultCurrency` to ensure consistency)
-* `paymentMethodPayUrl` - Payment method identifier ("credit" or "TBD")
+* `paymentMethodPayUrl` - Payment method identifier ("creditPoint" or "TBD")
 * `note` - Optional order note (includes RSVP details: RSVP ID, facility name, formatted reservation time in store timezone)
 * `isPaid` - Whether order is already paid (default: `false` for checkout flow)
 
@@ -1452,6 +1451,7 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 2.3 | 2025-01-27 | System | Redesigned anonymous reservation architecture to use Better Auth anonymous plugin: (1) **Authentication** - Anonymous users are authenticated via Better Auth anonymous plugin, which creates guest user accounts with emails like `guest-{id}@riben.life`. Anonymous users have active sessions and user IDs (guest users). (2) **Database Storage** - Reservations are stored in the database and linked to guest user accounts via `customerId` field. No longer using local storage as primary mechanism. (3) **Credit Accounts** - Anonymous users can have credit accounts (`CustomerCredit`) linked to their guest user ID. (4) **Edit/Delete/Cancel** - Anonymous users can edit, delete, and cancel reservations linked to their guest user ID (authorized by matching session `userId` to reservation `customerId`). (5) **Reservation History** - Reservation history is fetched from database based on session `customerId` (guest user ID for anonymous users). Updated Sections 4.1.1 (Customer Reservation Creation), 4.1.1 (Customer Reservation Modification), 4.2.1 (Reservation History), and 5.1 (Authentication & Authorization) to reflect the new architecture. |
 | 2.2 | 2025-01-27 | System | Updated database schema documentation: (1) **ServiceStaff Model** - Added complete ServiceStaff model schema documentation (Section 3.1.4) with all fields including capacity, defaultCost, defaultCredit, defaultDuration, businessHours, isDeleted, and description. (2) **StoreFacility Model** - Updated to include businessHours, description, location, and travelInfo fields, plus FacilityPricingRules relation. (3) **Rsvp Model** - Updated to include ServiceStaff relation and all indexes (rsvpTime, arriveTime, createdAt, updatedAt, and composite index [storeId, rsvpTime, status]). (4) **Service Staff Actions** - Added service staff management actions section (4.1.3a) documenting create, update, delete, and get actions. (5) **Database Constraints** - Updated to include ServiceStaff unique constraint and soft delete behavior. (6) **Service Staff Availability** - Enhanced documentation of service staff filtering and validation in reservation creation flow. |
 | 2.1 | 2025-01-27 | System | Added anonymous reservation workflow technical requirements: (1) **Name and Phone Validation** - Anonymous users must provide both name and phone number (validated with Zod schema using `.refine()`). Updated Rsvp model schema to include `name` field. (2) **Local Storage Implementation** - Anonymous reservation data saved to browser local storage (key: `rsvp-${storeId}`) after successful creation. Stored data includes reservation ID, store ID, name, phone, reservation details, status, and payment information. (3) **Checkout Flow for Anonymous Users** - After payment completion, anonymous users are redirected to order confirmation page which prompts phone number confirmation. (4) **Reservation History for Anonymous Users** - `/s/[storeId]/reservation/history` page allows anonymous access and displays reservations from local storage. No redirect to sign-in for anonymous users. Updated Sections 3.1.2 (Rsvp model), 4.1.1 (Customer Reservation Creation), and 4.2.1 (Public API Routes) to document these features. |
 | 2.0 | 2025-01-27 | System | Updated authentication requirements and enhanced reservation system: (1) Clarified that no sign-in is required to create reservations - anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`). (2) Fixed facility filtering - facilities are only filtered if existing reservations fall on the same calendar day (in store timezone) as the selected time slot, preventing incorrect filtering across different days. Updated `dayAndTimeSlotToUtc()` to extract date components in store timezone using `Intl.DateTimeFormat` instead of UTC methods, fixing one-day-off issue. (3) Improved payment method handling - `markOrderAsPaidCore` now explicitly uses provided `paymentMethodId` parameter, ensuring correct payment method tracking. Payment methods are fetched by `payUrl` identifier in all payment flows (Stripe, LINE Pay, credit, cash). (4) Currency consistency - orders use store's `defaultCurrency` consistently across creation and refund processes. Refund processing uses order's `currency` field instead of store's default currency. (5) Auto store membership - `ensureCustomerIsStoreMember()` utility automatically adds customers as store members (user role) when they create orders. (6) Order notes display - `DisplayOrder` component now supports `showOrderNotes` prop (default: false) to conditionally display order notes. (7) Fiat balance badge - customer menu displays fiat balance badge when balance > 0. (8) Checkout success UX - `SuccessAndRedirect` component displays brief success message before redirecting. (9) Unpaid RSVP redirect - reservation form redirects to checkout page when editing unpaid reservations. (10) Date/time display - reservation form uses display-only field for `rsvpTime` in create mode, formatted using `formatUtcDateToDateTimeLocal()` for correct timezone display. Updated Sections 4.1.1, 8.1.2, and 8.3.1 to reflect these enhancements. |

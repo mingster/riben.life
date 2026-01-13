@@ -9,7 +9,7 @@ import { checkAdminAccess } from "../admin-utils";
 import type { Store } from "@/types";
 import { Suspense } from "react";
 import { Loader } from "@/components/loader";
-import { StoreLevel } from "@/types/enum";
+import { StoreLevel, MemberRole } from "@/types/enum";
 import { Prisma } from "@prisma/client";
 
 type Params = Promise<{ storeId: string }>;
@@ -45,17 +45,49 @@ export default async function StoreAdminPage(props: {
 		},
 	});
 
-	const creditByStore = await sqlClient.customerCredit.groupBy({
-		by: ["storeId"],
-		_sum: {
-			point: true,
-		},
-	});
-
+	// Calculate credit per store by summing credits for users who are members of each store's organization
+	// Since credit is now cross-store, we calculate based on organization membership
 	const creditMap = new Map<string, number>();
-	creditByStore.forEach((row) => {
-		creditMap.set(row.storeId, Number(row._sum.point ?? 0));
-	});
+
+	// For each store, get all customer members and sum their credit points
+	for (const store of stores) {
+		if (!store.organizationId) {
+			creditMap.set(store.id, 0);
+			continue;
+		}
+
+		// Get all customer members for this store's organization
+		const customerMembers = await sqlClient.member.findMany({
+			where: {
+				organizationId: store.organizationId,
+				role: MemberRole.customer,
+			},
+			select: {
+				userId: true,
+			},
+		});
+
+		if (customerMembers.length === 0) {
+			creditMap.set(store.id, 0);
+			continue;
+		}
+
+		const customerUserIds = customerMembers.map((m) => m.userId);
+
+		// Sum credit points for all customers in this organization
+		const creditAggregate = await sqlClient.customerCredit.aggregate({
+			where: {
+				userId: {
+					in: customerUserIds,
+				},
+			},
+			_sum: {
+				point: true,
+			},
+		});
+
+		creditMap.set(store.id, Number(creditAggregate._sum.point ?? 0));
+	}
 
 	// Transform BigInt (epoch timestamps) and Decimal to numbers for JSON serialization
 	transformPrismaDataForJson(stores);

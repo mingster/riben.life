@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import ClientSignIn from "@/components/auth/client-signin";
 import { DisplayOrder } from "@/components/display-order";
@@ -27,7 +28,19 @@ export const DisplayClient: React.FC<props> = ({ store, order, rsvp }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const { data: session } = authClient.useSession();
-	const isSignedIn = Boolean(session?.user);
+	// Check if user is signed in (not anonymous)
+	// Anonymous users created via Better Auth anonymous plugin have emails like guest-{id}@riben.life
+	const isSignedIn = useMemo(() => {
+		if (!session?.user) return false;
+		// Check if user is anonymous (guest user)
+		const userEmail = session.user.email;
+		const isAnonymousUser =
+			userEmail &&
+			userEmail.startsWith("guest-") &&
+			userEmail.endsWith("@riben.life");
+		// Only consider it "signed in" if user exists and is not anonymous
+		return !isAnonymousUser;
+	}, [session?.user]);
 
 	// Determine the "Keep Shopping" link destination
 	// For RSVP orders that are paid, redirect to reservation history
@@ -103,6 +116,7 @@ export const DisplayClient: React.FC<props> = ({ store, order, rsvp }) => {
 							<ClientSignIn
 								title={t("order_sign_in_benefits")}
 								className="w-full h-full"
+								callbackUrl={`/s/${store.id}`}
 							/>
 						</div>
 					</div>

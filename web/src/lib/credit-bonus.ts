@@ -75,10 +75,7 @@ export async function processCreditTopUp(
 		// 1. Get current balance (before update)
 		const existingCredit = await tx.customerCredit.findUnique({
 			where: {
-				storeId_userId: {
-					storeId,
-					userId,
-				},
+				userId,
 			},
 		});
 
@@ -89,10 +86,7 @@ export async function processCreditTopUp(
 		// 2. Update CustomerCredit
 		const customerCredit = await tx.customerCredit.upsert({
 			where: {
-				storeId_userId: {
-					storeId,
-					userId,
-				},
+				userId,
 			},
 			update: {
 				point: {
@@ -100,7 +94,6 @@ export async function processCreditTopUp(
 				},
 			},
 			create: {
-				storeId,
 				userId,
 				point: totalCredit,
 				updatedAt: getUtcNowEpoch(),
@@ -185,10 +178,7 @@ export async function processFiatTopUp(
 		// 1. Get current balance (before update)
 		const existingCredit = await tx.customerCredit.findUnique({
 			where: {
-				storeId_userId: {
-					storeId,
-					userId,
-				},
+				userId,
 			},
 		});
 
@@ -198,10 +188,7 @@ export async function processFiatTopUp(
 		// 2. Update CustomerCredit (fiat field)
 		const customerCredit = await tx.customerCredit.upsert({
 			where: {
-				storeId_userId: {
-					storeId,
-					userId,
-				},
+				userId,
 			},
 			update: {
 				fiat: {
@@ -210,7 +197,6 @@ export async function processFiatTopUp(
 				updatedAt: getUtcNowEpoch(),
 			},
 			create: {
-				storeId,
 				userId,
 				fiat: new Prisma.Decimal(amount),
 				point: new Prisma.Decimal(0), // Ensure point is set

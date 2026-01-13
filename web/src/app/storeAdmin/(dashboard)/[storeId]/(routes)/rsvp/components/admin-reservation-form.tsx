@@ -501,7 +501,10 @@ export function AdminReservationForm({
 		}
 	}, [availableFacilities, form, isEditMode]);
 
-	// Calculate pricing only when form is mounted or rsvpTime/facilityId changes
+	// Extract setValue for stable reference (react-hook-form's setValue is stable)
+	const { setValue } = form;
+
+	// Calculate pricing only when rsvpTime/facilityId changes
 	useEffect(() => {
 		const calculatePricing = async () => {
 			if (!facilityId || !rsvpTime) {
@@ -542,12 +545,12 @@ export function AdminReservationForm({
 
 				const result = await response.json();
 				if (result.cost !== null && result.cost !== undefined) {
-					form.setValue("facilityCost", result.cost, {
+					setValue("facilityCost", result.cost, {
 						shouldValidate: false,
 					});
 				}
 				if (result.pricingRuleId) {
-					form.setValue("pricingRuleId", result.pricingRuleId, {
+					setValue("pricingRuleId", result.pricingRuleId, {
 						shouldValidate: false,
 					});
 				}
@@ -558,7 +561,7 @@ export function AdminReservationForm({
 		};
 
 		calculatePricing();
-	}, [facilityId, rsvpTime, storeId, form]);
+	}, [facilityId, rsvpTime, storeId, setValue]);
 
 	const onSubmit = async (values: FormInput) => {
 		try {

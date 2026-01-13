@@ -489,7 +489,7 @@ export const DisplayReservations = ({
 										item.Store?.name
 									)}
 								</div>
-								<div className="text-muted-foreground text-[10px]">
+								<div className="text-muted-foreground">
 									{format(
 										getDateInTz(
 											epochToDate(
@@ -510,7 +510,7 @@ export const DisplayReservations = ({
 							<div className="shrink-0">
 								<span
 									className={cn(
-										"inline-flex items-center px-2 py-1 text-[10px] font-medium rounded",
+										"inline-flex items-center px-2 py-1 font-medium rounded",
 										getStatusColorClasses(item.status, false),
 									)}
 								>
@@ -520,7 +520,7 @@ export const DisplayReservations = ({
 						</div>
 
 						{item.Facility?.facilityName && (
-							<div className="text-[10px] text-muted-foreground">
+							<div className="text-muted-foreground">
 								<span className="font-medium">{t("rsvp_facility")}:</span>
 								{item.Facility.facilityName}
 							</div>
@@ -536,14 +536,14 @@ export const DisplayReservations = ({
 						)}
 
 						{item.CreatedBy?.name && (
-							<div className="text-[10px] text-muted-foreground">
+							<div className="text-muted-foreground">
 								<span className="font-medium">{t("rsvp_creator")}:</span>
 								{item.CreatedBy?.name}
 							</div>
 						)}
 
 						<div className="flex items-center justify-between pt-1 border-t">
-							<div className="text-[10px] text-muted-foreground">
+							<div className="text-muted-foreground">
 								{format(
 									getDateInTz(
 										epochToDate(
@@ -651,7 +651,7 @@ export const DisplayReservations = ({
 									<td className="px-3 py-2">
 										<span
 											className={cn(
-												"inline-flex items-center px-2 py-1 text-[10px] font-medium rounded",
+												"inline-flex items-center px-2 py-1 font-medium rounded",
 												getStatusColorClasses(item.status, false),
 											)}
 										>

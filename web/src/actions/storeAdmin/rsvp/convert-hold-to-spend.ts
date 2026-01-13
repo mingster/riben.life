@@ -73,10 +73,7 @@ export async function convertHoldToSpend(
 	// Get current customer credit balance (should already be reduced from HOLD)
 	const customerCredit = await tx.customerCredit.findUnique({
 		where: {
-			storeId_userId: {
-				storeId,
-				userId: customerId,
-			},
+			userId: customerId,
 		},
 	});
 

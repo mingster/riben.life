@@ -134,10 +134,20 @@ export function RsvpCancelPolicyInfo({
 										{totalCost > 0 && (
 											<li>
 												{t("rsvp_facility_cost", {
-													amount: Number(totalCost).toFixed(2),
+													amount: new Intl.NumberFormat("en-US", {
+														style: "currency",
+														currency: (currency || "TWD").toUpperCase(),
+														maximumFractionDigits: 2,
+														minimumFractionDigits: 0,
+													}).format(Number(totalCost)),
 													currency: currency.toUpperCase(),
 												}) ||
-													`Facility cost: ${Number(totalCost).toFixed(2)} ${currency.toUpperCase()}`}
+													`Facility cost: ${new Intl.NumberFormat("en-US", {
+														style: "currency",
+														currency: (currency || "TWD").toUpperCase(),
+														maximumFractionDigits: 2,
+														minimumFractionDigits: 0,
+													}).format(Number(totalCost))}`}
 											</li>
 										)}
 									</>
@@ -148,10 +158,23 @@ export function RsvpCancelPolicyInfo({
 							return (
 								<li>
 									{t("rsvp_prepaid_required_fiat", {
-										amount: Number(prepaid).toFixed(2),
+										amount: new Intl.NumberFormat("en-US", {
+											style: "currency",
+											currency: (currency || "TWD").toUpperCase(),
+											maximumFractionDigits: 2,
+											minimumFractionDigits: 0,
+										}).format(Number(prepaid)),
 										currency: currency.toUpperCase(),
 									}) ||
-										`Prepaid required. This reservation will deduct ${Number(prepaid).toFixed(2)} ${currency.toUpperCase()}.`}
+										`Prepaid required. This reservation will deduct ${new Intl.NumberFormat(
+											"en-US",
+											{
+												style: "currency",
+												currency: (currency || "TWD").toUpperCase(),
+												maximumFractionDigits: 2,
+												minimumFractionDigits: 0,
+											},
+										).format(Number(prepaid))}.`}
 								</li>
 							);
 						})()}

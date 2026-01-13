@@ -47,7 +47,7 @@ export const NotificationBell = forwardRef<
 						unreadCount > 99
 							? "h-4 w-4 min-h-[16px] min-w-[16px] text-[9px] px-0.5 leading-none"
 							: unreadCount > 9
-								? "h-4 w-4 min-h-[16px] min-w-[16px] text-[10px] px-0.5 leading-none"
+								? "h-4 w-4 min-h-[16px] min-w-[16px] px-0.5 leading-none"
 								: "h-3.5 w-3.5 min-h-[14px] min-w-[14px] text-[9px] leading-none",
 					)}
 					aria-label={`${unreadCount} unread ${t("notifications")}`}

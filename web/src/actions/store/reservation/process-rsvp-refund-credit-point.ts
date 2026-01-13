@@ -153,10 +153,7 @@ export async function processRsvpCreditPointsRefund(
 		// 1. Get current customer credit balance (or 0 if record doesn't exist)
 		const customerCredit = await tx.customerCredit.findUnique({
 			where: {
-				storeId_userId: {
-					storeId,
-					userId: customerId,
-				},
+				userId: customerId,
 			},
 		});
 
@@ -166,13 +163,9 @@ export async function processRsvpCreditPointsRefund(
 		// 2. Update or create customer credit balance
 		await tx.customerCredit.upsert({
 			where: {
-				storeId_userId: {
-					storeId,
-					userId: customerId,
-				},
+				userId: customerId,
 			},
 			create: {
-				storeId,
 				userId: customerId,
 				point: new Prisma.Decimal(newBalance),
 				fiat: new Prisma.Decimal(0), // Ensure fiat is set

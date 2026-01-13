@@ -89,6 +89,8 @@ const PaymentStripe: React.FC<paymentProps> = ({ order, returnUrl }) => {
 	let email = session?.user?.email as string;
 	if (!email) email = "";
 
+	//console.log(JSON.stringify(session));
+
 	let name = session?.user?.name as string;
 	if (!name) name = "";
 
@@ -122,32 +124,21 @@ const PaymentStripe: React.FC<paymentProps> = ({ order, returnUrl }) => {
 		clientSecret !== "" &&
 		stripePromise !== null && (
 			<Elements key={clientSecret} stripe={stripePromise} options={options}>
-				<LinkAuthenticationElement
-					id="link-authentication-element"
-					// Access the email value like so:
-					// onChange={(event) => {
-					//  setEmail(event.value.email);
-					// }}
-					//
-					// Prefill the email field like so:
-					options={{ defaultValues: { email: email } }}
-				/>
-				<PaymentElement
-					id="payment-element"
-					options={{
-						defaultValues: {
-							billingDetails: {
-								email: email,
-								name: name,
-							},
-						},
-					}}
+				<StripeFormElementsWrapper
+					email={email}
+					name={name}
+					orderId={order.id}
+					returnUrl={returnUrl}
 				/>
 				<div>
-					{t("payment_stripe_pay_amount")}
-					{Number(order.orderTotal)} {order.currency.toUpperCase()}
+					{t("payment_stripe_pay_amount")}{" "}
+					{new Intl.NumberFormat("en-US", {
+						style: "currency",
+						currency: (order.currency || "TWD").toUpperCase(),
+						maximumFractionDigits: 2,
+						minimumFractionDigits: 0,
+					}).format(Number(order.orderTotal))}
 				</div>
-				<StripePayButton orderId={order.id} returnUrl={returnUrl} />
 			</Elements>
 		)
 	);
@@ -168,9 +159,64 @@ type PaymentStripeProp = {
 // If payment is confirmed, redirect user to success page (return_url).
 // if payment is NOT confirmed, display error message.
 //
-const StripePayButton: React.FC<PaymentStripeProp> = ({
+// Wrapper component to manage error state and pass clear callback to children
+const StripeFormElementsWrapper: React.FC<{
+	email: string;
+	name: string;
+	orderId: string;
+	returnUrl?: string;
+}> = ({ email, name, orderId, returnUrl }) => {
+	const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
+	const clearError = () => {
+		setErrorMessage(undefined);
+	};
+
+	return (
+		<>
+			<LinkAuthenticationElement
+				id="link-authentication-element"
+				onChange={() => {
+					// Clear error when user types in email field
+					clearError();
+				}}
+				options={{ defaultValues: { email: email } }}
+			/>
+			<PaymentElement
+				id="payment-element"
+				onChange={() => {
+					// Clear error when user interacts with payment element
+					clearError();
+				}}
+				options={{
+					defaultValues: {
+						billingDetails: {
+							email: email,
+							name: name,
+						},
+					},
+				}}
+			/>
+			<StripePayButton
+				orderId={orderId}
+				returnUrl={returnUrl}
+				errorMessage={errorMessage}
+				setErrorMessage={setErrorMessage}
+			/>
+		</>
+	);
+};
+
+const StripePayButton: React.FC<
+	PaymentStripeProp & {
+		errorMessage?: string | undefined;
+		setErrorMessage: (message: string | undefined) => void;
+	}
+> = ({
 	orderId,
 	returnUrl: customReturnUrl,
+	errorMessage,
+	setErrorMessage,
 }) => {
 	const router = useRouter();
 	const { lng } = useI18n();
@@ -181,7 +227,6 @@ const StripePayButton: React.FC<PaymentStripeProp> = ({
 	const elements = useElements();
 	const stripe = useStripe();
 	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-	const [errorMessage, setErrorMessage] = useState<string | undefined>();
 	const [formFields, setFormFields] = useState(defaultFormFields);
 	//const { displayName, email } = formFields;
 
@@ -229,36 +274,13 @@ const StripePayButton: React.FC<PaymentStripeProp> = ({
 		}
 	};
 
-	// if payment is not confirmed, do this every 5 sec.
-	const IntervaledContent = () => {
-		const [count, setCount] = useState(0);
-
-		useEffect(() => {
-			//Implementing the setInterval method
-			const interval = setInterval(() => {
-				fetchData();
-				setCount(count + 1);
-
-				if (count > 5) {
-					// give up after 5 retries
-					clearInterval(interval);
-				}
-			}, 3000); // do every 3 sec.
-
-			//Clearing the interval
-			return () => clearInterval(interval);
-		}, [count]);
-	};
-
 	const paymentHandler = async (e: React.SyntheticEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
 		setIsProcessingPayment(true);
 
-		// first fetch
-		fetchData();
-
-		IntervaledContent();
+		// Call fetchData - stripe.confirmPayment will handle redirects or return errors
+		await fetchData();
 
 		setIsProcessingPayment(false);
 	};

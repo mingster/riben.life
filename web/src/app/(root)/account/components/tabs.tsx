@@ -7,7 +7,6 @@ import { useI18n } from "@/providers/i18n-provider";
 
 import { Loader } from "@/components/loader";
 import Container from "@/components/ui/container";
-import { Heading } from "@/components/ui/heading";
 import type { StoreOrder, User } from "@/types";
 import type { Address } from "@prisma/client";
 import { AddressesTab } from "./tab-address";
@@ -123,13 +122,19 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 				</TabsContent>
 				<TabsContent value="credits">
 					<Card>
-						<CardHeader>
-							<CardTitle> </CardTitle>
-							<CardDescription> </CardDescription>
-						</CardHeader>
-
-						<CardContent className="space-y-2">
-							<DisplayCreditLedger ledger={user.CustomerCreditLedger} />
+						<CardContent className="space-y-4">
+							<CardHeader></CardHeader>
+							<div className="flex flex-col gap-1">
+								{user.CustomerCredit && (
+									<div className="flex items-center gap-1">
+										{t("customer_credit_balance")}:{" "}
+										<span className="font-semibold">
+											{Number(user.CustomerCredit.fiat) || 0}
+										</span>
+									</div>
+								)}
+								<DisplayCreditLedger ledger={user.CustomerFiatLedger} />
+							</div>
 						</CardContent>
 					</Card>
 				</TabsContent>

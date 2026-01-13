@@ -240,7 +240,7 @@ const userObj = Prisma.validator<Prisma.UserDefaultArgs>()({
 		Addresses: true,
 		Orders: true,
 		Reservations: true,
-		CustomerCredits: true,
+		CustomerCredit: true,
 		CustomerCreditLedger: true,
 		StoreLedgerCreated: true,
 		//NotificationTo: true,
@@ -309,7 +309,6 @@ export type MessageQueue = Prisma.MessageQueueGetPayload<
 
 const customerCreditObj = Prisma.validator<Prisma.CustomerCreditDefaultArgs>()({
 	include: {
-		Store: true,
 		User: true,
 	},
 });

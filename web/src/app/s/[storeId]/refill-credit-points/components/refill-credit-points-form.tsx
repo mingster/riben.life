@@ -228,7 +228,12 @@ export function RefillCreditPointsForm({
 												</span>
 												{creditExchangeRate > 0 && (
 													<span className="text-xs text-muted-foreground">
-														{dollarAmount.toLocaleString()} {currency}
+														{new Intl.NumberFormat("en-US", {
+															style: "currency",
+															currency: (currency || "TWD").toUpperCase(),
+															maximumFractionDigits: 2,
+															minimumFractionDigits: 0,
+														}).format(dollarAmount)}
 													</span>
 												)}
 											</Button>
@@ -262,7 +267,12 @@ export function RefillCreditPointsForm({
 									{dollarAmount > 0 && (
 										<p className="text-sm text-muted-foreground">
 											{t("credit_total_amount")}:{" "}
-											{dollarAmount.toLocaleString()} {currency}
+											{new Intl.NumberFormat("en-US", {
+												style: "currency",
+												currency: (currency || "TWD").toUpperCase(),
+												maximumFractionDigits: 2,
+												minimumFractionDigits: 0,
+											}).format(dollarAmount)}
 										</p>
 									)}
 									<FormMessage />

@@ -52,6 +52,14 @@ export const createReservationAction = baseClient
 		});
 
 		const sessionUserId = session?.user?.id;
+		const sessionUserEmail = session?.user?.email;
+
+		// Check if user is anonymous (no session OR anonymous user with guest-*@riben.life email)
+		// Anonymous users created via Better Auth anonymous plugin have emails like guest-{id}@riben.life
+		const isAnonymousUser =
+			sessionUserEmail &&
+			sessionUserEmail.startsWith("guest-") &&
+			sessionUserEmail.endsWith("@riben.life");
 
 		// Get store and RSVP settings
 		const [store, rsvpSettings] = await Promise.all([
@@ -115,8 +123,11 @@ export const createReservationAction = baseClient
 		// Validate reservation time window (canReserveBefore and canReserveAfter)
 		await validateReservationTimeWindow(rsvpSettings, rsvpTime);
 
-		// Check if user is anonymous (not logged in and no customerId provided)
-		let isAnonymous = !sessionUserId && !customerId;
+		// Check if user is anonymous (no session, anonymous user via plugin, or no customerId provided)
+		// Anonymous users include:
+		// 1. Users with no session (completely anonymous)
+		// 2. Users signed in via Better Auth anonymous plugin (guest-*@riben.life emails)
+		let isAnonymous = (!sessionUserId || isAnonymousUser) && !customerId;
 		let foundCustomerIdByPhone: string | null = null;
 
 		// Validate name and phone requirements for anonymous users
@@ -173,6 +184,9 @@ export const createReservationAction = baseClient
 							tags: ["rsvp", "user-lookup", "phone", "anonymous"],
 						},
 					);
+
+					// Note: User creation/sign-in should be handled on the client side using authClient
+					// Anonymous users should sign in before creating reservations that require payment
 				}
 			} catch (error) {
 				// Log error but don't block reservation creation
@@ -362,6 +376,9 @@ export const createReservationAction = baseClient
 			? Math.ceil(totalCost * (minPrepaidPercentage / 100))
 			: null;
 
+		// Determine if order should be created (whenever totalCost > 0)
+		const shouldCreateOrder = totalCost > 0;
+
 		// Determine RSVP status and payment status
 		let rsvpStatus = prepaidRequired
 			? Number(RsvpStatus.Pending)
@@ -414,18 +431,16 @@ export const createReservationAction = baseClient
 					},
 				});
 
-				// Step 2: If prepaid is required and customer is signed in, create order with RSVP ID in note
-				if (
-					prepaidRequired &&
-					requiredPrepaid !== null &&
-					requiredPrepaid > 0 &&
-					finalCustomerId
-				) {
+				// Step 2: If totalCost > 0 and customer is signed in, create order with RSVP ID in note
+				if (shouldCreateOrder && finalCustomerId) {
 					// Get translation function for order note
 					const { t } = await getT();
 
 					// Determine payment method based on store settings
-					const paymentMethodPayUrl = "TBD";
+					// If useCustomerCredit is true, use "creditPoint" payment method, otherwise use "TBD"
+					const paymentMethodPayUrl = store.useCustomerCredit
+						? "creditPoint"
+						: "TBD";
 
 					// Create order note with RSVP ID
 					const orderNote = `${t("rsvp_reservation_payment_note") || "RSVP reservation payment"} (RSVP ID: ${createdRsvp.id})`;
@@ -435,22 +450,20 @@ export const createReservationAction = baseClient
 					const serviceStaffCostForOrder =
 						serviceStaffCost > 0 ? serviceStaffCost : null;
 
-					// Calculate prepaid amounts proportionally if both costs exist
-					let facilityPrepaid: number | null = null;
-					let serviceStaffPrepaid: number | null = null;
+					// Calculate order amounts (use full cost, not just prepaid)
+					let facilityOrderAmount: number | null = null;
+					let serviceStaffOrderAmount: number | null = null;
 
 					if (facilityCostForOrder && serviceStaffCostForOrder) {
-						// Both costs exist, split prepaid proportionally
-						const facilityRatio = facilityCostForOrder / totalCost;
-						const serviceStaffRatio = serviceStaffCostForOrder / totalCost;
-						facilityPrepaid = Math.ceil(requiredPrepaid * facilityRatio);
-						serviceStaffPrepaid = requiredPrepaid - facilityPrepaid; // Ensure total matches
+						// Both costs exist, use full amounts
+						facilityOrderAmount = facilityCostForOrder;
+						serviceStaffOrderAmount = serviceStaffCostForOrder;
 					} else if (facilityCostForOrder) {
 						// Only facility cost
-						facilityPrepaid = requiredPrepaid;
+						facilityOrderAmount = facilityCostForOrder;
 					} else if (serviceStaffCostForOrder) {
 						// Only service staff cost
-						serviceStaffPrepaid = requiredPrepaid;
+						serviceStaffOrderAmount = serviceStaffCostForOrder;
 					}
 
 					// Create unpaid order (customer will pay at checkout)
@@ -458,8 +471,8 @@ export const createReservationAction = baseClient
 						tx,
 						storeId,
 						customerId: finalCustomerId, // finalCustomerId is guaranteed to be non-null here
-						facilityCost: facilityPrepaid,
-						serviceStaffCost: serviceStaffPrepaid,
+						facilityCost: facilityOrderAmount,
+						serviceStaffCost: serviceStaffOrderAmount,
 						currency: store.defaultCurrency || "twd",
 						paymentMethodPayUrl,
 						rsvpId: createdRsvp.id, // Pass RSVP ID for pickupCode
@@ -530,8 +543,8 @@ export const createReservationAction = baseClient
 			return {
 				rsvp: transformedRsvp,
 				orderId, // Return orderId so frontend can redirect to checkout
-				// If prepaid is required and user is anonymous, they need to sign in first
-				requiresSignIn: prepaidRequired && isAnonymous,
+				// If order should be created and user is anonymous, they need to sign in first
+				requiresSignIn: shouldCreateOrder && isAnonymous,
 			};
 		} catch (error: unknown) {
 			if (
