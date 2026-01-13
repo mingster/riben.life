@@ -28,9 +28,9 @@ export const FaqCategoryClient: React.FC<FaqCategoryClientProps> = ({
 		<>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
-					title={t("FaqCategory_mgmt")}
+					title={t("faq_category_mgmt")}
 					badge={data.length}
-					description={t("FaqCategory_mgmt_descr")}
+					description={t("faq_category_mgmt_descr")}
 				/>
 
 				<Button

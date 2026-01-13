@@ -71,9 +71,9 @@ export function AnnouncementClient({ serverData }: AnnouncementClientProps) {
 		<>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
-					title={t("Announcement_mgmt")}
+					title={t("announcement_mgmt")}
 					badge={data.length}
-					description={t("Announcement_mgmt_descr")}
+					description={t("announcement_mgmt_descr")}
 				/>
 				<EditAnnouncementDialog
 					isNew

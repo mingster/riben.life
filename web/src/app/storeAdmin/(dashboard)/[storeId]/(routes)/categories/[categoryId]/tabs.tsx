@@ -39,7 +39,7 @@ export const CategoryEditTabs = ({
 
 	//console.log(`ProductEditTabs: ${JSON.stringify(initialData?.ProductCategories)}`);
 
-	const pageTitle = t(action) + t("Category");
+	const pageTitle = t(action) + t("category");
 
 	const link_home = `/storeAdmin/${params.storeId}/`;
 	const link_cat = `/storeAdmin/${params.storeId}/categories`;
@@ -50,12 +50,12 @@ export const CategoryEditTabs = ({
 				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink href={link_home}>
-							{t("StoreDashboard")}
+							{t("store_dashboard")}
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
-						<BreadcrumbLink href={link_cat}>{t("Category")}</BreadcrumbLink>
+						<BreadcrumbLink href={link_cat}>{t("category")}</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
@@ -67,11 +67,11 @@ export const CategoryEditTabs = ({
 			<Tabs defaultValue="basic" className="w-full">
 				<TabsList>
 					<TabsTrigger className="px-5 lg:min-w-40" value="basic">
-						{t("Category_mgmt_tab_basic")}
+						{t("category_mgmt_tab_basic")}
 					</TabsTrigger>
 					{params.productId !== "new" && (
 						<TabsTrigger className="px-5 lg:min-w-40" value="products">
-							{t("Category_mgmt_tab_products")}
+							{t("category_mgmt_tab_products")}
 						</TabsTrigger>
 					)}
 				</TabsList>

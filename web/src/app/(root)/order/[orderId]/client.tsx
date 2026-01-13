@@ -64,7 +64,7 @@ export const DisplayClient: React.FC<props> = ({ store, order, rsvp }) => {
 
 						<Link href={keepShoppingHref} className="">
 							<Button className="w-full">
-								{t("cart_summary_keepShopping")}
+								{t("cart_summary_keep_shopping")}
 							</Button>
 						</Link>
 					</>
@@ -92,7 +92,7 @@ export const DisplayClient: React.FC<props> = ({ store, order, rsvp }) => {
 
 									<Link href={keepShoppingHref} className="mt-4">
 										<Button className="w-full">
-											{t("cart_summary_keepShopping")}
+											{t("cart_summary_keep_shopping")}
 										</Button>
 									</Link>
 								</CardContent>

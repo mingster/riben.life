@@ -16,7 +16,7 @@ export const createTransactionColumns = (
 	{
 		accessorKey: "amount",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title={t("Order_total")} />
+			<DataTableColumnHeader column={column} title={t("order_total")} />
 		),
 		cell: ({ row }) => {
 			const amount = Number(row.getValue("amount"));
@@ -26,7 +26,7 @@ export const createTransactionColumns = (
 	{
 		accessorKey: "orderStatus",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title={t("Order_status")} />
+			<DataTableColumnHeader column={column} title={t("order_status")} />
 		),
 		cell: ({ row }) => (
 			<DisplayOrderStatus status={row.getValue("orderStatus")} />
@@ -35,12 +35,12 @@ export const createTransactionColumns = (
 	{
 		accessorKey: "isPaid",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title={t("Order_isPaid")} />
+			<DataTableColumnHeader column={column} title={t("order_is_paid")} />
 		),
 		cell: ({ row }) =>
 			row.getValue("isPaid") === true ? (
 				<Button variant="outline" className="mr-2 cursor-default" size="sm">
-					{t("isPaid")}
+					{t("is_paid")}
 				</Button>
 			) : (
 				<Button
@@ -48,26 +48,26 @@ export const createTransactionColumns = (
 					className="mr-2 bg-red-900 text-gray cursor-default"
 					size="sm"
 				>
-					{t("isNotPaid")}
+					{t("is_not_paid")}
 				</Button>
 			),
 	},
 	{
 		accessorKey: "paymentMethod",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title={t("PaymentMethod")} />
+			<DataTableColumnHeader column={column} title={t("payment_method")} />
 		),
 	},
 	{
 		accessorKey: "shippingMethod",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title={t("shippingMethod")} />
+			<DataTableColumnHeader column={column} title={t("shipping_method")} />
 		),
 	},
 	{
 		accessorKey: "orderNum",
 		header: ({ column }) => (
-			<DataTableColumnHeader column={column} title={t("Order_orderNum")} />
+			<DataTableColumnHeader column={column} title={t("order_order_num")} />
 		),
 	},
 	{

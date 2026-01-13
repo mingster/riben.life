@@ -141,7 +141,7 @@ export default function DropdownMessage({ messages }: props) {
 			>
 				<div className="px-4.5 py-3">
 					<h5 className="text-sm font-medium text-bodydark2">
-						{mounted ? t("StoreAnnouncement_title") : "Announcement"}
+						{mounted ? t("store_announcement_title") : "Announcement"}
 					</h5>
 				</div>
 

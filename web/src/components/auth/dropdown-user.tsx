@@ -91,7 +91,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 						<DropdownMenuItem className="cursor-pointer" asChild>
 							<Link href="/account" className="flex items-center gap-2">
 								<IconSettings className="size-4 shrink-0" />
-								<span>{t("user_profile_myAccount")}</span>
+								<span>{t("user_profile_my_account")}</span>
 							</Link>
 						</DropdownMenuItem>
 
@@ -111,7 +111,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 							<DropdownMenuItem className="cursor-pointer" asChild>
 								<Link href="/storeAdmin/" className="flex items-center gap-2">
 									<IconLock className="size-4 shrink-0" />
-									<span>{t("user_profile_linkTo_storeDashboard")}</span>
+									<span>{t("user_profile_link_to_store_dashboard")}</span>
 								</Link>
 							</DropdownMenuItem>
 						)}
@@ -121,7 +121,7 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 								<DropdownMenuItem className="cursor-pointer" asChild>
 									<Link href="/sysAdmin" className="flex items-center gap-2">
 										<IconLock className="size-4 shrink-0" />
-										<span>{t("user_profile_linkTo_admin")}</span>
+										<span>{t("user_profile_link_to_admin")}</span>
 									</Link>
 								</DropdownMenuItem>
 								<DropdownMenuSeparator />

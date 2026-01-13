@@ -34,7 +34,7 @@ export const ProductPreviewDialog: React.FC<props> = ({ initialData }) => {
 			<Dialog>
 				<DialogTrigger asChild>
 					<Button
-						title={t("Preview")}
+						title={t("preview")}
 						className="bg-blue-900"
 						size="sm"
 						variant={"outline"}

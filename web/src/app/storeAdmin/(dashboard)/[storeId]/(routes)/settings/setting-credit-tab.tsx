@@ -148,10 +148,10 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
 										<FormLabel>
-											{t("StoreSettings_Use_Customer_Credit")}
+											{t("store_settings_use_customer_credit")}
 										</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("StoreSettings_Use_Customer_Credit_descr")}
+											{t("store_settings_use_customer_credit_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -174,7 +174,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 										render={({ field }) => (
 											<FormItem>
 												<FormLabel>
-													{t("StoreSettings_Credit_Exchange_Rate")}
+													{t("store_settings_credit_exchange_rate")}
 												</FormLabel>
 												<FormControl>
 													<Input
@@ -188,7 +188,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 													/>
 												</FormControl>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_Credit_Exchange_Rate_descr")}
+													{t("store_settings_credit_exchange_rate_descr")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -201,7 +201,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 										render={({ field }) => (
 											<FormItem>
 												<FormLabel>
-													{t("StoreSettings_Credit_Service_Exchange_Rate")}
+													{t("store_settings_credit_service_exchange_rate")}
 												</FormLabel>
 												<FormControl>
 													<Input
@@ -231,7 +231,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 										render={({ field }) => (
 											<FormItem>
 												<FormLabel>
-													{t("StoreSettings_Credit_Max_Purchase")}
+													{t("store_settings_credit_max_purchase")}
 												</FormLabel>
 												<FormControl>
 													<Input
@@ -245,7 +245,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 													/>
 												</FormControl>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_Credit_Max_Purchase_descr")}
+													{t("store_settings_credit_max_purchase_descr")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -258,7 +258,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 										render={({ field }) => (
 											<FormItem>
 												<FormLabel>
-													{t("StoreSettings_Credit_Min_Purchase")}
+													{t("store_settings_credit_min_purchase")}
 												</FormLabel>
 												<FormControl>
 													<Input
@@ -272,7 +272,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 													/>
 												</FormControl>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_Credit_Min_Purchase_descr")}
+													{t("store_settings_credit_min_purchase_descr")}
 												</FormDescription>
 												<FormMessage />
 											</FormItem>
@@ -286,7 +286,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("StoreSettings_Credit_Expiration")}
+												{t("store_settings_credit_expiration")}
 											</FormLabel>
 											<FormControl>
 												<Input
@@ -300,7 +300,7 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 												/>
 											</FormControl>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("StoreSettings_Credit_Expiration_descr")}
+												{t("store_settings_credit_expiration_descr")}
 											</FormDescription>
 											<FormMessage />
 										</FormItem>
@@ -320,22 +320,22 @@ export const CreditTab: React.FC<CreditTabProps> = ({
 									// Map field names to user-friendly labels using i18n
 									const fieldLabels: Record<string, string> = {
 										useCustomerCredit:
-											t("StoreSettings_Use_Customer_Credit") ||
+											t("store_settings_use_customer_credit") ||
 											"Use Customer Credit",
 										creditExchangeRate:
-											t("StoreSettings_Credit_Exchange_Rate") ||
+											t("store_settings_credit_exchange_rate") ||
 											"Credit Exchange Rate",
 										creditServiceExchangeRate:
-											t("StoreSettings_Credit_Service_Exchange_Rate") ||
+											t("store_settings_credit_service_exchange_rate") ||
 											"Credit Service Exchange Rate",
 										creditMaxPurchase:
-											t("StoreSettings_Credit_Max_Purchase") ||
+											t("store_settings_credit_max_purchase") ||
 											"Credit Max Purchase",
 										creditMinPurchase:
-											t("StoreSettings_Credit_Min_Purchase") ||
+											t("store_settings_credit_min_purchase") ||
 											"Credit Min Purchase",
 										creditExpiration:
-											t("StoreSettings_Credit_Expiration") ||
+											t("store_settings_credit_expiration") ||
 											"Credit Expiration",
 									};
 									const fieldLabel = fieldLabels[field] || field;

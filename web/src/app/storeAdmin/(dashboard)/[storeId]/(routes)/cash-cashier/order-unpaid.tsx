@@ -71,7 +71,7 @@ export const OrderUnpaid = ({
 		orders.filter((order) => order.id !== orderId);
 
 		toastSuccess({
-			title: t("Order") + t("updated"),
+			title: t("order") + t("updated"),
 			description: "",
 		});
 	};
@@ -82,8 +82,8 @@ export const OrderUnpaid = ({
 		<Card>
 			<div className="flex justify-between items-center p-2 border-b border-gray-200 dark:border-gray-800">
 				<Heading
-					title={t("Order_unpaid_title")}
-					description={orders.length !== 0 ? t("Order_unpaid_descr") : ""}
+					title={t("order_unpaid_title")}
+					description={orders.length !== 0 ? t("order_unpaid_descr") : ""}
 					badge={orders.length}
 					className="pt-2"
 				/>
@@ -108,16 +108,16 @@ export const OrderUnpaid = ({
 							<TableRow>
 								{/*單號/桌號*/}
 								<TableHead className="w-[80px] text-center align-middle">
-									{t("Order_cashier_confirm")}
+									{t("order_cashier_confirm")}
 								</TableHead>
-								<TableHead className="">{t("Order_number")}</TableHead>
-								<TableHead className="w-[200px]">{t("Order_items")}</TableHead>
-								<TableHead>{t("Order_note")}</TableHead>
+								<TableHead className="">{t("order_number_label")}</TableHead>
+								<TableHead className="w-[200px]">{t("order_items")}</TableHead>
+								<TableHead>{t("order_note")}</TableHead>
 								<TableHead className="w-[90px] hidden lg:table-cell">
 									{t("ordered_at")}
 								</TableHead>
 								<TableHead className="w-[90px] text-right">
-									{t("Order_total")}
+									{t("order_total")}
 								</TableHead>
 							</TableRow>
 						</TableHeader>
@@ -154,17 +154,17 @@ export const OrderUnpaid = ({
 												<Link
 													href={`/storeAdmin/${order.storeId}/order/${order.id}`}
 												>
-													{t("Order_Modify")}
+													{t("order_modify")}
 												</Link>
 											</Button>
 											<div>
 												{order.isPaid === true ? (
 													<div className="text-green-700 dark:text-green-700">
-														{t("isPaid")}
+														{t("is_paid")}
 													</div>
 												) : (
 													<div className="text-red-400 dark:text-red-700">
-														{t("isNotPaid")}
+														{t("is_not_paid")}
 													</div>
 												)}
 											</div>

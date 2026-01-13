@@ -96,7 +96,7 @@ export function BulkAddFacilitiesDialog({
 			onCreatedMany?.(createdFacilities);
 
 			toastSuccess({
-				title: t("Facility") + t("created"),
+				title: t("facility") + t("created"),
 				description: "",
 			});
 

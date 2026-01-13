@@ -87,7 +87,9 @@ export function CheckoutPaymentMethods({
 	return (
 		<Card className="mt-4">
 			<CardHeader>
-				<CardTitle>{t("checkout_paymentMethod") || "Payment Method"}</CardTitle>
+				<CardTitle>
+					{t("checkout_payment_method") || "Payment Method"}
+				</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<RadioGroup

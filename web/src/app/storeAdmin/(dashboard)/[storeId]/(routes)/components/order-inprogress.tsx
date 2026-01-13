@@ -78,7 +78,7 @@ export const OrderInProgress = ({
 		orders.filter((order) => order.id !== orderId);
 
 		toastSuccess({
-			title: t("Order") + t("updated"),
+			title: t("order") + t("updated"),
 			description: "",
 		});
 	};
@@ -91,8 +91,8 @@ export const OrderInProgress = ({
 				<Heading
 					title={
 						requirePrepaid
-							? t("Order_inProgress_alreadyPaid")
-							: t("Order_inProgress")
+							? t("order_in_progress_already_paid")
+							: t("order_in_progress")
 					}
 					description=""
 					badge={orders.length}
@@ -104,8 +104,8 @@ export const OrderInProgress = ({
 						{orders.length === 0
 							? t("no_results_found")
 							: autoAcceptOrder // if true, 請勾選來完成訂單; else 請勾選來接單
-								? t("Order_inProgress_descr2")
-								: t("Order_inProgress_descr")}
+								? t("order_in_progress_descr2")
+								: t("order_in_progress_descr")}
 					</div>
 
 					{orders.length !== 0 && (
@@ -113,19 +113,19 @@ export const OrderInProgress = ({
 							<TableHeader>
 								<TableRow>
 									{/*單號/桌號*/}
-									<TableHead className="">{t("Order_number")}</TableHead>
+									<TableHead className="">{t("order_number_label")}</TableHead>
 									<TableHead className="w-[200px]">
-										{t("Order_items")}
+										{t("order_items")}
 									</TableHead>
-									<TableHead>{t("Order_note")}</TableHead>
+									<TableHead>{t("order_note")}</TableHead>
 									<TableHead className="w-[90px] hidden lg:table-cell">
 										{t("ordered_at")}
 									</TableHead>
 									<TableHead className="w-[90px] text-right">
-										{t("Order_total")}
+										{t("order_total")}
 									</TableHead>
 									<TableHead className="w-[80px] text-center">
-										{t("Order_ready_to_ship_button")}
+										{t("order_ready_to_ship_button")}
 									</TableHead>
 								</TableRow>
 							</TableHeader>
@@ -154,18 +154,18 @@ export const OrderInProgress = ({
 													<Link
 														href={`/storeAdmin/${order.storeId}/order/${order.id}`}
 													>
-														{t("Order_Modify")}
+														{t("order_modify")}
 													</Link>
 												</Button>
 
 												<div>
 													{order.isPaid === true ? (
 														<div className="text-green-700 dark:text-green-700">
-															{t("isPaid")}
+															{t("is_paid")}
 														</div>
 													) : (
 														<div className="text-red-400 dark:text-red-700">
-															{t("isNotPaid")}
+															{t("is_not_paid")}
 														</div>
 													)}
 												</div>

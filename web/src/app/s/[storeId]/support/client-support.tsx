@@ -107,15 +107,15 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 	// Memoized status options
 	const statusOptions = useMemo(
 		() => [
-			{ value: ALL_TICKET_STATUS, label: t("TicketStatus_all") },
-			{ value: TicketStatus.Open.toString(), label: t("TicketStatus_Open") },
+			{ value: ALL_TICKET_STATUS, label: t("ticket_status_all") },
+			{ value: TicketStatus.Open.toString(), label: t("ticket_status_open") },
 			{
 				value: TicketStatus.Replied.toString(),
-				label: t("TicketStatus_Replied"),
+				label: t("ticket_status_replied"),
 			},
 			{
 				value: TicketStatus.Closed.toString(),
-				label: t("TicketStatus_Closed"),
+				label: t("ticket_status_closed"),
 			},
 		],
 		[t],
@@ -274,7 +274,7 @@ export function ClientSupport({ user, serverData }: ClientSupportProps) {
 						aria-label={t("filter_by_status")}
 					>
 						<SelectTrigger className="w-full sm:w-48 h-10 sm:h-9">
-							<SelectValue placeholder={t("TicketStatus_all")} />
+							<SelectValue placeholder={t("ticket_status_all")} />
 						</SelectTrigger>
 						<SelectContent>
 							{statusOptions.map((option) => (

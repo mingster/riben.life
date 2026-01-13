@@ -237,7 +237,7 @@ export function RefillAccountBalanceForm({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel className="pb-2">
-											{t("checkout_paymentMethod") || "Payment Method"}{" "}
+											{t("checkout_payment_method") || "Payment Method"}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>

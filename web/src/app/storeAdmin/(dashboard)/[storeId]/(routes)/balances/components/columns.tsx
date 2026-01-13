@@ -61,7 +61,7 @@ export const createBalanceColumns = (
 		{
 			accessorKey: "platformFee",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("platformFee")} />
+				<DataTableColumnHeader column={column} title={t("platform_fee")} />
 			),
 			cell: ({ row }) => {
 				const platformFee = Number(row.getValue("platformFee"));

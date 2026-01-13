@@ -7,6 +7,7 @@ import {
 	updateServiceStaffSchema,
 	type UpdateServiceStaffInput,
 } from "@/actions/storeAdmin/serviceStaff/update-service-staff.validation";
+import { updateUserPropertiesAction } from "@/actions/storeAdmin/serviceStaff/update-user-properties";
 import { getStoreMembersAction } from "@/actions/storeAdmin/serviceStaff/get-store-members";
 import { getServiceStaffAction } from "@/actions/storeAdmin/serviceStaff/get-service-staff";
 import { useTranslation } from "@/app/i18n/client";
@@ -159,11 +160,11 @@ export function EditServiceStaffDialog({
 				defaultDuration: serviceStaff.defaultDuration,
 				businessHours: serviceStaff.businessHours,
 				description: serviceStaff.description,
-				// User creation fields (not used in edit mode)
-				userName: "",
-				userEmail: "",
-				userPhone: "",
-				userPassword: "",
+				// User property fields (for editing user properties)
+				userName: serviceStaff.userName || "",
+				userEmail: serviceStaff.userEmail || "",
+				userPhone: serviceStaff.userPhoneNumber || "",
+				userPassword: "", // Password is not editable
 			}
 		: {
 				id: "",
@@ -253,8 +254,21 @@ export function EditServiceStaffDialog({
 						message: "Password is required when creating a new user",
 						path: ["userPassword"],
 					},
+				)
+				.refine(
+					(data) => {
+						// When editing, userName is required if userId is provided
+						if (isEditMode && data.userId && data.userId.trim()) {
+							return data.userName && data.userName.trim();
+						}
+						return true;
+					},
+					{
+						message: "Name is required",
+						path: ["userName"],
+					},
 				),
-		[baseSchema],
+		[baseSchema, isEditMode],
 	);
 
 	// Form input type: UpdateServiceStaffInput when editing, CreateServiceStaffInput when creating
@@ -494,6 +508,27 @@ export function EditServiceStaffDialog({
 					}
 				}
 
+				// Update user properties when editing (name is required, email and phone are optional)
+				if (isEditMode && values.userId) {
+					const userUpdateResult = await updateUserPropertiesAction(
+						String(params.storeId),
+						{
+							userId: values.userId,
+							name: values.userName?.trim() || "",
+							email: values.userEmail?.trim(),
+							phone: values.userPhone?.trim(),
+						},
+					);
+
+					if (userUpdateResult?.serverError) {
+						toastError({
+							title: t("error_title"),
+							description: userUpdateResult.serverError,
+						});
+						return;
+					}
+				}
+
 				// Update existing ServiceStaff entry
 				const result = await updateServiceStaffAction(String(params.storeId), {
 					id: actualServiceStaffId,
@@ -615,37 +650,141 @@ export function EditServiceStaffDialog({
 								</div>
 							)}
 							{userMode === "select" || isEditMode ? (
-								<FormField
-									control={form.control}
-									name="userId"
-									render={({ field, fieldState }) => (
-										<FormItem
-											className={cn(
-												fieldState.error &&
-													"rounded-md border border-destructive/50 bg-destructive/5 p-2",
-											)}
-										>
-											<FormLabel>
-												{t("user") || "User"}{" "}
-												<span className="text-destructive">*</span>
-											</FormLabel>
-											<FormControl>
-												<UserCombobox
-													users={users}
-													value={field.value}
-													onValueChange={field.onChange}
-													disabled={loading || form.formState.isSubmitting}
-													className={
-														fieldState.error
-															? "border-destructive focus-visible:ring-destructive"
-															: ""
-													}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
+								<>
+									<FormField
+										control={form.control}
+										name="userId"
+										render={({ field, fieldState }) => (
+											<FormItem
+												className={cn(
+													fieldState.error &&
+														"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+												)}
+											>
+												<FormLabel>
+													{t("user") || "User"}{" "}
+													<span className="text-destructive">*</span>
+												</FormLabel>
+												<FormControl>
+													<UserCombobox
+														users={users}
+														value={field.value}
+														onValueChange={field.onChange}
+														disabled={loading || form.formState.isSubmitting}
+														className={
+															fieldState.error
+																? "border-destructive focus-visible:ring-destructive"
+																: ""
+														}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									{/* User property fields (only shown when editing) */}
+									{isEditMode && (
+										<>
+											<FormField
+												control={form.control}
+												name="userName"
+												render={({ field, fieldState }) => (
+													<FormItem
+														className={cn(
+															fieldState.error &&
+																"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+														)}
+													>
+														<FormLabel>
+															{t("your_name") || "Your Name"}{" "}
+															<span className="text-destructive">*</span>
+														</FormLabel>
+														<FormControl>
+															<Input
+																disabled={
+																	loading || form.formState.isSubmitting
+																}
+																placeholder={
+																	t("your_name") || "Enter your name"
+																}
+																value={field.value || ""}
+																onChange={field.onChange}
+																className={cn(
+																	"h-10 text-base sm:h-9 sm:text-sm",
+																	fieldState.error &&
+																		"border-destructive focus-visible:ring-destructive",
+																)}
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+											<FormField
+												control={form.control}
+												name="userEmail"
+												render={({ field, fieldState }) => (
+													<FormItem
+														className={cn(
+															fieldState.error &&
+																"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+														)}
+													>
+														<FormLabel>{t("email") || "Email"}</FormLabel>
+														<FormControl>
+															<Input
+																type="email"
+																disabled={
+																	loading || form.formState.isSubmitting
+																}
+																placeholder="Enter email (optional)"
+																value={field.value || ""}
+																onChange={field.onChange}
+																className={cn(
+																	"h-10 text-base sm:h-9 sm:text-sm",
+																	fieldState.error &&
+																		"border-destructive focus-visible:ring-destructive",
+																)}
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+											<FormField
+												control={form.control}
+												name="userPhone"
+												render={({ field, fieldState }) => (
+													<FormItem
+														className={cn(
+															fieldState.error &&
+																"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+														)}
+													>
+														<FormLabel>{t("phone") || "Phone"}</FormLabel>
+														<FormControl>
+															<Input
+																type="tel"
+																disabled={
+																	loading || form.formState.isSubmitting
+																}
+																placeholder="Enter phone number (optional)"
+																value={field.value || ""}
+																onChange={field.onChange}
+																className={cn(
+																	"h-10 text-base sm:h-9 sm:text-sm",
+																	fieldState.error &&
+																		"border-destructive focus-visible:ring-destructive",
+																)}
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+										</>
 									)}
-								/>
+								</>
 							) : (
 								<>
 									<FormField
@@ -816,7 +955,7 @@ export function EditServiceStaffDialog({
 										)}
 									>
 										<FormLabel>
-											{t("Role") || "Role"}{" "}
+											{t("role") || "Role"}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
@@ -1064,7 +1203,7 @@ export function EditServiceStaffDialog({
 											// Map field names to user-friendly labels using i18n
 											const fieldLabels: Record<string, string> = {
 												userId: t("user") || "User",
-												memberRole: t("Role") || "Role",
+												memberRole: t("role") || "Role",
 												capacity: t("service_staff_capacity") || "Capacity",
 												defaultCost:
 													t("service_staff_default_cost") || "Default Cost",
@@ -1155,7 +1294,7 @@ export function EditServiceStaffDialog({
 															.map(([field, error]) => {
 																const fieldLabels: Record<string, string> = {
 																	userId: t("user") || "User",
-																	memberRole: t("Role") || "Role",
+																	memberRole: t("role") || "Role",
 																	capacity:
 																		t("service_staff_capacity") || "Capacity",
 																	defaultCost:

@@ -449,7 +449,7 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 					<BreadcrumbList>
 						<BreadcrumbItem>
 							<BreadcrumbLink asChild>
-								<Link href={link_home}>{t("StoreDashboard")}</Link>
+								<Link href={link_home}>{t("store_dashboard")}</Link>
 							</BreadcrumbLink>
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />

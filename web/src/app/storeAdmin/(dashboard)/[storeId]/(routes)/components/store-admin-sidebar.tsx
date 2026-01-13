@@ -358,7 +358,7 @@ export function StoreAdminSidebar() {
 										<div className="flex">
 											<IconHelp />
 											<Link className="flex items-center gap-1" href={"/help"}>
-												{t("Help")}
+												{t("help")}
 											</Link>
 										</div>
 									</DropdownMenuItem>

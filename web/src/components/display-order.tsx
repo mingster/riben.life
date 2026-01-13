@@ -146,7 +146,7 @@ export const DisplayOrder: React.FC<orderProps> = ({
 				{/* Total */}
 				<div className="flex items-center justify-end gap-2 mt-3 pt-3">
 					<span className="font-semibold text-sm sm:text-base">
-						{t("orderTotal_label")}
+						{t("order_total_label")}
 					</span>
 					<span className="font-bold text-base sm:text-lg capitalize">
 						{new Intl.NumberFormat("en-US", {

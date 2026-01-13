@@ -144,7 +144,7 @@ const PaymentStripe: React.FC<paymentProps> = ({ order, returnUrl }) => {
 					}}
 				/>
 				<div>
-					{t("payment_stripe_payAmount")}
+					{t("payment_stripe_pay_amount")}
 					{Number(order.orderTotal)} {order.currency.toUpperCase()}
 				</div>
 				<StripePayButton orderId={order.id} returnUrl={returnUrl} />
@@ -282,7 +282,7 @@ const StripePayButton: React.FC<PaymentStripeProp> = ({
 				type="submit"
 				className="w-full disabled:opacity-25"
 			>
-				{t("payment_stripeForm_payButton")}
+				{t("payment_stripe_form_pay_button")}
 			</Button>
 		</form>
 	);

@@ -114,42 +114,42 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 
 						switch (paymentStatus) {
 							case Number(PaymentStatus.Paid):
-								paymentStatusText = t("PaymentStatus_Paid");
+								paymentStatusText = t("payment_status_paid");
 								paymentStatusClass =
 									"bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300";
 								break;
 							case Number(PaymentStatus.Refunded):
-								paymentStatusText = t("PaymentStatus_Refunded");
+								paymentStatusText = t("payment_status_refunded");
 								paymentStatusClass =
 									"bg-orange-50 text-orange-700 dark:bg-orange-900 dark:text-orange-300";
 								break;
 							case Number(PaymentStatus.PartiallyRefunded):
-								paymentStatusText = t("PaymentStatus_PartiallyRefunded");
+								paymentStatusText = t("payment_status_partially_refunded");
 								paymentStatusClass =
 									"bg-yellow-50 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
 								break;
 							case Number(PaymentStatus.Authorized):
-								paymentStatusText = t("PaymentStatus_Authorized");
+								paymentStatusText = t("payment_status_authorized");
 								paymentStatusClass =
 									"bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
 								break;
 							case Number(PaymentStatus.SelfPickup):
-								paymentStatusText = t("PaymentStatus_SelfPickup");
+								paymentStatusText = t("payment_status_self_pickup");
 								paymentStatusClass =
 									"bg-purple-50 text-purple-700 dark:bg-purple-900 dark:text-purple-300";
 								break;
 							case Number(PaymentStatus.Voided):
-								paymentStatusText = t("PaymentStatus_Voided");
+								paymentStatusText = t("payment_status_voided");
 								paymentStatusClass =
 									"bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-300";
 								break;
 							case Number(PaymentStatus.Pending):
-								paymentStatusText = t("PaymentStatus_Pending");
+								paymentStatusText = t("payment_status_pending");
 								paymentStatusClass =
 									"bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300";
 								break;
 							default:
-								paymentStatusText = t("PaymentStatus_NoPayment");
+								paymentStatusText = t("payment_status_no_payment");
 								paymentStatusClass =
 									"bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300";
 								break;
@@ -204,7 +204,7 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 
 									<div className="space-y-1 text-right shrink-0">
 										<div className="text-[10px] text-muted-foreground">
-											{t("Order_total")}
+											{t("order_total")}
 										</div>
 										<div className="font-semibold text-base">
 											<Currency value={total} />
@@ -216,7 +216,7 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 									order.PaymentMethod.name !== "TBD" && (
 										<div className="text-[10px] text-muted-foreground pt-2 border-t">
 											<span className="font-medium">
-												{t("paymentMethod_name")}:
+												{t("payment_method_name")}:
 											</span>{" "}
 											{order.PaymentMethod.name}
 										</div>

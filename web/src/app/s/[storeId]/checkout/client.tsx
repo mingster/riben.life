@@ -181,7 +181,7 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 		setIsLoading(true);
 
 		if (!paymentMethod) {
-			const errmsg = t("checkout_no_paymentMethod");
+			const errmsg = t("checkout_no_payment_method");
 			logger.error("Operation log", {
 				tags: ["error"],
 			});
@@ -190,7 +190,7 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 			return;
 		}
 		if (!shipMethod) {
-			const errmsg = t("checkout_no_shippingMethod");
+			const errmsg = t("checkout_no_shipping_method");
 			logger.error("Operation log", {
 				tags: ["error"],
 			});
@@ -284,7 +284,7 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 			});
 			toastError({
 				title: "Something went wrong.",
-				description: t("checkout_placeOrder_exception") + err.message,
+				description: t("checkout_place_order_exception") + err.message,
 			});
 		} finally {
 			setIsLoading(false);
@@ -361,7 +361,7 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
               */}
 
 						<div className="flex items-center justify-end place-self-end mt-2">
-							<div className="sm:text-xs">{t("checkout_orderTotal")}</div>
+							<div className="sm:text-xs">{t("checkout_order_total")}</div>
 							<Currency value={cart.cartTotal} />
 						</div>
 					</div>
@@ -371,7 +371,7 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 			{/* #region 付款方式 */}
 			<Card className="mt-2">
 				<CardHeader>
-					<CardTitle>{t("checkout_paymentMethod")}</CardTitle>
+					<CardTitle>{t("checkout_payment_method")}</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<RadioGroup
@@ -409,7 +409,7 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 								className="disabled:opacity-50 lg:text-2xl w-1/2 p-5"
 								onClick={() => placeOrder()}
 							>
-								{t("checkout_orderButton")}
+								{t("checkout_order_button")}
 							</Button>
 							<Button
 								variant={"outline"}
@@ -418,7 +418,7 @@ const CheckoutSteps = ({ store, user, returnUrl, onChange }: props) => {
 								className="disabled:opacity-50"
 								onClick={() => router.back()}
 							>
-								{t("checkout_keepShoppingButton")}
+								{t("checkout_keep_shopping_button")}
 							</Button>
 						</div>
 					</div>

@@ -19,7 +19,7 @@ export const columns: ColumnDef<FaqCategoryColumn>[] = [
 		accessorKey: "name",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("FaqCategory_name")} />
+				<DataTableColumnHeader column={column} title={t("faq_category_name")} />
 			);
 		},
 		cell: ({ row }) => (
@@ -38,7 +38,7 @@ export const columns: ColumnDef<FaqCategoryColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("FaqCategory_sortOrder")}
+					title={t("faq_category_sort_order")}
 				/>
 			);
 		},

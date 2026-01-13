@@ -54,7 +54,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 			{
 				accessorKey: "name",
 				header: ({ column }) => (
-					<DataTableColumnHeader column={column} title={t("Product_name")} />
+					<DataTableColumnHeader column={column} title={t("product_name")} />
 				),
 				cell: ({ row }) => (
 					<Link
@@ -69,7 +69,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 			{
 				accessorKey: "status",
 				header: ({ column }) => (
-					<DataTableColumnHeader column={column} title={t("Product_status")} />
+					<DataTableColumnHeader column={column} title={t("product_status")} />
 				),
 				cell: ({ row }) => {
 					const status = ProductStatuses[Number(row.getValue("status"))];
@@ -82,7 +82,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 				header: ({ column }) => (
 					<DataTableColumnHeader
 						column={column}
-						title={t("Product_hasOptions")}
+						title={t("product_has_options")}
 					/>
 				),
 				cell: ({ row }) => {
@@ -99,7 +99,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 			{
 				accessorKey: "price",
 				header: ({ column }) => (
-					<DataTableColumnHeader column={column} title={t("Product_price")} />
+					<DataTableColumnHeader column={column} title={t("product_price")} />
 				),
 				cell: ({ row }) => {
 					const price = Number(row.getValue("price"));
@@ -110,7 +110,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 			{
 				accessorKey: "stock",
 				header: ({ column }) => (
-					<DataTableColumnHeader column={column} title={t("Product_stock")} />
+					<DataTableColumnHeader column={column} title={t("product_stock")} />
 				),
 			},
 			{
@@ -132,9 +132,9 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 		<>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
-					title={t("Product_mgmt")}
+					title={t("product_mgmt")}
 					badge={data.length}
-					description={t("Product_mgmt_descr")}
+					description={t("product_mgmt_descr")}
 				/>
 				<div className="flex flex-wrap gap-1.5 sm:gap-2 sm:content-end items-center">
 					<EditProduct
@@ -153,7 +153,7 @@ export const ProductsClient: React.FC<ProductsClientProps> = ({
 							<Button variant="outline" className="h-10 sm:h-9">
 								<IconPlus className="mr-2 size-4" />
 								<span className="text-sm sm:text-xs">
-									{t("Product_mgmt_add_button")}
+									{t("product_mgmt_add_button")}
 								</span>
 							</Button>
 						}

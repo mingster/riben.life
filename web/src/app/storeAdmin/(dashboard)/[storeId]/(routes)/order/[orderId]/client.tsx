@@ -180,7 +180,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 
 		setLoading(true);
 		if (updatedOrder?.OrderItemView.length === 0) {
-			alert(t("Order_edit_noItem"));
+			alert(t("order_edit_no_item"));
 			setLoading(false);
 
 			return;
@@ -205,7 +205,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		logger.info("result");
 
 		toastSuccess({
-			title: t("Order_edit_updated"),
+			title: t("order_edit_updated"),
 			description: "",
 		});
 
@@ -247,7 +247,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 			setLoading(false);
 
 			toastSuccess({
-				title: t("Order_edit_removed"),
+				title: t("order_edit_removed"),
 				description: "",
 			});
 			router.refresh();
@@ -341,7 +341,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		setLoading(true);
 
 		if (!store.StorePaymentMethods[0]) {
-			const errmsg = t("checkout_no_paymentMethod");
+			const errmsg = t("checkout_no_payment_method");
 			logger.error("Operation log", {
 				tags: ["error"],
 			});
@@ -350,7 +350,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 			return;
 		}
 		if (!store.StoreShippingMethods[0]) {
-			const errmsg = t("checkout_no_shippingMethod");
+			const errmsg = t("checkout_no_shipping_method");
 			logger.error("Operation log", {
 				tags: ["error"],
 			});
@@ -411,7 +411,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 			});
 			toastError({
 				title: "Something went wrong.",
-				description: t("checkout_placeOrder_exception") + err.message,
+				description: t("checkout_place_order_exception") + err.message,
 			});
 		} finally {
 			setLoading(false);
@@ -467,7 +467,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 		createOrder();
 	}, [updatedOrder, placeOrder]);
 
-	const pageTitle = t(action) + t("Order_edit_title");
+	const pageTitle = t(action) + t("order_edit_title");
 
 	if (updatedOrder?.orderStatus === OrderStatus.Completed) {
 		// do not allow editing if order is completed
@@ -574,7 +574,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 						<div className="pb-1 flex items-center gap-1">
 							{updatedOrder?.orderNum && (
 								<>
-									<span>{t("Order_edit_orderNum")}</span>
+									<span>{t("order_edit_order_num")}</span>
 									<div className="font-extrabold">{updatedOrder?.orderNum}</div>
 								</>
 							)}
@@ -693,7 +693,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 								onClick={() => setOpenModal(true)}
 								variant={"outline"}
 							>
-								{t("Order_edit_addButton")}
+								{t("order_edit_add_button")}
 							</Button>
 						</div>
 
@@ -815,7 +815,7 @@ export const OrderEditClient: React.FC<props> = ({ store, order, action }) => {
 								variant={"destructive"}
 								onClick={onCancel}
 							>
-								{t("Order_edit_deleteButton")}
+								{t("order_edit_delete_button")}
 							</Button>
 						</div>
 					</form>

@@ -128,7 +128,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel className="pr-2">
-											{t("StoreSettings_PayoutSchedule")}{" "}
+											{t("store_settings_payout_schedule")}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 
@@ -143,7 +143,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 										</FormControl>
 
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("StoreSettings_PayoutSchedule_descr")}
+											{t("store_settings_payout_schedule_descr")}
 										</FormDescription>
 
 										<FormMessage />
@@ -157,7 +157,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>
-											{t("StoreSettings_BankCode")}{" "}
+											{t("store_settings_bank_code")}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<TwBankCodeCombobox
@@ -175,7 +175,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>
-											{t("StoreSettings_BankAccountName")}{" "}
+											{t("store_settings_bank_account_name")}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
@@ -183,7 +183,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 												type="text"
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
-												placeholder={t("StoreSettings_BankAccountName")}
+												placeholder={t("store_settings_bank_account_name")}
 												{...field}
 												value={field.value ?? ""}
 											/>
@@ -200,7 +200,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("StoreSettings_BankAccount")}{" "}
+												{t("store_settings_bank_account")}{" "}
 												<span className="text-destructive">*</span>
 											</FormLabel>
 											<FormControl>
@@ -208,7 +208,7 @@ export const BankSettingTab: React.FC<SettingsFormProps> = ({
 													type="text"
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
-													placeholder={t("StoreSettings_BankAccount")}
+													placeholder={t("store_settings_bank_account")}
 													{...field}
 													value={field.value ?? ""}
 												/>

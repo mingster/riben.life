@@ -189,10 +189,10 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 								<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
 										<FormLabel>
-											{t("StoreSettings_acceptReservation")}
+											{t("store_settings_accept_reservation")}
 										</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("StoreSettings_acceptReservation_descr")}
+											{t("store_settings_accept_reservation_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>

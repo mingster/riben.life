@@ -82,12 +82,12 @@ export const CountryCombobox = ({
 					<PopoverContent className="p-0" side="bottom" align="start">
 						<Command className="rounded-lg border shadow-md">
 							<CommandInput
-								placeholder={t("country_combobox_PlaceHolder")}
+								placeholder={t("country_combobox_place_holder")}
 								className="h-9"
 							/>
 							<CommandList>
 								<CommandEmpty>
-									{t("country_combobox_noCountryFound")}
+									{t("country_combobox_no_country_found")}
 								</CommandEmpty>
 								<CommandGroup>
 									{countries.map((obj) => (

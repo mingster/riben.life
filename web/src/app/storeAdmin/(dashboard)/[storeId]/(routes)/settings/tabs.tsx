@@ -127,8 +127,8 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 
 			<div className="flex items-center justify-between">
 				<Heading
-					title={t("StoreSettings")}
-					description={t("StoreSettingsDescr")}
+					title={t("store_settings")}
+					description={t("store_settings_descr")}
 				/>
 				<Button
 					disabled={loading}
@@ -143,18 +143,18 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 			<Tabs defaultValue="basic" className="w-full">
 				<TabsList className="grid grid-cols-4 gap-1 lg:inline-flex lg:flex-row">
 					<TabsTrigger className="px-1 lg:min-w-25" value="basic">
-						{t("StoreSettingsTab_Basic")}
+						{t("store_settings_tab_basic")}
 					</TabsTrigger>
 
 					<TabsTrigger className="px-1 lg:min-w-25" value="contactInfo">
-						{t("StoreSettingsTab_ContactInfo")}
+						{t("store_settings_tab_contact_info")}
 					</TabsTrigger>
 					<TabsTrigger className="px-1 lg:min-w-25" value="privacyStatement">
-						{t("StoreSettingsTab_Policy")}
+						{t("store_settings_tab_policy")}
 					</TabsTrigger>
 					<TabsTrigger className="px-1 lg:min-w-25" value="ShippingMethod">
-						{t("StoreSettingsTab_shipping_method")} /{" "}
-						{t("StoreSettingsTab_payment_method")}
+						{t("store_settings_tab_shipping_method")} /{" "}
+						{t("store_settings_tab_payment_method")}
 					</TabsTrigger>
 
 					<TabsTrigger className="px-1 lg:min-w-25" value="credit">
@@ -162,11 +162,11 @@ export const StoreSettingTabs: React.FC<SettingsFormProps> = ({
 					</TabsTrigger>
 
 					<TabsTrigger className="px-1 lg:min-w-25" value="bank">
-						{t("StoreSettingsTab_Bank")}
+						{t("store_settings_tab_bank")}
 					</TabsTrigger>
 
 					<TabsTrigger className="px-1 lg:min-w-25" value="paidOptions">
-						{t("StoreSettingsTab_PaidOptions")}
+						{t("store_settings_tab_paid_options")}
 					</TabsTrigger>
 				</TabsList>
 

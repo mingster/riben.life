@@ -138,7 +138,7 @@ export const ProductEditCategoryTab = ({
 		router.refresh();
 
 		toastSuccess({
-			title: t("Product_category") + t("updated"),
+			title: t("product_category") + t("updated"),
 			description: "",
 		});
 	};
@@ -220,7 +220,7 @@ const columns: ColumnDef<CategoryColumn>[] = [
 		accessorKey: "name",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("Product_category")} />
+				<DataTableColumnHeader column={column} title={t("product_category")} />
 			);
 		},
 	},
@@ -230,7 +230,7 @@ const columns: ColumnDef<CategoryColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("Product_category_isFeatured")}
+					title={t("product_category_is_featured")}
 				/>
 			);
 		},

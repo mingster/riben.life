@@ -37,7 +37,7 @@ export const FaqClient: React.FC = () => {
 
 	return (
 		<Container className="lg:pl-2 pr-2">
-			<Heading title={t("QandA")} description={""} />
+			<Heading title={t("qand_a")} description={""} />
 
 			<Tabs
 				value={activeTab}

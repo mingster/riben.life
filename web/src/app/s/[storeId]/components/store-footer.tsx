@@ -118,7 +118,7 @@ export const StoreFooter: React.FC<props> = ({
 						>
 							<div className="flex w-full items-center justify-between gap-2">
 								<div className="grow font-bold text-base sm:text-lg lg:text-xl truncate">
-									{t("cart_dropDown_confirm")}
+									{t("cart_drop_down_confirm")}
 								</div>
 
 								<div className="self-end shrink-0 text-sm sm:text-base lg:text-lg">

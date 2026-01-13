@@ -207,7 +207,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 														password: t("password"),
 														locale: t("account_tabs_language"),
 														timezone: t("timezone"),
-														role: t("Role"),
+														role: t("role"),
 														phoneNumber: t("phone"),
 														image: t("profile_image"),
 														phoneNumberVerified: t("phone_number_verified"),
@@ -359,7 +359,7 @@ export const EditUser: React.FC<props> = ({ item, onUpdated, isNew }) => {
 										<FormItem>
 											<FormLabel>
 												<div>
-													{t("Role") || "Role"}{" "}
+													{t("role") || "Role"}{" "}
 													<span className="text-destructive">*</span>
 												</div>
 											</FormLabel>

@@ -125,7 +125,7 @@ export function NavItems() {
 					href="#useCases"
 					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
 				>
-					{t("nav_useCases")}
+					{t("nav_use_cases")}
 				</Link>
 			</li>
 
@@ -177,7 +177,7 @@ export function NavItems() {
 					href="/storeAdmin/"
 					className="block py-2 sm:py-1 hover:text-sky-500 dark:hover:text-sky-400 active:text-sky-600 dark:active:text-sky-300 capitalize flex items-center"
 				>
-					{t("nav_storeAdmin")}
+					{t("nav_store_admin")}
 				</Link>
 			</li>
 		</>

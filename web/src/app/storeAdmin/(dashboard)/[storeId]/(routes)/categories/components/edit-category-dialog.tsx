@@ -113,7 +113,7 @@ export function EditCategoryDialog({
 		}
 
 		toastSuccess({
-			title: t("Category") + t(isEditMode ? "updated" : "created"),
+			title: t("category") + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 
@@ -190,11 +190,11 @@ export function EditCategoryDialog({
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
-							? `${t("edit")} ${t("Category")}`
-							: `${t("create")} ${t("Category")}`}
+							? `${t("edit")} ${t("category")}`
+							: `${t("create")} ${t("category")}`}
 					</DialogTitle>
 					<DialogDescription>
-						{t("Category_mgmt_descr") ?? ""}
+						{t("category_mgmt_descr") ?? ""}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -206,7 +206,7 @@ export function EditCategoryDialog({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("Category_name")}{" "}
+										{t("category_name")}{" "}
 										<span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
@@ -227,7 +227,7 @@ export function EditCategoryDialog({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("Category_sortOrder")}{" "}
+										{t("category_sort_order")}{" "}
 										<span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
@@ -250,7 +250,7 @@ export function EditCategoryDialog({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between rounded-lg p-3 shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("Category_isFeatured")}</FormLabel>
+										<FormLabel>{t("category_is_featured")}</FormLabel>
 									</div>
 									<FormControl>
 										<Switch
@@ -273,9 +273,9 @@ export function EditCategoryDialog({
 								{Object.entries(form.formState.errors).map(([field, error]) => {
 									// Map field names to user-friendly labels using i18n
 									const fieldLabels: Record<string, string> = {
-										name: t("Category_name") || "Category Name",
-										sortOrder: t("Category_sortOrder") || "Sort Order",
-										isFeatured: t("Category_isFeatured") || "Featured",
+										name: t("category_name") || "Category Name",
+										sortOrder: t("category_sort_order") || "Sort Order",
+										isFeatured: t("category_is_featured") || "Featured",
 									};
 									const fieldLabel = fieldLabels[field] || field;
 									return (

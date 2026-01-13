@@ -131,7 +131,7 @@ export function EditCreditBonusRuleDialog({
 		}
 
 		toastSuccess({
-			title: t("Credit_Bonus_Rules") + t(isEditMode ? "updated" : "created"),
+			title: t("credit_bonus_rules") + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 
@@ -213,8 +213,8 @@ export function EditCreditBonusRuleDialog({
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
-							? t("edit") + t("Credit_Bonus_Rules")
-							: t("create") + t("Credit_Bonus_Rules")}
+							? t("edit") + t("credit_bonus_rules")
+							: t("create") + t("credit_bonus_rules")}
 					</DialogTitle>
 					<DialogDescription></DialogDescription>
 				</DialogHeader>

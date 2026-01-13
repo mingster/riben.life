@@ -1062,7 +1062,7 @@ export function ReservationForm({
 							variant="default"
 							className="w-full sm:w-auto"
 						>
-							{t("signin")} {t("or")} {t("signUp")}
+							{t("signin")} {t("or")} {t("sign_up")}
 						</Button>
 					</Link>
 				</div>
@@ -1623,7 +1623,7 @@ export function ReservationForm({
 								<FormLabel>{t("rsvp_message")}</FormLabel>
 								<FormControl>
 									<Textarea
-										placeholder={t("Special_requests_or_notes")}
+										placeholder={t("special_requests_or_notes")}
 										disabled={isSubmitting}
 										{...field}
 										value={field.value || ""}
@@ -1709,7 +1709,7 @@ export function ReservationForm({
 									{isSubmitting
 										? isEditMode
 											? t("updating")
-											: t("Submitting")
+											: t("submitting")
 										: isEditMode
 											? t("update_reservation")
 											: t("create_Reservation")}

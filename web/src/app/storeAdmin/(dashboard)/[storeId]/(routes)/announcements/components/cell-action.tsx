@@ -48,7 +48,7 @@ export function CellAction({ data, onUpdated, onDeleted }: CellActionProps) {
 				});
 			} else {
 				toastSuccess({
-					title: t("Announcement_deleted"),
+					title: t("announcement_deleted"),
 					description: "",
 				});
 				onDeleted?.(data.id);

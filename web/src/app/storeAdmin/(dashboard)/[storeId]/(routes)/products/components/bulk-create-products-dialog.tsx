@@ -99,7 +99,7 @@ export function BulkCreateProductsDialog({
 			if (entries.length === 0) {
 				form.setError("rawEntries", {
 					type: "manual",
-					message: `${t("Product_names")} is required`,
+					message: `${t("product_names")} is required`,
 				});
 				setLoading(false);
 				return;
@@ -121,7 +121,7 @@ export function BulkCreateProductsDialog({
 			} else if (result?.data?.products) {
 				onCreated?.(result.data.products);
 				toastSuccess({
-					title: t("Product_created"),
+					title: t("product_created"),
 					description: "",
 				});
 				form.reset();
@@ -143,14 +143,14 @@ export function BulkCreateProductsDialog({
 				{trigger ?? (
 					<Button variant="outline">
 						<IconPlus className="mr-0 size-4" />
-						{t("Product_mgmt_add_button")}
+						{t("product_mgmt_add_button")}
 					</Button>
 				)}
 			</DialogTrigger>
 			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
-					<DialogTitle>{t("Product_mgmt_add")}</DialogTitle>
-					<DialogDescription>{t("Product_mgmt_add_descr")}</DialogDescription>
+					<DialogTitle>{t("product_mgmt_add")}</DialogTitle>
+					<DialogDescription>{t("product_mgmt_add_descr")}</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -160,19 +160,19 @@ export function BulkCreateProductsDialog({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("Product_names")}{" "}
+										{t("product_names")}{" "}
 										<span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder={t("Product_names_descr")}
+											placeholder={t("product_names_descr")}
 											disabled={loading}
 											className="min-h-[160px]"
 											{...field}
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{`${t("Product_names_descr")} (name|price|description|category|option)`}
+										{`${t("product_names_descr")} (name|price|description|category|option)`}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -185,7 +185,7 @@ export function BulkCreateProductsDialog({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("Product_status")}{" "}
+										{t("product_status")}{" "}
 										<span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>

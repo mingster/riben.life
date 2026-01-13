@@ -144,7 +144,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({
 								name="privacyPolicy"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("StoreSettings_privacyPolicy")}</FormLabel>
+										<FormLabel>{t("store_settings_privacy_policy")}</FormLabel>
 										<FormControl>
 											<EditorComp
 												markdown={field.value ?? ""}
@@ -160,7 +160,7 @@ export const PrivacyTab: React.FC<SettingsFormProps> = ({
 								name="tos"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("StoreSettings_terms")}</FormLabel>
+										<FormLabel>{t("store_settings_terms")}</FormLabel>
 										<FormControl>
 											<EditorComp
 												markdown={field.value ?? ""}

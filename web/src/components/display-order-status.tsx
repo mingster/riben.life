@@ -51,7 +51,7 @@ export const DisplayOrderStatus: React.FC<props> = ({
 						className="w-full sm:w-auto h-10 sm:h-9"
 						onClick={() => onCompletedStatus?.()}
 					>
-						{t("order_tab_buyAgain")}
+						{t("order_tab_buy_again")}
 					</Button>
 				)}
 		</div>

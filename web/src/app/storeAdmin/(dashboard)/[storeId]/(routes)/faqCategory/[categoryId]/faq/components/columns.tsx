@@ -26,7 +26,7 @@ export const columns: ColumnDef<FaqColumn>[] = [
 					variant="ghost"
 					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 				>
-					{t("FaqCategory")}
+					{t("faq_category")}
 					<CaretSortIcon className="ml-2 size-4" />
 				</Button>
 			);
@@ -43,7 +43,7 @@ export const columns: ColumnDef<FaqColumn>[] = [
 	{
 		accessorKey: "question",
 		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title={t("FAQ")} />;
+			return <DataTableColumnHeader column={column} title={t("f_a_q")} />;
 		},
 		cell: ({ row }) => (
 			<div className="">
@@ -56,7 +56,7 @@ export const columns: ColumnDef<FaqColumn>[] = [
 	{
 		accessorKey: "sortOrder",
 		header: ({ column }) => {
-			return <DataTableColumnHeader column={column} title={t("sortOrder")} />;
+			return <DataTableColumnHeader column={column} title={t("sort_order")} />;
 		},
 	},
 	{

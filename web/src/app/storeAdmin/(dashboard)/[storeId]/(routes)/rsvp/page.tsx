@@ -93,6 +93,16 @@ export default async function RsvpPage(props: {
 				Order: true,
 				Facility: true,
 				FacilityPricingRule: true,
+				ServiceStaff: {
+					include: {
+						User: {
+							select: {
+								id: true,
+								name: true,
+							},
+						},
+					},
+				},
 			},
 			orderBy: { rsvpTime: "asc" },
 		}),

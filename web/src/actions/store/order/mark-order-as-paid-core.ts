@@ -457,7 +457,7 @@ export async function markOrderAsPaidCore(
 			await tx.orderNote.create({
 				data: {
 					orderId: order.id,
-					note: `${t("payment")} ${t("PaymentStatus_Completed")}`,
+					note: `${t("payment")} ${t("payment_status_completed")}`,
 					displayToCustomer: true,
 					createdAt: now,
 					updatedAt: now,

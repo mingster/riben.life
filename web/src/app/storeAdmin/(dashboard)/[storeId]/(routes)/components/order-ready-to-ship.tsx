@@ -66,7 +66,7 @@ export const OrderReadyToShip = ({ store, orders, parentLoading }: props) => {
 		orders.filter((order) => order.id !== orderId);
 
 		toastSuccess({
-			title: t("Order") + t("updated"),
+			title: t("order") + t("updated"),
 			description: "",
 		});
 	};
@@ -77,7 +77,7 @@ export const OrderReadyToShip = ({ store, orders, parentLoading }: props) => {
 		<>
 			<Card>
 				<Heading
-					title={t("Order_ready_to_ship")}
+					title={t("order_ready_to_ship")}
 					description=""
 					badge={orders.length}
 					className="pt-2"
@@ -87,7 +87,7 @@ export const OrderReadyToShip = ({ store, orders, parentLoading }: props) => {
 					<div className="text-muted-foreground xs:text-xs">
 						{orders.length === 0
 							? t("no_results_found")
-							: t("Order_ready_to_ship_descr")}
+							: t("order_ready_to_ship_descr")}
 					</div>
 
 					{orders.length !== 0 && (
@@ -95,20 +95,22 @@ export const OrderReadyToShip = ({ store, orders, parentLoading }: props) => {
 							<TableHeader>
 								<TableRow>
 									{/*單號/桌號*/}
-									<TableHead className="">{t("Order_number")}</TableHead>
-									<TableHead className="">{t("Order_pickupCode")}</TableHead>
-									<TableHead className="w-[200px]">
-										{t("Order_items")}
+									<TableHead className="">{t("order_number_label")}</TableHead>
+									<TableHead className="">
+										{t("order_pickup_code_label")}
 									</TableHead>
-									<TableHead>{t("Order_note")}</TableHead>
+									<TableHead className="w-[200px]">
+										{t("order_items")}
+									</TableHead>
+									<TableHead>{t("order_note")}</TableHead>
 									<TableHead className="w-[90px] hidden lg:table-cell">
 										{t("ordered_at")}
 									</TableHead>
 									<TableHead className="w-[90px] text-right">
-										{t("Order_total")}
+										{t("order_total")}
 									</TableHead>
 									<TableHead className="w-[80px] text-center">
-										{t("Order_ship_out")}
+										{t("order_ship_out")}
 									</TableHead>
 								</TableRow>
 							</TableHeader>
@@ -135,11 +137,11 @@ export const OrderReadyToShip = ({ store, orders, parentLoading }: props) => {
 												<div>
 													{order.isPaid === true ? (
 														<div className="text-green-700 dark:text-green-700">
-															{t("isPaid")}
+															{t("is_paid")}
 														</div>
 													) : (
 														<div className="text-red-400 dark:text-red-700">
-															{t("isNotPaid")}
+															{t("is_not_paid")}
 														</div>
 													)}
 												</div>

@@ -372,6 +372,16 @@ const rsvpObj = Prisma.validator<Prisma.RsvpDefaultArgs>()({
 		Facility: true,
 		FacilityPricingRule: true,
 		CreatedBy: true,
+		ServiceStaff: {
+			include: {
+				User: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
+			},
+		},
 	},
 });
 export type Rsvp = Prisma.RsvpGetPayload<typeof rsvpObj>;

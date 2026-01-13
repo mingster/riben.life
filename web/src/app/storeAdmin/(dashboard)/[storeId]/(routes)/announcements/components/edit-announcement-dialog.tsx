@@ -106,8 +106,8 @@ export function EditAnnouncementDialog({
 
 			toastSuccess({
 				title: isEditMode
-					? t("Announcement_updated")
-					: t("Announcement_created"),
+					? t("announcement_updated")
+					: t("announcement_created"),
 				description: "",
 			});
 
@@ -180,10 +180,10 @@ export function EditAnnouncementDialog({
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
-							? t("Announcement") + t("edit")
-							: t("Announcement") + t("create")}
+							? t("announcement") + t("edit")
+							: t("announcement") + t("create")}
 					</DialogTitle>
-					<DialogDescription>{t("Announcement_mgmt_descr")}</DialogDescription>
+					<DialogDescription>{t("announcement_mgmt_descr")}</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

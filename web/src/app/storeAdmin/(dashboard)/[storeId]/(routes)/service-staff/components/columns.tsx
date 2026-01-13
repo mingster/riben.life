@@ -54,7 +54,7 @@ export const createTableColumns = (
 		{
 			accessorKey: "memberRole",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Role") || "Role"} />
+				<DataTableColumnHeader column={column} title={t("role") || "Role"} />
 			),
 			cell: ({ row }) => (
 				<span>{(row.getValue("memberRole") as string) || "-"}</span>

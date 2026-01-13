@@ -121,7 +121,7 @@ export function FacilityLanding({
 							className="min-w-[200px] h-12"
 						>
 							<IconHelp className="mr-2 h-5 w-5" />
-							{t("FAQ")}
+							{t("f_a_q")}
 						</Button>
 					</div>
 				</div>

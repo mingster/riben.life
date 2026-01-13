@@ -300,7 +300,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 					className="justify-start text-left font-normal"
 				>
 					<IconCalendar className="mr-0 size-4" />
-					<span>{t("Date_and_Time")}</span>
+					<span>{t("date_and_time")}</span>
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent
@@ -308,7 +308,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 				className="w-auto space-y-3 p-3 sm:p-4 max-w-[calc(100vw-2rem)]"
 			>
 				<div className="text-sm text-muted-foreground">
-					{t("DateTime_Filter_descr")}
+					{t("date_time_filter_descr")}
 				</div>
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
@@ -377,7 +377,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 													>
 														{field.value
 															? format(field.value, "PPP")
-															: t("Pick_a_date")}
+															: t("pick_a_date")}
 														<IconCalendar className="ml-auto size-4 opacity-50" />
 													</Button>
 												</FormControl>
@@ -418,7 +418,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 													>
 														{field.value
 															? format(field.value, "PPP")
-															: t("Pick_a_date")}
+															: t("pick_a_date")}
 														<IconCalendar className="ml-auto size-4 opacity-50" />
 													</Button>
 												</FormControl>

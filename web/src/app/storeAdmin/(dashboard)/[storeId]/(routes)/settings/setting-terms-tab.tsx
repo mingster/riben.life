@@ -131,7 +131,7 @@ export const TermsTab: React.FC<SettingsFormProps> = ({
 							name="tos"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("StoreSettings_terms")}</FormLabel>
+									<FormLabel>{t("store_settings_terms")}</FormLabel>
 									<FormControl>
 										<EditorComp
 											markdown={field.value ?? ""}
