@@ -55,18 +55,18 @@ export function SubscriptionHistoryClient({
 						{
 							// if no subscription...
 							subscription?.status === SubscriptionStatus.Inactive
-								? t("SubscriptionStatus_Inactive")
+								? t("subscription_status_inactive")
 								: subscription?.status === SubscriptionStatus.Active
-									? t("SubscriptionStatus_Active")
+									? t("subscription_status_active")
 									: subscription?.status === SubscriptionStatus.Cancelled
-										? t("SubscriptionStatus_Canceled")
+										? t("subscription_status_canceled")
 										: ""
 						}
 					</div>
 					<div>
 						{subscription !== null && (
 							<div className="">
-								{t("storeAdmin_switchLevel_subscription_expiry").replace(
+								{t("store_admin_switch_level_subscription_expiry").replace(
 									"{0}",
 									formatDate(
 										epochToDate(subscription.expiration) ?? new Date(),
@@ -110,11 +110,11 @@ export function SubscriptionHistoryClient({
 											<div>
 												{payment.isPaid === true ? (
 													<div className="text-green-700 dark:text-green-700">
-														{t("isPaid")}
+														{t("is_paid")}
 													</div>
 												) : (
 													<div className="text-red-400 dark:text-red-700">
-														{t("isNotPaid")}
+														{t("is_not_paid")}
 													</div>
 												)}
 											</div>

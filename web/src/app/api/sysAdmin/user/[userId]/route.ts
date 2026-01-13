@@ -1,10 +1,6 @@
-import { sqlClient } from "@/lib/prismadb";
 import { NextResponse } from "next/server";
-
-// import { getUtcNowEpoch } from "@/utils/datetime-utils"; // User model still uses DateTime with defaults
-import { CheckAdminApiAccess } from "../../api_helper";
+import { deleteUserAction } from "@/actions/sysAdmin/user/delete-user";
 import logger from "@/lib/logger";
-import { authClient } from "@/lib/auth-client";
 
 ///!SECTION update user in database.
 export async function PATCH(
@@ -55,7 +51,6 @@ export async function DELETE(
 ) {
 	try {
 		const params = await props.params;
-		CheckAdminApiAccess();
 
 		if (!params.userId) {
 			return new NextResponse("user email is required", { status: 400 });
@@ -64,96 +59,31 @@ export async function DELETE(
 		// userId parameter is actually the user's email
 		const userEmail = params.userId;
 
-		logger.info("Deleting user", {
-			metadata: { userEmail },
-			tags: ["api", "sysAdmin", "user-delete"],
-		});
+		// Call server action (handles authentication via adminActionClient)
+		const result = await deleteUserAction({ userEmail });
 
-		// Find user by email
-		const user = await sqlClient.user.findUnique({
-			where: {
-				email: userEmail,
-			},
-		});
+		if (result?.serverError) {
+			logger.error("Failed to delete user", {
+				metadata: {
+					error: result.serverError,
+					userEmail,
+				},
+				tags: ["api", "sysAdmin", "user-delete", "error"],
+			});
 
-		if (!user) {
-			return new NextResponse("User not found", { status: 404 });
+			// Map server errors to appropriate HTTP status codes
+			if (result.serverError === "User not found") {
+				return new NextResponse(result.serverError, { status: 404 });
+			}
+
+			return new NextResponse(result.serverError, { status: 500 });
 		}
 
-		// Delete all data related to the user
-		// Delete all api keys
-		await sqlClient.apikey.deleteMany({
-			where: {
-				userId: user.id,
-			},
-		});
+		if (!result?.data) {
+			return new NextResponse("Internal error", { status: 500 });
+		}
 
-		// Delete all passkeys
-		await sqlClient.passkey.deleteMany({
-			where: {
-				userId: user.id,
-			},
-		});
-
-		// Delete all sessions
-		await sqlClient.session.deleteMany({
-			where: {
-				userId: user.id,
-			},
-		});
-
-		// Delete all accounts
-		await sqlClient.account.deleteMany({
-			where: {
-				userId: user.id,
-			},
-		});
-
-		// Delete all twofactors
-		await sqlClient.twoFactor.deleteMany({
-			where: {
-				userId: user.id,
-			},
-		});
-
-		// Delete all subscriptions of the user
-		await sqlClient.subscription.deleteMany({
-			where: {
-				referenceId: user.id,
-			},
-		});
-
-		// Delete all invitations of the user
-		await sqlClient.invitation.deleteMany({
-			where: {
-				email: user.email as string,
-			},
-		});
-
-		// Delete all members of the user
-		await sqlClient.member.deleteMany({
-			where: {
-				userId: user.id,
-			},
-		});
-
-		// Remove user from Better Auth
-		await authClient.admin.removeUser({
-			userId: user.id,
-		});
-
-		logger.info("User deleted successfully", {
-			metadata: { userId: user.id, userEmail },
-			tags: ["api", "sysAdmin", "user-delete"],
-		});
-
-		return NextResponse.json(
-			{
-				success: true,
-				message: "user deleted",
-			},
-			{ status: 200 },
-		);
+		return NextResponse.json(result.data, { status: 200 });
 	} catch (error) {
 		logger.error("Failed to delete user", {
 			metadata: {

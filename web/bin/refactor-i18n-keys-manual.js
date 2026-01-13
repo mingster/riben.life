@@ -65,8 +65,8 @@ const keyMappings = {
 	"ProductStatus_Deleted": "ProductStatus_deleted",
 	
 	// RSVP settings
-	"rsvp_Can_Cancel_Descr": "rsvp_Can_Cancel_descr",
-	"rsvp_Cancel_Hours_Descr": "rsvp_Cancel_Hours_descr",
+	"rsvp_can_Cancel_Descr": "rsvp_can_Cancel_descr",
+	"rsvp_cancel_Hours_Descr": "rsvp_cancel_Hours_descr",
 	"rsvp_Default_Duration_Descr": "rsvp_Default_Duration_descr",
 	"rsvp_Display_Settings_Descr": "rsvp_Display_Settings_descr",
 	"rsvp_Hours_Descr": "rsvp_Hours_descr",

@@ -232,7 +232,7 @@ export const EditFaq: React.FC<props> = ({ item, onUpdated, isNew }) => {
 											// Map field names to user-friendly labels using i18n
 											const fieldLabels: Record<string, string> = {
 												name: t("FAQ_name") || "FAQ Name",
-												categoryId: t("Category") || "Category",
+												categoryId: t("category") || "Category",
 												content: t("Content") || "Content",
 												published: t("Published") || "Published",
 											};

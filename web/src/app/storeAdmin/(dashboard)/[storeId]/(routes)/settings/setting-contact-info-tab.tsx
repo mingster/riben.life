@@ -158,7 +158,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>
-											{t("StoreSettings_orderNoteToCustomer")}
+											{t("store_settings_order_note_to_customer")}
 										</FormLabel>
 										<FormControl>
 											<Textarea
@@ -169,7 +169,7 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("StoreSettings_orderNoteToCustomer_desccr")}
+											{t("store_settings_order_note_to_customer_desccr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -181,12 +181,12 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 								name="aboutUs"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("StoreSettings_about_us")}</FormLabel>
+										<FormLabel>{t("store_settings_about_us")}</FormLabel>
 										<FormControl>
 											<Textarea
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
-												placeholder={`${t("input_placeholder1")}${t("StoreSettings_about_us")}`}
+												placeholder={`${t("input_placeholder1")}${t("store_settings_about_us")}`}
 												{...field}
 											/>
 										</FormControl>
@@ -201,12 +201,12 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 									name="supportEmail"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_support_email")}</FormLabel>
+											<FormLabel>{t("store_settings_support_email")}</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
-													placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_email")}`}
+													placeholder={`${t("input_placeholder1")}${t("store_settings_support_email")}`}
 													{...field}
 												/>
 											</FormControl>
@@ -220,12 +220,12 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 									name="supportPhoneNumber"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_support_phone")}</FormLabel>
+											<FormLabel>{t("store_settings_support_phone")}</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
-													placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_phone")}`}
+													placeholder={`${t("input_placeholder1")}${t("store_settings_support_phone")}`}
 													{...field}
 												/>
 											</FormControl>
@@ -241,12 +241,12 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 									name="facebookUrl"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_facebook_url")}</FormLabel>
+											<FormLabel>{t("store_settings_facebook_url")}</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
-													placeholder={`${t("input_placeholder1")}${t("StoreSettings_facebook_url")}`}
+													placeholder={`${t("input_placeholder1")}${t("store_settings_facebook_url")}`}
 													{...field}
 												/>
 											</FormControl>
@@ -260,12 +260,12 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 									name="igUrl"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_ig_url")}</FormLabel>
+											<FormLabel>{t("store_settings_ig_url")}</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
-													placeholder={`${t("input_placeholder1")}${t("StoreSettings_ig_url")}`}
+													placeholder={`${t("input_placeholder1")}${t("store_settings_ig_url")}`}
 													{...field}
 												/>
 											</FormControl>
@@ -281,12 +281,14 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 									name="lineId"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_support_lineId")}</FormLabel>
+											<FormLabel>
+												{t("store_settings_support_line_id")}
+											</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
-													placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_lineId")}`}
+													placeholder={`${t("input_placeholder1")}${t("store_settings_support_line_id")}`}
 													{...field}
 												/>
 											</FormControl>
@@ -300,13 +302,13 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("StoreSettings_support_telegramId")}
+												{t("store_settings_support_telegram_id")}
 											</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
-													placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_telegramId")}`}
+													placeholder={`${t("input_placeholder1")}${t("store_settings_support_telegram_id")}`}
 													{...field}
 												/>
 											</FormControl>
@@ -322,13 +324,13 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("StoreSettings_support_twitterId")}
+												{t("store_settings_support_twitter_id")}
 											</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
-													placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_twitterId")}`}
+													placeholder={`${t("input_placeholder1")}${t("store_settings_support_twitter_id")}`}
 													{...field}
 												/>
 											</FormControl>
@@ -342,13 +344,13 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("StoreSettings_support_whatsappId")}
+												{t("store_settings_support_whatsapp_id")}
 											</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
-													placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_whatsappId")}`}
+													placeholder={`${t("input_placeholder1")}${t("store_settings_support_whatsapp_id")}`}
 													{...field}
 												/>
 											</FormControl>
@@ -363,12 +365,14 @@ export const ContactInfoTab: React.FC<SettingsFormProps> = ({
 								name="wechatId"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("StoreSettings_support_wechatId")}</FormLabel>
+										<FormLabel>
+											{t("store_settings_support_wechat_id")}
+										</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
-												placeholder={`${t("input_placeholder1")}${t("StoreSettings_support_wechatId")}`}
+												placeholder={`${t("input_placeholder1")}${t("store_settings_support_wechat_id")}`}
 												{...field}
 											/>
 										</FormControl>

@@ -28,7 +28,7 @@ export const DisplayOrderStatus: React.FC<props> = ({
 		<div className="flex items-center justify-between w-full">
 			{status !== OrderStatus.Voided && (
 				<div className={className}>
-					{t(`OrderStatus_${OrderStatus[Number(status)]}`)}
+					{t(`order_status_${OrderStatus[Number(status)]}`)}
 				</div>
 			)}
 
@@ -38,7 +38,7 @@ export const DisplayOrderStatus: React.FC<props> = ({
 					className="mr-2 bg-muted text-gray-500 cursor-default"
 					size="sm"
 				>
-					{t(`OrderStatus_${OrderStatus[Number(status)]}`)}
+					{t(`order_status_${OrderStatus[Number(status)]}`)}
 				</Button>
 			)}
 
@@ -51,7 +51,7 @@ export const DisplayOrderStatus: React.FC<props> = ({
 						className="w-full sm:w-auto h-10 sm:h-9"
 						onClick={() => onCompletedStatus?.()}
 					>
-						{t("order_tab_buyAgain")}
+						{t("order_tab_buy_again")}
 					</Button>
 				)}
 		</div>

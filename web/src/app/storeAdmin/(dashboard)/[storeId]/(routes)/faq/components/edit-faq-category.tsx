@@ -154,7 +154,7 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 
 				<DrawerContent className="p-2 space-y-2 w-full">
 					<DrawerHeader className="">
-						<DrawerTitle>{t("FaqCategory")}</DrawerTitle>
+						<DrawerTitle>{t("faq_category")}</DrawerTitle>
 						<DrawerDescription>
 							{
 								//display form error if any
@@ -199,14 +199,14 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 								render={({ field }) => (
 									<FormItem className="w-full">
 										<FormLabel>
-											{t("FaqCategory_name")}{" "}
+											{t("faq_category_name")}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												placeholder={
-													t("input_placeholder1") + t("FaqCategory_name")
+													t("input_placeholder1") + t("faq_category_name")
 												}
 												{...field}
 											/>
@@ -222,7 +222,7 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 								render={({ field }) => (
 									<FormItem className="w-full">
 										<FormLabel>
-											{t("FaqCategory_sortOrder")}{" "}
+											{t("faq_category_sort_order")}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
@@ -230,7 +230,7 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 												type="number"
 												disabled={loading || form.formState.isSubmitting}
 												placeholder={
-													t("input_placeholder1") + t("FaqCategory_sortOrder")
+													t("input_placeholder1") + t("faq_category_sort_order")
 												}
 												{...field}
 											/>
@@ -250,9 +250,9 @@ export const EditFaqCategory: React.FC<props> = ({ item, onUpdated }) => {
 										([field, error]) => {
 											// Map field names to user-friendly labels using i18n
 											const fieldLabels: Record<string, string> = {
-												name: t("FaqCategory_name") || "Category Name",
+												name: t("faq_category_name") || "Category Name",
 												localeId: t("Locale") || "Locale",
-												sortOrder: t("FaqCategory_sortOrder") || "Sort Order",
+												sortOrder: t("faq_category_sort_order") || "Sort Order",
 											};
 											const fieldLabel = fieldLabels[field] || field;
 											return (

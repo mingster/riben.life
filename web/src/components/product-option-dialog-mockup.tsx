@@ -149,7 +149,7 @@ export const ProductOptionDialogMockup: React.FC<props> = ({ product }) => {
 		newQuantity -= 1;
 
 		if (newQuantity <= 0) {
-			const msg = t("cart_itemInfo_removeConfirm");
+			const msg = t("cart_item_info_remove_confirm");
 			if (confirm(msg)) {
 				// close dialog
 				setQuantity(0);

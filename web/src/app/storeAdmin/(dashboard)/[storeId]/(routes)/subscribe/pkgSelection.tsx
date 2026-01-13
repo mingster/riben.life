@@ -85,14 +85,14 @@ const DisplayPkg: React.FC<props> = ({
 
 	function handleDivClick(selected: number) {
 		if (selected === store.level) {
-			alert(t("storeAdmin_switchLevel_duplicated"));
+			alert(t("store_admin_switch_level_duplicated"));
 
 			return;
 		}
 
 		// user switch to free version
 		if (selected === StoreLevel.Free && store.level !== StoreLevel.Free) {
-			if (confirm(t("storeAdmin_switchLevel_cancel_confirm"))) {
+			if (confirm(t("store_admin_switch_level_cancel_confirm"))) {
 				store.level = selected;
 				unsubscribe();
 			}
@@ -111,7 +111,7 @@ const DisplayPkg: React.FC<props> = ({
 		if (ret.status === 200) {
 			//store.level = StoreLevel.Free;
 
-			const message = t("storeAdmin_switchLevel_cancel_result").replace(
+			const message = t("store_admin_switch_level_cancel_result").replace(
 				"{0}",
 				subscription?.expiration
 					? formatDate(
@@ -150,15 +150,15 @@ const DisplayPkg: React.FC<props> = ({
 				onClose={() => setOpen(false)}
 				onConfirm={onSelect}
 				loading={loading}
-				title={t("storeAdmin_switchLevel_title")}
-				description={t("storeAdmin_switchLevel_description")}
+				title={t("store_admin_switch_level_title")}
+				description={t("store_admin_switch_level_description")}
 			/>
 			<div
 				className={cn("max-w-6xl px-4 py-8 mx-auto sm:py-24 sm:px-6 lg:px-8")}
 			>
 				<div className="sm:flex sm:flex-col sm:align-middle">
 					<h1 className="text-4xl font-extrabold sm:text-center sm:text-6xl">
-						{t("storeAdmin_switchLevel_pageTitle")}
+						{t("store_admin_switch_level_page_title")}
 					</h1>
 					<div className="max-w-2xl m-auto mt-5 text-xl sm:text-center sm:text-2xl">
 						{
@@ -167,15 +167,15 @@ const DisplayPkg: React.FC<props> = ({
 							subscription.status === SubscriptionStatus.Inactive ||
 							subscription.status === SubscriptionStatus.Cancelled ||
 							subscription.expiration <= getUtcNowEpoch()
-								? t("storeAdmin_switchLevel_pageDescr")
-								: t("storeAdmin_switchLevel_pageDescr_subscribed")
+								? t("store_admin_switch_level_page_descr")
+								: t("store_admin_switch_level_page_descr_subscribed")
 						}
 					</div>
 					<div>
 						{subscription !== null &&
 							subscription.expiration > getUtcNowEpoch() && (
 								<div className="max-w-2xl m-auto mt-5 text-xl text-center">
-									{t("storeAdmin_switchLevel_subscription_expiry").replace(
+									{t("store_admin_switch_level_subscription_expiry").replace(
 										"{0}",
 										formatDate(
 											epochToDate(subscription.expiration) ?? new Date(),
@@ -205,7 +205,7 @@ const DisplayPkg: React.FC<props> = ({
 					>
 						<div className="flex-1">
 							<h2 className="text-2xl font-semibold leading-6">
-								{t("storeAdmin_switchLevel_free")}
+								{t("store_admin_switch_level_free")}
 							</h2>
 							<div className="mt-8 text-2xl font-extrabold">1%/營業額</div>
 							<div className="mt-4">無需任何前置費用，有成交才會產生費用。</div>
@@ -237,7 +237,7 @@ const DisplayPkg: React.FC<props> = ({
 					>
 						<div className="flex-1">
 							<h2 className="text-2xl font-semibold leading-6">
-								{t("storeAdmin_switchLevel_pro")}
+								{t("store_admin_switch_level_pro")}
 							</h2>
 							<div className="mt-8 text-2xl font-extrabold">$300/每月</div>
 
@@ -272,7 +272,7 @@ const DisplayPkg: React.FC<props> = ({
 					>
 						<div className="flex-1">
 							<h2 className="text-2xl font-semibold leading-6">
-								{t("storeAdmin_switchLevel_multi")}
+								{t("store_admin_switch_level_multi")}
 							</h2>
 							<div className="mt-8">
 								<span className="text-2xl font-extrabold">$300/每店</span>
@@ -406,7 +406,7 @@ const SubscriptionStripe: React.FC<paymentProps> = ({ order }) => {
 					<StripeCheckoutForm order={order} />
 
 					<div>
-						{t("payment_stripe_payAmount")}
+						{t("payment_stripe_pay_amount")}
 						{Number(order.amount)} {order.currency.toUpperCase()}
 					</div>
 				</div>
@@ -535,7 +535,7 @@ const StripeCheckoutForm: React.FC<paymentProps> = ({ order }) => {
 				type="submit"
 				className="w-full disabled:opacity-25"
 			>
-				{t("payment_stripeForm_payButton")}
+				{t("payment_stripe_form_pay_button")}
 			</Button>
 		</form>
 	);

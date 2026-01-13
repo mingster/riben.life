@@ -141,7 +141,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 				);
 
 				toastSuccess({
-					title: t("ProductOption") + t("updated"),
+					title: t("product_option") + t("updated"),
 					description: "",
 				});
 			}
@@ -152,7 +152,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 			);
 
 			toastSuccess({
-				title: t("ProductOption") + t("created"),
+				title: t("product_option") + t("created"),
 				description: "",
 			});
 		}
@@ -163,7 +163,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 		);
 	};
 
-	const pageTitle = t(action) + t("ProductOption");
+	const pageTitle = t(action) + t("product_option");
 
 	if (!params.productId) return <></>;
 
@@ -183,7 +183,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 				<DialogHeader>
 					<DialogTitle>{pageTitle}</DialogTitle>
 					<DialogDescription>
-						{t("ProductOption_mgmt_add_descr")}
+						{t("product_option_mgmt_add_descr")}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -194,7 +194,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 							name="optionName"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("ProductOption_optionName")}</FormLabel>
+									<FormLabel>{t("product_option_option_name")}</FormLabel>
 									<FormControl>
 										<Input
 											disabled={loading || form.formState.isSubmitting}
@@ -203,7 +203,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("ProductOption_optionName_descr")}
+										{t("product_option_option_name_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -216,9 +216,9 @@ export const AddProductOptionDialog: React.FC<props> = ({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between p-1 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("ProductOption_isRequired")}</FormLabel>
+										<FormLabel>{t("product_option_is_required")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_isRequired_descr")}
+											{t("product_option_is_required_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -238,9 +238,9 @@ export const AddProductOptionDialog: React.FC<props> = ({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between p-1 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("ProductOption_isMultiple")}</FormLabel>
+										<FormLabel>{t("product_option_is_multiple")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_isMultiple_descr")}
+											{t("product_option_is_multiple_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -261,7 +261,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 								name="minSelection"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("ProductOption_minSelection")}</FormLabel>
+										<FormLabel>{t("product_option_min_selection")}</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || !form.watch("isMultiple")}
@@ -270,7 +270,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_minSelection_descr")}
+											{t("product_option_min_selection_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -282,7 +282,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 								name="maxSelection"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("ProductOption_maxSelection")}</FormLabel>
+										<FormLabel>{t("product_option_max_selection")}</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || !form.watch("isMultiple")}
@@ -291,7 +291,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_maxSelection_descr")}
+											{t("product_option_max_selection_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -305,9 +305,9 @@ export const AddProductOptionDialog: React.FC<props> = ({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between p-1 rounded-lg shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("ProductOption_allowQuantity")}</FormLabel>
+										<FormLabel>{t("product_option_allow_quantity")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_allowQuantity_descr")}
+											{t("product_option_allow_quantity_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -327,7 +327,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 								name="minQuantity"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("ProductOption_minQuantity")}</FormLabel>
+										<FormLabel>{t("product_option_min_quantity")}</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || !form.watch("allowQuantity")}
@@ -336,7 +336,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_minQuantity_descr")}
+											{t("product_option_min_quantity_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -348,7 +348,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 								name="maxQuantity"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("ProductOption_maxQuantity")}</FormLabel>
+										<FormLabel>{t("product_option_max_quantity")}</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || !form.watch("allowQuantity")}
@@ -357,7 +357,7 @@ export const AddProductOptionDialog: React.FC<props> = ({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_maxQuantity_descr")}
+											{t("product_option_max_quantity_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -370,12 +370,12 @@ export const AddProductOptionDialog: React.FC<props> = ({
 							name="selections"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("ProductOption_selections")}</FormLabel>
+									<FormLabel>{t("product_option_selections")}</FormLabel>
 									<FormControl>
 										<Textarea {...field} />
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("ProductOption_selections_descr")}
+										{t("product_option_selections_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -387,13 +387,13 @@ export const AddProductOptionDialog: React.FC<props> = ({
 							name="sortOrder"
 							render={({ field }) => (
 								<FormItem className="p-3">
-									<FormLabel>{t("Category_sortOrder")}</FormLabel>
+									<FormLabel>{t("category_sort_order")}</FormLabel>
 									<FormControl>
 										<Input
 											disabled={loading || form.formState.isSubmitting}
 											className="font-mono"
 											placeholder={
-												t("input_placeholder1") + t("Category_sortOrder")
+												t("input_placeholder1") + t("category_sort_order")
 											}
 											type="number"
 											{...field}

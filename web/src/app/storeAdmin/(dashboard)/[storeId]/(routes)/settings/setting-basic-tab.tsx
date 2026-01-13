@@ -281,14 +281,14 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>
-											{t("StoreSettings_Store_Name")}{" "}
+											{t("store_settings_store_name")}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
-												placeholder={t("StoreSettings_Store_Name_descr")}
+												placeholder={t("store_settings_store_name_descr")}
 												{...field}
 												onChange={(e) => {
 													field.onChange(e);
@@ -317,18 +317,18 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("storeSettings_Store_Description")}
+												{t("store_settings_store_description")}
 											</FormLabel>
 											<FormControl>
 												<Textarea
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono min-h-20"
-													placeholder={`${t("input_placeholder1")}${t("storeSettings_Store_Description")}`}
+													placeholder={`${t("input_placeholder1")}${t("store_settings_store_description")}`}
 													{...field}
 												/>
 											</FormControl>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("storeSettings_Store_Description_descr")}
+												{t("store_settings_store_description_descr")}
 											</FormDescription>
 											<FormMessage />
 										</FormItem>
@@ -343,7 +343,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("StoreSettings_Store_Locale")}{" "}
+												{t("store_settings_store_locale")}{" "}
 												<span className="text-destructive">*</span>
 											</FormLabel>
 											<Select
@@ -353,7 +353,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 											>
 												<SelectTrigger className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1">
 													<SelectValue
-														placeholder={t("StoreSettings_Store_Locale_descr")}
+														placeholder={t("store_settings_store_locale_descr")}
 													/>
 												</SelectTrigger>
 
@@ -371,7 +371,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("StoreSettings_Store_Currency")}{" "}
+												{t("store_settings_store_currency")}{" "}
 												<span className="text-destructive">*</span>
 											</FormLabel>
 											<CurrencyCombobox
@@ -390,7 +390,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel>
-												{t("StoreSettings_Store_Country")}{" "}
+												{t("store_settings_store_country")}{" "}
 												<span className="text-destructive">*</span>
 											</FormLabel>
 											<CountryCombobox
@@ -407,7 +407,9 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 									name="defaultTimezone"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_Store_Timezone")}</FormLabel>
+											<FormLabel>
+												{t("store_settings_store_timezone")}
+											</FormLabel>
 											<FormControl>
 												<TimezoneSelect
 													value={field.value ?? "Asia/Taipei"}
@@ -416,7 +418,7 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 												/>
 											</FormControl>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("StoreSettings_Store_Timezone_descr")}
+												{t("store_settings_store_timezone_descr")}
 											</FormDescription>
 											<FormMessage />
 										</FormItem>
@@ -431,9 +433,9 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 									render={({ field }) => (
 										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
-												<FormLabel>{t("StoreSettings_isOpen")}</FormLabel>
+												<FormLabel>{t("store_settings_is_open")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_isOpen_descr")}
+													{t("store_settings_is_open_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>
@@ -454,10 +456,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>
-													{t("StoreSettings_useBusinessHours")}
+													{t("store_settings_use_business_hours")}
 												</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_useBusinessHours_descr")}
+													{t("store_settings_use_business_hours_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>
@@ -502,10 +504,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>
-													{t("StoreSettings_requireSeating")}
+													{t("store_settings_require_seating")}
 												</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_requireSeating_descr")}
+													{t("store_settings_require_seating_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>
@@ -525,10 +527,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>
-													{t("StoreSettings_requirePrepay")}
+													{t("store_settings_require_prepay")}
 												</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_requirePrepay_descr")}
+													{t("store_settings_require_prepay_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>
@@ -550,10 +552,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>
-													{t("StoreSettings_autoAcceptOrder")}
+													{t("store_settings_auto_accept_order")}
 												</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_autoAcceptOrder_descr")}
+													{t("store_settings_auto_accept_order_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>
@@ -573,10 +575,10 @@ export const BasicSettingTab: React.FC<SettingsFormProps> = ({
 										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>
-													{t("StoreSettings_use_order_system")}
+													{t("store_settings_use_order_system")}
 												</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_use_order_system_descr")}
+													{t("store_settings_use_order_system_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>

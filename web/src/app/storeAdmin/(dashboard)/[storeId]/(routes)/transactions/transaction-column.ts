@@ -6,6 +6,7 @@ export interface TransactionColumn {
 	id: string;
 	storeId: string;
 	user: string;
+	userEmail: string | null;
 	orderStatus: number;
 	amount: number;
 	refundAmount: number;
@@ -27,6 +28,7 @@ export const mapStoreOrderToColumn = (
 	id: order.id,
 	storeId: order.storeId,
 	user: order.User?.name ?? order.User?.email ?? "",
+	userEmail: order.User?.email ?? null,
 	orderStatus: Number(order.orderStatus ?? 0),
 	amount: Number(order.orderTotal ?? 0),
 	refundAmount: Number(order.refundAmount ?? 0),

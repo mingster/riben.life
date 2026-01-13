@@ -114,7 +114,7 @@ export function BulkAddCategoriesDialog({
 			}
 
 			toastSuccess({
-				title: t("Category") + t("created"),
+				title: t("category") + t("created"),
 				description: "",
 			});
 
@@ -140,14 +140,14 @@ export function BulkAddCategoriesDialog({
 				>
 					<IconPlus className="mr-2 size-4" />
 					<span className="text-sm sm:text-xs">
-						{t("Category_mgmt_add_button")}
+						{t("category_mgmt_add_button")}
 					</span>
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="max-w-[calc(100%-1rem)] p-4 sm:p-6 sm:max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto">
 				<DialogHeader>
-					<DialogTitle>{t("Category_mgmt_add")}</DialogTitle>
-					<DialogDescription>{t("Category_mgmt_add_descr")}</DialogDescription>
+					<DialogTitle>{t("category_mgmt_add")}</DialogTitle>
+					<DialogDescription>{t("category_mgmt_add_descr")}</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>
@@ -158,7 +158,7 @@ export function BulkAddCategoriesDialog({
 							render={({ field, fieldState }) => (
 								<FormItem>
 									<FormLabel>
-										{t("Category_names")}{" "}
+										{t("category_names")}{" "}
 										<span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
@@ -170,7 +170,7 @@ export function BulkAddCategoriesDialog({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("Category_names_descr")}
+										{t("category_names_descr")}
 									</FormDescription>
 									<FormMessage>{fieldState.error?.message}</FormMessage>
 								</FormItem>
@@ -183,9 +183,9 @@ export function BulkAddCategoriesDialog({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between rounded-lg p-3 shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("Category_isFeatured")}</FormLabel>
+										<FormLabel>{t("category_is_featured")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("Category_isFeatured_descr")}
+											{t("category_is_featured_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -221,8 +221,8 @@ export function BulkAddCategoriesDialog({
 										([field, error]) => {
 											// Map field names to user-friendly labels using i18n
 											const fieldLabels: Record<string, string> = {
-												names: t("Category_name") || "Category Names",
-												isFeatured: t("Category_isFeatured") || "Featured",
+												names: t("category_name") || "Category Names",
+												isFeatured: t("category_is_featured") || "Featured",
 											};
 											const fieldLabel = fieldLabels[field] || field;
 											return (

@@ -25,25 +25,25 @@ export const AskUserToSignIn = () => {
 					<DialogSignIn />
 
 					<Link
-						title={t("checkout_signIn")}
+						title={t("checkout_sign_in")}
 						key="signin"
 						href="/signIn"
 						onClick={() => router.push("/signIn")}
 						className="hover:font-bold text-primary"
 					>
-						{t("checkout_signIn")}
+						{t("checkout_sign_in")}
 					</Link>
 					{t("checkout_or")}
 					<Link
-						title={t("checkout_signUp")}
+						title={t("checkout_sign_up")}
 						key="signup"
 						href="/signIn"
 						onClick={() => router.push("/signIn")}
 						className="hover:font-bold text-primary"
 					>
-						{t("checkout_signUp")}
+						{t("checkout_sign_up")}
 					</Link>
-					{t("checkout_signInNote")}
+					{t("checkout_sign_in_note")}
 				</div>
 			)}
 		</>

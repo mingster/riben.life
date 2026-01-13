@@ -410,9 +410,9 @@ export const FaqCategoryClient: React.FC<props> = ({
 		<>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
-					title={t("FaqCategory_mgmt")}
+					title={t("faq_category_mgmt")}
 					badge={data.length}
-					description={t("FaqCategory_mgmt_descr")}
+					description={t("faq_category_mgmt_descr")}
 				/>
 				<div>
 					{/*新增 */}
@@ -431,9 +431,9 @@ export const FaqCategoryClient: React.FC<props> = ({
 
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
-					title={`${t("FAQ")}`}
+					title={`${t("f_a_q")}`}
 					badge={faqData.length}
-					description={t("FAQ_mgmt_descr")}
+					description={t("f_a_q_mgmt_descr")}
 				/>
 			</div>
 			{/* {JSON.stringify(data)} */}

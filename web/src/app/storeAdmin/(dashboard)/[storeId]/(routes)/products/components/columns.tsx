@@ -15,7 +15,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
 		accessorKey: "name",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("Product_name")} />
+				<DataTableColumnHeader column={column} title={t("product_name")} />
 			);
 		},
 		cell: ({ row }) => (
@@ -32,7 +32,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
 		accessorKey: "status",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("Product_status")} />
+				<DataTableColumnHeader column={column} title={t("product_status")} />
 			);
 		},
 		cell: ({ row }) => {
@@ -46,7 +46,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
     accessorKey: "isFeatured",
     header: ({ column }) => {
       return (
-        <DataTableColumnHeader column={column} title={t("Product_featured")} />
+        <DataTableColumnHeader column={column} title={t("product_featured")} />
       );
     },
     cell: ({ row }) => {
@@ -65,7 +65,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("Product_hasOptions")}
+					title={t("product_has_options")}
 				/>
 			);
 		},
@@ -84,7 +84,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
 		accessorKey: "price",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("Product_price")} />
+				<DataTableColumnHeader column={column} title={t("product_price")} />
 			);
 		},
 		cell: ({ row }) => {
@@ -97,7 +97,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
 		accessorKey: "stock",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("Product_stock")} />
+				<DataTableColumnHeader column={column} title={t("product_stock")} />
 			);
 		},
 	},
@@ -108,7 +108,7 @@ export const columns: ColumnDef<ProductColumn>[] = [
       return (
         <DataTableColumnHeader
           column={column}
-          title={t("Product_isRecurring")}
+          title={t("product_is_recurring")}
         />
       );
     },

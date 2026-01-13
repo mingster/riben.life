@@ -164,7 +164,7 @@ export const CategoryEditProductTab = ({
 		});
 
 		toastSuccess({
-			title: t("Category") + t("added"),
+			title: t("category") + t("added"),
 			description: "",
 		});
 
@@ -251,7 +251,7 @@ const columns: ColumnDef<ProductColumn>[] = [
 		accessorKey: "name",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("Product_name")} />
+				<DataTableColumnHeader column={column} title={t("product_name")} />
 			);
 		},
 		cell: ({ row }) => (
@@ -268,7 +268,7 @@ const columns: ColumnDef<ProductColumn>[] = [
 		accessorKey: "price",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("Product_price")} />
+				<DataTableColumnHeader column={column} title={t("product_price")} />
 			);
 		},
 		cell: ({ row }) => {
@@ -287,7 +287,7 @@ const columns: ColumnDef<ProductColumn>[] = [
 		accessorKey: "isFeatured",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("Product_featured")} />
+				<DataTableColumnHeader column={column} title={t("product_featured")} />
 			);
 		},
 		cell: ({ row }) => {
@@ -305,7 +305,7 @@ const columns: ColumnDef<ProductColumn>[] = [
 		accessorKey: "status",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("Product_status")} />
+				<DataTableColumnHeader column={column} title={t("product_status")} />
 			);
 		},
 		cell: ({ row }) => {

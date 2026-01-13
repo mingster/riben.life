@@ -104,7 +104,7 @@ export const DropdownCart = () => {
 										>
 											<div className="flex w-full items-center justify-between">
 												<div className="grow">
-													{t("cart_dropDown_placeOrder")}
+													{t("cart_drop_down_place_order")}
 												</div>
 
 												<div className="self-end">

@@ -77,7 +77,7 @@ export const CreditBonusRuleClient: React.FC<CreditBonusRuleClientProps> = ({
 		<>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
-					title={t("Credit_Bonus_Rules")}
+					title={t("credit_bonus_rules")}
 					badge={data.length}
 					description=""
 				/>

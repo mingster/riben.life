@@ -591,6 +591,11 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																				{rsvp.Facility.facilityName}
 																			</div>
 																		)}
+																		{rsvp.ServiceStaff?.User?.name && (
+																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																				{rsvp.ServiceStaff.User.name}
+																			</div>
+																		)}
 																		{rsvp.message && (
 																			<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
 																				{rsvp.message}
@@ -645,6 +650,11 @@ export const WeekViewCalendar: React.FC<WeekViewCalendarProps> = ({
 																					{rsvp.Facility?.facilityName && (
 																						<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
 																							{rsvp.Facility.facilityName}
+																						</div>
+																					)}
+																					{rsvp.ServiceStaff?.User?.name && (
+																						<div className="text-muted-foreground truncate text-[9px] sm:text-[10px] leading-tight mt-0.5">
+																							{rsvp.ServiceStaff.User.name}
 																						</div>
 																					)}
 																					{rsvp.message && (

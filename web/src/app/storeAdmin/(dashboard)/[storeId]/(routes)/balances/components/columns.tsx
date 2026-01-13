@@ -6,6 +6,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
 import { format } from "date-fns";
 import type { BalanceColumn } from "../balance-column";
+import { epochToDate } from "@/utils/datetime-utils";
 
 export const createBalanceColumns = (
 	t: TFunction,
@@ -18,6 +19,13 @@ export const createBalanceColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("created_at")} />
 			),
+			cell: ({ row }) => {
+				const balance = row.original;
+				if (!balance.createdAtIso) return "-";
+				const date = new Date(balance.createdAtIso);
+				if (isNaN(date.getTime())) return balance.createdAt;
+				return <span>{format(date, dateFormat)}</span>;
+			},
 		},
 		{
 			accessorKey: "availability",
@@ -45,7 +53,11 @@ export const createBalanceColumns = (
 			),
 			cell: ({ row }) => {
 				const amount = Number(row.getValue("amount"));
-				return <Currency value={amount} />;
+				return (
+					<span className="text-right">
+						<Currency value={amount} />
+					</span>
+				);
 			},
 		},
 		{
@@ -55,17 +67,25 @@ export const createBalanceColumns = (
 			),
 			cell: ({ row }) => {
 				const fee = Number(row.getValue("fee"));
-				return <Currency value={fee} />;
+				return (
+					<span className="text-right">
+						<Currency value={fee} />
+					</span>
+				);
 			},
 		},
 		{
 			accessorKey: "platformFee",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("platformFee")} />
+				<DataTableColumnHeader column={column} title={t("platform_fee")} />
 			),
 			cell: ({ row }) => {
 				const platformFee = Number(row.getValue("platformFee"));
-				return <Currency value={platformFee} />;
+				return (
+					<span className="text-right">
+						<Currency value={platformFee} />
+					</span>
+				);
 			},
 		},
 		{
@@ -75,7 +95,11 @@ export const createBalanceColumns = (
 			),
 			cell: ({ row }) => {
 				const balance = Number(row.getValue("balance"));
-				return <Currency value={balance} />;
+				return (
+					<span className="text-right">
+						<Currency value={balance} />
+					</span>
+				);
 			},
 		},
 		{

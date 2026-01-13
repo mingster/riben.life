@@ -105,7 +105,7 @@ export const OrderAddProductModal: React.FC<props> = ({
 		onValueChange?.(result);
 
 		toastSuccess({
-			title: t("Order_add_product_modal_updated"),
+			title: t("order_add_product_modal_updated"),
 			description: "",
 		});
 	};

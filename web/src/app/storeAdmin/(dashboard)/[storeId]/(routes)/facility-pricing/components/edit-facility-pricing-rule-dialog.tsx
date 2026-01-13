@@ -300,7 +300,7 @@ export function EditFacilityPricingRuleDialog({
 							name="facilityId"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Facility")}</FormLabel>
+									<FormLabel>{t("facility")}</FormLabel>
 									<FormControl>
 										<FacilityCombobox
 											storeId={String(params.storeId)}
@@ -504,7 +504,7 @@ export function EditFacilityPricingRuleDialog({
 								{Object.entries(form.formState.errors).map(([field, error]) => {
 									// Map field names to user-friendly labels using i18n
 									const fieldLabels: Record<string, string> = {
-										facilityId: t("Facility") || "Facility",
+										facilityId: t("facility") || "Facility",
 										dayOfWeek: t("Day_of_Week") || "Day of Week",
 										startTime: t("Start_Time") || "Start Time",
 										endTime: t("End_Time") || "End Time",

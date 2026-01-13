@@ -207,16 +207,16 @@ export function ClientSupport({
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value={allTicketStatus}>
-								{t("TicketStatus_all")}
+								{t("ticket_status_all")}
 							</SelectItem>
 							<SelectItem value={TicketStatus.Open.toString()}>
-								{t("TicketStatus_Open")}
+								{t("ticket_status_open")}
 							</SelectItem>
 							<SelectItem value={TicketStatus.Replied.toString()}>
-								{t("TicketStatus_Replied")}
+								{t("ticket_status_replied")}
 							</SelectItem>
 							<SelectItem value={TicketStatus.Closed.toString()}>
-								{t("TicketStatus_Closed")}
+								{t("ticket_status_closed")}
 							</SelectItem>
 						</SelectContent>
 					</Select>

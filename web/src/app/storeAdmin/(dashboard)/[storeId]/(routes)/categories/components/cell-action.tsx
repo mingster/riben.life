@@ -63,7 +63,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 			}
 
 			toastSuccess({
-				title: t("Category") + t("deleted"),
+				title: t("category") + t("deleted"),
 				description: "",
 			});
 			onDeleted?.(data.id);
@@ -81,7 +81,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 	const onCopy = (id: string) => {
 		navigator.clipboard.writeText(id);
 		toastSuccess({
-			title: t("Category") + " ID copied",
+			title: t("category") + " ID copied",
 			description: "",
 		});
 	};
@@ -137,7 +137,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 						}}
 					>
 						<IconActivity className="mr-0 size-4" />
-						{t("Category_EditProducts")}
+						{t("category_edit_products")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						disabled={data.numOfProducts !== 0}

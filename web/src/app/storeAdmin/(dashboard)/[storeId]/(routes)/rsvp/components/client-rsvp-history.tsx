@@ -467,9 +467,17 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 				onDeleted: handleDeleted,
 				onUpdated: handleUpdated,
 				storeTimezone,
+				storeId: params.storeId,
 				rsvpSettings,
 			}),
-		[t, handleDeleted, handleUpdated, storeTimezone, rsvpSettings],
+		[
+			t,
+			handleDeleted,
+			handleUpdated,
+			storeTimezone,
+			params.storeId,
+			rsvpSettings,
+		],
 	);
 
 	return (

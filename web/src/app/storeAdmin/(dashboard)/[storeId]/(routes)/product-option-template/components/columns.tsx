@@ -24,7 +24,7 @@ export const createProductOptionTemplateColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("ProductOption_optionName")}
+					title={t("product_option_option_name")}
 				/>
 			),
 		},
@@ -33,7 +33,7 @@ export const createProductOptionTemplateColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("ProductOption_isRequired")}
+					title={t("product_option_is_required")}
 				/>
 			),
 			cell: ({ row }) => {
@@ -55,7 +55,7 @@ export const createProductOptionTemplateColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("ProductOption_isMultiple")}
+					title={t("product_option_is_multiple")}
 				/>
 			),
 			cell: ({ row }) => {
@@ -77,7 +77,7 @@ export const createProductOptionTemplateColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("ProductOption_minSelection")}
+					title={t("product_option_min_selection")}
 				/>
 			),
 		},
@@ -86,7 +86,7 @@ export const createProductOptionTemplateColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("ProductOption_maxSelection")}
+					title={t("product_option_max_selection")}
 				/>
 			),
 		},
@@ -95,7 +95,7 @@ export const createProductOptionTemplateColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("ProductOption_allowQuantity")}
+					title={t("product_option_allow_quantity")}
 				/>
 			),
 			cell: ({ row }) => {
@@ -114,7 +114,9 @@ export const createProductOptionTemplateColumns = (
 		},
 		{
 			accessorKey: "selections",
-			header: () => <div className="pl-3">{t("ProductOption_selections")}</div>,
+			header: () => (
+				<div className="pl-3">{t("product_option_selections")}</div>
+			),
 			cell: ({ row }) => (
 				<div>
 					{row.original.selections.map((selection) => (

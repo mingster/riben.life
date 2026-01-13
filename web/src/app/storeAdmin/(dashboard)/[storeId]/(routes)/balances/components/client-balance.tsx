@@ -35,7 +35,7 @@ export function BalanceClient({ serverData }: BalanceClientProps) {
 
 	return (
 		<>
-			<Heading title={t("Balances")} badge={data.length} description="" />
+			<Heading title={t("balances")} badge={data.length} description="" />
 			<Separator />
 			<DataTable<BalanceColumn, unknown>
 				data={data}

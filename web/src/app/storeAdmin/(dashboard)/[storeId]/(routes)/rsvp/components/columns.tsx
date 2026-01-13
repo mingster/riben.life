@@ -15,11 +15,13 @@ import {
 	getOffsetHours,
 } from "@/utils/datetime-utils";
 import { getRsvpStatusColorClasses } from "@/utils/rsvp-status-utils";
+import Link from "next/link";
 
 interface CreateRsvpColumnsOptions {
 	onDeleted?: (rsvpId: string) => void;
 	onUpdated?: (rsvp: Rsvp) => void;
 	storeTimezone?: string;
+	storeId?: string;
 	rsvpSettings?: {
 		minPrepaidPercentage?: number | null;
 	} | null;
@@ -33,6 +35,7 @@ export const createRsvpColumns = (
 		onDeleted,
 		onUpdated,
 		storeTimezone = "Asia/Taipei",
+		storeId,
 		rsvpSettings,
 	} = options;
 
@@ -79,7 +82,24 @@ export const createRsvpColumns = (
 			),
 			cell: ({ row }) => {
 				const rsvp = row.original;
-				return <span>{rsvp.Customer?.name || "-"}</span>;
+				const customer = rsvp.Customer;
+				const customerName = customer?.name || "-";
+				const email = customer?.email;
+
+				if (!email || !storeId) {
+					return <span>{customerName}</span>;
+				}
+
+				return email ? (
+					<Link
+						href={`/storeAdmin/${storeId}/customers/${email}`}
+						className="text-primary hover:underline"
+					>
+						{customerName}
+					</Link>
+				) : (
+					<span>{customerName}</span>
+				);
 			},
 		},
 		{

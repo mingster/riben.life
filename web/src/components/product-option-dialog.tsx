@@ -161,7 +161,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 		newQuantity -= 1;
 
 		if (newQuantity <= 0) {
-			const msg = t("cart_itemInfo_removeConfirm");
+			const msg = t("cart_item_info_remove_confirm");
 			if (confirm(msg)) {
 				// close dialog
 				setQuantity(0);
@@ -578,12 +578,12 @@ export const ProductOptionDialog: React.FC<props> = ({
 													</Label>
 													{option.isRequired && (
 														<div className="w-10 text-center text-green-800 text-sm bg-slate-300">
-															{t("ProductOptionDialog_required")}
+															{t("product_option_dialog_required")}
 														</div>
 													)}
 													{option.minSelection !== 0 && (
 														<div className="text-center text-green-800 text-sm bg-slate-300">
-															{t("ProductOptionDialog_minSelection").replace(
+															{t("product_option_dialog_min_selection").replace(
 																"{0}",
 																`${option.minSelection}`,
 															)}
@@ -591,7 +591,7 @@ export const ProductOptionDialog: React.FC<props> = ({
 													)}
 													{option.maxSelection > 1 && (
 														<div className="text-center text-green-800 text-sm bg-slate-300">
-															{t("ProductOptionDialog_maxSelection").replace(
+															{t("product_option_dialog_max_selection").replace(
 																"{0}",
 																`${option.maxSelection}`,
 															)}

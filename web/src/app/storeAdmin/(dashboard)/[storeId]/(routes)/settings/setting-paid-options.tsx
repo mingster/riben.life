@@ -303,10 +303,10 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 										<FormItem className="flex flex-row items-center justify-between pr-3 rounded-lg shadow-sm">
 											<div className="space-y-0.5">
 												<FormLabel>
-													{t("StoreSettings_acceptAnonymousOrder")}
+													{t("store_settings_accept_anonymous_order")}
 												</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("StoreSettings_acceptAnonymousOrder_descr")}
+													{t("store_settings_accept_anonymous_order_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>
@@ -329,7 +329,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 									render={({ field }) => (
 										<FormItem>
 											<FormLabel className="">
-												{t("StoreSettings_Store_Customer_Domain")}
+												{t("store_settings_store_customer_domain")}
 											</FormLabel>
 											<FormControl>
 												<Input
@@ -350,7 +350,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 							</div>
 
 							<div className="mb-2">
-								<Label>{t("StoreSettings_Store_Logo")}</Label>
+								<Label>{t("store_settings_store_logo")}</Label>
 							</div>
 							<div className="flex flex-row w-full">
 								<div className="flex flex-col space-y-4 w-1/2">
@@ -434,7 +434,7 @@ export const PaidOptionsTab: React.FC<PaidOptionsSettingsProps> = ({
 												logo: t("Logo") || "Logo",
 												logoPublicId: t("Logo_Public_ID") || "Logo Public ID",
 												acceptAnonymousOrder:
-													t("StoreSettings_acceptAnonymousOrder") ||
+													t("store_settings_accept_anonymous_order") ||
 													"Accept Anonymous Order",
 												defaultTimezone:
 													t("Default_Timezone") || "Default Timezone",

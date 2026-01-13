@@ -85,7 +85,7 @@ export function GetMenuList(
 
 	const orderConfirmation = {
 		href: `${nav_prefix}/order/awaiting4Confirmation`,
-		label: t("Order_awaiting_to_confirm"),
+		label: t("order_awaiting_to_confirm"),
 		active: pathname.includes(`${nav_prefix}/order/awaiting4Confirmation`),
 		icon: IconPackage,
 		submenus: [],
@@ -93,83 +93,11 @@ export function GetMenuList(
 
 	return [
 		{
-			groupLabel: t("Sales"),
+			groupLabel: t("operation"),
 			menus: [
-				//...(store.autoAcceptOrder ? [] : [orderConfirmation]),
-				// add cash (現金結帳) menu if store level is not free
-				// otherwise display orderConfirmation
-
-				...(store.level !== StoreLevel.Free ? [cash] : []),
-
-				// show order ready to ship menu only when useOrderSystem is true
-				...(store.useOrderSystem
-					? [
-							{
-								href: `${nav_prefix}/order/awaiting_to_ship`,
-								label: t("Order_ready_to_ship"),
-								active: pathname.includes(
-									`${nav_prefix}/order/awaiting_to_ship`,
-								),
-								icon: IconCreditCard,
-								submenus: [],
-							},
-						]
-					: []),
-				{
-					href: `${nav_prefix}/transactions`,
-					label: t("Transactions"),
-					active: pathname.includes(`${nav_prefix}/transactions`),
-					icon: IconCurrencyDollar,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/balances`,
-					label: t("Balances"),
-					active: pathname.includes(`${nav_prefix}/balances`),
-					icon: IconCurrencyDollar,
-					submenus: [],
-				},
-				{
-					href: `${nav_prefix}/dashboard`,
-					label: t("Sales_Reports"),
-					active: pathname.includes(`${nav_prefix}/dashboard`),
-					icon: IconHttpOptions,
-					submenus: [],
-				},
-			],
-		},
-		{
-			groupLabel: t("Operation"),
-			menus: [
-				// for not pro stores, if autoAcceptOrder is true, show orderConfirmation menu
-				...(!store.autoAcceptOrder ? [orderConfirmation] : []),
-
-				// show order in progress menu only when useOrderSystem is true
-				...(store.useOrderSystem
-					? [
-							{
-								href: `${nav_prefix}/order/awaiting4Process`,
-								label: t("Order_inProgress"),
-								active: pathname.includes(
-									`${nav_prefix}/order/awaiting4Process`,
-								),
-								icon: IconArrowRight,
-								submenus: [],
-							},
-						]
-					: []),
-
-				{
-					href: `${nav_prefix}/rsvp/history`,
-					label: t("rsvp_history"),
-					active: pathname.startsWith(`${nav_prefix}/rsvp/history`),
-					icon: IconHistory,
-					submenus: [],
-					badge: options?.readyToConfirmRsvpCount,
-				},
 				{
 					href: `${nav_prefix}/rsvp`,
-					label: t("rsvp_list_add"),
+					label: t("rsvp_week_view"),
 					active:
 						pathname.includes(`${nav_prefix}/rsvp`) &&
 						!pathname.includes(`${nav_prefix}/rsvp-settings`) &&
@@ -178,6 +106,14 @@ export function GetMenuList(
 
 					icon: IconCalendarCheck,
 					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/rsvp/history`,
+					label: t("rsvp_history"),
+					active: pathname.startsWith(`${nav_prefix}/rsvp/history`),
+					icon: IconHistory,
+					submenus: [],
+					badge: options?.readyToConfirmRsvpCount,
 				},
 				{
 					href: `${nav_prefix}/rsvp/import`,
@@ -194,6 +130,91 @@ export function GetMenuList(
 						pathname.includes(`${nav_prefix}/waiting-list`) &&
 						!pathname.includes(`${nav_prefix}/waiting-list-settings`),
 					icon: IconClock,
+					submenus: [],
+				},
+
+				//...(store.autoAcceptOrder ? [] : [orderConfirmation]),
+				// add cash (現金結帳) menu if store level is not free
+				// otherwise display orderConfirmation
+				...(store.level !== StoreLevel.Free ? [cash] : []),
+
+				// show order ready to ship menu only when useOrderSystem is true
+				...(store.useOrderSystem
+					? [
+							{
+								href: `${nav_prefix}/order/awaiting_to_ship`,
+								label: t("order_ready_to_ship"),
+								active: pathname.includes(
+									`${nav_prefix}/order/awaiting_to_ship`,
+								),
+								icon: IconCreditCard,
+								submenus: [],
+							},
+						]
+					: []),
+
+				// for not pro stores, if autoAcceptOrder is true, show orderConfirmation menu
+				...(!store.autoAcceptOrder ? [orderConfirmation] : []),
+
+				// show order in progress menu only when useOrderSystem is true
+				...(store.useOrderSystem
+					? [
+							{
+								href: `${nav_prefix}/order/awaiting4Process`,
+								label: t("order_in_progress"),
+								active: pathname.includes(
+									`${nav_prefix}/order/awaiting4Process`,
+								),
+								icon: IconArrowRight,
+								submenus: [],
+							},
+						]
+					: []),
+			],
+		},
+		{
+			groupLabel: t("sales"),
+			menus: [
+				{
+					href: `${nav_prefix}/dashboard`,
+					label: t("sales_reports"),
+					active: pathname.includes(`${nav_prefix}/dashboard`),
+					icon: IconHttpOptions,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/transactions`,
+					label: t("transactions"),
+					active: pathname.includes(`${nav_prefix}/transactions`),
+					icon: IconCurrencyDollar,
+					submenus: [],
+				},
+				{
+					href: `${nav_prefix}/balances`,
+					label: t("balances"),
+					active: pathname.includes(`${nav_prefix}/balances`),
+					icon: IconCurrencyDollar,
+					submenus: [],
+				},
+			],
+		},
+
+		{
+			groupLabel: t("support"),
+			menus: [
+				{
+					href: `${nav_prefix}/support`,
+					label: t("tickets"),
+					active: pathname.includes(`${nav_prefix}/support`),
+					icon: IconTicket,
+					submenus: [],
+					badge: openSupportTicketCount,
+				},
+				{
+					href: `${nav_prefix}/announcements`,
+					label: t("announcements"),
+					active: pathname.includes(`${nav_prefix}/announcements`),
+					icon: IconMessageCircle,
 					submenus: [],
 				},
 			],
@@ -217,50 +238,30 @@ export function GetMenuList(
 				},
 			],
 		},
-		{
-			groupLabel: t("support"),
-			menus: [
-				{
-					href: `${nav_prefix}/support`,
-					label: t("Tickets"),
-					active: pathname.includes(`${nav_prefix}/support`),
-					icon: IconTicket,
-					submenus: [],
-					badge: openSupportTicketCount,
-				},
-				{
-					href: `${nav_prefix}/announcements`,
-					label: t("Announcements"),
-					active: pathname.includes(`${nav_prefix}/announcements`),
-					icon: IconMessageCircle,
-					submenus: [],
-				},
-			],
-		},
 		// show product group only when useOrderSystem is true
 		...(store.useOrderSystem
 			? [
 					{
-						//groupLabel: t("Marketing"),
+						//groupLabel: t("marketing"),
 						groupLabel: t("product"),
 						menus: [
 							{
 								href: `${nav_prefix}/categories`,
-								label: t("Category"),
+								label: t("category"),
 								active: pathname.includes(`${nav_prefix}/categories`),
 								icon: IconMenu,
 								submenus: [],
 							},
 							{
 								href: `${nav_prefix}/products`,
-								label: t("Products"),
+								label: t("products"),
 								active: pathname.includes(`${nav_prefix}/products`),
 								icon: IconBox,
 								submenus: [],
 							},
 							{
 								href: `${nav_prefix}/product-option-template`,
-								label: t("ProductOption_template"),
+								label: t("product_option_template"),
 								active: pathname.includes(
 									`${nav_prefix}/product-option-template`,
 								),
@@ -272,11 +273,11 @@ export function GetMenuList(
 				]
 			: []),
 		{
-			groupLabel: t("StoreSettings"),
+			groupLabel: t("store_settings"),
 			menus: [
 				{
 					href: `${nav_prefix}/faq`,
-					label: t("FAQ"),
+					label: t("f_a_q"),
 					active: pathname.includes(`${nav_prefix}/faq`),
 					icon: IconHelp,
 					submenus: [],
@@ -284,14 +285,14 @@ export function GetMenuList(
 
 				{
 					href: `${nav_prefix}/settings`,
-					label: t("Settings"),
+					label: t("settings_general"),
 					active: pathname.includes(`${nav_prefix}/settings`),
 					icon: IconSettings,
 					submenus: [],
 				},
 				{
 					href: `${nav_prefix}/credit-bonus-rule`,
-					label: t("Credit_Bonus_Rules"),
+					label: t("credit_bonus_rules"),
 					active: pathname.includes(`${nav_prefix}/credit-bonus-rule`),
 					icon: IconCoin,
 					submenus: [],
@@ -305,7 +306,7 @@ export function GetMenuList(
 				},
 				{
 					href: `${nav_prefix}/waiting-list-settings`,
-					label: t("StoreSettings_WaitingList"),
+					label: t("store_settings_waiting_list"),
 					active: pathname.includes(`${nav_prefix}/waiting-list-settings`),
 					icon: IconClock,
 					submenus: [],

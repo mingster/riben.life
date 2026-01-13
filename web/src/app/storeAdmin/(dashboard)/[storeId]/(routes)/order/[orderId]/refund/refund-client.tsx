@@ -141,7 +141,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 		}
 
 		toastSuccess({
-			title: t("Order_edit_updated"),
+			title: t("order_edit_updated"),
 			description: "",
 		});
 
@@ -243,7 +243,7 @@ export const OrderRefundClient: React.FC<props> = ({ order }) => {
 						<div className="pb-1 flex items-center gap-1">
 							{updatedOrder?.orderNum && (
 								<>
-									<span>{t("Order_edit_orderNum")}</span>
+									<span>{t("order_edit_order_num")}</span>
 									<div className="font-extrabold">{updatedOrder?.orderNum}</div>
 								</>
 							)}

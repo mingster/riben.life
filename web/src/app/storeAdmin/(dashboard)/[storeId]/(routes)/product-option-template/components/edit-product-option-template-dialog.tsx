@@ -154,7 +154,7 @@ export function EditProductOptionTemplateDialog({
 			}
 
 			toastSuccess({
-				title: `${t("ProductOption_template")} ${t(
+				title: `${t("product_option_template")} ${t(
 					isEditMode ? "updated" : "created",
 				)}`,
 				description: "",
@@ -234,11 +234,11 @@ export function EditProductOptionTemplateDialog({
 				<DialogHeader>
 					<DialogTitle>
 						{isEditMode
-							? t("ProductOption_template") + t("edit")
-							: t("ProductOption_template") + t("create")}
+							? t("product_option_template") + t("edit")
+							: t("product_option_template") + t("create")}
 					</DialogTitle>
 					<DialogDescription>
-						{t("ProductOption_mgmt_add_descr")}
+						{t("product_option_mgmt_add_descr")}
 					</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
@@ -248,7 +248,7 @@ export function EditProductOptionTemplateDialog({
 							name="optionName"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("ProductOption_optionName")}</FormLabel>
+									<FormLabel>{t("product_option_option_name")}</FormLabel>
 									<FormControl>
 										<Input
 											disabled={loading || form.formState.isSubmitting}
@@ -257,7 +257,7 @@ export function EditProductOptionTemplateDialog({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("ProductOption_optionName_descr")}
+										{t("product_option_option_name_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -270,9 +270,9 @@ export function EditProductOptionTemplateDialog({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("ProductOption_isRequired")}</FormLabel>
+										<FormLabel>{t("product_option_is_required")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_isRequired_descr")}
+											{t("product_option_is_required_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -292,9 +292,9 @@ export function EditProductOptionTemplateDialog({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("ProductOption_isMultiple")}</FormLabel>
+										<FormLabel>{t("product_option_is_multiple")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_isMultiple_descr")}
+											{t("product_option_is_multiple_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -314,7 +314,7 @@ export function EditProductOptionTemplateDialog({
 								name="minSelection"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("ProductOption_minSelection")}</FormLabel>
+										<FormLabel>{t("product_option_min_selection")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -327,7 +327,7 @@ export function EditProductOptionTemplateDialog({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_minSelection_descr")}
+											{t("product_option_min_selection_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -338,7 +338,7 @@ export function EditProductOptionTemplateDialog({
 								name="maxSelection"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("ProductOption_maxSelection")}</FormLabel>
+										<FormLabel>{t("product_option_max_selection")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -351,7 +351,7 @@ export function EditProductOptionTemplateDialog({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_maxSelection_descr")}
+											{t("product_option_max_selection_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -365,9 +365,9 @@ export function EditProductOptionTemplateDialog({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
 									<div className="space-y-0.5">
-										<FormLabel>{t("ProductOption_allowQuantity")}</FormLabel>
+										<FormLabel>{t("product_option_allow_quantity")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_allowQuantity_descr")}
+											{t("product_option_allow_quantity_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -387,7 +387,7 @@ export function EditProductOptionTemplateDialog({
 								name="minQuantity"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("ProductOption_minQuantity")}</FormLabel>
+										<FormLabel>{t("product_option_min_quantity")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -400,7 +400,7 @@ export function EditProductOptionTemplateDialog({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_minQuantity_descr")}
+											{t("product_option_min_quantity_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -411,7 +411,7 @@ export function EditProductOptionTemplateDialog({
 								name="maxQuantity"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("ProductOption_maxQuantity")}</FormLabel>
+										<FormLabel>{t("product_option_max_quantity")}</FormLabel>
 										<FormControl>
 											<Input
 												type="number"
@@ -424,7 +424,7 @@ export function EditProductOptionTemplateDialog({
 											/>
 										</FormControl>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("ProductOption_maxQuantity_descr")}
+											{t("product_option_max_quantity_descr")}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -437,7 +437,7 @@ export function EditProductOptionTemplateDialog({
 							name="selections"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("ProductOption_selections")}</FormLabel>
+									<FormLabel>{t("product_option_selections")}</FormLabel>
 									<FormControl>
 										<Textarea
 											className="font-mono"
@@ -446,7 +446,7 @@ export function EditProductOptionTemplateDialog({
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("ProductOption_selections_descr")}
+										{t("product_option_selections_descr")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -458,7 +458,7 @@ export function EditProductOptionTemplateDialog({
 							name="sortOrder"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Category_sortOrder")}</FormLabel>
+									<FormLabel>{t("category_sort_order")}</FormLabel>
 									<FormControl>
 										<Input
 											type="number"

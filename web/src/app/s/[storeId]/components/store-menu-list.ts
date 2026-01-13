@@ -105,7 +105,7 @@ export function GetMenuList(
 			menus: [
 				{
 					href: `${nav_prefix}/my-orders`,
-					label: t("store_linkToOrder"),
+					label: t("store_link_to_order"),
 					active: pathname.includes(`${nav_prefix}/my-orders`),
 					icon: IconShoppingCart,
 					submenus: [],
@@ -160,7 +160,7 @@ export function GetMenuList(
 			menus: [
 				{
 					href: `${nav_prefix}/faq`,
-					label: t("FAQ"),
+					label: t("f_a_q"),
 					active: pathname.includes(`${nav_prefix}/faq`),
 					icon: MessageCircleQuestion,
 					submenus: [],

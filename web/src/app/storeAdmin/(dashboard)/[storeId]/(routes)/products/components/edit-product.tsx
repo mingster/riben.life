@@ -220,7 +220,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 					<DialogTitle>
 						{isNew ? t("create") : t("Product_mgmt_edit")}
 					</DialogTitle>
-					<DialogDescription>{t("Product_mgmt_add_descr")}</DialogDescription>
+					<DialogDescription>{t("product_mgmt_add_descr")}</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>
@@ -247,12 +247,12 @@ export const EditProduct: React.FC<EditProductProps> = ({
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										{t("Product_name")}{" "}
+										{t("product_name")}{" "}
 										<span className="text-destructive">*</span>
 									</FormLabel>
 									<FormControl>
 										<Input
-											placeholder={t("input_placeholder1") + t("Product_name")}
+											placeholder={t("input_placeholder1") + t("product_name")}
 											disabled={loading}
 											{...field}
 										/>
@@ -267,16 +267,16 @@ export const EditProduct: React.FC<EditProductProps> = ({
 							name="description"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{t("Product_description")}</FormLabel>
+									<FormLabel>{t("product_description")}</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder={t("Product_description_placeholder")}
+											placeholder={t("product_description_placeholder")}
 											disabled={loading}
 											{...field}
 										/>
 									</FormControl>
 									<FormDescription className="text-xs font-mono text-gray-500">
-										{t("Product_description_helper")}
+										{t("product_description_helper")}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -290,7 +290,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>
-											{t("Product_price")}{" "}
+											{t("product_price")}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>
@@ -319,7 +319,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 								name="status"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>{t("Product_status")}</FormLabel>
+										<FormLabel>{t("product_status")}</FormLabel>
 										<FormControl>
 											<div>
 												<ProductStatusCombobox
@@ -343,9 +343,9 @@ export const EditProduct: React.FC<EditProductProps> = ({
 							render={({ field }) => (
 								<FormItem className="flex flex-row items-center justify-between rounded-lg">
 									<div className="space-y-0.5">
-										<FormLabel>{t("Product_featured")}</FormLabel>
+										<FormLabel>{t("product_featured")}</FormLabel>
 										<FormDescription className="text-xs font-mono text-gray-500">
-											{t("Product_isFeatured_descr")}
+											{t("product_is_featured_descr")}
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -373,7 +373,7 @@ export const EditProduct: React.FC<EditProductProps> = ({
 										description: t("Description") || "Description",
 										price: t("Price") || "Price",
 										credit: t("Credit") || "Credit",
-										categoryId: t("Category") || "Category",
+										categoryId: t("category") || "Category",
 										isActive: t("Active") || "Active",
 										sortOrder: t("Sort_Order") || "Sort Order",
 									};

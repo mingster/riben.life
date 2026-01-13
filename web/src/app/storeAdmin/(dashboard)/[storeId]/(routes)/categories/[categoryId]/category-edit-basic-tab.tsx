@@ -88,7 +88,7 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 					data,
 				);
 				toastSuccess({
-					title: t("Category") + t("updated"),
+					title: t("category") + t("updated"),
 					description: "",
 				});
 			} else {
@@ -98,7 +98,7 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 					data,
 				);
 				toastSuccess({
-					title: t("Category") + t("created"),
+					title: t("category") + t("created"),
 					description: "",
 				});
 			}
@@ -130,13 +130,13 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 								name="name"
 								render={({ field }) => (
 									<FormItem className="p-3">
-										<FormLabel>{t("Category_name")}</FormLabel>
+										<FormLabel>{t("category_name")}</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
 												placeholder={
-													t("input_placeholder1") + t("Category_name")
+													t("input_placeholder1") + t("category_name")
 												}
 												{...field}
 											/>
@@ -151,9 +151,9 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 								render={({ field }) => (
 									<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 										<div className="space-y-0.5">
-											<FormLabel>{t("Category_isFeatured")}</FormLabel>
+											<FormLabel>{t("category_is_featured")}</FormLabel>
 											<FormDescription className="text-xs font-mono text-gray-500">
-												{t("Category_isFeatured_descr")}
+												{t("category_is_featured_descr")}
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -170,13 +170,13 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 								name="sortOrder"
 								render={({ field }) => (
 									<FormItem className="p-3">
-										<FormLabel>{t("Category_sortOrder")}</FormLabel>
+										<FormLabel>{t("category_sort_order")}</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
 												placeholder={
-													t("input_placeholder1") + t("Category_sortOrder")
+													t("input_placeholder1") + t("category_sort_order")
 												}
 												type="number"
 												{...field}
@@ -198,9 +198,9 @@ export const CategoryEditBasicTab = ({ initialData }: editProps) => {
 										([field, error]) => {
 											// Map field names to user-friendly labels using i18n
 											const fieldLabels: Record<string, string> = {
-												name: t("Category_name") || "Category Name",
-												sortOrder: t("Category_sortOrder") || "Sort Order",
-												isFeatured: t("Category_isFeatured") || "Featured",
+												name: t("category_name") || "Category Name",
+												sortOrder: t("category_sort_order") || "Sort Order",
+												isFeatured: t("category_is_featured") || "Featured",
 											};
 											const fieldLabel = fieldLabels[field] || field;
 											return (

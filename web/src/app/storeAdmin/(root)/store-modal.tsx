@@ -178,7 +178,7 @@ export const StoreModal: React.FC = () => {
 
 			if (result?.data?.storeId) {
 				toastSuccess({
-					title: t("Store_created"),
+					title: t("store_created"),
 					description: "",
 				});
 
@@ -207,7 +207,7 @@ export const StoreModal: React.FC = () => {
 
 	return (
 		<Modal
-			title={t("Store_create")}
+			title={t("store_create")}
 			description=""
 			isOpen={storeModal.isOpen}
 			onClose={storeModal.onClose}
@@ -236,11 +236,11 @@ export const StoreModal: React.FC = () => {
 									name="name"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_Store_Name")}</FormLabel>
+											<FormLabel>{t("store_settings_store_name")}</FormLabel>
 											<FormControl>
 												<Input
 													disabled={loading || form.formState.isSubmitting}
-													placeholder={t("StoreSettings_Store_Name_descr")}
+													placeholder={t("store_settings_store_name_descr")}
 													{...field}
 													onChange={(e) => {
 														field.onChange(e);
@@ -267,7 +267,7 @@ export const StoreModal: React.FC = () => {
 									name="defaultLocale"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_Store_Locale")}</FormLabel>
+											<FormLabel>{t("store_settings_store_locale")}</FormLabel>
 											<Select
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
@@ -275,7 +275,7 @@ export const StoreModal: React.FC = () => {
 											>
 												<SelectTrigger>
 													<SelectValue
-														placeholder={t("StoreSettings_Store_Locale_descr")}
+														placeholder={t("store_settings_store_locale_descr")}
 													/>
 												</SelectTrigger>
 
@@ -292,7 +292,9 @@ export const StoreModal: React.FC = () => {
 									name="defaultCurrency"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_Store_Currency")}</FormLabel>
+											<FormLabel>
+												{t("store_settings_store_currency")}
+											</FormLabel>
 											<CurrencyCombobox
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}
@@ -307,7 +309,7 @@ export const StoreModal: React.FC = () => {
 									name="defaultCountry"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel>{t("StoreSettings_Store_Country")}</FormLabel>
+											<FormLabel>{t("store_settings_store_country")}</FormLabel>
 											<CountryCombobox
 												disabled={loading || form.formState.isSubmitting}
 												onValueChange={field.onChange}

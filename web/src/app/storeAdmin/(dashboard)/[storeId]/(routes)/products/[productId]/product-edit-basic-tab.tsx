@@ -150,7 +150,7 @@ export const ProductEditBasicTab = ({
 
 				if (result?.data?.product) {
 					toastSuccess({
-						title: t("Product_updated"),
+						title: t("product_updated"),
 						description: "",
 					});
 					onUpdated?.(result.data.product);
@@ -176,7 +176,7 @@ export const ProductEditBasicTab = ({
 
 				if (result?.data?.product) {
 					toastSuccess({
-						title: t("Product_created"),
+						title: t("product_created"),
 						description: "",
 					});
 					// Navigate to the new product page
@@ -211,14 +211,14 @@ export const ProductEditBasicTab = ({
 									name="name"
 									render={({ field }) => (
 										<FormItem className="p-3">
-											<FormLabel>{t("Product_name")}</FormLabel>
+											<FormLabel>{t("product_name")}</FormLabel>
 											<FormControl>
 												<Input
 													type="text"
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono"
 													placeholder={
-														t("input_placeholder1") + t("Product_name")
+														t("input_placeholder1") + t("product_name")
 													}
 													{...field}
 												/>
@@ -232,7 +232,7 @@ export const ProductEditBasicTab = ({
 									name="price"
 									render={({ field }) => (
 										<FormItem className="p-3">
-											<FormLabel>{t("Product_price")}</FormLabel>
+											<FormLabel>{t("product_price")}</FormLabel>
 											<FormControl>
 												<Input
 													type="number"
@@ -241,7 +241,7 @@ export const ProductEditBasicTab = ({
 													disabled={loading || form.formState.isSubmitting}
 													className="font-mono disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed"
 													placeholder={
-														t("input_placeholder1") + t("Product_price")
+														t("input_placeholder1") + t("product_price")
 													}
 													value={Number.isNaN(field.value) ? "" : field.value}
 													onChange={(event) => {
@@ -264,14 +264,14 @@ export const ProductEditBasicTab = ({
 								name="description"
 								render={({ field }) => (
 									<FormItem className="p-3">
-										<FormLabel>{t("Product_description")}</FormLabel>
+										<FormLabel>{t("product_description")}</FormLabel>
 										<FormControl>
 											<Input
 												type="text"
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
 												placeholder={
-													t("input_placeholder1") + t("Product_description")
+													t("input_placeholder1") + t("product_description")
 												}
 												{...field}
 											/>
@@ -288,9 +288,9 @@ export const ProductEditBasicTab = ({
 									render={({ field }) => (
 										<FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
 											<div className="space-y-1 leading-none">
-												<FormLabel>{t("Product_status")}</FormLabel>
+												<FormLabel>{t("product_status")}</FormLabel>
 												<FormDescription className="text-xs font-mono text-gray-500">
-													{t("Product_status_descr")}
+													{t("product_status_descr")}
 												</FormDescription>
 											</div>
 											<FormControl>
@@ -316,9 +316,9 @@ export const ProductEditBasicTab = ({
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
                       <div className="space-y-0.5">
-                        <FormLabel>{t("Product_isFeatured")}</FormLabel>
+                        <FormLabel>{t("product_is_featured")}</FormLabel>
                         <FormDescription className="text-xs font-mono text-gray-500">
-                          {t("Product_isFeatured_descr")}
+                          {t("product_is_featured_descr")}
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -337,9 +337,9 @@ export const ProductEditBasicTab = ({
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between p-3 rounded-lg shadow-sm">
                       <div className="space-y-0.5">
-                        <FormLabel>{t("Product_useOption")}</FormLabel>
+                        <FormLabel>{t("product_use_option")}</FormLabel>
                         <FormDescription className="text-xs font-mono text-gray-500">
-                          {t("Product_useOption_descr")}
+                          {t("product_use_option_descr")}
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -374,7 +374,7 @@ export const ProductEditBasicTab = ({
 												currency: t("Currency") || "Currency",
 												status: t("Status") || "Status",
 												isFeatured: t("Is_Featured") || "Is Featured",
-												categoryId: t("Category") || "Category",
+												categoryId: t("category") || "Category",
 											};
 											const fieldLabel = fieldLabels[field] || field;
 											return (

@@ -49,7 +49,7 @@ export function CellAction({ data, onUpdated, onDeleted }: CellActionProps) {
 				});
 			} else {
 				toastSuccess({
-					title: `${t("ProductOption_template")} ${t("deleted")}`,
+					title: `${t("product_option_template")} ${t("deleted")}`,
 					description: "",
 				});
 				onDeleted?.(data.id);

@@ -43,7 +43,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 			);
 
 			toastSuccess({
-				title: t("FaqCategory") + t("deleted"),
+				title: t("faq_category") + t("deleted"),
 				description: "",
 			});
 			router.refresh();
@@ -99,7 +99,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
 							)
 						}
 					>
-						<UserRoundPen className="mr-0 size-4" /> {t("FaqCategory_add_faq")}
+						<UserRoundPen className="mr-0 size-4" /> {t("faq_category_add_faq")}
 					</DropdownMenuItem>
 
 					<DropdownMenuItem

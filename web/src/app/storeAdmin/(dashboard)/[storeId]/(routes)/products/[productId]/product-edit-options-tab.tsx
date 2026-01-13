@@ -156,7 +156,7 @@ export const DisplayStoreOptionTemplates = ({
 		);
 
 		toastSuccess({
-			title: t("ProductOption") + t("added"),
+			title: t("product_option") + t("added"),
 			description: "",
 		});
 
@@ -224,7 +224,7 @@ const CellAction: React.FC<CellActionProps> = ({ data }) => {
 		);
 
 		toastSuccess({
-			title: `${t("ProductOption")} ${t("deleted")}`,
+			title: `${t("product_option")} ${t("deleted")}`,
 			description: "",
 		});
 		router.refresh();
@@ -335,7 +335,7 @@ const createStoreOptionColumns = (
 		header: ({ column }) => (
 			<DataTableColumnHeader
 				column={column}
-				title={t("ProductOption_optionName")}
+				title={t("product_option_option_name")}
 			/>
 		),
 	},
@@ -344,7 +344,7 @@ const createStoreOptionColumns = (
 		header: ({ column }) => (
 			<DataTableColumnHeader
 				column={column}
-				title={t("ProductOption_isRequired")}
+				title={t("product_option_is_required")}
 			/>
 		),
 		cell: ({ row }) => {
@@ -363,7 +363,7 @@ const createStoreOptionColumns = (
 		header: ({ column }) => (
 			<DataTableColumnHeader
 				column={column}
-				title={t("ProductOption_isMultiple")}
+				title={t("product_option_is_multiple")}
 			/>
 		),
 		cell: ({ row }) => {
@@ -382,7 +382,7 @@ const createStoreOptionColumns = (
 		header: ({ column }) => (
 			<DataTableColumnHeader
 				column={column}
-				title={t("ProductOption_minSelection")}
+				title={t("product_option_min_selection")}
 			/>
 		),
 	},
@@ -391,7 +391,7 @@ const createStoreOptionColumns = (
 		header: ({ column }) => (
 			<DataTableColumnHeader
 				column={column}
-				title={t("ProductOption_maxSelection")}
+				title={t("product_option_max_selection")}
 			/>
 		),
 	},
@@ -400,7 +400,7 @@ const createStoreOptionColumns = (
 		header: ({ column }) => (
 			<DataTableColumnHeader
 				column={column}
-				title={t("ProductOption_allowQuantity")}
+				title={t("product_option_allow_quantity")}
 			/>
 		),
 		cell: ({ row }) => {
@@ -418,7 +418,7 @@ const createStoreOptionColumns = (
 		accessorKey: "productOption",
 		header: () => (
 			<div className="pl-3 text-xs font-mono">
-				{t("ProductOption_selections")}
+				{t("product_option_selections")}
 			</div>
 		),
 		cell: ({ row }) => {
@@ -468,7 +468,7 @@ const createProductOptionColumns = (
 		header: ({ column }) => (
 			<DataTableColumnHeader
 				column={column}
-				title={t("ProductOption_optionName")}
+				title={t("product_option_option_name")}
 			/>
 		),
 	},
@@ -477,7 +477,7 @@ const createProductOptionColumns = (
 		header: ({ column }) => (
 			<DataTableColumnHeader
 				column={column}
-				title={t("ProductOption_isRequired")}
+				title={t("product_option_is_required")}
 			/>
 		),
 		cell: ({ row }) => {
@@ -496,7 +496,7 @@ const createProductOptionColumns = (
 		header: ({ column }) => (
 			<DataTableColumnHeader
 				column={column}
-				title={t("ProductOption_isMultiple")}
+				title={t("product_option_is_multiple")}
 			/>
 		),
 		cell: ({ row }) => {
@@ -515,7 +515,7 @@ const createProductOptionColumns = (
 		header: ({ column }) => (
 			<DataTableColumnHeader
 				column={column}
-				title={t("ProductOption_allowQuantity")}
+				title={t("product_option_allow_quantity")}
 			/>
 		),
 		cell: ({ row }) => {
@@ -534,7 +534,7 @@ const createProductOptionColumns = (
 		header: ({ column }) => (
 			<DataTableColumnHeader
 				column={column}
-				title={t("ProductOption_sortOrder")}
+				title={t("product_option_sort_order")}
 			/>
 		),
 	},
@@ -542,7 +542,7 @@ const createProductOptionColumns = (
 		accessorKey: "productOption",
 		header: () => (
 			<div className="pl-3 text-xs font-mono">
-				{t("ProductOption_selections")}
+				{t("product_option_selections")}
 			</div>
 		),
 		cell: ({ row }) => {

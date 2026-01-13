@@ -178,7 +178,7 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 						size="sm"
 						//role="combobox"
 						aria-expanded={open}
-						//aria-label={t("storeAdmin_switcher_select_a_store")}
+						//aria-label={t("store_admin_switcher_select_a_store")}
 						className={cn("lg:w-full justify-between", className)}
 					>
 						<StoreIcon className="mr-0 size-4" />
@@ -190,10 +190,10 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 					<Command>
 						<CommandList>
 							<CommandInput
-								placeholder={t("storeAdmin_switcher_search_prompt")}
+								placeholder={t("store_admin_switcher_search_prompt")}
 							/>
 							<CommandEmpty>No store found.</CommandEmpty>
-							<CommandGroup heading={t("storeAdmin_switcher_heading")}>
+							<CommandGroup heading={t("store_admin_switcher_heading")}>
 								{formattedItems.map((store) => (
 									<CommandItem
 										key={store.value}
@@ -224,7 +224,7 @@ export default function StoreSwitcher({ className }: PopoverTriggerProps) {
 									}}
 								>
 									<PlusCircle className="mr-2 size-5" />
-									{t("storeAdmin_switcher_create_store")}
+									{t("store_admin_switcher_create_store")}
 								</CommandItem>
 							</CommandGroup>
 						</CommandList>

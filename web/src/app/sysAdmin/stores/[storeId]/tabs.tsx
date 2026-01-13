@@ -42,13 +42,13 @@ export const StoreEditTabs = ({
 	return (
 		<>
 			<Heading
-				title={t("StoreSettings")}
-				description={t("StoreSettingsDescr")}
+				title={t("store_settings")}
+				description={t("store_settings_descr")}
 			/>
 			<Tabs defaultValue="basic" className="w-full">
 				<TabsList>
 					<TabsTrigger className="px-5 lg:min-w-40" value="basic">
-						{t("StoreSettingsTab_Basic")}
+						{t("store_settings_tab_basic")}
 					</TabsTrigger>
 
 					<TabsTrigger className="px-5 lg:min-w-40" value="subscription">

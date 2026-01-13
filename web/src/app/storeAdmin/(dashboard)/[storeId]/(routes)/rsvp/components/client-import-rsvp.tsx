@@ -613,7 +613,7 @@ export function ClientImportRsvp({
 			},
 			{
 				accessorKey: "alreadyPaid",
-				header: t("Order_isPaid") || "Payment Status",
+				header: t("order_is_paid") || "Payment Status",
 				cell: ({ row }) => {
 					const paid = row.getValue("alreadyPaid") as boolean;
 					return (

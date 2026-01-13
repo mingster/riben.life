@@ -46,7 +46,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data, onDeleted }) => {
 				});
 			} else {
 				toastSuccess({
-					title: t("Product_deleted"),
+					title: t("product_deleted"),
 					description: "",
 				});
 				onDeleted?.(data.id);

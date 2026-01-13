@@ -24,7 +24,7 @@ export const createCategoryColumns = (
 		{
 			accessorKey: "name",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Category_name")} />
+				<DataTableColumnHeader column={column} title={t("category_name")} />
 			),
 		},
 		{
@@ -32,7 +32,7 @@ export const createCategoryColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("Category_numOfProduct")}
+					title={t("category_num_of_product")}
 				/>
 			),
 		},
@@ -41,7 +41,7 @@ export const createCategoryColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("Category_isFeatured")}
+					title={t("category_is_featured")}
 				/>
 			),
 			cell: ({ row }) => {
@@ -62,7 +62,7 @@ export const createCategoryColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("Category_sortOrder")}
+					title={t("category_sort_order")}
 				/>
 			),
 		},

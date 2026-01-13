@@ -277,7 +277,7 @@ export function RefillCreditPointsForm({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel className="pb-2">
-											{t("checkout_paymentMethod")}{" "}
+											{t("checkout_payment_method")}{" "}
 											<span className="text-destructive">*</span>
 										</FormLabel>
 										<FormControl>

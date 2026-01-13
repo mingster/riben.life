@@ -5,6 +5,7 @@ import Currency from "@/components/currency";
 import { DataTable } from "@/components/dataTable";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
+import { useParams } from "next/navigation";
 import {
 	Form,
 	FormControl,
@@ -74,8 +75,12 @@ const sortTransactions = (items: TransactionColumn[]) =>
 export function TransactionClient({ serverData }: TransactionClientProps) {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng, "storeAdmin");
+	const params = useParams<{ storeId: string }>();
 
-	const columns = useMemo(() => createTransactionColumns(t), [t]);
+	const columns = useMemo(
+		() => createTransactionColumns(t, { storeId: params.storeId }),
+		[t, params.storeId],
+	);
 	const statusKeys = useMemo(
 		() =>
 			Object.keys(OrderStatus)
@@ -201,7 +206,7 @@ export function TransactionClient({ serverData }: TransactionClientProps) {
 					variant="outline"
 					onClick={() => setStatusFilter(0)}
 				>
-					<span className="text-sm sm:text-xs">{t("All")}</span>
+					<span className="text-sm sm:text-xs">{t("all")}</span>
 				</Button>
 				{statusKeys.map((key) => (
 					<Button
@@ -211,7 +216,7 @@ export function TransactionClient({ serverData }: TransactionClientProps) {
 						onClick={() => setStatusFilter(key)}
 					>
 						<span className="text-sm sm:text-xs">
-							{t(`OrderStatus_${OrderStatus[key]}`)}
+							{t(`order_status_${OrderStatus[key]}`)}
 						</span>
 					</Button>
 				))}
@@ -232,9 +237,9 @@ export function TransactionClient({ serverData }: TransactionClientProps) {
 						<span className="text-sm sm:text-xs">{t("clear_filter")}</span>
 					</Button>
 					<div className="flex gap-1 text-xs font-mono text-muted-foreground">
-						{TimerFilterSelections.find(
-							(item) => item.value === timeFilter.filter,
-						)?.label ?? ""}
+						{timeFilter.filter
+							? t(`timer_filter_selections_${timeFilter.filter}`)
+							: ""}
 						{timeFilter.filter === "f1" &&
 							` ${timeFilter.filter1_is_in_the_last_of_days ?? 0} ${t("days")}`}
 						{["f2", "f4", "f5"].includes(timeFilter.filter ?? "") &&
@@ -300,7 +305,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 					className="justify-start text-left font-normal"
 				>
 					<IconCalendar className="mr-0 size-4" />
-					<span>{t("Date_and_Time")}</span>
+					<span>{t("date_and_time")}</span>
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent
@@ -308,7 +313,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 				className="w-auto space-y-3 p-3 sm:p-4 max-w-[calc(100vw-2rem)]"
 			>
 				<div className="text-sm text-muted-foreground">
-					{t("DateTime_Filter_descr")}
+					{t("date_time_filter_descr")}
 				</div>
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
@@ -328,7 +333,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 											<SelectContent position="popper">
 												{TimerFilterSelections.map((item) => (
 													<SelectItem key={item.value} value={item.value}>
-														{t(`TimerFilterSelections_${item.value}`)}
+														{t(`timer_filter_selections_${item.value}`)}
 													</SelectItem>
 												))}
 											</SelectContent>
@@ -377,7 +382,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 													>
 														{field.value
 															? format(field.value, "PPP")
-															: t("Pick_a_date")}
+															: t("pick_a_date")}
 														<IconCalendar className="ml-auto size-4 opacity-50" />
 													</Button>
 												</FormControl>
@@ -418,7 +423,7 @@ function FilterDateTime({ value, onChange }: FilterDateTimeProps) {
 													>
 														{field.value
 															? format(field.value, "PPP")
-															: t("Pick_a_date")}
+															: t("pick_a_date")}
 														<IconCalendar className="ml-auto size-4 opacity-50" />
 													</Button>
 												</FormControl>

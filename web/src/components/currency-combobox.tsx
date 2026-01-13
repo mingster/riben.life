@@ -80,10 +80,10 @@ export const CurrencyCombobox = ({
 					<PopoverContent className="p-0" side="bottom" align="start">
 						<Command>
 							<CommandInput
-								placeholder={t("currency_combobox_changePlaceHolder")}
+								placeholder={t("currency_combobox_change_place_holder")}
 							/>
 							<CommandList>
-								<CommandEmpty>{t("currency_combobox_notFound")}</CommandEmpty>
+								<CommandEmpty>{t("currency_combobox_not_found")}</CommandEmpty>
 								<CommandGroup>
 									{currencies.map((currency) => (
 										<CommandItem

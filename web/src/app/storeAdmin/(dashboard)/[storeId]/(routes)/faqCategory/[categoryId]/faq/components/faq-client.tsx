@@ -30,9 +30,9 @@ export const FaqClient: React.FC<FaqClientProps> = ({ data, category }) => {
 		<>
 			<div className="flex items-center justify-between">
 				<Heading
-					title={`${category.name}-${t("FAQ")}`}
+					title={`${category.name}-${t("f_a_q")}`}
 					badge={data.length}
-					description={t("FAQ_mgmt_descr")}
+					description={t("f_a_q_mgmt_descr")}
 				/>
 
 				<Button

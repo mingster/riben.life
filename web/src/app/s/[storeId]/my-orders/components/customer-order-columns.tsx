@@ -34,7 +34,7 @@ export const createCustomerOrderColumns = (
 		{
 			accessorKey: "orderNum",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Order_orderNum")} />
+				<DataTableColumnHeader column={column} title={t("order_order_num")} />
 			),
 			cell: ({ row }) => {
 				const order = row.original;
@@ -51,7 +51,7 @@ export const createCustomerOrderColumns = (
 		{
 			accessorKey: "orderTotal",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Order_total")} />
+				<DataTableColumnHeader column={column} title={t("order_total")} />
 			),
 			cell: ({ row }) => {
 				const order = row.original;
@@ -66,7 +66,7 @@ export const createCustomerOrderColumns = (
 		{
 			accessorKey: "orderStatus",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Order_status")} />
+				<DataTableColumnHeader column={column} title={t("order_status")} />
 			),
 			cell: ({ row }) => (
 				<DisplayOrderStatus status={row.getValue("orderStatus")} className="" />
@@ -75,7 +75,7 @@ export const createCustomerOrderColumns = (
 		{
 			accessorKey: "paymentStatus",
 			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("Order_isPaid")} />
+				<DataTableColumnHeader column={column} title={t("order_is_paid")} />
 			),
 			cell: ({ row }) => {
 				const order = row.original;
@@ -86,42 +86,42 @@ export const createCustomerOrderColumns = (
 
 				switch (paymentStatus) {
 					case Number(PaymentStatus.Paid):
-						statusText = t("PaymentStatus_Paid");
+						statusText = t("payment_status_paid");
 						statusClass =
 							"bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300";
 						break;
 					case Number(PaymentStatus.Refunded):
-						statusText = t("PaymentStatus_Refunded");
+						statusText = t("payment_status_refunded");
 						statusClass =
 							"bg-orange-50 text-orange-700 dark:bg-orange-900 dark:text-orange-300";
 						break;
 					case Number(PaymentStatus.PartiallyRefunded):
-						statusText = t("PaymentStatus_PartiallyRefunded");
+						statusText = t("payment_status_partially_refunded");
 						statusClass =
 							"bg-yellow-50 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
 						break;
 					case Number(PaymentStatus.Authorized):
-						statusText = t("PaymentStatus_Authorized");
+						statusText = t("payment_status_authorized");
 						statusClass =
 							"bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
 						break;
 					case Number(PaymentStatus.SelfPickup):
-						statusText = t("PaymentStatus_SelfPickup");
+						statusText = t("payment_status_self_pickup");
 						statusClass =
 							"bg-purple-50 text-purple-700 dark:bg-purple-900 dark:text-purple-300";
 						break;
 					case Number(PaymentStatus.Voided):
-						statusText = t("PaymentStatus_Voided");
+						statusText = t("payment_status_voided");
 						statusClass =
 							"bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-300";
 						break;
 					case Number(PaymentStatus.Pending):
-						statusText = t("PaymentStatus_Pending");
+						statusText = t("payment_status_pending");
 						statusClass =
 							"bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300";
 						break;
 					default:
-						statusText = t("PaymentStatus_NoPayment");
+						statusText = t("payment_status_no_payment");
 						statusClass =
 							"bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300";
 						break;
@@ -146,7 +146,7 @@ export const createCustomerOrderColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader
 					column={column}
-					title={t("paymentMethod_name")}
+					title={t("payment_method_name")}
 				/>
 			),
 			cell: ({ row }) => {

@@ -125,10 +125,10 @@ function StoreAdminHeader() {
 						>
 							<span className="hidden lg:inline">
 								{store.level === StoreLevel.Free
-									? t("storeAdmin_switchLevel_free")
+									? t("store_admin_switch_level_free")
 									: store.level === StoreLevel.Pro
-										? t("storeAdmin_switchLevel_pro")
-										: t("storeAdmin_switchLevel_multi")}
+										? t("store_admin_switch_level_pro")
+										: t("store_admin_switch_level_multi")}
 							</span>
 							<span className="lg:hidden">Level</span>
 						</Link>

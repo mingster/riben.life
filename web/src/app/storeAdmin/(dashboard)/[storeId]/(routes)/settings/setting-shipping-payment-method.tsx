@@ -86,7 +86,7 @@ export const ShippingPaymentMethodTab: React.FC<
 			setSelectedShippingIds(nextSelection);
 
 			toastSuccess({
-				title: t("shippingMethod") + t("updated"),
+				title: t("shipping_method") + t("updated"),
 				description: "",
 			});
 		}
@@ -171,7 +171,7 @@ export const ShippingPaymentMethodTab: React.FC<
 			setSelectedPayMethodIds(nextSelection);
 
 			toastSuccess({
-				title: t("PaymentMethod") + t("updated"),
+				title: t("payment_method") + t("updated"),
 				description: "",
 			});
 		}
@@ -276,7 +276,7 @@ const PayMethodColumns: ColumnDef<PayMethodColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("paymentMethod_name")}
+					title={t("payment_method_name")}
 				/>
 			);
 		},
@@ -287,7 +287,7 @@ const PayMethodColumns: ColumnDef<PayMethodColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("paymentMethod_cost")}
+					title={t("payment_method_cost")}
 				/>
 			);
 		},
@@ -298,7 +298,7 @@ const PayMethodColumns: ColumnDef<PayMethodColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("paymentMethod_isDefault")}
+					title={t("payment_method_is_default")}
 				/>
 			);
 		},
@@ -359,7 +359,7 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
 		accessorKey: "name",
 		header: ({ column }) => {
 			return (
-				<DataTableColumnHeader column={column} title={t("shippingMethod")} />
+				<DataTableColumnHeader column={column} title={t("shipping_method")} />
 			);
 		},
 	},
@@ -369,7 +369,7 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("shippingMethod_currency")}
+					title={t("shipping_method_currency")}
 				/>
 			);
 		},
@@ -380,7 +380,7 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("shippingMethod_price")}
+					title={t("shipping_method_price")}
 				/>
 			);
 		},
@@ -396,7 +396,7 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("shippingMethod_shipRequired")}
+					title={t("shipping_method_ship_required")}
 				/>
 			);
 		},
@@ -417,7 +417,7 @@ const shipColumns: ColumnDef<ShippingMethodColumn>[] = [
 			return (
 				<DataTableColumnHeader
 					column={column}
-					title={t("shippingMethod_isDefault")}
+					title={t("shipping_method_is_default")}
 				/>
 			);
 		},

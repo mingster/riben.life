@@ -188,7 +188,8 @@ export function RsvpStats({
 		],
 	);
 
-	// Pre-fetch all periods in parallel
+	// Fetch data on-demand (lazy loading for better initial performance)
+	// Only fetch the current period - SWR will cache it for instant switching back
 	const fetcher = (url: RequestInfo) => fetch(url).then((res) => res.json());
 
 	const weekUrl = buildUrl("week");
@@ -196,29 +197,24 @@ export function RsvpStats({
 	const yearUrl = buildUrl("year");
 	const allUrl = buildUrl("all");
 
-	const { data: weekData } = useSWR<RsvpStatsData>(weekUrl, fetcher);
-	const { data: monthData } = useSWR<RsvpStatsData>(monthUrl, fetcher);
-	const { data: yearData } = useSWR<RsvpStatsData>(yearUrl, fetcher);
-	const { data: allData } = useSWR<RsvpStatsData>(allUrl, fetcher);
-
-	// Get data for current period (instant switch)
-	const data = useMemo(() => {
+	// Only fetch the currently selected period
+	// SWR caches the data, so switching back to a previously viewed period is instant
+	const currentUrl = useMemo(() => {
 		switch (periodType) {
 			case "week":
-				return weekData;
+				return weekUrl;
 			case "month":
-				return monthData;
+				return monthUrl;
 			case "year":
-				return yearData;
+				return yearUrl;
 			case "all":
-				return allData;
+				return allUrl;
 			default:
-				return monthData;
+				return monthUrl;
 		}
-	}, [periodType, weekData, monthData, yearData, allData]);
+	}, [periodType, weekUrl, monthUrl, yearUrl, allUrl]);
 
-	// Check if any period is still loading
-	const isLoading = !weekData || !monthData || !yearData || !allData;
+	const { data, isLoading } = useSWR<RsvpStatsData>(currentUrl, fetcher);
 
 	// Don't render if RSVP is not enabled
 	if (!rsvpSettings?.acceptReservation) {
@@ -370,7 +366,16 @@ export function RsvpStats({
 			value: totalCustomerCount,
 			subValues: [
 				{
-					label: t("rsvp_new_customers") || "New Customers",
+					label:
+						(periodType === "week"
+							? t("this_week")
+							: periodType === "month"
+								? t("this_month")
+								: periodType === "year"
+									? t("this_year")
+									: t("all")) +
+						" " +
+						(t("rsvp_new_customers") || "New Customers"),
 					value: newCustomerCount,
 					isCurrency: false,
 				},

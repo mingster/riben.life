@@ -72,7 +72,7 @@ const CartSummary = () => {
 
 							<div className="place-self-end">
 								<Link href="/" className="pl-2 text-xs">
-									{t("cart_summary_keepShopping")}
+									{t("cart_summary_keep_shopping")}
 								</Link>
 							</div>
 						</div>
@@ -84,7 +84,7 @@ const CartSummary = () => {
 							value={"ghost"}
 							className="w-full"
 						>
-							{t("cart_summary_placeOrder")}
+							{t("cart_summary_place_order")}
 						</Button>
 					</div>
 				</div>

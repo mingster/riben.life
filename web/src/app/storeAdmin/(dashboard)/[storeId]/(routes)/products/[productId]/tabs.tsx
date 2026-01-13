@@ -96,7 +96,7 @@ export const ProductEditTabs = ({
 		);
 
 		toastSuccess({
-			title: t("Product_deleted"),
+			title: t("product_deleted"),
 			description: "",
 		});
 
@@ -139,13 +139,13 @@ export const ProductEditTabs = ({
 						<BreadcrumbList>
 							<BreadcrumbItem>
 								<BreadcrumbLink href={link_home}>
-									{t("StoreDashboard")}
+									{t("store_dashboard")}
 								</BreadcrumbLink>
 							</BreadcrumbItem>
 							<BreadcrumbSeparator />
 							<BreadcrumbItem>
 								<BreadcrumbLink href={link_products}>
-									{t("Products")}
+									{t("products")}
 								</BreadcrumbLink>
 							</BreadcrumbItem>
 							<BreadcrumbSeparator />
@@ -178,7 +178,7 @@ export const ProductEditTabs = ({
 						className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
 						value="basic"
 					>
-						{t("Product_tab_basic")}
+						{t("product_tab_basic")}
 					</TabsTrigger>
 					{params.productId !== "new" && (
 						<>
@@ -186,28 +186,28 @@ export const ProductEditTabs = ({
 								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
 								value="categories"
 							>
-								{t("Product_tab_category")}
+								{t("product_tab_category")}
 							</TabsTrigger>
 
 							<TabsTrigger
 								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
 								value="options"
 							>
-								{t("Product_tab_options")}
+								{t("product_tab_options")}
 							</TabsTrigger>
 
 							<TabsTrigger
 								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
 								value="attribute"
 							>
-								{t("Product_tab_attribute")}
+								{t("product_tab_attribute")}
 							</TabsTrigger>
 
 							<TabsTrigger
 								className="data-[state=active]:text-amber-600 dark:data-[state=active]:text-green-600 px-5 lg:min-w-40"
 								value="images"
 							>
-								{t("Product_tab_images")}
+								{t("product_tab_images")}
 							</TabsTrigger>
 						</>
 					)}

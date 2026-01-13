@@ -132,7 +132,7 @@ export function EditFacilityDialog({
 		}
 
 		toastSuccess({
-			title: t("Facility") + t(isEditMode ? "updated" : "created"),
+			title: t("facility") + t(isEditMode ? "updated" : "created"),
 			description: "",
 		});
 

@@ -1153,7 +1153,7 @@ export function AdminReservationForm({
 							const fieldLabels: Record<string, string> = {
 								rsvpTime: t("RSVP_Time") || "RSVP Time",
 								arriveTime: t("Arrive_Time") || "Arrive Time",
-								facilityId: t("Facility") || "Facility",
+								facilityId: t("facility") || "Facility",
 								serviceStaffId: t("Service_Staff") || "Service Staff",
 								customerId: t("Customer") || "Customer",
 								status: t("Status") || "Status",
@@ -1188,7 +1188,7 @@ export function AdminReservationForm({
 					{loading
 						? isEditMode
 							? t("updating") || "Updating..."
-							: t("Submitting") || "Submitting..."
+							: t("submitting") || "Submitting..."
 						: isEditMode
 							? t("update_reservation")
 							: t("create_Reservation")}

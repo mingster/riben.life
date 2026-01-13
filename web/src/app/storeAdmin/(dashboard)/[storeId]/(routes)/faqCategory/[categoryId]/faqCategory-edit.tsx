@@ -109,7 +109,7 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
 		}
 	};
 
-	const pageTitle = t(action) + t("FaqCategory");
+	const pageTitle = t(action) + t("faq_category");
 
 	return (
 		<>
@@ -127,14 +127,14 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
 								name="name"
 								render={({ field }) => (
 									<FormItem className="p-3">
-										<FormLabel>{t("FaqCategory_name")}</FormLabel>
+										<FormLabel>{t("faq_category_name")}</FormLabel>
 										<FormControl>
 											<Input
 												type="text"
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
 												placeholder={
-													t("input_placeholder1") + t("FaqCategory_name")
+													t("input_placeholder1") + t("faq_category_name")
 												}
 												{...field}
 											/>
@@ -148,13 +148,13 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
 								name="sortOrder"
 								render={({ field }) => (
 									<FormItem className="p-3">
-										<FormLabel>{t("FaqCategory_sortOrder")}</FormLabel>
+										<FormLabel>{t("faq_category_sort_order")}</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
 												placeholder={
-													t("input_placeholder1") + t("FaqCategory_sortOrder")
+													t("input_placeholder1") + t("faq_category_sort_order")
 												}
 												type="number"
 												{...field}
@@ -176,8 +176,8 @@ export const FaqCategoryEdit = ({ initialData, action }: editProps) => {
 										([field, error]) => {
 											// Map field names to user-friendly labels using i18n
 											const fieldLabels: Record<string, string> = {
-												name: t("FaqCategory_name") || "FAQ Category Name",
-												sortOrder: t("FaqCategory_sortOrder") || "Sort Order",
+												name: t("faq_category_name") || "FAQ Category Name",
+												sortOrder: t("faq_category_sort_order") || "Sort Order",
 											};
 											const fieldLabel = fieldLabels[field] || field;
 											return (

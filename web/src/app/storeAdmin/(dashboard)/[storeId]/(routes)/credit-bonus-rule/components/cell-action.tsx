@@ -55,7 +55,7 @@ export const CellAction: React.FC<CellActionProps> = ({
 			}
 
 			toastSuccess({
-				title: t("Credit_Bonus_Rules") + t("deleted"),
+				title: t("credit_bonus_rules") + t("deleted"),
 				description: "",
 			});
 			onDeleted?.(data.id);

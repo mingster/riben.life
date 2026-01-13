@@ -88,7 +88,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 
 			await axios.patch(url, data);
 			toastSuccess({
-				title: t("FAQ") + t("saved"),
+				title: t("f_a_q") + t("saved"),
 				description: "",
 			});
 			router.refresh();
@@ -99,7 +99,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 				data,
 			);
 			toastSuccess({
-				title: t("FAQ") + t("created"),
+				title: t("f_a_q") + t("created"),
 				description: "",
 			});
 
@@ -125,7 +125,7 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
       */
 	};
 
-	const pageTitle = t(action) + t("FAQ");
+	const pageTitle = t(action) + t("f_a_q");
 
 	return (
 		<>
@@ -147,12 +147,12 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 								name="question"
 								render={({ field }) => (
 									<FormItem className="p-3">
-										<FormLabel>{t("FAQ")}</FormLabel>
+										<FormLabel>{t("f_a_q")}</FormLabel>
 										<FormControl>
 											<Textarea
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
-												placeholder={t("input_placeholder1") + t("FAQ")}
+												placeholder={t("input_placeholder1") + t("f_a_q")}
 												{...field}
 											/>
 										</FormControl>
@@ -165,12 +165,14 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 								name="answer"
 								render={({ field }) => (
 									<FormItem className="p-3">
-										<FormLabel>{t("FAQ_Answer")}</FormLabel>
+										<FormLabel>{t("f_a_q_answer")}</FormLabel>
 										<FormControl>
 											<Textarea
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
-												placeholder={t("input_placeholder1") + t("FAQ_Answer")}
+												placeholder={
+													t("input_placeholder1") + t("f_a_q_answer")
+												}
 												{...field}
 											/>
 										</FormControl>
@@ -184,12 +186,12 @@ export const FaqEdit = ({ initialData, category, action }: editProps) => {
 								name="sortOrder"
 								render={({ field }) => (
 									<FormItem className="p-3">
-										<FormLabel>{t("sortOrder")}</FormLabel>
+										<FormLabel>{t("sort_order")}</FormLabel>
 										<FormControl>
 											<Input
 												disabled={loading || form.formState.isSubmitting}
 												className="font-mono"
-												placeholder={t("input_placeholder1") + t("sortOrder")}
+												placeholder={t("input_placeholder1") + t("sort_order")}
 												type="number"
 												{...field}
 											/>
