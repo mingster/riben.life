@@ -8,12 +8,12 @@ import {
 import { sqlClient } from "@/lib/prismadb";
 import type { Store, StoreOrder } from "@/types";
 import { OrderStatus, PaymentStatus } from "@/types/enum";
-import isProLevel from "../is-pro-level";
 import {
 	epochToDate,
 	dateToEpoch,
 	getUtcNowEpoch,
 } from "@/utils/datetime-utils";
+import isProLevel from "../is-pro-level";
 
 const LinePayRefund = async (
 	orderId: string,
@@ -28,7 +28,6 @@ const LinePayRefund = async (
 		throw new Error("order not found");
 	}
 	const store = (await getStoreById(order.storeId)) as Store;
-	const ispro = await isProLevel(order.storeId);
 
 	if (store === null) throw Error("store is null");
 	if (order.PaymentMethod === null) throw Error("PaymentMethod is null");
@@ -43,7 +42,11 @@ const LinePayRefund = async (
 		body: requestBody,
 	};
 
-	const linePayClient = await getLinePayClientByStore(store);
+	const linePayClient = await getLinePayClientByStore(order.storeId, store);
+	if (!linePayClient) {
+		throw new Error("LINE Pay client not found");
+	}
+
 	const res = await linePayClient.refund.send(requestConfig);
 
 	if (res.body.returnCode === "0000") {
@@ -78,7 +81,8 @@ const LinePayRefund = async (
 		const feeTax = Number(fee * 0.05);
 
 		// fee charge by riben.life
-		const platform_fee = ispro ? 0 : Number(Number(order.orderTotal) * 0.01);
+		const isPro = await isProLevel(order.storeId);
+		const platform_fee = isPro ? 0 : Number(Number(order.orderTotal) * 0.01);
 
 		// availabilityDate = order date + payment methods' clear days
 		const updatedAtDate =

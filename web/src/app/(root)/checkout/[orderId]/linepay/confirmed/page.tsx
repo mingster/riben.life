@@ -55,7 +55,11 @@ export default async function LinePayConfirmedPage({
 	}
 
 	const store = (await getStoreById(order.storeId)) as Store;
-	const linePayClient = await getLinePayClientByStore(store);
+	const linePayClient = await getLinePayClientByStore(order.storeId, store);
+
+	if (!linePayClient) {
+		throw new Error("LINE Pay client not found");
+	}
 
 	const confirmRequest = {
 		transactionId: transactionId as string,

@@ -10,14 +10,10 @@ import type {
 	PaymentData,
 } from "./types";
 import type { StoreOrder } from "@prisma/client";
-import {
-	type Currency,
-	getLinePayClient,
-	getLinePayClientByStore,
-	type LinePayClient,
-} from "@/lib/linePay";
+import { type Currency, getLinePayClientByStore } from "@/lib/linePay";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
+import { LinePayClient } from "@/lib/linePay/type";
 
 /**
  * LINE Pay Payment Method Plugin
@@ -39,24 +35,7 @@ export class LinePayPlugin implements PaymentMethodPlugin {
 		config: PluginConfig,
 	): Promise<LinePayClient | null> {
 		try {
-			// Get store with LINE Pay configuration
-			const store = await sqlClient.store.findUnique({
-				where: { id: storeId },
-				select: {
-					LINE_PAY_ID: true,
-					LINE_PAY_SECRET: true,
-				},
-			});
-
-			if (store) {
-				return await getLinePayClientByStore(store as any);
-			}
-
-			// Fall back to environment variables if store config not available
-			return getLinePayClient(
-				process.env.LINE_PAY_ID || null,
-				process.env.LINE_PAY_SECRET || null,
-			);
+			return await getLinePayClientByStore(storeId);
 		} catch (error) {
 			logger.error("Failed to get LINE Pay client", {
 				metadata: {
