@@ -110,12 +110,12 @@ export const DisplayOrder: React.FC<orderProps> = ({
 								</span>
 							)}
 						</div>
-						<div className="text-[10px] sm:text-xs text-muted-foreground font-mono shrink-0 items-end justify-end">
+						<div className="sm:text-xs text-muted-foreground font-mono shrink-0 items-end justify-end">
 							{formatDateTime(order.createdAt)}
 						</div>
 					</div>
 
-					<div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs font-mono text-muted-foreground">
+					<div className="flex flex-wrap items-center gap-2 sm:text-xs font-mono text-muted-foreground">
 						{showPickupCode && order.pickupCode && (
 							<div className="flex items-center gap-1">
 								<span className="font-medium">{t("order_pickup_code")}:</span>
@@ -250,7 +250,7 @@ export const DisplayOrderItem: React.FC<itemViewOrops> = ({ currentItem }) => {
 				<div className="font-medium truncate">{currentItem.name}</div>
 
 				{currentItem.variants && currentItem.variants.length > 0 && (
-					<div className="mt-1 space-y-0.5 text-[10px] sm:text-xs text-muted-foreground">
+					<div className="mt-1 space-y-0.5 sm:text-xs text-muted-foreground">
 						{currentItem.variants.split(",").map((itemOption) => (
 							<div key={itemOption} className="truncate">
 								• {itemOption}

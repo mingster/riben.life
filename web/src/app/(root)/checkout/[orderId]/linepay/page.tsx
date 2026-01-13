@@ -65,7 +65,11 @@ const PaymentPage = async (props: {
 	}
 
 	const store = (await getStoreById(order.storeId)) as Store;
-	const linePayClient = await getLinePayClientByStore(store);
+	const linePayClient = await getLinePayClientByStore(order.storeId, store);
+
+	if (!linePayClient) {
+		throw new Error("LINE Pay client not found");
+	}
 
 	const env =
 		process.env.NODE_ENV === "development" ? "development" : "production";

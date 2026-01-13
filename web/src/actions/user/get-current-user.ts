@@ -67,7 +67,7 @@ const getCurrentUser = async (): Promise<User | null> => {
 					rsvpTime: "desc",
 				},
 			},
-			CustomerCredits: true,
+
 			CustomerCreditLedger: {
 				include: {
 					Creator: true,
@@ -77,6 +77,30 @@ const getCurrentUser = async (): Promise<User | null> => {
 					createdAt: "desc",
 				},
 			},
+
+			CustomerCredit: true,
+			CustomerFiatLedger: {
+				orderBy: {
+					createdAt: "desc",
+				},
+				include: {
+					Creator: true,
+					Store: true,
+				},
+			},
+			/*
+			CustomerCreditLedger: {
+				where: {
+					storeId: params.storeId,
+				},
+				include: {
+					Creator: true,
+					StoreOrder: true,
+				},
+				orderBy: {
+					createdAt: "desc",
+				},
+			},*/
 		},
 	});
 

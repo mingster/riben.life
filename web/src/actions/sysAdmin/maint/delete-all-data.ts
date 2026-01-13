@@ -15,6 +15,9 @@ export const deleteAllData = async () => {
 		rsvpCount,
 		rsvpBlacklistCount,
 		rsvpTagCount,
+		deliveryStatusCount,
+		messageQueueCount,
+		emailQueueCount,
 	] = await Promise.all([
 		sqlClient.storeLedger.deleteMany({ where: {} }),
 		sqlClient.storeOrder.deleteMany({ where: {} }),
@@ -25,6 +28,9 @@ export const deleteAllData = async () => {
 		sqlClient.rsvp.deleteMany({ where: {} }),
 		sqlClient.rsvpBlacklist.deleteMany({ where: {} }),
 		sqlClient.rsvpTag.deleteMany({ where: {} }),
+		sqlClient.notificationDeliveryStatus.deleteMany({ where: {} }),
+		sqlClient.messageQueue.deleteMany({ where: {} }),
+		sqlClient.emailQueue.deleteMany({ where: {} }),
 	]);
 
 	logger.info("Deleted all data", {
@@ -38,6 +44,9 @@ export const deleteAllData = async () => {
 			rsvpCount: rsvpCount.count,
 			rsvpBlacklistCount: rsvpBlacklistCount.count,
 			rsvpTagCount: rsvpTagCount.count,
+			deliveryStatusCount: deliveryStatusCount.count,
+			messageQueueCount: messageQueueCount.count,
+			emailQueueCount: emailQueueCount.count,
 		},
 		tags: ["action", "maintenance", "delete-all"],
 	});
@@ -54,5 +63,8 @@ export const deleteAllData = async () => {
 		rsvpCount: rsvpCount.count,
 		rsvpBlacklistCount: rsvpBlacklistCount.count,
 		rsvpTagCount: rsvpTagCount.count,
+		deliveryStatusCount: deliveryStatusCount.count,
+		messageQueueCount: messageQueueCount.count,
+		emailQueueCount: emailQueueCount.count,
 	};
 };

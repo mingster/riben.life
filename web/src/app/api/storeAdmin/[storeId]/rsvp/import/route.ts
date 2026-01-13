@@ -283,10 +283,7 @@ export async function POST(
 						// Get current customer fiat balance
 						const customerCredit = await tx.customerCredit.findUnique({
 							where: {
-								storeId_userId: {
-									storeId: params.storeId,
-									userId: customerId,
-								},
+								userId: customerId,
 							},
 						});
 
@@ -298,13 +295,9 @@ export async function POST(
 						// Update CustomerCredit.fiat
 						await tx.customerCredit.upsert({
 							where: {
-								storeId_userId: {
-									storeId: params.storeId,
-									userId: customerId,
-								},
+								userId: customerId,
 							},
 							create: {
-								storeId: params.storeId,
 								userId: customerId,
 								fiat: new Prisma.Decimal(newFiatBalance),
 								point: new Prisma.Decimal(0),
@@ -484,10 +477,7 @@ export async function POST(
 								// Get current customer fiat balance
 								const customerCredit = await tx.customerCredit.findUnique({
 									where: {
-										storeId_userId: {
-											storeId: params.storeId,
-											userId: customerId,
-										},
+										userId: customerId,
 									},
 								});
 
@@ -503,10 +493,7 @@ export async function POST(
 									// Update CustomerCredit.fiat (deduct)
 									await tx.customerCredit.update({
 										where: {
-											storeId_userId: {
-												storeId: params.storeId,
-												userId: customerId,
-											},
+											userId: customerId,
 										},
 										data: {
 											fiat: new Prisma.Decimal(newFiatBalance),
@@ -578,10 +565,7 @@ export async function POST(
 									// Update CustomerCredit.fiat (deduct)
 									await tx.customerCredit.update({
 										where: {
-											storeId_userId: {
-												storeId: params.storeId,
-												userId: customerId,
-											},
+											userId: customerId,
 										},
 										data: {
 											fiat: new Prisma.Decimal(newFiatBalance),

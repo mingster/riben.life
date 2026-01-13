@@ -554,7 +554,7 @@ export async function markOrderAsPaidCore(
 						}
 					}
 
-					if (paymentMethod.payUrl === "credit") {
+					if (paymentMethod.payUrl === "creditPoint") {
 						// RSVP paid with credit points: Use HOLD design with CustomerCreditLedger
 						if (
 							!storeForRsvp.useCustomerCredit ||
@@ -575,10 +575,7 @@ export async function markOrderAsPaidCore(
 						// Get current customer credit balance
 						const customerCredit = await tx.customerCredit.findUnique({
 							where: {
-								storeId_userId: {
-									storeId: order.storeId,
-									userId: order.userId!,
-								},
+								userId: order.userId!,
 							},
 						});
 
@@ -594,10 +591,7 @@ export async function markOrderAsPaidCore(
 						// Update CustomerCredit (point field) - decrease balance (HOLD)
 						await tx.customerCredit.upsert({
 							where: {
-								storeId_userId: {
-									storeId: order.storeId,
-									userId: order.userId!,
-								},
+								userId: order.userId!,
 							},
 							update: {
 								point: {
@@ -606,7 +600,6 @@ export async function markOrderAsPaidCore(
 								updatedAt: getUtcNowEpoch(),
 							},
 							create: {
-								storeId: order.storeId,
 								userId: order.userId!,
 								point: new Prisma.Decimal(-requiredCredit),
 								fiat: new Prisma.Decimal(0),
@@ -631,6 +624,62 @@ export async function markOrderAsPaidCore(
 
 						// No StoreLedger entry is created at this stage (HOLD design)
 						// Revenue will be recognized when RSVP is completed
+					} else if (paymentMethod.payUrl === "credit") {
+						// RSVP paid with fiat credit (account balance): Use HOLD design with CustomerFiatLedger
+						const fiatAmount = Number(order.orderTotal);
+
+						// Get current customer fiat balance
+						const customerCredit = await tx.customerCredit.findUnique({
+							where: {
+								userId: order.userId!,
+							},
+						});
+
+						const currentBalance = customerCredit
+							? Number(customerCredit.fiat)
+							: 0;
+						const newBalance = currentBalance - fiatAmount; // Decrease balance (HOLD)
+
+						if (newBalance < 0) {
+							throw new SafeError("Insufficient fiat balance");
+						}
+
+						// Update CustomerCredit (fiat field) - decrease balance (HOLD)
+						await tx.customerCredit.upsert({
+							where: {
+								userId: order.userId!,
+							},
+							update: {
+								fiat: {
+									decrement: fiatAmount,
+								},
+								updatedAt: getUtcNowEpoch(),
+							},
+							create: {
+								userId: order.userId!,
+								fiat: new Prisma.Decimal(-fiatAmount),
+								point: new Prisma.Decimal(0),
+								updatedAt: getUtcNowEpoch(),
+							},
+						});
+
+						// Create CustomerFiatLedger entry with HOLD type (HOLD design)
+						await tx.customerFiatLedger.create({
+							data: {
+								storeId: order.storeId,
+								userId: order.userId!,
+								amount: new Prisma.Decimal(-fiatAmount), // Negative for hold
+								balance: new Prisma.Decimal(newBalance),
+								type: "HOLD", // HOLD type
+								referenceId: order.id, // Link to order (which links to RSVP)
+								note: rsvpLedgerNote,
+								creatorId: order.userId!, // Customer initiated payment
+								createdAt: getUtcNowEpoch(),
+							},
+						});
+
+						// No StoreLedger entry is created at this stage (HOLD design)
+						// Revenue will be recognized when RSVP is completed
 					} else {
 						// RSVP paid with external payment: Use HOLD design with CustomerFiatLedger
 						const fiatAmount = Number(order.orderTotal);
@@ -638,10 +687,7 @@ export async function markOrderAsPaidCore(
 						// Get current customer fiat balance
 						const customerCredit = await tx.customerCredit.findUnique({
 							where: {
-								storeId_userId: {
-									storeId: order.storeId,
-									userId: order.userId!,
-								},
+								userId: order.userId!,
 							},
 						});
 
@@ -653,10 +699,7 @@ export async function markOrderAsPaidCore(
 						// Update CustomerCredit (fiat field)
 						await tx.customerCredit.upsert({
 							where: {
-								storeId_userId: {
-									storeId: order.storeId,
-									userId: order.userId!,
-								},
+								userId: order.userId!,
 							},
 							update: {
 								fiat: {
@@ -665,7 +708,6 @@ export async function markOrderAsPaidCore(
 								updatedAt: getUtcNowEpoch(),
 							},
 							create: {
-								storeId: order.storeId,
 								userId: order.userId!,
 								fiat: new Prisma.Decimal(fiatAmount),
 								point: new Prisma.Decimal(0),

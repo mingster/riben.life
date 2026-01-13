@@ -60,11 +60,10 @@ export const getCustomersAction = storeActionClient
 			},
 		})) as User[];
 
-		// Get CustomerCredit records for all users in this store
+		// Get CustomerCredit records for all users (credit is now cross-store)
 		const userIds = users.map((user) => user.id);
 		const customerCredits = await sqlClient.customerCredit.findMany({
 			where: {
-				storeId,
 				userId: {
 					in: userIds,
 				},

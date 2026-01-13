@@ -121,28 +121,55 @@ export const getRsvpStatsAction = storeActionClient
 				},
 			}),
 
-			// Count and sum of unused fiat balance (fiat > 0)
-			Promise.all([
-				sqlClient.customerCredit.count({
-					where: {
-						storeId,
-						fiat: {
-							gt: 0,
-						},
-					},
-				}),
-				sqlClient.customerCredit.aggregate({
-					where: {
-						storeId,
-						fiat: {
-							gt: 0,
-						},
-					},
-					_sum: {
-						fiat: true,
-					},
-				}),
-			]),
+			// Count and sum of unused fiat balance (fiat > 0) for customers in this store's organization
+			// Since credit is now cross-store, we need to filter by organization members
+			store?.organizationId
+				? (async () => {
+						// Get all customer user IDs for this store's organization
+						const customerMembers = await sqlClient.member.findMany({
+							where: {
+								organizationId: store.organizationId,
+								role: MemberRole.customer,
+							},
+							select: {
+								userId: true,
+							},
+						});
+
+						const customerUserIds = customerMembers.map((m) => m.userId);
+
+						if (customerUserIds.length === 0) {
+							return [0, { _sum: { fiat: null } }] as const;
+						}
+
+						// Count and sum CustomerCredit records for these users with fiat > 0
+						return Promise.all([
+							sqlClient.customerCredit.count({
+								where: {
+									userId: {
+										in: customerUserIds,
+									},
+									fiat: {
+										gt: 0,
+									},
+								},
+							}),
+							sqlClient.customerCredit.aggregate({
+								where: {
+									userId: {
+										in: customerUserIds,
+									},
+									fiat: {
+										gt: 0,
+									},
+								},
+								_sum: {
+									fiat: true,
+								},
+							}),
+						]);
+					})()
+				: Promise.resolve([0, { _sum: { fiat: null } }] as const),
 
 			// Count total customers in this store (all members with customer role in the organization)
 			store?.organizationId

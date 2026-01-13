@@ -233,7 +233,7 @@ export const CustomerFiatUsageClient: React.FC<
 						variant={periodType === "week" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("week")}
-						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
+						className="h-10 sm:h-9 touch-manipulation"
 					>
 						{t("this_week") || "This Week"}
 					</Button>
@@ -241,7 +241,7 @@ export const CustomerFiatUsageClient: React.FC<
 						variant={periodType === "month" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("month")}
-						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
+						className="h-10 sm:h-9 touch-manipulation"
 					>
 						{t("this_month") || "This Month"}
 					</Button>
@@ -249,7 +249,7 @@ export const CustomerFiatUsageClient: React.FC<
 						variant={periodType === "year" ? "default" : "outline"}
 						size="sm"
 						onClick={() => handlePeriodChange("year")}
-						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
+						className="h-10 sm:h-9 touch-manipulation"
 					>
 						{t("this_year") || "This Year"}
 					</Button>
@@ -261,7 +261,7 @@ export const CustomerFiatUsageClient: React.FC<
 						<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
 							<label
 								htmlFor="start-time"
-								className="text-sm font-medium whitespace-nowrap"
+								className="font-medium whitespace-nowrap"
 							>
 								{t("start_time") || "Start Time"}:
 							</label>
@@ -276,13 +276,13 @@ export const CustomerFiatUsageClient: React.FC<
 										setPeriodType("custom");
 									}
 								}}
-								className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto touch-manipulation"
+								className="h-10 text-base sm:sm:h-9 w-full sm:w-auto touch-manipulation"
 							/>
 						</div>
 						<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
 							<label
 								htmlFor="end-time"
-								className="text-sm font-medium whitespace-nowrap"
+								className="font-medium whitespace-nowrap"
 							>
 								{t("end_time") || "End Time"}:
 							</label>
@@ -297,7 +297,7 @@ export const CustomerFiatUsageClient: React.FC<
 										setPeriodType("custom");
 									}
 								}}
-								className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto touch-manipulation"
+								className="h-10 text-base sm:sm:h-9 w-full sm:w-auto touch-manipulation"
 							/>
 						</div>
 					</div>

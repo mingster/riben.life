@@ -1,7 +1,7 @@
 import { stripeClient } from "@better-auth/stripe/client";
 import {
 	adminClient,
-	//anonymousClient,
+	anonymousClient,
 	apiKeyClient,
 	customSessionClient,
 	//emailOTPClient,
@@ -40,6 +40,7 @@ export const authClient = createAuthClient({
 		genericOAuthClient(),
 		apiKeyClient(),
 		phoneNumberClient(),
+		anonymousClient(),
 
 		/*
 		emailOTPClient(),

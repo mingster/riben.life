@@ -84,7 +84,7 @@ export const OrderTab = ({ orders }: props) => {
 								setFilterStatus(Number(key));
 							}}
 						>
-							{t(`rderStatus_${OrderStatus[Number(key)]}`)}
+							{t(`order_status_${OrderStatus[Number(key)]}`)}
 						</Button>
 					))}
 				</div>

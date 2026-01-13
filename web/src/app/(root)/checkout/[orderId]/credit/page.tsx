@@ -90,10 +90,7 @@ export default async function CreditPaymentPage(props: {
 	// Get customer credit balance
 	const customerCredit = await sqlClient.customerCredit.findUnique({
 		where: {
-			storeId_userId: {
-				storeId: order.storeId,
-				userId: order.userId,
-			},
+			userId: order.userId,
 		},
 	});
 
@@ -132,13 +129,9 @@ export default async function CreditPaymentPage(props: {
 		// 1. Update customer fiat balance
 		await tx.customerCredit.upsert({
 			where: {
-				storeId_userId: {
-					storeId: order.storeId,
-					userId: order.userId,
-				},
+				userId: order.userId,
 			},
 			create: {
-				storeId: order.storeId,
 				userId: order.userId,
 				fiat: new Prisma.Decimal(newBalance),
 				point: new Prisma.Decimal(0), // Ensure point is set

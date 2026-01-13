@@ -40,7 +40,7 @@ import { useI18n } from "@/providers/i18n-provider";
 import { useIsHydrated } from "@/hooks/use-hydrated";
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { GetMenuList } from "./menu-list";
 import StoreSwitcher from "./store-switcher";
 import { useStoreAdminContext } from "./store-admin-context";
@@ -151,7 +151,7 @@ export function StoreAdminSidebar() {
 		<span className="relative inline-flex items-center pr-3">
 			<span>{text}</span>
 			{badge && badge > 0 ? (
-				<span className="absolute -top-0.2 -right-1 size-4 rounded-full bg-green-800 text-slate-100 flex justify-center items-center text-[10px]">
+				<span className="absolute -top-0.2 -right-1 size-4 rounded-full bg-green-800 text-slate-100 flex justify-center items-center">
 					<span>{badge}</span>
 				</span>
 			) : null}

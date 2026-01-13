@@ -43,6 +43,7 @@ model User {
   banExpires DateTime?
 
   normalizedEmail String?
+  isAnonymous     Boolean? @default(false)
 
   sessions    Session[]
   accounts    Account[]
@@ -62,7 +63,7 @@ model User {
   Reservations      Rsvp[]
   RsvpCreator       Rsvp[]          @relation("RsvpCreatedBy")
 
-  CustomerCredits            CustomerCredit[]
+  CustomerCredit             CustomerCredit?
   CustomerCreditLedger       CustomerCreditLedger[] @relation("UserCustomerCreditLogs")
   CustomerCreditLogsCreator  CustomerCreditLedger[] @relation("UserCustomerCreditLogsCreator")
   CustomerFiatLedger         CustomerFiatLedger[]   @relation("UserFiatAccountLogs")
@@ -569,16 +570,12 @@ model SubscriptionPayment {
 
 model CustomerCredit {
   id        String  @id @default(uuid())
-  storeId   String
-  userId    String //userId of the customer
+  userId    String  @unique //userId of the customer (one credit account per user, usable across stores)
   point     Decimal @default(0) //store credit point on account
   fiat      Decimal @default(0) //store fiat balance on account
   updatedAt BigInt
-  Store     Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
   User      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([storeId, userId])
-  @@index([storeId])
   @@index([userId])
   @@index([updatedAt])
 }
@@ -715,7 +712,6 @@ model Store {
   rsvpSettings               RsvpSettings?
   rsvpBlacklists             RsvpBlacklist[]
   rsvpTags                   RsvpTag[]
-  CustomerCredits            CustomerCredit[]
   CreditBonusRules           CreditBonusRule[]
   CustomerCreditLogs         CustomerCreditLedger[]
   CustomerFiatLedgers        CustomerFiatLedger[]

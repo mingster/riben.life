@@ -268,10 +268,7 @@ export async function deduceCustomerCredit(
 	// Get current credit balance
 	const existingCredit = await tx.customerCredit.findUnique({
 		where: {
-			storeId_userId: {
-				storeId,
-				userId: customerId,
-			},
+			userId: customerId,
 		},
 	});
 
@@ -302,10 +299,7 @@ export async function deduceCustomerCredit(
 	// Update CustomerCredit
 	await tx.customerCredit.upsert({
 		where: {
-			storeId_userId: {
-				storeId,
-				userId: customerId,
-			},
+			userId: customerId,
 		},
 		update: {
 			point: {
@@ -314,7 +308,6 @@ export async function deduceCustomerCredit(
 			updatedAt: getUtcNowEpoch(),
 		},
 		create: {
-			storeId,
 			userId: customerId,
 			point: -creditToDeduct, // Negative balance if deducting from zero
 			updatedAt: getUtcNowEpoch(),

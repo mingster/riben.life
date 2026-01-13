@@ -190,7 +190,12 @@ export function RefillAccountBalanceForm({
 												className="h-10 sm:h-9 flex flex-row"
 											>
 												<span className="font-semibold">
-													{amount.toLocaleString()} {currency}
+													{new Intl.NumberFormat("en-US", {
+														style: "currency",
+														currency: (currency || "TWD").toUpperCase(),
+														maximumFractionDigits: 2,
+														minimumFractionDigits: 0,
+													}).format(amount)}
 												</span>
 											</Button>
 										);

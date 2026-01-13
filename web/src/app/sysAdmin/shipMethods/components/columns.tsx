@@ -35,7 +35,12 @@ export const createShippingMethodColumns = (
 				const currencyId = row.original.currencyId;
 				return (
 					<span>
-						{price.toFixed(2)} {currencyId.toUpperCase()}
+						{new Intl.NumberFormat("en-US", {
+							style: "currency",
+							currency: (currencyId || "TWD").toUpperCase(),
+							maximumFractionDigits: 2,
+							minimumFractionDigits: 0,
+						}).format(price)}
 					</span>
 				);
 			},

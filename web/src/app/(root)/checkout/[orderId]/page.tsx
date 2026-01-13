@@ -120,10 +120,7 @@ const CheckoutHomePage = async (props: {
 	if (order.userId && order.userId !== "") {
 		const customerCredit = await sqlClient.customerCredit.findUnique({
 			where: {
-				storeId_userId: {
-					storeId,
-					userId: order.userId,
-				},
+				userId: order.userId,
 			},
 		});
 

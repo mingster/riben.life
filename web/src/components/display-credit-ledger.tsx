@@ -69,7 +69,7 @@ export const DisplayCreditLedger = ({
 
 						<div className="flex items-center justify-between pt-2 border-t">
 							<div className="space-y-1">
-								<div className="text-[10px] text-muted-foreground">
+								<div className="text-muted-foreground">
 									{t("customer_fiat_amount")}
 								</div>
 								<div
@@ -93,9 +93,7 @@ export const DisplayCreditLedger = ({
 							</div>
 
 							<div className="space-y-1 text-right">
-								<div className="text-[10px] text-muted-foreground">
-									{t("balance")}
-								</div>
+								<div className="text-muted-foreground">{t("balance")}</div>
 								<div className="font-semibold text-base font-mono">
 									{new Intl.NumberFormat("en-US", {
 										style: "currency",
@@ -110,14 +108,14 @@ export const DisplayCreditLedger = ({
 						</div>
 
 						{item.note && (
-							<div className="text-[10px] pt-2 border-t">
+							<div className="pt-2 border-t">
 								<span className="text-muted-foreground">{t("note")}:</span>{" "}
 								<span className="text-foreground">{item.note}</span>
 							</div>
 						)}
 
 						{item.Creator?.name && (
-							<div className="text-[10px] text-muted-foreground">
+							<div className="text-muted-foreground">
 								<span className="font-medium">
 									{t("customer_credit_creator")}:
 								</span>{" "}

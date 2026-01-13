@@ -59,11 +59,7 @@ export default async function UsersBillingAdminPage(props: {
 					rsvpTime: "desc",
 				},
 			},
-			CustomerCredits: {
-				where: {
-					storeId: params.storeId,
-				},
-			},
+			CustomerCredit: true,
 			CustomerFiatLedger: {
 				where: {
 					storeId: params.storeId,

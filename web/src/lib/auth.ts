@@ -1,7 +1,7 @@
 import { stripe } from "@better-auth/stripe";
-import { PrismaClient } from "@prisma/client";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { phoneNumber } from "better-auth/plugins";
+import { anonymous } from "better-auth/plugins";
 
 import { passkey } from "@better-auth/passkey";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
@@ -20,6 +20,8 @@ import { sendAuthPasswordReset } from "@/actions/mail/send-auth-password-reset";
 import { stripe as stripeClient } from "@/lib/stripe/config";
 import { customSession } from "better-auth/plugins";
 import { sqlClient } from "./prismadb";
+import logger from "./logger";
+import { linkAnonymousAccount } from "@/utils/account-linking";
 
 const options = {
 	//...config options
@@ -226,6 +228,39 @@ export const auth = betterAuth({
 				await sendAuthMagicLink(email, url);
 			},
 			expiresIn: 60 * 60 * 24, // 24 hours
+		}),
+		anonymous({
+			generateRandomEmail: () => {
+				const id = crypto.randomUUID();
+				return `guest-${id}@riben.life`;
+			},
+			onLinkAccount: async ({ anonymousUser, newUser }) => {
+				// Extract user IDs from the callback parameters
+				// Better Auth passes user objects - handle both direct user object and nested structure
+				const anonymousUserId =
+					typeof anonymousUser === "object" && "id" in anonymousUser
+						? anonymousUser.id
+						: (anonymousUser as any).user?.id;
+				const newUserId =
+					typeof newUser === "object" && "id" in newUser
+						? newUser.id
+						: (newUser as any).user?.id;
+
+				if (!anonymousUserId || !newUserId) {
+					logger.error("Account linking failed: missing user IDs", {
+						metadata: {
+							anonymousUser: anonymousUser,
+							newUser: newUser,
+						},
+						tags: ["auth", "anonymous", "account-linking", "error"],
+					});
+					return;
+				}
+
+				// Call utility function to handle account linking
+				await linkAnonymousAccount(anonymousUserId, newUserId);
+			},
+			//emailDomainName: "riben.life", // -> temp-{id}@example.com
 		}),
 		bearer(),
 		passkey(),

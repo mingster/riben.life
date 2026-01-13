@@ -114,10 +114,7 @@ export async function processRsvpFiatRefund(
 		// 1. Get current customer fiat balance (or 0 if record doesn't exist)
 		const customerCredit = await tx.customerCredit.findUnique({
 			where: {
-				storeId_userId: {
-					storeId,
-					userId: customerId,
-				},
+				userId: customerId,
 			},
 		});
 
@@ -127,13 +124,9 @@ export async function processRsvpFiatRefund(
 		// 2. Update or create customer fiat balance
 		await tx.customerCredit.upsert({
 			where: {
-				storeId_userId: {
-					storeId,
-					userId: customerId,
-				},
+				userId: customerId,
 			},
 			create: {
-				storeId,
 				userId: customerId,
 				fiat: new Prisma.Decimal(newBalance),
 				point: new Prisma.Decimal(0), // Ensure point is set

@@ -732,13 +732,9 @@ export async function POST(
 							// Get or create CustomerCredit
 							const customerCredit = await tx.customerCredit.upsert({
 								where: {
-									storeId_userId: {
-										storeId: params.storeId,
-										userId: user.id,
-									},
+									userId: user.id,
 								},
 								create: {
-									storeId: params.storeId,
 									userId: user.id,
 									point: new Prisma.Decimal(creditPoint),
 									fiat: new Prisma.Decimal(0),
@@ -773,13 +769,9 @@ export async function POST(
 							// Get or create CustomerCredit
 							const customerCredit = await tx.customerCredit.upsert({
 								where: {
-									storeId_userId: {
-										storeId: params.storeId,
-										userId: user.id,
-									},
+									userId: user.id,
 								},
 								create: {
-									storeId: params.storeId,
 									userId: user.id,
 									point: new Prisma.Decimal(0),
 									fiat: new Prisma.Decimal(creditFiat),

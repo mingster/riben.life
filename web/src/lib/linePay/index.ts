@@ -6,7 +6,6 @@ import { requestWithClient } from "./line-pay-api/request";
 import type { LineMerchantConfig } from "./line-pay-api/type";
 import { createPaymentApi } from "./payment-api/create";
 import type { LinePayClient } from "./type";
-export type { LinePayClient } from "./type";
 export {
 	createPaymentDetailsRecoveryHandler,
 	paymentDetailsToConfirm,
@@ -20,8 +19,7 @@ export {
 	isLinePayApiError,
 } from "./line-pay-api/error/line-pay-api";
 export { TimeoutError, isTimeoutError } from "./line-pay-api/error/timeout";
-import isProLevel from "@/actions/storeAdmin/is-pro-level";
-import type { Store } from "@prisma/client";
+
 import { checkPaymentStatusWithClient } from "./line-pay-api/check-payment-status";
 import { checkRegKeyWithClient } from "./line-pay-api/check-regkey";
 import { expireRegKeyWithClient } from "./line-pay-api/expire-regkey";
@@ -192,22 +190,12 @@ export function getLinePayClient(id: string | null, secret: string | null) {
 		linePaySecret = process.env.LINE_PAY_SECRET || null;
 	}
 
-	// Trim whitespace and validate
-	linePayId = linePayId?.trim() || null;
-	linePaySecret = linePaySecret?.trim() || null;
-
 	if (!linePayId || !linePaySecret) {
 		throw new Error("LINE_PAY is not set");
 	}
 
-	if (linePayId.length === 0 || linePaySecret.length === 0) {
-		throw new Error("LINE_PAY_ID and LINE_PAY_SECRET cannot be empty");
-	}
-
 	const env =
 		process.env.NODE_ENV === "development" ? "development" : "production";
-
-	console.log("linePayId", linePayId, "linePaySecret", linePaySecret);
 
 	const linePayClient = createLinePayClient({
 		channelId: linePayId,
@@ -218,38 +206,59 @@ export function getLinePayClient(id: string | null, secret: string | null) {
 	return linePayClient;
 }
 
-export async function getLinePayClientByStore(store: Store) {
-	// Use environment variables by default
-	let linePayId = process.env.LINE_PAY_ID || null;
-	let linePaySecret = process.env.LINE_PAY_SECRET || null;
+/**
+ * Get LINE Pay client based on store configuration.
+ *
+ * Logic:
+ * - If store is not Pro level: use platform payment processing (null, null)
+ * - If store is Pro level:
+ *   - If store has LINE_PAY_ID and LINE_PAY_SECRET: use store credentials
+ *   - Otherwise: fall back to platform payment processing (null, null)
+ *
+ * @param storeId - Store ID to check Pro level and credentials
+ * @param store - Optional store object with LINE_PAY_ID and LINE_PAY_SECRET (if already fetched)
+ * @returns LINE Pay client or null if not configured
+ */
+export async function getLinePayClientByStore(
+	storeId: string,
+	store?: { LINE_PAY_ID: string | null; LINE_PAY_SECRET: string | null } | null,
+): Promise<LinePayClient | null> {
+	const { sqlClient } = await import("@/lib/prismadb");
+	const isProLevel = (await import("@/actions/storeAdmin/is-pro-level"))
+		.default;
 
-	// Check if store is Pro level
-	const isPro = await isProLevel(store?.id);
+	const isPro = await isProLevel(storeId);
 
-	// Only use store-level settings if:
-	// 1. Store is Pro level (not free)
-	// 2. Store has LINE_PAY_ID and LINE_PAY_SECRET values set
-	if (isPro && store.LINE_PAY_ID && store.LINE_PAY_SECRET) {
-		linePayId = store.LINE_PAY_ID;
-		linePaySecret = store.LINE_PAY_SECRET;
+	if (!isPro) {
+		// Use platform payment processing
+		return getLinePayClient(null, null);
 	}
 
-	// Trim whitespace and validate
-	linePayId = linePayId?.trim() || null;
-	linePaySecret = linePaySecret?.trim() || null;
-
-	if (!linePayId || !linePaySecret) {
-		throw new Error("LINE_PAY is not set");
+	// Get store configuration if not provided
+	let storeConfig = store;
+	if (!storeConfig) {
+		const storeData = await sqlClient.store.findUnique({
+			where: { id: storeId },
+			select: {
+				LINE_PAY_ID: true,
+				LINE_PAY_SECRET: true,
+			},
+		});
+		storeConfig = storeData;
 	}
 
-	if (linePayId.length === 0 || linePaySecret.length === 0) {
-		throw new Error("LINE_PAY_ID and LINE_PAY_SECRET cannot be empty");
+	// If store has LINE Pay credentials, use them
+	if (
+		storeConfig &&
+		storeConfig.LINE_PAY_ID !== null &&
+		storeConfig.LINE_PAY_SECRET !== null
+	) {
+		return getLinePayClient(
+			storeConfig.LINE_PAY_ID,
+			storeConfig.LINE_PAY_SECRET,
+		);
 	}
 
-	const linePayClient = getLinePayClient(
-		linePayId,
-		linePaySecret,
-	) as LinePayClient;
-
-	return linePayClient;
+	// Fall back to platform payment processing
+	return getLinePayClient(null, null);
 }

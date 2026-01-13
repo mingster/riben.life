@@ -165,9 +165,9 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 										<div className="font-medium text-sm sm:text-base truncate font-mono">
 											{order.orderNum || "-"}
 										</div>
-										<div className="text-muted-foreground text-[10px]">
+										<span className="font-mono text-xs sm:text-sm">
 											{format(storeDate, `${datetimeFormat} HH:mm`)}
-										</div>
+										</span>
 									</div>
 									<div className="shrink-0 flex flex-col gap-1.5 items-end">
 										<DisplayOrderStatus
@@ -177,7 +177,7 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 										<Button
 											variant="outline"
 											className={cn(
-												"cursor-default text-[10px] px-2 py-0.5 h-auto",
+												"cursor-default px-2 py-0.5 h-auto",
 												paymentStatusClass,
 											)}
 											size="sm"
@@ -189,9 +189,7 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 
 								<div className="flex items-center justify-between pt-2 border-t">
 									<div className="space-y-1 flex-1 min-w-0">
-										<div className="text-[10px] text-muted-foreground">
-											{t("items")}
-										</div>
+										<div className="text-muted-foreground">{t("items")}</div>
 										<div className="text-xs truncate" title={itemNames}>
 											{items.length > 1 && (
 												<span className="text-muted-foreground mr-1">
@@ -203,7 +201,7 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 									</div>
 
 									<div className="space-y-1 text-right shrink-0">
-										<div className="text-[10px] text-muted-foreground">
+										<div className="text-muted-foreground">
 											{t("order_total")}
 										</div>
 										<div className="font-semibold text-base">
@@ -214,7 +212,7 @@ export const ClientMyOrders: React.FC<ClientMyOrdersProps> = ({
 
 								{order.PaymentMethod?.name &&
 									order.PaymentMethod.name !== "TBD" && (
-										<div className="text-[10px] text-muted-foreground pt-2 border-t">
+										<div className="text-muted-foreground pt-2 border-t">
 											<span className="font-medium">
 												{t("payment_method_name")}:
 											</span>{" "}

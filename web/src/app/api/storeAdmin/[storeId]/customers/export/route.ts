@@ -111,18 +111,14 @@ export async function POST(
 			include: {
 				sessions: true,
 				members: true,
-				CustomerCredits: {
-					where: {
-						storeId: params.storeId,
-					},
-				},
+				CustomerCredit: true,
 			},
 		});
 
 		// Map users to include credit data (all customers have "customer" role)
 		const usersWithRole = users.map((user) => {
-			// Get CustomerCredit for this store (should be at most one due to unique constraint)
-			const customerCredit = user.CustomerCredits[0];
+			// Get CustomerCredit (now one-to-one relationship, cross-store)
+			const customerCredit = user.CustomerCredit;
 			const creditPoint = customerCredit ? Number(customerCredit.point) : 0;
 			const creditFiat = customerCredit ? Number(customerCredit.fiat) : 0;
 

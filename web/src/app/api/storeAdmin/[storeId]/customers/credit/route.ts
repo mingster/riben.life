@@ -24,10 +24,7 @@ export async function GET(
 
 		const customerCredit = await sqlClient.customerCredit.findUnique({
 			where: {
-				storeId_userId: {
-					storeId: params.storeId,
-					userId: userId,
-				},
+				userId: userId,
 			},
 		});
 

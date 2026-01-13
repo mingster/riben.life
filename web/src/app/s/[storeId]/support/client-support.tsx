@@ -58,7 +58,7 @@ interface TicketThreadProps {
 // Memoized ticket thread component
 const TicketThread = ({ thread, index }: TicketThreadProps) => (
 	<div className="flex flex-row gap-1.5 sm:gap-2">
-		<div className="bg-amber-900 p-1.5 sm:p-2 text-white text-[10px] sm:text-xs font-medium rounded min-w-[24px] sm:min-w-[28px] flex items-center justify-center">
+		<div className="bg-amber-900 p-1.5 sm:p-2 text-white sm:text-xs font-medium rounded min-w-[24px] sm:min-w-[28px] flex items-center justify-center">
 			{index + 1}
 		</div>
 		<DisplayTicket item={thread} />

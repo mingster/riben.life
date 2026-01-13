@@ -102,10 +102,7 @@ export class CreditPlugin implements PaymentMethodPlugin {
 		// Check customer credit balance
 		const customerCredit = await sqlClient.customerCredit.findUnique({
 			where: {
-				storeId_userId: {
-					storeId: order.storeId,
-					userId: order.User.id,
-				},
+				userId: order.User.id,
 			},
 		});
 
