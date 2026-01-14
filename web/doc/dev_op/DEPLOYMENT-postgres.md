@@ -265,11 +265,11 @@ On a clinet machine, reconnect using the new user:
 psql -h mx2.mingster.com -d postgres -U pstv_user
 
 # Create new database and its permission:
-CREATE DATABASE pstv_web;
-GRANT ALL PRIVILEGES ON DATABASE pstv_web TO pstv_user;
+CREATE DATABASE ribenlife;
+GRANT ALL PRIVILEGES ON DATABASE ribenlife TO pstv_user;
 
 \list
-\connect pstv_web
+\connect ribenlife
 \dt
 \q
 ```

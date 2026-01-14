@@ -48,18 +48,31 @@ sudo apt update && sudo apt upgrade -y
 #### Essential Software
 
 ```bash
-sudo apt install wget ca-certificates curl nano unzip ufw
+sudo apt install wget nano unzip ufw
 ```
 
 #### postgres/psql (optional)
 
-this is just so we can use psql on the box.
+this is just so we can use psql client on the box.
 
 ```bash
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+# Import the repository signing key:
+sudo apt install curl ca-certificates
 
-sudo apt install postgresql postgresql-contrib
+sudo mkdir -p /usr/share/postgresql-common/pgdg
+sudo install -d /usr/share/postgresql-common/pgdg
+sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+
+# Create the repository configuration file:
+. /etc/os-release
+sudo sh -c "echo 'deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $VERSION_CODENAME-pgdg main' > /etc/apt/sources.list.d/pgdg.list"
+
+# Update the package lists:
+sudo apt update
+
+# install
+sudo apt install postgresql-client-18
+#sudo apt install postgresql-18
 ```
 
 ##### config db access
@@ -75,10 +88,16 @@ sudo nano /etc/postgresql/18/main/pg_hba.conf
 hostssl    all     all     59.126.30.241/32       scram-sha-256
 ```
 
+```bash
+sudo systemctl restart postgresql
+```
+
 ##### check db access
 
-```bash
+back to the web site:
 
+```bash
+psql -h mx2.mingster.com -d riben_life -U pstv_user
 ```
 
 #### Install Node.js and npm
@@ -86,11 +105,15 @@ hostssl    all     all     59.126.30.241/32       scram-sha-256
 For latest version, visit the Node.js official documentation page.
 
 ```bash
-# installs nvm (Node Version Manager)
-sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+sudo apt install -y ca-certificates curl gnupg
 
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo bash -
+sudo apt-get install -y nodejs
+
+# installs nvm (Node Version Manager)
+#sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
 # download and install Node.js (you may need to restart the terminal)
-nvm install 24.12.0
+#nvm install 24.12.0
 # verifies the right Node.js version is in the environment
 node -v # should print `v24.xxx`
 
@@ -224,19 +247,35 @@ sudo certbot --nginx -d riben.life
 ### clone the source
 
 ```bash
-sudo mkdir /var/www
+sudo mkdir -p /var/www
 cd /var/www
 sudo  git clone https://github.com/mingster/riben.life.git
 ```
 
-### .env 
+### .env
 
 copy or edit .env over to production
+
+### file permission
+
+```bash
+# Replace 'youruser' with your actual username
+
+sudo chown -R youruser:www-data /var/www/html
+sudo usermod -aG www-data youruser
+
+
+# Apply 755 to all directories
+sudo find /var/www/html -type d -exec chmod 755 {} \;
+
+# Apply 644 to all files
+sudo find /var/www/html -type f -exec chmod 644 {} \;
+```
 
 ### build
 
 ```bash
-cd riben.life/web/bin
+cd /var/www/riben.life/web/bin
 
 sh deploy.sh
 
