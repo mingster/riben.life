@@ -242,7 +242,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 						totalCredit: processCreditTopUpResult.totalCredit,
 					}),
 					note: t("credit_refill_note_ledger", {
-						orderId: order.id,
+						orderNum: order.orderNum ?? order.id,
 					}),
 					availability: BigInt(availabilityDate.getTime()),
 					createdAt: getUtcNowEpoch(),

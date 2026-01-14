@@ -72,11 +72,16 @@ export default async function StripeConfirmedPage(props: {
 	});
 
 	if (confirmed) {
+		// For subscriptions, redirect to the store admin subscription page
+		// The orderId is actually a subscriptionPayment ID, not a StoreOrder ID
+		const returnUrl = `/storeAdmin/${params.storeId}/subscribe`;
+
 		return (
 			<Container>
 				<SuccessAndRedirect
 					order={order || undefined}
 					orderId={params.orderId}
+					returnUrl={returnUrl}
 				/>
 			</Container>
 		);
