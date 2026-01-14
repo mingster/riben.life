@@ -187,6 +187,15 @@ export const DisplayReservations = ({
 			return false;
 		}
 
+		// Cannot edit if already completed, cancelled, or no-show
+		if (
+			rsvp.status === RsvpStatus.Completed ||
+			rsvp.status === RsvpStatus.Cancelled ||
+			rsvp.status === RsvpStatus.NoShow
+		) {
+			return false;
+		}
+
 		// Only allow edit for Pending status or if alreadyPaid
 		if (rsvp.status !== RsvpStatus.Pending && !rsvp.alreadyPaid) {
 			return false;
@@ -298,6 +307,15 @@ export const DisplayReservations = ({
 	//Both buttons are hidden if the reservation is within the cancelHours window, preventing last-minute changes.
 	const canCancelReservation = (rsvp: Rsvp): boolean => {
 		if (!isUserReservation(rsvp)) {
+			return false;
+		}
+
+		// Cannot cancel if already completed, cancelled, or no-show
+		if (
+			rsvp.status === RsvpStatus.Completed ||
+			rsvp.status === RsvpStatus.Cancelled ||
+			rsvp.status === RsvpStatus.NoShow
+		) {
 			return false;
 		}
 

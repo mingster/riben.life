@@ -7,7 +7,7 @@ import { SafeError } from "@/utils/error";
 import { processFiatTopUp } from "@/lib/credit-bonus";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { Prisma } from "@prisma/client";
-import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
+import { OrderStatus, PaymentStatus } from "@/types/enum";
 import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
 import { ensureFiatRefillProduct } from "./ensure-fiat-refill-product";
@@ -18,7 +18,7 @@ import { ensureFiatRefillProduct } from "./ensure-fiat-refill-product";
  * It will:
  * 1. Process fiat top-up (add to CustomerCredit.fiat)
  * 2. Mark the order as paid
- * 3. Create StoreLedger entry for unearned revenue (type = CreditRecharge)
+ * 3. Create StoreLedger entry for unearned revenue (type = CustomerCredit)
  */
 export const processFiatTopUpAfterPaymentAction = baseClient
 	.metadata({ name: "processFiatTopUpAfterPayment" })
@@ -238,7 +238,7 @@ export const processFiatTopUpAfterPaymentAction = baseClient
 		const availabilityDate = new Date();
 		availabilityDate.setDate(availabilityDate.getDate() + clearDays);
 
-		// Mark order as paid and completed. Also create StoreLedger entry in a transaction
+		// Mark order as paid and completed in a transaction
 		await sqlClient.$transaction(async (tx) => {
 			// Mark order as paid and completed
 			await tx.storeOrder.update({
@@ -253,30 +253,7 @@ export const processFiatTopUpAfterPaymentAction = baseClient
 				},
 			});
 
-			// Create StoreLedger entry for fiat refill (unearned revenue, type = CreditRecharge)
-			await tx.storeLedger.create({
-				data: {
-					storeId: order.storeId,
-					orderId: order.id,
-					amount: new Prisma.Decimal(fiatAmount),
-					fee: new Prisma.Decimal(fee + feeTax),
-					platformFee: new Prisma.Decimal(platformFee),
-					currency: order.Store.defaultCurrency,
-					type: StoreLedgerType.CreditRecharge,
-					balance: new Prisma.Decimal(
-						balance + fiatAmount + (fee + feeTax) + platformFee,
-					),
-					description: t("fiat_refill_description_ledger", {
-						fiatAmount,
-						currency: order.Store.defaultCurrency.toUpperCase(),
-					}),
-					note: t("fiat_refill_note_ledger", {
-						orderNum: order.orderNum ?? orderId,
-					}),
-					availability: BigInt(availabilityDate.getTime()),
-					createdAt: getUtcNowEpoch(),
-				},
-			});
+			// No StoreLedger entry is created for customer credit refills
 		});
 
 		logger.info("Fiat refill processed successfully", {

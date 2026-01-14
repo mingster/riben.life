@@ -4,7 +4,7 @@ import { getT } from "@/app/i18n";
 import { processCreditTopUp } from "@/lib/credit-bonus";
 import logger from "@/lib/logger";
 import { sqlClient } from "@/lib/prismadb";
-import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
+import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { baseClient } from "@/utils/actions/safe-action";
 import { epochToDate, getUtcNowEpoch } from "@/utils/datetime-utils";
 import { SafeError } from "@/utils/error";
@@ -17,7 +17,7 @@ import { processCreditTopUpAfterPaymentSchema } from "./process-credit-topup-aft
  * It will:
  * 1. Process credit top-up (including bonus calculation)
  * 2. Mark the order as paid
- * 3. Create StoreLedger entry for unearned revenue (type = CreditRecharge)
+ * 3. Create StoreLedger entry for unearned revenue (type = CustomerCredit)
  */
 export const processCreditTopUpAfterPaymentAction = baseClient
 	.metadata({ name: "processCreditTopUpAfterPayment" })
@@ -204,7 +204,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 			// If parsing fails, use default
 		}
 
-		// Mark order as paid and completed. Also create StoreLedger entry in a transaction
+		// Mark order as paid and completed in a transaction
 		await sqlClient.$transaction(async (tx) => {
 			// Mark order as paid and completed
 			await tx.storeOrder.update({
@@ -220,34 +220,7 @@ export const processCreditTopUpAfterPaymentAction = baseClient
 				},
 			});
 
-			// Create StoreLedger entry for credit refill (unearned revenue, type = CreditRecharge)
-			await tx.storeLedger.create({
-				data: {
-					storeId: order.storeId,
-					orderId: order.id,
-					amount: new Prisma.Decimal(dollarAmount),
-					fee: new Prisma.Decimal(fee + feeTax),
-					platformFee: new Prisma.Decimal(platformFee),
-					currency: order.Store.defaultCurrency,
-					type: StoreLedgerType.CreditRecharge,
-					balance: new Prisma.Decimal(
-						balance + dollarAmount + (fee + feeTax) + platformFee,
-					),
-					description: t("credit_refill_description_ledger", {
-						creditAmount,
-						dollarAmount,
-						currency: order.Store.defaultCurrency.toUpperCase(),
-						amount: processCreditTopUpResult.amount,
-						bonus: processCreditTopUpResult.bonus,
-						totalCredit: processCreditTopUpResult.totalCredit,
-					}),
-					note: t("credit_refill_note_ledger", {
-						orderNum: order.orderNum ?? order.id,
-					}),
-					availability: BigInt(availabilityDate.getTime()),
-					createdAt: getUtcNowEpoch(),
-				},
-			});
+			// No StoreLedger entry is created for customer credit refills
 
 			// add order note - credit_refill_completed
 			await tx.orderNote.create({

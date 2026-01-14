@@ -82,7 +82,7 @@ export const RsvpCalendarClient: React.FC<RsvpCalendarClientProps> = ({
 		<>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<Heading
-					title={t("rsvp_list_add") || "Reservations"}
+					title={t("rsvp_week_view") || "Week View"}
 					badge={data.length}
 					description=""
 				/>

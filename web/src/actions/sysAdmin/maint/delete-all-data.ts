@@ -1,17 +1,16 @@
 "use server";
 import { sqlClient } from "@/lib/prismadb";
-import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
 
 export const deleteAllData = async () => {
 	// Delete all data in sequence
+	// Delete ledgers first (before credits) to avoid any potential foreign key issues
 	const [
+		customerCreditLedgerCount,
+		customerFiatLedgerCount,
 		storeLedgerCount,
 		storeOrderCount,
 		ticketCount,
-		customerCreditLedgerCount,
-		customerCreditCount,
-		customerFiatLedgerCount,
 		rsvpCount,
 		rsvpBlacklistCount,
 		rsvpTagCount,
@@ -19,12 +18,11 @@ export const deleteAllData = async () => {
 		messageQueueCount,
 		emailQueueCount,
 	] = await Promise.all([
+		sqlClient.customerCreditLedger.deleteMany({ where: {} }),
+		sqlClient.customerFiatLedger.deleteMany({ where: {} }),
 		sqlClient.storeLedger.deleteMany({ where: {} }),
 		sqlClient.storeOrder.deleteMany({ where: {} }),
 		sqlClient.supportTicket.deleteMany({ where: {} }),
-		sqlClient.customerCreditLedger.deleteMany({ where: {} }),
-		sqlClient.customerCredit.deleteMany({ where: {} }),
-		sqlClient.customerFiatLedger.deleteMany({ where: {} }),
 		sqlClient.rsvp.deleteMany({ where: {} }),
 		sqlClient.rsvpBlacklist.deleteMany({ where: {} }),
 		sqlClient.rsvpTag.deleteMany({ where: {} }),
@@ -32,6 +30,11 @@ export const deleteAllData = async () => {
 		sqlClient.messageQueue.deleteMany({ where: {} }),
 		sqlClient.emailQueue.deleteMany({ where: {} }),
 	]);
+
+	// Delete customer credits after ledgers
+	const customerCreditCount = await sqlClient.customerCredit.deleteMany({
+		where: {},
+	});
 
 	logger.info("Deleted all data", {
 		metadata: {
@@ -51,7 +54,7 @@ export const deleteAllData = async () => {
 		tags: ["action", "maintenance", "delete-all"],
 	});
 
-	redirect("/sysAdmin/maint");
+	//redirect("/sysAdmin/maint");
 
 	return {
 		storeLedgerCount: storeLedgerCount.count,

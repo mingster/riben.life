@@ -376,8 +376,32 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
   * Frontend redirects to `/checkout/[orderId]` when `orderId` is returned
   * Customer selects payment method at checkout page
   * Payment processing handled by checkout flow (credit, Stripe, LINE Pay, etc.)
-  * After payment completion, reservation `alreadyPaid` and `status` are updated.
+  * After payment completion, `processRsvpAfterPaymentAction` is called to process the payment
+  * Reservation `alreadyPaid` and `status` are updated based on payment processing
   * Frontend redirects to `/order/[OrderId]`. Customer can review the result of the payment and its order details.
+* **HOLD Design Payment Processing:**
+  * **Location:** `src/actions/store/reservation/process-rsvp-after-payment.ts`
+  * **Purpose:** Processes RSVP payment after order is marked as paid. Uses HOLD design - no StoreLedger entry is created at payment time. Revenue is recognized when RSVP is completed.
+  * **Payment Methods and Ledger Entries:**
+    * **Credit Points Payment (`payUrl = "creditPoint"`):**
+      * Deducts `CustomerCredit.point` balance
+      * Creates `CustomerCreditLedger` entry with type `HOLD` (negative amount)
+      * No StoreLedger entry created (revenue recognized on completion)
+    * **Fiat Balance Payment (`payUrl = "credit"`):**
+      * Deducts `CustomerCredit.fiat` balance
+      * Creates `CustomerFiatLedger` entry with type `"HOLD"` (string, negative amount)
+      * No StoreLedger entry created (revenue recognized on completion)
+    * **External Payment (Stripe, LINE Pay, etc.):**
+      * Step 1: Credits `CustomerCredit.fiat` balance
+      * Step 2: Creates `CustomerFiatLedger` entry with type `"TOPUP"` (string, positive amount)
+      * Step 3: Deducts `CustomerCredit.fiat` balance
+      * Step 4: Creates `CustomerFiatLedger` entry with type `"HOLD"` (string, negative amount)
+      * No StoreLedger entry created (revenue recognized on completion)
+  * **Status Updates:**
+    * If `noNeedToConfirm = true`: Status changes to `Ready (40)`, `confirmedByStore = true`
+    * If `noNeedToConfirm = false`: Status changes to `ReadyToConfirm (10)`
+    * `alreadyPaid = true`, `paidAt` timestamp set
+  * **Note:** Prepaid payment processing should happen during RSVP creation (via `processRsvpPrepaidPaymentUsingCredit`), not during update. The update action should not process prepaid payments.
   * **Account Linking (Anonymous → Registered User):**
     * When an anonymous user chooses to sign-in/up, Better Auth's anonymous plugin automatically calls the `onLinkAccount` callback
     * The callback receives `anonymousUser` (guest user) and `newUser` (newly registered/authenticated user) parameters
@@ -416,6 +440,34 @@ The `create-reservation.ts` action handles customer-facing reservation creation 
   * `validate-rsvp-availability.ts` - Validates time slot availability
   * `validate-facility-business-hours.ts` - Validates facility-specific hours
 
+**RSVP Completion and Revenue Recognition:**
+
+The `complete-rsvp.ts` action handles RSVP completion and revenue recognition with the following technical requirements:
+
+* **Location:** `src/actions/storeAdmin/rsvp/complete-rsvp.ts`
+* **Core Logic:** `src/actions/storeAdmin/rsvp/complete-rsvp-core.ts`
+* **Purpose:** Completes an RSVP reservation and recognizes revenue. Only RSVPs in `Ready (40)` status can be completed.
+* **Credit Processing (Three Cases):**
+  * **Case 1: Prepaid RSVP with Credit Points (`alreadyPaid = true`, payment method = "creditPoint"):**
+    * Converts HOLD to SPEND via `convertHoldToSpend()`
+    * Creates new `CustomerCreditLedger` entry with type `SPEND` (negative amount, balance unchanged)
+    * Creates `StoreLedger` entry with type `StorePaymentProvider` (positive amount, revenue recognition)
+    * Revenue is recognized at completion time
+  * **Case 2: Prepaid RSVP with External Payment (`alreadyPaid = true`, payment method != "creditPoint"):**
+    * Converts HOLD to PAYMENT via `convertFiatTopupToPayment()`
+    * Creates new `CustomerFiatLedger` entry with type `"PAYMENT"` (string, negative amount)
+    * No need to deduct fiat since it's already held
+    * Creates `StoreLedger` entry with type `StorePaymentProvider` (positive amount, revenue recognition)
+    * Revenue is recognized at completion time
+  * **Case 3: Non-Prepaid RSVP (`alreadyPaid = false`):**
+    * Deducts credit for service usage via `deduceCustomerCredit()`
+    * Creates `CustomerCreditLedger` entry with type `SPEND` (negative amount)
+    * Creates `StoreLedger` entry with type `StorePaymentProvider` (positive amount, revenue recognition)
+    * Revenue is recognized at completion time
+* **Transaction Safety:** All credit processing happens BEFORE status update to ensure atomicity. If credit processing fails, status update is rolled back.
+* **StoreLedger Type:** Revenue recognition uses `StoreLedgerType.StorePaymentProvider` (not `Revenue` - that enum value was removed)
+* **Note:** Credit deduction should NOT happen in `update-rsvp.ts`. Only the dedicated `complete-rsvp` action should handle credit deduction and revenue recognition.
+
 **Customer Reservation Modification (FR-RSVP-013):**
 
 The `update-reservation.ts` action allows customers to modify their reservations with the following technical requirements:
@@ -424,10 +476,15 @@ The `update-reservation.ts` action allows customers to modify their reservations
 * **Unpaid Reservation Redirect:** When editing an unpaid reservation (where `orderId` exists and `alreadyPaid = false`), the system automatically redirects the customer to the checkout page (`/checkout/[orderId]`) via client-side `useEffect` hook before allowing modifications.
 * **Modifiable Fields:**
   * `rsvpTime` (date/time) - Subject to availability validation
-  * `facilityId` - Can change to a different facility
   * `numOfAdult` - Party size (adults)
   * `numOfChild` - Party size (children)
   * `message` - Special requests/notes
+* **Non-Modifiable Fields (Customers Cannot Change):**
+  * `facilityId` - Cannot be changed by customers
+  * `serviceStaffId` - Cannot be changed by customers
+  * `facilityCost`, `facilityCredit` - Costs remain as set during creation
+  * `serviceStaffCost`, `serviceStaffCredit` - Costs remain as set during creation
+  * `pricingRuleId` - Cannot be changed by customers
 * **Business Rules:**
   * When a reservation is modified, `confirmedByStore` must be set to `false` (requires re-confirmation by store)
   * Availability validation must check for conflicts with existing reservations
@@ -1203,11 +1260,11 @@ For Google Actions Center Appointments Redirect integration:
 
 #### 8.2.1 RSVP Refund Processing
 
-**Function:** `processRsvpRefund()`
+**Function:** `processRsvpCreditPointsRefund()`
 
-**File:** `process-rsvp-refund.ts`
+**File:** `process-rsvp-refund-credit-point.ts`
 
-**Purpose:** Processes refund for RSVP reservation if it was prepaid. Refunds credit back to customer and reverses revenue recognition.
+**Purpose:** Processes refund for RSVP reservation if it was prepaid with credit points. Handles both HOLD refunds (RSVP not completed) and SPEND refunds (RSVP was completed, then cancelled).
 
 **Parameters:**
 
@@ -1225,27 +1282,27 @@ For Google Actions Center Appointments Redirect integration:
 
 **Behavior:**
 
-* **Early Returns:** Returns `{ refunded: false }` if:
-  * No `orderId` or `customerId` provided (reservation wasn't prepaid)
-  * Order not found (might have been deleted)
-  * Payment method is not "credit" (only credit refunds are supported)
-  * Order is already refunded
-  * No SPEND ledger entry found (might not have been paid with credit)
+* **Refund Types:**
+  * **HOLD Refund:** RSVP was prepaid but not yet completed. No revenue was recognized, so no StoreLedger entry is created.
+  * **SPEND Refund:** RSVP was completed (revenue recognized), then cancelled. StoreLedger entry is created to reverse revenue.
 
-* **Refund Process (if conditions met):**
-  1. Finds original HOLD ledger entry by `orderId` to determine refund amount
-  2. Calculates refund amount (absolute value of HOLD entry amount)
+* **Refund Process:**
+  1. Determines refund type by checking for HOLD vs SPEND ledger entries
+  2. Calculates refund amount from ledger entry
   3. Gets current customer credit balance
   4. Calculates new balance (current + refund amount)
   5. Gets store credit exchange rate for cash value calculation
   6. **Transaction Processing:**
-     * Updates `CustomerCredit` balance (adds refund amount, restores held credit)
+     * Updates `CustomerCredit` balance (adds refund amount, restores credit)
      * Creates `CustomerCreditLedger` entry:
        * Type: "REFUND"
        * Amount: positive (credit restored)
        * `referenceId`: original order ID
        * `note`: refund reason or default message
-     * **No `StoreLedger` entry is created** (since no revenue was recognized during hold phase)
+     * **StoreLedger Entry (SPEND refunds only):**
+       * Creates `StoreLedger` entry with type `StorePaymentProvider` (negative amount, revenue reversal)
+       * Only created for SPEND refunds (when RSVP was completed before cancellation)
+       * **No StoreLedger entry for HOLD refunds** (no revenue was recognized)
      * Updates `StoreOrder`:
        * `refundAmount`: cash value of refund
        * `orderStatus`: `Refunded`
@@ -1451,6 +1508,7 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 2.4 | 2025-01-27 | System | Updated RSVP payment processing and completion flow documentation: (1) **HOLD Design Payment Processing** - Documented the three payment methods (credit points, fiat balance, external payment) and their ledger entry creation in `process-rsvp-after-payment.ts`. External payments create both TOPUP and HOLD entries. No StoreLedger entry is created at payment time (revenue recognized on completion). (2) **RSVP Completion and Revenue Recognition** - Documented the three cases handled by `complete-rsvp-core.ts`: prepaid with credit points (HOLD to SPEND), prepaid with external payment (TOPUP to PAYMENT), and non-prepaid (deduct credit). Revenue recognition uses `StoreLedgerType.StorePaymentProvider` (not `Revenue` - that enum value was removed). (3) **Prepaid Payment Processing** - Clarified that prepaid payment processing happens during RSVP creation (via `processRsvpPrepaidPaymentUsingCredit`) or after checkout payment (via `processRsvpAfterPaymentAction`), NOT during update. (4) **Credit Deduction** - Clarified that credit deduction should NOT happen in `update-rsvp.ts`. Only the dedicated `complete-rsvp` action handles credit deduction and revenue recognition. (5) **Customer Reservation Modification** - Updated to document that customers cannot change `facilityId`, `serviceStaffId`, or cost/credit fields. (6) **Refund Processing** - Updated to distinguish between HOLD refunds (no StoreLedger entry) and SPEND refunds (StoreLedger entry for revenue reversal). Updated Sections 4.1.1 (Customer Reservation Creation), 4.1.1 (RSVP Completion and Revenue Recognition), 4.1.1 (Customer Reservation Modification), and 8.2.1 (RSVP Refund Processing) to reflect these changes. |
 | 2.3 | 2025-01-27 | System | Redesigned anonymous reservation architecture to use Better Auth anonymous plugin: (1) **Authentication** - Anonymous users are authenticated via Better Auth anonymous plugin, which creates guest user accounts with emails like `guest-{id}@riben.life`. Anonymous users have active sessions and user IDs (guest users). (2) **Database Storage** - Reservations are stored in the database and linked to guest user accounts via `customerId` field. No longer using local storage as primary mechanism. (3) **Credit Accounts** - Anonymous users can have credit accounts (`CustomerCredit`) linked to their guest user ID. (4) **Edit/Delete/Cancel** - Anonymous users can edit, delete, and cancel reservations linked to their guest user ID (authorized by matching session `userId` to reservation `customerId`). (5) **Reservation History** - Reservation history is fetched from database based on session `customerId` (guest user ID for anonymous users). Updated Sections 4.1.1 (Customer Reservation Creation), 4.1.1 (Customer Reservation Modification), 4.2.1 (Reservation History), and 5.1 (Authentication & Authorization) to reflect the new architecture. |
 | 2.2 | 2025-01-27 | System | Updated database schema documentation: (1) **ServiceStaff Model** - Added complete ServiceStaff model schema documentation (Section 3.1.4) with all fields including capacity, defaultCost, defaultCredit, defaultDuration, businessHours, isDeleted, and description. (2) **StoreFacility Model** - Updated to include businessHours, description, location, and travelInfo fields, plus FacilityPricingRules relation. (3) **Rsvp Model** - Updated to include ServiceStaff relation and all indexes (rsvpTime, arriveTime, createdAt, updatedAt, and composite index [storeId, rsvpTime, status]). (4) **Service Staff Actions** - Added service staff management actions section (4.1.3a) documenting create, update, delete, and get actions. (5) **Database Constraints** - Updated to include ServiceStaff unique constraint and soft delete behavior. (6) **Service Staff Availability** - Enhanced documentation of service staff filtering and validation in reservation creation flow. |
 | 2.1 | 2025-01-27 | System | Added anonymous reservation workflow technical requirements: (1) **Name and Phone Validation** - Anonymous users must provide both name and phone number (validated with Zod schema using `.refine()`). Updated Rsvp model schema to include `name` field. (2) **Local Storage Implementation** - Anonymous reservation data saved to browser local storage (key: `rsvp-${storeId}`) after successful creation. Stored data includes reservation ID, store ID, name, phone, reservation details, status, and payment information. (3) **Checkout Flow for Anonymous Users** - After payment completion, anonymous users are redirected to order confirmation page which prompts phone number confirmation. (4) **Reservation History for Anonymous Users** - `/s/[storeId]/reservation/history` page allows anonymous access and displays reservations from local storage. No redirect to sign-in for anonymous users. Updated Sections 3.1.2 (Rsvp model), 4.1.1 (Customer Reservation Creation), and 4.2.1 (Public API Routes) to document these features. |

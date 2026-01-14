@@ -44,6 +44,7 @@ export const CustomerFiatUsageClient: React.FC<
 	const [periodType, setPeriodType] = useState<PeriodType>("custom");
 	const [startDate, setStartDate] = useState<Date | null>(null);
 	const [endDate, setEndDate] = useState<Date | null>(null);
+	const [isMounted, setIsMounted] = useState(false);
 
 	// Helper to get current date/time in store timezone
 	const getNowInStoreTimezone = useCallback((): Date => {
@@ -56,45 +57,57 @@ export const CustomerFiatUsageClient: React.FC<
 		return convertToUtc(formatted, storeTimezone);
 	}, [storeTimezone]);
 
-	// Initialize default to past 10 days to future 30 days
+	// Mark component as mounted
 	useEffect(() => {
-		if (!startDate && !endDate) {
-			const nowInTz = getNowInStoreTimezone();
-			// Extract date components in store timezone
-			const formatter = new Intl.DateTimeFormat("en-CA", {
-				timeZone: storeTimezone,
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-				hour: "2-digit",
-				minute: "2-digit",
-				hour12: false,
-			});
-			const parts = formatter.formatToParts(nowInTz);
-			const getValue = (type: string): number =>
-				Number(parts.find((p) => p.type === type)?.value || "0");
+		setIsMounted(true);
+	}, []);
 
-			const year = getValue("year");
-			const month = getValue("month") - 1; // 0-indexed
-			const day = getValue("day");
-			const hour = getValue("hour");
-			const minute = getValue("minute");
+	// Update allData when ledger prop changes (only after mount)
+	useEffect(() => {
+		if (!isMounted) return;
+		setAllData(ledger);
+	}, [ledger, isMounted]);
 
-			// Create a Date object representing current time in store timezone
-			const storeDate = new Date(year, month, day, hour, minute);
+	// Initialize default to past 10 days to future 30 days (only after mount)
+	useEffect(() => {
+		if (!isMounted) return;
+		if (startDate !== null || endDate !== null) return;
 
-			// Calculate past 10 days and future 30 days
-			const startDateLocal = subDays(storeDate, 10);
-			const endDateLocal = addDays(storeDate, 30);
+		const nowInTz = getNowInStoreTimezone();
+		// Extract date components in store timezone
+		const formatter = new Intl.DateTimeFormat("en-CA", {
+			timeZone: storeTimezone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			hour12: false,
+		});
+		const parts = formatter.formatToParts(nowInTz);
+		const getValue = (type: string): number =>
+			Number(parts.find((p) => p.type === type)?.value || "0");
 
-			// Convert to UTC (interpret as store timezone)
-			const startStr = `${startDateLocal.getFullYear()}-${String(startDateLocal.getMonth() + 1).padStart(2, "0")}-${String(startDateLocal.getDate()).padStart(2, "0")}T00:00`;
-			const endStr = `${endDateLocal.getFullYear()}-${String(endDateLocal.getMonth() + 1).padStart(2, "0")}-${String(endDateLocal.getDate()).padStart(2, "0")}T23:59`;
+		const year = getValue("year");
+		const month = getValue("month") - 1; // 0-indexed
+		const day = getValue("day");
+		const hour = getValue("hour");
+		const minute = getValue("minute");
 
-			setStartDate(convertToUtc(startStr, storeTimezone));
-			setEndDate(convertToUtc(endStr, storeTimezone));
-		}
-	}, [startDate, endDate, storeTimezone, getNowInStoreTimezone]);
+		// Create a Date object representing current time in store timezone
+		const storeDate = new Date(year, month, day, hour, minute);
+
+		// Calculate past 10 days and future 30 days
+		const startDateLocal = subDays(storeDate, 10);
+		const endDateLocal = addDays(storeDate, 30);
+
+		// Convert to UTC (interpret as store timezone)
+		const startStr = `${startDateLocal.getFullYear()}-${String(startDateLocal.getMonth() + 1).padStart(2, "0")}-${String(startDateLocal.getDate()).padStart(2, "0")}T00:00`;
+		const endStr = `${endDateLocal.getFullYear()}-${String(endDateLocal.getMonth() + 1).padStart(2, "0")}-${String(endDateLocal.getDate()).padStart(2, "0")}T23:59`;
+
+		setStartDate(convertToUtc(startStr, storeTimezone));
+		setEndDate(convertToUtc(endStr, storeTimezone));
+	}, [isMounted, startDate, endDate, storeTimezone, getNowInStoreTimezone]);
 
 	// Update date range when period type changes
 	const handlePeriodChange = useCallback(

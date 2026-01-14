@@ -130,10 +130,8 @@ export enum PaymentStatus {
 }
 
 export enum StoreLedgerType {
-	PlatformPayment = 0, // 代收 - Platform payment processing
-	StorePaymentProvider = 1, // Store's own payment provider
-	CreditRecharge = 2, // Customer credit refill (unearned revenue - liability)
-	Revenue = 3, // revenue recognition
+	HoldByPlatform = 0, // 代收 - payment processed by platform. the fiat is store's revenue that we need to pay out at request.
+	StorePaymentProvider = 1, // Store has its own payment processor. no payout needed.
 }
 
 export enum CustomerCreditLedgerType {

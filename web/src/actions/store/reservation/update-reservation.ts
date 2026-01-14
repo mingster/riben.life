@@ -25,6 +25,8 @@ import { RsvpStatus } from "@/types/enum";
 import { getT } from "@/app/i18n";
 
 // implement FR-RSVP-013
+// this is for store admin to update reservation.
+// customer can only update rsvp time, number of peopele, and message, for non-completed reservation.
 //
 export const updateReservationAction = baseClient
 	.metadata({ name: "updateReservation" })
@@ -309,44 +311,14 @@ export const updateReservationAction = baseClient
 			);
 		}
 
-		// Calculate costs: facility cost + service staff cost (if applicable)
-		// Use existing facility and service staff (customers cannot change them)
-		let finalFacilityCost = facility?.defaultCost
-			? Number(facility.defaultCost)
-			: 0;
-		let finalFacilityCredit = facility?.defaultCredit
-			? Number(facility.defaultCredit)
-			: 0;
-		let finalServiceStaffCost = serviceStaff?.defaultCost
-			? Number(serviceStaff.defaultCost)
-			: 0;
-		let finalServiceStaffCredit = serviceStaff?.defaultCredit
-			? Number(serviceStaff.defaultCredit)
-			: 0;
+		// Do not update costs/credits - these should remain as set during creation
+		// Customers can only update: rsvpTime, numOfAdult, numOfChild, message
 
 		try {
 			const updated = await sqlClient.rsvp.update({
 				where: { id },
 				data: {
-					facilityId: finalFacilityId, // Use existing value, not input
-					facilityCost:
-						finalFacilityCost > 0
-							? new Prisma.Decimal(finalFacilityCost)
-							: null,
-					facilityCredit:
-						finalFacilityCredit > 0
-							? new Prisma.Decimal(finalFacilityCredit)
-							: null,
-					pricingRuleId: null, // Pricing rules are not used in this simple reservation flow
-					serviceStaffId: finalServiceStaffId, // Use existing value, not input
-					serviceStaffCost:
-						finalServiceStaffCost > 0
-							? new Prisma.Decimal(finalServiceStaffCost)
-							: null,
-					serviceStaffCredit:
-						finalServiceStaffCredit > 0
-							? new Prisma.Decimal(finalServiceStaffCredit)
-							: null,
+					// Do not update facilityId or serviceStaffId - customers cannot change them
 					numOfAdult,
 					numOfChild,
 					rsvpTime,

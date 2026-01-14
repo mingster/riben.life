@@ -60,23 +60,23 @@ export async function completeRsvpCore(
 	// Determine if credit processing is needed
 	const wasCompleted = previousStatus === RsvpStatus.Completed;
 
-	// Case 1: Prepaid RSVP with credit points (alreadyPaid = true, payment method = "credit") - Convert HOLD to SPEND
+	// Case 1: Prepaid RSVP with credit points (alreadyPaid = true, payment method = "creditPoint") - Convert HOLD to SPEND
 	const needsHoldConversion =
 		!wasCompleted &&
 		existingRsvp.alreadyPaid &&
 		existingRsvp.orderId &&
 		existingRsvp.customerId &&
-		existingRsvp.Order?.PaymentMethod?.payUrl === "credit" &&
+		existingRsvp.Order?.PaymentMethod?.payUrl === "creditPoint" &&
 		store.creditExchangeRate &&
 		Number(store.creditExchangeRate) > 0;
 
-	// Case 2: Prepaid RSVP with external payment (alreadyPaid = true, payment method != "credit") - Convert TOPUP to PAYMENT
+	// Case 2: Prepaid RSVP with external payment (alreadyPaid = true, payment method != "creditPoint") - Convert TOPUP to PAYMENT
 	const needsFiatConversion =
 		!wasCompleted &&
 		existingRsvp.alreadyPaid &&
 		existingRsvp.orderId &&
 		existingRsvp.customerId &&
-		existingRsvp.Order?.PaymentMethod?.payUrl !== "credit" &&
+		existingRsvp.Order?.PaymentMethod?.payUrl !== "creditPoint" &&
 		existingRsvp.Order?.PaymentMethod?.payUrl !== null;
 
 	// Case 3: Non-prepaid RSVP (alreadyPaid = false) - Deduct credit for service usage

@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { processFiatTopUp } from "@/lib/credit-bonus";
 import { refillCustomerFiatSchema } from "./refill-customer-fiat.validation";
-import { OrderStatus, PaymentStatus, StoreLedgerType } from "@/types/enum";
+import { OrderStatus, PaymentStatus } from "@/types/enum";
 import { Prisma } from "@prisma/client";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { getT } from "@/app/i18n";
@@ -151,113 +151,7 @@ export const refillCustomerFiatAction = storeActionClient
 					: t("promotional_refill_by_operator_default_note")),
 		);
 
-		// Create StoreLedger entry
-		const lastLedger = await sqlClient.storeLedger.findFirst({
-			where: { storeId },
-			orderBy: { createdAt: "desc" },
-			take: 1,
-		});
-
-		const balance = Number(lastLedger ? lastLedger.balance : 0);
-
-		if (isPaid && cashAmount && cashAmount > 0) {
-			// Paid in person: create StoreLedger entry with cash amount
-			await sqlClient.storeLedger.create({
-				data: {
-					storeId,
-					orderId: orderId!, // Order ID is guaranteed to exist here
-					amount: new Prisma.Decimal(cashAmount), // Cash amount received
-					fee: new Prisma.Decimal(0), // No payment processing fee for cash
-					platformFee: new Prisma.Decimal(0), // No platform fee for cash
-					currency: store.defaultCurrency,
-					type: StoreLedgerType.CreditRecharge, // Same type as credit refill
-					balance: new Prisma.Decimal(balance + Number(cashAmount)), // Balance increases
-					description: t("in_person_fiat_refill_description_ledger", {
-						amount: result.amount,
-					}),
-					note: note
-						? t("in_person_fiat_refill_note_with_extra", {
-								cashAmount,
-								currency: store.defaultCurrency.toUpperCase(),
-								amount: result.amount,
-								operator: creatorId,
-								note,
-							})
-						: t("in_person_fiat_refill_note_ledger", {
-								cashAmount,
-								currency: store.defaultCurrency.toUpperCase(),
-								amount: result.amount,
-								operator: creatorId,
-							}),
-					createdBy: creatorId, // Store operator who created this ledger entry
-					availability: getUtcNowEpoch(), // Immediate for cash
-					createdAt: getUtcNowEpoch(),
-				},
-			});
-		} else {
-			// Promotional refill: create a minimal system order for StoreLedger reference
-			const promoPaymentMethod = await sqlClient.paymentMethod.findFirst({
-				where: {
-					payUrl: "promo",
-					isDeleted: false,
-				},
-			});
-
-			if (!promoPaymentMethod) {
-				throw new SafeError("Promo payment method not found");
-			}
-
-			// Set checkoutAttributes to identify this as a fiat refill order
-			const checkoutAttributes = JSON.stringify({ fiatRefill: true });
-
-			const systemOrder = await sqlClient.storeOrder.create({
-				data: {
-					storeId,
-					userId,
-					orderTotal: new Prisma.Decimal(0), // Zero amount for promotional
-					currency: store.defaultCurrency,
-					paymentMethodId: promoPaymentMethod.id, // Special payment method
-					shippingMethodId,
-					checkoutAttributes,
-					orderStatus: OrderStatus.Confirmed,
-					paymentStatus: PaymentStatus.Paid,
-					isPaid: true,
-					paidDate: getUtcNowEpoch(),
-					createdAt: getUtcNowEpoch(),
-					updatedAt: getUtcNowEpoch(),
-				},
-			});
-
-			// Create StoreLedger entry with amount = 0
-			await sqlClient.storeLedger.create({
-				data: {
-					storeId,
-					orderId: systemOrder.id,
-					amount: new Prisma.Decimal(0), // Zero amount - no cash transaction
-					fee: new Prisma.Decimal(0),
-					platformFee: new Prisma.Decimal(0),
-					currency: store.defaultCurrency,
-					type: StoreLedgerType.CreditRecharge, // Same type as credit refill
-					balance: new Prisma.Decimal(balance), // Balance unchanged
-					description: t("promotional_fiat_refill_description_ledger", {
-						amount: result.amount,
-					}),
-					note: note
-						? t("promotional_fiat_refill_note_with_extra", {
-								amount: result.amount,
-								operator: creatorId,
-								note,
-							})
-						: t("promotional_fiat_refill_note_ledger", {
-								amount: result.amount,
-								operator: creatorId,
-							}),
-					createdBy: creatorId, // Store operator who created this ledger entry
-					availability: getUtcNowEpoch(),
-					createdAt: getUtcNowEpoch(),
-				},
-			});
-		}
+		// No StoreLedger entry is created for customer credit refills
 
 		return {
 			success: true,

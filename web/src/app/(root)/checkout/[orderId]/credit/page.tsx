@@ -1,5 +1,13 @@
 import getOrderById from "@/actions/get-order-by_id";
 import { markOrderAsPaidCore } from "@/actions/store/order/mark-order-as-paid-core";
+import {
+	isFiatRefillOrder,
+	isCreditRefillOrder,
+	isRsvpOrder,
+} from "@/actions/store/order/detect-order-type";
+import { processFiatTopUpAfterPaymentAction } from "@/actions/store/credit/process-fiat-topup-after-payment";
+import { processCreditTopUpAfterPaymentAction } from "@/actions/store/credit/process-credit-topup-after-payment";
+import { processRsvpAfterPaymentAction } from "@/actions/store/reservation/process-rsvp-after-payment";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
 import Container from "@/components/ui/container";
 import { Loader } from "@/components/loader";
@@ -197,6 +205,76 @@ export default async function CreditPaymentPage(props: {
 		isPro,
 		logTags: ["credit", "fiat"],
 	});
+
+	// 5. Process additional actions based on order type
+	// Check for fiat refill order
+	const isFiatRefill = await isFiatRefillOrder(order);
+	if (isFiatRefill) {
+		logger.info("Processing fiat top-up after marking order as paid", {
+			metadata: { orderId: order.id },
+			tags: ["order", "payment", "fiat", "credit"],
+		});
+
+		const fiatResult = await processFiatTopUpAfterPaymentAction({
+			orderId: order.id,
+		});
+
+		if (fiatResult?.serverError) {
+			logger.error("Failed to process fiat top-up", {
+				metadata: {
+					orderId: order.id,
+					error: fiatResult.serverError,
+				},
+				tags: ["order", "payment", "fiat", "error", "credit"],
+			});
+		}
+	}
+
+	// Check for credit refill order
+	const isCreditRefill = await isCreditRefillOrder(order);
+	if (isCreditRefill) {
+		logger.info("Processing credit top-up after marking order as paid", {
+			metadata: { orderId: order.id },
+			tags: ["order", "payment", "credit", "credit"],
+		});
+
+		const creditResult = await processCreditTopUpAfterPaymentAction({
+			orderId: order.id,
+		});
+
+		if (creditResult?.serverError) {
+			logger.error("Failed to process credit top-up", {
+				metadata: {
+					orderId: order.id,
+					error: creditResult.serverError,
+				},
+				tags: ["order", "payment", "credit", "error", "credit"],
+			});
+		}
+	}
+
+	// Check for RSVP order
+	const isRsvp = await isRsvpOrder(order.id);
+	if (isRsvp) {
+		logger.info("Processing RSVP after marking order as paid", {
+			metadata: { orderId: order.id },
+			tags: ["order", "payment", "rsvp", "credit"],
+		});
+
+		const rsvpResult = await processRsvpAfterPaymentAction({
+			orderId: order.id,
+		});
+
+		if (rsvpResult?.serverError) {
+			logger.error("Failed to process RSVP", {
+				metadata: {
+					orderId: order.id,
+					error: rsvpResult.serverError,
+				},
+				tags: ["order", "payment", "rsvp", "error", "credit"],
+			});
+		}
+	}
 
 	// Determine return URL
 	// If returnUrl is null and order is for RSVP, redirect to store's reservation page
