@@ -363,6 +363,7 @@ export function ReservationForm({
 			return {
 				id: rsvp.id,
 				facilityId: rsvp.facilityId || null,
+				serviceStaffId: rsvp.serviceStaffId || null, // Include for form state, but disabled in UI
 				numOfAdult: rsvp.numOfAdult,
 				numOfChild: rsvp.numOfChild,
 				rsvpTime,
@@ -796,6 +797,17 @@ export function ReservationForm({
 			toastError({
 				title: t("Error"),
 				description: t("rsvp_not_currently_accepted"),
+			});
+			return;
+		}
+
+		// Prevent editing completed reservations (customer restriction)
+		if (isEditMode && rsvp && rsvp.status === RsvpStatus.Completed) {
+			toastError({
+				title: t("Error"),
+				description:
+					t("rsvp_completed_reservation_cannot_update") ||
+					"Completed reservations cannot be updated",
 			});
 			return;
 		}
@@ -1411,7 +1423,10 @@ export function ReservationForm({
 											{availableServiceStaff.length > 0 ? (
 												<ServiceStaffCombobox
 													serviceStaff={availableServiceStaff}
-													disabled={isSubmitting || isEditMode}
+													disabled={
+														isSubmitting ||
+														isEditMode /* Customers cannot change service staff when editing */
+													}
 													defaultValue={selectedServiceStaff || null}
 													allowEmpty={true}
 													storeCurrency={storeCurrency}

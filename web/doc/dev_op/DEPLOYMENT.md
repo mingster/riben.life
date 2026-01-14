@@ -261,15 +261,15 @@ copy or edit .env over to production
 ```bash
 # Replace 'youruser' with your actual username
 
-sudo chown -R youruser:www-data /var/www/html
+sudo chown -R youruser:www-data /var/www
 sudo usermod -aG www-data youruser
 
 
 # Apply 755 to all directories
-sudo find /var/www/html -type d -exec chmod 755 {} \;
+sudo find /var/www -type d -exec chmod 755 {} \;
 
 # Apply 644 to all files
-sudo find /var/www/html -type f -exec chmod 644 {} \;
+sudo find /var/www -type f -exec chmod 644 {} \;
 ```
 
 ### build

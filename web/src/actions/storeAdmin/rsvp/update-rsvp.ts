@@ -22,6 +22,9 @@ import { processRsvpPrepaidPaymentUsingCredit } from "@/actions/store/reservatio
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { getT } from "@/app/i18n";
 
+// this is for customer to update reservation.
+// customer can only update rsvp time, number of peopele, and message, for non-completed reservation.
+//
 export const updateRsvpAction = storeActionClient
 	.metadata({ name: "updateRsvp" })
 	.schema(updateRsvpSchema)
@@ -56,6 +59,9 @@ export const updateRsvpAction = storeActionClient
 				confirmedByStore: true,
 				customerId: true,
 				orderId: true,
+				facilityId: true,
+				serviceStaffId: true,
+				pricingRuleId: true,
 			},
 		});
 
@@ -73,6 +79,90 @@ export const updateRsvpAction = storeActionClient
 			headers: await headers(),
 		});
 		const createdBy = session?.user?.id || rsvp.createdBy || null;
+		const sessionUserId = session?.user?.id;
+
+		// Customer restrictions: if user is updating their own reservation (they are the customer),
+		// they can only update rsvp time, number of people, and message, for non-completed reservation.
+		// Store admins updating other people's reservations can update everything.
+		const isUpdatingOwnReservation =
+			sessionUserId && rsvp.customerId === sessionUserId;
+
+		if (isUpdatingOwnReservation) {
+			const { t } = await getT();
+
+			// Prevent updates to completed reservations
+			if (wasCompleted) {
+				throw new SafeError(
+					t("rsvp_completed_reservation_cannot_update") ||
+						"Completed reservations cannot be updated",
+				);
+			}
+
+			// Only allow updates to: rsvpTime, numOfAdult, numOfChild, message
+			// Prevent updates to other fields by checking if they differ from existing values
+			if (facilityId !== undefined) {
+				const existingFacilityId = rsvp.facilityId || null;
+				const normalizedFacilityId = facilityId || null; // Treat empty string as null
+				if (normalizedFacilityId !== existingFacilityId) {
+					throw new SafeError(
+						t("rsvp_customer_cannot_update_facility") ||
+							"Customers cannot update facility",
+					);
+				}
+			}
+			if (serviceStaffId !== undefined) {
+				const existingServiceStaffId = rsvp.serviceStaffId || null;
+				const normalizedServiceStaffId = serviceStaffId || null; // Treat empty string as null
+				if (normalizedServiceStaffId !== existingServiceStaffId) {
+					throw new SafeError(
+						t("rsvp_customer_cannot_update_service_staff") ||
+							"Customers cannot update service staff",
+					);
+				}
+			}
+			if (status !== undefined && status !== rsvp.status) {
+				throw new SafeError(
+					t("rsvp_customer_cannot_update_status") ||
+						"Customers cannot update status",
+				);
+			}
+			if (alreadyPaid !== undefined && alreadyPaid !== rsvp.alreadyPaid) {
+				throw new SafeError(
+					t("rsvp_customer_cannot_update_payment_status") ||
+						"Customers cannot update payment status",
+				);
+			}
+			if (
+				confirmedByStore !== undefined &&
+				confirmedByStore !== rsvp.confirmedByStore
+			) {
+				throw new SafeError(
+					t("rsvp_customer_cannot_update_confirmation") ||
+						"Customers cannot update store confirmation",
+				);
+			}
+			if (facilityCost !== undefined && facilityCost !== null) {
+				throw new SafeError(
+					t("rsvp_customer_cannot_update_cost") ||
+						"Customers cannot update facility cost",
+				);
+			}
+			if (pricingRuleId !== undefined) {
+				const existingPricingRuleId = rsvp.pricingRuleId || null;
+				if (pricingRuleId !== existingPricingRuleId) {
+					throw new SafeError(
+						t("rsvp_customer_cannot_update_pricing_rule") ||
+							"Customers cannot update pricing rule",
+					);
+				}
+			}
+			if (arriveTimeInput !== undefined && arriveTimeInput !== null) {
+				throw new SafeError(
+					t("rsvp_customer_cannot_update_arrive_time") ||
+						"Customers cannot update arrive time",
+				);
+			}
+		}
 
 		// Fetch store to get timezone, creditServiceExchangeRate, creditExchangeRate, defaultCurrency, and useCustomerCredit
 		const store = await sqlClient.store.findUnique({

@@ -27,8 +27,9 @@ import logger from "@/lib/logger";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 
 // create a reservation by the customer.
-// this action will create a reservation record, store order, and related ledger records in the database,
-// and process the prepaid payment if required.
+// this action will create a reservation record and store order.
+// once the order is paid, related ledger records will be created when mark as paid.
+//
 export const createReservationAction = baseClient
 	.metadata({ name: "createReservation" })
 	.schema(createReservationSchema)
@@ -443,7 +444,9 @@ export const createReservationAction = baseClient
 						: "TBD";
 
 					// Create order note with RSVP ID
-					const orderNote = `${t("rsvp_reservation_payment_note") || "RSVP reservation payment"} (RSVP ID: ${createdRsvp.id})`;
+					const orderNote = `${
+						t("rsvp_reservation_payment_note") || "RSVP reservation payment"
+					} (RSVP ID: ${createdRsvp.id})`;
 
 					// Calculate facility and service staff costs for order items
 					const facilityCostForOrder = facilityCost > 0 ? facilityCost : null;

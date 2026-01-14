@@ -8,7 +8,7 @@ import { transformPrismaDataForJson } from "@/utils/utils";
 import type { Rsvp } from "@/types";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { RsvpStatus, CustomerCreditLedgerType } from "@/types/enum";
+import { RsvpStatus } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 import { cancelReservationSchema } from "./cancel-reservation.validation";
@@ -107,69 +107,24 @@ export const cancelReservationAction = baseClient
 		const refundNeeded = !isWithinCancelHours;
 
 		if (refundNeeded && existingRsvp.orderId && existingRsvp.Order) {
+			// process refund
+			//
 			const order = existingRsvp.Order;
 
 			// Check if order is paid
 			if (order.isPaid && existingRsvp.customerId) {
 				const { t } = await getT();
 
-				// Determine payment method: check for credit points first, then fiat
-				// HOLD design: Prepaid RSVPs use HOLD (credit) or TOPUP (fiat) entries
-				let paymentMethod: "credit" | "fiat" | null = null;
+				// Refund logic: There are only 2 types of refund:
+				// 1. If paid by credit points (payUrl === "creditPoint"), refund to credit points
+				// 2. All other scenarios (fiat balance, Stripe, LINE Pay, etc.) refund to fiat
+				//
+				// Determine payment method from order's PaymentMethod.payUrl
+				const paymentMethodPayUrl = order.PaymentMethod?.payUrl;
+				const paymentMethod: "credit" | "fiat" =
+					paymentMethodPayUrl === "creditPoint" ? "credit" : "fiat";
 
-				// Check for credit points payment (HOLD design: look for HOLD entry first)
-				const holdEntry = await sqlClient.customerCreditLedger.findFirst({
-					where: {
-						storeId: existingRsvp.storeId,
-						userId: existingRsvp.customerId,
-						referenceId: existingRsvp.orderId,
-						type: CustomerCreditLedgerType.Hold,
-					},
-					orderBy: {
-						createdAt: "desc",
-					},
-				});
-
-				// Also check for SPEND entry (legacy/non-prepaid RSVPs)
-				const spendEntry = !holdEntry
-					? await sqlClient.customerCreditLedger.findFirst({
-							where: {
-								storeId: existingRsvp.storeId,
-								userId: existingRsvp.customerId,
-								referenceId: existingRsvp.orderId,
-								type: CustomerCreditLedgerType.Spend,
-							},
-							orderBy: {
-								createdAt: "desc",
-							},
-						})
-					: null;
-
-				if (holdEntry || spendEntry) {
-					paymentMethod = "credit";
-				} else {
-					// Check for fiat payment (HOLD design: look for TOPUP entry)
-					const topupEntry = await sqlClient.customerFiatLedger.findFirst({
-						where: {
-							storeId: existingRsvp.storeId,
-							userId: existingRsvp.customerId,
-							referenceId: existingRsvp.orderId,
-							type: "TOPUP",
-						},
-						orderBy: {
-							createdAt: "desc",
-						},
-					});
-
-					if (topupEntry) {
-						paymentMethod = "fiat";
-					} else {
-						// No credit or fiat payment found - might be paid through other method (Stripe, LINE Pay, etc.)
-						paymentMethod = null;
-					}
-				}
-
-				logger.info("Processing refund for paid order", {
+				logger.info("Processing refund for the paid order", {
 					metadata: {
 						rsvpId: id,
 						storeId: existingRsvp.storeId,
@@ -177,11 +132,14 @@ export const cancelReservationAction = baseClient
 						orderId: existingRsvp.orderId,
 						orderIsPaid: order.isPaid,
 						paymentMethod: paymentMethod,
+						paymentMethodPayUrl: paymentMethodPayUrl,
+						paymentMethodName: order.PaymentMethod?.name,
 						isWithinCancelHours: isWithinCancelHours,
 					},
 				});
 
 				// Process refund based on payment method
+				// paymentMethod is always "credit" or "fiat" (never null)
 				if (paymentMethod === "credit") {
 					const refundResult = await processRsvpCreditPointsRefund({
 						rsvpId: id,
@@ -192,7 +150,9 @@ export const cancelReservationAction = baseClient
 					});
 					refundCompleted = refundResult.refunded;
 					refundAmount = refundResult.refundAmount ?? null;
-				} else if (paymentMethod === "fiat") {
+				} else {
+					// refund to customer's fiat balance
+					// This covers fiat balance payments and external payment methods (Stripe, LINE Pay, etc.)
 					const refundResult = await processRsvpFiatRefund({
 						rsvpId: id,
 						storeId: existingRsvp.storeId,
@@ -202,23 +162,6 @@ export const cancelReservationAction = baseClient
 					});
 					refundCompleted = refundResult.refunded;
 					refundAmount = refundResult.refundAmount ?? null;
-				} else {
-					// No credit or fiat payment found - might be paid through other method (Stripe, LINE Pay, etc.)
-					logger.warn(
-						"Cannot refund: payment method not found or not refundable through credit/fiat system",
-						{
-							metadata: {
-								rsvpId: id,
-								storeId: existingRsvp.storeId,
-								customerId: existingRsvp.customerId,
-								orderId: existingRsvp.orderId,
-								orderPaymentMethod: order.PaymentMethod?.name,
-							},
-							tags: ["refund", "payment-detection"],
-						},
-					);
-					refundCompleted = false;
-					refundAmount = null;
 				}
 
 				// If refund was needed but didn't complete, log warning

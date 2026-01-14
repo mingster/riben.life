@@ -71,8 +71,8 @@ export async function processRsvpCreditPointsRefund(
 		return { refunded: false };
 	}
 
-	// Only refund if payment method is "credit"
-	if (order.PaymentMethod?.payUrl !== "credit") {
+	// Only refund if payment method is "creditPoint"
+	if (order.PaymentMethod?.payUrl !== "creditPoint") {
 		return { refunded: false };
 	}
 
@@ -184,11 +184,11 @@ export async function processRsvpCreditPointsRefund(
 				userId: customerId,
 				amount: new Prisma.Decimal(refundCreditAmount), // Positive for refund
 				balance: new Prisma.Decimal(newBalance),
-				type: "REFUND", // CustomerCreditLedgerType.Refund
+				type: CustomerCreditLedgerType.Refund,
 				referenceId: orderId, // Link to original order
 				note:
 					refundReason ||
-					t("rsvp_cancellation_refund_note", {
+					t("rsvp_cancellation_refund_note_credit", {
 						points: refundCreditAmount,
 					}),
 				creatorId: customerId, // Customer initiated cancellation
@@ -210,7 +210,12 @@ export async function processRsvpCreditPointsRefund(
 			const newStoreBalance = storeBalance - refundCashAmount; // Decrease balance
 
 			// Prepare ledger note - use RSVP format if RSVP data is available
-			let ledgerNote = `${order.PaymentMethod?.name || "Unknown"}, ${t("order")}:${order.orderNum || order.id}`;
+			const paymentMethodName =
+				order.PaymentMethod?.name || t("unknown_payment_method");
+			let ledgerNote = t("store_ledger_note_order_refund", {
+				paymentMethod: paymentMethodName,
+				orderNum: order.orderNum || order.id,
+			});
 
 			// Fetch RSVP, store, and user data for RSVP format
 			const rsvp = await tx.rsvp.findUnique({
@@ -244,7 +249,11 @@ export async function processRsvpCreditPointsRefund(
 						);
 
 						// Create RSVP format ledger note
-						ledgerNote = `${order.PaymentMethod?.name || "Unknown"}, ${t("rsvp")}:${formattedRsvpTime} for ${user.name}`;
+						ledgerNote = t("store_ledger_note_rsvp_refund", {
+							paymentMethod: paymentMethodName,
+							rsvpTime: formattedRsvpTime,
+							userName: user.name,
+						});
 					}
 				}
 			}
@@ -276,6 +285,19 @@ export async function processRsvpCreditPointsRefund(
 				refundAmount: new Prisma.Decimal(refundCashAmount),
 				orderStatus: Number(OrderStatus.Refunded),
 				paymentStatus: Number(PaymentStatus.Refunded),
+				updatedAt: getUtcNowEpoch(),
+			},
+		});
+
+		//add order note
+		await tx.orderNote.create({
+			data: {
+				orderId: orderId,
+				note: t("rsvp_cancellation_refund_note_credit", {
+					points: refundCreditAmount,
+				}),
+				displayToCustomer: true,
+				createdAt: getUtcNowEpoch(),
 				updatedAt: getUtcNowEpoch(),
 			},
 		});

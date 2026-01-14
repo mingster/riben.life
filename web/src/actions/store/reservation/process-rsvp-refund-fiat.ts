@@ -3,7 +3,11 @@
 import { sqlClient } from "@/lib/prismadb";
 import { Prisma } from "@prisma/client";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
-import { OrderStatus, PaymentStatus } from "@/types/enum";
+import {
+	CustomerCreditLedgerType,
+	OrderStatus,
+	PaymentStatus,
+} from "@/types/enum";
 import { getT } from "@/app/i18n";
 import logger from "@/lib/logger";
 
@@ -95,22 +99,6 @@ export async function processRsvpFiatRefund(
 
 	// Process refund in transaction
 	await sqlClient.$transaction(async (tx) => {
-		// HOLD design: Check for TOPUP entry (prepaid RSVP with external payment)
-		// If TOPUP entry exists, this is a HOLD refund (no revenue recognized, no StoreLedger needed)
-		const topupEntry = await tx.customerFiatLedger.findFirst({
-			where: {
-				storeId,
-				userId: customerId,
-				referenceId: orderId,
-				type: "TOPUP",
-			},
-			orderBy: {
-				createdAt: "desc",
-			},
-		});
-
-		const isTopupRefund = !!topupEntry;
-
 		// 1. Get current customer fiat balance (or 0 if record doesn't exist)
 		const customerCredit = await tx.customerCredit.findUnique({
 			where: {
@@ -145,7 +133,7 @@ export async function processRsvpFiatRefund(
 				userId: customerId,
 				amount: new Prisma.Decimal(refundFiatAmount), // Positive for refund
 				balance: new Prisma.Decimal(newBalance),
-				type: "REFUND", // CustomerFiatLedgerType.Refund
+				type: CustomerCreditLedgerType.Refund,
 				referenceId: orderId || rsvpId, // Link to original order or RSVP
 				note:
 					refundReason ||
@@ -155,6 +143,16 @@ export async function processRsvpFiatRefund(
 					}),
 				creatorId: customerId, // Customer initiated cancellation
 				createdAt: getUtcNowEpoch(),
+			},
+		});
+
+		// remove HOLD entry if exists
+		await tx.customerFiatLedger.deleteMany({
+			where: {
+				storeId,
+				userId: customerId,
+				referenceId: orderId,
+				type: CustomerCreditLedgerType.Hold,
 			},
 		});
 
@@ -184,9 +182,19 @@ export async function processRsvpFiatRefund(
 				},
 			});
 
-			// HOLD design: No StoreLedger entry is created for RSVP refunds
-			// StoreLedger entries for RSVPs are only created when RSVP is completed (revenue recognition)
-			// Since RSVP was not completed, no revenue was recognized, so no StoreLedger reversal is needed
+			//add order note
+			await tx.orderNote.create({
+				data: {
+					orderId: orderId,
+					note: t("rsvp_cancellation_refund_note", {
+						amount: refundFiatAmount,
+						currency: orderCurrency.toUpperCase(),
+					}),
+					displayToCustomer: true,
+					createdAt: getUtcNowEpoch(),
+					updatedAt: getUtcNowEpoch(),
+				},
+			});
 		}
 	});
 

@@ -194,7 +194,9 @@ export const processFiatTopUpAfterPaymentAction = baseClient
 			fiatAmount,
 			orderId, // Reference ID is the order ID
 			order.User.id, // Creator ID is the creator of the order
-			t("credit_refill_note_ledger", { orderId }),
+			t("credit_refill_note_ledger", {
+				orderNum: order.orderNum ?? orderId,
+			}),
 		);
 
 		if (!processFiatTopUpResult.success) {
@@ -269,7 +271,7 @@ export const processFiatTopUpAfterPaymentAction = baseClient
 						currency: order.Store.defaultCurrency.toUpperCase(),
 					}),
 					note: t("fiat_refill_note_ledger", {
-						orderId: order.id,
+						orderNum: order.orderNum ?? orderId,
 					}),
 					availability: BigInt(availabilityDate.getTime()),
 					createdAt: getUtcNowEpoch(),

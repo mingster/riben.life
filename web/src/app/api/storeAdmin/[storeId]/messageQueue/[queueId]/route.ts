@@ -1,5 +1,6 @@
 import { sqlClient } from "@/lib/prismadb";
 import { Prisma } from "@prisma/client";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import { NextResponse } from "next/server";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
 import logger from "@/lib/logger";
@@ -47,6 +48,9 @@ export async function DELETE(
 				id: params.queueId,
 			},
 		});
+
+		// Transform BigInt and Decimal to numbers for JSON serialization
+		transformPrismaDataForJson(obj);
 
 		return NextResponse.json(obj);
 	} catch (error) {

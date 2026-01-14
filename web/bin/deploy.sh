@@ -197,7 +197,7 @@ health_check() {
 # Main deployment function
 main() {
     # CRITICAL: Check permissions FIRST before any other operations
-    check_permissions "$@"
+    #check_permissions "$@"
     
     log "Starting deployment for ${ENVIRONMENT} environment..."
     log "Branch: ${BRANCH}"

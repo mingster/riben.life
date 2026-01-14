@@ -219,7 +219,7 @@ export async function processFiatTopUp(
 				userId,
 				amount: new Prisma.Decimal(amount),
 				balance: new Prisma.Decimal(newBalance),
-				type: "TOPUP",
+				type: CustomerCreditLedgerType.Topup,
 				referenceId: referenceId || null,
 				note: note || `Top-up ${amount}`,
 				creatorId: creatorId || null,
