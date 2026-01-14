@@ -34,7 +34,7 @@
 	},
 	{
 		"name": "LinePay",
-		"payUrl": "linePay",
+		"payUrl": "linepay",
 		"priceDescr": "3.0%",
 		"fee": 0.03,
 		"feeAdditional": 0,

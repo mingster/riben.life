@@ -117,7 +117,7 @@ export default async function LinePayConfirmedPage({
 		// Find LINE Pay payment method
 		const linePayPaymentMethod = await sqlClient.paymentMethod.findFirst({
 			where: {
-				payUrl: "linePay",
+				payUrl: "linepay",
 				isDeleted: false,
 			},
 		});

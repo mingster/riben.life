@@ -112,8 +112,8 @@ const PaymentPage = async (props: {
 	}
 
 	// Include returnUrl in confirmed and canceled URLs if provided
-	const confirmUrlBase = `${protocol}//${host}/checkout/${order.id}/linePay/confirmed`;
-	const cancelUrlBase = `${protocol}//${host}/checkout/${order.id}/linePay/canceled`;
+	const confirmUrlBase = `${protocol}//${host}/checkout/${order.id}/linepay/confirmed`;
+	const cancelUrlBase = `${protocol}//${host}/checkout/${order.id}/linepay/canceled`;
 	const confirmUrl = returnUrl
 		? `${confirmUrlBase}?returnUrl=${encodeURIComponent(returnUrl)}`
 		: confirmUrlBase;
