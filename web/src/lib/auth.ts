@@ -193,16 +193,51 @@ export const auth = betterAuth({
 				// Call our existing sendOTP function with the normalized phone number
 				// Note: Better Auth has already stored the OTP with the original phoneNumber format
 				// So we need to ensure the frontend also normalizes before calling sendPhoneNumberOTP
-				const result = await sendOTP({
-					phoneNumber: normalizedPhoneNumber,
-					locale,
-					code, // Use the code provided by Better Auth
-					ipAddress, // Pass IP address for rate limiting
-					userAgent, // Pass user agent for logging
-				});
+				try {
+					const result = await sendOTP({
+						phoneNumber: normalizedPhoneNumber,
+						locale,
+						code, // Use the code provided by Better Auth
+						ipAddress, // Pass IP address for rate limiting
+						userAgent, // Pass user agent for logging
+					});
 
-				if (!result.success) {
-					throw new Error(result.error || "Failed to send OTP");
+					if (!result.success) {
+						// Log the error with full details before throwing
+						const logger = (await import("@/lib/logger")).default;
+						logger.error("Better Auth sendOTP callback failed", {
+							metadata: {
+								phoneNumber: normalizedPhoneNumber.replace(/\d(?=\d{4})/g, "*"),
+								error: result.error,
+								locale,
+							},
+							tags: ["auth", "phone-otp", "error"],
+						});
+
+						// Throw error with full message
+						const errorMessage = result.error || "Failed to send OTP";
+						throw new Error(`SMS delivery failed: ${errorMessage}`);
+					}
+				} catch (error) {
+					// Log the error with full details before re-throwing
+					const logger = (await import("@/lib/logger")).default;
+					const errorMessage =
+						error instanceof Error ? error.message : String(error);
+					logger.error("Better Auth sendOTP callback exception", {
+						metadata: {
+							phoneNumber: normalizedPhoneNumber.replace(/\d(?=\d{4})/g, "*"),
+							error: errorMessage,
+							stack: error instanceof Error ? error.stack : undefined,
+							locale,
+						},
+						tags: ["auth", "phone-otp", "error"],
+					});
+
+					// Re-throw with full error message
+					throw new Error(
+						`SMS delivery failed: ${errorMessage}`,
+						error instanceof Error ? { cause: error } : undefined,
+					);
 				}
 			},
 			// No custom verifyOTP callback - Better Auth handles verification internally

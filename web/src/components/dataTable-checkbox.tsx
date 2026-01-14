@@ -64,7 +64,7 @@ export function DataTableCheckbox<TData, TValue>({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
-	// pre-select rows
+	// pre-select rows (only use initiallySelected for initial mount)
 	const [rowSelection, setRowSelection] =
 		useState<RowSelectionState>(initiallySelected);
 
@@ -78,7 +78,8 @@ export function DataTableCheckbox<TData, TValue>({
 	useEffect(() => {
 		//RowSelectionState = Record<string, boolean>
 		onRowSelectionChange?.(rowSelection);
-	}, [rowSelection, onRowSelectionChange]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [rowSelection]);
 
 	const [pagination, setPagination] = useState({
 		pageIndex: 0,

@@ -192,14 +192,16 @@ export async function SmSend(params: SmSendParams): Promise<SmSendResult> {
 				metadata: {
 					phoneNumber: formattedPhone.replace(/\d(?=\d{4})/g, "*"),
 					response: responseText,
+					responseLength: responseText.length,
+					firstChars: responseText.substring(0, 200),
 				},
 				tags: ["mitake", "sms", "error"],
 			});
 
 			return {
 				success: false,
-				error: "Failed to parse API response",
-				statusMessage: `Unexpected response format: ${responseText.substring(0, 100)}`,
+				error: `Failed to parse API response. Response: ${responseText.substring(0, 200)}`,
+				statusMessage: `Unexpected response format: ${responseText.substring(0, 200)}`,
 			};
 		}
 
@@ -239,21 +241,33 @@ export async function SmSend(params: SmSendParams): Promise<SmSendResult> {
 			};
 		} else {
 			// Status code indicates error (5-9)
+			// Validate statusCode is a valid number string
+			const statusCodeNum = parseInt(statusCode, 10);
+			const isValidStatusCode = !isNaN(statusCodeNum);
+
 			logger.error("Mitake SMS API returned error", {
 				metadata: {
 					statusCode,
+					statusCodeNum: isValidStatusCode ? statusCodeNum : null,
 					statusMessage: statusStr,
 					phoneNumber: formattedPhone.replace(/\d(?=\d{4})/g, "*"),
 					response: responseText,
+					responseLength: responseText.length,
 					messageLength: message.length,
 					message: message,
+					isValidStatusCode,
 				},
 				tags: ["mitake", "sms", "error"],
 			});
 
+			// Create a more descriptive error message
+			const errorMessage = statusStr
+				? `Mitake SMS error: ${statusStr} (status code: ${statusCode})`
+				: `Mitake SMS API error: status code ${statusCode || "unknown"}. Response: ${responseText.substring(0, 200)}`;
+
 			return {
 				success: false,
-				error: statusStr || `API error: status code ${statusCode || "unknown"}`,
+				error: errorMessage,
 				statusCode: statusCode ?? undefined,
 				statusMessage: statusStr,
 			};
