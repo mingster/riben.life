@@ -15,14 +15,12 @@ import {
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { updateRsvpSchema } from "./update-rsvp.validation";
-import { deduceCustomerCredit } from "./deduce-customer-credit";
 import { validateReservationTimeWindow } from "@/actions/store/reservation/validate-reservation-time-window";
 import { validateRsvpAvailability } from "@/actions/store/reservation/validate-rsvp-availability";
-import { processRsvpPrepaidPaymentUsingCredit } from "@/actions/store/reservation/process-rsvp-prepaid-payment-using-credit";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { getT } from "@/app/i18n";
 
-// this is for customer to update reservation.
+// this is for store admin to update reservation.
 // customer can only update rsvp time, number of peopele, and message, for non-completed reservation.
 //
 export const updateRsvpAction = storeActionClient
@@ -81,88 +79,12 @@ export const updateRsvpAction = storeActionClient
 		const createdBy = session?.user?.id || rsvp.createdBy || null;
 		const sessionUserId = session?.user?.id;
 
-		// Customer restrictions: if user is updating their own reservation (they are the customer),
-		// they can only update rsvp time, number of people, and message, for non-completed reservation.
-		// Store admins updating other people's reservations can update everything.
-		const isUpdatingOwnReservation =
-			sessionUserId && rsvp.customerId === sessionUserId;
-
-		if (isUpdatingOwnReservation) {
-			const { t } = await getT();
-
-			// Prevent updates to completed reservations
-			if (wasCompleted) {
-				throw new SafeError(
-					t("rsvp_completed_reservation_cannot_update") ||
-						"Completed reservations cannot be updated",
-				);
-			}
-
-			// Only allow updates to: rsvpTime, numOfAdult, numOfChild, message
-			// Prevent updates to other fields by checking if they differ from existing values
-			if (facilityId !== undefined) {
-				const existingFacilityId = rsvp.facilityId || null;
-				const normalizedFacilityId = facilityId || null; // Treat empty string as null
-				if (normalizedFacilityId !== existingFacilityId) {
-					throw new SafeError(
-						t("rsvp_customer_cannot_update_facility") ||
-							"Customers cannot update facility",
-					);
-				}
-			}
-			if (serviceStaffId !== undefined) {
-				const existingServiceStaffId = rsvp.serviceStaffId || null;
-				const normalizedServiceStaffId = serviceStaffId || null; // Treat empty string as null
-				if (normalizedServiceStaffId !== existingServiceStaffId) {
-					throw new SafeError(
-						t("rsvp_customer_cannot_update_service_staff") ||
-							"Customers cannot update service staff",
-					);
-				}
-			}
-			if (status !== undefined && status !== rsvp.status) {
-				throw new SafeError(
-					t("rsvp_customer_cannot_update_status") ||
-						"Customers cannot update status",
-				);
-			}
-			if (alreadyPaid !== undefined && alreadyPaid !== rsvp.alreadyPaid) {
-				throw new SafeError(
-					t("rsvp_customer_cannot_update_payment_status") ||
-						"Customers cannot update payment status",
-				);
-			}
-			if (
-				confirmedByStore !== undefined &&
-				confirmedByStore !== rsvp.confirmedByStore
-			) {
-				throw new SafeError(
-					t("rsvp_customer_cannot_update_confirmation") ||
-						"Customers cannot update store confirmation",
-				);
-			}
-			if (facilityCost !== undefined && facilityCost !== null) {
-				throw new SafeError(
-					t("rsvp_customer_cannot_update_cost") ||
-						"Customers cannot update facility cost",
-				);
-			}
-			if (pricingRuleId !== undefined) {
-				const existingPricingRuleId = rsvp.pricingRuleId || null;
-				if (pricingRuleId !== existingPricingRuleId) {
-					throw new SafeError(
-						t("rsvp_customer_cannot_update_pricing_rule") ||
-							"Customers cannot update pricing rule",
-					);
-				}
-			}
-			if (arriveTimeInput !== undefined && arriveTimeInput !== null) {
-				throw new SafeError(
-					t("rsvp_customer_cannot_update_arrive_time") ||
-						"Customers cannot update arrive time",
-				);
-			}
-		}
+		// Since this action uses storeActionClient, the user is already verified as:
+		// - System admin (Role.admin), OR
+		// - Store member with role: owner, storeAdmin, or staff
+		// Therefore, store admins/staff can update everything, including status, even for their own reservations.
+		// Customer restrictions only apply to the customer-facing update-reservation.ts action.
+		// No need to check for customer restrictions here - all users of this action have admin privileges.
 
 		// Fetch store to get timezone, creditServiceExchangeRate, creditExchangeRate, defaultCurrency, and useCustomerCredit
 		const store = await sqlClient.store.findUnique({
@@ -369,63 +291,11 @@ export const updateRsvpAction = storeActionClient
 					})()
 				: null;
 
-		// Calculate total cost: use facilityCost if provided, otherwise use facility.defaultCost (if facility exists)
-		const totalCost =
-			facilityCost !== null && facilityCost !== undefined
-				? facilityCost
-				: facility?.defaultCost
-					? Number(facility.defaultCost)
-					: null;
-
-		// Process prepaid payment if:
-		// 1. customerId is provided
-		// 2. No existing orderId (to avoid creating duplicate orders)
-		// 3. Store uses customer credit
-		const minPrepaidPercentage = rsvpSettings?.minPrepaidPercentage ?? 0;
-		let prepaidResult: {
-			status: number;
-			alreadyPaid: boolean;
-			orderId: string | null;
-		} = {
-			status,
-			alreadyPaid,
-			orderId: rsvp.orderId, // Keep existing orderId if it exists
-		};
-
-		// Only process prepaid payment if customerId is provided, no existing order, and store uses credit
-		if (
-			customerId &&
-			!rsvp.orderId &&
-			store.useCustomerCredit === true &&
-			facility
-		) {
-			prepaidResult = await processRsvpPrepaidPaymentUsingCredit({
-				storeId,
-				customerId,
-				minPrepaidPercentage,
-				totalCost,
-				rsvpTime,
-				rsvpId: id, // Pass RSVP ID for pickupCode
-				facilityId: facility.id, // Pass facility ID for pickupCode
-				store: {
-					useCustomerCredit: store.useCustomerCredit,
-					creditExchangeRate: store.creditExchangeRate
-						? Number(store.creditExchangeRate)
-						: null,
-					defaultCurrency: store.defaultCurrency,
-					defaultTimezone: store.defaultTimezone,
-				},
-			});
-		}
-
-		// Use status and alreadyPaid from prepaid payment processing if it was processed
-		// Otherwise, use the provided values
-		// Only override if prepaid payment was actually processed (orderId was created)
-		const finalStatus = prepaidResult.orderId ? prepaidResult.status : status;
-		const finalAlreadyPaid = prepaidResult.orderId
-			? prepaidResult.alreadyPaid
-			: alreadyPaid;
-		const finalOrderId = prepaidResult.orderId || rsvp.orderId;
+		// Prepaid payment should have been processed during RSVP creation, not during update
+		// Use the provided values directly
+		const finalStatus = status;
+		const finalAlreadyPaid = alreadyPaid;
+		const finalOrderId = rsvp.orderId;
 
 		try {
 			const updated = await sqlClient.$transaction(async (tx) => {
@@ -473,40 +343,8 @@ export const updateRsvpAction = storeActionClient
 					},
 				});
 
-				// If status is Completed, not alreadyPaid, and wasn't previously Completed, deduct customer's credit
-				// Note: This is for service credit usage (after service completion), not prepaid payment
-				// Only process if facility exists (credit deduction requires facility)
-				if (
-					finalStatus === RsvpStatus.Completed &&
-					!finalAlreadyPaid &&
-					!wasCompleted &&
-					customerId &&
-					facility &&
-					store.creditServiceExchangeRate &&
-					Number(store.creditServiceExchangeRate) > 0 &&
-					store.creditExchangeRate &&
-					Number(store.creditExchangeRate) > 0
-				) {
-					const duration = facility.defaultDuration || 60; // Default to 60 minutes if not set
-					const creditServiceExchangeRate = Number(
-						store.creditServiceExchangeRate,
-					);
-					const creditExchangeRate = Number(store.creditExchangeRate);
-					const defaultCurrency = store.defaultCurrency || "twd";
-
-					await deduceCustomerCredit({
-						tx,
-						storeId,
-						customerId,
-						rsvpId: id,
-						facilityId: facility.id,
-						duration,
-						creditServiceExchangeRate,
-						creditExchangeRate,
-						defaultCurrency,
-						createdBy: createdBy || null,
-					});
-				}
+				// Credit deduction should be handled by complete-rsvp action, not during update
+				// If status is being changed to Completed, use the dedicated complete-rsvp action instead
 
 				return updatedRsvp;
 			});

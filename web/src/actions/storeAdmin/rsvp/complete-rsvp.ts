@@ -14,7 +14,24 @@ import logger from "@/lib/logger";
 import { getT } from "@/app/i18n";
 
 // Store admin can complete any RSVP in their store.
-// If RSVP was not already paid and facility exists, deduct customer credit after completion.
+// When completing an RSVP, the system handles three different cases:
+//
+// Case 1: Prepaid RSVP with credit points (alreadyPaid = true, payment method = "creditPoint")
+//   - Converts HOLD ledger entry to SPEND (CustomerCreditLedgerType)
+//   - Creates StoreLedger entry with type StorePaymentProvider for revenue recognition
+//   - Updates RSVP status to Completed
+//
+// Case 2: Prepaid RSVP with external payment (alreadyPaid = true, payment method != "creditPoint")
+//   - Converts HOLD ledger entry to PAYMENT (CustomerFiatLedger.type = "PAYMENT")
+//   - No need to deduct fiat since it's already held
+//   - Creates StoreLedger entry with type StorePaymentProvider for revenue recognition
+//   - Updates RSVP status to Completed
+//
+// Case 3: Non-prepaid RSVP (alreadyPaid = false)
+//   - Deducts credit points directly (creates SPEND entry in CustomerCreditLedger)
+//   - Creates StoreLedger entry with type StorePaymentProvider for revenue recognition
+//   - Updates RSVP status to Completed
+//
 export const completeRsvpAction = storeActionClient
 	.metadata({ name: "completeRsvp" })
 	.schema(completeRsvpSchema)
@@ -140,7 +157,7 @@ export const completeRsvpAction = storeActionClient
 			const transformedRsvp = { ...updated } as Rsvp;
 			transformPrismaDataForJson(transformedRsvp);
 
-			// Send notification for RSVP completion
+			// Send notification to customer for RSVP completion
 			const notificationRouter = getRsvpNotificationRouter();
 			await notificationRouter.routeNotification({
 				rsvpId: updated.id,

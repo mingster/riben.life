@@ -121,7 +121,7 @@ export async function convertHoldToSpend(
 			fee: new Prisma.Decimal(0), // No payment processing fee for credit usage
 			platformFee: new Prisma.Decimal(0), // No platform fee for credit usage
 			currency: defaultCurrency.toLowerCase(),
-			type: StoreLedgerType.Revenue, // Credit usage (revenue recognition)
+			type: StoreLedgerType.StorePaymentProvider, // Revenue recognition (credit usage)
 			balance: new Prisma.Decimal(newStoreBalance),
 			description: t("rsvp_prepaid_payment_note", {
 				points: creditAmount,

@@ -1,11 +1,10 @@
-"use server";
-import Container from "@/components/ui/container";
 import confirmSubscriptionPayment from "@/actions/storeAdmin/subscription/stripe/confirm-payment";
+import Container from "@/components/ui/container";
 
-import logger from "@/lib/logger";
 import getOrderById from "@/actions/get-order-by_id";
-import { StoreOrder } from "@/types";
 import { SuccessAndRedirect } from "@/components/success-and-redirect";
+import logger from "@/lib/logger";
+import { StoreOrder } from "@/types";
 
 // This page is triggered when Stripe confirms the payment.
 // Marks the SubscriptionPayment as paid, activates the subscription, and shows confirmation.
@@ -14,6 +13,7 @@ export default async function StripeConfirmedPage(props: {
 	searchParams: Promise<{
 		payment_intent?: string;
 		payment_intent_client_secret?: string;
+		redirect_status?: string;
 	}>;
 }) {
 	const searchParams = await props.searchParams;

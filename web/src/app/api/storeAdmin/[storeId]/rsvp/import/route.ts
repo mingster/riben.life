@@ -541,7 +541,7 @@ export async function POST(
 											fee: new Prisma.Decimal(0),
 											platformFee: new Prisma.Decimal(0),
 											currency: (store.defaultCurrency || "twd").toLowerCase(),
-											type: StoreLedgerType.Revenue, // Revenue recognition
+											type: StoreLedgerType.StorePaymentProvider, // Revenue recognition
 											balance: new Prisma.Decimal(newStoreBalance),
 											description:
 												t2("rsvp_completion_revenue_note_fiat", {

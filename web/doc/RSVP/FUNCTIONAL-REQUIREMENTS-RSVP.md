@@ -215,7 +215,7 @@ Store Admins have all Store Staff permissions, plus:
     * Prepaid amount = `ceil(totalReservationCost * minPrepaidPercentage / 100)`; if total cost is missing or zero, prepaid is skipped
     * **Currency Handling:** Order currency is set to the store's `defaultCurrency` to ensure consistency across order creation and payment processing.
     * Payment method is determined based on store settings:
-      * If `store.useCustomerCredit = true`: Order is created with "credit" payment method (uses `CustomerCredit.point` with `creditExchangeRate`)
+      * If `store.useCustomerCredit = true`: Order is created with "creditPoint" payment method (uses `CustomerCredit.point` with `creditExchangeRate`)
       * If `store.useCustomerCredit = false`: Order is created with "TBD" (To Be Determined) payment method
       * **Note**: `CustomerCredit.fiat` (RSVP account balance) is always available regardless of `useCustomerCredit` setting
     * **Payment Method Updates:** When marking orders as paid, the system explicitly uses the provided payment method ID to ensure correct payment method tracking. Payment methods are correctly specified during order payment and refund processes.
@@ -227,7 +227,7 @@ Store Admins have all Store Staff permissions, plus:
       * This ensures the phone number used for the reservation matches the phone number associated with the order
       * The confirmed phone number is used for order tracking and customer communication
   * Payment can be made using:
-    * Customer credit points (if `useCustomerCredit = true` and customer selects "credit" payment method - uses `CustomerCredit.point`)
+    * Customer credit points (if `useCustomerCredit = true` and customer selects "creditPoint" payment method - uses `CustomerCredit.point`)
     * Other payment methods (Stripe, LINE Pay, cash, etc.) available at checkout
 * Payment status tracked via `alreadyPaid` flag (updated after payment completion)
 * Reservation linked to order via `orderId` when prepaid
@@ -326,7 +326,7 @@ Store Admins have all Store Staff permissions, plus:
    **If `rsvpSettings.minPrepaidPercentage > 0`:**
 
    * System creates `storeOrder` for the prepaid amount with:
-     * Payment method: "credit" if `store.useCustomerCredit = true` (uses `CustomerCredit.point`), otherwise "TBD"
+     * Payment method: "creditPoint" if `store.useCustomerCredit = true` (uses `CustomerCredit.point`), otherwise "TBD"
      * Order status: `Pending` (unpaid)
      * Shipping method: "digital"
    * Reservation `orderId` is set to the created order ID
@@ -335,7 +335,7 @@ Store Admins have all Store Staff permissions, plus:
    * Customer is redirected to `/checkout/[orderId]` to complete payment
    * At checkout page:
      * Customer can select payment method (credit, Stripe, LINE Pay, cash, etc.)
-     * If customer selects "credit" payment method:
+     * If customer selects "creditPoint" payment method:
        * System checks if customer has sufficient credit balance
        * If sufficient: System deducts credit and marks order as paid
        * If insufficient: Customer must refill credit or select different payment method
@@ -434,16 +434,28 @@ Store Admins have all Store Staff permissions, plus:
 
 **Payment Flow (if prepaid required and store uses credit system):**
 
-* Customer can create a pending RSVP first, then be prompted to complete refill of store credit if his/her credit is not sufficient.
-* When customer's credit is refilled and RSVP is paid for:
-  * Store order is created with credit payment method
-  * Customer credit is held (not spent yet) - credit balance is reduced
-  * `CustomerCreditLedger` entry is created with type `HOLD` (negative amount)
-  * **No `StoreLedger` entry is created** at this stage (revenue not yet recognized)
+* Customer creates a pending RSVP first, then completes payment at checkout
+* **Payment Processing (HOLD Design):**
+  * **Credit Points Payment (`payUrl = "creditPoint"`):**
+    * Customer credit points are held (not spent yet) - `CustomerCredit.point` balance is reduced
+    * `CustomerCreditLedger` entry is created with type `HOLD` (negative amount)
+    * **No `StoreLedger` entry is created** at this stage (revenue not yet recognized)
+  * **Fiat Balance Payment (`payUrl = "credit"`):**
+    * Customer fiat balance is held (not spent yet) - `CustomerCredit.fiat` balance is reduced
+    * `CustomerFiatLedger` entry is created with type `"HOLD"` (string, negative amount)
+    * **No `StoreLedger` entry is created** at this stage (revenue not yet recognized)
+  * **External Payment (Stripe, LINE Pay, etc.):**
+    * Step 1: Payment is credited to `CustomerCredit.fiat` balance
+    * Step 2: `CustomerFiatLedger` entry is created with type `"TOPUP"` (string, positive amount)
+    * Step 3: Fiat balance is held - `CustomerCredit.fiat` balance is reduced
+    * Step 4: `CustomerFiatLedger` entry is created with type `"HOLD"` (string, negative amount)
+    * **No `StoreLedger` entry is created** at this stage (revenue not yet recognized)
+* After payment processing:
   * The `alreadyPaid` flag is set to `true`
-  * The reservation status changes to `Ready (40)` (not `ReadyToConfirm`)
-* The reservation is linked to the order via `orderId`
-* Store staff notifications are sent when `alreadyPaid = true` and status is `Ready (40)`
+  * The reservation status changes to `Ready (40)` if `noNeedToConfirm = true`, otherwise `ReadyToConfirm (10)`
+  * The reservation is linked to the order via `orderId`
+* Store staff notifications are sent when `alreadyPaid = true` and status is `Ready (40)` or `ReadyToConfirm (10)`
+* **Note:** Prepaid payment processing happens during RSVP creation (via `processRsvpPrepaidPaymentUsingCredit`) or after checkout payment (via `processRsvpAfterPaymentAction`), NOT during update
 
 **Payment Flow (if prepaid required and store do not use credit system):**
 
@@ -471,16 +483,26 @@ Store Admins have all Store Staff permissions, plus:
 **Service Flow:**
 
 * When the customer arrives, store staff marks status as `Ready (40)` (can set `arriveTime` at this time)
-* When service is completed, store staff completes the reservation (status `Completed (50)`) - **Only RSVPs in Ready status can be completed**
-  * If RSVP was prepaid with credit (`alreadyPaid = true` and payment method is "credit"):
-    * Held credit is converted to spent credit
-    * New `CustomerCreditLedger` entry is created with type `SPEND` (negative amount)
-    * `StoreLedger` entry is created with type `CreditUsage` (positive amount, revenue recognition)
-    * Store receives the credit (revenue is recognized)
-  * If RSVP was not prepaid (`alreadyPaid = false`):
-    * Customer credit is deducted (if credit service exchange rate is configured)
-    * `CustomerCreditLedger` entry is created with type `SPEND` (negative amount)
-    * `StoreLedger` entry is created with type `CreditUsage` (positive amount, revenue recognition)
+* When service is completed, store staff completes the reservation using `complete-rsvp` action (status `Completed (50)`) - **Only RSVPs in Ready status can be completed**
+  * **Revenue Recognition (Three Cases):**
+    * **Case 1: Prepaid RSVP with Credit Points (`alreadyPaid = true`, payment method = "creditPoint"):**
+      * Held credit is converted to spent credit via `convertHoldToSpend()`
+      * New `CustomerCreditLedger` entry is created with type `SPEND` (negative amount, balance unchanged)
+      * `StoreLedger` entry is created with type `StorePaymentProvider` (positive amount, revenue recognition)
+      * Revenue is recognized at completion time
+    * **Case 2: Prepaid RSVP with External Payment (`alreadyPaid = true`, payment method != "creditPoint"):**
+      * HOLD is converted to PAYMENT via `convertFiatTopupToPayment()`
+      * New `CustomerFiatLedger` entry is created with type `"PAYMENT"` (string, negative amount)
+      * No need to deduct fiat since it's already held
+      * `StoreLedger` entry is created with type `StorePaymentProvider` (positive amount, revenue recognition)
+      * Revenue is recognized at completion time
+    * **Case 3: Non-Prepaid RSVP (`alreadyPaid = false`):**
+      * Customer credit is deducted for service usage via `deduceCustomerCredit()`
+      * `CustomerCreditLedger` entry is created with type `SPEND` (negative amount)
+      * `StoreLedger` entry is created with type `StorePaymentProvider` (positive amount, revenue recognition)
+      * Revenue is recognized at completion time
+  * **Transaction Safety:** Credit processing happens BEFORE status update. If credit processing fails, status update is rolled back.
+  * **Note:** Credit deduction should NOT happen in `update-rsvp.ts`. Only the dedicated `complete-rsvp` action handles credit deduction and revenue recognition.
 * The `arriveTime` field can be set when status changes to Ready or during reservation creation
 
 **Termination States:**
@@ -489,13 +511,20 @@ Store Admins have all Store Staff permissions, plus:
 * If the reservation is cancelled (by customer or store), status changes to `Cancelled (60)`
 * **Refund Policy:** When cancelled, customer credit or payment will be refunded only if cancellation occurs OUTSIDE the `cancelHours` window (i.e., cancelled more than `cancelHours` hours before the reservation time). If cancellation occurs WITHIN the `cancelHours` window (i.e., less than `cancelHours` hours before the reservation time), no refund is given.
 * **Credit Refund Process (if prepaid with credit):**
-  * If cancellation is outside the cancelHours window:
-    * Held credit is refunded to customer
-    * Customer credit balance is restored
-    * `CustomerCreditLedger` entry is created with type `REFUND` (positive amount)
-    * Store order status is updated to `Refunded`
-  * If cancellation is within the cancelHours window:
-    * No refund is given (held credit remains deducted)
+  * **HOLD Refund (RSVP not yet completed):**
+    * If cancellation is outside the cancelHours window:
+      * Held credit is refunded to customer (restores `CustomerCredit` balance)
+      * `CustomerCreditLedger` or `CustomerFiatLedger` entry is created with type `REFUND` (positive amount)
+      * **No `StoreLedger` entry is created** (no revenue was recognized during hold phase)
+      * Store order status is updated to `Refunded`
+    * If cancellation is within the cancelHours window:
+      * No refund is given (held credit remains deducted)
+  * **SPEND Refund (RSVP was completed, then cancelled - legacy/non-prepaid):**
+    * If cancellation occurs after completion:
+      * Credit is refunded to customer
+      * `CustomerCreditLedger` entry is created with type `REFUND` (positive amount)
+      * `StoreLedger` entry is created with type `StorePaymentProvider` (negative amount, revenue reversal)
+      * Store order status is updated to `Refunded`
 * If the customer does not show up for the reservation, store staff can mark status as `NoShow (70)`
 * Once in `Cancelled` or `NoShow` status, the reservation cannot transition to active states.
 * Customer can delete the RSVP when it is still pending (`Pending (0)` or `ReadyToConfirm (10)`).
@@ -2119,7 +2148,7 @@ Completed (50) [when service is finished]
 | 2.1 | 2025-01-XX | System | Updated RSVP functional requirements from current store implementation: (1) Added service staff management (FR-RSVP-026a, FR-RSVP-026b, FR-RSVP-026c) - service staff selection, assignment, capacity, business hours, and cost tracking. (2) Added selection requirements (FR-RSVP-034a) - `mustSelectFacility` and `mustHaveServiceStaff` settings. (3) Enhanced prepaid settings (FR-RSVP-029) - added `noNeedToConfirm` and `showCostToCustomer` settings. (4) Enhanced facility configuration (FR-RSVP-022) - added default cost, credit, duration, and business hours. (5) Enhanced reservation data model (FR-RSVP-060) - added service staff fields, pricing information snapshot, and created by field. (6) Enhanced settings data model (FR-RSVP-061) - added all new settings fields. (7) Added service staff data model (FR-RSVP-062a). (8) Updated business rules (BR-RSVP-001, BR-RSVP-004c, BR-RSVP-004d, BR-RSVP-004e, BR-RSVP-010d, BR-RSVP-010e) - added service staff capacity, selection requirements, and cost display rules. (9) Updated validation requirements (FR-RSVP-003) - added facility and service staff business hours validation, and required field validation. |
 | 2.0 | 2025-01-27 | System | Updated authentication requirements: (1) Clarified that no sign-in is required to create reservations - anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`). (2) Updated FR-RSVP-001, FR-RSVP-002, FR-RSVP-004, and BR-RSVP-008 to reflect that anonymous users can create reservations regardless of prepaid requirements. |
 | 1.9 | 2025-01-27 | System | Enhanced reservation system with authentication, timezone fixes, and UI improvements: (1) Added sign-in requirement for reservation page access - customers must authenticate before creating reservations. (2) Fixed facility filtering to only filter facilities on the same calendar day (in store timezone) as the selected time slot, preventing incorrect filtering across different days. (3) Fixed timezone handling in date/time selection - resolved one-day-off issue by ensuring date components are extracted in store timezone rather than UTC. (4) Improved payment method handling - payment methods are now explicitly specified and updated during order payment and refund processes. (5) Currency consistency - orders use store's `defaultCurrency` or order's `currency` consistently across creation and refund processes. (6) Auto store membership - customers are automatically added as store members (user role) when they create orders. (7) Order notes display - added option to display order notes in order detail views (default: hidden). (8) Fiat balance badge - added fiat balance badge to customer menu for quick balance visibility. (9) Checkout success UX - brief success message displayed before redirect on checkout success page. (10) Unpaid RSVP redirect - in edit mode, unpaid reservations automatically redirect to checkout page. (11) Date/time display - changed datetime-local input to display-only field in reservation form for better timezone handling. Updated FR-RSVP-001, FR-RSVP-003, FR-RSVP-004, and FR-RSVP-013 to reflect these enhancements. |
-| 1.8 | 2025-01-27 | System | Updated customer-facing RSVP creation flow with checkout integration: (1) Changed prepaid payment flow - when prepaid is required, system now creates an unpaid store order and redirects customer to checkout page (`/checkout/[orderId]`) instead of processing payment immediately. (2) Payment method selection: Orders are created with "credit" payment method if `store.useCustomerCredit = true`, otherwise "TBD" payment method. Customer selects payment method at checkout. (3) Credit deduction: Customer credit is no longer deducted at reservation creation time; it's deducted only when customer completes payment using credit at checkout. (4) Updated FR-RSVP-004 and UC-RSVP-001 to reflect new checkout-based payment flow. |
+| 1.8 | 2025-01-27 | System | Updated customer-facing RSVP creation flow with checkout integration: (1) Changed prepaid payment flow - when prepaid is required, system now creates an unpaid store order and redirects customer to checkout page (`/checkout/[orderId]`) instead of processing payment immediately. (2) Payment method selection: Orders are created with "creditPoint" payment method if `store.useCustomerCredit = true`, otherwise "TBD" payment method. Customer selects payment method at checkout. (3) Credit deduction: Customer credit is no longer deducted at reservation creation time; it's deducted only when customer completes payment using credit points at checkout. (4) Updated FR-RSVP-004 and UC-RSVP-001 to reflect new checkout-based payment flow. |
 | 1.7 | 2025-01-27 | System | Enhanced reservation validation and UI improvements: (1) Added detailed business hours validation logic with priority rules (RsvpSettings.useBusinessHours vs Store.useBusinessHours), including real-time UI validation and server-side validation on form submission. (2) Implemented dynamic facility filtering in reservation forms (both customer-facing and admin) - facilities already booked at the selected time slot are automatically filtered out from the dropdown, with special handling for singleServiceMode and edit mode. Updated FR-RSVP-003, FR-RSVP-024, and BR-RSVP-001 to document these enhancements. |
 | 1.6 | 2025-01-27 | System | Added `singleServiceMode` field to RsvpSettings: Boolean field (default: `false`) for personal shops where only ONE reservation per time slot is allowed across all facilities. When enabled, availability checking blocks any reservation if another reservation exists for the same time slot, regardless of facility. When disabled (default), multiple reservations can exist on the same time slot as long as they use different facilities. Updated business rules (BR-RSVP-004a, BR-RSVP-004b) and functional requirements (FR-RSVP-003, FR-RSVP-024, FR-RSVP-060) to document this behavior. |
 |---------|------|--------|---------|

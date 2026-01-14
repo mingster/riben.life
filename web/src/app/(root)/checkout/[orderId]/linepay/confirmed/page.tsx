@@ -1,4 +1,3 @@
-"use server";
 import getOrderById from "@/actions/get-order-by_id";
 import getStoreById from "@/actions/get-store-by_id";
 import { markOrderAsPaidAction } from "@/actions/store/order/mark-order-as-paid";
@@ -61,14 +60,56 @@ export default async function LinePayConfirmedPage({
 		throw new Error("LINE Pay client not found");
 	}
 
-	const confirmRequest = {
+	// Validate and prepare confirmation request body
+	const orderTotal = Number(order.orderTotal);
+	if (isNaN(orderTotal) || orderTotal <= 0) {
+		logger.error("Invalid order total for LINE Pay confirmation", {
+			metadata: {
+				orderId: order.id,
+				orderTotal: order.orderTotal,
+				convertedTotal: orderTotal,
+			},
+			tags: ["payment", "linepay", "error", "validation"],
+		});
+		throw new Error("Invalid order total");
+	}
+
+	// LINE Pay requires uppercase currency codes
+	const currency = (order.currency?.toUpperCase() || "TWD") as Currency;
+	const validCurrencies: Currency[] = ["USD", "JPY", "TWD", "THB"];
+	if (!validCurrencies.includes(currency)) {
+		logger.error("Invalid currency for LINE Pay confirmation", {
+			metadata: {
+				orderId: order.id,
+				currency: order.currency,
+				convertedCurrency: currency,
+			},
+			tags: ["payment", "linepay", "error", "validation"],
+		});
+		throw new Error(
+			`Invalid currency: ${currency}. LINE Pay supports: USD, JPY, TWD, THB`,
+		);
+	}
+
+	const roundedOrderTotal = Math.round(orderTotal * 100) / 100;
+
+	const confirmRequest: ConfirmRequestConfig = {
 		transactionId: transactionId as string,
 		body: {
-			currency: order.currency as Currency,
-			amount: Number(order.orderTotal),
+			currency: currency,
+			amount: roundedOrderTotal,
 		},
-	} as ConfirmRequestConfig;
-	//console.log("confirmRequest", JSON.stringify(confirmRequest));
+	};
+
+	logger.info("LINE Pay confirmation request prepared", {
+		metadata: {
+			orderId: order.id,
+			transactionId: transactionId as string,
+			amount: roundedOrderTotal,
+			currency: currency,
+		},
+		tags: ["payment", "linepay", "confirm"],
+	});
 
 	const res = await linePayClient.confirm.send(confirmRequest);
 

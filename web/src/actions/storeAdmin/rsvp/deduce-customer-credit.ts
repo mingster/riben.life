@@ -97,20 +97,20 @@ async function createStoreOrderForRsvp(
 		shippingMethodId = defaultShippingMethod.id;
 	}
 
-	// Find credit payment method (for credit usage, we use credit as the payment method)
+	// Find credit point payment method (for credit point usage, we use creditPoint as the payment method)
 	const creditPaymentMethod = await tx.paymentMethod.findFirst({
 		where: {
-			payUrl: "credit",
+			payUrl: "creditPoint",
 			isDeleted: false,
 		},
 	});
 
 	if (!creditPaymentMethod) {
-		logger.error("Credit payment method not found for RSVP store order", {
+		logger.error("Credit point payment method not found for RSVP store order", {
 			metadata: { storeId },
 			tags: ["rsvp", "error"],
 		});
-		throw new Error("Credit payment method not found");
+		throw new Error("Credit point payment method not found");
 	}
 
 	// Create a minimal store order for StoreLedger reference
@@ -206,7 +206,7 @@ async function createStoreLedgerForRsvpCreditUsage(
 			fee: new Prisma.Decimal(0), // No payment processing fee for credit usage
 			platformFee: new Prisma.Decimal(0), // No platform fee for credit usage
 			currency: defaultCurrency.toLowerCase(),
-			type: StoreLedgerType.Revenue, // Credit usage (revenue recognition)
+			type: StoreLedgerType.StorePaymentProvider, // Revenue recognition (credit usage)
 			balance: new Prisma.Decimal(newStoreBalance),
 			description: t("rsvp_prepaid_payment_credit_note", {
 				points: creditToDeduct,

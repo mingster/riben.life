@@ -2,7 +2,7 @@
 
 import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
-import { StoreLedgerType } from "@/types/enum";
+import { StoreLedgerType, CustomerCreditLedgerType } from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 import { getT } from "@/app/i18n";
 import logger from "@/lib/logger";
@@ -21,9 +21,9 @@ interface ConvertFiatTopupToPaymentParams {
 }
 
 /**
- * Converts TOPUP fiat ledger entry to PAYMENT and creates StoreLedger entry for revenue recognition.
- * This function should be called when a prepaid RSVP (paid with external payment using TOPUP) is completed.
- * Deducts fiat from customer's balance and creates StoreLedger entry for revenue recognition.
+ * Converts HOLD fiat ledger entry to SPEND and creates StoreLedger entry for revenue recognition.
+ * This function should be called when a prepaid RSVP (paid with external payment) is completed.
+ * No need to deduct fiat since it's already held - just convert HOLD to SPEND.
  */
 export async function convertFiatTopupToPayment(
 	params: ConvertFiatTopupToPaymentParams,
@@ -38,78 +38,48 @@ export async function convertFiatTopupToPayment(
 		createdBy = null,
 	} = params;
 
-	// Find the original TOPUP ledger entry for this order
-	const topupEntry = await tx.customerFiatLedger.findFirst({
+	// Find the original HOLD ledger entry for this order
+	const holdEntry = await tx.customerFiatLedger.findFirst({
 		where: {
 			storeId,
 			userId: customerId,
 			referenceId: orderId,
-			type: "TOPUP", // TOPUP type (HOLD design for RSVP external payments)
+			type: CustomerCreditLedgerType.Hold, // HOLD type (fiat is already held, not spent yet)
 		},
 		orderBy: {
-			createdAt: "desc", // Get the most recent TOPUP entry for this order
+			createdAt: "desc", // Get the most recent HOLD entry for this order
 		},
 	});
 
-	if (!topupEntry) {
-		logger.warn("No TOPUP fiat ledger entry found for order", {
+	if (!holdEntry) {
+		logger.warn("No HOLD fiat ledger entry found for order", {
 			metadata: {
 				storeId,
 				customerId,
 				orderId,
 				rsvpId,
 			},
-			tags: ["rsvp", "fiat", "topup", "warning"],
+			tags: ["rsvp", "fiat", "hold", "warning"],
 		});
-		// No TOPUP entry found - might not be a prepaid RSVP with external payment, skip conversion
+		// No HOLD entry found - might not be a prepaid RSVP with external payment, skip conversion
 		return;
 	}
 
-	// Get amount (it's positive for TOPUP)
-	const fiatAmount = Number(topupEntry.amount);
-
-	// Get current customer fiat balance (should already be credited from TOPUP)
-	const customerCredit = await tx.customerCredit.findUnique({
-		where: {
-			userId: customerId,
-		},
-	});
-
-	const currentBalance = customerCredit ? Number(customerCredit.fiat) : 0;
-	const newBalance = currentBalance - fiatAmount;
+	// Get absolute value of amount (it's negative for HOLD)
+	const fiatAmount = Math.abs(Number(holdEntry.amount));
 
 	// Get translation function
 	const { t } = await getT();
 
-	// Update CustomerCredit (fiat field) - deduct the amount
-	await tx.customerCredit.update({
+	// Update existing HOLD ledger entry to SPEND (converting HOLD to SPEND)
+	// amount and balance remain the same (already set during hold phase)
+	await tx.customerFiatLedger.update({
 		where: {
-			userId: customerId,
+			id: holdEntry.id,
 		},
 		data: {
-			fiat: {
-				decrement: fiatAmount,
-			},
-			updatedAt: getUtcNowEpoch(),
-		},
-	});
-
-	// Create new PAYMENT ledger entry (converting HOLD to PAYMENT)
-	await tx.customerFiatLedger.create({
-		data: {
-			storeId,
-			userId: customerId,
-			amount: new Prisma.Decimal(-fiatAmount), // Negative for payment
-			balance: new Prisma.Decimal(newBalance), // Updated balance after payment
-			type: "PAYMENT", // PAYMENT type (converted from TOPUP)
+			type: CustomerCreditLedgerType.Spend, // SPEND type (converted from HOLD)
 			referenceId: rsvpId, // Link to RSVP (not order)
-			note:
-				t("rsvp_completion_fiat_payment_note", {
-					amount: fiatAmount,
-					currency: defaultCurrency.toUpperCase(),
-				}) || `RSVP completion: ${fiatAmount} ${defaultCurrency.toUpperCase()}`,
-			creatorId: createdBy || null,
-			createdAt: getUtcNowEpoch(),
 		},
 	});
 
@@ -132,7 +102,7 @@ export async function convertFiatTopupToPayment(
 			fee: new Prisma.Decimal(0), // No payment processing fee for credit usage
 			platformFee: new Prisma.Decimal(0), // No platform fee for credit usage
 			currency: defaultCurrency.toLowerCase(),
-			type: StoreLedgerType.Revenue, // Credit usage (revenue recognition)
+			type: StoreLedgerType.StorePaymentProvider, // Revenue recognition (credit usage)
 			balance: new Prisma.Decimal(newStoreBalance),
 			description:
 				t("rsvp_completion_revenue_note_fiat", {
@@ -147,7 +117,7 @@ export async function convertFiatTopupToPayment(
 		},
 	});
 
-	logger.info("Converted TOPUP to PAYMENT for completed RSVP", {
+	logger.info("Converted HOLD to SPEND for completed RSVP", {
 		metadata: {
 			storeId,
 			customerId,
@@ -155,6 +125,6 @@ export async function convertFiatTopupToPayment(
 			orderId,
 			fiatAmount,
 		},
-		tags: ["rsvp", "fiat", "topup", "payment", "revenue"],
+		tags: ["rsvp", "fiat", "hold", "payment", "revenue"],
 	});
 }

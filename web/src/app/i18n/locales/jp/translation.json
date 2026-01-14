@@ -127,5 +127,12 @@
   "processing": "処理中...",
   "refill_account_balance": "アカウント残高チャージ",
   "refill_account_balance_description": "アカウント残高に資金を追加します。",
-  "refill_account_balance_order_note": "アカウント残高：{{fiatAmount}} {{currency}}"
+  "refill_account_balance_order_note": "アカウント残高：{{fiatAmount}} {{currency}}",
+  "rsvp_only_pending_can_delete": "保留中の予約のみ削除できます。代わりにキャンセルしてください。",
+  "rsvp_paid_reservation_cannot_delete": "支払済みの予約は削除できません。代わりにキャンセルしてください。",
+  "store_ledger_note_order_refund": "{{paymentMethod}}，注文：{{orderNum}}",
+  "store_ledger_note_rsvp_refund": "{{paymentMethod}}，予約キャンセル：{{rsvpTime}}，顧客：{{userName}}",
+  "customer_ledger_note_rsvp_payment_order": "{{paymentMethod}}，注文：{{orderNum}}",
+  "customer_ledger_note_rsvp_payment": "{{paymentMethod}}，予約：{{rsvpTime}}",
+  "unknown_payment_method": "不明"
 }
