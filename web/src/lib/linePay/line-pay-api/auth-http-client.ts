@@ -55,9 +55,18 @@ function generateHeader(
 	nonce: string,
 	signature: string,
 ): RequestHeader {
+	// Validate channel ID before using it
+	if (!channelId || typeof channelId !== "string" || channelId.trim() === "") {
+		throw new Error(
+			`Invalid channel ID: channelId must be a non-empty string. Received: ${JSON.stringify(channelId)}`,
+		);
+	}
+
+	const trimmedChannelId = channelId.trim();
+
 	return {
 		"Content-Type": "application/json",
-		"X-LINE-ChannelId": channelId,
+		"X-LINE-ChannelId": trimmedChannelId,
 		"X-LINE-Authorization-Nonce": nonce,
 		"X-LINE-Authorization": signature,
 	};
@@ -118,6 +127,8 @@ export function createAuthHttpClient(
 	const BASE_URL =
 		merchantConfig.env === "production" ? PRODUCTION_URL : SANDBOX_URL;
 
+	//console.log("BASE_URL", BASE_URL);
+
 	/**
 	 * JavaScript numbers are double-precision floating-point.
 	 * Transaction ID is larger than the largest integer JavaScript can be precisely stored (which is 2^53, 9007199254740992).
@@ -169,6 +180,29 @@ export function createAuthHttpClient(
 			}
 
 			if (!res.data.returnCode.startsWith("0")) {
+				// Log detailed error information for debugging
+				const logger = (async () => {
+					const { default: logger } = await import("@/lib/logger");
+					return logger;
+				})();
+
+				logger
+					.then((log) => {
+						log.error("LINE Pay API error", {
+							metadata: {
+								returnCode: res.data.returnCode,
+								returnMessage: res.data.returnMessage,
+								status: res.status,
+								channelId: merchantConfig.channelId?.substring(0, 4) + "***", // Mask for security
+								env: merchantConfig.env,
+							},
+							tags: ["linepay", "api", "error"],
+						});
+					})
+					.catch(() => {
+						// Silently fail if logger is not available
+					});
+
 				throw new LinePayApiError(res.data.returnMessage, res.status, res.data);
 			}
 
@@ -181,7 +215,6 @@ export function createAuthHttpClient(
 					err.response.status,
 					err.response.data,
 				);
-				// biome-ignore lint/style/noUselessElse: <explanation>
 			} else if (err.response === undefined && err.code === "ECONNABORTED") {
 				throw new TimeoutError(err.message);
 			}

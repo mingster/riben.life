@@ -1,6 +1,9 @@
 import { sqlClient } from "@/lib/prismadb";
 import { Prisma } from "@prisma/client";
-import { CustomerCreditLedgerType } from "@/types/enum";
+import {
+	CustomerCreditLedgerType,
+	CustomerFiatLedgerType,
+} from "@/types/enum";
 import { getUtcNowEpoch } from "@/utils/datetime-utils";
 
 /**
@@ -219,7 +222,7 @@ export async function processFiatTopUp(
 				userId,
 				amount: new Prisma.Decimal(amount),
 				balance: new Prisma.Decimal(newBalance),
-				type: "TOPUP",
+				type: CustomerFiatLedgerType.Topup,
 				referenceId: referenceId || null,
 				note: note || `Top-up ${amount}`,
 				creatorId: creatorId || null,

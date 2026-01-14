@@ -141,10 +141,31 @@ export type {
 /**
  * Create a client for LINE Pay API.
  *
+ * https://github.com/enylin/line-pay-merchant?tab=readme-ov-file
  * @param config Configuration from the LINE Pay for the client
  * @returns LINE Pay client
  */
 export function createLinePayClient(config: LineMerchantConfig): LinePayClient {
+	// Validate config before creating client
+	if (
+		!config.channelId ||
+		typeof config.channelId !== "string" ||
+		config.channelId.trim() === ""
+	) {
+		throw new Error(
+			`Invalid LINE Pay config: channelId must be a non-empty string. Received: ${JSON.stringify(config.channelId)}`,
+		);
+	}
+	if (
+		!config.channelSecretKey ||
+		typeof config.channelSecretKey !== "string" ||
+		config.channelSecretKey.trim() === ""
+	) {
+		throw new Error(
+			`Invalid LINE Pay config: channelSecretKey must be a non-empty string.`,
+		);
+	}
+
 	const httpClient = createAuthHttpClient(config);
 
 	return {
@@ -190,16 +211,36 @@ export function getLinePayClient(id: string | null, secret: string | null) {
 		linePaySecret = process.env.LINE_PAY_SECRET || null;
 	}
 
-	if (!linePayId || !linePaySecret) {
-		throw new Error("LINE_PAY is not set");
+	// Validate that channel ID and secret are non-empty strings
+	// Trim whitespace to catch cases where env vars have spaces
+	const trimmedId = linePayId?.trim();
+	const trimmedSecret = linePaySecret?.trim();
+
+	if (
+		!trimmedId ||
+		!trimmedSecret ||
+		trimmedId === "" ||
+		trimmedSecret === ""
+	) {
+		throw new Error(
+			"LINE_PAY is not set or invalid (channel ID and secret must be non-empty strings)",
+		);
+	}
+
+	// Validate channel ID format - LINE Pay channel IDs are typically numeric strings
+	// Allow alphanumeric but ensure it's not empty after validation
+	if (!/^[a-zA-Z0-9]+$/.test(trimmedId)) {
+		throw new Error(
+			`LINE_PAY channel ID format is invalid: channel ID must contain only alphanumeric characters. Received: ${trimmedId.substring(0, 10)}...`,
+		);
 	}
 
 	const env =
 		process.env.NODE_ENV === "development" ? "development" : "production";
 
 	const linePayClient = createLinePayClient({
-		channelId: linePayId,
-		channelSecretKey: linePaySecret,
+		channelId: trimmedId,
+		channelSecretKey: trimmedSecret,
 		env: env, // env can be 'development' or 'production'
 	}) as LinePayClient;
 
@@ -248,10 +289,15 @@ export async function getLinePayClientByStore(
 	}
 
 	// If store has LINE Pay credentials, use them
+	// Validate that both ID and secret are non-empty strings (not just non-null)
 	if (
 		storeConfig &&
 		storeConfig.LINE_PAY_ID !== null &&
-		storeConfig.LINE_PAY_SECRET !== null
+		storeConfig.LINE_PAY_ID !== undefined &&
+		storeConfig.LINE_PAY_ID.trim() !== "" &&
+		storeConfig.LINE_PAY_SECRET !== null &&
+		storeConfig.LINE_PAY_SECRET !== undefined &&
+		storeConfig.LINE_PAY_SECRET.trim() !== ""
 	) {
 		return getLinePayClient(
 			storeConfig.LINE_PAY_ID,
