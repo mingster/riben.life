@@ -145,31 +145,57 @@ export const updateReservationAction = baseClient
 			);
 		}
 
+		// Customer restrictions: customers can only update rsvp time, number of people, and message, for non-completed reservation.
+		const { t } = await getT();
+
+		// Prevent updates to completed reservations
+		if (existingRsvp.status === RsvpStatus.Completed) {
+			throw new SafeError(
+				t("rsvp_completed_reservation_cannot_update") ||
+					"Completed reservations cannot be updated",
+			);
+		}
+
+		// Only allow customers to update: rsvpTime, numOfAdult, numOfChild, message
+		// Prevent updates to facilityId and serviceStaffId
+		if (facilityId !== undefined) {
+			const existingFacilityId = existingRsvp.facilityId || null;
+			const normalizedFacilityId = facilityId || null; // Treat empty string as null
+			if (normalizedFacilityId !== existingFacilityId) {
+				throw new SafeError(
+					t("rsvp_customer_cannot_update_facility") ||
+						"Customers cannot update facility",
+				);
+			}
+		}
+		if (serviceStaffId !== undefined) {
+			const existingServiceStaffId = existingRsvp.serviceStaffId || null;
+			const normalizedServiceStaffId = serviceStaffId || null; // Treat empty string as null
+			if (normalizedServiceStaffId !== existingServiceStaffId) {
+				throw new SafeError(
+					t("rsvp_customer_cannot_update_service_staff") ||
+						"Customers cannot update service staff",
+				);
+			}
+		}
+
 		// Set createdBy if it's currently null (for old records)
 		const createdBy = sessionUserId || existingRsvp.createdBy || null;
 
-		// Validate facilityId if mustSelectFacility is true
-		if (rsvpSettingsResult?.mustSelectFacility && !facilityId) {
-			const { t } = await getT();
-			throw new SafeError(
-				t("rsvp_facility_required") || "Facility is required",
-			);
-		}
+		// Note: We don't validate mustSelectFacility or mustHaveServiceStaff here
+		// because customers cannot change facilityId or serviceStaffId anyway
+		// The existing values from the reservation will be preserved
 
-		// Validate serviceStaffId if mustHaveServiceStaff is true
-		if (rsvpSettingsResult?.mustHaveServiceStaff && !serviceStaffId) {
-			const { t } = await getT();
-			throw new SafeError(
-				t("rsvp_service_staff_required") || "Service staff is required",
-			);
-		}
+		// Use existing facilityId and serviceStaffId (customers cannot change them)
+		const finalFacilityId = existingRsvp.facilityId;
+		const finalServiceStaffId = existingRsvp.serviceStaffId;
 
-		// Get service staff if provided
+		// Get service staff using existing value (not input value)
 		let serviceStaff = null;
-		if (serviceStaffId) {
-			serviceStaff = await sqlClient.serviceStaff.findFirst({
+		if (finalServiceStaffId) {
+			const serviceStaffResult = await sqlClient.serviceStaff.findFirst({
 				where: {
-					id: serviceStaffId,
+					id: finalServiceStaffId,
 					storeId: existingRsvp.storeId,
 					isDeleted: false,
 				},
@@ -181,23 +207,29 @@ export const updateReservationAction = baseClient
 				},
 			});
 
-			if (!serviceStaff) {
-				const { t } = await getT();
-				throw new SafeError(
-					t("rsvp_service_staff_not_found") || "Service staff not found",
+			if (serviceStaffResult) {
+				serviceStaff = {
+					id: serviceStaffResult.id,
+					defaultCost: serviceStaffResult.defaultCost
+						? Number(serviceStaffResult.defaultCost)
+						: null,
+					defaultCredit: serviceStaffResult.defaultCredit
+						? Number(serviceStaffResult.defaultCredit)
+						: null,
+					businessHours: serviceStaffResult.businessHours,
+				};
+
+				// Validate service staff business hours
+				await validateServiceStaffBusinessHours(
+					serviceStaff.businessHours,
+					rsvpTimeUtc,
+					storeTimezone,
+					finalServiceStaffId,
 				);
 			}
-
-			// Validate service staff business hours
-			await validateServiceStaffBusinessHours(
-				serviceStaff.businessHours,
-				rsvpTimeUtc,
-				storeTimezone,
-				serviceStaffId,
-			);
 		}
 
-		// Validate facility if provided (optional)
+		// Get facility using existing value (not input value)
 		let facility: {
 			id: string;
 			storeId: string;
@@ -208,10 +240,10 @@ export const updateReservationAction = baseClient
 			businessHours: string | null;
 		} | null = null;
 
-		if (facilityId) {
+		if (finalFacilityId) {
 			const facilityResult = await sqlClient.storeFacility.findFirst({
 				where: {
-					id: facilityId,
+					id: finalFacilityId,
 					storeId: existingRsvp.storeId,
 				},
 				select: {
@@ -219,35 +251,30 @@ export const updateReservationAction = baseClient
 					storeId: true,
 					facilityName: true,
 					defaultDuration: true,
-					defaultCost: true, // Added defaultCost
-					defaultCredit: true, // Added defaultCredit
+					defaultCost: true,
+					defaultCredit: true,
 					businessHours: true,
 				},
 			});
 
-			if (!facilityResult) {
-				const { t } = await getT();
-				throw new SafeError(
-					t("rsvp_facility_not_found") || "Facility not found",
-				);
+			if (facilityResult) {
+				// Convert Decimal to number for type compatibility
+				facility = {
+					id: facilityResult.id,
+					storeId: facilityResult.storeId,
+					facilityName: facilityResult.facilityName,
+					defaultDuration: facilityResult.defaultDuration
+						? Number(facilityResult.defaultDuration)
+						: null,
+					defaultCost: facilityResult.defaultCost
+						? Number(facilityResult.defaultCost)
+						: null,
+					defaultCredit: facilityResult.defaultCredit
+						? Number(facilityResult.defaultCredit)
+						: null,
+					businessHours: facilityResult.businessHours,
+				};
 			}
-
-			// Convert Decimal to number for type compatibility
-			facility = {
-				id: facilityResult.id,
-				storeId: facilityResult.storeId,
-				facilityName: facilityResult.facilityName,
-				defaultDuration: facilityResult.defaultDuration
-					? Number(facilityResult.defaultDuration)
-					: null,
-				defaultCost: facilityResult.defaultCost
-					? Number(facilityResult.defaultCost)
-					: null,
-				defaultCredit: facilityResult.defaultCredit
-					? Number(facilityResult.defaultCredit)
-					: null,
-				businessHours: facilityResult.businessHours,
-			};
 		}
 
 		// Validate cancelHours window (FR-RSVP-013)
@@ -262,7 +289,7 @@ export const updateReservationAction = baseClient
 				facility.businessHours,
 				rsvpTimeUtc,
 				storeTimezone,
-				facilityId!,
+				finalFacilityId!,
 			);
 		}
 
@@ -276,21 +303,24 @@ export const updateReservationAction = baseClient
 				existingRsvp.storeId,
 				rsvpSettingsResult,
 				rsvpTime,
-				facilityId!,
+				finalFacilityId!,
 				facility.defaultDuration ?? rsvpSettingsResult?.defaultDuration ?? 60,
 				id, // Exclude current reservation from conflict check
 			);
 		}
 
 		// Calculate costs: facility cost + service staff cost (if applicable)
-		let facilityCost = facility?.defaultCost ? Number(facility.defaultCost) : 0;
-		let facilityCredit = facility?.defaultCredit
+		// Use existing facility and service staff (customers cannot change them)
+		let finalFacilityCost = facility?.defaultCost
+			? Number(facility.defaultCost)
+			: 0;
+		let finalFacilityCredit = facility?.defaultCredit
 			? Number(facility.defaultCredit)
 			: 0;
-		let serviceStaffCost = serviceStaff?.defaultCost
+		let finalServiceStaffCost = serviceStaff?.defaultCost
 			? Number(serviceStaff.defaultCost)
 			: 0;
-		let serviceStaffCredit = serviceStaff?.defaultCredit
+		let finalServiceStaffCredit = serviceStaff?.defaultCredit
 			? Number(serviceStaff.defaultCredit)
 			: 0;
 
@@ -298,18 +328,24 @@ export const updateReservationAction = baseClient
 			const updated = await sqlClient.rsvp.update({
 				where: { id },
 				data: {
-					facilityId: facilityId || null,
+					facilityId: finalFacilityId, // Use existing value, not input
 					facilityCost:
-						facilityCost > 0 ? new Prisma.Decimal(facilityCost) : null,
+						finalFacilityCost > 0
+							? new Prisma.Decimal(finalFacilityCost)
+							: null,
 					facilityCredit:
-						facilityCredit > 0 ? new Prisma.Decimal(facilityCredit) : null,
+						finalFacilityCredit > 0
+							? new Prisma.Decimal(finalFacilityCredit)
+							: null,
 					pricingRuleId: null, // Pricing rules are not used in this simple reservation flow
-					serviceStaffId: serviceStaffId || null,
+					serviceStaffId: finalServiceStaffId, // Use existing value, not input
 					serviceStaffCost:
-						serviceStaffCost > 0 ? new Prisma.Decimal(serviceStaffCost) : null,
+						finalServiceStaffCost > 0
+							? new Prisma.Decimal(finalServiceStaffCost)
+							: null,
 					serviceStaffCredit:
-						serviceStaffCredit > 0
-							? new Prisma.Decimal(serviceStaffCredit)
+						finalServiceStaffCredit > 0
+							? new Prisma.Decimal(finalServiceStaffCredit)
 							: null,
 					numOfAdult,
 					numOfChild,

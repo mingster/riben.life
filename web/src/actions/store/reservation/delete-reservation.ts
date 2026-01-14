@@ -12,6 +12,11 @@ import { deleteReservationSchema } from "./delete-reservation.validation";
 import { getRsvpNotificationRouter } from "@/lib/notification/rsvp-notification-router";
 import { getT } from "@/app/i18n";
 
+// delete pending reservation by the customer.
+// this action will delete the pending reservation record and related pending store order.
+//
+// once the order is paid, reservation should be cancelled instead of deleted.
+//
 export const deleteReservationAction = baseClient
 	.metadata({ name: "deleteReservation" })
 	.schema(deleteReservationSchema)
@@ -26,18 +31,28 @@ export const deleteReservationAction = baseClient
 		const sessionUserId = session?.user?.id;
 		const sessionUserEmail = session?.user?.email;
 
-		// Get the existing RSVP
+		// Get the existing RSVP with Order included to check payment status
 		const existingRsvp = await sqlClient.rsvp.findUnique({
 			where: { id },
 			include: {
 				Customer: true,
 				Store: true,
+				Order: true,
 			},
 		});
 
 		if (!existingRsvp) {
 			const { t } = await getT();
 			throw new SafeError(t("rsvp_not_found") || "Reservation not found");
+		}
+
+		// Once the order is paid, reservation should be cancelled instead of deleted
+		if (existingRsvp.Order?.isPaid) {
+			const { t } = await getT();
+			throw new SafeError(
+				t("rsvp_paid_reservation_cannot_delete") ||
+					"Paid reservations cannot be deleted. Please cancel instead.",
+			);
 		}
 
 		// Only allow deletion if status is Pending
@@ -102,9 +117,19 @@ export const deleteReservationAction = baseClient
 				actionUrl: `/storeAdmin/${existingRsvp.storeId}/rsvp`,
 			});
 
-			// Hard delete from database
-			await sqlClient.rsvp.delete({
-				where: { id },
+			// Delete reservation and related pending order in a transaction
+			await sqlClient.$transaction(async (tx) => {
+				// Delete the related pending store order if it exists
+				if (existingRsvp.orderId) {
+					await tx.storeOrder.delete({
+						where: { id: existingRsvp.orderId },
+					});
+				}
+
+				// Delete the reservation record
+				await tx.rsvp.delete({
+					where: { id },
+				});
 			});
 
 			return { id };
