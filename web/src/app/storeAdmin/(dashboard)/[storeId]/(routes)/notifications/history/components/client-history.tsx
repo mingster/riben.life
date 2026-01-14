@@ -110,7 +110,6 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 
 	const [data, setData] = useState<MessageQueueWithDelivery[]>(initialData);
 	const [loading, setLoading] = useState(false);
-	const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
 	const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
 	// Filters
@@ -286,7 +285,6 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 			await Promise.all(deletePromises);
 
 			setData((prev) => prev.filter((item) => !selectedIds.includes(item.id)));
-			setSelectedRows({});
 			setSelectedIds([]);
 			toastSuccess({
 				description: t("notifications_deleted", { count: selectedIds.length }),
@@ -299,6 +297,23 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 			setLoading(false);
 		}
 	}, [selectedIds, storeId, t]);
+
+	const handleRowSelectionChange = useCallback(
+		(rows: RowSelectionState) => {
+			// Update selectedIds based on row selection
+			const ids: string[] = [];
+			Object.keys(rows).forEach((rowIndex) => {
+				if (rows[rowIndex]) {
+					const row = filteredData[parseInt(rowIndex, 10)];
+					if (row) {
+						ids.push(row.id);
+					}
+				}
+			});
+			setSelectedIds(ids);
+		},
+		[filteredData],
+	);
 
 	const columns: ColumnDef<MessageQueueWithDelivery>[] = useMemo(
 		() => [
@@ -564,22 +579,9 @@ export function ClientHistory({ storeId, initialData }: ClientHistoryProps) {
 			<DataTableCheckbox
 				columns={columns}
 				data={filteredData}
-				initiallySelected={selectedRows}
+				initiallySelected={{}}
 				disabled={loading}
-				onRowSelectionChange={(rows) => {
-					setSelectedRows(rows);
-					// Update selectedIds based on row selection
-					const ids: string[] = [];
-					Object.keys(rows).forEach((rowIndex) => {
-						if (rows[rowIndex]) {
-							const row = filteredData[parseInt(rowIndex, 10)];
-							if (row) {
-								ids.push(row.id);
-							}
-						}
-					});
-					setSelectedIds(ids);
-				}}
+				onRowSelectionChange={handleRowSelectionChange}
 				noPagination={false}
 				defaultPageSize={30}
 			/>

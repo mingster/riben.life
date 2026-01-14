@@ -137,7 +137,7 @@ export const RsvpSettingTab: React.FC<RsvpSettingTabProps> = ({
 				const rsvpSettings = result.data.rsvpSettings;
 				const updatedRsvpSettings: RsvpSettingsData = {
 					...rsvpSettings,
-					minPrepaidPercentage: rsvpSettings.minPrepaidPercentage ?? 0,
+					minPrepaidPercentage: rsvpSettings.minPrepaidPercentage ?? 100,
 					createdAt: epochToDate(rsvpSettings.createdAt) ?? new Date(),
 					updatedAt: epochToDate(rsvpSettings.updatedAt) ?? new Date(),
 				};

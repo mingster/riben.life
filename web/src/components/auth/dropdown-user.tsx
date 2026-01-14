@@ -8,7 +8,7 @@ import {
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "@/app/i18n/client";
 import { NotMountSkeleton } from "@/components/not-mount-skeleton";
 import { Button } from "@/components/ui/button";
@@ -46,11 +46,26 @@ export default function DropdownUser({ db_user }: UserButtonProps) {
 		setMounted(true);
 	}, []);
 
+	// Check if user is signed in (not anonymous)
+	// Anonymous users created via Better Auth anonymous plugin have emails like guest-{id}@riben.life
+	// NOTE: This hook must be called before any conditional returns to follow Rules of Hooks
+	const isSignedIn = useMemo(() => {
+		if (!session?.user) return false;
+		// Check if user is anonymous (guest user)
+		const userEmail = session.user.email;
+		const isAnonymousUser =
+			userEmail &&
+			userEmail.startsWith("guest-") &&
+			userEmail.endsWith("@riben.life");
+		// Only consider it "signed in" if user exists and is not anonymous
+		return !isAnonymousUser;
+	}, [session?.user]);
+
 	if (!mounted) return <NotMountSkeleton />;
 
 	//logger.info("session", session);
 
-	if (!session) {
+	if (!session || !isSignedIn) {
 		return <DialogSignIn />;
 	}
 

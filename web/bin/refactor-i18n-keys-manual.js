@@ -87,7 +87,7 @@ const keyMappings = {
 	"StoreSettings_Credit_Max_Purchase_Descr": "StoreSettings_Credit_Max_Purchase_descr",
 	"StoreSettings_Credit_Min_Purchase_Descr": "StoreSettings_Credit_Min_Purchase_descr",
 	"StoreSettings_Credit_Service_Exchange_Rate_Descr": "StoreSettings_Credit_Service_Exchange_Rate_descr",
-	"StoreSettings_PayoutSchedule_Descr": "StoreSettings_PayoutSchedule_descr",
+	"StoreSettings_payout_schedule_Descr": "StoreSettings_payout_schedule_descr",
 	"StoreSettings_Store_Country_Descr": "StoreSettings_Store_Country_descr",
 	"StoreSettings_Store_Currency_Descr": "StoreSettings_Store_Currency_descr",
 	"StoreSettings_Store_Locale_Descr": "StoreSettings_Store_Locale_descr",

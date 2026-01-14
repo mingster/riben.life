@@ -52,7 +52,7 @@ export const PayoutScheduleCombobox = ({
 					{...props}
 				>
 					{selectedStatus ? (
-						<> {t(`PayoutSchedule_${selectedStatus.label}`)}</>
+						<> {t(`payout_schedule_${selectedStatus.label}`)}</>
 					) : (
 						<>+ {t("select")}</>
 					)}
@@ -80,7 +80,7 @@ export const PayoutScheduleCombobox = ({
 										setOpen(false);
 									}}
 								>
-									{t(`PayoutSchedule_${obj.label}`)}
+									{t(`payout_schedule_${obj.label}`)}
 								</CommandItem>
 							))}
 						</CommandGroup>
