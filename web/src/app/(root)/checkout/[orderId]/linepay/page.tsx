@@ -174,7 +174,7 @@ const PaymentPage = async (props: {
 		if (isNaN(amount) || amount <= 0) {
 			logger.error("Invalid package amount", {
 				metadata: {
-		orderId: order.id,
+					orderId: order.id,
 					itemId: item.id,
 					unitPrice,
 					quantity,
@@ -224,7 +224,7 @@ const PaymentPage = async (props: {
 				orderTotal: roundedOrderTotal,
 				packagesTotal: roundedPackagesTotal,
 				difference: Math.abs(roundedOrderTotal - roundedPackagesTotal),
-				},
+			},
 			tags: ["payment", "linepay", "warning", "validation"],
 		});
 	}

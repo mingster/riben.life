@@ -1,312 +1,276 @@
 #!/usr/bin/env bun
 /**
- * Installation Script for riben.life Platform
+ * Installation Script
  * 
- * This script initializes the platform by:
- * - Creating Stripe products and prices
- * - Populating country, currency, and locale data
- * - Setting up default payment and shipping methods
+ * This script initializes the database with default data:
+ * - Countries (ISO 3166)
+ * - Currencies (ISO 4217)
+ * - Locales
+ * - Platform settings
  * 
- * Usage: bun run ./bin/install.ts
+ * Usage:
+ *   bun run bin/install.ts              # Run full installation
+ *   bun run bin/install.ts --wipeout    # Wipeout and reinstall
+ *   bun run bin/install.ts --check      # Check installation status
  */
 
-import { populateCountryData } from "../src/actions/sysAdmin/populate-country-data";
-import { populateCurrencyData } from "../src/actions/sysAdmin/populate-currency-data";
-import {
-	create_locales,
-	create_paymentMethods,
-	create_shippingMethods,
-} from "../src/actions/sysAdmin/populate-payship_defaults";
-import { sqlClient, pool } from "../src/lib/prismadb";
-import { stripe } from "../src/lib/stripe/config";
-import logger from "../src/lib/logger";
-import type { PlatformSettings } from "../src/types";
-import pg from "pg";
+import { promises as fs } from "node:fs";
+import { sqlClient } from "@/lib/prismadb";
+import { stripe } from "@/lib/stripe/config";
+import type { PlatformSettings } from "@prisma/client";
 
-async function createStripeProducts(setting: PlatformSettings | null) {
-	console.log("Creating Stripe products and prices...");
+// Parse command line arguments
+const args = process.argv.slice(2);
+const isWipeout = args.includes("--wipeout");
+const isCheck = args.includes("--check");
 
-	const product = await stripe.products.create({
-		name: "riben.life subscription",
-	});
-
-	const price = await stripe.prices.create({
-		currency: "twd",
-		unit_amount: 30000, //NT$300
-		recurring: {
-			interval: "month",
-		},
-		product: product.id,
-	});
-
-	logger.info("stripe product created", { metadata: { product } });
-	logger.info("stripe price created", { metadata: { price } });
-
-	if (product && product !== null && product.id !== null) {
-		// Workaround: Use pool directly (Prisma v7 adapter issue in standalone scripts)
-		const poolClient = await pool.connect();
-		try {
-			if (setting === null) {
-				await poolClient.query(
-					'INSERT INTO "PlatformSettings" ("stripeProductId", "stripePriceId") VALUES ($1, $2)',
-					[product.id as string, price.id as string]
-				);
-				logger.info("platform setting created", { metadata: { product, price } });
-				console.log("✓ Platform settings created");
-			} else {
-				await poolClient.query(
-					'UPDATE "PlatformSettings" SET "stripeProductId" = $1, "stripePriceId" = $2 WHERE id = $3',
-					[product.id as string, price.id as string, setting.id]
-				);
-				logger.info("platform setting updated", { metadata: { setting } });
-				console.log("✓ Platform settings updated");
-			}
-		} finally {
-			poolClient.release();
+async function checkInstallationStatus() {
+	console.log("📊 Checking installation status...\n");
+	
+	try {
+		const countryCount = await sqlClient.country.count();
+		const currencyCount = await sqlClient.currency.count();
+		const localeCount = await sqlClient.locale.count();
+		const platformSettings = await sqlClient.platformSettings.findFirst();
+		
+		console.log(`✓ Countries:        ${countryCount} records`);
+		console.log(`✓ Currencies:       ${currencyCount} records`);
+		console.log(`✓ Locales:          ${localeCount} records`);
+		console.log(`✓ Platform Settings: ${platformSettings ? "Configured" : "Not configured"}`);
+		
+		if (platformSettings) {
+			console.log(`\n  Stripe Product ID: ${platformSettings.stripeProductId || "Not set"}`);
+			console.log(`  Stripe Price ID:   ${platformSettings.stripePriceId || "Not set"}`);
 		}
+		
+		const isInstalled = countryCount > 0 && currencyCount > 0 && localeCount > 0;
+		
+		if (isInstalled) {
+			console.log("\n✅ Installation is complete!");
+		} else {
+			console.log("\n⚠️  Installation is incomplete. Run: bun run bin/install.ts");
+		}
+		
+		return isInstalled;
+	} catch (error) {
+		console.error("❌ Error checking installation:", error);
+		return false;
 	}
-
-	console.log(`✓ Stripe Product ID: ${product.id}`);
-	console.log(`✓ Stripe Price ID: ${price.id}`);
 }
 
-async function createBaseObjects(
-	countryCount: number,
-	currencyCount: number,
-	localeCount: number,
-) {
-	console.log("\nPopulating base data...");
-
-	if (countryCount === 0) {
-		await populateCountryData();
-		console.log("✓ Country data populated");
-	} else {
-		console.log(`✓ Countries already exist (${countryCount})`);
+async function populateCountryData() {
+	console.log("\n📍 Populating country data...");
+	
+	const filePath = `${process.cwd()}/public/install/country_iso.json`;
+	const file = await fs.readFile(filePath, "utf8");
+	const data = JSON.parse(file);
+	
+	let created = 0;
+	for (const item of data) {
+		try {
+			await sqlClient.country.create({
+				data: {
+					alpha3: item.alpha3,
+					name: item.name,
+					unCode: item.unCode,
+				},
+			});
+			created++;
+		} catch (error) {
+			console.error(`  ⚠️  Failed to create country: ${item.name}`, error);
+		}
 	}
+	
+	console.log(`  ✓ Created ${created} countries`);
+	return created;
+}
 
-	if (currencyCount === 0) {
-		await populateCurrencyData();
-		console.log("✓ Currency data populated");
-	} else {
-		console.log(`✓ Currencies already exist (${currencyCount})`);
+async function populateCurrencyData() {
+	console.log("\n💰 Populating currency data...");
+	
+	const filePath = `${process.cwd()}/public/install/currency_iso.json`;
+	const file = await fs.readFile(filePath, "utf8");
+	const data = JSON.parse(file);
+	
+	let created = 0;
+	for (const item of data) {
+		try {
+			await sqlClient.currency.create({
+				data: {
+					id: item.currency,
+					name: item.name,
+					demonym: item.demonym,
+					majorSingle: item.majorSingle,
+					majorPlural: item.majorPlural,
+					ISOnum: item.ISOnum,
+					symbol: item.symbol,
+					symbolNative: item.symbolNative,
+					minorSingle: item.minorSingle,
+					minorPlural: item.minorPlural,
+					ISOdigits: item.ISOdigits,
+					decimals: item.decimals,
+					numToBasic: item.numToBasic,
+				},
+			});
+			created++;
+		} catch (error) {
+			console.error(`  ⚠️  Failed to create currency: ${item.currency}`, error);
+		}
 	}
+	
+	console.log(`  ✓ Created ${created} currencies`);
+	return created;
+}
 
-	if (localeCount === 0) {
-		await create_locales();
-		console.log("✓ Locale data populated");
-	} else {
-		console.log(`✓ Locales already exist (${localeCount})`);
+async function populateLocaleData() {
+	console.log("\n🌐 Populating locale data...");
+	
+	const filePath = `${process.cwd()}/public/install/locales.json`;
+	const file = await fs.readFile(filePath, "utf8");
+	const data = JSON.parse(file);
+	
+	let created = 0;
+	for (const item of data) {
+		try {
+			await sqlClient.locale.create({
+				data: item,
+			});
+			created++;
+		} catch (error) {
+			console.error(`  ⚠️  Failed to create locale: ${item.id}`, error);
+		}
 	}
+	
+	console.log(`  ✓ Created ${created} locales`);
+	return created;
+}
 
-	// Workaround: Use pool directly (Prisma v7 adapter issue in standalone scripts)
-	const poolClient = await pool.connect();
+async function checkPlatformSettings() {
+	console.log("\n⚙️  Checking platform settings...");
+	
+	const settings = await sqlClient.platformSettings.findFirst();
+	
+	if (!settings) {
+		console.log("  ⚠️  No platform settings found");
+		console.log("  💡 You can create them manually or through the admin panel");
+		return null;
+	}
+	
+	// Verify Stripe product if configured
+	if (settings.stripeProductId) {
+		try {
+			const product = await stripe.products.retrieve(settings.stripeProductId);
+			if (product) {
+				console.log(`  ✓ Stripe product verified: ${product.name}`);
+			}
+		} catch (error) {
+			console.error("  ⚠️  Invalid Stripe product ID");
+		}
+	} else {
+		console.log("  ℹ️  Stripe product not configured");
+	}
+	
+	return settings;
+}
+
+async function wipeoutData() {
+	console.log("\n🗑️  Wiping out existing data...");
+	
 	try {
-		const paymentMethodsResult = await poolClient.query<{ id: string }>('SELECT id FROM "PaymentMethod"');
-		if (paymentMethodsResult.rows.length === 0) {
-			await create_paymentMethods();
-			console.log("✓ Payment methods created");
-		} else {
-			console.log(`✓ Payment methods already exist (${paymentMethodsResult.rows.length})`);
-		}
+		await sqlClient.locale.deleteMany();
+		console.log("  ✓ Deleted all locales");
+		
+		await sqlClient.currency.deleteMany();
+		console.log("  ✓ Deleted all currencies");
+		
+		await sqlClient.country.deleteMany();
+		console.log("  ✓ Deleted all countries");
+		
+		console.log("\n✅ Wipeout complete");
+	} catch (error) {
+		console.error("❌ Error during wipeout:", error);
+		throw error;
+	}
+}
 
-		const shippingMethodsResult = await poolClient.query<{ id: string }>('SELECT id FROM "ShippingMethod"');
-		if (shippingMethodsResult.rows.length === 0) {
-			await create_shippingMethods();
-			console.log("✓ Shipping methods created");
+async function runInstallation() {
+	console.log("🚀 Starting installation...\n");
+	console.log("=" .repeat(50));
+	
+	try {
+		// Check current status
+		const countryCount = await sqlClient.country.count();
+		const currencyCount = await sqlClient.currency.count();
+		const localeCount = await sqlClient.locale.count();
+		
+		console.log("\n📊 Current Status:");
+		console.log(`  Countries:  ${countryCount}`);
+		console.log(`  Currencies: ${currencyCount}`);
+		console.log(`  Locales:    ${localeCount}`);
+		
+		// Populate missing data
+		if (countryCount === 0) {
+			await populateCountryData();
 		} else {
-			console.log(`✓ Shipping methods already exist (${shippingMethodsResult.rows.length})`);
+			console.log("\n📍 Countries already populated (skipping)");
 		}
-	} finally {
-		poolClient.release();
+		
+		if (currencyCount === 0) {
+			await populateCurrencyData();
+		} else {
+			console.log("\n💰 Currencies already populated (skipping)");
+		}
+		
+		if (localeCount === 0) {
+			await populateLocaleData();
+		} else {
+			console.log("\n🌐 Locales already populated (skipping)");
+		}
+		
+		// Check platform settings
+		await checkPlatformSettings();
+		
+		console.log("\n" + "=".repeat(50));
+		console.log("✅ Installation complete!\n");
+		
+		// Show final status
+		await checkInstallationStatus();
+		
+	} catch (error) {
+		console.error("\n❌ Installation failed:", error);
+		throw error;
 	}
 }
 
 async function main() {
-	console.log("======================================");
-	console.log("riben.life Platform Installation");
-	console.log("======================================\n");
-
 	try {
-		// Test database connection directly using pg Pool first
-		// This helps diagnose connection issues before using Prisma client
-		console.log("Testing database connection...");
-		const connectionString = process.env.POSTGRES_URL;
-		if (!connectionString) {
-			throw new Error("POSTGRES_URL environment variable is not set");
-		}
-		
-		// Parse connection string - server requires SSL but may not verify certificates
-		// Keep SSL enabled but allow unverified certificates (same as psql behavior)
-		let testConnectionString = connectionString;
-		try {
-			const url = new URL(connectionString);
-			// Ensure sslmode=require is set (server requires SSL)
-			if (!url.searchParams.get("sslmode")) {
-				url.searchParams.set("sslmode", "require");
-			}
-			url.searchParams.delete("ssl"); // Remove ssl=true, use sslmode instead
-			testConnectionString = url.toString();
-		} catch {
-			// If URL parsing fails, append sslmode=require
-			const separator = connectionString.includes("?") ? "&" : "?";
-			testConnectionString = `${connectionString}${separator}sslmode=require`;
-		}
-		
-		// Test connection with a simple pg query
-		// Enable SSL but don't verify certificate (server requires SSL but may have self-signed cert)
-		const testPool = new pg.Pool({
-			connectionString: testConnectionString,
-			ssl: { rejectUnauthorized: false }, // Enable SSL but don't verify certificate
-		});
-		
-		try {
-			const testResult = await testPool.query("SELECT 1 as test");
-			console.log("✓ Direct database connection successful");
-			await testPool.end();
-		} catch (poolError) {
-			await testPool.end();
-			throw new Error(
-				`Database connection test failed: ${poolError instanceof Error ? poolError.message : String(poolError)}`,
-			);
-		}
-		
-		// Now connect Prisma client
-		console.log("Connecting Prisma client...");
-		
-		// Ensure the pool has at least one active connection before using Prisma client
-		// This is a workaround for Prisma v7 adapter initialization timing
-		try {
-			const poolClient = await pool.connect();
-			await poolClient.query("SELECT 1");
-			poolClient.release();
-			console.log("✓ Pool connection verified");
-		} catch (poolError) {
-			throw new Error(
-				`Pool connection failed: ${poolError instanceof Error ? poolError.message : String(poolError)}`,
-			);
-		}
-		
-		// Now connect Prisma client
-		await sqlClient.$connect();
-		console.log("✓ Prisma client connected successfully.\n");
-
-		// Check and create platform settings
-		console.log("Checking platform settings...");
-		// Workaround for Prisma v7 adapter issue in standalone scripts:
-		// Use pool directly instead of Prisma client
-		const poolClient = await pool.connect();
-		let setting: { id: string; stripeProductId: string | null; stripePriceId: string | null } | null = null;
-		try {
-			const settingsResult = await poolClient.query<{ id: string; stripeProductId: string | null; stripePriceId: string | null }>(
-				'SELECT id, "stripeProductId", "stripePriceId" FROM "PlatformSettings" LIMIT 1'
-			);
-			setting = settingsResult.rows.length > 0 ? settingsResult.rows[0] : null;
-		} finally {
-			poolClient.release();
-		}
-
-		if (!setting) {
-			console.log("No platform settings found. Creating...");
-			await createStripeProducts(null);
+		if (isCheck) {
+			// Just check status
+			await checkInstallationStatus();
+		} else if (isWipeout) {
+			// Wipeout and reinstall
+			console.log("⚠️  WARNING: This will delete all countries, currencies, and locales!");
+			console.log("Press Ctrl+C to cancel, or wait 3 seconds to continue...\n");
+			
+			await new Promise(resolve => setTimeout(resolve, 3000));
+			
+			await wipeoutData();
+			await runInstallation();
 		} else {
-			// Check if stripe product id is valid
-			try {
-				const product = await stripe.products.retrieve(
-					setting.stripeProductId as string,
-				);
-				if (!product) {
-					console.log("Invalid Stripe product. Recreating...");
-					await createStripeProducts(setting);
-				} else {
-					console.log("✓ Platform settings exist and valid");
-					console.log(`  Stripe Product ID: ${setting.stripeProductId}`);
-					console.log(`  Stripe Price ID: ${setting.stripePriceId}`);
-				}
-			} catch (err) {
-				logger.error(err);
-				console.log("Error validating Stripe product. Recreating...");
-				await createStripeProducts(setting);
-			}
+			// Normal installation
+			await runInstallation();
 		}
-
-		// Get counts (workaround: Use pool directly for Prisma v7 adapter issue in standalone scripts)
-		const countClient = await pool.connect();
-		let countryCount = 0;
-		let currencyCount = 0;
-		let localeCount = 0;
-		try {
-			const countryResult = await countClient.query<{ count: string }>('SELECT COUNT(*) as count FROM "Country"');
-			countryCount = parseInt(countryResult.rows[0]?.count || "0", 10);
-			
-			const currencyResult = await countClient.query<{ count: string }>('SELECT COUNT(*) as count FROM "Currency"');
-			currencyCount = parseInt(currencyResult.rows[0]?.count || "0", 10);
-			
-			const localeResult = await countClient.query<{ count: string }>('SELECT COUNT(*) as count FROM "Locale"');
-			localeCount = parseInt(localeResult.rows[0]?.count || "0", 10);
-		} finally {
-			countClient.release();
-		}
-
-		// Create base objects
-		await createBaseObjects(countryCount, currencyCount, localeCount);
-
-		// Final summary
-		console.log("\n======================================");
-		console.log("Installation Summary");
-		console.log("======================================");
-		// Get final counts (workaround: Use pool directly for Prisma v7 adapter issue in standalone scripts)
-		const finalCountClient = await pool.connect();
-		let finalCounts: {
-			countries: number;
-			currencies: number;
-			locales: number;
-			paymentMethods: number;
-			shippingMethods: number;
-		};
-		try {
-			const [countriesResult, currenciesResult, localesResult, paymentMethodsResult, shippingMethodsResult] = await Promise.all([
-				finalCountClient.query<{ count: string }>('SELECT COUNT(*) as count FROM "Country"'),
-				finalCountClient.query<{ count: string }>('SELECT COUNT(*) as count FROM "Currency"'),
-				finalCountClient.query<{ count: string }>('SELECT COUNT(*) as count FROM "Locale"'),
-				finalCountClient.query<{ count: string }>('SELECT COUNT(*) as count FROM "PaymentMethod"'),
-				finalCountClient.query<{ count: string }>('SELECT COUNT(*) as count FROM "ShippingMethod"'),
-			]);
-			
-			finalCounts = {
-				countries: parseInt(countriesResult.rows[0]?.count || "0", 10),
-				currencies: parseInt(currenciesResult.rows[0]?.count || "0", 10),
-				locales: parseInt(localesResult.rows[0]?.count || "0", 10),
-				paymentMethods: parseInt(paymentMethodsResult.rows[0]?.count || "0", 10),
-				shippingMethods: parseInt(shippingMethodsResult.rows[0]?.count || "0", 10),
-			};
-		} finally {
-			finalCountClient.release();
-		}
-
-		console.log(`Countries:        ${finalCounts.countries}`);
-		console.log(`Currencies:       ${finalCounts.currencies}`);
-		console.log(`Locales:          ${finalCounts.locales}`);
-		console.log(`Payment Methods:  ${finalCounts.paymentMethods}`);
-		console.log(`Shipping Methods: ${finalCounts.shippingMethods}`);
-		console.log("\n✓ Installation completed successfully!");
-
-		// Cleanup: disconnect Prisma client
-		await sqlClient.$disconnect();
-		process.exit(0);
-	} catch (error) {
-		console.error("\n✗ Installation failed:", error);
-		logger.error({ message: "Installation failed", metadata: { error } });
 		
-		// Cleanup: disconnect Prisma client even on error
-		try {
-			await sqlClient.$disconnect();
-		} catch (disconnectError) {
-			// Ignore disconnect errors
-		}
+		console.log("\n🎉 Done!");
+		
+	} catch (error) {
+		console.error("\n💥 Fatal error:", error);
 		process.exit(1);
+	} finally {
+		await sqlClient.$disconnect();
 	}
 }
 
-// Run the installation
+// Run the script
 main();
 

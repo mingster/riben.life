@@ -36,8 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		// This allows the build to succeed even if database is not accessible
 		logger.warn("Failed to fetch stores for sitemap during build", {
 			metadata: {
-				error:
-					error instanceof Error ? error.message : String(error),
+				error: error instanceof Error ? error.message : String(error),
 				context: "sitemap generation",
 			},
 			tags: ["sitemap", "build", "warning"],

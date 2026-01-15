@@ -73,40 +73,40 @@ export const CustomerFiatUsageClient: React.FC<
 		if (!isMounted) return;
 		if (startDate !== null || endDate !== null) return;
 
-			const nowInTz = getNowInStoreTimezone();
-			// Extract date components in store timezone
-			const formatter = new Intl.DateTimeFormat("en-CA", {
-				timeZone: storeTimezone,
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-				hour: "2-digit",
-				minute: "2-digit",
-				hour12: false,
-			});
-			const parts = formatter.formatToParts(nowInTz);
-			const getValue = (type: string): number =>
-				Number(parts.find((p) => p.type === type)?.value || "0");
+		const nowInTz = getNowInStoreTimezone();
+		// Extract date components in store timezone
+		const formatter = new Intl.DateTimeFormat("en-CA", {
+			timeZone: storeTimezone,
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			hour12: false,
+		});
+		const parts = formatter.formatToParts(nowInTz);
+		const getValue = (type: string): number =>
+			Number(parts.find((p) => p.type === type)?.value || "0");
 
-			const year = getValue("year");
-			const month = getValue("month") - 1; // 0-indexed
-			const day = getValue("day");
-			const hour = getValue("hour");
-			const minute = getValue("minute");
+		const year = getValue("year");
+		const month = getValue("month") - 1; // 0-indexed
+		const day = getValue("day");
+		const hour = getValue("hour");
+		const minute = getValue("minute");
 
-			// Create a Date object representing current time in store timezone
-			const storeDate = new Date(year, month, day, hour, minute);
+		// Create a Date object representing current time in store timezone
+		const storeDate = new Date(year, month, day, hour, minute);
 
-			// Calculate past 10 days and future 30 days
-			const startDateLocal = subDays(storeDate, 10);
-			const endDateLocal = addDays(storeDate, 30);
+		// Calculate past 10 days and future 30 days
+		const startDateLocal = subDays(storeDate, 10);
+		const endDateLocal = addDays(storeDate, 30);
 
-			// Convert to UTC (interpret as store timezone)
-			const startStr = `${startDateLocal.getFullYear()}-${String(startDateLocal.getMonth() + 1).padStart(2, "0")}-${String(startDateLocal.getDate()).padStart(2, "0")}T00:00`;
-			const endStr = `${endDateLocal.getFullYear()}-${String(endDateLocal.getMonth() + 1).padStart(2, "0")}-${String(endDateLocal.getDate()).padStart(2, "0")}T23:59`;
+		// Convert to UTC (interpret as store timezone)
+		const startStr = `${startDateLocal.getFullYear()}-${String(startDateLocal.getMonth() + 1).padStart(2, "0")}-${String(startDateLocal.getDate()).padStart(2, "0")}T00:00`;
+		const endStr = `${endDateLocal.getFullYear()}-${String(endDateLocal.getMonth() + 1).padStart(2, "0")}-${String(endDateLocal.getDate()).padStart(2, "0")}T23:59`;
 
-			setStartDate(convertToUtc(startStr, storeTimezone));
-			setEndDate(convertToUtc(endStr, storeTimezone));
+		setStartDate(convertToUtc(startStr, storeTimezone));
+		setEndDate(convertToUtc(endStr, storeTimezone));
 	}, [isMounted, startDate, endDate, storeTimezone, getNowInStoreTimezone]);
 
 	// Update date range when period type changes

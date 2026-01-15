@@ -1,27 +1,27 @@
 import { stripe } from "@better-auth/stripe";
-import { prismaAdapter } from "better-auth/adapters/prisma";
-import { phoneNumber } from "better-auth/plugins";
-import { anonymous } from "better-auth/plugins";
 
 import { passkey } from "@better-auth/passkey";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { emailHarmony } from "better-auth-harmony";
+import { prismaAdapter } from "better-auth/adapters/prisma";
 import {
 	admin,
+	anonymous,
 	apiKey,
 	bearer,
 	magicLink,
 	organization,
+	phoneNumber,
 	twoFactor,
 } from "better-auth/plugins";
 
 import { sendAuthMagicLink } from "@/actions/mail/send-auth-magic-link";
 import { sendAuthPasswordReset } from "@/actions/mail/send-auth-password-reset";
 import { stripe as stripeClient } from "@/lib/stripe/config";
-import { customSession } from "better-auth/plugins";
-import { sqlClient } from "./prismadb";
-import logger from "./logger";
 import { linkAnonymousAccount } from "@/utils/account-linking";
+import { customSession } from "better-auth/plugins";
+import logger from "./logger";
+import { sqlClient } from "./prismadb";
 
 const options = {
 	//...config options

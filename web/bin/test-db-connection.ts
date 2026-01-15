@@ -9,7 +9,7 @@
  */
 
 import { testDatabaseConnection } from "../src/lib/test-db-connection";
-import { sqlClient, pool } from "../src/lib/prismadb";
+import { sqlClient } from "../src/lib/prismadb";
 
 async function main() {
 	console.log("Testing database connection...\n");
@@ -52,21 +52,24 @@ async function main() {
 		process.exit(1);
 	}
 
-	// Test a simple query using pool directly (workaround for Prisma v7 adapter issue in standalone scripts)
+	// Test a simple query using Prisma client
 	try {
 		console.log("\nTesting database query execution...");
-		const poolClient = await pool.connect();
-		try {
-			// Use lowercase table name (PostgreSQL table names are case-sensitive)
-			const testResult = await poolClient.query<{ id: string }>('SELECT id FROM "user" LIMIT 1');
-			console.log("✅ Database query execution successful");
-			console.log(`   Test user found: ${testResult.rows.length > 0 ? "Yes" : "No"}`);
-			
-			const countResult = await poolClient.query<{ count: string }>('SELECT COUNT(*) as count FROM "user"');
-			console.log(`   Total users: ${parseInt(countResult.rows[0]?.count || "0", 10)}`);
-		} finally {
-			poolClient.release();
-		}
+		
+		// Ensure client is connected
+		await sqlClient.$connect();
+		
+		// Test with a simple Prisma query
+		const testUser = await sqlClient.user.findFirst({
+			select: { id: true },
+		});
+		
+		console.log("✅ Database query execution successful");
+		console.log(`   Test user found: ${testUser ? "Yes" : "No"}`);
+		
+		// Get user count
+		const userCount = await sqlClient.user.count();
+		console.log(`   Total users: ${userCount}`);
 	} catch (error) {
 		console.error("❌ Database query execution failed");
 		console.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
