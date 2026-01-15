@@ -13,7 +13,7 @@ import {
 	magicLink,
 	organization,
 	phoneNumber,
-	twoFactor
+	twoFactor,
 } from "better-auth/plugins";
 
 import { sendAuthMagicLink } from "@/actions/mail/send-auth-magic-link";

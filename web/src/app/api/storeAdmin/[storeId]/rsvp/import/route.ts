@@ -88,54 +88,6 @@ export async function POST(
 
 		const storeTimezone = store.defaultTimezone || "Asia/Taipei";
 
-		// Get current user's service staff record
-		// Service staff must be the current signed-in user
-		const serviceStaff = await sqlClient.serviceStaff.findFirst({
-			where: {
-				userId: currentUserId,
-				storeId: params.storeId,
-				isDeleted: false,
-			},
-			include: {
-				User: {
-					select: {
-						name: true,
-						email: true,
-					},
-				},
-			},
-		});
-
-		// Throw error if current user is not a service staff
-		if (!serviceStaff) {
-			return NextResponse.json(
-				{
-					success: false,
-					error:
-						"Current user is not a service staff. Please add yourself as service staff first.",
-				},
-				{ status: 400 },
-			);
-		}
-
-		// Calculate cost using service staff's default cost
-		const serviceStaffDefaultCost = serviceStaff.defaultCost
-			? Number(serviceStaff.defaultCost)
-			: 0;
-		const serviceStaffDefaultDuration = serviceStaff.defaultDuration || 60;
-
-		// Validate that service staff has a default cost configured
-		if (serviceStaffDefaultCost <= 0) {
-			return NextResponse.json(
-				{
-					success: false,
-					error:
-						"Service staff default cost is not configured. Please set default cost first.",
-				},
-				{ status: 400 },
-			);
-		}
-
 		const result: ImportResult = {
 			success: true,
 			totalBlocks: 0,
@@ -332,11 +284,31 @@ export async function POST(
 						});
 
 						// Create ONE StoreOrder for the entire block
-						const serviceStaffName =
-							serviceStaff.User.name ||
-							serviceStaff.User.email ||
-							t("service_staff") ||
-							"Service Staff";
+						// Get service staff name from first paid RSVP (if available)
+						let serviceStaffName = t("service_staff") || "Service Staff";
+						if (paidRsvps.length > 0 && paidRsvps[0].serviceStaffId) {
+							const firstServiceStaff = await tx.serviceStaff.findFirst({
+								where: {
+									id: paidRsvps[0].serviceStaffId,
+									storeId: params.storeId,
+									isDeleted: false,
+								},
+								include: {
+									User: {
+										select: {
+											name: true,
+											email: true,
+										},
+									},
+								},
+							});
+							if (firstServiceStaff) {
+								serviceStaffName =
+									firstServiceStaff.User?.name ||
+									firstServiceStaff.User?.email ||
+									serviceStaffName;
+							}
+						}
 
 						const blockOrderNote = `${
 							t("rsvp_import_block_order_note") || "RSVP Import Block"
@@ -439,6 +411,31 @@ export async function POST(
 							finalArriveTime = dateToEpoch(arriveTimeDate);
 						}
 
+						// Get service staff from request (validate it exists and belongs to store)
+						let serviceStaffId: string | null = null;
+						if (rsvpData.serviceStaffId) {
+							const serviceStaff = await sqlClient.serviceStaff.findFirst({
+								where: {
+									id: rsvpData.serviceStaffId,
+									storeId: params.storeId,
+									isDeleted: false,
+								},
+							});
+
+							if (!serviceStaff) {
+								result.skippedReservations++;
+								result.errors.push({
+									blockIndex,
+									customerName,
+									reservationNumber: rsvpData.reservationNumber,
+									error: "Service staff not found or does not belong to store",
+								});
+								continue;
+							}
+
+							serviceStaffId = serviceStaff.id;
+						}
+
 						// Use block order ID (created earlier for paid blocks)
 
 						// Create RSVP in transaction
@@ -449,7 +446,7 @@ export async function POST(
 									storeId: params.storeId,
 									customerId: customerId,
 									facilityId: null, // No facility for import
-									serviceStaffId: serviceStaff.id,
+									serviceStaffId: serviceStaffId,
 									numOfAdult: 1,
 									numOfChild: 0,
 									rsvpTime: rsvpTimeEpoch,
