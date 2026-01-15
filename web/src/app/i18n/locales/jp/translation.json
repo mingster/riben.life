@@ -134,5 +134,9 @@
   "store_ledger_note_rsvp_refund": "{{paymentMethod}}，予約キャンセル：{{rsvpTime}}，顧客：{{userName}}",
   "customer_ledger_note_rsvp_payment_order": "{{paymentMethod}}，注文：{{orderNum}}",
   "customer_ledger_note_rsvp_payment": "{{paymentMethod}}，予約：{{rsvpTime}}",
+  "rsvp_import_service_staff_description": "すべてのインポート予約のサービススタッフメンバーを選択します。編集ダイアログで個別の予約を変更できます。",
+  "rsvp_order_reservation_name": "予約 ({{rsvpTime}})",
+  "rsvp_order_facility_name": "{{facilityName}}",
+  "rsvp_order_service_staff_name": "{{serviceStaffName}}",
   "unknown_payment_method": "不明"
 }

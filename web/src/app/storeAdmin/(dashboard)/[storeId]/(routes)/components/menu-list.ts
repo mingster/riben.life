@@ -93,7 +93,7 @@ export function GetMenuList(
 
 	return [
 		{
-			groupLabel: t("operation"),
+			groupLabel: t("reservation"),
 			menus: [
 				{
 					href: `${nav_prefix}/rsvp`,
@@ -122,7 +122,6 @@ export function GetMenuList(
 					icon: IconUpload,
 					submenus: [],
 				},
-
 				{
 					href: `${nav_prefix}/waiting-list`,
 					label: t("waiting_list"),
@@ -132,7 +131,11 @@ export function GetMenuList(
 					icon: IconClock,
 					submenus: [],
 				},
-
+			],
+		},
+		{
+			groupLabel: t("operation"),
+			menus: [
 				//...(store.autoAcceptOrder ? [] : [orderConfirmation]),
 				// add cash (現金結帳) menu if store level is not free
 				// otherwise display orderConfirmation

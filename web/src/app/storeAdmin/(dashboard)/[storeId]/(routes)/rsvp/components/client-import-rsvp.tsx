@@ -70,14 +70,19 @@ import {
 	setMinutes,
 	addMilliseconds,
 } from "date-fns";
+import useSWR from "swr";
+import { ServiceStaffCombobox } from "@/components/combobox-service-staff";
+import type { ServiceStaffColumn } from "@/app/storeAdmin/(dashboard)/[storeId]/(routes)/service-staff/service-staff-column";
 
 interface ServiceStaffInfo {
+	id: string;
 	name: string;
 	defaultCost: number;
 	defaultDuration: number;
 }
 
 interface ClientImportRsvpProps {
+	storeId: string;
 	storeTimezone: string;
 	storeCurrency?: string;
 	serviceStaffInfo: ServiceStaffInfo | null;
@@ -90,6 +95,7 @@ interface ParsedRsvpPreview {
 	rsvpTime: Date | null;
 	arriveTime: Date | null; // Same as rsvpTime from imported text
 	duration: number;
+	serviceStaffId: string | null;
 	serviceStaffName: string;
 	cost: number;
 	alreadyPaid: boolean;
@@ -107,6 +113,7 @@ const importRsvpSchema = z.object({
 type ImportRsvpFormValues = z.infer<typeof importRsvpSchema>;
 
 export function ClientImportRsvp({
+	storeId,
 	storeTimezone,
 	storeCurrency = "twd",
 	serviceStaffInfo,
@@ -123,14 +130,51 @@ export function ClientImportRsvp({
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 	const [editFormData, setEditFormData] =
 		useState<Partial<ParsedRsvpPreview> | null>(null);
+	const [selectedServiceStaff, setSelectedServiceStaff] =
+		useState<ServiceStaffColumn | null>(null);
 
-	// Calculate cost per minute from service staff info
+	// Fetch service staff list
+	const { data: serviceStaffData, isLoading: isLoadingServiceStaff } = useSWR<
+		ServiceStaffColumn[]
+	>(
+		`/api/storeAdmin/${storeId}/service-staff`,
+		async (url) => {
+			const response = await fetch(url);
+			if (!response.ok) {
+				throw new Error("Failed to fetch service staff");
+			}
+			return response.json();
+		},
+		{
+			revalidateOnFocus: false,
+		},
+	);
+
+	const serviceStaffList: ServiceStaffColumn[] = serviceStaffData ?? [];
+
+	// Set default service staff to current user's service staff if available
+	useMemo(() => {
+		if (
+			!selectedServiceStaff &&
+			serviceStaffInfo &&
+			serviceStaffList.length > 0
+		) {
+			const defaultStaff = serviceStaffList.find(
+				(ss) => ss.id === serviceStaffInfo.id,
+			);
+			if (defaultStaff) {
+				setSelectedServiceStaff(defaultStaff);
+			}
+		}
+	}, [serviceStaffInfo, serviceStaffList, selectedServiceStaff]);
+
+	// Calculate cost per minute from selected service staff
 	const costPerMinute = useMemo(() => {
-		if (!serviceStaffInfo) return 0;
-		return serviceStaffInfo.defaultDuration > 0
-			? serviceStaffInfo.defaultCost / serviceStaffInfo.defaultDuration
+		if (!selectedServiceStaff) return 0;
+		return selectedServiceStaff.defaultDuration > 0
+			? selectedServiceStaff.defaultCost / selectedServiceStaff.defaultDuration
 			: 0;
-	}, [serviceStaffInfo]);
+	}, [selectedServiceStaff]);
 
 	const form = useForm<ImportRsvpFormValues>({
 		resolver: zodResolver(importRsvpSchema),
@@ -163,20 +207,20 @@ export function ClientImportRsvp({
 			}
 
 			// Get service staff name and cost calculation info
-			if (!serviceStaffInfo) {
+			if (!selectedServiceStaff) {
 				toastError({
 					description:
-						"Current user is not a service staff. Please add yourself as service staff first.",
+						t("rsvp_import_select_service_staff") ||
+						"Please select a service staff member first.",
 				});
 				return;
 			}
 
-			const serviceStaffName = serviceStaffInfo.name;
-			const { defaultCost, defaultDuration } = serviceStaffInfo;
-
-			// Calculate cost per minute (store in component for edit dialog)
-			const costPerMinute =
-				defaultDuration > 0 ? defaultCost / defaultDuration : 0;
+			const serviceStaffName =
+				selectedServiceStaff.userName ||
+				selectedServiceStaff.userEmail ||
+				selectedServiceStaff.id;
+			const { defaultCost, defaultDuration } = selectedServiceStaff;
 
 			const preview: ParsedRsvpPreview[] = [];
 
@@ -237,6 +281,7 @@ export function ClientImportRsvp({
 										rsvpTime: null,
 										arriveTime: null,
 										duration: 0,
+										serviceStaffId: selectedServiceStaff.id,
 										serviceStaffName,
 										cost: 0,
 										alreadyPaid: block.paidDate !== null,
@@ -331,6 +376,7 @@ export function ClientImportRsvp({
 									rsvpTime: nextDateUtc, // Future date calculated from last valid time slot
 									arriveTime: null, // Recurring RSVPs don't have arriveTime
 									duration: lastValidTimeSlot.duration,
+									serviceStaffId: selectedServiceStaff.id,
 									serviceStaffName,
 									cost,
 									alreadyPaid: block.paidDate !== null,
@@ -350,6 +396,7 @@ export function ClientImportRsvp({
 								rsvpTime: null,
 								arriveTime: null,
 								duration: 0,
+								serviceStaffId: selectedServiceStaff.id,
 								serviceStaffName,
 								cost: 0,
 								alreadyPaid: block.paidDate !== null,
@@ -417,6 +464,7 @@ export function ClientImportRsvp({
 							rsvpTime: rsvpTimeDate,
 							arriveTime: arriveTimeDate,
 							duration: dateTimeResult.duration,
+							serviceStaffId: selectedServiceStaff.id,
 							serviceStaffName,
 							cost,
 							alreadyPaid: block.paidDate !== null,
@@ -432,6 +480,7 @@ export function ClientImportRsvp({
 							rsvpTime: null,
 							arriveTime: null,
 							duration: 0,
+							serviceStaffId: selectedServiceStaff.id,
 							serviceStaffName,
 							cost: 0,
 							alreadyPaid: block.paidDate !== null,
@@ -470,7 +519,7 @@ export function ClientImportRsvp({
 		} finally {
 			setIsParsing(false);
 		}
-	}, [form, storeTimezone, serviceStaffInfo, t, hasErrors]);
+	}, [form, storeTimezone, selectedServiceStaff, costPerMinute, t, hasErrors]);
 
 	const handleImport = useCallback(async () => {
 		if (parsedRsvps.length === 0 || hasErrors) {
@@ -486,6 +535,7 @@ export function ClientImportRsvp({
 				rsvpTime: rsvp.rsvpTime ? rsvp.rsvpTime.toISOString() : null,
 				arriveTime: rsvp.arriveTime ? rsvp.arriveTime.toISOString() : null,
 				duration: rsvp.duration,
+				serviceStaffId: rsvp.serviceStaffId,
 				cost: rsvp.cost,
 				alreadyPaid: rsvp.alreadyPaid,
 				rsvpStatus: rsvp.rsvpStatus,
@@ -645,7 +695,7 @@ export function ClientImportRsvp({
 					return (
 						<span
 							className={cn(
-								"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs font-mono",
+								"inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded font-mono",
 								getRsvpStatusColorClasses(rsvpStatus, false),
 							)}
 						>
@@ -667,7 +717,7 @@ export function ClientImportRsvp({
 							) : (
 								<Badge variant="destructive">{t("error") || "Error"}</Badge>
 							)}
-							{error && <div className="text-xs text-destructive">{error}</div>}
+							{error && <div className=" text-destructive">{error}</div>}
 						</div>
 					);
 				},
@@ -708,6 +758,37 @@ export function ClientImportRsvp({
 		<div className="space-y-4">
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(handleParse)} className="space-y-4">
+					<div className="space-y-2">
+						<label className="text-sm font-medium">
+							{t("service_staff") || "Service Staff"}{" "}
+							<span className="text-destructive">*</span>
+						</label>
+						{isLoadingServiceStaff ? (
+							<div className="text-sm text-muted-foreground">
+								{t("loading") || "Loading..."}
+							</div>
+						) : (
+							<ServiceStaffCombobox
+								serviceStaff={serviceStaffList}
+								disabled={isParsing || importing}
+								defaultValue={selectedServiceStaff}
+								allowEmpty={false}
+								storeCurrency={storeCurrency?.toUpperCase() || "TWD"}
+								onValueChange={(staff) => {
+									setSelectedServiceStaff(staff);
+									// Clear parsed RSVPs when service staff changes
+									if (parsedRsvps.length > 0) {
+										setParsedRsvps([]);
+									}
+								}}
+							/>
+						)}
+						<p className="font-mono text-sm text-neutral-500 dark:text-neutral-400">
+							{t("rsvp_import_service_staff_description") ||
+								"Select the service staff member for all imported reservations. You can change individual reservations in the edit dialog."}
+						</p>
+					</div>
+
 					<FormField
 						control={form.control}
 						name="rsvpData"
@@ -721,16 +802,25 @@ export function ClientImportRsvp({
 									<Textarea
 										placeholder={
 											t("rsvp_import_data_placeholder") ||
-											`許達夫 網球課10H（12/17 2025）
-1-   12/19 14:00～15:00
-2-   12/24 14:00～15:00`
+											`Nick 網球課10H（11/17 2025）
+1-    11/ 7 19:00～20:00
+2-   11/14 19:00～20:00
+3-   11/17 19:00～20:00
+4-  12/18 19:00～20:00
+5-  12/24 19:00～20:00
+2026
+6-   1 / 7  19:00～20:00
+7-
+8-
+9-
+10-`
 										}
 										disabled={isParsing || importing}
-										className="min-h-[200px] font-mono text-sm"
+										className="min-h-[200px] font-mono "
 										{...field}
 									/>
 								</FormControl>
-								<FormDescription className="text-xs font-mono text-gray-500">
+								<FormDescription className="font-mono text-gray-500">
 									{t("rsvp_import_data_description") ||
 										"Paste RSVP data in the specified format. First line: customer name, product name, and paid date. Following lines: reservation date and time ranges."}
 								</FormDescription>
@@ -743,7 +833,12 @@ export function ClientImportRsvp({
 						<Button
 							type="submit"
 							variant="outline"
-							disabled={!form.watch("rsvpData") || isParsing || importing}
+							disabled={
+								!form.watch("rsvpData") ||
+								!selectedServiceStaff ||
+								isParsing ||
+								importing
+							}
 							className="h-10 sm:h-9 sm:min-h-0"
 						>
 							{isParsing ? (
@@ -853,6 +948,51 @@ export function ClientImportRsvp({
 
 							<div className="space-y-2">
 								<label className="text-sm font-medium">
+									{t("service_staff") || "Service Staff"}{" "}
+									<span className="text-destructive">*</span>
+								</label>
+								{isLoadingServiceStaff ? (
+									<div className="text-sm text-muted-foreground">
+										{t("loading") || "Loading..."}
+									</div>
+								) : (
+									<ServiceStaffCombobox
+										serviceStaff={serviceStaffList}
+										disabled={importing}
+										defaultValue={
+											editFormData.serviceStaffId
+												? serviceStaffList.find(
+														(ss) => ss.id === editFormData.serviceStaffId,
+													) || null
+												: selectedServiceStaff
+										}
+										allowEmpty={false}
+										storeCurrency={storeCurrency?.toUpperCase() || "TWD"}
+										onValueChange={(staff) => {
+											if (staff) {
+												const newCostPerMinute =
+													staff.defaultDuration > 0
+														? staff.defaultCost / staff.defaultDuration
+														: 0;
+												const newCost =
+													editFormData.duration && newCostPerMinute > 0
+														? newCostPerMinute * editFormData.duration
+														: editFormData.cost || 0;
+												setEditFormData({
+													...editFormData,
+													serviceStaffId: staff.id,
+													serviceStaffName:
+														staff.userName || staff.userEmail || staff.id,
+													cost: newCost,
+												});
+											}
+										}}
+									/>
+								)}
+							</div>
+
+							<div className="space-y-2">
+								<label className="text-sm font-medium">
 									{t("rsvp_time") || "Reservation Time"}
 								</label>
 								<Input
@@ -888,8 +1028,21 @@ export function ClientImportRsvp({
 									value={editFormData.duration || 0}
 									onChange={(e) => {
 										const duration = parseInt(e.target.value, 10) || 0;
+										// Get cost per minute from selected service staff in edit dialog
+										const currentStaff = editFormData.serviceStaffId
+											? serviceStaffList.find(
+													(ss) => ss.id === editFormData.serviceStaffId,
+												)
+											: selectedServiceStaff;
+										const currentCostPerMinute =
+											currentStaff && currentStaff.defaultDuration > 0
+												? currentStaff.defaultCost /
+													currentStaff.defaultDuration
+												: costPerMinute;
 										const newCost =
-											costPerMinute > 0 ? costPerMinute * duration : 0;
+											currentCostPerMinute > 0
+												? currentCostPerMinute * duration
+												: 0;
 										setEditFormData({
 											...editFormData,
 											duration,

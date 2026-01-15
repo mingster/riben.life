@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27\
 **Status:** Active\
-**Version:** 2.5\
+**Version:** 2.6\
 **Related Documents:**
 
 * [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
@@ -1167,7 +1167,58 @@ For Google Actions Center Appointments Redirect integration:
 
 **Usage:** Used by `cancel-reservation.ts` to determine if refund should be processed.
 
-#### 8.1.4 Date/Time Conversion Utilities
+#### 8.1.4 Reservation Edit/Cancel Permission Utilities
+
+**Location:** `src/utils/rsvp-utils.ts`
+
+**Functions:** `canEditReservation()`, `canCancelReservation()`
+
+**Purpose:** Determines whether a reservation can be edited or cancelled by the customer based on reservation status, ownership, and RSVP settings.
+
+**Parameters:**
+
+* `rsvp: Rsvp` - The reservation to check
+* `rsvpSettings: RsvpSettingsForLogic | null | undefined` - RSVP settings containing `canCancel` and `cancelHours`
+* `isUserReservationFn: (rsvp: Rsvp) => boolean` - Function to check if reservation belongs to the current user
+
+**Returns:**
+
+* `boolean` - `true` if the reservation can be edited/cancelled, `false` otherwise
+
+**Behavior (`canEditReservation`):**
+
+1. **Ownership Check:** Reservation must belong to the user (checked via `isUserReservationFn`)
+2. **Status Restriction:** Returns `false` if reservation status is:
+   * `Completed (50)` - Reservation/service has been completed
+   * `Cancelled (60)` - Reservation has been cancelled
+   * `NoShow (70)` - Customer did not show up
+3. **Settings Check:** If `rsvpSettings` is not available, returns `false`
+4. **Cancellation Setting:** If `canCancel` is disabled, editing is also disabled (returns `false`)
+5. **Pending/ReadyToConfirm:** Reservations with status `Pending (0)` or `ReadyToConfirm (10)` can always be edited (returns `true`)
+6. **Time Window Check:** For other statuses (e.g., `Ready (40)`), checks if reservation is more than `cancelHours` away:
+   * Calculates hours until reservation time
+   * Returns `true` if `hoursUntilReservation >= cancelHours`
+   * Returns `false` if within the cancellation window
+
+**Behavior (`canCancelReservation`):**
+
+1. **Ownership Check:** Reservation must belong to the user (checked via `isUserReservationFn`)
+2. **Status Restriction:** Returns `false` if reservation status is:
+   * `Completed (50)` - Reservation/service has been completed
+   * `Cancelled (60)` - Reservation has been cancelled
+   * `NoShow (70)` - Customer did not show up
+3. **Pending/ReadyToConfirm:** Reservations with status `Pending (0)` or `ReadyToConfirm (10)` can always be cancelled (returns `true`), regardless of other conditions
+4. **Settings Check:** If `rsvpSettings` is not available, returns `false`
+5. **Cancellation Setting:** If `canCancel` is enabled, returns `true` (refund/no-refund logic is handled in the cancel action based on time window)
+
+**Key Differences:**
+
+* **Edit Permission:** Editing requires checking the `cancelHours` time window for non-pending reservations
+* **Cancel Permission:** Cancellation is simpler - if `canCancel` is enabled, cancellation is allowed (time window only affects refund, not cancellation permission)
+
+**Usage:** Used by customer-facing reservation components (`display-reservations.tsx`, reservation history pages) to determine whether to show edit/cancel buttons and enable/disable those actions.
+
+#### 8.1.5 Date/Time Conversion Utilities
 
 **Location:** `src/utils/datetime-utils.ts`
 
@@ -1511,6 +1562,7 @@ src/
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 2.6 | 2025-01-27 | System | Added documentation for reservation edit/cancel permission utilities: (1) **canEditReservation() and canCancelReservation() Functions** - Documented the utility functions in `src/utils/rsvp-utils.ts` that determine whether reservations can be edited or cancelled. Both functions check reservation ownership, status restrictions (Completed, Cancelled, NoShow statuses return `false`), and RSVP settings. `canEditReservation` also checks the `cancelHours` time window for non-pending reservations. `canCancelReservation` allows cancellation if `canCancel` is enabled, regardless of time window (time window only affects refund, not cancellation permission). Added Section 8.1.4 (Reservation Edit/Cancel Permission Utilities) to document these functions. |
 | 2.5 | 2025-01-27 | System | Updated payment method identifiers and route paths: (1) **LINE Pay Payment Method** - Changed payment method identifier from `"linePay"` to `"linepay"` (lowercase) to avoid case-sensitivity issues on deployment. Updated all references in documentation. (2) **Route Paths** - Updated route paths from `/checkout/[orderId]/linePay/` to `/checkout/[orderId]/linepay/` to match lowercase directory naming. (3) **Case 2 Completion Flow** - Clarified that Case 2 (prepaid RSVP with external payment) converts HOLD to SPEND (not TOPUP to PAYMENT). The `convertFiatTopupToPayment()` function name is legacy, but implementation correctly converts HOLD to SPEND using `CustomerCreditLedgerType.Spend` enum value. (4) **Payment Integration** - Updated payment integration section to document lowercase payment method identifiers and route paths. Updated Sections 4.1.1 (RSVP Completion and Revenue Recognition), 4.1.1 (HOLD Design Payment Processing), and 7.3 (Payment Integration) to reflect these changes. |
 | 2.4 | 2025-01-27 | System | Updated RSVP payment processing and completion flow documentation: (1) **HOLD Design Payment Processing** - Documented the three payment methods (credit points, fiat balance, external payment) and their ledger entry creation in `process-rsvp-after-payment.ts`. External payments create both TOPUP and HOLD entries. No StoreLedger entry is created at payment time (revenue recognized on completion). (2) **RSVP Completion and Revenue Recognition** - Documented the three cases handled by `complete-rsvp-core.ts`: prepaid with credit points (HOLD to SPEND), prepaid with external payment (HOLD to SPEND), and non-prepaid (deduct credit). Revenue recognition uses `StoreLedgerType.StorePaymentProvider` (not `Revenue` - that enum value was removed). (3) **Prepaid Payment Processing** - Clarified that prepaid payment processing happens during RSVP creation (via `processRsvpPrepaidPaymentUsingCredit`) or after checkout payment (via `processRsvpAfterPaymentAction`), NOT during update. (4) **Credit Deduction** - Clarified that credit deduction should NOT happen in `update-rsvp.ts`. Only the dedicated `complete-rsvp` action handles credit deduction and revenue recognition. (5) **Customer Reservation Modification** - Updated to document that customers cannot change `facilityId`, `serviceStaffId`, or cost/credit fields. (6) **Refund Processing** - Updated to distinguish between HOLD refunds (no StoreLedger entry) and SPEND refunds (StoreLedger entry for revenue reversal). Updated Sections 4.1.1 (Customer Reservation Creation), 4.1.1 (RSVP Completion and Revenue Recognition), 4.1.1 (Customer Reservation Modification), and 8.2.1 (RSVP Refund Processing) to reflect these changes. |
 | 2.3 | 2025-01-27 | System | Redesigned anonymous reservation architecture to use Better Auth anonymous plugin: (1) **Authentication** - Anonymous users are authenticated via Better Auth anonymous plugin, which creates guest user accounts with emails like `guest-{id}@riben.life`. Anonymous users have active sessions and user IDs (guest users). (2) **Database Storage** - Reservations are stored in the database and linked to guest user accounts via `customerId` field. No longer using local storage as primary mechanism. (3) **Credit Accounts** - Anonymous users can have credit accounts (`CustomerCredit`) linked to their guest user ID. (4) **Edit/Delete/Cancel** - Anonymous users can edit, delete, and cancel reservations linked to their guest user ID (authorized by matching session `userId` to reservation `customerId`). (5) **Reservation History** - Reservation history is fetched from database based on session `customerId` (guest user ID for anonymous users). Updated Sections 4.1.1 (Customer Reservation Creation), 4.1.1 (Customer Reservation Modification), 4.2.1 (Reservation History), and 5.1 (Authentication & Authorization) to reflect the new architecture. |

@@ -60,6 +60,7 @@ export default async function RsvpImportPage(props: {
 	// Service staff info for cost calculation
 	const serviceStaffInfo = serviceStaff
 		? {
+				id: serviceStaff.id,
 				name:
 					serviceStaff.User?.name ||
 					serviceStaff.User?.email ||
@@ -76,6 +77,7 @@ export default async function RsvpImportPage(props: {
 			<Suspense fallback={<Loader />}>
 				<div className="space-y-4">
 					<ClientImportRsvp
+						storeId={params.storeId}
 						storeTimezone={storeTimezone}
 						storeCurrency={storeCurrency}
 						serviceStaffInfo={serviceStaffInfo}

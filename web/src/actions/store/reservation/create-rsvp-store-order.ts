@@ -161,12 +161,12 @@ export async function createRsvpStoreOrder(
 		store.defaultCurrency ||
 		currency ||
 		"twd"
-	).toLowerCase();
+	).toUpperCase();
 
 	// Format rsvpTime for product name using i18n datetime format
 	const storeTimezone = store.defaultTimezone || "Asia/Taipei";
-	const rsvpTimeDate = epochToDate(rsvpTime);
 	const datetimeFormat = t("datetime_format");
+	const rsvpTimeDate = epochToDate(rsvpTime);
 	let formattedRsvpTime = "";
 	if (rsvpTimeDate) {
 		const storeDate = getDateInTz(rsvpTimeDate, getOffsetHours(storeTimezone));
@@ -184,38 +184,101 @@ export async function createRsvpStoreOrder(
 		variantCosts: null;
 	}> = [];
 
-	// Add facility order item if facilityCost is provided
-	if (facilityCost !== null && facilityCost > 0) {
-		const facilityProductName = t("rsvp_order_product_name", {
-			facilityName,
-			rsvpTime: formattedRsvpTime || "",
-		});
+	// Check if this is an import order (productName is not the default "RSVP Import" or "Reservation")
+	const isImportOrder =
+		facilityName &&
+		facilityName !== "RSVP Import" &&
+		facilityName !== "Reservation";
+
+	if (isImportOrder) {
+		// For import orders: Use only line item #1 with product name and total cost
 		orderItems.push({
 			productId: reservationPrepaidProduct.id,
-			productName: facilityProductName,
+			productName: facilityName, // Product name from import (e.g., "網球課10H")
 			quantity: 1,
-			unitPrice: new Prisma.Decimal(facilityCost),
+			unitPrice: new Prisma.Decimal(orderTotal), // Total cost (facilityCost + serviceStaffCost)
 			unitDiscount: new Prisma.Decimal(0),
 			variants: null,
 			variantCosts: null,
 		});
+	} else {
+		// For regular RSVP orders: Use line items #1, #2, #3 structure
+		// Line item #1: Always add "Reservation" line item with cost 0
+		const reservationProductName =
+			t("rsvp_order_reservation_name", {
+				rsvpTime: formattedRsvpTime || "",
+			}) || `Reservation (${formattedRsvpTime || ""})`;
+
+		orderItems.push({
+			productId: reservationPrepaidProduct.id,
+			productName: reservationProductName,
+			quantity: 1,
+			unitPrice: new Prisma.Decimal(0), // Reservation line item always has cost 0
+			unitDiscount: new Prisma.Decimal(0),
+			variants: null,
+			variantCosts: null,
+		});
+
+		// Line item #2: Add facility order item if facilityCost is provided
+		if (facilityCost !== null && facilityCost > 0) {
+			const facilityProductName =
+				t("rsvp_order_facility_name", {
+					facilityName,
+				}) || facilityName;
+			orderItems.push({
+				productId: reservationPrepaidProduct.id,
+				productName: facilityProductName,
+				quantity: 1,
+				unitPrice: new Prisma.Decimal(facilityCost),
+				unitDiscount: new Prisma.Decimal(0),
+				variants: null,
+				variantCosts: null,
+			});
+		}
+
+		// Line item #3: Add service staff order item if serviceStaffCost is provided
+		if (serviceStaffCost !== null && serviceStaffCost > 0) {
+			let serviceStaffProductName: string;
+
+			if (serviceStaffName) {
+				// Use service staff name
+				serviceStaffProductName =
+					t("rsvp_order_service_staff_name", {
+						serviceStaffName,
+					}) || serviceStaffName;
+			} else {
+				// Fallback if no service staff name provided
+				serviceStaffProductName = t("service_staff") || "Service Staff";
+			}
+
+			orderItems.push({
+				productId: reservationPrepaidProduct.id,
+				productName: serviceStaffProductName,
+				quantity: 1,
+				unitPrice: new Prisma.Decimal(serviceStaffCost),
+				unitDiscount: new Prisma.Decimal(0),
+				variants: null,
+				variantCosts: null,
+			});
+		}
 	}
 
-	// Add service staff order item if serviceStaffCost is provided
-	if (serviceStaffCost !== null && serviceStaffCost > 0 && serviceStaffName) {
-		const serviceStaffProductName = t("rsvp_order_service_staff_product_name", {
-			serviceStaffName,
-			rsvpTime: formattedRsvpTime || "",
-		});
-		orderItems.push({
-			productId: reservationPrepaidProduct.id,
-			productName: serviceStaffProductName,
-			quantity: 1,
-			unitPrice: new Prisma.Decimal(serviceStaffCost),
-			unitDiscount: new Prisma.Decimal(0),
-			variants: null,
-			variantCosts: null,
-		});
+	// Validate that sum of all line items equals order total
+	// Calculate: (unitPrice * quantity) - (unitDiscount * quantity) for each item
+	const lineItemsSum = orderItems.reduce((sum, item) => {
+		const itemTotal =
+			Number(item.unitPrice) * item.quantity -
+			Number(item.unitDiscount) * item.quantity;
+		return sum + itemTotal;
+	}, 0);
+	const totalDifference = Math.abs(lineItemsSum - orderTotal);
+	if (totalDifference > 0.01) {
+		// Allow small floating point differences (0.01)
+		const { t: tError } = await getT();
+		throw new SafeError(
+			tError("rsvp_order_line_items_sum_mismatch") ||
+				`Line items sum (${lineItemsSum.toFixed(2)}) does not equal order total (${orderTotal.toFixed(2)})`,
+		);
 	}
 
 	// Create the store order
