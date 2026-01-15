@@ -2,7 +2,7 @@
 
 **Date:** 2025-01-27
 **Status:** Active
-**Version:** 2.1
+**Version:** 2.3
 
 **Related Documents:**
 
@@ -228,7 +228,7 @@ Store Admins have all Store Staff permissions, plus:
       * The confirmed phone number is used for order tracking and customer communication
   * Payment can be made using:
     * Customer credit points (if `useCustomerCredit = true` and customer selects "creditPoint" payment method - uses `CustomerCredit.point`)
-    * Other payment methods (Stripe, LINE Pay, cash, etc.) available at checkout
+    * Other payment methods (Stripe (`payUrl = "stripe"`), LINE Pay (`payUrl = "linepay"` - lowercase), cash, etc.) available at checkout
 * Payment status tracked via `alreadyPaid` flag (updated after payment completion)
 * Reservation linked to order via `orderId` when prepaid
 * Customer credit balance is deducted only when customer completes payment using credit at checkout
@@ -334,12 +334,12 @@ Store Admins have all Store Staff permissions, plus:
    * Reservation `alreadyPaid` is set to `false` (will be updated after payment completion)
    * Customer is redirected to `/checkout/[orderId]` to complete payment
    * At checkout page:
-     * Customer can select payment method (credit, Stripe, LINE Pay, cash, etc.)
+     * Customer can select payment method (credit, Stripe (`payUrl = "stripe"`), LINE Pay (`payUrl = "linepay"` - lowercase), cash, etc.)
      * If customer selects "creditPoint" payment method:
        * System checks if customer has sufficient credit balance
        * If sufficient: System deducts credit and marks order as paid
        * If insufficient: Customer must refill credit or select different payment method
-     * If customer selects other payment method (Stripe, LINE Pay, etc.):
+     * If customer selects other payment method (Stripe (`payUrl = "stripe"`), LINE Pay (`payUrl = "linepay"` - lowercase), etc.):
        * Customer completes payment through payment provider
        * System marks order as paid after payment confirmation
    * After payment completion:
@@ -448,8 +448,9 @@ Store Admins have all Store Staff permissions, plus:
     * Step 1: Payment is credited to `CustomerCredit.fiat` balance
     * Step 2: `CustomerFiatLedger` entry is created with type `"TOPUP"` (string, positive amount)
     * Step 3: Fiat balance is held - `CustomerCredit.fiat` balance is reduced
-    * Step 4: `CustomerFiatLedger` entry is created with type `"HOLD"` (string, negative amount)
+    * Step 4: `CustomerFiatLedger` entry is created with type `"HOLD"` (string, negative amount, using `CustomerCreditLedgerType.Hold` enum value)
     * **No `StoreLedger` entry is created** at this stage (revenue not yet recognized)
+    * **Payment Method Identifiers:** External payment methods use lowercase identifiers: `"stripe"` for Stripe, `"linepay"` for LINE Pay (not `"linePay"`), `"payPal"` for PayPal, etc.
 * After payment processing:
   * The `alreadyPaid` flag is set to `true`
   * The reservation status changes to `Ready (40)` if `noNeedToConfirm = true`, otherwise `ReadyToConfirm (10)`
@@ -491,11 +492,12 @@ Store Admins have all Store Staff permissions, plus:
       * `StoreLedger` entry is created with type `StorePaymentProvider` (positive amount, revenue recognition)
       * Revenue is recognized at completion time
     * **Case 2: Prepaid RSVP with External Payment (`alreadyPaid = true`, payment method != "creditPoint"):**
-      * HOLD is converted to PAYMENT via `convertFiatTopupToPayment()`
-      * New `CustomerFiatLedger` entry is created with type `"PAYMENT"` (string, negative amount)
+      * HOLD is converted to SPEND via `convertFiatTopupToPayment()` (function name is legacy, but implementation converts HOLD to SPEND)
+      * Existing `CustomerFiatLedger` entry is updated from type `"HOLD"` to type `"SPEND"` (using `CustomerCreditLedgerType.Spend` enum value)
       * No need to deduct fiat since it's already held
       * `StoreLedger` entry is created with type `StorePaymentProvider` (positive amount, revenue recognition)
       * Revenue is recognized at completion time
+      * **Note:** External payment methods include Stripe (`payUrl = "stripe"`), LINE Pay (`payUrl = "linepay"` - lowercase), and other external payment gateways
     * **Case 3: Non-Prepaid RSVP (`alreadyPaid = false`):**
       * Customer credit is deducted for service usage via `deduceCustomerCredit()`
       * `CustomerCreditLedger` entry is created with type `SPEND` (negative amount)
@@ -2144,6 +2146,7 @@ Completed (50) [when service is finished]
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 2.3 | 2025-01-27 | System | Updated payment method identifiers and completion flow: (1) **LINE Pay Payment Method** - Changed payment method identifier from `"linePay"` to `"linepay"` (lowercase) to avoid case-sensitivity issues on deployment. Updated all references in documentation. (2) **Case 2 Completion Flow** - Clarified that Case 2 (prepaid RSVP with external payment) converts HOLD to SPEND (not TOPUP to PAYMENT). The `convertFiatTopupToPayment()` function name is legacy, but implementation correctly converts HOLD to SPEND using `CustomerCreditLedgerType.Spend` enum value. (3) **Payment Method References** - Updated all payment method references to use lowercase identifiers (`"stripe"`, `"linepay"`, etc.) for consistency. Updated Sections 3.1.3 (Payment Flow) and 3.1.3 (Service Flow) to reflect these changes. |
 | 2.2 | 2025-01-27 | System | Updated RSVP functional requirements documentation: (1) **Service Staff Data Model** - Enhanced FR-RSVP-062a to include `isDeleted` field for soft delete functionality. (2) **Service Staff Availability** - Clarified that service staff filtering in UI includes business hours validation and that current service staff is always included when editing existing reservations. (3) **Reservation Data Model** - Verified all service staff fields (serviceStaffId, serviceStaffCost, serviceStaffCredit) are properly documented in FR-RSVP-060. (4) **Database Schema Consistency** - Ensured all documented fields match actual Prisma schema implementation. |
 | 2.1 | 2025-01-XX | System | Updated RSVP functional requirements from current store implementation: (1) Added service staff management (FR-RSVP-026a, FR-RSVP-026b, FR-RSVP-026c) - service staff selection, assignment, capacity, business hours, and cost tracking. (2) Added selection requirements (FR-RSVP-034a) - `mustSelectFacility` and `mustHaveServiceStaff` settings. (3) Enhanced prepaid settings (FR-RSVP-029) - added `noNeedToConfirm` and `showCostToCustomer` settings. (4) Enhanced facility configuration (FR-RSVP-022) - added default cost, credit, duration, and business hours. (5) Enhanced reservation data model (FR-RSVP-060) - added service staff fields, pricing information snapshot, and created by field. (6) Enhanced settings data model (FR-RSVP-061) - added all new settings fields. (7) Added service staff data model (FR-RSVP-062a). (8) Updated business rules (BR-RSVP-001, BR-RSVP-004c, BR-RSVP-004d, BR-RSVP-004e, BR-RSVP-010d, BR-RSVP-010e) - added service staff capacity, selection requirements, and cost display rules. (9) Updated validation requirements (FR-RSVP-003) - added facility and service staff business hours validation, and required field validation. |
 | 2.0 | 2025-01-27 | System | Updated authentication requirements: (1) Clarified that no sign-in is required to create reservations - anonymous users can create reservations without authentication, even when prepaid is required (`minPrepaidPercentage > 0`). (2) Updated FR-RSVP-001, FR-RSVP-002, FR-RSVP-004, and BR-RSVP-008 to reflect that anonymous users can create reservations regardless of prepaid requirements. |
