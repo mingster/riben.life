@@ -6,6 +6,7 @@ import { DisplayOrderStatus } from "@/components/display-order-status";
 import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
+import { format } from "date-fns";
 import Link from "next/link";
 import type { TransactionColumn } from "../transaction-column";
 import { CellAction } from "./cell-action";
@@ -19,6 +20,7 @@ export const createTransactionColumns = (
 	options: CreateTransactionColumnsOptions = {},
 ): ColumnDef<TransactionColumn>[] => {
 	const { storeId } = options;
+	const dateFormat = t("datetime_format");
 	return [
 		{
 			accessorKey: "amount",
@@ -82,6 +84,13 @@ export const createTransactionColumns = (
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("updated")} />
 			),
+			cell: ({ row }) => {
+				const transaction = row.original;
+				if (!transaction.updatedAtIso) return "-";
+				const date = new Date(transaction.updatedAtIso);
+				if (isNaN(date.getTime())) return transaction.updatedAt;
+				return <span>{format(date, dateFormat)}</span>;
+			},
 		},
 		{
 			id: "info",

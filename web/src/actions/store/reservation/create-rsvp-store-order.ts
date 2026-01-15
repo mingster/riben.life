@@ -163,13 +163,14 @@ export async function createRsvpStoreOrder(
 		"twd"
 	).toLowerCase();
 
-	// Format rsvpTime for product name: yyyy/MM/dd HH:mm
+	// Format rsvpTime for product name using i18n datetime format
 	const storeTimezone = store.defaultTimezone || "Asia/Taipei";
 	const rsvpTimeDate = epochToDate(rsvpTime);
+	const datetimeFormat = t("datetime_format");
 	let formattedRsvpTime = "";
 	if (rsvpTimeDate) {
 		const storeDate = getDateInTz(rsvpTimeDate, getOffsetHours(storeTimezone));
-		formattedRsvpTime = format(storeDate, "yyyy/MM/dd HH:mm");
+		formattedRsvpTime = format(storeDate, `${datetimeFormat} HH:mm`);
 	}
 
 	// Build order items array
