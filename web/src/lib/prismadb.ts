@@ -45,31 +45,56 @@ let finalConnectionString = connectionString || fallbackConnectionString;
 
 // Parse connection string to check and modify SSL parameters
 let sslModeParam: string | null = null;
+let sslParam: string | null = null;
 let shouldEnableSSL = false;
 
 try {
 	const url = new URL(finalConnectionString);
 	sslModeParam = url.searchParams.get("sslmode");
+	sslParam = url.searchParams.get("ssl");
 
 	// Check environment variable for SSL preference
 	const sslModeEnv = process.env.POSTGRES_SSL?.toLowerCase();
 
 	// Determine if SSL should be enabled
-	// Priority: POSTGRES_SSL env var > sslmode query param > default (disable)
-	if (
-		sslModeEnv === "true" ||
-		sslModeEnv === "require" ||
-		sslModeParam === "require"
-	) {
+	// Priority: POSTGRES_SSL env var > ssl=true in connection string > sslmode query param > default (disable)
+	const sslEnabledByEnv = sslModeEnv === "true" || sslModeEnv === "require";
+	const sslEnabledByParam = sslParam === "true" || sslModeParam === "require";
+
+	if (sslEnabledByEnv || sslEnabledByParam) {
 		shouldEnableSSL = true;
 		// Ensure sslmode=require is in connection string
 		if (!sslModeParam || sslModeParam !== "require") {
 			url.searchParams.set("sslmode", "require");
 		}
-	} else {
-		// Disable SSL - explicitly set sslmode=disable in connection string
+		// Remove ssl=true if present (sslmode takes precedence)
+		if (sslParam === "true") {
+			url.searchParams.delete("ssl");
+		}
+	} else if (sslParam === "false" || sslModeParam === "disable") {
+		// Explicitly disable SSL
 		shouldEnableSSL = false;
 		url.searchParams.set("sslmode", "disable");
+		// Remove ssl=false if present (sslmode takes precedence)
+		if (sslParam === "false") {
+			url.searchParams.delete("ssl");
+		}
+	} else {
+		// Default: disable SSL if not explicitly set
+		shouldEnableSSL = false;
+		// Only set sslmode=disable if sslmode is not already set
+		if (!sslModeParam) {
+			url.searchParams.set("sslmode", "disable");
+		}
+		// Remove ssl parameter if present (sslmode takes precedence)
+		if (sslParam) {
+			url.searchParams.delete("ssl");
+		}
+	}
+
+	// Log SSL configuration in development for debugging
+	if (process.env.NODE_ENV !== "production") {
+		console.log(`[Prisma] SSL configuration: ${shouldEnableSSL ? "enabled" : "disabled"} (env: ${sslModeEnv || "not set"}, ssl param: ${sslParam || "not set"}, sslmode param: ${sslModeParam || "not set"})`);
 	}
 
 	// Remove other SSL-related parameters that might interfere
@@ -100,7 +125,45 @@ const poolConfig: pg.PoolConfig = {
 	ssl: shouldEnableSSL ? { rejectUnauthorized: false } : false,
 };
 
-const pool = new Pool(poolConfig);
+// Suppress deprecation warning for Bun's Promise implementation
+// This is a known issue with Bun and pg library - Bun uses a custom Promise implementation
+// The warning is harmless but will be removed in future pg versions
+// We suppress it here to reduce noise in logs
+const originalEmitWarning = process.emitWarning;
+let pool: pg.Pool;
+try {
+	// process.emitWarning has complex overloads, but this works at runtime
+	process.emitWarning = function (warning: any, ...args: any[]) {
+		if (
+			typeof warning === "string" &&
+			warning.includes("Passing a custom Promise implementation")
+		) {
+			// Suppress this specific warning
+			return;
+		}
+		return originalEmitWarning.apply(process, [warning, ...args] as any);
+	};
+
+	pool = new Pool(poolConfig);
+} finally {
+	// Always restore original emitWarning
+	process.emitWarning = originalEmitWarning;
+}
+
+// Export pool for testing/debugging (useful for standalone scripts)
+export { pool };
+
+// Add error handlers to pool for better diagnostics
+pool.on("error", (err) => {
+	console.error("Unexpected error on idle database client", err);
+});
+
+pool.on("connect", () => {
+	if (process.env.NODE_ENV !== "production") {
+		console.log("Database connection established");
+	}
+});
+
 const adapter = new PrismaPg(pool);
 
 const prismaClientSingleton = () => {
@@ -109,9 +172,16 @@ const prismaClientSingleton = () => {
 		throw new Error("Failed to initialize PrismaPg adapter");
 	}
 
-	return new sqlPrismaClient({
+	const client = new sqlPrismaClient({
 		adapter,
 	});
+
+	// Add connection error handling
+	client.$on("error" as never, (e: unknown) => {
+		console.error("Prisma Client error:", e);
+	});
+
+	return client;
 };
 
 declare global {
@@ -125,6 +195,21 @@ export const sqlClient = globalThis.client ?? prismaClientSingleton();
 if (process.env.NODE_ENV !== "production") {
 	globalThis.client = sqlClient;
 	//globalThis.mongo = new mongoPrismaClient();
+}
+
+// Export connection info for diagnostics (masked)
+export function getConnectionInfo() {
+	const connectionString = process.env.POSTGRES_URL;
+	return {
+		isSet: !!connectionString,
+		maskedUrl: connectionString
+			? connectionString.replace(/(:\/\/[^:]+:)([^@]+)(@)/, "://***:***@")
+			: "not set",
+		sslMode: process.env.POSTGRES_SSL || "not set (default: disable)",
+		poolSize: pool.totalCount,
+		idleCount: pool.idleCount,
+		waitingCount: pool.waitingCount,
+	};
 }
 
 // Gracefully cleanup on hot reload
