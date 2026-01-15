@@ -438,8 +438,8 @@ Store Admins have all Store Staff permissions, plus:
 * **Payment Processing (HOLD Design):**
   * **Credit Points Payment (`payUrl = "creditPoint"`):**
     * Customer credit points are held (not spent yet) - `CustomerCredit.point` balance is reduced
-    * `CustomerCreditLedger` entry is created with type `HOLD` (negative amount)
-    * **No `StoreLedger` entry is created** at this stage (revenue not yet recognized)
+  * `CustomerCreditLedger` entry is created with type `HOLD` (negative amount)
+  * **No `StoreLedger` entry is created** at this stage (revenue not yet recognized)
   * **Fiat Balance Payment (`payUrl = "credit"`):**
     * Customer fiat balance is held (not spent yet) - `CustomerCredit.fiat` balance is reduced
     * `CustomerFiatLedger` entry is created with type `"HOLD"` (string, negative amount)
@@ -454,7 +454,7 @@ Store Admins have all Store Staff permissions, plus:
 * After payment processing:
   * The `alreadyPaid` flag is set to `true`
   * The reservation status changes to `Ready (40)` if `noNeedToConfirm = true`, otherwise `ReadyToConfirm (10)`
-  * The reservation is linked to the order via `orderId`
+* The reservation is linked to the order via `orderId`
 * Store staff notifications are sent when `alreadyPaid = true` and status is `Ready (40)` or `ReadyToConfirm (10)`
 * **Note:** Prepaid payment processing happens during RSVP creation (via `processRsvpPrepaidPaymentUsingCredit`) or after checkout payment (via `processRsvpAfterPaymentAction`), NOT during update
 
@@ -500,7 +500,7 @@ Store Admins have all Store Staff permissions, plus:
       * **Note:** External payment methods include Stripe (`payUrl = "stripe"`), LINE Pay (`payUrl = "linepay"` - lowercase), and other external payment gateways
     * **Case 3: Non-Prepaid RSVP (`alreadyPaid = false`):**
       * Customer credit is deducted for service usage via `deduceCustomerCredit()`
-      * `CustomerCreditLedger` entry is created with type `SPEND` (negative amount)
+    * `CustomerCreditLedger` entry is created with type `SPEND` (negative amount)
       * `StoreLedger` entry is created with type `StorePaymentProvider` (positive amount, revenue recognition)
       * Revenue is recognized at completion time
   * **Transaction Safety:** Credit processing happens BEFORE status update. If credit processing fails, status update is rolled back.
@@ -514,13 +514,13 @@ Store Admins have all Store Staff permissions, plus:
 * **Refund Policy:** When cancelled, customer credit or payment will be refunded only if cancellation occurs OUTSIDE the `cancelHours` window (i.e., cancelled more than `cancelHours` hours before the reservation time). If cancellation occurs WITHIN the `cancelHours` window (i.e., less than `cancelHours` hours before the reservation time), no refund is given.
 * **Credit Refund Process (if prepaid with credit):**
   * **HOLD Refund (RSVP not yet completed):**
-    * If cancellation is outside the cancelHours window:
+  * If cancellation is outside the cancelHours window:
       * Held credit is refunded to customer (restores `CustomerCredit` balance)
       * `CustomerCreditLedger` or `CustomerFiatLedger` entry is created with type `REFUND` (positive amount)
       * **No `StoreLedger` entry is created** (no revenue was recognized during hold phase)
-      * Store order status is updated to `Refunded`
-    * If cancellation is within the cancelHours window:
-      * No refund is given (held credit remains deducted)
+    * Store order status is updated to `Refunded`
+  * If cancellation is within the cancelHours window:
+    * No refund is given (held credit remains deducted)
   * **SPEND Refund (RSVP was completed, then cancelled - legacy/non-prepaid):**
     * If cancellation occurs after completion:
       * Credit is refunded to customer
