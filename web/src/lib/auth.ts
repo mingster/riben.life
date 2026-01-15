@@ -9,17 +9,17 @@ import {
 	anonymous,
 	apiKey,
 	bearer,
+	customSession,
 	magicLink,
 	organization,
 	phoneNumber,
-	twoFactor,
+	twoFactor
 } from "better-auth/plugins";
 
 import { sendAuthMagicLink } from "@/actions/mail/send-auth-magic-link";
 import { sendAuthPasswordReset } from "@/actions/mail/send-auth-password-reset";
 import { stripe as stripeClient } from "@/lib/stripe/config";
 import { linkAnonymousAccount } from "@/utils/account-linking";
-import { customSession } from "better-auth/plugins";
 import logger from "./logger";
 import { sqlClient } from "./prismadb";
 
