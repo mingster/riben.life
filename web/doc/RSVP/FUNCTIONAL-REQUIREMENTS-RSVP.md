@@ -242,7 +242,7 @@ Store Admins have all Store Staff permissions, plus:
 * Status values (RsvpStatus enum):
   * `0` = Pending (待確認/尚未付款) - Initial status when reservation is created
   * `10` = ReadyToConfirm - If no prepaid required, status is ReadyToConfirm; otherwise ReadyToConfirm after payment. Auto-transitions to Ready (40) if `noNeedToConfirm = true` and `alreadyPaid = true`.
-  * `40` = Ready (已就序) - Customer has arrived and is ready for service. Only RSVPs in Ready status can be completed.
+  * `40` = Ready (預約中) - Customer has arrived and is ready for service. Only RSVPs in Ready status can be completed.
   * `50` = Completed (已完成) - Reservation/service has been completed
   * `60` = Cancelled (已取消) - Reservation has been cancelled
   * `70` = NoShow (未到) - Customer did not show up for the reservation
@@ -515,9 +515,9 @@ Store Admins have all Store Staff permissions, plus:
 * **Credit Refund Process (if prepaid with credit):**
   * **HOLD Refund (RSVP not yet completed):**
   * If cancellation is outside the cancelHours window:
-      * Held credit is refunded to customer (restores `CustomerCredit` balance)
-      * `CustomerCreditLedger` or `CustomerFiatLedger` entry is created with type `REFUND` (positive amount)
-      * **No `StoreLedger` entry is created** (no revenue was recognized during hold phase)
+    * Held credit is refunded to customer (restores `CustomerCredit` balance)
+    * `CustomerCreditLedger` or `CustomerFiatLedger` entry is created with type `REFUND` (positive amount)
+    * **No `StoreLedger` entry is created** (no revenue was recognized during hold phase)
     * Store order status is updated to `Refunded`
   * If cancellation is within the cancelHours window:
     * No refund is given (held credit remains deducted)

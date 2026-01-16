@@ -22,12 +22,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -49,6 +43,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/providers/i18n-provider";
 import {
 	epochToDate,
@@ -106,8 +101,24 @@ interface ParsedRsvpPreview {
 	reservationNumber: number;
 }
 
+interface ParsedStoreOrderPreview {
+	blockIndex: number;
+	customerName: string;
+	productName: string;
+	totalAmount: number;
+	reservationCount: number; // Number of scheduled RSVPs in the store order
+	currency: string;
+	paidDate: Date | null;
+	completedCount: number; // Number of RSVPs with Completed status
+	readyCount: number; // Number of RSVPs with Ready status
+	stillInCreditCount: number; // Number of prepaid RSVPs not yet scheduled (empty lines)
+	completedAmount: number; // Total amount for Completed RSVPs (will be SPEND)
+	readyAmount: number; // Total amount for Ready RSVPs (will be HOLD)
+}
+
 const importRsvpSchema = z.object({
 	rsvpData: z.string().min(1, "RSVP data is required"),
+	autoSchedule: z.boolean(),
 });
 
 type ImportRsvpFormValues = z.infer<typeof importRsvpSchema>;
@@ -127,9 +138,17 @@ export function ClientImportRsvp({
 	const [isParsing, setIsParsing] = useState(false);
 	const [importing, setImporting] = useState(false);
 	const [parsedRsvps, setParsedRsvps] = useState<ParsedRsvpPreview[]>([]);
+	const [parsedStoreOrders, setParsedStoreOrders] = useState<
+		ParsedStoreOrderPreview[]
+	>([]);
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 	const [editFormData, setEditFormData] =
 		useState<Partial<ParsedRsvpPreview> | null>(null);
+	const [editingStoreOrderIndex, setEditingStoreOrderIndex] = useState<
+		number | null
+	>(null);
+	const [editStoreOrderData, setEditStoreOrderData] =
+		useState<Partial<ParsedStoreOrderPreview> | null>(null);
 	const [selectedServiceStaff, setSelectedServiceStaff] =
 		useState<ServiceStaffColumn | null>(null);
 
@@ -180,6 +199,7 @@ export function ClientImportRsvp({
 		resolver: zodResolver(importRsvpSchema),
 		defaultValues: {
 			rsvpData: "",
+			autoSchedule: true,
 		},
 		mode: "onChange",
 	});
@@ -191,6 +211,8 @@ export function ClientImportRsvp({
 
 	const handleParse = useCallback(async () => {
 		const rsvpData = form.watch("rsvpData");
+		const autoSchedule = form.watch("autoSchedule");
+
 		if (!rsvpData.trim()) {
 			toastError({ description: "Please enter RSVP data to parse" });
 			return;
@@ -200,10 +222,17 @@ export function ClientImportRsvp({
 		try {
 			const parsedData = parseRsvpImportText(rsvpData);
 
+			// Show parsing errors as warnings, but don't block processing
+			// Store orders can still be created even if there are parsing errors
 			if (parsedData.errors.length > 0) {
-				toastError({
-					description: `Parsing errors: ${parsedData.errors.length} error(s) found`,
-				});
+				// Only show error if there are no blocks to process
+				if (parsedData.blocks.length === 0) {
+					toastError({
+						description: `Parsing errors: ${parsedData.errors.length} error(s) found. No valid blocks to process.`,
+					});
+					setIsParsing(false);
+					return;
+				}
 			}
 
 			// Get service staff name and cost calculation info
@@ -213,6 +242,7 @@ export function ClientImportRsvp({
 						t("rsvp_import_select_service_staff") ||
 						"Please select a service staff member first.",
 				});
+				setIsParsing(false);
 				return;
 			}
 
@@ -223,6 +253,7 @@ export function ClientImportRsvp({
 			const { defaultCost, defaultDuration } = selectedServiceStaff;
 
 			const preview: ParsedRsvpPreview[] = [];
+			const storeOrdersPreview: ParsedStoreOrderPreview[] = [];
 
 			for (
 				let blockIndex = 0;
@@ -230,6 +261,19 @@ export function ClientImportRsvp({
 				blockIndex++
 			) {
 				const block = parsedData.blocks[blockIndex];
+				const isBlockPaid = block.paidDate !== null;
+
+				// Track paid RSVPs in this block for store order calculation
+				const blockRsvpCosts: number[] = [];
+
+				// Track RSVP status counts for this block
+				let completedCount = 0;
+				let readyCount = 0;
+				let totalReservationsInBlock = block.totalReservations || 0; // Total reservations expected from product name
+
+				// Track costs for completed and ready RSVPs (for deduction calculation)
+				let completedAmount = 0;
+				let readyAmount = 0;
 
 				// Track last valid time slot for recurring RSVPs (empty slots)
 				let lastValidTimeSlot: {
@@ -272,25 +316,14 @@ export function ClientImportRsvp({
 								reservation.startTime === null &&
 								reservation.endTime === null
 							) {
+								// If autoSchedule is off, skip empty lines
+								if (!autoSchedule) {
+									continue;
+								}
+
 								// This is a recurring RSVP
 								if (!lastValidTimeSlot) {
-									// No valid time slot found yet, skip this recurring RSVP
-									preview.push({
-										customerName: block.customerName,
-										productName: block.productName,
-										rsvpTime: null,
-										arriveTime: null,
-										duration: 0,
-										serviceStaffId: selectedServiceStaff.id,
-										serviceStaffName,
-										cost: 0,
-										alreadyPaid: block.paidDate !== null,
-										status: "error",
-										rsvpStatus: RsvpStatus.Pending,
-										error: "No valid time slot found for recurring RSVP",
-										blockIndex,
-										reservationNumber: reservation.number,
-									});
+									// No valid time slot found yet, skip this recurring RSVP (don't import)
 									continue;
 								}
 
@@ -370,6 +403,11 @@ export function ClientImportRsvp({
 										? costPerMinute * lastValidTimeSlot.duration
 										: 0;
 
+								// Don't count auto-scheduled recurring RSVPs in store order total
+								// These are prepaid but not yet scheduled, so credit remains in account balance
+								// Only count RSVPs that had actual reservation times in the import data
+								// (Do NOT add to blockRsvpCosts here)
+
 								preview.push({
 									customerName: block.customerName,
 									productName: block.productName,
@@ -386,26 +424,11 @@ export function ClientImportRsvp({
 									blockIndex,
 									reservationNumber: reservation.number,
 								});
+								readyCount++; // Track Ready RSVPs
 								continue;
 							}
 
-							// Invalid date/time format
-							preview.push({
-								customerName: block.customerName,
-								productName: block.productName,
-								rsvpTime: null,
-								arriveTime: null,
-								duration: 0,
-								serviceStaffId: selectedServiceStaff.id,
-								serviceStaffName,
-								cost: 0,
-								alreadyPaid: block.paidDate !== null,
-								status: "error",
-								rsvpStatus: RsvpStatus.Pending, // Error state, use Pending as default
-								error: "Invalid date/time format",
-								blockIndex,
-								reservationNumber: reservation.number,
-							});
+							// Invalid date/time format - skip (don't import)
 							continue;
 						}
 
@@ -453,6 +476,11 @@ export function ClientImportRsvp({
 						const cost =
 							costPerMinute > 0 ? costPerMinute * dateTimeResult.duration : 0;
 
+						// Track cost for store order calculation if paid
+						if (isBlockPaid && cost > 0) {
+							blockRsvpCosts.push(cost);
+						}
+
 						// Determine RSVP status
 						// If rsvpTime exists in imported data, status = Completed
 						// If no rsvpTime (recurring), status = Ready
@@ -473,43 +501,88 @@ export function ClientImportRsvp({
 							blockIndex,
 							reservationNumber: reservation.number,
 						});
+
+						// Track status counts and amounts
+						if (rsvpStatus === RsvpStatus.Completed) {
+							completedCount++;
+							if (isBlockPaid && cost > 0) {
+								completedAmount += cost;
+							}
+						} else if (rsvpStatus === RsvpStatus.Ready) {
+							readyCount++;
+							if (isBlockPaid && cost > 0) {
+								readyAmount += cost;
+							}
+						}
 					} catch (error) {
-						preview.push({
-							customerName: block.customerName,
-							productName: block.productName,
-							rsvpTime: null,
-							arriveTime: null,
-							duration: 0,
-							serviceStaffId: selectedServiceStaff.id,
-							serviceStaffName,
-							cost: 0,
-							alreadyPaid: block.paidDate !== null,
-							status: "error",
-							rsvpStatus: RsvpStatus.Pending, // Error state, use Pending as default
-							error:
-								error instanceof Error
-									? error.message
-									: "Failed to parse reservation",
-							blockIndex,
-							reservationNumber: reservation.number,
-						});
+						// Skip reservations with errors (don't import)
+						continue;
 					}
+				}
+
+				// Calculate store order preview for this block (if it's paid)
+				// Total paid amount = # of lines * staff's hourly rate
+				// Store order should be created even if all reservation lines are empty
+				if (isBlockPaid) {
+					// Calculate hourly rate: defaultCost / defaultDuration * 60 minutes
+					const hourlyRate =
+						defaultDuration > 0 ? (defaultCost / defaultDuration) * 60 : 0;
+
+					// Number of lines = total reservation lines in the block
+					// This includes empty lines (e.g., "1-", "2-", etc.)
+					const numberOfLines = block.reservations.length;
+
+					// Total paid amount = number of lines × hourly rate
+					// Even if all lines are empty, we still create a store order for the prepaid amount
+					const totalBlockAmount = numberOfLines * hourlyRate;
+
+					// Convert paidDate string to Date if it exists
+					// paidDate format from parser: "MM/DD YYYY" (e.g., "11/17 2025")
+					let paidDate: Date | null = null;
+					if (
+						block.paidDate &&
+						block.paidDateYear &&
+						block.paidDateMonth &&
+						block.paidDateDay
+					) {
+						// Create Date in store timezone
+						const paidDateStr = `${block.paidDateYear}-${String(block.paidDateMonth).padStart(2, "0")}-${String(block.paidDateDay).padStart(2, "0")}T00:00`;
+						paidDate = convertToUtc(paidDateStr, storeTimezone);
+					}
+
+					// Calculate still in credit count (prepaid but not scheduled)
+					// Total reservations from product name minus scheduled ones (completed + ready)
+					const scheduledCount = completedCount + readyCount;
+					const stillInCreditCount =
+						totalReservationsInBlock > 0
+							? Math.max(0, totalReservationsInBlock - scheduledCount)
+							: 0;
+
+					storeOrdersPreview.push({
+						blockIndex,
+						customerName: block.customerName,
+						productName: block.productName,
+						totalAmount: totalBlockAmount,
+						reservationCount: blockRsvpCosts.length, // Scheduled RSVPs with cost
+						currency: storeCurrency.toUpperCase(),
+						paidDate,
+						completedCount,
+						readyCount,
+						stillInCreditCount,
+						completedAmount,
+						readyAmount,
+					});
 				}
 			}
 
 			setParsedRsvps(preview);
+			setParsedStoreOrders(storeOrdersPreview);
 
-			if (preview.length === 0) {
-				toastError({ description: "No valid reservations found in data" });
-			} else if (hasErrors) {
+			// Allow import even with no RSVPs if there are store orders to import
+			if (preview.length === 0 && storeOrdersPreview.length === 0) {
 				toastError({
-					description: `${preview.filter((p) => p.status === "error").length} reservation(s) have errors`,
+					description: "No valid reservations or store orders found in data",
 				});
-			} else {
-				/*
-				toastSuccess({
-					description: `Successfully parsed ${preview.length} reservation(s)`,
-				});*/
 			}
 		} catch (error) {
 			toastError({
@@ -519,10 +592,11 @@ export function ClientImportRsvp({
 		} finally {
 			setIsParsing(false);
 		}
-	}, [form, storeTimezone, selectedServiceStaff, costPerMinute, t, hasErrors]);
+	}, [form, storeTimezone, selectedServiceStaff, costPerMinute, t]);
 
 	const handleImport = useCallback(async () => {
-		if (parsedRsvps.length === 0 || hasErrors) {
+		// Allow import if there are RSVPs or store orders to import
+		if (parsedRsvps.length === 0 && parsedStoreOrders.length === 0) {
 			return;
 		}
 
@@ -543,6 +617,16 @@ export function ClientImportRsvp({
 				reservationNumber: rsvp.reservationNumber,
 			}));
 
+			// Send store order info with edited values
+			const storeOrdersData = parsedStoreOrders.map((order) => ({
+				blockIndex: order.blockIndex,
+				customerName: order.customerName,
+				productName: order.productName,
+				totalAmount: order.totalAmount,
+				currency: order.currency,
+				paidDate: order.paidDate ? order.paidDate.toISOString() : null,
+			}));
+
 			const response = await fetch(
 				`/api/storeAdmin/${params.storeId}/rsvp/import`,
 				{
@@ -550,7 +634,10 @@ export function ClientImportRsvp({
 					headers: {
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({ rsvps: importData }),
+					body: JSON.stringify({
+						rsvps: importData,
+						storeOrders: storeOrdersData,
+					}),
 				},
 			);
 
@@ -591,7 +678,7 @@ export function ClientImportRsvp({
 		} finally {
 			setImporting(false);
 		}
-	}, [form, parsedRsvps, hasErrors, params.storeId, router, onImported]);
+	}, [form, parsedRsvps, params.storeId, router, onImported]);
 
 	const columns: ColumnDef<ParsedRsvpPreview>[] = useMemo(
 		() => [
@@ -635,7 +722,11 @@ export function ClientImportRsvp({
 			},
 			{
 				accessorKey: "duration",
-				header: t("duration") || "Duration",
+				header: ({ column }) => (
+					<div className="text-xs capitalize">
+						{t("duration") || "Duration"}
+					</div>
+				),
 				cell: ({ row }) => {
 					const duration = row.getValue("duration") as number;
 					return `${duration} min`;
@@ -646,11 +737,17 @@ export function ClientImportRsvp({
 			},
 			{
 				accessorKey: "serviceStaffName",
-				header: t("service_staff") || "Service Staff",
+				header: ({ column }) => (
+					<div className="text-xs capitalize">
+						{t("service_staff") || "Service Staff"}
+					</div>
+				),
 			},
 			{
 				accessorKey: "cost",
-				header: t("cost") || "Cost",
+				header: ({ column }) => (
+					<div className="text-xs capitalize">{t("cost") || "Cost"}</div>
+				),
 				cell: ({ row }) => {
 					const cost = row.getValue("cost") as number;
 					return cost > 0
@@ -663,7 +760,11 @@ export function ClientImportRsvp({
 			},
 			{
 				accessorKey: "alreadyPaid",
-				header: t("order_is_paid") || "Payment Status",
+				header: ({ column }) => (
+					<div className="text-xs capitalize">
+						{t("order_is_paid") || "Payment Status"}
+					</div>
+				),
 				cell: ({ row }) => {
 					const paid = row.getValue("alreadyPaid") as boolean;
 					return (
@@ -706,7 +807,11 @@ export function ClientImportRsvp({
 			},
 			{
 				id: "status",
-				header: t("parse_status") || "Parse Status",
+				header: ({ column }) => (
+					<div className="text-xs capitalize">
+						{t("parse_status") || "Parse Status"}
+					</div>
+				),
 				cell: ({ row }) => {
 					const status = row.original.status;
 					const error = row.original.error;
@@ -724,29 +829,24 @@ export function ClientImportRsvp({
 			},
 			{
 				id: "actions",
-				header: t("actions") || "Actions",
+				header: ({ column }) => (
+					<div className="text-xs capitalize">{t("actions") || "Actions"}</div>
+				),
 				cell: ({ row }) => {
 					const index = row.index;
 					return (
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" className="h-8 w-8 p-0">
-									<span className="sr-only">Open menu</span>
-									<IconEdit className="h-4 w-4" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DropdownMenuItem
-									onClick={() => {
-										setEditingIndex(index);
-										setEditFormData({ ...row.original });
-									}}
-								>
-									<IconEdit className="mr-2 h-4 w-4" />
-									{t("edit") || "Edit"}
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
+						<Button
+							variant="ghost"
+							className="h-8 w-8 p-0"
+							onClick={() => {
+								setEditingIndex(index);
+								setEditFormData({ ...row.original });
+							}}
+							title={t("edit") || "Edit"}
+						>
+							<span className="sr-only">{t("edit") || "Edit"}</span>
+							<IconEdit className="h-4 w-4" />
+						</Button>
 					);
 				},
 			},
@@ -791,9 +891,50 @@ export function ClientImportRsvp({
 
 					<FormField
 						control={form.control}
+						name="autoSchedule"
+						render={({ field, fieldState }) => (
+							<FormItem
+								className={cn(
+									"flex flex-row items-center justify-between rounded-lg",
+									fieldState.error &&
+										"rounded-md border border-destructive/50 bg-destructive/5 p-3",
+								)}
+							>
+								<div className="space-y-0.5">
+									<FormLabel className="text-base">
+										{t("rsvp_import_auto_schedule") || "Auto Schedule"}
+									</FormLabel>
+									<FormDescription className="font-mono text-gray-500">
+										{t("rsvp_import_auto_schedule_description") ||
+											"When enabled, empty lines will be automatically scheduled as recurring reservations based on previous time slots. When disabled, empty lines will be skipped."}
+									</FormDescription>
+								</div>
+								<FormControl>
+									<Switch
+										checked={field.value}
+										onCheckedChange={field.onChange}
+										disabled={isParsing || importing}
+										className={cn(
+											fieldState.error &&
+												"border-destructive focus-visible:ring-destructive",
+										)}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+
+					<FormField
+						control={form.control}
 						name="rsvpData"
-						render={({ field }) => (
-							<FormItem>
+						render={({ field, fieldState }) => (
+							<FormItem
+								className={cn(
+									fieldState.error &&
+										"rounded-md border border-destructive/50 bg-destructive/5 p-2",
+								)}
+							>
 								<FormLabel>
 									{t("rsvp_import_data") || "RSVP Data"}{" "}
 									<span className="text-destructive">*</span>
@@ -816,11 +957,15 @@ export function ClientImportRsvp({
 10-`
 										}
 										disabled={isParsing || importing}
-										className="min-h-[200px] font-mono "
+										className={cn(
+											"min-h-[200px] font-mono",
+											fieldState.error &&
+												"border-destructive focus-visible:ring-destructive",
+										)}
 										{...field}
 									/>
 								</FormControl>
-								<FormDescription className="font-mono text-gray-500">
+								<FormDescription className="text-xs font-mono text-gray-500">
 									{t("rsvp_import_data_description") ||
 										"Paste RSVP data in the specified format. First line: customer name, product name, and paid date. Following lines: reservation date and time ranges."}
 								</FormDescription>
@@ -829,17 +974,45 @@ export function ClientImportRsvp({
 						)}
 					/>
 
+					{/* Error Summary */}
+					{Object.keys(form.formState.errors).length > 0 && (
+						<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3 space-y-1.5">
+							<div className="text-sm font-semibold text-destructive">
+								{t("please_fix_validation_errors") ||
+									"Please fix the following errors:"}
+							</div>
+							{Object.entries(form.formState.errors).map(([field, error]) => {
+								// Map field names to user-friendly labels using i18n
+								const fieldLabels: Record<string, string> = {
+									rsvpData: t("rsvp_import_data") || "RSVP Data",
+									autoSchedule:
+										t("rsvp_import_auto_schedule") || "Auto Schedule",
+								};
+								const fieldLabel = fieldLabels[field] || field;
+								return (
+									<div
+										key={field}
+										className="text-sm text-destructive flex items-start gap-2"
+									>
+										<span className="font-medium">{fieldLabel}:</span>
+										<span>{error.message as string}</span>
+									</div>
+								);
+							})}
+						</div>
+					)}
+
 					<div className="flex gap-2">
 						<Button
 							type="submit"
 							variant="outline"
 							disabled={
-								!form.watch("rsvpData") ||
+								!form.watch("rsvpData")?.trim() ||
 								!selectedServiceStaff ||
 								isParsing ||
 								importing
 							}
-							className="h-10 sm:h-9 sm:min-h-0"
+							className="h-10 sm:h-9 sm:min-h-0 disabled:opacity-25"
 						>
 							{isParsing ? (
 								<>
@@ -854,42 +1027,159 @@ export function ClientImportRsvp({
 				</form>
 			</Form>
 
-			{parsedRsvps.length > 0 && (
+			{(parsedRsvps.length > 0 || parsedStoreOrders.length > 0) && (
 				<div className="mt-4 space-y-4">
-					<div className="text-sm font-medium">
-						{t("parsed_reservations") || "Parsed Reservations"} (
-						{parsedRsvps.length})
-					</div>
-
-					{hasErrors && (
-						<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3">
-							<div className="text-sm font-semibold text-destructive">
-								{t("validation_errors") || "Validation Errors"}
+					{parsedStoreOrders.length > 0 && (
+						<div className="space-y-2">
+							<div className="text-sm font-medium">
+								{t("rsvp_import_store_orders_preview") ||
+									"Store Orders to be Created"}{" "}
+								({parsedStoreOrders.length})
 							</div>
-							<div className="mt-2 space-y-1">
-								{parsedRsvps
-									.filter((rsvp) => rsvp.status === "error")
-									.map((rsvp, index) => (
-										<div key={index} className="text-sm text-destructive">
-											{rsvp.customerName} - {rsvp.error}
-										</div>
-									))}
+							<div className="rounded-md border p-4">
+								<div className="space-y-3">
+									{parsedStoreOrders.map((order, index) => {
+										// Format paid date if available
+										let formattedPaidDate = "";
+										if (order.paidDate) {
+											const paidDateObj =
+												order.paidDate instanceof Date
+													? order.paidDate
+													: new Date(order.paidDate);
+											const storeDate = getDateInTz(
+												paidDateObj,
+												getOffsetHours(storeTimezone),
+											);
+											const datetimeFormat =
+												t("datetime_format") || "yyyy-MM-dd";
+											formattedPaidDate = format(
+												storeDate,
+												`${datetimeFormat}`,
+											);
+										}
+
+										const orderToDisplay = parsedStoreOrders[index]; // Use current order data
+
+										return (
+											<div
+												key={index}
+												className="flex items-center justify-between rounded-md p-3"
+											>
+												<div className="space-y-1 flex-1">
+													<div className="text-sm font-medium flex flex-row gap-10">
+														{orderToDisplay.customerName} -{" "}
+														{orderToDisplay.productName}
+														{formattedPaidDate && (
+															<span>
+																{t("paid_date") || "Paid Date"}:{" "}
+																<span className="font-mono">
+																	{formattedPaidDate}
+																</span>
+															</span>
+														)}
+													</div>
+													<div className="text-xs text-muted-foreground space-y-0.5">
+														<div className="space-y-0.5  flex flex-row gap-10">
+															<div>
+																{t("rsvp_completed_count") || "Completed"}:{" "}
+																{orderToDisplay.completedCount}
+															</div>
+															<div>
+																{t("rsvp_ready_count") || "Ready"}:{" "}
+																{orderToDisplay.readyCount}
+															</div>
+															{orderToDisplay.stillInCreditCount > 0 && (
+																<div>
+																	{t("rsvp_still_in_credit") ||
+																		"Still in Credit"}
+																	: {orderToDisplay.stillInCreditCount}
+																</div>
+															)}
+														</div>
+													</div>
+												</div>
+												<div className="flex items-center gap-4">
+													<div className="text-right space-y-2">
+														<div className="space-y-1">
+															<div className="text-xs text-muted-foreground">
+																{t("rsvp_to_be_credited") || "To be Credited"}
+															</div>
+															<div className="text-sm font-semibold">
+																{orderToDisplay.totalAmount.toFixed(2)}{" "}
+																{orderToDisplay.currency}
+															</div>
+														</div>
+														{(orderToDisplay.completedAmount > 0 ||
+															orderToDisplay.readyAmount > 0) && (
+															<div className="space-y-1 border-t pt-1 flex flex-row gap-10">
+																<div className="text-xs text-muted-foreground">
+																	{t("rsvp_to_be_deducted") || "To be Deducted"}
+																</div>
+																<div className="text-xs space-y-0.5">
+																	{orderToDisplay.completedAmount > 0 && (
+																		<div>
+																			{t("rsvp_completed_count") || "Completed"}
+																			:{" "}
+																			<span className="font-semibold">
+																				{orderToDisplay.completedAmount.toFixed(
+																					2,
+																				)}{" "}
+																				{orderToDisplay.currency}
+																			</span>
+																		</div>
+																	)}
+																</div>
+															</div>
+														)}
+													</div>
+													<Button
+														variant="ghost"
+														className="h-8 w-8 p-0"
+														onClick={() => {
+															setEditingStoreOrderIndex(index);
+															setEditStoreOrderData({ ...orderToDisplay });
+														}}
+														title={t("edit") || "Edit"}
+														disabled={importing}
+													>
+														<span className="sr-only">
+															{t("edit") || "Edit"}
+														</span>
+														<IconEdit className="h-4 w-4" />
+													</Button>
+												</div>
+											</div>
+										);
+									})}
+								</div>
 							</div>
 						</div>
 					)}
 
-					<DataTable<ParsedRsvpPreview, unknown>
-						columns={columns}
-						data={parsedRsvps}
-						searchKey="customerName"
-						noPagination={parsedRsvps.length <= 50}
-					/>
+					{parsedRsvps.length > 0 && (
+						<>
+							<div className="text-sm font-medium">
+								{t("parsed_reservations") || "Parsed Reservations"} (
+								{parsedRsvps.length})
+							</div>
+
+							<DataTable<ParsedRsvpPreview, unknown>
+								columns={columns}
+								data={parsedRsvps}
+								searchKey="customerName"
+								noPagination={parsedRsvps.length <= 50}
+							/>
+						</>
+					)}
 
 					<div className="flex justify-end">
 						<Button
 							type="button"
 							onClick={handleImport}
-							disabled={parsedRsvps.length === 0 || importing || hasErrors}
+							disabled={
+								(parsedRsvps.length === 0 && parsedStoreOrders.length === 0) ||
+								importing
+							}
 							className="h-10 sm:h-9 sm:min-h-0"
 						>
 							{importing ? (
@@ -900,7 +1190,11 @@ export function ClientImportRsvp({
 							) : (
 								<>
 									<IconUpload className="mr-2 h-4 w-4" />
-									{t("import") || "Import RSVPs"} ({parsedRsvps.length})
+									{t("import") || "Import RSVPs"}{" "}
+									{parsedRsvps.length > 0 && `(${parsedRsvps.length})`}
+									{parsedRsvps.length === 0 &&
+										parsedStoreOrders.length > 0 &&
+										`(${parsedStoreOrders.length} ${t("store_orders") || "store order(s)"})`}
 								</>
 							)}
 						</Button>
@@ -1144,6 +1438,126 @@ export function ClientImportRsvp({
 										description:
 											t("reservation_updated") || "Reservation updated",
 									});
+								}
+							}}
+						>
+							{t("save") || "Save"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Edit Store Order Dialog */}
+			<Dialog
+				open={editingStoreOrderIndex !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setEditingStoreOrderIndex(null);
+						setEditStoreOrderData(null);
+					}
+				}}
+			>
+				<DialogContent className="max-w-[calc(100%-1rem)] sm:max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle>
+							{t("edit_store_order") || "Edit Store Order"}
+						</DialogTitle>
+						<DialogDescription>
+							{t("edit_store_order_description") ||
+								"Edit the store order details. This information will be sent to the backend."}
+						</DialogDescription>
+					</DialogHeader>
+					{editStoreOrderData && (
+						<div className="space-y-4 py-4">
+							<div className="space-y-2">
+								<label className="text-sm font-medium">
+									{t("customer") || "Customer"}
+								</label>
+								<Input
+									value={editStoreOrderData.customerName || ""}
+									disabled
+									className="bg-muted"
+								/>
+							</div>
+
+							<div className="space-y-2">
+								<label className="text-sm font-medium">
+									{t("product") || "Product"}
+								</label>
+								<Input
+									value={editStoreOrderData.productName || ""}
+									disabled
+									className="bg-muted"
+								/>
+							</div>
+
+							<div className="space-y-2">
+								<label className="text-sm font-medium">
+									{t("total_amount") || "Total Amount"}{" "}
+									<span className="text-destructive">*</span>
+								</label>
+								<div className="flex items-center gap-2">
+									<Input
+										type="number"
+										min="0"
+										step="0.01"
+										value={editStoreOrderData.totalAmount || 0}
+										onChange={(e) =>
+											setEditStoreOrderData({
+												...editStoreOrderData,
+												totalAmount: parseFloat(e.target.value) || 0,
+											})
+										}
+									/>
+									<span className="text-sm text-muted-foreground">
+										{editStoreOrderData.currency || storeCurrency.toUpperCase()}
+									</span>
+								</div>
+							</div>
+
+							<div className="text-xs text-muted-foreground space-y-1">
+								<div>
+									{t("rsvp_completed_count") || "Completed"}:{" "}
+									{editStoreOrderData.completedCount || 0}
+								</div>
+								<div>
+									{t("rsvp_ready_count") || "Ready"}:{" "}
+									{editStoreOrderData.readyCount || 0}
+								</div>
+								{(editStoreOrderData.stillInCreditCount || 0) > 0 && (
+									<div>
+										{t("rsvp_still_in_credit") || "Still in Credit"}:{" "}
+										{editStoreOrderData.stillInCreditCount || 0}
+									</div>
+								)}
+							</div>
+						</div>
+					)}
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => {
+								setEditingStoreOrderIndex(null);
+								setEditStoreOrderData(null);
+							}}
+						>
+							{t("cancel") || "Cancel"}
+						</Button>
+						<Button
+							onClick={() => {
+								if (editingStoreOrderIndex !== null && editStoreOrderData) {
+									// Update the store order preview item
+									const updatedStoreOrders = parsedStoreOrders.map(
+										(order, idx) => {
+											if (idx === editingStoreOrderIndex) {
+												return { ...order, ...editStoreOrderData };
+											}
+											return order;
+										},
+									);
+									setParsedStoreOrders(updatedStoreOrders);
+									setEditingStoreOrderIndex(null);
+									setEditStoreOrderData(null);
 								}
 							}}
 						>

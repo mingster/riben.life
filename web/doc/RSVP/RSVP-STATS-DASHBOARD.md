@@ -1,7 +1,7 @@
 # RSVP Statistics Dashboard
 
 **Created:** 2025-01-27  
-**Last Updated:** 2025-01-28  
+**Last Updated:** 2025-01-29  
 **Status:** Active  
 **Related:** [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
 
@@ -41,36 +41,30 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 
 **Statistics Displayed:**
 
-1. **Upcoming Reservations**
-   - Icon: Calendar (`IconCalendar`)
-   - Value: Count of upcoming reservations
-   - Sub-values:
-     - Total Revenue (formatted currency)
-     - Facility Cost (formatted currency)
-     - Service Staff Cost (formatted currency)
-   - Link: `/storeAdmin/[storeId]/rsvp`
-   - Color: Blue
+1. **Facility Usage by Time Period**
+   - Lists all facilities in the store
+   - For each facility:
+     - Facility name
+     - Total revenue (formatted currency) from completed RSVPs in the selected period
+     - Number of RSVPs (count) for completed RSVPs in the selected period
+   - Format: "Facility #1: total revenue / num of rsvp"
+   - Filtered by the selected period (week/month/year/all)
+   - Only includes completed RSVPs
 
-2. **Completed This Week/Month/Year/All**
-   - Icon: Currency Dollar (`IconCurrencyDollar`)
-   - Value: Count of completed RSVPs for the selected period
-   - Title: Dynamically changes based on period selection ("Completed This Week", "Completed This Month", "Completed This Year", or "Completed (All)")
-   - Sub-values:
-     - Total Revenue (formatted currency)
-     - Facility Cost (formatted currency)
-     - Service Staff Cost (formatted currency)
-   - Link: `/storeAdmin/[storeId]/rsvp`
-   - Color: Green
+2. **Service Staff Performance**
+   - Lists all service staff in the store
+   - For each staff member:
+     - Staff name
+     - Total revenue (formatted currency) from completed RSVPs in the selected period
+     - Number of RSVPs (count) for completed RSVPs in the selected period
+   - Format: "staff #1: total revenue / num of rsvp"
+   - Filtered by the selected period (week/month/year/all)
+   - Only includes completed RSVPs
 
-3. **Customers with Credit**
-   - Icon: Credit Card (`IconCreditCard`)
-   - Value: Total customer count in the store (`totalCustomerCount`)
-   - Sub-values:
-     - New Customers (`newCustomerCount`) - Count of customers created in the selected period (filtered by period)
-     - Unused Account Balance (`totalUnusedCredit`) - Total unused fiat balance (formatted currency)
-     - Completed Reservation Revenue (`completedTotalRevenue`) - Total revenue from completed RSVPs (formatted currency)
-   - Link: `/storeAdmin/[storeId]/customers`
-   - Color: Purple
+3. **General Statistics**
+   - **Completed Reservation Revenue** (`completedTotalRevenue`) - Total revenue from completed RSVPs in the selected period (formatted currency)
+   - **New Customers** (`newCustomerCount`) - Count of customers created in the selected period (filtered by period)
+   - **Unused Account Balance** (`totalUnusedCredit`) - Total unused fiat balance (formatted currency)
 
 **Period Toggle:**
 
@@ -154,15 +148,35 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
    - `completedFacilityCost`: Sum of `facilityCost` only
    - `completedServiceStaffCost`: Sum of `serviceStaffCost` only
 
-5. **Total Customer Count** (`totalCustomerCount`)
+5. **Facility Breakdown** (`facilityStats`)
+   - Array of facility statistics for completed RSVPs in the selected period
+   - Each facility stat includes:
+     - `facilityId`: Facility ID
+     - `facilityName`: Facility name
+     - `totalRevenue`: Total revenue (facilityCost + serviceStaffCost) for all RSVPs using this facility
+     - `count`: Number of completed RSVPs using this facility
+   - Sorted by revenue (descending)
+   - Only includes facilities that have completed RSVPs in the selected period
+
+6. **Service Staff Breakdown** (`serviceStaffStats`)
+   - Array of service staff statistics for completed RSVPs in the selected period
+   - Each staff stat includes:
+     - `serviceStaffId`: Service staff ID
+     - `staffName`: Staff name (from User.name or User.email)
+     - `totalRevenue`: Total revenue (facilityCost + serviceStaffCost) for all RSVPs with this staff
+     - `count`: Number of completed RSVPs with this staff
+   - Sorted by revenue (descending)
+   - Only includes staff members that have completed RSVPs in the selected period
+
+7. **Total Customer Count** (`totalCustomerCount`)
    - Count of all customers in the store (all `Member` records with `role = customer` in the store's organization)
 
-6. **New Customer Count** (`newCustomerCount`)
+8. **New Customer Count** (`newCustomerCount`)
    - Count of customers created in the selected period
    - Filtered by `Member.createdAt` within the period date range
    - For "all" period, shows all customers (same as `totalCustomerCount`)
 
-7. **Unused Account Balance** (`customerCount`, `totalUnusedCredit`)
+9. **Unused Account Balance** (`customerCount`, `totalUnusedCredit`)
    - Count of customers with `fiat > 0` in `CustomerCredit` table
    - Sum of all unused fiat balances (not credit points)
    - **Note:** Uses `fiat` field (RSVP account balance), not `point` field (credit points)

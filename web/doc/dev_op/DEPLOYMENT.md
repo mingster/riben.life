@@ -85,11 +85,16 @@ sudo nano /etc/postgresql/18/main/pg_hba.conf
 
 ```text
 # tc2
+host    all     all     59.126.30.241/32       scram-sha-256
 hostssl    all     all     59.126.30.241/32       scram-sha-256
 ```
 
 ```bash
 sudo systemctl restart postgresql
+```
+
+```bash
+sudo ufw allow proto tcp from 43.213.66.99 to any port 5432
 ```
 
 ##### check db access

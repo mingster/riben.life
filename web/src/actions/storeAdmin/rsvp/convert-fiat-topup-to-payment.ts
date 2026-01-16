@@ -3,7 +3,13 @@
 import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { StoreLedgerType, CustomerCreditLedgerType } from "@/types/enum";
-import { getUtcNowEpoch } from "@/utils/datetime-utils";
+import {
+	getUtcNowEpoch,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+} from "@/utils/datetime-utils";
+import { format } from "date-fns";
 import { getT } from "@/app/i18n";
 import logger from "@/lib/logger";
 
@@ -68,8 +74,54 @@ export async function convertFiatTopupToPayment(
 	// Get absolute value of amount (it's negative for HOLD)
 	const fiatAmount = Math.abs(Number(holdEntry.amount));
 
+	// Fetch RSVP with customer and store information for note
+	const rsvp = await tx.rsvp.findUnique({
+		where: { id: rsvpId },
+		select: {
+			rsvpTime: true,
+			name: true, // For anonymous reservations
+			Customer: {
+				select: {
+					name: true,
+				},
+			},
+			Store: {
+				select: {
+					defaultTimezone: true,
+				},
+			},
+		},
+	});
+
 	// Get translation function
 	const { t } = await getT();
+
+	// Format customer name and RSVP time for note
+	let customerName = "";
+	let formattedRsvpTime = "";
+
+	if (rsvp) {
+		// Get customer name (from Customer.name or RSVP.name for anonymous)
+		customerName = rsvp.Customer?.name || rsvp.name || "";
+
+		// Format RSVP time
+		if (rsvp.rsvpTime) {
+			const storeTimezone = rsvp.Store?.defaultTimezone || "Asia/Taipei";
+			const rsvpTimeEpoch =
+				typeof rsvp.rsvpTime === "number"
+					? BigInt(rsvp.rsvpTime)
+					: typeof rsvp.rsvpTime === "bigint"
+						? rsvp.rsvpTime
+						: BigInt(rsvp.rsvpTime);
+
+			const utcDate = epochToDate(rsvpTimeEpoch);
+			if (utcDate) {
+				const storeDate = getDateInTz(utcDate, getOffsetHours(storeTimezone));
+				const datetimeFormat = t("datetime_format") || "yyyy-MM-dd";
+				formattedRsvpTime = format(storeDate, `${datetimeFormat} HH:mm`);
+			}
+		}
+	}
 
 	// Update existing HOLD ledger entry to SPEND (converting HOLD to SPEND)
 	// amount and balance remain the same (already set during hold phase)
@@ -104,13 +156,47 @@ export async function convertFiatTopupToPayment(
 			currency: defaultCurrency.toLowerCase(),
 			type: StoreLedgerType.StorePaymentProvider, // Revenue recognition (credit usage)
 			balance: new Prisma.Decimal(newStoreBalance),
+			note: (() => {
+				// Use appropriate translation key based on available information
+				if (customerName && formattedRsvpTime) {
+					return (
+						t("rsvp_completion_revenue_note_fiat_with_details", {
+							amount: fiatAmount,
+							currency: defaultCurrency.toUpperCase(),
+							customerName,
+							rsvpTime: formattedRsvpTime,
+						}) ||
+						`RSVP completion revenue: ${fiatAmount} ${defaultCurrency.toUpperCase()} (Customer: ${customerName}, RSVP Time: ${formattedRsvpTime})`
+					);
+				} else if (customerName) {
+					return (
+						t("rsvp_completion_revenue_note_fiat_with_customer", {
+							amount: fiatAmount,
+							currency: defaultCurrency.toUpperCase(),
+							customerName,
+						}) ||
+						`RSVP completion revenue: ${fiatAmount} ${defaultCurrency.toUpperCase()} (Customer: ${customerName})`
+					);
+				} else if (formattedRsvpTime) {
+					return (
+						t("rsvp_completion_revenue_note_fiat_with_time", {
+							amount: fiatAmount,
+							currency: defaultCurrency.toUpperCase(),
+							rsvpTime: formattedRsvpTime,
+						}) ||
+						`RSVP completion revenue: ${fiatAmount} ${defaultCurrency.toUpperCase()} (RSVP Time: ${formattedRsvpTime})`
+					);
+				}
+				return (
+					t("rsvp_completion_revenue_note_fiat", {
+						amount: fiatAmount,
+						currency: defaultCurrency.toUpperCase(),
+					}) ||
+					`RSVP completion revenue: ${fiatAmount} ${defaultCurrency.toUpperCase()}`
+				);
+			})(),
 			description:
-				t("rsvp_completion_revenue_note_fiat", {
-					amount: fiatAmount,
-					currency: defaultCurrency.toUpperCase(),
-				}) ||
-				`RSVP completion revenue: ${fiatAmount} ${defaultCurrency.toUpperCase()}`,
-			note: "",
+				t("rsvp_completion_fiat_payment_descr") || "RSVP completion revenue",
 			createdBy: createdBy || null,
 			availability: getUtcNowEpoch(), // Immediate availability for credit usage
 			createdAt: getUtcNowEpoch(),

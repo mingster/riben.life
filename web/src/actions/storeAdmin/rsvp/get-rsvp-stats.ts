@@ -98,7 +98,7 @@ export const getRsvpStatsAction = storeActionClient
 				},
 			}),
 
-			// Get completed RSVPs in the selected period
+			// Get completed RSVPs in the selected period with facility and service staff info
 			// For "all" period, don't filter by date range
 			sqlClient.rsvp.findMany({
 				where: {
@@ -116,8 +116,28 @@ export const getRsvpStatsAction = storeActionClient
 							: {}),
 				},
 				select: {
+					facilityId: true,
 					facilityCost: true,
+					serviceStaffId: true,
 					serviceStaffCost: true,
+					Facility: {
+						select: {
+							id: true,
+							facilityName: true,
+						},
+					},
+					ServiceStaff: {
+						select: {
+							id: true,
+							User: {
+								select: {
+									id: true,
+									name: true,
+									email: true,
+								},
+							},
+						},
+					},
 				},
 			}),
 
@@ -230,6 +250,28 @@ export const getRsvpStatsAction = storeActionClient
 		let completedFacilityCost = 0;
 		let completedServiceStaffCost = 0;
 
+		// Calculate facility breakdown
+		const facilityStatsMap = new Map<
+			string,
+			{
+				facilityId: string;
+				facilityName: string;
+				totalRevenue: number;
+				count: number;
+			}
+		>();
+
+		// Calculate service staff breakdown
+		const serviceStaffStatsMap = new Map<
+			string,
+			{
+				serviceStaffId: string;
+				staffName: string;
+				totalRevenue: number;
+				count: number;
+			}
+		>();
+
 		completedRsvps.forEach((rsvp) => {
 			const facilityCost = rsvp.facilityCost ? Number(rsvp.facilityCost) : 0;
 			const serviceStaffCost = rsvp.serviceStaffCost
@@ -239,7 +281,58 @@ export const getRsvpStatsAction = storeActionClient
 			completedFacilityCost += facilityCost;
 			completedServiceStaffCost += serviceStaffCost;
 			completedTotalRevenue += facilityCost + serviceStaffCost;
+
+			// Aggregate by facility
+			if (rsvp.facilityId && rsvp.Facility) {
+				const facilityId = rsvp.facilityId;
+				const facilityName = rsvp.Facility.facilityName;
+				const facilityRevenue = facilityCost + serviceStaffCost; // Total revenue for this RSVP
+
+				const existing = facilityStatsMap.get(facilityId);
+				if (existing) {
+					existing.totalRevenue += facilityRevenue;
+					existing.count += 1;
+				} else {
+					facilityStatsMap.set(facilityId, {
+						facilityId,
+						facilityName,
+						totalRevenue: facilityRevenue,
+						count: 1,
+					});
+				}
+			}
+
+			// Aggregate by service staff
+			if (rsvp.serviceStaffId && rsvp.ServiceStaff) {
+				const serviceStaffId = rsvp.serviceStaffId;
+				const staffName =
+					rsvp.ServiceStaff.User?.name ||
+					rsvp.ServiceStaff.User?.email ||
+					"Unknown";
+				const staffRevenue = facilityCost + serviceStaffCost; // Total revenue for this RSVP
+
+				const existing = serviceStaffStatsMap.get(serviceStaffId);
+				if (existing) {
+					existing.totalRevenue += staffRevenue;
+					existing.count += 1;
+				} else {
+					serviceStaffStatsMap.set(serviceStaffId, {
+						serviceStaffId,
+						staffName,
+						totalRevenue: staffRevenue,
+						count: 1,
+					});
+				}
+			}
 		});
+
+		// Convert maps to arrays and sort by revenue (descending)
+		const facilityStats = Array.from(facilityStatsMap.values()).sort(
+			(a, b) => b.totalRevenue - a.totalRevenue,
+		);
+		const serviceStaffStats = Array.from(serviceStaffStatsMap.values()).sort(
+			(a, b) => b.totalRevenue - a.totalRevenue,
+		);
 
 		return {
 			// Upcoming RSVPs
@@ -253,6 +346,12 @@ export const getRsvpStatsAction = storeActionClient
 			completedTotalRevenue,
 			completedFacilityCost,
 			completedServiceStaffCost,
+
+			// Facility breakdown
+			facilityStats,
+
+			// Service staff breakdown
+			serviceStaffStats,
 
 			// Customers
 			customerCount: unusedCreditCount,
