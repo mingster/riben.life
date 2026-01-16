@@ -22,12 +22,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -274,23 +268,7 @@ export function ClientImportRsvp({
 							) {
 								// This is a recurring RSVP
 								if (!lastValidTimeSlot) {
-									// No valid time slot found yet, skip this recurring RSVP
-									preview.push({
-										customerName: block.customerName,
-										productName: block.productName,
-										rsvpTime: null,
-										arriveTime: null,
-										duration: 0,
-										serviceStaffId: selectedServiceStaff.id,
-										serviceStaffName,
-										cost: 0,
-										alreadyPaid: block.paidDate !== null,
-										status: "error",
-										rsvpStatus: RsvpStatus.Pending,
-										error: "No valid time slot found for recurring RSVP",
-										blockIndex,
-										reservationNumber: reservation.number,
-									});
+									// No valid time slot found yet, skip this recurring RSVP (don't import)
 									continue;
 								}
 
@@ -389,23 +367,7 @@ export function ClientImportRsvp({
 								continue;
 							}
 
-							// Invalid date/time format
-							preview.push({
-								customerName: block.customerName,
-								productName: block.productName,
-								rsvpTime: null,
-								arriveTime: null,
-								duration: 0,
-								serviceStaffId: selectedServiceStaff.id,
-								serviceStaffName,
-								cost: 0,
-								alreadyPaid: block.paidDate !== null,
-								status: "error",
-								rsvpStatus: RsvpStatus.Pending, // Error state, use Pending as default
-								error: "Invalid date/time format",
-								blockIndex,
-								reservationNumber: reservation.number,
-							});
+							// Invalid date/time format - skip (don't import)
 							continue;
 						}
 
@@ -474,25 +436,8 @@ export function ClientImportRsvp({
 							reservationNumber: reservation.number,
 						});
 					} catch (error) {
-						preview.push({
-							customerName: block.customerName,
-							productName: block.productName,
-							rsvpTime: null,
-							arriveTime: null,
-							duration: 0,
-							serviceStaffId: selectedServiceStaff.id,
-							serviceStaffName,
-							cost: 0,
-							alreadyPaid: block.paidDate !== null,
-							status: "error",
-							rsvpStatus: RsvpStatus.Pending, // Error state, use Pending as default
-							error:
-								error instanceof Error
-									? error.message
-									: "Failed to parse reservation",
-							blockIndex,
-							reservationNumber: reservation.number,
-						});
+						// Skip reservations with errors (don't import)
+						continue;
 					}
 				}
 			}
@@ -501,15 +446,6 @@ export function ClientImportRsvp({
 
 			if (preview.length === 0) {
 				toastError({ description: "No valid reservations found in data" });
-			} else if (hasErrors) {
-				toastError({
-					description: `${preview.filter((p) => p.status === "error").length} reservation(s) have errors`,
-				});
-			} else {
-				/*
-				toastSuccess({
-					description: `Successfully parsed ${preview.length} reservation(s)`,
-				});*/
 			}
 		} catch (error) {
 			toastError({
@@ -519,10 +455,10 @@ export function ClientImportRsvp({
 		} finally {
 			setIsParsing(false);
 		}
-	}, [form, storeTimezone, selectedServiceStaff, costPerMinute, t, hasErrors]);
+	}, [form, storeTimezone, selectedServiceStaff, costPerMinute, t]);
 
 	const handleImport = useCallback(async () => {
-		if (parsedRsvps.length === 0 || hasErrors) {
+		if (parsedRsvps.length === 0) {
 			return;
 		}
 
@@ -591,7 +527,7 @@ export function ClientImportRsvp({
 		} finally {
 			setImporting(false);
 		}
-	}, [form, parsedRsvps, hasErrors, params.storeId, router, onImported]);
+	}, [form, parsedRsvps, params.storeId, router, onImported]);
 
 	const columns: ColumnDef<ParsedRsvpPreview>[] = useMemo(
 		() => [
@@ -728,25 +664,18 @@ export function ClientImportRsvp({
 				cell: ({ row }) => {
 					const index = row.index;
 					return (
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" className="h-8 w-8 p-0">
-									<span className="sr-only">Open menu</span>
-									<IconEdit className="h-4 w-4" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DropdownMenuItem
-									onClick={() => {
-										setEditingIndex(index);
-										setEditFormData({ ...row.original });
-									}}
-								>
-									<IconEdit className="mr-2 h-4 w-4" />
-									{t("edit") || "Edit"}
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
+						<Button
+							variant="ghost"
+							className="h-8 w-8 p-0"
+							onClick={() => {
+								setEditingIndex(index);
+								setEditFormData({ ...row.original });
+							}}
+							title={t("edit") || "Edit"}
+						>
+							<span className="sr-only">{t("edit") || "Edit"}</span>
+							<IconEdit className="h-4 w-4" />
+						</Button>
 					);
 				},
 			},
@@ -861,23 +790,6 @@ export function ClientImportRsvp({
 						{parsedRsvps.length})
 					</div>
 
-					{hasErrors && (
-						<div className="rounded-md bg-destructive/15 border border-destructive/50 p-3">
-							<div className="text-sm font-semibold text-destructive">
-								{t("validation_errors") || "Validation Errors"}
-							</div>
-							<div className="mt-2 space-y-1">
-								{parsedRsvps
-									.filter((rsvp) => rsvp.status === "error")
-									.map((rsvp, index) => (
-										<div key={index} className="text-sm text-destructive">
-											{rsvp.customerName} - {rsvp.error}
-										</div>
-									))}
-							</div>
-						</div>
-					)}
-
 					<DataTable<ParsedRsvpPreview, unknown>
 						columns={columns}
 						data={parsedRsvps}
@@ -889,7 +801,7 @@ export function ClientImportRsvp({
 						<Button
 							type="button"
 							onClick={handleImport}
-							disabled={parsedRsvps.length === 0 || importing || hasErrors}
+							disabled={parsedRsvps.length === 0 || importing}
 							className="h-10 sm:h-9 sm:min-h-0"
 						>
 							{importing ? (

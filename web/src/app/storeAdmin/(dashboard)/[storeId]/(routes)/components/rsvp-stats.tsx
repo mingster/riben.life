@@ -44,6 +44,20 @@ interface RsvpStatsProps {
 	storeTimezone: string;
 }
 
+interface FacilityStat {
+	facilityId: string;
+	facilityName: string;
+	totalRevenue: number;
+	count: number;
+}
+
+interface ServiceStaffStat {
+	serviceStaffId: string;
+	staffName: string;
+	totalRevenue: number;
+	count: number;
+}
+
 interface RsvpStatsData {
 	// Upcoming RSVPs
 	upcomingCount: number;
@@ -56,6 +70,12 @@ interface RsvpStatsData {
 	completedTotalRevenue: number;
 	completedFacilityCost: number;
 	completedServiceStaffCost: number;
+
+	// Facility breakdown
+	facilityStats: FacilityStat[];
+
+	// Service staff breakdown
+	serviceStaffStats: ServiceStaffStat[];
 
 	// Customers
 	customerCount: number;
@@ -281,6 +301,8 @@ export function RsvpStats({
 		completedTotalRevenue,
 		completedFacilityCost,
 		completedServiceStaffCost,
+		facilityStats,
+		serviceStaffStats,
 		customerCount,
 		totalUnusedCredit,
 		totalCustomerCount,
@@ -298,97 +320,85 @@ export function RsvpStats({
 		}).format(amount);
 	};
 
+	// Format facility stats for display
+	const facilityStatsDisplay = facilityStats.map((facility) => ({
+		label: facility.facilityName,
+		value: `${formatCurrency(facility.totalRevenue)} / ${facility.count}`,
+		isCurrency: false,
+	}));
+
+	// Format service staff stats for display
+	const serviceStaffStatsDisplay = serviceStaffStats.map((staff) => ({
+		label: staff.staffName,
+		value: `${formatCurrency(staff.totalRevenue)} / ${staff.count}`,
+		isCurrency: false,
+	}));
+
 	const stats: Array<{
 		title: string;
-		value: number;
-		subValues: Array<{ label: string; value: number; isCurrency?: boolean }>;
+		value: number | string;
+		subValues: Array<{
+			label: string;
+			value: number | string;
+			isCurrency?: boolean;
+		}>;
 		icon: typeof IconCalendar;
 		href: string;
 		color: string;
 	}> = [
 		{
-			title: t("rsvp_upcoming_reservations") || "Upcoming Reservations",
-			value: upcomingCount,
-			subValues: [
-				{
-					label: t("rsvp_total_revenue") || "Total Revenue",
-					value: upcomingTotalRevenue,
-					isCurrency: true,
-				},
-				{
-					label: t("rsvp_facility_cost") || "Facility Cost",
-					value: upcomingFacilityCost,
-					isCurrency: true,
-				},
-				{
-					label: t("rsvp_service_staff_cost") || "Service Staff Cost",
-					value: upcomingServiceStaffCost,
-					isCurrency: true,
-				},
-			],
+			title: t("rsvp_facility_usage") || "Facility Usage",
+			value: facilityStats.length,
+			subValues:
+				facilityStatsDisplay.length > 0
+					? facilityStatsDisplay
+					: [
+							{
+								label: t("rsvp_no_facilities") || "No facilities used",
+								value: "",
+								isCurrency: false,
+							},
+						],
 			icon: IconCalendar,
 			href: `/storeAdmin/${params.storeId}/rsvp`,
 			color: "text-blue-600",
 		},
 		{
-			title:
-				periodType === "week"
-					? t("rsvp_completed_this_week") || "Completed This Week"
-					: periodType === "month"
-						? t("rsvp_completed_this_month") || "Completed This Month"
-						: periodType === "year"
-							? t("rsvp_completed_this_year") || "Completed This Year"
-							: t("rsvp_completed_all") || "Completed (All)",
-			value: completedCount,
-			subValues: [
-				{
-					label: t("rsvp_total_revenue") || "Total Revenue",
-					value: completedTotalRevenue,
-					isCurrency: true,
-				},
-				{
-					label: t("rsvp_facility_cost") || "Facility Cost",
-					value: completedFacilityCost,
-					isCurrency: true,
-				},
-				{
-					label: t("rsvp_service_staff_cost") || "Service Staff Cost",
-					value: completedServiceStaffCost,
-					isCurrency: true,
-				},
-			],
+			title: t("rsvp_service_staff") || "Service Staff",
+			value: serviceStaffStats.length,
+			subValues:
+				serviceStaffStatsDisplay.length > 0
+					? serviceStaffStatsDisplay
+					: [
+							{
+								label: t("rsvp_no_service_staff") || "No service staff",
+								value: "",
+								isCurrency: false,
+							},
+						],
 			icon: IconCurrencyDollar,
 			href: `/storeAdmin/${params.storeId}/rsvp`,
 			color: "text-green-600",
 		},
 		{
-			title: t("rsvp_customers_with_credit") || "Customers with Credit",
-			value: totalCustomerCount,
+			title: t("rsvp_general_statistics") || "General Statistics",
+			value: completedCount,
 			subValues: [
 				{
 					label:
-						(periodType === "week"
-							? t("this_week")
-							: periodType === "month"
-								? t("this_month")
-								: periodType === "year"
-									? t("this_year")
-									: t("all")) +
-						" " +
-						(t("rsvp_new_customers") || "New Customers"),
+						t("rsvp_completed_reservation_revenue") ||
+						"Completed Reservation Revenue",
+					value: completedTotalRevenue,
+					isCurrency: true,
+				},
+				{
+					label: t("rsvp_new_customers") || "New Customers",
 					value: newCustomerCount,
 					isCurrency: false,
 				},
 				{
 					label: t("rsvp_unused_account_balance") || "Unused Account Balance",
 					value: totalUnusedCredit,
-					isCurrency: true,
-				},
-				{
-					label:
-						t("rsvp_completed_reservation_count") ||
-						"Completed Reservation Revenue",
-					value: completedTotalRevenue,
 					isCurrency: true,
 				},
 			],
@@ -449,7 +459,7 @@ export function RsvpStats({
 										{stat.title}
 									</CardDescription>
 									<CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-										{stat.value}
+										{typeof stat.value === "number" ? stat.value : stat.value}
 									</CardTitle>
 									{stat.subValues.length > 0 && (
 										<div className="space-y-1 text-sm text-muted-foreground">
@@ -457,8 +467,14 @@ export function RsvpStats({
 												<div key={index}>
 													{subValue.label}:{" "}
 													{subValue.isCurrency
-														? formatCurrency(subValue.value)
-														: subValue.value.toLocaleString()}
+														? formatCurrency(
+																typeof subValue.value === "number"
+																	? subValue.value
+																	: 0,
+															)
+														: typeof subValue.value === "number"
+															? subValue.value.toLocaleString()
+															: subValue.value}
 												</div>
 											))}
 										</div>

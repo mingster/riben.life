@@ -2,7 +2,15 @@ import { NextResponse } from "next/server";
 import { sqlClient } from "@/lib/prismadb";
 import logger from "@/lib/logger";
 import { CheckStoreAdminApiAccess } from "../../../api_helper";
-import { getUtcNowEpoch, dateToEpoch, getUtcNow } from "@/utils/datetime-utils";
+import {
+	getUtcNowEpoch,
+	dateToEpoch,
+	getUtcNow,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
+} from "@/utils/datetime-utils";
+import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
 import {
 	RsvpStatus,
@@ -487,6 +495,44 @@ export async function POST(
 									const { t: t2 } = await getT();
 									const newFiatBalance = currentFiatBalance - serviceStaffCost;
 
+									// Format RSVP time for note
+									let formattedRsvpTime = "";
+									if (rsvpTimeEpoch) {
+										const utcDate = epochToDate(rsvpTimeEpoch);
+										if (utcDate) {
+											const storeDate = getDateInTz(
+												utcDate,
+												getOffsetHours(storeTimezone),
+											);
+											const datetimeFormat =
+												t2("datetime_format") || "yyyy-MM-dd";
+											formattedRsvpTime = format(
+												storeDate,
+												`${datetimeFormat} HH:mm`,
+											);
+										}
+									}
+
+									// Get service staff name for note
+									let serviceStaffName = "";
+									if (serviceStaffId) {
+										const serviceStaff = await tx.serviceStaff.findUnique({
+											where: { id: serviceStaffId },
+											select: {
+												User: {
+													select: {
+														name: true,
+														email: true,
+													},
+												},
+											},
+										});
+										serviceStaffName =
+											serviceStaff?.User?.name ||
+											serviceStaff?.User?.email ||
+											"";
+									}
+
 									// Update CustomerCredit.fiat (deduct)
 									await tx.customerCredit.update({
 										where: {
@@ -509,12 +555,10 @@ export async function POST(
 											referenceId: createdRsvp.id, // Link to RSVP
 											note:
 												t2("rsvp_completion_fiat_payment_note", {
-													amount: serviceStaffCost,
-													currency: (
-														store.defaultCurrency || "twd"
-													).toUpperCase(),
+													staffName: serviceStaffName,
+													rsvpTime: formattedRsvpTime,
 												}) ||
-												`RSVP completion: ${serviceStaffCost} ${(store.defaultCurrency || "twd").toUpperCase()}`,
+												`RSVP completion: ${serviceStaffName}, RSVP Time: ${formattedRsvpTime}`,
 											creatorId: currentUserId,
 											createdAt: getUtcNowEpoch(),
 										},
@@ -540,15 +584,62 @@ export async function POST(
 											currency: (store.defaultCurrency || "twd").toLowerCase(),
 											type: StoreLedgerType.StorePaymentProvider, // Revenue recognition
 											balance: new Prisma.Decimal(newStoreBalance),
-											description:
-												t2("rsvp_completion_revenue_note_fiat", {
-													amount: serviceStaffCost,
-													currency: (
-														store.defaultCurrency || "twd"
-													).toUpperCase(),
-												}) ||
-												`RSVP completion revenue: ${serviceStaffCost} ${(store.defaultCurrency || "twd").toUpperCase()}`,
-											note: "",
+											description: (() => {
+												// Use appropriate translation key based on available information
+												if (customerName && formattedRsvpTime) {
+													return (
+														t2(
+															"rsvp_completion_revenue_note_fiat_with_details",
+															{
+																amount: serviceStaffCost,
+																currency: (
+																	store.defaultCurrency || "twd"
+																).toUpperCase(),
+																customerName,
+																rsvpTime: formattedRsvpTime,
+															},
+														) ||
+														`RSVP completion revenue: ${serviceStaffCost} ${(store.defaultCurrency || "twd").toUpperCase()} (Customer: ${customerName}, RSVP Time: ${formattedRsvpTime})`
+													);
+												} else if (customerName) {
+													return (
+														t2(
+															"rsvp_completion_revenue_note_fiat_with_customer",
+															{
+																amount: serviceStaffCost,
+																currency: (
+																	store.defaultCurrency || "twd"
+																).toUpperCase(),
+																customerName,
+															},
+														) ||
+														`RSVP completion revenue: ${serviceStaffCost} ${(store.defaultCurrency || "twd").toUpperCase()} (Customer: ${customerName})`
+													);
+												} else if (formattedRsvpTime) {
+													return (
+														t2("rsvp_completion_revenue_note_fiat_with_time", {
+															amount: serviceStaffCost,
+															currency: (
+																store.defaultCurrency || "twd"
+															).toUpperCase(),
+															rsvpTime: formattedRsvpTime,
+														}) ||
+														`RSVP completion revenue: ${serviceStaffCost} ${(store.defaultCurrency || "twd").toUpperCase()} (RSVP Time: ${formattedRsvpTime})`
+													);
+												}
+												return (
+													t2("rsvp_completion_revenue_note_fiat", {
+														amount: serviceStaffCost,
+														currency: (
+															store.defaultCurrency || "twd"
+														).toUpperCase(),
+													}) ||
+													`RSVP completion revenue: ${serviceStaffCost} ${(store.defaultCurrency || "twd").toUpperCase()}`
+												);
+											})(),
+											note:
+												t2("rsvp_completion_fiat_payment_descr") ||
+												"RSVP completion",
 											createdBy: currentUserId,
 											availability: getUtcNowEpoch(),
 											createdAt: getUtcNowEpoch(),
@@ -558,6 +649,44 @@ export async function POST(
 									// Ready RSVP: Create HOLD (no StoreLedger yet)
 									const { t: t3 } = await getT();
 									const newFiatBalance = currentFiatBalance - serviceStaffCost;
+
+									// Format RSVP time for note
+									let formattedRsvpTime = "";
+									if (rsvpTimeEpoch) {
+										const utcDate = epochToDate(rsvpTimeEpoch);
+										if (utcDate) {
+											const storeDate = getDateInTz(
+												utcDate,
+												getOffsetHours(storeTimezone),
+											);
+											const datetimeFormat =
+												t3("datetime_format") || "yyyy-MM-dd";
+											formattedRsvpTime = format(
+												storeDate,
+												`${datetimeFormat} HH:mm`,
+											);
+										}
+									}
+
+									// Get service staff name for note
+									let serviceStaffName = "";
+									if (serviceStaffId) {
+										const serviceStaff = await tx.serviceStaff.findUnique({
+											where: { id: serviceStaffId },
+											select: {
+												User: {
+													select: {
+														name: true,
+														email: true,
+													},
+												},
+											},
+										});
+										serviceStaffName =
+											serviceStaff?.User?.name ||
+											serviceStaff?.User?.email ||
+											"";
+									}
 
 									// Update CustomerCredit.fiat (deduct)
 									await tx.customerCredit.update({
@@ -581,12 +710,10 @@ export async function POST(
 											referenceId: createdRsvp.id, // Link to RSVP
 											note:
 												t3("rsvp_hold_fiat_payment_note", {
-													amount: serviceStaffCost,
-													currency: (
-														store.defaultCurrency || "twd"
-													).toUpperCase(),
+													staffName: serviceStaffName,
+													rsvpTime: formattedRsvpTime,
 												}) ||
-												`RSVP hold: ${serviceStaffCost} ${(store.defaultCurrency || "twd").toUpperCase()}`,
+												`RSVP hold: ${serviceStaffName}, RSVP Time: ${formattedRsvpTime}`,
 											creatorId: currentUserId,
 											createdAt: getUtcNowEpoch(),
 										},

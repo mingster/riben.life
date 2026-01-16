@@ -191,10 +191,12 @@
     Add the following line at the end of the file to allow connections from any IP address using sha-256 password authentication:
 
     ``` text
-    # tc2
+    # tc2    
+    host    all     all     34.80.131.137/32       scram-sha-256
     hostssl    all     all     34.80.131.137/32       scram-sha-256
 
     # mx2
+    host    all     all     64.186.50.230/32       scram-sha-256
     hostssl    all     all     64.186.50.230/32       scram-sha-256
     ```
 
