@@ -1,13 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+<svg xmlns="http://www.w3.org/2000/svg" 
      width="128" height="128" viewBox="0 0 128 128" version="1.1">
   <title>Riben Life Logo</title>
-  <image 
-    xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAfCAMAAACxiD++AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAk1BMVEUAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgAaYgceJJknqzN1dN4qbSrw8bb3djj4ds1hZzV2dbf39qcu8HD0M/i4duLsru3ystNkqT///9fsR4KAAAAH3RSTlMAKmSXweL4SZrmL5LyU8Rh3ljgOMsBnVeqOnSmz+39eqYUWwAAAAFiS0dEMK7cLeQAAAAHdElNRQfoCRQVNjEmh2EiAAABFUlEQVQoz4VTV7KDMAxUGum9kO4CDiK8hPvf7uFg3EjG+8GAd5GllQSg0en2+oMoGvR73Q60MRyNicZ4NPToyXRGHMymE5ufL0gLi7nhlyvyBatlw6835Cs265rf7sgP7LaS3x/sMyofjKuvw74SxIphLEm5eGRSgI0+rgRH9c55mj+zTwwjOAKcIhMfmfxdWILoBGfiC9ASkDNc1FuBiH8CUbiCC1yt9PNEJusIrnAzN7we+cu/4gZ3Y4EQrHh7grsVgSfIqEj8CE0OpChkFZT4OegqBK3LpKVbhfIhS6nywbG68qHlpCOonNS90AKG+dvqRdNNiWdZ97XUJ3FrHlx85iE4UeGZDE91eC/CmxXezd/b/Q8tvV+YZX0lgAAAAABJRU5ErkJggg=="
-    width="128"
-    height="128"
-    x="0"
-    y="0"
-    preserveAspectRatio="xMidYMid meet"
-  />
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#logoGradient)" />
+  
+  <!-- Chinese character 利 -->
+  <text x="64" y="64" 
+        font-family="Arial, 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif" 
+        font-size="72" 
+        font-weight="bold" 
+        fill="white" 
+        text-anchor="middle" 
+        dominant-baseline="central"
+        style="text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;">
+    利
+  </text>
 </svg>

@@ -1,40 +1,40 @@
 "use client";
 
+import { useTranslation } from "@/app/i18n/client";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardDescription,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTranslation } from "@/app/i18n/client";
+import { useIsHydrated } from "@/hooks/use-hydrated";
 import { useI18n } from "@/providers/i18n-provider";
+import type { RsvpSettings } from "@/types";
+import {
+	convertToUtc,
+	dateToEpoch,
+	formatUtcDateToDateTimeLocal,
+} from "@/utils/datetime-utils";
 import {
 	IconCalendar,
 	IconCreditCard,
 	IconCurrencyDollar,
 } from "@tabler/icons-react";
+import {
+	endOfMonth,
+	endOfWeek,
+	endOfYear,
+	startOfMonth,
+	startOfWeek,
+	startOfYear,
+} from "date-fns";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import type { RsvpSettings } from "@/types";
+import { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
-import { useIsHydrated } from "@/hooks/use-hydrated";
-import { useState, useCallback, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import {
-	startOfWeek,
-	endOfWeek,
-	startOfMonth,
-	endOfMonth,
-	startOfYear,
-	endOfYear,
-} from "date-fns";
-import {
-	convertToUtc,
-	formatUtcDateToDateTimeLocal,
-	dateToEpoch,
-} from "@/utils/datetime-utils";
 
 type PeriodType = "week" | "month" | "year" | "all";
 
@@ -320,10 +320,10 @@ export function RsvpStats({
 		}).format(amount);
 	};
 
-	// Format facility stats for display
+	// Format facility stats for display - list all facilities with revenue and RSVP count
 	const facilityStatsDisplay = facilityStats.map((facility) => ({
 		label: facility.facilityName,
-		value: `${formatCurrency(facility.totalRevenue)} / ${facility.count}`,
+		value: `${formatCurrency(facility.totalRevenue)} (${facility.count})`,
 		isCurrency: false,
 	}));
 
@@ -333,6 +333,36 @@ export function RsvpStats({
 		value: `${formatCurrency(staff.totalRevenue)} / ${staff.count}`,
 		isCurrency: false,
 	}));
+
+	// Get period label for interpolation
+	const getPeriodLabel = (period: PeriodType): string => {
+		switch (period) {
+			case "week":
+				return t("rsvp_stat_this_week") || "This Week";
+			case "month":
+				return t("rsvp_stat_this_month") || "This Month";
+			case "year":
+				return t("rsvp_stat_this_year") || "This Year";
+			case "all":
+				return t("rsvp_stat_all") || "All";
+			default:
+				return t("rsvp_stat_this_month") || "This Month";
+		}
+	};
+
+	const periodLabel = getPeriodLabel(periodType);
+
+	// Calculate total facility revenue
+	const totalFacilityRevenue = facilityStats.reduce(
+		(sum, facility) => sum + facility.totalRevenue,
+		0,
+	);
+
+	// Calculate total service staff revenue
+	const totalServiceStaffRevenue = serviceStaffStats.reduce(
+		(sum, staff) => sum + staff.totalRevenue,
+		0,
+	);
 
 	const stats: Array<{
 		title: string;
@@ -347,57 +377,45 @@ export function RsvpStats({
 		color: string;
 	}> = [
 		{
-			title: t("rsvp_facility_usage") || "Facility Usage",
-			value: facilityStats.length,
-			subValues:
-				facilityStatsDisplay.length > 0
-					? facilityStatsDisplay
-					: [
-							{
-								label: t("rsvp_no_facilities") || "No facilities used",
-								value: "",
-								isCurrency: false,
-							},
-						],
+			title: t("rsvp_stat_facility_usage") || "Facility Usage",
+			value: formatCurrency(totalFacilityRevenue),
+			subValues: facilityStatsDisplay.length > 0 ? facilityStatsDisplay : [],
 			icon: IconCalendar,
 			href: `/storeAdmin/${params.storeId}/rsvp`,
 			color: "text-blue-600",
 		},
 		{
-			title: t("rsvp_service_staff") || "Service Staff",
-			value: serviceStaffStats.length,
+			title: t("rsvp_stat_service_staff") || "Service Staff",
+			value: formatCurrency(totalServiceStaffRevenue),
 			subValues:
-				serviceStaffStatsDisplay.length > 0
-					? serviceStaffStatsDisplay
-					: [
-							{
-								label: t("rsvp_no_service_staff") || "No service staff",
-								value: "",
-								isCurrency: false,
-							},
-						],
+				serviceStaffStatsDisplay.length > 0 ? serviceStaffStatsDisplay : [],
 			icon: IconCurrencyDollar,
 			href: `/storeAdmin/${params.storeId}/rsvp`,
 			color: "text-green-600",
 		},
 		{
-			title: t("rsvp_general_statistics") || "General Statistics",
-			value: completedCount,
+			title: t("rsvp_stat_general_statistics") || "General Statistics",
+			value: "",
 			subValues: [
 				{
 					label:
-						t("rsvp_completed_reservation_revenue") ||
-						"Completed Reservation Revenue",
+						t("rsvp_stat_completed_reservation_revenue", {
+							period: periodLabel,
+						}) || "Completed Reservation Revenue",
 					value: completedTotalRevenue,
 					isCurrency: true,
 				},
 				{
-					label: t("rsvp_new_customers") || "New Customers",
+					label:
+						t("rsvp_stat_new_customers", {
+							period: periodLabel,
+						}) || "New Customers",
 					value: newCustomerCount,
 					isCurrency: false,
 				},
 				{
-					label: t("rsvp_unused_account_balance") || "Unused Account Balance",
+					label:
+						t("rsvp_stat_unused_account_balance") || "Unused Account Balance",
 					value: totalUnusedCredit,
 					isCurrency: true,
 				},
@@ -418,7 +436,7 @@ export function RsvpStats({
 					onClick={() => handlePeriodChange("week")}
 					className="h-10 sm:h-9"
 				>
-					{t("this_week") || "This Week"}
+					{t("rsvp_stat_this_week") || "This Week"}
 				</Button>
 				<Button
 					variant={periodType === "month" ? "default" : "outline"}
@@ -426,7 +444,7 @@ export function RsvpStats({
 					onClick={() => handlePeriodChange("month")}
 					className="h-10 sm:h-9"
 				>
-					{t("this_month") || "This Month"}
+					{t("rsvp_stat_this_month") || "This Month"}
 				</Button>
 				<Button
 					variant={periodType === "year" ? "default" : "outline"}
@@ -434,7 +452,7 @@ export function RsvpStats({
 					onClick={() => handlePeriodChange("year")}
 					className="h-10 sm:h-9"
 				>
-					{t("this_year") || "This Year"}
+					{t("rsvp_stat_this_year") || "This Year"}
 				</Button>
 				<Button
 					variant={periodType === "all" ? "default" : "outline"}
@@ -442,7 +460,7 @@ export function RsvpStats({
 					onClick={() => handlePeriodChange("all")}
 					className="h-10 sm:h-9"
 				>
-					{t("all") || "All"}
+					{t("rsvp_stat_all") || "All"}
 				</Button>
 			</div>
 			<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-3 mt-2">

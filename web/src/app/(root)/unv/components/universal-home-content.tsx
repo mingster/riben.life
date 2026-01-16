@@ -1,23 +1,15 @@
 "use client";
 
-import { DataTable } from "@/components/dataTable";
-import { DataTableColumnHeader } from "@/components/dataTable-column-header";
-
-import VideoPlayer from "@/components/video-player";
-import type { ColumnDef } from "@tanstack/react-table";
-import useSWR from "swr";
 import { Header, NavBar } from "./Header";
 
 import ScrollSpy from "react-ui-scrollspy";
 
-import Image from "next/image";
-import { ContactForm, ContactFormComponent } from "./ContactForm";
+import { AboutUs } from "./AboutUs";
+import { ContactFormComponent } from "./ContactForm";
 import { Cost } from "./Cost";
-import { FAQ } from "./FAQ";
 import { Features } from "./Features";
 import { Footer } from "./Footer";
 import { UseCases } from "./UseCases";
-import { AboutUs } from "./AboutUs";
 
 export const UniversalHomeContent = () => {
 	return (
