@@ -27,6 +27,7 @@ interface ImportResult {
 	totalBlocks: number;
 	totalReservations: number;
 	createdReservations: number;
+	createdStoreOrders: number;
 	skippedReservations: number;
 	errors: Array<{
 		blockIndex: number;
@@ -64,11 +65,26 @@ export async function POST(
 
 		// Get request body - expect parsed RSVP data with pre-calculated rsvpTime
 		const body = await req.json();
-		const { rsvps } = body;
+		const { rsvps, storeOrders } = body;
 
-		if (!rsvps || !Array.isArray(rsvps) || rsvps.length === 0) {
+		// Allow empty rsvps array if storeOrders are provided
+		if (!rsvps || !Array.isArray(rsvps)) {
 			return NextResponse.json(
 				{ success: false, error: "RSVP data is required" },
+				{ status: 400 },
+			);
+		}
+
+		// Require either RSVPs or store orders
+		if (
+			rsvps.length === 0 &&
+			(!storeOrders || !Array.isArray(storeOrders) || storeOrders.length === 0)
+		) {
+			return NextResponse.json(
+				{
+					success: false,
+					error: "Either RSVP data or store orders are required",
+				},
 				{ status: 400 },
 			);
 		}
@@ -101,6 +117,7 @@ export async function POST(
 			totalBlocks: 0,
 			totalReservations: rsvps.length,
 			createdReservations: 0,
+			createdStoreOrders: 0,
 			skippedReservations: 0,
 			errors: [],
 			warnings: [],
@@ -116,13 +133,48 @@ export async function POST(
 			rsvpsByBlock.get(blockIdx)!.push(rsvp);
 		}
 
-		result.totalBlocks = rsvpsByBlock.size;
+		// Map store orders by blockIndex for quick lookup
+		const storeOrdersByBlock = new Map<number, (typeof storeOrders)[0]>();
+		if (Array.isArray(storeOrders)) {
+			for (const storeOrder of storeOrders) {
+				const blockIdx = storeOrder.blockIndex ?? 0;
+				storeOrdersByBlock.set(blockIdx, storeOrder);
+			}
+		}
 
-		// Process each block
-		for (const [blockIdx, blockRsvps] of rsvpsByBlock.entries()) {
+		// Determine total blocks from either RSVPs or store orders
+		const blockIndicesFromRsvps = new Set(rsvps.map((r) => r.blockIndex ?? 0));
+		const blockIndicesFromStoreOrders = new Set(
+			Array.isArray(storeOrders)
+				? storeOrders.map((so) => so.blockIndex ?? 0)
+				: [],
+		);
+		const allBlockIndicesSet = new Set([
+			...blockIndicesFromRsvps,
+			...blockIndicesFromStoreOrders,
+		]);
+		result.totalBlocks = allBlockIndicesSet.size;
+
+		// Process all blocks (from both RSVPs and store orders)
+		const allBlockIndicesToProcess = new Set([
+			...Array.from(rsvpsByBlock.keys()),
+			...Array.from(storeOrdersByBlock.keys()),
+		]);
+
+		for (const blockIdx of allBlockIndicesToProcess) {
 			const blockIndex = blockIdx;
-			const customerName = blockRsvps[0]?.customerName || "Unknown";
-			const productName = blockRsvps[0]?.productName || "RSVP Import";
+			const blockRsvps = rsvpsByBlock.get(blockIndex) || [];
+			const storeOrderInfo = storeOrdersByBlock.get(blockIndex);
+
+			// Get customer name and product name from RSVPs or store order
+			const customerName =
+				blockRsvps[0]?.customerName ||
+				storeOrderInfo?.customerName ||
+				"Unknown";
+			const productName =
+				blockRsvps[0]?.productName ||
+				storeOrderInfo?.productName ||
+				"RSVP Import";
 
 			try {
 				// Get organizationId from store
@@ -207,36 +259,31 @@ export async function POST(
 				// Use user.id as customerId
 				const customerId = user.id;
 
-				// Filter valid RSVPs (skip errors)
-				const validRsvps = blockRsvps.filter(
-					(rsvp) => rsvp.status !== "error" && rsvp.rsvpTime,
-				);
+				// Frontend already filters invalid RSVPs, so all RSVPs in blockRsvps are valid
+				// Count paid RSVPs for note (using alreadyPaid flag from frontend)
+				const paidRsvpsCount = blockRsvps.filter(
+					(rsvp) => rsvp.alreadyPaid,
+				).length;
 
-				if (validRsvps.length === 0) {
-					result.errors.push({
-						blockIndex,
-						customerName,
-						error: "No valid RSVPs in block",
-					});
-					continue;
-				}
+				// Use totalAmount from storeOrderInfo (frontend already calculated it)
+				// Fallback to calculating from paid RSVPs only if storeOrderInfo is missing
+				const totalBlockAmount =
+					storeOrderInfo?.totalAmount !== undefined
+						? Number(storeOrderInfo.totalAmount)
+						: blockRsvps
+								.filter((rsvp) => rsvp.alreadyPaid)
+								.reduce((sum, rsvp) => sum + (rsvp.cost || 0), 0);
 
-				// Calculate total block amount for PAID RSVPs only
-				const paidRsvps = validRsvps.filter((rsvp) => rsvp.alreadyPaid);
-				const totalBlockAmount = paidRsvps.reduce(
-					(sum, rsvp) => sum + (rsvp.cost || 0),
-					0,
-				);
-
-				// Check if there are any paid RSVPs in the block
-				const hasPaidRsvps = paidRsvps.length > 0;
+				// Check if we should create a store order: either has store order info or has paid RSVPs
+				const shouldCreateStoreOrder =
+					storeOrderInfo || (paidRsvpsCount > 0 && totalBlockAmount > 0);
 
 				// Store block order ID for use in RSVP processing
 				let blockOrderId: string | null = null;
 
 				// Process block: Create TOPUP, update fiat balance, create StoreOrder
-				// Create block order if there are any paid RSVPs (not requiring all to be paid)
-				if (hasPaidRsvps && totalBlockAmount > 0) {
+				// Create block order if there are paid RSVPs or store order info provided
+				if (shouldCreateStoreOrder) {
 					blockOrderId = await sqlClient.$transaction(async (tx) => {
 						const { t } = await getT();
 
@@ -283,21 +330,24 @@ export async function POST(
 									t("rsvp_import_block_topup_note", {
 										amount: totalBlockAmount,
 										currency: (store.defaultCurrency || "twd").toUpperCase(),
-										count: paidRsvps.length,
+										count: paidRsvpsCount,
 									}) ||
-									`RSVP import block top-up: ${totalBlockAmount} ${(store.defaultCurrency || "twd").toUpperCase()} for ${paidRsvps.length} reservation(s)`,
+									`RSVP import block top-up: ${totalBlockAmount} ${(store.defaultCurrency || "twd").toUpperCase()} for ${paidRsvpsCount} reservation(s)`,
 								creatorId: currentUserId,
 								createdAt: getUtcNowEpoch(),
 							},
 						});
 
 						// Create ONE StoreOrder for the entire block
-						// Get service staff name from first paid RSVP (if available)
+						// Get service staff name from first RSVP with serviceStaffId (frontend already provides this)
 						let serviceStaffName = t("service_staff") || "Service Staff";
-						if (paidRsvps.length > 0 && paidRsvps[0].serviceStaffId) {
+						const firstRsvpWithStaff = blockRsvps.find(
+							(rsvp) => rsvp.serviceStaffId,
+						);
+						if (firstRsvpWithStaff?.serviceStaffId) {
 							const firstServiceStaff = await tx.serviceStaff.findFirst({
 								where: {
-									id: paidRsvps[0].serviceStaffId,
+									id: firstRsvpWithStaff.serviceStaffId,
 									storeId: params.storeId,
 									isDeleted: false,
 								},
@@ -324,7 +374,7 @@ export async function POST(
 							t("service_staff") || "Service Staff"
 						}: ${serviceStaffName}\n${
 							t("total_reservations") || "Total Reservations"
-						}: ${paidRsvps.length}`;
+						}: ${paidRsvpsCount}`;
 
 						// Use a placeholder RSVP ID for block order (since it's for the entire block)
 						const blockRsvpId = crypto.randomUUID();
@@ -362,24 +412,19 @@ export async function POST(
 
 						return blockOrderId;
 					});
+
+					// Track that a store order was created
+					if (blockOrderId) {
+						result.createdStoreOrders++;
+					}
 				}
 
-				// Process each RSVP (rsvpTime is already calculated in client)
+				// Process each RSVP (frontend already filters invalid RSVPs, so all are valid)
+				// Frontend provides pre-calculated rsvpTime, arriveTime, cost, alreadyPaid, rsvpStatus
 				for (const rsvpData of blockRsvps) {
 					try {
-						// Skip invalid RSVPs
-						if (rsvpData.status === "error") {
-							result.skippedReservations++;
-							result.errors.push({
-								blockIndex,
-								customerName,
-								reservationNumber: rsvpData.reservationNumber,
-								error: rsvpData.error || "Invalid RSVP data",
-							});
-							continue;
-						}
-
-						// Use pre-calculated rsvpTime from client
+						// Frontend already ensures rsvpTime exists for valid RSVPs
+						// Only check if rsvpTime is missing (shouldn't happen, but validate for safety)
 						if (!rsvpData.rsvpTime) {
 							result.skippedReservations++;
 							result.errors.push({
@@ -767,8 +812,10 @@ export async function POST(
 		}
 
 		// Determine overall success
+		// Success if no errors and either reservations or store orders were created
 		result.success =
-			result.errors.length === 0 && result.createdReservations > 0;
+			result.errors.length === 0 &&
+			(result.createdReservations > 0 || result.createdStoreOrders > 0);
 
 		return NextResponse.json(result);
 	} catch (error: unknown) {

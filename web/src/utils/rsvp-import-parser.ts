@@ -59,8 +59,10 @@ export function parseRsvpImportText(text: string): ParsedRsvpData {
 
 		// Check if this is a first line (customer name + product name + paid date)
 		// Pattern: {name} {product name}{quantity}H（MM/DD YYYY）or {name} {product name}{quantity}H
+		// Allow multiple spaces in date (e.g., "1/14  2026" with double space)
+		// Match with or without parentheses around the date
 		const firstLineMatch =
-			/^(.+?)\s+([^\s]+?\d+H)[（(]?(\d{1,2}\/\d{1,2}\s+\d{4})?[）)]?$/.exec(
+			/^(.+?)\s+([^\s]+?\d+H)(?:[（(](\d{1,2}\/\d{1,2}\s+\d{4})[）)])?$/.exec(
 				line,
 			);
 		if (firstLineMatch) {
@@ -87,8 +89,9 @@ export function parseRsvpImportText(text: string): ParsedRsvpData {
 			let paidDateDay: number | null = null;
 
 			if (paidDateStr) {
+				// Allow multiple spaces between date and year (e.g., "1/14  2026")
 				const paidDateMatch = /^(\d{1,2})\/(\d{1,2})\s+(\d{4})$/.exec(
-					paidDateStr,
+					paidDateStr.trim(),
 				);
 				if (paidDateMatch) {
 					paidDateMonth = parseInt(paidDateMatch[1], 10);
