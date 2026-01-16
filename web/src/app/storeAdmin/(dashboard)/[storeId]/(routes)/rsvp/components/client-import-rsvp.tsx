@@ -663,6 +663,11 @@ export function ClientImportRsvp({
 			// Reset form and state
 			form.reset();
 			setParsedRsvps([]);
+			setParsedStoreOrders([]);
+			setEditingIndex(null);
+			setEditFormData(null);
+			setEditingStoreOrderIndex(null);
+			setEditStoreOrderData(null);
 
 			// Refresh data or navigate
 			if (onImported) {
