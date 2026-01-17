@@ -4,6 +4,9 @@ import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { RsvpStatus, MemberRole } from "@/types/enum";
 import { getUtcNowEpoch, epochToDate } from "@/utils/datetime-utils";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { Role } from "@prisma/client";
 import { z } from "zod";
 
 const getRsvpStatsSchema = z.object({
@@ -19,6 +22,18 @@ export const getRsvpStatsAction = storeActionClient
 		const storeId = bindArgsClientInputs[0] as string;
 		const { period = "month", startEpoch, endEpoch } = parsedInput;
 		const now = getUtcNowEpoch();
+
+		// Get current user session to check role
+		const session = await auth.api.getSession({
+			headers: await headers(),
+		});
+		const currentUserId = session?.user?.id;
+		const userRole = session?.user?.role;
+		const isStaff = userRole === Role.staff;
+
+		// For staff users, filter RSVPs by createdBy (only show stats for RSVPs they created)
+		const staffFilter =
+			isStaff && currentUserId ? { createdBy: currentUserId } : {};
 
 		// For "all" period, don't filter by date range
 		const isAllPeriod = period === "all";
@@ -49,16 +64,56 @@ export const getRsvpStatsAction = storeActionClient
 
 		// Fetch stats in parallel
 		const [
+			readyRsvps,
 			upcomingRsvps,
 			completedRsvps,
 			unusedCreditResult,
 			totalCustomerCount,
 			newCustomerCount,
 		] = await Promise.all([
+			// Get Ready status RSVPs within the selected period
+			sqlClient.rsvp.findMany({
+				where: {
+					storeId,
+					...staffFilter, // Filter by createdBy if staff
+					status: RsvpStatus.Ready,
+					...(isAllPeriod
+						? {}
+						: startEpoch && endEpoch
+							? {
+									rsvpTime: {
+										gte: startEpoch,
+										lte: endEpoch,
+									},
+								}
+							: {}),
+				},
+				select: {
+					id: true,
+					rsvpTime: true,
+					Customer: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
+					name: true, // For anonymous reservations
+					Facility: {
+						select: {
+							id: true,
+							facilityName: true,
+						},
+					},
+				},
+				orderBy: {
+					rsvpTime: "asc",
+				},
+			}),
 			// Get upcoming reservations: active statuses (Pending, Ready) or (alreadyPaid, confirmedByStore, or confirmedByCustomer) and rsvpTime >= now
 			sqlClient.rsvp.findMany({
 				where: {
 					storeId,
+					...staffFilter, // Filter by createdBy if staff
 					rsvpTime: {
 						gte: now,
 					},
@@ -103,6 +158,7 @@ export const getRsvpStatsAction = storeActionClient
 			sqlClient.rsvp.findMany({
 				where: {
 					storeId,
+					...staffFilter, // Filter by createdBy if staff
 					status: RsvpStatus.Completed,
 					...(isAllPeriod
 						? {}
@@ -334,7 +390,23 @@ export const getRsvpStatsAction = storeActionClient
 			(a, b) => b.totalRevenue - a.totalRevenue,
 		);
 
+		// Format ready RSVPs for display
+		const readyRsvpsDisplay = readyRsvps.map((rsvp) => {
+			const customerName = rsvp.Customer?.name || rsvp.name || "Anonymous";
+			const facilityName = rsvp.Facility?.facilityName || null;
+
+			return {
+				rsvpTime: rsvp.rsvpTime,
+				customerName,
+				facilityName,
+			};
+		});
+
 		return {
+			// Ready RSVPs (within period)
+			readyCount: readyRsvps.length,
+			readyRsvps: readyRsvpsDisplay,
+
 			// Upcoming RSVPs
 			upcomingCount,
 			upcomingTotalRevenue,

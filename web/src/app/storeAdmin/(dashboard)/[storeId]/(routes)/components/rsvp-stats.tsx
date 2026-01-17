@@ -17,6 +17,9 @@ import {
 	convertToUtc,
 	dateToEpoch,
 	formatUtcDateToDateTimeLocal,
+	epochToDate,
+	getDateInTz,
+	getOffsetHours,
 } from "@/utils/datetime-utils";
 import {
 	IconCalendar,
@@ -30,6 +33,7 @@ import {
 	startOfMonth,
 	startOfWeek,
 	startOfYear,
+	format,
 } from "date-fns";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -58,7 +62,17 @@ interface ServiceStaffStat {
 	count: number;
 }
 
+interface ReadyRsvp {
+	rsvpTime: bigint | string | number;
+	customerName: string;
+	facilityName: string | null;
+}
+
 interface RsvpStatsData {
+	// Ready RSVPs (within period)
+	readyCount: number;
+	readyRsvps: ReadyRsvp[];
+
 	// Upcoming RSVPs
 	upcomingCount: number;
 	upcomingTotalRevenue: number;
@@ -245,7 +259,7 @@ export function RsvpStats({
 	if (!isHydrated) {
 		return (
 			<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 mt-4">
-				{[1, 2, 3].map((i) => (
+				{[1, 2, 3, 4].map((i) => (
 					<Card key={i} className="@container/card">
 						<CardHeader>
 							<CardDescription>
@@ -268,7 +282,7 @@ export function RsvpStats({
 	if (isLoading) {
 		return (
 			<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 mt-4">
-				{[1, 2, 3].map((i) => (
+				{[1, 2, 3, 4].map((i) => (
 					<Card key={i} className="@container/card">
 						<CardHeader>
 							<CardDescription>
@@ -293,19 +307,12 @@ export function RsvpStats({
 	}
 
 	const {
-		upcomingCount,
-		upcomingTotalRevenue,
-		upcomingFacilityCost,
-		upcomingServiceStaffCost,
-		completedCount,
+		readyCount,
+		readyRsvps,
 		completedTotalRevenue,
-		completedFacilityCost,
-		completedServiceStaffCost,
 		facilityStats,
 		serviceStaffStats,
-		customerCount,
 		totalUnusedCredit,
-		totalCustomerCount,
 		newCustomerCount,
 	} = data;
 
@@ -319,6 +326,30 @@ export function RsvpStats({
 			maximumFractionDigits: 0,
 		}).format(amount);
 	};
+
+	// Format ready RSVPs for display
+	const readyRsvpsDisplay = readyRsvps.map((rsvp) => {
+		const rsvpTimeValue =
+			typeof rsvp.rsvpTime === "bigint" ||
+			typeof rsvp.rsvpTime === "string" ||
+			typeof rsvp.rsvpTime === "number"
+				? BigInt(rsvp.rsvpTime)
+				: BigInt(0);
+		const rsvpTimeDate = epochToDate(rsvpTimeValue);
+		const formattedTime = rsvpTimeDate
+			? format(
+					getDateInTz(rsvpTimeDate, getOffsetHours(storeTimezone)),
+					"MM/dd HH:mm",
+				)
+			: "N/A";
+
+		const facilityText = rsvp.facilityName ? ` - ${rsvp.facilityName}` : "";
+		return {
+			label: `${formattedTime} - ${rsvp.customerName}${facilityText}`,
+			value: "",
+			isCurrency: false,
+		};
+	});
 
 	// Format facility stats for display - list all facilities with revenue and RSVP count
 	const facilityStatsDisplay = facilityStats.map((facility) => ({
@@ -376,6 +407,17 @@ export function RsvpStats({
 		href: string;
 		color: string;
 	}> = [
+		{
+			title:
+				t("rsvp_stat_ready_reservations", {
+					period: periodLabel,
+				}) || "Ready Reservations",
+			value: readyCount,
+			subValues: readyRsvpsDisplay.length > 0 ? readyRsvpsDisplay : [],
+			icon: IconCalendar,
+			href: `/storeAdmin/${params.storeId}/rsvp/history`,
+			color: "text-orange-600",
+		},
 		{
 			title: t("rsvp_stat_facility_usage") || "Facility Usage",
 			value: formatCurrency(totalFacilityRevenue),
@@ -463,7 +505,7 @@ export function RsvpStats({
 					{t("rsvp_stat_all") || "All"}
 				</Button>
 			</div>
-			<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-3 mt-2">
+			<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 mt-2">
 				{stats.map((stat) => {
 					const Icon = stat.icon;
 					return (
@@ -483,16 +525,22 @@ export function RsvpStats({
 										<div className="space-y-1 text-sm text-muted-foreground">
 											{stat.subValues.map((subValue, index) => (
 												<div key={index}>
-													{subValue.label}:{" "}
-													{subValue.isCurrency
-														? formatCurrency(
-																typeof subValue.value === "number"
-																	? subValue.value
-																	: 0,
-															)
-														: typeof subValue.value === "number"
-															? subValue.value.toLocaleString()
-															: subValue.value}
+													{subValue.value === "" ? (
+														subValue.label
+													) : (
+														<>
+															{subValue.label}:{" "}
+															{subValue.isCurrency
+																? formatCurrency(
+																		typeof subValue.value === "number"
+																			? subValue.value
+																			: 0,
+																	)
+																: typeof subValue.value === "number"
+																	? subValue.value.toLocaleString()
+																	: subValue.value}
+														</>
+													)}
 												</div>
 											))}
 										</div>

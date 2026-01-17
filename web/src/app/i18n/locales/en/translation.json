@@ -847,6 +847,7 @@
   "rsvp_facility_usage": "Facility Usage",
   "rsvp_stat_facility_usage": "Facility Usage",
   "rsvp_stat_no_facilities": "No facilities used",
+  "rsvp_stat_ready_reservations": "Upcoming Reservations {{period}}",
   "rsvp_stat_service_staff": "Service Staff",
   "rsvp_stat_no_service_staff": "No service staff",
   "rsvp_stat_general_statistics": "General Statistics",

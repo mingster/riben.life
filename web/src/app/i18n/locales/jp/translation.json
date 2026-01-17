@@ -100,6 +100,7 @@
   "rsvp_facility_usage": "施設使用状況",
   "rsvp_stat_facility_usage": "施設使用状況",
   "rsvp_stat_no_facilities": "使用された施設なし",
+  "rsvp_stat_ready_reservations": "{{period}}準備完了予約",
   "rsvp_stat_service_staff": "サービススタッフ",
   "rsvp_stat_no_service_staff": "サービススタッフなし",
   "rsvp_stat_general_statistics": "一般統計",
