@@ -1,7 +1,7 @@
 # RSVP Statistics Dashboard
 
 **Created:** 2025-01-27  
-**Last Updated:** 2025-01-29  
+**Last Updated:** 2025-01-30  
 **Status:** Active  
 **Related:** [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md)
 
@@ -32,39 +32,57 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 - **Pre-fetches all periods in parallel** using multiple SWR hooks for instant switching
 - Handles hydration to prevent SSR/CSR mismatches
 - Displays loading skeleton states
-- Responsive grid layout (1 column on mobile, 2 on tablet, 3 on desktop)
+- Responsive grid layout (1 column on mobile, 2 on tablet, 4 on desktop)
 - Clickable cards that navigate to relevant pages
 - Currency formatting for monetary values
 - Conditional rendering (only shows when RSVP is enabled)
-- **Period toggle** - Filter completed reservations by week, month, year, or all time
+- **Period toggle** - Filter reservations by week, month, year, or all time
 - **Instant period switching** - No loading delay when changing periods (data pre-loaded)
+- **Staff filtering** - Staff users only see statistics for RSVPs they created
 
 **Statistics Displayed:**
 
-1. **Facility Usage by Time Period**
-   - Lists all facilities in the store
-   - For each facility:
+1. **Ready Reservations (within period)** - *First card*
+   - **Main Value:** Count of Ready status RSVPs within the selected period
+   - **Sub-values:** List of Ready RSVPs, each showing:
+     - RSVP time (formatted as `MM/dd HH:mm` in store timezone)
+     - Customer name
+     - Facility name (if available)
+   - Format: `01/18 14:00 - Customer Name - Facility Name`
+   - Filtered by the selected period (week/month/year/all)
+   - Only includes RSVPs with status = `Ready`
+   - Links to RSVP history page
+   - **Note:** Staff users only see Ready RSVPs they created
+
+2. **Facility Usage** - *Second card*
+   - **Main Value:** Total facility revenue (sum of all facility revenues, formatted currency)
+   - **Sub-values:** Lists all facilities with completed RSVPs in the selected period:
      - Facility name
-     - Total revenue (formatted currency) from completed RSVPs in the selected period
-     - Number of RSVPs (count) for completed RSVPs in the selected period
-   - Format: "Facility #1: total revenue / num of rsvp"
+     - Total revenue (formatted currency) for that facility
+     - Number of RSVPs (count) for that facility
+   - Format: `Facility Name: NT$1,234 (5)`
    - Filtered by the selected period (week/month/year/all)
    - Only includes completed RSVPs
+   - **Note:** Staff users only see statistics for RSVPs they created
 
-2. **Service Staff Performance**
-   - Lists all service staff in the store
-   - For each staff member:
+3. **Service Staff Performance** - *Third card*
+   - **Main Value:** Total service staff revenue (sum of all service staff revenues, formatted currency)
+   - **Sub-values:** Lists all service staff with completed RSVPs in the selected period:
      - Staff name
-     - Total revenue (formatted currency) from completed RSVPs in the selected period
-     - Number of RSVPs (count) for completed RSVPs in the selected period
-   - Format: "staff #1: total revenue / num of rsvp"
+     - Total revenue (formatted currency) for that staff member
+     - Number of RSVPs (count) for that staff member
+   - Format: `Staff Name: NT$1,234 / 5`
    - Filtered by the selected period (week/month/year/all)
    - Only includes completed RSVPs
+   - **Note:** Staff users only see statistics for RSVPs they created
 
-3. **General Statistics**
-   - **Completed Reservation Revenue** (`completedTotalRevenue`) - Total revenue from completed RSVPs in the selected period (formatted currency)
-   - **New Customers** (`newCustomerCount`) - Count of customers created in the selected period (filtered by period)
-   - **Unused Account Balance** (`totalUnusedCredit`) - Total unused fiat balance (formatted currency)
+4. **General Statistics** - *Fourth card*
+   - **Main Value:** Empty (shows sub-values only)
+   - **Sub-values:**
+     - **Completed Reservation Revenue** (`completedTotalRevenue`) - Total revenue from completed RSVPs in the selected period (formatted currency, with period interpolation)
+     - **New Customers** (`newCustomerCount`) - Count of customers created in the selected period (filtered by period, with period interpolation)
+     - **Unused Account Balance** (`totalUnusedCredit`) - Total unused fiat balance (formatted currency)
+   - **Note:** Staff users only see statistics for RSVPs they created
 
 **Period Toggle:**
 
@@ -96,9 +114,9 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 
 **UI States:**
 
-- Loading: Skeleton cards with placeholder content (shows 3 skeleton cards)
+- Loading: Skeleton cards with placeholder content (shows 4 skeleton cards)
 - Error: Silently fails (returns `null`)
-- Success: Displays statistics cards with actual data
+- Success: Displays statistics cards with actual data (4 cards total)
 
 #### 2. Server Action (`get-rsvp-stats.ts`)
 
@@ -113,6 +131,9 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 - Uses `storeActionClient` wrapper
 - Requires authenticated user with store membership
 - Validates user has appropriate role (owner, storeAdmin, staff, or sysAdmin)
+- **Staff filtering:** If user role is `staff`, all RSVP queries are filtered by `createdBy = userId`
+  - Staff users only see statistics for RSVPs they created
+  - Store owners and admins see all RSVPs (no filtering)
 
 **Input Parameters:**
 
@@ -122,7 +143,18 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
 
 **Statistics Calculated:**
 
-1. **Upcoming Count** (`upcomingCount`)
+1. **Ready RSVPs (within period)** (`readyCount`, `readyRsvps`)
+   - Count of RSVPs where:
+     - Status is `Ready`
+     - `rsvpTime` is within the selected period (`startEpoch` to `endEpoch`)
+     - For "all" period, no date filtering (shows all Ready RSVPs)
+   - Returns array of Ready RSVPs with:
+     - `rsvpTime`: BigInt epoch timestamp
+     - `customerName`: Customer name (from Customer.name or RSVP.name for anonymous)
+     - `facilityName`: Facility name (if available, null otherwise)
+   - Sorted by `rsvpTime` ascending
+
+2. **Upcoming Count** (`upcomingCount`)
    - Count of RSVPs where:
      - `rsvpTime >= now` (future reservations)
      - Status is `Pending` or `Ready`, OR
@@ -131,24 +163,24 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
      - `confirmedByCustomer = true`
      - Status is NOT `Completed`, `Cancelled`, or `NoShow`
 
-2. **Upcoming Revenue** (`upcomingTotalRevenue`, `upcomingFacilityCost`, `upcomingServiceStaffCost`)
+3. **Upcoming Revenue** (`upcomingTotalRevenue`, `upcomingFacilityCost`, `upcomingServiceStaffCost`)
    - Calculated directly from upcoming RSVP records (`facilityCost` and `serviceStaffCost` fields)
    - `upcomingTotalRevenue`: Sum of `facilityCost + serviceStaffCost`
    - `upcomingFacilityCost`: Sum of `facilityCost` only
    - `upcomingServiceStaffCost`: Sum of `serviceStaffCost` only
 
-3. **Completed Count** (`completedCount`)
+4. **Completed Count** (`completedCount`)
    - Count of RSVPs where:
      - Status is `Completed`
      - `rsvpTime` is within the selected period (`startEpoch` to `endEpoch`)
 
-4. **Completed Revenue** (`completedTotalRevenue`, `completedFacilityCost`, `completedServiceStaffCost`)
+5. **Completed Revenue** (`completedTotalRevenue`, `completedFacilityCost`, `completedServiceStaffCost`)
    - Calculated directly from completed RSVP records (`facilityCost` and `serviceStaffCost` fields)
    - `completedTotalRevenue`: Sum of `facilityCost + serviceStaffCost`
    - `completedFacilityCost`: Sum of `facilityCost` only
    - `completedServiceStaffCost`: Sum of `serviceStaffCost` only
 
-5. **Facility Breakdown** (`facilityStats`)
+6. **Facility Breakdown** (`facilityStats`)
    - Array of facility statistics for completed RSVPs in the selected period
    - Each facility stat includes:
      - `facilityId`: Facility ID
@@ -158,7 +190,7 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
    - Sorted by revenue (descending)
    - Only includes facilities that have completed RSVPs in the selected period
 
-6. **Service Staff Breakdown** (`serviceStaffStats`)
+7. **Service Staff Breakdown** (`serviceStaffStats`)
    - Array of service staff statistics for completed RSVPs in the selected period
    - Each staff stat includes:
      - `serviceStaffId`: Service staff ID
@@ -168,15 +200,15 @@ The dashboard component is displayed on the store admin home page (`/storeAdmin/
    - Sorted by revenue (descending)
    - Only includes staff members that have completed RSVPs in the selected period
 
-7. **Total Customer Count** (`totalCustomerCount`)
+8. **Total Customer Count** (`totalCustomerCount`)
    - Count of all customers in the store (all `Member` records with `role = customer` in the store's organization)
 
-8. **New Customer Count** (`newCustomerCount`)
+9. **New Customer Count** (`newCustomerCount`)
    - Count of customers created in the selected period
    - Filtered by `Member.createdAt` within the period date range
    - For "all" period, shows all customers (same as `totalCustomerCount`)
 
-9. **Unused Account Balance** (`customerCount`, `totalUnusedCredit`)
+10. **Unused Account Balance** (`customerCount`, `totalUnusedCredit`)
    - Count of customers with `fiat > 0` in `CustomerCredit` table
    - Sum of all unused fiat balances (not credit points)
    - **Note:** Uses `fiat` field (RSVP account balance), not `point` field (credit points)
@@ -261,7 +293,10 @@ The RSVP stats component is conditionally rendered on the store admin home page:
 ### Database Tables Used
 
 1. **Rsvp Table**
-   - Fields: `id`, `storeId`, `rsvpTime`, `status`, `alreadyPaid`, `confirmedByStore`, `confirmedByCustomer`, `facilityCost`, `serviceStaffCost` (used for revenue calculation)
+   - Fields: `id`, `storeId`, `rsvpTime`, `status`, `alreadyPaid`, `confirmedByStore`, `confirmedByCustomer`, `facilityCost`, `serviceStaffCost`, `createdBy`, `name` (used for revenue calculation and staff filtering)
+   - `createdBy`: User ID who created the reservation (used for staff filtering)
+   - `name`: Customer name for anonymous reservations
+   - Relations: `Customer`, `Facility`, `ServiceStaff` (for name lookups)
 
 2. **CustomerCredit Table**
    - Fields: `storeId`, `fiat` (aggregated for unused account balance stats)
@@ -338,7 +373,7 @@ Revenue is calculated directly from RSVP records (not from `StoreLedger`):
 
 - **Mobile (< 640px):** 1 column grid
 - **Tablet (640px - 1024px):** 2 column grid (`@xl/main:grid-cols-2`)
-- **Desktop (>= 1920px):** 3 column grid (`@5xl/main:grid-cols-3`)
+- **Desktop (>= 1920px):** 4 column grid (`@5xl/main:grid-cols-4`)
 
 ### Period Toggle
 
@@ -357,18 +392,21 @@ Revenue is calculated directly from RSVP records (not from `StoreLedger`):
 
 Each statistics card displays:
 
-- **Header:** Badge with icon and title
-- **Main Value:** Large, prominent number (tabular font for alignment)
+- **Header:** Badge with icon and title (with period interpolation where applicable)
+- **Main Value:** Large, prominent number or currency (tabular font for alignment)
 - **Sub-values (if applicable):**
-  - For revenue cards: List of revenue breakdown items (Total Revenue, Facility Cost, Service Staff Cost)
-  - For customer card: New Customers count, Unused Account Balance (currency), Completed Reservation Revenue (currency)
+  - For Ready Reservations: List of RSVPs with time, customer name, and facility name (format: `MM/dd HH:mm - Customer Name - Facility Name`)
+  - For Facility Usage: List of facilities with revenue and count (format: `Facility Name: NT$1,234 (5)`)
+  - For Service Staff: List of staff with revenue and count (format: `Staff Name: NT$1,234 / 5`)
+  - For General Statistics: Completed Reservation Revenue, New Customers, Unused Account Balance
 - **Interaction:** Entire card is clickable link to relevant page
+- **Special Formatting:** Sub-values with empty value field display label only (no colon separator)
 
 ### Loading States
 
 - Skeleton cards match final layout structure
 - Placeholder content prevents layout shift
-- Shows 3 skeleton cards during loading
+- Shows 4 skeleton cards during loading
 
 ### Error Handling
 
@@ -382,26 +420,31 @@ Each statistics card displays:
 
 **Statistics Labels:**
 
-- `rsvp_upcoming_reservations` - "Upcoming Reservations"
-- `rsvp_completed_this_week` - "Completed This Week"
-- `rsvp_completed_this_month` - "Completed This Month"
-- `rsvp_completed_this_year` - "Completed This Year"
-- `rsvp_total_revenue` - "Total Revenue"
-- `rsvp_facility_cost` - "Facility Cost"
-- `rsvp_service_staff_cost` - "Service Staff Cost"
-- `rsvp_customers_with_credit` - "Customers with Credit"
-- `rsvp_total_customers` - "Total Customers"
-- `rsvp_new_customers` - "New Customers"
-- `rsvp_unused_account_balance` - "Unused Account Balance"
-- `rsvp_completed_reservation_count` - "Completed Reservation Revenue"
-- `rsvp_completed_all` - "Completed (All)"
+- `rsvp_stat_ready_reservations` - "Upcoming Reservations {{period}}" (with period interpolation)
+  - English: "Upcoming Reservations This Month"
+  - Traditional Chinese: "本月待完成預約"
+  - Japanese: "今月準備完了予約"
+- `rsvp_stat_facility_usage` - "Facility Usage"
+- `rsvp_stat_service_staff` - "Service Staff"
+- `rsvp_stat_general_statistics` - "General Statistics"
+- `rsvp_stat_completed_reservation_revenue` - "{{period}}收入" (with period interpolation)
+  - English: "Completed Reservation Revenue"
+  - Traditional Chinese: "本月收入" (with period)
+  - Japanese: "完了した予約の総収入"
+- `rsvp_stat_new_customers` - "{{period}}新增客戶數" (with period interpolation)
+  - English: "New Customers"
+  - Traditional Chinese: "本月新增客戶數" (with period)
+  - Japanese: "新規顧客"
+- `rsvp_stat_unused_account_balance` - "Unused Account Balance"
+- `rsvp_stat_no_facilities` - "No facilities used"
+- `rsvp_stat_no_service_staff` - "No service staff"
 
 **Period Toggle:**
 
-- `this_week` - "This Week"
-- `this_month` - "This Month"
-- `this_year` - "This Year"
-- `all` - "All"
+- `rsvp_stat_this_week` - "This Week" / "本週" / "今週"
+- `rsvp_stat_this_month` - "This Month" / "本月" / "今月"
+- `rsvp_stat_this_year` - "This Year" / "今年" / "今年"
+- `rsvp_stat_all` - "All" / "全部" / "すべて"
 
 ### Currency Formatting
 
@@ -439,12 +482,17 @@ Each statistics card displays:
 - Server action validates user authentication and store membership
 - Uses `storeActionClient` wrapper for consistent access control
 - Only store members with appropriate roles can access statistics
+- **Staff Filtering:** Staff users (`Role.staff`) only see statistics for RSVPs they created
+  - All RSVP queries are filtered by `createdBy = userId` for staff users
+  - Store owners, store admins, and sys admins see all RSVPs (no filtering)
+  - Filtering is applied server-side for security
 
 ### Data Exposure
 
 - Statistics are aggregated (no individual customer data exposed)
 - Currency amounts are display-only (no financial operations exposed)
 - API endpoint validates access before returning data
+- Staff users can only see data for RSVPs they created (enforced server-side)
 
 ## Future Enhancements
 
@@ -457,16 +505,18 @@ Potential improvements that are not currently implemented:
 5. **Comparison Views:** Compare current period with previous period
 6. **Advanced Analytics:** Utilization rates, peak time analysis, resource occupancy rates
 7. **Real-Time Updates:** WebSocket integration for live statistics updates
-8. **Ready Status Statistics:** Add statistics for Ready status RSVPs with HOLD amounts
+8. ~~**Ready Status Statistics:** Add statistics for Ready status RSVPs with HOLD amounts~~ ✅ **Implemented**
 
 ## Related Requirements
 
 From [FUNCTIONAL-REQUIREMENTS-RSVP.md](./FUNCTIONAL-REQUIREMENTS-RSVP.md):
 
 - **FR-RSVP-057:** Store admins must be able to view reservation statistics (Store Staff access not permitted)
+  - **Note:** Current implementation allows staff access but filters to show only RSVPs created by the staff member
 - **UI-RSVP-006:** Reservation dashboard must provide clear daily/weekly view (optimized for tablets and phones) - accessible to Store Staff and Store Admins
+  - **Status:** ✅ Implemented - Dashboard is responsive and accessible to staff (with filtered data)
 
-**Note:** Current implementation provides statistics overview, but detailed analytics and reporting features mentioned in FR-RSVP-057, FR-RSVP-058, and FR-RSVP-059 are not yet implemented.
+**Note:** Current implementation provides statistics overview with staff filtering. Detailed analytics and reporting features mentioned in FR-RSVP-058 and FR-RSVP-059 are not yet implemented.
 
 ## File Structure
 
@@ -529,22 +579,25 @@ src/
 
 The RSVP Statistics Dashboard provides store administrators with a quick overview of key reservation metrics. The implementation uses a client-server architecture with SWR for efficient data fetching, parallel database queries for performance, and responsive UI design for mobile and desktop devices.
 
-The dashboard displays three key statistics:
+The dashboard displays four key statistics:
 
-1. Upcoming reservations count with revenue breakdown (total, facility, service staff)
-2. Completed reservations for the selected period (week/month/year/all) with revenue breakdown
-3. Total customers with sub-statistics:
-   - New customers created in the selected period
-   - Unused account balance (fiat)
-   - Completed reservation revenue
+1. **Ready Reservations** (within selected period) - Count and list of Ready status RSVPs with time, customer name, and facility name
+2. **Facility Usage** - Total revenue and breakdown by facility (revenue and count per facility)
+3. **Service Staff Performance** - Total revenue and breakdown by service staff (revenue and count per staff)
+4. **General Statistics** - Completed reservation revenue, new customers, and unused account balance
 
 **Key Features:**
 
-- **Period Selection:** Toggle between viewing completed reservations for the current week, month, year, or all time
+- **Ready Reservations:** Shows count and list of Ready status RSVPs within the selected period
+- **Period Selection:** Toggle between viewing reservations for the current week, month, year, or all time
 - **Pre-fetched Periods:** All periods are pre-fetched in parallel for instant switching
 - **Store Timezone-Based Periods:** Period boundaries are calculated based on store timezone (matching `RsvpHistoryClient`), not UTC
-- **Revenue Breakdown:** All revenue statistics show breakdown by facility cost and service staff cost
+- **Revenue Totals:** Facility Usage and Service Staff cards show total revenue as main value
+- **Revenue Breakdown:** Facility and service staff statistics show breakdown by individual items (revenue and count)
 - **Direct Revenue Calculation:** Revenue is calculated from RSVP records (`facilityCost` and `serviceStaffCost`) rather than from `StoreLedger` entries
-- **Customer Statistics:** Shows total customers, new customers (filtered by period), unused account balance (fiat), and completed reservation revenue
+- **Customer Statistics:** Shows completed reservation revenue (with period), new customers (with period), and unused account balance (fiat)
+- **Staff Filtering:** Staff users only see statistics for RSVPs they created (filtered server-side by `createdBy`)
+- **Period Interpolation:** Translation keys support `{{period}}` placeholder for dynamic period labels
+- **Responsive Layout:** 1 column (mobile), 2 columns (tablet), 4 columns (desktop)
 
 All statistics are calculated server-side with proper access control, and displayed client-side with loading states and error handling.
