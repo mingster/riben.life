@@ -10,7 +10,10 @@ import { Role } from "@prisma/client";
 import { z } from "zod";
 
 const getRsvpStatsSchema = z.object({
-	period: z.enum(["week", "month", "year", "all"]).optional().default("month"),
+	period: z
+		.enum(["week", "month", "year", "all", "custom"])
+		.optional()
+		.default("month"),
 	startEpoch: z.bigint().nullable().optional(),
 	endEpoch: z.bigint().nullable().optional(),
 });

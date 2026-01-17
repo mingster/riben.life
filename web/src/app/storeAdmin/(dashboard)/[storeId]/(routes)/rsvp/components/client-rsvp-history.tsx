@@ -1,24 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-	startOfWeek,
-	endOfWeek,
-	startOfMonth,
-	endOfMonth,
-	startOfYear,
-	endOfYear,
-	subDays,
-	addDays,
-} from "date-fns";
-import { useParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { IconCheck } from "@tabler/icons-react";
 
 import { useTranslation } from "@/app/i18n/client";
 import { DataTable } from "@/components/dataTable";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/providers/i18n-provider";
 import { RsvpStatusLegend } from "@/components/rsvp-status-legend";
@@ -26,15 +15,14 @@ import { toastSuccess, toastError } from "@/components/toaster";
 
 import type { Rsvp } from "@/types";
 import { RsvpStatus } from "@/types/enum";
-import {
-	dateToEpoch,
-	convertToUtc,
-	formatUtcDateToDateTimeLocal,
-	epochToDate,
-} from "@/utils/datetime-utils";
+import { epochToDate } from "@/utils/datetime-utils";
 import { createRsvpColumns } from "./columns";
 import { updateRsvpAction } from "@/actions/storeAdmin/rsvp/update-rsvp";
 import { completeRsvpsAction } from "@/actions/storeAdmin/rsvp/complete-rsvps";
+import {
+	type PeriodRangeWithDates,
+	RsvpPeriodSelector,
+} from "../../components/rsvp-period-selector";
 
 interface RsvpHistoryClientProps {
 	serverData: Rsvp[];
@@ -46,8 +34,6 @@ interface RsvpHistoryClientProps {
 	} | null;
 }
 
-type PeriodType = "week" | "month" | "year" | "custom";
-
 export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 	serverData,
 	storeTimezone,
@@ -56,151 +42,72 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 	const params = useParams<{ storeId: string }>();
+	const searchParams = useSearchParams();
 
 	const [allData, setAllData] = useState<Rsvp[]>(serverData);
-	const [periodType, setPeriodType] = useState<PeriodType>("custom");
-	const [startDate, setStartDate] = useState<Date | null>(null);
-	const [endDate, setEndDate] = useState<Date | null>(null);
-	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>([
-		RsvpStatus.ReadyToConfirm,
-	]);
+
+	// Period range state (managed by RsvpPeriodSelector)
+	const [periodRange, setPeriodRange] = useState<PeriodRangeWithDates>({
+		periodType: "custom",
+		startDate: null,
+		endDate: null,
+		startEpoch: null,
+		endEpoch: null,
+	});
+
+	// Initialize statuses from URL parameter (only on mount)
+	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>(() => {
+		if (typeof window === "undefined") {
+			return [RsvpStatus.ReadyToConfirm];
+		}
+		const rsvpStatusParam = searchParams.get("rsvp_status");
+		if (rsvpStatusParam) {
+			// Map URL parameter values to RsvpStatus enum
+			const statusMap: Record<string, RsvpStatus> = {
+				ready: RsvpStatus.Ready,
+				"ready-to-confirm": RsvpStatus.ReadyToConfirm,
+				completed: RsvpStatus.Completed,
+				cancelled: RsvpStatus.Cancelled,
+				"no-show": RsvpStatus.NoShow,
+			};
+			const status = statusMap[rsvpStatusParam.toLowerCase()];
+			if (status) {
+				return [status];
+			}
+		}
+		// Default to ReadyToConfirm if no URL parameter
+		return [RsvpStatus.ReadyToConfirm];
+	});
 	const [confirmingAll, setConfirmingAll] = useState(false);
 	const [completingAll, setCompletingAll] = useState(false);
 
-	// Helper to get current date/time in store timezone
-	const getNowInStoreTimezone = useCallback((): Date => {
-		const now = new Date();
-		// Format current UTC time to store timezone, then parse back
-		// This gives us a Date object representing "now" in store timezone
-		const formatted = formatUtcDateToDateTimeLocal(now, storeTimezone);
-		if (!formatted) return now;
-		// Convert back to UTC Date (interpreting the formatted string as store timezone)
-		return convertToUtc(formatted, storeTimezone);
-	}, [storeTimezone]);
-
-	// Initialize default to past 10 days to future 30 days
-	useEffect(() => {
-		if (!startDate && !endDate) {
-			const nowInTz = getNowInStoreTimezone();
-			// Extract date components in store timezone
-			const formatter = new Intl.DateTimeFormat("en-CA", {
-				timeZone: storeTimezone,
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-				hour: "2-digit",
-				minute: "2-digit",
-				hour12: false,
-			});
-			const parts = formatter.formatToParts(nowInTz);
-			const getValue = (type: string): number =>
-				Number(parts.find((p) => p.type === type)?.value || "0");
-
-			const year = getValue("year");
-			const month = getValue("month") - 1; // 0-indexed
-			const day = getValue("day");
-			const hour = getValue("hour");
-			const minute = getValue("minute");
-
-			// Create a Date object representing current time in store timezone
-			const storeDate = new Date(year, month, day, hour, minute);
-
-			// Calculate past 10 days and future 30 days
-			const startDateLocal = subDays(storeDate, 10);
-			const endDateLocal = addDays(storeDate, 30);
-
-			// Convert to UTC (interpret as store timezone)
-			const startStr = `${startDateLocal.getFullYear()}-${String(startDateLocal.getMonth() + 1).padStart(2, "0")}-${String(startDateLocal.getDate()).padStart(2, "0")}T00:00`;
-			const endStr = `${endDateLocal.getFullYear()}-${String(endDateLocal.getMonth() + 1).padStart(2, "0")}-${String(endDateLocal.getDate()).padStart(2, "0")}T23:59`;
-
-			setStartDate(convertToUtc(startStr, storeTimezone));
-			setEndDate(convertToUtc(endStr, storeTimezone));
-		}
-	}, [startDate, endDate, storeTimezone, getNowInStoreTimezone]);
-
-	// Update date range when period type changes
-	const handlePeriodChange = useCallback(
-		(period: PeriodType) => {
-			setPeriodType(period);
-			const nowInTz = getNowInStoreTimezone();
-
-			// Extract date components in store timezone
-			const formatter = new Intl.DateTimeFormat("en-CA", {
-				timeZone: storeTimezone,
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-				hour: "2-digit",
-				minute: "2-digit",
-				hour12: false,
-			});
-			const parts = formatter.formatToParts(nowInTz);
-			const getValue = (type: string): number =>
-				Number(parts.find((p) => p.type === type)?.value || "0");
-
-			const year = getValue("year");
-			const month = getValue("month") - 1; // 0-indexed
-			const day = getValue("day");
-			const hour = getValue("hour");
-			const minute = getValue("minute");
-
-			const storeDate = new Date(year, month, day, hour, minute);
-			let periodStart: Date;
-			let periodEnd: Date;
-
-			switch (period) {
-				case "week":
-					periodStart = startOfWeek(storeDate, { weekStartsOn: 0 });
-					periodEnd = endOfWeek(storeDate, { weekStartsOn: 0 });
-					break;
-				case "month":
-					periodStart = startOfMonth(storeDate);
-					periodEnd = endOfMonth(storeDate);
-					break;
-				case "year":
-					periodStart = startOfYear(storeDate);
-					periodEnd = endOfYear(storeDate);
-					break;
-				case "custom":
-					// Keep current dates when switching to custom
-					return;
-				default:
-					return;
-			}
-
-			// Convert period boundaries to UTC (interpret as store timezone)
-			const startStr = `${periodStart.getFullYear()}-${String(periodStart.getMonth() + 1).padStart(2, "0")}-${String(periodStart.getDate()).padStart(2, "0")}T00:00`;
-			const endStr = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, "0")}-${String(periodEnd.getDate()).padStart(2, "0")}T23:59`;
-
-			setStartDate(convertToUtc(startStr, storeTimezone));
-			setEndDate(convertToUtc(endStr, storeTimezone));
-		},
-		[storeTimezone, getNowInStoreTimezone],
-	);
+	// Handle period range change from RsvpPeriodSelector
+	const handlePeriodRangeChange = useCallback((range: PeriodRangeWithDates) => {
+		setPeriodRange(range);
+	}, []);
 
 	// Filter data based on date range and status
 	const data = useMemo(() => {
 		let filtered = allData;
 
-		// Filter by date range
-		if (startDate && endDate) {
-			const startEpoch = dateToEpoch(startDate);
-			const endEpoch = dateToEpoch(endDate);
+		// Filter by date range (skip if period is "all" or dates are null)
+		if (
+			periodRange.periodType !== "all" &&
+			periodRange.startEpoch &&
+			periodRange.endEpoch
+		) {
+			filtered = filtered.filter((rsvp) => {
+				const rsvpTime = rsvp.rsvpTime;
+				if (!rsvpTime) return false;
 
-			if (startEpoch && endEpoch) {
-				filtered = filtered.filter((rsvp) => {
-					const rsvpTime = rsvp.rsvpTime;
-					if (!rsvpTime) return false;
+				// rsvpTime is BigInt epoch milliseconds
+				const rsvpTimeBigInt =
+					typeof rsvpTime === "bigint" ? rsvpTime : BigInt(rsvpTime);
+				const startBigInt = periodRange.startEpoch!;
+				const endBigInt = periodRange.endEpoch!;
 
-					// rsvpTime is BigInt epoch milliseconds
-					const rsvpTimeBigInt =
-						typeof rsvpTime === "bigint" ? rsvpTime : BigInt(rsvpTime);
-					const startBigInt = startEpoch;
-					const endBigInt = endEpoch;
-
-					return rsvpTimeBigInt >= startBigInt && rsvpTimeBigInt <= endBigInt;
-				});
-			}
+				return rsvpTimeBigInt >= startBigInt && rsvpTimeBigInt <= endBigInt;
+			});
 		}
 
 		// Filter by selected statuses
@@ -211,7 +118,7 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 		}
 
 		return filtered;
-	}, [allData, startDate, endDate, selectedStatuses]);
+	}, [allData, periodRange, selectedStatuses]);
 
 	const handleDeleted = useCallback((rsvpId: string) => {
 		setAllData((prev) => prev.filter((item) => item.id !== rsvpId));
@@ -331,6 +238,9 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 								}) ||
 								`${successCount} of ${rsvpsToConfirm.length} reservations confirmed`,
 				});
+
+				//change selected status to ready
+				setSelectedStatuses([RsvpStatus.Ready]);
 			}
 
 			if (errorCount > 0) {
@@ -410,6 +320,9 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 									}) ||
 									`${completedCount} of ${requestedCount} reservations completed`,
 					});
+
+					//change selected status to completed
+					setSelectedStatuses([RsvpStatus.Completed]);
 				}
 
 				// Show error message if some failed
@@ -436,30 +349,6 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 			setCompletingAll(false);
 		}
 	}, [data, params.storeId, t, handleUpdated]);
-
-	// Format date for datetime-local input (display in store timezone)
-	const formatDateForInput = useCallback(
-		(date: Date | null): string => {
-			if (!date) return "";
-			// date is in UTC, format it to show in store timezone
-			return formatUtcDateToDateTimeLocal(date, storeTimezone);
-		},
-		[storeTimezone],
-	);
-
-	// Parse datetime-local input to UTC Date (interpret input as store timezone)
-	const parseDateFromInput = useCallback(
-		(value: string): Date | null => {
-			if (!value) return null;
-			try {
-				// Interpret the datetime-local string as store timezone and convert to UTC
-				return convertToUtc(value, storeTimezone);
-			} catch {
-				return null;
-			}
-		},
-		[storeTimezone],
-	);
 
 	const columns = useMemo(
 		() =>
@@ -491,108 +380,51 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 			</div>
 			<Separator />
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3">
-				{/* Period Toggle Buttons */}
-				<div className="flex flex-wrap gap-1.5 sm:gap-2">
-					<Button
-						variant={periodType === "week" ? "default" : "outline"}
-						size="sm"
-						onClick={() => handlePeriodChange("week")}
-						className="h-10 sm:h-9"
-					>
-						{t("this_week") || "This Week"}
-					</Button>
-					<Button
-						variant={periodType === "month" ? "default" : "outline"}
-						size="sm"
-						onClick={() => handlePeriodChange("month")}
-						className="h-10 sm:h-9"
-					>
-						{t("this_month") || "This Month"}
-					</Button>
-					<Button
-						variant={periodType === "year" ? "default" : "outline"}
-						size="sm"
-						onClick={() => handlePeriodChange("year")}
-						className="h-10 sm:h-9"
-					>
-						{t("this_year") || "This Year"}
-					</Button>
-					{selectedStatuses.includes(RsvpStatus.ReadyToConfirm) && (
-						<Button
-							variant="default"
-							size="sm"
-							onClick={handleConfirmAll}
-							disabled={
-								confirmingAll ||
+				{/* Period Selector with Custom Date Inputs */}
+				<div className="flex flex-col sm:flex-row gap-3 sm:items-center flex-1">
+					<RsvpPeriodSelector
+						storeTimezone={storeTimezone}
+						storeId={params.storeId}
+						defaultPeriod="custom"
+						allowCustom={true}
+						onPeriodRangeChange={handlePeriodRangeChange}
+					/>
+					{/* Action Buttons */}
+					<div className="flex flex-wrap gap-1.5 sm:gap-2 items-center">
+						{
+							//全部標記為「預約中」按鈕
+							selectedStatuses.includes(RsvpStatus.ReadyToConfirm) &&
 								data.filter((r) => r.status === RsvpStatus.ReadyToConfirm)
-									.length === 0
-							}
-							className="h-10 sm:h-9"
-						>
-							<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-							{t("rsvp_confirm_all") || "Confirm All"}
-						</Button>
-					)}
-					{selectedStatuses.includes(RsvpStatus.Ready) && (
-						<Button
-							variant="default"
-							size="sm"
-							onClick={handleCompleteAll}
-							disabled={
-								completingAll ||
-								data.filter((r) => r.status === RsvpStatus.Ready).length === 0
-							}
-							className="h-10 sm:h-9"
-						>
-							<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-							{t("rsvp_complete_all") || "Complete All"}
-						</Button>
-					)}
-				</div>
-
-				{/* Date Range Inputs */}
-				<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-					<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
-						<label
-							htmlFor="start-time"
-							className="text-sm font-medium whitespace-nowrap"
-						>
-							{t("start_time") || "Start Time"}:
-						</label>
-						<Input
-							id="start-time"
-							type="datetime-local"
-							value={formatDateForInput(startDate)}
-							onChange={(e) => {
-								const newDate = parseDateFromInput(e.target.value);
-								if (newDate) {
-									setStartDate(newDate);
-									setPeriodType("custom");
-								}
-							}}
-							className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto"
-						/>
-					</div>
-					<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
-						<label
-							htmlFor="end-time"
-							className="text-sm font-medium whitespace-nowrap"
-						>
-							{t("end_time") || "End Time"}:
-						</label>
-						<Input
-							id="end-time"
-							type="datetime-local"
-							value={formatDateForInput(endDate)}
-							onChange={(e) => {
-								const newDate = parseDateFromInput(e.target.value);
-								if (newDate) {
-									setEndDate(newDate);
-									setPeriodType("custom");
-								}
-							}}
-							className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto"
-						/>
+									.length > 0 && (
+									<Button
+										variant="default"
+										size="sm"
+										onClick={handleConfirmAll}
+										disabled={confirmingAll}
+										className="h-10 sm:h-9"
+									>
+										<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+										{t("rsvp_confirm_all") || "Confirm All"}
+									</Button>
+								)
+						}
+						{
+							//全部標記為「已完成」按鈕
+							selectedStatuses.includes(RsvpStatus.Ready) &&
+								data.filter((r) => r.status === RsvpStatus.Ready).length >
+									0 && (
+									<Button
+										variant="default"
+										size="sm"
+										onClick={handleCompleteAll}
+										disabled={completingAll}
+										className="h-10 sm:h-9"
+									>
+										<IconCheck className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+										{t("rsvp_complete_all") || "Complete All"}
+									</Button>
+								)
+						}
 					</div>
 				</div>
 			</div>
