@@ -22,6 +22,7 @@ import { completeRsvpsAction } from "@/actions/storeAdmin/rsvp/complete-rsvps";
 import {
 	type PeriodRangeWithDates,
 	RsvpPeriodSelector,
+	useRsvpPeriodRanges,
 } from "../../components/rsvp-period-selector";
 
 interface RsvpHistoryClientProps {
@@ -46,15 +47,31 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 
 	const [allData, setAllData] = useState<Rsvp[]>(serverData);
 
-	// Period range state (managed by RsvpPeriodSelector)
-	const [periodRange, setPeriodRange] = useState<PeriodRangeWithDates>({
-		periodType: "custom",
-		startDate: null,
-		endDate: null,
-		startEpoch: null,
-		endEpoch: null,
-	});
+	// Get default period ra
+	// nges for initialization
+	const defaultPeriodRanges = useRsvpPeriodRanges(storeTimezone);
 
+	// Initialize period range with default "month" period epoch values
+	// This ensures the URL is valid immediately, and RsvpPeriodSelector will update it
+	// with the correct values (from localStorage or user selection) via onPeriodRangeChange
+	const initialPeriodRange = useMemo<PeriodRangeWithDates>(() => {
+		const monthRange = defaultPeriodRanges.month;
+		return {
+			periodType: "month",
+			startDate: null,
+			endDate: null,
+			startEpoch: monthRange.startEpoch,
+			endEpoch: monthRange.endEpoch,
+		};
+	}, [defaultPeriodRanges]);
+
+	const [periodRange, setPeriodRange] =
+		useState<PeriodRangeWithDates>(initialPeriodRange);
+
+	// Handle period range change from RsvpPeriodSelector
+	const handlePeriodRangeChange = useCallback((range: PeriodRangeWithDates) => {
+		setPeriodRange(range);
+	}, []);
 	// Initialize statuses from URL parameter (only on mount)
 	const [selectedStatuses, setSelectedStatuses] = useState<RsvpStatus[]>(() => {
 		if (typeof window === "undefined") {
@@ -80,11 +97,6 @@ export const RsvpHistoryClient: React.FC<RsvpHistoryClientProps> = ({
 	});
 	const [confirmingAll, setConfirmingAll] = useState(false);
 	const [completingAll, setCompletingAll] = useState(false);
-
-	// Handle period range change from RsvpPeriodSelector
-	const handlePeriodRangeChange = useCallback((range: PeriodRangeWithDates) => {
-		setPeriodRange(range);
-	}, []);
 
 	// Filter data based on date range and status
 	const data = useMemo(() => {

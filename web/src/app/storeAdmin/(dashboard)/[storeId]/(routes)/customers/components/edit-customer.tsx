@@ -129,8 +129,21 @@ export const EditCustomer: React.FC<EditCustomerProps> = ({
 			});
 			*/
 
-			if (result.data) {
-				onUpdated?.(result.data as User);
+			if (result.data?.user) {
+				onUpdated?.(result.data.user as User);
+			} else if (onUpdated) {
+				// If result.data.user is not available, update with the form data
+				// This is a fallback - ideally the action should return the updated user
+				const updatedUser = {
+					...item,
+					...data,
+					name: data.name || item.name,
+					email: data.email || item.email,
+					phoneNumber: data.phone || (item as any).phoneNumber,
+					locale: data.locale || item.locale,
+					timezone: data.timezone || item.timezone,
+				} as User;
+				onUpdated(updatedUser);
 			}
 		}
 		setLoading(false);

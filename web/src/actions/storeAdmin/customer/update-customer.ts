@@ -5,6 +5,7 @@ import { sqlClient } from "@/lib/prismadb";
 import { storeActionClient } from "@/utils/actions/safe-action";
 import { getUtcNowEpoch, getUtcNow } from "@/utils/datetime-utils";
 import { MemberRole } from "@/types/enum";
+import { transformPrismaDataForJson } from "@/utils/utils";
 import crypto from "crypto";
 
 export const updateCustomerAction = storeActionClient
@@ -76,5 +77,17 @@ export const updateCustomerAction = storeActionClient
 					},
 				});
 			}
+
+			// Fetch and return the updated user
+			const updatedUser = await sqlClient.user.findUnique({
+				where: { id: customerId },
+			});
+
+			if (updatedUser) {
+				// Transform BigInt and Decimal to numbers for JSON serialization
+				transformPrismaDataForJson(updatedUser);
+			}
+
+			return { user: updatedUser };
 		},
 	);

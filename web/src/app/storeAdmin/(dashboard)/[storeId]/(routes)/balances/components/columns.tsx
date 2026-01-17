@@ -27,24 +27,15 @@ export const createBalanceColumns = (
 				return <span>{format(date, dateFormat)}</span>;
 			},
 		},
-		{
-			accessorKey: "availability",
-			header: ({ column }) => (
-				<DataTableColumnHeader column={column} title={t("availability_date")} />
-			),
-			cell: ({ row }) => {
-				const balance = row.original;
-				if (!balance.availabilityIso) return "-";
-				const date = new Date(balance.availabilityIso);
-				if (isNaN(date.getTime())) return balance.availability;
-				return <span>{format(date, dateFormat)}</span>;
-			},
-		},
+
 		{
 			accessorKey: "description",
 			header: ({ column }) => (
 				<DataTableColumnHeader column={column} title={t("description")} />
 			),
+			meta: {
+				className: "hidden sm:table-cell",
+			},
 		},
 		{
 			accessorKey: "amount",
@@ -100,6 +91,22 @@ export const createBalanceColumns = (
 						<Currency value={balance} />
 					</span>
 				);
+			},
+		},
+		{
+			accessorKey: "availability",
+			header: ({ column }) => (
+				<DataTableColumnHeader column={column} title={t("availability_date")} />
+			),
+			cell: ({ row }) => {
+				const balance = row.original;
+				if (!balance.availabilityIso) return "-";
+				const date = new Date(balance.availabilityIso);
+				if (isNaN(date.getTime())) return balance.availability;
+				return <span>{format(date, dateFormat)}</span>;
+			},
+			meta: {
+				className: "hidden sm:table-cell",
 			},
 		},
 		{
