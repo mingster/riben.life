@@ -138,7 +138,29 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 
 	const handleUpdated = useCallback((updatedVal: User) => {
 		setData((prev) =>
-			prev.map((obj) => (obj.id === updatedVal.id ? updatedVal : obj)),
+			prev.map((obj) => {
+				if (obj.id === updatedVal.id) {
+					// Preserve extended fields and relation fields from original object
+					// Updated user from action doesn't include relations (sessions, Orders, etc.)
+					return {
+						...obj, // Start with original object to preserve all relations
+						...updatedVal, // Override with updated fields
+						// Preserve extended fields (customerCreditFiat, customerCreditPoint)
+						customerCreditFiat:
+							(updatedVal as any).customerCreditFiat ?? obj.customerCreditFiat,
+						customerCreditPoint:
+							(updatedVal as any).customerCreditPoint ??
+							obj.customerCreditPoint,
+						// Explicitly preserve relation fields that might not be in updatedVal
+						sessions: obj.sessions || [],
+						Orders: obj.Orders || [],
+						Reservations: obj.Reservations || [],
+						CustomerCredit: obj.CustomerCredit || null,
+						CustomerFiatLedger: obj.CustomerFiatLedger || [],
+					};
+				}
+				return obj;
+			}),
 		);
 		clientLogger.info("handleUpdated", {
 			metadata: { updatedVal },
@@ -304,118 +326,125 @@ export const CustomersClient: React.FC<CustomersClientProps> = ({
 		);
 	};
 
-	const columns: ColumnDef<User>[] = [
-		{
-			accessorKey: "name",
-			header: ({ column }) => {
-				return <DataTableColumnHeader column={column} title={t("your_name")} />;
-			},
-			cell: ({ row }) => {
-				return (
-					<div
-						className="flex flex-col gap-0"
-						title={t("user_edit_basic_info")}
-					>
+	const columns: ColumnDef<User>[] = useMemo(
+		() => [
+			{
+				accessorKey: "name",
+				header: ({ column }) => {
+					return (
+						<DataTableColumnHeader column={column} title={t("your_name")} />
+					);
+				},
+				cell: ({ row }) => {
+					return (
 						<div
-							className="flex flex-row items-center gap-0"
-							title="click to edit"
+							className="flex flex-col gap-0"
+							title={t("user_edit_basic_info")}
 						>
-							<EditCustomer item={row.original} onUpdated={handleUpdated} />
+							<div
+								className="flex flex-row items-center gap-0"
+								title="click to edit"
+							>
+								<EditCustomer item={row.original} onUpdated={handleUpdated} />
+								<Link
+									title="manage user"
+									className="cursor-pointer text-sm text-blue-800 dark:text-blue-200 hover:text-gold"
+									href={`/storeAdmin/${storeId}/customers/${row.original.email}`}
+								>
+									{row.getValue("name")}
+								</Link>
+							</div>
 							<Link
 								title="manage user"
 								className="cursor-pointer text-sm text-blue-800 dark:text-blue-200 hover:text-gold"
 								href={`/storeAdmin/${storeId}/customers/${row.original.email}`}
 							>
-								{row.getValue("name")}
+								{row.original.phoneNumber
+									? ` (${row.original.phoneNumber})`
+									: ""}
 							</Link>
 						</div>
-						<Link
-							title="manage user"
-							className="cursor-pointer text-sm text-blue-800 dark:text-blue-200 hover:text-gold"
-							href={`/storeAdmin/${storeId}/customers/${row.original.email}`}
-						>
-							{row.original.phoneNumber ? ` (${row.original.phoneNumber})` : ""}
-						</Link>
-					</div>
-				);
+					);
+				},
+				enableHiding: false,
 			},
-			enableHiding: false,
-		},
 
-		{
-			accessorKey: "customerCreditFiat",
-			header: ({ column }) => {
-				return (
-					<DataTableColumnHeader
-						column={column}
-						className="text-right items-end"
-						title={`${t("customer_fiat_amount")} / ${t("customer_credit_amount")}`}
-					/>
-				);
+			{
+				accessorKey: "customerCreditFiat",
+				header: ({ column }) => {
+					return (
+						<DataTableColumnHeader
+							column={column}
+							className="text-right items-end"
+							title={`${t("customer_fiat_amount")} / ${t("customer_credit_amount")}`}
+						/>
+					);
+				},
+				cell: ({ row }) => {
+					const fiat = (row.original as any).customerCreditFiat ?? 0;
+					const point = (row.original as any).customerCreditPoint ?? 0;
+					return (
+						<div className="flex flex-row gap-1">
+							<CurrencyComponent value={fiat} />
+							<span className="text-sm font-mono text-muted-foreground">
+								{Number(point).toFixed(0)}
+								{t("points") || "pts"}
+							</span>
+						</div>
+					);
+				},
 			},
-			cell: ({ row }) => {
-				const fiat = (row.original as any).customerCreditFiat ?? 0;
-				const point = (row.original as any).customerCreditPoint ?? 0;
-				return (
-					<div className="flex flex-row gap-1">
-						<CurrencyComponent value={fiat} />
-						<span className="text-sm font-mono text-muted-foreground">
-							{Number(point).toFixed(0)}
-							{t("points") || "pts"}
-						</span>
-					</div>
-				);
+			{
+				accessorKey: "createdAt",
+				header: ({ column }) => {
+					return (
+						<DataTableColumnHeader
+							column={column}
+							title={t("user_member_since")}
+						/>
+					);
+				},
+				cell: ({ row }) => {
+					return (
+						<div className="">{formatDateTime(row.getValue("createdAt"))}</div>
+					);
+				},
 			},
-		},
-		{
-			accessorKey: "createdAt",
-			header: ({ column }) => {
-				return (
-					<DataTableColumnHeader
-						column={column}
-						title={t("user_member_since")}
-					/>
-				);
-			},
-			cell: ({ row }) => {
-				return (
-					<div className="">{formatDateTime(row.getValue("createdAt"))}</div>
-				);
-			},
-		},
-		{
-			accessorKey: "currentlySignedIn",
-			header: ({ column }) => {
-				return (
-					<DataTableColumnHeader
-						column={column}
-						title={t("user_signed_in_banned")}
-					/>
-				);
-			},
-			cell: ({ row }) => {
-				const data = row.original as User;
-				const sessions = data.sessions;
-				const signedIn = sessions.length > 0;
-				const banned = data.banned;
+			{
+				accessorKey: "currentlySignedIn",
+				header: ({ column }) => {
+					return (
+						<DataTableColumnHeader
+							column={column}
+							title={t("user_signed_in_banned")}
+						/>
+					);
+				},
+				cell: ({ row }) => {
+					const data = row.original as User;
+					const sessions = data.sessions || [];
+					const signedIn = sessions.length > 0;
+					const banned = data.banned;
 
-				return (
-					<div className="pl-3">
-						{signedIn ? (
-							<IconCheck className="text-green-400  size-4" />
-						) : (
-							<IconX className="text-red-400 size-4" />
-						)}
-						{banned ? <IconX className="text-red-400 size-4" /> : ""}
-					</div>
-				);
+					return (
+						<div className="pl-3">
+							{signedIn ? (
+								<IconCheck className="text-green-400  size-4" />
+							) : (
+								<IconX className="text-red-400 size-4" />
+							)}
+							{banned ? <IconX className="text-red-400 size-4" /> : ""}
+						</div>
+					);
+				},
 			},
-		},
-		{
-			id: "actions",
-			cell: ({ row }) => <CellAction item={row.original as User} />,
-		},
-	];
+			{
+				id: "actions",
+				cell: ({ row }) => <CellAction item={row.original as User} />,
+			},
+		],
+		[t, storeId, handleUpdated],
+	);
 
 	const newUser: Partial<User> & {
 		id: string;

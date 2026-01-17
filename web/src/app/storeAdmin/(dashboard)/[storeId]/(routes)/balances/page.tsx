@@ -13,14 +13,20 @@ export default async function BalanceMgmtPage(props: {
 }) {
 	const params = await props.params;
 
-	const ledgers = await sqlClient.storeLedger.findMany({
-		where: {
-			storeId: params.storeId,
-		},
-		orderBy: {
-			createdAt: "desc",
-		},
-	});
+	const [ledgers, store] = await Promise.all([
+		sqlClient.storeLedger.findMany({
+			where: {
+				storeId: params.storeId,
+			},
+			orderBy: {
+				createdAt: "desc",
+			},
+		}),
+		sqlClient.store.findUnique({
+			where: { id: params.storeId },
+			select: { defaultTimezone: true },
+		}),
+	]);
 
 	transformPrismaDataForJson(ledgers);
 
@@ -30,7 +36,10 @@ export default async function BalanceMgmtPage(props: {
 
 	return (
 		<Container>
-			<BalanceClient serverData={formattedData} />
+			<BalanceClient
+				serverData={formattedData}
+				storeTimezone={store?.defaultTimezone || "Asia/Taipei"}
+			/>
 		</Container>
 	);
 }

@@ -50,6 +50,8 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 		stripeSubscription || [],
 	);
 	const [mounted, setMounted] = useState(false);
+	// Maintain client state for user data
+	const [clientUser, setClientUser] = useState<User | null>(user);
 
 	// Memoized values
 	const initialTab = useMemo(() => searchParams.get("tab"), [searchParams]);
@@ -71,13 +73,25 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 		setActiveTab(value);
 	}, []);
 
+	// Handle user updates from EditCustomer component
+	const handleUserUpdated = useCallback((updatedUser: User) => {
+		setClientUser(updatedUser);
+	}, []);
+
+	// Sync clientUser with prop when user prop changes
+	useEffect(() => {
+		if (user) {
+			setClientUser(user);
+		}
+	}, [user]);
+
 	// Early returns
 	if (!mounted) return null;
 	if (loading) return <Loader />;
 
 	const link_home = `/storeAdmin/${storeId}`;
 	const link_customers = `/storeAdmin/${storeId}/customers`;
-	const userDisplayName = user?.name || user?.email || "";
+	const userDisplayName = clientUser?.name || clientUser?.email || "";
 
 	return (
 		<div className="space-y-6">
@@ -126,23 +140,29 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 						<CardHeader>
 							<div className="flex items-center">
 								<Heading
-									title={user?.name || user?.email || ""}
+									title={clientUser?.name || clientUser?.email || ""}
 									description={t("user_mgmt_descr")}
 								/>
-								<EditCustomer item={user} />
+								{clientUser && (
+									<EditCustomer
+										item={clientUser}
+										onUpdated={handleUserUpdated}
+									/>
+								)}
 							</div>
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<div className="flex flex-col gap-1">
-								{user.createdAt && (
+								{clientUser?.createdAt && (
 									<span className=" text-muted-foreground">
 										{t("customer_mgmt_member_since").replace(
 											"{0}",
 											format(
-												typeof user.createdAt === "number"
-													? (epochToDate(BigInt(user.createdAt)) ?? new Date())
-													: user.createdAt instanceof Date
-														? user.createdAt
+												typeof clientUser.createdAt === "number"
+													? (epochToDate(BigInt(clientUser.createdAt)) ??
+															new Date())
+													: clientUser.createdAt instanceof Date
+														? clientUser.createdAt
 														: new Date(),
 												datetimeFormat,
 											),
@@ -176,7 +196,9 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 							<div className="flex items-center"></div>
 						</CardHeader>
 						<CardContent className="space-y-4">
-							<DisplayOrders orders={(user.Orders as StoreOrder[]) || []} />
+							<DisplayOrders
+								orders={(clientUser?.Orders as StoreOrder[]) || []}
+							/>
 						</CardContent>
 					</Card>
 				</TabsContent>
@@ -186,15 +208,15 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 						<CardContent className="space-y-4">
 							<CardHeader></CardHeader>
 							<div className="flex flex-col gap-1">
-								{user.CustomerCredit && (
+								{clientUser?.CustomerCredit && (
 									<div className="flex items-center gap-1">
 										{t("customer_credit_balance")}:{" "}
 										<span className="font-semibold">
-											{Number(user.CustomerCredit.fiat) || 0}
+											{Number(clientUser.CustomerCredit.fiat) || 0}
 										</span>
 									</div>
 								)}
-								<DisplayCreditLedger ledger={user.CustomerFiatLedger} />
+								<DisplayCreditLedger ledger={clientUser?.CustomerFiatLedger} />
 							</div>
 						</CardContent>
 					</Card>
@@ -204,7 +226,7 @@ export const ManageUserClient: React.FC<iUserTabProps> = ({
 						<CardContent className="space-y-4">
 							<CardHeader></CardHeader>
 							<DisplayReservations
-								reservations={user.Reservations}
+								reservations={clientUser?.Reservations}
 								hideActions={true}
 							/>
 						</CardContent>

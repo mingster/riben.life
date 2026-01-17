@@ -315,8 +315,14 @@ export function RsvpPeriodSelector({
 
 	// Notify parent of period range changes (after initialization or when period/dates change)
 	useEffect(() => {
-		// Skip notification if not hydrated or in controlled mode (parent manages state)
-		if (!isHydrated || isControlledPeriod || isControlledDates) return;
+		// Skip notification if not hydrated
+		if (!isHydrated) return;
+
+		// Skip if callback not provided (uncontrolled mode without callback)
+		if (!onPeriodRangeChange) return;
+
+		// Skip notification if in controlled mode (parent manages state via props)
+		if (isControlledPeriod || isControlledDates) return;
 
 		// Only notify after initialization has completed
 		if (!hasInitialized.current) return;
@@ -332,6 +338,7 @@ export function RsvpPeriodSelector({
 		notifyPeriodRangeChange(periodType, startDate ?? null, endDate ?? null);
 	}, [
 		isHydrated,
+		onPeriodRangeChange,
 		isControlledPeriod,
 		isControlledDates,
 		periodType,
