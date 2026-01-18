@@ -17,6 +17,19 @@ export default async function TransactionMgmtPage(props: {
 }) {
 	const params = await props.params;
 
+	// Fetch store to get timezone
+	const store = await sqlClient.store.findUnique({
+		where: { id: params.storeId },
+		select: {
+			id: true,
+			defaultTimezone: true,
+		},
+	});
+
+	if (!store) {
+		throw new Error("Store not found");
+	}
+
 	const orders = await sqlClient.storeOrder.findMany({
 		where: {
 			storeId: params.storeId,
@@ -41,7 +54,10 @@ export default async function TransactionMgmtPage(props: {
 
 	return (
 		<Container>
-			<TransactionClient serverData={formattedData} />
+			<TransactionClient
+				serverData={formattedData}
+				storeTimezone={store.defaultTimezone || "Asia/Taipei"}
+			/>
 		</Container>
 	);
 }

@@ -107,12 +107,7 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 				</TabsContent>
 				<TabsContent value="reservations">
 					<Card>
-						<CardHeader>
-							<CardTitle> </CardTitle>
-							<CardDescription> </CardDescription>
-						</CardHeader>
-
-						<CardContent className="space-y-2">
+						<CardContent className="space-y-0">
 							<DisplayReservations
 								reservations={user.Reservations}
 								user={user}
@@ -122,14 +117,13 @@ export const AccountTabs: React.FC<iUserTabProps> = ({
 				</TabsContent>
 				<TabsContent value="credits">
 					<Card>
-						<CardContent className="space-y-4">
-							<CardHeader></CardHeader>
+						<CardContent className="space-y-0">
 							<div className="flex flex-col gap-1">
-								{user.CustomerCredit && (
+								{user?.CustomerFiat && (
 									<div className="flex items-center gap-1">
-										{t("customer_credit_balance")}:{" "}
+										{t("customer_fiat_amount")}:{" "}
 										<span className="font-semibold">
-											{Number(user.CustomerCredit.fiat) || 0}
+											{Number(user.CustomerFiat.fiat) || 0}
 										</span>
 									</div>
 								)}

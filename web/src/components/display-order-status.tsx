@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/i18n-provider";
 
 import { OrderStatus } from "@/types/enum";
+import { cn } from "@/utils/utils";
 
 type props = {
 	status: OrderStatus;
@@ -17,7 +18,7 @@ export const DisplayOrderStatus: React.FC<props> = ({
 	status,
 	displayBuyAgain,
 	onCompletedStatus,
-	className = "mr-2 cursor-default font-semibold text-base",
+	className = "mr-2 cursor-default font-semibold text-sm sm:text-xs",
 }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
@@ -26,7 +27,7 @@ export const DisplayOrderStatus: React.FC<props> = ({
 
 	return (
 		<div className="flex items-center justify-between w-full">
-			<div className={className}>
+			<div className={cn(className, "text-sm sm:text-xs")}>
 				{t(`order_status_${OrderStatus[Number(status)]}`)}
 			</div>
 
