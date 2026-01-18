@@ -29,7 +29,8 @@
     "commit": "clear && npx git-cz",
     "lint": "next lint; eslint --fix \"./src/**/*.{js,jsx,ts,tsx}\"",
     "cleanup:console": "bun run scripts/cleanup-console-logs.ts",
-    "optimize:cache": "node scripts/cache-optimize.js"
+    "optimize:cache": "node scripts/cache-optimize.js",
+    "generate:favicons": "bun run scripts/generate-favicons.ts"
   },
   "dependencies": {
     "@better-auth/passkey": "^1.4.15",
@@ -163,6 +164,7 @@
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "@types/react-google-recaptcha": "^2.1.9",
+    "@types/sharp": "^0.32.0",
     "@types/uuid": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
@@ -179,6 +181,7 @@
     "lint-staged": "^15.5.2",
     "prisma": "6.19.1",
     "shadcn": "^3.7.0",
+    "sharp": "^0.34.5",
     "shiki": "^3.21.0",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",

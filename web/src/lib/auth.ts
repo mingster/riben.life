@@ -256,6 +256,17 @@ export const auth = betterAuth({
 					);
 				},
 			},
+			// Note: Better Auth automatically handles account linking when a phone number
+			// already exists, thanks to the global accountLinking configuration:
+			// - account.accountLinking.enabled: true
+			// - account.accountLinking.trustedProviders: ["phone"]
+			//
+			// When a user verifies a phone number that's already associated with an account,
+			// Better Auth will automatically link the credentials to the existing account.
+			// No custom callback is needed for basic account linking.
+			//
+			// If you need custom data migration logic (similar to anonymous account linking),
+			// you would need to handle this in your verify-otp action or use Better Auth hooks.
 		}),
 		twoFactor(),
 		magicLink({

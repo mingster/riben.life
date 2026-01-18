@@ -80,6 +80,12 @@ export const createCustomerOrderColumns = (
 			cell: ({ row }) => {
 				const order = row.original;
 				const paymentStatus = order.paymentStatus;
+				const orderStatus = order.orderStatus;
+
+				// Don't display payment status if order is voided
+				if (orderStatus === Number(OrderStatus.Voided)) {
+					return null;
+				}
 
 				let statusText: string;
 				let statusClass: string;
@@ -127,14 +133,32 @@ export const createCustomerOrderColumns = (
 						break;
 				}
 
+				const isPending =
+					paymentStatus === Number(PaymentStatus.Pending) &&
+					orderStatus === Number(OrderStatus.Pending);
+
+				if (isPending) {
+					return (
+						<Button
+							variant="outline"
+							className={cn(statusClass)}
+							size="sm"
+							asChild
+						>
+							<Link href={`/checkout/${order.id}`}>{statusText}</Link>
+						</Button>
+					);
+				}
+
 				return (
-					<Button
-						variant="outline"
-						className={cn("cursor-default", statusClass)}
-						size="sm"
+					<div
+						className={cn(
+							"px-2 py-1 text-xs rounded-md border border-input bg-background inline-block",
+							statusClass,
+						)}
 					>
 						{statusText}
-					</Button>
+					</div>
 				);
 			},
 			meta: {

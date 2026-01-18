@@ -133,6 +133,15 @@ export const DisplayOrder: React.FC<orderProps> = ({
 						<div className="flex items-center gap-1">
 							<span>({order.OrderItemView.length})</span>
 						</div>
+						{/* display payment method */}
+						{order.PaymentMethod?.name &&
+							order.PaymentMethod.name !== "TBD" && (
+								<div className="flex items-center gap-1">
+									<span className="text-foreground">
+										{order.PaymentMethod.name}
+									</span>
+								</div>
+							)}
 					</div>
 				</div>
 

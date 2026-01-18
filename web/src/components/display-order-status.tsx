@@ -26,21 +26,9 @@ export const DisplayOrderStatus: React.FC<props> = ({
 
 	return (
 		<div className="flex items-center justify-between w-full">
-			{status !== OrderStatus.Voided && (
-				<div className={className}>
-					{t(`order_status_${OrderStatus[Number(status)]}`)}
-				</div>
-			)}
-
-			{status === OrderStatus.Voided && (
-				<Button
-					variant={"outline"}
-					className="mr-2 bg-muted text-gray-500 cursor-default"
-					size="sm"
-				>
-					{t(`order_status_${OrderStatus[Number(status)]}`)}
-				</Button>
-			)}
+			<div className={className}>
+				{t(`order_status_${OrderStatus[Number(status)]}`)}
+			</div>
 
 			{(status === OrderStatus.Completed ||
 				status === OrderStatus.InShipping) &&

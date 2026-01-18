@@ -101,6 +101,8 @@ export function RsvpPeriodSelector({
 
 	// Track if initialization has completed to prevent infinite loops
 	const hasInitialized = useRef(false);
+	// Track if we're currently handling a period change to prevent duplicate notifications
+	const isHandlingPeriodChange = useRef(false);
 
 	// Determine if component is in controlled mode
 	const isControlledPeriod = controlledPeriodType !== undefined;
@@ -108,8 +110,22 @@ export function RsvpPeriodSelector({
 		controlledStartDate !== undefined || controlledEndDate !== undefined;
 
 	// Internal state (for uncontrolled mode)
-	const [internalPeriodType, setInternalPeriodType] =
-		useState<PeriodType>(defaultPeriod);
+	// Initialize with stored value if available, otherwise use defaultPeriod
+	const getInitialPeriodType = useCallback((): PeriodType => {
+		if (isControlledPeriod || typeof window === "undefined")
+			return defaultPeriod;
+		const stored = storeId
+			? localStorage.getItem(`rsvp-period-${storeId}`)
+			: null;
+		if (stored && ["week", "month", "year", "all", "custom"].includes(stored)) {
+			return stored as PeriodType;
+		}
+		return defaultPeriod;
+	}, [isControlledPeriod, storeId, defaultPeriod]);
+
+	const [internalPeriodType, setInternalPeriodType] = useState<PeriodType>(
+		getInitialPeriodType(),
+	);
 	const [internalStartDate, setInternalStartDate] = useState<Date | null>(null);
 	const [internalEndDate, setInternalEndDate] = useState<Date | null>(null);
 
@@ -192,6 +208,7 @@ export function RsvpPeriodSelector({
 					setInternalStartDate(loadedStartDate);
 					setInternalEndDate(loadedEndDate);
 					// Notify parent after state updates (done via useEffect below)
+					// Note: useEffect will handle notification after state settles
 					return;
 				}
 			}
@@ -216,49 +233,67 @@ export function RsvpPeriodSelector({
 				setInternalEndDate(null);
 			}
 			// Notify parent after state updates (done via useEffect below)
+			// Note: useEffect will handle notification after state settles
 			return;
 		}
 
-		// Initialize default dates for custom period if no stored data
-		const nowInTz = getNowInStoreTimezone();
-		const formatter = new Intl.DateTimeFormat("en-CA", {
-			timeZone: storeTimezone,
-			year: "numeric",
-			month: "2-digit",
-			day: "2-digit",
-			hour: "2-digit",
-			minute: "2-digit",
-			hour12: false,
-		});
-		const parts = formatter.formatToParts(nowInTz);
-		const getValue = (type: string): number =>
-			Number(parts.find((p) => p.type === type)?.value || "0");
-
-		const year = getValue("year");
-		const month = getValue("month") - 1;
-		const day = getValue("day");
-		const hour = getValue("hour");
-		const minute = getValue("minute");
-
-		const storeDate = new Date(year, month, day, hour, minute);
-
-		let defaultStartDate: Date;
-		let defaultEndDate: Date;
-
-		if (customDefaultDates) {
-			defaultStartDate = customDefaultDates.startDate;
-			defaultEndDate = customDefaultDates.endDate;
+		// If no stored period, initialize with defaultPeriod's range
+		const initialPeriod = getInitialPeriodType();
+		if (initialPeriod !== "all" && initialPeriod !== "custom") {
+			const range = periodRanges[initialPeriod];
+			if (range?.startEpoch && range?.endEpoch) {
+				const startEpochDate = epochToDate(range.startEpoch);
+				const endEpochDate = epochToDate(range.endEpoch);
+				if (startEpochDate && endEpochDate) {
+					setInternalStartDate(startEpochDate);
+					setInternalEndDate(endEpochDate);
+				}
+			}
+		} else if (initialPeriod === "all") {
+			setInternalStartDate(null);
+			setInternalEndDate(null);
 		} else {
-			// Default: past 10 days to future 30 days
-			defaultStartDate = subDays(storeDate, 10);
-			defaultEndDate = addDays(storeDate, 30);
+			// Custom period - initialize default dates if no stored data
+			const nowInTz = getNowInStoreTimezone();
+			const formatter = new Intl.DateTimeFormat("en-CA", {
+				timeZone: storeTimezone,
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+				hour: "2-digit",
+				minute: "2-digit",
+				hour12: false,
+			});
+			const parts = formatter.formatToParts(nowInTz);
+			const getValue = (type: string): number =>
+				Number(parts.find((p) => p.type === type)?.value || "0");
+
+			const year = getValue("year");
+			const month = getValue("month") - 1;
+			const day = getValue("day");
+			const hour = getValue("hour");
+			const minute = getValue("minute");
+
+			const storeDate = new Date(year, month, day, hour, minute);
+
+			let defaultStartDate: Date;
+			let defaultEndDate: Date;
+
+			if (customDefaultDates) {
+				defaultStartDate = customDefaultDates.startDate;
+				defaultEndDate = customDefaultDates.endDate;
+			} else {
+				// Default: past 10 days to future 30 days
+				defaultStartDate = subDays(storeDate, 10);
+				defaultEndDate = addDays(storeDate, 30);
+			}
+
+			const startStr = `${defaultStartDate.getFullYear()}-${String(defaultStartDate.getMonth() + 1).padStart(2, "0")}-${String(defaultStartDate.getDate()).padStart(2, "0")}T00:00`;
+			const endStr = `${defaultEndDate.getFullYear()}-${String(defaultEndDate.getMonth() + 1).padStart(2, "0")}-${String(defaultEndDate.getDate()).padStart(2, "0")}T23:59`;
+
+			setInternalStartDate(convertToUtc(startStr, storeTimezone));
+			setInternalEndDate(convertToUtc(endStr, storeTimezone));
 		}
-
-		const startStr = `${defaultStartDate.getFullYear()}-${String(defaultStartDate.getMonth() + 1).padStart(2, "0")}-${String(defaultStartDate.getDate()).padStart(2, "0")}T00:00`;
-		const endStr = `${defaultEndDate.getFullYear()}-${String(defaultEndDate.getMonth() + 1).padStart(2, "0")}-${String(defaultEndDate.getDate()).padStart(2, "0")}T23:59`;
-
-		setInternalStartDate(convertToUtc(startStr, storeTimezone));
-		setInternalEndDate(convertToUtc(endStr, storeTimezone));
 	}, [
 		isHydrated,
 		isControlledPeriod,
@@ -268,6 +303,7 @@ export function RsvpPeriodSelector({
 		storeTimezone,
 		getNowInStoreTimezone,
 		customDefaultDates,
+		getInitialPeriodType,
 	]);
 
 	// Initialize temp dates when popover opens
@@ -327,6 +363,9 @@ export function RsvpPeriodSelector({
 		// Only notify after initialization has completed
 		if (!hasInitialized.current) return;
 
+		// Skip if we're currently handling a period change (handlePeriodChangeInternal will notify explicitly)
+		if (isHandlingPeriodChange.current) return;
+
 		// For custom period, ensure we have valid dates before notifying
 		// (handlePeriodChangeInternal explicitly notifies for custom, so this is just a safety check)
 		if (periodType === "custom" && (!startDate || !endDate)) {
@@ -350,6 +389,9 @@ export function RsvpPeriodSelector({
 	// Handle period change
 	const handlePeriodChangeInternal = useCallback(
 		(period: PeriodType) => {
+			// Mark that we're handling a period change to prevent useEffect from duplicating notifications
+			isHandlingPeriodChange.current = true;
+
 			// For custom period, ensure dates are set BEFORE updating periodType
 			// to prevent useEffect from notifying with null dates
 			if (period === "custom") {
@@ -426,13 +468,31 @@ export function RsvpPeriodSelector({
 						}
 					}
 				} else {
-					// Dates exist, just update period type
+					// Dates exist, just update period type and notify
 					if (!isControlledPeriod) {
 						setInternalPeriodType(period);
 					}
+					// Save to localStorage
+					if (!isControlledPeriod && storeId && typeof window !== "undefined") {
+						localStorage.setItem(`rsvp-period-${storeId}`, period);
+					}
+					// Notify parent with existing dates
+					if (
+						currentStart &&
+						currentEnd &&
+						!isNaN(currentStart.getTime()) &&
+						!isNaN(currentEnd.getTime())
+					) {
+						notifyPeriodRangeChange(period, currentStart, currentEnd);
+					}
+					// Reset flag after a short delay to allow state to settle
+					setTimeout(() => {
+						isHandlingPeriodChange.current = false;
+					}, 0);
+					return;
 				}
 
-				// Save to localStorage
+				// Save to localStorage (only reached when dates didn't exist and were set above)
 				if (!isControlledPeriod && storeId && typeof window !== "undefined") {
 					localStorage.setItem(`rsvp-period-${storeId}`, period);
 				}
@@ -447,6 +507,10 @@ export function RsvpPeriodSelector({
 				) {
 					notifyPeriodRangeChange(period, currentStart, currentEnd);
 				}
+				// Reset flag after a short delay to allow state to settle
+				setTimeout(() => {
+					isHandlingPeriodChange.current = false;
+				}, 0);
 				return;
 			}
 
@@ -467,9 +531,20 @@ export function RsvpPeriodSelector({
 
 			// Handle date updates based on period
 			if (period === "all") {
-				handleStartDateChangeInternal(null);
-				handleEndDateChangeInternal(null);
+				// Update dates directly without triggering handlers (to avoid duplicate notifications)
+				if (!isControlledDates) {
+					setInternalStartDate(null);
+					setInternalEndDate(null);
+				} else if (controlledOnStartDateChange && controlledOnEndDateChange) {
+					controlledOnStartDateChange(null);
+					controlledOnEndDateChange(null);
+				}
+				// Explicitly notify with the new period type
 				notifyPeriodRangeChange(period, null, null);
+				// Reset flag after notification
+				setTimeout(() => {
+					isHandlingPeriodChange.current = false;
+				}, 0);
 				return;
 			}
 
@@ -479,14 +554,29 @@ export function RsvpPeriodSelector({
 				const startEpochDate = epochToDate(range.startEpoch);
 				const endEpochDate = epochToDate(range.endEpoch);
 				if (startEpochDate && endEpochDate) {
-					// Update dates using handlers (they handle both controlled and uncontrolled)
-					handleStartDateChangeInternal(startEpochDate);
-					handleEndDateChangeInternal(endEpochDate);
+					// Update dates directly without triggering handlers (to avoid duplicate notifications)
+					if (!isControlledDates) {
+						setInternalStartDate(startEpochDate);
+						setInternalEndDate(endEpochDate);
+						// Clear custom dates from localStorage when switching to predefined period
+						if (storeId && typeof window !== "undefined") {
+							localStorage.removeItem(`rsvp-history-startDate-${storeId}`);
+							localStorage.removeItem(`rsvp-history-endDate-${storeId}`);
+						}
+					} else if (controlledOnStartDateChange && controlledOnEndDateChange) {
+						controlledOnStartDateChange(startEpochDate);
+						controlledOnEndDateChange(endEpochDate);
+					}
 					// Explicitly notify with the new period type to ensure parent gets updated correctly
-					// (this overrides any notifications from the handlers that might use stale periodType)
+					// This is the single source of truth for the notification
 					notifyPeriodRangeChange(period, startEpochDate, endEpochDate);
 				}
 			}
+
+			// Reset flag after a short delay to allow state to settle
+			setTimeout(() => {
+				isHandlingPeriodChange.current = false;
+			}, 0);
 		},
 		[
 			isControlledPeriod,
@@ -600,6 +690,9 @@ export function RsvpPeriodSelector({
 			!isNaN(tempStartDate.getTime()) &&
 			!isNaN(tempEndDate.getTime())
 		) {
+			// Mark that we're handling a period change
+			isHandlingPeriodChange.current = true;
+
 			// Update internal state if not controlled
 			if (!isControlledPeriod) {
 				setInternalPeriodType("custom");
@@ -626,6 +719,11 @@ export function RsvpPeriodSelector({
 
 			// Explicitly notify parent with the new dates
 			notifyPeriodRangeChange("custom", tempStartDate, tempEndDate);
+
+			// Reset flag after a short delay
+			setTimeout(() => {
+				isHandlingPeriodChange.current = false;
+			}, 0);
 
 			// Close the popover
 			setPopoverOpen(false);

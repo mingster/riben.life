@@ -74,7 +74,20 @@ export async function generateMetadata() {
 			statusBarStyle: "default",
 		},
 		icons: {
-			icon: "/favicons/favicon-16x16.png",
+			// Use SVG for modern browsers (sharpest quality)
+			icon: [
+				{ url: "/logo.svg", type: "image/svg+xml" },
+				{
+					url: "/favicons/favicon-32x32.png",
+					sizes: "32x32",
+					type: "image/png",
+				},
+				{
+					url: "/favicons/favicon-16x16.png",
+					sizes: "16x16",
+					type: "image/png",
+				},
+			],
 			shortcut: "/favicons/favicon-32x32.png",
 			apple: [
 				{ url: "/favicons/apple-touch-icon.png" },
@@ -113,6 +126,10 @@ export default async function RootLayout({
 	return (
 		<html lang={htmlLang} suppressHydrationWarning>
 			<head>
+				{/* Favicon links for better browser compatibility */}
+				<link rel="icon" href="/favicons/favicon.ico" sizes="any" />
+				<link rel="icon" href="/logo.svg" type="image/svg+xml" />
+				<link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
 				<script
 					dangerouslySetInnerHTML={{
 						__html: `
