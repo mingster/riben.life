@@ -309,6 +309,10 @@ pm2 logs riben.life --lines 50
 
 ## Cron jobs
 
+```bash
+sudo apt-get install cron
+```
+
 1. Sendmail
 
 Cron Script: `bin/run-sendmail-cron.sh`
@@ -334,8 +338,53 @@ The API route processes the email queue using sendMailsInQueue() from `@/actions
 
 To set it up, add this to your crontab:
 
-`** * * * * sleep 10 curl https://riben.life/api/cron-jobs/sendmail >> /var/www/riben.life/logs/sendmail.log 2>&1`
+```bash
+** * * * * sleep 10 curl https://riben.life/api/cron-jobs/sendmail >> /var/www/riben.life/logs/sendmail.log 2>&1
+
+** * * * * sleep 10 bun run /var/www/riben.life/web/bin/run-sendmail-cron.sh >> /var/www/riben.life/logs/sendmail.log 2>&1
+```
 
 Or for Windows/Cygwin (as shown in DEPLOYMENT.md):
 
 `** * * * * sleep 10; curl https://riben.life/api/cron-jobs/sendmail >> /var/www/riben.life/logs/sendmail.log 2>&1`
+
+1. Cleanup Unpaid RSVPs
+
+Cron Script: `bin/run-cleanup-unpaid-rsvps-cron.sh`
+
+Calls the API endpoint via curl
+
+API Endpoint: `web/src/app/api/cron-jobs/cleanup-unpaid-rsvps/route.ts`
+
+Handles GET requests
+
+Deletes unpaid RSVPs older than a specified age threshold
+
+Crontab Configuration:
+
+* Runs every 5 minutes: `*/5 * * * *`
+
+Actual Implementation:
+
+The script calls: `curl https://riben.life/api/cron-jobs/cleanup-unpaid-rsvps?ageMinutes=30`
+
+The API route deletes unpaid RSVPs where:
+
+* `alreadyPaid = false`
+* `status = RsvpStatus.Pending` (0 = "尚未付款")
+* `createdAt` is older than the specified age threshold (default: 30 minutes)
+
+**Environment Variables:**
+
+* `AGE_MINUTES`: (optional) Minimum age in minutes before deleting (default: 30)
+
+To set it up, add this to your crontab:
+
+```bash
+*/5 * * * * /var/www/riben.life/web/bin/run-cleanup-unpaid-rsvps-cron.sh >> /var/www/riben.life/logs/cleanup-unpaid-rsvps.log 2>&1
+```
+
+Make sure to:
+
+* Make the script executable: `chmod +x /var/www/riben.life/web/bin/run-cleanup-unpaid-rsvps-cron.sh`
+* Set `AGE_MINUTES` environment variable if you want a different age threshold (default is 30 minutes)

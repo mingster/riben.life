@@ -58,7 +58,22 @@ import {
 import type { Rsvp as RsvpType } from "@/types";
 import { cancelReservationAction } from "@/actions/store/reservation/cancel-reservation";
 import { deleteReservationAction } from "@/actions/store/reservation/delete-reservation";
+import { updateReservationAction } from "@/actions/store/reservation/update-reservation";
 import { toastError, toastSuccess } from "@/components/toaster";
+import {
+	DndContext,
+	type DragEndEvent,
+	type DragStartEvent,
+	useDraggable,
+	useDroppable,
+	closestCenter,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import { useIsHydrated } from "@/hooks/use-hydrated";
+import logger from "@/lib/logger";
+import { AlertModal } from "@/components/modals/alert-modal";
 
 interface CustomerWeekViewCalendarProps {
 	existingReservations: Rsvp[];
@@ -107,6 +122,79 @@ const isToday = (date: Date, storeTimezone: string): boolean => {
 		getOffsetHours(storeTimezone),
 	);
 	return isSameDay(date, todayInStoreTz);
+};
+
+// Draggable Card Component
+interface DraggableCardProps {
+	id: string;
+	children: React.ReactNode;
+	className?: string;
+	isDragging?: boolean;
+}
+
+const DraggableCard: React.FC<DraggableCardProps> = ({
+	id,
+	children,
+	className,
+	isDragging = false,
+}) => {
+	const isHydrated = useIsHydrated();
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		isDragging: isDraggingState,
+	} = useDraggable({
+		id,
+	});
+
+	// Apply drag styles only after hydration to prevent mismatch
+	const style =
+		isHydrated && transform
+			? {
+					transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+					opacity: isDraggingState ? 0.5 : 1,
+				}
+			: {
+					// Default style for SSR and initial client render
+					opacity: 1,
+				};
+
+	return (
+		<div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+			{children}
+		</div>
+	);
+};
+
+// Droppable Slot Component
+interface DroppableSlotProps {
+	id: string;
+	children: React.ReactNode;
+	className?: string;
+}
+
+const DroppableSlot: React.FC<DroppableSlotProps> = ({
+	id,
+	children,
+	className,
+}) => {
+	const { isOver, setNodeRef } = useDroppable({
+		id,
+	});
+
+	return (
+		<div
+			ref={setNodeRef}
+			className={cn(
+				className,
+				isOver && "bg-primary/20 ring-2 ring-primary ring-offset-2",
+			)}
+		>
+			{children}
+		</div>
+	);
 };
 
 export const CustomerWeekViewCalendar: React.FC<
@@ -235,6 +323,23 @@ export const CustomerWeekViewCalendar: React.FC<
 	);
 	const [isCancelling, setIsCancelling] = useState(false);
 	const [openEditDialogId, setOpenEditDialogId] = useState<string | null>(null);
+	const [activeId, setActiveId] = useState<string | null>(null);
+	const [moveIntoCancelWindowConfirmOpen, setMoveIntoCancelWindowConfirmOpen] =
+		useState(false);
+	const [pendingUpdate, setPendingUpdate] = useState<{
+		rsvp: Rsvp;
+		newRsvpTime: Date;
+	} | null>(null);
+	const [isUpdating, setIsUpdating] = useState(false);
+
+	// Configure drag sensors
+	const sensors = useSensors(
+		useSensor(PointerSensor, {
+			activationConstraint: {
+				distance: 8, // 8px before drag starts
+			},
+		}),
+	);
 
 	const useBusinessHours = rsvpSettings?.useBusinessHours ?? true;
 	const rsvpHours = rsvpSettings?.rsvpHours ?? null;
@@ -712,6 +817,472 @@ export const CustomerWeekViewCalendar: React.FC<
 		setCancelDialogOpen(true);
 	}, []);
 
+	const handleDragStart = useCallback((event: DragStartEvent) => {
+		setActiveId(event.active.id as string);
+	}, []);
+
+	// Function to perform RSVP update (extracted for reuse)
+	const performRsvpUpdate = useCallback(
+		async (rsvp: Rsvp, newRsvpTime: Date) => {
+			try {
+				setIsUpdating(true);
+				// Update RSVP time via server action
+				const result = await updateReservationAction({
+					id: rsvp.id,
+					facilityId: rsvp.facilityId,
+					serviceStaffId: rsvp.serviceStaffId,
+					numOfAdult: rsvp.numOfAdult ?? 1,
+					numOfChild: rsvp.numOfChild ?? 0,
+					rsvpTime: newRsvpTime,
+					message: rsvp.message,
+				});
+
+				if (result?.serverError) {
+					toastError({
+						description: result.serverError,
+					});
+					logger.error("Failed to update RSVP via server action", {
+						metadata: {
+							rsvpId: rsvp.id,
+							serverError: result.serverError,
+						},
+						tags: ["dnd", "error", "server-action"],
+					});
+					return;
+				}
+
+				if (result?.data?.rsvp) {
+					handleReservationUpdated(result.data.rsvp as Rsvp);
+					toastSuccess({
+						description:
+							t("rsvp_time_updated") ||
+							"Reservation time updated successfully!",
+					});
+				}
+			} catch (error) {
+				toastError({
+					description:
+						t("failed_to_update_rsvp") || "Failed to update reservation time",
+				});
+				logger.error("Error updating RSVP via server action", {
+					metadata: {
+						rsvpId: rsvp.id,
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["dnd", "error", "server-action"],
+				});
+			} finally {
+				setIsUpdating(false);
+			}
+		},
+		[handleReservationUpdated, t],
+	);
+
+	// Handle confirmation to move RSVP into cancellation window
+	const handleMoveIntoCancelWindowConfirm = useCallback(async () => {
+		if (!pendingUpdate) return;
+
+		await performRsvpUpdate(pendingUpdate.rsvp, pendingUpdate.newRsvpTime);
+		setMoveIntoCancelWindowConfirmOpen(false);
+		setPendingUpdate(null);
+	}, [pendingUpdate, performRsvpUpdate]);
+
+	// Handle drag end event - update RSVP time
+	const handleDragEnd = useCallback(
+		async (event: DragEndEvent) => {
+			const { active, over } = event;
+			setActiveId(null);
+
+			if (!over || !active) {
+				return;
+			}
+
+			// Parse drag data
+			const draggedRsvpId = active.id as string;
+			const dropTargetId = over.id as string;
+
+			// Extract actual RSVP ID from draggable ID (format: "rsvp-{id}")
+			const rsvpIdMatch = draggedRsvpId.toString().match(/^rsvp-(.+)$/);
+			if (!rsvpIdMatch) {
+				logger.error("Invalid draggable ID format", {
+					metadata: { draggedRsvpId },
+					tags: ["dnd", "error"],
+				});
+				return;
+			}
+
+			const actualRsvpId = rsvpIdMatch[1];
+
+			// Find the RSVP being dragged
+			const draggedRsvp = rsvps.find((r) => r.id === actualRsvpId);
+			if (!draggedRsvp) {
+				logger.error("Dragged RSVP not found", {
+					metadata: { actualRsvpId },
+					tags: ["dnd", "error"],
+				});
+				return;
+			}
+
+			// Check if RSVP is currently within cancellation window - block any update
+			if (rsvpSettings?.canCancel && rsvpSettings?.cancelHours) {
+				const now = getUtcNow();
+				const rsvpTimeDate = epochToDate(
+					typeof draggedRsvp.rsvpTime === "number"
+						? BigInt(draggedRsvp.rsvpTime)
+						: draggedRsvp.rsvpTime instanceof Date
+							? BigInt(draggedRsvp.rsvpTime.getTime())
+							: draggedRsvp.rsvpTime,
+				);
+				if (rsvpTimeDate) {
+					const hoursUntilReservation =
+						(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+					const cancelHours = rsvpSettings.cancelHours ?? 24;
+					if (hoursUntilReservation < cancelHours) {
+						toastError({
+							description:
+								t("cannot_edit_reservation_within_cancel_window") ||
+								`Cannot edit reservation within ${cancelHours} hours of reservation time`,
+						});
+						return;
+					}
+				}
+			}
+
+			// Only allow dragging if user can edit this reservation
+			if (!canEditReservation(draggedRsvp)) {
+				toastError({
+					description:
+						t("cannot_edit_reservation") || "Cannot edit this reservation",
+				});
+				return;
+			}
+
+			// Skip if dropped on completed RSVP (non-draggable)
+			if (draggedRsvp.status === RsvpStatus.Completed) {
+				return;
+			}
+
+			// Parse drop target: format is "slot-{dayISO}-{timeSlot}"
+			// e.g., "slot-2026-01-18T00:00:00.000Z-14:00"
+			const dropTargetStr = dropTargetId.toString();
+			if (!dropTargetStr.startsWith("slot-")) {
+				logger.warn("Invalid drop target ID format", {
+					metadata: { dropTargetId },
+					tags: ["dnd", "warn"],
+				});
+				toastError({
+					description:
+						t("invalid_drop_target") ||
+						"Invalid drop target. Please try again.",
+				});
+				return;
+			}
+
+			// Extract timeSlot from the end (e.g., "14:00")
+			const timeSlotMatch = dropTargetStr.match(/-(\d{1,2}:\d{2})$/);
+			if (!timeSlotMatch) {
+				logger.warn("Invalid time slot format in drop target ID", {
+					metadata: { dropTargetId },
+					tags: ["dnd", "warn"],
+				});
+				toastError({
+					description:
+						t("invalid_drop_target") ||
+						"Invalid drop target. Please try again.",
+				});
+				return;
+			}
+
+			const timeSlot = timeSlotMatch[1];
+			// Extract the day ISO string (everything between "slot-" and the last "-HH:MM")
+			const dayISO = dropTargetStr.slice(5, -timeSlot.length - 1); // Remove "slot-" prefix and "-{timeSlot}" suffix
+			const dropDay = new Date(dayISO);
+
+			if (isNaN(dropDay.getTime())) {
+				toastError({
+					description:
+						t("invalid_date_format") ||
+						"Invalid date format. Please try again.",
+				});
+				logger.error("Invalid drop day parsed from ID", {
+					metadata: { dayISO, dropTargetId },
+					tags: ["dnd", "error"],
+				});
+				return;
+			}
+
+			let newRsvpTime: Date;
+			try {
+				// Convert day + timeSlot to UTC date for new rsvpTime
+				newRsvpTime = dayAndTimeSlotToUtc(dropDay, timeSlot, storeTimezone);
+			} catch (error) {
+				toastError({
+					description:
+						t("failed_to_calculate_rsvp_time") ||
+						"Failed to calculate new reservation time",
+				});
+				logger.error("Failed to convert day and time slot to UTC", {
+					metadata: {
+						dropDay,
+						timeSlot,
+						storeTimezone,
+						error: error instanceof Error ? error.message : String(error),
+					},
+					tags: ["dnd", "error"],
+				});
+				return;
+			}
+
+			// Validate newRsvpTime is a valid Date
+			if (!newRsvpTime || isNaN(newRsvpTime.getTime())) {
+				toastError({
+					description:
+						t("failed_to_calculate_rsvp_time") ||
+						"Failed to calculate new reservation time",
+				});
+				logger.error("Calculated newRsvpTime is invalid", {
+					metadata: { newRsvpTime, dropDay, timeSlot, storeTimezone },
+					tags: ["dnd", "error"],
+				});
+				return;
+			}
+
+			// Helper to convert rsvpTime/arriveTime to Date (handles BigInt, number, string, Date)
+			const convertToDate = (
+				value: Date | bigint | number | string | null | undefined,
+			): Date | null => {
+				if (!value) return null;
+				if (value instanceof Date) return value;
+				if (typeof value === "bigint") return epochToDate(value);
+				if (typeof value === "number") return new Date(value);
+				if (typeof value === "string") {
+					// Try parsing as ISO string first
+					const parsed = new Date(value);
+					if (!isNaN(parsed.getTime())) return parsed;
+					// Try parsing as epoch number string
+					const epochNum = Number.parseInt(value, 10);
+					if (!isNaN(epochNum)) return new Date(epochNum);
+					return null;
+				}
+				return null;
+			};
+
+			// Check if RSVP time actually changed
+			const oldRsvpTime = convertToDate(draggedRsvp.rsvpTime);
+			if (
+				oldRsvpTime &&
+				Math.abs(oldRsvpTime.getTime() - newRsvpTime.getTime()) < 60000
+			) {
+				// Less than 1 minute difference, no need to update
+				return;
+			}
+
+			// Double-check: Block update if RSVP is currently within cancellation window
+			// (This is a safety check in case the drag started before the window was reached)
+			if (rsvpSettings?.canCancel && rsvpSettings?.cancelHours) {
+				const now = getUtcNow();
+				const rsvpTimeDate = epochToDate(
+					typeof draggedRsvp.rsvpTime === "number"
+						? BigInt(draggedRsvp.rsvpTime)
+						: draggedRsvp.rsvpTime instanceof Date
+							? BigInt(draggedRsvp.rsvpTime.getTime())
+							: draggedRsvp.rsvpTime,
+				);
+				if (rsvpTimeDate) {
+					const hoursUntilReservation =
+						(rsvpTimeDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+					const cancelHours = rsvpSettings.cancelHours ?? 24;
+					if (hoursUntilReservation < cancelHours) {
+						toastError({
+							description:
+								t("cannot_edit_reservation_within_cancel_window") ||
+								`Cannot edit reservation within ${cancelHours} hours of reservation time`,
+						});
+						return;
+					}
+				}
+			}
+
+			// Check if NEW time slot would put RSVP within cancellation window
+			// If yes, ask for user consent before proceeding
+			if (rsvpSettings?.canCancel && rsvpSettings?.cancelHours) {
+				const now = getUtcNow();
+				const hoursUntilNewReservation =
+					(newRsvpTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+				const cancelHours = rsvpSettings.cancelHours ?? 24;
+				if (hoursUntilNewReservation < cancelHours) {
+					// Store pending update and show confirmation dialog
+					setPendingUpdate({ rsvp: draggedRsvp, newRsvpTime });
+					setMoveIntoCancelWindowConfirmOpen(true);
+					return;
+				}
+			}
+
+			// Validate facility availability (if facility is selected)
+			if (draggedRsvp.facilityId) {
+				const facility = facilities.find(
+					(f) => f.id === draggedRsvp.facilityId,
+				);
+				if (facility) {
+					// Check facility business hours
+					const facilityHoursCheck = checkTimeAgainstBusinessHours(
+						facility.businessHours,
+						newRsvpTime,
+						storeTimezone,
+					);
+					if (!facilityHoursCheck.isValid) {
+						toastError({
+							description:
+								t("rsvp_time_outside_business_hours_facility") ||
+								"The selected time is outside business hours for this facility",
+						});
+						return;
+					}
+
+					// Check if facility is already booked at the new time slot
+					// Convert newRsvpTime to epoch for comparison
+					const newRsvpTimeEpoch = dateToEpoch(newRsvpTime);
+					if (newRsvpTimeEpoch) {
+						const facilityDuration =
+							facility.defaultDuration ?? defaultDuration;
+						const durationMs = facilityDuration * 60 * 1000;
+						const slotStart = Number(newRsvpTimeEpoch);
+						const slotEnd = slotStart + durationMs;
+
+						// Find conflicting reservations for this facility (excluding the dragged RSVP)
+						const conflictingReservations = rsvps.filter((existingRsvp) => {
+							// Exclude the dragged RSVP itself
+							if (existingRsvp.id === draggedRsvp.id) {
+								return false;
+							}
+
+							// Exclude cancelled reservations
+							if (existingRsvp.status === RsvpStatus.Cancelled) {
+								return false;
+							}
+
+							// Only check reservations for the same facility
+							if (existingRsvp.facilityId !== draggedRsvp.facilityId) {
+								return false;
+							}
+
+							// Convert existing reservation time to epoch
+							let existingRsvpTime: bigint;
+							if (existingRsvp.rsvpTime instanceof Date) {
+								existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+							} else if (typeof existingRsvp.rsvpTime === "number") {
+								existingRsvpTime = BigInt(existingRsvp.rsvpTime);
+							} else if (typeof existingRsvp.rsvpTime === "bigint") {
+								existingRsvpTime = existingRsvp.rsvpTime;
+							} else {
+								return false;
+							}
+
+							const existingStart = Number(existingRsvpTime);
+							const existingDuration =
+								existingRsvp.Facility?.defaultDuration ??
+								facility.defaultDuration ??
+								defaultDuration;
+							const existingDurationMs = existingDuration * 60 * 1000;
+							const existingEnd = existingStart + existingDurationMs;
+
+							// Check if slots overlap (they overlap if one starts before the other ends)
+							return slotStart < existingEnd && slotEnd > existingStart;
+						});
+
+						if (conflictingReservations.length > 0) {
+							toastError({
+								description:
+									t("rsvp_time_slot_already_booked_facility") ||
+									"This time slot is already booked for this facility. Please select a different time.",
+							});
+							return;
+						}
+					}
+				}
+			}
+
+			// Validate service staff availability (if service staff is selected)
+			if (draggedRsvp.serviceStaffId) {
+				// Find the service staff to check business hours
+				// Note: We need to fetch service staff details or check from existing data
+				// For now, we'll check if there are conflicting reservations for this service staff
+				const newRsvpTimeEpoch = dateToEpoch(newRsvpTime);
+				if (newRsvpTimeEpoch) {
+					const slotStart = Number(newRsvpTimeEpoch);
+					const slotDuration = defaultDuration * 60 * 1000;
+					const slotEnd = slotStart + slotDuration;
+
+					// Find conflicting reservations for this service staff (excluding the dragged RSVP)
+					const conflictingReservations = rsvps.filter((existingRsvp) => {
+						// Exclude the dragged RSVP itself
+						if (existingRsvp.id === draggedRsvp.id) {
+							return false;
+						}
+
+						// Exclude cancelled reservations
+						if (existingRsvp.status === RsvpStatus.Cancelled) {
+							return false;
+						}
+
+						// Only check reservations for the same service staff
+						if (existingRsvp.serviceStaffId !== draggedRsvp.serviceStaffId) {
+							return false;
+						}
+
+						// Convert existing reservation time to epoch
+						let existingRsvpTime: bigint;
+						if (existingRsvp.rsvpTime instanceof Date) {
+							existingRsvpTime = BigInt(existingRsvp.rsvpTime.getTime());
+						} else if (typeof existingRsvp.rsvpTime === "number") {
+							existingRsvpTime = BigInt(existingRsvp.rsvpTime);
+						} else if (typeof existingRsvp.rsvpTime === "bigint") {
+							existingRsvpTime = existingRsvp.rsvpTime;
+						} else {
+							return false;
+						}
+
+						const existingStart = Number(existingRsvpTime);
+						// Get duration from facility or use default
+						const existingDuration =
+							existingRsvp.Facility?.defaultDuration ?? defaultDuration;
+						const existingDurationMs = existingDuration * 60 * 1000;
+						const existingEnd = existingStart + existingDurationMs;
+
+						// Check if slots overlap (they overlap if one starts before the other ends)
+						return slotStart < existingEnd && slotEnd > existingStart;
+					});
+
+					if (conflictingReservations.length > 0) {
+						toastError({
+							description:
+								t("rsvp_time_slot_already_booked_single_service") ||
+								t("no_service_staff_available_at_selected_time") ||
+								"This time slot is already booked for this service staff. Please select a different time.",
+						});
+						return;
+					}
+				}
+
+				// Check service staff business hours if available
+				// Note: Service staff business hours would need to be fetched or passed as prop
+				// For now, we rely on the server-side validation which will catch this
+			}
+
+			// Proceed with update (this function is called after confirmation if needed)
+			await performRsvpUpdate(draggedRsvp, newRsvpTime);
+		},
+		[
+			rsvps,
+			storeTimezone,
+			handleReservationUpdated,
+			t,
+			canEditReservation,
+			facilities,
+			defaultDuration,
+		],
+	);
+
 	const handleCancelConfirm = useCallback(async () => {
 		if (!reservationToCancel) return;
 
@@ -883,321 +1454,372 @@ export const CustomerWeekViewCalendar: React.FC<
 			</div>
 
 			{/* Calendar Grid */}
-			<div className="border rounded-lg overflow-hidden">
-				<div className="overflow-x-auto -mx-3 sm:mx-0">
-					<table className="w-full border-collapse min-w-[390px] sm:min-w-full">
-						<thead>
-							<tr>
-								<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-right text-base sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
-									{t("time")}
-								</th>
-								{weekDays.map((day) => {
-									const isDayToday = todayDays.has(day.toISOString());
-									return (
-										<th
-											key={day.toISOString()}
-											className={cn(
-												"border-b border-r p-0.5 sm:p-2 text-center sm:text-sm font-medium w-[48px] sm:min-w-[110px]",
-												isDayToday && "bg-primary/10",
-												"last:border-r-0",
-											)}
-										>
-											<div className="flex flex-col">
-												<span className="text-[9px] sm:text-xs text-muted-foreground">
-													{getDayName(day, t)}
-												</span>
-												<span
-													className={cn(
-														"text-xs sm:text-lg font-semibold",
-														isDayToday && "text-primary",
-													)}
-												>
-													{getDayNumber(day)}
-												</span>
-											</div>
-										</th>
-									);
-								})}
-							</tr>
-						</thead>
-						<tbody>
-							{timeSlots.map((timeSlot) => (
-								<tr key={timeSlot}>
-									<td className="border-b border-r p-1 sm:p-2 text-right sm:text-sm text-muted-foreground sticky left-0 bg-background z-10 whitespace-nowrap">
-										{timeSlot}
-									</td>
+			<DndContext
+				sensors={sensors}
+				collisionDetection={closestCenter}
+				onDragStart={handleDragStart}
+				onDragEnd={handleDragEnd}
+			>
+				<div className="border rounded-lg overflow-hidden">
+					<div className="overflow-x-auto -mx-3 sm:mx-0">
+						<table className="w-full border-collapse min-w-[390px] sm:min-w-full">
+							<thead>
+								<tr>
+									<th className="w-12 sm:w-20 border-b border-r p-1 sm:p-2 text-right text-base sm:text-sm font-medium text-muted-foreground sticky left-0 bg-background z-10">
+										{t("time")}
+									</th>
 									{weekDays.map((day) => {
-										const slotRsvps = getRsvpsForSlot(day, timeSlot);
-										// Filter out cancelled RSVPs when determining availability
-										const activeRsvps = slotRsvps.filter(
-											(rsvp) => rsvp.status !== RsvpStatus.Cancelled,
-										);
-										// Check if this day/time slot is in the past using pre-computed map
-										const slotKey = `${day.toISOString()}-${timeSlot}`;
-										const isPast = pastSlots.has(slotKey);
 										const isDayToday = todayDays.has(day.toISOString());
 										return (
-											<td
-												key={`${day.toISOString()}-${timeSlot}`}
+											<th
+												key={day.toISOString()}
 												className={cn(
-													"border-b border-r p-0.5 sm:p-1 w-[48px] sm:min-w-[120px] align-top",
-													isDayToday && "bg-primary/5",
+													"border-b border-r p-0.5 sm:p-2 text-center sm:text-sm font-medium w-[48px] sm:min-w-[110px]",
+													isDayToday && "bg-primary/10",
 													"last:border-r-0",
 												)}
 											>
-												<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
-													{activeRsvps.length > 0 &&
-														activeRsvps.map((rsvp) => {
-															const isUserRsvp = isUserReservation(rsvp);
-															const canEdit =
-																!isPast && canEditReservation(rsvp) && storeId;
-															const canCancel = canCancelReservation(rsvp);
-															const isCompleted =
-																rsvp.status === RsvpStatus.Completed;
-															const displayName =
-																getReservationDisplayName(rsvp);
-
-															// If not store owner AND not user's reservation, show as "booked" without details
-															if (!isStoreOwner && !isUserRsvp) {
-																return (
-																	<button
-																		key={rsvp.id}
-																		type="button"
-																		disabled
-																		className={cn(
-																			"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full cursor-default",
-																			getStatusColorClasses(rsvp.status, false),
-																			isPast && "opacity-50",
-																		)}
-																	>
-																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																			{t("booked")}
-																		</div>
-																	</button>
-																);
-															}
-
-															// Render as non-clickable for completed RSVPs
-															if (isCompleted) {
-																return (
-																	<button
-																		key={rsvp.id}
-																		type="button"
-																		disabled
-																		className={cn(
-																			"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full cursor-default",
-																			getStatusColorClasses(rsvp.status, false),
-																			isPast && "opacity-50",
-																		)}
-																	>
-																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																			{displayName}
-																		</div>
-																		{rsvp.Facility?.facilityName && (
-																			<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
-																				{rsvp.Facility.facilityName}
-																			</div>
-																		)}
-																		{rsvp.message && (
-																			<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
-																				{rsvp.message}
-																			</div>
-																		)}
-																	</button>
-																);
-															}
-
-															// Render dialog for editable RSVPs or non-editable button for others
-															if (canEdit) {
-																return (
-																	<React.Fragment key={rsvp.id}>
-																		<ReservationDialog
-																			storeId={storeId || ""}
-																			rsvpSettings={rsvpSettings}
-																			storeSettings={storeSettings}
-																			facilities={facilities}
-																			user={user}
-																			rsvp={rsvp}
-																			existingReservations={rsvps}
-																			storeTimezone={storeTimezone}
-																			storeCurrency={storeCurrency}
-																			storeUseBusinessHours={
-																				storeUseBusinessHours
-																			}
-																			open={openEditDialogId === rsvp.id}
-																			onOpenChange={(open) => {
-																				setOpenEditDialogId(
-																					open ? rsvp.id : null,
-																				);
-																			}}
-																			onReservationUpdated={(updated) => {
-																				setOpenEditDialogId(null);
-																				handleReservationUpdated(updated);
-																			}}
-																			trigger={
-																				<div className="relative">
-																					{renderCancelButton(rsvp)}
-																					<button
-																						type="button"
-																						onClick={(e) => {
-																							e.stopPropagation();
-																							setOpenEditDialogId(rsvp.id);
-																						}}
-																						className={cn(
-																							"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full",
-																							getStatusColorClasses(
-																								rsvp.status,
-																							),
-																							canCancel && "pr-6",
-																						)}
-																					>
-																						<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																							{displayName}
-																						</div>
-																						{rsvp.Facility?.facilityName && (
-																							<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
-																								{rsvp.Facility.facilityName}
-																							</div>
-																						)}
-																						{rsvp.message && (
-																							<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
-																								{rsvp.message}
-																							</div>
-																						)}
-																					</button>
-																				</div>
-																			}
-																		/>
-																	</React.Fragment>
-																);
-															}
-
-															// Render non-editable button for other RSVPs (only visible to owner)
-															// But still show delete button if user owns it and can cancel
-															return (
-																<div key={rsvp.id} className="relative">
-																	{canCancel && (
-																		<Button
-																			variant="ghost"
-																			size="icon"
-																			className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 text-destructive hover:text-destructive p-0 z-10"
-																			onClick={(e) => {
-																				e.stopPropagation();
-																				handleCancelClick(e, rsvp);
-																			}}
-																			title={
-																				rsvp.status === RsvpStatus.Pending
-																					? t("rsvp_delete_reservation")
-																					: t("rsvp_cancel_reservation")
-																			}
-																		>
-																			<IconTrash className="h-3 w-3 sm:h-4 sm:w-4" />
-																		</Button>
-																	)}
-																	<button
-																		type="button"
-																		disabled
-																		className={cn(
-																			"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full cursor-default",
-																			getStatusColorClasses(rsvp.status, false),
-																			isPast && "opacity-50",
-																			canCancel && "pr-6",
-																		)}
-																	>
-																		<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
-																			{displayName}
-																		</div>
-																		{rsvp.Facility?.facilityName && (
-																			<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
-																				{rsvp.Facility.facilityName}
-																			</div>
-																		)}
-																		{rsvp.message && (
-																			<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
-																				{rsvp.message}
-																			</div>
-																		)}
-																	</button>
-																</div>
-															);
-														})}
-
-													{/* Show "+" button if slot is available and facilities exist */}
-													{(() => {
-														const canAddMore =
-															activeRsvps.length === 0 || !singleServiceMode;
-														if (!canAddMore || isPast) return null;
-
-														const slotTimeUtc = dayAndTimeSlotToUtc(
-															day,
-															timeSlot,
-															storeTimezone || "Asia/Taipei",
-														);
-														if (!hasAvailableFacilities(slotTimeUtc, rsvps)) {
-															return null;
-														}
-
-														if (!canCreateReservation) return null;
-
-														const addButton = (
-															<button
-																type="button"
-																disabled={isPast}
-																className={cn(
-																	"w-full h-full sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground flex items-center justify-center",
-																	isPast && "cursor-not-allowed opacity-50",
-																)}
-															>
-																+
-															</button>
-														);
-
-														return storeId ? (
-															<ReservationDialog
-																storeId={storeId}
-																rsvpSettings={rsvpSettings}
-																storeSettings={storeSettings}
-																facilities={facilities}
-																user={user}
-																defaultRsvpTime={slotTimeUtc}
-																onReservationCreated={handleReservationCreated}
-																existingReservations={rsvps}
-																storeTimezone={storeTimezone}
-																storeCurrency={storeCurrency}
-																storeUseBusinessHours={storeUseBusinessHours}
-																useCustomerCredit={useCustomerCredit}
-																creditExchangeRate={creditExchangeRate}
-																creditServiceExchangeRate={
-																	creditServiceExchangeRate
-																}
-																trigger={addButton}
-															/>
-														) : (
-															<button
-																type="button"
-																onClick={() =>
-																	handleTimeSlotClick(day, timeSlot)
-																}
-																disabled={isPast}
-																className={cn(
-																	"w-full h-full sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground flex items-center justify-center",
-																	isPast && "cursor-not-allowed opacity-50",
-																)}
-															>
-																+
-															</button>
-														);
-													})()}
+												<div className="flex flex-col">
+													<span className="text-[9px] sm:text-xs text-muted-foreground">
+														{getDayName(day, t)}
+													</span>
+													<span
+														className={cn(
+															"text-xs sm:text-lg font-semibold",
+															isDayToday && "text-primary",
+														)}
+													>
+														{getDayNumber(day)}
+													</span>
 												</div>
-											</td>
+											</th>
 										);
 									})}
 								</tr>
-							))}
-						</tbody>
-					</table>
+							</thead>
+							<tbody>
+								{timeSlots.map((timeSlot) => (
+									<tr key={timeSlot}>
+										<td className="border-b border-r p-1 sm:p-2 text-right sm:text-sm text-muted-foreground sticky left-0 bg-background z-10 whitespace-nowrap">
+											{timeSlot}
+										</td>
+										{weekDays.map((day) => {
+											const slotRsvps = getRsvpsForSlot(day, timeSlot);
+											// Filter out cancelled RSVPs when determining availability
+											const activeRsvps = slotRsvps.filter(
+												(rsvp) => rsvp.status !== RsvpStatus.Cancelled,
+											);
+											// Check if this day/time slot is in the past using pre-computed map
+											const slotKey = `${day.toISOString()}-${timeSlot}`;
+											const isPast = pastSlots.has(slotKey);
+											const isDayToday = todayDays.has(day.toISOString());
+											return (
+												<td
+													key={`${day.toISOString()}-${timeSlot}`}
+													className={cn(
+														"border-b border-r p-0.5 sm:p-1 w-[48px] sm:min-w-[120px] align-top",
+														isDayToday && "bg-primary/5",
+														"last:border-r-0",
+													)}
+												>
+													<DroppableSlot
+														id={`slot-${day.toISOString()}-${timeSlot}`}
+													>
+														<div className="flex flex-col gap-0.5 sm:gap-1 min-h-[50px] sm:min-h-[60px]">
+															{activeRsvps.length > 0 &&
+																activeRsvps.map((rsvp) => {
+																	const isUserRsvp = isUserReservation(rsvp);
+																	const canEdit =
+																		!isPast &&
+																		canEditReservation(rsvp) &&
+																		storeId;
+																	const canCancel = canCancelReservation(rsvp);
+																	const isCompleted =
+																		rsvp.status === RsvpStatus.Completed;
+																	const displayName =
+																		getReservationDisplayName(rsvp);
+
+																	// If not store owner AND not user's reservation, show as "booked" without details
+																	if (!isStoreOwner && !isUserRsvp) {
+																		return (
+																			<button
+																				key={rsvp.id}
+																				type="button"
+																				disabled
+																				className={cn(
+																					"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full cursor-default",
+																					getStatusColorClasses(
+																						rsvp.status,
+																						false,
+																					),
+																					isPast && "opacity-50",
+																				)}
+																			>
+																				<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																					{t("booked")}
+																				</div>
+																			</button>
+																		);
+																	}
+
+																	// Render as non-clickable for completed RSVPs
+																	if (isCompleted) {
+																		return (
+																			<button
+																				key={rsvp.id}
+																				type="button"
+																				disabled
+																				className={cn(
+																					"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full cursor-default",
+																					getStatusColorClasses(
+																						rsvp.status,
+																						false,
+																					),
+																					isPast && "opacity-50",
+																				)}
+																			>
+																				<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																					{displayName}
+																				</div>
+																				{rsvp.Facility?.facilityName && (
+																					<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
+																						{rsvp.Facility.facilityName}
+																					</div>
+																				)}
+																				{rsvp.message && (
+																					<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
+																						{rsvp.message}
+																					</div>
+																				)}
+																			</button>
+																		);
+																	}
+
+																	// Render dialog for editable RSVPs or non-editable button for others
+																	if (canEdit) {
+																		// Render card for editable RSVPs (can be dragged)
+																		const draggableId = `rsvp-${rsvp.id}`;
+																		const isDragging = activeId === draggableId;
+
+																		return (
+																			<React.Fragment key={rsvp.id}>
+																				<DraggableCard
+																					id={draggableId}
+																					isDragging={isDragging}
+																				>
+																					<ReservationDialog
+																						storeId={storeId || ""}
+																						rsvpSettings={rsvpSettings}
+																						storeSettings={storeSettings}
+																						facilities={facilities}
+																						user={user}
+																						rsvp={rsvp}
+																						existingReservations={rsvps}
+																						storeTimezone={storeTimezone}
+																						storeCurrency={storeCurrency}
+																						storeUseBusinessHours={
+																							storeUseBusinessHours
+																						}
+																						open={openEditDialogId === rsvp.id}
+																						onOpenChange={(open) => {
+																							setOpenEditDialogId(
+																								open ? rsvp.id : null,
+																							);
+																						}}
+																						onReservationUpdated={(updated) => {
+																							setOpenEditDialogId(null);
+																							handleReservationUpdated(updated);
+																						}}
+																						trigger={
+																							<div className="relative">
+																								{renderCancelButton(rsvp)}
+																								<button
+																									type="button"
+																									onClick={(e) => {
+																										e.stopPropagation();
+																										setOpenEditDialogId(
+																											rsvp.id,
+																										);
+																									}}
+																									className={cn(
+																										"cursor-move transition-all w-full rounded border-0 py-0 relative",
+																										getStatusColorClasses(
+																											rsvp.status,
+																											true,
+																										),
+																										isPast && "opacity-50",
+																										isDragging &&
+																											"opacity-50 cursor-grabbing",
+																										!isDragging &&
+																											"hover:shadow-md",
+																										"flex flex-col shadow-sm",
+																										canCancel && "pr-6",
+																									)}
+																								>
+																									<div className="font-medium truncate leading-tight text-[9px] sm:text-xs p-1.5 sm:p-2">
+																										{displayName}
+																									</div>
+																									{rsvp.Facility
+																										?.facilityName && (
+																										<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5 px-1.5 sm:px-2">
+																											{
+																												rsvp.Facility
+																													.facilityName
+																											}
+																										</div>
+																									)}
+																									{rsvp.message && (
+																										<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5 px-1.5 sm:px-2">
+																											{rsvp.message}
+																										</div>
+																									)}
+																								</button>
+																							</div>
+																						}
+																					/>
+																				</DraggableCard>
+																			</React.Fragment>
+																		);
+																	}
+
+																	// Render non-editable button for other RSVPs (only visible to owner)
+																	// But still show delete button if user owns it and can cancel
+																	return (
+																		<div key={rsvp.id} className="relative">
+																			{canCancel && (
+																				<Button
+																					variant="ghost"
+																					size="icon"
+																					className="absolute top-0.5 right-0.5 h-6 w-6 min-h-[32px] min-w-[32px] sm:h-5 sm:w-5 text-destructive hover:text-destructive p-0 z-10"
+																					onClick={(e) => {
+																						e.stopPropagation();
+																						handleCancelClick(e, rsvp);
+																					}}
+																					title={
+																						rsvp.status === RsvpStatus.Pending
+																							? t("rsvp_delete_reservation")
+																							: t("rsvp_cancel_reservation")
+																					}
+																				>
+																					<IconTrash className="h-3 w-3 sm:h-4 sm:w-4" />
+																				</Button>
+																			)}
+																			<button
+																				type="button"
+																				disabled
+																				className={cn(
+																					"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full cursor-default",
+																					getStatusColorClasses(
+																						rsvp.status,
+																						false,
+																					),
+																					isPast && "opacity-50",
+																					canCancel && "pr-6",
+																				)}
+																			>
+																				<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
+																					{displayName}
+																				</div>
+																				{rsvp.Facility?.facilityName && (
+																					<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
+																						{rsvp.Facility.facilityName}
+																					</div>
+																				)}
+																				{rsvp.message && (
+																					<div className="text-muted-foreground truncate text-[9px] sm:leading-tight mt-0.5">
+																						{rsvp.message}
+																					</div>
+																				)}
+																			</button>
+																		</div>
+																	);
+																})}
+
+															{/* Show "+" button if slot is available and facilities exist */}
+															{(() => {
+																const canAddMore =
+																	activeRsvps.length === 0 ||
+																	!singleServiceMode;
+																if (!canAddMore || isPast) return null;
+
+																const slotTimeUtc = dayAndTimeSlotToUtc(
+																	day,
+																	timeSlot,
+																	storeTimezone || "Asia/Taipei",
+																);
+																if (
+																	!hasAvailableFacilities(slotTimeUtc, rsvps)
+																) {
+																	return null;
+																}
+
+																if (!canCreateReservation) return null;
+
+																const addButton = (
+																	<button
+																		type="button"
+																		disabled={isPast}
+																		className={cn(
+																			"w-full h-full sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground flex items-center justify-center",
+																			isPast && "cursor-not-allowed opacity-50",
+																		)}
+																	>
+																		+
+																	</button>
+																);
+
+																return storeId ? (
+																	<ReservationDialog
+																		storeId={storeId}
+																		rsvpSettings={rsvpSettings}
+																		storeSettings={storeSettings}
+																		facilities={facilities}
+																		user={user}
+																		defaultRsvpTime={slotTimeUtc}
+																		onReservationCreated={
+																			handleReservationCreated
+																		}
+																		existingReservations={rsvps}
+																		storeTimezone={storeTimezone}
+																		storeCurrency={storeCurrency}
+																		storeUseBusinessHours={
+																			storeUseBusinessHours
+																		}
+																		useCustomerCredit={useCustomerCredit}
+																		creditExchangeRate={creditExchangeRate}
+																		creditServiceExchangeRate={
+																			creditServiceExchangeRate
+																		}
+																		trigger={addButton}
+																	/>
+																) : (
+																	<button
+																		type="button"
+																		onClick={() =>
+																			handleTimeSlotClick(day, timeSlot)
+																		}
+																		disabled={isPast}
+																		className={cn(
+																			"w-full h-full sm:min-h-[60px] text-left p-2 rounded hover:bg-muted/50 active:bg-muted/70 transition-colors text-xs sm:text-sm text-muted-foreground flex items-center justify-center",
+																			isPast && "cursor-not-allowed opacity-50",
+																		)}
+																	>
+																		+
+																	</button>
+																);
+															})()}
+														</div>
+													</DroppableSlot>
+												</td>
+											);
+										})}
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
 				</div>
-			</div>
+			</DndContext>
 
 			{/* Status Legend */}
 			<RsvpStatusLegend t={t} />
@@ -1214,6 +1836,27 @@ export const CustomerWeekViewCalendar: React.FC<
 				useCustomerCredit={useCustomerCredit}
 				creditExchangeRate={creditExchangeRate}
 				t={t}
+			/>
+
+			{/* Move into cancellation window confirmation */}
+			<AlertModal
+				isOpen={moveIntoCancelWindowConfirmOpen}
+				onClose={() => {
+					setMoveIntoCancelWindowConfirmOpen(false);
+					setPendingUpdate(null);
+				}}
+				onConfirm={handleMoveIntoCancelWindowConfirm}
+				loading={isUpdating}
+				title={
+					t("confirm_move_into_cancel_window_title") ||
+					"Move Reservation into Cancellation Window?"
+				}
+				description={
+					t("confirm_move_into_cancel_window_description", {
+						hours: rsvpSettings?.cancelHours ?? 24,
+					}) ||
+					`Moving this reservation to the selected time will place it within the cancellation window (${rsvpSettings?.cancelHours ?? 24} hours). You may not be able to cancel or edit it later. Do you want to proceed?`
+				}
 			/>
 		</div>
 	);

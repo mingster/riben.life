@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/providers/i18n-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import type { Rsvp } from "@/types";
@@ -147,6 +147,24 @@ export function AdminReservationForm({
 
 	const [loading, setLoading] = useState(false);
 
+	// Memoize the default rsvpTime to avoid creating new Date objects on every render
+	// Only compute once when defaultRsvpTime is not provided
+	// Use a ref to store the initial default time to prevent it from changing on every render
+	const defaultRsvpTimeRef = useRef<Date | null>(null);
+
+	const memoizedDefaultRsvpTime = useMemo(() => {
+		if (defaultRsvpTime) {
+			// If defaultRsvpTime is provided, use it directly
+			return defaultRsvpTime;
+		}
+		// If no defaultRsvpTime and we haven't stored one yet, create and store it
+		if (!defaultRsvpTimeRef.current) {
+			defaultRsvpTimeRef.current = getUtcNow();
+		}
+		// Return the stored default time (stays stable across renders)
+		return defaultRsvpTimeRef.current;
+	}, [defaultRsvpTime]);
+
 	// Fetch store members for userId selection
 	const customersUrl = `${process.env.NEXT_PUBLIC_API_URL}/storeAdmin/${storeId}/customers`;
 	const customersFetcher = (url: RequestInfo) =>
@@ -252,8 +270,9 @@ export function AdminReservationForm({
 		[],
 	);
 
-	const defaultValues = rsvp
-		? {
+	const defaultValues = useMemo(() => {
+		if (rsvp) {
+			return {
 				storeId: rsvp.storeId,
 				id: rsvp.id,
 				customerId: rsvp.customerId,
@@ -293,26 +312,28 @@ export function AdminReservationForm({
 						? Number(rsvp.facilityCost)
 						: null,
 				pricingRuleId: rsvp.pricingRuleId,
-			}
-		: {
-				//default value when create new
-				storeId: storeId,
-				id: "",
-				customerId: null,
-				facilityId: null, // Allow null for reservations without facilities
-				serviceStaffId: null,
-				numOfAdult: 1,
-				numOfChild: 0,
-				rsvpTime: defaultRsvpTime || getUtcNow(),
-				arriveTime: null,
-				status: RsvpStatus.Pending,
-				message: null,
-				alreadyPaid: false,
-				confirmedByStore: true,
-				confirmedByCustomer: false,
-				facilityCost: null,
-				pricingRuleId: null,
 			};
+		}
+		return {
+			//default value when create new
+			storeId: storeId,
+			id: "",
+			customerId: null,
+			facilityId: null, // Allow null for reservations without facilities
+			serviceStaffId: null,
+			numOfAdult: 1,
+			numOfChild: 0,
+			rsvpTime: memoizedDefaultRsvpTime,
+			arriveTime: null,
+			status: RsvpStatus.Pending,
+			message: null,
+			alreadyPaid: false,
+			confirmedByStore: true,
+			confirmedByCustomer: false,
+			facilityCost: null,
+			pricingRuleId: null,
+		};
+	}, [rsvp, storeId, memoizedDefaultRsvpTime]);
 
 	// Use updateRsvpSchema when editing, createRsvpSchema when creating
 	const schema = useMemo(
@@ -330,12 +351,11 @@ export function AdminReservationForm({
 		reValidateMode: "onChange",
 	});
 
-	// Reset form when rsvp prop changes (for edit mode)
+	// Reset form when defaultValues change (rsvp, storeId, or memoizedDefaultRsvpTime changes)
+	// This ensures the form is reset with updated values when any dependency changes
 	useEffect(() => {
-		if (rsvp) {
-			form.reset(defaultValues);
-		}
-	}, [rsvp, defaultValues, form]);
+		form.reset(defaultValues);
+	}, [form, defaultValues]);
 
 	// Watch for facilityId and rsvpTime changes to auto-calculate facilityCost
 	const facilityId = form.watch("facilityId");
@@ -556,7 +576,7 @@ export function AdminReservationForm({
 				}
 			} catch (error) {
 				// Silently fail - pricing calculation is optional
-				console.error("Failed to calculate facility pricing:", error);
+				// Error is ignored as pricing calculation failure should not block form submission
 			}
 		};
 

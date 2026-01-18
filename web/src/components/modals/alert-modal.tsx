@@ -11,6 +11,8 @@ interface AlertModalProps {
 	onClose: () => void;
 	onConfirm: () => void;
 	loading: boolean;
+	title?: string;
+	description?: string;
 }
 
 export const AlertModal: React.FC<AlertModalProps> = ({
@@ -18,6 +20,8 @@ export const AlertModal: React.FC<AlertModalProps> = ({
 	onClose,
 	onConfirm,
 	loading,
+	title,
+	description,
 }) => {
 	const [isMounted, setIsMounted] = useState(false);
 
@@ -34,8 +38,8 @@ export const AlertModal: React.FC<AlertModalProps> = ({
 
 	return (
 		<Modal
-			title={t("alert_title")}
-			description={t("alert_descr")}
+			title={title || t("alert_title")}
+			description={description || t("alert_descr")}
 			isOpen={isOpen}
 			onClose={onClose}
 		>
