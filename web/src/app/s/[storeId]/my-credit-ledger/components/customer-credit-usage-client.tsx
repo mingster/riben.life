@@ -1,166 +1,73 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-	startOfWeek,
-	endOfWeek,
-	startOfMonth,
-	endOfMonth,
-	startOfYear,
-	endOfYear,
-} from "date-fns";
 
 import { useTranslation } from "@/app/i18n/client";
 import { useI18n } from "@/providers/i18n-provider";
 import { DisplayCreditLedger } from "@/components/display-credit-ledger";
 import { Heading } from "@/components/ui/heading";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import type { CustomerCreditLedger } from "@/types";
 import {
-	dateToEpoch,
-	convertToUtc,
-	formatUtcDateToDateTimeLocal,
-} from "@/utils/datetime-utils";
+	type PeriodRangeWithDates,
+	RsvpPeriodSelector,
+	useRsvpPeriodRanges,
+} from "@/components/rsvp-period-selector";
+import type { CustomerCreditLedger } from "@/types";
 
 interface CustomerCreditUsageClientProps {
 	ledger: CustomerCreditLedger[];
 	storeTimezone: string;
+	storeId?: string;
 }
-
-type PeriodType = "week" | "month" | "year" | "custom";
 
 export const CustomerCreditUsageClient: React.FC<
 	CustomerCreditUsageClientProps
-> = ({ ledger, storeTimezone }) => {
+> = ({ ledger, storeTimezone, storeId }) => {
 	const { lng } = useI18n();
 	const { t } = useTranslation(lng);
 
 	const [allData, setAllData] = useState<CustomerCreditLedger[]>(ledger);
-	const [periodType, setPeriodType] = useState<PeriodType>("week");
-	const [startDate, setStartDate] = useState<Date | null>(null);
-	const [endDate, setEndDate] = useState<Date | null>(null);
 
-	// Helper to get current date/time in store timezone
-	const getNowInStoreTimezone = useCallback((): Date => {
-		const now = new Date();
-		// Format current UTC time to store timezone, then parse back
-		// This gives us a Date object representing "now" in store timezone
-		const formatted = formatUtcDateToDateTimeLocal(now, storeTimezone);
-		if (!formatted) return now;
-		// Convert back to UTC Date (interpreting the formatted string as store timezone)
-		return convertToUtc(formatted, storeTimezone);
-	}, [storeTimezone]);
-
-	// Initialize default to "this week"
+	// Update allData when ledger prop changes
 	useEffect(() => {
-		if (periodType === "week" && !startDate && !endDate) {
-			const nowInTz = getNowInStoreTimezone();
-			// Extract date components in store timezone
-			const formatter = new Intl.DateTimeFormat("en-CA", {
-				timeZone: storeTimezone,
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-				hour: "2-digit",
-				minute: "2-digit",
-				hour12: false,
-			});
-			const parts = formatter.formatToParts(nowInTz);
-			const getValue = (type: string): number =>
-				Number(parts.find((p) => p.type === type)?.value || "0");
+		setAllData(ledger);
+	}, [ledger]);
 
-			const year = getValue("year");
-			const month = getValue("month") - 1; // 0-indexed
-			const day = getValue("day");
-			const hour = getValue("hour");
-			const minute = getValue("minute");
+	// Get default period ranges for initialization
+	const defaultPeriodRanges = useRsvpPeriodRanges(storeTimezone);
 
-			// Create a Date object representing current time in store timezone
-			// We'll use this to calculate week boundaries
-			const storeDate = new Date(year, month, day, hour, minute);
-			const weekStart = startOfWeek(storeDate, { weekStartsOn: 0 }); // Sunday
-			const weekEnd = endOfWeek(storeDate, { weekStartsOn: 0 }); // Saturday
+	// Initialize period range with default "month" period epoch values
+	// This ensures the component is valid immediately, and RsvpPeriodSelector will update it
+	// with the correct values (from localStorage or user selection) via onPeriodRangeChange
+	const initialPeriodRange = useMemo<PeriodRangeWithDates>(() => {
+		const monthRange = defaultPeriodRanges.month;
+		return {
+			periodType: "month",
+			startDate: null,
+			endDate: null,
+			startEpoch: monthRange.startEpoch,
+			endEpoch: monthRange.endEpoch,
+		};
+	}, [defaultPeriodRanges]);
 
-			// Convert week boundaries to UTC (interpret as store timezone)
-			const weekStartStr = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, "0")}-${String(weekStart.getDate()).padStart(2, "0")}T00:00`;
-			const weekEndStr = `${weekEnd.getFullYear()}-${String(weekEnd.getMonth() + 1).padStart(2, "0")}-${String(weekEnd.getDate()).padStart(2, "0")}T23:59`;
+	const [periodRange, setPeriodRange] =
+		useState<PeriodRangeWithDates>(initialPeriodRange);
 
-			setStartDate(convertToUtc(weekStartStr, storeTimezone));
-			setEndDate(convertToUtc(weekEndStr, storeTimezone));
-		}
-	}, [periodType, startDate, endDate, storeTimezone, getNowInStoreTimezone]);
+	// Handle period range change from RsvpPeriodSelector
+	const handlePeriodRangeChange = useCallback((range: PeriodRangeWithDates) => {
+		setPeriodRange(range);
+	}, []);
 
-	// Update date range when period type changes
-	const handlePeriodChange = useCallback(
-		(period: PeriodType) => {
-			setPeriodType(period);
-			const nowInTz = getNowInStoreTimezone();
-
-			// Extract date components in store timezone
-			const formatter = new Intl.DateTimeFormat("en-CA", {
-				timeZone: storeTimezone,
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-				hour: "2-digit",
-				minute: "2-digit",
-				hour12: false,
-			});
-			const parts = formatter.formatToParts(nowInTz);
-			const getValue = (type: string): number =>
-				Number(parts.find((p) => p.type === type)?.value || "0");
-
-			const year = getValue("year");
-			const month = getValue("month") - 1; // 0-indexed
-			const day = getValue("day");
-			const hour = getValue("hour");
-			const minute = getValue("minute");
-
-			const storeDate = new Date(year, month, day, hour, minute);
-			let periodStart: Date;
-			let periodEnd: Date;
-
-			switch (period) {
-				case "week":
-					periodStart = startOfWeek(storeDate, { weekStartsOn: 0 });
-					periodEnd = endOfWeek(storeDate, { weekStartsOn: 0 });
-					break;
-				case "month":
-					periodStart = startOfMonth(storeDate);
-					periodEnd = endOfMonth(storeDate);
-					break;
-				case "year":
-					periodStart = startOfYear(storeDate);
-					periodEnd = endOfYear(storeDate);
-					break;
-				case "custom":
-					// Keep current dates when switching to custom
-					return;
-				default:
-					return;
-			}
-
-			// Convert period boundaries to UTC (interpret as store timezone)
-			const startStr = `${periodStart.getFullYear()}-${String(periodStart.getMonth() + 1).padStart(2, "0")}-${String(periodStart.getDate()).padStart(2, "0")}T00:00`;
-			const endStr = `${periodEnd.getFullYear()}-${String(periodEnd.getMonth() + 1).padStart(2, "0")}-${String(periodEnd.getDate()).padStart(2, "0")}T23:59`;
-
-			setStartDate(convertToUtc(startStr, storeTimezone));
-			setEndDate(convertToUtc(endStr, storeTimezone));
-		},
-		[storeTimezone, getNowInStoreTimezone],
-	);
-
-	// Filter data based on date range
+	// Filter data based on period range (using createdAt field)
 	const data = useMemo(() => {
-		if (!startDate || !endDate) {
+		const { periodType, startEpoch, endEpoch } = periodRange;
+
+		// Handle "all" period (no date filtering)
+		if (periodType === "all") {
 			return allData;
 		}
 
-		const startEpoch = dateToEpoch(startDate);
-		const endEpoch = dateToEpoch(endDate);
-
+		// Handle custom or predefined periods (require startEpoch and endEpoch)
 		if (!startEpoch || !endEpoch) {
 			return allData;
 		}
@@ -181,36 +88,9 @@ export const CustomerCreditUsageClient: React.FC<
 				return false;
 			}
 
-			const startBigInt = startEpoch;
-			const endBigInt = endEpoch;
-
-			return createdAtBigInt >= startBigInt && createdAtBigInt <= endBigInt;
+			return createdAtBigInt >= startEpoch && createdAtBigInt <= endEpoch;
 		});
-	}, [allData, startDate, endDate]);
-
-	// Format date for datetime-local input (display in store timezone)
-	const formatDateForInput = useCallback(
-		(date: Date | null): string => {
-			if (!date) return "";
-			// date is in UTC, format it to show in store timezone
-			return formatUtcDateToDateTimeLocal(date, storeTimezone);
-		},
-		[storeTimezone],
-	);
-
-	// Parse datetime-local input to UTC Date (interpret input as store timezone)
-	const parseDateFromInput = useCallback(
-		(value: string): Date | null => {
-			if (!value) return null;
-			try {
-				// Interpret the datetime-local string as store timezone and convert to UTC
-				return convertToUtc(value, storeTimezone);
-			} catch {
-				return null;
-			}
-		},
-		[storeTimezone],
-	);
+	}, [allData, periodRange]);
 
 	return (
 		<>
@@ -223,81 +103,13 @@ export const CustomerCreditUsageClient: React.FC<
 			</div>
 			<Separator />
 			<div className="flex flex-col gap-3 sm:gap-4 py-3">
-				{/* Period Toggle Buttons */}
-				<div className="flex flex-wrap gap-1.5 sm:gap-2">
-					<Button
-						variant={periodType === "week" ? "default" : "outline"}
-						size="sm"
-						onClick={() => handlePeriodChange("week")}
-						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
-					>
-						{t("this_week") || "This Week"}
-					</Button>
-					<Button
-						variant={periodType === "month" ? "default" : "outline"}
-						size="sm"
-						onClick={() => handlePeriodChange("month")}
-						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
-					>
-						{t("this_month") || "This Month"}
-					</Button>
-					<Button
-						variant={periodType === "year" ? "default" : "outline"}
-						size="sm"
-						onClick={() => handlePeriodChange("year")}
-						className="h-10 sm:h-9 touch-manipulation text-sm sm:text-xs"
-					>
-						{t("this_year") || "This Year"}
-					</Button>
-				</div>
-
-				{/* Date Range Inputs */}
-				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-					<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-						<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
-							<label
-								htmlFor="start-time"
-								className="text-sm font-medium whitespace-nowrap"
-							>
-								{t("start_time") || "Start Time"}:
-							</label>
-							<Input
-								id="start-time"
-								type="datetime-local"
-								value={formatDateForInput(startDate)}
-								onChange={(e) => {
-									const newDate = parseDateFromInput(e.target.value);
-									if (newDate) {
-										setStartDate(newDate);
-										setPeriodType("custom");
-									}
-								}}
-								className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto touch-manipulation"
-							/>
-						</div>
-						<div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
-							<label
-								htmlFor="end-time"
-								className="text-sm font-medium whitespace-nowrap"
-							>
-								{t("end_time") || "End Time"}:
-							</label>
-							<Input
-								id="end-time"
-								type="datetime-local"
-								value={formatDateForInput(endDate)}
-								onChange={(e) => {
-									const newDate = parseDateFromInput(e.target.value);
-									if (newDate) {
-										setEndDate(newDate);
-										setPeriodType("custom");
-									}
-								}}
-								className="h-10 text-base sm:text-sm sm:h-9 w-full sm:w-auto touch-manipulation"
-							/>
-						</div>
-					</div>
-				</div>
+				<RsvpPeriodSelector
+					storeTimezone={storeTimezone}
+					storeId={storeId}
+					onPeriodRangeChange={handlePeriodRangeChange}
+					defaultPeriod="month"
+					allowCustom={true}
+				/>
 			</div>
 			<Separator />
 			<div className="py-3 sm:py-4">

@@ -85,6 +85,7 @@ export default async function CustomerFiatUsagePage(props: {
 					ledger={formattedData}
 					storeTimezone={store.defaultTimezone || "Asia/Taipei"}
 					currency={store.defaultCurrency || "TWD"}
+					storeId={actualStoreId}
 				/>
 			</Suspense>
 		</Container>

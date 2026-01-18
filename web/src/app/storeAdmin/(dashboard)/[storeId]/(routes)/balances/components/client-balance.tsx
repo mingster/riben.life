@@ -13,7 +13,7 @@ import { createBalanceColumns } from "./columns";
 import {
 	RsvpPeriodSelector,
 	type PeriodRangeWithDates,
-} from "../../components/rsvp-period-selector";
+} from "@/components/rsvp-period-selector";
 
 interface BalanceClientProps {
 	serverData: BalanceColumn[];

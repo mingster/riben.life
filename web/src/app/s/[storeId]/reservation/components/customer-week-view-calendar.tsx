@@ -147,6 +147,7 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
 		isDragging: isDraggingState,
 	} = useDraggable({
 		id,
+		disabled: false, // Will be disabled at the button level if needed
 	});
 
 	// Apply drag styles only after hydration to prevent mismatch
@@ -162,7 +163,13 @@ const DraggableCard: React.FC<DraggableCardProps> = ({
 				};
 
 	return (
-		<div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+		<div
+			ref={setNodeRef}
+			style={style}
+			{...listeners}
+			{...attributes}
+			className={cn("cursor-default", className)}
+		>
 			{children}
 		</div>
 	);
@@ -1288,12 +1295,16 @@ export const CustomerWeekViewCalendar: React.FC<
 
 		setIsCancelling(true);
 		try {
-			// If status is Pending, delete it (hard delete)
+			// Always use cancel for paid RSVPs, regardless of status
+			// For unpaid RSVPs with Pending/ReadyToConfirm status, delete (hard delete)
 			// Otherwise, cancel it (change status to Cancelled)
-			if (
-				reservationToCancel.status === RsvpStatus.Pending ||
-				reservationToCancel.status === RsvpStatus.ReadyToConfirm
-			) {
+			const isPaid = reservationToCancel.alreadyPaid === true;
+			const shouldDelete =
+				!isPaid &&
+				(reservationToCancel.status === RsvpStatus.Pending ||
+					reservationToCancel.status === RsvpStatus.ReadyToConfirm);
+
+			if (shouldDelete) {
 				// Simplified: If user can click delete (canCancelReservation returns true),
 				// they have permission - no need to send name/phone for verification
 				const result = await deleteReservationAction({
@@ -1542,12 +1553,10 @@ export const CustomerWeekViewCalendar: React.FC<
 																	// If not store owner AND not user's reservation, show as "booked" without details
 																	if (!isStoreOwner && !isUserRsvp) {
 																		return (
-																			<button
+																			<div
 																				key={rsvp.id}
-																				type="button"
-																				disabled
 																				className={cn(
-																					"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full cursor-default",
+																					"cursor-default text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full",
 																					getStatusColorClasses(
 																						rsvp.status,
 																						false,
@@ -1558,19 +1567,17 @@ export const CustomerWeekViewCalendar: React.FC<
 																				<div className="font-medium truncate leading-tight text-[9px] sm:text-xs">
 																					{t("booked")}
 																				</div>
-																			</button>
+																			</div>
 																		);
 																	}
 
 																	// Render as non-clickable for completed RSVPs
 																	if (isCompleted) {
 																		return (
-																			<button
+																			<div
 																				key={rsvp.id}
-																				type="button"
-																				disabled
 																				className={cn(
-																					"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full cursor-default",
+																					"cursor-default text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full",
 																					getStatusColorClasses(
 																						rsvp.status,
 																						false,
@@ -1591,7 +1598,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																						{rsvp.message}
 																					</div>
 																				)}
-																			</button>
+																			</div>
 																		);
 																	}
 
@@ -1606,6 +1613,11 @@ export const CustomerWeekViewCalendar: React.FC<
 																				<DraggableCard
 																					id={draggableId}
 																					isDragging={isDragging}
+																					className={
+																						!canEdit
+																							? "cursor-default"
+																							: undefined
+																					}
 																				>
 																					<ReservationDialog
 																						storeId={storeId || ""}
@@ -1637,12 +1649,17 @@ export const CustomerWeekViewCalendar: React.FC<
 																									type="button"
 																									onClick={(e) => {
 																										e.stopPropagation();
+																										if (!canEdit) return;
 																										setOpenEditDialogId(
 																											rsvp.id,
 																										);
 																									}}
+																									disabled={!canEdit}
 																									className={cn(
-																										"cursor-move transition-all w-full rounded border-0 py-0 relative",
+																										"transition-all w-full rounded border-0 py-0 relative",
+																										canEdit
+																											? "cursor-move"
+																											: "cursor-not-allowed",
 																										getStatusColorClasses(
 																											rsvp.status,
 																											true,
@@ -1651,9 +1668,11 @@ export const CustomerWeekViewCalendar: React.FC<
 																										isDragging &&
 																											"opacity-50 cursor-grabbing",
 																										!isDragging &&
+																											canEdit &&
 																											"hover:shadow-md",
 																										"flex flex-col shadow-sm",
 																										canCancel && "pr-6",
+																										!canEdit && "opacity-75",
 																									)}
 																								>
 																									<div className="font-medium truncate leading-tight text-[9px] sm:text-xs p-1.5 sm:p-2">
@@ -1682,7 +1701,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																		);
 																	}
 
-																	// Render non-editable button for other RSVPs (only visible to owner)
+																	// Render non-editable display for other RSVPs (only visible to owner)
 																	// But still show delete button if user owns it and can cancel
 																	return (
 																		<div key={rsvp.id} className="relative">
@@ -1704,11 +1723,9 @@ export const CustomerWeekViewCalendar: React.FC<
 																					<IconTrash className="h-3 w-3 sm:h-4 sm:w-4" />
 																				</Button>
 																			)}
-																			<button
-																				type="button"
-																				disabled
+																			<div
 																				className={cn(
-																					"text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full cursor-default",
+																					"cursor-default text-left p-1.5 sm:p-2 rounded sm:text-xs transition-colors w-full",
 																					getStatusColorClasses(
 																						rsvp.status,
 																						false,
@@ -1730,7 +1747,7 @@ export const CustomerWeekViewCalendar: React.FC<
 																						{rsvp.message}
 																					</div>
 																				)}
-																			</button>
+																			</div>
 																		</div>
 																	);
 																})}

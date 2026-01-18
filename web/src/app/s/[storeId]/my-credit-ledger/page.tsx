@@ -82,6 +82,7 @@ export default async function CustomerCreditUsagePage(props: {
 				<CustomerCreditUsageClient
 					ledger={formattedData}
 					storeTimezone={store.defaultTimezone || "Asia/Taipei"}
+					storeId={actualStoreId}
 				/>
 			</Suspense>
 		</Container>
